@@ -1,4 +1,5 @@
 import logging
+import math
 
 import numpy as np
 from opfunu.cec_based import cec2015
@@ -11,7 +12,7 @@ def main():
     dim = 10
     seed = 1
     knn = 5
-    rsm = 0.9
+    rsm = 0.1
 
     # benchmark function
     f1 = cec2015.F12015(ndim=10)
@@ -91,15 +92,50 @@ def ibrbf_ga(func, dim, seed, knn, rsm):
             # predict offspring[i]
             pass
 
+        # TODO: remove this
+        offspring_fit = [func.evaluate(ind) for ind in offspring]
+
         # TODO: implement selection
         # sort by predicted fitness
+        offspring = offspring[np.argsort(offspring_fit)]
+        offspring_fit = np.sort(offspring_fit)
         # select psm individuals to evaluate with the true function
         fe = fe + psm
         # add evaluated individuals to the archive
         # select a best solution in parent
+        best_idx = np.argmin(parent_fit)
+        parent_best = parent[best_idx]
+        parent_best_fit = parent_fit[best_idx]
+        parent = np.delete(parent, best_idx, axis=0)
+        parent_fit = np.delete(parent_fit, best_idx, axis=0)
         # update population and fitness
+        pop = np.vstack((parent_best, parent, offspring))
+        fit = np.hstack((parent_best_fit, parent_fit, offspring_fit))
+        pop = pop[np.argsort(fit)]
+        fit = np.sort(fit)
+        pop = pop[:popsize]
+        fit = fit[:popsize]
 
         logging.info(f"fbest: {fit[0]}, fe: {fe}")
+
+
+def crossover_blx_alpha(p1, p2, gamma, lb, ub):
+    dim = len(p1)
+    alpha = np.random.uniform(-gamma, 1 + gamma, size=dim)
+    c1 = alpha * p1 + (1 - alpha) * p2
+    c2 = (1 - alpha) * p1 + alpha * p2
+    # TODO: implement boundary handling
+    c1 = np.clip(c1, lb, ub)
+    c2 = np.clip(c2, lb, ub)
+    return c1, c2
+
+
+def mutation_uniform(p, mutation_rate, lb, ub):
+    dim = len(p)
+    mutation_bool = np.random.random(dim) < mutation_rate
+    c = p.copy()
+    np.where(mutation_bool, c := np.random.uniform(lb, ub, size=dim), c)
+    return c
 
 
 if __name__ == "__main__":
