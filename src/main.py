@@ -57,25 +57,29 @@ def ibrbf_ga(func, dim, seed, knn, rsm):
 
         # crossover
         parent_crossover = parent[randpop_idx[:num_cross]]
-        offscpring_crossover = []
+        offspring_crossover = []
         for i in range(0, num_cross, 2):
             p1 = parent_crossover[i]
             p2 = parent_crossover[i + 1]
 
             # TODO: implement BLX-alpha
-            offscpring_crossover.append(p1)
-            offscpring_crossover.append(p2)
+            p1, p2 = crossover_blx_alpha(p1, p2, gamma, lb, ub)
+
+            offspring_crossover.append(p1)
+            offspring_crossover.append(p2)
 
         # mutation
         parent_mutation = parent[randpop_idx[num_cross:]]
-        offscpring_mutation = []
+        offspring_mutation = []
         for i in range(num_mut):
             p = parent_mutation[i]
 
             # TODO: implement uniform mutation
-            offscpring_mutation.append(p)
+            p = mutation_uniform(p, mutation_rate, lb, ub)
 
-        offscpring = np.vstack((offscpring_crossover, offscpring_mutation))
+            offspring_mutation.append(p)
+
+        offspring = np.vstack((offspring_crossover, offspring_mutation))
 
         psm = int(rsm * popsize)
 
