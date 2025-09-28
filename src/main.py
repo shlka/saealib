@@ -40,7 +40,7 @@ def ibrbf_ga(func, dim, seed, knn, rsm):
     # initialize archive
     archive_x = np.random.uniform(lb, ub, (init_archive_size, dim))
     archive_y = np.array([func.evaluate(ind) for ind in archive_x])
-    archive_x = archive_x[np.argsort(archive_y)[::-1]]
+    archive_x = archive_x[np.argsort(archive_y)]
     archive_y = np.sort(archive_y)
 
     # initialize population
