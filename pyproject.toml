@@ -8,9 +8,11 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 numpy = ">=1.22.1"
+
+
+[tool.poetry.group.dev.dependencies]
 opfunu = ">=1.0.0"
 setuptools = "^80.9.0"
-
 
 [build-system]
 requires = ["poetry-core"]
