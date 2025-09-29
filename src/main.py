@@ -11,7 +11,7 @@ def main():
     # parameters
     dim = 10
     seed = 1
-    knn = 5
+    knn = 50
     rsm = 0.1
 
     # benchmark function
@@ -85,23 +85,32 @@ def ibrbf_ga(func, dim, seed, knn, rsm):
         psm = int(rsm * popsize)
 
         # surrogate model
+        offspring_fit = np.array([])
         for i in range(popsize):
             # TODO: implement surrogate model
             # get training data for offspring[i]
+            train_x, train_y = get_neighbors(archive_x, archive_y, offspring[i], knn)
             # train RBF model
+            rbf_model = RBF(gaussian_kernel, dim)
+            rbf_model.fit(train_x, train_y)
             # predict offspring[i]
-            pass
+            offspring_fit = np.append(offspring_fit, rbf_model.predict(offspring[i].reshape(1, -1)))
 
         # TODO: remove this
-        offspring_fit = [func.evaluate(ind) for ind in offspring]
+        # offspring_fit = [func.evaluate(ind) for ind in offspring]
 
         # TODO: implement selection
         # sort by predicted fitness
         offspring = offspring[np.argsort(offspring_fit)]
         offspring_fit = np.sort(offspring_fit)
         # select psm individuals to evaluate with the true function
+        offspring_eval = offspring[:psm]
+        offspring_eval_fit = np.array([func.evaluate(ind) for ind in offspring_eval])
+        offspring_fit[:psm] = offspring_eval_fit
         fe = fe + psm
         # add evaluated individuals to the archive
+        archive_x = np.vstack((archive_x, offspring_eval))
+        archive_y = np.hstack((archive_y, offspring_eval_fit))
         # select a best solution in parent
         best_idx = np.argmin(parent_fit)
         parent_best = parent[best_idx]
@@ -116,7 +125,7 @@ def ibrbf_ga(func, dim, seed, knn, rsm):
         pop = pop[:popsize]
         fit = fit[:popsize]
 
-        logging.info(f"fbest: {fit[0]}, fe: {fe}")
+        logging.info(f"fbest: {archive_y.min()}, fe: {fe}")
 
 
 def crossover_blx_alpha(p1, p2, gamma, lb, ub):
@@ -136,6 +145,43 @@ def mutation_uniform(p, mutation_rate, lb, ub):
     c = p.copy()
     np.where(mutation_bool, c := np.random.uniform(lb, ub, size=dim), c)
     return c
+
+def get_neighbors(archive_x, archive_y, x, k):
+    distances = np.linalg.norm(archive_x - x, axis=1)
+    neighbor_idx = np.argsort(distances)[:k]
+    return archive_x[neighbor_idx], archive_y[neighbor_idx]
+
+
+def gaussian_kernel(x1, x2, sigma=2.0):
+    return math.exp(-np.linalg.norm(x1 - x2) ** 2 / (2 * (sigma ** 2)))
+
+class RBF:
+    def __init__(self, kernel, dim):
+        self.dim = dim
+        self.train_x = []
+        self.train_y = []
+        self.kernel = kernel
+        self.weights = []
+        self.kernel_matrix = []
+
+    def fit(self, train_x, train_y):
+        self.train_x = train_x
+        self.train_y = train_y
+        n_samples = len(train_x)
+        self.kernel_matrix = np.zeros((n_samples, n_samples))
+        for i in range(n_samples):
+            for j in range(n_samples):
+                self.kernel_matrix[i, j] = self.kernel(train_x[i], train_x[j])
+        # self.weights = np.linalg.solve(self.kernel_matrix, train_y)
+        self.weights = np.linalg.solve(self.kernel_matrix, (train_y - np.mean(train_y)))
+
+    def predict(self, test_x):
+        n_samples = len(self.train_x)
+        prediction = 0
+        for i in range(n_samples):
+            prediction += self.kernel(test_x, self.train_x[i]) * self.weights[i]
+        return prediction + np.mean(self.train_y)
+
 
 
 if __name__ == "__main__":
