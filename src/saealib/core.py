@@ -70,14 +70,14 @@ class Archive(Population):
     """
     Archive class to handle archive of evaluated solutions.
     """
-    def __init__(self, atol: float = 1e-8):
+    def __init__(self, atol: float = 0.0):
         super().__init__()
         self.data["x"] = np.empty((0, 0))
         self.data["y"] = np.empty((0, ))
         self.atol = atol  # tolerance for duplicate check
 
     @staticmethod
-    def new(x: np.ndarray, y: np.ndarray, atol: float = 1e-8) -> "Archive":
+    def new(x: np.ndarray, y: np.ndarray, atol: float = 0.0) -> "Archive":
         archive = Archive(atol=atol)
         archive.set("x", x)
         archive.set("y", y)
