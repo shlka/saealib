@@ -151,7 +151,7 @@ def get_neighbors(archive_x, archive_y, x, k):
     return archive_x[neighbor_idx], archive_y[neighbor_idx]
 
 
-def gaussian_kernel(x1, x2, sigma=2.0):
+def gaussian_kernel(x1, x2, sigma=100.0):
     return math.exp(-np.linalg.norm(x1 - x2) ** 2 / (2 * (sigma ** 2)))
 
 class RBF:
