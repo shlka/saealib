@@ -4,6 +4,8 @@ import math
 import numpy as np
 from opfunu.cec_based import cec2015
 
+from saealib.core import Population, Individual, Archive
+
 logging.basicConfig(level=logging.INFO)
 
 
@@ -34,7 +36,7 @@ def ibrbf_ga(func, dim, seed, knn, rsm):
     init_archive_size = 5 * dim
     crossover_rate = 0.7
     gamma = 0.4
-    mutation_rate = 0.3
+    mutation_rate = 1.0
     mutation_rate_inner = 0.3
 
     # initialize archive
@@ -42,18 +44,19 @@ def ibrbf_ga(func, dim, seed, knn, rsm):
     archive_y = np.array([func.evaluate(ind) for ind in archive_x])
     archive_x = archive_x[np.argsort(archive_y)]
     archive_y = np.sort(archive_y)
+    archive = Archive.new(archive_x, archive_y)
 
     # initialize population
-    pop = archive_x[:popsize]
-    fit = archive_y[:popsize]
+    pop = Population.new("x", archive.get("x")[:popsize])
+    pop.set("f", archive.get("y")[:popsize])
 
     fe = init_archive_size
-    logging.info(f"fbest: {fit[0]}, fe: {fe}")
+    logging.info(f"fbest: {pop.get('f')[0]}, fe: {fe}")
 
     while fe < maxfe:
         randpop_idx = np.random.permutation(popsize)
-        parent = pop[randpop_idx]
-        parent_fit = fit[randpop_idx]
+        parent = pop.get("x")[randpop_idx]
+        parent_fit = pop.get("f")[randpop_idx]
 
         # crossover
         offspring = np.empty((0, dim))
@@ -79,7 +82,7 @@ def ibrbf_ga(func, dim, seed, knn, rsm):
         for i in range(popsize):
             # TODO: implement surrogate model
             # get training data for offspring[i]
-            train_x, train_y = get_neighbors(archive_x, archive_y, offspring[i], knn)
+            train_x, train_y = archive.get_knn(offspring[i], knn)
             # train RBF model
             rbf_model = RBF(gaussian_kernel, dim)
             rbf_model.fit(train_x, train_y)
@@ -98,17 +101,10 @@ def ibrbf_ga(func, dim, seed, knn, rsm):
         offspring_eval_fit = np.array([func.evaluate(ind) for ind in offspring_eval])
         offspring_fit[:psm] = offspring_eval_fit
         fe = fe + psm
+        print(f"offspring eval fit: {offspring_eval_fit}")
         # add evaluated individuals to the archive, handling duplicates
         for i, ind in enumerate(offspring_eval):
-            # check for duplicate in archive_x
-            if np.any(np.all(np.isclose(archive_x, ind, atol=1e-8), axis=1)):
-                # print(f"Duplicate found: {ind}, {archive_x[np.all(np.isclose(archive_x, ind, atol=1e-8), axis=1)]}")
-                # archive_x = np.vstack((archive_x, ind.reshape(1, -1)))
-                # archive_y = np.hstack((archive_y, np.inf))
-                continue
-            else:
-                archive_x = np.vstack((archive_x, ind.reshape(1, -1)))
-                archive_y = np.hstack((archive_y, offspring_eval_fit[i]))
+            archive.add(ind, offspring_eval_fit[i])
         # select a best solution in parent
         best_idx = np.argmin(parent_fit)
         parent_best = parent[best_idx]
@@ -116,14 +112,14 @@ def ibrbf_ga(func, dim, seed, knn, rsm):
         parent = np.delete(parent, best_idx, axis=0)
         parent_fit = np.delete(parent_fit, best_idx, axis=0)
         # update population and fitness
-        pop = np.vstack((parent_best, parent, offspring))
-        fit = np.hstack((parent_best_fit, parent_fit, offspring_fit))
-        pop = pop[np.argsort(fit)]
-        fit = np.sort(fit)
-        pop = pop[:popsize]
-        fit = fit[:popsize]
+        pop_cand = np.vstack((parent_best, parent, offspring))
+        fit_cand = np.hstack((parent_best_fit, parent_fit, offspring_fit))
+        pop_cand = pop_cand[np.argsort(fit_cand)]
+        fit_cand = np.sort(fit_cand)
+        pop.set("x", pop_cand[:popsize])
+        pop.set("f", fit_cand[:popsize])
 
-        logging.info(f"fbest: {archive_y.min()}, fe: {fe}")
+        logging.info(f"fbest: {archive.get('y').min()}, fe: {fe}")
 
 
 def crossover_blx_alpha(p1, p2, gamma, lb, ub):
@@ -151,7 +147,7 @@ def get_neighbors(archive_x, archive_y, x, k):
     return archive_x[neighbor_idx], archive_y[neighbor_idx]
 
 
-def gaussian_kernel(x1, x2, sigma=100.0):
+def gaussian_kernel(x1, x2, sigma=2.0):
     return math.exp(-np.linalg.norm(x1 - x2) ** 2 / (2 * (sigma ** 2)))
 
 class RBF:
