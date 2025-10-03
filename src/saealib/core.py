@@ -85,9 +85,10 @@ class Archive(Population):
 
     def add(self, x: np.ndarray, y: float) -> None:
         # duplicate check
-        if np.any(np.all(np.isclose(self.data["x"], x, atol=self.atol), axis=1)):
-            self.data["x"] = np.vstack((self.data["x"], None))
-            self.data["y"] = np.hstack((self.data["y"], None))
+        if np.any(np.all(np.isclose(self.data["x"], x.reshape(1, -1), atol=self.atol), axis=1)):
+            # TODO: implement to match the actual evaluation count (fe) with the archive size
+            # self.data["x"] = np.vstack((self.data["x"], x.reshape(1, -1)))
+            # self.data["y"] = np.hstack((self.data["y"], np.inf))
             return
         self.data["x"] = np.vstack((self.data["x"], x.reshape(1, -1)))
         self.data["y"] = np.hstack((self.data["y"], y))
