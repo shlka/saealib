@@ -35,8 +35,7 @@ def ibrbf_ga(func, dim, seed, knn, rsm):
     crossover_rate = 0.7
     gamma = 0.4
     mutation_rate = 0.3
-    num_cross = 2 * round(crossover_rate * popsize / 2)
-    num_mut = round(mutation_rate * popsize)
+    mutation_rate_inner = 0.3
 
     # initialize archive
     archive_x = np.random.uniform(lb, ub, (init_archive_size, dim))
@@ -57,30 +56,21 @@ def ibrbf_ga(func, dim, seed, knn, rsm):
         parent_fit = fit[randpop_idx]
 
         # crossover
-        parent_crossover = parent[randpop_idx[:num_cross]]
-        offspring_crossover = []
-        for i in range(0, num_cross, 2):
-            p1 = parent_crossover[i]
-            p2 = parent_crossover[i + 1]
-
-            # TODO: implement BLX-alpha
-            p1, p2 = crossover_blx_alpha(p1, p2, gamma, lb, ub)
-
-            offspring_crossover.append(p1)
-            offspring_crossover.append(p2)
+        offspring = np.empty((0, dim))
+        for i in range(0, popsize, 2):
+            if np.random.rand() < crossover_rate:
+                p1 = parent[i]
+                p2 = parent[i + 1]
+                o1, o2 = crossover_blx_alpha(p1, p2, gamma, lb, ub)
+                offspring = np.vstack((offspring, o1, o2))
+            else:
+                offspring = np.vstack((offspring, parent[i], parent[i + 1]))
 
         # mutation
-        parent_mutation = parent[randpop_idx[num_cross:]]
-        offspring_mutation = []
-        for i in range(num_mut):
-            p = parent_mutation[i]
-
-            # TODO: implement uniform mutation
-            p = mutation_uniform(p, mutation_rate, lb, ub)
-
-            offspring_mutation.append(p)
-
-        offspring = np.vstack((offspring_crossover, offspring_mutation))
+        for i in range(popsize):
+            if np.random.rand() < mutation_rate:
+                p = offspring[i]
+                offspring[i] = mutation_uniform(p, mutation_rate_inner, lb, ub)
 
         psm = int(rsm * popsize)
 
@@ -143,7 +133,9 @@ def mutation_uniform(p, mutation_rate, lb, ub):
     dim = len(p)
     mutation_bool = np.random.random(dim) < mutation_rate
     c = p.copy()
-    np.where(mutation_bool, c := np.random.uniform(lb, ub, size=dim), c)
+    for i in range(dim):
+        if np.random.rand() < mutation_rate:
+            c[i] = np.random.uniform(lb, ub)
     return c
 
 def get_neighbors(archive_x, archive_y, x, k):
