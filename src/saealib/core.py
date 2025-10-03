@@ -65,5 +65,34 @@ class Population:
         else:
             raise TypeError("Invalid argument type.")
 
-class Archive:
-    pass
+
+class Archive(Population):
+    """
+    Archive class to handle archive of evaluated solutions.
+    """
+    def __init__(self, atol: float = 1e-8):
+        super().__init__()
+        self.data["x"] = np.empty((0, 0))
+        self.data["y"] = np.empty((0, ))
+        self.atol = atol  # tolerance for duplicate check
+
+    @staticmethod
+    def new(x: np.ndarray, y: np.ndarray, atol: float = 1e-8) -> "Archive":
+        archive = Archive(atol=atol)
+        archive.set("x", x)
+        archive.set("y", y)
+        return archive
+
+    def add(self, x: np.ndarray, y: float) -> None:
+        # duplicate check
+        if np.any(np.all(np.isclose(self.data["x"], x, atol=self.atol), axis=1)):
+            self.data["x"] = np.vstack((self.data["x"], None))
+            self.data["y"] = np.hstack((self.data["y"], None))
+            return
+        self.data["x"] = np.vstack((self.data["x"], x.reshape(1, -1)))
+        self.data["y"] = np.hstack((self.data["y"], y))
+
+    def get_knn(self, x: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
+        dist = np.linalg.norm(self.data["x"] - x, axis=1)
+        idx = np.argsort(dist)[:k]
+        return self.data["x"][idx], self.data["y"][idx]
