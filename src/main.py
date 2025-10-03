@@ -98,9 +98,17 @@ def ibrbf_ga(func, dim, seed, knn, rsm):
         offspring_eval_fit = np.array([func.evaluate(ind) for ind in offspring_eval])
         offspring_fit[:psm] = offspring_eval_fit
         fe = fe + psm
-        # add evaluated individuals to the archive
-        archive_x = np.vstack((archive_x, offspring_eval))
-        archive_y = np.hstack((archive_y, offspring_eval_fit))
+        # add evaluated individuals to the archive, handling duplicates
+        for i, ind in enumerate(offspring_eval):
+            # check for duplicate in archive_x
+            if np.any(np.all(np.isclose(archive_x, ind, atol=1e-8), axis=1)):
+                # print(f"Duplicate found: {ind}, {archive_x[np.all(np.isclose(archive_x, ind, atol=1e-8), axis=1)]}")
+                # archive_x = np.vstack((archive_x, ind.reshape(1, -1)))
+                # archive_y = np.hstack((archive_y, np.inf))
+                continue
+            else:
+                archive_x = np.vstack((archive_x, ind.reshape(1, -1)))
+                archive_y = np.hstack((archive_y, offspring_eval_fit[i]))
         # select a best solution in parent
         best_idx = np.argmin(parent_fit)
         parent_best = parent[best_idx]
@@ -131,7 +139,6 @@ def crossover_blx_alpha(p1, p2, gamma, lb, ub):
 
 def mutation_uniform(p, mutation_rate, lb, ub):
     dim = len(p)
-    mutation_bool = np.random.random(dim) < mutation_rate
     c = p.copy()
     for i in range(dim):
         if np.random.rand() < mutation_rate:
