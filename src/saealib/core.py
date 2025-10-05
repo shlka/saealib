@@ -169,12 +169,12 @@ class GA(Algorithm):
             p1 = parent[i % len(parent)]
             p2 = parent[(i + 1) % len(parent)]
             if optimizer.rng.random() < self.crossover.crossover_rate:
-                c1, c2 = self.crossover.crossover(p1, p2)
+                c1, c2 = self.crossover.crossover(p1, p2, rng=optimizer.rng)
             else:
                 c1, c2 = p1, p2
             candidate = np.vstack((candidate, c1, c2))
         for i in range(len(candidate)):
-            candidate[i] = self.mutation.mutate(candidate[i])
+            candidate[i] = self.mutation.mutate(candidate[i], rng=optimizer.rng)
         return candidate[:optimizer.popsize]
     
     def tell(self, optimizer, offspring, offspring_fit):
@@ -218,9 +218,9 @@ class CrossoverBLXAlpha(Crossover):
         self.lb = lb
         self.ub = ub
 
-    def crossover(self, p1: np.ndarray, p2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def crossover(self, p1: np.ndarray, p2: np.ndarray, rng=np.random.default_rng()) -> tuple[np.ndarray, np.ndarray]:
         dim = len(p1)
-        alpha = np.random.uniform(-self.gamma, 1 + self.gamma, size=dim)
+        alpha = rng.uniform(-self.gamma, 1 + self.gamma, size=dim)
         c1 = alpha * p1 + (1 - alpha) * p2
         c2 = (1 - alpha) * p1 + alpha * p2
         return np.clip(c1, self.lb, self.ub), np.clip(c2, self.lb, self.ub)
@@ -247,12 +247,12 @@ class MutationUniform(Mutation):
         self.lb = lb
         self.ub = ub
 
-    def mutate(self, p: np.ndarray) -> np.ndarray:
+    def mutate(self, p: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
         dim = len(p)
         c = p.copy()
         for i in range(dim):
-            if np.random.rand() < self.mutation_rate:
-                c[i] = np.random.uniform(self.lb, self.ub)
+            if rng.random() < self.mutation_rate:
+                c[i] = rng.uniform(self.lb, self.ub)
         return c
 
 
@@ -456,8 +456,6 @@ class Optimizer:
 
             for cb in self.callbacks:
                 cb.cb_generation_end(self)
-
-            self.gen += 1
 
         for cb in self.callbacks:
             cb.cb_run_end(self)
