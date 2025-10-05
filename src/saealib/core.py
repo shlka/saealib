@@ -367,6 +367,27 @@ class IndividualBasedStrategy(ModelManager):
 
         return self.candidate, self.candidate_fit
 
+
+class Callback:
+    def cb_run_start(self, optimizer: "Optimizer"):
+        pass
+
+    def cb_run_end(self, optimizer: "Optimizer"):
+        pass
+
+    def cb_generation_start(self, optimizer: "Optimizer"):
+        pass
+
+    def cb_generation_end(self, optimizer: "Optimizer"):
+        pass
+
+    def cb_surrogate_start(self, optimizer: "Optimizer"):
+        pass
+
+    def cb_surrogate_end(self, optimizer: "Optimizer"):
+        pass
+
+
 class Optimizer:
     """
     Base class for optimizers.
@@ -390,6 +411,8 @@ class Optimizer:
 
         self.popsize = 40
 
+        self.callbacks = []
+
     def _initialize(self, n_init_archive: int):
         archive_x = self.rng.uniform(self.problem.lb, self.problem.ub, (n_init_archive, self.problem.dim))
         archive_y = np.array([self.problem.evaluate(ind) for ind in archive_x])
@@ -405,17 +428,34 @@ class Optimizer:
 
     def run(self):
         self._initialize(self.archive_init_size)
+        for cb in self.callbacks:
+            cb.cb_run_start(self)
+
         while not self.termination.is_terminated(fe=self.fe):
+
+            for cb in self.callbacks:
+                cb.cb_generation_start(self)
+
             # ask
             cand = self.algorithm.ask(self)
+
+            for cb in self.callbacks:
+                cb.cb_surrogate_start(self)
 
             # surrogate
             self.modelmanager.candidate = cand
             cand, cand_fit = self.modelmanager.run_strategy(self)
 
+            for cb in self.callbacks:
+                cb.cb_surrogate_end(self)
+
             # tell
             self.algorithm.tell(self, cand, cand_fit)
+
+            for cb in self.callbacks:
+                cb.cb_generation_end(self)
+
             self.gen += 1
 
-            # logging info
-            logging.info(f"fbest: {self.population.get('f')[0]}, fe: {self.fe}, gen: {self.gen}")
+        for cb in self.callbacks:
+            cb.cb_run_end(self)
