@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 
@@ -97,3 +99,283 @@ class Archive(Population):
         dist = np.linalg.norm(self.data["x"] - x, axis=1)
         idx = np.argsort(dist)[:k]
         return self.data["x"][idx], self.data["y"][idx]
+    
+
+### Interface classes for users
+
+class Termination:
+    """
+    Base class for termination conditions.
+    """
+    def __init__(self, **kwargs):
+        self.maxparameter = {}
+        for k, v in kwargs.items():
+            self.maxparameter[k] = v
+
+    def get(self, key: str) -> float | None:
+        return self.maxparameter.get(key, None)
+    
+    def set(self, key: str, value: float) -> None:
+        self.maxparameter[key] = value
+
+    def is_terminated(self, **kwargs) -> bool:
+        for k, v in kwargs.items():
+            if k in self.maxparameter and v >= self.maxparameter[k]:
+                return True
+        return False
+
+
+class Problem:
+    """
+    Base class for problems.
+    """
+    def __init__(self, func, dim: int, lb: float, ub: float):
+        self.dim = dim
+        self.lb = lb
+        self.ub = ub
+        self.func = func
+
+    def evaluate(self, x: np.ndarray) -> float:
+        return self.func(x)
+
+
+class Algorithm:
+    """
+    Base class for algorithms.
+    """
+    def __init__(self):
+        pass
+
+    def step(self):
+        pass
+
+
+class GA(Algorithm):
+    """
+    Genetic Algorithm class.
+    """
+    def __init__(self, crossover, mutation, selection):
+        super().__init__()
+        self.crossover = crossover
+        self.mutation = mutation
+        self.selection = selection
+
+    def ask(self, optimizer):
+        candidate = np.empty((0, optimizer.problem.dim))
+        # parent = self.selection.select_parent(optimizer.population)
+        parent = optimizer.population.get("x")
+        for i in range(0, len(optimizer.population), 2):
+            p1 = parent[i % len(parent)]
+            p2 = parent[(i + 1) % len(parent)]
+            if optimizer.rng.random() < self.crossover.crossover_rate:
+                c1, c2 = self.crossover.crossover(p1, p2)
+            else:
+                c1, c2 = p1, p2
+            candidate = np.vstack((candidate, c1, c2))
+        for i in range(len(candidate)):
+            candidate[i] = self.mutation.mutate(candidate[i])
+        return candidate[:optimizer.popsize]
+    
+    def tell(self, optimizer, offspring, offspring_fit):
+        # select a best solution in parent
+        best_idx = np.argmin(optimizer.population.get("f"))
+        parent_best = optimizer.population.get("x")[best_idx]
+        parent_best_fit = optimizer.population.get("f")[best_idx]
+        parent = np.delete(optimizer.population.get("x"), best_idx, axis=0)
+        parent_fit = np.delete(optimizer.population.get("f"), best_idx, axis=0)
+        # update population and fitness
+        pop_cand = np.vstack((parent_best, parent, offspring))
+        fit_cand = np.hstack((parent_best_fit, parent_fit, offspring_fit))  
+        pop_cand = pop_cand[np.argsort(fit_cand)]
+        fit_cand = np.sort(fit_cand)
+        optimizer.population.set("x", pop_cand[:optimizer.popsize])
+        optimizer.population.set("f", fit_cand[:optimizer.popsize])
+
+    def step(self, optimizer):
+        pass
+
+
+class Crossover:
+    """
+    Base class for crossover operators.
+    """
+    def __init__(self):
+        pass
+
+    def crossover(self, parent: np.ndarray) -> np.ndarray:
+        pass
+
+
+class CrossoverBLXAlpha(Crossover):
+    """
+    BLX-alpha crossover operator.
+    """
+    def __init__(self, crossover_rate: float, gamma: float, lb: float, ub: float):
+        super().__init__()
+        self.crossover_rate = crossover_rate
+        self.gamma = gamma
+        self.lb = lb
+        self.ub = ub
+
+    def crossover(self, p1: np.ndarray, p2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        dim = len(p1)
+        alpha = np.random.uniform(-self.gamma, 1 + self.gamma, size=dim)
+        c1 = alpha * p1 + (1 - alpha) * p2
+        c2 = (1 - alpha) * p1 + alpha * p2
+        return np.clip(c1, self.lb, self.ub), np.clip(c2, self.lb, self.ub)
+    
+
+class Mutation:
+    """
+    Base class for mutation operators.
+    """
+    def __init__(self):
+        pass
+
+    def mutate(self, individual: np.ndarray) -> np.ndarray:
+        pass
+
+
+class MutationUniform(Mutation):
+    """
+    Uniform mutation operator.
+    """
+    def __init__(self, mutation_rate: float, lb: float, ub: float):
+        super().__init__()
+        self.mutation_rate = mutation_rate
+        self.lb = lb
+        self.ub = ub
+
+    def mutate(self, p: np.ndarray) -> np.ndarray:
+        dim = len(p)
+        c = p.copy()
+        for i in range(dim):
+            if np.random.rand() < self.mutation_rate:
+                c[i] = np.random.uniform(self.lb, self.ub)
+        return c
+
+
+class Selection:
+    """
+    Base class for selection operators.
+    """
+    def __init__(self):
+        pass
+
+    def select(self) -> np.ndarray:
+        pass
+
+
+class Surrogate:
+    """
+    Base class for surrogate models.
+    """
+    def __init__(self):
+        pass
+
+    def fit(self, train_x: np.ndarray, train_y: np.ndarray) -> None:
+        pass
+
+    def predict(self, test_x: np.ndarray) -> float:
+        pass
+
+
+def gaussian_kernel(x1, x2, sigma=2.0):
+    return math.exp(-np.linalg.norm(x1 - x2) ** 2 / (2 * (sigma ** 2)))
+
+
+class RBFsurrogate(Surrogate):
+    def __init__(self, kernel, dim):
+        self.dim = dim
+        self.train_x = []
+        self.train_y = []
+        self.kernel = kernel
+        self.weights = []
+        self.kernel_matrix = []
+
+    def fit(self, train_x, train_y):
+        self.train_x = train_x
+        self.train_y = train_y
+        n_samples = len(train_x)
+        self.kernel_matrix = np.zeros((n_samples, n_samples))
+        for i in range(n_samples):
+            for j in range(n_samples):
+                self.kernel_matrix[i, j] = self.kernel(train_x[i], train_x[j])
+        # self.weights = np.linalg.solve(self.kernel_matrix, train_y)
+        self.weights = np.linalg.solve(self.kernel_matrix, (train_y - np.mean(train_y)))
+
+    def predict(self, test_x):
+        n_samples = len(self.train_x)
+        prediction = 0
+        for i in range(n_samples):
+            prediction += self.kernel(test_x, self.train_x[i]) * self.weights[i]
+        return prediction + np.mean(self.train_y)
+
+
+class Optimizer:
+    """
+    Base class for optimizers.
+    """
+    def __init__(self):
+        self.problem = None
+        self.algorithm = None
+        self.termination = None
+
+        self.archive_atol = 0.0
+        self.archive = None
+        self.archive_init_size = 50
+
+        self.seed = 0
+        self.rng = np.random.default_rng(seed=self.seed)
+
+        self.fe = 0
+        self.gen = 0
+
+        self.popsize = 40
+
+    def _initialize(self, n_init_archive: int):
+        archive_x = self.rng.uniform(self.problem.lb, self.problem.ub, (n_init_archive, self.problem.dim))
+        archive_y = np.array([self.problem.evaluate(ind) for ind in archive_x])
+        archive_x = archive_x[np.argsort(archive_y)]
+        archive_y = np.sort(archive_y)
+        self.archive = Archive.new(archive_x, archive_y, atol=self.archive_atol)
+
+        self.population = Population.new("x", self.archive.get("x")[:self.popsize])
+        self.population.set("f", self.archive.get("y")[:self.popsize])
+
+        self.fe = self.archive_init_size
+        self.gen = 0
+
+    def run(self):
+        self._initialize(self.archive_init_size)
+        while not self.termination.is_terminated(fe=self.fe):
+
+            cand = self.algorithm.ask(self)
+
+            # surrogate model
+            cand_fit = np.array([])
+            for i in range(self.popsize):
+                # TODO: implement surrogate model
+                knn = 50
+                psm = int(0.1 * self.popsize)
+                # get training data for offspring[i]
+                train_x, train_y = self.archive.get_knn(cand[i], knn)
+                # train RBF model
+                rbf_model = RBFsurrogate(gaussian_kernel, self.problem.dim)
+                rbf_model.fit(train_x, train_y)
+                # predict offspring[i]
+                cand_fit = np.append(cand_fit, rbf_model.predict(cand[i].reshape(1, -1)))
+            # cand_fit = np.array([self.problem.evaluate(ind) for ind in cand])
+            cand = cand[np.argsort(cand_fit)]
+            cand_fit = np.sort(cand_fit)
+            cand_eval = cand[:psm]
+            cand_eval_fit = np.array([self.problem.evaluate(ind) for ind in cand_eval])
+            cand_fit[:psm] = cand_eval_fit
+            self.fe += psm
+
+            for i in range(len(cand)):
+                self.archive.add(cand[i], cand_fit[i])
+            self.algorithm.tell(self, cand, cand_fit)
+            self.gen += 1
+            # logging info
+            print(f"fbest: {self.population.get('f')[0]}, fe: {self.fe}, gen: {self.gen}")
