@@ -303,7 +303,13 @@ class RBFsurrogate(Surrogate):
             for j in range(n_samples):
                 self.kernel_matrix[i, j] = self.kernel(train_x[i], train_x[j])
         # self.weights = np.linalg.solve(self.kernel_matrix, train_y)
-        self.weights = np.linalg.solve(self.kernel_matrix, (train_y - np.mean(train_y)))
+        if np.linalg.cond(self.kernel_matrix) > 1 / np.finfo(self.kernel_matrix.dtype).eps:
+            logging.warning("Kernel matrix is ill-conditioned. Adding regularization.")
+        try:
+            self.weights = np.linalg.solve(self.kernel_matrix, (train_y - np.mean(train_y)))
+        except np.linalg.LinAlgError:
+            logging.error("Failed to solve linear system.")
+            self.weights = np.zeros(n_samples)
 
     def predict(self, test_x):
         n_samples = len(self.train_x)

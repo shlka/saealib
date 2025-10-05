@@ -52,7 +52,7 @@ def main():
         selection=None  # Define a selection method here
     )
     opt.termination = Termination(fe=200 * dim)
-    opt.archive_atol = 1e-8
+    opt.archive_atol = 0.0
     opt.seed = seed
     opt.archive_init_size = 5 * dim
     opt.surrogate = RBFsurrogate(gaussian_kernel, dim)
