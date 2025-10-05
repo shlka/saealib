@@ -433,6 +433,8 @@ class Optimizer:
 
         while not self.termination.is_terminated(fe=self.fe):
 
+            self.gen += 1
+
             for cb in self.callbacks:
                 cb.cb_generation_start(self)
 
