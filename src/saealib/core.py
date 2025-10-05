@@ -1,4 +1,5 @@
 import math
+import logging
 
 import numpy as np
 
@@ -312,6 +313,60 @@ class RBFsurrogate(Surrogate):
         return prediction + np.mean(self.train_y)
 
 
+class ModelManager:
+    """
+    Base class for surrogate model manager.
+    """
+    def __init__(self):
+        pass
+
+
+class IndividualBasedStrategy(ModelManager):
+    """
+    Individual-based strategy for surrogate model management.
+    """
+    def __init__(self):
+        super().__init__()
+        # parameters
+        self.surrogate_model = None
+        self.candidate = None
+
+        # parameters (optional)
+        self.n_train = 50
+        self.knn = 50
+        self.rsm = 0.1
+
+    def run_strategy(self, optimizer):
+        n_cand = len(self.candidate)
+        psm = int(self.rsm * n_cand)
+        rbf_model = optimizer.surrogate
+
+        self.candidate_fit = np.zeros(n_cand)
+
+        # predict all candidates using surrogate model
+        for i in range(n_cand):
+            # get training data for candidate[i]
+            train_x, train_y = optimizer.archive.get_knn(self.candidate[i], k=self.knn)
+            # train RBF model
+            rbf_model.fit(train_x, train_y)
+            # predict candidate[i]
+            self.candidate_fit[i] = rbf_model.predict(self.candidate[i].reshape(1, -1))
+
+        # psm individuals are evaluated using the true function
+        self.candidate = self.candidate[np.argsort(self.candidate_fit)]
+        self.candidate_fit = np.sort(self.candidate_fit)
+
+        self.candidate_eval = self.candidate[:psm]
+        self.candidate_eval_fit = np.array([optimizer.problem.evaluate(ind) for ind in self.candidate_eval])
+        self.candidate_fit[:psm] = self.candidate_eval_fit
+        optimizer.fe += psm
+
+        # add evaluated individuals to the archive
+        for i in range(psm):
+            optimizer.archive.add(self.candidate_eval[i], self.candidate_eval_fit[i])
+
+        return self.candidate, self.candidate_fit
+
 class Optimizer:
     """
     Base class for optimizers.
@@ -319,6 +374,8 @@ class Optimizer:
     def __init__(self):
         self.problem = None
         self.algorithm = None
+        self.surrogate = None
+        self.modelmanager = None
         self.termination = None
 
         self.archive_atol = 0.0
@@ -349,33 +406,16 @@ class Optimizer:
     def run(self):
         self._initialize(self.archive_init_size)
         while not self.termination.is_terminated(fe=self.fe):
-
+            # ask
             cand = self.algorithm.ask(self)
 
-            # surrogate model
-            cand_fit = np.array([])
-            for i in range(self.popsize):
-                # TODO: implement surrogate model
-                knn = 50
-                psm = int(0.1 * self.popsize)
-                # get training data for offspring[i]
-                train_x, train_y = self.archive.get_knn(cand[i], knn)
-                # train RBF model
-                rbf_model = RBFsurrogate(gaussian_kernel, self.problem.dim)
-                rbf_model.fit(train_x, train_y)
-                # predict offspring[i]
-                cand_fit = np.append(cand_fit, rbf_model.predict(cand[i].reshape(1, -1)))
-            # cand_fit = np.array([self.problem.evaluate(ind) for ind in cand])
-            cand = cand[np.argsort(cand_fit)]
-            cand_fit = np.sort(cand_fit)
-            cand_eval = cand[:psm]
-            cand_eval_fit = np.array([self.problem.evaluate(ind) for ind in cand_eval])
-            cand_fit[:psm] = cand_eval_fit
-            self.fe += psm
+            # surrogate
+            self.modelmanager.candidate = cand
+            cand, cand_fit = self.modelmanager.run_strategy(self)
 
-            for i in range(len(cand)):
-                self.archive.add(cand[i], cand_fit[i])
+            # tell
             self.algorithm.tell(self, cand, cand_fit)
             self.gen += 1
+
             # logging info
-            print(f"fbest: {self.population.get('f')[0]}, fe: {self.fe}, gen: {self.gen}")
+            logging.info(f"fbest: {self.population.get('f')[0]}, fe: {self.fe}, gen: {self.gen}")
