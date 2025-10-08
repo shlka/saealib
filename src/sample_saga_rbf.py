@@ -1,5 +1,6 @@
 import numpy as np
 import logging
+import cProfile
 from opfunu.cec_based import cec2015
 
 from saealib.core import Optimizer, Problem, Termination, GA, MutationUniform, CrossoverBLXAlpha, RBFsurrogate, gaussian_kernel, IndividualBasedStrategy, Callback
@@ -64,4 +65,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    cProfile.run("main()")
