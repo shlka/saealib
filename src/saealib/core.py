@@ -140,6 +140,52 @@ class Problem:
         return self.func(x)
 
 
+class Constraint:
+    """
+    Base class for constraints.
+    """
+    def __init__(self, n_constraint: int = 1, type_constraint: str = "ineq"):
+        self.n_constraint = n_constraint
+        self.type_constraint = type_constraint  # "eq", "ineq"
+
+    def evaluate(self, x: np.ndarray) -> np.ndarray:
+        # return np.array of shape (n_constraint, dim)
+        pass
+
+
+class FunctionConstraint(Constraint):
+    def __init__(self, func, type_constraint: str = "ineq"):
+        super().__init__(n_constraint=1, type_constraint=type_constraint)
+        self.func = func
+
+    def evaluate(self, x):
+        return self.func(x)
+
+
+class BoundaryConstraqint(Constraint):
+    def __init__(self, lb: float, ub: float):
+        super().__init__(n_constraint=2, type_constraint="ineq")
+        self.lb = lb
+        self.ub = ub
+
+    def evaluate(self, x) -> np.ndarray:
+        return np.array([x - self.lb, self.ub - x])
+    
+
+class ConstraintManager:
+    def __init__(self):
+        self.constraint_obj = []
+
+    def add(self, constraint: Constraint) -> None:
+        self.constraint_obj.append(constraint)
+
+    def evaluate(self, x: np.ndarray) -> np.ndarray:
+        results = []
+        for constraint in self.constraint_obj:
+            results.append(constraint.evaluate(x))
+        return np.array(results)
+
+
 class Algorithm:
     """
     Base class for algorithms.
