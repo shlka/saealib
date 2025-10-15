@@ -193,6 +193,12 @@ class Algorithm:
     def __init__(self):
         pass
 
+    def ask(self, optimizer) -> np.ndarray:
+        pass
+
+    def tell(self, optimizer, offspring: np.ndarray, offspring_fit: np.ndarray) -> None:
+        pass
+
     def step(self):
         pass
 
