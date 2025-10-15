@@ -179,11 +179,20 @@ class ConstraintManager:
     def add(self, constraint: Constraint) -> None:
         self.constraint_obj.append(constraint)
 
-    def evaluate(self, x: np.ndarray) -> np.ndarray:
-        results = []
+    def evaluate(self, x: np.ndarray, out: dict) -> None:
+        result_eq = []
+        result_ineq = []
         for constraint in self.constraint_obj:
-            results.append(constraint.evaluate(x))
-        return np.array(results)
+            v = constraint.evaluate(x)
+            if constraint.type_constraint == "eq":
+                result_eq.append(v)
+            else:
+                result_ineq.append(v)
+        
+        if result_eq:
+            out["eq"] = np.concatenate(result_eq, axis=1)
+        if result_ineq:
+            out["ineq"] = np.concatenate(result_ineq, axis=1)
 
 
 class Algorithm:
