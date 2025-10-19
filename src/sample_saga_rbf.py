@@ -3,36 +3,9 @@ import logging
 import cProfile
 from opfunu.cec_based import cec2015
 
-from saealib.core import Optimizer, Problem, Termination, GA, MutationUniform, CrossoverBLXAlpha, RBFsurrogate, gaussian_kernel, IndividualBasedStrategy, Callback
+from saealib.core import Optimizer, Problem, Termination, GA, MutationUniform, CrossoverBLXAlpha, RBFsurrogate, gaussian_kernel, IndividualBasedStrategy
 
 logging.basicConfig(level=logging.INFO)
-
-
-class LoggingCallback(Callback):
-    def __init__(self):
-        self.start_fe = 0
-
-    def cb_run_start(self, optimizer: Optimizer):
-        self.start_fe = optimizer.fe
-        logging.info(f"Run started. Initial fe: {self.start_fe}")
-
-    def cb_generation_start(self, optimizer: Optimizer):
-        logging.info(f"Generation {optimizer.gen} started.")
-
-    def cb_surrogate_start(self, optimizer: Optimizer):
-        logging.info(f"Surrogate model evaluation started at fe: {optimizer.fe}")
-
-    def cb_surrogate_end(self, optimizer: Optimizer):
-        logging.info(f"Surrogate model evaluation ended at fe: {optimizer.fe}")
-
-    def cb_generation_end(self, optimizer: Optimizer):
-        best_f = optimizer.population.get("f")[0]
-        logging.info(f"Generation {optimizer.gen} ended. Best f: {best_f}, fe: {optimizer.fe}")
-
-    def cb_run_end(self, optimizer: Optimizer):
-        total_fe = optimizer.fe - self.start_fe
-        best_f = optimizer.population.get("f")[0]
-        logging.info(f"Run ended. Total fe: {total_fe}, Best f: {best_f}")
 
 
 def main():
@@ -60,7 +33,6 @@ def main():
     opt.modelmanager = IndividualBasedStrategy()
     opt.modelmanager.knn = knn
     opt.modelmanager.rsm = rsm
-    opt.callbacks = [LoggingCallback()]
     opt.run()
 
 

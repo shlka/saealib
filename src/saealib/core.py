@@ -1,5 +1,7 @@
 import math
 import logging
+from enum import Enum, auto
+from collections import defaultdict
 
 import numpy as np
 
@@ -130,69 +132,60 @@ class Problem:
     """
     Base class for problems.
     """
-    def __init__(self, func, dim: int, lb: float, ub: float):
+    def __init__(self, func, dim: int, lb: list[float], ub: list[float], constraints: list["Constraint"] = None):
         self.dim = dim
-        self.lb = lb
-        self.ub = ub
+        self.lb = np.asarray(lb)
+        self.ub = np.asarray(ub)
         self.func = func
+        if constraints is None:
+            constraints_list = []
+        else:
+            constraints_list = constraints
+        
+        for i in range(dim):
+            constraints_list.append(Constraint(lambda x, i=i: x[i] - self.ub[i], type=ConstraintType.INEQ))
+            constraints_list.append(Constraint(lambda x, i=i: self.lb[i] - x[i], type=ConstraintType.INEQ))
+        
+        self.constraint_manager = ConstraintManager(constraints=constraints_list)
 
     def evaluate(self, x: np.ndarray) -> float:
         return self.func(x)
 
 
+class ConstraintType(Enum):
+    EQ = auto()
+    INEQ = auto()
+
+
 class Constraint:
-    """
-    Base class for constraints.
-    """
-    def __init__(self, n_constraint: int = 1, type_constraint: str = "ineq"):
-        self.n_constraint = n_constraint
-        self.type_constraint = type_constraint  # "eq", "ineq"
-
-    def evaluate(self, x: np.ndarray) -> np.ndarray:
-        # return np.array of shape (n_constraint, dim)
-        pass
-
-
-class FunctionConstraint(Constraint):
-    def __init__(self, func, type_constraint: str = "ineq"):
-        super().__init__(n_constraint=1, type_constraint=type_constraint)
+    def __init__(self, func, type: ConstraintType = ConstraintType.INEQ):
+        self.type_constraint = type
         self.func = func
 
-    def evaluate(self, x):
-        return self.func(x)
+    def evaluate(self, x: np.ndarray) -> float:
+        v = self.func(x)
+        if self.type_constraint == ConstraintType.INEQ:
+            return max(0, v)
+        elif self.type_constraint == ConstraintType.EQ:
+            return abs(v)
 
-
-class BoundaryConstraqint(Constraint):
-    def __init__(self, lb: float, ub: float):
-        super().__init__(n_constraint=2, type_constraint="ineq")
-        self.lb = lb
-        self.ub = ub
-
-    def evaluate(self, x) -> np.ndarray:
-        return np.array([x - self.lb, self.ub - x])
-    
 
 class ConstraintManager:
-    def __init__(self):
-        self.constraint_obj = []
+    def __init__(self, constraints: list[Constraint]):
+        if constraints is None:
+            self.constraints = []
+        else:
+            self.constraints = constraints
 
-    def add(self, constraint: Constraint) -> None:
-        self.constraint_obj.append(constraint)
+    def evaluate(self, x: np.ndarray) -> float:
+        if not self.constraints:
+            return 0.0
+        return sum(constraint.evaluate(x) for constraint in self.constraints)
 
-    def evaluate(self, x: np.ndarray, out: dict) -> None:
-        result_eq = []
-        result_ineq = []
-        for constraint in self.constraint_obj:
-            v = constraint.evaluate(x)
-            if constraint.type_constraint == "eq":
-                result_eq.append(v)
-            else:
-                result_ineq.append(v)
-        
-        if result_eq:
-            out["eq"] = np.concatenate(result_eq, axis=1)
-        if result_ineq:
-            out["ineq"] = np.concatenate(result_ineq, axis=1)
+    def evaluate_population(self, population: Population) -> np.ndarray:
+        if not self.constraints:
+            return np.zeros(len(population))
+        return np.array([self.evaluate(ind.get("x")) for ind in population])
 
 
 class Algorithm:
@@ -234,8 +227,10 @@ class GA(Algorithm):
             else:
                 c1, c2 = p1, p2
             candidate = np.vstack((candidate, c1, c2))
+        optimizer.dispatch(CallbackEvent.POST_CROSSOVER, data=candidate)
         for i in range(len(candidate)):
             candidate[i] = self.mutation.mutate(candidate[i], rng=optimizer.rng)
+        optimizer.dispatch(CallbackEvent.POST_MUTATION, data=candidate)
         return candidate[:optimizer.popsize]
     
     def tell(self, optimizer, offspring, offspring_fit):
@@ -435,24 +430,40 @@ class IndividualBasedStrategy(ModelManager):
         return self.candidate, self.candidate_fit
 
 
-class Callback:
-    def cb_run_start(self, optimizer: "Optimizer"):
-        pass
+class CallbackEvent(Enum):
+    # Optimizer.run events
+    RUN_START = auto()
+    RUN_END = auto()
+    GENERATION_START = auto()
+    GENERATION_END = auto()
+    SURROGATE_START = auto()
+    SURROGATE_END = auto()
+    # Algorithm.ask events
+    POST_CROSSOVER = auto()
+    POST_MUTATION = auto()
 
-    def cb_run_end(self, optimizer: "Optimizer"):
-        pass
 
-    def cb_generation_start(self, optimizer: "Optimizer"):
-        pass
+class CallbackManager:
+    def __init__(self):
+        self.handlers = defaultdict(list)
 
-    def cb_generation_end(self, optimizer: "Optimizer"):
-        pass
+    def register(self, event: CallbackEvent, func: callable):
+        self.handlers[event].append(func)
 
-    def cb_surrogate_start(self, optimizer: "Optimizer"):
-        pass
+    def dispatch(self, event: CallbackEvent, **kwargs):
+        for handler in self.handlers[event]:
+            handler(**kwargs)
 
-    def cb_surrogate_end(self, optimizer: "Optimizer"):
-        pass
+
+def repair_clipping(**kwargs):
+    problem = kwargs.get("optimizer", None).problem
+    data = kwargs.get("data", None)
+    repaired = np.clip(data, problem.lb, problem.ub)
+    kwargs["data"] = repaired
+
+def logging_generation(**kwargs):
+    optimizer = kwargs.get("optimizer", None)
+    logging.info(f"Generation {optimizer.gen} started. fe: {optimizer.fe}. Best f: {optimizer.population.get('f')[0]}")
 
 
 class Optimizer:
@@ -478,7 +489,7 @@ class Optimizer:
 
         self.popsize = 40
 
-        self.callbacks = []
+        self.cbmanager = CallbackManager()
 
     def _initialize(self, n_init_archive: int):
         archive_x = self.rng.uniform(self.problem.lb, self.problem.ub, (n_init_archive, self.problem.dim))
@@ -493,36 +504,38 @@ class Optimizer:
         self.fe = self.archive_init_size
         self.gen = 0
 
+        self.cbmanager.register(CallbackEvent.GENERATION_START, logging_generation)
+        self.cbmanager.register(CallbackEvent.POST_CROSSOVER, repair_clipping)
+        self.cbmanager.register(CallbackEvent.POST_MUTATION, repair_clipping)
+    
+    def dispatch(self, event: CallbackEvent, **kwargs):
+        kwargs["optimizer"] = self
+        self.cbmanager.dispatch(event, **kwargs)
+
     def run(self):
         self._initialize(self.archive_init_size)
-        for cb in self.callbacks:
-            cb.cb_run_start(self)
+        self.dispatch(CallbackEvent.RUN_START)
 
         while not self.termination.is_terminated(fe=self.fe):
 
             self.gen += 1
 
-            for cb in self.callbacks:
-                cb.cb_generation_start(self)
+            self.dispatch(CallbackEvent.GENERATION_START)
 
             # ask
             cand = self.algorithm.ask(self)
 
-            for cb in self.callbacks:
-                cb.cb_surrogate_start(self)
+            self.dispatch(CallbackEvent.SURROGATE_START)
 
             # surrogate
             self.modelmanager.candidate = cand
             cand, cand_fit = self.modelmanager.run_strategy(self)
 
-            for cb in self.callbacks:
-                cb.cb_surrogate_end(self)
+            self.dispatch(CallbackEvent.SURROGATE_END)
 
             # tell
             self.algorithm.tell(self, cand, cand_fit)
 
-            for cb in self.callbacks:
-                cb.cb_generation_end(self)
+            self.dispatch(CallbackEvent.GENERATION_END)
 
-        for cb in self.callbacks:
-            cb.cb_run_end(self)
+        self.dispatch(CallbackEvent.RUN_END)
