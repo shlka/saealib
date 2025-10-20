@@ -398,7 +398,7 @@ class IndividualBasedStrategy(ModelManager):
         self.rsm = 0.1
 
     def run(self, optimizer, candidate):
-        n_cand = len(self.candidate)
+        n_cand = len(candidate)
         psm = int(self.rsm * n_cand)
         self.surrogate_model = optimizer.surrogate
 
