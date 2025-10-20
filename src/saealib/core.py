@@ -475,24 +475,25 @@ class Optimizer:
     Base class for optimizers.
     """
     def __init__(self):
+        # components
         self.problem = None
         self.algorithm = None
         self.surrogate = None
         self.modelmanager = None
         self.termination = None
-
+        # Archive init parameters
         self.archive_atol = 0.0
         self.archive = None
         self.archive_init_size = 50
-
+        # random setup
         self.seed = 0
         self.rng = np.random.default_rng(seed=self.seed)
-
+        # state variables
         self.fe = 0
         self.gen = 0
-
+        # EA parameters
         self.popsize = 40
-
+        # callback event manager
         self.cbmanager = CallbackManager()
 
     def _initialize(self, n_init_archive: int):
