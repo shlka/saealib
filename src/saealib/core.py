@@ -411,6 +411,7 @@ class IndividualBasedStrategy(ModelManager):
             train_x, train_y = optimizer.archive.get_knn(self.candidate[i], k=self.knn)
             # train RBF model
             rbf_model.fit(train_x, train_y)
+            optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, model=rbf_model, train_x=train_x, train_y=train_y)
             # predict candidate[i]
             self.candidate_fit[i] = rbf_model.predict(self.candidate[i].reshape(1, -1))
 
@@ -441,6 +442,9 @@ class CallbackEvent(Enum):
     # Algorithm.ask events
     POST_CROSSOVER = auto()
     POST_MUTATION = auto()
+    # ModelManager.run events (commented out for future use)
+    POST_SURROGATE_FIT = auto()
+    # POST_SURROGATE_PREDICT = auto()
 
 
 class CallbackManager:
