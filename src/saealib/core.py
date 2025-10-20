@@ -360,7 +360,7 @@ class RBFsurrogate(Surrogate):
                 self.kernel_matrix[i, j] = self.kernel(train_x[i], train_x[j])
         # self.weights = np.linalg.solve(self.kernel_matrix, train_y)
         if np.linalg.cond(self.kernel_matrix) > 1 / np.finfo(self.kernel_matrix.dtype).eps:
-            logging.warning("Kernel matrix is ill-conditioned.")
+            logging.warning(f"Kernel matrix is ill-conditioned. RCOND: {1/np.linalg.cond(self.kernel_matrix)}")
         try:
             self.weights = np.linalg.solve(self.kernel_matrix, (train_y - np.mean(train_y)))
         except np.linalg.LinAlgError:
