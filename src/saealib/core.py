@@ -279,7 +279,7 @@ class CrossoverBLXAlpha(Crossover):
         alpha = rng.uniform(-self.gamma, 1 + self.gamma, size=dim)
         c1 = alpha * p1 + (1 - alpha) * p2
         c2 = (1 - alpha) * p1 + alpha * p2
-        return np.clip(c1, self.lb, self.ub), np.clip(c2, self.lb, self.ub)
+        return c1, c2
     
 
 class Mutation:
