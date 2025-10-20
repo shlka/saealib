@@ -395,7 +395,6 @@ class IndividualBasedStrategy(ModelManager):
 
         # parameters (optional)
         self.n_train = 50
-        self.knn = 50
         self.rsm = 0.1
 
     def run(self, optimizer, candidate):
@@ -409,7 +408,7 @@ class IndividualBasedStrategy(ModelManager):
         # predict all candidates using surrogate model
         for i in range(n_cand):
             # get training data for candidate[i]
-            train_x, train_y = optimizer.archive.get_knn(self.candidate[i], k=self.knn)
+            train_x, train_y = optimizer.archive.get_knn(self.candidate[i], k=self.n_train)
             # train RBF model
             self.surrogate_model.fit(train_x, train_y)
             # predict candidate[i]
