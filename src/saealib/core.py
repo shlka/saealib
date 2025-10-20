@@ -398,7 +398,7 @@ class IndividualBasedStrategy(ModelManager):
         self.knn = 50
         self.rsm = 0.1
 
-    def run_strategy(self, optimizer):
+    def run(self, optimizer):
         n_cand = len(self.candidate)
         psm = int(self.rsm * n_cand)
         rbf_model = optimizer.surrogate
@@ -533,7 +533,7 @@ class Optimizer:
 
             # surrogate
             self.modelmanager.candidate = cand
-            cand, cand_fit = self.modelmanager.run_strategy(self)
+            cand, cand_fit = self.modelmanager.run(self)
 
             self.dispatch(CallbackEvent.SURROGATE_END)
 
