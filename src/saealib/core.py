@@ -389,7 +389,8 @@ class IndividualBasedStrategy(ModelManager):
     """
     def __init__(self):
         super().__init__()
-        # parameters
+        self.candidate = None
+        self.candidate_fit =None
         self.surrogate_model = None
 
         # parameters (optional)
@@ -398,7 +399,8 @@ class IndividualBasedStrategy(ModelManager):
         self.rsm = 0.1
 
     def run(self, optimizer, candidate):
-        n_cand = len(candidate)
+        self.candidate = candidate
+        n_cand = len(self.candidate)
         psm = int(self.rsm * n_cand)
         self.surrogate_model = optimizer.surrogate
 
