@@ -400,7 +400,7 @@ class IndividualBasedStrategy(ModelManager):
     def run(self, optimizer, candidate):
         n_cand = len(self.candidate)
         psm = int(self.rsm * n_cand)
-        rbf_model = optimizer.surrogate
+        self.surrogate_model = optimizer.surrogate
 
         self.candidate_fit = np.zeros(n_cand)
 
@@ -409,10 +409,10 @@ class IndividualBasedStrategy(ModelManager):
             # get training data for candidate[i]
             train_x, train_y = optimizer.archive.get_knn(self.candidate[i], k=self.knn)
             # train RBF model
-            rbf_model.fit(train_x, train_y)
-            optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, model=rbf_model, train_x=train_x, train_y=train_y)
+            self.surrogate_model.fit(train_x, train_y)
+            optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, model=self.surrogate_model, train_x=train_x, train_y=train_y)
             # predict candidate[i]
-            self.candidate_fit[i] = rbf_model.predict(self.candidate[i].reshape(1, -1))
+            self.candidate_fit[i] = self.surrogate_model.predict(self.candidate[i].reshape(1, -1))
 
         # psm individuals are evaluated using the true function
         self.candidate = self.candidate[np.argsort(self.candidate_fit)]
