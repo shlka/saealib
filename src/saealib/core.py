@@ -474,9 +474,9 @@ class Optimizer:
     """
     Base class for optimizers.
     """
-    def __init__(self):
+    def __init__(self, problem: Problem):
         # components
-        self.problem = None
+        self.problem = problem
         self.algorithm = None
         self.surrogate = None
         self.modelmanager = None
@@ -495,6 +495,39 @@ class Optimizer:
         self.popsize = 40
         # callback event manager
         self.cbmanager = CallbackManager()
+
+    def set_algorithm(self, algorithm: Algorithm):
+        self.algorithm = algorithm
+        return self
+    
+    def set_surrogate(self, surrogate: Surrogate):
+        self.surrogate = surrogate
+        return self
+    
+    def set_modelmanager(self, modelmanager: ModelManager):
+        self.modelmanager = modelmanager
+        return self
+
+    def set_termination(self, termination: Termination):
+        self.termination = termination
+        return self
+
+    def set_archive_init_size(self, size: int):
+        self.archive_init_size = size
+        return self
+    
+    def set_archive_atol(self, atol: float):
+        self.archive_atol = atol
+        return self
+    
+    def set_seed(self, seed: int):
+        self.seed = seed
+        self.rng = np.random.default_rng(seed=self.seed)
+        return self
+
+    def set_popsize(self, popsize: int):
+        self.popsize = popsize
+        return self
 
     def _initialize(self, n_init_archive: int):
         archive_x = self.rng.uniform(self.problem.lb, self.problem.ub, (n_init_archive, self.problem.dim))

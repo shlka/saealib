@@ -20,21 +20,27 @@ def main():
     # benchmark function
     f1 = cec2015.F12015(ndim=10)
 
-    opt = Optimizer()
-    opt.problem = Problem(f1.evaluate, dim, lb=-100, ub=100)
-    opt.algorithm = GA(
-        crossover=CrossoverBLXAlpha(crossover_rate=0.7, gamma=0.4, lb=-100, ub=100),
-        mutation=MutationUniform(mutation_rate=0.3, lb=-100, ub=100),
+    problem = Problem(f1.evaluate, dim, lb=lb, ub=ub)
+    algorithm = GA(
+        crossover=CrossoverBLXAlpha(crossover_rate=0.7, gamma=0.4, lb=lb, ub=ub),
+        mutation=MutationUniform(mutation_rate=0.3, lb=lb, ub=ub),
         selection=None  # Define a selection method here
     )
-    opt.termination = Termination(fe=200 * dim)
-    opt.archive_atol = 0.0
-    opt.seed = seed
-    opt.archive_init_size = 5 * dim
-    opt.surrogate = RBFsurrogate(gaussian_kernel, dim)
-    opt.modelmanager = IndividualBasedStrategy()
-    opt.modelmanager.knn = knn
-    opt.modelmanager.rsm = rsm
+    termination = Termination(fe=200 * dim)
+    surrogate = RBFsurrogate(gaussian_kernel, dim)
+    modelmanager = IndividualBasedStrategy()
+    modelmanager.knn = knn
+    modelmanager.rsm = rsm
+
+    opt = (Optimizer(problem)
+            .set_algorithm(algorithm)
+            .set_termination(termination)
+            .set_surrogate(surrogate)
+            .set_modelmanager(modelmanager)
+            .set_archive_init_size(5 * dim)
+            .set_archive_atol(0.0)
+            .set_seed(seed)
+    )
     opt.run()
 
 
