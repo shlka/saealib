@@ -14,6 +14,8 @@ def main():
     seed = 1
     knn = 50
     rsm = 0.1
+    ub = [100] * dim
+    lb = [-100] * dim
 
     # benchmark function
     f1 = cec2015.F12015(ndim=10)
