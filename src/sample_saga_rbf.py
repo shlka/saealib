@@ -20,7 +20,14 @@ def main():
     # benchmark function
     f1 = cec2015.F12015(ndim=10)
 
-    problem = Problem(f1.evaluate, dim, lb=lb, ub=ub)
+    problem = Problem(
+        func=f1.evaluate,
+        dim=dim, 
+        n_obj=1,
+        weight=np.array([-1.0]),
+        lb=lb, 
+        ub=ub
+    )
     algorithm = GA(
         crossover=CrossoverBLXAlpha(crossover_rate=0.7, gamma=0.4, lb=lb, ub=ub),
         mutation=MutationUniform(mutation_rate=0.3, lb=lb, ub=ub),
