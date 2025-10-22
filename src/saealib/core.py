@@ -340,6 +340,9 @@ class Comparator:
     def compare(self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float) -> int:
         pass
 
+    def sort(self, fitness: np.ndarray, cv: np.ndarray) -> np.ndarray:
+        pass
+
 
 class SingleObjectiveComparator(Comparator):
     """
@@ -367,6 +370,11 @@ class SingleObjectiveComparator(Comparator):
                 return 1
             else:
                 return 0
+    
+    def sort(self, fitness: np.ndarray, cv: np.ndarray) -> np.ndarray:
+        cv_key = np.where(cv > self.eps, cv, 0)
+        obj_key = fitness.flatten() * self.weights[0]
+        return np.lexsort((-obj_key, cv_key))
 
 
 class Surrogate:
