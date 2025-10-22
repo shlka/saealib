@@ -132,8 +132,11 @@ class Problem:
     """
     Base class for problems.
     """
-    def __init__(self, func, dim: int, lb: list[float], ub: list[float], constraints: list["Constraint"] = None):
+    def __init__(self, func, dim: int, n_obj: int, weight: np.ndarray, lb: list[float], ub: list[float], constraints: list["Constraint"] = None, eps: float = 1e-6):
         self.dim = dim
+        self.n_obj = n_obj
+        self.weight = weight
+        self.eps = eps
         self.lb = np.asarray(lb)
         self.ub = np.asarray(ub)
         self.func = func
@@ -147,6 +150,9 @@ class Problem:
             constraints_list.append(Constraint(lambda x, i=i: self.lb[i] - x[i], type=ConstraintType.INEQ))
         
         self.constraint_manager = ConstraintManager(constraints=constraints_list)
+
+        #TODO: multiple objective support
+        self.comparator = SingleObjectiveComparator(weight=weight, eps=eps)
 
     def evaluate(self, x: np.ndarray) -> float:
         return self.func(x)
