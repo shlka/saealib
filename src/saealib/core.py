@@ -323,6 +323,46 @@ class Selection:
         pass
 
 
+class Comparator:
+    """
+    Base class for comparator.
+    """
+    def __init__(self, weights: np.ndarray, eps: float):
+        self.weights = weights
+        self.eps = eps
+
+    def compare(self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float) -> int:
+        pass
+
+
+class SingleObjectiveComparator(Comparator):
+    """
+    Comparator for single-objective optimization.
+    """
+    def __init__(self, weight: float = 1.0, eps: float = 1e-6):
+        super().__init__(np.array([weight]), eps)
+
+    def compare(self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float) -> int:
+        if cv_a > self.eps and cv_b > self.eps:
+            if cv_a < cv_b:
+                return -1
+            elif cv_a > cv_b:
+                return 1
+            else:
+                return 0
+        elif cv_a > self.eps and cv_b <= self.eps:
+            return 1
+        elif cv_a <= self.eps and cv_b > self.eps:
+            return -1
+        else:
+            if fitness_a[0] < fitness_b[0] - self.eps:
+                return -1
+            elif fitness_a[0] > fitness_b[0] + self.eps:
+                return 1
+            else:
+                return 0
+
+
 class Surrogate:
     """
     Base class for surrogate models.
