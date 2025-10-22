@@ -132,8 +132,11 @@ class Problem:
     """
     Base class for problems.
     """
-    def __init__(self, func, dim: int, lb: list[float], ub: list[float], constraints: list["Constraint"] = None):
+    def __init__(self, func, dim: int, n_obj: int, weight: np.ndarray, lb: list[float], ub: list[float], constraints: list["Constraint"] = None, eps: float = 1e-6):
         self.dim = dim
+        self.n_obj = n_obj
+        self.weight = weight
+        self.eps = eps
         self.lb = np.asarray(lb)
         self.ub = np.asarray(ub)
         self.func = func
@@ -147,6 +150,9 @@ class Problem:
             constraints_list.append(Constraint(lambda x, i=i: self.lb[i] - x[i], type=ConstraintType.INEQ))
         
         self.constraint_manager = ConstraintManager(constraints=constraints_list)
+
+        #TODO: multiple objective support
+        self.comparator = SingleObjectiveComparator(weight=weight, eps=eps)
 
     def evaluate(self, x: np.ndarray) -> float:
         return self.func(x)
@@ -234,6 +240,7 @@ class GA(Algorithm):
         return candidate[:optimizer.popsize]
     
     def tell(self, optimizer, offspring, offspring_fit):
+        cmp = optimizer.problem.comparator
         # select a best solution in parent
         best_idx = np.argmin(optimizer.population.get("f"))
         parent_best = optimizer.population.get("x")[best_idx]
@@ -243,8 +250,10 @@ class GA(Algorithm):
         # update population and fitness
         pop_cand = np.vstack((parent_best, parent, offspring))
         fit_cand = np.hstack((parent_best_fit, parent_fit, offspring_fit))  
-        pop_cand = pop_cand[np.argsort(fit_cand)]
-        fit_cand = np.sort(fit_cand)
+        # TODO: use cv if constraints are defined
+        cand_idx = cmp.sort(fit_cand, np.zeros_like(fit_cand))
+        pop_cand = pop_cand[cand_idx]
+        fit_cand = fit_cand[cand_idx]
         optimizer.population.set("x", pop_cand[:optimizer.popsize])
         optimizer.population.set("f", fit_cand[:optimizer.popsize])
 
@@ -321,6 +330,54 @@ class Selection:
 
     def select(self) -> np.ndarray:
         pass
+
+
+class Comparator:
+    """
+    Base class for comparator.
+    """
+    def __init__(self, weights: np.ndarray, eps: float):
+        self.weights = weights
+        self.eps = eps
+
+    def compare(self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float) -> int:
+        pass
+
+    def sort(self, fitness: np.ndarray, cv: np.ndarray) -> np.ndarray:
+        pass
+
+
+class SingleObjectiveComparator(Comparator):
+    """
+    Comparator for single-objective optimization.
+    """
+    def __init__(self, weight: float = 1.0, eps: float = 1e-6):
+        super().__init__(np.array([weight]), eps)
+
+    def compare(self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float) -> int:
+        if cv_a > self.eps and cv_b > self.eps:
+            if cv_a < cv_b:
+                return -1
+            elif cv_a > cv_b:
+                return 1
+            else:
+                return 0
+        elif cv_a > self.eps and cv_b <= self.eps:
+            return 1
+        elif cv_a <= self.eps and cv_b > self.eps:
+            return -1
+        else:
+            if fitness_a[0] < fitness_b[0] - self.eps:
+                return -1
+            elif fitness_a[0] > fitness_b[0] + self.eps:
+                return 1
+            else:
+                return 0
+    
+    def sort(self, fitness: np.ndarray, cv: np.ndarray) -> np.ndarray:
+        cv_key = np.where(cv > self.eps, cv, 0)
+        obj_key = fitness.flatten() * self.weights[0]
+        return np.lexsort((-obj_key, cv_key))
 
 
 class Surrogate:
@@ -402,6 +459,7 @@ class IndividualBasedStrategy(ModelManager):
         n_cand = len(self.candidate)
         psm = int(self.rsm * n_cand)
         self.surrogate_model = optimizer.surrogate
+        cmp = optimizer.problem.comparator
 
         self.candidate_fit = np.zeros(n_cand)
 
@@ -416,8 +474,10 @@ class IndividualBasedStrategy(ModelManager):
             optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, train_x=train_x, train_y=train_y)
 
         # psm individuals are evaluated using the true function
-        self.candidate = self.candidate[np.argsort(self.candidate_fit)]
-        self.candidate_fit = np.sort(self.candidate_fit)
+        # TODO: use cv if constraints are defined
+        cand_idx = cmp.sort(self.candidate_fit, np.zeros_like(self.candidate_fit))
+        self.candidate = self.candidate[cand_idx]
+        self.candidate_fit = self.candidate_fit[cand_idx]
 
         self.candidate_eval = self.candidate[:psm]
         self.candidate_eval_fit = np.array([optimizer.problem.evaluate(ind) for ind in self.candidate_eval])
@@ -532,8 +592,10 @@ class Optimizer:
     def _initialize(self, n_init_archive: int):
         archive_x = self.rng.uniform(self.problem.lb, self.problem.ub, (n_init_archive, self.problem.dim))
         archive_y = np.array([self.problem.evaluate(ind) for ind in archive_x])
-        archive_x = archive_x[np.argsort(archive_y)]
-        archive_y = np.sort(archive_y)
+        # TODO: use cv if constraints are defined
+        archive_sort_idx = self.problem.comparator.sort(archive_y, np.zeros_like(archive_y))
+        archive_x = archive_x[archive_sort_idx]
+        archive_y = archive_y[archive_sort_idx]
         self.archive = Archive.new(archive_x, archive_y, atol=self.archive_atol)
 
         self.population = Population.new("x", self.archive.get("x")[:self.popsize])
