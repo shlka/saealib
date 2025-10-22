@@ -240,6 +240,7 @@ class GA(Algorithm):
         return candidate[:optimizer.popsize]
     
     def tell(self, optimizer, offspring, offspring_fit):
+        cmp = optimizer.problem.comparator
         # select a best solution in parent
         best_idx = np.argmin(optimizer.population.get("f"))
         parent_best = optimizer.population.get("x")[best_idx]
@@ -249,8 +250,10 @@ class GA(Algorithm):
         # update population and fitness
         pop_cand = np.vstack((parent_best, parent, offspring))
         fit_cand = np.hstack((parent_best_fit, parent_fit, offspring_fit))  
-        pop_cand = pop_cand[np.argsort(fit_cand)]
-        fit_cand = np.sort(fit_cand)
+        # TODO: use cv if constraints are defined
+        cand_idx = cmp.sort(fit_cand, np.zeros_like(fit_cand))
+        pop_cand = pop_cand[cand_idx]
+        fit_cand = fit_cand[cand_idx]
         optimizer.population.set("x", pop_cand[:optimizer.popsize])
         optimizer.population.set("f", fit_cand[:optimizer.popsize])
 
@@ -456,6 +459,7 @@ class IndividualBasedStrategy(ModelManager):
         n_cand = len(self.candidate)
         psm = int(self.rsm * n_cand)
         self.surrogate_model = optimizer.surrogate
+        cmp = optimizer.problem.comparator
 
         self.candidate_fit = np.zeros(n_cand)
 
@@ -470,8 +474,10 @@ class IndividualBasedStrategy(ModelManager):
             optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, train_x=train_x, train_y=train_y)
 
         # psm individuals are evaluated using the true function
-        self.candidate = self.candidate[np.argsort(self.candidate_fit)]
-        self.candidate_fit = np.sort(self.candidate_fit)
+        # TODO: use cv if constraints are defined
+        cand_idx = cmp.sort(self.candidate_fit, np.zeros_like(self.candidate_fit))
+        self.candidate = self.candidate[cand_idx]
+        self.candidate_fit = self.candidate_fit[cand_idx]
 
         self.candidate_eval = self.candidate[:psm]
         self.candidate_eval_fit = np.array([optimizer.problem.evaluate(ind) for ind in self.candidate_eval])
@@ -586,8 +592,10 @@ class Optimizer:
     def _initialize(self, n_init_archive: int):
         archive_x = self.rng.uniform(self.problem.lb, self.problem.ub, (n_init_archive, self.problem.dim))
         archive_y = np.array([self.problem.evaluate(ind) for ind in archive_x])
-        archive_x = archive_x[np.argsort(archive_y)]
-        archive_y = np.sort(archive_y)
+        # TODO: use cv if constraints are defined
+        archive_sort_idx = self.problem.comparator.sort(archive_y, np.zeros_like(archive_y))
+        archive_x = archive_x[archive_sort_idx]
+        archive_y = archive_y[archive_sort_idx]
         self.archive = Archive.new(archive_x, archive_y, atol=self.archive_atol)
 
         self.population = Population.new("x", self.archive.get("x")[:self.popsize])
