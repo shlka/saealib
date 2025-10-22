@@ -4,6 +4,7 @@ from enum import Enum, auto
 from collections import defaultdict
 
 import numpy as np
+import scipy
 
 
 class Individual:
@@ -394,30 +395,29 @@ class Surrogate:
         pass
 
 
-def gaussian_kernel(x1, x2, sigma=2.0):
-    return math.exp(-np.linalg.norm(x1 - x2) ** 2 / (2 * (sigma ** 2)))
+def gaussian_kernel(x1: np.ndarray, x2: np.ndarray, sigma=2.0):
+    # return np.exp(-np.linalg.norm(x1 - x2) ** 2 / (2 * (sigma ** 2)))
+    sq_dist = scipy.spatial.distance.cdist(x1, x2, 'sqeuclidean')
+    return np.exp(-sq_dist / (2 * (sigma ** 2)))
 
 
 class RBFsurrogate(Surrogate):
     def __init__(self, kernel, dim):
         self.dim = dim
-        self.train_x = []
-        self.train_y = []
+        self.train_x = None
+        self.train_y = None
         self.kernel = kernel
-        self.weights = []
-        self.kernel_matrix = []
+        self.weights = None
+        self.kernel_matrix = None
 
     def fit(self, train_x, train_y):
-        self.train_x = train_x
-        self.train_y = train_y
+        self.train_x = np.asarray(train_x)
+        self.train_y = np.asarray(train_y)
         n_samples = len(train_x)
-        self.kernel_matrix = np.zeros((n_samples, n_samples))
-        for i in range(n_samples):
-            for j in range(n_samples):
-                self.kernel_matrix[i, j] = self.kernel(train_x[i], train_x[j])
-        # self.weights = np.linalg.solve(self.kernel_matrix, train_y)
-        if np.linalg.cond(self.kernel_matrix) > 1 / np.finfo(self.kernel_matrix.dtype).eps:
-            logging.warning(f"Kernel matrix is ill-conditioned. RCOND: {1/np.linalg.cond(self.kernel_matrix)}")
+        self.kernel_matrix = self.kernel(self.train_x, self.train_x)
+        rcond = 1 / np.linalg.cond(self.kernel_matrix)
+        if rcond < np.finfo(self.kernel_matrix.dtype).eps:
+            logging.warning(f"Kernel matrix is ill-conditioned. RCOND: {rcond}")
         try:
             self.weights = np.linalg.solve(self.kernel_matrix, (train_y - np.mean(train_y)))
         except np.linalg.LinAlgError:
@@ -426,9 +426,8 @@ class RBFsurrogate(Surrogate):
 
     def predict(self, test_x):
         n_samples = len(self.train_x)
-        prediction = 0
-        for i in range(n_samples):
-            prediction += self.kernel(test_x, self.train_x[i]) * self.weights[i]
+        kernel_vec = self.kernel(self.train_x, test_x).flatten()
+        prediction = np.dot(kernel_vec, self.weights)
         return prediction + np.mean(self.train_y)
 
 
