@@ -216,26 +216,36 @@ class GA(Algorithm):
     """
     Genetic Algorithm class.
     """
-    def __init__(self, crossover, mutation, selection):
+    def __init__(self, crossover: "Crossover", mutation: "Mutation", parent_selection: "ParentSelection", survivor_selection: "SurvivorSelection"):
         super().__init__()
         self.crossover = crossover
         self.mutation = mutation
-        self.selection = selection
+        self.parent_selection = parent_selection
+        self.survivor_selection = survivor_selection
 
     def ask(self, optimizer):
         candidate = np.empty((0, optimizer.problem.dim))
-        # parent = self.selection.select_parent(optimizer.population)
-        parent = optimizer.population.get("x")
-        for i in range(0, len(optimizer.population), 2):
-            p1 = parent[i % len(parent)]
-            p2 = parent[(i + 1) % len(parent)]
+        popsize = len(optimizer.population)
+        pop = optimizer.population.get("x")
+        n_pair = math.ceil(popsize / 2)
+        parent_idx_m = self.parent_selection.select(
+            optimizer,
+            pop,
+            optimizer.population.get("f"),
+            np.zeros(popsize),# TODO: use cv if constraints are defined
+            n_pair=n_pair,
+            n_parents=2,# TODO: recieve n_parents from Crossover
+            rng=optimizer.rng)
+        for i in range(n_pair):
+            parent = pop[parent_idx_m[i]]
             if optimizer.rng.random() < self.crossover.crossover_rate:
-                c1, c2 = self.crossover.crossover(p1, p2, rng=optimizer.rng)
+                c = self.crossover.crossover(parent, rng=optimizer.rng)
             else:
-                c1, c2 = p1, p2
-            candidate = np.vstack((candidate, c1, c2))
+                c = parent.copy()
+            candidate = np.vstack((candidate, c))
         optimizer.dispatch(CallbackEvent.POST_CROSSOVER, data=candidate)
-        for i in range(len(candidate)):
+        candidate_len = len(candidate)
+        for i in range(candidate_len):
             candidate[i] = self.mutation.mutate(candidate[i], rng=optimizer.rng)
         optimizer.dispatch(CallbackEvent.POST_MUTATION, data=candidate)
         return candidate[:optimizer.popsize]
