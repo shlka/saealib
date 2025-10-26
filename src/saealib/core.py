@@ -284,14 +284,14 @@ class CrossoverBLXAlpha(Crossover):
         self.lb = lb
         self.ub = ub
 
-    def crossover(self, p: np.ndarray, rng=np.random.default_rng()) -> tuple[np.ndarray, np.ndarray]:
+    def crossover(self, p: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
         p1 = p[0]
         p2 = p[1]
         dim = len(p1)
         alpha = rng.uniform(-self.gamma, 1 + self.gamma, size=dim)
         c1 = alpha * p1 + (1 - alpha) * p2
         c2 = (1 - alpha) * p1 + alpha * p2
-        return c1, c2
+        return np.array([c1, c2])
     
 
 class Mutation:
