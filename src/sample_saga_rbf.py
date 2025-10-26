@@ -3,7 +3,7 @@ import logging
 import cProfile
 from opfunu.cec_based import cec2015
 
-from saealib.core import Optimizer, Problem, Termination, GA, MutationUniform, CrossoverBLXAlpha, RBFsurrogate, gaussian_kernel, IndividualBasedStrategy
+from saealib.core import Optimizer, Problem, Termination, GA, MutationUniform, CrossoverBLXAlpha, SequentialSelection, TruncationSelection, RBFsurrogate, gaussian_kernel, IndividualBasedStrategy
 
 logging.basicConfig(level=logging.INFO)
 
@@ -31,7 +31,8 @@ def main():
     algorithm = GA(
         crossover=CrossoverBLXAlpha(crossover_rate=0.7, gamma=0.4, lb=lb, ub=ub),
         mutation=MutationUniform(mutation_rate=0.3, lb=lb, ub=ub),
-        selection=None  # Define a selection method here
+        parent_selection=SequentialSelection(),
+        survivor_selection=TruncationSelection()
     )
     termination = Termination(fe=200 * dim)
     surrogate = RBFsurrogate(gaussian_kernel, dim)
@@ -52,4 +53,5 @@ def main():
 
 
 if __name__ == "__main__":
-    cProfile.run("main()")
+    # cProfile.run("main()")
+    main()
