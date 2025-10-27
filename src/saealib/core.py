@@ -228,6 +228,8 @@ class GA(Algorithm):
         candidate = np.empty((0, optimizer.problem.dim))
         popsize = len(optimizer.population)
         pop = optimizer.population.get("x")
+        lb = optimizer.problem.lb
+        ub = optimizer.problem.ub
         n_pair = math.ceil(popsize / 2)
         parent_idx_m = self.parent_selection.select(
             optimizer,
@@ -247,7 +249,7 @@ class GA(Algorithm):
         optimizer.dispatch(CallbackEvent.POST_CROSSOVER, data=candidate)
         candidate_len = len(candidate)
         for i in range(candidate_len):
-            candidate[i] = self.mutation.mutate(candidate[i], rng=optimizer.rng)
+            candidate[i] = self.mutation.mutate(candidate[i], (lb, ub), rng=optimizer.rng)
         optimizer.dispatch(CallbackEvent.POST_MUTATION, data=candidate)
         return candidate[:optimizer.popsize]
     
