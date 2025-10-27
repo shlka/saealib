@@ -76,22 +76,23 @@ class Archive(Population):
     """
     Archive class to handle archive of evaluated solutions.
     """
-    def __init__(self, atol: float = 0.0):
+    def __init__(self, atol: float = 0.0, rtol: float = 0.0):
         super().__init__()
         self.data["x"] = np.empty((0, 0))
         self.data["y"] = np.empty((0, ))
         self.atol = atol  # tolerance for duplicate check
+        self.rtol = rtol  # relative tolerance for duplicate check
 
     @staticmethod
-    def new(x: np.ndarray, y: np.ndarray, atol: float = 0.0) -> "Archive":
-        archive = Archive(atol=atol)
+    def new(x: np.ndarray, y: np.ndarray, atol: float = 0.0, rtol: float = 0.0) -> "Archive":
+        archive = Archive(atol=atol, rtol=rtol)
         archive.set("x", x)
         archive.set("y", y)
         return archive
 
     def add(self, x: np.ndarray, y: float) -> None:
         # duplicate check
-        if np.any(np.all(np.isclose(self.data["x"], x.reshape(1, -1), atol=self.atol), axis=1)):
+        if np.any(np.all(np.isclose(self.data["x"], x.reshape(1, -1), atol=self.atol, rtol=self.rtol), axis=1)):
             # TODO: implement to match the actual evaluation count (fe) with the archive size
             # self.data["x"] = np.vstack((self.data["x"], x.reshape(1, -1)))
             # self.data["y"] = np.hstack((self.data["y"], np.inf))
