@@ -631,6 +631,7 @@ class Optimizer:
         self.termination = None
         # Archive init parameters
         self.archive_atol = 0.0
+        self.archive_rtol = 0.0
         self.archive = None
         self.archive_init_size = 50
         # random setup
@@ -668,6 +669,10 @@ class Optimizer:
         self.archive_atol = atol
         return self
     
+    def set_archive_rtol(self, rtol: float):
+        self.archive_rtol = rtol
+        return self
+    
     def set_seed(self, seed: int):
         self.seed = seed
         self.rng = np.random.default_rng(seed=self.seed)
@@ -684,7 +689,7 @@ class Optimizer:
         archive_sort_idx = self.problem.comparator.sort(archive_y, np.zeros_like(archive_y))
         archive_x = archive_x[archive_sort_idx]
         archive_y = archive_y[archive_sort_idx]
-        self.archive = Archive.new(archive_x, archive_y, atol=self.archive_atol)
+        self.archive = Archive.new(archive_x, archive_y, atol=self.archive_atol, rtol=self.archive_rtol)
 
         self.population = Population.new("x", self.archive.get("x")[:self.popsize])
         self.population.set("f", self.archive.get("y")[:self.popsize])
