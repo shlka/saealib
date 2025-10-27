@@ -318,18 +318,17 @@ class MutationUniform(Mutation):
     """
     Uniform mutation operator.
     """
-    def __init__(self, mutation_rate: float, lb: np.ndarray, ub: np.ndarray):
+    def __init__(self, mutation_rate: float):
         super().__init__()
         self.mutation_rate = mutation_rate
-        self.lb = np.asarray(lb)
-        self.ub = np.asarray(ub)
 
-    def mutate(self, p: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
+    def mutate(self, p: np.ndarray, range: tuple, rng=np.random.default_rng()) -> np.ndarray:
         dim = len(p)
         c = p.copy()
+        lb, ub = range
         for i in range(dim):
             if rng.random() < self.mutation_rate:
-                c[i] = rng.uniform(self.lb[i], self.ub[i])
+                c[i] = rng.uniform(lb[i], ub[i])
         return c
 
 
