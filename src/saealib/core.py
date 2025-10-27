@@ -322,10 +322,10 @@ class MutationUniform(Mutation):
         super().__init__()
         self.mutation_rate = mutation_rate
 
-    def mutate(self, p: np.ndarray, range: tuple, rng=np.random.default_rng()) -> np.ndarray:
+    def mutate(self, p: np.ndarray, mutate_range: tuple, rng=np.random.default_rng()) -> np.ndarray:
         dim = len(p)
         c = p.copy()
-        lb, ub = range
+        lb, ub = mutate_range
         for i in range(dim):
             if rng.random() < self.mutation_rate:
                 c[i] = rng.uniform(lb[i], ub[i])
