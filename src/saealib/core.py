@@ -216,26 +216,36 @@ class GA(Algorithm):
     """
     Genetic Algorithm class.
     """
-    def __init__(self, crossover, mutation, selection):
+    def __init__(self, crossover: "Crossover", mutation: "Mutation", parent_selection: "ParentSelection", survivor_selection: "SurvivorSelection"):
         super().__init__()
         self.crossover = crossover
         self.mutation = mutation
-        self.selection = selection
+        self.parent_selection = parent_selection
+        self.survivor_selection = survivor_selection
 
     def ask(self, optimizer):
         candidate = np.empty((0, optimizer.problem.dim))
-        # parent = self.selection.select_parent(optimizer.population)
-        parent = optimizer.population.get("x")
-        for i in range(0, len(optimizer.population), 2):
-            p1 = parent[i % len(parent)]
-            p2 = parent[(i + 1) % len(parent)]
+        popsize = len(optimizer.population)
+        pop = optimizer.population.get("x")
+        n_pair = math.ceil(popsize / 2)
+        parent_idx_m = self.parent_selection.select(
+            optimizer,
+            pop,
+            optimizer.population.get("f"),
+            np.zeros(popsize),# TODO: use cv if constraints are defined
+            n_pair=n_pair,
+            n_parents=2,# TODO: recieve n_parents from Crossover
+            rng=optimizer.rng)
+        for i in range(n_pair):
+            parent = pop[parent_idx_m[i]]
             if optimizer.rng.random() < self.crossover.crossover_rate:
-                c1, c2 = self.crossover.crossover(p1, p2, rng=optimizer.rng)
+                c = self.crossover.crossover(parent, rng=optimizer.rng)
             else:
-                c1, c2 = p1, p2
-            candidate = np.vstack((candidate, c1, c2))
+                c = parent.copy()
+            candidate = np.vstack((candidate, c))
         optimizer.dispatch(CallbackEvent.POST_CROSSOVER, data=candidate)
-        for i in range(len(candidate)):
+        candidate_len = len(candidate)
+        for i in range(candidate_len):
             candidate[i] = self.mutation.mutate(candidate[i], rng=optimizer.rng)
         optimizer.dispatch(CallbackEvent.POST_MUTATION, data=candidate)
         return candidate[:optimizer.popsize]
@@ -284,12 +294,14 @@ class CrossoverBLXAlpha(Crossover):
         self.lb = lb
         self.ub = ub
 
-    def crossover(self, p1: np.ndarray, p2: np.ndarray, rng=np.random.default_rng()) -> tuple[np.ndarray, np.ndarray]:
+    def crossover(self, p: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
+        p1 = p[0]
+        p2 = p[1]
         dim = len(p1)
         alpha = rng.uniform(-self.gamma, 1 + self.gamma, size=dim)
         c1 = alpha * p1 + (1 - alpha) * p2
         c2 = (1 - alpha) * p1 + alpha * p2
-        return c1, c2
+        return np.array([c1, c2])
     
 
 class Mutation:
@@ -322,15 +334,91 @@ class MutationUniform(Mutation):
         return c
 
 
-class Selection:
+class ParentSelection:
     """
-    Base class for selection operators.
+    Base class for parent selection operators.
     """
     def __init__(self):
         pass
 
-    def select(self) -> np.ndarray:
+    def select(self, population: Population) -> np.ndarray:
         pass
+
+
+class TournamentSelection(ParentSelection):
+    """
+    Tournament selection operator.
+    """
+    def __init__(self, tournament_size: int):
+        super().__init__()
+        self.tournament_size = tournament_size
+
+    def select(self, opt: "Optimizer", pop_x: np.ndarray, pop_f: np.ndarray, pop_cv: np.ndarray, n_pair: int, n_parents: int, rng=np.random.default_rng()) -> np.ndarray:
+        n_pop = len(pop_x)
+        cmp = opt.problem.comparator
+        selected_idx = np.zeros((n_pair, n_parents), dtype=int)
+        for i in range(n_pair):
+            for j in range(n_parents):
+                tournament_idx = rng.choice(n_pop, size=self.tournament_size, replace=False)
+                best_idx = tournament_idx[0]
+                for idx in tournament_idx[1:]:
+                    if cmp.compare(pop_f[idx:idx+1], pop_cv[idx], pop_f[best_idx:best_idx+1], pop_cv[best_idx]) < 0:
+                        best_idx = idx
+                selected_idx[i, j] = best_idx
+        return selected_idx
+
+
+class SequentialSelection(ParentSelection):
+    """
+    Sequential selection operator.
+    """
+    def __init__(self):
+        super().__init__()
+
+    def select(self, opt: "Optimizer", pop_x: np.ndarray, pop_f: np.ndarray, pop_cv: np.ndarray, n_pair: int, n_parents: int, rng=np.random.default_rng()) -> np.ndarray:
+        n_pop = len(pop_x)
+        selected_idx = np.zeros((n_pair, n_parents), dtype=int)
+        i_grid, j_grid = np.meshgrid(np.arange(n_pair), np.arange(n_parents), indexing='ij')
+        selected_idx = i_grid * n_parents + j_grid
+        return selected_idx
+
+
+class SurvivorSelection:
+    """
+    Base class for survivor selection operators.
+    """
+    def __init__(self):
+        pass
+
+    def select(self, opt: "Optimizer", pop_x: np.ndarray, pop_f: np.ndarray, pop_cv: np.ndarray, off_x: np.ndarray, off_f: np.ndarray, off_cv: np.ndarray, n_survivors: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        pool_x, pool_f, pool_cv = self._create_pool(pop_x, pop_f, pop_cv, off_x, off_f, off_cv)
+        survivor_idx = self._select_from_pool(opt, pool_x, pool_f, pool_cv, n_survivors)
+        return pool_x[survivor_idx], pool_f[survivor_idx], pool_cv[survivor_idx]
+
+    def _create_pool(self, pop_x: np.ndarray, pop_f: np.ndarray, pop_cv: np.ndarray, off_x: np.ndarray, off_f: np.ndarray, off_cv: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        # default: (μ + λ) selection
+        # can be overridden in subclasses
+        pool_x = np.vstack((pop_x, off_x))
+        pool_f = np.hstack((pop_f, off_f))
+        pool_cv = np.hstack((pop_cv, off_cv))
+        return pool_x, pool_f, pool_cv
+    
+    def _select_from_pool(self, opt: "Optimizer", pool_x: np.ndarray, pool_f: np.ndarray, pool_cv: np.ndarray, n_survivors: int) -> np.ndarray:
+        pass
+
+
+class TruncationSelection(SurvivorSelection):
+    """
+    Truncation selection operator.
+    """
+    def __init__(self):
+        super().__init__()
+
+    def _select_from_pool(self, opt: "Optimizer", pool_x: np.ndarray, pool_f: np.ndarray, pool_cv: np.ndarray, n_survivors: int) -> np.ndarray:
+        cmp = opt.problem.comparator
+        cand_idx = cmp.sort(pool_f, pool_cv)
+        survivor_idx = cand_idx[:n_survivors]
+        return survivor_idx
 
 
 class Comparator:
