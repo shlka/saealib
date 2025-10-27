@@ -288,12 +288,10 @@ class CrossoverBLXAlpha(Crossover):
     """
     BLX-alpha crossover operator.
     """
-    def __init__(self, crossover_rate: float, gamma: float, lb: float, ub: float):
+    def __init__(self, crossover_rate: float, gamma: float):
         super().__init__()
         self.crossover_rate = crossover_rate
         self.gamma = gamma
-        self.lb = lb
-        self.ub = ub
 
     def crossover(self, p: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
         p1 = p[0]
