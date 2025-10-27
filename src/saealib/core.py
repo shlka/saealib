@@ -76,22 +76,23 @@ class Archive(Population):
     """
     Archive class to handle archive of evaluated solutions.
     """
-    def __init__(self, atol: float = 0.0):
+    def __init__(self, atol: float = 0.0, rtol: float = 0.0):
         super().__init__()
         self.data["x"] = np.empty((0, 0))
         self.data["y"] = np.empty((0, ))
         self.atol = atol  # tolerance for duplicate check
+        self.rtol = rtol  # relative tolerance for duplicate check
 
     @staticmethod
-    def new(x: np.ndarray, y: np.ndarray, atol: float = 0.0) -> "Archive":
-        archive = Archive(atol=atol)
+    def new(x: np.ndarray, y: np.ndarray, atol: float = 0.0, rtol: float = 0.0) -> "Archive":
+        archive = Archive(atol=atol, rtol=rtol)
         archive.set("x", x)
         archive.set("y", y)
         return archive
 
     def add(self, x: np.ndarray, y: float) -> None:
         # duplicate check
-        if np.any(np.all(np.isclose(self.data["x"], x.reshape(1, -1), atol=self.atol), axis=1)):
+        if np.any(np.all(np.isclose(self.data["x"], x.reshape(1, -1), atol=self.atol, rtol=self.rtol), axis=1)):
             # TODO: implement to match the actual evaluation count (fe) with the archive size
             # self.data["x"] = np.vstack((self.data["x"], x.reshape(1, -1)))
             # self.data["y"] = np.hstack((self.data["y"], np.inf))
@@ -630,6 +631,7 @@ class Optimizer:
         self.termination = None
         # Archive init parameters
         self.archive_atol = 0.0
+        self.archive_rtol = 0.0
         self.archive = None
         self.archive_init_size = 50
         # random setup
@@ -667,6 +669,10 @@ class Optimizer:
         self.archive_atol = atol
         return self
     
+    def set_archive_rtol(self, rtol: float):
+        self.archive_rtol = rtol
+        return self
+    
     def set_seed(self, seed: int):
         self.seed = seed
         self.rng = np.random.default_rng(seed=self.seed)
@@ -683,7 +689,7 @@ class Optimizer:
         archive_sort_idx = self.problem.comparator.sort(archive_y, np.zeros_like(archive_y))
         archive_x = archive_x[archive_sort_idx]
         archive_y = archive_y[archive_sort_idx]
-        self.archive = Archive.new(archive_x, archive_y, atol=self.archive_atol)
+        self.archive = Archive.new(archive_x, archive_y, atol=self.archive_atol, rtol=self.archive_rtol)
 
         self.population = Population.new("x", self.archive.get("x")[:self.popsize])
         self.population.set("f", self.archive.get("y")[:self.popsize])

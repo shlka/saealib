@@ -47,6 +47,7 @@ def main():
             .set_modelmanager(modelmanager)
             .set_archive_init_size(5 * dim)
             .set_archive_atol(0.0)
+            .set_archive_rtol(0.0)
             .set_seed(seed)
     )
     opt.run()
