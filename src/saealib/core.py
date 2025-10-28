@@ -228,6 +228,8 @@ class GA(Algorithm):
         candidate = np.empty((0, optimizer.problem.dim))
         popsize = len(optimizer.population)
         pop = optimizer.population.get("x")
+        lb = optimizer.problem.lb
+        ub = optimizer.problem.ub
         n_pair = math.ceil(popsize / 2)
         parent_idx_m = self.parent_selection.select(
             optimizer,
@@ -247,7 +249,7 @@ class GA(Algorithm):
         optimizer.dispatch(CallbackEvent.POST_CROSSOVER, data=candidate)
         candidate_len = len(candidate)
         for i in range(candidate_len):
-            candidate[i] = self.mutation.mutate(candidate[i], rng=optimizer.rng)
+            candidate[i] = self.mutation.mutate(candidate[i], (lb, ub), rng=optimizer.rng)
         optimizer.dispatch(CallbackEvent.POST_MUTATION, data=candidate)
         return candidate[:optimizer.popsize]
     
@@ -288,12 +290,10 @@ class CrossoverBLXAlpha(Crossover):
     """
     BLX-alpha crossover operator.
     """
-    def __init__(self, crossover_rate: float, gamma: float, lb: float, ub: float):
+    def __init__(self, crossover_rate: float, gamma: float):
         super().__init__()
         self.crossover_rate = crossover_rate
         self.gamma = gamma
-        self.lb = lb
-        self.ub = ub
 
     def crossover(self, p: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
         p1 = p[0]
@@ -320,18 +320,17 @@ class MutationUniform(Mutation):
     """
     Uniform mutation operator.
     """
-    def __init__(self, mutation_rate: float, lb: np.ndarray, ub: np.ndarray):
+    def __init__(self, mutation_rate: float):
         super().__init__()
         self.mutation_rate = mutation_rate
-        self.lb = np.asarray(lb)
-        self.ub = np.asarray(ub)
 
-    def mutate(self, p: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
+    def mutate(self, p: np.ndarray, mutate_range: tuple, rng=np.random.default_rng()) -> np.ndarray:
         dim = len(p)
         c = p.copy()
+        lb, ub = mutate_range
         for i in range(dim):
             if rng.random() < self.mutation_rate:
-                c[i] = rng.uniform(self.lb[i], self.ub[i])
+                c[i] = rng.uniform(lb[i], ub[i])
         return c
 
 
