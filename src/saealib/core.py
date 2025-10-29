@@ -688,7 +688,7 @@ class Optimizer:
 
     def _initialize(self, n_init_archive: int):
         archive_x = scipy.stats.qmc.LatinHypercube(d=self.problem.dim, rng=self.rng).random(n_init_archive)
-        scipy.stats.qmc.scale(archive_x, self.problem.lb, self.problem.ub)
+        archive_x = scipy.stats.qmc.scale(archive_x, self.problem.lb, self.problem.ub)
         archive_y = np.array([self.problem.evaluate(ind) for ind in archive_x])
         # TODO: use cv if constraints are defined
         archive_sort_idx = self.problem.comparator.sort(archive_y, np.zeros_like(archive_y))
