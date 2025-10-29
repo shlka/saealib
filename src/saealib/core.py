@@ -246,11 +246,11 @@ class GA(Algorithm):
             else:
                 c = parent.copy()
             candidate = np.vstack((candidate, c))
-        optimizer.dispatch(CallbackEvent.POST_CROSSOVER, data=candidate)
+        candidate = optimizer.dispatch(CallbackEvent.POST_CROSSOVER, data=candidate)
         candidate_len = len(candidate)
         for i in range(candidate_len):
             candidate[i] = self.mutation.mutate(candidate[i], (lb, ub), rng=optimizer.rng)
-        optimizer.dispatch(CallbackEvent.POST_MUTATION, data=candidate)
+        candidate = optimizer.dispatch(CallbackEvent.POST_MUTATION, data=candidate)
         return candidate[:optimizer.popsize]
     
     def tell(self, optimizer, offspring, offspring_fit):
@@ -512,11 +512,15 @@ class RBFsurrogate(Surrogate):
             logging.error("Failed to solve linear system (Kernel matrix might be singular).")
             self.weights = np.zeros(n_samples)
 
-    def predict(self, test_x):
-        n_samples = len(self.train_x)
-        kernel_vec = self.kernel(self.train_x, test_x).flatten()
-        prediction = np.dot(kernel_vec, self.weights)
-        return prediction + np.mean(self.train_y)
+    def predict(self, test_x: np.ndarray):
+        tx = np.asarray(test_x)
+        if tx.ndim == 1:
+            tx = tx.reshape(1, -1)
+        k = self.kernel(self.train_x, tx)  
+        # k shape: (n_train, n_test)
+        # weights shape: (n_train,)
+        preds = k.T.dot(self.weights) + np.mean(self.train_y)
+        return np.asarray(preds).flatten()
 
 
 class ModelManager:
@@ -557,8 +561,8 @@ class IndividualBasedStrategy(ModelManager):
             # train RBF model
             self.surrogate_model.fit(train_x, train_y)
             # predict candidate[i]
-            self.candidate_fit[i] = self.surrogate_model.predict(self.candidate[i].reshape(1, -1))
-            optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, train_x=train_x, train_y=train_y)
+            self.candidate_fit[i] = self.surrogate_model.predict(self.candidate[i])
+            optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, None, train_x=train_x, train_y=train_y, center=self.candidate[i])
 
         # psm individuals are evaluated using the true function
         # TODO: use cv if constraints are defined
@@ -601,18 +605,19 @@ class CallbackManager:
     def register(self, event: CallbackEvent, func: callable):
         self.handlers[event].append(func)
 
-    def dispatch(self, event: CallbackEvent, **kwargs):
+    def dispatch(self, event: CallbackEvent, data, **kwargs):
+        cur_data = data
         for handler in self.handlers[event]:
-            handler(**kwargs)
+            cur_data = handler(data=cur_data, **kwargs)
+        return cur_data
 
 
-def repair_clipping(**kwargs):
+def repair_clipping(data, **kwargs):
     problem = kwargs.get("optimizer", None).problem
-    data = kwargs.get("data", None)
     repaired = np.clip(data, problem.lb, problem.ub)
-    kwargs["data"] = repaired
+    return repaired
 
-def logging_generation(**kwargs):
+def logging_generation(data, **kwargs):
     optimizer = kwargs.get("optimizer", None)
     logging.info(f"Generation {optimizer.gen} started. fe: {optimizer.fe}. Best f: {optimizer.population.get('f')[0]}")
 
@@ -682,7 +687,8 @@ class Optimizer:
         return self
 
     def _initialize(self, n_init_archive: int):
-        archive_x = self.rng.uniform(self.problem.lb, self.problem.ub, (n_init_archive, self.problem.dim))
+        archive_x = scipy.stats.qmc.LatinHypercube(d=self.problem.dim, rng=self.rng).random(n_init_archive)
+        archive_x = scipy.stats.qmc.scale(archive_x, self.problem.lb, self.problem.ub)
         archive_y = np.array([self.problem.evaluate(ind) for ind in archive_x])
         # TODO: use cv if constraints are defined
         archive_sort_idx = self.problem.comparator.sort(archive_y, np.zeros_like(archive_y))
@@ -699,10 +705,10 @@ class Optimizer:
         self.cbmanager.register(CallbackEvent.GENERATION_START, logging_generation)
         self.cbmanager.register(CallbackEvent.POST_CROSSOVER, repair_clipping)
         self.cbmanager.register(CallbackEvent.POST_MUTATION, repair_clipping)
-    
-    def dispatch(self, event: CallbackEvent, **kwargs):
+
+    def dispatch(self, event: CallbackEvent, data=None, **kwargs):
         kwargs["optimizer"] = self
-        self.cbmanager.dispatch(event, **kwargs)
+        return self.cbmanager.dispatch(event, data, **kwargs)
 
     def run(self):
         self._initialize(self.archive_init_size)
