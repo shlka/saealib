@@ -512,11 +512,15 @@ class RBFsurrogate(Surrogate):
             logging.error("Failed to solve linear system (Kernel matrix might be singular).")
             self.weights = np.zeros(n_samples)
 
-    def predict(self, test_x):
-        n_samples = len(self.train_x)
-        kernel_vec = self.kernel(self.train_x, test_x).flatten()
-        prediction = np.dot(kernel_vec, self.weights)
-        return prediction + np.mean(self.train_y)
+    def predict(self, test_x: np.ndarray):
+        tx = np.asarray(test_x)
+        if tx.ndim == 1:
+            tx = tx.reshape(1, -1)
+        k = self.kernel(self.train_x, tx)  
+        # k shape: (n_train, n_test)
+        # weights shape: (n_train,)
+        preds = k.T.dot(self.weights) + np.mean(self.train_y)
+        return np.asarray(preds).flatten()
 
 
 class ModelManager:
@@ -557,7 +561,7 @@ class IndividualBasedStrategy(ModelManager):
             # train RBF model
             self.surrogate_model.fit(train_x, train_y)
             # predict candidate[i]
-            self.candidate_fit[i] = self.surrogate_model.predict(self.candidate[i].reshape(1, -1))
+            self.candidate_fit[i] = self.surrogate_model.predict(self.candidate[i])
             optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, train_x=train_x, train_y=train_y, center=self.candidate[i])
 
         # psm individuals are evaluated using the true function
