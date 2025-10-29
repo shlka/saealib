@@ -6,6 +6,8 @@ from collections import defaultdict
 import numpy as np
 import scipy
 
+logger = logging.getLogger(__name__)
+
 
 class Individual:
     """
@@ -507,11 +509,11 @@ class RBFsurrogate(Surrogate):
         self.kernel_matrix = self.kernel(self.train_x, self.train_x, sigma=self.sigma)
         rcond = 1 / np.linalg.cond(self.kernel_matrix)
         if rcond < np.finfo(self.kernel_matrix.dtype).eps:
-            logging.warning(f"Kernel matrix is ill-conditioned. RCOND: {rcond}")
+            logger.warning(f"Kernel matrix is ill-conditioned. RCOND: {rcond}")
         try:
             self.weights = np.linalg.solve(self.kernel_matrix, (train_y - np.mean(train_y)))
         except np.linalg.LinAlgError:
-            logging.error("Failed to solve linear system (Kernel matrix might be singular).")
+            logger.error("Failed to solve linear system (Kernel matrix might be singular).")
             self.weights = np.zeros(n_samples)
 
     def predict(self, test_x: np.ndarray):
