@@ -246,11 +246,11 @@ class GA(Algorithm):
             else:
                 c = parent.copy()
             candidate = np.vstack((candidate, c))
-        optimizer.dispatch(CallbackEvent.POST_CROSSOVER, data=candidate)
+        candidate = optimizer.dispatch(CallbackEvent.POST_CROSSOVER, data=candidate)
         candidate_len = len(candidate)
         for i in range(candidate_len):
             candidate[i] = self.mutation.mutate(candidate[i], (lb, ub), rng=optimizer.rng)
-        optimizer.dispatch(CallbackEvent.POST_MUTATION, data=candidate)
+        candidate = optimizer.dispatch(CallbackEvent.POST_MUTATION, data=candidate)
         return candidate[:optimizer.popsize]
     
     def tell(self, optimizer, offspring, offspring_fit):
@@ -605,16 +605,17 @@ class CallbackManager:
     def register(self, event: CallbackEvent, func: callable):
         self.handlers[event].append(func)
 
-    def dispatch(self, event: CallbackEvent, **kwargs):
+    def dispatch(self, event: CallbackEvent, data, **kwargs):
+        cur_data = data
         for handler in self.handlers[event]:
-            handler(**kwargs)
+            cur_data = handler(data=cur_data, **kwargs)
+        return cur_data
 
 
-def repair_clipping(**kwargs):
+def repair_clipping(data, **kwargs):
     problem = kwargs.get("optimizer", None).problem
-    data = kwargs.get("data", None)
     repaired = np.clip(data, problem.lb, problem.ub)
-    kwargs["data"] = repaired
+    return repaired
 
 def logging_generation(**kwargs):
     optimizer = kwargs.get("optimizer", None)
@@ -704,10 +705,10 @@ class Optimizer:
         self.cbmanager.register(CallbackEvent.GENERATION_START, logging_generation)
         self.cbmanager.register(CallbackEvent.POST_CROSSOVER, repair_clipping)
         self.cbmanager.register(CallbackEvent.POST_MUTATION, repair_clipping)
-    
-    def dispatch(self, event: CallbackEvent, **kwargs):
+
+    def dispatch(self, event: CallbackEvent, data=None, **kwargs):
         kwargs["optimizer"] = self
-        self.cbmanager.dispatch(event, **kwargs)
+        return self.cbmanager.dispatch(event, data, **kwargs)
 
     def run(self):
         self._initialize(self.archive_init_size)
