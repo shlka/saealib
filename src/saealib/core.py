@@ -648,6 +648,8 @@ class Optimizer:
         self.popsize = 40
         # callback event manager
         self.cbmanager = CallbackManager()
+        # instance name
+        self.instance_name = ""
 
     def set_algorithm(self, algorithm: Algorithm):
         self.algorithm = algorithm
@@ -684,6 +686,10 @@ class Optimizer:
 
     def set_popsize(self, popsize: int):
         self.popsize = popsize
+        return self
+
+    def set_instance_name(self, name: str):
+        self.instance_name = name
         return self
 
     def _initialize(self, n_init_archive: int):
