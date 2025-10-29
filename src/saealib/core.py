@@ -497,12 +497,14 @@ class RBFsurrogate(Surrogate):
         self.kernel = kernel
         self.weights = None
         self.kernel_matrix = None
+        self.sigma = None
 
     def fit(self, train_x, train_y):
         self.train_x = np.asarray(train_x)
         self.train_y = np.asarray(train_y)
         n_samples = len(train_x)
-        self.kernel_matrix = self.kernel(self.train_x, self.train_x)
+        self.sigma = np.median(scipy.spatial.distance.pdist(self.train_x))
+        self.kernel_matrix = self.kernel(self.train_x, self.train_x, sigma=self.sigma)
         rcond = 1 / np.linalg.cond(self.kernel_matrix)
         if rcond < np.finfo(self.kernel_matrix.dtype).eps:
             logging.warning(f"Kernel matrix is ill-conditioned. RCOND: {rcond}")
@@ -516,7 +518,7 @@ class RBFsurrogate(Surrogate):
         tx = np.asarray(test_x)
         if tx.ndim == 1:
             tx = tx.reshape(1, -1)
-        k = self.kernel(self.train_x, tx)  
+        k = self.kernel(self.train_x, tx, sigma=self.sigma)
         # k shape: (n_train, n_test)
         # weights shape: (n_train,)
         preds = k.T.dot(self.weights) + np.mean(self.train_y)
