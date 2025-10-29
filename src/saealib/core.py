@@ -623,7 +623,7 @@ def repair_clipping(data, **kwargs):
 
 def logging_generation(data, **kwargs):
     optimizer = kwargs.get("optimizer", None)
-    logging.info(f"Generation {optimizer.gen} started. fe: {optimizer.fe}. Best f: {optimizer.population.get('f')[0]}")
+    logger.info(f"Generation {optimizer.gen} started. fe: {optimizer.fe}. Best f: {optimizer.archive.get('y').min()}")
 
 
 class Optimizer:
