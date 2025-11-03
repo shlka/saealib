@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from ..population import Population
-    from ..optimizer import Optimizer
+    from saealib.population import Population
+    from saealib.optimizer import Optimizer
 
 
 class ParentSelection:

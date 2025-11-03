@@ -2,10 +2,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from .callback import CallbackEvent
+from saealib.callback import CallbackEvent
 
 if TYPE_CHECKING:
-    from .optimizer import Optimizer
+    from saealib.optimizer import Optimizer
 
 
 

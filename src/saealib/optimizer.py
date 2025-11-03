@@ -3,16 +3,16 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats
 
-from .population import Population, Archive
-from .callback import CallbackEvent, CallbackManager, logging_generation
-from .operators.repair import repair_clipping
+from saealib.population import Population, Archive
+from saealib.callback import CallbackEvent, CallbackManager, logging_generation
+from saealib.operators.repair import repair_clipping
 
 if TYPE_CHECKING:
-    from .algorithm import Algorithm
-    from .surrogate.base import Surrogate
-    from .modelmanager import ModelManager
-    from .termination import Termination
-    from .problem import Problem
+    from saealib.algorithm import Algorithm
+    from saealib.surrogate.base import Surrogate
+    from saealib.modelmanager import ModelManager
+    from saealib.termination import Termination
+    from saealib.problem import Problem
 
 
 class Optimizer:

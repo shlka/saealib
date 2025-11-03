@@ -3,7 +3,7 @@ import math
 
 import numpy as np
 
-from .callback import CallbackEvent
+from saealib.callback import CallbackEvent
 
 if TYPE_CHECKING:
     from .optimizer import Optimizer
