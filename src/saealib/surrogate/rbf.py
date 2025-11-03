@@ -6,6 +6,9 @@ import scipy.spatial
 from saealib.surrogate.base import Surrogate
 
 
+logger = logging.getLogger(__name__)
+
+
 def gaussian_kernel(x1: np.ndarray, x2: np.ndarray, sigma=2.0):
     # return np.exp(-np.linalg.norm(x1 - x2) ** 2 / (2 * (sigma ** 2)))
     sq_dist = scipy.spatial.distance.cdist(x1, x2, 'sqeuclidean')
@@ -30,11 +33,11 @@ class RBFsurrogate(Surrogate):
         self.kernel_matrix = self.kernel(self.train_x, self.train_x, sigma=self.sigma)
         rcond = 1 / np.linalg.cond(self.kernel_matrix)
         if rcond < np.finfo(self.kernel_matrix.dtype).eps:
-            logging.warning(f"Kernel matrix is ill-conditioned. RCOND: {rcond}")
+            logger.warning(f"Kernel matrix is ill-conditioned. RCOND: {rcond}")
         try:
             self.weights = np.linalg.solve(self.kernel_matrix, (train_y - np.mean(train_y)))
         except np.linalg.LinAlgError:
-            logging.error("Failed to solve linear system (Kernel matrix might be singular).")
+            logger.error("Failed to solve linear system (Kernel matrix might be singular).")
             self.weights = np.zeros(n_samples)
 
     def predict(self, test_x: np.ndarray):

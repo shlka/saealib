@@ -25,7 +25,7 @@ from saealib.operators.selection import (
 )
 from saealib.operators.repair import repair_clipping
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
     # core components
