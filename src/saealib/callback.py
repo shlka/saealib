@@ -9,6 +9,9 @@ if TYPE_CHECKING:
     from saealib.optimizer import Optimizer
 
 
+logger = logging.getLogger(__name__)
+
+
 class CallbackEvent(Enum):
     # Optimizer.run events
     RUN_START = auto()
@@ -41,4 +44,4 @@ class CallbackManager:
 
 def logging_generation(data, **kwargs):
     optimizer: Optimizer = kwargs.get("optimizer", None)
-    logging.info(f"Generation {optimizer.gen} started. fe: {optimizer.fe}. Best f: {optimizer.archive.get('y').min()}")
+    logger.info(f"Generation {optimizer.gen} started. fe: {optimizer.fe}. Best f: {optimizer.archive.get('y').min()}")
