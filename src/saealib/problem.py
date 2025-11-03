@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from .population import Population
+    from saealib.population import Population
 
 
 class Problem:

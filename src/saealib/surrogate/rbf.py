@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import scipy.spatial
 
-from .base import Surrogate
+from saealib.surrogate.base import Surrogate
 
 
 def gaussian_kernel(x1: np.ndarray, x2: np.ndarray, sigma=2.0):

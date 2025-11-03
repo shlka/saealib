@@ -1,29 +1,29 @@
 import logging
 
 # core components
-from .optimizer import Optimizer
-from .problem import Problem, Constraint, ConstraintType, ConstraintManager, Comparator, SingleObjectiveComparator
-from .algorithm import Algorithm, GA
-from .termination import Termination
-from .modelmanager import ModelManager, IndividualBasedStrategy
-from .callback import CallbackManager, CallbackEvent, logging_generation
-from .population import Population, Individual, Archive, Solution
+from saealib.optimizer import Optimizer
+from saealib.problem import Problem, Constraint, ConstraintType, ConstraintManager, Comparator, SingleObjectiveComparator
+from saealib.algorithm import Algorithm, GA
+from saealib.termination import Termination
+from saealib.modelmanager import ModelManager, IndividualBasedStrategy
+from saealib.callback import CallbackManager, CallbackEvent, logging_generation
+from saealib.population import Population, Individual, Archive, Solution
 
 # surrogate models
-from .surrogate.base import Surrogate
-from .surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.base import Surrogate
+from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
 
 # operators
-from .operators.crossover import Crossover, CrossoverBLXAlpha
-from .operators.mutation import Mutation, MutationUniform
-from .operators.selection import (
+from saealib.operators.crossover import Crossover, CrossoverBLXAlpha
+from saealib.operators.mutation import Mutation, MutationUniform
+from saealib.operators.selection import (
     ParentSelection,
     SequentialSelection,
     TournamentSelection,
     SurvivorSelection,
     TruncationSelection,
 )
-from .operators.repair import repair_clipping
+from saealib.operators.repair import repair_clipping
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 

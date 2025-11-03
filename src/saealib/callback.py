@@ -4,7 +4,7 @@ from collections import defaultdict
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .optimizer import Optimizer
+    from saealib.optimizer import Optimizer
 
 
 class CallbackEvent(Enum):
