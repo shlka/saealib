@@ -1,3 +1,8 @@
+"""
+Evolutionary Algorithm Module
+
+This module contains the implementation of evolutionary algorithms.
+"""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -16,7 +21,7 @@ if TYPE_CHECKING:
 
 class Algorithm:
     """
-    Base class for algorithms.
+    Base class for evolutionary algorithms.
     """
     def __init__(self):
         pass
@@ -35,7 +40,32 @@ class GA(Algorithm):
     """
     Genetic Algorithm class.
     """
-    def __init__(self, crossover: "Crossover", mutation: "Mutation", parent_selection: "ParentSelection", survivor_selection: "SurvivorSelection"):
+    def __init__(self, crossover: Crossover, mutation: Mutation, parent_selection: ParentSelection, survivor_selection: SurvivorSelection):
+        """
+        Initialize GA (Genetic Algorithm) class.
+
+        Parameters
+        ----------
+        crossover : Crossover
+            Crossover operator.
+        mutation : Mutation
+            Mutation operator.
+        parent_selection : ParentSelection
+            Parent selection operator.
+        survivor_selection : SurvivorSelection
+            Survivor selection operator.
+
+        Attributes
+        ----------
+        crossover : Crossover
+            Crossover operator. 
+        mutation : Mutation
+            Mutation operator.
+        parent_selection : ParentSelection
+            Parent selection operator.
+        survivor_selection : SurvivorSelection
+            Survivor selection operator.
+        """
         super().__init__()
         self.crossover = crossover
         self.mutation = mutation
@@ -43,6 +73,30 @@ class GA(Algorithm):
         self.survivor_selection = survivor_selection
 
     def ask(self, optimizer: Optimizer):
+        """
+        Generate offspring solutions.
+
+        Parameters
+        ----------
+        optimizer : Optimizer
+            Optimizer instance.
+        
+        Returns
+        -------
+        np.ndarray
+            Generated offspring solutions. shape = (popsize, dim).
+        
+        Notes
+        -----
+        These optimizer attributes are used:
+        - population (readonly)
+        - popsize (readonly)
+        - problem.dim (readonly)
+        - problem.lb (readonly)
+        - problem.ub (readonly)
+        - rng (readonly)
+        - dispatch (method)
+        """
         candidate = np.empty((0, optimizer.problem.dim))
         popsize = len(optimizer.population)
         pop = optimizer.population.get("x")
@@ -72,6 +126,29 @@ class GA(Algorithm):
         return candidate[:optimizer.popsize]
 
     def tell(self, optimizer: Optimizer, offspring: np.ndarray, offspring_fit: np.ndarray):
+        """
+        Update the population with offspring solutions. Optimizer population is updated in-place.
+
+        Parameters
+        ----------
+        optimizer : Optimizer
+            Optimizer instance.
+        offspring : np.ndarray
+            Offspring solutions. shape = (popsize, dim).
+        offspring_fit : np.ndarray
+            Offspring fitness values. shape = (popsize, ).
+        
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        These optimizer attributes are used:
+        - population (read/write)
+        - popsize (readonly)
+        - problem.comparator (readonly)
+        """
         cmp = optimizer.problem.comparator
         # select a best solution in parent
         best_idx = np.argmin(optimizer.population.get("f"))
