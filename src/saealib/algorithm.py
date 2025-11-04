@@ -6,6 +6,7 @@ This module contains the implementation of evolutionary algorithms.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from abc import ABC, abstractmethod
 import math
 
 import numpy as np
@@ -19,21 +20,18 @@ if TYPE_CHECKING:
     from .operators.selection import ParentSelection, SurvivorSelection
 
 
-class Algorithm:
+class Algorithm(ABC):
     """
     Base class for evolutionary algorithms.
     """
-    def __init__(self):
+    @abstractmethod
+    def ask(self, optimizer: Optimizer) -> np.ndarray:
         pass
 
-    def ask(self, optimizer) -> np.ndarray:
+    @abstractmethod
+    def tell(self, optimizer: Optimizer, offspring: np.ndarray, offspring_fit: np.ndarray) -> None:
         pass
 
-    def tell(self, optimizer, offspring: np.ndarray, offspring_fit: np.ndarray) -> None:
-        pass
-
-    def step(self):
-        pass
 
 
 class GA(Algorithm):
@@ -165,6 +163,3 @@ class GA(Algorithm):
         fit_cand = fit_cand[cand_idx]
         optimizer.population.set("x", pop_cand[:optimizer.popsize])
         optimizer.population.set("f", fit_cand[:optimizer.popsize])
-
-    def step(self, optimizer):
-        pass
