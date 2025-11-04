@@ -1,3 +1,7 @@
+"""
+saealib: Surrogate-Assisted Evolutionary Algorithms (SAEAs) Library
+"""
+
 import logging
 
 # core components
