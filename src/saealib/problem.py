@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from enum import Enum, auto
 from typing import TYPE_CHECKING
+from abc import ABC, abstractmethod
 
 import numpy as np
 
@@ -11,9 +12,52 @@ if TYPE_CHECKING:
 
 class Problem:
     """
-    Base class for problems.
+    Definition of optimization problem.
+
+    Attributes
+    ----------
+    dim : int
+        Dimension of the design variables.
+    n_obj : int
+        Number of objectives.
+    weight : np.ndarray
+        Weights for objectives. shape = (n_obj, )
+    lb : np.ndarray
+        Lower bounds for design variables. shape = (dim, )
+    ub : np.ndarray
+        Upper bounds for design variables. shape = (dim, )
+    constraint_manager : ConstraintManager
+        Constraint manager instance to handle constraints.
+    comparator : Comparator
+        Comparator instance to compare solutions.
+    eps : float
+        Epsilon value for comparison (Comparator use).
+    func : callable -> float
+        Objective function to evaluate solutions.
     """
-    def __init__(self, func, dim: int, n_obj: int, weight: np.ndarray, lb: list[float], ub: list[float], constraints: list["Constraint"] = None, eps: float = 1e-6):
+    def __init__(self, func: callable, dim: int, n_obj: int, weight: np.ndarray, lb: list[float], ub: list[float], constraints: list["Constraint"] = None, eps: float = 1e-6):
+        """
+        initialize Problem instance.
+
+        Parameters
+        ----------
+        func : callable -> float
+            Objective function to evaluate solutions.
+        dim : int
+            Dimension of the design variables.
+        n_obj : int
+            Number of objectives.
+        weight : np.ndarray
+            Weights for objectives. shape = (n_obj, )
+        lb : list[float]
+            Lower bounds for design variables. length = dim
+        ub : list[float]
+            Upper bounds for design variables. length = dim
+        constraints : list[Constraint], optional
+            List of constraints, by default None
+        eps : float, optional
+            Epsilon value for comparison (Comparator use), by default 1e-6
+        """
         self.dim = dim
         self.n_obj = n_obj
         self.weight = weight
@@ -36,20 +80,71 @@ class Problem:
         self.comparator = SingleObjectiveComparator(weight=weight, eps=eps)
 
     def evaluate(self, x: np.ndarray) -> float:
+        """
+        Evaluate the objective function at given solution x.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            The solution to evaluate.
+        
+        Returns
+        -------
+        float
+            The objective value at solution x.
+        """
         return self.func(x)
 
 
 class ConstraintType(Enum):
+    """
+    Constraint types.
+
+    Attributes
+    ----------
+    EQ
+        Equality constraint.
+    INEQ
+        Inequality constraint.
+    """
     EQ = auto()
     INEQ = auto()
 
 
 class Constraint:
+    """
+    Constraint class to handle single constraint.
+
+    Attributes
+    ----------
+    type_constraint : ConstraintType
+        Type of the constraint.
+    func : callable -> float
+        Returns constraint violation value.
+    """
     def __init__(self, func, type: ConstraintType = ConstraintType.INEQ):
+        """
+        Initialize Constraint instance.
+
+        Parameters
+        ----------
+        func : callable -> float
+            Returns constraint violation value.
+        type : ConstraintType, optional
+            Type of the constraint, by default ConstraintType.INEQ
+        """
         self.type_constraint = type
         self.func = func
 
     def evaluate(self, x: np.ndarray) -> float:
+        """
+        Evaluate the constraint violation at given solution x.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            The solution to evaluate.
+        """
         v = self.func(x)
         if self.type_constraint == ConstraintType.INEQ:
             return max(0, v)
@@ -58,35 +153,120 @@ class Constraint:
 
 
 class ConstraintManager:
+    """
+    Constraint manager to handle multiple constraints.
+    
+    Attributes
+    ----------
+    constraints : list[Constraint]
+        List of constraints.
+    """
     def __init__(self, constraints: list[Constraint]):
+        """
+        Initialize ConstraintManager instance.
+
+        Parameters
+        ----------
+        constraints : list[Constraint]
+            List of constraints.
+        """
         if constraints is None:
             self.constraints = []
         else:
             self.constraints = constraints
 
     def evaluate(self, x: np.ndarray) -> float:
+        """
+        Evaluate the total constraint violation at given solution x.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            The solution to evaluate.
+        
+        Returns
+        -------
+        float
+            The total constraint violation at solution x.
+        """
         if not self.constraints:
             return 0.0
         return sum(constraint.evaluate(x) for constraint in self.constraints)
 
     def evaluate_population(self, population: Population) -> np.ndarray:
+        """
+        Evaluate the total constraint violation for each individual in the population.
+
+        Parameters
+        ----------
+        population : Population
+            The population to evaluate.
+        Returns
+        -------
+        np.ndarray
+            The total constraint violation for each individual in the population.
+        """
         if not self.constraints:
             return np.zeros(len(population))
         return np.array([self.evaluate(ind.get("x")) for ind in population])
 
 
-class Comparator:
+class Comparator(ABC):
     """
     Base class for comparator.
+
+    Attributes
+    ----------
+    weights : np.ndarray
+        Weights for objectives. shape = (n_obj, )
+    eps : float
+        Epsilon value for comparison tolerance.
     """
+    @abstractmethod
     def __init__(self, weights: np.ndarray, eps: float):
+        """
+        Initialize Comparator instance.
+
+        Parameters
+        ----------
+        weights : np.ndarray
+            Weights for objectives. shape = (n_obj, )
+        eps : float
+            Epsilon value for comparison tolerance.
+        """
         self.weights = weights
         self.eps = eps
 
+    @abstractmethod
     def compare(self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float) -> int:
+        """
+        Compare two solutions.
+
+        Parameters
+        ----------
+        fitness_a : np.ndarray
+            Objective values of solution a. shape = (n_obj, )
+        cv_a : float
+            Constraint violation of solution a.
+        fitness_b : np.ndarray
+            Objective values of solution b. shape = (n_obj, )
+        cv_b : float
+            Constraint violation of solution b.
+        """
         pass
 
+    @abstractmethod
     def sort(self, fitness: np.ndarray, cv: np.ndarray) -> np.ndarray:
+        """
+        Sort solutions based on their fitness and constraint violations.
+        
+        Parameters
+        ----------
+        fitness : np.ndarray
+            Objective values of solutions. shape = (n_individuals, n_obj)
+        cv : np.ndarray
+            Constraint violations of solutions. shape = (n_individuals, )
+        """
         pass
 
 

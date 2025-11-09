@@ -37,6 +37,17 @@ class Algorithm(ABC):
 class GA(Algorithm):
     """
     Genetic Algorithm class.
+
+    Attributes
+    ----------
+    crossover : Crossover
+        Crossover operator. 
+    mutation : Mutation
+        Mutation operator.
+    parent_selection : ParentSelection
+        Parent selection operator.
+    survivor_selection : SurvivorSelection
+        Survivor selection operator.
     """
     def __init__(self, crossover: Crossover, mutation: Mutation, parent_selection: ParentSelection, survivor_selection: SurvivorSelection):
         """
@@ -46,17 +57,6 @@ class GA(Algorithm):
         ----------
         crossover : Crossover
             Crossover operator.
-        mutation : Mutation
-            Mutation operator.
-        parent_selection : ParentSelection
-            Parent selection operator.
-        survivor_selection : SurvivorSelection
-            Survivor selection operator.
-
-        Attributes
-        ----------
-        crossover : Crossover
-            Crossover operator. 
         mutation : Mutation
             Mutation operator.
         parent_selection : ParentSelection
