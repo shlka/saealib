@@ -1,11 +1,20 @@
+from __future__ import annotations
+
 import numpy as np
 
 
 class Individual:
     """
     Individual class to handle single individual in population.
+
+    Attributes
+    ----------
+    population : Population
+    index : int
+        Index of the individual in the population.
     """
-    def __init__(self, population: "Population", index: int):
+    # TODO: Consider how to avoid circular references to Population
+    def __init__(self, population: Population, index: int):
         self.population = population
         self.index = index
 
@@ -34,22 +43,45 @@ class Population:
     """
     Base class for population.
     (self.data must have at least "x" key.)
+
+    Attributes
+    ----------
+    data : dict[str, np.ndarray]
+        Dictionary to store population data.
     """
     def __init__(self):
         self.data = {}
     
     @staticmethod
-    def new(key: str, value: np.ndarray) -> "Population":
+    def new(key: str, value: np.ndarray) -> Population:
         pop = Population()
         pop.set(key, value)
         return pop
 
     def get(self, key: str) -> np.ndarray:
+        """
+        Get the population data for the given key.
+
+        Parameters
+        ----------
+        key : str
+            The key to retrieve data for.
+        """
         if key not in self.data:
             return None
         return self.data.get(key)
 
     def set(self, key: str, value: np.ndarray) -> None:
+        """
+        Set the population data for the given key.
+
+        Parameters
+        ----------
+        key : str
+            The key to set data for.
+        value : np.ndarray
+            The data to set for the given key.
+        """
         self.data[key] = value
 
     def __len__(self):
@@ -69,6 +101,16 @@ class Population:
 class Archive(Population):
     """
     Archive class to handle archive of evaluated solutions.
+    (self.data must have at least "x" and "y" keys.)
+
+    Attributes
+    ----------
+    data : dict[str, np.ndarray]
+        Dictionary to store archive data. keys are "x" and "y".
+    atol : float
+        Absolute tolerance for duplicate check.
+    rtol : float
+        Relative tolerance for duplicate check.
     """
     def __init__(self, atol: float = 0.0, rtol: float = 0.0):
         super().__init__()
@@ -78,13 +120,23 @@ class Archive(Population):
         self.rtol = rtol  # relative tolerance for duplicate check
 
     @staticmethod
-    def new(x: np.ndarray, y: np.ndarray, atol: float = 0.0, rtol: float = 0.0) -> "Archive":
+    def new(x: np.ndarray, y: np.ndarray, atol: float = 0.0, rtol: float = 0.0) -> Archive:
         archive = Archive(atol=atol, rtol=rtol)
         archive.set("x", x)
         archive.set("y", y)
         return archive
 
     def add(self, x: np.ndarray, y: float) -> None:
+        """
+        Add a new solution to the archive. Duplicate solutions are ignored.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            The solution to add.
+        y : float
+            The objective value of the solution.
+        """
         # duplicate check
         if np.any(np.all(np.isclose(self.data["x"], x.reshape(1, -1), atol=self.atol, rtol=self.rtol), axis=1)):
             # TODO: implement to match the actual evaluation count (fe) with the archive size
@@ -95,6 +147,21 @@ class Archive(Population):
         self.data["y"] = np.hstack((self.data["y"], y))
 
     def get_knn(self, x: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Get k-nearest neighbors of the given solution from the archive.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            The solution to find neighbors for.
+        k : int
+            The number of neighbors to retrieve.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            The k-nearest neighbors' solutions and their objective values.
+        """
         dist = np.linalg.norm(self.data["x"] - x, axis=1)
         idx = np.argsort(dist)[:k]
         return self.data["x"][idx], self.data["y"][idx]

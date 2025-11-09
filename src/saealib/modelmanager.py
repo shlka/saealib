@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from abc import ABC, abstractmethod
 
 import numpy as np
 
@@ -11,29 +12,80 @@ if TYPE_CHECKING:
 
 
 
-class ModelManager:
+class ModelManager(ABC):
     """
     Base class for surrogate model manager.
     """
-    def __init__(self):
+    @abstractmethod
+    def run(self, optimizer: Optimizer, candidate: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Run the model manager.
+
+        Parameters
+        ----------
+        optimizer : Optimizer
+            The optimizer instance.
+        candidate : np.ndarray
+            The candidate solutions to be evaluated or predicted.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            A tuple containing the candidate solutions and their corresponding fitness values.
+            (candidate_x, candidate_y)
+        """
         pass
 
 
 class IndividualBasedStrategy(ModelManager):
     """
     Individual-based strategy for surrogate model management.
+
+    A method in which a certain percentage of individuals are evaluated with a true evaluation function
+    for each candidate solution per generation, and the remainder are predicted by a surrogate model.
+
+    Attributes
+    ----------
+    candidate : np.ndarray
+        The candidate solutions. shape=(n_candidate, n_dimension)
+    candidate_fit : np.ndarray
+        The fitness values of the candidate solutions. shape=(n_candidate,)
+    surrogate_model : Surrogate
+        The surrogate model used for predictions.
+    n_train : int
+        Number of training samples for surrogate model.
+    rsm : float
+        Ratio of real evaluations.
     """
     def __init__(self):
-        super().__init__()
+        """
+        Initialize IndividualBasedStrategy class.
+        """
         self.candidate = None
         self.candidate_fit =None
         self.surrogate_model = None
 
-        # parameters (optional)
+        # parameters (optional) TODO: make them configurable
         self.n_train = 50
         self.rsm = 0.1
 
-    def run(self, optimizer: Optimizer, candidate: np.ndarray):
+    def run(self, optimizer: Optimizer, candidate: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Run the individual-based strategy.
+
+        Parameters
+        ----------
+        optimizer : Optimizer
+            The optimizer instance.
+        candidate : np.ndarray
+            The candidate solutions to be evaluated or predicted.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            A tuple containing the candidate solutions and their corresponding fitness values.
+            (candidate_x, candidate_y)
+        """
         self.candidate = candidate
         n_cand = len(self.candidate)
         psm = int(self.rsm * n_cand)
