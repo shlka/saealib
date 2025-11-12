@@ -168,12 +168,12 @@ class Archive(Population):
         Archive
             Returns a new Archive including duplicate solutions.
         """
-        x_prev = self.data["x"].copy()
-        y_prev = self.data["y"].copy()
+        x_full = self.data["x"].copy()
+        y_full = self.data["y"].copy()
         for e in self.duplicate_log:
             idx = e["index"]
-            x_full = np.insert(x_prev, idx, e["x"], axis=0)
-            y_full = np.insert(y_prev, idx, e["y"], axis=0)
+            x_full = np.insert(x_full, idx, e["x"], axis=0)
+            y_full = np.insert(y_full, idx, e["y"], axis=0)
         arc_full = Archive.new(x_full, y_full, atol=self.atol, rtol=self.rtol)
         return arc_full
 
