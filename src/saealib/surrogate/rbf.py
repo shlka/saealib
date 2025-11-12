@@ -1,3 +1,8 @@
+"""
+RBF surrogate model module.
+
+This module defines the Radial Basis Function (RBF) surrogate model.
+"""
 import logging
 
 import numpy as np

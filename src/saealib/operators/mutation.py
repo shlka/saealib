@@ -1,3 +1,8 @@
+"""
+Mutation operators module.
+
+This module defines mutation operators for evolutionary algorithms.
+"""
 from abc import ABC, abstractmethod
 
 import numpy as np

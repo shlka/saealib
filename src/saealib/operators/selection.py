@@ -1,3 +1,8 @@
+"""
+Selection operators module.
+
+This module defines selection operators for evolutionary algorithms.
+"""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

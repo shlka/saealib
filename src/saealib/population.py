@@ -1,3 +1,8 @@
+"""
+Population module.
+
+This module defines classes to handle populations and individuals.
+"""
 from __future__ import annotations
 
 import numpy as np

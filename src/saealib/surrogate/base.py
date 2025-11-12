@@ -1,3 +1,8 @@
+"""
+Surrogate base module.
+
+This module defines the base class for surrogate models.
+"""
 from abc import ABC, abstractmethod
 
 import numpy as np

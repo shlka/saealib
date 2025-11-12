@@ -1,3 +1,8 @@
+"""
+Repair operators module.
+
+This module defines repair operators to fix individuals that violate problem constraints.
+"""
 import numpy as np
 
 

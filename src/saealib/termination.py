@@ -1,3 +1,8 @@
+"""
+Termination module.
+
+Termination class defines criteria to stop the optimization process.
+"""
 class Termination:
     """
     Termination class to determine when to stop the optimization process.
