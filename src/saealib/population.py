@@ -1,0 +1,172 @@
+"""
+Population module.
+
+This module defines classes to handle populations and individuals.
+"""
+from __future__ import annotations
+
+import numpy as np
+
+
+class Individual:
+    """
+    Individual class to handle single individual in population.
+
+    Attributes
+    ----------
+    population : Population
+    index : int
+        Index of the individual in the population.
+    """
+    # TODO: Consider how to avoid circular references to Population
+    def __init__(self, population: Population, index: int):
+        self.population = population
+        self.index = index
+
+    def get(self, key: str) -> np.ndarray:
+        if key not in self.population.data:
+            return None
+        return self.population.get(key)[self.index]
+
+    def set(self, key: str, value: np.ndarray) -> None:
+        self.population.get(key)[self.index] = value
+
+
+class Solution(Individual):
+    """
+    Solution class to generate single individual easily.
+    """
+    def __init__(self, x: np.ndarray, **kwargs):
+        pop = Population.new("x", np.array([x]))
+        for k, v in kwargs.items():
+            pop.set(k, np.array([v]))
+        super().__init__(pop, 0)
+
+
+
+class Population:
+    """
+    Base class for population.
+    (self.data must have at least "x" key.)
+
+    Attributes
+    ----------
+    data : dict[str, np.ndarray]
+        Dictionary to store population data.
+    """
+    def __init__(self):
+        self.data = {}
+    
+    @staticmethod
+    def new(key: str, value: np.ndarray) -> Population:
+        pop = Population()
+        pop.set(key, value)
+        return pop
+
+    def get(self, key: str) -> np.ndarray:
+        """
+        Get the population data for the given key.
+
+        Parameters
+        ----------
+        key : str
+            The key to retrieve data for.
+        """
+        if key not in self.data:
+            return None
+        return self.data.get(key)
+
+    def set(self, key: str, value: np.ndarray) -> None:
+        """
+        Set the population data for the given key.
+
+        Parameters
+        ----------
+        key : str
+            The key to set data for.
+        value : np.ndarray
+            The data to set for the given key.
+        """
+        self.data[key] = value
+
+    def __len__(self):
+        if "x" in self.data:
+            return self.data["x"].shape[0]
+        return 0
+    
+    def __getitem__(self, index):    
+        if isinstance(index, int):
+            return Individual(self, index)
+        elif isinstance(index, slice):
+            return [Individual(self, i) for i in range(*index.indices(len(self)))]
+        else:
+            raise TypeError("Invalid argument type.")
+
+
+class Archive(Population):
+    """
+    Archive class to handle archive of evaluated solutions.
+    (self.data must have at least "x" and "y" keys.)
+
+    Attributes
+    ----------
+    data : dict[str, np.ndarray]
+        Dictionary to store archive data. keys are "x" and "y".
+    atol : float
+        Absolute tolerance for duplicate check.
+    rtol : float
+        Relative tolerance for duplicate check.
+    """
+    def __init__(self, atol: float = 0.0, rtol: float = 0.0):
+        super().__init__()
+        self.data["x"] = np.empty((0, 0))
+        self.data["y"] = np.empty((0, ))
+        self.atol = atol  # tolerance for duplicate check
+        self.rtol = rtol  # relative tolerance for duplicate check
+
+    @staticmethod
+    def new(x: np.ndarray, y: np.ndarray, atol: float = 0.0, rtol: float = 0.0) -> Archive:
+        archive = Archive(atol=atol, rtol=rtol)
+        archive.set("x", x)
+        archive.set("y", y)
+        return archive
+
+    def add(self, x: np.ndarray, y: float) -> None:
+        """
+        Add a new solution to the archive. Duplicate solutions are ignored.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            The solution to add.
+        y : float
+            The objective value of the solution.
+        """
+        # duplicate check
+        if np.any(np.all(np.isclose(self.data["x"], x.reshape(1, -1), atol=self.atol, rtol=self.rtol), axis=1)):
+            # TODO: implement to match the actual evaluation count (fe) with the archive size
+            # self.data["x"] = np.vstack((self.data["x"], x.reshape(1, -1)))
+            # self.data["y"] = np.hstack((self.data["y"], np.inf))
+            return
+        self.data["x"] = np.vstack((self.data["x"], x.reshape(1, -1)))
+        self.data["y"] = np.hstack((self.data["y"], y))
+
+    def get_knn(self, x: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Get k-nearest neighbors of the given solution from the archive.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            The solution to find neighbors for.
+        k : int
+            The number of neighbors to retrieve.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            The k-nearest neighbors' solutions and their objective values.
+        """
+        dist = np.linalg.norm(self.data["x"] - x, axis=1)
+        idx = np.argsort(dist)[:k]
+        return self.data["x"][idx], self.data["y"][idx]
