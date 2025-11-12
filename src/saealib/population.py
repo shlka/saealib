@@ -121,6 +121,7 @@ class Archive(Population):
         super().__init__()
         self.data["x"] = np.empty((0, 0))
         self.data["y"] = np.empty((0, ))
+        self.duplicate_log = []
         self.atol = atol  # tolerance for duplicate check
         self.rtol = rtol  # relative tolerance for duplicate check
 
@@ -147,9 +148,34 @@ class Archive(Population):
             # TODO: implement to match the actual evaluation count (fe) with the archive size
             # self.data["x"] = np.vstack((self.data["x"], x.reshape(1, -1)))
             # self.data["y"] = np.hstack((self.data["y"], np.inf))
+            self.duplicate_log.append({
+                "index": len(self.data["y"]),
+                "x": x.copy(),
+                "y": y
+            })
             return
         self.data["x"] = np.vstack((self.data["x"], x.reshape(1, -1)))
         self.data["y"] = np.hstack((self.data["y"], y))
+
+    def restore_duplicates(self) -> Archive:
+        """
+        Restore duplicate solutions and return a new Archive including them.
+
+        This method does not modify the current Archive instance.
+
+        Returns
+        -------
+        Archive
+            Returns a new Archive including duplicate solutions.
+        """
+        x_prev = self.data["x"].copy()
+        y_prev = self.data["y"].copy()
+        for e in self.duplicate_log:
+            idx = e["index"]
+            x_full = np.insert(x_prev, idx, e["x"], axis=0)
+            y_full = np.insert(y_prev, idx, e["y"], axis=0)
+        arc_full = Archive.new(x_full, y_full, atol=self.atol, rtol=self.rtol)
+        return arc_full
 
     def get_knn(self, x: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
         """
