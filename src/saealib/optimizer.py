@@ -1,3 +1,8 @@
+"""
+Optimizer module.
+
+Optimizer class that integrates components to perform evolutionary optimization with surrogate models.
+"""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

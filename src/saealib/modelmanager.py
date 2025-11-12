@@ -1,3 +1,10 @@
+"""
+Model manager module.
+
+This module defines the base class `ModelManager` and the derived class `IndividualBasedStrategy`
+for managing surrogate models in evolutionary optimization.
+These classes provide how to evaluate candidate solutions using a combination of true evaluations and surrogate model predictions.
+"""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

@@ -1,3 +1,8 @@
+"""
+Problem module.
+
+Problem has definitions for optimization problems, and includes classes that depend on problem.
+"""
 from __future__ import annotations
 
 from enum import Enum, auto

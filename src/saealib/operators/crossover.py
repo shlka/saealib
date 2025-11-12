@@ -1,3 +1,8 @@
+"""
+Crossover operators module.
+
+This module defines crossover operators for evolutionary algorithms.
+"""
 from abc import ABC, abstractmethod
 
 import numpy as np
