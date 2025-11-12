@@ -112,6 +112,8 @@ class Archive(Population):
     ----------
     data : dict[str, np.ndarray]
         Dictionary to store archive data. keys are "x" and "y".
+    duplicate_log : list[dict]
+        List to store duplicate solutions information.
     atol : float
         Absolute tolerance for duplicate check.
     rtol : float
