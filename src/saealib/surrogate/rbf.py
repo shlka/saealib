@@ -90,7 +90,7 @@ class RBFsurrogate(Surrogate):
             self.weights = np.linalg.solve(self.kernel_matrix, (train_y - np.mean(train_y)))
         except np.linalg.LinAlgError:
             logger.error("Failed to solve linear system (Kernel matrix might be singular).")
-            self.weights = np.zeros(n_samples)
+            self.weights = np.nan * np.ones(n_samples)
 
     def predict(self, test_x: np.ndarray) -> np.ndarray:
         test = np.asarray(test_x)
