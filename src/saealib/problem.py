@@ -8,6 +8,7 @@ from __future__ import annotations
 from enum import Enum, auto
 from typing import TYPE_CHECKING
 from abc import ABC, abstractmethod
+from functools import partial
 
 import numpy as np
 
@@ -76,8 +77,8 @@ class Problem:
             constraints_list = constraints
         
         for i in range(dim):
-            constraints_list.append(Constraint(lambda x, i=i: x[i] - self.ub[i], type=ConstraintType.INEQ))
-            constraints_list.append(Constraint(lambda x, i=i: self.lb[i] - x[i], type=ConstraintType.INEQ))
+            constraints_list.append(Constraint(partial(ub_constraint, ub=self.ub), type=ConstraintType.INEQ))
+            constraints_list.append(Constraint(partial(lb_constraint, lb=self.lb), type=ConstraintType.INEQ))
         
         self.constraint_manager = ConstraintManager(constraints=constraints_list)
 
@@ -155,6 +156,44 @@ class Constraint:
             return max(0, v)
         elif self.type_constraint == ConstraintType.EQ:
             return abs(v)
+
+
+def ub_constraint(x: np.ndarray, ub: np.ndarray) -> np.ndarray:
+    """
+    Upper bound constraint function.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        The solution to evaluate.
+    ub : np.ndarray
+        Upper bounds for design variables.
+
+    Returns
+    -------
+    np.ndarray
+        The upper bound constraint violation.
+    """
+    return x - ub
+
+
+def lb_constraint(x: np.ndarray, lb: np.ndarray) -> np.ndarray:
+    """
+    Lower bound constraint function.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        The solution to evaluate.
+    lb : np.ndarray
+        Lower bounds for design variables.
+
+    Returns
+    -------
+    np.ndarray
+        The lower bound constraint violation.
+    """
+    return lb - x
 
 
 class ConstraintManager:
