@@ -121,10 +121,10 @@ class Population:
         self.data[key] = value
 
     def __len__(self):
-        if "x" in self.data:
-            return self.data["x"].shape[0]
-        return 0
-    
+        if not self.data:
+            return 0
+        return len(next(iter(self.data.values())))
+
     def __getitem__(self, index):    
         if isinstance(index, int):
             return Individual(self, index)
