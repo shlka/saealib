@@ -133,6 +133,10 @@ class Population:
         else:
             raise TypeError("Invalid argument type.")
 
+    def __iter__(self) -> iter:
+        for i in range(len(self)):
+            yield Individual(self, i)
+
 
 class Archive(Population):
     """
