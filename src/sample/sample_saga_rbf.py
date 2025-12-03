@@ -3,7 +3,7 @@ import logging
 import cProfile
 from opfunu.cec_based import cec2015
 
-from saealib.core import Optimizer, Problem, Termination, GA, MutationUniform, CrossoverBLXAlpha, SequentialSelection, TruncationSelection, RBFsurrogate, gaussian_kernel, IndividualBasedStrategy
+from saealib import Optimizer, Problem, Termination, GA, MutationUniform, CrossoverBLXAlpha, SequentialSelection, TruncationSelection, RBFsurrogate, gaussian_kernel, IndividualBasedStrategy
 
 logging.basicConfig(level=logging.INFO)
 
