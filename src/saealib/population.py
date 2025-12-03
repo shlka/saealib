@@ -63,6 +63,37 @@ class Population:
         pop.set(key, value)
         return pop
 
+    @classmethod
+    def merge(cls, *populations: Population) -> Population:
+        """
+        Merge multiple populations into new Population.
+
+        Only keys common to all populations are merged.
+
+        Parameters
+        ----------
+        *populations : Population
+            Populations to merge.
+
+        Returns
+        -------
+        Population
+            Merged Population.
+        """
+        if not populations:
+            return cls()
+        
+        all_keys = set().union(*(pop.data.keys() for pop in populations))
+
+        new_pop = cls()
+        for key in all_keys:
+            merged_arr = [p.get(key) for p in populations if p.get(key) is not None]
+            if len(merged_arr) == len(populations):
+                new_pop.set(key, np.vstack(merged_arr))
+        
+        return new_pop
+
+
     def get(self, key: str) -> np.ndarray:
         """
         Get the population data for the given key.
