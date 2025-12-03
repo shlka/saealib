@@ -43,6 +43,17 @@ class ModelManager(ABC):
         """
         pass
 
+    def step(self, optimizer: Optimizer) -> None:
+        """
+        Step function called at each generation.
+
+        Parameters
+        ----------
+        optimizer : Optimizer
+            The optimizer instance.
+        """
+        pass
+
 
 class IndividualBasedStrategy(ModelManager):
     """
