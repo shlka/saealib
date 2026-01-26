@@ -8,39 +8,6 @@ from __future__ import annotations
 import numpy as np
 
 
-class Individual:
-    """
-    Individual class to handle single individual in population.
-
-    Attributes
-    ----------
-    population : Population
-    index : int
-        Index of the individual in the population.
-    """
-    # TODO: Consider how to avoid circular references to Population
-    def __init__(self, population: Population, index: int):
-        self.population = population
-        self.index = index
-
-    def get(self, key: str) -> np.ndarray:
-        if key not in self.population.data:
-            return None
-        return self.population.get(key)[self.index]
-
-    def set(self, key: str, value: np.ndarray) -> None:
-        self.population.get(key)[self.index] = value
-
-
-class Solution(Individual):
-    """
-    Solution class to generate single individual easily.
-    """
-    def __init__(self, x: np.ndarray, **kwargs):
-        pop = Population.new("x", np.array([x]))
-        for k, v in kwargs.items():
-            pop.set(k, np.array([v]))
-        super().__init__(pop, 0)
 
 
 
