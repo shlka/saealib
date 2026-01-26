@@ -394,9 +394,64 @@ class Population:
         else:
             raise TypeError("Invalid argument type.")
 
-    def __iter__(self) -> iter:
-        for i in range(len(self)):
-            yield Individual(self, i)
+
+class Individual(Generic[T_Population]):
+    """
+    Individual class representing a single solution in the population.
+
+    Attributes
+    ----------
+    _popref : weakref.ref
+        Weak reference to the parent population.
+    _index : int
+        Index of the individual in the population.
+    _version : int
+        Version number to track modifications.
+    """
+    __slots__ = ("_popref", "_index", "_version")
+
+    def __init__(self, population: T_Population, index: int):
+        self._popref = weakref.ref(population)
+        self._index = index
+        self._version = population._version
+
+    def _get_pop(self) -> T_Population:
+        """
+        Get the referenced population, checking for validity.
+
+        Returns
+        -------
+        Population
+            The referenced population.
+        """
+        pop = self._popref()
+        if pop is None or pop._version != self._version:
+            raise RuntimeError("Invalid Individual reference")
+        return pop
+
+    def __getattr__(self, name: str) -> Any:
+        pop = self._get_pop()
+        if name in pop._data:
+            return pop._data[name][self._index]
+        else:
+            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name in self.__slots__:
+            super().__setattr__(name, value)
+            return
+        else:
+            pop = self._get_pop()
+            if name in pop._data:
+                pop._data[name][self._index] = value
+                return
+            else:
+                raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+    @property
+    def pop(self) -> T_Population:
+        pop = self._get_pop()
+        return pop
 
 
 class Archive(Population):
