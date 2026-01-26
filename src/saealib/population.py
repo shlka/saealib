@@ -457,78 +457,124 @@ class Individual(Generic[T_Population]):
 class Archive(Population):
     """
     Archive class to handle archive of evaluated solutions.
-    (self.data must have at least "x" and "y" keys.)
+    (self.data must have at least key_attr (default is "x").)
+    Duplicate removal and range queries can be performed.
 
     Attributes
     ----------
     data : dict[str, np.ndarray]
-        Dictionary to store archive data. keys are "x" and "y".
+        Dictionary to store archive data.
     duplicate_log : list[dict]
         List to store duplicate solutions information.
+    key_attr : str
+        Key for duplicate checking
     atol : float
         Absolute tolerance for duplicate check.
     rtol : float
         Relative tolerance for duplicate check.
     """
-    def __init__(self, atol: float = 0.0, rtol: float = 0.0):
-        super().__init__()
-        self.data["x"] = np.empty((0, 0))
-        self.data["y"] = np.empty((0, ))
-        self.duplicate_log = []
+    def __init__(self, attrs: List[PopulationAttribute], init_capacity: int = 100, key_attr: str = "x", atol: float = 0.0, rtol: float = 0.0):
+        super().__init__(attrs, init_capacity)
+        if key_attr not in self.schema:
+            raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
+        self._duplicate_indices: List[int] = []
+        self.key_attr = key_attr
         self.atol = atol  # tolerance for duplicate check
         self.rtol = rtol  # relative tolerance for duplicate check
 
-    @staticmethod
-    def new(x: np.ndarray, y: np.ndarray, atol: float = 0.0, rtol: float = 0.0) -> Archive:
-        archive = Archive(atol=atol, rtol=rtol)
-        archive.set("x", x)
-        archive.set("y", y)
-        return archive
-
-    def add(self, x: np.ndarray, y: float) -> None:
+    def add(self, element: Individual | Dict[str, Any] | None = None, **kwargs) -> int:
         """
         Add a new solution to the archive. Duplicate solutions are ignored.
 
         Parameters
         ----------
-        x : np.ndarray
-            The solution to add.
-        y : float
-            The objective value of the solution.
-        """
-        # duplicate check
-        if np.any(np.all(np.isclose(self.data["x"], x.reshape(1, -1), atol=self.atol, rtol=self.rtol), axis=1)):
-            # TODO: implement to match the actual evaluation count (fe) with the archive size
-            # self.data["x"] = np.vstack((self.data["x"], x.reshape(1, -1)))
-            # self.data["y"] = np.hstack((self.data["y"], np.inf))
-            self.duplicate_log.append({
-                "index": len(self.data["y"]),
-                "x": x.copy(),
-                "y": y
-            })
-            return
-        self.data["x"] = np.vstack((self.data["x"], x.reshape(1, -1)))
-        self.data["y"] = np.hstack((self.data["y"], y))
+        element : Individual | dict | None
+            Data for the additional individual
+        **kwargs : 
+            Set attribute values individually and add them. Alternatively, overwrite based on the element's value and add it.
+        
+        Returns
+        -------
+        idx : int
+            Destination Index
 
-    def restore_duplicates(self) -> Archive:
+        Example
+        -------
+        >>> arcv.add(ind)               # adding ind(Individual)
+        >>> arcv.add({"x": x_val})      # adding dict
+        >>> arcv.add(x=x_val, f=0.1)    # adding with keywords
+        >>> arcv.add(ind, f=0.1)        # Overwrite only the 'f' based on the ind and add it.
         """
-        Restore duplicate solutions and return a new Archive including them.
+        # get adding solution
+        key_attr_val = kwargs.get(self.key_attr)
+        if key_attr_val is None:
+            if isinstance(element, dict):
+                key_attr_val = element.get(self.key_attr)
+            elif element is not None and hasattr(element, self.key_attr):
+                key_attr_val = getattr(element, self.key_attr)
+        if key_attr_val is None:
+            # element does not have key_attr
+            raise ValueError(f"Solution must have {self.key_attr} attribute")
+        
+        # check duplicate
+        idx = self._find_idx(key_attr_val)
 
-        This method does not modify the current Archive instance.
+        if idx is not None:
+            # duplicate found
+            self._duplicate_indices.append(idx)
+            return idx
+        else:
+            # no duplicate
+            new_idx = self._size
+            super().append(element, **kwargs)
+            self._duplicate_indices.append(new_idx)
+            return new_idx
+
+    def _find_idx(self, element: np.ndarray | np.floating) -> int | None:
+        """
+        Search for duplicate indexes and return them if found.
+
+        Parameters
+        ----------
+        element : np.ndarray | np.floating
+            Search target
+        
+        Returns
+        -------
+        int | None
+            Duplicate index. Return None if it does not exist.
+        """
+        if self._size == 0:
+            return None
+        # TODO: Handling cases where the element is not a np.ndarray
+        key_attr_arr = self.get_array(self.key_attr)
+        element = np.array(element, dtype=self._schema[self.key_attr].dtype)
+        if element.ndim == 0:
+            element = element.reshape(1)
+        if element.shape != key_attr_arr.shape[1:]:
+            element = element.reshape(key_attr_arr.shape[1:])
+        matching = np.all(np.isclose(key_attr_arr, element, atol=self.atol, rtol=self.rtol), axis=1)
+        indices = np.where(matching)[0]
+        if indices.size > 0:
+            return int(indices[0])
+        return None
+
+    def get_duplicated_population(self) -> Population:
+        """
+        Returns a Population object without removing duplicates.
 
         Returns
         -------
-        Archive
-            Returns a new Archive including duplicate solutions.
+        Population without removing duplicates.
         """
-        x_full = self.data["x"].copy()
-        y_full = self.data["y"].copy()
-        for e in self.duplicate_log:
-            idx = e["index"]
-            x_full = np.insert(x_full, idx, e["x"], axis=0)
-            y_full = np.insert(y_full, idx, e["y"], axis=0)
-        arc_full = Archive.new(x_full, y_full, atol=self.atol, rtol=self.rtol)
-        return arc_full
+        all_length = len(self._duplicate_indices)
+        dup_pop = Population(attrs=list(self._schema.values()), init_capacity=all_length)
+        indices = np.array(self._duplicate_indices)
+        for k, v in self._data.items():
+            dup_pop._data[k][:all_length] = v[indices]
+        dup_pop._size = all_length
+        dup_pop._version = self._version
+        return dup_pop
 
     def get_knn(self, x: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
         """
@@ -546,6 +592,10 @@ class Archive(Population):
         tuple[np.ndarray, np.ndarray]
             The k-nearest neighbors' solutions and their objective values.
         """
-        dist = np.linalg.norm(self.data["x"] - x, axis=1)
+        if self._size == 0:
+            return np.array([]), np.array([])
+        key_attr_arr = self.get_array(self.key_attr)
+        dist = np.linalg.norm(key_attr_arr - x, axis=1)
+        k = min(k, self._size)
         idx = np.argsort(dist)[:k]
-        return self.data["x"][idx], self.data["y"][idx]
+        return idx, dist[idx]
