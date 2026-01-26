@@ -4,11 +4,36 @@ Population module.
 This module defines classes to handle populations and individuals.
 """
 from __future__ import annotations
+from dataclasses import dataclass
+from typing import Type, Tuple, List, Dict, Any, TypeVar, Generic
+from typing_extensions import Self
+from types import MappingProxyType
+import weakref
+import warnings
 
 import numpy as np
 
 
+@dataclass(frozen=True)
+class PopulationAttribute:
+    """
+    Population attribute definition.
 
+    Attributes
+    ----------
+    name : str
+        Name of the attribute.
+    dtype : Type | np.dtype
+        Data type of the attribute.
+    shape : Tuple[int, ...]
+        Shape of the attribute.
+    default : Any
+        Default value for the attribute.
+    """
+    name: str
+    dtype: Type | np.dtype
+    shape: Tuple[int, ...] = ()
+    default: Any = np.nan
 
 
 class Population:
