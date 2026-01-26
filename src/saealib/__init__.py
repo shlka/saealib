@@ -11,7 +11,7 @@ from saealib.algorithm import Algorithm, GA
 from saealib.termination import Termination
 from saealib.modelmanager import ModelManager, IndividualBasedStrategy
 from saealib.callback import CallbackManager, CallbackEvent, logging_generation
-from saealib.population import Population, Individual, Archive
+from saealib.population import Population, Individual, Archive, PopulationAttribute
 
 # surrogate models
 from saealib.surrogate.base import Surrogate
@@ -39,7 +39,7 @@ __all__ = [
     "Termination",
     "ModelManager", "IndividualBasedStrategy",
     "CallbackManager", "CallbackEvent", "logging_generation",
-    "Population", "Individual", "Archive",
+    "Population", "Individual", "Archive", "PopulationAttribute",
     # surrogate models
     "Surrogate", "RBFsurrogate", "gaussian_kernel",
     # operators
