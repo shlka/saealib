@@ -528,9 +528,9 @@ class ArchiveMixin:
     rtol : float
         Relative tolerance for duplicate check.
     """
-    def __init__(self, *args, key_attr: str = "x", atol: float = 0.0, rtol: float = 0.0, **kwargs):
+    def __init__(self, attrs: List[PopulationAttribute], init_capacity: int = 100, key_attr: str = "x", atol: float = 0.0, rtol: float = 0.0, **kwargs):
         # initialize Population class
-        super().__init__(*args, **kwargs)
+        super().__init__(attrs=attrs, init_capacity=init_capacity **kwargs)
 
         if key_attr not in self.schema:
             raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
