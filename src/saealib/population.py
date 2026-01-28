@@ -92,6 +92,12 @@ class Population(Generic[T_Individual]):
 
     individual_class = None
 
+    # Reserve standard expressions
+    x: np.ndarray = bind_property_array("x", doc="Design variables")
+    f: np.ndarray = bind_property_array("f", doc="Objective function values")
+    g: np.ndarray = bind_property_array("g", doc="Constraint values")
+    cv: np.ndarray = bind_property_array("cv", doc="Constraint violation")
+
     def __init__(self, attrs: List[PopulationAttribute], init_capacity: int = 100) -> None:
         """
         Initialize a Population.
