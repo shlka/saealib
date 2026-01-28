@@ -15,6 +15,7 @@ import numpy as np
 
 
 T_Population = TypeVar("T_Population", bound="Population")
+T_Individual = TypeVar("T_Individual", bound="Individual")
 
 
 @dataclass(frozen=True)
@@ -39,7 +40,39 @@ class PopulationAttribute:
     default: Any = np.nan
 
 
-class Population:
+class PropertyAvoidConfCheck(property):
+    """
+    A subclass of the property to avoid attribute conflict checks in Population. 
+    Using for function 'bind_property', 'bind_property_array'. 
+    This class and property behave identically, differing only in their class names.
+    """
+    pass
+
+
+def bind_property(key: str, doc: str = "") -> Any:
+    """
+    Helper function: make property for Individual attributes.
+    """
+    def fget(self):
+        return self.__getattr__(key)
+    def fset(self, value):
+        self.__setattr__(key, value)
+    return PropertyAvoidConfCheck(fget, fset, doc=doc)
+
+
+def bind_property_array(key: str, doc: str = "") -> Any:
+    """
+    Helper function: make property for Population attributes.
+    Need 'get_array' method for setter.
+    """
+    def fget(self):
+        return self.__getattr__(key)
+    def fset(self, value):
+        self.get_array(key)[:] = value
+    return PropertyAvoidConfCheck(fget, fset, doc=doc)
+
+
+class Population(Generic[T_Individual]):
     """
     Container for population data.
 
@@ -56,6 +89,9 @@ class Population:
     _version : int
         Version number to track modifications.
     """
+
+    individual_class = None
+
     def __init__(self, attrs: List[PopulationAttribute], init_capacity: int = 100) -> None:
         """
         Initialize a Population.
@@ -125,7 +161,7 @@ class Population:
             self._data[k] = new_arr
         self._capacity = new_capacity
 
-    def append(self, element: Individual | Dict[str, Any] | None = None, **kwargs) -> None:
+    def append(self, element: T_Individual | Dict[str, Any] | None = None, **kwargs) -> None:
         """
         Append a new individual to the population.
 
@@ -376,7 +412,7 @@ class Population:
 
         raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
 
-    def __getitem__(self, index: int | slice) -> Individual | Population:
+    def __getitem__(self, index: int | slice) -> T_Individual | Self:
         """
         support bracket access
 
@@ -387,7 +423,7 @@ class Population:
         if isinstance(index, int):
             if index < 0 or index >= self._size:
                 raise IndexError("Index out of range")
-            return Individual(self, index)
+            return self.individual_class(self, index)
         # slice (return Population)
         elif isinstance(index, slice):
             return self.extract(index)
@@ -454,7 +490,7 @@ class Individual(Generic[T_Population]):
         return pop
 
 
-class Archive(Population):
+class Archive(Population[T_Individual]):
     """
     Archive class to handle archive of evaluated solutions.
     (self.data must have at least key_attr (default is "x").)
@@ -599,3 +635,6 @@ class Archive(Population):
         k = min(k, self._size)
         idx = np.argsort(dist)[:k]
         return idx, dist[idx]
+
+
+Population.individual_class = Individual
