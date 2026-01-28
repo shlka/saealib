@@ -501,9 +501,11 @@ class Individual(Generic[T_Population]):
         return pop
 
 
-class Archive(Population[T_Individual]):
+class ArchiveMixin:
     """
-    Archive class to handle archive of evaluated solutions.
+    A mixin class for using Population as an Archive.
+    Must be subclassed via multiple inheritance as a subclass of the Population class.
+    Handle archive of evaluated solutions.
     (self.data must have at least key_attr (default is "x").)
     Duplicate removal and range queries can be performed.
 
@@ -520,8 +522,10 @@ class Archive(Population[T_Individual]):
     rtol : float
         Relative tolerance for duplicate check.
     """
-    def __init__(self, attrs: List[PopulationAttribute], init_capacity: int = 100, key_attr: str = "x", atol: float = 0.0, rtol: float = 0.0):
-        super().__init__(attrs, init_capacity)
+    def __init__(self, *args, key_attr: str = "x", atol: float = 0.0, rtol: float = 0.0, **kwargs):
+        # initialize Population class
+        super().__init__(*args, **kwargs)
+
         if key_attr not in self.schema:
             raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
         self._duplicate_indices: List[int] = []
@@ -646,6 +650,23 @@ class Archive(Population[T_Individual]):
         k = min(k, self._size)
         idx = np.argsort(dist)[:k]
         return idx, dist[idx]
+
+class Archive(ArchiveMixin, Population):
+    """    
+    Handle archive of evaluated solutions.
+    (self.data must have at least key_attr (default is "x").)
+    Duplicate removal and range queries can be performed.
+
+    Attributes
+    ----------
+    key_attr : str
+        Key for duplicate checking
+    atol : float
+        Absolute tolerance for duplicate check.
+    rtol : float
+        Relative tolerance for duplicate check.
+    """
+    pass
 
 
 Population.individual_class = Individual
