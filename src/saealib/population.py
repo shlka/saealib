@@ -103,17 +103,6 @@ class Population(Generic[T_Individual]):
         init_capacity : int, optional
             Initial capacity of the population, by default 100.
         """
-        # checking duplicate attrs
-        reserved_names = set(dir(self.__class__)) | set(self.__dict__.keys())
-        for attr in attrs:
-            if attr.name in reserved_names:
-                warnings.warn(
-                    f"Attribute name '{attr.name}' conflicts with a Population method/property. "
-                    f"Access via pop.{attr.name} will return the method. "
-                    f"Use pop.get('{attr.name}') or pop.get_array('{attr.name}') to access the data.",
-                    UserWarning,
-                    stacklevel=3
-                )
         self._capacity = init_capacity
         self._size = 0
         self._version = 0
@@ -121,6 +110,28 @@ class Population(Generic[T_Individual]):
         for attr in attrs:
             self._init_column(attr, self._capacity)
         self._schema = {attr.name: attr for attr in attrs}
+        self._check_name_conflicts()
+
+    def _check_name_conflicts(self):
+        """
+        Check conflict attributes. 
+        If any attributes provided during initialization have the same name 
+        as a method or property of the Population class, a warning message is displayed.
+        """
+        cls = type(self)
+        for name in self.schema:
+            if hasattr(cls, name):
+                attr = getattr(cls, name)
+                if isinstance(attr, PropertyAvoidConfCheck):
+                    # No conflicts occur for properties added using the bind_property function or the bind_property_array function.
+                    continue
+                warnings.warn(
+                    f"Attribute name '{name}' conflicts with a Population method/property. "
+                    f"Access via pop.{name} will return the method. "
+                    f"Use pop.get('{name}') or pop.get_array('{name}') to access the data.",
+                    UserWarning,
+                    stacklevel=3
+                )
 
     def _init_column(self, attr: PopulationAttribute, capacity: int) -> None:
         """
