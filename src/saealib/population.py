@@ -530,7 +530,7 @@ class ArchiveMixin:
     """
     def __init__(self, attrs: List[PopulationAttribute], init_capacity: int = 100, key_attr: str = "x", atol: float = 0.0, rtol: float = 0.0, **kwargs):
         # initialize Population class
-        super().__init__(attrs=attrs, init_capacity=init_capacity **kwargs)
+        super().__init__(attrs=attrs, init_capacity=init_capacity)
 
         if key_attr not in self.schema:
             raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
