@@ -14,10 +14,10 @@ import numpy as np
 from saealib.callback import CallbackEvent
 
 if TYPE_CHECKING:
-    from .optimizer import Optimizer
-    from .operators.crossover import Crossover
-    from .operators.mutation import Mutation
-    from .operators.selection import ParentSelection, SurvivorSelection
+    from saealib.optimizer import Optimizer
+    from saealib.operators.crossover import Crossover
+    from saealib.operators.mutation import Mutation
+    from saealib.operators.selection import ParentSelection, SurvivorSelection
 
 
 class Algorithm(ABC):
