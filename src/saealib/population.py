@@ -239,7 +239,7 @@ class Population(Generic[T_Individual]):
             The other population to extend from.
         """
         # Population(Self) or dict
-        if isinstance(other, (Self, Population)):
+        if isinstance(other, Population):
             other_size = len(other)
             other_data = {k: other.get_array(k) for k in other.schema}
         elif isinstance(other, dict):
