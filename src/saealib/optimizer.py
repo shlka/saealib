@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats
 
-from saealib.population import Population, Archive
+from saealib.population import Population, Archive, PopulationAttribute
 from saealib.callback import CallbackEvent, CallbackManager, logging_generation
 from saealib.operators.repair import repair_clipping
 
@@ -268,15 +268,28 @@ class Optimizer:
         """
         archive_x = scipy.stats.qmc.LatinHypercube(d=self.problem.dim, rng=self.rng).random(n_init_archive)
         archive_x = scipy.stats.qmc.scale(archive_x, self.problem.lb, self.problem.ub)
-        archive_y = np.array([self.problem.evaluate(ind) for ind in archive_x])
+        archive_f = np.array([self.problem.evaluate(ind) for ind in archive_x])
         # TODO: use cv if constraints are defined
-        archive_sort_idx = self.problem.comparator.sort(archive_y, np.zeros_like(archive_y))
+        archive_sort_idx = self.problem.comparator.sort(archive_f, np.zeros_like(archive_f))
         archive_x = archive_x[archive_sort_idx]
-        archive_y = archive_y[archive_sort_idx]
-        self.archive = Archive.new(archive_x, archive_y, atol=self.archive_atol, rtol=self.archive_rtol)
+        archive_f = archive_f[archive_sort_idx]
 
-        self.population = Population.new("x", self.archive.get("x")[:self.popsize])
-        self.population.set("f", self.archive.get("y")[:self.popsize])
+        # TODO: Handling "f" in multiple dimensions (comment out)
+        # TODO: Change to receive the required attributes from the Algorithm.
+        self.population_attributes = [
+            PopulationAttribute("x", float, (self.problem.dim, )),
+            # PopulationAttribute("f", float, (self.problem.n_obj, )),
+            PopulationAttribute("f", float),
+            PopulationAttribute("g", float),
+            PopulationAttribute("cv", float),
+        ]
+
+        self.archive = Archive(self.population_attributes, key_attr="x")
+        for i in range(self.archive_init_size):
+            self.archive.add({"x": archive_x[i], "f": archive_f[i]})
+
+        self.population = Population(self.population_attributes)
+        self.population.extend({"x": archive_x[:self.popsize], "f": archive_f[:self.popsize]})
 
         self.fe = self.archive_init_size
         self.gen = 0
