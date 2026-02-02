@@ -115,12 +115,14 @@ class IndividualBasedStrategy(ModelManager):
         # predict all candidates using surrogate model
         for i in range(n_cand):
             # get training data for candidate[i]
-            train_x, train_y = optimizer.archive.get_knn(self.candidate[i], k=self.n_train)
+            train_idx, _ = optimizer.archive.get_knn(self.candidate[i], k=self.n_train)
+            train_x = optimizer.archive.get_array("x")[train_idx]
+            train_f = optimizer.archive.get_array("f")[train_idx]
             # train RBF model
-            self.surrogate_model.fit(train_x, train_y)
+            self.surrogate_model.fit(train_x, train_f)
             # predict candidate[i]
             self.candidate_fit[i] = self.surrogate_model.predict(self.candidate[i])
-            optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, None, train_x=train_x, train_y=train_y, center=self.candidate[i])
+            optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, None, train_x=train_x, train_f=train_f, center=self.candidate[i])
 
         # psm individuals are evaluated using the true function
         # TODO: use cv if constraints are defined
@@ -135,7 +137,7 @@ class IndividualBasedStrategy(ModelManager):
 
         # add evaluated individuals to the archive
         for i in range(psm):
-            optimizer.archive.add(self.candidate_eval[i], self.candidate_eval_fit[i])
+            optimizer.archive.add({"x": self.candidate_eval[i], "f": self.candidate_eval_fit[i]})
 
         return self.candidate, self.candidate_fit
     
@@ -161,9 +163,11 @@ class IndividualBasedStrategy(ModelManager):
 
         for i in range(n_cand):
             # get training data for candidate[i]
-            train_x, train_y = optimizer.archive.get_knn(candidate[i], k=n_train)
+            train_idx, _ = optimizer.archive.get_knn(self.candidate[i], k=self.n_train)
+            train_x = optimizer.archive.get_array("x")[train_idx]
+            train_f = optimizer.archive.get_array("f")[train_idx]
             # train RBF model
-            self.surrogate_model.fit(train_x, train_y)
+            self.surrogate_model.fit(train_x, train_f)
             # predict candidate[i]
             candidate_fit[i] = self.surrogate_model.predict(candidate[i])
             optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, None, train_x=train_x, train_y=train_y, center=candidate[i])
