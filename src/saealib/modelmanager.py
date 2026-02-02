@@ -43,6 +43,17 @@ class ModelManager(ABC):
         """
         pass
 
+    def step(self, optimizer: Optimizer) -> None:
+        """
+        Step function called at each generation.
+
+        Parameters
+        ----------
+        optimizer : Optimizer
+            The optimizer instance.
+        """
+        pass
+
 
 class IndividualBasedStrategy(ModelManager):
     """
@@ -104,12 +115,14 @@ class IndividualBasedStrategy(ModelManager):
         # predict all candidates using surrogate model
         for i in range(n_cand):
             # get training data for candidate[i]
-            train_x, train_y = optimizer.archive.get_knn(self.candidate[i], k=self.n_train)
+            train_idx, _ = optimizer.archive.get_knn(self.candidate[i], k=self.n_train)
+            train_x = optimizer.archive.get_array("x")[train_idx]
+            train_f = optimizer.archive.get_array("f")[train_idx]
             # train RBF model
-            self.surrogate_model.fit(train_x, train_y)
+            self.surrogate_model.fit(train_x, train_f)
             # predict candidate[i]
             self.candidate_fit[i] = self.surrogate_model.predict(self.candidate[i])
-            optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, None, train_x=train_x, train_y=train_y, center=self.candidate[i])
+            optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, None, train_x=train_x, train_f=train_f, center=self.candidate[i])
 
         # psm individuals are evaluated using the true function
         # TODO: use cv if constraints are defined
@@ -124,6 +137,90 @@ class IndividualBasedStrategy(ModelManager):
 
         # add evaluated individuals to the archive
         for i in range(psm):
-            optimizer.archive.add(self.candidate_eval[i], self.candidate_eval_fit[i])
+            optimizer.archive.add({"x": self.candidate_eval[i], "f": self.candidate_eval_fit[i]})
 
         return self.candidate, self.candidate_fit
+    
+    def _predict_all(self, optimizer: Optimizer, candidate: np.ndarray, n_train: int) -> np.ndarray:
+        """
+        Predict fitness values for all candidate solutions using the surrogate model.
+        using k-NN training data selection.
+
+        Parameters
+        ----------
+        optimizer : Optimizer
+            The optimizer instance.
+        candidate : np.ndarray
+            The candidate solutions to be predicted.
+
+        Returns
+        -------
+        np.ndarray
+            The predicted fitness values for the candidate solutions.
+        """
+        n_cand = len(candidate)
+        candidate_fit = np.zeros(n_cand)
+
+        for i in range(n_cand):
+            # get training data for candidate[i]
+            train_idx, _ = optimizer.archive.get_knn(self.candidate[i], k=self.n_train)
+            train_x = optimizer.archive.get_array("x")[train_idx]
+            train_f = optimizer.archive.get_array("f")[train_idx]
+            # train RBF model
+            self.surrogate_model.fit(train_x, train_f)
+            # predict candidate[i]
+            candidate_fit[i] = self.surrogate_model.predict(candidate[i])
+            optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, None, train_x=train_x, train_y=train_y, center=candidate[i])
+
+        return candidate_fit
+    
+    def _eval_true(self, optimizer: Optimizer, candidate: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Evaluate candidate solutions using the true evaluation function.
+
+        Parameters
+        ----------
+        optimizer : Optimizer
+            The optimizer instance.
+        candidate : np.ndarray
+            The candidate solutions to be evaluated.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            A tuple containing the candidate solutions and their corresponding fitness values.
+            (candidate_x, candidate_y)
+        """
+        n_cand = len(candidate)
+        candidate_y = np.array([optimizer.problem.evaluate(ind) for ind in candidate])
+        optimizer.fe += n_cand
+
+        # add evaluated individuals to the archive
+        for i in range(n_cand):
+            optimizer.archive.add(candidate[i], candidate_y[i])
+
+        return candidate, candidate_y
+    
+    def step(self, optimizer: Optimizer) -> None:
+        """
+        Step function called at each generation.
+
+        Parameters
+        ----------
+        optimizer : Optimizer
+            The optimizer instance.
+        """
+        cand = optimizer.algorithm.ask(optimizer)
+        n_cand = len(cand)
+        n_eval = int(self.rsm * n_cand)
+        if n_eval < 1:
+            n_eval = 1
+
+        optimizer.dispatch(CallbackEvent.SURROGATE_START)
+
+        cand_x, cand_y = self.run(optimizer, cand)
+
+        optimizer.dispatch(CallbackEvent.SURROGATE_END, None, candidate_x=cand_x, candidate_y=cand_y)
+
+        optimizer.algorithm.tell(optimizer, cand_x, cand_y)
+

@@ -14,10 +14,10 @@ import numpy as np
 from saealib.callback import CallbackEvent
 
 if TYPE_CHECKING:
-    from .optimizer import Optimizer
-    from .operators.crossover import Crossover
-    from .operators.mutation import Mutation
-    from .operators.selection import ParentSelection, SurvivorSelection
+    from saealib.optimizer import Optimizer
+    from saealib.operators.crossover import Crossover
+    from saealib.operators.mutation import Mutation
+    from saealib.operators.selection import ParentSelection, SurvivorSelection
 
 
 class Algorithm(ABC):
@@ -96,15 +96,15 @@ class GA(Algorithm):
         - dispatch (method)
         """
         candidate = np.empty((0, optimizer.problem.dim))
-        popsize = len(optimizer.population)
-        pop = optimizer.population.get("x")
+        pop = optimizer.population.get_array("x")
+        popsize = len(pop)
         lb = optimizer.problem.lb
         ub = optimizer.problem.ub
         n_pair = math.ceil(popsize / 2)
         parent_idx_m = self.parent_selection.select(
             optimizer,
             pop,
-            optimizer.population.get("f"),
+            optimizer.population.get_array("f"),
             np.zeros(popsize),# TODO: use cv if constraints are defined
             n_pair=n_pair,
             n_parents=2,# TODO: recieve n_parents from Crossover
@@ -149,17 +149,18 @@ class GA(Algorithm):
         """
         cmp = optimizer.problem.comparator
         # select a best solution in parent
-        best_idx = np.argmin(optimizer.population.get("f"))
-        parent_best = optimizer.population.get("x")[best_idx]
-        parent_best_fit = optimizer.population.get("f")[best_idx]
-        parent = np.delete(optimizer.population.get("x"), best_idx, axis=0)
-        parent_fit = np.delete(optimizer.population.get("f"), best_idx, axis=0)
+        best_idx = cmp.sort(optimizer.population.get_array("f"), optimizer.population.get_array("cv"))
+        parent_best = optimizer.population.get_array("x")[best_idx]
+        parent_best_fit = optimizer.population.get_array("f")[best_idx]
+        parent = np.delete(optimizer.population.get_array("x"), best_idx, axis=0)
+        parent_fit = np.delete(optimizer.population.get_array("f"), best_idx, axis=0)
         # update population and fitness
         pop_cand = np.vstack((parent_best, parent, offspring))
-        fit_cand = np.hstack((parent_best_fit, parent_fit, offspring_fit))  
+        fit_cand = np.hstack((parent_best_fit, parent_fit, offspring_fit)) 
         # TODO: use cv if constraints are defined
         cand_idx = cmp.sort(fit_cand, np.zeros_like(fit_cand))
         pop_cand = pop_cand[cand_idx]
         fit_cand = fit_cand[cand_idx]
-        optimizer.population.set("x", pop_cand[:optimizer.popsize])
-        optimizer.population.set("f", fit_cand[:optimizer.popsize])
+
+        optimizer.population.clear()
+        optimizer.population.extend({"x": pop_cand[:optimizer.popsize], "f": fit_cand[:optimizer.popsize]})

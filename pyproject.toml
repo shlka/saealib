@@ -9,6 +9,7 @@ readme = "README.md"
 python = ">=3.10,<4.0"
 numpy = ">=1.22.1"
 scipy = ">=1.0.0"
+typing-extensions = "^4.15.0"
 
 
 [tool.poetry.group.dev.dependencies]

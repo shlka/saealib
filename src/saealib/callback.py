@@ -129,4 +129,4 @@ def logging_generation(data, **kwargs):
     None
     """
     optimizer: Optimizer = kwargs.get("optimizer", None)
-    logger.info(f"Generation {optimizer.gen} started. fe: {optimizer.fe}. Best f: {optimizer.archive.get('y').min()}")
+    logger.info(f"Generation {optimizer.gen} started. fe: {optimizer.fe}. Best f: {optimizer.archive.get('f').min()}")
