@@ -7,7 +7,7 @@ evolutionary optimization with surrogate models.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol, Any
 
 import numpy as np
 import scipy.stats
@@ -24,6 +24,25 @@ if TYPE_CHECKING:
     from saealib.termination import Termination
 
 
+class ComponentProvider(Protocol):
+    """
+    The interface for components that can be used by the Optimizer.
+    """
+    @property
+    def algorithm(self) -> Algorithm: ...
+    @property
+    def modelmanager(self) -> ModelManager: ...
+    @property
+    def surrogate(self) -> Surrogate: ...
+    @property
+    def termination(self) -> Termination: ...
+    @property
+    def cbmanager(self) -> CallbackManager: ...
+
+    def dispatch(self, event: CallbackEvent, data=None, **kwargs) -> Any: ...
+
+
+# class Optimizer(ComponentProvider):
 class Optimizer:
     """
     Optimizer class for evolutionary algorithms.
