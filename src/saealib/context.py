@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from saealib.problem import Problem
+    from saealib.problem import Problem, Comparator
     from saealib.population import Population, Archive
 
 
@@ -51,6 +51,27 @@ class OptimizationContext:
     def dim(self) -> int:
         return self.problem.dim
 
+    @property
+    def n_obj(self) -> int:
+        return self.problem.n_obj
+
+    @property
+    def lb(self) -> np.ndarray:
+        return self.problem.lb
+
+    @property
+    def ub(self) -> np.ndarray:
+        return self.problem.ub
+
+    @property
+    def weight(self) -> np.ndarray:
+        return self.problem.weight
+
+    @property
+    def comparator(self) -> Comparator:
+        return self.problem.comparator
+
+    def count_fe(self, count: int = 1) -> None:
         """
         Count function evaluations.
 
@@ -61,7 +82,7 @@ class OptimizationContext:
         """
         self.fe += count
 
-    def next_generation(self) -> None:
+    def count_generation(self) -> None:
         """
         Count generations.
         """
