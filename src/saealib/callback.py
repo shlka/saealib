@@ -12,8 +12,8 @@ from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from saealib.optimizer import Optimizer
-
+    from saealib.optimizer import OptimizationContext
+    # from saealib.optimizer import ComponentProvider
 
 logger = logging.getLogger(__name__)
 
@@ -133,8 +133,9 @@ def logging_generation(data, **kwargs):
     -------
     None
     """
-    optimizer: Optimizer = kwargs.get("optimizer")
+    ctx: OptimizationContext = kwargs.get("ctx", None)
+    # provider: ComponentProvider = kwargs.get("provider")
     logger.info(
-        f"Generation {optimizer.gen} started. fe: {optimizer.fe}. "
-        f"Best f: {optimizer.archive.get('f').min()}"
+        f"Generation {ctx.gen} started. fe: {ctx.fe}. "
+        f"Best f: {ctx.archive.get('f').min()}"
     )

@@ -4,8 +4,12 @@ Repair operators module.
 This module defines repair operators to fix individuals
 that violate problem constraints.
 """
-
+from typing import TYPE_CHECKING
 import numpy as np
+
+if TYPE_CHECKING:
+    from saealib.optimizer import OptimizationContext 
+    # from saealib.optimizer import ComponentProvider
 
 
 def repair_clipping(data: np.ndarray, **kwargs) -> np.ndarray:
@@ -22,6 +26,8 @@ def repair_clipping(data: np.ndarray, **kwargs) -> np.ndarray:
     np.ndarray
         Repaired data.
     """
-    problem = kwargs.get("optimizer").problem
+    ctx: OptimizationContext = kwargs.get("ctx", None)
+    # provider: ComponentProvider = kwargs.get("provider")
+    problem = ctx.problem
     repaired = np.clip(data, problem.lb, problem.ub)
     return repaired

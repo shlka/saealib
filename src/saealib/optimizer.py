@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Protocol, Any
 import numpy as np
 import scipy.stats
 
+from saealib.context import OptimizationContext
 from saealib.callback import CallbackEvent, CallbackManager, logging_generation
 from saealib.operators.repair import repair_clipping
 from saealib.population import Archive, Population, PopulationAttribute
@@ -102,10 +103,6 @@ class Optimizer:
         self.archive_init_size = 50
         # random setup
         self.seed = 0
-        self.rng = np.random.default_rng(seed=self.seed)
-        # state variables
-        self.fe = 0
-        self.gen = 0
         # EA parameters
         self.popsize = 40
         # callback event manager
@@ -247,7 +244,6 @@ class Optimizer:
             Returns self for method chaining.
         """
         self.seed = seed
-        self.rng = np.random.default_rng(seed=self.seed)
         return self
 
     def set_popsize(self, popsize: int) -> Optimizer:
@@ -284,53 +280,6 @@ class Optimizer:
         self.instance_name = name
         return self
 
-    def _initialize(self, n_init_archive: int) -> None:
-        """
-        Before running the optimization, initialize the archive and population.
-
-        Parameters
-        ----------
-        n_init_archive : int
-            Number of initial solutions in the archive.
-        """
-        archive_x = scipy.stats.qmc.LatinHypercube(
-            d=self.problem.dim, rng=self.rng
-        ).random(n_init_archive)
-        archive_x = scipy.stats.qmc.scale(archive_x, self.problem.lb, self.problem.ub)
-        archive_f = np.array([self.problem.evaluate(ind) for ind in archive_x])
-        # TODO: use cv if constraints are defined
-        archive_sort_idx = self.problem.comparator.sort(
-            archive_f, np.zeros_like(archive_f)
-        )
-        archive_x = archive_x[archive_sort_idx]
-        archive_f = archive_f[archive_sort_idx]
-
-        # TODO: Handling "f" in multiple dimensions (comment out)
-        # TODO: Change to receive the required attributes from the Algorithm.
-        self.population_attributes = [
-            PopulationAttribute("x", float, (self.problem.dim,)),
-            # PopulationAttribute("f", float, (self.problem.n_obj, )),
-            PopulationAttribute("f", float),
-            PopulationAttribute("g", float),
-            PopulationAttribute("cv", float),
-        ]
-
-        self.archive = Archive(self.population_attributes, key_attr="x")
-        for i in range(self.archive_init_size):
-            self.archive.add({"x": archive_x[i], "f": archive_f[i]})
-
-        self.population = Population(self.population_attributes)
-        self.population.extend(
-            {"x": archive_x[: self.popsize], "f": archive_f[: self.popsize]}
-        )
-
-        self.fe = self.archive_init_size
-        self.gen = 0
-
-        self.cbmanager.register(CallbackEvent.GENERATION_START, logging_generation)
-        self.cbmanager.register(CallbackEvent.POST_CROSSOVER, repair_clipping)
-        self.cbmanager.register(CallbackEvent.POST_MUTATION, repair_clipping)
-
     def dispatch(self, event: CallbackEvent, data=None, **kwargs) -> any:
         """
         Dispatch an event to the callback manager.
@@ -349,8 +298,71 @@ class Optimizer:
         any
             The data returned by another callback.
         """
-        kwargs["optimizer"] = self
+        kwargs["provider"] = self
         return self.cbmanager.dispatch(event, data, **kwargs)
+
+    def create_context(self) -> OptimizationContext:
+        """
+        Creating the OptimizationContext and initializing the Optimizer.
+        """
+        rng = np.random.default_rng(self.seed)
+
+        # TODO:　modify it to account for the fact that there are n_obj instances of f.
+        # default attributes
+        attrs = [
+            PopulationAttribute("x",  float, (self.problem.dim, ), default=np.nan),
+            # PopulationAttribute("f",  float, (self.problem.n_obj, ), default=np.nan)
+            PopulationAttribute("f",  float, (), default=np.nan),
+            PopulationAttribute("g",  float, (self.problem.n_constraint, ), default=0.0),
+            PopulationAttribute("cv", float, (), default=0.0),
+        ]
+
+        # Retrieve attributes and classes according to the algorithm
+        if self.algorithm is not None:
+            attrs_required = self.algorithm.get_required_attrs(self.problem)
+            ex_names = {attr.name for attr in attrs}
+            for attr in attrs_required:
+                if attr.name not in ex_names:
+                    attrs.append(attr)
+
+            PopClass = self.algorithm.population_class
+            ArcClass = self.algorithm.archive_class
+        else:
+            # TODO: Consider whether to make it an exception
+            PopClass = Population
+            ArcClass = Archive
+
+        population = PopClass(attrs=attrs, init_capacity=self.popsize)
+        archive = ArcClass(attrs=attrs, init_capacity=self.archive_init_size)
+
+        archive_x = scipy.stats.qmc.LatinHypercube(d=self.problem.dim, rng=rng).random(self.archive_init_size)
+        archive_x = scipy.stats.qmc.scale(archive_x, self.problem.lb, self.problem.ub)
+        archive_f = np.array([self.problem.evaluate(ind) for ind in archive_x])
+
+        # TODO: use cv if constraints are defined
+        archive_sort_idx = self.problem.comparator.sort(archive_f, np.zeros_like(archive_f))
+        archive_x = archive_x[archive_sort_idx]
+        archive_f = archive_f[archive_sort_idx]
+
+        for i in range(self.archive_init_size):
+            archive.add({"x": archive_x[i], "f": archive_f[i]})
+
+        population.extend(archive[:self.popsize])
+
+        # initialize callbacks
+        self.cbmanager.register(CallbackEvent.GENERATION_START, logging_generation)
+        self.cbmanager.register(CallbackEvent.POST_CROSSOVER, repair_clipping)
+        self.cbmanager.register(CallbackEvent.POST_MUTATION, repair_clipping)
+
+        ctx = OptimizationContext(
+            problem=self.problem,
+            population=population,
+            archive=archive,
+            rng=rng,
+            fe=self.archive_init_size,
+            gen=0
+        )
+        return ctx
 
     def run(self) -> None:
         """
@@ -360,27 +372,30 @@ class Optimizer:
         -------
         None
         """
-        self._initialize(self.archive_init_size)
-        self.dispatch(CallbackEvent.RUN_START)
+        ctx = self.create_context()
+        self.dispatch(CallbackEvent.RUN_START, ctx=ctx)
 
-        while not self.termination.is_terminated(fe=self.fe):
-            self.gen += 1
+        while not self.termination.is_terminated(fe=ctx.fe):
+            ctx.count_generation()
 
-            self.dispatch(CallbackEvent.GENERATION_START)
+            self.dispatch(CallbackEvent.GENERATION_START, ctx=ctx)
 
             # ask
-            cand = self.algorithm.ask(self)
+            cand = self.algorithm.ask(ctx, self)
 
-            self.dispatch(CallbackEvent.SURROGATE_START)
+            self.dispatch(CallbackEvent.SURROGATE_START, ctx=ctx)
 
             # surrogate
-            cand, cand_fit = self.modelmanager.run(self, cand)
+            # TODO: use Population container
+            cand_, cand_fit = self.modelmanager.run(ctx, self, cand.get_array("x"))
+            cand.clear()
+            cand.extend({"x": cand_, "f": cand_fit})
 
-            self.dispatch(CallbackEvent.SURROGATE_END)
+            self.dispatch(CallbackEvent.SURROGATE_END, ctx=ctx)
 
             # tell
-            self.algorithm.tell(self, cand, cand_fit)
+            self.algorithm.tell(ctx, self, cand)
 
-            self.dispatch(CallbackEvent.GENERATION_END)
+            self.dispatch(CallbackEvent.GENERATION_END, ctx=ctx)
 
-        self.dispatch(CallbackEvent.RUN_END)
+        self.dispatch(CallbackEvent.RUN_END, ctx=ctx)

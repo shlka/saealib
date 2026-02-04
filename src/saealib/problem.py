@@ -79,6 +79,7 @@ class Problem:
         """
         self.dim = dim
         self.n_obj = n_obj
+        self.n_constraint = len(constraints) if constraints is not None else 0
         self.weight = weight
         self.eps = eps
         self.lb = np.asarray(lb)
