@@ -18,7 +18,7 @@ import numpy as np
 from saealib.callback import CallbackEvent
 
 if TYPE_CHECKING:
-    from saealib.optimizer import Optimizer
+    from saealib.optimizer import Optimizer, OptimizationContext, ComponentProvider
 
 
 class ModelManager(ABC):
@@ -26,15 +26,17 @@ class ModelManager(ABC):
 
     @abstractmethod
     def run(
-        self, optimizer: Optimizer, candidate: np.ndarray
+        self, ctx: OptimizationContext, provider: ComponentProvider, candidate: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
         """
         Run the model manager.
 
         Parameters
         ----------
-        optimizer : Optimizer
-            The optimizer instance.
+        ctx : OptimizationContext
+            A dataclass object that holds internal information about the Optimizer.
+        provider : ComponentProvider
+            Objects of the class in which the component is exposed (ex. Optimizer).
         candidate : np.ndarray
             The candidate solutions to be evaluated or predicted.
 
@@ -92,15 +94,17 @@ class IndividualBasedStrategy(ModelManager):
         self.rsm = 0.1
 
     def run(
-        self, optimizer: Optimizer, candidate: np.ndarray
+        self, ctx: OptimizationContext, provider: ComponentProvider, candidate: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
         """
         Run the individual-based strategy.
 
         Parameters
         ----------
-        optimizer : Optimizer
-            The optimizer instance.
+        ctx : OptimizationContext
+            A dataclass object that holds internal information about the Optimizer.
+        provider : ComponentProvider
+            Objects of the class in which the component is exposed (ex. Optimizer).
         candidate : np.ndarray
             The candidate solutions to be evaluated or predicted.
 
@@ -114,24 +118,24 @@ class IndividualBasedStrategy(ModelManager):
         self.candidate = candidate
         n_cand = len(self.candidate)
         psm = int(self.rsm * n_cand)
-        self.surrogate_model = optimizer.surrogate
-        cmp = optimizer.problem.comparator
+        self.surrogate_model = provider.surrogate
+        cmp = ctx.comparator
 
         self.candidate_fit = np.zeros(n_cand)
 
         # predict all candidates using surrogate model
         for i in range(n_cand):
             # get training data for candidate[i]
-            train_idx, _ = optimizer.archive.get_knn(self.candidate[i], k=self.n_train)
-            train_x = optimizer.archive.get_array("x")[train_idx]
-            train_f = optimizer.archive.get_array("f")[train_idx]
+            train_idx, _ = ctx.archive.get_knn(self.candidate[i], k=self.n_train)
+            train_x = ctx.archive.get_array("x")[train_idx]
+            train_f = ctx.archive.get_array("f")[train_idx]
             # train RBF model
             self.surrogate_model.fit(train_x, train_f)
             # predict candidate[i]
             self.candidate_fit[i] = self.surrogate_model.predict(self.candidate[i])
-            optimizer.dispatch(
+            provider.dispatch(
                 CallbackEvent.POST_SURROGATE_FIT,
-                None,
+                None, ctx=ctx,
                 train_x=train_x,
                 train_f=train_f,
                 center=self.candidate[i],
@@ -145,14 +149,14 @@ class IndividualBasedStrategy(ModelManager):
 
         self.candidate_eval = self.candidate[:psm]
         self.candidate_eval_fit = np.array(
-            [optimizer.problem.evaluate(ind) for ind in self.candidate_eval]
+            [ctx.problem.evaluate(ind) for ind in self.candidate_eval]
         )
         self.candidate_fit[:psm] = self.candidate_eval_fit
-        optimizer.fe += psm
+        ctx.count_fe(psm)
 
         # add evaluated individuals to the archive
         for i in range(psm):
-            optimizer.archive.add(
+            ctx.archive.add(
                 {"x": self.candidate_eval[i], "f": self.candidate_eval_fit[i]}
             )
 
