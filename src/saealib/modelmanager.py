@@ -5,10 +5,11 @@ This module defines the base class `ModelManager` and the derived class `Individ
 for managing surrogate models in evolutionary optimization.
 These classes provide how to evaluate candidate solutions using a combination of true evaluations and surrogate model predictions.
 """
+
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -18,13 +19,15 @@ if TYPE_CHECKING:
     from saealib.optimizer import Optimizer
 
 
-
 class ModelManager(ABC):
     """
     Base class for surrogate model manager.
     """
+
     @abstractmethod
-    def run(self, optimizer: Optimizer, candidate: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def run(
+        self, optimizer: Optimizer, candidate: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Run the model manager.
 
@@ -75,19 +78,22 @@ class IndividualBasedStrategy(ModelManager):
     rsm : float
         Ratio of real evaluations.
     """
+
     def __init__(self):
         """
         Initialize IndividualBasedStrategy class.
         """
         self.candidate = None
-        self.candidate_fit =None
+        self.candidate_fit = None
         self.surrogate_model = None
 
         # parameters (optional) TODO: make them configurable
         self.n_train = 50
         self.rsm = 0.1
 
-    def run(self, optimizer: Optimizer, candidate: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def run(
+        self, optimizer: Optimizer, candidate: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Run the individual-based strategy.
 
@@ -122,7 +128,13 @@ class IndividualBasedStrategy(ModelManager):
             self.surrogate_model.fit(train_x, train_f)
             # predict candidate[i]
             self.candidate_fit[i] = self.surrogate_model.predict(self.candidate[i])
-            optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, None, train_x=train_x, train_f=train_f, center=self.candidate[i])
+            optimizer.dispatch(
+                CallbackEvent.POST_SURROGATE_FIT,
+                None,
+                train_x=train_x,
+                train_f=train_f,
+                center=self.candidate[i],
+            )
 
         # psm individuals are evaluated using the true function
         # TODO: use cv if constraints are defined
@@ -131,17 +143,23 @@ class IndividualBasedStrategy(ModelManager):
         self.candidate_fit = self.candidate_fit[cand_idx]
 
         self.candidate_eval = self.candidate[:psm]
-        self.candidate_eval_fit = np.array([optimizer.problem.evaluate(ind) for ind in self.candidate_eval])
+        self.candidate_eval_fit = np.array(
+            [optimizer.problem.evaluate(ind) for ind in self.candidate_eval]
+        )
         self.candidate_fit[:psm] = self.candidate_eval_fit
         optimizer.fe += psm
 
         # add evaluated individuals to the archive
         for i in range(psm):
-            optimizer.archive.add({"x": self.candidate_eval[i], "f": self.candidate_eval_fit[i]})
+            optimizer.archive.add(
+                {"x": self.candidate_eval[i], "f": self.candidate_eval_fit[i]}
+            )
 
         return self.candidate, self.candidate_fit
-    
-    def _predict_all(self, optimizer: Optimizer, candidate: np.ndarray, n_train: int) -> np.ndarray:
+
+    def _predict_all(
+        self, optimizer: Optimizer, candidate: np.ndarray, n_train: int
+    ) -> np.ndarray:
         """
         Predict fitness values for all candidate solutions using the surrogate model.
         using k-NN training data selection.
@@ -170,11 +188,19 @@ class IndividualBasedStrategy(ModelManager):
             self.surrogate_model.fit(train_x, train_f)
             # predict candidate[i]
             candidate_fit[i] = self.surrogate_model.predict(candidate[i])
-            optimizer.dispatch(CallbackEvent.POST_SURROGATE_FIT, None, train_x=train_x, train_y=train_y, center=candidate[i])
+            optimizer.dispatch(
+                CallbackEvent.POST_SURROGATE_FIT,
+                None,
+                train_x=train_x,
+                train_y=train_y,
+                center=candidate[i],
+            )
 
         return candidate_fit
-    
-    def _eval_true(self, optimizer: Optimizer, candidate: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+
+    def _eval_true(
+        self, optimizer: Optimizer, candidate: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Evaluate candidate solutions using the true evaluation function.
 
@@ -200,7 +226,7 @@ class IndividualBasedStrategy(ModelManager):
             optimizer.archive.add(candidate[i], candidate_y[i])
 
         return candidate, candidate_y
-    
+
     def step(self, optimizer: Optimizer) -> None:
         """
         Step function called at each generation.
@@ -220,7 +246,8 @@ class IndividualBasedStrategy(ModelManager):
 
         cand_x, cand_y = self.run(optimizer, cand)
 
-        optimizer.dispatch(CallbackEvent.SURROGATE_END, None, candidate_x=cand_x, candidate_y=cand_y)
+        optimizer.dispatch(
+            CallbackEvent.SURROGATE_END, None, candidate_x=cand_x, candidate_y=cand_y
+        )
 
         optimizer.algorithm.tell(optimizer, cand_x, cand_y)
-

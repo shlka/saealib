@@ -3,13 +3,13 @@ RBF surrogate model module.
 
 This module defines the Radial Basis Function (RBF) surrogate model.
 """
+
 import logging
 
 import numpy as np
 import scipy.spatial
 
 from saealib.surrogate.base import Surrogate
-
 
 logger = logging.getLogger(__name__)
 
@@ -26,15 +26,15 @@ def gaussian_kernel(x1: np.ndarray, x2: np.ndarray, sigma=2.0) -> np.ndarray:
         Input data 2.
     sigma : float
         Kernel width parameter.
-    
+
     Returns
     -------
     np.ndarray
         Matrix of kernel evaluations between x1 and x2. shape: (len(x1), len(x2))
     """
     # return np.exp(-np.linalg.norm(x1 - x2) ** 2 / (2 * (sigma ** 2)))
-    sq_dist = scipy.spatial.distance.cdist(x1, x2, 'sqeuclidean')
-    return np.exp(-sq_dist / (2 * (sigma ** 2)))
+    sq_dist = scipy.spatial.distance.cdist(x1, x2, "sqeuclidean")
+    return np.exp(-sq_dist / (2 * (sigma**2)))
 
 
 class RBFsurrogate(Surrogate):
@@ -58,6 +58,7 @@ class RBFsurrogate(Surrogate):
     sigma : float
         Kernel width parameter.
     """
+
     def __init__(self, kernel: callable, dim: int):
         """
         Initialize RBF surrogate model.
@@ -87,9 +88,13 @@ class RBFsurrogate(Surrogate):
         if rcond < np.finfo(self.kernel_matrix.dtype).eps:
             logger.warning(f"Kernel matrix is ill-conditioned. RCOND: {rcond}")
         try:
-            self.weights = np.linalg.solve(self.kernel_matrix, (train_y - np.mean(train_y)))
+            self.weights = np.linalg.solve(
+                self.kernel_matrix, (train_y - np.mean(train_y))
+            )
         except np.linalg.LinAlgError:
-            logger.error("Failed to solve linear system (Kernel matrix might be singular).")
+            logger.error(
+                "Failed to solve linear system (Kernel matrix might be singular)."
+            )
             self.weights = np.nan * np.ones(n_samples)
 
     def predict(self, test_x: np.ndarray) -> np.ndarray:

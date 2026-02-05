@@ -3,11 +3,12 @@ Callback module.
 
 This module contains the implementation of callback events and manager.
 """
+
 from __future__ import annotations
 
 import logging
-from enum import Enum, auto
 from collections import defaultdict
+from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -42,6 +43,7 @@ class CallbackEvent(Enum):
     POST_SURROGATE_FIT
         Triggered after surrogate model fitting.
     """
+
     # Optimizer.run events
     RUN_START = auto()
     RUN_END = auto()
@@ -61,6 +63,7 @@ class CallbackManager:
     """
     Manages callback events and their handlers.
     """
+
     def __init__(self) -> None:
         """
         Initialize CallbackManager.
@@ -82,7 +85,7 @@ class CallbackManager:
             The event to register the callback for.
         func : callable
             The callback function to register.
-        
+
         Returns
         -------
         None
@@ -116,17 +119,19 @@ class CallbackManager:
 def logging_generation(data, **kwargs):
     """
     Simple logging callback for generation start event.
-    
+
     Parameters
     ----------
     data : any
         The data passed to the callback. Not used here.
     **kwargs : any
         Additional keyword arguments. Should contain 'optimizer'.
-    
+
     Returns
     -------
     None
     """
-    optimizer: Optimizer = kwargs.get("optimizer", None)
-    logger.info(f"Generation {optimizer.gen} started. fe: {optimizer.fe}. Best f: {optimizer.archive.get('f').min()}")
+    optimizer: Optimizer = kwargs.get("optimizer")
+    logger.info(
+        f"Generation {optimizer.gen} started. fe: {optimizer.fe}. Best f: {optimizer.archive.get('f').min()}"
+    )
