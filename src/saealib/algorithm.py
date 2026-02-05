@@ -4,42 +4,49 @@ Evolutionary Algorithm Module.
 This module contains the implementation of evolutionary algorithms.
 """
 
+
 from __future__ import annotations
 
 import math
+import math
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 from typing import TYPE_CHECKING
 
 import numpy as np
 
-from saealib.population import Population, PopulationAttribute, Archive
 from saealib.callback import CallbackEvent
 from saealib.context import OptimizationContext
+from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
 
 if TYPE_CHECKING:
-    from saealib.optimizer import ComponentProvider
     from saealib.operators.crossover import Crossover
     from saealib.operators.mutation import Mutation
     from saealib.operators.selection import ParentSelection, SurvivorSelection
+    from saealib.optimizer import ComponentProvider
     from saealib.optimizer import Optimizer
 
 
 class Algorithm(ABC):
     """Base class for evolutionary algorithms."""
+    """Base class for evolutionary algorithms."""
 
     @abstractmethod
     def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
+        """Return the list of attributes required for Population."""
         pass
 
     @property
     @abstractmethod
     def population_class(self) -> type[Population]:
+        """Return the population class."""
         pass
 
     @property
     @abstractmethod
     def archive_class(self) -> type[Archive]:
+        """Return the archive class."""
         pass
 
 
@@ -58,11 +65,27 @@ class Algorithm(ABC):
         np.ndarray
             Generated offspring solutions. shape = (popsize, dim).
         """
+        """
+        Generate offspring solutions.
+
+        Parameters
+        ----------
+        optimizer : Optimizer
+            Optimizer instance.
+
+        Returns
+        -------
+        np.ndarray
+            Generated offspring solutions. shape = (popsize, dim).
+        """
         pass
 
     @abstractmethod
     def tell(
-        self, ctx: OptimizationContext, provider: ComponentProvider, offspring: Population
+        self,
+        ctx: OptimizationContext,
+        provider: ComponentProvider,
+        offspring: Population,
     ) -> None:
         """
         Update the population with offspring solutions.
@@ -124,7 +147,8 @@ class GA(Algorithm):
 
     def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
         """
-        Returns the list of attributes required for Population based on a Problem object. 
+        Return the list of attributes required for Population based on a Problem object.
+
         GA requires only the default attributes ('x', 'f', 'g', 'cv').
 
         Parameters
@@ -137,14 +161,16 @@ class GA(Algorithm):
         list[PopulationAttribute]
             List of attributes required in addition to the default attributes.
         """
-        return [] # only default attrs
+        return []  # only default attrs
 
     @property
     def population_class(self):
+        """Return the population class."""
         return Population
 
     @property
     def archive_class(self):
+        """Return the archive class."""
         return Archive
 
     def ask(self, ctx: OptimizationContext, provider: ComponentProvider) -> Population:
@@ -158,12 +184,14 @@ class GA(Algorithm):
         provider : ComponentProvider
             Objects of the class in which the component is exposed (ex. Optimizer).
 
+
         Returns
         -------
         np.ndarray
             Generated offspring solutions. shape = (popsize, dim).
         """
-        # TODO: Modified the ask method to return candidate solutions of arbitrary size without depending on popsize.
+        # TODO: Modified the ask method to return candidate solutions of arbitrary
+        # size without depending on popsize.
         cand = np.empty((0, ctx.dim))
         pop = ctx.population.get_array("x")
         pop_f = ctx.population.get_array("f")
@@ -175,10 +203,11 @@ class GA(Algorithm):
             provider,
             pop,
             pop_f,
-            np.zeros(popsize),# TODO: use cv if constraints are defined
+            np.zeros(popsize),  # TODO: use cv if constraints are defined
             n_pair=n_pair,
-            n_parents=2,# TODO: recieve n_parents from Crossover
-            rng=ctx.rng)
+            n_parents=2,  # TODO: recieve n_parents from Crossover
+            rng=ctx.rng,
+        )
         for i in range(n_pair):
             parent = pop[parent_idx_m[i]]
             if ctx.rng.random() < self.crossover.crossover_rate:
@@ -196,7 +225,12 @@ class GA(Algorithm):
         cand_pop.extend({"x": cand[:popsize]})
         return cand_pop
 
-    def tell(self, ctx: OptimizationContext, provider: ComponentProvider, offspring: Population):
+    def tell(
+        self,
+        ctx: OptimizationContext,
+        provider: ComponentProvider,
+        offspring: Population,
+    ):
         """
         Update the population with offspring solutions.
 
@@ -210,7 +244,7 @@ class GA(Algorithm):
             Objects of the class in which the component is exposed (ex. Optimizer).
         offspring : Population
             Population object representing offspring.
-        
+
         Returns
         -------
         None
