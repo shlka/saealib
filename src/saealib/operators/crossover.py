@@ -3,16 +3,32 @@ Crossover operators module.
 
 This module defines crossover operators for evolutionary algorithms.
 """
+
 from abc import ABC, abstractmethod
 
 import numpy as np
 
+
 class Crossover(ABC):
-    """
-    Base class for crossover operators.
-    """
+    """Base class for crossover operators."""
+
     @abstractmethod
     def crossover(self, parent: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
+        """
+        Execute crossover.
+
+        Parameters
+        ----------
+        parent : np.ndarray
+            Parent individuals. shape = (n_parents, dim)
+        rng : np.random.Generator, optional
+            Random number generator, by default np.random.default_rng()
+
+        Returns
+        -------
+        np.ndarray
+            Offspring individuals. shape = (n_offspring, dim)
+        """
         pass
 
 
@@ -27,6 +43,7 @@ class CrossoverBLXAlpha(Crossover):
     gamma : float
         Gamma parameter for BLX-alpha crossover.
     """
+
     def __init__(self, crossover_rate: float, gamma: float):
         """
         Initialize BLX-alpha crossover operator.
@@ -52,7 +69,7 @@ class CrossoverBLXAlpha(Crossover):
             Parent individuals. shape = (2, dim)
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
-        
+
         Returns
         -------
         np.ndarray

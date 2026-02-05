@@ -3,21 +3,22 @@ Surrogate base module.
 
 This module defines the base class for surrogate models.
 """
+
 from abc import ABC, abstractmethod
 
 import numpy as np
 
 
-# TODO: this class is regression surrogate, need to generalize for classification surrogate
+# TODO: this class is regression surrogate
+# need to generalize for classification surrogate
 class Surrogate(ABC):
-    """
-    Base class for surrogate models.
-    """
+    """Base class for surrogate models."""
+
     @abstractmethod
     def fit(self, train_x: np.ndarray, train_y: np.ndarray) -> None:
         """
         Fit the surrogate model.
-        
+
         Parameters
         ----------
         train_x : np.ndarray
@@ -40,7 +41,7 @@ class Surrogate(ABC):
         ----------
         test_x : np.ndarray
             Input data for prediction. shape: (n_samples, n_features)
-        
+
         Returns
         -------
         np.ndarray
