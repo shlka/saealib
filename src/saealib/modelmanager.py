@@ -1,9 +1,11 @@
 """
 Model manager module.
 
-This module defines the base class `ModelManager` and the derived class `IndividualBasedStrategy`
-for managing surrogate models in evolutionary optimization.
-These classes provide how to evaluate candidate solutions using a combination of true evaluations and surrogate model predictions.
+This module defines the base class `ModelManager` and
+the derived class `IndividualBasedStrategy` for managing
+surrogate models in evolutionary optimization.
+These classes provide how to evaluate candidate solutions using a combination
+of true evaluations and surrogate model predictions.
 """
 
 from __future__ import annotations
@@ -20,9 +22,7 @@ if TYPE_CHECKING:
 
 
 class ModelManager(ABC):
-    """
-    Base class for surrogate model manager.
-    """
+    """Base class for surrogate model manager."""
 
     @abstractmethod
     def run(
@@ -41,7 +41,8 @@ class ModelManager(ABC):
         Returns
         -------
         tuple[np.ndarray, np.ndarray]
-            A tuple containing the candidate solutions and their corresponding fitness values.
+            A tuple containing the candidate solutions
+            and their corresponding fitness values.
             (candidate_x, candidate_y)
         """
         pass
@@ -62,8 +63,9 @@ class IndividualBasedStrategy(ModelManager):
     """
     Individual-based strategy for surrogate model management.
 
-    A method in which a certain percentage of individuals are evaluated with a true evaluation function
-    for each candidate solution per generation, and the remainder are predicted by a surrogate model.
+    A method in which a certain percentage of individuals are evaluated
+    with a true evaluation function for each candidate solution per generation,
+    and the remainder are predicted by a surrogate model.
 
     Attributes
     ----------
@@ -80,9 +82,7 @@ class IndividualBasedStrategy(ModelManager):
     """
 
     def __init__(self):
-        """
-        Initialize IndividualBasedStrategy class.
-        """
+        """Initialize IndividualBasedStrategy class."""
         self.candidate = None
         self.candidate_fit = None
         self.surrogate_model = None
@@ -107,7 +107,8 @@ class IndividualBasedStrategy(ModelManager):
         Returns
         -------
         tuple[np.ndarray, np.ndarray]
-            A tuple containing the candidate solutions and their corresponding fitness values.
+            A tuple containing the candidate solutions
+            and their corresponding fitness values.
             (candidate_x, candidate_y)
         """
         self.candidate = candidate
@@ -162,6 +163,7 @@ class IndividualBasedStrategy(ModelManager):
     ) -> np.ndarray:
         """
         Predict fitness values for all candidate solutions using the surrogate model.
+
         using k-NN training data selection.
 
         Parameters
@@ -192,7 +194,7 @@ class IndividualBasedStrategy(ModelManager):
                 CallbackEvent.POST_SURROGATE_FIT,
                 None,
                 train_x=train_x,
-                train_y=train_y,
+                train_f=train_f,
                 center=candidate[i],
             )
 
@@ -214,7 +216,8 @@ class IndividualBasedStrategy(ModelManager):
         Returns
         -------
         tuple[np.ndarray, np.ndarray]
-            A tuple containing the candidate solutions and their corresponding fitness values.
+            A tuple containing the candidate solutions
+            and their corresponding fitness values.
             (candidate_x, candidate_y)
         """
         n_cand = len(candidate)

@@ -1,7 +1,8 @@
 """
 Optimizer module.
 
-Optimizer class that integrates components to perform evolutionary optimization with surrogate models.
+Optimizer class that integrates components to perform
+evolutionary optimization with surrogate models.
 """
 
 from __future__ import annotations
@@ -27,8 +28,8 @@ class Optimizer:
     """
     Optimizer class for evolutionary algorithms.
 
-    Integrates problem definition, evolutionary algorithm, surrogate model, model manager, and termination condition,
-    and manages the optimization process.
+    Integrates problem definition, evolutionary algorithm, surrogate model,
+    model manager, and termination condition, and manages the optimization process.
 
     Attributes
     ----------
@@ -267,6 +268,11 @@ class Optimizer:
     def _initialize(self, n_init_archive: int) -> None:
         """
         Before running the optimization, initialize the archive and population.
+
+        Parameters
+        ----------
+        n_init_archive : int
+            Number of initial solutions in the archive.
         """
         archive_x = scipy.stats.qmc.LatinHypercube(
             d=self.problem.dim, rng=self.rng

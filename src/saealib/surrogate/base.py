@@ -9,11 +9,10 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 
-# TODO: this class is regression surrogate, need to generalize for classification surrogate
+# TODO: this class is regression surrogate
+# need to generalize for classification surrogate
 class Surrogate(ABC):
-    """
-    Base class for surrogate models.
-    """
+    """Base class for surrogate models."""
 
     @abstractmethod
     def fit(self, train_x: np.ndarray, train_y: np.ndarray) -> None:

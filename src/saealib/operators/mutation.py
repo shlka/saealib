@@ -10,14 +10,29 @@ import numpy as np
 
 
 class Mutation(ABC):
-    """
-    Base class for mutation operators.
-    """
+    """Base class for mutation operators."""
 
     @abstractmethod
     def mutate(
         self, p: np.ndarray, mutate_range: tuple, rng=np.random.default_rng()
     ) -> np.ndarray:
+        """
+        Execute mutation.
+
+        Parameters
+        ----------
+        p : np.ndarray
+            Parent individual. shape = (dim,)
+        mutate_range : tuple
+            Tuple of (lower_bound, upper_bound) for mutation.
+        rng : np.random.Generator, optional
+            Random number generator, by default np.random.default_rng()
+
+        Returns
+        -------
+        np.ndarray
+            Mutated individual. shape = (dim,)
+        """
         pass
 
 

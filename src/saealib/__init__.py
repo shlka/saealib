@@ -1,6 +1,4 @@
-"""
-saealib: Surrogate-Assisted Evolutionary Algorithms (SAEAs) Library
-"""
+"""saealib: Surrogate-Assisted Evolutionary Algorithms (SAEAs) Library."""
 
 import logging
 
@@ -46,40 +44,40 @@ from saealib.termination import Termination
 logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
-    # core components
-    "Optimizer",
-    "Problem",
-    "Constraint",
-    "ConstraintType",
-    "ConstraintManager",
-    "Comparator",
-    "SingleObjectiveComparator",
-    "Algorithm",
     "GA",
-    "Termination",
-    "ModelManager",
-    "IndividualBasedStrategy",
-    "CallbackManager",
-    "CallbackEvent",
-    "logging_generation",
-    "Population",
-    "Individual",
+    "Algorithm",
     "Archive",
-    "PopulationAttribute",
     "ArchiveMixin",
-    # surrogate models
-    "Surrogate",
-    "RBFsurrogate",
-    "gaussian_kernel",
+    "CallbackEvent",
+    "CallbackManager",
+    "Comparator",
+    "Constraint",
+    "ConstraintManager",
+    "ConstraintType",
     # operators
     "Crossover",
     "CrossoverBLXAlpha",
+    "Individual",
+    "IndividualBasedStrategy",
+    "ModelManager",
     "Mutation",
     "MutationUniform",
+    # core components
+    "Optimizer",
     "ParentSelection",
+    "Population",
+    "PopulationAttribute",
+    "Problem",
+    "RBFsurrogate",
     "SequentialSelection",
-    "TournamentSelection",
+    "SingleObjectiveComparator",
+    # surrogate models
+    "Surrogate",
     "SurvivorSelection",
+    "Termination",
+    "TournamentSelection",
     "TruncationSelection",
+    "gaussian_kernel",
+    "logging_generation",
     "repair_clipping",
 ]

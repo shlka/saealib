@@ -10,12 +10,25 @@ import numpy as np
 
 
 class Crossover(ABC):
-    """
-    Base class for crossover operators.
-    """
+    """Base class for crossover operators."""
 
     @abstractmethod
     def crossover(self, parent: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
+        """
+        Execute crossover.
+
+        Parameters
+        ----------
+        parent : np.ndarray
+            Parent individuals. shape = (n_parents, dim)
+        rng : np.random.Generator, optional
+            Random number generator, by default np.random.default_rng()
+
+        Returns
+        -------
+        np.ndarray
+            Offspring individuals. shape = (n_offspring, dim)
+        """
         pass
 
 
