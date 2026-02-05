@@ -3,16 +3,17 @@ Population module.
 
 This module defines classes to handle populations and individuals.
 """
+
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Type, Tuple, List, Dict, Any, TypeVar, Generic
-from typing_extensions import Self
-from types import MappingProxyType
-import weakref
+
 import warnings
+import weakref
+from dataclasses import dataclass
+from types import MappingProxyType
+from typing import Any, Generic, TypeVar
 
 import numpy as np
-
+from typing_extensions import Self
 
 T_Population = TypeVar("T_Population", bound="Population")
 T_Individual = TypeVar("T_Individual", bound="Individual")
@@ -34,41 +35,49 @@ class PopulationAttribute:
     default : Any
         Default value for the attribute.
     """
+
     name: str
-    dtype: Type | np.dtype
-    shape: Tuple[int, ...] = ()
+    dtype: type | np.dtype
+    shape: tuple[int, ...] = ()
     default: Any = np.nan
 
 
 class PropertyAvoidConfCheck(property):
     """
-    A subclass of the property to avoid attribute conflict checks in Population. 
-    Using for function 'bind_property', 'bind_property_array'. 
+    A subclass of the property to avoid attribute conflict checks in Population.
+
+    Using for function 'bind_property', 'bind_property_array'.
     This class and property behave identically, differing only in their class names.
     """
+
     pass
 
 
 def bind_property(key: str, doc: str = "") -> Any:
-    """
-    Helper function: make property for Individual attributes.
-    """
+    """Make property for Individual attributes (helper function)."""
+
     def fget(self):
         return self.__getattr__(key)
+
     def fset(self, value):
         self.__setattr__(key, value)
+
     return PropertyAvoidConfCheck(fget, fset, doc=doc)
 
 
 def bind_property_array(key: str, doc: str = "") -> Any:
     """
-    Helper function: make property for Population attributes.
+    Make property for Population attributes (helper function).
+
     Need 'get_array' method for setter.
     """
+
     def fget(self):
         return self.__getattr__(key)
+
     def fset(self, value):
         self.get_array(key)[:] = value
+
     return PropertyAvoidConfCheck(fget, fset, doc=doc)
 
 
@@ -98,21 +107,24 @@ class Population(Generic[T_Individual]):
     g: np.ndarray = bind_property_array("g", doc="Constraint values")
     cv: np.ndarray = bind_property_array("cv", doc="Constraint violation")
 
-    def __init__(self, attrs: List[PopulationAttribute], init_capacity: int = 100) -> None:
+    def __init__(
+        self, attrs: list[PopulationAttribute], init_capacity: int = 100
+    ) -> None:
         """
         Initialize a Population.
 
         Parameters
         ----------
         attrs : List[PopulationAttribute]
-            List of population attributes. Each attribute defines a column in the population.
+            List of population attributes.
+            Each attribute defines a column in the population.
         init_capacity : int, optional
             Initial capacity of the population, by default 100.
         """
         self._capacity = init_capacity
         self._size = 0
         self._version = 0
-        self._data: Dict[str, np.ndarray] = {}
+        self._data: dict[str, np.ndarray] = {}
         for attr in attrs:
             self._init_column(attr, self._capacity)
         self._schema = {attr.name: attr for attr in attrs}
@@ -120,8 +132,9 @@ class Population(Generic[T_Individual]):
 
     def _check_name_conflicts(self):
         """
-        Check conflict attributes. 
-        If any attributes provided during initialization have the same name 
+        Check conflict attributes.
+
+        If any attributes provided during initialization have the same name
         as a method or property of the Population class, a warning message is displayed.
         """
         cls = type(self)
@@ -129,14 +142,17 @@ class Population(Generic[T_Individual]):
             if hasattr(cls, name):
                 attr = getattr(cls, name)
                 if isinstance(attr, PropertyAvoidConfCheck):
-                    # No conflicts occur for properties added using the bind_property function or the bind_property_array function.
+                    # No conflicts occur for properties added using the bind_property
+                    # function or the bind_property_array function.
                     continue
                 warnings.warn(
-                    f"Attribute name '{name}' conflicts with a Population method/property. "
+                    f"Attribute name '{name}' conflicts with a "
+                    f"Population method/property. "
                     f"Access via pop.{name} will return the method. "
-                    f"Use pop.get('{name}') or pop.get_array('{name}') to access the data.",
+                    f"Use pop.get('{name}') or pop.get_array('{name}') "
+                    f"to access the data.",
                     UserWarning,
-                    stacklevel=3
+                    stacklevel=3,
                 )
 
     def _init_column(self, attr: PopulationAttribute, capacity: int) -> None:
@@ -150,9 +166,11 @@ class Population(Generic[T_Individual]):
         capacity : int
             The initial capacity of the column.
         """
-        shape = (capacity, ) + attr.shape
+        shape = (capacity, *attr.shape)
         if attr.default is not None:
-            arr = np.full(shape=shape, fill_value=attr.default, dtype=attr.dtype, order="C")
+            arr = np.full(
+                shape=shape, fill_value=attr.default, dtype=attr.dtype, order="C"
+            )
         elif np.issubdtype(attr.dtype, np.floating) and np.isnan(attr.default):
             arr = np.full(shape=shape, fill_value=np.nan, dtype=attr.dtype, order="C")
         else:
@@ -170,15 +188,19 @@ class Population(Generic[T_Individual]):
         """
         for k, v in self._data.items():
             attr = self._schema[k]
-            shape = (new_capacity, ) + attr.shape
-            new_arr = np.full(shape=shape, fill_value=attr.default, dtype=attr.dtype, order="C")
+            shape = (new_capacity, *attr.shape)
+            new_arr = np.full(
+                shape=shape, fill_value=attr.default, dtype=attr.dtype, order="C"
+            )
             if attr.default is not None:
                 new_arr[:] = attr.default
-            new_arr[:self._size] = v[:self._size]
+            new_arr[: self._size] = v[: self._size]
             self._data[k] = new_arr
         self._capacity = new_capacity
 
-    def append(self, element: T_Individual | Dict[str, Any] | None = None, **kwargs) -> None:
+    def append(
+        self, element: T_Individual | dict[str, Any] | None = None, **kwargs
+    ) -> None:
         """
         Append a new individual to the population.
 
@@ -186,18 +208,19 @@ class Population(Generic[T_Individual]):
         ----------
         element : Individual | dict | None
             Data for the additional individual
-        **kwargs : 
-            Set attribute values individually and add them. Alternatively, overwrite based on the element's value and add it.
-        
-        Example
-        -------
-        >>> pop.append(ind)             # adding ind(Individual)
-        >>> pop.append({"x": x_val})    # adding dict
-        >>> pop.append(x=x_val, f=0.1)  # adding with keywords
-        >>> pop.append(ind, f=0.1)      # Overwrite only the 'f' based on the ind and add it.
+        **kwargs :
+            Set attribute values individually and add them.
+            Alternatively, overwrite based on the element's value and add it.
+
+        Examples
+        --------
+        >>> pop.append(ind)
+        >>> pop.append({"x": x_val})
+        >>> pop.append(x=x_val, f=0.1)
+        >>> pop.append(ind, f=0.1)
         """
         # data: merge element and kwargs
-        data: Dict[str, Any] = {}
+        data: dict[str, Any] = {}
         if element is not None:
             if isinstance(element, dict):
                 data.update(element)
@@ -247,7 +270,8 @@ class Population(Generic[T_Individual]):
             other_data = other
 
         # if empty extended
-        if other_size == 0: return
+        if other_size == 0:
+            return
 
         # resizing
         if self._size + other_size > self._capacity:
@@ -258,20 +282,20 @@ class Population(Generic[T_Individual]):
         for key, attr in self._schema.items():
             val_self = self._data[key]
             if key in other_data:
-                val_self[start:start+other_size] = other_data[key]
+                val_self[start : start + other_size] = other_data[key]
             else:
                 # fill default values
                 if attr.default is not None:
-                    val_self[start:start+other_size] = attr.default
+                    val_self[start : start + other_size] = attr.default
                 elif np.issubdtype(attr.dtype, np.floating) and np.isnan(attr.default):
-                    val_self[start:start+other_size] = np.nan
+                    val_self[start : start + other_size] = np.nan
                 else:
-                    val_self[start:start+other_size] = 0
-        
+                    val_self[start : start + other_size] = 0
+
         self._size += other_size
         self._version += 1
 
-    def extract(self, indices: np.ndarray | List[int] | slice) -> Self:
+    def extract(self, indices: np.ndarray | list[int] | slice) -> Self:
         """
         Extract individuals with indices, and return new Population.
 
@@ -287,12 +311,12 @@ class Population(Generic[T_Individual]):
         else:
             indices_arr = np.array(indices)
             n_extract = len(indices_arr)
-        
+
         new_pop = self.empty_like(capacity=n_extract)
 
         for key, val in self._data.items():
-            new_pop._data[key][:n_extract] = val[:self._size][indices_arr]
-        
+            new_pop._data[key][:n_extract] = val[: self._size][indices_arr]
+
         new_pop._size = n_extract
         new_pop._version += 1
         return new_pop
@@ -312,7 +336,7 @@ class Population(Generic[T_Individual]):
             self._size = new_size
             self._version += 1
 
-    def delete(self, index: int | slice | List[int] | np.ndarray) -> None:
+    def delete(self, index: int | slice | list[int] | np.ndarray) -> None:
         """
         Delete individuals from the population.
 
@@ -325,7 +349,7 @@ class Population(Generic[T_Individual]):
         bool_mask[index] = False
         new_size = np.sum(bool_mask)
         for k, v in self._data.items():
-            valid_data = v[:self._size]
+            valid_data = v[: self._size]
             v[:new_size] = valid_data[bool_mask]
         self._size = new_size
         self._version += 1
@@ -340,10 +364,12 @@ class Population(Generic[T_Individual]):
             The new order of individuals.
         """
         if len(order) != self._size:
-            raise ValueError(f"Order length {len(order)} must match population size {self._size}")
+            raise ValueError(
+                f"Order length {len(order)} must match population size {self._size}"
+            )
         for k, v in self._data.items():
-            valid_data = v[:self._size]
-            v[:self._size] = valid_data[order]
+            valid_data = v[: self._size]
+            v[: self._size] = valid_data[order]
         self._version += 1
 
     def argsort(self, name: str, reverse: bool = False) -> np.ndarray:
@@ -359,21 +385,19 @@ class Population(Generic[T_Individual]):
         """
         if name not in self._data:
             raise KeyError(f"Key '{name}' not found in population schema")
-        sort_arg = np.argsort(self._data[name][:self._size])
+        sort_arg = np.argsort(self._data[name][: self._size])
         if reverse:
             sort_arg = sort_arg[::-1]
         return sort_arg
 
     def clear(self) -> None:
-        """
-        Clear the population.
-        """
+        """Clear the population."""
         self._size = 0
         self._version += 1
 
-    def empty_like(self, capacity: int = None):
+    def empty_like(self, capacity: int | None = None):
         """
-        Create emplty Population object that have same schema
+        Create emplty Population object that have same schema.
 
         Parameters
         ----------
@@ -381,13 +405,14 @@ class Population(Generic[T_Individual]):
             capacity of new Population object. default is self._capacity.
         """
         if capacity is None:
-            capacity = self._capacity 
+            capacity = self._capacity
         return self.__class__(self.attrs, capacity)
 
-    def get(self, key: str, default = None) -> np.ndarray:
+    def get(self, key: str, default=None) -> np.ndarray:
         """
         Get the array of a specific attribute.
-        If the key does not exist in the attribute, it returns the specified value (default is None).
+
+        If the key does not exist in the attribute, it returns check default.
 
         Parameters
         ----------
@@ -409,29 +434,34 @@ class Population(Generic[T_Individual]):
         key : str
             The attribute name to get the array for.
         """
-        return self._data[key][:self._size]
+        return self._data[key][: self._size]
 
     @property
     def schema(self) -> MappingProxyType[str, PopulationAttribute]:
+        """Return the schema of the population."""
         return MappingProxyType(self._schema)
 
     @property
-    def attrs(self) -> List[PopulationAttribute]:
+    def attrs(self) -> list[PopulationAttribute]:
+        """Return the list of attributes in the population."""
         return list(self._schema.values())
 
     def __len__(self) -> int:
+        """Return the size of the population."""
         return self._size
 
     def __getattr__(self, name: str) -> np.ndarray:
-        """support dot access (ex: pop.x)"""
+        """Support dot access (ex: pop.x)."""
         if name in self._data:
             return self.get_array(name)
 
-        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute '{name}'"
+        )
 
     def __getitem__(self, index: int | slice) -> T_Individual | Self:
         """
-        support bracket access
+        Support bracket access.
 
         pop[0]   -> return Individual
         pop[:10] -> return new Population
@@ -461,7 +491,8 @@ class Individual(Generic[T_Population]):
     _version : int
         Version number to track modifications.
     """
-    __slots__ = ("_popref", "_index", "_version")
+
+    __slots__ = ("_index", "_popref", "_version")
 
     def __init__(self, population: T_Population, index: int):
         self._popref = weakref.ref(population)
@@ -483,13 +514,17 @@ class Individual(Generic[T_Population]):
         return pop
 
     def __getattr__(self, name: str) -> Any:
+        """Access attribute from the population data."""
         pop = self._get_pop()
         if name in pop._data:
             return pop._data[name][self._index]
         else:
-            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'"
+            )
 
     def __setattr__(self, name: str, value: Any) -> None:
+        """Set attribute value."""
         if name in self.__slots__:
             super().__setattr__(name, value)
             return
@@ -499,10 +534,13 @@ class Individual(Generic[T_Population]):
                 pop._data[name][self._index] = value
                 return
             else:
-                raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+                raise AttributeError(
+                    f"'{type(self).__name__}' object has no attribute '{name}'"
+                )
 
     @property
     def pop(self) -> T_Population:
+        """Return the parent population."""
         pop = self._get_pop()
         return pop
 
@@ -510,6 +548,7 @@ class Individual(Generic[T_Population]):
 class ArchiveMixin:
     """
     A mixin class for using Population as an Archive.
+
     Must be subclassed via multiple inheritance as a subclass of the Population class.
     Handle archive of evaluated solutions.
     (self.data must have at least key_attr (default is "x").)
@@ -528,18 +567,27 @@ class ArchiveMixin:
     rtol : float
         Relative tolerance for duplicate check.
     """
-    def __init__(self, attrs: List[PopulationAttribute], init_capacity: int = 100, key_attr: str = "x", atol: float = 0.0, rtol: float = 0.0, **kwargs):
+
+    def __init__(
+        self,
+        attrs: list[PopulationAttribute],
+        init_capacity: int = 100,
+        key_attr: str = "x",
+        atol: float = 0.0,
+        rtol: float = 0.0,
+        **kwargs,
+    ):
         # initialize Population class
         super().__init__(attrs=attrs, init_capacity=init_capacity)
 
         if key_attr not in self.schema:
             raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
-        self._duplicate_indices: List[int] = []
+        self._duplicate_indices: list[int] = []
         self.key_attr = key_attr
         self.atol = atol  # tolerance for duplicate check
         self.rtol = rtol  # relative tolerance for duplicate check
 
-    def add(self, element: Individual | Dict[str, Any] | None = None, **kwargs) -> int:
+    def add(self, element: Individual | dict[str, Any] | None = None, **kwargs) -> int:
         """
         Add a new solution to the archive. Duplicate solutions are ignored.
 
@@ -547,20 +595,21 @@ class ArchiveMixin:
         ----------
         element : Individual | dict | None
             Data for the additional individual
-        **kwargs : 
-            Set attribute values individually and add them. Alternatively, overwrite based on the element's value and add it.
-        
+        **kwargs :
+            Set attribute values individually and add them.
+            Alternatively, overwrite based on the element's value and add it.
+
         Returns
         -------
         idx : int
             Destination Index
 
-        Example
-        -------
-        >>> arcv.add(ind)               # adding ind(Individual)
-        >>> arcv.add({"x": x_val})      # adding dict
-        >>> arcv.add(x=x_val, f=0.1)    # adding with keywords
-        >>> arcv.add(ind, f=0.1)        # Overwrite only the 'f' based on the ind and add it.
+        Examples
+        --------
+        >>> arcv.add(ind)
+        >>> arcv.add({"x": x_val})
+        >>> arcv.add(x=x_val, f=0.1)
+        >>> arcv.add(ind, f=0.1)
         """
         # get adding solution
         key_attr_val = kwargs.get(self.key_attr)
@@ -572,7 +621,7 @@ class ArchiveMixin:
         if key_attr_val is None:
             # element does not have key_attr
             raise ValueError(f"Solution must have {self.key_attr} attribute")
-        
+
         # check duplicate
         idx = self._find_idx(key_attr_val)
 
@@ -595,7 +644,7 @@ class ArchiveMixin:
         ----------
         element : np.ndarray | np.floating
             Search target
-        
+
         Returns
         -------
         int | None
@@ -610,7 +659,9 @@ class ArchiveMixin:
             element = element.reshape(1)
         if element.shape != key_attr_arr.shape[1:]:
             element = element.reshape(key_attr_arr.shape[1:])
-        matching = np.all(np.isclose(key_attr_arr, element, atol=self.atol, rtol=self.rtol), axis=1)
+        matching = np.all(
+            np.isclose(key_attr_arr, element, atol=self.atol, rtol=self.rtol), axis=1
+        )
         indices = np.where(matching)[0]
         if indices.size > 0:
             return int(indices[0])
@@ -618,14 +669,16 @@ class ArchiveMixin:
 
     def get_duplicated_population(self) -> Population:
         """
-        Returns a Population object without removing duplicates.
+        Return a Population object without removing duplicates.
 
         Returns
         -------
         Population without removing duplicates.
         """
         all_length = len(self._duplicate_indices)
-        dup_pop = Population(attrs=list(self._schema.values()), init_capacity=all_length)
+        dup_pop = Population(
+            attrs=list(self._schema.values()), init_capacity=all_length
+        )
         indices = np.array(self._duplicate_indices)
         for k, v in self._data.items():
             dup_pop._data[k][:all_length] = v[indices]
@@ -657,9 +710,11 @@ class ArchiveMixin:
         idx = np.argsort(dist)[:k]
         return idx, dist[idx]
 
+
 class Archive(ArchiveMixin, Population):
-    """    
+    """
     Handle archive of evaluated solutions.
+
     (self.data must have at least key_attr (default is "x").)
     Duplicate removal and range queries can be performed.
 
@@ -672,6 +727,7 @@ class Archive(ArchiveMixin, Population):
     rtol : float
         Relative tolerance for duplicate check.
     """
+
     pass
 
 

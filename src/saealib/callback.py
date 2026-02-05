@@ -3,11 +3,12 @@ Callback module.
 
 This module contains the implementation of callback events and manager.
 """
+
 from __future__ import annotations
 
 import logging
-from enum import Enum, auto
 from collections import defaultdict
+from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -42,6 +43,7 @@ class CallbackEvent(Enum):
     POST_SURROGATE_FIT
         Triggered after surrogate model fitting.
     """
+
     # Optimizer.run events
     RUN_START = auto()
     RUN_END = auto()
@@ -60,16 +62,15 @@ class CallbackEvent(Enum):
 class CallbackManager:
     """
     Manages callback events and their handlers.
+
+    Attributes
+    ----------
+    handlers : defaultdict[CallbackEvent, list[callable]]
+        Dictionary mapping events to list of callback functions.
     """
+
     def __init__(self) -> None:
-        """
-        Initialize CallbackManager.
-
-        Attributes
-        ----------
-        handlers : dict
-
-        """
+        """Initialize CallbackManager."""
         self.handlers = defaultdict(list)
 
     def register(self, event: CallbackEvent, func: callable) -> None:
@@ -82,7 +83,7 @@ class CallbackManager:
             The event to register the callback for.
         func : callable
             The callback function to register.
-        
+
         Returns
         -------
         None
@@ -98,9 +99,11 @@ class CallbackManager:
         event : CallbackEvent
             The event to dispatch.
         data : any
-            The data to pass to the callback functions. Can be modified by each callback.
+            The data to pass to the callback functions.
+            Can be modified by each callback.
         **kwargs : any
-            Additional keyword arguments to pass to the callback functions. Read-only.
+            Additional keyword arguments to pass to the callback functions.
+            Read-only.
 
         Returns
         -------
@@ -115,18 +118,23 @@ class CallbackManager:
 
 def logging_generation(data, **kwargs):
     """
-    Simple logging callback for generation start event.
-    
+    Log generation start event.
+
+    Simple logging callback.
+
     Parameters
     ----------
     data : any
         The data passed to the callback. Not used here.
     **kwargs : any
         Additional keyword arguments. Should contain 'optimizer'.
-    
+
     Returns
     -------
     None
     """
-    optimizer: Optimizer = kwargs.get("optimizer", None)
-    logger.info(f"Generation {optimizer.gen} started. fe: {optimizer.fe}. Best f: {optimizer.archive.get('f').min()}")
+    optimizer: Optimizer = kwargs.get("optimizer")
+    logger.info(
+        f"Generation {optimizer.gen} started. fe: {optimizer.fe}. "
+        f"Best f: {optimizer.archive.get('f').min()}"
+    )

@@ -3,17 +3,36 @@ Mutation operators module.
 
 This module defines mutation operators for evolutionary algorithms.
 """
+
 from abc import ABC, abstractmethod
 
 import numpy as np
 
 
 class Mutation(ABC):
-    """
-    Base class for mutation operators.
-    """
+    """Base class for mutation operators."""
+
     @abstractmethod
-    def mutate(self, p: np.ndarray, mutate_range: tuple, rng=np.random.default_rng()) -> np.ndarray:
+    def mutate(
+        self, p: np.ndarray, mutate_range: tuple, rng=np.random.default_rng()
+    ) -> np.ndarray:
+        """
+        Execute mutation.
+
+        Parameters
+        ----------
+        p : np.ndarray
+            Parent individual. shape = (dim,)
+        mutate_range : tuple
+            Tuple of (lower_bound, upper_bound) for mutation.
+        rng : np.random.Generator, optional
+            Random number generator, by default np.random.default_rng()
+
+        Returns
+        -------
+        np.ndarray
+            Mutated individual. shape = (dim,)
+        """
         pass
 
 
@@ -26,6 +45,7 @@ class MutationUniform(Mutation):
     mutation_rate : float
         The probability of mutating each dimension.
     """
+
     def __init__(self, mutation_rate: float):
         """
         Initialize uniform mutation operator.
@@ -39,7 +59,9 @@ class MutationUniform(Mutation):
         self.mutation_rate = mutation_rate
 
     # TODO: mutate_range should be handled outside (__init__ method?)
-    def mutate(self, p: np.ndarray, mutate_range: tuple, rng=np.random.default_rng()) -> np.ndarray:
+    def mutate(
+        self, p: np.ndarray, mutate_range: tuple, rng=np.random.default_rng()
+    ) -> np.ndarray:
         """
         Execute uniform mutation.
 
@@ -51,7 +73,7 @@ class MutationUniform(Mutation):
             Tuple of (lower_bound, upper_bound) for mutation.
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
-        
+
         Returns
         -------
         np.ndarray

@@ -1,8 +1,10 @@
 """
 Optimizer module.
 
-Optimizer class that integrates components to perform evolutionary optimization with surrogate models.
+Optimizer class that integrates components to perform
+evolutionary optimization with surrogate models.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -10,24 +12,24 @@ from typing import TYPE_CHECKING
 import numpy as np
 import scipy.stats
 
-from saealib.population import Population, Archive, PopulationAttribute
 from saealib.callback import CallbackEvent, CallbackManager, logging_generation
 from saealib.operators.repair import repair_clipping
+from saealib.population import Archive, Population, PopulationAttribute
 
 if TYPE_CHECKING:
     from saealib.algorithm import Algorithm
-    from saealib.surrogate.base import Surrogate
     from saealib.modelmanager import ModelManager
-    from saealib.termination import Termination
     from saealib.problem import Problem
+    from saealib.surrogate.base import Surrogate
+    from saealib.termination import Termination
 
 
 class Optimizer:
     """
     Optimizer class for evolutionary algorithms.
 
-    Integrates problem definition, evolutionary algorithm, surrogate model, model manager, and termination condition, 
-    and manages the optimization process.
+    Integrates problem definition, evolutionary algorithm, surrogate model,
+    model manager, and termination condition, and manages the optimization process.
 
     Attributes
     ----------
@@ -58,6 +60,7 @@ class Optimizer:
     instance_name : str
         The name of the optimizer instance.
     """
+
     def __init__(self, problem: Problem):
         """
         Initialize the Optimizer.
@@ -99,7 +102,7 @@ class Optimizer:
         ----------
         algorithm : Algorithm
             Algorithm instance.
-        
+
         Returns
         -------
         Optimizer
@@ -150,7 +153,7 @@ class Optimizer:
         ----------
         termination : Termination
             Termination instance.
-        
+
         Returns
         -------
         Optimizer
@@ -167,7 +170,7 @@ class Optimizer:
         ----------
         size : int
             Initial size of the archive.
-        
+
         Returns
         -------
         Optimizer
@@ -184,7 +187,7 @@ class Optimizer:
         ----------
         atol : float
             Absolute tolerance for the archive.
-        
+
         Returns
         -------
         Optimizer
@@ -192,7 +195,7 @@ class Optimizer:
         """
         self.archive_atol = atol
         return self
-    
+
     def set_archive_rtol(self, rtol: float) -> Optimizer:
         """
         Set Archive relative tolerance to remove duplicates.
@@ -201,7 +204,7 @@ class Optimizer:
         ----------
         rtol : float
             Relative tolerance for the archive.
-        
+
         Returns
         -------
         Optimizer
@@ -218,7 +221,7 @@ class Optimizer:
         ----------
         seed : int
             Random seed.
-        
+
         Returns
         -------
         Optimizer
@@ -236,7 +239,7 @@ class Optimizer:
         ----------
         popsize : int
             Population size.
-        
+
         Returns
         -------
         Optimizer
@@ -253,7 +256,7 @@ class Optimizer:
         ----------
         name : str
             Instance name.
-        
+
         Returns
         -------
         Optimizer
@@ -265,19 +268,28 @@ class Optimizer:
     def _initialize(self, n_init_archive: int) -> None:
         """
         Before running the optimization, initialize the archive and population.
+
+        Parameters
+        ----------
+        n_init_archive : int
+            Number of initial solutions in the archive.
         """
-        archive_x = scipy.stats.qmc.LatinHypercube(d=self.problem.dim, rng=self.rng).random(n_init_archive)
+        archive_x = scipy.stats.qmc.LatinHypercube(
+            d=self.problem.dim, rng=self.rng
+        ).random(n_init_archive)
         archive_x = scipy.stats.qmc.scale(archive_x, self.problem.lb, self.problem.ub)
         archive_f = np.array([self.problem.evaluate(ind) for ind in archive_x])
         # TODO: use cv if constraints are defined
-        archive_sort_idx = self.problem.comparator.sort(archive_f, np.zeros_like(archive_f))
+        archive_sort_idx = self.problem.comparator.sort(
+            archive_f, np.zeros_like(archive_f)
+        )
         archive_x = archive_x[archive_sort_idx]
         archive_f = archive_f[archive_sort_idx]
 
         # TODO: Handling "f" in multiple dimensions (comment out)
         # TODO: Change to receive the required attributes from the Algorithm.
         self.population_attributes = [
-            PopulationAttribute("x", float, (self.problem.dim, )),
+            PopulationAttribute("x", float, (self.problem.dim,)),
             # PopulationAttribute("f", float, (self.problem.n_obj, )),
             PopulationAttribute("f", float),
             PopulationAttribute("g", float),
@@ -289,7 +301,9 @@ class Optimizer:
             self.archive.add({"x": archive_x[i], "f": archive_f[i]})
 
         self.population = Population(self.population_attributes)
-        self.population.extend({"x": archive_x[:self.popsize], "f": archive_f[:self.popsize]})
+        self.population.extend(
+            {"x": archive_x[: self.popsize], "f": archive_f[: self.popsize]}
+        )
 
         self.fe = self.archive_init_size
         self.gen = 0
@@ -310,7 +324,7 @@ class Optimizer:
             Data that may be rewritten.
         kwargs : dict, optional
             Additional keyword arguments for the callback.
-        
+
         Returns
         -------
         any
@@ -331,7 +345,6 @@ class Optimizer:
         self.dispatch(CallbackEvent.RUN_START)
 
         while not self.termination.is_terminated(fe=self.fe):
-
             self.gen += 1
 
             self.dispatch(CallbackEvent.GENERATION_START)
