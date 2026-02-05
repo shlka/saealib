@@ -3,18 +3,22 @@ Optimizer module.
 
 Optimizer class that integrates components to perform
 evolutionary optimization with surrogate models.
+Optimizer class that integrates components to perform
+evolutionary optimization with surrogate models.
 """
+
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
 import scipy.stats
 
-from saealib.context import OptimizationContext
 from saealib.callback import CallbackEvent, CallbackManager, logging_generation
+from saealib.context import OptimizationContext
 from saealib.operators.repair import repair_clipping
+from saealib.population import Archive, Population, PopulationAttribute
 from saealib.population import Archive, Population, PopulationAttribute
 
 if TYPE_CHECKING:
@@ -22,25 +26,42 @@ if TYPE_CHECKING:
     from saealib.modelmanager import ModelManager
     from saealib.problem import Problem
     from saealib.surrogate.base import Surrogate
+    from saealib.problem import Problem
+    from saealib.surrogate.base import Surrogate
     from saealib.termination import Termination
 
 
 class ComponentProvider(Protocol):
-    """
-    The interface for components that can be used by the Optimizer.
-    """
-    @property
-    def algorithm(self) -> Algorithm: ...
-    @property
-    def modelmanager(self) -> ModelManager: ...
-    @property
-    def surrogate(self) -> Surrogate: ...
-    @property
-    def termination(self) -> Termination: ...
-    @property
-    def cbmanager(self) -> CallbackManager: ...
+    """The interface for components that can be used by the Optimizer."""
 
-    def dispatch(self, event: CallbackEvent, data=None, **kwargs) -> Any: ...
+    @property
+    def algorithm(self) -> Algorithm:
+        """Return the algorithm instance."""
+        ...
+
+    @property
+    def modelmanager(self) -> ModelManager:
+        """Return the model manager instance."""
+        ...
+
+    @property
+    def surrogate(self) -> Surrogate:
+        """Return the surrogate model instance."""
+        ...
+
+    @property
+    def termination(self) -> Termination:
+        """Return the termination condition."""
+        ...
+
+    @property
+    def cbmanager(self) -> CallbackManager:
+        """Return the callback manager."""
+        ...
+
+    def dispatch(self, event: CallbackEvent, data=None, **kwargs) -> Any:
+        """Dispatch a callback event."""
+        ...
 
 
 # class Optimizer(ComponentProvider):
@@ -48,6 +69,8 @@ class Optimizer:
     """
     Optimizer class for evolutionary algorithms.
 
+    Integrates problem definition, evolutionary algorithm, surrogate model,
+    model manager, and termination condition, and manages the optimization process.
     Integrates problem definition, evolutionary algorithm, surrogate model,
     model manager, and termination condition, and manages the optimization process.
 
@@ -80,6 +103,7 @@ class Optimizer:
     instance_name : str
         The name of the optimizer instance.
     """
+
 
     def __init__(self, problem: Problem):
         """
@@ -118,6 +142,7 @@ class Optimizer:
         ----------
         algorithm : Algorithm
             Algorithm instance.
+
 
         Returns
         -------
@@ -170,6 +195,7 @@ class Optimizer:
         termination : Termination
             Termination instance.
 
+
         Returns
         -------
         Optimizer
@@ -186,6 +212,7 @@ class Optimizer:
         ----------
         size : int
             Initial size of the archive.
+
 
         Returns
         -------
@@ -204,6 +231,7 @@ class Optimizer:
         atol : float
             Absolute tolerance for the archive.
 
+
         Returns
         -------
         Optimizer
@@ -211,6 +239,7 @@ class Optimizer:
         """
         self.archive_atol = atol
         return self
+
 
     def set_archive_rtol(self, rtol: float) -> Optimizer:
         """
@@ -220,6 +249,7 @@ class Optimizer:
         ----------
         rtol : float
             Relative tolerance for the archive.
+
 
         Returns
         -------
@@ -238,6 +268,7 @@ class Optimizer:
         seed : int
             Random seed.
 
+
         Returns
         -------
         Optimizer
@@ -255,6 +286,7 @@ class Optimizer:
         popsize : int
             Population size.
 
+
         Returns
         -------
         Optimizer
@@ -271,6 +303,7 @@ class Optimizer:
         ----------
         name : str
             Instance name.
+
 
         Returns
         -------
@@ -293,6 +326,7 @@ class Optimizer:
         kwargs : dict, optional
             Additional keyword arguments for the callback.
 
+
         Returns
         -------
         any
@@ -302,18 +336,16 @@ class Optimizer:
         return self.cbmanager.dispatch(event, data, **kwargs)
 
     def create_context(self) -> OptimizationContext:
-        """
-        Creating the OptimizationContext and initializing the Optimizer.
-        """
+        """Create the OptimizationContext and initialize the Optimizer."""
         rng = np.random.default_rng(self.seed)
 
         # TODO:　modify it to account for the fact that there are n_obj instances of f.
         # default attributes
         attrs = [
-            PopulationAttribute("x",  float, (self.problem.dim, ), default=np.nan),
+            PopulationAttribute("x", float, (self.problem.dim,), default=np.nan),
             # PopulationAttribute("f",  float, (self.problem.n_obj, ), default=np.nan)
-            PopulationAttribute("f",  float, (), default=np.nan),
-            PopulationAttribute("g",  float, (self.problem.n_constraint, ), default=0.0),
+            PopulationAttribute("f", float, (), default=np.nan),
+            PopulationAttribute("g", float, (self.problem.n_constraint,), default=0.0),
             PopulationAttribute("cv", float, (), default=0.0),
         ]
 
@@ -325,29 +357,33 @@ class Optimizer:
                 if attr.name not in ex_names:
                     attrs.append(attr)
 
-            PopClass = self.algorithm.population_class
-            ArcClass = self.algorithm.archive_class
+            pop_class = self.algorithm.population_class
+            arc_class = self.algorithm.archive_class
         else:
             # TODO: Consider whether to make it an exception
-            PopClass = Population
-            ArcClass = Archive
+            pop_class = Population
+            arc_class = Archive
 
-        population = PopClass(attrs=attrs, init_capacity=self.popsize)
-        archive = ArcClass(attrs=attrs, init_capacity=self.archive_init_size)
+        population = pop_class(attrs=attrs, init_capacity=self.popsize)
+        archive = arc_class(attrs=attrs, init_capacity=self.archive_init_size)
 
-        archive_x = scipy.stats.qmc.LatinHypercube(d=self.problem.dim, rng=rng).random(self.archive_init_size)
+        archive_x = scipy.stats.qmc.LatinHypercube(d=self.problem.dim, rng=rng).random(
+            self.archive_init_size
+        )
         archive_x = scipy.stats.qmc.scale(archive_x, self.problem.lb, self.problem.ub)
         archive_f = np.array([self.problem.evaluate(ind) for ind in archive_x])
 
         # TODO: use cv if constraints are defined
-        archive_sort_idx = self.problem.comparator.sort(archive_f, np.zeros_like(archive_f))
+        archive_sort_idx = self.problem.comparator.sort(
+            archive_f, np.zeros_like(archive_f)
+        )
         archive_x = archive_x[archive_sort_idx]
         archive_f = archive_f[archive_sort_idx]
 
         for i in range(self.archive_init_size):
             archive.add({"x": archive_x[i], "f": archive_f[i]})
 
-        population.extend(archive[:self.popsize])
+        population.extend(archive[: self.popsize])
 
         # initialize callbacks
         self.cbmanager.register(CallbackEvent.GENERATION_START, logging_generation)
@@ -360,7 +396,7 @@ class Optimizer:
             archive=archive,
             rng=rng,
             fe=self.archive_init_size,
-            gen=0
+            gen=0,
         )
         return ctx
 
