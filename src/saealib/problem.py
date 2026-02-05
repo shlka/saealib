@@ -3,12 +3,13 @@ Problem module.
 
 Problem has definitions for optimization problems, and includes classes that depend on problem.
 """
+
 from __future__ import annotations
 
-from enum import Enum, auto
-from typing import TYPE_CHECKING
 from abc import ABC, abstractmethod
+from enum import Enum, auto
 from functools import partial
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -41,9 +42,20 @@ class Problem:
     func : callable -> float
         Objective function to evaluate solutions.
     """
-    def __init__(self, func: callable, dim: int, n_obj: int, weight: np.ndarray, lb: list[float], ub: list[float], constraints: list["Constraint"] = None, eps: float = 1e-6):
+
+    def __init__(
+        self,
+        func: callable,
+        dim: int,
+        n_obj: int,
+        weight: np.ndarray,
+        lb: list[float],
+        ub: list[float],
+        constraints: list[Constraint] = None,
+        eps: float = 1e-6,
+    ):
         """
-        initialize Problem instance.
+        Initialize Problem instance.
 
         Parameters
         ----------
@@ -75,14 +87,18 @@ class Problem:
             constraints_list = []
         else:
             constraints_list = constraints
-        
+
         for i in range(dim):
-            constraints_list.append(Constraint(partial(ub_constraint, ub=self.ub), type=ConstraintType.INEQ))
-            constraints_list.append(Constraint(partial(lb_constraint, lb=self.lb), type=ConstraintType.INEQ))
-        
+            constraints_list.append(
+                Constraint(partial(ub_constraint, ub=self.ub), type=ConstraintType.INEQ)
+            )
+            constraints_list.append(
+                Constraint(partial(lb_constraint, lb=self.lb), type=ConstraintType.INEQ)
+            )
+
         self.constraint_manager = ConstraintManager(constraints=constraints_list)
 
-        #TODO: multiple objective support
+        # TODO: multiple objective support
         self.comparator = SingleObjectiveComparator(weight=weight, eps=eps)
 
     def evaluate(self, x: np.ndarray) -> float:
@@ -93,7 +109,7 @@ class Problem:
         ----------
         x : np.ndarray
             The solution to evaluate.
-        
+
         Returns
         -------
         float
@@ -113,6 +129,7 @@ class ConstraintType(Enum):
     INEQ
         Inequality constraint.
     """
+
     EQ = auto()
     INEQ = auto()
 
@@ -128,6 +145,7 @@ class Constraint:
     func : callable -> float
         Returns constraint violation value.
     """
+
     def __init__(self, func, type: ConstraintType = ConstraintType.INEQ):
         """
         Initialize Constraint instance.
@@ -199,12 +217,13 @@ def lb_constraint(x: np.ndarray, lb: np.ndarray) -> np.ndarray:
 class ConstraintManager:
     """
     Constraint manager to handle multiple constraints.
-    
+
     Attributes
     ----------
     constraints : list[Constraint]
         List of constraints.
     """
+
     def __init__(self, constraints: list[Constraint]):
         """
         Initialize ConstraintManager instance.
@@ -227,7 +246,7 @@ class ConstraintManager:
         ----------
         x : np.ndarray
             The solution to evaluate.
-        
+
         Returns
         -------
         float
@@ -245,6 +264,7 @@ class ConstraintManager:
         ----------
         population : Population
             The population to evaluate.
+
         Returns
         -------
         np.ndarray
@@ -266,6 +286,7 @@ class Comparator(ABC):
     eps : float
         Epsilon value for comparison tolerance.
     """
+
     @abstractmethod
     def __init__(self, weights: np.ndarray, eps: float):
         """
@@ -282,7 +303,9 @@ class Comparator(ABC):
         self.eps = eps
 
     @abstractmethod
-    def compare(self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float) -> int:
+    def compare(
+        self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float
+    ) -> int:
         """
         Compare two solutions.
 
@@ -303,7 +326,7 @@ class Comparator(ABC):
     def sort(self, fitness: np.ndarray, cv: np.ndarray) -> np.ndarray:
         """
         Sort solutions based on their fitness and constraint violations.
-        
+
         Parameters
         ----------
         fitness : np.ndarray
@@ -318,10 +341,13 @@ class SingleObjectiveComparator(Comparator):
     """
     Comparator for single-objective optimization.
     """
+
     def __init__(self, weight: float = 1.0, eps: float = 1e-6):
         super().__init__(np.array([weight]), eps)
 
-    def compare(self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float) -> int:
+    def compare(
+        self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float
+    ) -> int:
         if cv_a > self.eps and cv_b > self.eps:
             if cv_a < cv_b:
                 return -1
@@ -340,7 +366,7 @@ class SingleObjectiveComparator(Comparator):
                 return 1
             else:
                 return 0
-    
+
     def sort(self, fitness: np.ndarray, cv: np.ndarray) -> np.ndarray:
         cv_key = np.where(cv > self.eps, cv, 0)
         obj_key = fitness.flatten() * self.weights[0]

@@ -3,6 +3,8 @@ Termination module.
 
 Termination class defines criteria to stop the optimization process.
 """
+
+
 class Termination:
     """
     Termination class to determine when to stop the optimization process.
@@ -12,6 +14,7 @@ class Termination:
     maxparameter : dict[str, float]
         Dictionary to store maximum parameters for termination.
     """
+
     def __init__(self, **kwargs):
         """
         Initialize Termination instance.
@@ -33,14 +36,14 @@ class Termination:
         ----------
         key : str
             The key to retrieve the maximum parameter for.
-        
+
         Returns
         -------
         float | None
             The maximum parameter for the given key, or None if not found.
         """
         return self.maxparameter.get(key, None)
-    
+
     def set(self, key: str, value: float) -> None:
         """
         Setter for maximum parameter.
