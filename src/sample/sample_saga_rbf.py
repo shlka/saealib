@@ -21,6 +21,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main():
+    """Run SAGA-RBF optimization example."""
     # parameters
     dim = 10
     seed = 1

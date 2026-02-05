@@ -65,6 +65,11 @@ class Termination:
         ----------
         kwargs : dict[str, float]
             Current parameters to check against maximum parameters.
+
+        Returns
+        -------
+        bool
+            True if any termination criterion is met, False otherwise.
         """
         for k, v in kwargs.items():
             if k in self.maxparameter and v >= self.maxparameter[k]:

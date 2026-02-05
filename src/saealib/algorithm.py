@@ -1,5 +1,5 @@
 """
-Evolutionary Algorithm Module
+Evolutionary Algorithm Module.
 
 This module contains the implementation of evolutionary algorithms.
 """
@@ -22,18 +22,41 @@ if TYPE_CHECKING:
 
 
 class Algorithm(ABC):
-    """
-    Base class for evolutionary algorithms.
-    """
+    """Base class for evolutionary algorithms."""
 
     @abstractmethod
     def ask(self, optimizer: Optimizer) -> np.ndarray:
+        """
+        Generate offspring solutions.
+
+        Parameters
+        ----------
+        optimizer : Optimizer
+            Optimizer instance.
+
+        Returns
+        -------
+        np.ndarray
+            Generated offspring solutions. shape = (popsize, dim).
+        """
         pass
 
     @abstractmethod
     def tell(
         self, optimizer: Optimizer, offspring: np.ndarray, offspring_fit: np.ndarray
     ) -> None:
+        """
+        Update the population with offspring solutions.
+
+        Parameters
+        ----------
+        optimizer : Optimizer
+            Optimizer instance.
+        offspring : np.ndarray
+            Offspring solutions. shape = (popsize, dim).
+        offspring_fit : np.ndarray
+            Offspring fitness values. shape = (popsize, ).
+        """
         pass
 
 
@@ -140,7 +163,9 @@ class GA(Algorithm):
         self, optimizer: Optimizer, offspring: np.ndarray, offspring_fit: np.ndarray
     ):
         """
-        Update the population with offspring solutions. Optimizer population is updated in-place.
+        Update the population with offspring solutions.
+
+        Optimizer population is updated in-place.
 
         Parameters
         ----------

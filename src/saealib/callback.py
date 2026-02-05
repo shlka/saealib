@@ -62,17 +62,15 @@ class CallbackEvent(Enum):
 class CallbackManager:
     """
     Manages callback events and their handlers.
+
+    Attributes
+    ----------
+    handlers : defaultdict[CallbackEvent, list[callable]]
+        Dictionary mapping events to list of callback functions.
     """
 
     def __init__(self) -> None:
-        """
-        Initialize CallbackManager.
-
-        Attributes
-        ----------
-        handlers : dict
-
-        """
+        """Initialize CallbackManager."""
         self.handlers = defaultdict(list)
 
     def register(self, event: CallbackEvent, func: callable) -> None:
@@ -101,9 +99,11 @@ class CallbackManager:
         event : CallbackEvent
             The event to dispatch.
         data : any
-            The data to pass to the callback functions. Can be modified by each callback.
+            The data to pass to the callback functions.
+            Can be modified by each callback.
         **kwargs : any
-            Additional keyword arguments to pass to the callback functions. Read-only.
+            Additional keyword arguments to pass to the callback functions.
+            Read-only.
 
         Returns
         -------
@@ -118,7 +118,9 @@ class CallbackManager:
 
 def logging_generation(data, **kwargs):
     """
-    Simple logging callback for generation start event.
+    Log generation start event.
+
+    Simple logging callback.
 
     Parameters
     ----------
@@ -133,5 +135,6 @@ def logging_generation(data, **kwargs):
     """
     optimizer: Optimizer = kwargs.get("optimizer")
     logger.info(
-        f"Generation {optimizer.gen} started. fe: {optimizer.fe}. Best f: {optimizer.archive.get('f').min()}"
+        f"Generation {optimizer.gen} started. fe: {optimizer.fe}. "
+        f"Best f: {optimizer.archive.get('f').min()}"
     )

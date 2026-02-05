@@ -1,7 +1,8 @@
 """
 Problem module.
 
-Problem has definitions for optimization problems, and includes classes that depend on problem.
+Problem has definitions for optimization problems,
+and includes classes that depend on problem.
 """
 
 from __future__ import annotations
@@ -51,7 +52,7 @@ class Problem:
         weight: np.ndarray,
         lb: list[float],
         ub: list[float],
-        constraints: list[Constraint] = None,
+        constraints: list[Constraint] | None = None,
         eps: float = 1e-6,
     ):
         """
@@ -83,10 +84,7 @@ class Problem:
         self.lb = np.asarray(lb)
         self.ub = np.asarray(ub)
         self.func = func
-        if constraints is None:
-            constraints_list = []
-        else:
-            constraints_list = constraints
+        constraints_list = [] if constraints is None else constraints
 
         for i in range(dim):
             constraints_list.append(
@@ -319,6 +317,14 @@ class Comparator(ABC):
             Objective values of solution b. shape = (n_obj, )
         cv_b : float
             Constraint violation of solution b.
+
+        Returns
+        -------
+        int
+            Comparison result.
+            -1 if a is better than b.
+            1 if b is better than a.
+            0 if a and b are equal.
         """
         pass
 
@@ -333,14 +339,17 @@ class Comparator(ABC):
             Objective values of solutions. shape = (n_individuals, n_obj)
         cv : np.ndarray
             Constraint violations of solutions. shape = (n_individuals, )
+
+        Returns
+        -------
+        np.ndarray
+            Sorted indices of the solutions.
         """
         pass
 
 
 class SingleObjectiveComparator(Comparator):
-    """
-    Comparator for single-objective optimization.
-    """
+    """Comparator for single-objective optimization."""
 
     def __init__(self, weight: float = 1.0, eps: float = 1e-6):
         super().__init__(np.array([weight]), eps)
@@ -348,6 +357,28 @@ class SingleObjectiveComparator(Comparator):
     def compare(
         self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float
     ) -> int:
+        """
+        Compare two solutions.
+
+        Parameters
+        ----------
+        fitness_a : np.ndarray
+            Objective values of solution a. shape = (n_obj, )
+        cv_a : float
+            Constraint violation of solution a.
+        fitness_b : np.ndarray
+            Objective values of solution b. shape = (n_obj, )
+        cv_b : float
+            Constraint violation of solution b.
+
+        Returns
+        -------
+        int
+            Comparison result.
+            -1 if a is better than b.
+            1 if b is better than a.
+            0 if a and b are equal.
+        """
         if cv_a > self.eps and cv_b > self.eps:
             if cv_a < cv_b:
                 return -1
@@ -368,6 +399,21 @@ class SingleObjectiveComparator(Comparator):
                 return 0
 
     def sort(self, fitness: np.ndarray, cv: np.ndarray) -> np.ndarray:
+        """
+        Sort solutions based on their fitness and constraint violations.
+
+        Parameters
+        ----------
+        fitness : np.ndarray
+            Objective values of solutions. shape = (n_individuals, n_obj)
+        cv : np.ndarray
+            Constraint violations of solutions. shape = (n_individuals, )
+
+        Returns
+        -------
+        np.ndarray
+            Sorted indices of the solutions.
+        """
         cv_key = np.where(cv > self.eps, cv, 0)
         obj_key = fitness.flatten() * self.weights[0]
         return np.lexsort((-obj_key, cv_key))

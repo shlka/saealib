@@ -79,6 +79,16 @@ class RBFsurrogate(Surrogate):
         self.sigma = None
 
     def fit(self, train_x: np.ndarray, train_y: np.ndarray) -> None:
+        """
+        Fit the surrogate model.
+
+        Parameters
+        ----------
+        train_x : np.ndarray
+            Training input data. matrix of shape (n_samples, n_features)
+        train_y : np.ndarray
+            Training output data. array of shape (n_samples, )
+        """
         self.train_x = np.asarray(train_x)
         self.train_y = np.asarray(train_y)
         n_samples = len(train_x)
@@ -98,6 +108,19 @@ class RBFsurrogate(Surrogate):
             self.weights = np.nan * np.ones(n_samples)
 
     def predict(self, test_x: np.ndarray) -> np.ndarray:
+        """
+        Predict using the surrogate model.
+
+        Parameters
+        ----------
+        test_x : np.ndarray
+            Input data for prediction. matrix of shape (n_samples, n_features)
+
+        Returns
+        -------
+        np.ndarray
+            Predicted output data. array of shape (n_samples, )
+        """
         test = np.asarray(test_x)
         if test.ndim == 1:
             test = test.reshape(1, -1)

@@ -16,9 +16,7 @@ if TYPE_CHECKING:
 
 
 class ParentSelection(ABC):
-    """
-    Base class for parent selection operators.
-    """
+    """Base class for parent selection operators."""
 
     @abstractmethod
     def select(
@@ -31,14 +29,37 @@ class ParentSelection(ABC):
         n_parents: int,
         rng=np.random.default_rng(),
     ) -> np.ndarray:
+        """
+        Select parents for reproduction.
+
+        Parameters
+        ----------
+        opt : Optimizer
+            The optimizer instance.
+        pop_x : np.ndarray
+            Population decision variables.
+        pop_f : np.ndarray
+            Population objective values.
+        pop_cv : np.ndarray
+            Population constraint violation values.
+        n_pair : int
+            Number of pairs to select.
+        n_parents : int
+            Number of parents per pair.
+        rng : np.random.Generator, optional
+            Random number generator, by default np.random.default_rng()
+
+        Returns
+        -------
+        np.ndarray
+            Selected parent indices. shape = (n_pair, n_parents)
+        """
         pass
 
 
 # TODO: check required
 class TournamentSelection(ParentSelection):
-    """
-    Tournament selection operator.
-    """
+    """Tournament selection operator."""
 
     def __init__(self, tournament_size: int):
         super().__init__()
@@ -54,6 +75,31 @@ class TournamentSelection(ParentSelection):
         n_parents: int,
         rng=np.random.default_rng(),
     ) -> np.ndarray:
+        """
+        Execute tournament selection.
+
+        Parameters
+        ----------
+        opt : Optimizer
+            The optimizer instance.
+        pop_x : np.ndarray
+            Population decision variables.
+        pop_f : np.ndarray
+            Population objective values.
+        pop_cv : np.ndarray
+            Population constraint violation values.
+        n_pair : int
+            Number of pairs to select.
+        n_parents : int
+            Number of parents per pair.
+        rng : np.random.Generator, optional
+            Random number generator, by default np.random.default_rng()
+
+        Returns
+        -------
+        np.ndarray
+            Selected parent indices. shape = (n_pair, n_parents)
+        """
         n_pop = len(pop_x)
         cmp = opt.problem.comparator
         selected_idx = np.zeros((n_pair, n_parents), dtype=int)
@@ -79,14 +125,10 @@ class TournamentSelection(ParentSelection):
 
 
 class SequentialSelection(ParentSelection):
-    """
-    Sequential selection operator.
-    """
+    """Sequential selection operator."""
 
     def __init__(self):
-        """
-        Initialize sequential selection operator.
-        """
+        """Initialize sequential selection operator."""
         super().__init__()
 
     def select(
@@ -124,7 +166,7 @@ class SequentialSelection(ParentSelection):
         np.ndarray
             Selected parent indices. shape = (n_pair, n_parents)
         """
-        n_pop = len(pop_x)
+        len(pop_x)
         selected_idx = np.zeros((n_pair, n_parents), dtype=int)
         i_grid, j_grid = np.meshgrid(
             np.arange(n_pair), np.arange(n_parents), indexing="ij"
@@ -134,9 +176,7 @@ class SequentialSelection(ParentSelection):
 
 
 class SurvivorSelection(ABC):
-    """
-    Base class for survivor selection operators.
-    """
+    """Base class for survivor selection operators."""
 
     def select(
         self,
@@ -176,7 +216,8 @@ class SurvivorSelection(ABC):
         Returns
         -------
         tuple[np.ndarray, np.ndarray, np.ndarray]
-            Selected survivors' decision variables, objective values, and constraint violation values.
+            Selected survivors' decision variables, objective values,
+            and constraint violation values.
         """
         pool_x, pool_f, pool_cv = self._create_pool(
             pop_x, pop_f, pop_cv, off_x, off_f, off_cv
@@ -216,7 +257,8 @@ class SurvivorSelection(ABC):
         Returns
         -------
         tuple[np.ndarray, np.ndarray, np.ndarray]
-            Selection pool decision variables, objective values, and constraint violation values.
+            Selection pool decision variables, objective values,
+            and constraint violation values.
         """
         pool_x = np.vstack((pop_x, off_x))
         pool_f = np.hstack((pop_f, off_f))
@@ -257,9 +299,7 @@ class SurvivorSelection(ABC):
 
 
 class TruncationSelection(SurvivorSelection):
-    """
-    Truncation selection operator.
-    """
+    """Truncation selection operator."""
 
     def __init__(self):
         super().__init__()
