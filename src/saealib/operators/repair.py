@@ -3,11 +3,11 @@ Repair operators module.
 
 This module defines repair operators to fix individuals
 that violate problem constraints.
-This module defines repair operators to fix individuals
-that violate problem constraints.
+
 """
 
 from typing import TYPE_CHECKING
+
 import numpy as np
 
 if TYPE_CHECKING:
@@ -24,6 +24,8 @@ def repair_clipping(data: np.ndarray, **kwargs) -> np.ndarray:
     ----------
     data : np.ndarray
         Data to be repaired.
+    **kwargs : any
+        Additional keyword arguments. Should contain 'ctx'.
 
     Returns
     -------

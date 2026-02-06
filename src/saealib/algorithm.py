@@ -4,13 +4,10 @@ Evolutionary Algorithm Module.
 This module contains the implementation of evolutionary algorithms.
 """
 
-
 from __future__ import annotations
 
 import math
-import math
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -25,11 +22,9 @@ if TYPE_CHECKING:
     from saealib.operators.mutation import Mutation
     from saealib.operators.selection import ParentSelection, SurvivorSelection
     from saealib.optimizer import ComponentProvider
-    from saealib.optimizer import Optimizer
 
 
 class Algorithm(ABC):
-    """Base class for evolutionary algorithms."""
     """Base class for evolutionary algorithms."""
 
     @abstractmethod
@@ -49,7 +44,6 @@ class Algorithm(ABC):
         """Return the archive class."""
         pass
 
-
     @abstractmethod
     def ask(self, ctx: OptimizationContext, provider: ComponentProvider) -> Population:
         """
@@ -57,26 +51,15 @@ class Algorithm(ABC):
 
         Parameters
         ----------
-        optimizer : Optimizer
-            Optimizer instance.
+        ctx : OptimizationContext
+            Context instance.
+        provider : ComponentProvider
+            Provider instance.
 
         Returns
         -------
-        np.ndarray
-            Generated offspring solutions. shape = (popsize, dim).
-        """
-        """
-        Generate offspring solutions.
-
-        Parameters
-        ----------
-        optimizer : Optimizer
-            Optimizer instance.
-
-        Returns
-        -------
-        np.ndarray
-            Generated offspring solutions. shape = (popsize, dim).
+        Population
+            Generated offspring solutions.
         """
         pass
 
@@ -92,12 +75,12 @@ class Algorithm(ABC):
 
         Parameters
         ----------
-        optimizer : Optimizer
-            Optimizer instance.
-        offspring : np.ndarray
-            Offspring solutions. shape = (popsize, dim).
-        offspring_fit : np.ndarray
-            Offspring fitness values. shape = (popsize, ).
+        ctx : OptimizationContext
+            Context instance.
+        provider : ComponentProvider
+            Provider instance.
+        offspring : Population
+            Offspring solutions.
         """
         pass
 
@@ -184,10 +167,9 @@ class GA(Algorithm):
         provider : ComponentProvider
             Objects of the class in which the component is exposed (ex. Optimizer).
 
-
         Returns
         -------
-        np.ndarray
+        Population
             Generated offspring solutions. shape = (popsize, dim).
         """
         # TODO: Modified the ask method to return candidate solutions of arbitrary
@@ -275,6 +257,4 @@ class GA(Algorithm):
 
         popsize = len(ctx.population)
         ctx.population.clear()
-        ctx.population.extend(
-            {"x": pop_cand[: popsize], "f": fit_cand[: popsize]}
-        )
+        ctx.population.extend({"x": pop_cand[:popsize], "f": fit_cand[:popsize]})
