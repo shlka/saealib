@@ -4,12 +4,10 @@ Callback module.
 This module contains the implementation of callback events and manager.
 """
 
-
 from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from enum import Enum, auto
 from enum import Enum, auto
 from typing import TYPE_CHECKING
 
@@ -46,7 +44,6 @@ class CallbackEvent(Enum):
         Triggered after surrogate model fitting.
     """
 
-
     # Optimizer.run events
     RUN_START = auto()
     RUN_END = auto()
@@ -70,16 +67,9 @@ class CallbackManager:
     ----------
     handlers : defaultdict[CallbackEvent, list[callable]]
         Dictionary mapping events to list of callback functions.
-
-    Attributes
-    ----------
-    handlers : defaultdict[CallbackEvent, list[callable]]
-        Dictionary mapping events to list of callback functions.
     """
 
-
     def __init__(self) -> None:
-        """Initialize CallbackManager."""
         """Initialize CallbackManager."""
         self.handlers = defaultdict(list)
 
@@ -93,7 +83,6 @@ class CallbackManager:
             The event to register the callback for.
         func : callable
             The callback function to register.
-
 
         Returns
         -------
@@ -112,11 +101,8 @@ class CallbackManager:
         data : any
             The data to pass to the callback functions.
             Can be modified by each callback.
-            The data to pass to the callback functions.
-            Can be modified by each callback.
+
         **kwargs : any
-            Additional keyword arguments to pass to the callback functions.
-            Read-only.
             Additional keyword arguments to pass to the callback functions.
             Read-only.
 
@@ -137,17 +123,12 @@ def logging_generation(data, **kwargs):
 
     Simple logging callback.
 
-    Log generation start event.
-
-    Simple logging callback.
-
     Parameters
     ----------
     data : any
         The data passed to the callback. Not used here.
     **kwargs : any
-        Additional keyword arguments. Should contain 'optimizer'.
-
+        Additional keyword arguments. Should contain 'ctx'.
 
     Returns
     -------

@@ -6,18 +6,12 @@ the derived class `IndividualBasedStrategy` for managing
 surrogate models in evolutionary optimization.
 These classes provide how to evaluate candidate solutions using a combination
 of true evaluations and surrogate model predictions.
-This module defines the base class `ModelManager` and
-the derived class `IndividualBasedStrategy` for managing
-surrogate models in evolutionary optimization.
-These classes provide how to evaluate candidate solutions using a combination
-of true evaluations and surrogate model predictions.
-"""
 
+"""
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -28,12 +22,8 @@ if TYPE_CHECKING:
     from saealib.context import OptimizationContext
     from saealib.optimizer import ComponentProvider, Optimizer
 
-    from saealib.optimizer import Optimizer, OptimizationContext, ComponentProvider
-
 
 class ModelManager(ABC):
-    """Base class for surrogate model manager."""
-
     """Base class for surrogate model manager."""
 
     @abstractmethod
@@ -60,8 +50,7 @@ class ModelManager(ABC):
         tuple[np.ndarray, np.ndarray]
             A tuple containing the candidate solutions
             and their corresponding fitness values.
-            A tuple containing the candidate solutions
-            and their corresponding fitness values.
+
             (candidate_x, candidate_y)
         """
         pass
@@ -85,9 +74,7 @@ class IndividualBasedStrategy(ModelManager):
     A method in which a certain percentage of individuals are evaluated
     with a true evaluation function for each candidate solution per generation,
     and the remainder are predicted by a surrogate model.
-    A method in which a certain percentage of individuals are evaluated
-    with a true evaluation function for each candidate solution per generation,
-    and the remainder are predicted by a surrogate model.
+
 
     Attributes
     ----------
@@ -103,9 +90,7 @@ class IndividualBasedStrategy(ModelManager):
         Ratio of real evaluations.
     """
 
-
     def __init__(self):
-        """Initialize IndividualBasedStrategy class."""
         """Initialize IndividualBasedStrategy class."""
         self.candidate = None
         self.candidate_fit = None
@@ -139,8 +124,7 @@ class IndividualBasedStrategy(ModelManager):
         tuple[np.ndarray, np.ndarray]
             A tuple containing the candidate solutions
             and their corresponding fitness values.
-            A tuple containing the candidate solutions
-            and their corresponding fitness values.
+
             (candidate_x, candidate_y)
         """
         self.candidate = candidate
@@ -180,17 +164,12 @@ class IndividualBasedStrategy(ModelManager):
         self.candidate_eval_fit = np.array(
             [ctx.problem.evaluate(ind) for ind in self.candidate_eval]
         )
-        self.candidate_eval_fit = np.array(
-            [ctx.problem.evaluate(ind) for ind in self.candidate_eval]
-        )
+
         self.candidate_fit[:psm] = self.candidate_eval_fit
         ctx.count_fe(psm)
 
         # add evaluated individuals to the archive
         for i in range(psm):
-            ctx.archive.add(
-                {"x": self.candidate_eval[i], "f": self.candidate_eval_fit[i]}
-            )
             ctx.archive.add(
                 {"x": self.candidate_eval[i], "f": self.candidate_eval_fit[i]}
             )
@@ -203,15 +182,17 @@ class IndividualBasedStrategy(ModelManager):
         """
         Predict fitness values for all candidate solutions using the surrogate model.
 
-
         using k-NN training data selection.
 
         Parameters
         ----------
         optimizer : Optimizer
             The optimizer instance.
+
         candidate : np.ndarray
             The candidate solutions to be predicted.
+        n_train : int
+            Number of training samples.
 
         Returns
         -------
@@ -230,13 +211,6 @@ class IndividualBasedStrategy(ModelManager):
             self.surrogate_model.fit(train_x, train_f)
             # predict candidate[i]
             candidate_fit[i] = self.surrogate_model.predict(candidate[i])
-            optimizer.dispatch(
-                CallbackEvent.POST_SURROGATE_FIT,
-                None,
-                train_x=train_x,
-                train_y=train_f,
-                center=candidate[i],
-            )
             optimizer.dispatch(
                 CallbackEvent.POST_SURROGATE_FIT,
                 None,
@@ -265,8 +239,7 @@ class IndividualBasedStrategy(ModelManager):
         tuple[np.ndarray, np.ndarray]
             A tuple containing the candidate solutions
             and their corresponding fitness values.
-            A tuple containing the candidate solutions
-            and their corresponding fitness values.
+
             (candidate_x, candidate_y)
         """
         n_cand = len(candidate)
@@ -278,7 +251,6 @@ class IndividualBasedStrategy(ModelManager):
             optimizer.archive.add(candidate[i], candidate_y[i])
 
         return candidate, candidate_y
-
 
     def step(self, optimizer: Optimizer) -> None:
         """
@@ -299,9 +271,6 @@ class IndividualBasedStrategy(ModelManager):
 
         cand_x, cand_y = self.run(optimizer, cand)
 
-        optimizer.dispatch(
-            CallbackEvent.SURROGATE_END, None, candidate_x=cand_x, candidate_y=cand_y
-        )
         optimizer.dispatch(
             CallbackEvent.SURROGATE_END, None, candidate_x=cand_x, candidate_y=cand_y
         )

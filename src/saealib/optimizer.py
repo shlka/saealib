@@ -3,10 +3,8 @@ Optimizer module.
 
 Optimizer class that integrates components to perform
 evolutionary optimization with surrogate models.
-Optimizer class that integrates components to perform
-evolutionary optimization with surrogate models.
-"""
 
+"""
 
 from __future__ import annotations
 
@@ -19,13 +17,10 @@ from saealib.callback import CallbackEvent, CallbackManager, logging_generation
 from saealib.context import OptimizationContext
 from saealib.operators.repair import repair_clipping
 from saealib.population import Archive, Population, PopulationAttribute
-from saealib.population import Archive, Population, PopulationAttribute
 
 if TYPE_CHECKING:
     from saealib.algorithm import Algorithm
     from saealib.modelmanager import ModelManager
-    from saealib.problem import Problem
-    from saealib.surrogate.base import Surrogate
     from saealib.problem import Problem
     from saealib.surrogate.base import Surrogate
     from saealib.termination import Termination
@@ -71,8 +66,6 @@ class Optimizer:
 
     Integrates problem definition, evolutionary algorithm, surrogate model,
     model manager, and termination condition, and manages the optimization process.
-    Integrates problem definition, evolutionary algorithm, surrogate model,
-    model manager, and termination condition, and manages the optimization process.
 
     Attributes
     ----------
@@ -103,7 +96,6 @@ class Optimizer:
     instance_name : str
         The name of the optimizer instance.
     """
-
 
     def __init__(self, problem: Problem):
         """
@@ -142,7 +134,6 @@ class Optimizer:
         ----------
         algorithm : Algorithm
             Algorithm instance.
-
 
         Returns
         -------
@@ -195,7 +186,6 @@ class Optimizer:
         termination : Termination
             Termination instance.
 
-
         Returns
         -------
         Optimizer
@@ -212,7 +202,6 @@ class Optimizer:
         ----------
         size : int
             Initial size of the archive.
-
 
         Returns
         -------
@@ -231,7 +220,6 @@ class Optimizer:
         atol : float
             Absolute tolerance for the archive.
 
-
         Returns
         -------
         Optimizer
@@ -239,7 +227,6 @@ class Optimizer:
         """
         self.archive_atol = atol
         return self
-
 
     def set_archive_rtol(self, rtol: float) -> Optimizer:
         """
@@ -249,7 +236,6 @@ class Optimizer:
         ----------
         rtol : float
             Relative tolerance for the archive.
-
 
         Returns
         -------
@@ -268,7 +254,6 @@ class Optimizer:
         seed : int
             Random seed.
 
-
         Returns
         -------
         Optimizer
@@ -286,7 +271,6 @@ class Optimizer:
         popsize : int
             Population size.
 
-
         Returns
         -------
         Optimizer
@@ -303,7 +287,6 @@ class Optimizer:
         ----------
         name : str
             Instance name.
-
 
         Returns
         -------
@@ -325,7 +308,6 @@ class Optimizer:
             Data that may be rewritten.
         kwargs : dict, optional
             Additional keyword arguments for the callback.
-
 
         Returns
         -------
