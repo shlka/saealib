@@ -20,8 +20,8 @@ from saealib.population import Archive, Population, PopulationAttribute
 
 if TYPE_CHECKING:
     from saealib.algorithm import Algorithm
-    from saealib.modelmanager import ModelManager
     from saealib.problem import Problem
+    from saealib.strategies.base import OptimizationStrategy
     from saealib.surrogate.base import Surrogate
     from saealib.termination import Termination
 
@@ -35,8 +35,8 @@ class ComponentProvider(Protocol):
         ...
 
     @property
-    def modelmanager(self) -> ModelManager:
-        """Return the model manager instance."""
+    def strategy(self) -> OptimizationStrategy:
+        """Return the optimization strategy instance."""
         ...
 
     @property
@@ -75,8 +75,8 @@ class Optimizer:
         The evolutionary algorithm.
     surrogate : Surrogate
         The surrogate model.
-    modelmanager : ModelManager
-        The surrogate model manager.
+    strategy : OptimizationStrategy
+        The optimization strategy.
     termination : Termination
         The termination condition.
     archive : Archive
@@ -110,7 +110,7 @@ class Optimizer:
         self.problem = problem
         self.algorithm = None
         self.surrogate = None
-        self.modelmanager = None
+        self.strategy = None
         self.termination = None
         # Archive init parameters
         self.archive_atol = 0.0
@@ -160,21 +160,21 @@ class Optimizer:
         self.surrogate = surrogate
         return self
 
-    def set_modelmanager(self, modelmanager: ModelManager) -> Optimizer:
+    def set_strategy(self, strategy: OptimizationStrategy) -> Optimizer:
         """
-        Set ModelManager instance.
+        Set OptimizationStrategy instance.
 
         Parameters
         ----------
-        modelmanager : ModelManager
-            ModelManager instance.
+        strategy : OptimizationStrategy
+            OptimizationStrategy instance.
 
         Returns
         -------
         Optimizer
             Returns self for method chaining.
         """
-        self.modelmanager = modelmanager
+        self.strategy = strategy
         return self
 
     def set_termination(self, termination: Termination) -> Optimizer:
@@ -394,26 +394,6 @@ class Optimizer:
         self.dispatch(CallbackEvent.RUN_START, ctx=ctx)
 
         while not self.termination.is_terminated(fe=ctx.fe):
-            ctx.count_generation()
-
-            self.dispatch(CallbackEvent.GENERATION_START, ctx=ctx)
-
-            # ask
-            cand = self.algorithm.ask(ctx, self)
-
-            self.dispatch(CallbackEvent.SURROGATE_START, ctx=ctx)
-
-            # surrogate
-            # TODO: use Population container
-            cand_, cand_fit = self.modelmanager.run(ctx, self, cand.get_array("x"))
-            cand.clear()
-            cand.extend({"x": cand_, "f": cand_fit})
-
-            self.dispatch(CallbackEvent.SURROGATE_END, ctx=ctx)
-
-            # tell
-            self.algorithm.tell(ctx, self, cand)
-
-            self.dispatch(CallbackEvent.GENERATION_END, ctx=ctx)
+            self.strategy.step(ctx, self)
 
         self.dispatch(CallbackEvent.RUN_END, ctx=ctx)

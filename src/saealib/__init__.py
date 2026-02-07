@@ -4,9 +4,6 @@ import logging
 
 from saealib.algorithm import GA, Algorithm
 from saealib.callback import CallbackEvent, CallbackManager, logging_generation
-from saealib.modelmanager import IndividualBasedStrategy, ModelManager
-
-# operators
 from saealib.operators.crossover import Crossover, CrossoverBLXAlpha
 from saealib.operators.mutation import Mutation, MutationUniform
 from saealib.operators.repair import repair_clipping
@@ -17,8 +14,6 @@ from saealib.operators.selection import (
     TournamentSelection,
     TruncationSelection,
 )
-
-# core components
 from saealib.optimizer import Optimizer
 from saealib.population import (
     Archive,
@@ -35,8 +30,8 @@ from saealib.problem import (
     Problem,
     SingleObjectiveComparator,
 )
-
-# surrogate models
+from saealib.strategies.base import OptimizationStrategy
+from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.surrogate.base import Surrogate
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
 from saealib.termination import Termination
@@ -54,15 +49,13 @@ __all__ = [
     "Constraint",
     "ConstraintManager",
     "ConstraintType",
-    # operators
     "Crossover",
     "CrossoverBLXAlpha",
     "Individual",
     "IndividualBasedStrategy",
-    "ModelManager",
     "Mutation",
     "MutationUniform",
-    # core components
+    "OptimizationStrategy",
     "Optimizer",
     "ParentSelection",
     "Population",
@@ -71,7 +64,6 @@ __all__ = [
     "RBFsurrogate",
     "SequentialSelection",
     "SingleObjectiveComparator",
-    # surrogate models
     "Surrogate",
     "SurvivorSelection",
     "Termination",

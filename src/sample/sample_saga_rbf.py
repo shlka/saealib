@@ -44,16 +44,14 @@ def main():
     )
     termination = Termination(fe=200 * dim)
     surrogate = RBFsurrogate(gaussian_kernel, dim)
-    modelmanager = IndividualBasedStrategy()
-    modelmanager.knn = knn
-    modelmanager.rsm = rsm
+    strategy = IndividualBasedStrategy(knn, rsm)
 
     opt = (
         Optimizer(problem)
         .set_algorithm(algorithm)
         .set_termination(termination)
         .set_surrogate(surrogate)
-        .set_modelmanager(modelmanager)
+        .set_strategy(strategy)
         .set_archive_init_size(5 * dim)
         .set_archive_atol(0.0)
         .set_archive_rtol(0.0)
@@ -63,5 +61,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # cProfile.run("main()")
     main()
