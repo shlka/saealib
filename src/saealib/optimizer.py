@@ -3,27 +3,62 @@ Optimizer module.
 
 Optimizer class that integrates components to perform
 evolutionary optimization with surrogate models.
+
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-import numpy as np
-import scipy.stats
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any, Protocol
 
 from saealib.callback import CallbackEvent, CallbackManager, logging_generation
+from saealib.context import OptimizationContext
+from saealib.execution.runner import Runner
 from saealib.operators.repair import repair_clipping
-from saealib.population import Archive, Population, PopulationAttribute
 
 if TYPE_CHECKING:
-    from saealib.algorithm import Algorithm
-    from saealib.modelmanager import ModelManager
+    from saealib.algorithms.base import Algorithm
+    from saealib.execution.initializer import Initializer
     from saealib.problem import Problem
+    from saealib.strategies.base import OptimizationStrategy
     from saealib.surrogate.base import Surrogate
     from saealib.termination import Termination
 
 
+class ComponentProvider(Protocol):
+    """The interface for components that can be used by the Optimizer."""
+
+    @property
+    def algorithm(self) -> Algorithm:
+        """Return the algorithm instance."""
+        ...
+
+    @property
+    def strategy(self) -> OptimizationStrategy:
+        """Return the optimization strategy instance."""
+        ...
+
+    @property
+    def surrogate(self) -> Surrogate:
+        """Return the surrogate model instance."""
+        ...
+
+    @property
+    def termination(self) -> Termination:
+        """Return the termination condition."""
+        ...
+
+    @property
+    def cbmanager(self) -> CallbackManager:
+        """Return the callback manager."""
+        ...
+
+    def dispatch(self, event: CallbackEvent, data=None, **kwargs) -> Any:
+        """Dispatch a callback event."""
+        ...
+
+
+# class Optimizer(ComponentProvider):
 class Optimizer:
     """
     Optimizer class for evolutionary algorithms.
@@ -39,8 +74,8 @@ class Optimizer:
         The evolutionary algorithm.
     surrogate : Surrogate
         The surrogate model.
-    modelmanager : ModelManager
-        The surrogate model manager.
+    strategy : OptimizationStrategy
+        The optimization strategy.
     termination : Termination
         The termination condition.
     archive : Archive
@@ -70,29 +105,36 @@ class Optimizer:
         problem : Problem
             The optimization problem.
         """
-        # components
-        self.problem = problem
-        self.algorithm = None
-        self.surrogate = None
-        self.modelmanager = None
-        self.termination = None
-        # Archive init parameters
-        self.archive_atol = 0.0
-        self.archive_rtol = 0.0
-        self.archive = None
-        self.archive_init_size = 50
-        # random setup
-        self.seed = 0
-        self.rng = np.random.default_rng(seed=self.seed)
-        # state variables
-        self.fe = 0
-        self.gen = 0
-        # EA parameters
-        self.popsize = 40
+        # Problem instance
+        self.problem: Problem = problem
         # callback event manager
-        self.cbmanager = CallbackManager()
-        # instance name
-        self.instance_name = ""
+        self.cbmanager: CallbackManager = CallbackManager()
+        # initialize callbacks (default)
+        self.cbmanager.register(CallbackEvent.GENERATION_START, logging_generation)
+        self.cbmanager.register(CallbackEvent.POST_CROSSOVER, repair_clipping)
+        self.cbmanager.register(CallbackEvent.POST_MUTATION, repair_clipping)
+        # initializer instance
+        self.initializer: Initializer = None
+        # Optimizer instance name
+        self.instance_name: str = ""
+
+    ### SETTERS ###
+    def set_initializer(self, initializer: Initializer) -> Optimizer:
+        """
+        Set Initializer instance.
+
+        Parameters
+        ----------
+        initializer : Initializer
+            Initializer instance.
+
+        Returns
+        -------
+        Optimizer
+            Returns self for method chaining.
+        """
+        self.initializer = initializer
+        return self
 
     def set_algorithm(self, algorithm: Algorithm) -> Optimizer:
         """
@@ -128,21 +170,21 @@ class Optimizer:
         self.surrogate = surrogate
         return self
 
-    def set_modelmanager(self, modelmanager: ModelManager) -> Optimizer:
+    def set_strategy(self, strategy: OptimizationStrategy) -> Optimizer:
         """
-        Set ModelManager instance.
+        Set OptimizationStrategy instance.
 
         Parameters
         ----------
-        modelmanager : ModelManager
-            ModelManager instance.
+        strategy : OptimizationStrategy
+            OptimizationStrategy instance.
 
         Returns
         -------
         Optimizer
             Returns self for method chaining.
         """
-        self.modelmanager = modelmanager
+        self.strategy = strategy
         return self
 
     def set_termination(self, termination: Termination) -> Optimizer:
@@ -162,92 +204,6 @@ class Optimizer:
         self.termination = termination
         return self
 
-    def set_archive_init_size(self, size: int) -> Optimizer:
-        """
-        Set Archive initial size.
-
-        Parameters
-        ----------
-        size : int
-            Initial size of the archive.
-
-        Returns
-        -------
-        Optimizer
-            Returns self for method chaining.
-        """
-        self.archive_init_size = size
-        return self
-
-    def set_archive_atol(self, atol: float) -> Optimizer:
-        """
-        Set Archive absolute tolerance to remove duplicates.
-
-        Parameters
-        ----------
-        atol : float
-            Absolute tolerance for the archive.
-
-        Returns
-        -------
-        Optimizer
-            Returns self for method chaining.
-        """
-        self.archive_atol = atol
-        return self
-
-    def set_archive_rtol(self, rtol: float) -> Optimizer:
-        """
-        Set Archive relative tolerance to remove duplicates.
-
-        Parameters
-        ----------
-        rtol : float
-            Relative tolerance for the archive.
-
-        Returns
-        -------
-        Optimizer
-            Returns self for method chaining.
-        """
-        self.archive_rtol = rtol
-        return self
-
-    def set_seed(self, seed: int) -> Optimizer:
-        """
-        Set random seed and initialize numpy.random.Generator.
-
-        Parameters
-        ----------
-        seed : int
-            Random seed.
-
-        Returns
-        -------
-        Optimizer
-            Returns self for method chaining.
-        """
-        self.seed = seed
-        self.rng = np.random.default_rng(seed=self.seed)
-        return self
-
-    def set_popsize(self, popsize: int) -> Optimizer:
-        """
-        Set population size.
-
-        Parameters
-        ----------
-        popsize : int
-            Population size.
-
-        Returns
-        -------
-        Optimizer
-            Returns self for method chaining.
-        """
-        self.popsize = popsize
-        return self
-
     def set_instance_name(self, name: str) -> Optimizer:
         """
         Set instance name.
@@ -265,53 +221,7 @@ class Optimizer:
         self.instance_name = name
         return self
 
-    def _initialize(self, n_init_archive: int) -> None:
-        """
-        Before running the optimization, initialize the archive and population.
-
-        Parameters
-        ----------
-        n_init_archive : int
-            Number of initial solutions in the archive.
-        """
-        archive_x = scipy.stats.qmc.LatinHypercube(
-            d=self.problem.dim, rng=self.rng
-        ).random(n_init_archive)
-        archive_x = scipy.stats.qmc.scale(archive_x, self.problem.lb, self.problem.ub)
-        archive_f = np.array([self.problem.evaluate(ind) for ind in archive_x])
-        # TODO: use cv if constraints are defined
-        archive_sort_idx = self.problem.comparator.sort(
-            archive_f, np.zeros_like(archive_f)
-        )
-        archive_x = archive_x[archive_sort_idx]
-        archive_f = archive_f[archive_sort_idx]
-
-        # TODO: Handling "f" in multiple dimensions (comment out)
-        # TODO: Change to receive the required attributes from the Algorithm.
-        self.population_attributes = [
-            PopulationAttribute("x", float, (self.problem.dim,)),
-            # PopulationAttribute("f", float, (self.problem.n_obj, )),
-            PopulationAttribute("f", float),
-            PopulationAttribute("g", float),
-            PopulationAttribute("cv", float),
-        ]
-
-        self.archive = Archive(self.population_attributes, key_attr="x")
-        for i in range(self.archive_init_size):
-            self.archive.add({"x": archive_x[i], "f": archive_f[i]})
-
-        self.population = Population(self.population_attributes)
-        self.population.extend(
-            {"x": archive_x[: self.popsize], "f": archive_f[: self.popsize]}
-        )
-
-        self.fe = self.archive_init_size
-        self.gen = 0
-
-        self.cbmanager.register(CallbackEvent.GENERATION_START, logging_generation)
-        self.cbmanager.register(CallbackEvent.POST_CROSSOVER, repair_clipping)
-        self.cbmanager.register(CallbackEvent.POST_MUTATION, repair_clipping)
-
+    ### CALLBACKS ###
     def dispatch(self, event: CallbackEvent, data=None, **kwargs) -> any:
         """
         Dispatch an event to the callback manager.
@@ -330,38 +240,28 @@ class Optimizer:
         any
             The data returned by another callback.
         """
-        kwargs["optimizer"] = self
+        kwargs["provider"] = self
         return self.cbmanager.dispatch(event, data, **kwargs)
 
-    def run(self) -> None:
+    ### RUN ###
+    def iterate(self) -> Generator[OptimizationContext, None, None]:
+        """
+        Iterate the optimization process.
+
+        Returns
+        -------
+        Generator[OptimizationContext]
+            Generator of OptimizationContext.
+        """
+        return Runner(self).iterate()
+
+    def run(self) -> OptimizationContext:
         """
         Run the optimization process.
 
         Returns
         -------
-        None
+        OptimizationContext
+            The optimization context.
         """
-        self._initialize(self.archive_init_size)
-        self.dispatch(CallbackEvent.RUN_START)
-
-        while not self.termination.is_terminated(fe=self.fe):
-            self.gen += 1
-
-            self.dispatch(CallbackEvent.GENERATION_START)
-
-            # ask
-            cand = self.algorithm.ask(self)
-
-            self.dispatch(CallbackEvent.SURROGATE_START)
-
-            # surrogate
-            cand, cand_fit = self.modelmanager.run(self, cand)
-
-            self.dispatch(CallbackEvent.SURROGATE_END)
-
-            # tell
-            self.algorithm.tell(self, cand, cand_fit)
-
-            self.dispatch(CallbackEvent.GENERATION_END)
-
-        self.dispatch(CallbackEvent.RUN_END)
+        return Runner(self).run()

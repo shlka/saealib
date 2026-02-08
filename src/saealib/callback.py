@@ -12,8 +12,8 @@ from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from saealib.optimizer import Optimizer
-
+    from saealib.optimizer import OptimizationContext
+    # from saealib.optimizer import ComponentProvider
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +101,7 @@ class CallbackManager:
         data : any
             The data to pass to the callback functions.
             Can be modified by each callback.
+
         **kwargs : any
             Additional keyword arguments to pass to the callback functions.
             Read-only.
@@ -127,14 +128,15 @@ def logging_generation(data, **kwargs):
     data : any
         The data passed to the callback. Not used here.
     **kwargs : any
-        Additional keyword arguments. Should contain 'optimizer'.
+        Additional keyword arguments. Should contain 'ctx'.
 
     Returns
     -------
     None
     """
-    optimizer: Optimizer = kwargs.get("optimizer")
+    ctx: OptimizationContext = kwargs.get("ctx")
+    # provider: ComponentProvider = kwargs.get("provider", None)
     logger.info(
-        f"Generation {optimizer.gen} started. fe: {optimizer.fe}. "
-        f"Best f: {optimizer.archive.get('f').min()}"
+        f"Generation {ctx.gen} started. fe: {ctx.fe}. "
+        f"Best f: {ctx.archive.get('f').min()}"
     )
