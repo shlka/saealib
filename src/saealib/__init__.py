@@ -2,7 +2,8 @@
 
 import logging
 
-from saealib.algorithm import GA, Algorithm
+from saealib.algorithms.base import Algorithm
+from saealib.algorithms.ga import GA
 from saealib.callback import CallbackEvent, CallbackManager, logging_generation
 from saealib.execution.initializer import Initializer, LHSInitializer
 from saealib.operators.crossover import Crossover, CrossoverBLXAlpha

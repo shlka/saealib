@@ -17,7 +17,7 @@ from saealib.execution.runner import Runner
 from saealib.operators.repair import repair_clipping
 
 if TYPE_CHECKING:
-    from saealib.algorithm import Algorithm
+    from saealib.algorithms.base import Algorithm
     from saealib.execution.initializer import Initializer
     from saealib.problem import Problem
     from saealib.strategies.base import OptimizationStrategy
