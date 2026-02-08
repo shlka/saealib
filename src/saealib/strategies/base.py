@@ -1,3 +1,5 @@
+"""Base class for optimization strategies."""
+
 from abc import ABC, abstractmethod
 
 from saealib.context import OptimizationContext
