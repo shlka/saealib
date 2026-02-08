@@ -4,6 +4,7 @@ import logging
 
 from saealib.algorithm import GA, Algorithm
 from saealib.callback import CallbackEvent, CallbackManager, logging_generation
+from saealib.execution.initializer import Initializer, LHSInitializer
 from saealib.operators.crossover import Crossover, CrossoverBLXAlpha
 from saealib.operators.mutation import Mutation, MutationUniform
 from saealib.operators.repair import repair_clipping
@@ -53,6 +54,8 @@ __all__ = [
     "CrossoverBLXAlpha",
     "Individual",
     "IndividualBasedStrategy",
+    "Initializer",
+    "LHSInitializer",
     "Mutation",
     "MutationUniform",
     "OptimizationStrategy",
