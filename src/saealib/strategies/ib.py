@@ -1,3 +1,11 @@
+"""
+Individual-based / Pre-selection / Local-modeling.
+
+For each offspring, construct a surrogate model to obtain a predicted value.
+Select the top models based on the RSM ratio for actual evaluation.
+The surrogate model is a local approximation of the objective function.
+
+"""
 
 from saealib.callback import CallbackEvent
 from saealib.context import OptimizationContext
@@ -25,8 +33,6 @@ class IndividualBasedStrategy(OptimizationStrategy):
             Objects of the class in which the component is exposed (ex. Optimizer).
         """
         ctx.count_generation()
-
-        provider.dispatch(CallbackEvent.GENERATION_START, ctx=ctx)
 
         # 1. get candidate solutions as "offspring" (algorithm.ask)
         offspring = provider.algorithm.ask(ctx, provider)
@@ -56,5 +62,3 @@ class IndividualBasedStrategy(OptimizationStrategy):
 
         # 4. update algorithm with offspring (algorithm.tell)
         provider.algorithm.tell(ctx, provider, offspring)
-
-        provider.dispatch(CallbackEvent.GENERATION_END, ctx=ctx)
