@@ -7,6 +7,7 @@ from saealib import (
     GA,
     CrossoverBLXAlpha,
     IndividualBasedStrategy,
+    LHSInitializer,
     MutationUniform,
     Optimizer,
     Problem,
@@ -34,7 +35,17 @@ def main():
     f1 = cec2015.F12015(ndim=10)
 
     problem = Problem(
-        func=f1.evaluate, dim=dim, n_obj=1, weight=np.array([-1.0]), lb=lb, ub=ub
+        func=f1.evaluate,
+        dim=dim,
+        n_obj=1,
+        weight=np.array([-1.0]),
+        lb=lb,
+        ub=ub,
+    )
+    initializer = LHSInitializer(
+        n_init_archive=5 * dim,
+        n_init_population=4 * dim,
+        seed=seed,
     )
     algorithm = GA(
         crossover=CrossoverBLXAlpha(crossover_rate=0.7, gamma=0.4),
@@ -44,24 +55,18 @@ def main():
     )
     termination = Termination(fe=200 * dim)
     surrogate = RBFsurrogate(gaussian_kernel, dim)
-    modelmanager = IndividualBasedStrategy()
-    modelmanager.knn = knn
-    modelmanager.rsm = rsm
+    strategy = IndividualBasedStrategy(knn, rsm)
 
     opt = (
         Optimizer(problem)
+        .set_initializer(initializer)
         .set_algorithm(algorithm)
         .set_termination(termination)
         .set_surrogate(surrogate)
-        .set_modelmanager(modelmanager)
-        .set_archive_init_size(5 * dim)
-        .set_archive_atol(0.0)
-        .set_archive_rtol(0.0)
-        .set_seed(seed)
+        .set_strategy(strategy)
     )
     opt.run()
 
 
 if __name__ == "__main__":
-    # cProfile.run("main()")
     main()
