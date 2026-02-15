@@ -45,7 +45,7 @@ class IndividualBasedStrategy(OptimizationStrategy):
         for i in range(n_offspring):
             train_idx, _ = ctx.archive.get_knn(offspring[i].x, self.n_train)
             train_x = ctx.archive.x[train_idx]
-            train_f = ctx.archive.f[train_idx]
+            train_f = ctx.archive.f[train_idx].flatten()
             provider.surrogate.fit(train_x, train_f)
             offspring[i].f = provider.surrogate.predict(offspring[i].x)
 
