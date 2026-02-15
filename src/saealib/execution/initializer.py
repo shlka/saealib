@@ -42,12 +42,10 @@ class Initializer(ABC):
         list[PopulationAttribute]
             The attributes for Population and Archive.
         """
-        # TODO: modify it to account for the fact that there are n_obj instances of f.
         # default attributes
         attrs = [
             PopulationAttribute("x", float, (problem.dim,), default=np.nan),
-            # PopulationAttribute("f",  float, (self.problem.n_obj, ), default=np.nan)
-            PopulationAttribute("f", float, (), default=np.nan),
+            PopulationAttribute("f", float, (problem.n_obj,), default=np.nan),
             PopulationAttribute("g", float, (problem.n_constraint,), default=0.0),
             PopulationAttribute("cv", float, (), default=0.0),
         ]
@@ -180,7 +178,7 @@ class LHSInitializer(Initializer):
         archive_x = scipy.stats.qmc.scale(archive_x, problem.lb, problem.ub)
         archive_f = np.array([problem.evaluate(ind) for ind in archive_x])
 
-        archive_sort_idx = problem.comparator.sort(archive_f, np.zeros_like(archive_f))
+        archive_sort_idx = problem.comparator.sort(archive_f, np.zeros(len(archive_f)))
         archive_x = archive_x[archive_sort_idx]
         archive_f = archive_f[archive_sort_idx]
 
