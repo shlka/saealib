@@ -100,7 +100,7 @@ class Problem:
         # TODO: multiple objective support
         self.comparator = SingleObjectiveComparator(weight=weight, eps=eps)
 
-    def evaluate(self, x: np.ndarray) -> float:
+    def evaluate(self, x: np.ndarray) -> np.ndarray:
         """
         Evaluate the objective function at given solution x.
 
@@ -111,10 +111,11 @@ class Problem:
 
         Returns
         -------
-        float
-            The objective value at solution x.
+        np.ndarray
+            The objective value(s) at solution x. shape = (n_obj, )
         """
-        return self.func(x)
+        result = self.func(x)
+        return np.atleast_1d(np.asarray(result, dtype=float))
 
 
 class ConstraintType(Enum):

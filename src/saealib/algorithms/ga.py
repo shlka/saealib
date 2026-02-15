@@ -188,9 +188,9 @@ class GA(Algorithm):
         parent_fit = np.delete(ctx.population.get_array("f"), best_idx, axis=0)
         # update population and fitness
         pop_cand = np.vstack((parent_best, parent, offspring.get_array("x")))
-        fit_cand = np.hstack((parent_best_fit, parent_fit, offspring.get_array("f")))
+        fit_cand = np.vstack((parent_best_fit, parent_fit, offspring.get_array("f")))
         # TODO: use cv if constraints are defined
-        cand_idx = cmp.sort(fit_cand, np.zeros_like(fit_cand))
+        cand_idx = cmp.sort(fit_cand, np.zeros(len(fit_cand)))
         pop_cand = pop_cand[cand_idx]
         fit_cand = fit_cand[cand_idx]
 
