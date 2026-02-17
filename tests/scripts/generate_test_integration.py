@@ -26,6 +26,7 @@ from saealib import (
     Termination,
     TruncationSelection,
     gaussian_kernel,
+    max_fe,
 )
 
 
@@ -77,7 +78,7 @@ def run_benchmark(seed: int):
         parent_selection=SequentialSelection(),
         survivor_selection=TruncationSelection(),
     )
-    termination = Termination(fe=200 * dim)
+    termination = Termination(max_fe(200 * dim))
     surrogate = RBFsurrogate(gaussian_kernel, dim)
     strategy = IndividualBasedStrategy(knn, rsm)
 
