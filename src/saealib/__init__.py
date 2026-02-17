@@ -71,11 +71,11 @@ __all__ = [
     "Surrogate",
     "SurvivorSelection",
     "Termination",
-    "max_fe",
-    "max_gen",
     "TournamentSelection",
     "TruncationSelection",
     "gaussian_kernel",
     "logging_generation",
+    "max_fe",
+    "max_gen",
     "repair_clipping",
 ]
