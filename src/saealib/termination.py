@@ -2,76 +2,135 @@
 Termination module.
 
 Termination class defines criteria to stop the optimization process.
+Users can specify arbitrary termination conditions as callable objects.
 """
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable
+
+if TYPE_CHECKING:
+    from saealib.context import OptimizationContext
+
+
+#: Type alias for a termination condition function.
+#: A callable that takes an OptimizationContext and returns True
+#: when the optimization should stop.
+TerminationCondition = Callable[["OptimizationContext"], bool]
 
 
 class Termination:
     """
     Termination class to determine when to stop the optimization process.
 
-    Attributes
+    Accepts one or more callable conditions. Each condition receives
+    an ``OptimizationContext`` and returns ``True`` when the process
+    should terminate. The optimization stops when **any** condition
+    evaluates to ``True``.
+
+    Parameters
     ----------
-    maxparameter : dict[str, float]
-        Dictionary to store maximum parameters for termination.
+    *conditions : TerminationCondition
+        One or more callable conditions. Each must accept an
+        ``OptimizationContext`` and return ``bool``.
+
+    Raises
+    ------
+    ValueError
+        If no conditions are provided.
+    TypeError
+        If any condition is not callable.
+
+    Examples
+    --------
+    >>> termination = Termination(max_fe(2000))
+    >>> termination = Termination(max_fe(2000), max_gen(100))
+    >>> termination = Termination(
+    ...     max_fe(2000),
+    ...     lambda ctx: ctx.archive.get("f").min() < 1e-6,
+    ... )
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, *conditions: TerminationCondition):
+        if not conditions:
+            raise ValueError(
+                "At least one termination condition must be provided."
+            )
+        for cond in conditions:
+            if not callable(cond):
+                raise TypeError(
+                    f"Termination condition must be callable, got {type(cond).__name__}."
+                )
+        self.conditions: tuple[TerminationCondition, ...] = conditions
+
+    def is_terminated(self, ctx: OptimizationContext) -> bool:
         """
-        Initialize Termination instance.
+        Check if any termination condition is met.
 
         Parameters
         ----------
-        kwargs : dict[str, float]
-            Maximum parameters for termination.
-        """
-        self.maxparameter = {}
-        for k, v in kwargs.items():
-            self.maxparameter[k] = v
-
-    def get(self, key: str) -> float | None:
-        """
-        Getter for maximum parameter.
-
-        Parameters
-        ----------
-        key : str
-            The key to retrieve the maximum parameter for.
-
-        Returns
-        -------
-        float | None
-            The maximum parameter for the given key, or None if not found.
-        """
-        return self.maxparameter.get(key, None)
-
-    def set(self, key: str, value: float) -> None:
-        """
-        Setter for maximum parameter.
-
-        Parameters
-        ----------
-        key : str
-            The key to set the maximum parameter for.
-        value : float
-            The maximum parameter value to set.
-        """
-        self.maxparameter[key] = value
-
-    def is_terminated(self, **kwargs) -> bool:
-        """
-        Check if termination criteria are met.
-
-        Parameters
-        ----------
-        kwargs : dict[str, float]
-            Current parameters to check against maximum parameters.
+        ctx : OptimizationContext
+            The current optimization context.
 
         Returns
         -------
         bool
-            True if any termination criterion is met, False otherwise.
+            True if any termination condition is met, False otherwise.
         """
-        for k, v in kwargs.items():
-            if k in self.maxparameter and v >= self.maxparameter[k]:
-                return True
-        return False
+        return any(cond(ctx) for cond in self.conditions)
+
+
+### Built-in termination condition factories ###
+
+def max_fe(value: int) -> TerminationCondition:
+    """
+    Create a termination condition based on maximum function evaluations.
+
+    Parameters
+    ----------
+    value : int
+        Maximum number of function evaluations.
+
+    Returns
+    -------
+    TerminationCondition
+        A callable that returns True when ``ctx.fe >= value``.
+
+    Examples
+    --------
+    >>> termination = Termination(max_fe(2000))
+    """
+
+    def _condition(ctx: OptimizationContext) -> bool:
+        return ctx.fe >= value
+
+    _condition.__doc__ = f"Terminate when fe >= {value}."
+    _condition.__qualname__ = f"max_fe({value})"
+    return _condition
+
+
+def max_gen(value: int) -> TerminationCondition:
+    """
+    Create a termination condition based on maximum generations.
+
+    Parameters
+    ----------
+    value : int
+        Maximum number of generations.
+
+    Returns
+    -------
+    TerminationCondition
+        A callable that returns True when ``ctx.gen >= value``.
+
+    Examples
+    --------
+    >>> termination = Termination(max_gen(100))
+    """
+
+    def _condition(ctx: OptimizationContext) -> bool:
+        return ctx.gen >= value
+
+    _condition.__doc__ = f"Terminate when gen >= {value}."
+    _condition.__qualname__ = f"max_gen({value})"
+    return _condition

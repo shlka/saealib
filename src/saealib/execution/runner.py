@@ -68,7 +68,7 @@ class Runner:
         self.optimizer.dispatch(CallbackEvent.RUN_START, ctx=ctx)
         yield ctx
 
-        while not self.optimizer.termination.is_terminated(fe=ctx.fe):
+        while not self.optimizer.termination.is_terminated(ctx):
             self.optimizer.dispatch(CallbackEvent.GENERATION_START, ctx=ctx)
             self.optimizer.strategy.step(ctx, self.optimizer)
             yield ctx
