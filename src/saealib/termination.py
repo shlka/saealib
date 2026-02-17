@@ -7,7 +7,8 @@ Users can specify arbitrary termination conditions as callable objects.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationContext
@@ -53,13 +54,12 @@ class Termination:
 
     def __init__(self, *conditions: TerminationCondition):
         if not conditions:
-            raise ValueError(
-                "At least one termination condition must be provided."
-            )
+            raise ValueError("At least one termination condition must be provided.")
         for cond in conditions:
             if not callable(cond):
                 raise TypeError(
-                    f"Termination condition must be callable, got {type(cond).__name__}."
+                    "Termination condition must be callable, "
+                    f"got {type(cond).__name__}."
                 )
         self.conditions: tuple[TerminationCondition, ...] = conditions
 
@@ -81,6 +81,7 @@ class Termination:
 
 
 ### Built-in termination condition factories ###
+
 
 def max_fe(value: int) -> TerminationCondition:
     """

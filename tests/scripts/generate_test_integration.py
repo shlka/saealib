@@ -24,9 +24,9 @@ from saealib import (
     RBFsurrogate,
     SequentialSelection,
     Termination,
-    max_fe,
     TruncationSelection,
     gaussian_kernel,
+    max_fe,
 )
 
 
