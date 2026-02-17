@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import sys
 
 import numpy as np
 import pytest
@@ -22,6 +23,10 @@ from saealib import (
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("saealib.surrogate.rbf").setLevel(logging.CRITICAL)
+
+# Snapshot regression test is only run on Python 3.10 (the development environment).
+# On other Python versions, only the behavioral assertion (best_f < 1.0) is checked.
+IS_SNAPSHOT_ENV = sys.version_info[:2] == (3, 10)
 
 # Load snapshot
 dirname = os.path.dirname(__file__)
@@ -101,7 +106,8 @@ def test_integration(seed_str: str, expected_f: float):
     best_f = ctx.archive.get("f").min()
     assert best_f < 1.0
 
-    assert np.isclose(best_f, expected_f, atol=1e-5)
+    if IS_SNAPSHOT_ENV:
+        assert np.isclose(best_f, expected_f, atol=1e-5)
 
 
 if __name__ == "__main__":
