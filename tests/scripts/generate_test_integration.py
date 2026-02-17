@@ -9,6 +9,7 @@ please update this script to perform the same processing.
 
 import json
 import os
+import sys
 
 import numpy as np
 
@@ -94,6 +95,13 @@ def run_benchmark(seed: int):
 
 
 def main():
+    if sys.version_info[:2] != (3, 10):
+        print(
+            f"Error: Snapshot must be generated with Python 3.10 "
+            f"(current: {sys.version_info.major}.{sys.version_info.minor})"
+        )
+        sys.exit(1)
+
     dirname = os.path.dirname(__file__)
     filename = os.path.join(dirname, "../data/test_integration.json")
     init_seed = 42
