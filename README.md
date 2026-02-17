@@ -70,6 +70,7 @@ from saealib import (
     TruncationSelection,
     IndividualBasedStrategy,
     Termination,
+    max_fe,
     gaussian_kernel
 )
 
@@ -114,7 +115,7 @@ surrogate = RBFsurrogate(gaussian_kernel, dim)
 strategy = IndividualBasedStrategy(knn=50, rsm=0.1)
 
 # Termination Criterion
-termination = Termination(fe=100)  # Stop after 100 function evaluations
+termination = Termination(max_fe(100))  # Stop after 100 function evaluations
 
 # 4. Build and Run the Optimizer
 opt = (
