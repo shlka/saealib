@@ -19,6 +19,7 @@ from saealib import (
     Termination,
     TruncationSelection,
     gaussian_kernel,
+    max_fe,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -87,7 +88,7 @@ def test_integration(seed_str: str, expected_f: float):
         parent_selection=SequentialSelection(),
         survivor_selection=TruncationSelection(),
     )
-    termination = Termination(fe=200 * dim)
+    termination = Termination(max_fe(200 * dim))
     surrogate = RBFsurrogate(gaussian_kernel, dim)
     strategy = IndividualBasedStrategy(knn, rsm)
 

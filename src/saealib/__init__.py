@@ -36,7 +36,7 @@ from saealib.strategies.base import OptimizationStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.surrogate.base import Surrogate
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
-from saealib.termination import Termination
+from saealib.termination import Termination, max_fe, max_gen
 
 logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -75,5 +75,7 @@ __all__ = [
     "TruncationSelection",
     "gaussian_kernel",
     "logging_generation",
+    "max_fe",
+    "max_gen",
     "repair_clipping",
 ]
