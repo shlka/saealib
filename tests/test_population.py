@@ -144,6 +144,24 @@ class TestPopulationInit:
             conflict_warnings = [x for x in w if "conflicts" in str(x.message)]
             assert len(conflict_warnings) == 0
 
+    def test_dot_setter_property(self, populated_pop: Population) -> None:
+        arr = np.zeros_like(populated_pop.x)
+        populated_pop.x = arr
+        np.testing.assert_array_equal(populated_pop.x, arr)
+
+    def test_get_readonly_array(self, pop: Population) -> None:
+        arr = pop.get_readonly_array("f")
+        assert not arr.flags.writeable
+
+    def test_mod_value_and_mod_structure(self, pop: Population) -> None:
+        v0 = pop._value_version
+        s0 = pop._structure_version
+        pop.mod_value()
+        assert pop._value_version == v0 + 1
+        pop.mod_structure()
+        assert pop._structure_version == s0 + 1
+        assert pop._value_version == v0 + 2
+
 
 # ===========================================================================
 # Population Append Tests
@@ -188,10 +206,21 @@ class TestPopulationAppend:
         assert len(pop) == 5
         assert pop._capacity >= 5
 
-    def test_version_increments(self, pop: Population) -> None:
-        v0 = pop._version
+    def test_structure_version_increments(self, pop: Population) -> None:
+        v0 = pop._structure_version
         pop.append(x=np.array([1.0, 2.0, 3.0]), f=0.0)
-        assert pop._version == v0 + 1
+        assert pop._structure_version == v0 + 1
+
+    def test_value_version_increments(self, pop: Population) -> None:
+        v0 = pop._value_version
+        pop.x = np.zeros_like(pop.x)
+        assert pop._value_version == v0 + 1
+
+    def test_readonly_view(self, pop: Population) -> None:
+        with pytest.raises(ValueError, match="read-only"):
+            pop.f[:] = 1.0
+        with pytest.raises(ValueError, match="read-only"):
+            pop.f[0] = 1.0
 
 
 # ===========================================================================
@@ -218,10 +247,10 @@ class TestPopulationExtend:
         """Extending with an empty Population is a no-op."""
         empty = pop.empty_like()
         pop.append(x=np.array([1.0, 2.0, 3.0]), f=0.0)
-        v_before = pop._version
+        v_before = pop._structure_version
         pop.extend(empty)
         assert len(pop) == 1
-        assert pop._version == v_before  # version unchanged
+        assert pop._structure_version == v_before  # version unchanged
 
     def test_extend_triggers_resize(self) -> None:
         attrs = [PopulationAttribute(name="x", dtype=np.float64)]
@@ -504,6 +533,16 @@ class TestIndividual:
         del pop
         with pytest.raises(RuntimeError, match="Invalid Individual reference"):
             _ = ind.x
+
+    def test_readonly_view(self, populated_pop: Population) -> None:
+        ind = populated_pop[0]
+        with pytest.raises(ValueError, match="read-only"):
+            ind.x[:] = np.array([1.0, 2.0, 3.0])
+
+    def test_get_readonly_value(self, populated_pop: Population) -> None:
+        ind = populated_pop[0]
+        arr = ind.get_readonly_value("x")
+        assert not arr.flags.writeable
 
 
 # ===========================================================================
