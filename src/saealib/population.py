@@ -57,10 +57,16 @@ def bind_property(key: str, doc: str = "") -> Any:
     """Make property for Individual attributes (helper function)."""
 
     def fget(self):
-        return self.__getattr__(key)
+        value = self.population.get_array(key)[self.index]
+        if isinstance(value, np.ndarray):
+            view = value.view()
+            view.flags.writeable = False
+            return view
+        return value
 
     def fset(self, value):
-        self.__setattr__(key, value)
+        self.population.get_array(key)[self.index] = value
+        self.population.mod_value()
 
     return PropertyAvoidConfCheck(fget, fset, doc=doc)
 
@@ -73,10 +79,13 @@ def bind_property_array(key: str, doc: str = "") -> Any:
     """
 
     def fget(self):
-        return self.__getattr__(key)
+        view = self.get_array(key).view()
+        view.flags.writeable = False
+        return view
 
     def fset(self, value):
         self.get_array(key)[:] = value
+        self._value_version += 1
 
     return PropertyAvoidConfCheck(fget, fset, doc=doc)
 
@@ -95,8 +104,10 @@ class Population(Generic[T_Individual]):
         Current capacity of the population.
     _size : int
         Current size of the population.
-    _version : int
-        Version number to track modifications.
+    _structure_version : int
+        Version number to track structure modifications.
+    _value_version : int
+        Version number to track value modifications.
     """
 
     individual_class = None
@@ -123,7 +134,8 @@ class Population(Generic[T_Individual]):
         """
         self._capacity = init_capacity
         self._size = 0
-        self._version = 0
+        self._structure_version = 0
+        self._value_version = 0
         self._data: dict[str, np.ndarray] = {}
         for attr in attrs:
             self._init_column(attr, self._capacity)
@@ -198,6 +210,14 @@ class Population(Generic[T_Individual]):
             self._data[k] = new_arr
         self._capacity = new_capacity
 
+    def mod_value(self) -> None:
+        """Public method to call when the value changes."""
+        self._value_version += 1
+
+    def mod_structure(self) -> None:
+        """Public method to call when the structure changes."""
+        self._structure_version += 1
+
     def append(
         self, element: T_Individual | dict[str, Any] | None = None, **kwargs
     ) -> None:
@@ -250,7 +270,7 @@ class Population(Generic[T_Individual]):
                     data_self[idx] = 0
 
         self._size += 1
-        self._version += 1
+        self._structure_version += 1
 
     def extend(self, other: Self | dict) -> None:
         """
@@ -293,7 +313,7 @@ class Population(Generic[T_Individual]):
                     val_self[start : start + other_size] = 0
 
         self._size += other_size
-        self._version += 1
+        self._structure_version += 1
 
     def extract(self, indices: np.ndarray | list[int] | slice) -> Self:
         """
@@ -318,7 +338,7 @@ class Population(Generic[T_Individual]):
             new_pop._data[key][:n_extract] = val[: self._size][indices_arr]
 
         new_pop._size = n_extract
-        new_pop._version += 1
+        new_pop._structure_version += 1
         return new_pop
 
     def truncate(self, new_size: int) -> None:
@@ -334,7 +354,7 @@ class Population(Generic[T_Individual]):
             raise ValueError("new_size must be non-negative")
         if new_size < self._size:
             self._size = new_size
-            self._version += 1
+            self._structure_version += 1
 
     def delete(self, index: int | slice | list[int] | np.ndarray) -> None:
         """
@@ -352,7 +372,7 @@ class Population(Generic[T_Individual]):
             valid_data = v[: self._size]
             v[:new_size] = valid_data[bool_mask]
         self._size = new_size
-        self._version += 1
+        self._structure_version += 1
 
     def reorder(self, order: np.ndarray) -> None:
         """
@@ -370,7 +390,7 @@ class Population(Generic[T_Individual]):
         for k, v in self._data.items():
             valid_data = v[: self._size]
             v[: self._size] = valid_data[order]
-        self._version += 1
+        self._structure_version += 1
 
     def argsort(self, name: str, reverse: bool = False) -> np.ndarray:
         """
@@ -393,7 +413,7 @@ class Population(Generic[T_Individual]):
     def clear(self) -> None:
         """Clear the population."""
         self._size = 0
-        self._version += 1
+        self._structure_version += 1
 
     def empty_like(self, capacity: int | None = None):
         """
@@ -488,16 +508,16 @@ class Individual(Generic[T_Population]):
         Weak reference to the parent population.
     _index : int
         Index of the individual in the population.
-    _version : int
-        Version number to track modifications.
+    _structure_version : int
+        Version number to track structure modifications.
     """
 
-    __slots__ = ("_index", "_popref", "_version")
+    __slots__ = ("_index", "_popref", "_structure_version")
 
     def __init__(self, population: T_Population, index: int):
         self._popref = weakref.ref(population)
         self._index = index
-        self._version = population._version
+        self._structure_version = population._structure_version
 
     def _get_pop(self) -> T_Population:
         """
@@ -509,7 +529,7 @@ class Individual(Generic[T_Population]):
             The referenced population.
         """
         pop = self._popref()
-        if pop is None or pop._version != self._version:
+        if pop is None or pop._structure_version != self._structure_version:
             raise RuntimeError("Invalid Individual reference")
         return pop
 
@@ -683,7 +703,7 @@ class ArchiveMixin:
         for k, v in self._data.items():
             dup_pop._data[k][:all_length] = v[indices]
         dup_pop._size = all_length
-        dup_pop._version = self._version
+        dup_pop._structure_version = self._structure_version
         return dup_pop
 
     def get_knn(self, x: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
