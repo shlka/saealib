@@ -91,6 +91,9 @@ class Population(Generic[T_Individual]):
         Schema defining the attributes of the population.
     _data : Dict[str, np.ndarray]
         Dictionary to store population data arrays.
+    _cache : Dict[str, Any]
+        Dictionary to store cached values (ex: nds_rank).
+        Cleared on every value or structure modification.
     _capacity : int
         Current capacity of the population.
     _size : int
@@ -128,6 +131,7 @@ class Population(Generic[T_Individual]):
         self._structure_version = 0
         self._value_version = 0
         self._data: dict[str, np.ndarray] = {}
+        self._cache: dict[str, Any] = {}
         for attr in attrs:
             self._init_column(attr, self._capacity)
         self._schema = {attr.name: attr for attr in attrs}
@@ -204,11 +208,47 @@ class Population(Generic[T_Individual]):
     def mod_value(self) -> None:
         """Public method to call when the value changes."""
         self._value_version += 1
+        if "_cache" in self.__dict__:
+            self._cache.clear()
 
     def mod_structure(self) -> None:
         """Public method to call when the structure changes."""
         self._structure_version += 1
-        self._value_version += 1
+        self.mod_value()
+
+    def set_cache(self, key: str, value: Any) -> None:
+        """
+        Set a cache value.
+
+        The cache is automatically cleared when the population is modified
+        (via ``mod_value`` or ``mod_structure``).
+
+        Parameters
+        ----------
+        key : str
+            The key of the cache.
+        value : Any
+            The value to be cached.
+        """
+        self._cache[key] = value
+
+    def get_cache(self, key: str) -> Any | None:
+        """
+        Get a cached value.
+
+        Returns ``None`` if the key is not found.
+
+        Parameters
+        ----------
+        key : str
+            The key of the cache.
+
+        Returns
+        -------
+        Any | None
+            The cached value, or ``None`` if not found.
+        """
+        return self._cache.get(key)
 
     def append(
         self, element: T_Individual | dict[str, Any] | None = None, **kwargs
