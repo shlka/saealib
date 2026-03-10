@@ -10,6 +10,7 @@ Tests cover:
 - bind_property / bind_property_array
 - ArchiveMixin / Archive: add, duplicate detection, get_duplicated_population,
   get_knn, tolerance-based matching
+- Cache: set_cache, get_cache, automatic invalidation on mutation
 """
 
 import warnings
@@ -709,3 +710,125 @@ class TestPopulationResize:
         np.testing.assert_array_equal(pop.x[0], [1.0, 2.0])
         np.testing.assert_array_equal(pop.x[1], [3.0, 4.0])
         np.testing.assert_array_equal(pop.x[2], [5.0, 6.0])
+
+
+# ===========================================================================
+# Cache Tests
+# ===========================================================================
+class TestPopulationCache:
+    """Tests for Population cache mechanism (set_cache / get_cache)."""
+
+    def test_set_and_get_cache(self, populated_pop: Population) -> None:
+        """Basic cache round-trip."""
+        populated_pop.set_cache("rank", [0, 1, 2, 3, 4])
+        assert populated_pop.get_cache("rank") == [0, 1, 2, 3, 4]
+
+    def test_get_cache_missing_key(self, pop: Population) -> None:
+        """get_cache returns None for a missing key."""
+        assert pop.get_cache("nonexistent") is None
+
+    def test_cache_cleared_on_mod_value(self, populated_pop: Population) -> None:
+        """Cache is cleared when mod_value() is called."""
+        populated_pop.set_cache("rank", [0, 1, 2, 3, 4])
+        populated_pop.mod_value()
+        assert populated_pop.get_cache("rank") is None
+
+    def test_cache_cleared_on_mod_structure(self, populated_pop: Population) -> None:
+        """Cache is cleared when mod_structure() is called."""
+        populated_pop.set_cache("rank", [0, 1, 2, 3, 4])
+        populated_pop.mod_structure()
+        assert populated_pop.get_cache("rank") is None
+
+    def test_cache_cleared_on_append(self, populated_pop: Population) -> None:
+        """Cache is cleared when a new individual is appended."""
+        populated_pop.set_cache("cd", np.ones(5))
+        populated_pop.append(x=np.array([9.0, 9.0, 9.0]), f=9.0)
+        assert populated_pop.get_cache("cd") is None
+
+    def test_cache_cleared_on_extend(self, populated_pop: Population) -> None:
+        """Cache is cleared when the population is extended."""
+        populated_pop.set_cache("cd", np.ones(5))
+        other = populated_pop.empty_like()
+        other.append(x=np.array([9.0, 9.0, 9.0]), f=9.0)
+        populated_pop.extend(other)
+        assert populated_pop.get_cache("cd") is None
+
+    def test_cache_cleared_on_delete(self, populated_pop: Population) -> None:
+        """Cache is cleared when individuals are deleted."""
+        populated_pop.set_cache("rank", [0, 1, 2, 3, 4])
+        populated_pop.delete(0)
+        assert populated_pop.get_cache("rank") is None
+
+    def test_cache_cleared_on_truncate(self, populated_pop: Population) -> None:
+        """Cache is cleared when the population is truncated."""
+        populated_pop.set_cache("rank", [0, 1, 2, 3, 4])
+        populated_pop.truncate(3)
+        assert populated_pop.get_cache("rank") is None
+
+    def test_cache_cleared_on_reorder(self, populated_pop: Population) -> None:
+        """Cache is cleared when the population is reordered."""
+        populated_pop.set_cache("rank", [0, 1, 2, 3, 4])
+        populated_pop.reorder(np.array([4, 3, 2, 1, 0]))
+        assert populated_pop.get_cache("rank") is None
+
+    def test_cache_cleared_on_clear(self, populated_pop: Population) -> None:
+        """Cache is cleared when the population is cleared."""
+        populated_pop.set_cache("rank", [0, 1, 2, 3, 4])
+        populated_pop.clear()
+        assert populated_pop.get_cache("rank") is None
+
+    def test_cache_cleared_on_update_array(self, populated_pop: Population) -> None:
+        """Cache is cleared when update_array is called."""
+        populated_pop.set_cache("rank", [0, 1, 2, 3, 4])
+        populated_pop.update_array("f", np.zeros(5))
+        assert populated_pop.get_cache("rank") is None
+
+    def test_cache_cleared_on_dot_setter(self, populated_pop: Population) -> None:
+        """Cache is cleared when a value is set via dot access."""
+        populated_pop.set_cache("rank", [0, 1, 2, 3, 4])
+        populated_pop.f = np.zeros(5)
+        assert populated_pop.get_cache("rank") is None
+
+    def test_cache_cleared_on_individual_setattr(
+        self, populated_pop: Population
+    ) -> None:
+        """Cache is cleared when an Individual modifies a value."""
+        populated_pop.set_cache("rank", [0, 1, 2, 3, 4])
+        ind = populated_pop[0]
+        ind.f = 999.0
+        assert populated_pop.get_cache("rank") is None
+
+    def test_cache_not_inherited_by_extract(self, populated_pop: Population) -> None:
+        """Extracted population does not inherit cache from the parent."""
+        populated_pop.set_cache("rank", [0, 1, 2, 3, 4])
+        sub = populated_pop.extract([0, 1])
+        assert sub.get_cache("rank") is None
+
+    def test_cache_not_inherited_by_empty_like(self, populated_pop: Population) -> None:
+        """empty_like population does not inherit cache."""
+        populated_pop.set_cache("rank", [0, 1, 2, 3, 4])
+        new_pop = populated_pop.empty_like()
+        assert new_pop.get_cache("rank") is None
+
+    def test_cache_overwrite(self, populated_pop: Population) -> None:
+        """Setting the same key twice overwrites the previous value."""
+        populated_pop.set_cache("rank", [0, 1, 2, 3, 4])
+        populated_pop.set_cache("rank", [4, 3, 2, 1, 0])
+        assert populated_pop.get_cache("rank") == [4, 3, 2, 1, 0]
+
+    def test_multiple_cache_keys(self, populated_pop: Population) -> None:
+        """Multiple independent cache keys can coexist."""
+        populated_pop.set_cache("rank", [0, 1, 2])
+        populated_pop.set_cache("cd", [0.5, 0.3, 0.1])
+        assert populated_pop.get_cache("rank") == [0, 1, 2]
+        assert populated_pop.get_cache("cd") == [0.5, 0.3, 0.1]
+
+    def test_all_cache_keys_cleared_on_mutation(
+        self, populated_pop: Population
+    ) -> None:
+        """All cache keys are cleared on a single mutation."""
+        populated_pop.set_cache("rank", [0, 1, 2])
+        populated_pop.set_cache("cd", [0.5, 0.3, 0.1])
+        populated_pop.mod_value()
+        assert populated_pop.get_cache("rank") is None
+        assert populated_pop.get_cache("cd") is None
