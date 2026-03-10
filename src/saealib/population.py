@@ -57,10 +57,10 @@ def bind_property(key: str, doc: str = "") -> Any:
     """Make property for Individual attributes (helper function)."""
 
     def fget(self):
-        return self.__getattr__(key)
+        return self.get_readonly_value(key)
 
     def fset(self, value):
-        self.__setattr__(key, value)
+        self.update_value(key, value)
 
     return PropertyAvoidConfCheck(fget, fset, doc=doc)
 
@@ -73,10 +73,10 @@ def bind_property_array(key: str, doc: str = "") -> Any:
     """
 
     def fget(self):
-        return self.__getattr__(key)
+        return self.get_readonly_array(key)
 
     def fset(self, value):
-        self.get_array(key)[:] = value
+        self.update_array(key, value)
 
     return PropertyAvoidConfCheck(fget, fset, doc=doc)
 
@@ -91,12 +91,17 @@ class Population(Generic[T_Individual]):
         Schema defining the attributes of the population.
     _data : Dict[str, np.ndarray]
         Dictionary to store population data arrays.
+    _cache : Dict[str, Any]
+        Dictionary to store cached values (ex: nds_rank).
+        Cleared on every value or structure modification.
     _capacity : int
         Current capacity of the population.
     _size : int
         Current size of the population.
-    _version : int
-        Version number to track modifications.
+    _structure_version : int
+        Version number to track structure modifications.
+    _value_version : int
+        Version number to track value modifications.
     """
 
     individual_class = None
@@ -123,8 +128,10 @@ class Population(Generic[T_Individual]):
         """
         self._capacity = init_capacity
         self._size = 0
-        self._version = 0
+        self._structure_version = 0
+        self._value_version = 0
         self._data: dict[str, np.ndarray] = {}
+        self._cache: dict[str, Any] = {}
         for attr in attrs:
             self._init_column(attr, self._capacity)
         self._schema = {attr.name: attr for attr in attrs}
@@ -198,6 +205,51 @@ class Population(Generic[T_Individual]):
             self._data[k] = new_arr
         self._capacity = new_capacity
 
+    def mod_value(self) -> None:
+        """Public method to call when the value changes."""
+        self._value_version += 1
+        if "_cache" in self.__dict__:
+            self._cache.clear()
+
+    def mod_structure(self) -> None:
+        """Public method to call when the structure changes."""
+        self._structure_version += 1
+        self.mod_value()
+
+    def set_cache(self, key: str, value: Any) -> None:
+        """
+        Set a cache value.
+
+        The cache is automatically cleared when the population is modified
+        (via ``mod_value`` or ``mod_structure``).
+
+        Parameters
+        ----------
+        key : str
+            The key of the cache.
+        value : Any
+            The value to be cached.
+        """
+        self._cache[key] = value
+
+    def get_cache(self, key: str) -> Any | None:
+        """
+        Get a cached value.
+
+        Returns ``None`` if the key is not found.
+
+        Parameters
+        ----------
+        key : str
+            The key of the cache.
+
+        Returns
+        -------
+        Any | None
+            The cached value, or ``None`` if not found.
+        """
+        return self._cache.get(key)
+
     def append(
         self, element: T_Individual | dict[str, Any] | None = None, **kwargs
     ) -> None:
@@ -250,7 +302,7 @@ class Population(Generic[T_Individual]):
                     data_self[idx] = 0
 
         self._size += 1
-        self._version += 1
+        self.mod_structure()
 
     def extend(self, other: Self | dict) -> None:
         """
@@ -293,7 +345,7 @@ class Population(Generic[T_Individual]):
                     val_self[start : start + other_size] = 0
 
         self._size += other_size
-        self._version += 1
+        self.mod_structure()
 
     def extract(self, indices: np.ndarray | list[int] | slice) -> Self:
         """
@@ -318,7 +370,7 @@ class Population(Generic[T_Individual]):
             new_pop._data[key][:n_extract] = val[: self._size][indices_arr]
 
         new_pop._size = n_extract
-        new_pop._version += 1
+        new_pop.mod_structure()
         return new_pop
 
     def truncate(self, new_size: int) -> None:
@@ -334,7 +386,7 @@ class Population(Generic[T_Individual]):
             raise ValueError("new_size must be non-negative")
         if new_size < self._size:
             self._size = new_size
-            self._version += 1
+            self.mod_structure()
 
     def delete(self, index: int | slice | list[int] | np.ndarray) -> None:
         """
@@ -352,7 +404,7 @@ class Population(Generic[T_Individual]):
             valid_data = v[: self._size]
             v[:new_size] = valid_data[bool_mask]
         self._size = new_size
-        self._version += 1
+        self.mod_structure()
 
     def reorder(self, order: np.ndarray) -> None:
         """
@@ -370,7 +422,7 @@ class Population(Generic[T_Individual]):
         for k, v in self._data.items():
             valid_data = v[: self._size]
             v[: self._size] = valid_data[order]
-        self._version += 1
+        self.mod_structure()
 
     def argsort(self, name: str, reverse: bool = False) -> np.ndarray:
         """
@@ -393,7 +445,7 @@ class Population(Generic[T_Individual]):
     def clear(self) -> None:
         """Clear the population."""
         self._size = 0
-        self._version += 1
+        self.mod_structure()
 
     def empty_like(self, capacity: int | None = None):
         """
@@ -436,6 +488,17 @@ class Population(Generic[T_Individual]):
         """
         return self._data[key][: self._size]
 
+    def get_readonly_array(self, key: str) -> np.ndarray:
+        """Return a read only view of the specified key."""
+        view = self.get_array(key).view()
+        view.flags.writeable = False
+        return view
+
+    def update_array(self, key: str, value: Any) -> np.ndarray:
+        """Safe Array Updates and Value Version Updates."""
+        self.get_array(key)[:] = value
+        self.mod_value()
+
     @property
     def schema(self) -> MappingProxyType[str, PopulationAttribute]:
         """Return the schema of the population."""
@@ -452,12 +515,19 @@ class Population(Generic[T_Individual]):
 
     def __getattr__(self, name: str) -> np.ndarray:
         """Support dot access (ex: pop.x)."""
-        if name in self._data:
-            return self.get_array(name)
+        if "_data" in self.__dict__ and name in self.__dict__["_data"]:
+            return self.get_readonly_array(name)
 
         raise AttributeError(
             f"'{type(self).__name__}' object has no attribute '{name}'"
         )
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Support dot setter."""
+        if "_data" in self.__dict__ and name in self.__dict__["_data"]:
+            self.update_array(name, value)
+        else:
+            super().__setattr__(name, value)
 
     def __getitem__(self, index: int | slice) -> T_Individual | Self:
         """
@@ -488,16 +558,16 @@ class Individual(Generic[T_Population]):
         Weak reference to the parent population.
     _index : int
         Index of the individual in the population.
-    _version : int
-        Version number to track modifications.
+    _structure_version : int
+        Version number to track structure modifications.
     """
 
-    __slots__ = ("_index", "_popref", "_version")
+    __slots__ = ("_index", "_popref", "_structure_version")
 
     def __init__(self, population: T_Population, index: int):
         self._popref = weakref.ref(population)
         self._index = index
-        self._version = population._version
+        self._structure_version = population._structure_version
 
     def _get_pop(self) -> T_Population:
         """
@@ -509,15 +579,33 @@ class Individual(Generic[T_Population]):
             The referenced population.
         """
         pop = self._popref()
-        if pop is None or pop._version != self._version:
+        if pop is None or pop._structure_version != self._structure_version:
             raise RuntimeError("Invalid Individual reference")
         return pop
+
+    def get_readonly_value(self, key: str) -> Any:
+        """
+        Retrieve the value of the specified key.
+
+        If the value is a NumPy array, return a read-only view.
+        """
+        value = self._get_pop().get_array(key)[self._index]
+        if isinstance(value, np.ndarray):
+            view = value.view()
+            view.flags.writeable = False
+            return view
+        return value
+
+    def update_value(self, key: str, value: Any) -> None:
+        """Safe value updates and value version updates."""
+        self._get_pop().get_array(key)[self._index] = value
+        self._get_pop().mod_value()
 
     def __getattr__(self, name: str) -> Any:
         """Access attribute from the population data."""
         pop = self._get_pop()
         if name in pop._data:
-            return pop._data[name][self._index]
+            return self.get_readonly_value(name)
         else:
             raise AttributeError(
                 f"'{type(self).__name__}' object has no attribute '{name}'"
@@ -531,7 +619,7 @@ class Individual(Generic[T_Population]):
         else:
             pop = self._get_pop()
             if name in pop._data:
-                pop._data[name][self._index] = value
+                self.update_value(name, value)
                 return
             else:
                 raise AttributeError(
@@ -683,7 +771,7 @@ class ArchiveMixin:
         for k, v in self._data.items():
             dup_pop._data[k][:all_length] = v[indices]
         dup_pop._size = all_length
-        dup_pop._version = self._version
+        dup_pop._structure_version = self._structure_version
         return dup_pop
 
     def get_knn(self, x: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
