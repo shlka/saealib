@@ -7,15 +7,11 @@ This module defines selection operators for evolutionary algorithms.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 
 import numpy as np
 
 from saealib.context import OptimizationContext
 from saealib.population import Population
-
-# if TYPE_CHECKING:
-#     from saealib.optimizer import Optimizer
 
 
 class ParentSelection(ABC):
@@ -132,16 +128,14 @@ class SequentialSelection(ParentSelection):
         """
         Execute sequential selection.
 
+        Assign parents sequentially without any fitness-based comparison.
+
         Parameters
         ----------
-        opt : Optimizer
-            The optimizer instance.
-        pop_x : np.ndarray
-            Population decision variables.
-        pop_f : np.ndarray
-            Population objective values.
-        pop_cv : np.ndarray
-            Population constraint violation values.
+        ctx : OptimizationContext
+            Optimization context.
+        population : Population
+            Population to select from.
         n_pair : int
             Number of pairs to select.
         n_parents : int
