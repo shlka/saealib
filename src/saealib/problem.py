@@ -98,7 +98,12 @@ class Problem:
         self.constraint_manager = ConstraintManager(constraints=constraints_list)
 
         # TODO: multiple objective support
-        self.comparator = SingleObjectiveComparator(weight=weight, eps=eps)
+        if n_obj == 1:
+            self.comparator = SingleObjectiveComparator(weight=weight, eps=eps)
+        elif n_obj > 1:
+            raise NotImplementedError(
+                "Multiple objective optimization is not supported yet."
+            )
 
     def evaluate(self, x: np.ndarray) -> np.ndarray:
         """
@@ -303,49 +308,43 @@ class Comparator(ABC):
         self.eps = eps
 
     @abstractmethod
-    def compare(
-        self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float
-    ) -> int:
+    def sort_population(self, population: Population) -> np.ndarray:
         """
-        Compare two solutions.
+        Sort population based on their attributes.
 
         Parameters
         ----------
-        fitness_a : np.ndarray
-            Objective values of solution a. shape = (n_obj, )
-        cv_a : float
-            Constraint violation of solution a.
-        fitness_b : np.ndarray
-            Objective values of solution b. shape = (n_obj, )
-        cv_b : float
-            Constraint violation of solution b.
+        population : Population
+            The population to sort.
+
+        Returns
+        -------
+        np.ndarray
+            Sorted population indices.
+        """
+        pass
+
+    @abstractmethod
+    def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
+        """
+        Compare individual a and b in population.
+
+        Parameters
+        ----------
+        population : Population
+            The population to compare.
+        idx_a : int
+            Index of the first individual.
+        idx_b : int
+            Index of the second individual.
 
         Returns
         -------
         int
             Comparison result.
-            -1 if a is better than b.
-            1 if b is better than a.
-            0 if a and b are equal.
-        """
-        pass
-
-    @abstractmethod
-    def sort(self, fitness: np.ndarray, cv: np.ndarray) -> np.ndarray:
-        """
-        Sort solutions based on their fitness and constraint violations.
-
-        Parameters
-        ----------
-        fitness : np.ndarray
-            Objective values of solutions. shape = (n_individuals, n_obj)
-        cv : np.ndarray
-            Constraint violations of solutions. shape = (n_individuals, )
-
-        Returns
-        -------
-        np.ndarray
-            Sorted indices of the solutions.
+            -1 if the individual a is better than the individual b.
+            1 if the individual a is worse than the individual b.
+            0 if the individual a is equal to the individual b.
         """
         pass
 
@@ -356,7 +355,50 @@ class SingleObjectiveComparator(Comparator):
     def __init__(self, weight: float = 1.0, eps: float = 1e-6):
         super().__init__(np.array([weight]), eps)
 
-    def compare(
+    def sort_population(self, population: Population) -> np.ndarray:
+        """
+        Sort population based on their fitness and constraint violations.
+
+        Parameters
+        ----------
+        population : Population
+            The population to sort.
+
+        Returns
+        -------
+        np.ndarray
+            Sorted population indices.
+        """
+        f = population.get("f")
+        cv = population.get("cv")
+        return self._sort(f, cv)
+
+    def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
+        """
+        Compare individual a and b in population.
+
+        Parameters
+        ----------
+        population : Population
+            The population to compare.
+        idx_a : int
+            Index of the first individual.
+        idx_b : int
+            Index of the second individual.
+
+        Returns
+        -------
+        int
+            Comparison result.
+            -1 if the individual a is better than the individual b.
+            1 if the individual a is worse than the individual b.
+            0 if the individual a is equal to the individual b.
+        """
+        f = population.get("f")
+        cv = population.get("cv")
+        return self._compare(f[idx_a], cv[idx_a], f[idx_b], cv[idx_b])
+
+    def _compare(
         self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float
     ) -> int:
         """
@@ -400,7 +442,7 @@ class SingleObjectiveComparator(Comparator):
             else:
                 return 0
 
-    def sort(self, fitness: np.ndarray, cv: np.ndarray) -> np.ndarray:
+    def _sort(self, fitness: np.ndarray, cv: np.ndarray) -> np.ndarray:
         """
         Sort solutions based on their fitness and constraint violations.
 
