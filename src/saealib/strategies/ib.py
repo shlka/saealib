@@ -52,7 +52,7 @@ class IndividualBasedStrategy(OptimizationStrategy):
         provider.dispatch(CallbackEvent.SURROGATE_END, ctx=ctx)
 
         # 3. top-k selection and true evaluation
-        idx = ctx.comparator.sort(offspring.f, offspring.cv)
+        idx = ctx.comparator.sort_population(offspring)
         offspring = offspring.extract(idx)
 
         for i in range(n_eval):
