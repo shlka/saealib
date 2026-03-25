@@ -7,12 +7,11 @@ This module defines selection operators for evolutionary algorithms.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 
 import numpy as np
 
-if TYPE_CHECKING:
-    from saealib.optimizer import Optimizer
+from saealib.context import OptimizationContext
+from saealib.population import Population
 
 
 class ParentSelection(ABC):
@@ -21,10 +20,8 @@ class ParentSelection(ABC):
     @abstractmethod
     def select(
         self,
-        opt: Optimizer,
-        pop_x: np.ndarray,
-        pop_f: np.ndarray,
-        pop_cv: np.ndarray,
+        ctx: OptimizationContext,
+        population: Population,
         n_pair: int,
         n_parents: int,
         rng=np.random.default_rng(),
@@ -34,14 +31,10 @@ class ParentSelection(ABC):
 
         Parameters
         ----------
-        opt : Optimizer
-            The optimizer instance.
-        pop_x : np.ndarray
-            Population decision variables.
-        pop_f : np.ndarray
-            Population objective values.
-        pop_cv : np.ndarray
-            Population constraint violation values.
+        ctx : OptimizationContext
+            Optimization context.
+        population : Population
+            Population to select from.
         n_pair : int
             Number of pairs to select.
         n_parents : int
@@ -67,10 +60,8 @@ class TournamentSelection(ParentSelection):
 
     def select(
         self,
-        opt: Optimizer,
-        pop_x: np.ndarray,
-        pop_f: np.ndarray,
-        pop_cv: np.ndarray,
+        ctx: OptimizationContext,
+        population: Population,
         n_pair: int,
         n_parents: int,
         rng=np.random.default_rng(),
@@ -80,14 +71,10 @@ class TournamentSelection(ParentSelection):
 
         Parameters
         ----------
-        opt : Optimizer
-            The optimizer instance.
-        pop_x : np.ndarray
-            Population decision variables.
-        pop_f : np.ndarray
-            Population objective values.
-        pop_cv : np.ndarray
-            Population constraint violation values.
+        ctx : OptimizationContext
+            Optimization context.
+        population : Population
+            Population to select from.
         n_pair : int
             Number of pairs to select.
         n_parents : int
@@ -100,8 +87,8 @@ class TournamentSelection(ParentSelection):
         np.ndarray
             Selected parent indices. shape = (n_pair, n_parents)
         """
-        n_pop = len(pop_x)
-        cmp = opt.problem.comparator
+        n_pop = population.n_ind
+        cmp = ctx.comparator
         selected_idx = np.zeros((n_pair, n_parents), dtype=int)
         for i in range(n_pair):
             for j in range(n_parents):
@@ -111,11 +98,10 @@ class TournamentSelection(ParentSelection):
                 best_idx = tournament_idx[0]
                 for idx in tournament_idx[1:]:
                     if (
-                        cmp.compare(
-                            pop_f[idx : idx + 1],
-                            pop_cv[idx],
-                            pop_f[best_idx : best_idx + 1],
-                            pop_cv[best_idx],
+                        cmp.compare_population(
+                            population,
+                            idx,
+                            best_idx,
                         )
                         < 0
                     ):
@@ -133,10 +119,8 @@ class SequentialSelection(ParentSelection):
 
     def select(
         self,
-        opt: Optimizer,
-        pop_x: np.ndarray,
-        pop_f: np.ndarray,
-        pop_cv: np.ndarray,
+        ctx: OptimizationContext,
+        population: Population,
         n_pair: int,
         n_parents: int,
         rng=np.random.default_rng(),
@@ -144,16 +128,14 @@ class SequentialSelection(ParentSelection):
         """
         Execute sequential selection.
 
+        Assign parents sequentially without any fitness-based comparison.
+
         Parameters
         ----------
-        opt : Optimizer
-            The optimizer instance.
-        pop_x : np.ndarray
-            Population decision variables.
-        pop_f : np.ndarray
-            Population objective values.
-        pop_cv : np.ndarray
-            Population constraint violation values.
+        ctx : OptimizationContext
+            Optimization context.
+        population : Population
+            Population to select from.
         n_pair : int
             Number of pairs to select.
         n_parents : int
@@ -166,7 +148,6 @@ class SequentialSelection(ParentSelection):
         np.ndarray
             Selected parent indices. shape = (n_pair, n_parents)
         """
-        len(pop_x)
         selected_idx = np.zeros((n_pair, n_parents), dtype=int)
         i_grid, j_grid = np.meshgrid(
             np.arange(n_pair), np.arange(n_parents), indexing="ij"
@@ -178,115 +159,26 @@ class SequentialSelection(ParentSelection):
 class SurvivorSelection(ABC):
     """Base class for survivor selection operators."""
 
+    @abstractmethod
     def select(
         self,
-        opt: Optimizer,
-        pop_x: np.ndarray,
-        pop_f: np.ndarray,
-        pop_cv: np.ndarray,
-        off_x: np.ndarray,
-        off_f: np.ndarray,
-        off_cv: np.ndarray,
-        n_survivors: int,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """
-        Execute survivor selection.
-
-        Create Pool from parents and offspring, then select survivors from the Pool.
-
-        Parameters
-        ----------
-        opt : Optimizer
-            The optimizer instance.
-        pop_x : np.ndarray
-            Parent population decision variables.
-        pop_f : np.ndarray
-            Parent population objective values.
-        pop_cv : np.ndarray
-            Parent population constraint violation values.
-        off_x : np.ndarray
-            Offspring decision variables.
-        off_f : np.ndarray
-            Offspring objective values.
-        off_cv : np.ndarray
-            Offspring constraint violation values.
-        n_survivors : int
-            Number of survivors to select.
-
-        Returns
-        -------
-        tuple[np.ndarray, np.ndarray, np.ndarray]
-            Selected survivors' decision variables, objective values,
-            and constraint violation values.
-        """
-        pool_x, pool_f, pool_cv = self._create_pool(
-            pop_x, pop_f, pop_cv, off_x, off_f, off_cv
-        )
-        survivor_idx = self._select_from_pool(opt, pool_x, pool_f, pool_cv, n_survivors)
-        return pool_x[survivor_idx], pool_f[survivor_idx], pool_cv[survivor_idx]
-
-    def _create_pool(
-        self,
-        pop_x: np.ndarray,
-        pop_f: np.ndarray,
-        pop_cv: np.ndarray,
-        off_x: np.ndarray,
-        off_f: np.ndarray,
-        off_cv: np.ndarray,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """
-        Define how to create the selection pool from parents and offspring.
-
-        Default implementation is (μ + λ) selection. Can be overridden in subclasses.
-
-        Parameters
-        ----------
-        pop_x : np.ndarray
-            Parent population decision variables.
-        pop_f : np.ndarray
-            Parent population objective values.
-        pop_cv : np.ndarray
-            Parent population constraint violation values.
-        off_x : np.ndarray
-            Offspring decision variables.
-        off_f : np.ndarray
-            Offspring objective values.
-        off_cv : np.ndarray
-            Offspring constraint violation values.
-
-        Returns
-        -------
-        tuple[np.ndarray, np.ndarray, np.ndarray]
-            Selection pool decision variables, objective values,
-            and constraint violation values.
-        """
-        pool_x = np.vstack((pop_x, off_x))
-        pool_f = np.hstack((pop_f, off_f))
-        pool_cv = np.hstack((pop_cv, off_cv))
-        return pool_x, pool_f, pool_cv
-
-    @abstractmethod
-    def _select_from_pool(
-        self,
-        opt: Optimizer,
-        pool_x: np.ndarray,
-        pool_f: np.ndarray,
-        pool_cv: np.ndarray,
+        ctx: OptimizationContext,
+        pool: Population,
         n_survivors: int,
     ) -> np.ndarray:
         """
         Select survivors from the selection pool.
 
+        The pool is a merged Population (e.g., parents + offspring) constructed
+        by the Algorithm. The replacement strategy (μ+λ or μ,λ) is determined
+        by the Algorithm, not by this class.
+
         Parameters
         ----------
-        opt : Optimizer
-            The optimizer instance.
-        pool_x : np.ndarray
-            Selection pool decision variables.
-        pool_f : np.ndarray
-            Selection pool objective values.
-        pool_cv : np.ndarray
-            Selection pool constraint violation values.
+        ctx : OptimizationContext
+            Optimization context.
+        pool : Population
+            Selection pool to choose survivors from.
         n_survivors : int
             Number of survivors to select.
 
@@ -301,18 +193,29 @@ class SurvivorSelection(ABC):
 class TruncationSelection(SurvivorSelection):
     """Truncation selection operator."""
 
-    def __init__(self):
-        super().__init__()
-
-    def _select_from_pool(
+    def select(
         self,
-        opt: Optimizer,
-        pool_x: np.ndarray,
-        pool_f: np.ndarray,
-        pool_cv: np.ndarray,
+        ctx: OptimizationContext,
+        pool: Population,
         n_survivors: int,
     ) -> np.ndarray:
-        cmp = opt.problem.comparator
-        cand_idx = cmp.sort(pool_f, pool_cv)
-        survivor_idx = cand_idx[:n_survivors]
-        return survivor_idx
+        """
+        Select survivors by truncating the sorted pool.
+
+        Parameters
+        ----------
+        ctx : OptimizationContext
+            Optimization context.
+        pool : Population
+            Selection pool to choose survivors from.
+        n_survivors : int
+            Number of survivors to select.
+
+        Returns
+        -------
+        np.ndarray
+            Indices of selected survivors in the pool.
+        """
+        cmp = ctx.comparator
+        sorted_idx = cmp.sort_population(pool)
+        return sorted_idx[:n_survivors]

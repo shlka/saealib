@@ -115,18 +115,15 @@ class GA(Algorithm):
         # size without depending on popsize.
         cand = np.empty((0, ctx.dim))
         pop = ctx.population.get_array("x")
-        pop_f = ctx.population.get_array("f")
         popsize = len(pop)
         lb = ctx.problem.lb
         ub = ctx.problem.ub
         n_pair = math.ceil(popsize / 2)
         parent_idx_m = self.parent_selection.select(
-            provider,
-            pop,
-            pop_f,
-            np.zeros(popsize),  # TODO: use cv if constraints are defined
+            ctx,
+            ctx.population,
             n_pair=n_pair,
-            n_parents=2,  # TODO: recieve n_parents from Crossover
+            n_parents=2,  # TODO: receive n_parents from Crossover
             rng=ctx.rng,
         )
         for i in range(n_pair):
@@ -172,28 +169,20 @@ class GA(Algorithm):
 
         Notes
         -----
-        These optimizer attributes are used:
-        - population (read/write)
-        - popsize (readonly)
-        - problem.comparator (readonly)
+        Uses (μ+λ) replacement strategy: merges parents and offspring into
+        a pool, then selects the best popsize individuals via
+        survivor_selection.
         """
-        cmp = ctx.comparator
-        # select a best solution in parent
-        best_idx = cmp.sort(
-            ctx.population.get_array("f"), ctx.population.get_array("cv")
-        )
-        parent_best = ctx.population.get_array("x")[best_idx]
-        parent_best_fit = ctx.population.get_array("f")[best_idx]
-        parent = np.delete(ctx.population.get_array("x"), best_idx, axis=0)
-        parent_fit = np.delete(ctx.population.get_array("f"), best_idx, axis=0)
-        # update population and fitness
-        pop_cand = np.vstack((parent_best, parent, offspring.get_array("x")))
-        fit_cand = np.vstack((parent_best_fit, parent_fit, offspring.get_array("f")))
-        # TODO: use cv if constraints are defined
-        cand_idx = cmp.sort(fit_cand, np.zeros(len(fit_cand)))
-        pop_cand = pop_cand[cand_idx]
-        fit_cand = fit_cand[cand_idx]
-
         popsize = len(ctx.population)
+
+        # Build μ+λ pool
+        pool = ctx.population.empty_like(capacity=popsize + len(offspring))
+        pool.extend(ctx.population)
+        pool.extend(offspring)
+
+        # Select survivors
+        survivor_idx = self.survivor_selection.select(ctx, pool, popsize)
+
+        # Update population
         ctx.population.clear()
-        ctx.population.extend({"x": pop_cand[:popsize], "f": fit_cand[:popsize]})
+        ctx.population.extend(pool.extract(survivor_idx))
