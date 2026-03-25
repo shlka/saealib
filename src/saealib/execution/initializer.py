@@ -178,13 +178,15 @@ class LHSInitializer(Initializer):
         archive_x = scipy.stats.qmc.scale(archive_x, problem.lb, problem.ub)
         archive_f = np.array([problem.evaluate(ind) for ind in archive_x])
 
-        archive_sort_idx = problem.comparator.sort(archive_f, np.zeros(len(archive_f)))
-        archive_x = archive_x[archive_sort_idx]
-        archive_f = archive_f[archive_sort_idx]
-
         # TODO: Modify the archive to register attributes predefined by the archive.
         for i in range(self.n_init_archive):
             archive.add({"x": archive_x[i], "f": archive_f[i]})
+
+        # Sort archive using population-based comparator
+        sorted_idx = problem.comparator.sort_population(archive)
+        archive_sorted = archive.extract(sorted_idx)
+        archive.clear()
+        archive.extend(archive_sorted)
 
         population.extend(archive[: self.n_init_population])
 
