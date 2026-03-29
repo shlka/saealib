@@ -192,7 +192,9 @@ class Optimizer:
             Returns self for method chaining.
         """
         self.surrogate_manager = LocalSurrogateManager(
-            surrogate, MeanPrediction(), n_neighbors=n_neighbors
+            surrogate,
+            MeanPrediction(weights=self.problem.weight),
+            n_neighbors=n_neighbors,
         )
         return self
 
