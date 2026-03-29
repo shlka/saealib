@@ -5,6 +5,8 @@ For each offspring, the surrogate manager scores candidates using a local
 surrogate model. The top-rsm fraction are selected for true evaluation.
 """
 
+import numpy as np
+
 from saealib.callback import CallbackEvent
 from saealib.context import OptimizationContext
 from saealib.optimizer import ComponentProvider
@@ -59,7 +61,7 @@ class IndividualBasedStrategy(OptimizationStrategy):
         provider.dispatch(CallbackEvent.SURROGATE_END, ctx=ctx)
 
         # 3. top-k selection and true evaluation
-        idx = ctx.comparator.sort_population(offspring)
+        idx = np.argsort(-scores)
         offspring = offspring.extract(idx)
 
         for i in range(n_eval):
