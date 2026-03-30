@@ -8,8 +8,6 @@ and includes classes that depend on problem.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from enum import Enum, auto
-from functools import partial
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -34,8 +32,6 @@ class Problem:
         Lower bounds for design variables. shape = (dim, )
     ub : np.ndarray
         Upper bounds for design variables. shape = (dim, )
-    constraint_manager : ConstraintManager
-        Constraint manager instance to handle constraints.
     comparator : Comparator
         Comparator instance to compare solutions.
     eps : float
@@ -52,7 +48,6 @@ class Problem:
         weight: np.ndarray,
         lb: list[float],
         ub: list[float],
-        constraints: list[Constraint] | None = None,
         eps: float = 1e-6,
         comparator: Comparator | None = None,
     ):
@@ -75,8 +70,6 @@ class Problem:
             Lower bounds for design variables. length = dim
         ub : list[float]
             Upper bounds for design variables. length = dim
-        constraints : list[Constraint], optional
-            List of constraints, by default None
         eps : float, optional
             Epsilon value for comparison (Comparator use), by default 1e-6
         comparator : Comparator, optional
@@ -86,23 +79,11 @@ class Problem:
         """
         self.dim = dim
         self.n_obj = n_obj
-        self.n_constraint = len(constraints) if constraints is not None else 0
         self.weight = weight
         self.eps = eps
         self.lb = np.asarray(lb)
         self.ub = np.asarray(ub)
         self.func = func
-        constraints_list = [] if constraints is None else constraints
-
-        for i in range(dim):
-            constraints_list.append(
-                Constraint(partial(ub_constraint, ub=self.ub), type=ConstraintType.INEQ)
-            )
-            constraints_list.append(
-                Constraint(partial(lb_constraint, lb=self.lb), type=ConstraintType.INEQ)
-            )
-
-        self.constraint_manager = ConstraintManager(constraints=constraints_list)
 
         if comparator is not None:
             self.comparator = comparator
@@ -127,163 +108,6 @@ class Problem:
         """
         result = self.func(x)
         return np.atleast_1d(np.asarray(result, dtype=float))
-
-
-class ConstraintType(Enum):
-    """
-    Constraint types.
-
-    Attributes
-    ----------
-    EQ
-        Equality constraint.
-    INEQ
-        Inequality constraint.
-    """
-
-    EQ = auto()
-    INEQ = auto()
-
-
-class Constraint:
-    """
-    Constraint class to handle single constraint.
-
-    Attributes
-    ----------
-    type_constraint : ConstraintType
-        Type of the constraint.
-    func : callable -> float
-        Returns constraint violation value.
-    """
-
-    def __init__(self, func, type: ConstraintType = ConstraintType.INEQ):
-        """
-        Initialize Constraint instance.
-
-        Parameters
-        ----------
-        func : callable -> float
-            Returns constraint violation value.
-        type : ConstraintType, optional
-            Type of the constraint, by default ConstraintType.INEQ
-        """
-        self.type_constraint = type
-        self.func = func
-
-    def evaluate(self, x: np.ndarray) -> float:
-        """
-        Evaluate the constraint violation at given solution x.
-
-        Parameters
-        ----------
-        x : np.ndarray
-            The solution to evaluate.
-        """
-        v = self.func(x)
-        if self.type_constraint == ConstraintType.INEQ:
-            return max(0, v)
-        elif self.type_constraint == ConstraintType.EQ:
-            return abs(v)
-
-
-def ub_constraint(x: np.ndarray, ub: np.ndarray) -> np.ndarray:
-    """
-    Upper bound constraint function.
-
-    Parameters
-    ----------
-    x : np.ndarray
-        The solution to evaluate.
-    ub : np.ndarray
-        Upper bounds for design variables.
-
-    Returns
-    -------
-    np.ndarray
-        The upper bound constraint violation.
-    """
-    return x - ub
-
-
-def lb_constraint(x: np.ndarray, lb: np.ndarray) -> np.ndarray:
-    """
-    Lower bound constraint function.
-
-    Parameters
-    ----------
-    x : np.ndarray
-        The solution to evaluate.
-    lb : np.ndarray
-        Lower bounds for design variables.
-
-    Returns
-    -------
-    np.ndarray
-        The lower bound constraint violation.
-    """
-    return lb - x
-
-
-class ConstraintManager:
-    """
-    Constraint manager to handle multiple constraints.
-
-    Attributes
-    ----------
-    constraints : list[Constraint]
-        List of constraints.
-    """
-
-    def __init__(self, constraints: list[Constraint]):
-        """
-        Initialize ConstraintManager instance.
-
-        Parameters
-        ----------
-        constraints : list[Constraint]
-            List of constraints.
-        """
-        if constraints is None:
-            self.constraints = []
-        else:
-            self.constraints = constraints
-
-    def evaluate(self, x: np.ndarray) -> float:
-        """
-        Evaluate the total constraint violation at given solution x.
-
-        Parameters
-        ----------
-        x : np.ndarray
-            The solution to evaluate.
-
-        Returns
-        -------
-        float
-            The total constraint violation at solution x.
-        """
-        if not self.constraints:
-            return 0.0
-        return sum(constraint.evaluate(x) for constraint in self.constraints)
-
-    def evaluate_population(self, population: Population) -> np.ndarray:
-        """
-        Evaluate the total constraint violation for each individual in the population.
-
-        Parameters
-        ----------
-        population : Population
-            The population to evaluate.
-
-        Returns
-        -------
-        np.ndarray
-            The total constraint violation for each individual in the population.
-        """
-        if not self.constraints:
-            return np.zeros(len(population))
-        return np.array([self.evaluate(ind.get("x")) for ind in population])
 
 
 class Comparator(ABC):
