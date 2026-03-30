@@ -70,7 +70,7 @@ class ExpectedImprovement(AcquisitionFunction):
                 "ExpectedImprovement requires a surrogate with uncertainty "
                 "estimates (prediction.std must not be None)."
             )
-        mu = prediction.mean[:, self.obj_idx]    # (n_samples,)
+        mu = prediction.mean[:, self.obj_idx]  # (n_samples,)
         sigma = prediction.std[:, self.obj_idx]  # (n_samples,)
 
         ref = np.asarray(reference, dtype=float)

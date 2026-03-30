@@ -66,7 +66,7 @@ class ProbabilityOfFeasibility(AcquisitionFunction):
                 "ProbabilityOfFeasibility requires a surrogate with uncertainty "
                 "estimates (prediction.std must not be None)."
             )
-        mu = prediction.mean[:, self.obj_idx]    # (n_samples,)
+        mu = prediction.mean[:, self.obj_idx]  # (n_samples,)
         sigma = prediction.std[:, self.obj_idx]  # (n_samples,)
         sigma = np.maximum(sigma, 1e-9)
-        return norm.cdf((0.0 - mu) / sigma)      # P(g(x) <= 0)
+        return norm.cdf((0.0 - mu) / sigma)  # P(g(x) <= 0)

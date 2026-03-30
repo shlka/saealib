@@ -93,10 +93,10 @@ def main():
     ctx = opt.run()
 
     # --- post-processing: extract the Pareto front ---
-    archive_f = ctx.archive.get("f")   # (n_archive, 2)
-    ranks, fronts = non_dominated_sort(archive_f)
+    archive_f = ctx.archive.get("f")  # (n_archive, 2)
+    _ranks, fronts = non_dominated_sort(archive_f)
 
-    pareto_f = archive_f[fronts[0]]    # front 0 = non-dominated solutions
+    pareto_f = archive_f[fronts[0]]  # front 0 = non-dominated solutions
     pareto_f_sorted = pareto_f[np.argsort(pareto_f[:, 0])]
 
     print(f"\n=== Results (FE={ctx.fe}) ===")

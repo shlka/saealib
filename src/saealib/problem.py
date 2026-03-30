@@ -316,20 +316,20 @@ class WeightedSumComparator(Comparator):
         super().__init__(np.asarray(weights, dtype=float), eps)
 
     def sort_population(self, population: Population) -> np.ndarray:
-        f = population.get("f")    # (n_ind, n_obj)
+        """Sort population by weighted sum of objectives, with feasibility first."""
+        f = population.get("f")  # (n_ind, n_obj)
         cv = population.get("cv")  # (n_ind,)
         scalar = f @ self.weights  # (n_ind,) weighted sum per individual
         cv_key = np.where(cv > self.eps, cv, 0)
         return np.lexsort((-scalar, cv_key))
 
     def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
+        """Compare two individuals by weighted sum; -1=a better, 1=b better, 0=equal."""
         f = population.get("f")
         cv = population.get("cv")
         return self._compare(f[idx_a], float(cv[idx_a]), f[idx_b], float(cv[idx_b]))
 
-    def _compare(
-        self, fa: np.ndarray, cv_a: float, fb: np.ndarray, cv_b: float
-    ) -> int:
+    def _compare(self, fa: np.ndarray, cv_a: float, fb: np.ndarray, cv_b: float) -> int:
         if cv_a > self.eps and cv_b > self.eps:
             if cv_a < cv_b:
                 return -1
@@ -540,7 +540,7 @@ class NSGA2Comparator(Comparator):
         if cached is not None:
             return cached
 
-        f = population.get("f")    # (n, n_obj)
+        f = population.get("f")  # (n, n_obj)
         cv = population.get("cv")  # (n,)
         feasible = np.where(cv <= self.eps)[0]
         infeasible = np.where(cv > self.eps)[0]
@@ -561,7 +561,7 @@ class NSGA2Comparator(Comparator):
         return result
 
     def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
-        """Compare via Pareto dominance; -1=a dominates, 1=b dominates, 0=non-dominated."""
+        """Compare via Pareto dominance; -1=a dominates, 1=b dominates, 0=equal."""
         f = population.get("f")
         cv = population.get("cv")
         cv_a, cv_b = float(cv[idx_a]), float(cv[idx_b])

@@ -14,7 +14,6 @@ Tests cover:
 import logging
 
 import numpy as np
-import pytest
 
 from saealib import (
     GA,
@@ -29,11 +28,11 @@ from saealib import (
     Termination,
     TruncationSelection,
     WeightedSumComparator,
+    crowding_distance,
+    crowding_distance_all_fronts,
     gaussian_kernel,
     max_fe,
     non_dominated_sort,
-    crowding_distance,
-    crowding_distance_all_fronts,
 )
 from saealib.population import Population, PopulationAttribute
 from saealib.problem import NSGA2Comparator, SingleObjectiveComparator
@@ -95,20 +94,21 @@ class TestNonDominatedSort:
     def test_all_dominated_chain(self) -> None:
         """0 dominates 1 dominates 2: three separate fronts."""
         f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
-        ranks, fronts = non_dominated_sort(f)
+        ranks, _fronts = non_dominated_sort(f)
         assert ranks[0] == 0
         assert ranks[1] == 1
         assert ranks[2] == 2
 
     def test_ranks_shape(self) -> None:
-        f = np.random.rand(10, 2)
-        ranks, fronts = non_dominated_sort(f)
+        rng = np.random.default_rng(0)
+        f = rng.random((10, 2))
+        ranks, _fronts = non_dominated_sort(f)
         assert ranks.shape == (10,)
 
     def test_nan_row_last_front(self) -> None:
         """NaN rows are placed in a sentinel front after all valid individuals."""
         f = np.array([[0.0, 0.0], [np.nan, np.nan], [1.0, 1.0]])
-        ranks, fronts = non_dominated_sort(f)
+        ranks, _fronts = non_dominated_sort(f)
         assert ranks[0] == 0  # best valid point
         assert ranks[2] == 1  # dominated valid point
         # NaN point rank > all valid ranks
@@ -123,7 +123,7 @@ class TestNonDominatedSort:
     def test_three_objectives(self) -> None:
         """Works for n_obj > 2."""
         f = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
-        ranks, fronts = non_dominated_sort(f)
+        ranks, _fronts = non_dominated_sort(f)
         assert ranks[0] == 0
         assert ranks[1] == 1
 
@@ -161,7 +161,8 @@ class TestCrowdingDistance:
         assert np.all(np.isfinite(cd[1:4]))
 
     def test_output_shape(self) -> None:
-        f = np.random.rand(6, 2)
+        rng = np.random.default_rng(0)
+        f = rng.random((6, 2))
         cd = crowding_distance(f)
         assert cd.shape == (6,)
 
@@ -359,7 +360,7 @@ class TestNSGA2Comparator:
         assert order.dtype == np.intp or np.issubdtype(order.dtype, np.integer)
 
     def test_weights_stored_but_not_used_in_sorting(self) -> None:
-        """weights parameter is stored for interface compatibility but ignored in Pareto sort."""
+        """weights is stored for interface compatibility but ignored in sorting."""
         f = np.array([[0.0, 1.0], [1.0, 0.0]])
         pop = _make_pop(f)
         comp_no_w = NSGA2Comparator()
@@ -489,7 +490,7 @@ class TestMOOIntegration:
         assert np.all(np.isfinite(archive_f))
 
         # At least some non-dominated solutions exist (front 0 is non-empty)
-        ranks, fronts = non_dominated_sort(archive_f)
+        _ranks, fronts = non_dominated_sort(archive_f)
         assert len(fronts[0]) >= 1
 
         # Best f1 and f2 are reasonable (within the feasible region bounds)
