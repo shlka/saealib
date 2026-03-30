@@ -10,7 +10,7 @@ ZDT1 (Zitzler-Deb-Thiele function 1) is a 2-objective benchmark:
 Pareto front: f2 = 1 - sqrt(f1) for f1 in [0, 1].
 
 This example demonstrates:
-- Multi-objective Problem with automatic ParetoComparator selection
+- Multi-objective Problem with automatic NSGA2Comparator selection
 - IndividualBasedStrategy with per-objective RBF ensemble surrogate
 - Post-processing with non_dominated_sort to extract the Pareto front
 """
