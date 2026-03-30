@@ -34,9 +34,6 @@ from saealib.population import (
 )
 from saealib.problem import (
     Comparator,
-    Constraint,
-    ConstraintManager,
-    ConstraintType,
     NSGA2Comparator,
     Problem,
     SingleObjectiveComparator,
@@ -69,9 +66,6 @@ __all__ = [
     "CallbackEvent",
     "CallbackManager",
     "Comparator",
-    "Constraint",
-    "ConstraintManager",
-    "ConstraintType",
     "Crossover",
     "CrossoverBLXAlpha",
     "EnsembleSurrogateManager",

@@ -46,7 +46,6 @@ class Initializer(ABC):
         attrs = [
             PopulationAttribute("x", float, (problem.dim,), default=np.nan),
             PopulationAttribute("f", float, (problem.n_obj,), default=np.nan),
-            PopulationAttribute("g", float, (problem.n_constraint,), default=0.0),
             PopulationAttribute("cv", float, (), default=0.0),
         ]
         # Retrieve attributes and classes according to the algorithm
