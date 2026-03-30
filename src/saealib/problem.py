@@ -519,9 +519,9 @@ class WeightedSumComparator(Comparator):
             return -1
         sa = float(np.dot(fa, self.weights))
         sb = float(np.dot(fb, self.weights))
-        if sa < sb - self.eps:
+        if sa > sb + self.eps:
             return -1
-        elif sa > sb + self.eps:
+        elif sa < sb - self.eps:
             return 1
         return 0
 
