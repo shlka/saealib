@@ -1,11 +1,11 @@
 """
 Individual-based / Pre-selection / Local-modeling.
 
-For each offspring, construct a surrogate model to obtain a predicted value.
-Select the top models based on the RSM ratio for actual evaluation.
-The surrogate model is a local approximation of the objective function.
-
+For each offspring, the surrogate manager scores candidates using a local
+surrogate model. The top-rsm fraction are selected for true evaluation.
 """
+
+import numpy as np
 
 from saealib.callback import CallbackEvent
 from saealib.context import OptimizationContext
@@ -16,9 +16,18 @@ from saealib.strategies.base import OptimizationStrategy
 class IndividualBasedStrategy(OptimizationStrategy):
     """Individual-based strategy."""
 
-    def __init__(self, n_train: int = 50, rsm: float = 0.1):
-        """Initialize IndividualBasedStrategy class."""
-        self.n_train = n_train
+    def __init__(self, rsm: float = 0.1):
+        """
+        Initialize IndividualBasedStrategy.
+
+        Parameters
+        ----------
+        rsm : float
+            Ratio of surrogate model usage. The top ``rsm`` fraction of
+            offspring are selected for true objective evaluation.
+            The number of neighbors for local surrogate fitting is now
+            configured on the SurrogateManager (e.g. LocalSurrogateManager).
+        """
         self.rsm = rsm
 
     def step(self, ctx: OptimizationContext, provider: ComponentProvider) -> None:
@@ -41,18 +50,18 @@ class IndividualBasedStrategy(OptimizationStrategy):
 
         provider.dispatch(CallbackEvent.SURROGATE_START, ctx=ctx)
 
-        # 2. predict obj value using surrogate (surrogate.fit, surrogate.predict)
-        for i in range(n_offspring):
-            train_idx, _ = ctx.archive.get_knn(offspring[i].x, self.n_train)
-            train_x = ctx.archive.x[train_idx]
-            train_f = ctx.archive.f[train_idx].flatten()
-            provider.surrogate.fit(train_x, train_f)
-            offspring[i].f = provider.surrogate.predict(offspring[i].x)
+        # 2. score candidates via surrogate manager
+        reference = ctx.archive.f.min(axis=0)  # (n_obj,) component-wise best
+        scores, predictions = provider.surrogate_manager.score_candidates(
+            offspring.x, ctx.archive, reference
+        )
+        for i, pred in enumerate(predictions):
+            offspring[i].f = pred.mean[0]  # assign predicted objectives (n_obj,)
 
         provider.dispatch(CallbackEvent.SURROGATE_END, ctx=ctx)
 
         # 3. top-k selection and true evaluation
-        idx = ctx.comparator.sort_population(offspring)
+        idx = np.argsort(-scores)
         offspring = offspring.extract(idx)
 
         for i in range(n_eval):

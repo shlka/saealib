@@ -20,6 +20,7 @@ from saealib import (
 )
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger("saealib.surrogate.rbf").setLevel(logging.CRITICAL)
 
 
 def main():
@@ -56,14 +57,14 @@ def main():
     )
     termination = Termination(max_fe(200 * dim))
     surrogate = RBFsurrogate(gaussian_kernel, dim)
-    strategy = IndividualBasedStrategy(knn, rsm)
+    strategy = IndividualBasedStrategy(rsm=rsm)
 
     opt = (
         Optimizer(problem)
         .set_initializer(initializer)
         .set_algorithm(algorithm)
         .set_termination(termination)
-        .set_surrogate(surrogate)
+        .set_surrogate(surrogate, n_neighbors=knn)
         .set_strategy(strategy)
     )
     opt.run()
