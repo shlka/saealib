@@ -17,7 +17,7 @@ __all__ = [
     "AcquisitionFunction",
     "ExpectedImprovement",
     "LowerConfidenceBound",
-    "MeanPrediction",
     "MaxUncertainty",
+    "MeanPrediction",
     "ProbabilityOfFeasibility",
 ]

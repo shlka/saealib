@@ -73,12 +73,14 @@ class TestMeanPrediction:
         np.testing.assert_array_almost_equal(scores, [-3.0, -7.0])
 
     def test_output_shape(self) -> None:
-        pred = _pred(mean=np.random.rand(5, 2))
+        rng = np.random.default_rng(0)
+        pred = _pred(mean=rng.random((5, 2)))
         scores = MeanPrediction().score(pred, reference=None)
         assert scores.shape == (5,)
 
     def test_output_shape_with_weights(self) -> None:
-        pred = _pred(mean=np.random.rand(7, 3))
+        rng = np.random.default_rng(0)
+        pred = _pred(mean=rng.random((7, 3)))
         scores = MeanPrediction(weights=np.array([-1.0, -1.0, -1.0])).score(
             pred, reference=None
         )
@@ -123,7 +125,9 @@ class TestMaxUncertainty:
             mean=[[0.0, 0.0]],
             std=[[1.0, 2.0]],
         )
-        scores = MaxUncertainty(weights=np.array([1.0, 0.0])).score(pred, reference=None)
+        scores = MaxUncertainty(weights=np.array([1.0, 0.0])).score(
+            pred, reference=None
+        )
         assert scores[0] == pytest.approx(1.0)
 
     def test_requires_uncertainty(self) -> None:
@@ -171,8 +175,8 @@ class TestExpectedImprovement:
         assert np.all(scores >= 0.0)
 
     def test_ei_higher_for_better_candidate(self) -> None:
-        """Candidate with lower mean (closer to current best from below) scores higher."""
-        # reference best = 2.0; candidate with mean=1.5 should score higher than mean=3.0
+        """Candidate with lower mean scores higher EI."""
+        # reference best = 2.0; mean=1.5 should score higher than mean=3.0
         pred = _pred(
             mean=[[3.0], [1.5]],
             std=[[0.5], [0.5]],
@@ -201,8 +205,12 @@ class TestExpectedImprovement:
             mean=[[10.0, 1.0]],
             std=[[0.5, 0.5]],
         )
-        score_obj0 = ExpectedImprovement(obj_idx=0).score(pred, reference=np.array([2.0, 2.0]))
-        score_obj1 = ExpectedImprovement(obj_idx=1).score(pred, reference=np.array([2.0, 2.0]))
+        score_obj0 = ExpectedImprovement(obj_idx=0).score(
+            pred, reference=np.array([2.0, 2.0])
+        )
+        score_obj1 = ExpectedImprovement(obj_idx=1).score(
+            pred, reference=np.array([2.0, 2.0])
+        )
         # obj1: mu=1.0 < f_best=2.0, positive EI; obj0: mu=10.0 >> f_best=2.0, ~0
         assert score_obj1[0] > score_obj0[0]
 
@@ -324,5 +332,5 @@ class TestProbabilityOfFeasibility:
         )
         s0 = ProbabilityOfFeasibility(obj_idx=0).score(pred, reference=None)
         s1 = ProbabilityOfFeasibility(obj_idx=1).score(pred, reference=None)
-        assert s0[0] > 0.99   # mu=-5: clearly feasible
-        assert s1[0] < 0.01   # mu=+5: clearly infeasible
+        assert s0[0] > 0.99  # mu=-5: clearly feasible
+        assert s1[0] < 0.01  # mu=+5: clearly infeasible

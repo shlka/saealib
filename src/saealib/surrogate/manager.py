@@ -153,12 +153,12 @@ class LocalSurrogateManager(SurrogateManager):
             train_x = archive.x[train_idx]
             train_f = archive.f[train_idx]  # (n_neighbors, n_obj)
             self.surrogate.fit(train_x, train_f)
-            pred = self.surrogate.predict(x)   # mean: (1, n_obj)
+            pred = self.surrogate.predict(x)  # mean: (1, n_obj)
             predictions.append(pred)
 
-        scores = np.array([
-            self.acquisition.score(p, reference)[0] for p in predictions
-        ])
+        scores = np.array(
+            [self.acquisition.score(p, reference)[0] for p in predictions]
+        )
         return scores, predictions
 
 
@@ -214,7 +214,7 @@ class EnsembleSurrogateManager(SurrogateManager):
             if i == 0:
                 first_predictions = preds
 
-        combined = np.stack(all_scores, axis=0)          # (n_managers, n_candidates)
+        combined = np.stack(all_scores, axis=0)  # (n_managers, n_candidates)
         aggregated = (self.weights[:, None] * combined).sum(axis=0)  # (n_candidates,)
         return aggregated, first_predictions  # type: ignore[return-value]
 
