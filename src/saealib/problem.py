@@ -70,7 +70,7 @@ class Problem:
         weight : np.ndarray
             Weights for objectives. shape = (n_obj, )
             Used by SingleObjectiveComparator and WeightedSumComparator.
-            Not used by ParetoComparator.
+            Not used by NSGA2Comparator.
         lb : list[float]
             Lower bounds for design variables. length = dim
         ub : list[float]
@@ -82,7 +82,7 @@ class Problem:
         comparator : Comparator, optional
             Comparator instance to use. If None, auto-selected based on n_obj:
             n_obj == 1 -> SingleObjectiveComparator,
-            n_obj >  1 -> ParetoComparator.
+            n_obj >  1 -> NSGA2Comparator.
         """
         self.dim = dim
         self.n_obj = n_obj
@@ -109,7 +109,7 @@ class Problem:
         elif n_obj == 1:
             self.comparator = SingleObjectiveComparator(weight=weight, eps=eps)
         else:
-            self.comparator = ParetoComparator(weights=weight, eps=eps)
+            self.comparator = NSGA2Comparator(weights=weight, eps=eps)
 
     def evaluate(self, x: np.ndarray) -> np.ndarray:
         """
@@ -683,9 +683,9 @@ def crowding_distance_all_fronts(
     return cd
 
 
-class ParetoComparator(Comparator):
+class NSGA2Comparator(Comparator):
     """
-    Comparator for multi-objective optimization via Pareto dominance.
+    Comparator for multi-objective optimization via NSGA-II style ranking.
 
     Implements NSGA-II style ranking:
     - sort_population: non-dominated sorting + crowding distance

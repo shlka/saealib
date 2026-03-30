@@ -6,7 +6,7 @@ Tests cover:
 - crowding_distance: boundary=inf, interior calculation, 2-point and 1-point edge cases
 - crowding_distance_all_fronts: correct per-front assignment
 - WeightedSumComparator: sort_population, compare_population, constraint handling
-- ParetoComparator: sort_population, compare_population, cache, infeasible handling
+- NSGA2Comparator: sort_population, compare_population, cache, infeasible handling
 - Problem: auto-selection of comparator (n_obj=1 / n_obj>1), custom injection
 - MOO integration: 2-objective optimization with IndividualBasedStrategy
 """
@@ -36,7 +36,7 @@ from saealib import (
     crowding_distance_all_fronts,
 )
 from saealib.population import Population, PopulationAttribute
-from saealib.problem import ParetoComparator, SingleObjectiveComparator
+from saealib.problem import NSGA2Comparator, SingleObjectiveComparator
 
 logging.getLogger("saealib.surrogate.rbf").setLevel(logging.CRITICAL)
 
@@ -276,17 +276,17 @@ class TestWeightedSumComparator:
 
 
 # ===========================================================================
-# ParetoComparator Tests
+# NSGA2Comparator Tests
 # ===========================================================================
-class TestParetoComparator:
-    """Tests for ParetoComparator."""
+class TestNSGA2Comparator:
+    """Tests for NSGA2Comparator."""
 
     def test_sort_population_first_front_first(self) -> None:
         """Non-dominated solutions (front 0) appear before dominated ones."""
         # f[0] and f[1] are non-dominated; f[2] is dominated by both
         f = np.array([[0.0, 3.0], [3.0, 0.0], [2.0, 2.0]])
         pop = _make_pop(f)
-        comp = ParetoComparator()
+        comp = NSGA2Comparator()
         order = comp.sort_population(pop)
         # idx 0 and 1 must appear before idx 2
         assert set(order[:2]) == {0, 1}
@@ -297,7 +297,7 @@ class TestParetoComparator:
         f = np.array([[10.0, 10.0], [0.0, 0.0], [1.0, 1.0]])
         cv = np.array([1.0, 0.0, 0.0])  # idx=0 infeasible
         pop = _make_pop(f, cv)
-        comp = ParetoComparator()
+        comp = NSGA2Comparator()
         order = comp.sort_population(pop)
         assert order[-1] == 0
 
@@ -305,7 +305,7 @@ class TestParetoComparator:
         """Second call returns the cached result without recomputing."""
         f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
         pop = _make_pop(f)
-        comp = ParetoComparator()
+        comp = NSGA2Comparator()
         order1 = comp.sort_population(pop)
         order2 = comp.sort_population(pop)
         assert order1 is order2  # same object from cache
@@ -314,7 +314,7 @@ class TestParetoComparator:
         """Cache is invalidated when the population is modified."""
         f = np.array([[0.0, 1.0], [1.0, 0.0]])
         pop = _make_pop(f)
-        comp = ParetoComparator()
+        comp = NSGA2Comparator()
         order1 = comp.sort_population(pop)
         # mutate population
         pop.f = np.array([[0.5, 0.5], [0.5, 0.5]])
@@ -325,21 +325,21 @@ class TestParetoComparator:
     def test_compare_population_a_dominates_b(self) -> None:
         f = np.array([[0.0, 0.0], [1.0, 1.0]])
         pop = _make_pop(f)
-        comp = ParetoComparator()
+        comp = NSGA2Comparator()
         result = comp.compare_population(pop, 0, 1)
         assert result == -1  # a dominates b
 
     def test_compare_population_b_dominates_a(self) -> None:
         f = np.array([[1.0, 1.0], [0.0, 0.0]])
         pop = _make_pop(f)
-        comp = ParetoComparator()
+        comp = NSGA2Comparator()
         result = comp.compare_population(pop, 0, 1)
         assert result == 1  # b dominates a
 
     def test_compare_population_non_dominated(self) -> None:
         f = np.array([[0.0, 1.0], [1.0, 0.0]])
         pop = _make_pop(f)
-        comp = ParetoComparator()
+        comp = NSGA2Comparator()
         result = comp.compare_population(pop, 0, 1)
         assert result == 0  # mutually non-dominated
 
@@ -347,14 +347,14 @@ class TestParetoComparator:
         f = np.array([[0.0, 0.0], [0.0, 0.0]])
         cv = np.array([1.0, 0.0])  # a infeasible, b feasible
         pop = _make_pop(f, cv)
-        comp = ParetoComparator()
+        comp = NSGA2Comparator()
         result = comp.compare_population(pop, 0, 1)
         assert result == 1  # b (feasible) is better
 
     def test_output_is_int_array(self) -> None:
         f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
         pop = _make_pop(f)
-        comp = ParetoComparator()
+        comp = NSGA2Comparator()
         order = comp.sort_population(pop)
         assert order.dtype == np.intp or np.issubdtype(order.dtype, np.integer)
 
@@ -362,8 +362,8 @@ class TestParetoComparator:
         """weights parameter is stored for interface compatibility but ignored in Pareto sort."""
         f = np.array([[0.0, 1.0], [1.0, 0.0]])
         pop = _make_pop(f)
-        comp_no_w = ParetoComparator()
-        comp_with_w = ParetoComparator(weights=np.array([1.0, 2.0]))
+        comp_no_w = NSGA2Comparator()
+        comp_with_w = NSGA2Comparator(weights=np.array([1.0, 2.0]))
         order_no_w = comp_no_w.sort_population(pop)
         order_with_w = comp_with_w.sort_population(pop)
         np.testing.assert_array_equal(order_no_w, order_with_w)
@@ -395,7 +395,7 @@ class TestProblemComparatorAutoSelection:
             lb=[-5.0, -5.0],
             ub=[5.0, 5.0],
         )
-        assert isinstance(p.comparator, ParetoComparator)
+        assert isinstance(p.comparator, NSGA2Comparator)
 
     def test_custom_comparator_overrides_auto_selection(self) -> None:
         custom = WeightedSumComparator(weights=np.array([-1.0, -1.0]))
