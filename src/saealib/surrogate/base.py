@@ -8,9 +8,9 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+from saealib.surrogate.prediction import SurrogatePrediction
 
-# TODO: this class is regression surrogate
-# need to generalize for classification surrogate
+
 class Surrogate(ABC):
     """Base class for surrogate models."""
 
@@ -24,7 +24,8 @@ class Surrogate(ABC):
         train_x : np.ndarray
             Training input data. shape: (n_samples, n_features)
         train_y : np.ndarray
-            Training output data. shape: (n_samples, )
+            Training output data. shape: (n_samples, n_obj)
+            For n_obj == 1, shape (n_samples,) is also accepted.
 
         Returns
         -------
@@ -33,7 +34,7 @@ class Surrogate(ABC):
         pass
 
     @abstractmethod
-    def predict(self, test_x: np.ndarray) -> np.ndarray:
+    def predict(self, test_x: np.ndarray) -> SurrogatePrediction:
         """
         Predict using the surrogate model.
 
@@ -44,7 +45,8 @@ class Surrogate(ABC):
 
         Returns
         -------
-        np.ndarray
-            Predicted output data. shape: (n_samples, )
+        SurrogatePrediction
+            prediction.mean shape: (n_samples, n_obj)
+            prediction.std  shape: (n_samples, n_obj) or None
         """
         pass

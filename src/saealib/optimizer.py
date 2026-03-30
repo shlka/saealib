@@ -11,10 +11,12 @@ from __future__ import annotations
 from collections.abc import Generator
 from typing import TYPE_CHECKING, Any, Protocol
 
+from saealib.acquisition.mean import MeanPrediction
 from saealib.callback import CallbackEvent, CallbackManager, logging_generation
 from saealib.context import OptimizationContext
 from saealib.execution.runner import Runner
 from saealib.operators.repair import repair_clipping
+from saealib.surrogate.manager import LocalSurrogateManager, SurrogateManager
 
 if TYPE_CHECKING:
     from saealib.algorithms.base import Algorithm
@@ -39,8 +41,8 @@ class ComponentProvider(Protocol):
         ...
 
     @property
-    def surrogate(self) -> Surrogate:
-        """Return the surrogate model instance."""
+    def surrogate_manager(self) -> SurrogateManager:
+        """Return the surrogate manager instance."""
         ...
 
     @property
@@ -153,21 +155,47 @@ class Optimizer:
         self.algorithm = algorithm
         return self
 
-    def set_surrogate(self, surrogate: Surrogate) -> Optimizer:
+    def set_surrogate_manager(self, manager: SurrogateManager) -> Optimizer:
         """
-        Set Surrogate instance.
+        Set SurrogateManager instance.
 
         Parameters
         ----------
-        surrogate : Surrogate
-            Surrogate instance.
+        manager : SurrogateManager
+            SurrogateManager instance.
 
         Returns
         -------
         Optimizer
             Returns self for method chaining.
         """
-        self.surrogate = surrogate
+        self.surrogate_manager = manager
+        return self
+
+    def set_surrogate(self, surrogate: Surrogate, n_neighbors: int = 50) -> Optimizer:
+        """
+        Wrap a Surrogate in a LocalSurrogateManager (backward compatibility).
+
+        Provided for backward compatibility. Equivalent to:
+            set_surrogate_manager(LocalSurrogateManager(surrogate, MeanPrediction()))
+
+        Parameters
+        ----------
+        surrogate : Surrogate
+            Surrogate model instance.
+        n_neighbors : int
+            Number of nearest neighbors for local model training.
+
+        Returns
+        -------
+        Optimizer
+            Returns self for method chaining.
+        """
+        self.surrogate_manager = LocalSurrogateManager(
+            surrogate,
+            MeanPrediction(weights=self.problem.weight),
+            n_neighbors=n_neighbors,
+        )
         return self
 
     def set_strategy(self, strategy: OptimizationStrategy) -> Optimizer:

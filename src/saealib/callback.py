@@ -138,5 +138,5 @@ def logging_generation(data, **kwargs):
     # provider: ComponentProvider = kwargs.get("provider", None)
     logger.info(
         f"Generation {ctx.gen} started. fe: {ctx.fe}. "
-        f"Best f: {ctx.archive.get('f').min()}"
+        f"Best f: {ctx.archive.get('f').min(axis=0)}"
     )
