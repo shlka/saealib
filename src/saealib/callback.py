@@ -11,6 +11,11 @@ from collections import defaultdict
 from enum import Enum, auto
 from typing import TYPE_CHECKING
 
+import numpy as np
+
+from saealib.problem import non_dominated_sort
+from saealib.utils.indicators import hypervolume
+
 if TYPE_CHECKING:
     from saealib.optimizer import OptimizationContext
     # from saealib.optimizer import ComponentProvider
@@ -121,22 +126,48 @@ def logging_generation(data, **kwargs):
     """
     Log generation start event.
 
-    Simple logging callback.
+    For single-objective problems, logs the best objective value determined
+    by the comparator. For multi-objective problems, logs the size of the
+    first Pareto front and the per-objective value ranges of that front.
 
     Parameters
     ----------
     data : any
-        The data passed to the callback. Not used here.
+        The data passed to the callback. Returned unchanged.
     **kwargs : any
         Additional keyword arguments. Should contain 'ctx'.
 
     Returns
     -------
-    None
+    any
+        data, unchanged.
     """
     ctx: OptimizationContext = kwargs.get("ctx")
-    # provider: ComponentProvider = kwargs.get("provider", None)
-    logger.info(
-        f"Generation {ctx.gen} started. fe: {ctx.fe}. "
-        f"Best f: {ctx.archive.get('f').min(axis=0)}"
-    )
+
+    if ctx.n_obj == 1:
+        cmp = ctx.comparator
+        sorted_idxs = cmp.sort_population(ctx.archive)
+        best_idx = sorted_idxs[0]
+        best_f = ctx.archive.get("f")[best_idx]
+        logger.info(f"Generation {ctx.gen} started. fe: {ctx.fe}. Best f: {best_f}")
+    else:
+        f = ctx.archive.get("f")
+        _, fronts = non_dominated_sort(f)
+        front1_idxs = fronts[0] if fronts else []
+        front1_size = len(front1_idxs)
+        if front1_size > 0:
+            f_front1 = f[front1_idxs]
+            f_min = np.min(f_front1, axis=0)
+            f_max = np.max(f_front1, axis=0)
+            ranges_str = ", ".join(
+                f"f[{i}]=[{f_min[i]:.4g}, {f_max[i]:.4g}]" for i in range(ctx.n_obj)
+            )
+        else:
+            ranges_str = "n/a"
+        logger.info(
+            f"Generation {ctx.gen} started. fe: {ctx.fe}. "
+            f"Front1 size: {front1_size}. {ranges_str}"
+        )
+
+    return data
+
