@@ -174,7 +174,7 @@ def logging_generation(data, **kwargs):
 
 def logging_generation_hv(reference_point: np.ndarray):
     """
-    Factory returning a callback that logs the hypervolume per generation.
+    Return a callback that logs the hypervolume per generation.
 
     Computes the hypervolume of the first Pareto front in the archive with
     respect to the given reference point (minimization convention).
