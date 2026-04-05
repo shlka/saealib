@@ -171,3 +171,43 @@ def logging_generation(data, **kwargs):
 
     return data
 
+
+def logging_generation_hv(reference_point: np.ndarray):
+    """
+    Factory returning a callback that logs the hypervolume per generation.
+
+    Computes the hypervolume of the first Pareto front in the archive with
+    respect to the given reference point (minimization convention).
+
+    Parameters
+    ----------
+    reference_point : np.ndarray
+        Reference (nadir) point, shape (n_obj,). Each component should be
+        strictly greater than the best achievable value per objective.
+
+    Returns
+    -------
+    callable
+        A callback function compatible with CallbackManager.register.
+
+    Examples
+    --------
+    >>> optimizer.cbmanager.register(
+    ...     CallbackEvent.GENERATION_START,
+    ...     logging_generation_hv(np.array([1.1, 1.1]))
+    ... )
+    """
+    ref = np.asarray(reference_point, dtype=float)
+
+    def _callback(data, **kwargs):
+        ctx: OptimizationContext = kwargs.get("ctx")
+        f = ctx.archive.get("f")
+        _, fronts = non_dominated_sort(f)
+        if not fronts or not fronts[0]:
+            return data
+        f_front1 = f[fronts[0]]
+        hv = hypervolume(f_front1, ref)
+        logger.info(f"Generation {ctx.gen}. fe: {ctx.fe}. HV: {hv:.6g}")
+        return data
+
+    return _callback
