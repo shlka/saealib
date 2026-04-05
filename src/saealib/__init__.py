@@ -12,7 +12,12 @@ from saealib.acquisition import (
 )
 from saealib.algorithms.base import Algorithm
 from saealib.algorithms.ga import GA
-from saealib.callback import CallbackEvent, CallbackManager, logging_generation
+from saealib.callback import (
+    CallbackEvent,
+    CallbackManager,
+    logging_generation,
+    logging_generation_hv,
+)
 from saealib.execution.initializer import Initializer, LHSInitializer
 from saealib.operators.crossover import Crossover, CrossoverBLXAlpha
 from saealib.operators.mutation import Mutation, MutationUniform
@@ -54,6 +59,7 @@ from saealib.surrogate.manager import (
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
 from saealib.termination import Termination, max_fe, max_gen
+from saealib.utils.indicators import hypervolume
 
 logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -103,7 +109,9 @@ __all__ = [
     "crowding_distance",
     "crowding_distance_all_fronts",
     "gaussian_kernel",
+    "hypervolume",
     "logging_generation",
+    "logging_generation_hv",
     "max_fe",
     "max_gen",
     "non_dominated_sort",
