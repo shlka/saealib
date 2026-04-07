@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from dataclasses import dataclass
 from enum import Enum, auto
 from typing import TYPE_CHECKING
 
@@ -17,10 +18,33 @@ from saealib.problem import non_dominated_sort
 from saealib.utils.indicators import hypervolume
 
 if TYPE_CHECKING:
-    from saealib.optimizer import OptimizationContext
-    # from saealib.optimizer import ComponentProvider
+    from saealib.context import OptimizationContext
+    from saealib.optimizer import ComponentProvider
+    from saealib.population import Population
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class CallbackArgs:
+    """Base argument object passed to every callback handler."""
+
+    ctx: OptimizationContext
+    provider: ComponentProvider | None = None
+
+
+@dataclass
+class SurrogateArgs(CallbackArgs):
+    """Arguments for surrogate-related callback events."""
+
+    offspring: Population | None = None
+
+
+@dataclass
+class PostAskArgs(CallbackArgs):
+    """Arguments for post-ask callback events (crossover/mutation/ask)."""
+
+    candidates: np.ndarray | None = None
 
 
 class CallbackEvent(Enum):
@@ -59,6 +83,7 @@ class CallbackEvent(Enum):
     # Algorithm.ask events
     POST_CROSSOVER = auto()
     POST_MUTATION = auto()
+    POST_ASK = auto()
     # ModelManager.run events (commented out for future use)
     POST_SURROGATE_FIT = auto()
     # POST_SURROGATE_PREDICT = auto()
