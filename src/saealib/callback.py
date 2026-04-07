@@ -120,7 +120,7 @@ class CallbackManager:
         """
         self.handlers[event].append(func)
 
-    def dispatch(self, event: CallbackEvent, data: any, **kwargs) -> any:
+    def dispatch(self, event: CallbackEvent, args: CallbackArgs) -> None:
         """
         Dispatch a callback event.
 
@@ -128,26 +128,56 @@ class CallbackManager:
         ----------
         event : CallbackEvent
             The event to dispatch.
-        data : any
-            The data to pass to the callback functions.
-            Can be modified by each callback.
-
-        **kwargs : any
-            Additional keyword arguments to pass to the callback functions.
-            Read-only.
+        args : CallbackArgs
+            Argument object passed to each handler. Handlers must not return
+            a value; the args object may be read but should not be mutated.
 
         Returns
         -------
-        any
-            The result of the last callback function.
+        None
         """
-        cur_data = data
         for handler in self.handlers[event]:
-            cur_data = handler(data=cur_data, **kwargs)
-        return cur_data
+            handler(args)
+
+    def unregister(self, event: CallbackEvent, func: callable) -> None:
+        """
+        Unregister a callback function from an event.
+
+        Parameters
+        ----------
+        event : CallbackEvent
+            The event to unregister the callback from.
+        func : callable
+            The callback function to remove. Raises ValueError if not found.
+
+        Returns
+        -------
+        None
+        """
+        self.handlers[event].remove(func)
+
+    def replace(self, event: CallbackEvent, old: callable, new: callable) -> None:
+        """
+        Replace a registered callback with another.
+
+        Parameters
+        ----------
+        event : CallbackEvent
+            The event whose handler list to modify.
+        old : callable
+            The handler to replace. Raises ValueError if not found.
+        new : callable
+            The replacement handler.
+
+        Returns
+        -------
+        None
+        """
+        idx = self.handlers[event].index(old)
+        self.handlers[event][idx] = new
 
 
-def logging_generation(data, **kwargs):
+def logging_generation(args: CallbackArgs) -> None:
     """
     Log generation start event.
 
@@ -157,17 +187,14 @@ def logging_generation(data, **kwargs):
 
     Parameters
     ----------
-    data : any
-        The data passed to the callback. Returned unchanged.
-    **kwargs : any
-        Additional keyword arguments. Should contain 'ctx'.
+    args : CallbackArgs
+        Callback argument object. Must contain a valid ``ctx``.
 
     Returns
     -------
-    any
-        data, unchanged.
+    None
     """
-    ctx: OptimizationContext = kwargs.get("ctx")
+    ctx: OptimizationContext = args.ctx
 
     if ctx.n_obj == 1:
         cmp = ctx.comparator
@@ -193,8 +220,6 @@ def logging_generation(data, **kwargs):
             f"Generation {ctx.gen} started. fe: {ctx.fe}. "
             f"Front1 size: {front1_size}. {ranges_str}"
         )
-
-    return data
 
 
 def logging_generation_hv(reference_point: np.ndarray):
@@ -224,15 +249,14 @@ def logging_generation_hv(reference_point: np.ndarray):
     """
     ref = np.asarray(reference_point, dtype=float)
 
-    def _callback(data, **kwargs):
-        ctx: OptimizationContext = kwargs.get("ctx")
+    def _callback(args: CallbackArgs) -> None:
+        ctx: OptimizationContext = args.ctx
         f = ctx.archive.get("f")
         _, fronts = non_dominated_sort(f)
         if not fronts or not fronts[0]:
-            return data
+            return
         f_front1 = f[fronts[0]]
         hv = hypervolume(f_front1, ref)
         logger.info(f"Generation {ctx.gen}. fe: {ctx.fe}. HV: {hv:.6g}")
-        return data
 
     return _callback
