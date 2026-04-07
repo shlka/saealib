@@ -9,13 +9,12 @@ evolutionary optimization with surrogate models.
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from saealib.acquisition.mean import MeanPrediction
-from saealib.callback import CallbackEvent, CallbackManager, logging_generation
+from saealib.callback import CallbackArgs, CallbackEvent, CallbackManager, logging_generation
 from saealib.context import OptimizationContext
 from saealib.execution.runner import Runner
-from saealib.operators.repair import repair_clipping
 from saealib.surrogate.manager import LocalSurrogateManager, SurrogateManager
 
 if TYPE_CHECKING:
@@ -55,7 +54,7 @@ class ComponentProvider(Protocol):
         """Return the callback manager."""
         ...
 
-    def dispatch(self, event: CallbackEvent, data=None, **kwargs) -> Any:
+    def dispatch(self, event: CallbackEvent, args: CallbackArgs) -> None:
         """Dispatch a callback event."""
         ...
 
@@ -113,8 +112,6 @@ class Optimizer:
         self.cbmanager: CallbackManager = CallbackManager()
         # initialize callbacks (default)
         self.cbmanager.register(CallbackEvent.GENERATION_START, logging_generation)
-        self.cbmanager.register(CallbackEvent.POST_CROSSOVER, repair_clipping)
-        self.cbmanager.register(CallbackEvent.POST_MUTATION, repair_clipping)
         # initializer instance
         self.initializer: Initializer = None
         # Optimizer instance name
@@ -250,7 +247,7 @@ class Optimizer:
         return self
 
     ### CALLBACKS ###
-    def dispatch(self, event: CallbackEvent, data=None, **kwargs) -> any:
+    def dispatch(self, event: CallbackEvent, args: CallbackArgs) -> None:
         """
         Dispatch an event to the callback manager.
 
@@ -258,18 +255,16 @@ class Optimizer:
         ----------
         event : CallbackEvent
             The callback event to dispatch.
-        data : any, optional
-            Data that may be rewritten.
-        kwargs : dict, optional
-            Additional keyword arguments for the callback.
+        args : CallbackArgs
+            Argument object passed to each handler. ``args.provider`` is set
+            to this optimizer before forwarding to the callback manager.
 
         Returns
         -------
-        any
-            The data returned by another callback.
+        None
         """
-        kwargs["provider"] = self
-        return self.cbmanager.dispatch(event, data, **kwargs)
+        args.provider = self
+        self.cbmanager.dispatch(event, args)
 
     ### RUN ###
     def iterate(self) -> Generator[OptimizationContext, None, None]:
