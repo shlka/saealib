@@ -11,10 +11,13 @@ from saealib.acquisition import (
     ProbabilityOfFeasibility,
 )
 from saealib.algorithms.base import Algorithm
-from saealib.algorithms.ga import GA
+from saealib.algorithms.ga import GA, RepairFunc
 from saealib.callback import (
+    CallbackArgs,
     CallbackEvent,
     CallbackManager,
+    PostAskArgs,
+    SurrogateArgs,
     logging_generation,
     logging_generation_hv,
 )
@@ -67,6 +70,7 @@ __all__ = [
     "GA",
     "AcquisitionFunction",
     "Algorithm",
+    "CallbackArgs",
     "Archive",
     "ArchiveMixin",
     "CallbackEvent",
@@ -93,12 +97,15 @@ __all__ = [
     "ParentSelection",
     "Population",
     "PopulationAttribute",
+    "PostAskArgs",
     "ProbabilityOfFeasibility",
+    "RepairFunc",
     "Problem",
     "RBFsurrogate",
     "SequentialSelection",
     "SingleObjectiveComparator",
     "Surrogate",
+    "SurrogateArgs",
     "SurrogateManager",
     "SurrogatePrediction",
     "SurvivorSelection",
