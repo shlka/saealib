@@ -12,7 +12,12 @@ from collections.abc import Generator
 from typing import TYPE_CHECKING, Protocol
 
 from saealib.acquisition.mean import MeanPrediction
-from saealib.callback import CallbackArgs, CallbackEvent, CallbackManager, logging_generation
+from saealib.callback import (
+    CallbackManager,
+    Event,
+    GenerationStartEvent,
+    logging_generation,
+)
 from saealib.context import OptimizationContext
 from saealib.execution.runner import Runner
 from saealib.surrogate.manager import LocalSurrogateManager, SurrogateManager
@@ -54,7 +59,7 @@ class ComponentProvider(Protocol):
         """Return the callback manager."""
         ...
 
-    def dispatch(self, event: CallbackEvent, args: CallbackArgs) -> None:
+    def dispatch(self, event: Event) -> None:
         """Dispatch a callback event."""
         ...
 
@@ -111,7 +116,7 @@ class Optimizer:
         # callback event manager
         self.cbmanager: CallbackManager = CallbackManager()
         # initialize callbacks (default)
-        self.cbmanager.register(CallbackEvent.GENERATION_START, logging_generation)
+        self.cbmanager.register(GenerationStartEvent, logging_generation)
         # initializer instance
         self.initializer: Initializer = None
         # Optimizer instance name
@@ -247,24 +252,21 @@ class Optimizer:
         return self
 
     ### CALLBACKS ###
-    def dispatch(self, event: CallbackEvent, args: CallbackArgs) -> None:
+    def dispatch(self, event: Event) -> None:
         """
         Dispatch an event to the callback manager.
 
         Parameters
         ----------
-        event : CallbackEvent
-            The callback event to dispatch.
-        args : CallbackArgs
-            Argument object passed to each handler. ``args.provider`` is set
-            to this optimizer before forwarding to the callback manager.
+        event : Event
+            The event to dispatch. ``event.provider`` must be set to this
+            optimizer by the caller before passing.
 
         Returns
         -------
         None
         """
-        args.provider = self
-        self.cbmanager.dispatch(event, args)
+        self.cbmanager.dispatch(event)
 
     ### RUN ###
     def iterate(self) -> Generator[OptimizationContext, None, None]:

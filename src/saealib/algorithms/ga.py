@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Callable
 import numpy as np
 
 from saealib.algorithms.base import Algorithm
-from saealib.callback import CallbackEvent, PostAskArgs
+from saealib.callback import PostAskEvent, PostCrossoverEvent, PostMutationEvent
 from saealib.context import OptimizationContext
 from saealib.operators.repair import repair_clipping
 from saealib.population import Archive, Population, PopulationAttribute
@@ -143,14 +143,22 @@ class GA(Algorithm):
             cand = np.vstack((cand, c))
         if self.repair is not None:
             cand = self.repair(cand, (lb, ub))
-        provider.dispatch(CallbackEvent.POST_CROSSOVER, PostAskArgs(ctx=ctx, candidates=cand))
+        post_co = PostCrossoverEvent(ctx=ctx, provider=provider, candidates=cand)
+        provider.dispatch(post_co)
+        cand = post_co.candidates
+
         cand_len = len(cand)
         for i in range(cand_len):
             cand[i] = self.mutation.mutate(cand[i], (lb, ub), rng=ctx.rng)
         if self.repair is not None:
             cand = self.repair(cand, (lb, ub))
-        provider.dispatch(CallbackEvent.POST_MUTATION, PostAskArgs(ctx=ctx, candidates=cand))
-        provider.dispatch(CallbackEvent.POST_ASK, PostAskArgs(ctx=ctx, candidates=cand))
+        post_mut = PostMutationEvent(ctx=ctx, provider=provider, candidates=cand)
+        provider.dispatch(post_mut)
+        cand = post_mut.candidates
+
+        post_ask = PostAskEvent(ctx=ctx, provider=provider, candidates=cand)
+        provider.dispatch(post_ask)
+        cand = post_ask.candidates
 
         cand_pop = ctx.population.empty_like(capacity=popsize)
         cand_pop.extend({"x": cand[:popsize]})

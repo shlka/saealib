@@ -9,7 +9,12 @@ from __future__ import annotations
 from collections.abc import Generator
 from typing import TYPE_CHECKING
 
-from saealib.callback import CallbackArgs, CallbackEvent
+from saealib.callback import (
+    GenerationEndEvent,
+    GenerationStartEvent,
+    RunEndEvent,
+    RunStartEvent,
+)
 from saealib.context import OptimizationContext
 
 if TYPE_CHECKING:
@@ -61,17 +66,16 @@ class Runner:
         Generator[OptimizationContext, None, None]
             The optimization context.
         """
-        ctx = self.optimizer.initializer.initialize(
-            self.optimizer,
-            self.optimizer.problem,
-        )
-        self.optimizer.dispatch(CallbackEvent.RUN_START, CallbackArgs(ctx=ctx))
+        opt = self.optimizer
+        ctx = opt.initializer.initialize(opt, opt.problem)
+
+        opt.dispatch(RunStartEvent(ctx=ctx, provider=opt))
         yield ctx
 
-        while not self.optimizer.termination.is_terminated(ctx):
-            self.optimizer.dispatch(CallbackEvent.GENERATION_START, CallbackArgs(ctx=ctx))
-            self.optimizer.strategy.step(ctx, self.optimizer)
-            self.optimizer.dispatch(CallbackEvent.GENERATION_END, CallbackArgs(ctx=ctx))
+        while not opt.termination.is_terminated(ctx):
+            opt.dispatch(GenerationStartEvent(ctx=ctx, provider=opt))
+            opt.strategy.step(ctx, opt)
+            opt.dispatch(GenerationEndEvent(ctx=ctx, provider=opt))
             yield ctx
 
-        self.optimizer.dispatch(CallbackEvent.RUN_END, CallbackArgs(ctx=ctx))
+        opt.dispatch(RunEndEvent(ctx=ctx, provider=opt))

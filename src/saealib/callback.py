@@ -1,7 +1,8 @@
 """
 Callback module.
 
-This module contains the implementation of callback events and manager.
+This module contains event classes and the callback manager for
+the optimization lifecycle.
 """
 
 from __future__ import annotations
@@ -9,8 +10,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
-from enum import Enum, auto
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, TypeVar
 
 import numpy as np
 
@@ -25,161 +25,221 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+# ---------------------------------------------------------------------------
+# Event hierarchy
+# ---------------------------------------------------------------------------
+
+
 @dataclass
-class CallbackArgs:
-    """Base argument object passed to every callback handler."""
+class Event:
+    """
+    Base class for all callback events.
+
+    Attributes
+    ----------
+    ctx : OptimizationContext
+        The current optimization context.
+    provider : ComponentProvider
+        The component provider (e.g. Optimizer) that fired this event.
+    """
 
     ctx: OptimizationContext
-    provider: ComponentProvider | None = None
+    provider: ComponentProvider
+
+
+# --- Optimizer.run events ---
 
 
 @dataclass
-class SurrogateArgs(CallbackArgs):
-    """Arguments for surrogate-related callback events."""
+class RunStartEvent(Event):
+    """Fired once when the optimization run starts."""
+
+
+@dataclass
+class RunEndEvent(Event):
+    """Fired once when the optimization run ends."""
+
+
+@dataclass
+class GenerationStartEvent(Event):
+    """Fired at the beginning of each generation."""
+
+
+@dataclass
+class GenerationEndEvent(Event):
+    """Fired at the end of each generation, before yielding the context."""
+
+
+# --- Surrogate events ---
+
+
+@dataclass
+class SurrogateStartEvent(Event):
+    """Fired before surrogate-based candidate scoring."""
 
     offspring: Population | None = None
 
 
 @dataclass
-class PostAskArgs(CallbackArgs):
-    """Arguments for post-ask callback events (crossover/mutation/ask)."""
+class SurrogateEndEvent(Event):
+    """Fired after surrogate-based candidate scoring."""
+
+    offspring: Population | None = None
+
+
+# --- Algorithm.ask events ---
+
+
+@dataclass
+class PostCrossoverEvent(Event):
+    """
+    Fired after crossover and repair.
+
+    Handlers may replace ``candidates`` with a modified array.
+    """
 
     candidates: np.ndarray | None = None
 
 
-class CallbackEvent(Enum):
+@dataclass
+class PostMutationEvent(Event):
     """
-    Enum class for callback events.
+    Fired after mutation and repair.
 
-    Attributes
-    ----------
-    RUN_START
-        Triggered when the optimization run starts.
-    RUN_END
-        Triggered when the optimization run ends.
-    GENERATION_START
-        Triggered when a new generation starts.
-    GENERATION_END
-        Triggered when a generation ends.
-    SURROGATE_START
-        Triggered when surrogate model training starts.
-    SURROGATE_END
-        Triggered when surrogate model training ends.
-    POST_CROSSOVER
-        Triggered after crossover operation.
-    POST_MUTATION
-        Triggered after mutation operation.
-    POST_SURROGATE_FIT
-        Triggered after surrogate model fitting.
+    Handlers may replace ``candidates`` with a modified array.
     """
 
-    # Optimizer.run events
-    RUN_START = auto()
-    RUN_END = auto()
-    GENERATION_START = auto()
-    GENERATION_END = auto()
-    SURROGATE_START = auto()
-    SURROGATE_END = auto()
-    # Algorithm.ask events
-    POST_CROSSOVER = auto()
-    POST_MUTATION = auto()
-    POST_ASK = auto()
-    # ModelManager.run events (commented out for future use)
-    POST_SURROGATE_FIT = auto()
-    # POST_SURROGATE_PREDICT = auto()
+    candidates: np.ndarray | None = None
+
+
+@dataclass
+class PostAskEvent(Event):
+    """
+    Fired after the full ask step (post crossover and mutation).
+
+    Handlers may replace ``candidates`` with a modified array.
+    """
+
+    candidates: np.ndarray | None = None
+
+
+# --- Model events ---
+
+
+@dataclass
+class PostSurrogateFitEvent(Event):
+    """Fired after the surrogate model is fitted."""
+
+
+# ---------------------------------------------------------------------------
+# CallbackManager
+# ---------------------------------------------------------------------------
+
+E = TypeVar("E", bound=Event)
 
 
 class CallbackManager:
     """
-    Manages callback events and their handlers.
+    Manages event handlers.
+
+    Handlers are registered per concrete event type and called in
+    registration order when an event of that type is dispatched.
 
     Attributes
     ----------
-    handlers : defaultdict[CallbackEvent, list[callable]]
-        Dictionary mapping events to list of callback functions.
+    handlers : defaultdict[type[Event], list[Callable]]
+        Mapping from event class to list of registered handler functions.
     """
 
     def __init__(self) -> None:
         """Initialize CallbackManager."""
-        self.handlers = defaultdict(list)
+        self.handlers: defaultdict[type[Event], list] = defaultdict(list)
 
-    def register(self, event: CallbackEvent, func: callable) -> None:
+    def register(self, event_type: type[E], func: Callable[[E], None]) -> None:
         """
-        Register a callback function for a event.
+        Register a handler for an event type.
 
         Parameters
         ----------
-        event : CallbackEvent
-            The event to register the callback for.
-        func : callable
-            The callback function to register.
+        event_type : type[E]
+            The concrete event class to listen for.
+        func : Callable[[E], None]
+            Handler function. Receives the event object and returns nothing.
 
         Returns
         -------
         None
         """
-        self.handlers[event].append(func)
+        self.handlers[event_type].append(func)
 
-    def dispatch(self, event: CallbackEvent, args: CallbackArgs) -> None:
+    def dispatch(self, event: Event) -> None:
         """
-        Dispatch a callback event.
+        Invoke all handlers registered for the type of *event*.
 
         Parameters
         ----------
-        event : CallbackEvent
-            The event to dispatch.
-        args : CallbackArgs
-            Argument object passed to each handler. Handlers must not return
-            a value; the args object may be read but should not be mutated.
+        event : Event
+            The event object to dispatch. Handlers receive this object
+            directly and may modify its mutable fields.
 
         Returns
         -------
         None
         """
-        for handler in self.handlers[event]:
-            handler(args)
+        for handler in self.handlers[type(event)]:
+            handler(event)
 
-    def unregister(self, event: CallbackEvent, func: callable) -> None:
+    def unregister(self, event_type: type[E], func: Callable[[E], None]) -> None:
         """
-        Unregister a callback function from an event.
+        Remove a previously registered handler.
 
         Parameters
         ----------
-        event : CallbackEvent
-            The event to unregister the callback from.
-        func : callable
-            The callback function to remove. Raises ValueError if not found.
+        event_type : type[E]
+            The event class the handler was registered for.
+        func : Callable[[E], None]
+            The handler to remove. Raises ``ValueError`` if not found.
 
         Returns
         -------
         None
         """
-        self.handlers[event].remove(func)
+        self.handlers[event_type].remove(func)
 
-    def replace(self, event: CallbackEvent, old: callable, new: callable) -> None:
+    def replace(
+        self,
+        event_type: type[E],
+        old: Callable[[E], None],
+        new: Callable[[E], None],
+    ) -> None:
         """
-        Replace a registered callback with another.
+        Replace a registered handler with another.
 
         Parameters
         ----------
-        event : CallbackEvent
-            The event whose handler list to modify.
-        old : callable
-            The handler to replace. Raises ValueError if not found.
-        new : callable
+        event_type : type[E]
+            The event class whose handler list to modify.
+        old : Callable[[E], None]
+            The handler to replace. Raises ``ValueError`` if not found.
+        new : Callable[[E], None]
             The replacement handler.
 
         Returns
         -------
         None
         """
-        idx = self.handlers[event].index(old)
-        self.handlers[event][idx] = new
+        idx = self.handlers[event_type].index(old)
+        self.handlers[event_type][idx] = new
 
 
-def logging_generation(args: CallbackArgs) -> None:
+# ---------------------------------------------------------------------------
+# Built-in handlers
+# ---------------------------------------------------------------------------
+
+
+def logging_generation(event: GenerationStartEvent) -> None:
     """
-    Log generation start event.
+    Log the state at the start of each generation.
 
     For single-objective problems, logs the best objective value determined
     by the comparator. For multi-objective problems, logs the size of the
@@ -187,14 +247,14 @@ def logging_generation(args: CallbackArgs) -> None:
 
     Parameters
     ----------
-    args : CallbackArgs
-        Callback argument object. Must contain a valid ``ctx``.
+    event : GenerationStartEvent
+        The generation-start event.
 
     Returns
     -------
     None
     """
-    ctx: OptimizationContext = args.ctx
+    ctx: OptimizationContext = event.ctx
 
     if ctx.n_obj == 1:
         cmp = ctx.comparator
@@ -224,7 +284,7 @@ def logging_generation(args: CallbackArgs) -> None:
 
 def logging_generation_hv(reference_point: np.ndarray):
     """
-    Return a callback that logs the hypervolume per generation.
+    Return a handler that logs the hypervolume per generation.
 
     Computes the hypervolume of the first Pareto front in the archive with
     respect to the given reference point (minimization convention).
@@ -237,20 +297,20 @@ def logging_generation_hv(reference_point: np.ndarray):
 
     Returns
     -------
-    callable
-        A callback function compatible with CallbackManager.register.
+    Callable[[GenerationStartEvent], None]
+        A handler compatible with ``CallbackManager.register``.
 
     Examples
     --------
     >>> optimizer.cbmanager.register(
-    ...     CallbackEvent.GENERATION_START,
+    ...     GenerationStartEvent,
     ...     logging_generation_hv(np.array([1.1, 1.1]))
     ... )
     """
     ref = np.asarray(reference_point, dtype=float)
 
-    def _callback(args: CallbackArgs) -> None:
-        ctx: OptimizationContext = args.ctx
+    def _callback(event: GenerationStartEvent) -> None:
+        ctx: OptimizationContext = event.ctx
         f = ctx.archive.get("f")
         _, fronts = non_dominated_sort(f)
         if not fronts or not fronts[0]:
