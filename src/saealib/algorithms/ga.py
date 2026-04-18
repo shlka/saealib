@@ -7,13 +7,15 @@ This module contains the implementation of Genetic Algorithm.
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
 
 from saealib.algorithms.base import Algorithm
-from saealib.callback import CallbackEvent
+from saealib.callback import PostAskEvent, PostCrossoverEvent, PostMutationEvent
 from saealib.context import OptimizationContext
+from saealib.operators.repair import repair_clipping
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -22,6 +24,8 @@ if TYPE_CHECKING:
     from saealib.operators.mutation import Mutation
     from saealib.operators.selection import ParentSelection, SurvivorSelection
     from saealib.optimizer import ComponentProvider
+
+RepairFunc = Callable[[np.ndarray, tuple[np.ndarray, np.ndarray]], np.ndarray]
 
 
 class GA(Algorithm):
@@ -46,6 +50,7 @@ class GA(Algorithm):
         mutation: Mutation,
         parent_selection: ParentSelection,
         survivor_selection: SurvivorSelection,
+        repair: RepairFunc | None = repair_clipping,
     ):
         """
         Initialize GA (Genetic Algorithm) class.
@@ -60,12 +65,16 @@ class GA(Algorithm):
             Parent selection operator.
         survivor_selection : SurvivorSelection
             Survivor selection operator.
+        repair : RepairFunc or None, optional
+            Repair function applied after crossover and after mutation.
+            Defaults to ``repair_clipping``. Pass ``None`` to disable repair.
         """
         super().__init__()
         self.crossover = crossover
         self.mutation = mutation
         self.parent_selection = parent_selection
         self.survivor_selection = survivor_selection
+        self.repair = repair
 
     def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
         """
@@ -133,11 +142,24 @@ class GA(Algorithm):
             else:
                 c = parent.copy()
             cand = np.vstack((cand, c))
-        cand = provider.dispatch(CallbackEvent.POST_CROSSOVER, ctx=ctx, data=cand)
+        if self.repair is not None:
+            cand = self.repair(cand, (lb, ub))
+        post_co = PostCrossoverEvent(ctx=ctx, provider=provider, candidates=cand)
+        provider.dispatch(post_co)
+        cand = post_co.candidates
+
         cand_len = len(cand)
         for i in range(cand_len):
             cand[i] = self.mutation.mutate(cand[i], (lb, ub), rng=ctx.rng)
-        cand = provider.dispatch(CallbackEvent.POST_MUTATION, ctx=ctx, data=cand)
+        if self.repair is not None:
+            cand = self.repair(cand, (lb, ub))
+        post_mut = PostMutationEvent(ctx=ctx, provider=provider, candidates=cand)
+        provider.dispatch(post_mut)
+        cand = post_mut.candidates
+
+        post_ask = PostAskEvent(ctx=ctx, provider=provider, candidates=cand)
+        provider.dispatch(post_ask)
+        cand = post_ask.candidates
 
         cand_pop = ctx.population.empty_like(capacity=popsize)
         cand_pop.extend({"x": cand[:popsize]})

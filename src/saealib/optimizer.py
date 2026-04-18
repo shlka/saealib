@@ -9,13 +9,17 @@ evolutionary optimization with surrogate models.
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from saealib.acquisition.mean import MeanPrediction
-from saealib.callback import CallbackEvent, CallbackManager, logging_generation
+from saealib.callback import (
+    CallbackManager,
+    Event,
+    GenerationStartEvent,
+    logging_generation,
+)
 from saealib.context import OptimizationContext
 from saealib.execution.runner import Runner
-from saealib.operators.repair import repair_clipping
 from saealib.surrogate.manager import LocalSurrogateManager, SurrogateManager
 
 if TYPE_CHECKING:
@@ -55,7 +59,7 @@ class ComponentProvider(Protocol):
         """Return the callback manager."""
         ...
 
-    def dispatch(self, event: CallbackEvent, data=None, **kwargs) -> Any:
+    def dispatch(self, event: Event) -> None:
         """Dispatch a callback event."""
         ...
 
@@ -112,9 +116,7 @@ class Optimizer:
         # callback event manager
         self.cbmanager: CallbackManager = CallbackManager()
         # initialize callbacks (default)
-        self.cbmanager.register(CallbackEvent.GENERATION_START, logging_generation)
-        self.cbmanager.register(CallbackEvent.POST_CROSSOVER, repair_clipping)
-        self.cbmanager.register(CallbackEvent.POST_MUTATION, repair_clipping)
+        self.cbmanager.register(GenerationStartEvent, logging_generation)
         # initializer instance
         self.initializer: Initializer = None
         # Optimizer instance name
@@ -250,26 +252,21 @@ class Optimizer:
         return self
 
     ### CALLBACKS ###
-    def dispatch(self, event: CallbackEvent, data=None, **kwargs) -> any:
+    def dispatch(self, event: Event) -> None:
         """
         Dispatch an event to the callback manager.
 
         Parameters
         ----------
-        event : CallbackEvent
-            The callback event to dispatch.
-        data : any, optional
-            Data that may be rewritten.
-        kwargs : dict, optional
-            Additional keyword arguments for the callback.
+        event : Event
+            The event to dispatch. ``event.provider`` must be set to this
+            optimizer by the caller before passing.
 
         Returns
         -------
-        any
-            The data returned by another callback.
+        None
         """
-        kwargs["provider"] = self
-        return self.cbmanager.dispatch(event, data, **kwargs)
+        self.cbmanager.dispatch(event)
 
     ### RUN ###
     def iterate(self) -> Generator[OptimizationContext, None, None]:
