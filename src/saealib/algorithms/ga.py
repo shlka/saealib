@@ -7,7 +7,8 @@ This module contains the implementation of Genetic Algorithm.
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import numpy as np
 

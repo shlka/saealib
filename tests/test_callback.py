@@ -12,7 +12,6 @@ Tests cover:
 from __future__ import annotations
 
 import logging
-from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -103,7 +102,9 @@ class _MockProvider:
         self.dispatched.append(event)
 
 
-def _make_ctx(archive: Archive | None = None, population: Population | None = None) -> OptimizationContext:
+def _make_ctx(
+    archive: Archive | None = None, population: Population | None = None
+) -> OptimizationContext:
     problem = _make_problem()
     arc = archive if archive is not None else _make_archive()
     pop = population if population is not None else _make_population()
@@ -171,7 +172,9 @@ class TestCallbackManager:
         cbmanager.dispatch(event)
         handler.assert_called_once_with(event)
 
-    def test_dispatch_passes_exact_event_object(self, cbmanager: CallbackManager) -> None:
+    def test_dispatch_passes_exact_event_object(
+        self, cbmanager: CallbackManager
+    ) -> None:
         received = []
         cbmanager.register(RunStartEvent, received.append)
         prov = _MockProvider()
@@ -238,13 +241,23 @@ class TestCallbackManager:
 
     def test_replace_preserves_position(self, cbmanager: CallbackManager) -> None:
         order: list[str] = []
-        h1 = lambda _: order.append("h1")
-        h2 = lambda _: order.append("h2")
-        h3 = lambda _: order.append("h3")
+
+        def h1(_: RunStartEvent) -> None:
+            order.append("h1")
+
+        def h2(_: RunStartEvent) -> None:
+            order.append("h2")
+
+        def h3(_: RunStartEvent) -> None:
+            order.append("h3")
+
         cbmanager.register(RunStartEvent, h1)
         cbmanager.register(RunStartEvent, h2)
         cbmanager.register(RunStartEvent, h3)
-        new = lambda _: order.append("new")
+
+        def new(_: RunStartEvent) -> None:
+            order.append("new")
+
         cbmanager.replace(RunStartEvent, h2, new)
         prov = _MockProvider()
         ctx = _make_ctx()
@@ -262,7 +275,10 @@ class TestCallbackManager:
     def test_register_same_handler_twice(self, cbmanager: CallbackManager) -> None:
         """Registering the same function twice results in two calls."""
         counter = [0]
-        handler = lambda _: counter.__setitem__(0, counter[0] + 1)
+
+        def handler(_: RunStartEvent) -> None:
+            counter[0] += 1
+
         cbmanager.register(RunStartEvent, handler)
         cbmanager.register(RunStartEvent, handler)
         prov = _MockProvider()
@@ -417,9 +433,7 @@ class TestLoggingGenerationHandler:
             gen=1,
         )
 
-    def test_logging_generation_single_obj_does_not_raise(
-        self, caplog
-    ) -> None:
+    def test_logging_generation_single_obj_does_not_raise(self, caplog) -> None:
         ctx = self._make_1obj_ctx()
         prov = _MockProvider()
         event = GenerationStartEvent(ctx=ctx, provider=prov)
@@ -487,7 +501,9 @@ class TestPostSurrogateFitDispatch:
         manager.score_candidates(
             candidates, archive, reference=np.array([0.0]), provider=prov, ctx=ctx
         )
-        fit_events = [e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)]
+        fit_events = [
+            e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)
+        ]
         assert len(fit_events) == 1
 
     def test_global_no_dispatch_without_provider(
@@ -499,7 +515,7 @@ class TestPostSurrogateFitDispatch:
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         # provider=None (default) — should not raise and fire no events
-        scores, predictions = manager.score_candidates(
+        scores, _predictions = manager.score_candidates(
             candidates, archive, reference=np.array([0.0])
         )
         assert scores.shape == (len(candidates),)
@@ -553,7 +569,9 @@ class TestPostSurrogateFitDispatch:
         manager.score_candidates(
             candidates, archive, reference=np.array([0.0]), provider=prov, ctx=ctx
         )
-        fit_events = [e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)]
+        fit_events = [
+            e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)
+        ]
         assert len(fit_events) == len(candidates)
 
     def test_local_no_dispatch_without_provider(
@@ -578,12 +596,16 @@ class TestPostSurrogateFitDispatch:
         n_neighbors = 10
         prov = _MockProvider()
         manager = LocalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction(), n_neighbors=n_neighbors
+            RBFsurrogate(gaussian_kernel, DIM),
+            MeanPrediction(),
+            n_neighbors=n_neighbors,
         )
         manager.score_candidates(
             candidates, archive, reference=np.array([0.0]), provider=prov, ctx=ctx
         )
-        fit_events = [e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)]
+        fit_events = [
+            e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)
+        ]
         for event in fit_events:
             assert event.train_x is not None
             assert event.train_f is not None
@@ -598,13 +620,19 @@ class TestPostSurrogateFitDispatch:
     ) -> None:
         """EnsembleSurrogateManager passes provider through to each sub-manager."""
         prov = _MockProvider()
-        m1 = GlobalSurrogateManager(RBFsurrogate(gaussian_kernel, DIM), MeanPrediction())
-        m2 = GlobalSurrogateManager(RBFsurrogate(gaussian_kernel, DIM), MeanPrediction())
+        m1 = GlobalSurrogateManager(
+            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+        )
+        m2 = GlobalSurrogateManager(
+            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+        )
         ensemble = EnsembleSurrogateManager([m1, m2])
         ensemble.score_candidates(
             candidates, archive, reference=np.array([0.0]), provider=prov, ctx=ctx
         )
-        fit_events = [e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)]
+        fit_events = [
+            e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)
+        ]
         # One PostSurrogateFitEvent per sub-manager (each fits once on full archive)
         assert len(fit_events) == 2
 
@@ -652,7 +680,9 @@ class TestPostEvaluationDispatch:
         problem = _make_problem()
         opt = (
             Optimizer(problem)
-            .set_initializer(LHSInitializer(n_init_archive=20, n_init_population=10, seed=0))
+            .set_initializer(
+                LHSInitializer(n_init_archive=20, n_init_population=10, seed=0)
+            )
             .set_algorithm(
                 GA(
                     crossover=CrossoverBLXAlpha(crossover_rate=0.9, gamma=0.5),
@@ -741,8 +771,12 @@ class TestPostEvaluationDispatch:
         ctx, opt = self._make_strategy_provider(rsm=0.5)
 
         order: list[type] = []
-        opt.cbmanager.register(SurrogateEndEvent, lambda _: order.append(SurrogateEndEvent))
-        opt.cbmanager.register(PostEvaluationEvent, lambda _: order.append(PostEvaluationEvent))
+        opt.cbmanager.register(
+            SurrogateEndEvent, lambda _: order.append(SurrogateEndEvent)
+        )
+        opt.cbmanager.register(
+            PostEvaluationEvent, lambda _: order.append(PostEvaluationEvent)
+        )
 
         strategy = IndividualBasedStrategy(rsm=0.5)
         strategy.step(ctx, opt)
