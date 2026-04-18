@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from saealib.context import OptimizationContext
     from saealib.optimizer import ComponentProvider
     from saealib.population import Population
+    from saealib.surrogate.base import Surrogate
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +129,35 @@ class PostAskEvent(Event):
 
 @dataclass
 class PostSurrogateFitEvent(Event):
-    """Fired after the surrogate model is fitted."""
+    """Fired after the surrogate model is fitted.
+
+    Attributes
+    ----------
+    surrogate : Surrogate or None
+        The surrogate model that was just fitted.
+    train_x : np.ndarray or None
+        Design variable matrix used for fitting, shape (n_train, dim).
+    train_f : np.ndarray or None
+        Objective value matrix used for fitting, shape (n_train, n_obj).
+    """
+
+    surrogate: Surrogate | None = None
+    train_x: np.ndarray | None = None
+    train_f: np.ndarray | None = None
+
+
+@dataclass
+class PostEvaluationEvent(Event):
+    """Fired after true evaluation of selected candidates.
+
+    Attributes
+    ----------
+    offspring : Population or None
+        The candidates that were evaluated with the true objective function.
+        All individuals in this population have true objective values assigned.
+    """
+
+    offspring: Population | None = None
 
 
 # ---------------------------------------------------------------------------
