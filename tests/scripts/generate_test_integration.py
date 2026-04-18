@@ -50,7 +50,6 @@ def run_benchmark(seed: int):
     """
     # parameters
     dim = 10
-    knn = 50
     evaluation_ratio = 0.1
     ub = [5] * dim
     lb = [-5] * dim
