@@ -110,9 +110,8 @@ algorithm = GA(
 surrogate = RBFsurrogate(gaussian_kernel, dim)
 
 # Strategy: Individual-Based Management
-# knn=50: K-Nearest Neighbors for local modeling
-# rsm=0.1: Ratio of surrogate model usage
-strategy = IndividualBasedStrategy(knn=50, rsm=0.1)
+# evaluation_ratio=0.1: Ratio of offspring selected for true objective evaluation
+strategy = IndividualBasedStrategy(evaluation_ratio=0.1)
 
 # Termination Criterion
 termination = Termination(max_fe(100))  # Stop after 100 function evaluations

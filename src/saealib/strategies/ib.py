@@ -2,7 +2,7 @@
 Individual-based / Pre-selection / Local-modeling.
 
 For each offspring, the surrogate manager scores candidates using a local
-surrogate model. The top-rsm fraction are selected for true evaluation.
+surrogate model. The top-evaluation_ratio fraction are selected for true evaluation.
 """
 
 import numpy as np
@@ -16,19 +16,21 @@ from saealib.strategies.base import OptimizationStrategy
 class IndividualBasedStrategy(OptimizationStrategy):
     """Individual-based strategy."""
 
-    def __init__(self, rsm: float = 0.1):
+    def __init__(self, evaluation_ratio: float = 0.1):
         """
         Initialize IndividualBasedStrategy.
 
         Parameters
         ----------
-        rsm : float
-            Ratio of surrogate model usage. The top ``rsm`` fraction of
-            offspring are selected for true objective evaluation.
+        evaluation_ratio : float
+            Ratio of offspring selected for true objective evaluation.
+            The top ``evaluation_ratio`` fraction of offspring are evaluated
+            with the real objective function; the rest are discarded after
+            surrogate scoring.
             The number of neighbors for local surrogate fitting is now
             configured on the SurrogateManager (e.g. LocalSurrogateManager).
         """
-        self.rsm = rsm
+        self.evaluation_ratio = evaluation_ratio
 
     def step(self, ctx: OptimizationContext, provider: ComponentProvider) -> None:
         """
@@ -46,7 +48,7 @@ class IndividualBasedStrategy(OptimizationStrategy):
         # 1. get candidate solutions as "offspring" (algorithm.ask)
         offspring = provider.algorithm.ask(ctx, provider)
         n_offspring = len(offspring)
-        n_eval = max(1, int(self.rsm * n_offspring))
+        n_eval = max(1, int(self.evaluation_ratio * n_offspring))
 
         provider.dispatch(
             SurrogateStartEvent(ctx=ctx, provider=provider, offspring=offspring)

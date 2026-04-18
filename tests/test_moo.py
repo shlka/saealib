@@ -466,7 +466,7 @@ class TestMOOIntegration:
         )
         termination = Termination(max_fe(80 * dim))
         surrogate = RBFsurrogate(gaussian_kernel, dim)
-        strategy = IndividualBasedStrategy(rsm=0.1)
+        strategy = IndividualBasedStrategy(evaluation_ratio=0.1)
 
         opt = (
             Optimizer(problem)
