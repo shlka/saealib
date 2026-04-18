@@ -90,7 +90,7 @@ def test_integration(seed_str: str, expected_f: float):
     )
     termination = Termination(max_fe(200 * dim))
     surrogate = RBFsurrogate(gaussian_kernel, dim)
-    strategy = IndividualBasedStrategy(rsm=rsm)
+    strategy = IndividualBasedStrategy(evaluation_ratio=rsm)
 
     opt = (
         Optimizer(problem)

@@ -661,7 +661,7 @@ class TestPostEvaluationDispatch:
     evaluated offspring after true objective evaluations.
     """
 
-    def _make_strategy_provider(self, rsm: float = 0.5):
+    def _make_strategy_provider(self, evaluation_ratio: float = 0.5):
         """Build a minimal but real optimizer setup for IndividualBasedStrategy."""
         from saealib import (
             GA,
@@ -692,7 +692,7 @@ class TestPostEvaluationDispatch:
                 )
             )
             .set_surrogate(RBFsurrogate(gaussian_kernel, dim), n_neighbors=10)
-            .set_strategy(IndividualBasedStrategy(rsm=rsm))
+            .set_strategy(IndividualBasedStrategy(evaluation_ratio=evaluation_ratio))
             .set_termination(Termination(max_fe(100)))
         )
         # Initialize the context
@@ -702,12 +702,12 @@ class TestPostEvaluationDispatch:
     def test_post_evaluation_event_is_dispatched(self) -> None:
         from saealib.strategies.ib import IndividualBasedStrategy
 
-        ctx, opt = self._make_strategy_provider(rsm=0.5)
+        ctx, opt = self._make_strategy_provider(evaluation_ratio=0.5)
 
         received: list[PostEvaluationEvent] = []
         opt.cbmanager.register(PostEvaluationEvent, received.append)
 
-        strategy = IndividualBasedStrategy(rsm=0.5)
+        strategy = IndividualBasedStrategy(evaluation_ratio=0.5)
         strategy.step(ctx, opt)
 
         assert len(received) == 1
@@ -715,12 +715,12 @@ class TestPostEvaluationDispatch:
     def test_post_evaluation_event_offspring_is_population(self) -> None:
         from saealib.strategies.ib import IndividualBasedStrategy
 
-        ctx, opt = self._make_strategy_provider(rsm=0.5)
+        ctx, opt = self._make_strategy_provider(evaluation_ratio=0.5)
 
         received: list[PostEvaluationEvent] = []
         opt.cbmanager.register(PostEvaluationEvent, received.append)
 
-        strategy = IndividualBasedStrategy(rsm=0.5)
+        strategy = IndividualBasedStrategy(evaluation_ratio=0.5)
         strategy.step(ctx, opt)
 
         event = received[0]
@@ -730,12 +730,12 @@ class TestPostEvaluationDispatch:
         from saealib.strategies.ib import IndividualBasedStrategy
 
         rsm = 0.3
-        ctx, opt = self._make_strategy_provider(rsm=rsm)
+        ctx, opt = self._make_strategy_provider(evaluation_ratio=rsm)
 
         received: list[PostEvaluationEvent] = []
         opt.cbmanager.register(PostEvaluationEvent, received.append)
 
-        strategy = IndividualBasedStrategy(rsm=rsm)
+        strategy = IndividualBasedStrategy(evaluation_ratio=rsm)
         strategy.step(ctx, opt)
 
         event = received[0]
@@ -751,12 +751,12 @@ class TestPostEvaluationDispatch:
         from saealib.strategies.ib import IndividualBasedStrategy
 
         rsm = 0.2
-        ctx, opt = self._make_strategy_provider(rsm=rsm)
+        ctx, opt = self._make_strategy_provider(evaluation_ratio=rsm)
 
         received: list[PostEvaluationEvent] = []
         opt.cbmanager.register(PostEvaluationEvent, received.append)
 
-        strategy = IndividualBasedStrategy(rsm=rsm)
+        strategy = IndividualBasedStrategy(evaluation_ratio=rsm)
         strategy.step(ctx, opt)
 
         popsize = len(ctx.population)
@@ -768,7 +768,7 @@ class TestPostEvaluationDispatch:
         """PostEvaluationEvent must be dispatched after SurrogateEndEvent."""
         from saealib.strategies.ib import IndividualBasedStrategy
 
-        ctx, opt = self._make_strategy_provider(rsm=0.5)
+        ctx, opt = self._make_strategy_provider(evaluation_ratio=0.5)
 
         order: list[type] = []
         opt.cbmanager.register(
@@ -778,7 +778,7 @@ class TestPostEvaluationDispatch:
             PostEvaluationEvent, lambda _: order.append(PostEvaluationEvent)
         )
 
-        strategy = IndividualBasedStrategy(rsm=0.5)
+        strategy = IndividualBasedStrategy(evaluation_ratio=0.5)
         strategy.step(ctx, opt)
 
         assert order.index(SurrogateEndEvent) < order.index(PostEvaluationEvent)

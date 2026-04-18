@@ -50,8 +50,7 @@ def run_benchmark(seed: int):
     """
     # parameters
     dim = 10
-    knn = 50
-    rsm = 0.1
+    evaluation_ratio = 0.1
     ub = [5] * dim
     lb = [-5] * dim
 
@@ -80,7 +79,7 @@ def run_benchmark(seed: int):
     )
     termination = Termination(max_fe(200 * dim))
     surrogate = RBFsurrogate(gaussian_kernel, dim)
-    strategy = IndividualBasedStrategy(knn, rsm)
+    strategy = IndividualBasedStrategy(evaluation_ratio=evaluation_ratio)
 
     opt = (
         Optimizer(problem)
