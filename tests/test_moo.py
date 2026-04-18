@@ -35,7 +35,7 @@ from saealib import (
     non_dominated_sort,
 )
 from saealib.population import Population, PopulationAttribute
-from saealib.problem import NSGA2Comparator, SingleObjectiveComparator
+from saealib.problem import NSGA2Comparator, ParetoComparator, SingleObjectiveComparator
 
 logging.getLogger("saealib.surrogate.rbf").setLevel(logging.CRITICAL)
 
@@ -274,6 +274,116 @@ class TestWeightedSumComparator:
         # ascending order of f: idx=1(1.0), idx=0(2.0), idx=2(3.0)
         assert order[0] == 1
         assert order[-1] == 2
+
+
+# ===========================================================================
+# ParetoComparator Tests
+# ===========================================================================
+class TestParetoComparator:
+    """Tests for ParetoComparator (non-dominated sorting, no crowding distance)."""
+
+    def test_is_subclass_of_comparator(self) -> None:
+        from saealib import Comparator
+
+        assert issubclass(ParetoComparator, Comparator)
+
+    def test_nsga2_is_subclass_of_pareto(self) -> None:
+        assert issubclass(NSGA2Comparator, ParetoComparator)
+
+    def test_sort_population_first_front_first(self) -> None:
+        """Non-dominated solutions (front 0) appear before dominated ones."""
+        f = np.array([[0.0, 3.0], [3.0, 0.0], [2.0, 2.0]])
+        pop = _make_pop(f)
+        comp = ParetoComparator()
+        order = comp.sort_population(pop)
+        assert set(order[:2]) == {0, 1}
+        assert order[2] == 2
+
+    def test_sort_population_infeasible_last(self) -> None:
+        """Infeasible individuals appear after all feasible ones."""
+        f = np.array([[10.0, 10.0], [0.0, 0.0], [1.0, 1.0]])
+        cv = np.array([1.0, 0.0, 0.0])
+        pop = _make_pop(f, cv)
+        comp = ParetoComparator()
+        order = comp.sort_population(pop)
+        assert order[-1] == 0
+
+    def test_sort_population_infeasible_by_ascending_cv(self) -> None:
+        """Multiple infeasible individuals are sorted by ascending cv."""
+        f = np.array([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]])
+        cv = np.array([2.0, 0.5, 1.0])
+        pop = _make_pop(f, cv)
+        comp = ParetoComparator()
+        order = comp.sort_population(pop)
+        assert list(order) == [1, 2, 0]
+
+    def test_sort_population_not_cached(self) -> None:
+        """ParetoComparator does not write to the pareto_sort cache."""
+        f = np.array([[0.0, 1.0], [1.0, 0.0]])
+        pop = _make_pop(f)
+        comp = ParetoComparator()
+        comp.sort_population(pop)
+        assert pop.get_cache("pareto_sort") is None
+
+    def test_sort_population_nan_last_among_feasible(self) -> None:
+        """NaN objective rows are placed last within the feasible block."""
+        f = np.array([[0.0, 0.0], [np.nan, np.nan], [1.0, 1.0]])
+        pop = _make_pop(f)
+        comp = ParetoComparator()
+        order = comp.sort_population(pop)
+        assert order[0] == 0
+        assert order[-1] == 1
+
+    def test_sort_population_output_is_int_array(self) -> None:
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
+        pop = _make_pop(f)
+        comp = ParetoComparator()
+        order = comp.sort_population(pop)
+        assert np.issubdtype(order.dtype, np.integer)
+
+    def test_compare_population_a_dominates_b(self) -> None:
+        f = np.array([[0.0, 0.0], [1.0, 1.0]])
+        pop = _make_pop(f)
+        comp = ParetoComparator()
+        assert comp.compare_population(pop, 0, 1) == -1
+
+    def test_compare_population_b_dominates_a(self) -> None:
+        f = np.array([[1.0, 1.0], [0.0, 0.0]])
+        pop = _make_pop(f)
+        comp = ParetoComparator()
+        assert comp.compare_population(pop, 0, 1) == 1
+
+    def test_compare_population_non_dominated(self) -> None:
+        f = np.array([[0.0, 1.0], [1.0, 0.0]])
+        pop = _make_pop(f)
+        comp = ParetoComparator()
+        assert comp.compare_population(pop, 0, 1) == 0
+
+    def test_compare_infeasible_vs_feasible(self) -> None:
+        """Feasible always beats infeasible regardless of objectives."""
+        f = np.array([[0.0, 0.0], [100.0, 100.0]])
+        cv = np.array([1.0, 0.0])
+        pop = _make_pop(f, cv)
+        comp = ParetoComparator()
+        assert comp.compare_population(pop, 0, 1) == 1
+
+    def test_compare_both_infeasible_lower_cv_wins(self) -> None:
+        f = np.array([[0.0, 0.0], [0.0, 0.0]])
+        cv = np.array([0.5, 2.0])
+        pop = _make_pop(f, cv)
+        comp = ParetoComparator()
+        assert comp.compare_population(pop, 0, 1) == -1
+
+    def test_weights_stored_but_not_used(self) -> None:
+        """Weights are stored for interface compatibility but ignored."""
+        f = np.array([[0.0, 1.0], [1.0, 0.0]])
+        pop = _make_pop(f)
+        comp_no_w = ParetoComparator()
+        comp_with_w = ParetoComparator(weights=np.array([1.0, 2.0]))
+        np.testing.assert_array_equal(
+            comp_no_w.sort_population(pop),
+            comp_with_w.sort_population(pop),
+        )
 
 
 # ===========================================================================

@@ -507,14 +507,87 @@ def crowding_distance_all_fronts(
     return cd
 
 
-class NSGA2Comparator(Comparator):
+class ParetoComparator(Comparator):
+    """
+    Comparator for multi-objective optimization via non-dominated sorting only.
+
+    Implements rank-only Pareto ordering:
+    - sort_population: Pareto front rank order (no crowding distance tiebreaking).
+      Infeasible individuals (cv > eps) are always ranked after feasible ones,
+      ordered by ascending constraint violation.
+    - compare_population: Pareto dominance (-1 = a dominates b, 1 = b
+      dominates a, 0 = non-dominated). Infeasibility is handled with the
+      standard constraint-domination rule.
+
+    NaN objective values are treated as non-dominating and placed last within
+    the feasible block (consistent with non_dominated_sort).
+
+    This class is a concrete base for Pareto-based comparators. NSGA2Comparator
+    inherits from it and overrides sort_population to add crowding-distance-based
+    secondary ordering within each front.
+
+    Parameters
+    ----------
+    weights : np.ndarray or None
+        Stored for interface compatibility but not used in Pareto ranking.
+    eps : float
+        Epsilon tolerance for constraint violation.
+    """
+
+    def __init__(self, weights: np.ndarray | None = None, eps: float = 1e-6):
+        w = np.asarray(weights, dtype=float) if weights is not None else np.empty(0)
+        super().__init__(w, eps)
+
+    def sort_population(self, population: Population) -> np.ndarray:
+        """Sort by Pareto front rank; infeasible individuals come last."""
+        f = population.get("f")
+        cv = population.get("cv")
+        feasible = np.where(cv <= self.eps)[0]
+        infeasible = np.where(cv > self.eps)[0]
+
+        sorted_feasible = np.empty(0, int)
+        if len(feasible):
+            ranks, _ = non_dominated_sort(f[feasible])
+            order = np.argsort(ranks, kind="stable")
+            sorted_feasible = feasible[order]
+
+        sorted_infeasible = np.empty(0, int)
+        if len(infeasible):
+            sorted_infeasible = infeasible[np.argsort(cv[infeasible])]
+
+        return np.concatenate([sorted_feasible, sorted_infeasible]).astype(int)
+
+    def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
+        """Compare via Pareto dominance; -1=a dominates, 1=b dominates, 0=equal."""
+        f = population.get("f")
+        cv = population.get("cv")
+        cv_a, cv_b = float(cv[idx_a]), float(cv[idx_b])
+
+        if cv_a > self.eps and cv_b > self.eps:
+            if cv_a < cv_b:
+                return -1
+            elif cv_a > cv_b:
+                return 1
+            return 0
+        elif cv_a > self.eps:
+            return 1
+        elif cv_b > self.eps:
+            return -1
+
+        if _pareto_dominates(f[idx_a], f[idx_b]):
+            return -1
+        if _pareto_dominates(f[idx_b], f[idx_a]):
+            return 1
+        return 0
+
+
+class NSGA2Comparator(ParetoComparator):
     """
     Comparator for multi-objective optimization via NSGA-II style ranking.
 
-    Implements NSGA-II style ranking:
+    Extends ParetoComparator with crowding-distance-based secondary ordering:
     - sort_population: non-dominated sorting + crowding distance
-    - compare_population: Pareto dominance (-1 = a dominates b, 1 = b
-      dominates a, 0 = non-dominated)
+    - compare_population: inherited from ParetoComparator (Pareto dominance)
 
     Infeasible individuals (cv > eps) are always ranked after feasible
     ones, ordered by ascending constraint violation.
@@ -531,8 +604,7 @@ class NSGA2Comparator(Comparator):
     """
 
     def __init__(self, weights: np.ndarray | None = None, eps: float = 1e-6):
-        w = np.asarray(weights, dtype=float) if weights is not None else np.empty(0)
-        super().__init__(w, eps)
+        super().__init__(weights, eps)
 
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort by Pareto front rank then crowding distance (NSGA-II style)."""
@@ -559,26 +631,3 @@ class NSGA2Comparator(Comparator):
         result = np.concatenate([sorted_feasible, sorted_infeasible]).astype(int)
         population.set_cache("pareto_sort", result)
         return result
-
-    def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
-        """Compare via Pareto dominance; -1=a dominates, 1=b dominates, 0=equal."""
-        f = population.get("f")
-        cv = population.get("cv")
-        cv_a, cv_b = float(cv[idx_a]), float(cv[idx_b])
-
-        if cv_a > self.eps and cv_b > self.eps:
-            if cv_a < cv_b:
-                return -1
-            elif cv_a > cv_b:
-                return 1
-            return 0
-        elif cv_a > self.eps:
-            return 1
-        elif cv_b > self.eps:
-            return -1
-
-        if _pareto_dominates(f[idx_a], f[idx_b]):
-            return -1
-        if _pareto_dominates(f[idx_b], f[idx_a]):
-            return 1
-        return 0
