@@ -7,7 +7,7 @@ surrogate model. The top-rsm fraction are selected for true evaluation.
 
 import numpy as np
 
-from saealib.callback import SurrogateEndEvent, SurrogateStartEvent
+from saealib.callback import PostEvaluationEvent, SurrogateEndEvent, SurrogateStartEvent
 from saealib.context import OptimizationContext
 from saealib.optimizer import ComponentProvider
 from saealib.strategies.base import OptimizationStrategy
@@ -53,7 +53,7 @@ class IndividualBasedStrategy(OptimizationStrategy):
         # 2. score candidates via surrogate manager
         reference = ctx.archive.f.min(axis=0)  # (n_obj,) component-wise best
         scores, predictions = provider.surrogate_manager.score_candidates(
-            offspring.x, ctx.archive, reference
+            offspring.x, ctx.archive, reference, provider, ctx
         )
         for i, pred in enumerate(predictions):
             offspring[i].f = pred.mean[0]  # assign predicted objectives (n_obj,)
@@ -68,6 +68,9 @@ class IndividualBasedStrategy(OptimizationStrategy):
             offspring[i].f = ctx.problem.evaluate(offspring[i].x)
             ctx.archive.add(x=offspring[i].x, f=offspring[i].f)
         ctx.count_fe(n_eval)
+
+        evaluated = offspring.extract(list(range(n_eval)))
+        provider.dispatch(PostEvaluationEvent(ctx=ctx, provider=provider, offspring=evaluated))
 
         # 4. update algorithm with offspring (algorithm.tell)
         provider.algorithm.tell(ctx, provider, offspring)
