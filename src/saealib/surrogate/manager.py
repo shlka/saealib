@@ -18,10 +18,13 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from saealib.acquisition.base import AcquisitionFunction
+from saealib.callback import PostSurrogateFitEvent
 from saealib.surrogate.base import Surrogate
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
+    from saealib.context import OptimizationContext
+    from saealib.optimizer import ComponentProvider
     from saealib.population import Archive
 
 
@@ -41,6 +44,8 @@ class SurrogateManager(ABC):
         candidates_x: np.ndarray,
         archive: Archive,
         reference: Any,
+        provider: ComponentProvider | None = None,
+        ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """
         Score candidate solutions using the surrogate model.
@@ -55,6 +60,11 @@ class SurrogateManager(ABC):
             Reference information for the acquisition function.
             Typically the current best objective value(s) for single-objective,
             or a Pareto front / reference point for multi-objective.
+        provider : ComponentProvider or None, optional
+            Component provider used to dispatch ``PostSurrogateFitEvent``
+            after each surrogate fit. If ``None``, no event is dispatched.
+        ctx : OptimizationContext or None, optional
+            Current optimization context. Required when ``provider`` is given.
 
         Returns
         -------
@@ -92,11 +102,23 @@ class GlobalSurrogateManager(SurrogateManager):
         candidates_x: np.ndarray,
         archive: Archive,
         reference: Any,
+        provider: ComponentProvider | None = None,
+        ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """Fit on full archive, predict and score all candidates at once."""
         train_x = archive.x
         train_f = archive.f  # (n_archive, n_obj)
         self.surrogate.fit(train_x, train_f)
+        if provider is not None and ctx is not None:
+            provider.dispatch(
+                PostSurrogateFitEvent(
+                    ctx=ctx,
+                    provider=provider,
+                    surrogate=self.surrogate,
+                    train_x=train_x,
+                    train_f=train_f,
+                )
+            )
 
         prediction = self.surrogate.predict(candidates_x)  # mean: (n_candidates, n_obj)
         scores = self.acquisition.score(prediction, reference)
@@ -144,15 +166,28 @@ class LocalSurrogateManager(SurrogateManager):
         candidates_x: np.ndarray,
         archive: Archive,
         reference: Any,
+        provider: ComponentProvider | None = None,
+        ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """Fit a local model per candidate and score each individually."""
         predictions: list[SurrogatePrediction] = []
+        _dispatch = provider is not None and ctx is not None
 
         for x in candidates_x:
             train_idx, _ = archive.get_knn(x, self.n_neighbors)
             train_x = archive.x[train_idx]
             train_f = archive.f[train_idx]  # (n_neighbors, n_obj)
             self.surrogate.fit(train_x, train_f)
+            if _dispatch:
+                provider.dispatch(
+                    PostSurrogateFitEvent(
+                        ctx=ctx,
+                        provider=provider,
+                        surrogate=self.surrogate,
+                        train_x=train_x,
+                        train_f=train_f,
+                    )
+                )
             pred = self.surrogate.predict(x)  # mean: (1, n_obj)
             predictions.append(pred)
 
@@ -199,6 +234,8 @@ class EnsembleSurrogateManager(SurrogateManager):
         candidates_x: np.ndarray,
         archive: Archive,
         reference: Any,
+        provider: ComponentProvider | None = None,
+        ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """
         Aggregate rank-normalized scores from all sub-managers.
@@ -209,7 +246,9 @@ class EnsembleSurrogateManager(SurrogateManager):
         first_predictions: list[SurrogatePrediction] | None = None
 
         for i, manager in enumerate(self.managers):
-            scores, preds = manager.score_candidates(candidates_x, archive, reference)
+            scores, preds = manager.score_candidates(
+                candidates_x, archive, reference, provider, ctx
+            )
             all_scores.append(_rank_normalize(scores))
             if i == 0:
                 first_predictions = preds
