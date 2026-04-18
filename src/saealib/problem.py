@@ -558,7 +558,7 @@ class ParetoComparator(Comparator):
         return np.concatenate([sorted_feasible, sorted_infeasible]).astype(int)
 
     def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
-        """Compare via Pareto dominance; -1=a dominates, 1=b dominates, 0=non-dominated."""
+        """Compare via Pareto dominance; -1=a dominates, 1=b dominates, 0=equal."""
         f = population.get("f")
         cv = population.get("cv")
         cv_a, cv_b = float(cv[idx_a]), float(cv[idx_b])
