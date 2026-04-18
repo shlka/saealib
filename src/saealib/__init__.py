@@ -51,6 +51,7 @@ from saealib.population import (
 from saealib.problem import (
     Comparator,
     NSGA2Comparator,
+    ParetoComparator,
     Problem,
     SingleObjectiveComparator,
     WeightedSumComparator,
@@ -104,6 +105,7 @@ __all__ = [
     "OptimizationStrategy",
     "Optimizer",
     "ParentSelection",
+    "ParetoComparator",
     "Population",
     "PopulationAttribute",
     "PostAskEvent",
