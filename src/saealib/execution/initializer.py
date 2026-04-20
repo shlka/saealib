@@ -46,6 +46,7 @@ class Initializer(ABC):
         attrs = [
             PopulationAttribute("x", float, (problem.dim,), default=np.nan),
             PopulationAttribute("f", float, (problem.n_obj,), default=np.nan),
+            PopulationAttribute("g", float, (problem.n_constraints,), default=0.0),
             PopulationAttribute("cv", float, (), default=0.0),
         ]
         # Retrieve attributes and classes according to the algorithm
@@ -179,7 +180,8 @@ class LHSInitializer(Initializer):
 
         # TODO: Modify the archive to register attributes predefined by the archive.
         for i in range(self.n_init_archive):
-            archive.add({"x": archive_x[i], "f": archive_f[i]})
+            g, cv = problem.evaluate_constraints(archive_x[i])
+            archive.add({"x": archive_x[i], "f": archive_f[i], "g": g, "cv": cv})
 
         # Sort archive using population-based comparator
         sorted_idx = problem.comparator.sort_population(archive)

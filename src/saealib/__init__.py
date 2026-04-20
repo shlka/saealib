@@ -50,6 +50,7 @@ from saealib.population import (
 )
 from saealib.problem import (
     Comparator,
+    Constraint,
     NSGA2Comparator,
     ParetoComparator,
     Problem,
@@ -83,6 +84,7 @@ __all__ = [
     "ArchiveMixin",
     "CallbackManager",
     "Comparator",
+    "Constraint",
     "Crossover",
     "CrossoverBLXAlpha",
     "EnsembleSurrogateManager",
