@@ -75,7 +75,9 @@ class IndividualBasedStrategy(OptimizationStrategy):
             g, cv = ctx.problem.evaluate_constraints(offspring[i].x)
             offspring[i].cv = cv
             offspring[i].g = g
-            ctx.archive.add({"x": offspring[i].x, "f": offspring[i].f, "g": g, "cv": cv})
+            ctx.archive.add(
+                {"x": offspring[i].x, "f": offspring[i].f, "g": g, "cv": cv}
+            )
         ctx.count_fe(n_eval)
 
         evaluated = offspring.extract(list(range(n_eval)))

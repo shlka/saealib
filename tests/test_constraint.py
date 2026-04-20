@@ -14,7 +14,6 @@ import pytest
 
 from saealib.problem import Constraint, Problem
 
-
 # ---------------------------------------------------------------------------
 # Constraint unit tests
 # ---------------------------------------------------------------------------
@@ -130,8 +129,8 @@ class TestEvaluateConstraints:
     def test_multiple_constraints_cv_is_sum(self):
         """cv = sum of individual violations."""
         constraints = [
-            Constraint(lambda x: x[0] - 0.3),   # violated by 0.2 at x[0]=0.5
-            Constraint(lambda x: x[1] - 0.4),   # violated by 0.1 at x[1]=0.5
+            Constraint(lambda x: x[0] - 0.3),  # violated by 0.2 at x[0]=0.5
+            Constraint(lambda x: x[1] - 0.4),  # violated by 0.1 at x[1]=0.5
         ]
         p = self._make_problem(constraints=constraints)
         g, cv = p.evaluate_constraints(np.array([0.5, 0.5]))
@@ -141,20 +140,20 @@ class TestEvaluateConstraints:
     def test_multiple_constraints_some_satisfied(self):
         """Only violated constraints contribute to cv."""
         constraints = [
-            Constraint(lambda x: x[0] - 0.8),   # satisfied at x[0]=0.5
-            Constraint(lambda x: x[1] - 0.4),   # violated by 0.1 at x[1]=0.5
+            Constraint(lambda x: x[0] - 0.8),  # satisfied at x[0]=0.5
+            Constraint(lambda x: x[1] - 0.4),  # violated by 0.1 at x[1]=0.5
         ]
         p = self._make_problem(constraints=constraints)
-        g, cv = p.evaluate_constraints(np.array([0.5, 0.5]))
+        _g, cv = p.evaluate_constraints(np.array([0.5, 0.5]))
         assert cv == pytest.approx(0.1)
 
     def test_threshold_nonzero(self):
         """Constraint(func, threshold=t) means g(x) <= t."""
         c = Constraint(lambda x: float(x[0]), threshold=0.8)
         p = self._make_problem(constraints=[c])
-        g, cv = p.evaluate_constraints(np.array([0.5, 0.0]))
-        assert cv == pytest.approx(0.0)   # 0.5 <= 0.8
-        g2, cv2 = p.evaluate_constraints(np.array([0.9, 0.0]))
+        _g, cv = p.evaluate_constraints(np.array([0.5, 0.0]))
+        assert cv == pytest.approx(0.0)  # 0.5 <= 0.8
+        _g2, cv2 = p.evaluate_constraints(np.array([0.9, 0.0]))
         assert cv2 == pytest.approx(0.1)  # 0.9 - 0.8 = 0.1
 
     def test_g_dtype_float(self):
