@@ -16,6 +16,31 @@ if TYPE_CHECKING:
     from saealib.population import Population
 
 
+class Constraint:
+    """
+    A single inequality constraint: g(x) <= threshold.
+
+    Parameters
+    ----------
+    func : callable
+        Constraint function g(x). Should return a scalar float.
+    threshold : float, optional
+        Right-hand side of the constraint g(x) <= threshold. Default: 0.0.
+    """
+
+    def __init__(self, func: callable, threshold: float = 0.0):
+        self.func = func
+        self.threshold = threshold
+
+    def evaluate(self, x: np.ndarray) -> float:
+        """Return the raw constraint value g(x)."""
+        return float(self.func(x))
+
+    def violation(self, x: np.ndarray) -> float:
+        """Return constraint violation: max(0, g(x) - threshold)."""
+        return max(0.0, self.evaluate(x) - self.threshold)
+
+
 class Problem:
     """
     Definition of optimization problem.
@@ -38,6 +63,8 @@ class Problem:
         Epsilon value for comparison (Comparator use).
     func : callable -> float
         Objective function to evaluate solutions.
+    constraints : list[Constraint]
+        List of inequality constraint definitions.
     """
 
     def __init__(
@@ -50,6 +77,7 @@ class Problem:
         ub: list[float],
         eps: float = 1e-6,
         comparator: Comparator | None = None,
+        constraints: list[Constraint] | None = None,
     ):
         """
         Initialize Problem instance.
@@ -76,6 +104,8 @@ class Problem:
             Comparator instance to use. If None, auto-selected based on n_obj:
             n_obj == 1 -> SingleObjectiveComparator,
             n_obj >  1 -> NSGA2Comparator.
+        constraints : list[Constraint], optional
+            List of inequality constraint definitions. Default: empty list.
         """
         self.dim = dim
         self.n_obj = n_obj
@@ -84,6 +114,7 @@ class Problem:
         self.lb = np.asarray(lb)
         self.ub = np.asarray(ub)
         self.func = func
+        self.constraints = constraints if constraints is not None else []
 
         if comparator is not None:
             self.comparator = comparator
@@ -91,6 +122,35 @@ class Problem:
             self.comparator = SingleObjectiveComparator(weight=weight, eps=eps)
         else:
             self.comparator = NSGA2Comparator(weights=weight, eps=eps)
+
+    @property
+    def n_constraints(self) -> int:
+        """Number of constraint functions."""
+        return len(self.constraints)
+
+    def evaluate_constraints(self, x: np.ndarray) -> tuple[np.ndarray, float]:
+        """
+        Evaluate all constraint functions at x.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            The solution to evaluate. shape = (dim, )
+
+        Returns
+        -------
+        g : np.ndarray
+            Raw constraint values. shape = (n_constraints, )
+            Empty array when no constraints are defined.
+        cv : float
+            Aggregate constraint violation = sum(max(0, g_i - threshold_i)).
+            0.0 when no constraints are defined.
+        """
+        if not self.constraints:
+            return np.empty(0, dtype=float), 0.0
+        g = np.array([c.evaluate(x) for c in self.constraints], dtype=float)
+        cv = float(sum(c.violation(x) for c in self.constraints))
+        return g, cv
 
     def evaluate(self, x: np.ndarray) -> np.ndarray:
         """
