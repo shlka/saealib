@@ -30,11 +30,19 @@ from saealib.callback import (
     logging_generation_hv,
 )
 from saealib.execution.initializer import Initializer, LHSInitializer
-from saealib.operators.crossover import Crossover, CrossoverBLXAlpha
-from saealib.operators.mutation import Mutation, MutationUniform
+from saealib.operators.crossover import (
+    Crossover,
+    CrossoverBLXAlpha,
+    CrossoverOnePoint,
+    CrossoverSBX,
+    CrossoverTwoPoint,
+    CrossoverUniform,
+)
+from saealib.operators.mutation import Mutation, MutationGaussian, MutationPolynomial, MutationUniform
 from saealib.operators.repair import repair_clipping
 from saealib.operators.selection import (
     ParentSelection,
+    RouletteWheelSelection,
     SequentialSelection,
     SurvivorSelection,
     TournamentSelection,
@@ -87,6 +95,10 @@ __all__ = [
     "Constraint",
     "Crossover",
     "CrossoverBLXAlpha",
+    "CrossoverOnePoint",
+    "CrossoverSBX",
+    "CrossoverTwoPoint",
+    "CrossoverUniform",
     "EnsembleSurrogateManager",
     "Event",
     "ExpectedImprovement",
@@ -102,11 +114,14 @@ __all__ = [
     "MaxUncertainty",
     "MeanPrediction",
     "Mutation",
+    "MutationGaussian",
+    "MutationPolynomial",
     "MutationUniform",
     "NSGA2Comparator",
     "OptimizationStrategy",
     "Optimizer",
     "ParentSelection",
+    "RouletteWheelSelection",
     "ParetoComparator",
     "Population",
     "PopulationAttribute",
