@@ -122,7 +122,12 @@ class PSO(Algorithm):
         """Return the archive class."""
         return Archive
 
-    def ask(self, ctx: OptimizationContext, provider: ComponentProvider) -> Population:
+    def ask(
+        self,
+        ctx: OptimizationContext,
+        provider: ComponentProvider,
+        n_offspring: int | None = None,
+    ) -> Population:
         """
         Generate candidate solutions by updating particle velocities and positions.
 
@@ -132,6 +137,8 @@ class PSO(Algorithm):
             Optimization context.
         provider : ComponentProvider
             Component provider.
+        n_offspring : int or None, optional
+            Not used by PSO; the population size determines the output count.
 
         Returns
         -------

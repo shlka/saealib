@@ -104,7 +104,12 @@ class GA(Algorithm):
         """Return the archive class."""
         return Archive
 
-    def ask(self, ctx: OptimizationContext, provider: ComponentProvider) -> Population:
+    def ask(
+        self,
+        ctx: OptimizationContext,
+        provider: ComponentProvider,
+        n_offspring: int | None = None,
+    ) -> Population:
         """
         Generate offspring solutions.
 
@@ -114,20 +119,22 @@ class GA(Algorithm):
             A dataclass object that holds internal information about the Optimizer.
         provider : ComponentProvider
             Objects of the class in which the component is exposed (ex. Optimizer).
+        n_offspring : int or None, optional
+            Number of offspring to generate. If ``None``, defaults to the
+            current population size.
 
         Returns
         -------
         Population
-            Generated offspring solutions. shape = (popsize, dim).
+            Generated offspring solutions.
         """
-        # TODO: Modified the ask method to return candidate solutions of arbitrary
-        # size without depending on popsize.
         cand = np.empty((0, ctx.dim))
         pop = ctx.population.get_array("x")
         popsize = len(pop)
+        target = n_offspring if n_offspring is not None else popsize
         lb = ctx.problem.lb
         ub = ctx.problem.ub
-        n_pair = math.ceil(popsize / 2)
+        n_pair = math.ceil(target / 2)
         parent_idx_m = self.parent_selection.select(
             ctx,
             ctx.population,
@@ -161,8 +168,8 @@ class GA(Algorithm):
         provider.dispatch(post_ask)
         cand = post_ask.candidates
 
-        cand_pop = ctx.population.empty_like(capacity=popsize)
-        cand_pop.extend({"x": cand[:popsize]})
+        cand_pop = ctx.population.empty_like(capacity=target)
+        cand_pop.extend({"x": cand[:target]})
         return cand_pop
 
     def tell(
