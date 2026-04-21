@@ -142,12 +142,13 @@ class MutationPolynomial(Mutation):
                 delta = min(c[i] - lb[i], ub[i] - c[i]) / (ub[i] - lb[i])
                 u = rng.random()
                 if u <= 0.5:
-                    delta_q = (2.0 * u + (1.0 - 2.0 * u) * (1.0 - delta) ** (self.eta + 1)) ** (
-                        1.0 / (self.eta + 1)
-                    ) - 1.0
+                    delta_q = (
+                        2.0 * u + (1.0 - 2.0 * u) * (1.0 - delta) ** (self.eta + 1)
+                    ) ** (1.0 / (self.eta + 1)) - 1.0
                 else:
                     delta_q = 1.0 - (
-                        2.0 * (1.0 - u) + 2.0 * (u - 0.5) * (1.0 - delta) ** (self.eta + 1)
+                        2.0 * (1.0 - u)
+                        + 2.0 * (u - 0.5) * (1.0 - delta) ** (self.eta + 1)
                     ) ** (1.0 / (self.eta + 1))
                 c[i] = np.clip(c[i] + delta_q * (ub[i] - lb[i]), lb[i], ub[i])
         return c
