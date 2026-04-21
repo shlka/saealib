@@ -72,7 +72,7 @@ def run_benchmark(seed: int):
         seed=seed,
     )
     algorithm = GA(
-        crossover=CrossoverBLXAlpha(crossover_rate=0.7, gamma=0.4),
+        crossover=CrossoverBLXAlpha(crossover_rate=0.7, alpha=0.4),
         mutation=MutationUniform(mutation_rate=0.3),
         parent_selection=SequentialSelection(),
         survivor_selection=TruncationSelection(),

@@ -40,11 +40,12 @@ class CrossoverBLXAlpha(Crossover):
     ----------
     crossover_rate : float
         Crossover rate.
-    gamma : float
-        Gamma parameter for BLX-alpha crossover.
+    alpha : float
+        Alpha parameter for BLX-alpha crossover. Controls how far outside
+        the parents' range offspring can be generated.
     """
 
-    def __init__(self, crossover_rate: float, gamma: float):
+    def __init__(self, crossover_rate: float, alpha: float):
         """
         Initialize BLX-alpha crossover operator.
 
@@ -52,12 +53,12 @@ class CrossoverBLXAlpha(Crossover):
         ----------
         crossover_rate : float
             Crossover rate.
-        gamma : float
-            Gamma parameter for BLX-alpha crossover.
+        alpha : float
+            Alpha parameter for BLX-alpha crossover.
         """
         super().__init__()
         self.crossover_rate = crossover_rate
-        self.gamma = gamma
+        self.alpha = alpha
 
     def crossover(self, p: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
         """
@@ -78,7 +79,9 @@ class CrossoverBLXAlpha(Crossover):
         p1 = p[0]
         p2 = p[1]
         dim = len(p1)
-        alpha = rng.uniform(-self.gamma, 1 + self.gamma, size=dim)
-        c1 = alpha * p1 + (1 - alpha) * p2
-        c2 = (1 - alpha) * p1 + alpha * p2
+        blend = rng.uniform(-self.alpha, 1 + self.alpha, size=dim)
+        c1 = blend * p1 + (1 - blend) * p2
+        c2 = (1 - blend) * p1 + blend * p2
+        return np.array([c1, c2])
+
         return np.array([c1, c2])
