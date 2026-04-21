@@ -132,7 +132,7 @@ class GA(Algorithm):
             ctx,
             ctx.population,
             n_pair=n_pair,
-            n_parents=2,  # TODO: receive n_parents from Crossover
+            n_parents=self.crossover.n_parents,
             rng=ctx.rng,
         )
         for i in range(n_pair):
