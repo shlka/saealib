@@ -241,7 +241,7 @@ class Comparator(ABC):
     @abstractmethod
     def compare(self, fa: np.ndarray, cv_a: float, fb: np.ndarray, cv_b: float) -> int:
         """
-        Compare two solutions directly from raw objective values and constraint violations.
+        Compare two solutions directly from raw values.
 
         This is the low-overhead variant of ``compare_population`` that avoids
         constructing or indexing into a Population object.

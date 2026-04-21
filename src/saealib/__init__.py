@@ -92,6 +92,7 @@ logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
     "GA",
+    "PSO",
     "AcquisitionFunction",
     "Algorithm",
     "Archive",
@@ -126,7 +127,6 @@ __all__ = [
     "NSGA2Comparator",
     "OptimizationStrategy",
     "Optimizer",
-    "PSO",
     "ParentSelection",
     "ParetoComparator",
     "Population",
