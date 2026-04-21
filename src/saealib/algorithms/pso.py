@@ -98,10 +98,18 @@ class PSO(Algorithm):
         dim = problem.dim
         n_obj = problem.n_obj
         return [
-            PopulationAttribute(name="velocity", dtype=np.float64, shape=(dim,), default=0.0),
-            PopulationAttribute(name="pbest_x", dtype=np.float64, shape=(dim,), default=np.nan),
-            PopulationAttribute(name="pbest_f", dtype=np.float64, shape=(n_obj,), default=np.nan),
-            PopulationAttribute(name="pbest_cv", dtype=np.float64, shape=(), default=np.nan),
+            PopulationAttribute(
+                name="velocity", dtype=np.float64, shape=(dim,), default=0.0
+            ),
+            PopulationAttribute(
+                name="pbest_x", dtype=np.float64, shape=(dim,), default=np.nan
+            ),
+            PopulationAttribute(
+                name="pbest_f", dtype=np.float64, shape=(n_obj,), default=np.nan
+            ),
+            PopulationAttribute(
+                name="pbest_cv", dtype=np.float64, shape=(), default=np.nan
+            ),
         ]
 
     @property
@@ -155,11 +163,7 @@ class PSO(Algorithm):
         r1 = ctx.rng.uniform(0.0, 1.0, size=(popsize, ctx.dim))
         r2 = ctx.rng.uniform(0.0, 1.0, size=(popsize, ctx.dim))
 
-        v_new = (
-            self.w * v
-            + self.c1 * r1 * (pbest_x - x)
-            + self.c2 * r2 * (leader - x)
-        )
+        v_new = self.w * v + self.c1 * r1 * (pbest_x - x) + self.c2 * r2 * (leader - x)
 
         if self.v_max is not None:
             v_new = np.clip(v_new, -self.v_max, self.v_max)
@@ -222,7 +226,10 @@ class PSO(Algorithm):
         for i in range(popsize):
             if np.any(np.isnan(f_new[i])):
                 continue
-            if np.any(np.isnan(pbest_f[i])) or cmp.compare(f_new[i], cv_new[i], pbest_f[i], pbest_cv[i]) == -1:
+            if (
+                np.any(np.isnan(pbest_f[i]))
+                or cmp.compare(f_new[i], cv_new[i], pbest_f[i], pbest_cv[i]) == -1
+            ):
                 pbest_x[i] = x_new[i]
                 pbest_f[i] = f_new[i]
                 pbest_cv[i] = cv_new[i]

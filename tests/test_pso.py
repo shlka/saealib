@@ -44,7 +44,6 @@ class _DummyProvider:
 
 def _make_problem() -> Problem:
     # weight=-1.0 in SingleObjectiveComparator: sort_population puts lowest f first
-    # (ascending sort of f * (-1) = ascending sort of -f = lowest f first = minimisation).
     return Problem(
         func=lambda x: np.array([np.sum(x**2)]),
         dim=DIM,
@@ -76,7 +75,11 @@ def _make_pso_ctx(
 
     xs = rng.uniform(-3.0, 3.0, size=(N_POP, DIM))
     fs = np.array([[np.sum(x**2)] for x in xs])
-    vs = rng.uniform(-1.0, 1.0, size=(N_POP, DIM)) if init_velocity else np.zeros((N_POP, DIM))
+    vs = (
+        rng.uniform(-1.0, 1.0, size=(N_POP, DIM))
+        if init_velocity
+        else np.zeros((N_POP, DIM))
+    )
 
     if init_pbest:
         pbest_x = xs.copy()
@@ -321,7 +324,9 @@ class TestPSOPbestUpdate:
         ctx = _make_pso_ctx(init_pbest=True)
         x_new = np.ones((N_POP, DIM)) * 0.5
         f_new = np.full((N_POP, 1), 1e9)  # worse, so pbest stays
-        offspring = _make_offspring(ctx, f_new=f_new, pbest_f=ctx.population.get_array("pbest_f").copy())
+        offspring = _make_offspring(
+            ctx, f_new=f_new, pbest_f=ctx.population.get_array("pbest_f").copy()
+        )
         offspring.get_array("x")[:] = x_new
         pso.tell(ctx, _DummyProvider(), offspring)
         np.testing.assert_array_equal(ctx.population.get_array("x"), x_new)
