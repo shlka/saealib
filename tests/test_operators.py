@@ -23,7 +23,10 @@ from saealib.operators.crossover import (
     CrossoverTwoPoint,
     CrossoverUniform,
 )
-from saealib.operators.mutation import MutationGaussian, MutationPolynomial, MutationUniform
+from saealib.operators.mutation import (
+    MutationGaussian,
+    MutationPolynomial,
+)
 from saealib.operators.selection import RouletteWheelSelection
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem, SingleObjectiveComparator

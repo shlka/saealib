@@ -38,7 +38,12 @@ from saealib.operators.crossover import (
     CrossoverTwoPoint,
     CrossoverUniform,
 )
-from saealib.operators.mutation import Mutation, MutationGaussian, MutationPolynomial, MutationUniform
+from saealib.operators.mutation import (
+    Mutation,
+    MutationGaussian,
+    MutationPolynomial,
+    MutationUniform,
+)
 from saealib.operators.repair import repair_clipping
 from saealib.operators.selection import (
     ParentSelection,
@@ -121,7 +126,6 @@ __all__ = [
     "OptimizationStrategy",
     "Optimizer",
     "ParentSelection",
-    "RouletteWheelSelection",
     "ParetoComparator",
     "Population",
     "PopulationAttribute",
@@ -134,6 +138,7 @@ __all__ = [
     "Problem",
     "RBFsurrogate",
     "RepairFunc",
+    "RouletteWheelSelection",
     "RunEndEvent",
     "RunStartEvent",
     "SequentialSelection",
