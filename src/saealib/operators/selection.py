@@ -87,7 +87,7 @@ class TournamentSelection(ParentSelection):
         np.ndarray
             Selected parent indices. shape = (n_pair, n_parents)
         """
-        n_pop = population.n_ind
+        n_pop = len(population)
         cmp = ctx.comparator
         selected_idx = np.zeros((n_pair, n_parents), dtype=int)
         for i in range(n_pair):
@@ -154,6 +154,59 @@ class SequentialSelection(ParentSelection):
         )
         selected_idx = i_grid * n_parents + j_grid
         return selected_idx
+
+
+class RouletteWheelSelection(ParentSelection):
+    """
+    Roulette wheel selection operator using linear rank-based probabilities.
+
+    Selection probability is proportional to rank: the best individual has
+    the highest probability and the worst has the lowest. This avoids
+    numerical issues with raw fitness values (negative values, scale
+    sensitivity) while preserving a fitness-proportionate behaviour.
+    """
+
+    def __init__(self):
+        """Initialize roulette wheel selection operator."""
+        super().__init__()
+
+    def select(
+        self,
+        ctx: OptimizationContext,
+        population: Population,
+        n_pair: int,
+        n_parents: int,
+        rng=np.random.default_rng(),
+    ) -> np.ndarray:
+        """
+        Execute roulette wheel selection.
+
+        Parameters
+        ----------
+        ctx : OptimizationContext
+            Optimization context.
+        population : Population
+            Population to select from.
+        n_pair : int
+            Number of pairs to select.
+        n_parents : int
+            Number of parents per pair.
+        rng : np.random.Generator, optional
+            Random number generator, by default np.random.default_rng()
+
+        Returns
+        -------
+        np.ndarray
+            Selected parent indices. shape = (n_pair, n_parents)
+        """
+        n_pop = len(population)
+        sorted_idx = ctx.comparator.sort_population(population)
+        weights = np.arange(n_pop, 0, -1, dtype=float)
+        probs = weights / weights.sum()
+        rank_probs = np.empty(n_pop)
+        rank_probs[sorted_idx] = probs
+        chosen = rng.choice(n_pop, size=n_pair * n_parents, p=rank_probs)
+        return chosen.reshape(n_pair, n_parents)
 
 
 class SurvivorSelection(ABC):
