@@ -75,6 +75,7 @@ from saealib.problem import (
     non_dominated_sort,
 )
 from saealib.strategies.base import OptimizationStrategy
+from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.surrogate.base import Surrogate
 from saealib.surrogate.manager import (
@@ -109,6 +110,7 @@ __all__ = [
     "EnsembleSurrogateManager",
     "Event",
     "ExpectedImprovement",
+    "GenerationBasedStrategy",
     "GenerationEndEvent",
     "GenerationStartEvent",
     "GlobalSurrogateManager",
