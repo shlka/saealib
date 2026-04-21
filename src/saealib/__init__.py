@@ -12,6 +12,7 @@ from saealib.acquisition import (
 )
 from saealib.algorithms.base import Algorithm
 from saealib.algorithms.ga import GA, RepairFunc
+from saealib.algorithms.pso import PSO
 from saealib.callback import (
     CallbackManager,
     Event,
@@ -125,6 +126,7 @@ __all__ = [
     "NSGA2Comparator",
     "OptimizationStrategy",
     "Optimizer",
+    "PSO",
     "ParentSelection",
     "ParetoComparator",
     "Population",
