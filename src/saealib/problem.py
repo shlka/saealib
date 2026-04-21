@@ -238,6 +238,32 @@ class Comparator(ABC):
         """
         pass
 
+    @abstractmethod
+    def compare(self, fa: np.ndarray, cv_a: float, fb: np.ndarray, cv_b: float) -> int:
+        """
+        Compare two solutions directly from raw objective values and constraint violations.
+
+        This is the low-overhead variant of ``compare_population`` that avoids
+        constructing or indexing into a Population object.
+
+        Parameters
+        ----------
+        fa : np.ndarray
+            Objective values of solution a. shape = (n_obj,)
+        cv_a : float
+            Constraint violation of solution a.
+        fb : np.ndarray
+            Objective values of solution b. shape = (n_obj,)
+        cv_b : float
+            Constraint violation of solution b.
+
+        Returns
+        -------
+        int
+            -1 if a is better than b, 1 if b is better than a, 0 if equal.
+        """
+        pass
+
 
 class SingleObjectiveComparator(Comparator):
     """Comparator for single-objective optimization."""
@@ -286,7 +312,11 @@ class SingleObjectiveComparator(Comparator):
         """
         f = population.get("f")
         cv = population.get("cv")
-        return self._compare(f[idx_a], cv[idx_a], f[idx_b], cv[idx_b])
+        return self.compare(f[idx_a], cv[idx_a], f[idx_b], cv[idx_b])
+
+    def compare(self, fa: np.ndarray, cv_a: float, fb: np.ndarray, cv_b: float) -> int:
+        """Compare two solutions directly without a Population object."""
+        return self._compare(fa, cv_a, fb, cv_b)
 
     def _compare(
         self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float
@@ -387,7 +417,11 @@ class WeightedSumComparator(Comparator):
         """Compare two individuals by weighted sum; -1=a better, 1=b better, 0=equal."""
         f = population.get("f")
         cv = population.get("cv")
-        return self._compare(f[idx_a], float(cv[idx_a]), f[idx_b], float(cv[idx_b]))
+        return self.compare(f[idx_a], float(cv[idx_a]), f[idx_b], float(cv[idx_b]))
+
+    def compare(self, fa: np.ndarray, cv_a: float, fb: np.ndarray, cv_b: float) -> int:
+        """Compare two solutions directly without a Population object."""
+        return self._compare(fa, cv_a, fb, cv_b)
 
     def _compare(self, fa: np.ndarray, cv_a: float, fb: np.ndarray, cv_b: float) -> int:
         if cv_a > self.eps and cv_b > self.eps:
@@ -621,8 +655,10 @@ class ParetoComparator(Comparator):
         """Compare via Pareto dominance; -1=a dominates, 1=b dominates, 0=equal."""
         f = population.get("f")
         cv = population.get("cv")
-        cv_a, cv_b = float(cv[idx_a]), float(cv[idx_b])
+        return self.compare(f[idx_a], float(cv[idx_a]), f[idx_b], float(cv[idx_b]))
 
+    def compare(self, fa: np.ndarray, cv_a: float, fb: np.ndarray, cv_b: float) -> int:
+        """Compare two solutions directly without a Population object."""
         if cv_a > self.eps and cv_b > self.eps:
             if cv_a < cv_b:
                 return -1
@@ -634,9 +670,9 @@ class ParetoComparator(Comparator):
         elif cv_b > self.eps:
             return -1
 
-        if _pareto_dominates(f[idx_a], f[idx_b]):
+        if _pareto_dominates(fa, fb):
             return -1
-        if _pareto_dominates(f[idx_b], f[idx_a]):
+        if _pareto_dominates(fb, fa):
             return 1
         return 0
 
