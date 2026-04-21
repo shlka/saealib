@@ -141,7 +141,7 @@ class GA(Algorithm):
             n_pair=n_pair,
             n_parents=self.crossover.n_parents,
             rng=ctx.rng,
-        )
+        ) % popsize
         for i in range(n_pair):
             parent = pop[parent_idx_m[i]]
             if ctx.rng.random() < self.crossover.crossover_rate:
