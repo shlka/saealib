@@ -23,7 +23,9 @@ class Crossover(ABC):
     n_parents: int = 2
 
     @abstractmethod
-    def crossover(self, parent: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
+    def crossover(
+        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+    ) -> np.ndarray:
         """
         Execute crossover.
 
@@ -70,7 +72,9 @@ class CrossoverBLXAlpha(Crossover):
         self.crossover_rate = crossover_rate
         self.alpha = alpha
 
-    def crossover(self, p: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
+    def crossover(
+        self, p: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+    ) -> np.ndarray:
         """
         Execute BLX-alpha crossover.
 
@@ -122,7 +126,9 @@ class CrossoverSBX(Crossover):
         self.crossover_rate = crossover_rate
         self.eta = eta
 
-    def crossover(self, p: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
+    def crossover(
+        self, p: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+    ) -> np.ndarray:
         """
         Execute SBX crossover.
 
@@ -184,7 +190,9 @@ class CrossoverUniform(Crossover):
         self.crossover_rate = crossover_rate
         self.swap_rate = swap_rate
 
-    def crossover(self, p: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
+    def crossover(
+        self, p: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+    ) -> np.ndarray:
         """
         Execute uniform crossover.
 
@@ -230,7 +238,9 @@ class CrossoverOnePoint(Crossover):
         super().__init__()
         self.crossover_rate = crossover_rate
 
-    def crossover(self, p: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
+    def crossover(
+        self, p: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+    ) -> np.ndarray:
         """
         Execute one-point crossover.
 
@@ -277,7 +287,9 @@ class CrossoverTwoPoint(Crossover):
         super().__init__()
         self.crossover_rate = crossover_rate
 
-    def crossover(self, p: np.ndarray, rng=np.random.default_rng()) -> np.ndarray:
+    def crossover(
+        self, p: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+    ) -> np.ndarray:
         """
         Execute two-point crossover.
 
