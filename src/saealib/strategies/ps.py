@@ -44,15 +44,16 @@ class PreSelectionStrategy(OptimizationStrategy):
         """
         ctx.count_generation()
 
-        candidates = provider.algorithm.ask(ctx, provider, n_offspring=self.n_candidates)
+        candidates = provider.algorithm.ask(
+            ctx, provider, n_offspring=self.n_candidates
+        )
 
         provider.dispatch(
             SurrogateStartEvent(ctx=ctx, provider=provider, offspring=candidates)
         )
 
-        reference = ctx.archive.f.min(axis=0)
         scores, predictions = provider.surrogate_manager.score_candidates(
-            candidates.x, ctx.archive, reference, provider, ctx
+            candidates.x, ctx.archive, provider, ctx
         )
         for i, pred in enumerate(predictions):
             candidates[i].f = pred.mean[0]
