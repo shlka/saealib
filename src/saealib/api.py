@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -63,9 +64,10 @@ class Result:
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+
 def _ensure_problem(
-    func: Union[Callable, Problem],
-    dim: Union[int, None],
+    func: Callable | Problem,
+    dim: int | None,
     lb,
     ub,
     n_obj: int,
@@ -75,13 +77,11 @@ def _ensure_problem(
     if isinstance(func, Problem):
         return func
     if dim is None or lb is None or ub is None:
-        raise ValueError(
-            "dim, lb, and ub are required when func is a callable."
-        )
+        raise ValueError("dim, lb, and ub are required when func is a callable.")
     return Problem(func=func, dim=dim, n_obj=n_obj, weight=weight, lb=lb, ub=ub)
 
 
-def _resolve_algorithm(algorithm: Union[str, "Algorithm"]) -> "Algorithm":
+def _resolve_algorithm(algorithm: str | Algorithm) -> Algorithm:
     if isinstance(algorithm, str):
         name = algorithm.upper()
         if name == "GA":
@@ -94,19 +94,21 @@ def _resolve_algorithm(algorithm: Union[str, "Algorithm"]) -> "Algorithm":
         if name == "PSO":
             return PSO()
         raise ValueError(
-            f"Unknown algorithm: {algorithm!r}. Use 'GA', 'PSO', or an Algorithm instance."
+            f"Unknown algorithm: {algorithm!r}. "
+            "Use 'GA', 'PSO', or an Algorithm instance."
         )
     return algorithm
 
 
 def _resolve_surrogate(
-    surrogate: Union[str, "Surrogate", SurrogateManager, None],
+    surrogate: str | Surrogate | SurrogateManager | None,
     problem: Problem,
     n_neighbors: int,
 ) -> SurrogateManager:
     if surrogate is None:
         raise ValueError(
-            "surrogate=None is not supported. Use 'rbf' or a Surrogate/SurrogateManager instance."
+            "surrogate=None is not supported. "
+            "Use 'rbf' or a Surrogate/SurrogateManager instance."
         )
     if isinstance(surrogate, SurrogateManager):
         return surrogate
@@ -119,7 +121,8 @@ def _resolve_surrogate(
                 n_neighbors=n_neighbors,
             )
         raise ValueError(
-            f"Unknown surrogate: {surrogate!r}. Use 'rbf' or a Surrogate/SurrogateManager instance."
+            f"Unknown surrogate: {surrogate!r}. "
+            "Use 'rbf' or a Surrogate/SurrogateManager instance."
         )
     return LocalSurrogateManager(
         surrogate,
@@ -129,9 +132,9 @@ def _resolve_surrogate(
 
 
 def _resolve_strategy(
-    strategy: Union[str, "OptimizationStrategy", None],
+    strategy: str | OptimizationStrategy | None,
     pop_size: int,
-) -> "OptimizationStrategy":
+) -> OptimizationStrategy:
     if strategy is None or (isinstance(strategy, str) and strategy.lower() == "ib"):
         return IndividualBasedStrategy(evaluation_ratio=0.1)
     if isinstance(strategy, str):
@@ -142,7 +145,8 @@ def _resolve_strategy(
             n_select = max(1, pop_size // 10)
             return PreSelectionStrategy(n_candidates=pop_size, n_select=n_select)
         raise ValueError(
-            f"Unknown strategy: {strategy!r}. Use 'ib', 'gb', 'ps', or an OptimizationStrategy instance."
+            f"Unknown strategy: {strategy!r}. "
+            "Use 'ib', 'gb', 'ps', or an OptimizationStrategy instance."
         )
     return strategy
 
@@ -155,26 +159,26 @@ def _build_result(ctx: OptimizationContext) -> Result:
     if ctx.problem.n_obj == 1:
         scores = archive_f @ weight
         best_idx = int(np.argmax(scores))
-        X = archive_x[best_idx]
-        F = archive_f[best_idx]
+        best_x = archive_x[best_idx]
+        best_f = archive_f[best_idx]
     else:
         fronts = non_dominated_sort(archive_f, weight)
         pareto_idx = fronts[0]
-        X = archive_x[pareto_idx]
-        F = archive_f[pareto_idx]
+        best_x = archive_x[pareto_idx]
+        best_f = archive_f[pareto_idx]
 
-    return Result(X=X, F=F, fe=ctx.fe, gen=ctx.gen, ctx=ctx)
+    return Result(X=best_x, F=best_f, fe=ctx.fe, gen=ctx.gen, ctx=ctx)
 
 
 def _run(
     problem: Problem,
-    algorithm: Union[str, "Algorithm"],
-    surrogate: Union[str, "Surrogate", SurrogateManager, None],
-    strategy: Union[str, "OptimizationStrategy", None],
-    max_fe: Union[int, None],
-    pop_size: Union[int, None],
+    algorithm: str | Algorithm,
+    surrogate: str | Surrogate | SurrogateManager | None,
+    strategy: str | OptimizationStrategy | None,
+    max_fe: int | None,
+    pop_size: int | None,
     n_neighbors: int,
-    seed: Union[int, None],
+    seed: int | None,
     verbose: bool,
 ) -> Result:
     dim = problem.dim
@@ -214,20 +218,21 @@ def _run(
 # Public API
 # ---------------------------------------------------------------------------
 
+
 def minimize(
-    func: Union[Callable, Problem],
-    algorithm: Union[str, "Algorithm"] = "GA",
+    func: Callable | Problem,
+    algorithm: str | Algorithm = "GA",
     *,
-    dim: Union[int, None] = None,
+    dim: int | None = None,
     lb=None,
     ub=None,
     n_obj: int = 1,
-    surrogate: Union[str, "Surrogate", SurrogateManager, None] = "rbf",
-    strategy: Union[str, "OptimizationStrategy", None] = "ib",
-    max_fe: Union[int, None] = None,
-    pop_size: Union[int, None] = None,
+    surrogate: str | Surrogate | SurrogateManager | None = "rbf",
+    strategy: str | OptimizationStrategy | None = "ib",
+    max_fe: int | None = None,
+    pop_size: int | None = None,
     n_neighbors: int = 50,
-    seed: Union[int, None] = None,
+    seed: int | None = None,
     verbose: bool = True,
 ) -> Result:
     """Run surrogate-assisted minimization.
@@ -249,9 +254,11 @@ def minimize(
     n_obj : int
         Number of objectives. Ignored when *func* is a :class:`Problem`. Default: 1.
     surrogate : str, Surrogate, SurrogateManager, or None
-        ``'rbf'``, a :class:`Surrogate`, or a :class:`SurrogateManager`. Default: ``'rbf'``.
+        ``'rbf'``, a :class:`Surrogate`, or a :class:`SurrogateManager`.
+        Default: ``'rbf'``.
     strategy : str or OptimizationStrategy
-        ``'ib'``, ``'gb'``, ``'ps'``, or an :class:`OptimizationStrategy`. Default: ``'ib'``.
+        ``'ib'``, ``'gb'``, ``'ps'``, or an :class:`OptimizationStrategy`.
+        Default: ``'ib'``.
     max_fe : int or None
         Maximum true function evaluations. Default: ``200 * dim``.
     pop_size : int or None
@@ -277,24 +284,33 @@ def minimize(
     """
     weight = np.full(n_obj, -1.0)
     problem = _ensure_problem(func, dim, lb, ub, n_obj, weight)
-    return _run(problem, algorithm, surrogate, strategy, max_fe, pop_size,
-                n_neighbors, seed, verbose)
+    return _run(
+        problem,
+        algorithm,
+        surrogate,
+        strategy,
+        max_fe,
+        pop_size,
+        n_neighbors,
+        seed,
+        verbose,
+    )
 
 
 def maximize(
-    func: Union[Callable, Problem],
-    algorithm: Union[str, "Algorithm"] = "GA",
+    func: Callable | Problem,
+    algorithm: str | Algorithm = "GA",
     *,
-    dim: Union[int, None] = None,
+    dim: int | None = None,
     lb=None,
     ub=None,
     n_obj: int = 1,
-    surrogate: Union[str, "Surrogate", SurrogateManager, None] = "rbf",
-    strategy: Union[str, "OptimizationStrategy", None] = "ib",
-    max_fe: Union[int, None] = None,
-    pop_size: Union[int, None] = None,
+    surrogate: str | Surrogate | SurrogateManager | None = "rbf",
+    strategy: str | OptimizationStrategy | None = "ib",
+    max_fe: int | None = None,
+    pop_size: int | None = None,
     n_neighbors: int = 50,
-    seed: Union[int, None] = None,
+    seed: int | None = None,
     verbose: bool = True,
 ) -> Result:
     """Run surrogate-assisted maximization.
@@ -318,9 +334,11 @@ def maximize(
     n_obj : int
         Number of objectives. Ignored when *func* is a :class:`Problem`. Default: 1.
     surrogate : str, Surrogate, SurrogateManager, or None
-        ``'rbf'``, a :class:`Surrogate`, or a :class:`SurrogateManager`. Default: ``'rbf'``.
+        ``'rbf'``, a :class:`Surrogate`, or a :class:`SurrogateManager`.
+        Default: ``'rbf'``.
     strategy : str or OptimizationStrategy
-        ``'ib'``, ``'gb'``, ``'ps'``, or an :class:`OptimizationStrategy`. Default: ``'ib'``.
+        ``'ib'``, ``'gb'``, ``'ps'``, or an :class:`OptimizationStrategy`.
+        Default: ``'ib'``.
     max_fe : int or None
         Maximum true function evaluations. Default: ``200 * dim``.
     pop_size : int or None
@@ -346,5 +364,14 @@ def maximize(
     """
     weight = np.full(n_obj, +1.0)
     problem = _ensure_problem(func, dim, lb, ub, n_obj, weight)
-    return _run(problem, algorithm, surrogate, strategy, max_fe, pop_size,
-                n_neighbors, seed, verbose)
+    return _run(
+        problem,
+        algorithm,
+        surrogate,
+        strategy,
+        max_fe,
+        pop_size,
+        n_neighbors,
+        seed,
+        verbose,
+    )
