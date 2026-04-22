@@ -1,9 +1,9 @@
-"""High-level API: minimize function and Result dataclass."""
+"""High-level API: minimize / maximize functions and Result dataclass."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Callable, Union
 
 import numpy as np
 
@@ -17,7 +17,7 @@ from saealib.operators.crossover import CrossoverBLXAlpha
 from saealib.operators.mutation import MutationUniform
 from saealib.operators.selection import SequentialSelection, TruncationSelection
 from saealib.optimizer import Optimizer
-from saealib.problem import non_dominated_sort
+from saealib.problem import Problem, non_dominated_sort
 from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
@@ -28,14 +28,13 @@ from saealib.termination import max_fe as max_fe_cond
 
 if TYPE_CHECKING:
     from saealib.algorithms.base import Algorithm
-    from saealib.problem import Problem
     from saealib.strategies.base import OptimizationStrategy
     from saealib.surrogate.base import Surrogate
 
 
 @dataclass
 class Result:
-    """Optimization result returned by :func:`minimize`.
+    """Optimization result returned by :func:`minimize` / :func:`maximize`.
 
     Attributes
     ----------
@@ -60,6 +59,28 @@ class Result:
     ctx: OptimizationContext
 
 
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+def _ensure_problem(
+    func: Union[Callable, Problem],
+    dim: Union[int, None],
+    lb,
+    ub,
+    n_obj: int,
+    weight: np.ndarray,
+) -> Problem:
+    """Return a Problem, building one from a callable if needed."""
+    if isinstance(func, Problem):
+        return func
+    if dim is None or lb is None or ub is None:
+        raise ValueError(
+            "dim, lb, and ub are required when func is a callable."
+        )
+    return Problem(func=func, dim=dim, n_obj=n_obj, weight=weight, lb=lb, ub=ub)
+
+
 def _resolve_algorithm(algorithm: Union[str, "Algorithm"]) -> "Algorithm":
     if isinstance(algorithm, str):
         name = algorithm.upper()
@@ -80,7 +101,7 @@ def _resolve_algorithm(algorithm: Union[str, "Algorithm"]) -> "Algorithm":
 
 def _resolve_surrogate(
     surrogate: Union[str, "Surrogate", SurrogateManager, None],
-    problem: "Problem",
+    problem: Problem,
     n_neighbors: int,
 ) -> SurrogateManager:
     if surrogate is None:
@@ -100,7 +121,6 @@ def _resolve_surrogate(
         raise ValueError(
             f"Unknown surrogate: {surrogate!r}. Use 'rbf' or a Surrogate/SurrogateManager instance."
         )
-    # Surrogate instance
     return LocalSurrogateManager(
         surrogate,
         MeanPrediction(weights=problem.weight),
@@ -146,58 +166,17 @@ def _build_result(ctx: OptimizationContext) -> Result:
     return Result(X=X, F=F, fe=ctx.fe, gen=ctx.gen, ctx=ctx)
 
 
-def minimize(
-    problem: "Problem",
-    algorithm: Union[str, "Algorithm"] = "GA",
-    *,
-    surrogate: Union[str, "Surrogate", SurrogateManager, None] = "rbf",
-    strategy: Union[str, "OptimizationStrategy", None] = "ib",
-    max_fe: Union[int, None] = None,
-    pop_size: Union[int, None] = None,
-    n_neighbors: int = 50,
-    seed: Union[int, None] = None,
-    verbose: bool = True,
+def _run(
+    problem: Problem,
+    algorithm: Union[str, "Algorithm"],
+    surrogate: Union[str, "Surrogate", SurrogateManager, None],
+    strategy: Union[str, "OptimizationStrategy", None],
+    max_fe: Union[int, None],
+    pop_size: Union[int, None],
+    n_neighbors: int,
+    seed: Union[int, None],
+    verbose: bool,
 ) -> Result:
-    """Run surrogate-assisted optimization with sensible defaults.
-
-    Parameters
-    ----------
-    problem : Problem
-        Optimization problem.
-    algorithm : str or Algorithm
-        ``'GA'``, ``'PSO'``, or an :class:`Algorithm` instance. Default: ``'GA'``.
-    surrogate : str, Surrogate, SurrogateManager, or None
-        ``'rbf'``, a :class:`Surrogate` instance, or a :class:`SurrogateManager`
-        instance. Default: ``'rbf'``.
-    strategy : str or OptimizationStrategy
-        ``'ib'`` (IndividualBased), ``'gb'`` (GenerationBased), ``'ps'``
-        (PreSelection), or an :class:`OptimizationStrategy` instance. Default:
-        ``'ib'``.
-    max_fe : int or None
-        Maximum true function evaluations. Default: ``200 * problem.dim``.
-    pop_size : int or None
-        Population size. Default: ``4 * problem.dim``.
-    n_neighbors : int
-        Nearest neighbours used by :class:`LocalSurrogateManager`. Default: 50.
-    seed : int or None
-        Random seed passed to :class:`LHSInitializer`.
-    verbose : bool
-        If ``False``, suppress per-generation log output. Default: ``True``.
-
-    Returns
-    -------
-    Result
-        Optimization result with best solution, objective value, and context.
-
-    Examples
-    --------
-    >>> from saealib import minimize, Problem
-    >>> import numpy as np
-    >>> problem = Problem(func=lambda x: np.sum(x**2), dim=5, n_obj=1,
-    ...                   weight=np.array([-1.0]), lb=[-5.0]*5, ub=[5.0]*5)
-    >>> result = minimize(problem, "GA", max_fe=500, seed=0)
-    >>> result.X, result.F
-    """
     dim = problem.dim
     if pop_size is None:
         pop_size = 4 * dim
@@ -229,3 +208,143 @@ def minimize(
 
     ctx = opt.run()
     return _build_result(ctx)
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+def minimize(
+    func: Union[Callable, Problem],
+    algorithm: Union[str, "Algorithm"] = "GA",
+    *,
+    dim: Union[int, None] = None,
+    lb=None,
+    ub=None,
+    n_obj: int = 1,
+    surrogate: Union[str, "Surrogate", SurrogateManager, None] = "rbf",
+    strategy: Union[str, "OptimizationStrategy", None] = "ib",
+    max_fe: Union[int, None] = None,
+    pop_size: Union[int, None] = None,
+    n_neighbors: int = 50,
+    seed: Union[int, None] = None,
+    verbose: bool = True,
+) -> Result:
+    """Run surrogate-assisted minimization.
+
+    Parameters
+    ----------
+    func : callable or Problem
+        Objective function ``f(x) -> float | array``, or a fully configured
+        :class:`Problem` instance (in which case ``dim``, ``lb``, ``ub``, and
+        ``n_obj`` are ignored).
+    algorithm : str or Algorithm
+        ``'GA'``, ``'PSO'``, or an :class:`Algorithm` instance. Default: ``'GA'``.
+    dim : int, optional
+        Number of design variables. Required when *func* is a callable.
+    lb : array-like, optional
+        Lower bounds of length *dim*. Required when *func* is a callable.
+    ub : array-like, optional
+        Upper bounds of length *dim*. Required when *func* is a callable.
+    n_obj : int
+        Number of objectives. Ignored when *func* is a :class:`Problem`. Default: 1.
+    surrogate : str, Surrogate, SurrogateManager, or None
+        ``'rbf'``, a :class:`Surrogate`, or a :class:`SurrogateManager`. Default: ``'rbf'``.
+    strategy : str or OptimizationStrategy
+        ``'ib'``, ``'gb'``, ``'ps'``, or an :class:`OptimizationStrategy`. Default: ``'ib'``.
+    max_fe : int or None
+        Maximum true function evaluations. Default: ``200 * dim``.
+    pop_size : int or None
+        Population size. Default: ``4 * dim``.
+    n_neighbors : int
+        Nearest neighbours for :class:`LocalSurrogateManager`. Default: 50.
+    seed : int or None
+        Random seed for :class:`LHSInitializer`.
+    verbose : bool
+        If ``False``, suppress per-generation log output. Default: ``True``.
+
+    Returns
+    -------
+    Result
+
+    Examples
+    --------
+    >>> from saealib import minimize
+    >>> import numpy as np
+    >>> result = minimize(lambda x: np.sum(x**2), dim=5, lb=[-5]*5, ub=[5]*5,
+    ...                   max_fe=500, seed=0, verbose=False)
+    >>> result.X, result.F
+    """
+    weight = np.full(n_obj, -1.0)
+    problem = _ensure_problem(func, dim, lb, ub, n_obj, weight)
+    return _run(problem, algorithm, surrogate, strategy, max_fe, pop_size,
+                n_neighbors, seed, verbose)
+
+
+def maximize(
+    func: Union[Callable, Problem],
+    algorithm: Union[str, "Algorithm"] = "GA",
+    *,
+    dim: Union[int, None] = None,
+    lb=None,
+    ub=None,
+    n_obj: int = 1,
+    surrogate: Union[str, "Surrogate", SurrogateManager, None] = "rbf",
+    strategy: Union[str, "OptimizationStrategy", None] = "ib",
+    max_fe: Union[int, None] = None,
+    pop_size: Union[int, None] = None,
+    n_neighbors: int = 50,
+    seed: Union[int, None] = None,
+    verbose: bool = True,
+) -> Result:
+    """Run surrogate-assisted maximization.
+
+    Identical to :func:`minimize` except that all objectives are maximized
+    (``weight = +1``).
+
+    Parameters
+    ----------
+    func : callable or Problem
+        Objective function ``f(x) -> float | array``, or a fully configured
+        :class:`Problem` instance.
+    algorithm : str or Algorithm
+        ``'GA'``, ``'PSO'``, or an :class:`Algorithm` instance. Default: ``'GA'``.
+    dim : int, optional
+        Number of design variables. Required when *func* is a callable.
+    lb : array-like, optional
+        Lower bounds of length *dim*. Required when *func* is a callable.
+    ub : array-like, optional
+        Upper bounds of length *dim*. Required when *func* is a callable.
+    n_obj : int
+        Number of objectives. Ignored when *func* is a :class:`Problem`. Default: 1.
+    surrogate : str, Surrogate, SurrogateManager, or None
+        ``'rbf'``, a :class:`Surrogate`, or a :class:`SurrogateManager`. Default: ``'rbf'``.
+    strategy : str or OptimizationStrategy
+        ``'ib'``, ``'gb'``, ``'ps'``, or an :class:`OptimizationStrategy`. Default: ``'ib'``.
+    max_fe : int or None
+        Maximum true function evaluations. Default: ``200 * dim``.
+    pop_size : int or None
+        Population size. Default: ``4 * dim``.
+    n_neighbors : int
+        Nearest neighbours for :class:`LocalSurrogateManager`. Default: 50.
+    seed : int or None
+        Random seed for :class:`LHSInitializer`.
+    verbose : bool
+        If ``False``, suppress per-generation log output. Default: ``True``.
+
+    Returns
+    -------
+    Result
+
+    Examples
+    --------
+    >>> from saealib import maximize
+    >>> import numpy as np
+    >>> result = maximize(lambda x: -np.sum(x**2) + 10, dim=5, lb=[-5]*5, ub=[5]*5,
+    ...                   max_fe=500, seed=0, verbose=False)
+    >>> result.X, result.F
+    """
+    weight = np.full(n_obj, +1.0)
+    problem = _ensure_problem(func, dim, lb, ub, n_obj, weight)
+    return _run(problem, algorithm, surrogate, strategy, max_fe, pop_size,
+                n_neighbors, seed, verbose)
