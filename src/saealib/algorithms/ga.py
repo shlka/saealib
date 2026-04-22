@@ -135,13 +135,16 @@ class GA(Algorithm):
         lb = ctx.problem.lb
         ub = ctx.problem.ub
         n_pair = math.ceil(target / 2)
-        parent_idx_m = self.parent_selection.select(
-            ctx,
-            ctx.population,
-            n_pair=n_pair,
-            n_parents=self.crossover.n_parents,
-            rng=ctx.rng,
-        ) % popsize
+        parent_idx_m = (
+            self.parent_selection.select(
+                ctx,
+                ctx.population,
+                n_pair=n_pair,
+                n_parents=self.crossover.n_parents,
+                rng=ctx.rng,
+            )
+            % popsize
+        )
         for i in range(n_pair):
             parent = pop[parent_idx_m[i]]
             if ctx.rng.random() < self.crossover.crossover_rate:
