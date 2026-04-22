@@ -41,7 +41,7 @@ uv run <command>
 ### Install via pip
 
 ```bash
-git clone https://github.com/yourusername/saealib.git
+git clone https://github.com/shlka/saealib.git
 cd saealib
 pip install .
 ```
