@@ -1,6 +1,4 @@
-"""
-Event classes for the optimization lifecycle.
-"""
+"""Event classes for the optimization lifecycle."""
 
 from __future__ import annotations
 
