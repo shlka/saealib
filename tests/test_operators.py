@@ -15,6 +15,7 @@ Tests cover:
 import numpy as np
 import pytest
 
+from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationContext
 from saealib.operators.crossover import (
     CrossoverBLXAlpha,
@@ -29,7 +30,6 @@ from saealib.operators.mutation import (
 )
 from saealib.operators.selection import RouletteWheelSelection
 from saealib.population import Archive, Population, PopulationAttribute
-from saealib.comparators import SingleObjectiveComparator
 from saealib.problem import Problem
 
 # ---------------------------------------------------------------------------

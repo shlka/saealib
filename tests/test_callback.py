@@ -35,9 +35,9 @@ from saealib.callback import (
     logging_generation,
     logging_generation_hv,
 )
+from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationContext
 from saealib.population import Archive, Population, PopulationAttribute
-from saealib.comparators import SingleObjectiveComparator
 from saealib.problem import Problem
 from saealib.surrogate.manager import (
     EnsembleSurrogateManager,

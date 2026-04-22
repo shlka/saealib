@@ -31,6 +31,16 @@ from saealib.callback import (
     logging_generation,
     logging_generation_hv,
 )
+from saealib.comparators import (
+    Comparator,
+    NSGA2Comparator,
+    ParetoComparator,
+    SingleObjectiveComparator,
+    WeightedSumComparator,
+    crowding_distance,
+    crowding_distance_all_fronts,
+    non_dominated_sort,
+)
 from saealib.execution.initializer import Initializer, LHSInitializer
 from saealib.operators.crossover import (
     Crossover,
@@ -62,16 +72,6 @@ from saealib.population import (
     Individual,
     Population,
     PopulationAttribute,
-)
-from saealib.comparators import (
-    Comparator,
-    NSGA2Comparator,
-    ParetoComparator,
-    SingleObjectiveComparator,
-    WeightedSumComparator,
-    crowding_distance,
-    crowding_distance_all_fronts,
-    non_dominated_sort,
 )
 from saealib.problem import (
     Constraint,

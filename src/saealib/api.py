@@ -12,13 +12,13 @@ from saealib.acquisition.mean import MeanPrediction
 from saealib.algorithms.ga import GA
 from saealib.algorithms.pso import PSO
 from saealib.callback import GenerationStartEvent, logging_generation
+from saealib.comparators import non_dominated_sort
 from saealib.context import OptimizationContext
 from saealib.execution.initializer import LHSInitializer
 from saealib.operators.crossover import CrossoverBLXAlpha
 from saealib.operators.mutation import MutationUniform
 from saealib.operators.selection import SequentialSelection, TruncationSelection
 from saealib.optimizer import Optimizer
-from saealib.comparators import non_dominated_sort
 from saealib.problem import Problem
 from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy

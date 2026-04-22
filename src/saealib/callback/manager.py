@@ -1,6 +1,4 @@
-"""
-CallbackManager: manages event handler registration and dispatch.
-"""
+"""CallbackManager: manages event handler registration and dispatch."""
 
 from __future__ import annotations
 

@@ -34,8 +34,12 @@ from saealib import (
     max_fe,
     non_dominated_sort,
 )
+from saealib.comparators import (
+    NSGA2Comparator,
+    ParetoComparator,
+    SingleObjectiveComparator,
+)
 from saealib.population import Population, PopulationAttribute
-from saealib.comparators import NSGA2Comparator, ParetoComparator, SingleObjectiveComparator
 
 logging.getLogger("saealib.surrogate.rbf").setLevel(logging.CRITICAL)
 

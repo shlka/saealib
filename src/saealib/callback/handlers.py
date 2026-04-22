@@ -1,6 +1,4 @@
-"""
-Built-in callback handlers for common logging use cases.
-"""
+"""Built-in callback handlers for common logging use cases."""
 
 from __future__ import annotations
 
