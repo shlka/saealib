@@ -187,9 +187,7 @@ class TestGlobalSurrogateManager:
         candidates: np.ndarray,
     ) -> None:
         manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        result = manager.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        result = manager.score_candidates(candidates, archive_1obj)
         assert isinstance(result, tuple)
         assert len(result) == 2
 
@@ -200,9 +198,7 @@ class TestGlobalSurrogateManager:
         candidates: np.ndarray,
     ) -> None:
         manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        scores, _ = manager.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
 
     def test_predictions_count(
@@ -212,9 +208,7 @@ class TestGlobalSurrogateManager:
         candidates: np.ndarray,
     ) -> None:
         manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        _, predictions = manager.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        _, predictions = manager.score_candidates(candidates, archive_1obj)
         assert len(predictions) == len(candidates)
 
     def test_predictions_are_surrogate_prediction(
@@ -224,9 +218,7 @@ class TestGlobalSurrogateManager:
         candidates: np.ndarray,
     ) -> None:
         manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        _, predictions = manager.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        _, predictions = manager.score_candidates(candidates, archive_1obj)
         for p in predictions:
             assert isinstance(p, SurrogatePrediction)
 
@@ -237,9 +229,7 @@ class TestGlobalSurrogateManager:
         candidates: np.ndarray,
     ) -> None:
         manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        _, predictions = manager.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        _, predictions = manager.score_candidates(candidates, archive_1obj)
         for p in predictions:
             assert p.mean.shape == (1, N_OBJ)
 
@@ -250,9 +240,7 @@ class TestGlobalSurrogateManager:
         candidates: np.ndarray,
     ) -> None:
         manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        scores, _ = manager.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert np.all(np.isfinite(scores))
 
     def test_biobj_scores_shape(
@@ -266,9 +254,7 @@ class TestGlobalSurrogateManager:
         manager = GlobalSurrogateManager(
             surrogate_2obj, MeanPrediction(weights=weights)
         )
-        scores, predictions = manager.score_candidates(
-            candidates, archive_2obj, reference=np.zeros(2)
-        )
+        scores, predictions = manager.score_candidates(candidates, archive_2obj)
         assert scores.shape == (len(candidates),)
         for p in predictions:
             assert p.mean.shape == (1, 2)
@@ -289,9 +275,7 @@ class TestLocalSurrogateManager:
         manager = LocalSurrogateManager(
             surrogate_1obj, MeanPrediction(), n_neighbors=10
         )
-        result = manager.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        result = manager.score_candidates(candidates, archive_1obj)
         assert isinstance(result, tuple) and len(result) == 2
 
     def test_scores_shape(
@@ -303,9 +287,7 @@ class TestLocalSurrogateManager:
         manager = LocalSurrogateManager(
             surrogate_1obj, MeanPrediction(), n_neighbors=10
         )
-        scores, _ = manager.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
 
     def test_predictions_count(
@@ -317,9 +299,7 @@ class TestLocalSurrogateManager:
         manager = LocalSurrogateManager(
             surrogate_1obj, MeanPrediction(), n_neighbors=10
         )
-        _, predictions = manager.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        _, predictions = manager.score_candidates(candidates, archive_1obj)
         assert len(predictions) == len(candidates)
 
     def test_prediction_mean_shape(
@@ -331,9 +311,7 @@ class TestLocalSurrogateManager:
         manager = LocalSurrogateManager(
             surrogate_1obj, MeanPrediction(), n_neighbors=10
         )
-        _, predictions = manager.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        _, predictions = manager.score_candidates(candidates, archive_1obj)
         for p in predictions:
             assert p.mean.shape == (1, N_OBJ)
 
@@ -347,9 +325,7 @@ class TestLocalSurrogateManager:
         manager = LocalSurrogateManager(surrogate_1obj, MeanPrediction())
         assert manager.n_neighbors == 50
         # archive has only 20 points, get_knn should still work
-        scores, _ = manager.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
 
     def test_scores_finite(
@@ -361,9 +337,7 @@ class TestLocalSurrogateManager:
         manager = LocalSurrogateManager(
             surrogate_1obj, MeanPrediction(), n_neighbors=10
         )
-        scores, _ = manager.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert np.all(np.isfinite(scores))
 
 
@@ -405,9 +379,7 @@ class TestEnsembleSurrogateManager:
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         ensemble = EnsembleSurrogateManager([m1, m2])
-        scores, _ = ensemble.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        scores, _ = ensemble.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
 
     def test_predictions_from_first_manager(
@@ -421,9 +393,7 @@ class TestEnsembleSurrogateManager:
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         ensemble = EnsembleSurrogateManager([m1, m2])
-        _, predictions = ensemble.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        _, predictions = ensemble.score_candidates(candidates, archive_1obj)
         assert len(predictions) == len(candidates)
         for p in predictions:
             assert isinstance(p, SurrogatePrediction)
@@ -439,9 +409,7 @@ class TestEnsembleSurrogateManager:
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         ensemble = EnsembleSurrogateManager([m1, m2])
-        scores, _ = ensemble.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        scores, _ = ensemble.score_candidates(candidates, archive_1obj)
         assert np.all(scores >= 0.0)
         assert np.all(scores <= 1.0)
 
@@ -454,7 +422,5 @@ class TestEnsembleSurrogateManager:
         """An ensemble with one manager propagates scores correctly."""
         m = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
         ensemble = EnsembleSurrogateManager([m])
-        scores, _ = ensemble.score_candidates(
-            candidates, archive_1obj, reference=np.array([0.0])
-        )
+        scores, _ = ensemble.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)

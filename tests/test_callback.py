@@ -498,9 +498,7 @@ class TestPostSurrogateFitDispatch:
         manager = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
-        manager.score_candidates(
-            candidates, archive, reference=np.array([0.0]), provider=prov, ctx=ctx
-        )
+        manager.score_candidates(candidates, archive, provider=prov, ctx=ctx)
         fit_events = [
             e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)
         ]
@@ -515,9 +513,7 @@ class TestPostSurrogateFitDispatch:
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         # provider=None (default) — should not raise and fire no events
-        scores, _predictions = manager.score_candidates(
-            candidates, archive, reference=np.array([0.0])
-        )
+        scores, _predictions = manager.score_candidates(candidates, archive)
         assert scores.shape == (len(candidates),)
 
     def test_global_event_carries_surrogate_and_training_data(
@@ -529,9 +525,7 @@ class TestPostSurrogateFitDispatch:
         prov = _MockProvider()
         surrogate = RBFsurrogate(gaussian_kernel, DIM)
         manager = GlobalSurrogateManager(surrogate, MeanPrediction())
-        manager.score_candidates(
-            candidates, archive, reference=np.array([0.0]), provider=prov, ctx=ctx
-        )
+        manager.score_candidates(candidates, archive, provider=prov, ctx=ctx)
         event: PostSurrogateFitEvent = prov.dispatched[0]
         assert event.surrogate is surrogate
         assert event.train_x is not None
@@ -549,9 +543,7 @@ class TestPostSurrogateFitDispatch:
         manager = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
-        manager.score_candidates(
-            candidates, archive, reference=np.array([0.0]), provider=prov, ctx=ctx
-        )
+        manager.score_candidates(candidates, archive, provider=prov, ctx=ctx)
         event: PostSurrogateFitEvent = prov.dispatched[0]
         assert event.ctx is ctx
         assert event.provider is prov
@@ -566,9 +558,7 @@ class TestPostSurrogateFitDispatch:
         manager = LocalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction(), n_neighbors=10
         )
-        manager.score_candidates(
-            candidates, archive, reference=np.array([0.0]), provider=prov, ctx=ctx
-        )
+        manager.score_candidates(candidates, archive, provider=prov, ctx=ctx)
         fit_events = [
             e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)
         ]
@@ -582,9 +572,7 @@ class TestPostSurrogateFitDispatch:
         manager = LocalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction(), n_neighbors=10
         )
-        scores, _ = manager.score_candidates(
-            candidates, archive, reference=np.array([0.0])
-        )
+        scores, _ = manager.score_candidates(candidates, archive)
         assert scores.shape == (len(candidates),)
 
     def test_local_each_event_carries_local_training_data(
@@ -600,9 +588,7 @@ class TestPostSurrogateFitDispatch:
             MeanPrediction(),
             n_neighbors=n_neighbors,
         )
-        manager.score_candidates(
-            candidates, archive, reference=np.array([0.0]), provider=prov, ctx=ctx
-        )
+        manager.score_candidates(candidates, archive, provider=prov, ctx=ctx)
         fit_events = [
             e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)
         ]
@@ -627,9 +613,7 @@ class TestPostSurrogateFitDispatch:
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         ensemble = EnsembleSurrogateManager([m1, m2])
-        ensemble.score_candidates(
-            candidates, archive, reference=np.array([0.0]), provider=prov, ctx=ctx
-        )
+        ensemble.score_candidates(candidates, archive, provider=prov, ctx=ctx)
         fit_events = [
             e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)
         ]
@@ -647,7 +631,7 @@ class TestPostSurrogateFitDispatch:
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         scores, _ = manager.score_candidates(
-            candidates, archive, reference=np.array([0.0]), provider=None, ctx=ctx
+            candidates, archive, provider=None, ctx=ctx
         )
         assert scores.shape == (len(candidates),)
 

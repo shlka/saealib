@@ -83,7 +83,7 @@ def _make_ga() -> GA:
 class _MockSurrogateManager:
     """Returns uniform scores and constant predictions."""
 
-    def score_candidates(self, candidates_x, archive, reference, provider, ctx):
+    def score_candidates(self, candidates_x, archive, provider, ctx):
         n = len(candidates_x)
         scores = np.linspace(1.0, 0.0, n)
         predictions = [

@@ -49,9 +49,8 @@ class GenerationBasedStrategy(OptimizationStrategy):
                 SurrogateStartEvent(ctx=ctx, provider=provider, offspring=offspring)
             )
 
-            reference = ctx.archive.f.min(axis=0)
             _, predictions = provider.surrogate_manager.score_candidates(
-                offspring.x, ctx.archive, reference, provider, ctx
+                offspring.x, ctx.archive, provider, ctx
             )
             for i, pred in enumerate(predictions):
                 offspring[i].f = pred.mean[0]

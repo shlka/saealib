@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from scipy.stats import norm
 
 from saealib.acquisition.base import AcquisitionFunction
 from saealib.surrogate.prediction import SurrogatePrediction
+
+if TYPE_CHECKING:
+    from saealib.population import Archive
 
 
 class ExpectedImprovement(AcquisitionFunction):
@@ -35,9 +38,16 @@ class ExpectedImprovement(AcquisitionFunction):
         problems where EI is applied to a single objective. Default: 0.
     """
 
-    def __init__(self, xi: float = 0.01, obj_idx: int = 0):
+    def __init__(self, xi: float = 0.01, obj_idx: int = 0, reference: Any = None):
         self.xi = xi
         self.obj_idx = obj_idx
+        self.reference = reference
+
+    def compute_reference(self, archive: Archive) -> np.ndarray:
+        """Return fixed reference if set, otherwise component-wise best from archive."""
+        if self.reference is not None:
+            return self.reference
+        return archive.f.min(axis=0)
 
     def score(
         self,

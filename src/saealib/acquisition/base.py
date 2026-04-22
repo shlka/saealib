@@ -8,11 +8,14 @@ functions used in surrogate-assisted optimization.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from saealib.surrogate.prediction import SurrogatePrediction
+
+if TYPE_CHECKING:
+    from saealib.population import Archive
 
 
 class AcquisitionFunction(ABC):
@@ -25,6 +28,30 @@ class AcquisitionFunction(ABC):
     The AcquisitionFunction is completely decoupled from Surrogate:
     it knows nothing about how predictions are generated.
     """
+
+    @abstractmethod
+    def compute_reference(self, archive: Archive) -> Any:
+        """
+        Compute the reference value required by this acquisition function.
+
+        Called by SurrogateManager before scoring. Each acquisition function
+        derives its appropriate reference from the archive. If ``self.reference``
+        is set (injected externally at construction or later), implementations
+        should return it instead of computing from the archive, allowing users
+        to supply domain knowledge or a fixed reference point.
+
+        Parameters
+        ----------
+        archive : Archive
+            Archive of evaluated solutions.
+
+        Returns
+        -------
+        Any
+            Reference value passed to ``score``. Return ``None`` if this
+            acquisition function does not use a reference.
+        """
+        ...
 
     @abstractmethod
     def score(
@@ -40,13 +67,7 @@ class AcquisitionFunction(ABC):
         prediction : SurrogatePrediction
             Predictions from a surrogate model.
         reference : Any
-            Reference information for the acquisition function.
-            - Single-objective: scalar or ndarray of shape (n_obj,)
-              representing the current best objective value(s).
-            - Multi-objective: Pareto front (Population), reference point,
-              or any structure required by the specific acquisition function.
-            Implementations that require a specific type should raise
-            TypeError if the type is incompatible.
+            Reference value produced by ``compute_reference``.
 
         Returns
         -------
