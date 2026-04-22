@@ -16,7 +16,8 @@ import pytest
 from saealib.algorithms.pso import PSO
 from saealib.context import OptimizationContext
 from saealib.population import Archive, Population, PopulationAttribute
-from saealib.problem import Problem, SingleObjectiveComparator
+from saealib.comparators import SingleObjectiveComparator
+from saealib.problem import Problem
 
 # ---------------------------------------------------------------------------
 # Shared constants and fixtures

@@ -63,17 +63,19 @@ from saealib.population import (
     Population,
     PopulationAttribute,
 )
-from saealib.problem import (
+from saealib.comparators import (
     Comparator,
-    Constraint,
     NSGA2Comparator,
     ParetoComparator,
-    Problem,
     SingleObjectiveComparator,
     WeightedSumComparator,
     crowding_distance,
     crowding_distance_all_fronts,
     non_dominated_sort,
+)
+from saealib.problem import (
+    Constraint,
+    Problem,
 )
 from saealib.strategies.base import OptimizationStrategy
 from saealib.strategies.gb import GenerationBasedStrategy

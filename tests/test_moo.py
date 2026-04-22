@@ -35,7 +35,7 @@ from saealib import (
     non_dominated_sort,
 )
 from saealib.population import Population, PopulationAttribute
-from saealib.problem import NSGA2Comparator, ParetoComparator, SingleObjectiveComparator
+from saealib.comparators import NSGA2Comparator, ParetoComparator, SingleObjectiveComparator
 
 logging.getLogger("saealib.surrogate.rbf").setLevel(logging.CRITICAL)
 
