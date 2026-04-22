@@ -7,7 +7,6 @@ Tests cover:
 """
 
 import numpy as np
-import pytest
 
 from saealib import (
     GA,
