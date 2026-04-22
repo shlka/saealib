@@ -55,9 +55,8 @@ class IndividualBasedStrategy(OptimizationStrategy):
         )
 
         # 2. score candidates via surrogate manager
-        reference = ctx.archive.f.min(axis=0)  # (n_obj,) component-wise best
         scores, predictions = provider.surrogate_manager.score_candidates(
-            offspring.x, ctx.archive, reference, provider, ctx
+            offspring.x, ctx.archive, provider, ctx
         )
         for i, pred in enumerate(predictions):
             offspring[i].f = pred.mean[0]  # assign predicted objectives (n_obj,)

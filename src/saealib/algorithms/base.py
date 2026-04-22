@@ -38,7 +38,12 @@ class Algorithm(ABC):
         pass
 
     @abstractmethod
-    def ask(self, ctx: OptimizationContext, provider: ComponentProvider) -> Population:
+    def ask(
+        self,
+        ctx: OptimizationContext,
+        provider: ComponentProvider,
+        n_offspring: int | None = None,
+    ) -> Population:
         """
         Generate offspring solutions.
 
@@ -48,6 +53,9 @@ class Algorithm(ABC):
             Context instance.
         provider : ComponentProvider
             Provider instance.
+        n_offspring : int or None, optional
+            Number of offspring to generate. If ``None``, the algorithm
+            determines the count (typically equal to the population size).
 
         Returns
         -------
