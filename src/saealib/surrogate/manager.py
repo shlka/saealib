@@ -13,7 +13,7 @@ Responsibility split:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -43,7 +43,6 @@ class SurrogateManager(ABC):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        reference: Any,
         provider: ComponentProvider | None = None,
         ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
@@ -56,10 +55,6 @@ class SurrogateManager(ABC):
             Candidate design variable matrix. shape: (n_candidates, dim)
         archive : Archive
             Archive of evaluated solutions used for surrogate training.
-        reference : Any
-            Reference information for the acquisition function.
-            Typically the current best objective value(s) for single-objective,
-            or a Pareto front / reference point for multi-objective.
         provider : ComponentProvider or None, optional
             Component provider used to dispatch ``PostSurrogateFitEvent``
             after each surrogate fit. If ``None``, no event is dispatched.
@@ -101,7 +96,6 @@ class GlobalSurrogateManager(SurrogateManager):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        reference: Any,
         provider: ComponentProvider | None = None,
         ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
@@ -120,6 +114,7 @@ class GlobalSurrogateManager(SurrogateManager):
                 )
             )
 
+        reference = self.acquisition.compute_reference(archive)
         prediction = self.surrogate.predict(candidates_x)  # mean: (n_candidates, n_obj)
         scores = self.acquisition.score(prediction, reference)
 
@@ -165,13 +160,13 @@ class LocalSurrogateManager(SurrogateManager):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        reference: Any,
         provider: ComponentProvider | None = None,
         ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """Fit a local model per candidate and score each individually."""
         predictions: list[SurrogatePrediction] = []
         _dispatch = provider is not None and ctx is not None
+        reference = self.acquisition.compute_reference(archive)
 
         for x in candidates_x:
             train_idx, _ = archive.get_knn(x, self.n_neighbors)
@@ -233,7 +228,6 @@ class EnsembleSurrogateManager(SurrogateManager):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        reference: Any,
         provider: ComponentProvider | None = None,
         ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
@@ -247,7 +241,7 @@ class EnsembleSurrogateManager(SurrogateManager):
 
         for i, manager in enumerate(self.managers):
             scores, preds = manager.score_candidates(
-                candidates_x, archive, reference, provider, ctx
+                candidates_x, archive, provider, ctx
             )
             all_scores.append(_rank_normalize(scores))
             if i == 0:

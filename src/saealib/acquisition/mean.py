@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from saealib.acquisition.base import AcquisitionFunction
 from saealib.surrogate.prediction import SurrogatePrediction
+
+if TYPE_CHECKING:
+    from saealib.population import Archive
 
 
 class MeanPrediction(AcquisitionFunction):
@@ -30,8 +33,13 @@ class MeanPrediction(AcquisitionFunction):
         shape: (n_obj,). If None, uses the first objective only.
     """
 
-    def __init__(self, weights: np.ndarray | None = None):
+    def __init__(self, weights: np.ndarray | None = None, reference: Any = None):
         self.weights = weights
+        self.reference = reference
+
+    def compute_reference(self, archive: Archive) -> Any:
+        """Return fixed reference if set, otherwise None."""
+        return self.reference
 
     def score(
         self,
