@@ -2,7 +2,7 @@
 
 import logging
 
-from saealib.api import Result, minimize
+from saealib.api import Result, maximize, minimize
 from saealib.acquisition import (
     AcquisitionFunction,
     ExpectedImprovement,
@@ -96,6 +96,7 @@ logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 __all__ = [
     "GA",
     "Result",
+    "maximize",
     "minimize",
     "PSO",
     "AcquisitionFunction",
