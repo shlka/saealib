@@ -29,7 +29,8 @@ from saealib.operators.mutation import (
 )
 from saealib.operators.selection import RouletteWheelSelection
 from saealib.population import Archive, Population, PopulationAttribute
-from saealib.problem import Problem, SingleObjectiveComparator
+from saealib.comparators import SingleObjectiveComparator
+from saealib.problem import Problem
 
 # ---------------------------------------------------------------------------
 # Shared fixtures

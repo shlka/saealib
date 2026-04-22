@@ -17,7 +17,8 @@ from saealib import (
 )
 from saealib.context import OptimizationContext
 from saealib.population import Archive, Population, PopulationAttribute
-from saealib.problem import Problem, SingleObjectiveComparator
+from saealib.comparators import SingleObjectiveComparator
+from saealib.problem import Problem
 from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate.prediction import SurrogatePrediction

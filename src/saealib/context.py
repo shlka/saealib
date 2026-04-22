@@ -12,8 +12,9 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
+    from saealib.comparators import Comparator
     from saealib.population import Archive, Population
-    from saealib.problem import Comparator, Problem
+    from saealib.problem import Problem
 
 
 @dataclass

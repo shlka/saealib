@@ -18,7 +18,8 @@ from saealib.operators.crossover import CrossoverBLXAlpha
 from saealib.operators.mutation import MutationUniform
 from saealib.operators.selection import SequentialSelection, TruncationSelection
 from saealib.optimizer import Optimizer
-from saealib.problem import Problem, non_dominated_sort
+from saealib.comparators import non_dominated_sort
+from saealib.problem import Problem
 from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
