@@ -1,7 +1,7 @@
 [project]
 name = "saealib"
 version = "0.1.0"
-description = ""
+description = "A Python library for Surrogate-Assisted Evolutionary Algorithms (SAEAs)"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
