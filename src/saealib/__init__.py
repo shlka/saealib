@@ -2,7 +2,6 @@
 
 import logging
 
-from saealib.api import Result, maximize, minimize
 from saealib.acquisition import (
     AcquisitionFunction,
     ExpectedImprovement,
@@ -14,6 +13,7 @@ from saealib.acquisition import (
 from saealib.algorithms.base import Algorithm
 from saealib.algorithms.ga import GA, RepairFunc
 from saealib.algorithms.pso import PSO
+from saealib.api import Result, maximize, minimize
 from saealib.callback import (
     CallbackManager,
     Event,
@@ -95,9 +95,6 @@ logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
     "GA",
-    "Result",
-    "maximize",
-    "minimize",
     "PSO",
     "AcquisitionFunction",
     "Algorithm",
@@ -148,6 +145,7 @@ __all__ = [
     "Problem",
     "RBFsurrogate",
     "RepairFunc",
+    "Result",
     "RouletteWheelSelection",
     "RunEndEvent",
     "RunStartEvent",
@@ -171,6 +169,8 @@ __all__ = [
     "logging_generation_hv",
     "max_fe",
     "max_gen",
+    "maximize",
+    "minimize",
     "non_dominated_sort",
     "repair_clipping",
 ]
