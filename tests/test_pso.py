@@ -14,9 +14,10 @@ import numpy as np
 import pytest
 
 from saealib.algorithms.pso import PSO
+from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationContext
 from saealib.population import Archive, Population, PopulationAttribute
-from saealib.problem import Problem, SingleObjectiveComparator
+from saealib.problem import Problem
 
 # ---------------------------------------------------------------------------
 # Shared constants and fixtures

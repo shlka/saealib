@@ -922,7 +922,6 @@ source = { editable = "." }
 dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "pytest" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "typing-extensions" },
@@ -931,6 +930,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "opfunu" },
+    { name = "pytest" },
     { name = "ruff" },
     { name = "setuptools" },
 ]
@@ -938,7 +938,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "numpy", specifier = ">=1.22.1" },
-    { name = "pytest", specifier = ">=9.0.2" },
     { name = "scipy", specifier = ">=1.0.0" },
     { name = "typing-extensions", specifier = ">=4.15.0" },
 ]
@@ -946,6 +945,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "opfunu", specifier = ">=1.0.4" },
+    { name = "pytest", specifier = ">=9.0.2" },
     { name = "ruff" },
     { name = "setuptools", specifier = ">=80.9.0" },
 ]

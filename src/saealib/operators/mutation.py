@@ -14,7 +14,10 @@ class Mutation(ABC):
 
     @abstractmethod
     def mutate(
-        self, p: np.ndarray, mutate_range: tuple, rng=np.random.default_rng()
+        self,
+        p: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Execute mutation.
@@ -60,7 +63,10 @@ class MutationUniform(Mutation):
 
     # TODO: mutate_range should be handled outside (__init__ method?)
     def mutate(
-        self, p: np.ndarray, mutate_range: tuple, rng=np.random.default_rng()
+        self,
+        p: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Execute uniform mutation.
@@ -116,7 +122,10 @@ class MutationPolynomial(Mutation):
         self.eta = eta
 
     def mutate(
-        self, p: np.ndarray, mutate_range: tuple, rng=np.random.default_rng()
+        self,
+        p: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Execute polynomial mutation.
@@ -182,7 +191,10 @@ class MutationGaussian(Mutation):
         self.sigma = sigma
 
     def mutate(
-        self, p: np.ndarray, mutate_range: tuple, rng=np.random.default_rng()
+        self,
+        p: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Execute Gaussian mutation.

@@ -24,7 +24,7 @@ class ParentSelection(ABC):
         population: Population,
         n_pair: int,
         n_parents: int,
-        rng=np.random.default_rng(),
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Select parents for reproduction.
@@ -64,7 +64,7 @@ class TournamentSelection(ParentSelection):
         population: Population,
         n_pair: int,
         n_parents: int,
-        rng=np.random.default_rng(),
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Execute tournament selection.
@@ -123,7 +123,7 @@ class SequentialSelection(ParentSelection):
         population: Population,
         n_pair: int,
         n_parents: int,
-        rng=np.random.default_rng(),
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Execute sequential selection.
@@ -176,7 +176,7 @@ class RouletteWheelSelection(ParentSelection):
         population: Population,
         n_pair: int,
         n_parents: int,
-        rng=np.random.default_rng(),
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Execute roulette wheel selection.

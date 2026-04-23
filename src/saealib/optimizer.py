@@ -118,7 +118,7 @@ class Optimizer:
         # initialize callbacks (default)
         self.cbmanager.register(GenerationStartEvent, logging_generation)
         # initializer instance
-        self.initializer: Initializer = None
+        self.initializer: Initializer | None = None
         # Optimizer instance name
         self.instance_name: str = ""
 
