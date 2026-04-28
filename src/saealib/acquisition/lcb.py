@@ -19,6 +19,7 @@ class LowerConfidenceBound(AcquisitionFunction):
 
     LCB trades off exploitation (low predicted mean) and exploration
     (high predicted uncertainty):
+
         LCB(x) = mu(x) - kappa * sigma(x)
 
     For minimization, lower LCB values are better. This class returns
