@@ -21,7 +21,8 @@ class ExpectedImprovement(AcquisitionFunction):
     EI balances exploration and exploitation by computing the expected
     amount of improvement over the current best observed value.
 
-    For single-objective minimization:
+    For single-objective minimization::
+
         EI(x) = E[max(f_best - f(x), 0)]
                = (f_best - mu) * Phi(Z) + sigma * phi(Z)
         where Z = (f_best - mu) / sigma
