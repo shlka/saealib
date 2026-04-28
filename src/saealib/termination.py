@@ -80,7 +80,7 @@ class Termination:
         return any(cond(ctx) for cond in self.conditions)
 
 
-### Built-in termination condition factories ###
+# Built-in termination condition factories
 
 
 def max_fe(value: int) -> TerminationCondition:

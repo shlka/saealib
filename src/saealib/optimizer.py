@@ -1,10 +1,4 @@
-"""
-Optimizer module.
-
-Optimizer class that integrates components to perform
-evolutionary optimization with surrogate models.
-
-"""
+"""Optimizer: assembles and runs the surrogate-assisted EA pipeline."""
 
 from __future__ import annotations
 
@@ -111,87 +105,35 @@ class Optimizer:
         problem : Problem
             The optimization problem.
         """
-        # Problem instance
         self.problem: Problem = problem
-        # callback event manager
         self.cbmanager: CallbackManager = CallbackManager()
-        # initialize callbacks (default)
         self.cbmanager.register(GenerationStartEvent, logging_generation)
-        # initializer instance
         self.initializer: Initializer | None = None
-        # Optimizer instance name
         self.instance_name: str = ""
 
-    ### SETTERS ###
+    # --- setters (all return self for chaining) ---
+
     def set_initializer(self, initializer: Initializer) -> Optimizer:
-        """
-        Set Initializer instance.
-
-        Parameters
-        ----------
-        initializer : Initializer
-            Initializer instance.
-
-        Returns
-        -------
-        Optimizer
-            Returns self for method chaining.
-        """
+        """Set the initializer. Returns self."""
         self.initializer = initializer
         return self
 
     def set_algorithm(self, algorithm: Algorithm) -> Optimizer:
-        """
-        Set Algorithm instance.
-
-        Parameters
-        ----------
-        algorithm : Algorithm
-            Algorithm instance.
-
-        Returns
-        -------
-        Optimizer
-            Returns self for method chaining.
-        """
+        """Set the evolutionary algorithm. Returns self."""
         self.algorithm = algorithm
         return self
 
     def set_surrogate_manager(self, manager: SurrogateManager) -> Optimizer:
-        """
-        Set SurrogateManager instance.
-
-        Parameters
-        ----------
-        manager : SurrogateManager
-            SurrogateManager instance.
-
-        Returns
-        -------
-        Optimizer
-            Returns self for method chaining.
-        """
+        """Set the surrogate manager. Returns self."""
         self.surrogate_manager = manager
         return self
 
     def set_surrogate(self, surrogate: Surrogate, n_neighbors: int = 50) -> Optimizer:
         """
-        Wrap a Surrogate in a LocalSurrogateManager (backward compatibility).
+        Wrap a raw Surrogate in a LocalSurrogateManager. Returns self.
 
-        Provided for backward compatibility. Equivalent to:
-            set_surrogate_manager(LocalSurrogateManager(surrogate, MeanPrediction()))
-
-        Parameters
-        ----------
-        surrogate : Surrogate
-            Surrogate model instance.
-        n_neighbors : int
-            Number of nearest neighbors for local model training.
-
-        Returns
-        -------
-        Optimizer
-            Returns self for method chaining.
+        Equivalent to ``set_surrogate_manager(LocalSurrogateManager(surrogate, ...))``.
+        Provided for backward compatibility.
         """
         self.surrogate_manager = LocalSurrogateManager(
             surrogate,
@@ -201,74 +143,28 @@ class Optimizer:
         return self
 
     def set_strategy(self, strategy: OptimizationStrategy) -> Optimizer:
-        """
-        Set OptimizationStrategy instance.
-
-        Parameters
-        ----------
-        strategy : OptimizationStrategy
-            OptimizationStrategy instance.
-
-        Returns
-        -------
-        Optimizer
-            Returns self for method chaining.
-        """
+        """Set the optimization strategy. Returns self."""
         self.strategy = strategy
         return self
 
     def set_termination(self, termination: Termination) -> Optimizer:
-        """
-        Set Termination instance.
-
-        Parameters
-        ----------
-        termination : Termination
-            Termination instance.
-
-        Returns
-        -------
-        Optimizer
-            Returns self for method chaining.
-        """
+        """Set the termination condition. Returns self."""
         self.termination = termination
         return self
 
     def set_instance_name(self, name: str) -> Optimizer:
-        """
-        Set instance name.
-
-        Parameters
-        ----------
-        name : str
-            Instance name.
-
-        Returns
-        -------
-        Optimizer
-            Returns self for method chaining.
-        """
+        """Set the instance name. Returns self."""
         self.instance_name = name
         return self
 
-    ### CALLBACKS ###
+    # --- callbacks ---
+
     def dispatch(self, event: Event) -> None:
-        """
-        Dispatch an event to the callback manager.
-
-        Parameters
-        ----------
-        event : Event
-            The event to dispatch. ``event.provider`` must be set to this
-            optimizer by the caller before passing.
-
-        Returns
-        -------
-        None
-        """
+        """Dispatch an event to the callback manager."""
         self.cbmanager.dispatch(event)
 
-    ### RUN ###
+    # --- run ---
+
     def iterate(self) -> Generator[OptimizationContext, None, None]:
         """
         Iterate the optimization process.

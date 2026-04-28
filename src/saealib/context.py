@@ -1,8 +1,4 @@
-"""
-Context Module.
-
-This module contains the implementation of the optimization context.
-"""
+"""OptimizationContext: shared mutable state passed through the optimization loop."""
 
 from __future__ import annotations
 

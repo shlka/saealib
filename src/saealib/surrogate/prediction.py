@@ -1,9 +1,4 @@
-"""
-SurrogatePrediction module.
-
-This module defines the SurrogatePrediction dataclass,
-which is the unified return type for all surrogate model predictions.
-"""
+"""SurrogatePrediction: unified return type for all surrogate model predictions."""
 
 from __future__ import annotations
 

@@ -34,14 +34,14 @@ class IndividualBasedStrategy(OptimizationStrategy):
 
     def step(self, ctx: OptimizationContext, provider: ComponentProvider) -> None:
         """
-        Perform one iteration of optimization processing.
+        Score all offspring with the surrogate, then true-evaluate the top fraction.
 
         Parameters
         ----------
         ctx : OptimizationContext
-            A dataclass object that holds internal information about the Optimizer.
+            Current optimization context.
         provider : ComponentProvider
-            Objects of the class in which the component is exposed (ex. Optimizer).
+            Component provider.
         """
         ctx.count_generation()
 
