@@ -28,17 +28,14 @@ class GenerationBasedStrategy(OptimizationStrategy):
 
     def step(self, ctx: OptimizationContext, provider: ComponentProvider) -> None:
         """
-        Perform one iteration of optimization processing.
-
-        Runs ``gen_ctrl`` surrogate generations internally, then evaluates
-        all offspring with the true objective function.
+        Run ``gen_ctrl`` surrogate-only generations, then one true-evaluation step.
 
         Parameters
         ----------
         ctx : OptimizationContext
-            A dataclass object that holds internal information about the Optimizer.
+            Current optimization context.
         provider : ComponentProvider
-            Objects of the class in which the component is exposed (ex. Optimizer).
+            Component provider.
         """
         # --- surrogate inner loop ---
         for _ in range(self.gen_ctrl):

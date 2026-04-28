@@ -126,16 +126,6 @@ class RBFsurrogate(Surrogate):
     """
 
     def __init__(self, kernel: callable, dim: int):
-        """
-        Initialize RBF surrogate model.
-
-        Parameters
-        ----------
-        kernel : callable
-            Kernel function to use.
-        dim : int
-            Dimensionality of the input data.
-        """
         self.kernel = kernel
         self.dim = dim
         self.n_obj: int | None = None

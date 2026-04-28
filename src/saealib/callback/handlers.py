@@ -29,10 +29,6 @@ def logging_generation(event: GenerationStartEvent) -> None:
     ----------
     event : GenerationStartEvent
         The generation-start event.
-
-    Returns
-    -------
-    None
     """
     ctx: OptimizationContext = event.ctx
 

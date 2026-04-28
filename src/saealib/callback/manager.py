@@ -38,10 +38,6 @@ class CallbackManager:
             The concrete event class to listen for.
         func : Callable[[E], None]
             Handler function. Receives the event object and returns nothing.
-
-        Returns
-        -------
-        None
         """
         self.handlers[event_type].append(func)
 
@@ -54,10 +50,6 @@ class CallbackManager:
         event : Event
             The event object to dispatch. Handlers receive this object
             directly and may modify its mutable fields.
-
-        Returns
-        -------
-        None
         """
         for handler in self.handlers[type(event)]:
             handler(event)
@@ -72,10 +64,6 @@ class CallbackManager:
             The event class the handler was registered for.
         func : Callable[[E], None]
             The handler to remove. Raises ``ValueError`` if not found.
-
-        Returns
-        -------
-        None
         """
         self.handlers[event_type].remove(func)
 
@@ -96,10 +84,6 @@ class CallbackManager:
             The handler to replace. Raises ``ValueError`` if not found.
         new : Callable[[E], None]
             The replacement handler.
-
-        Returns
-        -------
-        None
         """
         idx = self.handlers[event_type].index(old)
         self.handlers[event_type][idx] = new

@@ -1,8 +1,4 @@
-"""
-Initializer module.
-
-Initialize Population and Archive, and use them to generate an OptimizationContext.
-"""
+"""Initializer: builds the initial Population, Archive, and OptimizationContext."""
 
 from __future__ import annotations
 
@@ -18,11 +14,7 @@ from saealib.problem import Problem
 
 
 class Initializer(ABC):
-    """
-    Initializer class.
-
-    Initialize Population and Archive, and use them to generate an OptimizationContext.
-    """
+    """Abstract base for classes that set up the initial optimization context."""
 
     def _create_attrs(
         self, problem: Problem, provider: ComponentProvider
@@ -42,14 +34,12 @@ class Initializer(ABC):
         list[PopulationAttribute]
             The attributes for Population and Archive.
         """
-        # default attributes
         attrs = [
             PopulationAttribute("x", float, (problem.dim,), default=np.nan),
             PopulationAttribute("f", float, (problem.n_obj,), default=np.nan),
             PopulationAttribute("g", float, (problem.n_constraints,), default=0.0),
             PopulationAttribute("cv", float, (), default=0.0),
         ]
-        # Retrieve attributes and classes according to the algorithm
         if provider.algorithm is not None:
             attrs_required = provider.algorithm.get_required_attrs(problem)
             ex_names = {attr.name for attr in attrs}
@@ -142,9 +132,7 @@ class LHSInitializer(Initializer):
         self, provider: ComponentProvider, problem: Problem
     ) -> OptimizationContext:
         """
-        Initialize Population and Archive.
-
-        Use them to generate an OptimizationContext.
+        Initialize Population and Archive with LHS samples.
 
         Parameters
         ----------
@@ -156,7 +144,6 @@ class LHSInitializer(Initializer):
         Returns
         -------
         OptimizationContext
-            The optimization context.
         """
         rng = np.random.default_rng(self.seed)
         attrs = self._create_attrs(problem, provider)
@@ -168,22 +155,19 @@ class LHSInitializer(Initializer):
             attrs=attrs, init_capacity=self.n_init_archive
         )
 
-        # TODO: Assign different metadata per dimension.
-        # To support mixed variable optimization in the future.
-        # TODO: Supports initialization of CV and other attributes.
-        # Additionally, it handles cases where the sort does not depend on f and cv.
+        # TODO: Assign different metadata per dimension (mixed variable support).
+        # TODO: Support initialization of CV and other attributes.
         archive_x = scipy.stats.qmc.LatinHypercube(d=problem.dim, rng=rng).random(
             self.n_init_archive
         )
         archive_x = scipy.stats.qmc.scale(archive_x, problem.lb, problem.ub)
         archive_f = np.array([problem.evaluate(ind) for ind in archive_x])
 
-        # TODO: Modify the archive to register attributes predefined by the archive.
+        # TODO: Register algorithm-specific attributes in the archive.
         for i in range(self.n_init_archive):
             g, cv = problem.evaluate_constraints(archive_x[i])
             archive.add({"x": archive_x[i], "f": archive_f[i], "g": g, "cv": cv})
 
-        # Sort archive using population-based comparator
         sorted_idx = problem.comparator.sort_population(archive)
         archive_sorted = archive.extract(sorted_idx)
         archive.clear()

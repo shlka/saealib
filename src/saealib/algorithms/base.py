@@ -1,8 +1,4 @@
-"""
-Evolutionary Algorithm Module.
-
-This module contains the implementation of evolutionary algorithms.
-"""
+"""Abstract base class for evolutionary algorithms."""
 
 from __future__ import annotations
 
