@@ -1,5 +1,6 @@
 import os
 import sys
+from importlib.metadata import version as _get_version
 
 sys.path.insert(0, os.path.abspath("../src"))
 
@@ -7,7 +8,8 @@ sys.path.insert(0, os.path.abspath("../src"))
 project = "saealib"
 copyright = "2026, shlka"
 author = "shlka"
-release = "0.1.0"
+release = _get_version("saealib")
+myst_substitutions = {"version": release}
 
 # -- General configuration ---------------------------------------------------
 extensions = [
@@ -30,6 +32,7 @@ myst_enable_extensions = [
     "colon_fence",
     "deflist",
     "fieldlist",
+    "substitution",
     "tasklist",
 ]
 
