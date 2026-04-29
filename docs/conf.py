@@ -22,6 +22,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_design",
     "sphinxcontrib.mermaid",
+    "sphinx_sitemap",
 ]
 
 templates_path = ["_templates"]
@@ -42,6 +43,7 @@ locale_dirs = ["locale/"]
 gettext_compact = False
 
 # -- HTML output -------------------------------------------------------------
+html_baseurl = "https://shlka.github.io/saealib/"
 html_theme = "furo"
 html_static_path = ["_static"]
 html_theme_options = {
