@@ -44,8 +44,10 @@ gettext_compact = False
 
 # -- HTML output -------------------------------------------------------------
 html_baseurl = "https://shlka.github.io/saealib/"
+sitemap_url_scheme = "{link}"
 html_theme = "furo"
 html_static_path = ["_static"]
+html_extra_path = ["googleb2b2a6492b1c5bc1.html"]
 html_theme_options = {
     "light_css_variables": {
         "color-brand-primary": "#2e7d32",
