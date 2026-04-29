@@ -18,6 +18,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "myst_parser",
     "sphinx_copybutton",
+    "sphinx_design",
     "sphinxcontrib.mermaid",
 ]
 
