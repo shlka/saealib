@@ -1,7 +1,6 @@
 # Components
 
 ```{toctree}
-:maxdepth: 1
 
 problem
 optimizer

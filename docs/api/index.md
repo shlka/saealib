@@ -1,7 +1,7 @@
 # API Reference
 
 ```{toctree}
-:maxdepth: 1
+maxdepth: 2
 
 highlevel
 optimizer
