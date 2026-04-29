@@ -7,6 +7,9 @@
 A comprehensive library for **Surrogate-Assisted Evolutionary Algorithms (SAEAs)** in Python.  
 Designed for expensive optimization problems where function evaluations are costly, `saealib` provides a modular framework to combine evolutionary algorithms, surrogate models, and model management strategies.
 
+## Documents
+https://shlka.github.io/saealib/index.html
+
 ## Key Features
 
 - **Modular Architecture**: Easily mix and match Algorithms (e.g., GA), Surrogates (e.g., RBF), and Management Strategies.
