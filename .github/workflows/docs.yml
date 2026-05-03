@@ -54,6 +54,22 @@ jobs:
       - name: Build all versions with sphinx-multiversion
         run: uv run sphinx-multiversion docs docs/_build/html
 
+      - name: Create root redirect to latest release
+        run: |
+          LATEST=$(git tag -l 'v*' --sort=-version:refname | head -1)
+          LATEST=${LATEST:-main}
+          {
+            echo '<!DOCTYPE html>'
+            echo '<html><head>'
+            echo '  <meta charset="utf-8">'
+            echo "  <title>Redirecting to ${LATEST}...</title>"
+            echo "  <meta http-equiv=\"refresh\" content=\"0; url=${LATEST}/\">"
+            echo "  <link rel=\"canonical\" href=\"${LATEST}/\" />"
+            echo '</head><body>'
+            echo "  <p>Redirecting to <a href=\"${LATEST}/\">${LATEST}</a></p>"
+            echo '</body></html>'
+          } > docs/_build/html/index.html
+
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:

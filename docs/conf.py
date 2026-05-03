@@ -23,6 +23,7 @@ extensions = [
     "sphinx_design",
     "sphinxcontrib.mermaid",
     "sphinx_sitemap",
+    "sphinx_multiversion",
 ]
 
 templates_path = ["_templates"]
@@ -78,9 +79,21 @@ autosummary_imported_members = False
 # -- warnings ----------------------------------------------------------------
 suppress_warnings = ["toc.no_title"]
 
+# -- HTML sidebars -----------------------------------------------------------
+html_sidebars = {
+    "**": [
+        "sidebar/scroll-start.html",
+        "sidebar/brand.html",
+        "sidebar/search.html",
+        "sidebar/navigation.html",
+        "sidebar/versions.html",
+        "sidebar/scroll-end.html",
+    ]
+}
+
 # -- sphinx-multiversion -----------------------------------------------------
 smv_tag_whitelist = r"^v\d+\.\d+.*$"
 smv_branch_whitelist = r"^main$"
-smv_remote_whitelist = r"^origin$"
+smv_remote_whitelist = None
 smv_outputdir_format = "{ref.name}"
 smv_prefer_remote_refs = False
