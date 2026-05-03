@@ -3,11 +3,11 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="&lt;no title&gt;" href="custom.html"><link rel="prev" title="&lt;no title&gt;" href="algorithms.html">
-        <link rel="canonical" href="https://shlka.github.io/saealib/examples/surrogates.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="カスタムコンポーネント" href="custom_components.html"><link rel="prev" title="獲得関数の選択" href="acquisition_functions.html">
+        <link rel="canonical" href="https://shlka.github.io/saealib/tutorials/callbacks.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>&lt;no title&gt; - saealib 0.1.0b1 documentation</title>
+        <title>コールバックによる進捗の監視 - saealib 0.1.0b1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -181,7 +181,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
@@ -199,7 +199,7 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <ul>
+  <ul class="current">
 <li class="toctree-l1 has-children"><a class="reference internal" href="../getting_started/index.html">Getting Started</a><input aria-label="Toggle navigation of Getting Started" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../getting_started/what_is_saealib.html">What is saealib</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
@@ -212,16 +212,16 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><input aria-label="Toggle navigation of Tutorials" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/single_objective.html">単目的最適化</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/multi_objective.html">多目的最適化</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/constraints.html">制約付き最適化</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/acquisition_functions.html">獲得関数の選択</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/callbacks.html">コールバックによる進捗の監視</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom_components.html">カスタムコンポーネント</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Tutorials</a><input aria-label="Toggle navigation of Tutorials" checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="single_objective.html">単目的最適化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi_objective.html">多目的最適化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraints.html">制約付き最適化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="acquisition_functions.html">獲得関数の選択</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">コールバックによる進捗の監視</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_components.html">カスタムコンポーネント</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="index.html">Examples</a><input aria-label="Toggle navigation of Examples" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="simple">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../examples/index.html">Examples</a><input aria-label="Toggle navigation of Examples" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="simple">
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -345,7 +345,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="../_sources/examples/surrogates.md.txt" title="View this page">
+  <a class="muted-link" href="../_sources/tutorials/callbacks.md.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -358,34 +358,231 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          
+          <section id="id1">
+<h1>コールバックによる進捗の監視<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h1>
+<p>このチュートリアルでは，<code class="docutils literal notranslate"><span class="pre">CallbackManager</span></code> を使って最適化の進捗をログ出力・記録する方法を説明します．</p>
+<section id="id2">
+<h2>デフォルトのログ出力<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> は初期化時に <code class="docutils literal notranslate"><span class="pre">logging_generation</span></code> を <code class="docutils literal notranslate"><span class="pre">GenerationStartEvent</span></code> へ自動登録します．Python の <code class="docutils literal notranslate"><span class="pre">logging</span></code> モジュールを有効にするだけで，世代ごとの情報が出力されます．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">sphere</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">sphere</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">5.0</span><span class="p">]</span><span class="o">*</span><span class="mi">5</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="p">[</span><span class="mf">5.0</span><span class="p">]</span><span class="o">*</span><span class="mi">5</span><span class="p">,</span> <span class="n">max_fe</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>出力例（単目的）：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Generation</span> <span class="mi">1</span> <span class="n">started</span><span class="o">.</span> <span class="n">fe</span><span class="p">:</span> <span class="mf">25.</span> <span class="n">Best</span> <span class="n">f</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.42</span><span class="p">]</span>
+<span class="n">Generation</span> <span class="mi">2</span> <span class="n">started</span><span class="o">.</span> <span class="n">fe</span><span class="p">:</span> <span class="mf">27.</span> <span class="n">Best</span> <span class="n">f</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.31</span><span class="p">]</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>多目的の場合はパレートフロントのサイズと各目的の範囲が出力されます．</p>
+</section>
+<hr class="docutils" />
+<section id="id3">
+<h2>カスタムハンドラの登録<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h2>
+<p>低レベルAPIでは <code class="docutils literal notranslate"><span class="pre">optimizer.cbmanager.register()</span></code> でハンドラを追加できます．ハンドラはイベントオブジェクトを受け取る関数です．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenerationEndEvent</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">my_handler</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n">GenerationEndEvent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">ctx</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">ctx</span>
+    <span class="n">best_f</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;gen=</span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">gen</span><span class="si">}</span><span class="s2">  fe=</span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">fe</span><span class="si">}</span><span class="s2">  best=</span><span class="si">{</span><span class="n">best_f</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">optimizer</span><span class="o">.</span><span class="n">cbmanager</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">GenerationEndEvent</span><span class="p">,</span> <span class="n">my_handler</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="id4">
+<h2>収束履歴の記録<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h2>
+<p>クロージャを使うと，外部のリストへ結果を蓄積できます．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.algorithms.ga</span><span class="w"> </span><span class="kn">import</span> <span class="n">GA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.crossover</span><span class="w"> </span><span class="kn">import</span> <span class="n">CrossoverBLXAlpha</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.mutation</span><span class="w"> </span><span class="kn">import</span> <span class="n">MutationUniform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">SequentialSelection</span><span class="p">,</span> <span class="n">TruncationSelection</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.rbf</span><span class="w"> </span><span class="kn">import</span> <span class="n">RBFsurrogate</span><span class="p">,</span> <span class="n">gaussian_kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalSurrogateManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.mean</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanPrediction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.ib</span><span class="w"> </span><span class="kn">import</span> <span class="n">IndividualBasedStrategy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.initializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">LHSInitializer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">Termination</span><span class="p">,</span> <span class="n">max_fe</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenerationEndEvent</span>
+
+<span class="n">DIM</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">problem</span> <span class="o">=</span> <span class="n">Problem</span><span class="p">(</span>
+    <span class="n">func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span>
+    <span class="n">dim</span><span class="o">=</span><span class="n">DIM</span><span class="p">,</span>
+    <span class="n">n_obj</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">weight</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">]),</span>
+    <span class="n">lb</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">5.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">DIM</span><span class="p">,</span>
+    <span class="n">ub</span><span class="o">=</span><span class="p">[</span> <span class="mf">5.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">DIM</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">record_history</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n">GenerationEndEvent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">ctx</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">ctx</span>
+    <span class="n">best_f</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+    <span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ctx</span><span class="o">.</span><span class="n">fe</span><span class="p">,</span> <span class="n">best_f</span><span class="p">))</span>
+
+<span class="n">optimizer</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_initializer</span><span class="p">(</span><span class="n">LHSInitializer</span><span class="p">(</span><span class="n">n_init_archive</span><span class="o">=</span><span class="mi">5</span><span class="o">*</span><span class="n">DIM</span><span class="p">,</span> <span class="n">n_init_population</span><span class="o">=</span><span class="mi">4</span><span class="o">*</span><span class="n">DIM</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">GA</span><span class="p">(</span>
+        <span class="n">crossover</span><span class="o">=</span><span class="n">CrossoverBLXAlpha</span><span class="p">(</span><span class="n">crossover_rate</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">),</span>
+        <span class="n">mutation</span><span class="o">=</span><span class="n">MutationUniform</span><span class="p">(</span><span class="n">mutation_rate</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
+        <span class="n">parent_selection</span><span class="o">=</span><span class="n">SequentialSelection</span><span class="p">(),</span>
+        <span class="n">survivor_selection</span><span class="o">=</span><span class="n">TruncationSelection</span><span class="p">(),</span>
+    <span class="p">))</span>
+    <span class="o">.</span><span class="n">set_surrogate_manager</span><span class="p">(</span><span class="n">LocalSurrogateManager</span><span class="p">(</span>
+        <span class="n">RBFsurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">DIM</span><span class="p">),</span>
+        <span class="n">MeanPrediction</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">])),</span>
+        <span class="n">n_neighbors</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="p">))</span>
+    <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">IndividualBasedStrategy</span><span class="p">(</span><span class="n">evaluation_ratio</span><span class="o">=</span><span class="mf">0.1</span><span class="p">))</span>
+    <span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">300</span><span class="p">)))</span>
+<span class="p">)</span>
+
+<span class="n">optimizer</span><span class="o">.</span><span class="n">cbmanager</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">GenerationEndEvent</span><span class="p">,</span> <span class="n">record_history</span><span class="p">)</span>
+<span class="n">optimizer</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">fe</span><span class="p">,</span> <span class="n">best</span> <span class="ow">in</span> <span class="n">history</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;fe=</span><span class="si">{</span><span class="n">fe</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2">  best_f=</span><span class="si">{</span><span class="n">best</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="id5">
+<h2>多目的問題: ハイパーボリュームの追跡<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">logging_generation_hv</span></code> はハイパーボリュームを世代ごとにログ出力するファクトリ関数です．基準点（リファレンスポイント）を渡します．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenerationStartEvent</span><span class="p">,</span> <span class="n">logging_generation_hv</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">hv_handler</span> <span class="o">=</span> <span class="n">logging_generation_hv</span><span class="p">(</span><span class="n">reference_point</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">]))</span>
+<span class="n">optimizer</span><span class="o">.</span><span class="n">cbmanager</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">GenerationStartEvent</span><span class="p">,</span> <span class="n">hv_handler</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>出力例：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Generation</span> <span class="mf">1.</span> <span class="n">fe</span><span class="p">:</span> <span class="mf">50.</span> <span class="n">HV</span><span class="p">:</span> <span class="mf">0.312451</span>
+<span class="n">Generation</span> <span class="mf">2.</span> <span class="n">fe</span><span class="p">:</span> <span class="mf">52.</span> <span class="n">HV</span><span class="p">:</span> <span class="mf">0.347820</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>ハイパーボリュームは最小化規約で計算されます．各目的の真の最良値より大きい値を基準点に設定してください．</p>
+</section>
+<hr class="docutils" />
+<section id="id6">
+<h2>デフォルトハンドラの無効化<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">logging_generation</span></code> が不要な場合は <code class="docutils literal notranslate"><span class="pre">unregister</span></code> で除去できます．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">logging_generation</span><span class="p">,</span> <span class="n">GenerationStartEvent</span>
+
+<span class="n">optimizer</span><span class="o">.</span><span class="n">cbmanager</span><span class="o">.</span><span class="n">unregister</span><span class="p">(</span><span class="n">GenerationStartEvent</span><span class="p">,</span> <span class="n">logging_generation</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>既存ハンドラを別のものに置き換えるには <code class="docutils literal notranslate"><span class="pre">replace</span></code> を使います．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">optimizer</span><span class="o">.</span><span class="n">cbmanager</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">GenerationStartEvent</span><span class="p">,</span> <span class="n">logging_generation</span><span class="p">,</span> <span class="n">my_handler</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="iterate">
+<h2><code class="docutils literal notranslate"><span class="pre">iterate()</span></code> との使い分け<a class="headerlink" href="#iterate" title="Link to this heading">¶</a></h2>
+<p>世代ごとの処理は <code class="docutils literal notranslate"><span class="pre">iterate()</span></code> でも書けますが，2 つのアプローチにはそれぞれ適した用途があります．</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>方法</p></th>
+<th class="head"><p>適した用途</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">iterate()</span></code></p></td>
+<td><p>スクリプト内で完結する一時的な処理，早期終了のカスタム条件</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cbmanager</span></code></p></td>
+<td><p>再利用可能なログや記録，複数の Optimizer に共通して使いたい処理</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<hr class="docutils" />
+<section id="id7">
+<h2>利用可能なイベント一覧<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>イベント</p></th>
+<th class="head"><p>発火タイミング</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">RunStartEvent</span></code></p></td>
+<td><p>最適化の開始時（1回）</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">RunEndEvent</span></code></p></td>
+<td><p>最適化の終了時（1回）</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GenerationStartEvent</span></code></p></td>
+<td><p>各世代の開始時</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GenerationEndEvent</span></code></p></td>
+<td><p>各世代の終了時</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PostAskEvent</span></code></p></td>
+<td><p>アルゴリズムが候補を生成した直後</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">PostSurrogateFitEvent</span></code></p></td>
+<td><p>サロゲートのフィット直後</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PostEvaluationEvent</span></code></p></td>
+<td><p>真の関数評価直後</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+
         </article>
       </div>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="custom.html">
+          <a class="next-page" href="custom_components.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">&lt;no title&gt;</div>
+                <div class="title">カスタムコンポーネント</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="algorithms.html">
+          <a class="prev-page" href="acquisition_functions.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">&lt;no title&gt;</div>
+                <div class="title">獲得関数の選択</div>
                 
               </div>
             </a>
@@ -407,8 +604,33 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">コールバックによる進捗の監視</a><ul>
+<li><a class="reference internal" href="#id2">デフォルトのログ出力</a></li>
+<li><a class="reference internal" href="#id3">カスタムハンドラの登録</a></li>
+<li><a class="reference internal" href="#id4">収束履歴の記録</a></li>
+<li><a class="reference internal" href="#id5">多目的問題: ハイパーボリュームの追跡</a></li>
+<li><a class="reference internal" href="#id6">デフォルトハンドラの無効化</a></li>
+<li><a class="reference internal" href="#iterate"><code class="docutils literal notranslate"><span class="pre">iterate()</span></code> との使い分け</a></li>
+<li><a class="reference internal" href="#id7">利用可能なイベント一覧</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>

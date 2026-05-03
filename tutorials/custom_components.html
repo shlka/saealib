@@ -3,11 +3,11 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="制約付き最適化" href="constraints.html"><link rel="prev" title="単目的最適化" href="single_objective.html">
-        <link rel="canonical" href="https://shlka.github.io/saealib/tutorials/multi_objective.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Examples" href="../examples/index.html"><link rel="prev" title="コールバックによる進捗の監視" href="callbacks.html">
+        <link rel="canonical" href="https://shlka.github.io/saealib/tutorials/custom_components.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>多目的最適化 - saealib 0.1.0b1 documentation</title>
+        <title>カスタムコンポーネント - saealib 0.1.0b1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -214,11 +214,11 @@
 </li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Tutorials</a><input aria-label="Toggle navigation of Tutorials" checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="single_objective.html">単目的最適化</a></li>
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">多目的最適化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi_objective.html">多目的最適化</a></li>
 <li class="toctree-l2"><a class="reference internal" href="constraints.html">制約付き最適化</a></li>
 <li class="toctree-l2"><a class="reference internal" href="acquisition_functions.html">獲得関数の選択</a></li>
 <li class="toctree-l2"><a class="reference internal" href="callbacks.html">コールバックによる進捗の監視</a></li>
-<li class="toctree-l2"><a class="reference internal" href="custom_components.html">カスタムコンポーネント</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">カスタムコンポーネント</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../examples/index.html">Examples</a><input aria-label="Toggle navigation of Examples" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="simple">
@@ -345,7 +345,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="../_sources/tutorials/multi_objective.md.txt" title="View this page">
+  <a class="muted-link" href="../_sources/tutorials/custom_components.md.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -364,13 +364,144 @@
         </div>
         <article role="main" id="furo-main-content">
           <section id="id1">
-<h1>多目的最適化<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h1>
-<p>このチュートリアルでは，複数の目的関数を同時に最適化する多目的最適化問題の扱い方を説明します．</p>
+<h1>カスタムコンポーネント<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h1>
+<p>このチュートリアルでは，コールバックによる候補解の書き換えと，<code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code> を継承したカスタム獲得関数の実装方法を説明します．</p>
 <section id="id2">
-<h2>問題設定<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
-<p>多目的最適化では，複数の目的間にトレードオフが存在するため，単一の「最適解」は存在しません．代わりに，どれも他に劣らない<strong>パレートフロント</strong>上の解集合が得られます．</p>
-<p>ここでは ZDT1 問題（最小化，2 目的）を例として使います．</p>
+<h2>コールバックによる候補解の書き換え<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">PostCrossoverEvent</span></code>・<code class="docutils literal notranslate"><span class="pre">PostMutationEvent</span></code>・<code class="docutils literal notranslate"><span class="pre">PostAskEvent</span></code> は，アルゴリズムが候補解を生成した直後に発火します．これらのイベントオブジェクトが持つ <code class="docutils literal notranslate"><span class="pre">candidates</span></code> フィールドを書き換えると，アルゴリズムはその変更後の候補解を使って処理を続けます．</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">PostCrossoverEvent</span></code> と <code class="docutils literal notranslate"><span class="pre">PostMutationEvent</span></code> は GA 固有のイベントです．PSO を使う場合は <code class="docutils literal notranslate"><span class="pre">PostAskEvent</span></code> を使ってください．</p>
+</div>
+<section id="id3">
+<h3>設計変数の一部を固定する<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<p>特定の変数を定数に固定して，低次元の部分空間だけを探索したい場合の例です．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostAskEvent</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">fix_x0</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n">PostAskEvent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">event</span><span class="o">.</span><span class="n">candidates</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># x[0] を常に 0 に固定</span>
+
+<span class="n">optimizer</span><span class="o">.</span><span class="n">cbmanager</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">PostAskEvent</span><span class="p">,</span> <span class="n">fix_x0</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h3>カスタム修復（グリッドへのスナップ）<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<p>設計変数が離散グリッド上に制限される問題では，突然変異後に丸め処理を挟めます．</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostMutationEvent</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">snap_to_grid</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n">PostMutationEvent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">event</span><span class="o">.</span><span class="n">candidates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">candidates</span><span class="p">,</span> <span class="n">decimals</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">optimizer</span><span class="o">.</span><span class="n">cbmanager</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">PostMutationEvent</span><span class="p">,</span> <span class="n">snap_to_grid</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h3>既知の良解を候補に挿入する<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<p>ドメイン知識として良いと分かっている解を毎世代 1 つ混ぜることで，収束を促進できます．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostAskEvent</span>
+
+<span class="n">known_good</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">])</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">inject_known_solution</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n">PostAskEvent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">candidates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">known_good</span>
+
+<span class="n">optimizer</span><span class="o">.</span><span class="n">cbmanager</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">PostAskEvent</span><span class="p">,</span> <span class="n">inject_known_solution</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="id6">
+<h2>カスタム獲得関数の実装<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code> を継承して <code class="docutils literal notranslate"><span class="pre">compute_reference</span></code> と <code class="docutils literal notranslate"><span class="pre">score</span></code> を実装すると，独自の選択基準を定義できます．</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>メソッド</p></th>
+<th class="head"><p>役割</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">compute_reference(archive)</span></code></p></td>
+<td><p>アーカイブから参照値を計算して返す</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">score(prediction,</span> <span class="pre">reference)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code> をスコア（高いほど良い）に変換する</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<section id="id7">
+<h3>実装例: チェビシェフスカラー化<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
+<p>多目的問題でパレートフロントの特定の点（目標トレードオフ）を狙う獲得関数です．<code class="docutils literal notranslate"><span class="pre">MeanPrediction</span></code> の重み付き和とは異なり，各目的の最大乖離を最小化するため，均等なトレードオフが得やすくなります．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurrogatePrediction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ChebyshevScalarization</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    チェビシェフスカラー化による獲得関数（最小化規約）．</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    weights : np.ndarray</span>
+<span class="sd">        各目的の重み（正値）．shape: (n_obj,)</span>
+<span class="sd">    target : np.ndarray or None</span>
+<span class="sd">        目標目的値．None のとき，アーカイブの理想点（各目的の最小値）を使用．</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">target</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span>
+        <span class="k">return</span> <span class="n">archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># 理想点</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prediction</span><span class="p">:</span> <span class="n">SurrogatePrediction</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="c1"># weighted Chebyshev distance: max_i{ w_i * (mu_i - z_i) }</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">mean</span> <span class="o">-</span> <span class="n">reference</span>      <span class="c1"># (n_samples, n_obj)</span>
+        <span class="n">weighted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">*</span> <span class="n">diff</span>          <span class="c1"># (n_samples, n_obj)</span>
+        <span class="c1"># 最大乖離が小さい候補ほど良い → 符号反転でスコア化</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">weighted</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>        <span class="c1"># (n_samples,)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code> と組み合わせて使います：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalSurrogateManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.rbf</span><span class="w"> </span><span class="kn">import</span> <span class="n">RBFsurrogate</span><span class="p">,</span> <span class="n">gaussian_kernel</span>
+
+<span class="n">DIM</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">N_OBJ</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="n">acquisition</span> <span class="o">=</span> <span class="n">ChebyshevScalarization</span><span class="p">(</span>
+    <span class="n">weights</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]),</span>   <span class="c1"># 均等な重み</span>
+    <span class="n">target</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span>    <span class="c1"># 理想点を目標に（Noneにするとアーカイブから自動計算）</span>
+<span class="p">)</span>
+
+<span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">LocalSurrogateManager</span><span class="p">(</span>
+    <span class="n">RBFsurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">DIM</span><span class="p">),</span>
+    <span class="n">acquisition</span><span class="p">,</span>
+    <span class="n">n_neighbors</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>あとは通常の低レベル API と同様に <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> に渡します：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.algorithms.ga</span><span class="w"> </span><span class="kn">import</span> <span class="n">GA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.crossover</span><span class="w"> </span><span class="kn">import</span> <span class="n">CrossoverBLXAlpha</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.mutation</span><span class="w"> </span><span class="kn">import</span> <span class="n">MutationUniform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">SequentialSelection</span><span class="p">,</span> <span class="n">TruncationSelection</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.ib</span><span class="w"> </span><span class="kn">import</span> <span class="n">IndividualBasedStrategy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.initializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">LHSInitializer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">Termination</span><span class="p">,</span> <span class="n">max_fe</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.comparators</span><span class="w"> </span><span class="kn">import</span> <span class="n">non_dominated_sort</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">zdt1</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="n">f1</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -378,177 +509,37 @@
     <span class="n">f2</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">f1</span> <span class="o">/</span> <span class="n">g</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">f1</span><span class="p">,</span> <span class="n">f2</span><span class="p">])</span>
 
-<span class="n">DIM</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="n">LB</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">DIM</span>
-<span class="n">UB</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">DIM</span>
-</pre></div>
-</div>
-</section>
-<hr class="docutils" />
-<section id="api-minimize">
-<h2>高レベルAPI: <code class="docutils literal notranslate"><span class="pre">minimize</span></code><a class="headerlink" href="#api-minimize" title="Link to this heading">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">n_obj</span></code> に目的数を指定します．それ以外の呼び出し方は単目的と同じです．</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
-
-<span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">zdt1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">DIM</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="n">LB</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">UB</span><span class="p">,</span> <span class="n">n_obj</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_fe</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-</pre></div>
-</div>
-<section id="id3">
-<h3>結果の読み方<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
-<p>多目的の場合，<code class="docutils literal notranslate"><span class="pre">result.X</span></code> と <code class="docutils literal notranslate"><span class="pre">result.F</span></code> はパレートフロント上の解集合になります．</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># (n_pareto, dim)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">F</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># (n_pareto, n_obj)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">fe</span><span class="p">)</span>       <span class="c1"># 真の関数評価回数</span>
-</pre></div>
-</div>
-<p>パレートフロント上の解を目的空間で確認します．</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">f1_vals</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">F</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
-<span class="n">f2_vals</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">F</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
-
-<span class="k">for</span> <span class="n">f1</span><span class="p">,</span> <span class="n">f2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">f1_vals</span><span class="p">,</span> <span class="n">f2_vals</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;f1=</span><span class="si">{</span><span class="n">f1</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">  f2=</span><span class="si">{</span><span class="n">f2</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-</section>
-<hr class="docutils" />
-<section id="id4">
-<h2>アルゴリズムと戦略の選択<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h2>
-<p>単目的と同様に <code class="docutils literal notranslate"><span class="pre">algorithm</span></code> と <code class="docutils literal notranslate"><span class="pre">strategy</span></code> を切り替えられます．</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># PSO + Pre-selection 戦略</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span>
-    <span class="n">zdt1</span><span class="p">,</span>
-    <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;PSO&#39;</span><span class="p">,</span>
-    <span class="n">dim</span><span class="o">=</span><span class="n">DIM</span><span class="p">,</span>
-    <span class="n">lb</span><span class="o">=</span><span class="n">LB</span><span class="p">,</span>
-    <span class="n">ub</span><span class="o">=</span><span class="n">UB</span><span class="p">,</span>
-    <span class="n">n_obj</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-    <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;ps&#39;</span><span class="p">,</span>
-    <span class="n">max_fe</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
-    <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<hr class="docutils" />
-<section id="api-optimizer">
-<h2>低レベルAPI: <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code><a class="headerlink" href="#api-optimizer" title="Link to this heading">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">Problem</span></code> の <code class="docutils literal notranslate"><span class="pre">weight</span></code> に各目的の符号を指定します．最小化なら <code class="docutils literal notranslate"><span class="pre">-1.0</span></code>，最大化なら <code class="docutils literal notranslate"><span class="pre">1.0</span></code> です．</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.algorithms.ga</span><span class="w"> </span><span class="kn">import</span> <span class="n">GA</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.crossover</span><span class="w"> </span><span class="kn">import</span> <span class="n">CrossoverBLXAlpha</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.mutation</span><span class="w"> </span><span class="kn">import</span> <span class="n">MutationUniform</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">SequentialSelection</span><span class="p">,</span> <span class="n">TruncationSelection</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.rbf</span><span class="w"> </span><span class="kn">import</span> <span class="n">RBFsurrogate</span><span class="p">,</span> <span class="n">gaussian_kernel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalSurrogateManager</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.mean</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanPrediction</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.ib</span><span class="w"> </span><span class="kn">import</span> <span class="n">IndividualBasedStrategy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.initializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">LHSInitializer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">Termination</span><span class="p">,</span> <span class="n">max_fe</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.comparators</span><span class="w"> </span><span class="kn">import</span> <span class="n">non_dominated_sort</span>
-
-<span class="n">N_OBJ</span> <span class="o">=</span> <span class="mi">2</span>
 <span class="n">problem</span> <span class="o">=</span> <span class="n">Problem</span><span class="p">(</span>
     <span class="n">func</span><span class="o">=</span><span class="n">zdt1</span><span class="p">,</span>
     <span class="n">dim</span><span class="o">=</span><span class="n">DIM</span><span class="p">,</span>
     <span class="n">n_obj</span><span class="o">=</span><span class="n">N_OBJ</span><span class="p">,</span>
-    <span class="n">weight</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">]),</span>  <span class="c1"># 両目的を最小化</span>
-    <span class="n">lb</span><span class="o">=</span><span class="n">LB</span><span class="p">,</span>
-    <span class="n">ub</span><span class="o">=</span><span class="n">UB</span><span class="p">,</span>
+    <span class="n">weight</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">]),</span>
+    <span class="n">lb</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">DIM</span><span class="p">,</span>
+    <span class="n">ub</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">DIM</span><span class="p">,</span>
 <span class="p">)</span>
-
-<span class="n">algorithm</span> <span class="o">=</span> <span class="n">GA</span><span class="p">(</span>
-    <span class="n">crossover</span><span class="o">=</span><span class="n">CrossoverBLXAlpha</span><span class="p">(</span><span class="n">crossover_rate</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">),</span>
-    <span class="n">mutation</span><span class="o">=</span><span class="n">MutationUniform</span><span class="p">(</span><span class="n">mutation_rate</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
-    <span class="n">parent_selection</span><span class="o">=</span><span class="n">SequentialSelection</span><span class="p">(),</span>
-    <span class="n">survivor_selection</span><span class="o">=</span><span class="n">TruncationSelection</span><span class="p">(),</span>
-<span class="p">)</span>
-
-<span class="n">surrogate</span> <span class="o">=</span> <span class="n">RBFsurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">DIM</span><span class="p">)</span>
-<span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">LocalSurrogateManager</span><span class="p">(</span>
-    <span class="n">surrogate</span><span class="p">,</span>
-    <span class="n">MeanPrediction</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">])),</span>
-    <span class="n">n_neighbors</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="n">strategy</span> <span class="o">=</span> <span class="n">IndividualBasedStrategy</span><span class="p">(</span><span class="n">evaluation_ratio</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
-
-<span class="n">initializer</span> <span class="o">=</span> <span class="n">LHSInitializer</span><span class="p">(</span>
-    <span class="n">n_init_archive</span><span class="o">=</span><span class="mi">5</span> <span class="o">*</span> <span class="n">DIM</span><span class="p">,</span>
-    <span class="n">n_init_population</span><span class="o">=</span><span class="mi">4</span> <span class="o">*</span> <span class="n">DIM</span><span class="p">,</span>
-    <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="n">termination</span> <span class="o">=</span> <span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">500</span><span class="p">))</span>
 
 <span class="n">ctx</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">set_initializer</span><span class="p">(</span><span class="n">initializer</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_initializer</span><span class="p">(</span><span class="n">LHSInitializer</span><span class="p">(</span><span class="n">n_init_archive</span><span class="o">=</span><span class="mi">5</span><span class="o">*</span><span class="n">DIM</span><span class="p">,</span> <span class="n">n_init_population</span><span class="o">=</span><span class="mi">4</span><span class="o">*</span><span class="n">DIM</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">GA</span><span class="p">(</span>
+        <span class="n">crossover</span><span class="o">=</span><span class="n">CrossoverBLXAlpha</span><span class="p">(</span><span class="n">crossover_rate</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">),</span>
+        <span class="n">mutation</span><span class="o">=</span><span class="n">MutationUniform</span><span class="p">(</span><span class="n">mutation_rate</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
+        <span class="n">parent_selection</span><span class="o">=</span><span class="n">SequentialSelection</span><span class="p">(),</span>
+        <span class="n">survivor_selection</span><span class="o">=</span><span class="n">TruncationSelection</span><span class="p">(),</span>
+    <span class="p">))</span>
     <span class="o">.</span><span class="n">set_surrogate_manager</span><span class="p">(</span><span class="n">surrogate_manager</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">strategy</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">termination</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">IndividualBasedStrategy</span><span class="p">(</span><span class="n">evaluation_ratio</span><span class="o">=</span><span class="mf">0.1</span><span class="p">))</span>
+    <span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">500</span><span class="p">)))</span>
     <span class="o">.</span><span class="n">run</span><span class="p">()</span>
 <span class="p">)</span>
-</pre></div>
-</div>
-<section id="id5">
-<h3>パレートフロントの抽出<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">non_dominated_sort</span></code> でアーカイブからパレートフロントを取り出します．</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">archive_x</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
+
 <span class="n">archive_f</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
-
 <span class="n">_</span><span class="p">,</span> <span class="n">fronts</span> <span class="o">=</span> <span class="n">non_dominated_sort</span><span class="p">(</span><span class="n">archive_f</span><span class="p">)</span>
-<span class="n">pareto_idx</span> <span class="o">=</span> <span class="n">fronts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
-<span class="n">pareto_x</span> <span class="o">=</span> <span class="n">archive_x</span><span class="p">[</span><span class="n">pareto_idx</span><span class="p">]</span>
-<span class="n">pareto_f</span> <span class="o">=</span> <span class="n">archive_f</span><span class="p">[</span><span class="n">pareto_idx</span><span class="p">]</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;パレートフロント上の解数: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pareto_idx</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;pareto_x.shape: </span><span class="si">{</span><span class="n">pareto_x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># (n_pareto, dim)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;pareto_f.shape: </span><span class="si">{</span><span class="n">pareto_f</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># (n_pareto, n_obj)</span>
+<span class="n">pareto_f</span> <span class="o">=</span> <span class="n">archive_f</span><span class="p">[</span><span class="n">fronts</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;パレートフロント上の解数: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">fronts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
-</section>
-<hr class="docutils" />
-<section id="ensemblesurrogatemanager">
-<h2><code class="docutils literal notranslate"><span class="pre">EnsembleSurrogateManager</span></code> を使う<a class="headerlink" href="#ensemblesurrogatemanager" title="Link to this heading">¶</a></h2>
-<p>多目的問題では，目的ごとに異なるサロゲートを用意して <code class="docutils literal notranslate"><span class="pre">EnsembleSurrogateManager</span></code> で組み合わせることができます．各サブマネージャーのスコアはランク正規化されたうえで加重平均されます．</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalSurrogateManager</span><span class="p">,</span> <span class="n">EnsembleSurrogateManager</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.mean</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanPrediction</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.rbf</span><span class="w"> </span><span class="kn">import</span> <span class="n">RBFsurrogate</span><span class="p">,</span> <span class="n">gaussian_kernel</span>
-
-<span class="n">manager_f1</span> <span class="o">=</span> <span class="n">LocalSurrogateManager</span><span class="p">(</span>
-    <span class="n">RBFsurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">DIM</span><span class="p">),</span>
-    <span class="n">MeanPrediction</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])),</span>  <span class="c1"># f1 のみを対象</span>
-    <span class="n">n_neighbors</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">manager_f2</span> <span class="o">=</span> <span class="n">LocalSurrogateManager</span><span class="p">(</span>
-    <span class="n">RBFsurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">DIM</span><span class="p">),</span>
-    <span class="n">MeanPrediction</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">])),</span>  <span class="c1"># f2 のみを対象</span>
-    <span class="n">n_neighbors</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="n">ensemble_manager</span> <span class="o">=</span> <span class="n">EnsembleSurrogateManager</span><span class="p">(</span>
-    <span class="n">managers</span><span class="o">=</span><span class="p">[</span><span class="n">manager_f1</span><span class="p">,</span> <span class="n">manager_f2</span><span class="p">],</span>
-    <span class="n">weights</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]),</span>  <span class="c1"># 均等に重み付け</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ctx</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">set_initializer</span><span class="p">(</span><span class="n">initializer</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">set_surrogate_manager</span><span class="p">(</span><span class="n">ensemble_manager</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">strategy</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">termination</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">run</span><span class="p">()</span>
-<span class="p">)</span>
-</pre></div>
-</div>
 </section>
 </section>
 
@@ -557,23 +548,23 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="constraints.html">
+          <a class="next-page" href="../examples/index.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">制約付き最適化</div>
+                <div class="title">Examples</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="single_objective.html">
+          <a class="prev-page" href="callbacks.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">単目的最適化</div>
+                <div class="title">コールバックによる進捗の監視</div>
                 
               </div>
             </a>
@@ -607,18 +598,17 @@
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">多目的最適化</a><ul>
-<li><a class="reference internal" href="#id2">問題設定</a></li>
-<li><a class="reference internal" href="#api-minimize">高レベルAPI: <code class="docutils literal notranslate"><span class="pre">minimize</span></code></a><ul>
-<li><a class="reference internal" href="#id3">結果の読み方</a></li>
+<li><a class="reference internal" href="#">カスタムコンポーネント</a><ul>
+<li><a class="reference internal" href="#id2">コールバックによる候補解の書き換え</a><ul>
+<li><a class="reference internal" href="#id3">設計変数の一部を固定する</a></li>
+<li><a class="reference internal" href="#id4">カスタム修復（グリッドへのスナップ）</a></li>
+<li><a class="reference internal" href="#id5">既知の良解を候補に挿入する</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#id4">アルゴリズムと戦略の選択</a></li>
-<li><a class="reference internal" href="#api-optimizer">低レベルAPI: <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code></a><ul>
-<li><a class="reference internal" href="#id5">パレートフロントの抽出</a></li>
+<li><a class="reference internal" href="#id6">カスタム獲得関数の実装</a><ul>
+<li><a class="reference internal" href="#id7">実装例: チェビシェフスカラー化</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#ensemblesurrogatemanager"><code class="docutils literal notranslate"><span class="pre">EnsembleSurrogateManager</span></code> を使う</a></li>
 </ul>
 </li>
 </ul>

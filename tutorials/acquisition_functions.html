@@ -3,11 +3,11 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="&lt;no title&gt;" href="architecture.html"><link rel="prev" title="Quickstart" href="../getting_started/quickstart.html">
-        <link rel="canonical" href="https://shlka.github.io/saealib/user_guide/index.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="コールバックによる進捗の監視" href="callbacks.html"><link rel="prev" title="制約付き最適化" href="constraints.html">
+        <link rel="canonical" href="https://shlka.github.io/saealib/tutorials/acquisition_functions.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>User Guide - saealib 0.1.0b1 documentation</title>
+        <title>獲得関数の選択 - saealib 0.1.0b1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -206,19 +206,19 @@
 <li class="toctree-l2"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current has-children current-page"><a class="current reference internal" href="#">User Guide</a><input aria-label="Toggle navigation of User Guide" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2 has-children"><a class="reference internal" href="components/index.html">Components</a><input aria-label="Toggle navigation of Components" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="simple">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../user_guide/components/index.html">Components</a><input aria-label="Toggle navigation of Components" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="simple">
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><input aria-label="Toggle navigation of Tutorials" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/single_objective.html">単目的最適化</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/multi_objective.html">多目的最適化</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/constraints.html">制約付き最適化</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/acquisition_functions.html">獲得関数の選択</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/callbacks.html">コールバックによる進捗の監視</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom_components.html">カスタムコンポーネント</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Tutorials</a><input aria-label="Toggle navigation of Tutorials" checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="single_objective.html">単目的最適化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi_objective.html">多目的最適化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraints.html">制約付き最適化</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">獲得関数の選択</a></li>
+<li class="toctree-l2"><a class="reference internal" href="callbacks.html">コールバックによる進捗の監視</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_components.html">カスタムコンポーネント</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../examples/index.html">Examples</a><input aria-label="Toggle navigation of Examples" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="simple">
@@ -345,7 +345,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="../_sources/user_guide/index.md.txt" title="View this page">
+  <a class="muted-link" href="../_sources/tutorials/acquisition_functions.md.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -363,14 +363,11 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="user-guide">
-<h1>User Guide<a class="headerlink" href="#user-guide" title="Link to this heading">¶</a></h1>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="components/index.html">Components</a><ul class="simple">
-</ul>
-</li>
-</ul>
+          <section id="id1">
+<h1>獲得関数の選択<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>このページは現在作成中です．不確実性推定を提供するサロゲートモデルの実装が完了次第，追記します．</p>
 </div>
 </section>
 
@@ -379,23 +376,23 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="architecture.html">
+          <a class="next-page" href="callbacks.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">&lt;no title&gt;</div>
+                <div class="title">コールバックによる進捗の監視</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="../getting_started/quickstart.html">
+          <a class="prev-page" href="constraints.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Quickstart</div>
+                <div class="title">制約付き最適化</div>
                 
               </div>
             </a>
