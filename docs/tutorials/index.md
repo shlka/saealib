@@ -7,4 +7,5 @@
 
 single_objective
 multi_objective
+constraints
 ```
