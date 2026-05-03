@@ -3,11 +3,11 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="User Guide" href="../user_guide/index.html"><link rel="prev" title="Installation" href="installation.html">
-        <link rel="canonical" href="https://shlka.github.io/saealib/getting_started/quickstart.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Examples" href="../examples/index.html"><link rel="prev" title="多目的最適化" href="multi_objective.html">
+        <link rel="canonical" href="https://shlka.github.io/saealib/tutorials/constraints.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>Quickstart - saealib 0.1.0b1 documentation</title>
+        <title>制約付き最適化 - saealib 0.1.0b1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -200,10 +200,10 @@
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
-<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Getting Started</a><input aria-label="Toggle navigation of Getting Started" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="what_is_saealib.html">What is saealib</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Quickstart</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting_started/index.html">Getting Started</a><input aria-label="Toggle navigation of Getting Started" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/what_is_saealib.html">What is saealib</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -212,10 +212,10 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><input aria-label="Toggle navigation of Tutorials" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/single_objective.html">単目的最適化</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/multi_objective.html">多目的最適化</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/constraints.html">制約付き最適化</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Tutorials</a><input aria-label="Toggle navigation of Tutorials" checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="single_objective.html">単目的最適化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi_objective.html">多目的最適化</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">制約付き最適化</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../examples/index.html">Examples</a><input aria-label="Toggle navigation of Examples" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="simple">
@@ -342,7 +342,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="../_sources/getting_started/quickstart.md.txt" title="View this page">
+  <a class="muted-link" href="../_sources/tutorials/constraints.md.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -360,80 +360,180 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="quickstart">
-<h1>Quickstart<a class="headerlink" href="#quickstart" title="Link to this heading">¶</a></h1>
-<section id="id1">
-<h2>最初の最適化を実行する<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">saealib</span></code> では，目的関数・変数の次元・探索範囲を指定するだけで最適化を実行できます．</p>
-<div class="sd-tab-set docutils">
-<input checked="checked" id="sd-tab-item-0" name="sd-tab-set-0" type="radio">
-<label class="sd-tab-label" for="sd-tab-item-0">
-minimize</label><div class="sd-tab-content docutils">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
+          <section id="id1">
+<h1>制約付き最適化<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h1>
+<p>このチュートリアルでは，設計変数に不等式制約がある問題の扱い方を説明します．</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>今後制約処理の方法は強化する予定です．インターフェースの変更は未定ですが，変更される可能性があることに留意してください．</p>
+</div>
+<section id="id2">
+<h2>制約の定義<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">saealib</span></code> の制約は <strong>不等式制約</strong> <code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">&lt;=</span> <span class="pre">threshold</span></code> の形式で表現します．<code class="docutils literal notranslate"><span class="pre">Constraint</span></code> クラスを使って定義します．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constraint</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">sphere</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="c1"># g(x) = x[0]^2 + x[1]^2 - 1 &lt;= 0  (原点からの距離が 1 以内)</span>
+<span class="n">c1</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+
+<span class="c1"># g(x) &lt;= threshold を明示する場合</span>
+<span class="c1"># g(x) = x[0] - 0.5 &lt;= 0</span>
+<span class="n">c2</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Constraint</span></code> は <code class="docutils literal notranslate"><span class="pre">violation(x)</span></code> で違反量（<code class="docutils literal notranslate"><span class="pre">max(0,</span> <span class="pre">g(x)</span> <span class="pre">-</span> <span class="pre">threshold)</span></code>）を返します．制約を満たしていれば <code class="docutils literal notranslate"><span class="pre">0.0</span></code> になります．</p>
+</section>
+<hr class="docutils" />
+<section id="problem">
+<h2><code class="docutils literal notranslate"><span class="pre">Problem</span></code> への制約の組み込み<a class="headerlink" href="#problem" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">constraints</span></code> 引数にリストで渡します．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span><span class="p">,</span> <span class="n">Constraint</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">objective</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
 
-<span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">sphere</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">]</span> <span class="o">*</span> <span class="mi">5</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">*</span> <span class="mi">5</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="c1"># x[0]^2 + x[1]^2 &lt;= 1 の制約</span>
+<span class="n">c1</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+
+<span class="n">problem</span> <span class="o">=</span> <span class="n">Problem</span><span class="p">(</span>
+    <span class="n">func</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+    <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">n_obj</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">weight</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">]),</span>
+    <span class="n">lb</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">],</span>
+    <span class="n">ub</span><span class="o">=</span><span class="p">[</span> <span class="mf">2.0</span><span class="p">,</span>  <span class="mf">2.0</span><span class="p">],</span>
+    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">c1</span><span class="p">],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="minimize">
+<h2><code class="docutils literal notranslate"><span class="pre">minimize</span></code> で制約付き問題を解く<a class="headerlink" href="#minimize" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Problem</span></code> インスタンスを <code class="docutils literal notranslate"><span class="pre">minimize</span></code> の第一引数として直接渡します．<code class="docutils literal notranslate"><span class="pre">dim</span></code>, <code class="docutils literal notranslate"><span class="pre">lb</span></code>, <code class="docutils literal notranslate"><span class="pre">ub</span></code> は <code class="docutils literal notranslate"><span class="pre">Problem</span></code> から取得されるため省略します．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">max_fe</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">X</span><span class="p">)</span>   <span class="c1"># 最適解の設計変数</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">F</span><span class="p">)</span>   <span class="c1"># 最適解の目的関数値</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">fe</span><span class="p">)</span>  <span class="c1"># 真の関数評価回数</span>
 </pre></div>
 </div>
-</div>
-<input id="sd-tab-item-1" name="sd-tab-set-0" type="radio">
-<label class="sd-tab-label" for="sd-tab-item-1">
-maximize</label><div class="sd-tab-content docutils">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">maximize</span>
+<p>制約が複数ある場合もリストに追加するだけです．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">c1</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>   <span class="c1"># x[0]^2 + x[1]^2 &lt;= 1</span>
+<span class="n">c2</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>                       <span class="c1"># x[0] &gt;= 0</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">neg_sphere</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">10</span>
+<span class="n">problem</span> <span class="o">=</span> <span class="n">Problem</span><span class="p">(</span>
+    <span class="n">func</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+    <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">n_obj</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">weight</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">]),</span>
+    <span class="n">lb</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">],</span>
+    <span class="n">ub</span><span class="o">=</span><span class="p">[</span> <span class="mf">2.0</span><span class="p">,</span>  <span class="mf">2.0</span><span class="p">],</span>
+    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">],</span>
+<span class="p">)</span>
 
-<span class="n">result</span> <span class="o">=</span> <span class="n">maximize</span><span class="p">(</span><span class="n">neg_sphere</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">]</span> <span class="o">*</span> <span class="mi">5</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">*</span> <span class="mi">5</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">X</span><span class="p">)</span>   <span class="c1"># 最適解の設計変数</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">F</span><span class="p">)</span>   <span class="c1"># 最適解の目的関数値</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">fe</span><span class="p">)</span>  <span class="c1"># 真の関数評価回数</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">max_fe</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-</div>
 </section>
-<section id="id2">
-<h2>結果の読み方<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
-<div class="table-wrapper colwidths-auto docutils container">
-<table class="docutils align-default">
-<thead>
-<tr class="row-odd"><th class="head"><p>属性</p></th>
-<th class="head"><p>説明</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">result.X</span></code></p></td>
-<td><p>最適解の設計変数．形状 <code class="docutils literal notranslate"><span class="pre">(dim,)</span></code></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">result.F</span></code></p></td>
-<td><p>最適解の目的関数値．形状 <code class="docutils literal notranslate"><span class="pre">(n_obj,)</span></code></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">result.fe</span></code></p></td>
-<td><p>最適化に使用した真の関数評価回数</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">result.gen</span></code></p></td>
-<td><p>完了した世代数</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
+<hr class="docutils" />
 <section id="id3">
-<h2>次のステップ<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h2>
+<h2>不等式制約以外の表現方法<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Constraint</span></code> は <code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">&lt;=</span> <span class="pre">threshold</span></code> のみをサポートしていますが，以下の変換で他の制約形式も扱えます．</p>
+<section id="id4">
+<h3><code class="docutils literal notranslate"><span class="pre">&gt;=</span></code> 制約（下界制約）<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">&gt;=</span> <span class="pre">c</span></code> は両辺を符号反転して <code class="docutils literal notranslate"><span class="pre">−g(x)</span> <span class="pre">&lt;=</span> <span class="pre">−c</span></code> に変換します．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># x[0] &gt;= 0.5  →  -x[0] &lt;= -0.5</span>
+<span class="n">c_ge</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">threshold</span><span class="o">=-</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h3>等式制約<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">==</span> <span class="pre">c</span></code> は <strong>2 つの不等式制約</strong> に分解します．</p>
 <ul class="simple">
-<li><p><strong>チュートリアル</strong> — アルゴリズムやサロゲートモデルのカスタマイズ方法を学ぶ</p></li>
-<li><p><strong>API リファレンス</strong> — <code class="docutils literal notranslate"><span class="pre">minimize</span></code> / <code class="docutils literal notranslate"><span class="pre">maximize</span></code> の全パラメータを確認する</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">&lt;=</span> <span class="pre">c</span> <span class="pre">+</span> <span class="pre">ε</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">−g(x)</span> <span class="pre">&lt;=</span> <span class="pre">−c</span> <span class="pre">+</span> <span class="pre">ε</span></code>（すなわち <code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">&gt;=</span> <span class="pre">c</span> <span class="pre">−</span> <span class="pre">ε</span></code>）</p></li>
 </ul>
+<p>ε は許容誤差で，問題スケールに合わせて設定します．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># x[0] + x[1] == 1.0  (許容誤差 ε = 1e-3)</span>
+<span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-3</span>
+<span class="n">c_eq_upper</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span>  <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>  <span class="n">threshold</span><span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span>
+<span class="n">c_eq_lower</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>  <span class="n">threshold</span><span class="o">=-</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span>
+
+<span class="n">problem</span> <span class="o">=</span> <span class="n">Problem</span><span class="p">(</span>
+    <span class="n">func</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+    <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">n_obj</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">weight</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">]),</span>
+    <span class="n">lb</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">],</span>
+    <span class="n">ub</span><span class="o">=</span><span class="p">[</span> <span class="mf">2.0</span><span class="p">,</span>  <span class="mf">2.0</span><span class="p">],</span>
+    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">c_eq_upper</span><span class="p">,</span> <span class="n">c_eq_lower</span><span class="p">],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>注意</strong>: 等式制約の実行可能領域は <code class="docutils literal notranslate"><span class="pre">2ε</span></code> 幅の細い帯状領域になります．ε が小さいほど SAEA が偶然その帯を踏む確率が低くなり，実行可能解を見つけるために必要な関数評価回数が急増します．不等式制約（<code class="docutils literal notranslate"><span class="pre">&lt;=</span></code>, <code class="docutils literal notranslate"><span class="pre">&gt;=</span></code>）と比べて探索が格段に難しいため，<code class="docutils literal notranslate"><span class="pre">archive.get_array(&quot;cv&quot;)</span></code> で実行可能解の数を確認しながら ε や <code class="docutils literal notranslate"><span class="pre">max_fe</span></code> を調整してください．</p>
+</div></blockquote>
+</section>
+</section>
+<hr class="docutils" />
+<section id="id6">
+<h2>制約違反量の確認<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h2>
+<p>アーカイブには各解の制約違反量（<code class="docutils literal notranslate"><span class="pre">cv</span></code>）が記録されています．<code class="docutils literal notranslate"><span class="pre">cv</span> <span class="pre">==</span> <span class="pre">0.0</span></code> の解が制約を満たしている解です．</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.initializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">LHSInitializer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">Termination</span><span class="p">,</span> <span class="n">max_fe</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.algorithms.ga</span><span class="w"> </span><span class="kn">import</span> <span class="n">GA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.crossover</span><span class="w"> </span><span class="kn">import</span> <span class="n">CrossoverBLXAlpha</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.mutation</span><span class="w"> </span><span class="kn">import</span> <span class="n">MutationUniform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">SequentialSelection</span><span class="p">,</span> <span class="n">TruncationSelection</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.rbf</span><span class="w"> </span><span class="kn">import</span> <span class="n">RBFsurrogate</span><span class="p">,</span> <span class="n">gaussian_kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalSurrogateManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.mean</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanPrediction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.ib</span><span class="w"> </span><span class="kn">import</span> <span class="n">IndividualBasedStrategy</span>
+
+<span class="n">algorithm</span> <span class="o">=</span> <span class="n">GA</span><span class="p">(</span>
+    <span class="n">crossover</span><span class="o">=</span><span class="n">CrossoverBLXAlpha</span><span class="p">(</span><span class="n">crossover_rate</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">),</span>
+    <span class="n">mutation</span><span class="o">=</span><span class="n">MutationUniform</span><span class="p">(</span><span class="n">mutation_rate</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
+    <span class="n">parent_selection</span><span class="o">=</span><span class="n">SequentialSelection</span><span class="p">(),</span>
+    <span class="n">survivor_selection</span><span class="o">=</span><span class="n">TruncationSelection</span><span class="p">(),</span>
+<span class="p">)</span>
+
+<span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">LocalSurrogateManager</span><span class="p">(</span>
+    <span class="n">RBFsurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="n">MeanPrediction</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">])),</span>
+    <span class="n">n_neighbors</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">ctx</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_initializer</span><span class="p">(</span><span class="n">LHSInitializer</span><span class="p">(</span><span class="n">n_init_archive</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">n_init_population</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_surrogate_manager</span><span class="p">(</span><span class="n">surrogate_manager</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">IndividualBasedStrategy</span><span class="p">(</span><span class="n">evaluation_ratio</span><span class="o">=</span><span class="mf">0.1</span><span class="p">))</span>
+    <span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">300</span><span class="p">)))</span>
+    <span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="p">)</span>
+
+<span class="n">archive_x</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
+<span class="n">archive_f</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
+<span class="n">archive_cv</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;cv&quot;</span><span class="p">)</span>
+
+<span class="c1"># 制約を満たす解だけを抽出</span>
+<span class="n">feasible_mask</span> <span class="o">=</span> <span class="n">archive_cv</span> <span class="o">==</span> <span class="mf">0.0</span>
+<span class="n">feasible_x</span> <span class="o">=</span> <span class="n">archive_x</span><span class="p">[</span><span class="n">feasible_mask</span><span class="p">]</span>
+<span class="n">feasible_f</span> <span class="o">=</span> <span class="n">archive_f</span><span class="p">[</span><span class="n">feasible_mask</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;実行可能解の数: </span><span class="si">{</span><span class="n">feasible_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">archive_cv</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">feasible_f</span><span class="p">):</span>
+    <span class="n">best_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">feasible_f</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;最適解 (制約満足): </span><span class="si">{</span><span class="n">feasible_x</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;目的値:           </span><span class="si">{</span><span class="n">feasible_f</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 </section>
 
@@ -442,23 +542,23 @@ maximize</label><div class="sd-tab-content docutils">
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="../user_guide/index.html">
+          <a class="next-page" href="../examples/index.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">User Guide</div>
+                <div class="title">Examples</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="installation.html">
+          <a class="prev-page" href="multi_objective.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Installation</div>
+                <div class="title">多目的最適化</div>
                 
               </div>
             </a>
@@ -492,10 +592,16 @@ maximize</label><div class="sd-tab-content docutils">
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Quickstart</a><ul>
-<li><a class="reference internal" href="#id1">最初の最適化を実行する</a></li>
-<li><a class="reference internal" href="#id2">結果の読み方</a></li>
-<li><a class="reference internal" href="#id3">次のステップ</a></li>
+<li><a class="reference internal" href="#">制約付き最適化</a><ul>
+<li><a class="reference internal" href="#id2">制約の定義</a></li>
+<li><a class="reference internal" href="#problem"><code class="docutils literal notranslate"><span class="pre">Problem</span></code> への制約の組み込み</a></li>
+<li><a class="reference internal" href="#minimize"><code class="docutils literal notranslate"><span class="pre">minimize</span></code> で制約付き問題を解く</a></li>
+<li><a class="reference internal" href="#id3">不等式制約以外の表現方法</a><ul>
+<li><a class="reference internal" href="#id4"><code class="docutils literal notranslate"><span class="pre">&gt;=</span></code> 制約（下界制約）</a></li>
+<li><a class="reference internal" href="#id5">等式制約</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id6">制約違反量の確認</a></li>
 </ul>
 </li>
 </ul>
