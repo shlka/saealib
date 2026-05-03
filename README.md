@@ -22,26 +22,42 @@ https://shlka.github.io/saealib/index.html
 
 ## Installation
 
-Since the package is in active development, it is recommended to install from the source.
-
 ### Requirements
 - Python >= 3.10
 - numpy
 - scipy
 
-### Install via uv (Recommended)
-
-This project uses [uv](https://github.com/astral-sh/uv) for dependency management.
+### Install via pip
 
 ```bash
-# Install dependencies
-uv sync
-
-# Run active environment
-uv run <command>
+pip install saealib
 ```
 
-### Install via pip
+To install the latest beta release explicitly:
+
+```bash
+pip install saealib==0.1.0b1
+```
+
+Or to install the latest pre-release version:
+
+```bash
+pip install --pre saealib
+```
+
+### Install via uv
+
+```bash
+uv add saealib
+```
+
+To install the latest beta release explicitly:
+
+```bash
+uv add saealib==0.1.0b1
+```
+
+### Install from source
 
 ```bash
 git clone https://github.com/shlka/saealib.git
