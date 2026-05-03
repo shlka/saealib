@@ -48,7 +48,7 @@ result = minimize(func, dim=5,
 :::
 
 :::{grid-item-card} 拡張しやすい設計
-:link: user_guide/custom_components
+:link: tutorials/custom_components
 :link-type: doc
 
 独自コンポーネントを実装してパイプラインに組み込めます．研究・実験用途に最適です．
@@ -101,6 +101,5 @@ result = minimize(func, dim=5,
 getting_started/index
 user_guide/index
 tutorials/index
-examples/index
 api/index
 ```

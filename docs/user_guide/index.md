@@ -4,6 +4,4 @@
 :titlesonly:
 
 architecture
-components/index
-custom_components
 ```
