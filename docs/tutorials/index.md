@@ -8,4 +8,7 @@
 single_objective
 multi_objective
 constraints
+acquisition_functions
+callbacks
+custom_components
 ```
