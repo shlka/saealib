@@ -246,3 +246,18 @@ for ctx in optimizer.iterate():
 
 print("終了 — 評価回数:", ctx.fe)
 ```
+
+---
+
+## 参照
+
+- {py:func}`saealib.minimize` / {py:func}`saealib.maximize`
+- {py:class}`saealib.Optimizer`
+- {py:class}`saealib.GA` / {py:class}`saealib.PSO`
+- {py:class}`saealib.IndividualBasedStrategy` / {py:class}`saealib.GenerationBasedStrategy` / {py:class}`saealib.PreSelectionStrategy`
+- {py:class}`saealib.LocalSurrogateManager` / {py:class}`saealib.GlobalSurrogateManager`
+- {py:class}`saealib.RBFsurrogate`
+- {py:class}`saealib.MeanPrediction`
+- {py:class}`saealib.LHSInitializer`
+- {py:class}`saealib.Termination` / {py:func}`saealib.max_fe` / {py:func}`saealib.max_gen`
+

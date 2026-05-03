@@ -185,3 +185,12 @@ if len(feasible_f):
     print(f"最適解 (制約満足): {feasible_x[best_idx]}")
     print(f"目的値:           {feasible_f[best_idx]}")
 ```
+
+---
+
+## 参照
+
+- {py:class}`saealib.Constraint`
+- {py:class}`saealib.Problem`
+- {py:func}`saealib.minimize`
+- {py:class}`saealib.Optimizer`
