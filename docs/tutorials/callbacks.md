@@ -178,3 +178,15 @@ optimizer.cbmanager.replace(GenerationStartEvent, logging_generation, my_handler
 | `PostAskEvent` | アルゴリズムが候補を生成した直後 |
 | `PostSurrogateFitEvent` | サロゲートのフィット直後 |
 | `PostEvaluationEvent` | 真の関数評価直後 |
+
+---
+
+## 参照
+
+- {py:class}`saealib.CallbackManager`
+- {py:func}`saealib.logging_generation` / {py:func}`saealib.logging_generation_hv`
+- {py:class}`saealib.GenerationStartEvent` / {py:class}`saealib.GenerationEndEvent`
+- {py:class}`saealib.RunStartEvent` / {py:class}`saealib.RunEndEvent`
+- {py:class}`saealib.PostAskEvent` / {py:class}`saealib.PostCrossoverEvent` / {py:class}`saealib.PostMutationEvent`
+- {py:class}`saealib.PostSurrogateFitEvent` / {py:class}`saealib.PostEvaluationEvent`
+- {py:func}`saealib.hypervolume`

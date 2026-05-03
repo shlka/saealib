@@ -173,3 +173,11 @@ _, fronts = non_dominated_sort(archive_f)
 pareto_f = archive_f[fronts[0]]
 print(f"パレートフロント上の解数: {len(fronts[0])}")
 ```
+
+---
+
+## 参照
+
+- {py:class}`saealib.AcquisitionFunction` / {py:class}`saealib.SurrogatePrediction`
+- {py:class}`saealib.PostAskEvent` / {py:class}`saealib.PostCrossoverEvent` / {py:class}`saealib.PostMutationEvent`
+- {py:class}`saealib.CallbackManager`

@@ -200,3 +200,18 @@ ctx = (
     .run()
 )
 ```
+
+---
+
+## 参照
+
+- {py:func}`saealib.minimize`
+- {py:class}`saealib.Optimizer`
+- {py:class}`saealib.GA` / {py:class}`saealib.PSO`
+- {py:class}`saealib.IndividualBasedStrategy` / {py:class}`saealib.GenerationBasedStrategy` / {py:class}`saealib.PreSelectionStrategy`
+- {py:class}`saealib.LocalSurrogateManager` / {py:class}`saealib.EnsembleSurrogateManager`
+- {py:class}`saealib.RBFsurrogate`
+- {py:class}`saealib.MeanPrediction`
+- {py:func}`saealib.non_dominated_sort`
+- {py:class}`saealib.LHSInitializer`
+- {py:class}`saealib.Termination` / {py:func}`saealib.max_fe`
