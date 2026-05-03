@@ -155,16 +155,21 @@ def _resolve_strategy(
 def _build_result(ctx: OptimizationContext) -> Result:
     archive_x = ctx.archive.get_array("x")
     archive_f = ctx.archive.get_array("f")
+    archive_cv = ctx.archive.get_array("cv")
     weight = ctx.problem.weight
+    eps = ctx.problem.eps
+
+    feasible = np.where(archive_cv <= eps)[0]
+    pool = feasible if len(feasible) else np.array([int(np.argmin(archive_cv))])
 
     if ctx.problem.n_obj == 1:
-        scores = archive_f @ weight
-        best_idx = int(np.argmax(scores))
+        scores = archive_f[pool] @ weight
+        best_idx = pool[int(np.argmax(scores))]
         best_x = archive_x[best_idx]
         best_f = archive_f[best_idx]
     else:
-        fronts = non_dominated_sort(archive_f, weight)
-        pareto_idx = fronts[0]
+        _, fronts = non_dominated_sort(archive_f[pool])
+        pareto_idx = pool[fronts[0]]
         best_x = archive_x[pareto_idx]
         best_f = archive_f[pareto_idx]
 
