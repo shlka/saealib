@@ -1,0 +1,12 @@
+{%- if versions %}
+<div class="sidebar-tree">
+  <p class="sidebar-caption" role="heading" aria-level="2"><span class="caption-text">Versions</span></p>
+  <ul>
+    {%- for item in versions %}
+    <li class="toctree-l1{% if item.name == version %} current{% endif %}">
+      <a class="reference{% if item.name == version %} current{% endif %}" href="{{ item.url }}">{{ item.name }}</a>
+    </li>
+    {%- endfor %}
+  </ul>
+</div>
+{%- endif %}
