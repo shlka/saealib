@@ -1,8 +1,4 @@
-"""
-Runner module.
-
-Run the optimization process as Generator.
-"""
+"""Runner: drives the optimization loop and yields context each generation."""
 
 from __future__ import annotations
 
@@ -35,36 +31,18 @@ class Runner:
         self.optimizer = optimizer
 
     def run(self) -> OptimizationContext:
-        """
-        Run the optimization process.
-
-        Parameters
-        ----------
-        optimizer : Optimizer
-            The optimizer instance.
-
-        Returns
-        -------
-        OptimizationContext
-            The optimization context.
-        """
+        """Run to completion and return the final context."""
         for ctx in self.iterate():
             pass
         return ctx
 
     def iterate(self) -> Generator[OptimizationContext, None, None]:
         """
-        Iterate the optimization process.
-
-        Parameters
-        ----------
-        optimizer : Optimizer
-            The optimizer instance.
+        Iterate the optimization loop, yielding the context after each generation.
 
         Returns
         -------
         Generator[OptimizationContext, None, None]
-            The optimization context.
         """
         opt = self.optimizer
         ctx = opt.initializer.initialize(opt, opt.problem)

@@ -12,13 +12,13 @@ class OptimizationStrategy(ABC):
     @abstractmethod
     def step(self, ctx: OptimizationContext, provider: ComponentProvider) -> None:
         """
-        Perform one iteration of optimization processing.
+        Perform one generation step: generate, score, evaluate, and update.
 
         Parameters
         ----------
         ctx : OptimizationContext
-            A dataclass object that holds internal information about the Optimizer.
+            Current optimization context.
         provider : ComponentProvider
-            Objects of the class in which the component is exposed (ex. Optimizer).
+            Component provider.
         """
         pass

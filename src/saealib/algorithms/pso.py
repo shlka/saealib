@@ -1,8 +1,4 @@
-"""
-Particle Swarm Optimization class.
-
-This module contains the implementation of Particle Swarm Optimization (PSO).
-"""
+"""Particle Swarm Optimization module."""
 
 from __future__ import annotations
 
@@ -129,21 +125,21 @@ class PSO(Algorithm):
         n_offspring: int | None = None,
     ) -> Population:
         """
-        Generate candidate solutions by updating particle velocities and positions.
+        Update particle velocities and positions.
 
         Parameters
         ----------
         ctx : OptimizationContext
-            Optimization context.
+            Current optimization context.
         provider : ComponentProvider
             Component provider.
         n_offspring : int or None, optional
-            Not used by PSO; the population size determines the output count.
+            Ignored; output count equals population size.
 
         Returns
         -------
         Population
-            Candidate solutions with updated x and velocity.
+            Candidates with updated ``x`` and ``velocity``.
         """
         pop = ctx.population
         popsize = len(pop)
@@ -205,15 +201,12 @@ class PSO(Algorithm):
         offspring: Population,
     ) -> None:
         """
-        Update the population using evaluated offspring.
-
-        Compares each particle against its personal best using ``ctx.comparator``
-        and updates pbest when the new position is better.
+        Update the population and personal bests from evaluated offspring.
 
         Parameters
         ----------
         ctx : OptimizationContext
-            Optimization context.
+            Current optimization context.
         provider : ComponentProvider
             Component provider.
         offspring : Population

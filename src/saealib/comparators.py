@@ -30,16 +30,6 @@ class Comparator(ABC):
 
     @abstractmethod
     def __init__(self, weights: np.ndarray, eps: float):
-        """
-        Initialize Comparator instance.
-
-        Parameters
-        ----------
-        weights : np.ndarray
-            Weights for objectives. shape = (n_obj, )
-        eps : float
-            Epsilon value for comparison tolerance.
-        """
         self.weights = weights
         self.eps = eps
 
@@ -136,26 +126,7 @@ class SingleObjectiveComparator(Comparator):
         return self._sort(f, cv)
 
     def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
-        """
-        Compare individual a and b in population.
-
-        Parameters
-        ----------
-        population : Population
-            The population to compare.
-        idx_a : int
-            Index of the first individual.
-        idx_b : int
-            Index of the second individual.
-
-        Returns
-        -------
-        int
-            Comparison result.
-            -1 if the individual a is better than the individual b.
-            1 if the individual a is worse than the individual b.
-            0 if the individual a is equal to the individual b.
-        """
+        """Compare individuals a and b; returns -1/0/1."""
         f = population.get("f")
         cv = population.get("cv")
         return self.compare(f[idx_a], cv[idx_a], f[idx_b], cv[idx_b])
@@ -167,28 +138,7 @@ class SingleObjectiveComparator(Comparator):
     def _compare(
         self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float
     ) -> int:
-        """
-        Compare two solutions.
-
-        Parameters
-        ----------
-        fitness_a : np.ndarray
-            Objective values of solution a. shape = (n_obj, )
-        cv_a : float
-            Constraint violation of solution a.
-        fitness_b : np.ndarray
-            Objective values of solution b. shape = (n_obj, )
-        cv_b : float
-            Constraint violation of solution b.
-
-        Returns
-        -------
-        int
-            Comparison result.
-            -1 if a is better than b.
-            1 if b is better than a.
-            0 if a and b are equal.
-        """
+        """Constraint-domination comparison; -1=a better, 1=b better, 0=equal."""
         if cv_a > self.eps and cv_b > self.eps:
             if cv_a < cv_b:
                 return -1

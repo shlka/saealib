@@ -1,8 +1,4 @@
-"""
-Genetic Algorithm class.
-
-This module contains the implementation of Genetic Algorithm.
-"""
+"""Genetic Algorithm module."""
 
 from __future__ import annotations
 
@@ -77,22 +73,8 @@ class GA(Algorithm):
         self.repair = repair
 
     def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
-        """
-        Return the list of attributes required for Population based on a Problem object.
-
-        GA requires only the default attributes ('x', 'f', 'g', 'cv').
-
-        Parameters
-        ----------
-        problem : Problem
-            The Problem object being referenced.
-
-        Returns
-        -------
-        list[PopulationAttribute]
-            List of attributes required in addition to the default attributes.
-        """
-        return []  # only default attrs
+        """Return algorithm-specific attributes (GA needs none beyond the defaults)."""
+        return []
 
     @property
     def population_class(self):
@@ -111,22 +93,20 @@ class GA(Algorithm):
         n_offspring: int | None = None,
     ) -> Population:
         """
-        Generate offspring solutions.
+        Generate offspring via crossover and mutation.
 
         Parameters
         ----------
         ctx : OptimizationContext
-            A dataclass object that holds internal information about the Optimizer.
+            Current optimization context.
         provider : ComponentProvider
-            Objects of the class in which the component is exposed (ex. Optimizer).
+            Component provider.
         n_offspring : int or None, optional
-            Number of offspring to generate. If ``None``, defaults to the
-            current population size.
+            Number of offspring. Defaults to the current population size.
 
         Returns
         -------
         Population
-            Generated offspring solutions.
         """
         cand = np.empty((0, ctx.dim))
         pop = ctx.population.get_array("x")
@@ -182,39 +162,24 @@ class GA(Algorithm):
         offspring: Population,
     ):
         """
-        Update the population with offspring solutions.
-
-        Optimizer population is updated in-place.
+        Update the population using (μ+λ) survivor selection.
 
         Parameters
         ----------
         ctx : OptimizationContext
-            A dataclass object that holds internal information about the Optimizer.
+            Current optimization context.
         provider : ComponentProvider
-            Objects of the class in which the component is exposed (ex. Optimizer).
+            Component provider.
         offspring : Population
-            Population object representing offspring.
-
-        Returns
-        -------
-        None
-
-        Notes
-        -----
-        Uses (μ+λ) replacement strategy: merges parents and offspring into
-        a pool, then selects the best popsize individuals via
-        survivor_selection.
+            Offspring population.
         """
         popsize = len(ctx.population)
 
-        # Build μ+λ pool
         pool = ctx.population.empty_like(capacity=popsize + len(offspring))
         pool.extend(ctx.population)
         pool.extend(offspring)
 
-        # Select survivors
         survivor_idx = self.survivor_selection.select(ctx, pool, popsize)
 
-        # Update population
         ctx.population.clear()
         ctx.population.extend(pool.extract(survivor_idx))

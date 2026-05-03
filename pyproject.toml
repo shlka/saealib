@@ -1,9 +1,10 @@
 [project]
 name = "saealib"
-version = "0.1.0"
+version = "0.1.0b1"
 description = "A Python library for Surrogate-Assisted Evolutionary Algorithms (SAEAs)"
 readme = "README.md"
 requires-python = ">=3.10"
+license = { text = "MIT" }
 dependencies = [
     "numpy>=1.22.1",
     "scipy>=1.0.0",
@@ -12,6 +13,26 @@ dependencies = [
 authors = [
     { name = "shlka", email = "82360718+shlka@users.noreply.github.com" }
 ]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/shlka/saealib"
+Repository = "https://github.com/shlka/saealib"
+Documentation = "https://shlka.github.io/saealib/"
+"Bug Tracker" = "https://github.com/shlka/saealib/issues"
 
 [build-system]
 requires = ["hatchling"]
@@ -26,6 +47,17 @@ dev = [
     "pytest>=9.0.2",
     "setuptools>=80.9.0",
     "ruff",
+]
+docs = [
+    "furo>=2025.12.19",
+    "myst-parser>=4.0.1",
+    "sphinx>=8.1.3",
+    "sphinx-copybutton>=0.5.2",
+    "sphinx-design>=0.6.1",
+    "sphinx-intl>=2.3.0",
+    "sphinx-multiversion>=0.2.4",
+    "sphinx-sitemap>=2.6.0",
+    "sphinxcontrib-mermaid>=1.0.0",
 ]
 
 [tool.ruff]

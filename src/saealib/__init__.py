@@ -1,6 +1,9 @@
 """saealib: Surrogate-Assisted Evolutionary Algorithms (SAEAs) Library."""
 
 import logging
+from importlib.metadata import version
+
+__version__ = version("saealib")
 
 from saealib.acquisition import (
     AcquisitionFunction,

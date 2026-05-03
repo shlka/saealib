@@ -1,10 +1,4 @@
-"""
-Repair operators module.
-
-This module defines repair operators to fix individuals
-that violate problem constraints.
-
-"""
+"""Repair operators to clip candidates back into bounds."""
 
 import numpy as np
 

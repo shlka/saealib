@@ -1,13 +1,10 @@
 """
-Surrogate manager module.
-
-This module defines SurrogateManager and its implementations, which
-orchestrate the fit/predict/score pipeline for surrogate-assisted selection.
+Surrogate manager: coordinates the fit/predict/score pipeline.
 
 Responsibility split:
-  Surrogate        -- fits a model and predicts SurrogatePrediction
+  Surrogate           -- fits a model and predicts SurrogatePrediction
   AcquisitionFunction -- converts SurrogatePrediction to scalar scores
-  SurrogateManager -- coordinates the two above; exposes score_candidates()
+  SurrogateManager    -- coordinates the two above; exposes score_candidates()
 """
 
 from __future__ import annotations

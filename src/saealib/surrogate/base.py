@@ -1,8 +1,4 @@
-"""
-Surrogate base module.
-
-This module defines the base class for surrogate models.
-"""
+"""Abstract base class for surrogate models."""
 
 from abc import ABC, abstractmethod
 

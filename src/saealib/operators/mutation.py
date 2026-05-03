@@ -1,8 +1,4 @@
-"""
-Mutation operators module.
-
-This module defines mutation operators for evolutionary algorithms.
-"""
+"""Mutation operators for evolutionary algorithms."""
 
 from abc import ABC, abstractmethod
 
@@ -61,7 +57,6 @@ class MutationUniform(Mutation):
         super().__init__()
         self.mutation_rate = mutation_rate
 
-    # TODO: mutate_range should be handled outside (__init__ method?)
     def mutate(
         self,
         p: np.ndarray,
