@@ -32,26 +32,6 @@ jobs:
           path: docs/_build/html/
           retention-days: 7
 
-  deploy-test:
-    name: Deploy preview (dev-docs)
-    needs: build
-    if: github.ref == 'refs/heads/dev-docs'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: html-docs
-          path: html/
-
-      - name: Deploy to gh-pages branch
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: html/
-
   deploy-release:
     name: Deploy release (main)
     needs: build
