@@ -4,6 +4,7 @@ version = "0.1.0b1"
 description = "A Python library for Surrogate-Assisted Evolutionary Algorithms (SAEAs)"
 readme = "README.md"
 requires-python = ">=3.10"
+license = { text = "MIT" }
 dependencies = [
     "numpy>=1.22.1",
     "scipy>=1.0.0",
@@ -12,6 +13,26 @@ dependencies = [
 authors = [
     { name = "shlka", email = "sazakurosulp36@gmail.com" }
 ]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/shlka/saealib"
+Repository = "https://github.com/shlka/saealib"
+Documentation = "https://shlka.github.io/saealib/"
+"Bug Tracker" = "https://github.com/shlka/saealib/issues"
 
 [build-system]
 requires = ["hatchling"]
