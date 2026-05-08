@@ -196,3 +196,118 @@ class FeasibilityClassificationSet(TrainingSet):
         eps = ctx.problem.eps if ctx is not None else 1e-6
         labels = (src.get_array("cv") <= eps).astype(float)
         return TrainingData(train_x=src.get_array("x"), train_y=labels)
+
+
+# ---------------------------------------------------------------------------
+# Rank-based labelling
+# ---------------------------------------------------------------------------
+
+
+class TopKBipartitionSet(TrainingSet):
+    """Binary labels from a sorted bipartition: 1 for top-*k*, 0 for the rest.
+
+    Individuals are sorted by ``ctx.comparator.sort_population`` (best-first),
+    then the top ``floor(n * top_ratio)`` receive label 1 (promising) and the
+    remainder receive label 0 (unpromising).
+
+    Literature patterns: CPS-MOEA (P2), CSEA / pre-selection (P5).
+
+    Parameters
+    ----------
+    source:
+        ``"archive"`` or ``"population"``.
+    top_ratio:
+        Fraction of individuals labelled as promising. Clamped to ``[0, 1]``.
+        At least one individual always receives label 1.
+
+    Raises
+    ------
+    ValueError
+        If ``ctx`` is ``None`` or ``source="population"`` with ``population=None``.
+    """
+
+    def __init__(self, source: str = "archive", top_ratio: float = 0.5) -> None:
+        self.source = source
+        self.top_ratio = top_ratio
+
+    def build(
+        self,
+        archive: Archive,
+        population: Population | None,
+        ctx: OptimizationContext | None,
+        candidate_x: np.ndarray | None = None,
+    ) -> TrainingData:
+        """Return bipartition labels based on sorted rank."""
+        if ctx is None:
+            raise ValueError("TopKBipartitionSet requires ctx.")
+        if self.source == "population":
+            if population is None:
+                raise ValueError(
+                    "TopKBipartitionSet: source='population' requires population."
+                )
+            src = population
+        else:
+            src = archive
+        sorted_idx = ctx.comparator.sort_population(src)
+        x = src.get_array("x")[sorted_idx]
+        n = len(x)
+        k = max(1, int(n * self.top_ratio))
+        labels = np.concatenate([np.ones(k), np.zeros(n - k)])
+        return TrainingData(train_x=x, train_y=labels)
+
+
+class LevelBasedSet(TrainingSet):
+    """Multi-class labels from equal-division of a sorted population (CA-LLSO, P1).
+
+    Individuals are sorted by ``ctx.comparator.sort_population`` (best-first),
+    then divided into ``n_levels`` equally-sized groups.  Group 0 (best) receives
+    label 0, group ``n_levels - 1`` (worst) receives the highest label.
+    Remainder individuals are appended to the last (worst) group.
+
+    Parameters
+    ----------
+    source:
+        ``"archive"`` or ``"population"``.
+    n_levels:
+        Number of classification levels (≥ 2).
+
+    Raises
+    ------
+    ValueError
+        If ``ctx`` is ``None`` or ``source="population"`` with ``population=None``.
+    """
+
+    def __init__(self, source: str = "population", n_levels: int = 5) -> None:
+        self.source = source
+        self.n_levels = n_levels
+
+    def build(
+        self,
+        archive: Archive,
+        population: Population | None,
+        ctx: OptimizationContext | None,
+        candidate_x: np.ndarray | None = None,
+    ) -> TrainingData:
+        """Return level labels from equal-size sorted groups."""
+        if ctx is None:
+            raise ValueError("LevelBasedSet requires ctx.")
+        if self.source == "population":
+            if population is None:
+                raise ValueError(
+                    "LevelBasedSet: source='population' requires population."
+                )
+            src = population
+        else:
+            src = archive
+        sorted_idx = ctx.comparator.sort_population(src)
+        x = src.get_array("x")[sorted_idx]
+        n = len(x)
+        per = n // self.n_levels
+        labels = np.repeat(np.arange(self.n_levels), per)
+        # Remainder goes to the last (worst) level
+        remainder = n - len(labels)
+        if remainder > 0:
+            labels = np.concatenate(
+                [labels, np.full(remainder, self.n_levels - 1)]
+            )
+        return TrainingData(train_x=x, train_y=labels.astype(float))

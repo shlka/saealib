@@ -13,6 +13,8 @@ from saealib.surrogate.training_set import (
     ArchiveObjectiveSet,
     FeasibilityClassificationSet,
     KNNObjectiveSet,
+    LevelBasedSet,
+    TopKBipartitionSet,
     TrainingSet,
 )
 
@@ -222,4 +224,155 @@ class TestFeasibilityClassificationSet:
         arc = _make_archive_with_cv([0.0, 1.0])
         ts = FeasibilityClassificationSet(source="archive")
         data = ts.build(arc, None, None)
+        assert data.train_y.dtype == float
+
+
+# ===========================================================================
+# TopKBipartitionSet
+# ===========================================================================
+
+
+def _make_archive_with_f(
+    f_values: list[float], cvs: list[float] | None = None
+) -> Archive:
+    """Archive where each point has a prescribed scalar objective."""
+    if cvs is None:
+        cvs = [0.0] * len(f_values)
+    arc = Archive(_ATTRS, init_capacity=len(f_values) + 5)
+    rng = np.random.default_rng(2)
+    for fv, cv in zip(f_values, cvs):
+        x = rng.uniform(-2.0, 2.0, size=DIM)
+        arc.add(x=x, f=np.array([fv]), cv=float(cv))
+    return arc
+
+
+class TestTopKBipartitionSet:
+    def test_label_count(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0])
+        ctx = _make_ctx(archive=arc)
+        ts = TopKBipartitionSet(source="archive", top_ratio=0.5)
+        data = ts.build(arc, None, ctx)
+        assert data.train_y.shape == (4,)
+        assert int(data.train_y.sum()) == 2  # top 2 = label 1
+
+    def test_best_get_label_one(self) -> None:
+        """After sorting best-first, the first k entries should be label 1."""
+        # f=1.0 is best (minimization), f=4.0 is worst
+        arc = _make_archive_with_f([4.0, 1.0, 3.0, 2.0])
+        ctx = _make_ctx(archive=arc)
+        ts = TopKBipartitionSet(source="archive", top_ratio=0.5)
+        data = ts.build(arc, None, ctx)
+        # sorted order: f=1.0, f=2.0 → label 1; f=3.0, f=4.0 → label 0
+        np.testing.assert_array_equal(data.train_y[:2], [1.0, 1.0])
+        np.testing.assert_array_equal(data.train_y[2:], [0.0, 0.0])
+
+    def test_at_least_one_label_one(self) -> None:
+        """top_ratio=0 should still yield at least one label 1."""
+        arc = _make_archive_with_f([1.0, 2.0, 3.0])
+        ctx = _make_ctx(archive=arc)
+        ts = TopKBipartitionSet(source="archive", top_ratio=0.0)
+        data = ts.build(arc, None, ctx)
+        assert data.train_y.sum() >= 1.0
+
+    def test_ctx_none_raises(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0])
+        ts = TopKBipartitionSet(source="archive")
+        with pytest.raises(ValueError, match="ctx"):
+            ts.build(arc, None, None)
+
+    def test_source_population_none_raises(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0])
+        ctx = _make_ctx(archive=arc)
+        ts = TopKBipartitionSet(source="population")
+        with pytest.raises(ValueError, match="population"):
+            ts.build(arc, None, ctx)
+
+    def test_source_population(self) -> None:
+        pop = _make_population_with_cv([0.0, 0.0, 0.0, 0.0])
+        arc = _make_archive()
+        ctx = _make_ctx(archive=arc, population=pop)
+        ts = TopKBipartitionSet(source="population", top_ratio=0.5)
+        data = ts.build(arc, pop, ctx)
+        assert data.train_x.shape == (4, DIM)
+        assert data.train_y.shape == (4,)
+
+    def test_train_x_shape(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0, 3.0])
+        ctx = _make_ctx(archive=arc)
+        ts = TopKBipartitionSet(source="archive")
+        data = ts.build(arc, None, ctx)
+        assert data.train_x.shape == (3, DIM)
+
+    def test_labels_are_float(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0])
+        ctx = _make_ctx(archive=arc)
+        ts = TopKBipartitionSet(source="archive")
+        data = ts.build(arc, None, ctx)
+        assert data.train_y.dtype == float
+
+
+# ===========================================================================
+# LevelBasedSet
+# ===========================================================================
+
+
+class TestLevelBasedSet:
+    def test_three_levels_equal_split(self) -> None:
+        """6 individuals, 3 levels → 2 per level, labels [0,0,1,1,2,2]."""
+        arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+        ctx = _make_ctx(archive=arc)
+        ts = LevelBasedSet(source="archive", n_levels=3)
+        data = ts.build(arc, None, ctx)
+        np.testing.assert_array_equal(data.train_y, [0.0, 0.0, 1.0, 1.0, 2.0, 2.0])
+
+    def test_remainder_goes_to_last_level(self) -> None:
+        """7 individuals, 3 levels → per=2; labels [0,0,1,1,2,2,2]."""
+        arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0])
+        ctx = _make_ctx(archive=arc)
+        ts = LevelBasedSet(source="archive", n_levels=3)
+        data = ts.build(arc, None, ctx)
+        np.testing.assert_array_equal(
+            data.train_y, [0.0, 0.0, 1.0, 1.0, 2.0, 2.0, 2.0]
+        )
+
+    def test_best_individuals_get_level_zero(self) -> None:
+        """Level 0 corresponds to best-sorted (smallest f for minimization)."""
+        arc = _make_archive_with_f([5.0, 1.0, 3.0, 2.0])
+        ctx = _make_ctx(archive=arc)
+        ts = LevelBasedSet(source="archive", n_levels=2)
+        data = ts.build(arc, None, ctx)
+        # sorted order: f=1.0, f=2.0 → level 0; f=3.0, f=5.0 → level 1
+        np.testing.assert_array_equal(data.train_y[:2], [0.0, 0.0])
+        np.testing.assert_array_equal(data.train_y[2:], [1.0, 1.0])
+
+    def test_default_n_levels(self) -> None:
+        ts = LevelBasedSet()
+        assert ts.n_levels == 5
+
+    def test_ctx_none_raises(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0])
+        ts = LevelBasedSet(source="archive")
+        with pytest.raises(ValueError, match="ctx"):
+            ts.build(arc, None, None)
+
+    def test_source_population_none_raises(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0])
+        ctx = _make_ctx(archive=arc)
+        ts = LevelBasedSet(source="population")
+        with pytest.raises(ValueError, match="population"):
+            ts.build(arc, None, ctx)
+
+    def test_train_x_shape(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0, 5.0])
+        ctx = _make_ctx(archive=arc)
+        ts = LevelBasedSet(source="archive", n_levels=5)
+        data = ts.build(arc, None, ctx)
+        assert data.train_x.shape == (5, DIM)
+        assert data.train_y.shape == (5,)
+
+    def test_labels_are_float(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0, 3.0])
+        ctx = _make_ctx(archive=arc)
+        ts = LevelBasedSet(source="archive", n_levels=3)
+        data = ts.build(arc, None, ctx)
         assert data.train_y.dtype == float
