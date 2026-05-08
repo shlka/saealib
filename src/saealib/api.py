@@ -115,20 +115,24 @@ def _resolve_surrogate(
         return surrogate
     if isinstance(surrogate, str):
         if surrogate.lower() == "rbf":
+            from saealib.surrogate.training_set import KNNObjectiveSet
+
             rbf = RBFsurrogate(gaussian_kernel, problem.dim)
             return LocalSurrogateManager(
                 rbf,
                 MeanPrediction(weights=problem.weight),
-                n_neighbors=n_neighbors,
+                training_set=KNNObjectiveSet(n_neighbors),
             )
         raise ValueError(
             f"Unknown surrogate: {surrogate!r}. "
             "Use 'rbf' or a Surrogate/SurrogateManager instance."
         )
+    from saealib.surrogate.training_set import KNNObjectiveSet
+
     return LocalSurrogateManager(
         surrogate,
         MeanPrediction(weights=problem.weight),
-        n_neighbors=n_neighbors,
+        training_set=KNNObjectiveSet(n_neighbors),
     )
 
 

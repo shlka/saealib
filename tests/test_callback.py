@@ -45,6 +45,7 @@ from saealib.surrogate.manager import (
     LocalSurrogateManager,
 )
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.training_set import KNNObjectiveSet
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -557,7 +558,9 @@ class TestPostSurrogateFitDispatch:
     ) -> None:
         prov = _MockProvider()
         manager = LocalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction(), n_neighbors=10
+            RBFsurrogate(gaussian_kernel, DIM),
+            MeanPrediction(),
+            training_set=KNNObjectiveSet(10),
         )
         manager.score_candidates(candidates, archive, provider=prov, ctx=ctx)
         fit_events = [
@@ -571,7 +574,9 @@ class TestPostSurrogateFitDispatch:
         candidates: np.ndarray,
     ) -> None:
         manager = LocalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction(), n_neighbors=10
+            RBFsurrogate(gaussian_kernel, DIM),
+            MeanPrediction(),
+            training_set=KNNObjectiveSet(10),
         )
         scores, _ = manager.score_candidates(candidates, archive)
         assert scores.shape == (len(candidates),)
@@ -587,7 +592,7 @@ class TestPostSurrogateFitDispatch:
         manager = LocalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM),
             MeanPrediction(),
-            n_neighbors=n_neighbors,
+            training_set=KNNObjectiveSet(n_neighbors),
         )
         manager.score_candidates(candidates, archive, provider=prov, ctx=ctx)
         fit_events = [

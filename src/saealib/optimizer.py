@@ -135,10 +135,12 @@ class Optimizer:
         Equivalent to ``set_surrogate_manager(LocalSurrogateManager(surrogate, ...))``.
         Provided for backward compatibility.
         """
+        from saealib.surrogate.training_set import KNNObjectiveSet
+
         self.surrogate_manager = LocalSurrogateManager(
             surrogate,
             MeanPrediction(weights=self.problem.weight),
-            n_neighbors=n_neighbors,
+            training_set=KNNObjectiveSet(n_neighbors=n_neighbors),
         )
         return self
 
