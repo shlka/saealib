@@ -145,3 +145,54 @@ class KNNObjectiveSet(TrainingSet):
             raise ValueError("KNNObjectiveSet requires candidate_x.")
         idx, _ = archive.get_knn(candidate_x, self.n_neighbors)
         return TrainingData(train_x=archive.x[idx], train_y=archive.f[idx])
+
+
+# ---------------------------------------------------------------------------
+# Constraint-based classification
+# ---------------------------------------------------------------------------
+
+
+class FeasibilityClassificationSet(TrainingSet):
+    """Binary labels derived from constraint violation: 1 if feasible, 0 otherwise.
+
+    A sample is feasible when ``cv <= eps``, where ``eps`` is taken from
+    ``ctx.problem.eps`` (defaults to ``1e-6`` when ``ctx`` is ``None``).
+
+    This set is algo-agnostic and works with any surrogate that accepts binary
+    classification targets (shape ``(n_train,)``).
+
+    Parameters
+    ----------
+    source:
+        ``"archive"`` to use the evaluated archive, or ``"population"`` to
+        use the current population.
+
+    Raises
+    ------
+    ValueError
+        If ``source="population"`` but ``population`` is ``None``.
+    """
+
+    def __init__(self, source: str = "archive") -> None:
+        self.source = source
+
+    def build(
+        self,
+        archive: Archive,
+        population: Population | None,
+        ctx: OptimizationContext | None,
+        candidate_x: np.ndarray | None = None,
+    ) -> TrainingData:
+        """Return feasibility binary labels (1 = feasible, 0 = infeasible)."""
+        if self.source == "population":
+            if population is None:
+                raise ValueError(
+                    "FeasibilityClassificationSet: source='population' requires "
+                    "population to be provided."
+                )
+            src = population
+        else:
+            src = archive
+        eps = ctx.problem.eps if ctx is not None else 1e-6
+        labels = (src.get_array("cv") <= eps).astype(float)
+        return TrainingData(train_x=src.get_array("x"), train_y=labels)
