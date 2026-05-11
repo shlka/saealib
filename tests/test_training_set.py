@@ -14,6 +14,7 @@ from saealib.surrogate.training_set import (
     FeasibilityClassificationSet,
     KNNObjectiveSet,
     LevelBasedSet,
+    PairwiseComparisonSet,
     TopKBipartitionSet,
     TrainingSet,
 )
@@ -376,3 +377,94 @@ class TestLevelBasedSet:
         ts = LevelBasedSet(source="archive", n_levels=3)
         data = ts.build(arc, None, ctx)
         assert data.train_y.dtype == float
+
+
+# ===========================================================================
+# PairwiseComparisonSet
+# ===========================================================================
+
+
+class TestPairwiseComparisonSet:
+    def test_all_pairs_by_default(self) -> None:
+        """n_pairs=None → all n*(n-1)/2 pairs generated."""
+        arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0])
+        ctx = _make_ctx(archive=arc)
+        ts = PairwiseComparisonSet(source="archive")
+        data = ts.build(arc, None, ctx)
+        n = 4
+        assert data.train_x.shape == (n * (n - 1) // 2, DIM * 2)
+        assert data.train_y.shape == (n * (n - 1) // 2,)
+
+    def test_n_pairs_limits_count(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0, 5.0])
+        ctx = _make_ctx(archive=arc)
+        ts = PairwiseComparisonSet(source="archive", n_pairs=3)
+        data = ts.build(arc, None, ctx)
+        assert data.train_x.shape == (3, DIM * 2)
+        assert data.train_y.shape == (3,)
+
+    def test_n_pairs_exceeds_total_uses_all(self) -> None:
+        """n_pairs >= n*(n-1)/2 → all pairs used."""
+        arc = _make_archive_with_f([1.0, 2.0, 3.0])
+        ctx = _make_ctx(archive=arc)
+        ts = PairwiseComparisonSet(source="archive", n_pairs=999)
+        data = ts.build(arc, None, ctx)
+        assert data.train_x.shape == (3, DIM * 2)  # 3*(3-1)/2 = 3
+
+    def test_train_x_shape_is_2_dim(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0, 3.0])
+        ctx = _make_ctx(archive=arc)
+        ts = PairwiseComparisonSet(source="archive")
+        data = ts.build(arc, None, ctx)
+        assert data.train_x.shape[1] == DIM * 2
+
+    def test_label_ordering_best_vs_worst(self) -> None:
+        """For a pair (best, worst), label should be 1 (best wins)."""
+        arc = _make_archive_with_f([1.0, 10.0])  # idx 0 = best, idx 1 = worst
+        ctx = _make_ctx(archive=arc)
+        ts = PairwiseComparisonSet(source="archive")
+        data = ts.build(arc, None, ctx)
+        # Only one pair (0, 1): f=1.0 beats f=10.0 → label 1
+        assert data.train_y[0] == pytest.approx(1.0)
+
+    def test_labels_are_binary(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0])
+        ctx = _make_ctx(archive=arc)
+        ts = PairwiseComparisonSet(source="archive")
+        data = ts.build(arc, None, ctx)
+        assert set(data.train_y.tolist()).issubset({0.0, 1.0})
+
+    def test_ctx_none_raises(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0])
+        ts = PairwiseComparisonSet(source="archive")
+        with pytest.raises(ValueError, match="ctx"):
+            ts.build(arc, None, None)
+
+    def test_source_population_none_raises(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0])
+        ctx = _make_ctx(archive=arc)
+        ts = PairwiseComparisonSet(source="population")
+        with pytest.raises(ValueError, match="population"):
+            ts.build(arc, None, ctx)
+
+    def test_custom_rng(self) -> None:
+        """Custom rng produces reproducible sampling."""
+        arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0, 5.0])
+        ctx = _make_ctx(archive=arc)
+        rng1 = np.random.default_rng(99)
+        rng2 = np.random.default_rng(99)
+        ts1 = PairwiseComparisonSet(source="archive", n_pairs=4, rng=rng1)
+        ts2 = PairwiseComparisonSet(source="archive", n_pairs=4, rng=rng2)
+        d1 = ts1.build(arc, None, ctx)
+        d2 = ts2.build(arc, None, ctx)
+        np.testing.assert_array_equal(d1.train_x, d2.train_x)
+        np.testing.assert_array_equal(d1.train_y, d2.train_y)
+
+    def test_no_duplicate_pairs(self) -> None:
+        """Each (i, j) pair appears at most once."""
+        arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0, 5.0])
+        ctx = _make_ctx(archive=arc)
+        ts = PairwiseComparisonSet(source="archive", n_pairs=8)
+        data = ts.build(arc, None, ctx)
+        # Each row in train_x is unique (half-vector x_a or full [x_a, x_b])
+        assert len(data.train_x) == len(np.unique(data.train_x, axis=0))

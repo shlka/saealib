@@ -311,3 +311,98 @@ class LevelBasedSet(TrainingSet):
                 [labels, np.full(remainder, self.n_levels - 1)]
             )
         return TrainingData(train_x=x, train_y=labels.astype(float))
+
+
+# ---------------------------------------------------------------------------
+# Pairwise comparison
+# ---------------------------------------------------------------------------
+
+
+class PairwiseComparisonSet(TrainingSet):
+    """Pairwise labels: ``train_x`` is ``[x_a, x_b]``, label is 1 if *a* beats *b*.
+
+    For each pair ``(a, b)``, the feature vector is the concatenation
+    ``[x_a, x_b]`` (shape ``(n_pairs, 2 * dim)``), and the label is 1 if
+    ``comparator.compare(f_a, cv_a, f_b, cv_b) <= 0`` (a dominates or equals b),
+    0 otherwise.
+
+    .. warning::
+        ``train_x`` has shape ``(n_pairs, 2 * dim)``, which is incompatible with
+        standard regression surrogates (e.g. ``RBFsurrogate``).  Use a
+        pairwise-specific surrogate that expects concatenated feature pairs.
+
+    Parameters
+    ----------
+    source:
+        ``"archive"`` or ``"population"``.
+    n_pairs:
+        Number of pairs to sample.  ``None`` (default) uses all
+        ``n * (n-1) / 2`` pairs.  If the requested count exceeds the total
+        available pairs, all pairs are used.
+    rng:
+        Random number generator for pair sampling.  Falls back to
+        ``ctx.rng`` when ``ctx`` is provided, otherwise creates a new one.
+
+    Raises
+    ------
+    ValueError
+        If ``ctx`` is ``None`` (comparator required) or
+        ``source="population"`` with ``population=None``.
+    """
+
+    def __init__(
+        self,
+        source: str = "archive",
+        n_pairs: int | None = None,
+        rng: np.random.Generator | None = None,
+    ) -> None:
+        self.source = source
+        self.n_pairs = n_pairs
+        self.rng = rng
+
+    def build(
+        self,
+        archive: Archive,
+        population: Population | None,
+        ctx: OptimizationContext | None,
+        candidate_x: np.ndarray | None = None,
+    ) -> TrainingData:
+        """Return pairwise comparison training data."""
+        if ctx is None:
+            raise ValueError("PairwiseComparisonSet requires ctx.")
+        if self.source == "population":
+            if population is None:
+                raise ValueError(
+                    "PairwiseComparisonSet: source='population' requires population."
+                )
+            src = population
+        else:
+            src = archive
+        x = src.get_array("x")
+        f = src.get_array("f")
+        cv = src.get_array("cv")
+        cmp = ctx.comparator
+        rng = self.rng if self.rng is not None else ctx.rng
+        n = len(x)
+        n_all = n * (n - 1) // 2
+        if self.n_pairs is None or self.n_pairs >= n_all:
+            pairs = [(i, j) for i in range(n) for j in range(i + 1, n)]
+        else:
+            pairs: list[tuple[int, int]] = []
+            seen: set[tuple[int, int]] = set()
+            while len(pairs) < self.n_pairs:
+                idx = rng.choice(n, size=2, replace=False)
+                key = (int(min(idx[0], idx[1])), int(max(idx[0], idx[1])))
+                if key not in seen:
+                    seen.add(key)
+                    pairs.append(key)
+        train_x = np.stack(
+            [np.concatenate([x[i], x[j]]) for i, j in pairs]
+        )
+        train_y = np.array(
+            [
+                1.0 if cmp.compare(f[i], cv[i], f[j], cv[j]) <= 0 else 0.0
+                for i, j in pairs
+            ]
+        )
+        return TrainingData(train_x=train_x, train_y=train_y)
