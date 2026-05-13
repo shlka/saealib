@@ -332,9 +332,7 @@ class TestLevelBasedSet:
         ctx = _make_ctx(archive=arc)
         ts = LevelBasedSet(source="archive", n_levels=3)
         data = ts.build(arc, None, ctx)
-        np.testing.assert_array_equal(
-            data.train_y, [0.0, 0.0, 1.0, 1.0, 2.0, 2.0, 2.0]
-        )
+        np.testing.assert_array_equal(data.train_y, [0.0, 0.0, 1.0, 1.0, 2.0, 2.0, 2.0])
 
     def test_best_individuals_get_level_zero(self) -> None:
         """Level 0 corresponds to best-sorted (smallest f for minimization)."""

@@ -307,9 +307,7 @@ class LevelBasedSet(TrainingSet):
         # Remainder goes to the last (worst) level
         remainder = n - len(labels)
         if remainder > 0:
-            labels = np.concatenate(
-                [labels, np.full(remainder, self.n_levels - 1)]
-            )
+            labels = np.concatenate([labels, np.full(remainder, self.n_levels - 1)])
         return TrainingData(train_x=x, train_y=labels.astype(float))
 
 
@@ -396,9 +394,7 @@ class PairwiseComparisonSet(TrainingSet):
                 if key not in seen:
                     seen.add(key)
                     pairs.append(key)
-        train_x = np.stack(
-            [np.concatenate([x[i], x[j]]) for i, j in pairs]
-        )
+        train_x = np.stack([np.concatenate([x[i], x[j]]) for i, j in pairs])
         train_y = np.array(
             [
                 1.0 if cmp.compare(f[i], cv[i], f[j], cv[j]) <= 0 else 0.0
