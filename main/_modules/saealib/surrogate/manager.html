@@ -381,6 +381,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostSurrogateFitEvent</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Surrogate</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurrogatePrediction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.training_set</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ArchiveObjectiveSet</span><span class="p">,</span>
+    <span class="n">KNNObjectiveSet</span><span class="p">,</span>
+    <span class="n">TrainingSet</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationContext</span>
@@ -454,13 +459,24 @@
 <span class="sd">        Surrogate model instance.</span>
 <span class="sd">    acquisition : AcquisitionFunction</span>
 <span class="sd">        Acquisition function used to score predictions.</span>
+<span class="sd">    training_set : TrainingSet or None</span>
+<span class="sd">        Strategy object for building training data. Defaults to</span>
+<span class="sd">        ``ArchiveObjectiveSet()``, which preserves the previous behaviour.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="GlobalSurrogateManager.__init__">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">surrogate</span><span class="p">:</span> <span class="n">Surrogate</span><span class="p">,</span> <span class="n">acquisition</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">surrogate</span><span class="p">:</span> <span class="n">Surrogate</span><span class="p">,</span>
+        <span class="n">acquisition</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
+        <span class="n">training_set</span><span class="p">:</span> <span class="n">TrainingSet</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span> <span class="o">=</span> <span class="n">surrogate</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="o">=</span> <span class="n">acquisition</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="o">=</span> <span class="n">acquisition</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_set</span><span class="p">:</span> <span class="n">TrainingSet</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">training_set</span> <span class="k">if</span> <span class="n">training_set</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">ArchiveObjectiveSet</span><span class="p">()</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="GlobalSurrogateManager.score_candidates">
@@ -473,17 +489,17 @@
         <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit on full archive, predict and score all candidates at once.&quot;&quot;&quot;</span>
-        <span class="n">train_x</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">x</span>
-        <span class="n">train_f</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">f</span>  <span class="c1"># (n_archive, n_obj)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_f</span><span class="p">)</span>
+        <span class="n">population</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span> <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_set</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">candidate_x</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">train_x</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">train_y</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">provider</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">provider</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span>
                 <span class="n">PostSurrogateFitEvent</span><span class="p">(</span>
                     <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
                     <span class="n">provider</span><span class="o">=</span><span class="n">provider</span><span class="p">,</span>
                     <span class="n">surrogate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="p">,</span>
-                    <span class="n">train_x</span><span class="o">=</span><span class="n">train_x</span><span class="p">,</span>
-                    <span class="n">train_f</span><span class="o">=</span><span class="n">train_f</span><span class="p">,</span>
+                    <span class="n">train_x</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">train_x</span><span class="p">,</span>
+                    <span class="n">train_f</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">train_y</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
 
@@ -519,8 +535,10 @@
 <span class="sd">        Surrogate model instance (re-fit per candidate).</span>
 <span class="sd">    acquisition : AcquisitionFunction</span>
 <span class="sd">        Acquisition function used to score predictions.</span>
-<span class="sd">    n_neighbors : int</span>
-<span class="sd">        Number of nearest neighbors for local model training.</span>
+<span class="sd">    training_set : TrainingSet or None</span>
+<span class="sd">        Strategy object for building training data per candidate. Defaults to</span>
+<span class="sd">        ``KNNObjectiveSet(n_neighbors=50)``, which preserves the previous</span>
+<span class="sd">        behaviour.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="LocalSurrogateManager.__init__">
@@ -529,11 +547,15 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">surrogate</span><span class="p">:</span> <span class="n">Surrogate</span><span class="p">,</span>
         <span class="n">acquisition</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
-        <span class="n">n_neighbors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+        <span class="n">training_set</span><span class="p">:</span> <span class="n">TrainingSet</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span> <span class="o">=</span> <span class="n">surrogate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="o">=</span> <span class="n">acquisition</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_neighbors</span> <span class="o">=</span> <span class="n">n_neighbors</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_set</span><span class="p">:</span> <span class="n">TrainingSet</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">training_set</span>
+            <span class="k">if</span> <span class="n">training_set</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">KNNObjectiveSet</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="LocalSurrogateManager.score_candidates">
@@ -549,20 +571,19 @@
         <span class="n">predictions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">_dispatch</span> <span class="o">=</span> <span class="n">provider</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span><span class="o">.</span><span class="n">compute_reference</span><span class="p">(</span><span class="n">archive</span><span class="p">)</span>
+        <span class="n">population</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span> <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
 
         <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">candidates_x</span><span class="p">:</span>
-            <span class="n">train_idx</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">get_knn</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_neighbors</span><span class="p">)</span>
-            <span class="n">train_x</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">train_idx</span><span class="p">]</span>
-            <span class="n">train_f</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">f</span><span class="p">[</span><span class="n">train_idx</span><span class="p">]</span>  <span class="c1"># (n_neighbors, n_obj)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_f</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_set</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">candidate_x</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">train_x</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">train_y</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">_dispatch</span><span class="p">:</span>
                 <span class="n">provider</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span>
                     <span class="n">PostSurrogateFitEvent</span><span class="p">(</span>
                         <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
                         <span class="n">provider</span><span class="o">=</span><span class="n">provider</span><span class="p">,</span>
                         <span class="n">surrogate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="p">,</span>
-                        <span class="n">train_x</span><span class="o">=</span><span class="n">train_x</span><span class="p">,</span>
-                        <span class="n">train_f</span><span class="o">=</span><span class="n">train_f</span><span class="p">,</span>
+                        <span class="n">train_x</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">train_x</span><span class="p">,</span>
+                        <span class="n">train_f</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">train_y</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
             <span class="n">pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># mean: (1, n_obj)</span>

@@ -371,7 +371,7 @@
 <h1>saealib.LocalSurrogateManager<a class="headerlink" href="#saealib-localsurrogatemanager" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.LocalSurrogateManager">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">LocalSurrogateManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surrogate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_neighbors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#LocalSurrogateManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.LocalSurrogateManager" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">LocalSurrogateManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surrogate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_set</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#LocalSurrogateManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.LocalSurrogateManager" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.surrogate.manager.SurrogateManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurrogateManager</span></code></a></p>
 <p>Surrogate manager that fits a local model per candidate (pre-selection).</p>
 <p>For each candidate, retrieves the k nearest neighbors from the archive,
@@ -386,7 +386,9 @@ surrogate factory instead (future work).</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>surrogate</strong> (<a class="reference internal" href="saealib.Surrogate.html#saealib.Surrogate" title="saealib.Surrogate"><em>Surrogate</em></a>) – Surrogate model instance (re-fit per candidate).</p></li>
 <li><p><strong>acquisition</strong> (<a class="reference internal" href="saealib.AcquisitionFunction.html#saealib.AcquisitionFunction" title="saealib.AcquisitionFunction"><em>AcquisitionFunction</em></a>) – Acquisition function used to score predictions.</p></li>
-<li><p><strong>n_neighbors</strong> (<em>int</em>) – Number of nearest neighbors for local model training.</p></li>
+<li><p><strong>training_set</strong> (<em>TrainingSet</em><em> or </em><em>None</em>) – Strategy object for building training data per candidate. Defaults to
+<code class="docutils literal notranslate"><span class="pre">KNNObjectiveSet(n_neighbors=50)</span></code>, which preserves the previous
+behaviour.</p></li>
 </ul>
 </dd>
 </dl>
@@ -408,13 +410,13 @@ surrogate factory instead (future work).</p>
 <p class="rubric">Method Details</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.LocalSurrogateManager.__init__">
-<span class="sig-prename descclassname"><span class="pre">LocalSurrogateManager.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surrogate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_neighbors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#LocalSurrogateManager.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.LocalSurrogateManager.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">LocalSurrogateManager.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surrogate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_set</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#LocalSurrogateManager.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.LocalSurrogateManager.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>surrogate</strong> (<a class="reference internal" href="saealib.Surrogate.html#saealib.Surrogate" title="saealib.surrogate.base.Surrogate"><em>Surrogate</em></a>)</p></li>
 <li><p><strong>acquisition</strong> (<a class="reference internal" href="saealib.AcquisitionFunction.html#saealib.AcquisitionFunction" title="saealib.acquisition.base.AcquisitionFunction"><em>AcquisitionFunction</em></a>)</p></li>
-<li><p><strong>n_neighbors</strong> (<em>int</em>)</p></li>
+<li><p><strong>training_set</strong> (<em>TrainingSet</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>

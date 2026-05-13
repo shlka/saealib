@@ -514,10 +514,12 @@
 <span class="sd">        Equivalent to ``set_surrogate_manager(LocalSurrogateManager(surrogate, ...))``.</span>
 <span class="sd">        Provided for backward compatibility.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.training_set</span><span class="w"> </span><span class="kn">import</span> <span class="n">KNNObjectiveSet</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">LocalSurrogateManager</span><span class="p">(</span>
             <span class="n">surrogate</span><span class="p">,</span>
             <span class="n">MeanPrediction</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">weight</span><span class="p">),</span>
-            <span class="n">n_neighbors</span><span class="o">=</span><span class="n">n_neighbors</span><span class="p">,</span>
+            <span class="n">training_set</span><span class="o">=</span><span class="n">KNNObjectiveSet</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="n">n_neighbors</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 

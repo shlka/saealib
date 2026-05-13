@@ -371,7 +371,7 @@
 <h1>saealib.GlobalSurrogateManager<a class="headerlink" href="#saealib-globalsurrogatemanager" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.GlobalSurrogateManager">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">GlobalSurrogateManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surrogate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#GlobalSurrogateManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.GlobalSurrogateManager" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">GlobalSurrogateManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surrogate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_set</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#GlobalSurrogateManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.GlobalSurrogateManager" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.surrogate.manager.SurrogateManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurrogateManager</span></code></a></p>
 <p>Surrogate manager that fits once on the full archive.</p>
 <p>Fits the surrogate on all archived solutions, then predicts and scores
@@ -382,6 +382,8 @@ quality is sufficient.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>surrogate</strong> (<a class="reference internal" href="saealib.Surrogate.html#saealib.Surrogate" title="saealib.Surrogate"><em>Surrogate</em></a>) – Surrogate model instance.</p></li>
 <li><p><strong>acquisition</strong> (<a class="reference internal" href="saealib.AcquisitionFunction.html#saealib.AcquisitionFunction" title="saealib.AcquisitionFunction"><em>AcquisitionFunction</em></a>) – Acquisition function used to score predictions.</p></li>
+<li><p><strong>training_set</strong> (<em>TrainingSet</em><em> or </em><em>None</em>) – Strategy object for building training data. Defaults to
+<code class="docutils literal notranslate"><span class="pre">ArchiveObjectiveSet()</span></code>, which preserves the previous behaviour.</p></li>
 </ul>
 </dd>
 </dl>
@@ -403,12 +405,13 @@ quality is sufficient.</p>
 <p class="rubric">Method Details</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.GlobalSurrogateManager.__init__">
-<span class="sig-prename descclassname"><span class="pre">GlobalSurrogateManager.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surrogate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#GlobalSurrogateManager.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.GlobalSurrogateManager.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">GlobalSurrogateManager.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surrogate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_set</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#GlobalSurrogateManager.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.GlobalSurrogateManager.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>surrogate</strong> (<a class="reference internal" href="saealib.Surrogate.html#saealib.Surrogate" title="saealib.surrogate.base.Surrogate"><em>Surrogate</em></a>)</p></li>
 <li><p><strong>acquisition</strong> (<a class="reference internal" href="saealib.AcquisitionFunction.html#saealib.AcquisitionFunction" title="saealib.acquisition.base.AcquisitionFunction"><em>AcquisitionFunction</em></a>)</p></li>
+<li><p><strong>training_set</strong> (<em>TrainingSet</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
