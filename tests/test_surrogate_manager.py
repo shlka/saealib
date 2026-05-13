@@ -23,6 +23,7 @@ from saealib.surrogate.manager import (
 )
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.training_set import KNNObjectiveSet
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -273,7 +274,7 @@ class TestLocalSurrogateManager:
         candidates: np.ndarray,
     ) -> None:
         manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), n_neighbors=10
+            surrogate_1obj, MeanPrediction(), training_set=KNNObjectiveSet(10)
         )
         result = manager.score_candidates(candidates, archive_1obj)
         assert isinstance(result, tuple) and len(result) == 2
@@ -285,7 +286,7 @@ class TestLocalSurrogateManager:
         candidates: np.ndarray,
     ) -> None:
         manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), n_neighbors=10
+            surrogate_1obj, MeanPrediction(), training_set=KNNObjectiveSet(10)
         )
         scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
@@ -297,7 +298,7 @@ class TestLocalSurrogateManager:
         candidates: np.ndarray,
     ) -> None:
         manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), n_neighbors=10
+            surrogate_1obj, MeanPrediction(), training_set=KNNObjectiveSet(10)
         )
         _, predictions = manager.score_candidates(candidates, archive_1obj)
         assert len(predictions) == len(candidates)
@@ -309,7 +310,7 @@ class TestLocalSurrogateManager:
         candidates: np.ndarray,
     ) -> None:
         manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), n_neighbors=10
+            surrogate_1obj, MeanPrediction(), training_set=KNNObjectiveSet(10)
         )
         _, predictions = manager.score_candidates(candidates, archive_1obj)
         for p in predictions:
@@ -321,9 +322,10 @@ class TestLocalSurrogateManager:
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
-        """Default n_neighbors=50 is clamped to archive size."""
+        """Default training_set is KNNObjectiveSet(50), clamped to archive size."""
         manager = LocalSurrogateManager(surrogate_1obj, MeanPrediction())
-        assert manager.n_neighbors == 50
+        assert isinstance(manager.training_set, KNNObjectiveSet)
+        assert manager.training_set.n_neighbors == 50
         # archive has only 20 points, get_knn should still work
         scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
@@ -335,7 +337,7 @@ class TestLocalSurrogateManager:
         candidates: np.ndarray,
     ) -> None:
         manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), n_neighbors=10
+            surrogate_1obj, MeanPrediction(), training_set=KNNObjectiveSet(10)
         )
         scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert np.all(np.isfinite(scores))

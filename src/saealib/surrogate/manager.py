@@ -18,6 +18,11 @@ from saealib.acquisition.base import AcquisitionFunction
 from saealib.callback import PostSurrogateFitEvent
 from saealib.surrogate.base import Surrogate
 from saealib.surrogate.prediction import SurrogatePrediction
+from saealib.surrogate.training_set import (
+    ArchiveObjectiveSet,
+    KNNObjectiveSet,
+    TrainingSet,
+)
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationContext
@@ -83,11 +88,22 @@ class GlobalSurrogateManager(SurrogateManager):
         Surrogate model instance.
     acquisition : AcquisitionFunction
         Acquisition function used to score predictions.
+    training_set : TrainingSet or None
+        Strategy object for building training data. Defaults to
+        ``ArchiveObjectiveSet()``, which preserves the previous behaviour.
     """
 
-    def __init__(self, surrogate: Surrogate, acquisition: AcquisitionFunction):
+    def __init__(
+        self,
+        surrogate: Surrogate,
+        acquisition: AcquisitionFunction,
+        training_set: TrainingSet | None = None,
+    ):
         self.surrogate = surrogate
         self.acquisition = acquisition
+        self.training_set: TrainingSet = (
+            training_set if training_set is not None else ArchiveObjectiveSet()
+        )
 
     def score_candidates(
         self,
@@ -97,17 +113,17 @@ class GlobalSurrogateManager(SurrogateManager):
         ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """Fit on full archive, predict and score all candidates at once."""
-        train_x = archive.x
-        train_f = archive.f  # (n_archive, n_obj)
-        self.surrogate.fit(train_x, train_f)
+        population = ctx.population if ctx is not None else None
+        data = self.training_set.build(archive, population, ctx, candidate_x=None)
+        self.surrogate.fit(data.train_x, data.train_y)
         if provider is not None and ctx is not None:
             provider.dispatch(
                 PostSurrogateFitEvent(
                     ctx=ctx,
                     provider=provider,
                     surrogate=self.surrogate,
-                    train_x=train_x,
-                    train_f=train_f,
+                    train_x=data.train_x,
+                    train_f=data.train_y,
                 )
             )
 
@@ -139,19 +155,25 @@ class LocalSurrogateManager(SurrogateManager):
         Surrogate model instance (re-fit per candidate).
     acquisition : AcquisitionFunction
         Acquisition function used to score predictions.
-    n_neighbors : int
-        Number of nearest neighbors for local model training.
+    training_set : TrainingSet or None
+        Strategy object for building training data per candidate. Defaults to
+        ``KNNObjectiveSet(n_neighbors=50)``, which preserves the previous
+        behaviour.
     """
 
     def __init__(
         self,
         surrogate: Surrogate,
         acquisition: AcquisitionFunction,
-        n_neighbors: int = 50,
+        training_set: TrainingSet | None = None,
     ):
         self.surrogate = surrogate
         self.acquisition = acquisition
-        self.n_neighbors = n_neighbors
+        self.training_set: TrainingSet = (
+            training_set
+            if training_set is not None
+            else KNNObjectiveSet(n_neighbors=50)
+        )
 
     def score_candidates(
         self,
@@ -164,20 +186,19 @@ class LocalSurrogateManager(SurrogateManager):
         predictions: list[SurrogatePrediction] = []
         _dispatch = provider is not None and ctx is not None
         reference = self.acquisition.compute_reference(archive)
+        population = ctx.population if ctx is not None else None
 
         for x in candidates_x:
-            train_idx, _ = archive.get_knn(x, self.n_neighbors)
-            train_x = archive.x[train_idx]
-            train_f = archive.f[train_idx]  # (n_neighbors, n_obj)
-            self.surrogate.fit(train_x, train_f)
+            data = self.training_set.build(archive, population, ctx, candidate_x=x)
+            self.surrogate.fit(data.train_x, data.train_y)
             if _dispatch:
                 provider.dispatch(
                     PostSurrogateFitEvent(
                         ctx=ctx,
                         provider=provider,
                         surrogate=self.surrogate,
-                        train_x=train_x,
-                        train_f=train_f,
+                        train_x=data.train_x,
+                        train_f=data.train_y,
                     )
                 )
             pred = self.surrogate.predict(x)  # mean: (1, n_obj)
