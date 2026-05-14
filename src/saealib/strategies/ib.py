@@ -59,7 +59,7 @@ class IndividualBasedStrategy(OptimizationStrategy):
             offspring.x, ctx.archive, provider, ctx
         )
         for i, pred in enumerate(predictions):
-            offspring[i].f = pred.value[0]  # assign predicted objectives (n_obj,)
+            offspring[i].f = pred.tell_f[0]  # assign predicted objectives (n_obj,)
 
         provider.dispatch(
             SurrogateEndEvent(ctx=ctx, provider=provider, offspring=offspring)

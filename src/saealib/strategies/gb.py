@@ -50,7 +50,7 @@ class GenerationBasedStrategy(OptimizationStrategy):
                 offspring.x, ctx.archive, provider, ctx
             )
             for i, pred in enumerate(predictions):
-                offspring[i].f = pred.value[0]
+                offspring[i].f = pred.tell_f[0]
 
             provider.dispatch(
                 SurrogateEndEvent(ctx=ctx, provider=provider, offspring=offspring)

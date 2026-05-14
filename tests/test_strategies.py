@@ -107,6 +107,7 @@ class _MockProvider:
         pass
 
 
+
 # ---------------------------------------------------------------------------
 # GenerationBasedStrategy
 # ---------------------------------------------------------------------------
@@ -155,6 +156,7 @@ class TestGenerationBasedStrategy:
         strategy.step(ctx, provider)
         assert ctx.gen == 1
         assert ctx.fe == len(ctx.population)
+
 
 
 # ---------------------------------------------------------------------------
