@@ -69,7 +69,7 @@ class SurrogateManager(ABC):
             Acquisition scores. shape: (n_candidates,). Higher is better.
         predictions : list[SurrogatePrediction]
             Surrogate predictions for each candidate.
-            predictions[i].mean shape: (1, n_obj)
+            predictions[i].value shape: (1, n_obj)
         """
         ...
 
@@ -272,7 +272,7 @@ class EnsembleSurrogateManager(SurrogateManager):
 
 def _split_prediction(prediction: SurrogatePrediction) -> list[SurrogatePrediction]:
     """Split a batch SurrogatePrediction into per-sample SurrogatePrediction objects."""
-    n = prediction.mean.shape[0]
+    n = prediction.value.shape[0]
     result = []
     for i in range(n):
         std_i = prediction.std[i : i + 1] if prediction.std is not None else None
@@ -280,7 +280,7 @@ def _split_prediction(prediction: SurrogatePrediction) -> list[SurrogatePredicti
         tell_f_i = prediction._tell_f[i : i + 1] if prediction._tell_f is not None else None
         result.append(
             SurrogatePrediction(
-                mean=prediction.mean[i : i + 1],
+                value=prediction.value[i : i + 1],
                 std=std_i,
                 label=label_i,
                 _tell_f=tell_f_i,

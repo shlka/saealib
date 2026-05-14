@@ -14,8 +14,8 @@ class SurrogatePrediction:
 
     Attributes
     ----------
-    mean : np.ndarray
-        Predicted mean values. shape: (n_samples, n_obj)
+    value : np.ndarray
+        Predicted values. shape: (n_samples, n_obj)
     std : np.ndarray or None
         Predicted standard deviations (uncertainty).
         shape: (n_samples, n_obj). None if the surrogate does not
@@ -34,7 +34,7 @@ class SurrogatePrediction:
         (e.g., SHAP values, gradient estimates).
     """
 
-    mean: np.ndarray
+    value: np.ndarray
     std: np.ndarray | None = None
     label: np.ndarray | None = None
     _tell_f: np.ndarray | None = field(default=None)
@@ -55,7 +55,7 @@ class SurrogatePrediction:
     @property
     def tell_f(self) -> np.ndarray:
         """Return the override array if set, otherwise fall back to mean."""
-        return self._tell_f if self._tell_f is not None else self.mean
+        return self._tell_f if self._tell_f is not None else self.value
 
     @property
     def has_tell_f(self) -> bool:

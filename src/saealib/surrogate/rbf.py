@@ -168,9 +168,9 @@ class RBFsurrogate(Surrogate):
         Returns
         -------
         SurrogatePrediction
-            prediction.mean shape: (n_samples, n_obj)
+            prediction.value shape: (n_samples, n_obj)
             prediction.std  is None (RBF interpolation provides no uncertainty)
         """
         preds = [m.predict(test_x) for m in self._models]
-        mean = np.column_stack(preds)  # (n_samples, n_obj)
-        return SurrogatePrediction(mean=mean)
+        value = np.column_stack(preds)  # (n_samples, n_obj)
+        return SurrogatePrediction(value=value)

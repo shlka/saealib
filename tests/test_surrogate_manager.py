@@ -88,40 +88,40 @@ class TestSplitPrediction:
     """Tests for the _split_prediction helper."""
 
     def test_splits_into_correct_count(self) -> None:
-        pred = SurrogatePrediction(mean=np.zeros((4, 2)))
+        pred = SurrogatePrediction(value=np.zeros((4, 2)))
         parts = _split_prediction(pred)
         assert len(parts) == 4
 
     def test_each_part_has_shape_1_nobj(self) -> None:
-        pred = SurrogatePrediction(mean=np.arange(6).reshape(3, 2).astype(float))
+        pred = SurrogatePrediction(value=np.arange(6).reshape(3, 2).astype(float))
         parts = _split_prediction(pred)
         for p in parts:
-            assert p.mean.shape == (1, 2)
+            assert p.value.shape == (1, 2)
 
     def test_values_preserved(self) -> None:
         mean = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
-        pred = SurrogatePrediction(mean=mean)
+        pred = SurrogatePrediction(value=mean)
         parts = _split_prediction(pred)
         for i, p in enumerate(parts):
-            np.testing.assert_array_equal(p.mean[0], mean[i])
+            np.testing.assert_array_equal(p.value[0], mean[i])
 
     def test_std_split_correctly(self) -> None:
         std = np.array([[0.1, 0.2], [0.3, 0.4]])
-        pred = SurrogatePrediction(mean=np.zeros((2, 2)), std=std)
+        pred = SurrogatePrediction(value=np.zeros((2, 2)), std=std)
         parts = _split_prediction(pred)
         assert parts[0].std is not None
         assert parts[0].std.shape == (1, 2)
         np.testing.assert_array_almost_equal(parts[0].std[0], [0.1, 0.2])
 
     def test_std_none_propagates(self) -> None:
-        pred = SurrogatePrediction(mean=np.zeros((3, 1)))
+        pred = SurrogatePrediction(value=np.zeros((3, 1)))
         parts = _split_prediction(pred)
         for p in parts:
             assert p.std is None
 
     def test_label_split_correctly(self) -> None:
         label = np.array([0.0, 1.0, 2.0])
-        pred = SurrogatePrediction(mean=np.zeros((3, 1)), label=label)
+        pred = SurrogatePrediction(value=np.zeros((3, 1)), label=label)
         parts = _split_prediction(pred)
         for i, p in enumerate(parts):
             assert p.label is not None
@@ -130,14 +130,14 @@ class TestSplitPrediction:
     def test_metadata_shared(self) -> None:
         """metadata dict is shared (not deep-copied) across splits."""
         meta = {"key": "val"}
-        pred = SurrogatePrediction(mean=np.zeros((2, 1)), metadata=meta)
+        pred = SurrogatePrediction(value=np.zeros((2, 1)), metadata=meta)
         parts = _split_prediction(pred)
         for p in parts:
             assert p.metadata is meta
 
     def test_tell_f_split_correctly(self) -> None:
         tell_f = np.array([[10.0], [20.0], [30.0]])
-        pred = SurrogatePrediction(mean=np.zeros((3, 1)), _tell_f=tell_f)
+        pred = SurrogatePrediction(value=np.zeros((3, 1)), _tell_f=tell_f)
         parts = _split_prediction(pred)
         assert parts[0].has_tell_f
         assert parts[0].tell_f.shape == (1, 1)
@@ -146,14 +146,14 @@ class TestSplitPrediction:
         np.testing.assert_array_almost_equal(parts[2].tell_f[0], [30.0])
 
     def test_tell_f_none_propagates(self) -> None:
-        pred = SurrogatePrediction(mean=np.zeros((3, 1)))
+        pred = SurrogatePrediction(value=np.zeros((3, 1)))
         parts = _split_prediction(pred)
         for p in parts:
             assert not p.has_tell_f
 
     def test_tell_f_shape_preserved_after_split(self) -> None:
         tell_f = np.array([[1.0, 2.0], [3.0, 4.0]])
-        pred = SurrogatePrediction(mean=np.zeros((2, 2)), _tell_f=tell_f)
+        pred = SurrogatePrediction(value=np.zeros((2, 2)), _tell_f=tell_f)
         parts = _split_prediction(pred)
         assert parts[0].has_tell_f
         assert parts[0].tell_f.shape == (1, 2)
@@ -170,19 +170,19 @@ class TestSurrogatePredictionProperties:
     """Tests for tell_f property and has_tell_f."""
 
     def test_tell_f_uses_override_when_set(self) -> None:
-        pred = SurrogatePrediction(mean=np.array([[0.0]]), _tell_f=np.array([[99.0]]))
+        pred = SurrogatePrediction(value=np.array([[0.0]]), _tell_f=np.array([[99.0]]))
         np.testing.assert_array_almost_equal(pred.tell_f, [[99.0]])
 
     def test_tell_f_falls_back_to_mean(self) -> None:
-        pred = SurrogatePrediction(mean=np.array([[42.0]]))
+        pred = SurrogatePrediction(value=np.array([[42.0]]))
         np.testing.assert_array_almost_equal(pred.tell_f, [[42.0]])
 
     def test_has_tell_f_true_when_set(self) -> None:
-        pred = SurrogatePrediction(mean=np.array([[0.0]]), _tell_f=np.array([[1.0]]))
+        pred = SurrogatePrediction(value=np.array([[0.0]]), _tell_f=np.array([[1.0]]))
         assert pred.has_tell_f is True
 
     def test_has_tell_f_false_when_none(self) -> None:
-        pred = SurrogatePrediction(mean=np.array([[0.0]]))
+        pred = SurrogatePrediction(value=np.array([[0.0]]))
         assert pred.has_tell_f is False
 
 
@@ -282,7 +282,7 @@ class TestGlobalSurrogateManager:
         manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
         _, predictions = manager.score_candidates(candidates, archive_1obj)
         for p in predictions:
-            assert p.mean.shape == (1, N_OBJ)
+            assert p.value.shape == (1, N_OBJ)
 
     def test_scores_finite(
         self,
@@ -308,7 +308,7 @@ class TestGlobalSurrogateManager:
         scores, predictions = manager.score_candidates(candidates, archive_2obj)
         assert scores.shape == (len(candidates),)
         for p in predictions:
-            assert p.mean.shape == (1, 2)
+            assert p.value.shape == (1, 2)
 
 
 # ===========================================================================
@@ -364,7 +364,7 @@ class TestLocalSurrogateManager:
         )
         _, predictions = manager.score_candidates(candidates, archive_1obj)
         for p in predictions:
-            assert p.mean.shape == (1, N_OBJ)
+            assert p.value.shape == (1, N_OBJ)
 
     def test_n_neighbors_default(
         self,
