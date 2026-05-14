@@ -56,7 +56,7 @@ class PreSelectionStrategy(OptimizationStrategy):
             candidates.x, ctx.archive, provider, ctx
         )
         for i, pred in enumerate(predictions):
-            candidates[i].f = pred.mean[0]
+            candidates[i].f = pred.tell_f[0]
 
         provider.dispatch(
             SurrogateEndEvent(ctx=ctx, provider=provider, offspring=candidates)

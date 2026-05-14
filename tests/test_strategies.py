@@ -88,7 +88,7 @@ class _MockSurrogateManager:
         scores = np.linspace(1.0, 0.0, n)
         predictions = [
             SurrogatePrediction(
-                mean=np.array([[1.0]]),
+                value=np.array([[1.0]]),
                 std=None,
                 label=None,
                 metadata={},

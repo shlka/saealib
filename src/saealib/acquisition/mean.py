@@ -52,7 +52,7 @@ class MeanPrediction(AcquisitionFunction):
         Parameters
         ----------
         prediction : SurrogatePrediction
-            Surrogate predictions. prediction.mean shape: (n_samples, n_obj)
+            Surrogate predictions. prediction.value shape: (n_samples, n_obj)
         reference : Any
             Not used. Accepted for interface compatibility.
 
@@ -61,7 +61,7 @@ class MeanPrediction(AcquisitionFunction):
         np.ndarray
             Scores. shape: (n_samples,)
         """
-        m = prediction.mean  # (n_samples, n_obj)
+        m = prediction.value  # (n_samples, n_obj)
         if self.weights is not None:
             return m @ np.asarray(self.weights)  # (n_samples,)
         return m[:, 0]  # single-objective default

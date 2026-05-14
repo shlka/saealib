@@ -42,7 +42,7 @@ class Surrogate(ABC):
         Returns
         -------
         SurrogatePrediction
-            prediction.mean shape: (n_samples, n_obj)
+            prediction.value shape: (n_samples, n_obj)
             prediction.std  shape: (n_samples, n_obj) or None
         """
         pass
