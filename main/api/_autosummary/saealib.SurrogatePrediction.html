@@ -371,23 +371,24 @@
 <h1>saealib.SurrogatePrediction<a class="headerlink" href="#saealib-surrogateprediction" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.SurrogatePrediction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">SurrogatePrediction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/prediction.html#SurrogatePrediction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.SurrogatePrediction" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">SurrogatePrediction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_tell_f=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/prediction.html#SurrogatePrediction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.SurrogatePrediction" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Unified return type for surrogate model predictions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mean</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>value</strong> (<em>ndarray</em>)</p></li>
 <li><p><strong>std</strong> (<em>ndarray</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>label</strong> (<em>ndarray</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>_tell_f</strong> (<em>ndarray</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>metadata</strong> (<em>dict</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="saealib.SurrogatePrediction.mean">
-<span class="sig-name descname"><span class="pre">mean</span></span><a class="headerlink" href="#saealib.SurrogatePrediction.mean" title="Link to this definition">¶</a></dt>
-<dd><p>Predicted mean values. shape: (n_samples, n_obj)</p>
+<dt class="sig sig-object py" id="saealib.SurrogatePrediction.value">
+<span class="sig-name descname"><span class="pre">value</span></span><a class="headerlink" href="#saealib.SurrogatePrediction.value" title="Link to this definition">¶</a></dt>
+<dd><p>Predicted values. shape: (n_samples, n_obj)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>np.ndarray</p>
@@ -421,6 +422,21 @@ None unless the surrogate is a classification model.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="saealib.SurrogatePrediction.tell_f">
+<span class="sig-name descname"><span class="pre">tell_f</span></span><a class="headerlink" href="#saealib.SurrogatePrediction.tell_f" title="Link to this definition">¶</a></dt>
+<dd><p>Values to assign to offspring.f before calling algorithm.tell().
+Falls back to <code class="docutils literal notranslate"><span class="pre">mean</span></code> when no override is set (<code class="docutils literal notranslate"><span class="pre">_tell_f</span> <span class="pre">is</span> <span class="pre">None</span></code>).
+Pass <code class="docutils literal notranslate"><span class="pre">_tell_f=np.full(...,</span> <span class="pre">np.nan)</span></code> to prevent pbest corruption
+when the surrogate returns non-objective values (e.g., class
+probabilities, novelty scores).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="saealib.SurrogatePrediction.metadata">
 <span class="sig-name descname"><span class="pre">metadata</span></span><a class="headerlink" href="#saealib.SurrogatePrediction.metadata" title="Link to this definition">¶</a></dt>
 <dd><p>Implementation-specific additional information
@@ -447,13 +463,14 @@ None unless the surrogate is a classification model.</p>
 <p class="rubric">Method Details</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.SurrogatePrediction.__init__">
-<span class="sig-prename descclassname"><span class="pre">SurrogatePrediction.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.SurrogatePrediction.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SurrogatePrediction.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_tell_f=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.SurrogatePrediction.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mean</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>value</strong> (<em>ndarray</em>)</p></li>
 <li><p><strong>std</strong> (<em>ndarray</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>label</strong> (<em>ndarray</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>_tell_f</strong> (<em>ndarray</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>metadata</strong> (<em>dict</em>)</p></li>
 </ul>
 </dd>
@@ -522,9 +539,10 @@ None unless the surrogate is a classification model.</p>
             <ul>
 <li><a class="reference internal" href="#">saealib.SurrogatePrediction</a><ul>
 <li><a class="reference internal" href="#saealib.SurrogatePrediction"><code class="docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code></a><ul>
-<li><a class="reference internal" href="#saealib.SurrogatePrediction.mean"><code class="docutils literal notranslate"><span class="pre">SurrogatePrediction.mean</span></code></a></li>
+<li><a class="reference internal" href="#saealib.SurrogatePrediction.value"><code class="docutils literal notranslate"><span class="pre">SurrogatePrediction.value</span></code></a></li>
 <li><a class="reference internal" href="#saealib.SurrogatePrediction.std"><code class="docutils literal notranslate"><span class="pre">SurrogatePrediction.std</span></code></a></li>
 <li><a class="reference internal" href="#saealib.SurrogatePrediction.label"><code class="docutils literal notranslate"><span class="pre">SurrogatePrediction.label</span></code></a></li>
+<li><a class="reference internal" href="#saealib.SurrogatePrediction.tell_f"><code class="docutils literal notranslate"><span class="pre">SurrogatePrediction.tell_f</span></code></a></li>
 <li><a class="reference internal" href="#saealib.SurrogatePrediction.metadata"><code class="docutils literal notranslate"><span class="pre">SurrogatePrediction.metadata</span></code></a></li>
 </ul>
 </li>

@@ -379,8 +379,8 @@
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
-<span class="sd">    mean : np.ndarray</span>
-<span class="sd">        Predicted mean values. shape: (n_samples, n_obj)</span>
+<span class="sd">    value : np.ndarray</span>
+<span class="sd">        Predicted values. shape: (n_samples, n_obj)</span>
 <span class="sd">    std : np.ndarray or None</span>
 <span class="sd">        Predicted standard deviations (uncertainty).</span>
 <span class="sd">        shape: (n_samples, n_obj). None if the surrogate does not</span>
@@ -388,14 +388,21 @@
 <span class="sd">    label : np.ndarray or None</span>
 <span class="sd">        Predicted class labels. shape: (n_samples,).</span>
 <span class="sd">        None unless the surrogate is a classification model.</span>
+<span class="sd">    tell_f : np.ndarray</span>
+<span class="sd">        Values to assign to offspring.f before calling algorithm.tell().</span>
+<span class="sd">        Falls back to ``mean`` when no override is set (``_tell_f is None``).</span>
+<span class="sd">        Pass ``_tell_f=np.full(..., np.nan)`` to prevent pbest corruption</span>
+<span class="sd">        when the surrogate returns non-objective values (e.g., class</span>
+<span class="sd">        probabilities, novelty scores).</span>
 <span class="sd">    metadata : dict</span>
 <span class="sd">        Implementation-specific additional information</span>
 <span class="sd">        (e.g., SHAP values, gradient estimates).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">mean</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">value</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">std</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">label</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_tell_f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="c1"># Values that are conventionally used should be implemented</span>
     <span class="c1"># as attributes rather than metadata.</span>
@@ -408,7 +415,17 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">has_label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if classification labels are available.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tell_f</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the override array if set, otherwise fall back to mean.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tell_f</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tell_f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_tell_f</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if a dedicated tell_f override is set.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tell_f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
 
 </pre></div>
         </article>

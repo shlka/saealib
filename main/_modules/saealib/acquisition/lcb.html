@@ -450,7 +450,7 @@
                 <span class="s2">&quot;LowerConfidenceBound requires a surrogate with uncertainty &quot;</span>
                 <span class="s2">&quot;estimates (prediction.std must not be None).&quot;</span>
             <span class="p">)</span>
-        <span class="n">mu</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">mean</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_idx</span><span class="p">]</span>  <span class="c1"># (n_samples,)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">value</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_idx</span><span class="p">]</span>  <span class="c1"># (n_samples,)</span>
         <span class="n">sigma</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">std</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_idx</span><span class="p">]</span>  <span class="c1"># (n_samples,)</span>
         <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="n">mu</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">kappa</span> <span class="o">*</span> <span class="n">sigma</span><span class="p">)</span>  <span class="c1"># negate: higher = better</span></div>
 </div>

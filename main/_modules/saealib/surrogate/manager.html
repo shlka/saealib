@@ -436,7 +436,7 @@
 <span class="sd">            Acquisition scores. shape: (n_candidates,). Higher is better.</span>
 <span class="sd">        predictions : list[SurrogatePrediction]</span>
 <span class="sd">            Surrogate predictions for each candidate.</span>
-<span class="sd">            predictions[i].mean shape: (1, n_obj)</span>
+<span class="sd">            predictions[i].value shape: (1, n_obj)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="o">...</span></div>
 </div>
@@ -668,16 +668,20 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_split_prediction</span><span class="p">(</span><span class="n">prediction</span><span class="p">:</span> <span class="n">SurrogatePrediction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Split a batch SurrogatePrediction into per-sample SurrogatePrediction objects.&quot;&quot;&quot;</span>
-    <span class="n">n</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
         <span class="n">std_i</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">std</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">prediction</span><span class="o">.</span><span class="n">std</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="n">label_i</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">label</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">prediction</span><span class="o">.</span><span class="n">label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">tell_f_i</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">prediction</span><span class="o">.</span><span class="n">_tell_f</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">prediction</span><span class="o">.</span><span class="n">_tell_f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
         <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">SurrogatePrediction</span><span class="p">(</span>
-                <span class="n">mean</span><span class="o">=</span><span class="n">prediction</span><span class="o">.</span><span class="n">mean</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">prediction</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
                 <span class="n">std</span><span class="o">=</span><span class="n">std_i</span><span class="p">,</span>
                 <span class="n">label</span><span class="o">=</span><span class="n">label_i</span><span class="p">,</span>
+                <span class="n">_tell_f</span><span class="o">=</span><span class="n">tell_f_i</span><span class="p">,</span>
                 <span class="n">metadata</span><span class="o">=</span><span class="n">prediction</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
