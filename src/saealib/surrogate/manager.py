@@ -277,7 +277,9 @@ def _split_prediction(prediction: SurrogatePrediction) -> list[SurrogatePredicti
     for i in range(n):
         std_i = prediction.std[i : i + 1] if prediction.std is not None else None
         label_i = prediction.label[i : i + 1] if prediction.label is not None else None
-        tell_f_i = prediction._tell_f[i : i + 1] if prediction._tell_f is not None else None
+        tell_f_i = (
+            prediction._tell_f[i : i + 1] if prediction._tell_f is not None else None
+        )
         result.append(
             SurrogatePrediction(
                 value=prediction.value[i : i + 1],
