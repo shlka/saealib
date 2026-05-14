@@ -135,6 +135,56 @@ class TestSplitPrediction:
         for p in parts:
             assert p.metadata is meta
 
+    def test_tell_f_split_correctly(self) -> None:
+        tell_f = np.array([[10.0], [20.0], [30.0]])
+        pred = SurrogatePrediction(mean=np.zeros((3, 1)), _tell_f=tell_f)
+        parts = _split_prediction(pred)
+        assert parts[0].has_tell_f
+        assert parts[0].tell_f.shape == (1, 1)
+        np.testing.assert_array_almost_equal(parts[0].tell_f[0], [10.0])
+        np.testing.assert_array_almost_equal(parts[1].tell_f[0], [20.0])
+        np.testing.assert_array_almost_equal(parts[2].tell_f[0], [30.0])
+
+    def test_tell_f_none_propagates(self) -> None:
+        pred = SurrogatePrediction(mean=np.zeros((3, 1)))
+        parts = _split_prediction(pred)
+        for p in parts:
+            assert not p.has_tell_f
+
+    def test_tell_f_shape_preserved_after_split(self) -> None:
+        tell_f = np.array([[1.0, 2.0], [3.0, 4.0]])
+        pred = SurrogatePrediction(mean=np.zeros((2, 2)), _tell_f=tell_f)
+        parts = _split_prediction(pred)
+        assert parts[0].has_tell_f
+        assert parts[0].tell_f.shape == (1, 2)
+        np.testing.assert_array_almost_equal(parts[0].tell_f[0], [1.0, 2.0])
+        assert parts[1].has_tell_f
+        assert parts[1].tell_f.shape == (1, 2)
+        np.testing.assert_array_almost_equal(parts[1].tell_f[0], [3.0, 4.0])
+
+
+# ===========================================================================
+# SurrogatePrediction Properties Tests
+# ===========================================================================
+class TestSurrogatePredictionProperties:
+    """Tests for tell_f property and has_tell_f."""
+
+    def test_tell_f_uses_override_when_set(self) -> None:
+        pred = SurrogatePrediction(mean=np.array([[0.0]]), _tell_f=np.array([[99.0]]))
+        np.testing.assert_array_almost_equal(pred.tell_f, [[99.0]])
+
+    def test_tell_f_falls_back_to_mean(self) -> None:
+        pred = SurrogatePrediction(mean=np.array([[42.0]]))
+        np.testing.assert_array_almost_equal(pred.tell_f, [[42.0]])
+
+    def test_has_tell_f_true_when_set(self) -> None:
+        pred = SurrogatePrediction(mean=np.array([[0.0]]), _tell_f=np.array([[1.0]]))
+        assert pred.has_tell_f is True
+
+    def test_has_tell_f_false_when_none(self) -> None:
+        pred = SurrogatePrediction(mean=np.array([[0.0]]))
+        assert pred.has_tell_f is False
+
 
 # ===========================================================================
 # _rank_normalize Tests
