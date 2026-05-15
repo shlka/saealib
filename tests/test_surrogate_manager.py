@@ -700,3 +700,60 @@ class TestNichingManager:
         scores = mgr.compute_scores(candidates, empty_arc)
         assert scores.shape == (len(candidates),)
         assert np.all(np.isfinite(scores))
+
+
+# ===========================================================================
+# EnsembleSurrogateManager + ArchiveBasedManager Integration Tests
+# ===========================================================================
+class TestEnsembleSurrogateManagerWithArchiveBased:
+    """Integration tests: EnsembleSurrogateManager with ArchiveBasedManager sub-managers."""
+
+    def test_regression_novelty_ensemble_scores_shape(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        m_reg = GlobalSurrogateManager(RBFsurrogate(gaussian_kernel, DIM), MeanPrediction())
+        ensemble = EnsembleSurrogateManager(
+            [m_reg, NoveltyManager(k=3)], weights=np.array([0.7, 0.3])
+        )
+        scores, _ = ensemble.score_candidates(candidates, archive_1obj)
+        assert scores.shape == (len(candidates),)
+
+    def test_regression_novelty_ensemble_scores_in_0_1(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        m_reg = GlobalSurrogateManager(RBFsurrogate(gaussian_kernel, DIM), MeanPrediction())
+        ensemble = EnsembleSurrogateManager([m_reg, NoveltyManager(k=3)])
+        scores, _ = ensemble.score_candidates(candidates, archive_1obj)
+        assert np.all(scores >= 0.0) and np.all(scores <= 1.0)
+
+    def test_regression_first_tell_f_is_finite(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        """Regression surrogate listed first → predictions returned are finite."""
+        m_reg = GlobalSurrogateManager(RBFsurrogate(gaussian_kernel, DIM), MeanPrediction())
+        ensemble = EnsembleSurrogateManager([m_reg, NoveltyManager(k=3)])
+        _, preds = ensemble.score_candidates(candidates, archive_1obj)
+        for p in preds:
+            assert np.all(np.isfinite(p.tell_f))
+
+    def test_novelty_only_ensemble_tell_f_is_nan(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        """ArchiveBasedManager alone → predictions have NaN tell_f."""
+        ensemble = EnsembleSurrogateManager([NoveltyManager(k=3)])
+        _, preds = ensemble.score_candidates(candidates, archive_1obj)
+        for p in preds:
+            assert p.has_tell_f
+            assert np.all(np.isnan(p.tell_f))
+
+    def test_regression_density_ensemble_scores_shape(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        m_reg = GlobalSurrogateManager(RBFsurrogate(gaussian_kernel, DIM), MeanPrediction())
+        ensemble = EnsembleSurrogateManager(
+            [m_reg, DensityManager(eps=0.5)], weights=np.array([0.6, 0.4])
+        )
+        scores, preds = ensemble.score_candidates(candidates, archive_1obj)
+        assert scores.shape == (len(candidates),)
+        for p in preds:
+            assert np.all(np.isfinite(p.tell_f))
