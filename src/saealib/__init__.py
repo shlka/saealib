@@ -84,6 +84,12 @@ from saealib.strategies.base import OptimizationStrategy
 from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
+from saealib.surrogate.archive_manager import (
+    ArchiveBasedManager,
+    DensityManager,
+    NichingManager,
+    NoveltyManager,
+)
 from saealib.surrogate.base import Surrogate
 from saealib.surrogate.manager import (
     EnsembleSurrogateManager,
@@ -104,11 +110,13 @@ __all__ = [
     "AcquisitionFunction",
     "Algorithm",
     "Archive",
+    "ArchiveBasedManager",
     "ArchiveMixin",
     "CallbackManager",
     "Comparator",
     "Constraint",
     "Crossover",
+    "DensityManager",
     "CrossoverBLXAlpha",
     "CrossoverOnePoint",
     "CrossoverSBX",
@@ -129,6 +137,8 @@ __all__ = [
     "LowerConfidenceBound",
     "MaxUncertainty",
     "MeanPrediction",
+    "NichingManager",
+    "NoveltyManager",
     "Mutation",
     "MutationGaussian",
     "MutationPolynomial",
