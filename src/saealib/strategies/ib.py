@@ -10,7 +10,7 @@ import numpy as np
 from saealib.callback import PostEvaluationEvent, SurrogateEndEvent, SurrogateStartEvent
 from saealib.context import OptimizationContext
 from saealib.optimizer import ComponentProvider
-from saealib.strategies.base import OptimizationStrategy
+from saealib.strategies.base import OptimizationStrategy, assign_tell_f
 
 
 class IndividualBasedStrategy(OptimizationStrategy):
@@ -59,7 +59,7 @@ class IndividualBasedStrategy(OptimizationStrategy):
             offspring.x, ctx.archive, provider, ctx
         )
         for i, pred in enumerate(predictions):
-            offspring[i].f = pred.tell_f[0]  # assign predicted objectives (n_obj,)
+            assign_tell_f(offspring[i], pred, ctx)
 
         provider.dispatch(
             SurrogateEndEvent(ctx=ctx, provider=provider, offspring=offspring)

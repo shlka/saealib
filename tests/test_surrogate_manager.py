@@ -24,6 +24,7 @@ from saealib.surrogate.manager import (
     EnsembleSurrogateManager,
     GlobalSurrogateManager,
     LocalSurrogateManager,
+    SurrogateManager,
     _rank_normalize,
     _split_prediction,
 )
@@ -190,6 +191,44 @@ class TestSurrogatePredictionProperties:
     def test_has_tell_f_false_when_none(self) -> None:
         pred = SurrogatePrediction(value=np.array([[0.0]]))
         assert pred.has_tell_f is False
+
+
+# ===========================================================================
+# _sanitize_nan Tests
+# ===========================================================================
+class TestSanitizeNan:
+    """Tests for SurrogateManager._sanitize_nan."""
+
+    def test_no_nan_unchanged(self) -> None:
+        scores = np.array([1.0, 2.0, 3.0])
+        preds = [SurrogatePrediction(value=np.array([[v]])) for v in scores]
+        s, p = SurrogateManager._sanitize_nan(scores, preds)
+        np.testing.assert_array_equal(s, scores)
+        assert not p[0].has_tell_f
+
+    def test_nan_score_becomes_neginf(self) -> None:
+        scores = np.array([1.0, np.nan, 3.0])
+        preds = [SurrogatePrediction(value=np.array([[v]])) for v in [1.0, 0.0, 3.0]]
+        s, _ = SurrogateManager._sanitize_nan(scores, preds)
+        assert s[1] == -np.inf
+        assert s[0] == 1.0 and s[2] == 3.0
+
+    def test_nan_prediction_gets_explicit_tell_f_nan(self) -> None:
+        scores = np.array([np.nan, 1.0])
+        preds = [SurrogatePrediction(value=np.array([[np.nan]])),
+                 SurrogatePrediction(value=np.array([[1.0]]))]
+        _, p = SurrogateManager._sanitize_nan(scores, preds)
+        assert p[0].has_tell_f
+        assert np.all(np.isnan(p[0].tell_f))
+        assert not p[1].has_tell_f
+
+    def test_original_scores_not_mutated(self) -> None:
+        scores = np.array([np.nan, 1.0])
+        preds = [SurrogatePrediction(value=np.array([[0.0]])),
+                 SurrogatePrediction(value=np.array([[1.0]]))]
+        orig = scores.copy()
+        SurrogateManager._sanitize_nan(scores, preds)
+        np.testing.assert_array_equal(scores, orig)
 
 
 # ===========================================================================
