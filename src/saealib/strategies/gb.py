@@ -8,7 +8,7 @@ by one generation of true objective evaluations.
 from saealib.callback import PostEvaluationEvent, SurrogateEndEvent, SurrogateStartEvent
 from saealib.context import OptimizationContext
 from saealib.optimizer import ComponentProvider
-from saealib.strategies.base import OptimizationStrategy
+from saealib.strategies.base import OptimizationStrategy, assign_tell_f
 
 
 class GenerationBasedStrategy(OptimizationStrategy):
@@ -50,7 +50,7 @@ class GenerationBasedStrategy(OptimizationStrategy):
                 offspring.x, ctx.archive, provider, ctx
             )
             for i, pred in enumerate(predictions):
-                offspring[i].f = pred.tell_f[0]
+                assign_tell_f(offspring[i], pred, ctx)
 
             provider.dispatch(
                 SurrogateEndEvent(ctx=ctx, provider=provider, offspring=offspring)

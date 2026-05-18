@@ -10,7 +10,7 @@ import numpy as np
 from saealib.callback import PostEvaluationEvent, SurrogateEndEvent, SurrogateStartEvent
 from saealib.context import OptimizationContext
 from saealib.optimizer import ComponentProvider
-from saealib.strategies.base import OptimizationStrategy
+from saealib.strategies.base import OptimizationStrategy, assign_tell_f
 
 
 class PreSelectionStrategy(OptimizationStrategy):
@@ -56,7 +56,7 @@ class PreSelectionStrategy(OptimizationStrategy):
             candidates.x, ctx.archive, provider, ctx
         )
         for i, pred in enumerate(predictions):
-            candidates[i].f = pred.tell_f[0]
+            assign_tell_f(candidates[i], pred, ctx)
 
         provider.dispatch(
             SurrogateEndEvent(ctx=ctx, provider=provider, offspring=candidates)

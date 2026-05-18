@@ -15,13 +15,18 @@ from saealib import (
     SequentialSelection,
     TruncationSelection,
 )
+from saealib.acquisition import MeanPrediction
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationContext
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.strategies.gb import GenerationBasedStrategy
+from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
+from saealib.surrogate.archive_manager import DensityManager, NoveltyManager
+from saealib.surrogate.manager import EnsembleSurrogateManager, LocalSurrogateManager
 from saealib.surrogate.prediction import SurrogatePrediction
+from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
 
 # ---------------------------------------------------------------------------
 # Shared fixtures
@@ -205,3 +210,97 @@ class TestPreSelectionStrategy:
         strategy.step(ctx, provider)
         assert ctx.fe == 3
         assert ctx.fe < 30
+
+
+# ---------------------------------------------------------------------------
+# IndividualBasedStrategy + NoveltyManager (via EnsembleSurrogateManager)
+# ---------------------------------------------------------------------------
+
+
+def _make_ensemble_novelty() -> EnsembleSurrogateManager:
+    """Regression surrogate first (finite tell_f) + NoveltyManager second."""
+    return EnsembleSurrogateManager(
+        [
+            LocalSurrogateManager(RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()),
+            NoveltyManager(k=3),
+        ],
+        weights=np.array([0.7, 0.3]),
+    )
+
+
+def _make_ensemble_density() -> EnsembleSurrogateManager:
+    """Regression surrogate first (finite tell_f) + DensityManager second."""
+    return EnsembleSurrogateManager(
+        [
+            LocalSurrogateManager(RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()),
+            DensityManager(eps=1.0),
+        ],
+        weights=np.array([0.7, 0.3]),
+    )
+
+
+class TestIndividualBasedStrategyWithNoveltyManager:
+    """End-to-end: IndividualBasedStrategy + regression + NoveltyManager ensemble."""
+
+    def _setup(self, evaluation_ratio: float = 0.5):
+        ctx = _make_ctx()
+        provider = _MockProvider(_make_ga(), _make_ensemble_novelty())
+        strategy = IndividualBasedStrategy(evaluation_ratio=evaluation_ratio)
+        return ctx, provider, strategy
+
+    def test_step_runs_without_error(self):
+        ctx, provider, strategy = self._setup()
+        strategy.step(ctx, provider)
+
+    def test_fe_equals_evaluation_ratio_times_offspring(self):
+        evaluation_ratio = 0.5
+        ctx, provider, strategy = self._setup(evaluation_ratio=evaluation_ratio)
+        strategy.step(ctx, provider)
+        n_offspring = len(ctx.population)
+        expected_fe = max(1, int(evaluation_ratio * n_offspring))
+        assert ctx.fe == expected_fe
+
+    def test_archive_grows_by_n_eval(self):
+        evaluation_ratio = 0.5
+        ctx, provider, strategy = self._setup(evaluation_ratio=evaluation_ratio)
+        before = len(ctx.archive)
+        strategy.step(ctx, provider)
+        n_eval = max(1, int(evaluation_ratio * len(ctx.population)))
+        assert len(ctx.archive) == before + n_eval
+
+    def test_generation_count_incremented(self):
+        ctx, provider, strategy = self._setup()
+        strategy.step(ctx, provider)
+        assert ctx.gen == 1
+
+
+class TestPreSelectionStrategyWithDensityManager:
+    """End-to-end: PreSelectionStrategy + regression + DensityManager ensemble."""
+
+    def _setup(self, n_candidates: int = 20, n_select: int = 5):
+        ctx = _make_ctx()
+        provider = _MockProvider(_make_ga(), _make_ensemble_density())
+        strategy = PreSelectionStrategy(n_candidates=n_candidates, n_select=n_select)
+        return ctx, provider, strategy
+
+    def test_step_runs_without_error(self):
+        ctx, provider, strategy = self._setup()
+        strategy.step(ctx, provider)
+
+    def test_fe_equals_n_select(self):
+        ctx, provider, strategy = self._setup(n_candidates=20, n_select=5)
+        strategy.step(ctx, provider)
+        assert ctx.fe == 5
+
+    def test_archive_grows_after_step(self):
+        """Archive grows by at most n_select (duplicates may be rejected)."""
+        n_select = 5
+        ctx, provider, strategy = self._setup(n_candidates=20, n_select=n_select)
+        before = len(ctx.archive)
+        strategy.step(ctx, provider)
+        assert before < len(ctx.archive) <= before + n_select
+
+    def test_generation_count_incremented(self):
+        ctx, provider, strategy = self._setup()
+        strategy.step(ctx, provider)
+        assert ctx.gen == 1

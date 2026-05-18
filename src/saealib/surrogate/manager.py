@@ -40,6 +40,38 @@ class SurrogateManager(ABC):
     objective values to offspring.
     """
 
+    @staticmethod
+    def _sanitize_nan(
+        scores: np.ndarray,
+        predictions: list[SurrogatePrediction],
+    ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
+        """Replace NaN scores with -inf and mark failed predictions explicitly.
+
+        Any candidate whose acquisition score is NaN (surrogate fit failed,
+        external library returned NaN, etc.) is given score=-inf so it is
+        never selected by the strategy's pre-selection step.  The
+        corresponding prediction's _tell_f is set to an explicit NaN array,
+        following the same convention as ArchiveBasedManager, so strategies
+        can detect and handle invalid predictions without comparing NaN
+        objective values.
+        """
+        nan_mask = np.isnan(scores)
+        if not nan_mask.any():
+            return scores, predictions
+        scores = scores.copy()
+        scores[nan_mask] = -np.inf
+        for i in np.where(nan_mask)[0]:
+            p = predictions[i]
+            nan_f = np.full_like(p.value, np.nan)
+            predictions[i] = SurrogatePrediction(
+                value=p.value,
+                std=p.std,
+                label=p.label,
+                _tell_f=nan_f,
+                metadata=p.metadata,
+            )
+        return scores, predictions
+
     @abstractmethod
     def score_candidates(
         self,
@@ -133,7 +165,7 @@ class GlobalSurrogateManager(SurrogateManager):
 
         # Split batch prediction into per-candidate SurrogatePrediction objects
         predictions = _split_prediction(prediction)
-        return scores, predictions
+        return self._sanitize_nan(scores, predictions)
 
 
 class LocalSurrogateManager(SurrogateManager):
@@ -207,7 +239,7 @@ class LocalSurrogateManager(SurrogateManager):
         scores = np.array(
             [self.acquisition.score(p, reference)[0] for p in predictions]
         )
-        return scores, predictions
+        return self._sanitize_nan(scores, predictions)
 
 
 class EnsembleSurrogateManager(SurrogateManager):
@@ -297,12 +329,14 @@ def _rank_normalize(scores: np.ndarray) -> np.ndarray:
     Normalize scores to [0, 1] via rank transform.
 
     Rank 0 (lowest score) -> 0.0, rank n-1 (highest score) -> 1.0.
-    Ties receive the same normalized rank.
+    NaN scores are treated as the lowest rank (0.0) so that candidates
+    with failed surrogate predictions are never selected.
     """
     n = len(scores)
     if n == 1:
         return np.ones(1)
-    order = np.argsort(scores)
+    safe = np.where(np.isnan(scores), -np.inf, scores)
+    order = np.argsort(safe)
     ranks = np.empty(n)
     ranks[order] = np.arange(n)
     return ranks / (n - 1)

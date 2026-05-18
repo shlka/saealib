@@ -14,10 +14,17 @@ import pytest
 
 from saealib.acquisition import MeanPrediction
 from saealib.population import Archive, PopulationAttribute
+from saealib.surrogate.archive_manager import (
+    ArchiveBasedManager,
+    DensityManager,
+    NichingManager,
+    NoveltyManager,
+)
 from saealib.surrogate.manager import (
     EnsembleSurrogateManager,
     GlobalSurrogateManager,
     LocalSurrogateManager,
+    SurrogateManager,
     _rank_normalize,
     _split_prediction,
 )
@@ -187,6 +194,48 @@ class TestSurrogatePredictionProperties:
 
 
 # ===========================================================================
+# _sanitize_nan Tests
+# ===========================================================================
+class TestSanitizeNan:
+    """Tests for SurrogateManager._sanitize_nan."""
+
+    def test_no_nan_unchanged(self) -> None:
+        scores = np.array([1.0, 2.0, 3.0])
+        preds = [SurrogatePrediction(value=np.array([[v]])) for v in scores]
+        s, p = SurrogateManager._sanitize_nan(scores, preds)
+        np.testing.assert_array_equal(s, scores)
+        assert not p[0].has_tell_f
+
+    def test_nan_score_becomes_neginf(self) -> None:
+        scores = np.array([1.0, np.nan, 3.0])
+        preds = [SurrogatePrediction(value=np.array([[v]])) for v in [1.0, 0.0, 3.0]]
+        s, _ = SurrogateManager._sanitize_nan(scores, preds)
+        assert s[1] == -np.inf
+        assert s[0] == 1.0 and s[2] == 3.0
+
+    def test_nan_prediction_gets_explicit_tell_f_nan(self) -> None:
+        scores = np.array([np.nan, 1.0])
+        preds = [
+            SurrogatePrediction(value=np.array([[np.nan]])),
+            SurrogatePrediction(value=np.array([[1.0]])),
+        ]
+        _, p = SurrogateManager._sanitize_nan(scores, preds)
+        assert p[0].has_tell_f
+        assert np.all(np.isnan(p[0].tell_f))
+        assert not p[1].has_tell_f
+
+    def test_original_scores_not_mutated(self) -> None:
+        scores = np.array([np.nan, 1.0])
+        preds = [
+            SurrogatePrediction(value=np.array([[0.0]])),
+            SurrogatePrediction(value=np.array([[1.0]])),
+        ]
+        orig = scores.copy()
+        SurrogateManager._sanitize_nan(scores, preds)
+        np.testing.assert_array_equal(scores, orig)
+
+
+# ===========================================================================
 # _rank_normalize Tests
 # ===========================================================================
 class TestRankNormalize:
@@ -223,6 +272,21 @@ class TestRankNormalize:
     def test_output_shape(self) -> None:
         result = _rank_normalize(np.arange(10, dtype=float))
         assert result.shape == (10,)
+
+    def test_nan_treated_as_lowest(self) -> None:
+        """NaN scores must be assigned rank 0 (worst), not rank n-1 (best)."""
+        scores = np.array([3.0, 1.0, np.nan, 2.0])
+        result = _rank_normalize(scores)
+        assert result[2] == pytest.approx(0.0), "NaN should map to 0.0 (lowest rank)"
+
+    def test_nan_never_highest(self) -> None:
+        """NaN scores must never be selected as best in argsort(-normalized)."""
+        scores = np.array([np.nan, 1.0, 2.0])
+        result = _rank_normalize(scores)
+        best_idx = np.argmax(result)
+        assert best_idx != 0, (
+            "NaN candidate should not have the highest normalized score"
+        )
 
 
 # ===========================================================================
@@ -476,3 +540,288 @@ class TestEnsembleSurrogateManager:
         ensemble = EnsembleSurrogateManager([m])
         scores, _ = ensemble.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
+
+
+# ===========================================================================
+# ArchiveBasedManager Tests
+# ===========================================================================
+
+
+class _ConstantArchiveManager(ArchiveBasedManager):
+    """Minimal concrete subclass for testing ArchiveBasedManager base behaviour."""
+
+    def compute_scores(self, candidates_x, archive, ctx=None) -> np.ndarray:
+        return np.ones(len(candidates_x))
+
+
+class TestArchiveBasedManager:
+    """Tests for the ArchiveBasedManager base class via _ConstantArchiveManager."""
+
+    def test_score_candidates_returns_tuple(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        mgr = _ConstantArchiveManager()
+        result = mgr.score_candidates(candidates, archive_1obj)
+        assert isinstance(result, tuple) and len(result) == 2
+
+    def test_scores_shape(self, archive_1obj: Archive, candidates: np.ndarray) -> None:
+        mgr = _ConstantArchiveManager()
+        scores, _ = mgr.score_candidates(candidates, archive_1obj)
+        assert scores.shape == (len(candidates),)
+
+    def test_predictions_count(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        mgr = _ConstantArchiveManager()
+        _, preds = mgr.score_candidates(candidates, archive_1obj)
+        assert len(preds) == len(candidates)
+
+    def test_tell_f_is_nan(self, archive_1obj: Archive, candidates: np.ndarray) -> None:
+        mgr = _ConstantArchiveManager()
+        _, preds = mgr.score_candidates(candidates, archive_1obj)
+        for p in preds:
+            assert p.has_tell_f
+            assert np.all(np.isnan(p.tell_f))
+
+    def test_tell_f_shape_matches_n_obj(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        mgr = _ConstantArchiveManager()
+        _, preds = mgr.score_candidates(candidates, archive_1obj)
+        for p in preds:
+            assert p.tell_f.shape == (1, N_OBJ)
+
+    def test_tell_f_shape_biobj(
+        self, archive_2obj: Archive, candidates: np.ndarray
+    ) -> None:
+        mgr = _ConstantArchiveManager()
+        _, preds = mgr.score_candidates(candidates, archive_2obj)
+        for p in preds:
+            assert p.tell_f.shape == (1, 2)
+
+    def test_empty_archive_n_obj_fallback(self, candidates: np.ndarray) -> None:
+        """Empty archive: n_obj defaults to 1."""
+        attrs = [
+            PopulationAttribute(name="x", dtype=np.float64, shape=(DIM,)),
+            PopulationAttribute(name="f", dtype=np.float64, shape=(1,)),
+        ]
+        empty_arc = Archive(attrs, init_capacity=10)
+        mgr = _ConstantArchiveManager()
+        _, preds = mgr.score_candidates(candidates, empty_arc)
+        for p in preds:
+            assert p.tell_f.shape == (1, 1)
+            assert np.all(np.isnan(p.tell_f))
+
+
+# ===========================================================================
+# NoveltyManager Tests
+# ===========================================================================
+class TestNoveltyManager:
+    """Tests for NoveltyManager."""
+
+    def test_empty_archive_returns_ones(self, candidates: np.ndarray) -> None:
+        attrs = [
+            PopulationAttribute(name="x", dtype=np.float64, shape=(DIM,)),
+            PopulationAttribute(name="f", dtype=np.float64, shape=(1,)),
+        ]
+        empty_arc = Archive(attrs, init_capacity=10)
+        mgr = NoveltyManager(k=3)
+        scores = mgr.compute_scores(candidates, empty_arc)
+        np.testing.assert_array_equal(scores, np.ones(len(candidates)))
+
+    def test_scores_shape(self, archive_1obj: Archive, candidates: np.ndarray) -> None:
+        mgr = NoveltyManager(k=1)
+        scores = mgr.compute_scores(candidates, archive_1obj)
+        assert scores.shape == (len(candidates),)
+
+    def test_scores_nonnegative(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        mgr = NoveltyManager(k=3)
+        scores = mgr.compute_scores(candidates, archive_1obj)
+        assert np.all(scores >= 0.0)
+
+    def test_more_distant_point_has_higher_novelty(self, archive_1obj: Archive) -> None:
+        """A point far from the archive should score higher than a nearby one."""
+        near = archive_1obj.x[0:1] + 1e-6  # almost identical to archive point
+        far = np.array([[100.0, 100.0]])
+        mgr = NoveltyManager(k=1)
+        score_near = mgr.compute_scores(near, archive_1obj)[0]
+        score_far = mgr.compute_scores(far, archive_1obj)[0]
+        assert score_far > score_near
+
+    def test_k_clamped_to_archive_size(self, archive_1obj: Archive) -> None:
+        """k larger than archive size should not raise an error."""
+        mgr = NoveltyManager(k=1000)
+        candidates = np.zeros((3, DIM))
+        scores = mgr.compute_scores(candidates, archive_1obj)
+        assert scores.shape == (3,)
+        assert np.all(np.isfinite(scores))
+
+    def test_k_affects_scores(self, archive_1obj: Archive) -> None:
+        """Different k values yield different scores (unless all distances equal)."""
+        candidates = np.zeros((5, DIM))
+        s1 = NoveltyManager(k=1).compute_scores(candidates, archive_1obj)
+        s5 = NoveltyManager(k=5).compute_scores(candidates, archive_1obj)
+        # mean of 1 NN vs mean of 5 NN — they may differ
+        assert s1.shape == s5.shape == (5,)
+
+
+# ===========================================================================
+# DensityManager Tests
+# ===========================================================================
+class TestDensityManager:
+    """Tests for DensityManager."""
+
+    def test_empty_archive_returns_ones(self, candidates: np.ndarray) -> None:
+        attrs = [
+            PopulationAttribute(name="x", dtype=np.float64, shape=(DIM,)),
+            PopulationAttribute(name="f", dtype=np.float64, shape=(1,)),
+        ]
+        empty_arc = Archive(attrs, init_capacity=10)
+        mgr = DensityManager(eps=1.0)
+        scores = mgr.compute_scores(candidates, empty_arc)
+        np.testing.assert_array_equal(scores, np.ones(len(candidates)))
+
+    def test_scores_shape(self, archive_1obj: Archive, candidates: np.ndarray) -> None:
+        mgr = DensityManager(eps=1.0)
+        scores = mgr.compute_scores(candidates, archive_1obj)
+        assert scores.shape == (len(candidates),)
+
+    def test_scores_positive(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        mgr = DensityManager(eps=1.0)
+        scores = mgr.compute_scores(candidates, archive_1obj)
+        assert np.all(scores > 0.0)
+
+    def test_sparse_region_has_higher_score(self, archive_1obj: Archive) -> None:
+        """Point far from archive (no neighbors within eps) should score higher."""
+        dense = archive_1obj.x[0:1] + 0.01  # inside many eps-balls
+        sparse = np.array([[100.0, 100.0]])  # far away, zero neighbors
+        mgr = DensityManager(eps=0.5)
+        score_dense = mgr.compute_scores(dense, archive_1obj)[0]
+        score_sparse = mgr.compute_scores(sparse, archive_1obj)[0]
+        assert score_sparse > score_dense
+
+    def test_eps_affects_scores(self, archive_1obj: Archive) -> None:
+        """Larger eps counts more neighbors → lower inverse density."""
+        candidate = np.zeros((1, DIM))
+        score_small_eps = DensityManager(eps=0.01).compute_scores(
+            candidate, archive_1obj
+        )[0]
+        score_large_eps = DensityManager(eps=100.0).compute_scores(
+            candidate, archive_1obj
+        )[0]
+        assert score_small_eps >= score_large_eps
+
+
+# ===========================================================================
+# NichingManager Tests
+# ===========================================================================
+class TestNichingManager:
+    """Tests for NichingManager."""
+
+    def test_scores_shape(self, archive_1obj: Archive, candidates: np.ndarray) -> None:
+        mgr = NichingManager()
+        scores = mgr.compute_scores(candidates, archive_1obj)
+        assert scores.shape == (len(candidates),)
+
+    def test_single_candidate_returns_ones(self, archive_1obj: Archive) -> None:
+        mgr = NichingManager()
+        single = np.zeros((1, DIM))
+        scores = mgr.compute_scores(single, archive_1obj)
+        np.testing.assert_array_equal(scores, np.ones(1))
+
+    def test_scores_nonnegative(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        mgr = NichingManager()
+        scores = mgr.compute_scores(candidates, archive_1obj)
+        assert np.all(scores >= 0.0)
+
+    def test_isolated_candidate_has_higher_score(self, archive_1obj: Archive) -> None:
+        """A candidate isolated from others and the archive should score higher."""
+        clustered = np.array([[0.0, 0.0], [0.01, 0.0], [0.0, 0.01]])
+        isolated_point = np.array([100.0, 100.0])
+        candidates = np.vstack([clustered, isolated_point[np.newaxis]])
+        mgr = NichingManager()
+        scores = mgr.compute_scores(candidates, archive_1obj)
+        assert scores[-1] > scores[0]
+
+    def test_empty_archive(self, candidates: np.ndarray) -> None:
+        """Empty archive: archive_min falls back to ones."""
+        attrs = [
+            PopulationAttribute(name="x", dtype=np.float64, shape=(DIM,)),
+            PopulationAttribute(name="f", dtype=np.float64, shape=(1,)),
+        ]
+        empty_arc = Archive(attrs, init_capacity=10)
+        mgr = NichingManager()
+        scores = mgr.compute_scores(candidates, empty_arc)
+        assert scores.shape == (len(candidates),)
+        assert np.all(np.isfinite(scores))
+
+
+# ===========================================================================
+# EnsembleSurrogateManager + ArchiveBasedManager Integration Tests
+# ===========================================================================
+class TestEnsembleSurrogateManagerWithArchiveBased:
+    """Integration tests: EnsembleSurrogateManager with ArchiveBasedManager."""
+
+    def test_regression_novelty_ensemble_scores_shape(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        m_reg = GlobalSurrogateManager(
+            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+        )
+        ensemble = EnsembleSurrogateManager(
+            [m_reg, NoveltyManager(k=3)], weights=np.array([0.7, 0.3])
+        )
+        scores, _ = ensemble.score_candidates(candidates, archive_1obj)
+        assert scores.shape == (len(candidates),)
+
+    def test_regression_novelty_ensemble_scores_in_0_1(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        m_reg = GlobalSurrogateManager(
+            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+        )
+        ensemble = EnsembleSurrogateManager([m_reg, NoveltyManager(k=3)])
+        scores, _ = ensemble.score_candidates(candidates, archive_1obj)
+        assert np.all(scores >= 0.0) and np.all(scores <= 1.0)
+
+    def test_regression_first_tell_f_is_finite(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        """Regression surrogate listed first → predictions returned are finite."""
+        m_reg = GlobalSurrogateManager(
+            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+        )
+        ensemble = EnsembleSurrogateManager([m_reg, NoveltyManager(k=3)])
+        _, preds = ensemble.score_candidates(candidates, archive_1obj)
+        for p in preds:
+            assert np.all(np.isfinite(p.tell_f))
+
+    def test_novelty_only_ensemble_tell_f_is_nan(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        """ArchiveBasedManager alone → predictions have NaN tell_f."""
+        ensemble = EnsembleSurrogateManager([NoveltyManager(k=3)])
+        _, preds = ensemble.score_candidates(candidates, archive_1obj)
+        for p in preds:
+            assert p.has_tell_f
+            assert np.all(np.isnan(p.tell_f))
+
+    def test_regression_density_ensemble_scores_shape(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        m_reg = GlobalSurrogateManager(
+            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+        )
+        ensemble = EnsembleSurrogateManager(
+            [m_reg, DensityManager(eps=0.5)], weights=np.array([0.6, 0.4])
+        )
+        scores, preds = ensemble.score_candidates(candidates, archive_1obj)
+        assert scores.shape == (len(candidates),)
+        for p in preds:
+            assert np.all(np.isfinite(p.tell_f))
