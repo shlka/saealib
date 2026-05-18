@@ -230,6 +230,19 @@ class TestRankNormalize:
         result = _rank_normalize(np.arange(10, dtype=float))
         assert result.shape == (10,)
 
+    def test_nan_treated_as_lowest(self) -> None:
+        """NaN scores must be assigned rank 0 (worst), not rank n-1 (best)."""
+        scores = np.array([3.0, 1.0, np.nan, 2.0])
+        result = _rank_normalize(scores)
+        assert result[2] == pytest.approx(0.0), "NaN should map to 0.0 (lowest rank)"
+
+    def test_nan_never_highest(self) -> None:
+        """NaN scores must never be selected as best in argsort(-normalized)."""
+        scores = np.array([np.nan, 1.0, 2.0])
+        result = _rank_normalize(scores)
+        best_idx = np.argmax(result)
+        assert best_idx != 0, "NaN candidate should not have the highest normalized score"
+
 
 # ===========================================================================
 # GlobalSurrogateManager Tests

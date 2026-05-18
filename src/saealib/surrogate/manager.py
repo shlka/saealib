@@ -297,12 +297,14 @@ def _rank_normalize(scores: np.ndarray) -> np.ndarray:
     Normalize scores to [0, 1] via rank transform.
 
     Rank 0 (lowest score) -> 0.0, rank n-1 (highest score) -> 1.0.
-    Ties receive the same normalized rank.
+    NaN scores are treated as the lowest rank (0.0) so that candidates
+    with failed surrogate predictions are never selected.
     """
     n = len(scores)
     if n == 1:
         return np.ones(1)
-    order = np.argsort(scores)
+    safe = np.where(np.isnan(scores), -np.inf, scores)
+    order = np.argsort(safe)
     ranks = np.empty(n)
     ranks[order] = np.arange(n)
     return ranks / (n - 1)
