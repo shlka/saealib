@@ -405,6 +405,38 @@
 <span class="sd">    objective values to offspring.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sanitize_nan</span><span class="p">(</span>
+        <span class="n">scores</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">predictions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Replace NaN scores with -inf and mark failed predictions explicitly.</span>
+
+<span class="sd">        Any candidate whose acquisition score is NaN (surrogate fit failed,</span>
+<span class="sd">        external library returned NaN, etc.) is given score=-inf so it is</span>
+<span class="sd">        never selected by the strategy&#39;s pre-selection step.  The</span>
+<span class="sd">        corresponding prediction&#39;s _tell_f is set to an explicit NaN array,</span>
+<span class="sd">        following the same convention as ArchiveBasedManager, so strategies</span>
+<span class="sd">        can detect and handle invalid predictions without comparing NaN</span>
+<span class="sd">        objective values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nan_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">nan_mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">scores</span><span class="p">[</span><span class="n">nan_mask</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">nan_mask</span><span class="p">)[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">nan_f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            <span class="n">predictions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">SurrogatePrediction</span><span class="p">(</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">std</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">std</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+                <span class="n">_tell_f</span><span class="o">=</span><span class="n">nan_f</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span>
+
 <div class="viewcode-block" id="SurrogateManager.score_candidates">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.score_candidates">[docs]</a>
     <span class="nd">@abstractmethod</span>
@@ -509,7 +541,7 @@
 
         <span class="c1"># Split batch prediction into per-candidate SurrogatePrediction objects</span>
         <span class="n">predictions</span> <span class="o">=</span> <span class="n">_split_prediction</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sanitize_nan</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span></div>
 </div>
 
 
@@ -592,7 +624,7 @@
         <span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
             <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">reference</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">predictions</span><span class="p">]</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sanitize_nan</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span></div>
 </div>
 
 
@@ -693,12 +725,14 @@
 <span class="sd">    Normalize scores to [0, 1] via rank transform.</span>
 
 <span class="sd">    Rank 0 (lowest score) -&gt; 0.0, rank n-1 (highest score) -&gt; 1.0.</span>
-<span class="sd">    Ties receive the same normalized rank.</span>
+<span class="sd">    NaN scores are treated as the lowest rank (0.0) so that candidates</span>
+<span class="sd">    with failed surrogate predictions are never selected.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+    <span class="n">safe</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">scores</span><span class="p">),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">scores</span><span class="p">)</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">safe</span><span class="p">)</span>
     <span class="n">ranks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
     <span class="n">ranks</span><span class="p">[</span><span class="n">order</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ranks</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
