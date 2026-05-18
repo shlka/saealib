@@ -43,7 +43,6 @@ def main():
     # parameters
     dim = 10
     seed = 1
-    knn = 50
     rsm = 0.1
     novelty_k = 3
     novelty_weight = 0.3

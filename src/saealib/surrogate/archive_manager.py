@@ -1,6 +1,6 @@
-"""
-Archive-based surrogate managers: score candidates directly from the archive
-without training a surrogate model.
+"""Archive-based surrogate managers: score candidates directly from the archive.
+
+Score candidates without training a surrogate model.
 """
 
 from __future__ import annotations
@@ -21,9 +21,7 @@ if TYPE_CHECKING:
 
 
 class ArchiveBasedManager(SurrogateManager):
-    """
-    SurrogateManager that scores candidates directly from the archive
-    without training a surrogate model.
+    """SurrogateManager that scores candidates from the archive without a surrogate.
 
     Subclasses implement compute_scores(). score_candidates() calls
     compute_scores() and wraps each result in a SurrogatePrediction with
@@ -60,6 +58,7 @@ class ArchiveBasedManager(SurrogateManager):
         provider: ComponentProvider | None = None,
         ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
+        """Compute scores and wrap results in SurrogatePrediction with tell_f=NaN."""
         scores = self.compute_scores(candidates_x, archive, ctx)
         n_obj = archive.f.shape[1] if len(archive) > 0 else 1
         nan_f = np.full((1, n_obj), np.nan)
@@ -89,6 +88,7 @@ class NoveltyManager(ArchiveBasedManager):
         archive: Archive,
         ctx: OptimizationContext | None = None,
     ) -> np.ndarray:
+        """Compute mean k-NN distance from each candidate to the archive."""
         if len(archive) == 0:
             return np.ones(len(candidates_x))
         dists = cdist(candidates_x, archive.x)
@@ -115,6 +115,7 @@ class DensityManager(ArchiveBasedManager):
         archive: Archive,
         ctx: OptimizationContext | None = None,
     ) -> np.ndarray:
+        """Compute inverse ε-NN density for each candidate."""
         if len(archive) == 0:
             return np.ones(len(candidates_x))
         dists = cdist(candidates_x, archive.x)
@@ -124,8 +125,8 @@ class DensityManager(ArchiveBasedManager):
 
 
 class NichingManager(ArchiveBasedManager):
-    """
-    Score = min distance to other candidates + min distance to archive.
+    """Score = min distance to other candidates + min distance to archive.
+
     Promotes diversity among candidates.
 
     Note: scores all candidates jointly. At small population sizes, score
@@ -138,6 +139,7 @@ class NichingManager(ArchiveBasedManager):
         archive: Archive,
         ctx: OptimizationContext | None = None,
     ) -> np.ndarray:
+        """Compute min intra-candidate distance plus min archive distance."""
         n = len(candidates_x)
         if n == 1:
             return np.ones(1)
