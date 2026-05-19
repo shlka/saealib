@@ -30,6 +30,8 @@ class MaxUncertainty(AcquisitionFunction):
         shape: (n_obj,). If None, uses the mean across objectives.
     """
 
+    requires_uncertainty: bool = True
+
     def __init__(self, weights: np.ndarray | None = None, reference: Any = None):
         self.weights = weights
         self.reference = reference

@@ -29,6 +29,9 @@ class AcquisitionFunction(ABC):
     it knows nothing about how predictions are generated.
     """
 
+    # Optimizer.validate() cross-checks this with surrogate.provides_uncertainty.
+    requires_uncertainty: bool = False
+
     @abstractmethod
     def compute_reference(self, archive: Archive) -> Any:
         """

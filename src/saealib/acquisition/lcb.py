@@ -38,6 +38,8 @@ class LowerConfidenceBound(AcquisitionFunction):
         problems where LCB is applied to a single objective. Default: 0.
     """
 
+    requires_uncertainty: bool = True
+
     def __init__(self, kappa: float = 2.0, obj_idx: int = 0, reference: Any = None):
         self.kappa = kappa
         self.obj_idx = obj_idx

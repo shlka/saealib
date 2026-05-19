@@ -167,6 +167,58 @@ class Optimizer:
 
     # --- run ---
 
+    def validate(self) -> list[str]:
+        """Check configuration consistency. Returns list of issues."""
+        issues: list[str] = []
+
+        algorithm = getattr(self, "algorithm", None)
+        strategy = getattr(self, "strategy", None)
+        termination = getattr(self, "termination", None)
+        surrogate_manager = getattr(self, "surrogate_manager", None)
+
+        if algorithm is None:
+            issues.append("algorithm is not set; call set_algorithm()")
+        if strategy is None:
+            issues.append("strategy is not set; call set_strategy()")
+        if self.initializer is None:
+            issues.append("initializer is not set; call set_initializer()")
+        if termination is None:
+            issues.append("termination is not set; call set_termination()")
+
+        if (
+            strategy is not None
+            and getattr(strategy, "requires_surrogate", False)
+            and surrogate_manager is None
+        ):
+            issues.append(
+                f"{type(strategy).__name__} requires a surrogate_manager; "
+                "call set_surrogate_manager() or set_surrogate()"
+            )
+
+        weights = getattr(self.problem.comparator, "weights", None)
+        if weights is not None and len(weights) != self.problem.n_obj:
+            issues.append(
+                f"comparator.weights length ({len(weights)}) does not match "
+                f"problem.n_obj ({self.problem.n_obj})"
+            )
+
+        if surrogate_manager is not None:
+            acq = getattr(surrogate_manager, "acquisition", None)
+            surr = getattr(surrogate_manager, "surrogate", None)
+            if (
+                acq is not None
+                and surr is not None
+                and getattr(acq, "requires_uncertainty", False)
+                and not getattr(surr, "provides_uncertainty", False)
+            ):
+                issues.append(
+                    f"{type(acq).__name__} requires uncertainty estimates but "
+                    f"{type(surr).__name__} does not provide them "
+                    "(provides_uncertainty=False)"
+                )
+
+        return issues
+
     def iterate(self) -> Generator[OptimizationContext, None, None]:
         """
         Iterate the optimization process.
@@ -176,6 +228,11 @@ class Optimizer:
         Generator[OptimizationContext]
             Generator of OptimizationContext.
         """
+        issues = self.validate()
+        if issues:
+            raise ValueError(
+                "Optimizer misconfigured:\n" + "\n".join(f"  - {m}" for m in issues)
+            )
         return Runner(self).iterate()
 
     def run(self) -> OptimizationContext:
@@ -187,4 +244,9 @@ class Optimizer:
         OptimizationContext
             The optimization context.
         """
+        issues = self.validate()
+        if issues:
+            raise ValueError(
+                "Optimizer misconfigured:\n" + "\n".join(f"  - {m}" for m in issues)
+            )
         return Runner(self).run()

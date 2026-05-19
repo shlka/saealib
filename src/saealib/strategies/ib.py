@@ -16,6 +16,8 @@ from saealib.strategies.base import OptimizationStrategy, assign_tell_f
 class IndividualBasedStrategy(OptimizationStrategy):
     """Individual-based strategy."""
 
+    requires_surrogate: bool = True
+
     def __init__(self, evaluation_ratio: float = 0.1):
         """
         Initialize IndividualBasedStrategy.
