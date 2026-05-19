@@ -87,3 +87,118 @@ class SklearnSurrogate(Surrogate):
         value = np.column_stack(preds)
         return SurrogatePrediction(value=value)
 
+
+class SVMSurrogate(SklearnSurrogate):
+    """
+    Support Vector Regression surrogate.
+
+    Convenience wrapper around ``SklearnSurrogate`` using
+    ``sklearn.svm.SVR``.
+
+    Parameters
+    ----------
+    **kwargs
+        Keyword arguments forwarded to ``sklearn.svm.SVR``.
+    """
+
+    def __init__(self, **kwargs: object) -> None:
+        from sklearn.svm import SVR
+
+        super().__init__(SVR(**kwargs))
+
+
+class NNSurrogate(SklearnSurrogate):
+    """
+    Multi-layer Perceptron surrogate.
+
+    Convenience wrapper around ``SklearnSurrogate`` using
+    ``sklearn.neural_network.MLPRegressor``.
+
+    Parameters
+    ----------
+    **kwargs
+        Keyword arguments forwarded to ``sklearn.neural_network.MLPRegressor``.
+    """
+
+    def __init__(self, **kwargs: object) -> None:
+        from sklearn.neural_network import MLPRegressor
+
+        super().__init__(MLPRegressor(**kwargs))
+
+
+class DTSurrogate(SklearnSurrogate):
+    """
+    Random Forest surrogate.
+
+    Convenience wrapper around ``SklearnSurrogate`` using
+    ``sklearn.ensemble.RandomForestRegressor``.
+
+    Parameters
+    ----------
+    **kwargs
+        Keyword arguments forwarded to
+        ``sklearn.ensemble.RandomForestRegressor``.
+    """
+
+    def __init__(self, **kwargs: object) -> None:
+        from sklearn.ensemble import RandomForestRegressor
+
+        super().__init__(RandomForestRegressor(**kwargs))
+
+
+class XGBSurrogate(SklearnSurrogate):
+    """
+    XGBoost surrogate.
+
+    Convenience wrapper around ``SklearnSurrogate`` using
+    ``xgboost.XGBRegressor``.
+
+    Parameters
+    ----------
+    **kwargs
+        Keyword arguments forwarded to ``xgboost.XGBRegressor``.
+
+    Raises
+    ------
+    ImportError
+        If xgboost is not installed.
+    """
+
+    def __init__(self, **kwargs: object) -> None:
+        try:
+            from xgboost import XGBRegressor
+        except ImportError as e:
+            raise ImportError(
+                "xgboost is required for XGBSurrogate. "
+                "Install it with: pip install saealib[xgboost]"
+            ) from e
+        super().__init__(XGBRegressor(**kwargs))
+
+
+class LGBMSurrogate(SklearnSurrogate):
+    """
+    LightGBM surrogate.
+
+    Convenience wrapper around ``SklearnSurrogate`` using
+    ``lightgbm.LGBMRegressor``.
+
+    Parameters
+    ----------
+    **kwargs
+        Keyword arguments forwarded to ``lightgbm.LGBMRegressor``.
+
+    Raises
+    ------
+    ImportError
+        If lightgbm is not installed.
+    """
+
+    def __init__(self, **kwargs: object) -> None:
+        try:
+            from lightgbm import LGBMRegressor
+        except ImportError as e:
+            raise ImportError(
+                "lightgbm is required for LGBMSurrogate. "
+                "Install it with: pip install saealib[lightgbm]"
+            ) from e
+        super().__init__(LGBMRegressor(**kwargs))
