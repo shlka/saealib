@@ -28,6 +28,12 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+[project.optional-dependencies]
+sklearn = ["scikit-learn>=1.0.0"]
+xgboost = ["xgboost>=1.7.0"]
+lightgbm = ["lightgbm>=3.0.0"]
+torch = ["torch>=2.0.0"]
+
 [project.urls]
 Homepage = "https://github.com/shlka/saealib"
 Repository = "https://github.com/shlka/saealib"
@@ -47,6 +53,10 @@ dev = [
     "pytest>=9.0.2",
     "setuptools>=80.9.0",
     "ruff",
+    "scikit-learn>=1.0.0",
+    "xgboost>=1.7.0",
+    "lightgbm>=3.0.0",
+    "torch>=2.0.0",
 ]
 docs = [
     "furo>=2025.12.19",
