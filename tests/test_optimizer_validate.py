@@ -23,7 +23,7 @@ N_OBJ = 1
 
 def _make_problem(n_obj: int = N_OBJ) -> Problem:
     return Problem(
-        func=lambda x: np.zeros(n_obj),
+        func=lambda _: np.zeros(n_obj),
         dim=DIM,
         n_obj=n_obj,
         weight=np.array([-1.0] * n_obj),
@@ -94,7 +94,7 @@ def test_multiple_issues_reported_together():
 
 
 # ---------------------------------------------------------------------------
-# Strategy × Surrogate
+# Strategy x Surrogate
 # ---------------------------------------------------------------------------
 
 
@@ -117,7 +117,7 @@ def test_strategy_requires_surrogate_present():
 
 
 # ---------------------------------------------------------------------------
-# Comparator × n_obj
+# Comparator x n_obj
 # ---------------------------------------------------------------------------
 
 
@@ -128,7 +128,7 @@ def test_comparator_weight_mismatch():
 
 
 # ---------------------------------------------------------------------------
-# Acquisition × Surrogate uncertainty
+# Acquisition x Surrogate uncertainty
 # ---------------------------------------------------------------------------
 
 

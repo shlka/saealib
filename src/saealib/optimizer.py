@@ -171,9 +171,9 @@ class Optimizer:
         """Check configuration consistency. Returns list of issues."""
         issues: list[str] = []
 
-        algorithm         = getattr(self, "algorithm", None)
-        strategy          = getattr(self, "strategy", None)
-        termination       = getattr(self, "termination", None)
+        algorithm = getattr(self, "algorithm", None)
+        strategy = getattr(self, "strategy", None)
+        termination = getattr(self, "termination", None)
         surrogate_manager = getattr(self, "surrogate_manager", None)
 
         if algorithm is None:
@@ -185,12 +185,15 @@ class Optimizer:
         if termination is None:
             issues.append("termination is not set; call set_termination()")
 
-        if strategy is not None and getattr(strategy, "requires_surrogate", False):
-            if surrogate_manager is None:
-                issues.append(
-                    f"{type(strategy).__name__} requires a surrogate_manager; "
-                    "call set_surrogate_manager() or set_surrogate()"
-                )
+        if (
+            strategy is not None
+            and getattr(strategy, "requires_surrogate", False)
+            and surrogate_manager is None
+        ):
+            issues.append(
+                f"{type(strategy).__name__} requires a surrogate_manager; "
+                "call set_surrogate_manager() or set_surrogate()"
+            )
 
         weights = getattr(self.problem.comparator, "weights", None)
         if weights is not None and len(weights) != self.problem.n_obj:
@@ -200,7 +203,7 @@ class Optimizer:
             )
 
         if surrogate_manager is not None:
-            acq  = getattr(surrogate_manager, "acquisition", None)
+            acq = getattr(surrogate_manager, "acquisition", None)
             surr = getattr(surrogate_manager, "surrogate", None)
             if (
                 acq is not None
