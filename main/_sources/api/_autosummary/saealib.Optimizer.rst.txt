@@ -26,6 +26,7 @@
    ~Optimizer.set_surrogate
    ~Optimizer.set_surrogate_manager
    ~Optimizer.set_termination
+   ~Optimizer.validate
 
 
 
@@ -66,6 +67,9 @@
 
 
 .. automethod:: saealib.Optimizer.set_termination
+
+
+.. automethod:: saealib.Optimizer.validate
 
 
 

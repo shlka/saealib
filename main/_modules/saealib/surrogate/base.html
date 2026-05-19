@@ -375,6 +375,9 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Surrogate</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for surrogate models.&quot;&quot;&quot;</span>
 
+    <span class="c1"># GP implementation will override this with True.</span>
+    <span class="n">provides_uncertainty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
 <div class="viewcode-block" id="Surrogate.fit">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.Surrogate.html#saealib.Surrogate.fit">[docs]</a>
     <span class="nd">@abstractmethod</span>

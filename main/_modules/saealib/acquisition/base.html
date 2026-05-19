@@ -394,6 +394,9 @@
 <span class="sd">    it knows nothing about how predictions are generated.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="c1"># Optimizer.validate() cross-checks this with surrogate.provides_uncertainty.</span>
+    <span class="n">requires_uncertainty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
 <div class="viewcode-block" id="AcquisitionFunction.compute_reference">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.AcquisitionFunction.html#saealib.AcquisitionFunction.compute_reference">[docs]</a>
     <span class="nd">@abstractmethod</span>
