@@ -34,6 +34,8 @@ class ProbabilityOfFeasibility(AcquisitionFunction):
         Index of the predicted constraint to evaluate. Default: 0.
     """
 
+    requires_uncertainty: bool = True
+
     def __init__(self, obj_idx: int = 0, reference: Any = None):
         self.obj_idx = obj_idx
         self.reference = reference

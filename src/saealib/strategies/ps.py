@@ -16,6 +16,8 @@ from saealib.strategies.base import OptimizationStrategy, assign_tell_f
 class PreSelectionStrategy(OptimizationStrategy):
     """Pre-selection strategy."""
 
+    requires_surrogate: bool = True
+
     def __init__(self, n_candidates: int, n_select: int):
         """
         Initialize PreSelectionStrategy.

@@ -14,6 +14,8 @@ from saealib.strategies.base import OptimizationStrategy, assign_tell_f
 class GenerationBasedStrategy(OptimizationStrategy):
     """Generation-based strategy."""
 
+    requires_surrogate: bool = True
+
     def __init__(self, gen_ctrl: int):
         """
         Initialize GenerationBasedStrategy.

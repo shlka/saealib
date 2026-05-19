@@ -39,6 +39,8 @@ class ExpectedImprovement(AcquisitionFunction):
         problems where EI is applied to a single objective. Default: 0.
     """
 
+    requires_uncertainty: bool = True
+
     def __init__(self, xi: float = 0.01, obj_idx: int = 0, reference: Any = None):
         self.xi = xi
         self.obj_idx = obj_idx

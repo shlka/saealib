@@ -10,6 +10,9 @@ from saealib.surrogate.prediction import SurrogatePrediction
 class Surrogate(ABC):
     """Base class for surrogate models."""
 
+    # GP implementation will override this with True.
+    provides_uncertainty: bool = False
+
     @abstractmethod
     def fit(self, train_x: np.ndarray, train_y: np.ndarray) -> None:
         """

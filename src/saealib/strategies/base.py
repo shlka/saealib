@@ -38,6 +38,9 @@ def assign_tell_f(
 class OptimizationStrategy(ABC):
     """Base class for optimization strategies."""
 
+    # Optimizer.validate() checks this to ensure surrogate_manager is configured.
+    requires_surrogate: bool = False
+
     @abstractmethod
     def step(self, ctx: OptimizationContext, provider: ComponentProvider) -> None:
         """
