@@ -146,6 +146,59 @@ class DTSurrogate(SklearnSurrogate):
         super().__init__(RandomForestRegressor(**kwargs))
 
 
+class GPSurrogate(SklearnSurrogate):
+    """
+    Gaussian Process Regressor surrogate.
+
+    Convenience wrapper around ``SklearnSurrogate`` using
+    ``sklearn.gaussian_process.GaussianProcessRegressor``.
+    Provides uncertainty estimates via ``SurrogatePrediction.std``,
+    enabling compatibility with acquisition functions such as EI, LCB,
+    PoF, and MaxUncertainty.
+
+    Parameters
+    ----------
+    **kwargs
+        Keyword arguments forwarded to
+        ``sklearn.gaussian_process.GaussianProcessRegressor``
+        (e.g. ``kernel``, ``alpha``, ``n_restarts_optimizer``).
+    """
+
+    provides_uncertainty: bool = True
+
+    def __init__(self, **kwargs: object) -> None:
+        from sklearn.gaussian_process import GaussianProcessRegressor
+
+        super().__init__(GaussianProcessRegressor(**kwargs))
+
+    def predict(self, test_x: np.ndarray) -> SurrogatePrediction:
+        """
+        Predict mean and standard deviation using the GP models.
+
+        Parameters
+        ----------
+        test_x : np.ndarray
+            Input data. shape: (n_samples, n_features) or (n_features,)
+
+        Returns
+        -------
+        SurrogatePrediction
+            prediction.value shape: (n_samples, n_obj)
+            prediction.std  shape: (n_samples, n_obj)
+        """
+        test = np.asarray(test_x)
+        if test.ndim == 1:
+            test = test.reshape(1, -1)
+        means, stds = [], []
+        for m in self._models:
+            mu, sigma = m.predict(test, return_std=True)
+            means.append(mu)
+            stds.append(sigma)
+        value = np.column_stack(means)
+        std = np.column_stack(stds)
+        return SurrogatePrediction(value=value, std=std)
+
+
 class XGBSurrogate(SklearnSurrogate):
     """
     XGBoost surrogate.
