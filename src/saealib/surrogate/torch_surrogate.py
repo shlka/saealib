@@ -127,7 +127,7 @@ class TorchSurrogate(Surrogate):
         with torch.no_grad():
             device = next(self.model.parameters()).device  # type: ignore[union-attr]
             x_tensor = torch.tensor(test, dtype=torch.float32).to(device)
-            pred = self.model(x_tensor).numpy()  # type: ignore[operator]
+            pred = self.model(x_tensor).detach().cpu().numpy()  # type: ignore[operator]
 
         if pred.ndim == 1:
             pred = pred.reshape(-1, 1)
