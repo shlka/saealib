@@ -103,18 +103,14 @@ class TestPerObjectiveSurrogate:
         with pytest.raises(ValueError, match="at least one"):
             PerObjectiveSurrogate([])
 
-    def test_fit_predict_1obj_single_surrogate(
-        self, train_data_1obj, test_x
-    ) -> None:
+    def test_fit_predict_1obj_single_surrogate(self, train_data_1obj, test_x) -> None:
         X, y = train_data_1obj
         s = PerObjectiveSurrogate([RBFsurrogate(gaussian_kernel, DIM)])
         s.fit(X, y)
         pred = s.predict(test_x)
         assert pred.value.shape == (5, 1)
 
-    def test_fit_predict_2obj_two_surrogates(
-        self, train_data_2obj, test_x
-    ) -> None:
+    def test_fit_predict_2obj_two_surrogates(self, train_data_2obj, test_x) -> None:
         X, y = train_data_2obj
         s = PerObjectiveSurrogate(
             [RBFsurrogate(gaussian_kernel, DIM), RBFsurrogate(gaussian_kernel, DIM)]

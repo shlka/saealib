@@ -97,8 +97,8 @@ from saealib.surrogate.manager import (
     LocalSurrogateManager,
     SurrogateManager,
 )
-from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.per_objective import PerObjectiveSurrogate
+from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
 from saealib.surrogate.sklearn_surrogate import (
     DTSurrogate,

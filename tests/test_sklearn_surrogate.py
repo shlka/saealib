@@ -116,7 +116,9 @@ class TestSklearnSurrogate:
         s.fit(X, y)
         assert s.predict(test_x).std is None
 
-    def test_refit_different_nobj(self, train_data_1obj, train_data_2obj, test_x) -> None:
+    def test_refit_different_nobj(
+        self, train_data_1obj, train_data_2obj, test_x
+    ) -> None:
         from sklearn.linear_model import Ridge
 
         X1, y1 = train_data_1obj
