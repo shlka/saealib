@@ -98,7 +98,7 @@ convention = "numpy"
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/*" = ["D", "N802"]
+"tests/*" = ["D", "N802", "N806"]
 
 [tool.ruff.format]
 quote-style = "double"
