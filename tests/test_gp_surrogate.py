@@ -141,7 +141,9 @@ class TestGPSurrogate:
         assert pred.value.shape == (5, 1)
         assert pred.std is not None
 
-    def test_refit_different_nobj(self, train_data_1obj, train_data_2obj, test_x) -> None:
+    def test_refit_different_nobj(
+        self, train_data_1obj, train_data_2obj, test_x
+    ) -> None:
         X1, y1 = train_data_1obj
         X2, y2 = train_data_2obj
         gp = GPSurrogate()
@@ -196,6 +198,9 @@ class TestGPSurrogateManager:
         scores, preds = manager.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
         assert np.all(scores >= 0.0)
+        assert len(preds) == len(candidates)
+        for p in preds:
+            assert p.std is not None
 
     def test_global_manager_lcb(self, archive_1obj, candidates) -> None:
         manager = GlobalSurrogateManager(GPSurrogate(), LowerConfidenceBound())
