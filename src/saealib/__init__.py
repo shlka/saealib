@@ -102,6 +102,7 @@ from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
 from saealib.surrogate.sklearn_surrogate import (
     DTSurrogate,
+    GPSurrogate,
     LGBMSurrogate,
     NNSurrogate,
     SklearnSurrogate,
@@ -136,6 +137,7 @@ __all__ = [
     "EnsembleSurrogateManager",
     "Event",
     "ExpectedImprovement",
+    "GPSurrogate",
     "GenerationBasedStrategy",
     "GenerationEndEvent",
     "GenerationStartEvent",
