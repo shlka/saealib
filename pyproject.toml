@@ -1,6 +1,6 @@
 [project]
 name = "saealib"
-version = "0.1.0b2"
+dynamic = ["version"]
 description = "A Python library for Surrogate-Assisted Evolutionary Algorithms (SAEAs)"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -41,8 +41,11 @@ Documentation = "https://shlka.github.io/saealib/"
 "Bug Tracker" = "https://github.com/shlka/saealib/issues"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/saealib"]
