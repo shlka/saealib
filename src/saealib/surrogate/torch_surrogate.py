@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import copy
-
 import numpy as np
 
 from saealib.surrogate.base import Surrogate
@@ -57,7 +55,7 @@ class TorchSurrogate(Surrogate):
                 "Install it with: pip install saealib[torch]"
             ) from e
         self.model = model
-        self._initial_state = copy.deepcopy(model.state_dict())  # type: ignore[union-attr]
+        self._initial_state = {k: v.clone() for k, v in model.state_dict().items()}  # type: ignore[union-attr]
         self.optimizer_cls = optimizer_cls
         self.optimizer_kwargs = optimizer_kwargs or {}
         self.loss_fn = loss_fn
@@ -79,7 +77,7 @@ class TorchSurrogate(Surrogate):
         """
         import torch
 
-        self.model.load_state_dict(copy.deepcopy(self._initial_state))  # type: ignore[union-attr]
+        self.model.load_state_dict(self._initial_state)  # type: ignore[union-attr]
         self.model.train()  # type: ignore[union-attr]
 
         arr = np.asarray(train_y, dtype=float)
