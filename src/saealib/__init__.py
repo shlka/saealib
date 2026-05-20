@@ -98,7 +98,17 @@ from saealib.surrogate.manager import (
     SurrogateManager,
 )
 from saealib.surrogate.prediction import SurrogatePrediction
+from saealib.surrogate.per_objective import PerObjectiveSurrogate
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.sklearn_surrogate import (
+    DTSurrogate,
+    LGBMSurrogate,
+    NNSurrogate,
+    SklearnSurrogate,
+    SVMSurrogate,
+    XGBSurrogate,
+)
+from saealib.surrogate.torch_surrogate import TorchSurrogate
 from saealib.termination import Termination, max_fe, max_gen
 from saealib.utils.indicators import hypervolume
 
@@ -121,6 +131,7 @@ __all__ = [
     "CrossoverSBX",
     "CrossoverTwoPoint",
     "CrossoverUniform",
+    "DTSurrogate",
     "DensityManager",
     "EnsembleSurrogateManager",
     "Event",
@@ -132,6 +143,7 @@ __all__ = [
     "Individual",
     "IndividualBasedStrategy",
     "Initializer",
+    "LGBMSurrogate",
     "LHSInitializer",
     "LocalSurrogateManager",
     "LowerConfidenceBound",
@@ -141,6 +153,7 @@ __all__ = [
     "MutationGaussian",
     "MutationPolynomial",
     "MutationUniform",
+    "NNSurrogate",
     "NSGA2Comparator",
     "NichingManager",
     "NoveltyManager",
@@ -148,6 +161,7 @@ __all__ = [
     "Optimizer",
     "ParentSelection",
     "ParetoComparator",
+    "PerObjectiveSurrogate",
     "Population",
     "PopulationAttribute",
     "PostAskEvent",
@@ -164,8 +178,10 @@ __all__ = [
     "RouletteWheelSelection",
     "RunEndEvent",
     "RunStartEvent",
+    "SVMSurrogate",
     "SequentialSelection",
     "SingleObjectiveComparator",
+    "SklearnSurrogate",
     "Surrogate",
     "SurrogateEndEvent",
     "SurrogateManager",
@@ -173,9 +189,11 @@ __all__ = [
     "SurrogateStartEvent",
     "SurvivorSelection",
     "Termination",
+    "TorchSurrogate",
     "TournamentSelection",
     "TruncationSelection",
     "WeightedSumComparator",
+    "XGBSurrogate",
     "crowding_distance",
     "crowding_distance_all_fronts",
     "gaussian_kernel",
