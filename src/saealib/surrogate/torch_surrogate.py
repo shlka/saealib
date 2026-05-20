@@ -87,8 +87,9 @@ class TorchSurrogate(Surrogate):
             arr = arr.reshape(-1, 1)
         self.n_obj = arr.shape[1]
 
-        x_tensor = torch.tensor(train_x, dtype=torch.float32)
-        y_tensor = torch.tensor(arr, dtype=torch.float32)
+        device = next(self.model.parameters()).device  # type: ignore[union-attr]
+        x_tensor = torch.tensor(train_x, dtype=torch.float32).to(device)
+        y_tensor = torch.tensor(arr, dtype=torch.float32).to(device)
 
         optimizer_cls = self.optimizer_cls or torch.optim.Adam
         optimizer = optimizer_cls(self.model.parameters(), **self.optimizer_kwargs)  # type: ignore[union-attr]
@@ -124,7 +125,8 @@ class TorchSurrogate(Surrogate):
 
         self.model.eval()  # type: ignore[union-attr]
         with torch.no_grad():
-            x_tensor = torch.tensor(test, dtype=torch.float32)
+            device = next(self.model.parameters()).device  # type: ignore[union-attr]
+            x_tensor = torch.tensor(test, dtype=torch.float32).to(device)
             pred = self.model(x_tensor).numpy()  # type: ignore[operator]
 
         if pred.ndim == 1:
