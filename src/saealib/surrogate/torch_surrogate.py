@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
+
+if TYPE_CHECKING:
+    import torch
 
 from saealib.surrogate.base import Surrogate
 from saealib.surrogate.prediction import SurrogatePrediction
@@ -41,7 +46,7 @@ class TorchSurrogate(Surrogate):
 
     def __init__(
         self,
-        model: object,
+        model: torch.nn.Module,
         optimizer_cls: type | None = None,
         optimizer_kwargs: dict | None = None,
         loss_fn: object | None = None,
@@ -55,7 +60,7 @@ class TorchSurrogate(Surrogate):
                 "Install it with: pip install saealib[torch]"
             ) from e
         self.model = model
-        self._initial_state = {k: v.clone() for k, v in model.state_dict().items()}  # type: ignore[union-attr]
+        self._initial_state = {k: v.clone() for k, v in model.state_dict().items()}
         self.optimizer_cls = optimizer_cls
         self.optimizer_kwargs = optimizer_kwargs or {}
         self.loss_fn = loss_fn
@@ -77,20 +82,20 @@ class TorchSurrogate(Surrogate):
         """
         import torch
 
-        self.model.load_state_dict(self._initial_state)  # type: ignore[union-attr]
-        self.model.train()  # type: ignore[union-attr]
+        self.model.load_state_dict(self._initial_state)
+        self.model.train()
 
         arr = np.asarray(train_y, dtype=float)
         if arr.ndim == 1:
             arr = arr.reshape(-1, 1)
         self.n_obj = arr.shape[1]
 
-        device = next(self.model.parameters()).device  # type: ignore[union-attr]
+        device = next(self.model.parameters()).device
         x_tensor = torch.tensor(train_x, dtype=torch.float32).to(device)
         y_tensor = torch.tensor(arr, dtype=torch.float32).to(device)
 
         optimizer_cls = self.optimizer_cls or torch.optim.Adam
-        optimizer = optimizer_cls(self.model.parameters(), **self.optimizer_kwargs)  # type: ignore[union-attr]
+        optimizer = optimizer_cls(self.model.parameters(), **self.optimizer_kwargs)
         loss_fn = self.loss_fn or torch.nn.MSELoss()
 
         for _ in range(self.epochs):
@@ -121,9 +126,9 @@ class TorchSurrogate(Surrogate):
         if test.ndim == 1:
             test = test.reshape(1, -1)
 
-        self.model.eval()  # type: ignore[union-attr]
+        self.model.eval()
         with torch.no_grad():
-            device = next(self.model.parameters()).device  # type: ignore[union-attr]
+            device = next(self.model.parameters()).device
             x_tensor = torch.tensor(test, dtype=torch.float32).to(device)
             pred = self.model(x_tensor).detach().cpu().numpy()  # type: ignore[operator]
 
