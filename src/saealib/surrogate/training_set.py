@@ -81,7 +81,7 @@ class TrainingSet(ABC):
         population:
             Current population. Not used by all implementations.
         ctx:
-            Optimization context. Provides ``comparator``, ``problem.eps``,
+            Optimization context. Provides ``comparator``, ``problem.eps_cv``,
             etc. Required by ranking- and comparison-based implementations.
         candidate_x:
             Centre point for k-NN queries (shape ``(dim,)``). Passed by
@@ -155,8 +155,8 @@ class KNNObjectiveSet(TrainingSet):
 class FeasibilityClassificationSet(TrainingSet):
     """Binary labels derived from constraint violation: 1 if feasible, 0 otherwise.
 
-    A sample is feasible when ``cv <= eps``, where ``eps`` is taken from
-    ``ctx.problem.eps`` (defaults to ``1e-6`` when ``ctx`` is ``None``).
+    A sample is feasible when ``cv <= eps_cv``, where ``eps_cv`` is taken from
+    ``ctx.problem.eps_cv`` (defaults to ``1e-6`` when ``ctx`` is ``None``).
 
     This set is algo-agnostic and works with any surrogate that accepts binary
     classification targets (shape ``(n_train,)``).
@@ -193,7 +193,7 @@ class FeasibilityClassificationSet(TrainingSet):
             src = population
         else:
             src = archive
-        eps = ctx.problem.eps if ctx is not None else 1e-6
+        eps = ctx.problem.eps_cv if ctx is not None else 1e-6
         labels = (src.get_array("cv") <= eps).astype(float)
         return TrainingData(train_x=src.get_array("x"), train_y=labels)
 
