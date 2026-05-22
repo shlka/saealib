@@ -34,7 +34,7 @@ _ATTRS = [
 ]
 
 
-def _make_problem(eps: float = 1e-6) -> Problem:
+def _make_problem(eps_cv: float = 1e-6) -> Problem:
     return Problem(
         func=lambda x: np.array([np.sum(x**2)]),
         dim=DIM,
@@ -42,7 +42,7 @@ def _make_problem(eps: float = 1e-6) -> Problem:
         weight=np.array([-1.0]),
         lb=[-5.0] * DIM,
         ub=[5.0] * DIM,
-        eps=eps,
+        eps_cv=eps_cv,
         comparator=SingleObjectiveComparator(),
     )
 
@@ -82,9 +82,9 @@ def _make_population_with_cv(cvs: list[float]) -> Population:
 def _make_ctx(
     archive: Archive | None = None,
     population: Population | None = None,
-    eps: float = 1e-6,
+    eps_cv: float = 1e-6,
 ) -> OptimizationContext:
-    problem = _make_problem(eps=eps)
+    problem = _make_problem(eps_cv=eps_cv)
     arc = archive if archive is not None else _make_archive()
     pop = population if population is not None else _make_population_with_cv([0.0] * 5)
     return OptimizationContext(
@@ -187,7 +187,7 @@ class TestFeasibilityClassificationSet:
     def test_eps_from_ctx(self) -> None:
         """Boundary value: cv == eps is feasible."""
         arc = _make_archive_with_cv([0.1, 0.2, 0.3])
-        ctx = _make_ctx(archive=arc, eps=0.15)
+        ctx = _make_ctx(archive=arc, eps_cv=0.15)
         ts = FeasibilityClassificationSet(source="archive")
         data = ts.build(arc, None, ctx)
         # cv=0.1 <= 0.15 → 1, cv=0.2 > 0.15 → 0, cv=0.3 > 0.15 → 0
