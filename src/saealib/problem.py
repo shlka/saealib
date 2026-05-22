@@ -7,6 +7,8 @@ Comparator classes and Pareto-related utilities are in saealib.comparators.
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 
 from saealib.comparators import (
@@ -59,8 +61,10 @@ class Problem:
         Upper bounds for design variables. shape = (dim, )
     comparator : Comparator
         Comparator instance to compare solutions.
-    eps : float
-        Epsilon value for comparison (Comparator use).
+    eps_cv : float
+        Epsilon for constraint violation feasibility threshold.
+    eps_obj : float
+        Epsilon for objective value equality comparison.
     func : callable -> float
         Objective function to evaluate solutions.
     constraints : list[Constraint]
@@ -75,9 +79,12 @@ class Problem:
         weight: np.ndarray,
         lb: list[float],
         ub: list[float],
-        eps: float = 1e-6,
+        eps: float | None = None,
         comparator: Comparator | None = None,
         constraints: list[Constraint] | None = None,
+        *,
+        eps_cv: float = 1e-6,
+        eps_obj: float = 1e-6,
     ):
         """
         Initialize Problem instance.
@@ -99,18 +106,31 @@ class Problem:
         ub : list[float]
             Upper bounds for design variables. length = dim
         eps : float, optional
-            Epsilon value for comparison (Comparator use), by default 1e-6
+            Deprecated. Use eps_cv and eps_obj. Will be removed in 0.1.0.
         comparator : Comparator, optional
             Comparator instance to use. If None, auto-selected based on n_obj:
             n_obj == 1 -> SingleObjectiveComparator,
             n_obj >  1 -> NSGA2Comparator.
         constraints : list[Constraint], optional
             List of inequality constraint definitions. Default: empty list.
+        eps_cv : float, optional
+            Epsilon for constraint violation feasibility threshold. Default: 1e-6.
+        eps_obj : float, optional
+            Epsilon for objective value equality comparison. Default: 1e-6.
         """
+        if eps is not None:
+            warnings.warn(
+                "Problem(eps=...) is deprecated and will be removed in 0.1.0. "
+                "Use eps_cv and eps_obj.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            eps_cv = eps_obj = eps
         self.dim = dim
         self.n_obj = n_obj
         self.weight = weight
-        self.eps = eps
+        self.eps_cv = eps_cv
+        self.eps_obj = eps_obj
         self.lb = np.asarray(lb)
         self.ub = np.asarray(ub)
         self.func = func
@@ -119,9 +139,20 @@ class Problem:
         if comparator is not None:
             self.comparator = comparator
         elif n_obj == 1:
-            self.comparator = SingleObjectiveComparator(weight=weight, eps=eps)
+            self.comparator = SingleObjectiveComparator(weight=weight, eps_cv=eps_cv, eps_obj=eps_obj)
         else:
-            self.comparator = NSGA2Comparator(weights=weight, eps=eps)
+            self.comparator = NSGA2Comparator(weights=weight, eps_cv=eps_cv, eps_obj=eps_obj)
+
+    @property
+    def eps(self) -> float:
+        """Deprecated. Use eps_cv or eps_obj."""
+        warnings.warn(
+            "Problem.eps is deprecated and will be removed in 0.1.0. "
+            "Use eps_cv or eps_obj.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.eps_cv
 
     @property
     def n_constraints(self) -> int:
