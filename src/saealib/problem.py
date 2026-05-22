@@ -139,9 +139,13 @@ class Problem:
         if comparator is not None:
             self.comparator = comparator
         elif n_obj == 1:
-            self.comparator = SingleObjectiveComparator(weight=weight, eps_cv=eps_cv, eps_obj=eps_obj)
+            self.comparator = SingleObjectiveComparator(
+                weight=weight, eps_cv=eps_cv, eps_obj=eps_obj
+            )
         else:
-            self.comparator = NSGA2Comparator(weights=weight, eps_cv=eps_cv, eps_obj=eps_obj)
+            self.comparator = NSGA2Comparator(
+                weights=weight, eps_cv=eps_cv, eps_obj=eps_obj
+            )
 
     @property
     def eps(self) -> float:

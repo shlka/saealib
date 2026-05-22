@@ -129,8 +129,8 @@ class SingleObjectiveComparator(Comparator):
     ):
         if eps is not None:
             warnings.warn(
-                "SingleObjectiveComparator(eps=...) is deprecated and will be removed in 0.1.0. "
-                "Use eps_cv and eps_obj.",
+                "SingleObjectiveComparator(eps=...) is deprecated"
+                " and will be removed in 0.1.0. Use eps_cv and eps_obj.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -238,8 +238,8 @@ class WeightedSumComparator(Comparator):
     ):
         if eps is not None:
             warnings.warn(
-                "WeightedSumComparator(eps=...) is deprecated and will be removed in 0.1.0. "
-                "Use eps_cv and eps_obj.",
+                "WeightedSumComparator(eps=...) is deprecated"
+                " and will be removed in 0.1.0. Use eps_cv and eps_obj.",
                 DeprecationWarning,
                 stacklevel=2,
             )
