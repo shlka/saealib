@@ -172,7 +172,8 @@ def _build_result(ctx: OptimizationContext) -> Result:
         best_x = archive_x[best_idx]
         best_f = archive_f[best_idx]
     else:
-        _, fronts = non_dominated_sort(archive_f[pool])
+        direction = np.sign(weight)
+        _, fronts = non_dominated_sort(archive_f[pool], direction=direction)
         pareto_idx = pool[fronts[0]]
         best_x = archive_x[pareto_idx]
         best_f = archive_f[pareto_idx]
