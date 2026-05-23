@@ -290,9 +290,11 @@ class WeightedSumComparator(Comparator):
 # ---------------------------------------------------------------------------
 
 
-def _pareto_dominates(fa: np.ndarray, fb: np.ndarray) -> bool:
+def _pareto_dominates(
+    fa: np.ndarray, fb: np.ndarray, direction: np.ndarray | None = None
+) -> bool:
     """
-    Return True if fa Pareto-dominates fb (minimization).
+    Return True if fa Pareto-dominates fb.
 
     NaN values in fa are treated as non-dominating (returns False).
 
@@ -300,16 +302,23 @@ def _pareto_dominates(fa: np.ndarray, fb: np.ndarray) -> bool:
     ----------
     fa, fb : np.ndarray
         Objective vectors to compare.
+    direction : np.ndarray or None
+        Per-objective optimization direction: +1 = maximize, -1 = minimize.
+        None defaults to minimization for all objectives.
     """
     fa = np.asarray(fa, float)
     fb = np.asarray(fb, float)
     if np.any(np.isnan(fa)):
         return False
+    if direction is not None:
+        fa = fa * (-direction)
+        fb = fb * (-direction)
     return bool(np.all(fa <= fb) and np.any(fa < fb))
 
 
 def non_dominated_sort(
     f: np.ndarray,
+    direction: np.ndarray | None = None,
 ) -> tuple[np.ndarray, list[list[int]]]:
     """
     O(MN^2) non-dominated sorting (Deb et al., 2002).
@@ -320,6 +329,9 @@ def non_dominated_sort(
     ----------
     f : np.ndarray
         Objective matrix. shape: (n, n_obj)
+    direction : np.ndarray or None
+        Per-objective optimization direction: +1 = maximize, -1 = minimize.
+        None defaults to minimization for all objectives.
 
     Returns
     -------
@@ -341,7 +353,7 @@ def non_dominated_sort(
         for j in valid:
             if i == j:
                 continue
-            if _pareto_dominates(f[i], f[j]):
+            if _pareto_dominates(f[i], f[j], direction):
                 dominates_set[i].append(j)
                 dominated_by_count[j] += 1
 
@@ -482,6 +494,12 @@ class ParetoComparator(Comparator):
         w = np.asarray(weights, dtype=float) if weights is not None else np.empty(0)
         super().__init__(w, eps_cv, eps_obj)
 
+    @property
+    def _direction(self) -> np.ndarray | None:
+        if self.weights.size == 0:
+            return None
+        return np.sign(self.weights)
+
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort by Pareto front rank; infeasible individuals come last."""
         f = population.get("f")
@@ -491,7 +509,7 @@ class ParetoComparator(Comparator):
 
         sorted_feasible = np.empty(0, int)
         if len(feasible):
-            ranks, _ = non_dominated_sort(f[feasible])
+            ranks, _ = non_dominated_sort(f[feasible], direction=self._direction)
             order = np.argsort(ranks, kind="stable")
             sorted_feasible = feasible[order]
 
@@ -520,9 +538,10 @@ class ParetoComparator(Comparator):
         elif cv_b > self.eps_cv:
             return -1
 
-        if _pareto_dominates(fa, fb):
+        direction = self._direction
+        if _pareto_dominates(fa, fb, direction):
             return -1
-        if _pareto_dominates(fb, fa):
+        if _pareto_dominates(fb, fa, direction):
             return 1
         return 0
 
@@ -580,7 +599,7 @@ class NSGA2Comparator(ParetoComparator):
 
         sorted_feasible = np.empty(0, int)
         if len(feasible):
-            ranks, fronts = non_dominated_sort(f[feasible])
+            ranks, fronts = non_dominated_sort(f[feasible], direction=self._direction)
             cd = crowding_distance_all_fronts(f[feasible], fronts)
             order = np.lexsort((-cd, ranks))
             sorted_feasible = feasible[order]
