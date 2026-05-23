@@ -379,7 +379,7 @@ class TestParetoComparator:
         assert comp.compare_population(pop, 0, 1) == -1
 
     def test_weights_direction_affects_ranking(self) -> None:
-        """Weights sign determines optimization direction: negative=minimize, positive=maximize."""
+        """Weights sign determines optimization direction."""
         f = np.array([[3.0, 3.0], [1.0, 1.0]])
         pop = _make_pop(f)
         comp_min = ParetoComparator(weights=np.array([-1.0, -1.0]))
@@ -472,12 +472,16 @@ class TestNSGA2Comparator:
         assert order.dtype == np.intp or np.issubdtype(order.dtype, np.integer)
 
     def test_weights_direction_affects_sorting(self) -> None:
-        """Weights sign determines optimization direction: negative=minimize, positive=maximize."""
+        """Weights sign determines optimization direction."""
         f = np.array([[3.0, 3.0], [1.0, 1.0]])
         comp_min = NSGA2Comparator(weights=np.array([-1.0, -1.0]))
         comp_max = NSGA2Comparator(weights=np.array([1.0, 1.0]))
-        assert comp_min.sort_population(_make_pop(f))[0] == 1  # [1,1] wins under minimization
-        assert comp_max.sort_population(_make_pop(f))[0] == 0  # [3,3] wins under maximization
+        assert (
+            comp_min.sort_population(_make_pop(f))[0] == 1
+        )  # [1,1] wins under minimization
+        assert (
+            comp_max.sort_population(_make_pop(f))[0] == 0
+        )  # [3,3] wins under maximization
 
 
 # ===========================================================================
