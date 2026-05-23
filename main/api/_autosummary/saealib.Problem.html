@@ -7,7 +7,7 @@
         <link rel="canonical" href="https://shlka.github.io/saealib/api/_autosummary/saealib.Problem.html">
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 -->
-        <title>saealib.Problem - saealib 0.1.0b3.dev1+gdf778a664 documentation</title>
+        <title>saealib.Problem - saealib 0.1.0b3.dev2+g9b9c8cabe documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -170,7 +170,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">saealib 0.1.0b3.dev1+gdf778a664 documentation</div></a>
+      <a href="../../index.html"><div class="brand">saealib 0.1.0b3.dev2+g9b9c8cabe documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -191,7 +191,7 @@
       
       <div class="sidebar-sticky"><div class="sidebar-scroll"><a class="sidebar-brand" href="../../index.html">
   
-  <span class="sidebar-brand-text">saealib 0.1.0b3.dev1+gdf778a664 documentation</span>
+  <span class="sidebar-brand-text">saealib 0.1.0b3.dev2+g9b9c8cabe documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -374,7 +374,7 @@
 <h1>saealib.Problem<a class="headerlink" href="#saealib-problem" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.Problem">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">Problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ub</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comparator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/problem.html#Problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.Problem" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">Problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ub</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comparator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_cv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/problem.html#Problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.Problem" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Definition of optimization problem.</p>
 <dl class="field-list simple">
@@ -386,9 +386,11 @@
 <li><p><strong>weight</strong> (<em>np.ndarray</em>)</p></li>
 <li><p><strong>lb</strong> (<em>list</em><em>[</em><em>float</em><em>]</em>)</p></li>
 <li><p><strong>ub</strong> (<em>list</em><em>[</em><em>float</em><em>]</em>)</p></li>
-<li><p><strong>eps</strong> (<em>float</em>)</p></li>
+<li><p><strong>eps</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>comparator</strong> (<em>Comparator</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>constraints</strong> (<em>list</em><em>[</em><a class="reference internal" href="saealib.Constraint.html#saealib.Constraint" title="saealib.Constraint"><em>Constraint</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>eps_cv</strong> (<em>float</em>)</p></li>
+<li><p><strong>eps_obj</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -459,9 +461,20 @@
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="saealib.Problem.eps">
-<span class="sig-name descname"><span class="pre">eps</span></span><a class="headerlink" href="#saealib.Problem.eps" title="Link to this definition">¶</a></dt>
-<dd><p>Epsilon value for comparison (Comparator use).</p>
+<dt class="sig sig-object py" id="saealib.Problem.eps_cv">
+<span class="sig-name descname"><span class="pre">eps_cv</span></span><a class="headerlink" href="#saealib.Problem.eps_cv" title="Link to this definition">¶</a></dt>
+<dd><p>Epsilon for constraint violation feasibility threshold.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saealib.Problem.eps_obj">
+<span class="sig-name descname"><span class="pre">eps_obj</span></span><a class="headerlink" href="#saealib.Problem.eps_obj" title="Link to this definition">¶</a></dt>
+<dd><p>Epsilon for objective value equality comparison.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>float</p>
@@ -512,7 +525,7 @@
 <p class="rubric">Method Details</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Problem.__init__">
-<span class="sig-prename descclassname"><span class="pre">Problem.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ub</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comparator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/problem.html#Problem.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.Problem.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">Problem.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ub</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comparator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_cv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/problem.html#Problem.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.Problem.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Initialize Problem instance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -525,11 +538,13 @@ Used by SingleObjectiveComparator and WeightedSumComparator.
 Not used by NSGA2Comparator.</p></li>
 <li><p><strong>lb</strong> (<em>list</em><em>[</em><em>float</em><em>]</em>) – Lower bounds for design variables. length = dim</p></li>
 <li><p><strong>ub</strong> (<em>list</em><em>[</em><em>float</em><em>]</em>) – Upper bounds for design variables. length = dim</p></li>
-<li><p><strong>eps</strong> (<em>float</em><em>, </em><em>optional</em>) – Epsilon value for comparison (Comparator use), by default 1e-6</p></li>
+<li><p><strong>eps</strong> (<em>float</em><em>, </em><em>optional</em>) – Deprecated. Use eps_cv and eps_obj. Will be removed in 0.1.0.</p></li>
 <li><p><strong>comparator</strong> (<em>Comparator</em><em>, </em><em>optional</em>) – Comparator instance to use. If None, auto-selected based on n_obj:
 n_obj == 1 -&gt; SingleObjectiveComparator,
 n_obj &gt;  1 -&gt; NSGA2Comparator.</p></li>
 <li><p><strong>constraints</strong> (<em>list</em><em>[</em><a class="reference internal" href="saealib.Constraint.html#saealib.Constraint" title="saealib.Constraint"><em>Constraint</em></a><em>]</em><em>, </em><em>optional</em>) – List of inequality constraint definitions. Default: empty list.</p></li>
+<li><p><strong>eps_cv</strong> (<em>float</em><em>, </em><em>optional</em>) – Epsilon for constraint violation feasibility threshold. Default: 1e-6.</p></li>
+<li><p><strong>eps_obj</strong> (<em>float</em><em>, </em><em>optional</em>) – Epsilon for objective value equality comparison. Default: 1e-6.</p></li>
 </ul>
 </dd>
 </dl>
@@ -640,7 +655,8 @@ Empty array when no constraints are defined.</p></li>
 <li><a class="reference internal" href="#saealib.Problem.lb"><code class="docutils literal notranslate"><span class="pre">Problem.lb</span></code></a></li>
 <li><a class="reference internal" href="#saealib.Problem.ub"><code class="docutils literal notranslate"><span class="pre">Problem.ub</span></code></a></li>
 <li><a class="reference internal" href="#saealib.Problem.comparator"><code class="docutils literal notranslate"><span class="pre">Problem.comparator</span></code></a></li>
-<li><a class="reference internal" href="#saealib.Problem.eps"><code class="docutils literal notranslate"><span class="pre">Problem.eps</span></code></a></li>
+<li><a class="reference internal" href="#saealib.Problem.eps_cv"><code class="docutils literal notranslate"><span class="pre">Problem.eps_cv</span></code></a></li>
+<li><a class="reference internal" href="#saealib.Problem.eps_obj"><code class="docutils literal notranslate"><span class="pre">Problem.eps_obj</span></code></a></li>
 <li><a class="reference internal" href="#saealib.Problem.func"><code class="docutils literal notranslate"><span class="pre">Problem.func</span></code></a></li>
 <li><a class="reference internal" href="#saealib.Problem.constraints"><code class="docutils literal notranslate"><span class="pre">Problem.constraints</span></code></a></li>
 </ul>
@@ -659,7 +675,7 @@ Empty array when no constraints are defined.</p></li>
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=ae9b0b6a"></script>
+</div><script src="../../_static/documentation_options.js?v=3ff2f8ef"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
