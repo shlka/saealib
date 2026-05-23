@@ -108,13 +108,13 @@ class GA(Algorithm):
         -------
         Population
         """
-        cand = np.empty((0, ctx.dim))
         pop = ctx.population.get_array("x")
         popsize = len(pop)
         target = n_offspring if n_offspring is not None else popsize
         lb = ctx.problem.lb
         ub = ctx.problem.ub
-        n_pair = math.ceil(target / 2)
+        n_children = self.crossover.n_children
+        n_pair = math.ceil(target / n_children)
         parent_idx_m = (
             self.parent_selection.select(
                 ctx,
@@ -125,13 +125,14 @@ class GA(Algorithm):
             )
             % popsize
         )
+        cand = np.empty((n_pair * n_children, ctx.dim))
         for i in range(n_pair):
             parent = pop[parent_idx_m[i]]
             if ctx.rng.random() < self.crossover.crossover_rate:
                 c = self.crossover.crossover(parent, rng=ctx.rng)
             else:
-                c = parent.copy()
-            cand = np.vstack((cand, c))
+                c = parent[:n_children].copy()
+            cand[i * n_children : (i + 1) * n_children] = c
         if self.repair is not None:
             cand = self.repair(cand, (lb, ub))
         post_co = PostCrossoverEvent(ctx=ctx, provider=provider, candidates=cand)

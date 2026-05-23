@@ -7,6 +7,7 @@ Tests cover:
 - CrossoverUniform: output shape, swap_rate=0/1 boundary cases
 - CrossoverOnePoint: output shape, segment integrity
 - CrossoverTwoPoint: output shape, segment integrity
+- Crossover (base): n_children default and consistency with output shape
 - MutationPolynomial: output shape, within-bounds, zero-rate
 - MutationGaussian: output shape, zero-rate, zero-sigma
 - RouletteWheelSelection: output shape, probability bias
@@ -220,6 +221,31 @@ class TestCrossoverTwoPoint:
         np.testing.assert_array_equal(c[0, :pt1], p[0, :pt1])
         np.testing.assert_array_equal(c[0, pt1:pt2], p[1, pt1:pt2])
         np.testing.assert_array_equal(c[0, pt2:], p[0, pt2:])
+
+
+# ---------------------------------------------------------------------------
+# Crossover base: n_children
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "op",
+    [
+        CrossoverBLXAlpha(crossover_rate=0.9, alpha=0.4),
+        CrossoverSBX(crossover_rate=0.9, eta=2.0),
+        CrossoverUniform(crossover_rate=0.9),
+        CrossoverOnePoint(crossover_rate=0.9),
+        CrossoverTwoPoint(crossover_rate=0.9),
+    ],
+)
+class TestCrossoverNChildren:
+    def test_n_children_default(self, op):
+        assert op.n_children == 2
+
+    def test_output_rows_match_n_children(self, op):
+        rng = np.random.default_rng(0)
+        c = op.crossover(_make_parents(rng), rng=rng)
+        assert c.shape[0] == op.n_children
 
 
 # ---------------------------------------------------------------------------

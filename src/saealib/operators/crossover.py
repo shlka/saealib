@@ -14,9 +14,14 @@ class Crossover(ABC):
         Number of parents required per crossover call. Default is 2.
         Subclasses may override this class attribute if they require a
         different number of parents.
+    n_children : int
+        Number of offspring produced per crossover call. Default is 2.
+        Subclasses may override this class attribute if they produce a
+        different number of offspring.
     """
 
     n_parents: int = 2
+    n_children: int = 2
 
     @abstractmethod
     def crossover(
