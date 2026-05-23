@@ -7,6 +7,7 @@ for ranking and comparing solutions in single- and multi-objective optimization.
 
 from __future__ import annotations
 
+import warnings
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
@@ -24,14 +25,28 @@ class Comparator(ABC):
     ----------
     weights : np.ndarray
         Weights for objectives. shape = (n_obj, )
-    eps : float
-        Epsilon value for comparison tolerance.
+    eps_cv : float
+        Epsilon for constraint violation feasibility threshold.
+    eps_obj : float
+        Epsilon for objective value equality comparison.
     """
 
     @abstractmethod
-    def __init__(self, weights: np.ndarray, eps: float):
+    def __init__(self, weights: np.ndarray, eps_cv: float, eps_obj: float):
         self.weights = weights
-        self.eps = eps
+        self.eps_cv = eps_cv
+        self.eps_obj = eps_obj
+
+    @property
+    def eps(self) -> float:
+        """Deprecated. Use eps_cv or eps_obj."""
+        warnings.warn(
+            "Comparator.eps is deprecated and will be removed in 0.1.0. "
+            "Use eps_cv or eps_obj.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.eps_cv
 
     @abstractmethod
     def sort_population(self, population: Population) -> np.ndarray:
@@ -104,8 +119,23 @@ class Comparator(ABC):
 class SingleObjectiveComparator(Comparator):
     """Comparator for single-objective optimization."""
 
-    def __init__(self, weight: float = 1.0, eps: float = 1e-6):
-        super().__init__(np.array([weight]), eps)
+    def __init__(
+        self,
+        weight: float = 1.0,
+        eps: float | None = None,
+        *,
+        eps_cv: float = 1e-6,
+        eps_obj: float = 1e-6,
+    ):
+        if eps is not None:
+            warnings.warn(
+                "SingleObjectiveComparator(eps=...) is deprecated"
+                " and will be removed in 0.1.0. Use eps_cv and eps_obj.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            eps_cv = eps_obj = eps
+        super().__init__(np.array([weight]), eps_cv, eps_obj)
 
     def sort_population(self, population: Population) -> np.ndarray:
         """
@@ -139,21 +169,21 @@ class SingleObjectiveComparator(Comparator):
         self, fitness_a: np.ndarray, cv_a: float, fitness_b: np.ndarray, cv_b: float
     ) -> int:
         """Constraint-domination comparison; -1=a better, 1=b better, 0=equal."""
-        if cv_a > self.eps and cv_b > self.eps:
+        if cv_a > self.eps_cv and cv_b > self.eps_cv:
             if cv_a < cv_b:
                 return -1
             elif cv_a > cv_b:
                 return 1
             else:
                 return 0
-        elif cv_a > self.eps and cv_b <= self.eps:
+        elif cv_a > self.eps_cv and cv_b <= self.eps_cv:
             return 1
-        elif cv_a <= self.eps and cv_b > self.eps:
+        elif cv_a <= self.eps_cv and cv_b > self.eps_cv:
             return -1
         else:
-            if fitness_a[0] < fitness_b[0] - self.eps:
+            if fitness_a[0] < fitness_b[0] - self.eps_obj:
                 return -1
-            elif fitness_a[0] > fitness_b[0] + self.eps:
+            elif fitness_a[0] > fitness_b[0] + self.eps_obj:
                 return 1
             else:
                 return 0
@@ -174,7 +204,7 @@ class SingleObjectiveComparator(Comparator):
         np.ndarray
             Sorted indices of the solutions.
         """
-        cv_key = np.where(cv > self.eps, cv, 0)
+        cv_key = np.where(cv > self.eps_cv, cv, 0)
         obj_key = fitness.flatten() * self.weights[0]
         return np.lexsort((-obj_key, cv_key))
 
@@ -198,15 +228,30 @@ class WeightedSumComparator(Comparator):
         Epsilon tolerance for constraint violation and fitness comparison.
     """
 
-    def __init__(self, weights: np.ndarray, eps: float = 1e-6):
-        super().__init__(np.asarray(weights, dtype=float), eps)
+    def __init__(
+        self,
+        weights: np.ndarray,
+        eps: float | None = None,
+        *,
+        eps_cv: float = 1e-6,
+        eps_obj: float = 1e-6,
+    ):
+        if eps is not None:
+            warnings.warn(
+                "WeightedSumComparator(eps=...) is deprecated"
+                " and will be removed in 0.1.0. Use eps_cv and eps_obj.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            eps_cv = eps_obj = eps
+        super().__init__(np.asarray(weights, dtype=float), eps_cv, eps_obj)
 
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort population by weighted sum of objectives, with feasibility first."""
         f = population.get("f")  # (n_ind, n_obj)
         cv = population.get("cv")  # (n_ind,)
         scalar = f @ self.weights  # (n_ind,) weighted sum per individual
-        cv_key = np.where(cv > self.eps, cv, 0)
+        cv_key = np.where(cv > self.eps_cv, cv, 0)
         return np.lexsort((-scalar, cv_key))
 
     def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
@@ -220,22 +265,22 @@ class WeightedSumComparator(Comparator):
         return self._compare(fa, cv_a, fb, cv_b)
 
     def _compare(self, fa: np.ndarray, cv_a: float, fb: np.ndarray, cv_b: float) -> int:
-        if cv_a > self.eps and cv_b > self.eps:
+        if cv_a > self.eps_cv and cv_b > self.eps_cv:
             if cv_a < cv_b:
                 return -1
             elif cv_a > cv_b:
                 return 1
             else:
                 return 0
-        elif cv_a > self.eps:
+        elif cv_a > self.eps_cv:
             return 1
-        elif cv_b > self.eps:
+        elif cv_b > self.eps_cv:
             return -1
         sa = float(np.dot(fa, self.weights))
         sb = float(np.dot(fb, self.weights))
-        if sa > sb + self.eps:
+        if sa > sb + self.eps_obj:
             return -1
-        elif sa < sb - self.eps:
+        elif sa < sb - self.eps_obj:
             return 1
         return 0
 
@@ -418,16 +463,31 @@ class ParetoComparator(Comparator):
         Epsilon tolerance for constraint violation.
     """
 
-    def __init__(self, weights: np.ndarray | None = None, eps: float = 1e-6):
+    def __init__(
+        self,
+        weights: np.ndarray | None = None,
+        eps: float | None = None,
+        *,
+        eps_cv: float = 1e-6,
+        eps_obj: float = 1e-6,
+    ):
+        if eps is not None:
+            warnings.warn(
+                "ParetoComparator(eps=...) is deprecated and will be removed in 0.1.0. "
+                "Use eps_cv.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            eps_cv = eps
         w = np.asarray(weights, dtype=float) if weights is not None else np.empty(0)
-        super().__init__(w, eps)
+        super().__init__(w, eps_cv, eps_obj)
 
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort by Pareto front rank; infeasible individuals come last."""
         f = population.get("f")
         cv = population.get("cv")
-        feasible = np.where(cv <= self.eps)[0]
-        infeasible = np.where(cv > self.eps)[0]
+        feasible = np.where(cv <= self.eps_cv)[0]
+        infeasible = np.where(cv > self.eps_cv)[0]
 
         sorted_feasible = np.empty(0, int)
         if len(feasible):
@@ -449,15 +509,15 @@ class ParetoComparator(Comparator):
 
     def compare(self, fa: np.ndarray, cv_a: float, fb: np.ndarray, cv_b: float) -> int:
         """Compare two solutions directly without a Population object."""
-        if cv_a > self.eps and cv_b > self.eps:
+        if cv_a > self.eps_cv and cv_b > self.eps_cv:
             if cv_a < cv_b:
                 return -1
             elif cv_a > cv_b:
                 return 1
             return 0
-        elif cv_a > self.eps:
+        elif cv_a > self.eps_cv:
             return 1
-        elif cv_b > self.eps:
+        elif cv_b > self.eps_cv:
             return -1
 
         if _pareto_dominates(fa, fb):
@@ -489,8 +549,23 @@ class NSGA2Comparator(ParetoComparator):
         Epsilon tolerance for constraint violation.
     """
 
-    def __init__(self, weights: np.ndarray | None = None, eps: float = 1e-6):
-        super().__init__(weights, eps)
+    def __init__(
+        self,
+        weights: np.ndarray | None = None,
+        eps: float | None = None,
+        *,
+        eps_cv: float = 1e-6,
+        eps_obj: float = 1e-6,
+    ):
+        if eps is not None:
+            warnings.warn(
+                "NSGA2Comparator(eps=...) is deprecated and will be removed in 0.1.0. "
+                "Use eps_cv.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            eps_cv = eps
+        super().__init__(weights, eps_cv=eps_cv, eps_obj=eps_obj)
 
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort by Pareto front rank then crowding distance (NSGA-II style)."""
@@ -500,8 +575,8 @@ class NSGA2Comparator(ParetoComparator):
 
         f = population.get("f")  # (n, n_obj)
         cv = population.get("cv")  # (n,)
-        feasible = np.where(cv <= self.eps)[0]
-        infeasible = np.where(cv > self.eps)[0]
+        feasible = np.where(cv <= self.eps_cv)[0]
+        infeasible = np.where(cv > self.eps_cv)[0]
 
         sorted_feasible = np.empty(0, int)
         if len(feasible):

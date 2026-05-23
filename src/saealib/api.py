@@ -161,7 +161,7 @@ def _build_result(ctx: OptimizationContext) -> Result:
     archive_f = ctx.archive.get_array("f")
     archive_cv = ctx.archive.get_array("cv")
     weight = ctx.problem.weight
-    eps = ctx.problem.eps
+    eps = ctx.problem.eps_cv
 
     feasible = np.where(archive_cv <= eps)[0]
     pool = feasible if len(feasible) else np.array([int(np.argmin(archive_cv))])
