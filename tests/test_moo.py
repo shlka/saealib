@@ -378,16 +378,14 @@ class TestParetoComparator:
         comp = ParetoComparator()
         assert comp.compare_population(pop, 0, 1) == -1
 
-    def test_weights_stored_but_not_used(self) -> None:
-        """Weights are stored for interface compatibility but ignored."""
-        f = np.array([[0.0, 1.0], [1.0, 0.0]])
+    def test_weights_direction_affects_ranking(self) -> None:
+        """Weights sign determines optimization direction: negative=minimize, positive=maximize."""
+        f = np.array([[3.0, 3.0], [1.0, 1.0]])
         pop = _make_pop(f)
-        comp_no_w = ParetoComparator()
-        comp_with_w = ParetoComparator(weights=np.array([1.0, 2.0]))
-        np.testing.assert_array_equal(
-            comp_no_w.sort_population(pop),
-            comp_with_w.sort_population(pop),
-        )
+        comp_min = ParetoComparator(weights=np.array([-1.0, -1.0]))
+        comp_max = ParetoComparator(weights=np.array([1.0, 1.0]))
+        assert comp_min.sort_population(pop)[0] == 1  # [1,1] wins under minimization
+        assert comp_max.sort_population(pop)[0] == 0  # [3,3] wins under maximization
 
 
 # ===========================================================================
@@ -473,15 +471,13 @@ class TestNSGA2Comparator:
         order = comp.sort_population(pop)
         assert order.dtype == np.intp or np.issubdtype(order.dtype, np.integer)
 
-    def test_weights_stored_but_not_used_in_sorting(self) -> None:
-        """weights is stored for interface compatibility but ignored in sorting."""
-        f = np.array([[0.0, 1.0], [1.0, 0.0]])
-        pop = _make_pop(f)
-        comp_no_w = NSGA2Comparator()
-        comp_with_w = NSGA2Comparator(weights=np.array([1.0, 2.0]))
-        order_no_w = comp_no_w.sort_population(pop)
-        order_with_w = comp_with_w.sort_population(pop)
-        np.testing.assert_array_equal(order_no_w, order_with_w)
+    def test_weights_direction_affects_sorting(self) -> None:
+        """Weights sign determines optimization direction: negative=minimize, positive=maximize."""
+        f = np.array([[3.0, 3.0], [1.0, 1.0]])
+        comp_min = NSGA2Comparator(weights=np.array([-1.0, -1.0]))
+        comp_max = NSGA2Comparator(weights=np.array([1.0, 1.0]))
+        assert comp_min.sort_population(_make_pop(f))[0] == 1  # [1,1] wins under minimization
+        assert comp_max.sort_population(_make_pop(f))[0] == 0  # [3,3] wins under maximization
 
 
 # ===========================================================================
