@@ -3,6 +3,7 @@ name: Docs
 on:
   push:
     branches: ["main", "dev-docs"]
+    tags: ["v*"]
   pull_request:
     branches: ["main"]
 
@@ -33,9 +34,9 @@ jobs:
           retention-days: 7
 
   deploy-release:
-    name: Deploy release (main)
+    name: Deploy release (tag)
     needs: build
-    if: github.ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
