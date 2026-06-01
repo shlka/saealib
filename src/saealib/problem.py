@@ -18,7 +18,7 @@ from saealib.comparators import (
 )
 
 
-class Constraint:
+class InequalityConstraint:
     """
     A single inequality constraint: g(x) <= threshold.
 
@@ -56,6 +56,46 @@ class Constraint:
         g = self.evaluate(x)
         return g, max(0.0, g - self.threshold)
 
+    def gradient(self, x: np.ndarray) -> np.ndarray | None:
+        """
+        Return the gradient of g(x) with respect to x, if available.
+
+        Override this in a subclass to enable gradient-based constraint
+        handlers (e.g. gradient-based repair). The default returns ``None``,
+        signalling that no analytical Jacobian is provided.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            The solution at which to evaluate the gradient. shape = (dim, )
+
+        Returns
+        -------
+        np.ndarray or None
+            Gradient vector with shape = (dim, ), or ``None`` when no
+            gradient is available.
+        """
+        return None
+
+
+class Constraint(InequalityConstraint):
+    """
+    Deprecated alias of :class:`InequalityConstraint`.
+
+    .. deprecated::
+        Use :class:`InequalityConstraint`. ``Constraint`` will be removed
+        in a future release.
+    """
+
+    def __init__(self, func: callable, threshold: float = 0.0):
+        warnings.warn(
+            "Constraint is deprecated and will be removed in a future release. "
+            "Use InequalityConstraint instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(func, threshold)
+
 
 class Problem:
     """
@@ -81,7 +121,7 @@ class Problem:
         Epsilon for objective value equality comparison.
     func : callable -> float
         Objective function to evaluate solutions.
-    constraints : list[Constraint]
+    constraints : list[InequalityConstraint]
         List of inequality constraint definitions.
     """
 
@@ -95,7 +135,7 @@ class Problem:
         ub: list[float],
         eps: float | None = None,
         comparator: Comparator | None = None,
-        constraints: list[Constraint] | None = None,
+        constraints: list[InequalityConstraint] | None = None,
         *,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
@@ -125,7 +165,7 @@ class Problem:
             Comparator instance to use. If None, auto-selected based on n_obj:
             n_obj == 1 -> SingleObjectiveComparator,
             n_obj >  1 -> NSGA2Comparator.
-        constraints : list[Constraint], optional
+        constraints : list[InequalityConstraint], optional
             List of inequality constraint definitions. Default: empty list.
         eps_cv : float, optional
             Epsilon for constraint violation feasibility threshold. Default: 1e-6.

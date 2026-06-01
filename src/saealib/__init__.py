@@ -83,6 +83,7 @@ from saealib.population import (
 )
 from saealib.problem import (
     Constraint,
+    InequalityConstraint,
     Problem,
 )
 from saealib.strategies.base import OptimizationStrategy
@@ -151,6 +152,7 @@ __all__ = [
     "GlobalSurrogateManager",
     "Individual",
     "IndividualBasedStrategy",
+    "InequalityConstraint",
     "Initializer",
     "LGBMSurrogate",
     "LHSInitializer",
