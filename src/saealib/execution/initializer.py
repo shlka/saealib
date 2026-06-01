@@ -161,12 +161,18 @@ class LHSInitializer(Initializer):
             self.n_init_archive
         )
         archive_x = scipy.stats.qmc.scale(archive_x, problem.lb, problem.ub)
-        archive_f = np.array([problem.evaluate(ind) for ind in archive_x])
+        result = provider.evaluator.evaluate_batch(archive_x, problem)
 
         # TODO: Register algorithm-specific attributes in the archive.
         for i in range(self.n_init_archive):
-            g, cv = problem.evaluate_constraints(archive_x[i])
-            archive.add({"x": archive_x[i], "f": archive_f[i], "g": g, "cv": cv})
+            archive.add(
+                {
+                    "x": archive_x[i],
+                    "f": result.f[i],
+                    "g": result.g[i],
+                    "cv": float(result.cv[i]),
+                }
+            )
 
         sorted_idx = problem.comparator.sort_population(archive)
         archive_sorted = archive.extract(sorted_idx)
