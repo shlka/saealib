@@ -68,14 +68,13 @@ class PreSelectionStrategy(OptimizationStrategy):
         candidates = candidates.extract(idx)
         n_eval = min(self.n_select, len(candidates))
 
+        result = provider.evaluator.evaluate_batch(candidates.x[:n_eval], ctx.problem)
         for i in range(n_eval):
-            candidates[i].f = ctx.problem.evaluate(candidates[i].x)
-            g, cv = ctx.problem.evaluate_constraints(candidates[i].x)
-            candidates[i].cv = cv
-            candidates[i].g = g
-            ctx.archive.add(
-                {"x": candidates[i].x, "f": candidates[i].f, "g": g, "cv": cv}
-            )
+            f_i, g_i, cv_i = result.f[i], result.g[i], float(result.cv[i])
+            candidates[i].f = f_i
+            candidates[i].g = g_i
+            candidates[i].cv = cv_i
+            ctx.archive.add({"x": candidates[i].x, "f": f_i, "g": g_i, "cv": cv_i})
         ctx.count_fe(n_eval)
 
         evaluated = candidates.extract(list(range(n_eval)))
