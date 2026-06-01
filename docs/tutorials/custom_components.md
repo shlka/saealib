@@ -176,8 +176,84 @@ print(f"パレートフロント上の解数: {len(fronts[0])}")
 
 ---
 
+## カスタム評価器（Evaluator）の実装
+
+ライブラリ内で真の（高コストな）目的関数評価を行う処理は，すべて `Evaluator` という単一の入口に集約されています．`Evaluator` を継承して `evaluate_batch` を実装すると，並列実行・リモート実行・キャッシュなどの評価バックエンドを，パイプライン本体に手を入れずに差し替えられます．
+
+| 役割 | 内容 |
+|---------|------|
+| `evaluate_batch(x, problem)` | 設計変数のバッチ `x`（shape: `(n, dim)`）を評価し，`EvaluationResult` を返す |
+| `EvaluationResult` | `f`（目的関数値 `(n, n_obj)`）・`g`（生制約値 `(n, n_constraints)`）・`cv`（制約違反量 `(n,)`）を保持する |
+
+デフォルトは候補を逐次評価する `SerialEvaluator` です．
+
+### 実装例: スレッドプールによる並列評価
+
+```python
+from concurrent.futures import ThreadPoolExecutor
+
+import numpy as np
+from saealib import Problem
+from saealib.execution.evaluator import EvaluationResult, Evaluator
+
+
+class ParallelEvaluator(Evaluator):
+    """スレッドプールで候補バッチを並列評価する評価器．"""
+
+    def __init__(self, max_workers: int | None = None):
+        self.max_workers = max_workers
+
+    def evaluate_batch(self, x: np.ndarray, problem: Problem) -> EvaluationResult:
+        x = np.atleast_2d(np.asarray(x, dtype=float))
+        n = len(x)
+        f = np.empty((n, problem.n_obj), dtype=float)
+        g = np.empty((n, problem.n_constraints), dtype=float)
+        cv = np.zeros(n, dtype=float)
+
+        def _eval(xi):
+            g_i, cv_i = problem.evaluate_constraints(xi)
+            return problem.evaluate(xi), g_i, cv_i
+
+        with ThreadPoolExecutor(max_workers=self.max_workers) as pool:
+            for i, (f_i, g_i, cv_i) in enumerate(pool.map(_eval, x)):
+                f[i], g[i], cv[i] = f_i, g_i, cv_i
+
+        return EvaluationResult(f=f, g=g, cv=cv)
+```
+
+`Optimizer.set_evaluator()` で差し込みます：
+
+```python
+optimizer.set_evaluator(ParallelEvaluator(max_workers=4))
+```
+
+```{note}
+真の並列性が必要な場合は，`ThreadPoolExecutor` を `ProcessPoolExecutor`・joblib・MPI などに置き換えてください（目的関数が pickle 可能である必要があります）．
+```
+
+### 追加の評価出力を持たせたい場合
+
+評価コスト・勾配・ノイズ推定など，`f` / `g` / `cv` 以外の値を扱いたい場合は，`EvaluationResult` を**継承**して必要なフィールドを追加します．コア最適化ループは基底クラスの `f` / `g` / `cv` のみを参照するため，追加フィールドを持つサブクラスを返しても安全に動作します．
+
+```python
+from dataclasses import dataclass
+
+import numpy as np
+from saealib.execution.evaluator import EvaluationResult
+
+
+@dataclass
+class CostAwareResult(EvaluationResult):
+    cost: np.ndarray  # 各候補の評価コスト. shape: (n,)
+```
+
+追加フィールドは，独自の `SurrogateManager` やコールバックから参照して活用できます．
+
+---
+
 ## 参照
 
 - {py:class}`saealib.AcquisitionFunction` / {py:class}`saealib.SurrogatePrediction`
 - {py:class}`saealib.PostAskEvent` / {py:class}`saealib.PostCrossoverEvent` / {py:class}`saealib.PostMutationEvent`
 - {py:class}`saealib.CallbackManager`
+- {py:class}`saealib.Evaluator` / {py:class}`saealib.SerialEvaluator` / {py:class}`saealib.EvaluationResult`

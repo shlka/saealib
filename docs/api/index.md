@@ -13,6 +13,7 @@ surrogate
 acquisition
 strategies
 initialization
+evaluation
 termination
 callbacks
 utils

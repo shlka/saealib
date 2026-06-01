@@ -71,14 +71,13 @@ class IndividualBasedStrategy(OptimizationStrategy):
         idx = np.argsort(-scores)
         offspring = offspring.extract(idx)
 
+        result = provider.evaluator.evaluate_batch(offspring.x[:n_eval], ctx.problem)
         for i in range(n_eval):
-            offspring[i].f = ctx.problem.evaluate(offspring[i].x)
-            g, cv = ctx.problem.evaluate_constraints(offspring[i].x)
-            offspring[i].cv = cv
-            offspring[i].g = g
-            ctx.archive.add(
-                {"x": offspring[i].x, "f": offspring[i].f, "g": g, "cv": cv}
-            )
+            f_i, g_i, cv_i = result.f[i], result.g[i], float(result.cv[i])
+            offspring[i].f = f_i
+            offspring[i].g = g_i
+            offspring[i].cv = cv_i
+            ctx.archive.add({"x": offspring[i].x, "f": f_i, "g": g_i, "cv": cv_i})
         ctx.count_fe(n_eval)
 
         evaluated = offspring.extract(list(range(n_eval)))
