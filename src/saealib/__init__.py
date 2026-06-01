@@ -44,6 +44,11 @@ from saealib.comparators import (
     crowding_distance_all_fronts,
     non_dominated_sort,
 )
+from saealib.execution.evaluator import (
+    EvaluationResult,
+    Evaluator,
+    SerialEvaluator,
+)
 from saealib.execution.initializer import Initializer, LHSInitializer
 from saealib.operators.crossover import (
     Crossover,
@@ -135,6 +140,8 @@ __all__ = [
     "DTSurrogate",
     "DensityManager",
     "EnsembleSurrogateManager",
+    "EvaluationResult",
+    "Evaluator",
     "Event",
     "ExpectedImprovement",
     "GPSurrogate",
@@ -182,6 +189,7 @@ __all__ = [
     "RunStartEvent",
     "SVMSurrogate",
     "SequentialSelection",
+    "SerialEvaluator",
     "SingleObjectiveComparator",
     "SklearnSurrogate",
     "Surrogate",

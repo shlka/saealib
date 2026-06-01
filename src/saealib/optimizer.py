@@ -13,6 +13,7 @@ from saealib.callback import (
     logging_generation,
 )
 from saealib.context import OptimizationContext
+from saealib.execution.evaluator import Evaluator, SerialEvaluator
 from saealib.execution.runner import Runner
 from saealib.surrogate.manager import LocalSurrogateManager, SurrogateManager
 
@@ -41,6 +42,11 @@ class ComponentProvider(Protocol):
     @property
     def surrogate_manager(self) -> SurrogateManager:
         """Return the surrogate manager instance."""
+        ...
+
+    @property
+    def evaluator(self) -> Evaluator:
+        """Return the evaluator instance."""
         ...
 
     @property
@@ -109,6 +115,7 @@ class Optimizer:
         self.cbmanager: CallbackManager = CallbackManager()
         self.cbmanager.register(GenerationStartEvent, logging_generation)
         self.initializer: Initializer | None = None
+        self.evaluator: Evaluator = SerialEvaluator()
         self.instance_name: str = ""
 
     # --- setters (all return self for chaining) ---
@@ -147,6 +154,11 @@ class Optimizer:
     def set_strategy(self, strategy: OptimizationStrategy) -> Optimizer:
         """Set the optimization strategy. Returns self."""
         self.strategy = strategy
+        return self
+
+    def set_evaluator(self, evaluator: Evaluator) -> Optimizer:
+        """Set the evaluator. Returns self."""
+        self.evaluator = evaluator
         return self
 
     def set_termination(self, termination: Termination) -> Optimizer:
