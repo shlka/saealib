@@ -45,6 +45,28 @@ class TestConstraint:
         assert c.violation(np.array([-1.0])) == pytest.approx(0.0)
         assert c.violation(np.array([2.0])) == pytest.approx(2.0)
 
+    def test_evaluate_with_violation_returns_both(self):
+        """Returns (g, cv) consistent with evaluate / violation."""
+        c = Constraint(lambda x: float(x[0]), threshold=5.0)
+        g, cv = c.evaluate_with_violation(np.array([7.0]))
+        assert g == pytest.approx(7.0)
+        assert cv == pytest.approx(2.0)
+        g2, cv2 = c.evaluate_with_violation(np.array([3.0]))
+        assert g2 == pytest.approx(3.0)
+        assert cv2 == pytest.approx(0.0)
+
+    def test_evaluate_with_violation_calls_func_once(self):
+        """A single function evaluation yields both g and cv (no double-eval)."""
+        calls = {"n": 0}
+
+        def func(x):
+            calls["n"] += 1
+            return float(x[0])
+
+        c = Constraint(func, threshold=1.0)
+        c.evaluate_with_violation(np.array([3.0]))
+        assert calls["n"] == 1
+
 
 # ---------------------------------------------------------------------------
 # Problem.n_constraints
@@ -161,3 +183,19 @@ class TestEvaluateConstraints:
         p = self._make_problem(constraints=[c])
         g, _ = p.evaluate_constraints(np.array([0.5, 0.5]))
         assert g.dtype == float
+
+    def test_evaluates_each_constraint_once(self):
+        """Each constraint func is evaluated once, not twice (no double-eval)."""
+        calls = [0, 0]
+
+        def make_func(i):
+            def func(x):
+                calls[i] += 1
+                return float(x[i])
+
+            return func
+
+        constraints = [Constraint(make_func(0)), Constraint(make_func(1))]
+        p = self._make_problem(constraints=constraints)
+        p.evaluate_constraints(np.array([0.5, 0.5]))
+        assert calls == [1, 1]

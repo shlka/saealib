@@ -42,6 +42,20 @@ class Constraint:
         """Return constraint violation: max(0, g(x) - threshold)."""
         return max(0.0, self.evaluate(x) - self.threshold)
 
+    def evaluate_with_violation(self, x: np.ndarray) -> tuple[float, float]:
+        """
+        Return the raw value and violation with a single function evaluation.
+
+        Returns
+        -------
+        g : float
+            Raw constraint value g(x).
+        cv : float
+            Constraint violation: max(0, g(x) - threshold).
+        """
+        g = self.evaluate(x)
+        return g, max(0.0, g - self.threshold)
+
 
 class Problem:
     """
@@ -183,9 +197,12 @@ class Problem:
         """
         if not self.constraints:
             return np.empty(0, dtype=float), 0.0
-        g = np.array([c.evaluate(x) for c in self.constraints], dtype=float)
-        cv = float(sum(c.violation(x) for c in self.constraints))
-        return g, cv
+        g = np.empty(len(self.constraints), dtype=float)
+        cv = 0.0
+        for i, c in enumerate(self.constraints):
+            g[i], v = c.evaluate_with_violation(x)
+            cv += v
+        return g, float(cv)
 
     def evaluate(self, x: np.ndarray) -> np.ndarray:
         """
