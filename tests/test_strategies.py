@@ -18,6 +18,7 @@ from saealib import (
 from saealib.acquisition import MeanPrediction
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationContext
+from saealib.execution.evaluator import SerialEvaluator
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.strategies.gb import GenerationBasedStrategy
@@ -107,6 +108,7 @@ class _MockProvider:
     def __init__(self, algorithm, surrogate_manager):
         self.algorithm = algorithm
         self.surrogate_manager = surrogate_manager
+        self.evaluator = SerialEvaluator()
 
     def dispatch(self, event):
         pass
