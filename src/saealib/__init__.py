@@ -83,8 +83,10 @@ from saealib.population import (
 )
 from saealib.problem import (
     Constraint,
+    ConstraintHandler,
     InequalityConstraint,
     Problem,
+    StaticToleranceHandler,
 )
 from saealib.strategies.base import OptimizationStrategy
 from saealib.strategies.gb import GenerationBasedStrategy
@@ -132,6 +134,7 @@ __all__ = [
     "CallbackManager",
     "Comparator",
     "Constraint",
+    "ConstraintHandler",
     "Crossover",
     "CrossoverBLXAlpha",
     "CrossoverOnePoint",
@@ -194,6 +197,7 @@ __all__ = [
     "SerialEvaluator",
     "SingleObjectiveComparator",
     "SklearnSurrogate",
+    "StaticToleranceHandler",
     "Surrogate",
     "SurrogateEndEvent",
     "SurrogateManager",
