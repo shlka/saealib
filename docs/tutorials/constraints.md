@@ -6,22 +6,26 @@
 今後制約処理の方法は強化する予定です．インターフェースの変更は未定ですが，変更される可能性があることに留意してください．
 ```
 
+```{note}
+`Constraint` は `InequalityConstraint` へリネームされました．`Constraint` は非推奨エイリアスとして当面残りますが，使用すると `DeprecationWarning` が発生します．新しいコードでは `InequalityConstraint` を使用してください．
+```
+
 ## 制約の定義
 
-`saealib` の制約は **不等式制約** `g(x) <= threshold` の形式で表現します．`Constraint` クラスを使って定義します．
+`saealib` の制約は **不等式制約** `g(x) <= threshold` の形式で表現します．`InequalityConstraint` クラスを使って定義します．
 
 ```python
-from saealib.problem import Constraint
+from saealib.problem import InequalityConstraint
 
 # g(x) = x[0]^2 + x[1]^2 - 1 <= 0  (原点からの距離が 1 以内)
-c1 = Constraint(func=lambda x: x[0]**2 + x[1]**2 - 1.0)
+c1 = InequalityConstraint(func=lambda x: x[0]**2 + x[1]**2 - 1.0)
 
 # g(x) <= threshold を明示する場合
 # g(x) = x[0] - 0.5 <= 0
-c2 = Constraint(func=lambda x: x[0], threshold=0.5)
+c2 = InequalityConstraint(func=lambda x: x[0], threshold=0.5)
 ```
 
-`Constraint` は `violation(x)` で違反量（`max(0, g(x) - threshold)`）を返します．制約を満たしていれば `0.0` になります．
+`InequalityConstraint` は `violation(x)` で違反量（`max(0, g(x) - threshold)`）を返します．制約を満たしていれば `0.0` になります．
 
 ---
 
@@ -31,13 +35,13 @@ c2 = Constraint(func=lambda x: x[0], threshold=0.5)
 
 ```python
 import numpy as np
-from saealib.problem import Problem, Constraint
+from saealib.problem import Problem, InequalityConstraint
 
 def objective(x):
     return np.sum(x ** 2)
 
 # x[0]^2 + x[1]^2 <= 1 の制約
-c1 = Constraint(func=lambda x: x[0]**2 + x[1]**2 - 1.0)
+c1 = InequalityConstraint(func=lambda x: x[0]**2 + x[1]**2 - 1.0)
 
 problem = Problem(
     func=objective,
@@ -69,8 +73,8 @@ print(result.fe)  # 真の関数評価回数
 制約が複数ある場合もリストに追加するだけです．
 
 ```python
-c1 = Constraint(func=lambda x: x[0]**2 + x[1]**2 - 1.0)   # x[0]^2 + x[1]^2 <= 1
-c2 = Constraint(func=lambda x: -x[0])                       # x[0] >= 0
+c1 = InequalityConstraint(func=lambda x: x[0]**2 + x[1]**2 - 1.0)  # x[0]^2 + x[1]^2 <= 1
+c2 = InequalityConstraint(func=lambda x: -x[0])                     # x[0] >= 0
 
 problem = Problem(
     func=objective,
@@ -89,7 +93,7 @@ result = minimize(problem, max_fe=300, seed=0)
 
 ## 不等式制約以外の表現方法
 
-`Constraint` は `g(x) <= threshold` のみをサポートしていますが，以下の変換で他の制約形式も扱えます．
+`InequalityConstraint` は `g(x) <= threshold` のみをサポートしていますが，以下の変換で他の制約形式も扱えます．
 
 ### `>=` 制約（下界制約）
 
@@ -97,7 +101,7 @@ result = minimize(problem, max_fe=300, seed=0)
 
 ```python
 # x[0] >= 0.5  →  -x[0] <= -0.5
-c_ge = Constraint(func=lambda x: -x[0], threshold=-0.5)
+c_ge = InequalityConstraint(func=lambda x: -x[0], threshold=-0.5)
 ```
 
 ### 等式制約
@@ -112,8 +116,8 @@ c_ge = Constraint(func=lambda x: -x[0], threshold=-0.5)
 ```python
 # x[0] + x[1] == 1.0  (許容誤差 ε = 1e-3)
 eps = 1e-3
-c_eq_upper = Constraint(func=lambda x:  (x[0] + x[1]),  threshold= 1.0 + eps)
-c_eq_lower = Constraint(func=lambda x: -(x[0] + x[1]),  threshold=-1.0 + eps)
+c_eq_upper = InequalityConstraint(func=lambda x:  (x[0] + x[1]),  threshold= 1.0 + eps)
+c_eq_lower = InequalityConstraint(func=lambda x: -(x[0] + x[1]),  threshold=-1.0 + eps)
 
 problem = Problem(
     func=objective,
@@ -188,9 +192,56 @@ if len(feasible_f):
 
 ---
 
+## 制約処理の差し替え（`ConstraintHandler`）
+
+制約処理の方法（制約違反量 `cv` の集約方法，目的関数へのペナルティ付与，実行可能判定のしきい値など）は `ConstraintHandler` として `Problem` に注入できます．既定では `StaticToleranceHandler` が使われ，`cv` は各制約違反量の総和 `sum(max(0, g_i - threshold_i))`，実行可能判定のしきい値は固定の `eps_cv` になります（従来の挙動）．
+
+```python
+from saealib.problem import Problem, InequalityConstraint, ConstraintHandler
+
+class PenaltyHandler(ConstraintHandler):
+    """違反量の総和を cv とし，目的関数にペナルティを加える例．"""
+
+    def __init__(self, coef: float = 1e3):
+        self.coef = coef
+
+    def compute_cv(self, constraints, x, g):
+        return float(sum(max(0.0, gi - c.threshold) for gi, c in zip(g, constraints)))
+
+    def augment_objective(self, f, constraints, x, g):
+        return f + self.coef * self.compute_cv(constraints, x, g)
+
+problem = Problem(
+    func=objective,
+    dim=2,
+    n_obj=1,
+    weight=np.array([-1.0]),
+    lb=[-2.0, -2.0],
+    ub=[ 2.0,  2.0],
+    constraints=[c1],
+    handler=PenaltyHandler(coef=1e3),
+)
+```
+
+`ConstraintHandler` は制約処理のライフサイクルをオーバーライド可能なフックとして公開します．
+
+| フック | 役割 | 既定 |
+|---|---|---|
+| `repair(x, constraints)` | 評価前の解修復 | 無修復（`x` を返す） |
+| `compute_cv(constraints, x, g)` | 制約違反量 `cv` の集約（抽象メソッド） | — |
+| `augment_objective(f, constraints, x, g)` | 目的関数の変換（ペナルティ等） | 恒等（`f` を返す） |
+| `feasibility_threshold` | 実行可能判定のしきい値 `eps_cv` | `1e-6` |
+| `on_generation_end(gen, population)` | 世代末の処理 | no-op |
+
+`compute_cv` のみが抽象メソッドで，残りのフックは既定で no-op です．必要なフックだけをオーバーライドしてください．勾配ベースの修復を行う場合は，`InequalityConstraint.gradient(x)` をサブクラスで実装して制約のヤコビアンを提供できます．
+
+---
+
 ## 参照
 
-- {py:class}`saealib.Constraint`
+- {py:class}`saealib.InequalityConstraint`
+- {py:class}`saealib.ConstraintHandler`
+- {py:class}`saealib.StaticToleranceHandler`
 - {py:class}`saealib.Problem`
 - {py:func}`saealib.minimize`
 - {py:class}`saealib.Optimizer`
