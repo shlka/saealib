@@ -96,8 +96,8 @@ class SerialEvaluator(Evaluator):
         cv = np.zeros(n, dtype=float)
 
         for i, xi in enumerate(x):
-            f[i] = problem.evaluate(xi)
             g_i, cv_i = problem.evaluate_constraints(xi)
+            f[i] = problem.evaluate(xi, g_i)
             g[i] = g_i
             cv[i] = cv_i
 

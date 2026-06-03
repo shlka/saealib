@@ -8,6 +8,8 @@ Comparator classes and Pareto-related utilities are in saealib.comparators.
 from __future__ import annotations
 
 import warnings
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -17,8 +19,11 @@ from saealib.comparators import (
     SingleObjectiveComparator,
 )
 
+if TYPE_CHECKING:
+    from saealib.population import Population
 
-class Constraint:
+
+class InequalityConstraint:
     """
     A single inequality constraint: g(x) <= threshold.
 
@@ -56,6 +61,204 @@ class Constraint:
         g = self.evaluate(x)
         return g, max(0.0, g - self.threshold)
 
+    def gradient(self, x: np.ndarray) -> np.ndarray | None:
+        """
+        Return the gradient of g(x) with respect to x, if available.
+
+        Override this in a subclass to enable gradient-based constraint
+        handlers (e.g. gradient-based repair). The default returns ``None``,
+        signalling that no analytical Jacobian is provided.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            The solution at which to evaluate the gradient. shape = (dim, )
+
+        Returns
+        -------
+        np.ndarray or None
+            Gradient vector with shape = (dim, ), or ``None`` when no
+            gradient is available.
+        """
+        return None
+
+
+class Constraint(InequalityConstraint):
+    """
+    Deprecated alias of :class:`InequalityConstraint`.
+
+    .. deprecated::
+        Use :class:`InequalityConstraint`. ``Constraint`` will be removed
+        in a future release.
+    """
+
+    def __init__(self, func: callable, threshold: float = 0.0):
+        warnings.warn(
+            "Constraint is deprecated and will be removed in a future release. "
+            "Use InequalityConstraint instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(func, threshold)
+
+
+class ConstraintHandler(ABC):
+    """
+    Pluggable constraint-processing strategy.
+
+    A ``ConstraintHandler`` exposes the constraint-handling lifecycle as a set
+    of overridable hooks, decoupling the per-constraint violation formula and
+    the aggregation method from the core :class:`Problem`. This lets research
+    code swap in alternative strategies (e.g. ε-constraint, penalty functions,
+    gradient-based repair, augmented Lagrangian) without forking core classes.
+
+    Lifecycle::
+
+        Ask            -> [repair(x, constraints)]
+                       -> evaluate f, g
+                       -> [compute_cv(constraints, x, g)]        -> cv
+                       -> [augment_objective(f, constraints, x, g)] -> f'
+        Tell           -> Comparator(f', cv) with eps_cv = feasibility_threshold
+        Generation end -> [on_generation_end(gen, population)]
+
+    Only :meth:`compute_cv` is abstract; the remaining hooks default to no-ops
+    so that subclasses implement just what they need.
+    """
+
+    def repair(
+        self, x: np.ndarray, constraints: list[InequalityConstraint]
+    ) -> np.ndarray:
+        """
+        Repair a design vector before evaluation.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            The design vector to repair. shape = (dim, )
+        constraints : list[InequalityConstraint]
+            The problem's inequality constraints.
+
+        Returns
+        -------
+        np.ndarray
+            The (possibly) repaired design vector. The default returns ``x``
+            unchanged.
+        """
+        return x
+
+    @abstractmethod
+    def compute_cv(
+        self,
+        constraints: list[InequalityConstraint],
+        x: np.ndarray,
+        g: np.ndarray,
+    ) -> float:
+        """
+        Aggregate raw constraint values into a scalar constraint violation.
+
+        Parameters
+        ----------
+        constraints : list[InequalityConstraint]
+            The problem's inequality constraints, aligned with ``g``.
+        x : np.ndarray
+            The evaluated design vector. shape = (dim, )
+        g : np.ndarray
+            Raw constraint values g(x). shape = (n_constraints, )
+
+        Returns
+        -------
+        float
+            Aggregate constraint violation (``cv``); ``0.0`` means feasible.
+        """
+        ...
+
+    def augment_objective(
+        self,
+        f: np.ndarray,
+        constraints: list[InequalityConstraint],
+        x: np.ndarray,
+        g: np.ndarray,
+    ) -> np.ndarray:
+        """
+        Transform objective values using constraint information.
+
+        Used by penalty-based or augmented-Lagrangian strategies. The default
+        is the identity (objectives are returned unchanged).
+
+        Parameters
+        ----------
+        f : np.ndarray
+            Raw objective values. shape = (n_obj, )
+        constraints : list[InequalityConstraint]
+            The problem's inequality constraints, aligned with ``g``.
+        x : np.ndarray
+            The evaluated design vector. shape = (dim, )
+        g : np.ndarray
+            Raw constraint values g(x). shape = (n_constraints, )
+
+        Returns
+        -------
+        np.ndarray
+            The (possibly) augmented objective values. shape = (n_obj, )
+        """
+        return f
+
+    @property
+    def feasibility_threshold(self) -> float:
+        """Constraint-violation threshold below which a solution is feasible."""
+        return 1e-6
+
+    def on_generation_end(self, gen: int, population: Population) -> None:
+        """
+        Run end-of-generation bookkeeping.
+
+        Used by adaptive strategies (e.g. ε-level control) that update their
+        internal state between generations. The default is a no-op.
+
+        Parameters
+        ----------
+        gen : int
+            The generation index that just finished.
+        population : Population
+            The current population.
+        """
+
+
+class StaticToleranceHandler(ConstraintHandler):
+    """
+    Default constraint handler reproducing the static-tolerance behavior.
+
+    The constraint violation is the sum of per-constraint violations
+    ``sum(max(0, g_i - threshold_i))`` and the feasibility threshold is a
+    fixed ``eps_cv``. Objectives are not augmented.
+
+    Parameters
+    ----------
+    eps_cv : float, optional
+        Feasibility threshold returned by :attr:`feasibility_threshold`.
+        Default: 1e-6.
+    """
+
+    def __init__(self, eps_cv: float = 1e-6):
+        self._eps_cv = eps_cv
+
+    def compute_cv(
+        self,
+        constraints: list[InequalityConstraint],
+        x: np.ndarray,
+        g: np.ndarray,
+    ) -> float:
+        """Return the sum of per-constraint violations max(0, g_i - t_i)."""
+        cv = 0.0
+        for gi, c in zip(g, constraints):
+            cv += max(0.0, float(gi) - c.threshold)
+        return cv
+
+    @property
+    def feasibility_threshold(self) -> float:
+        """Fixed feasibility threshold ``eps_cv``."""
+        return self._eps_cv
+
 
 class Problem:
     """
@@ -81,8 +284,11 @@ class Problem:
         Epsilon for objective value equality comparison.
     func : callable -> float
         Objective function to evaluate solutions.
-    constraints : list[Constraint]
+    constraints : list[InequalityConstraint]
         List of inequality constraint definitions.
+    handler : ConstraintHandler
+        Constraint-handling strategy used to aggregate violations and augment
+        objectives.
     """
 
     def __init__(
@@ -95,10 +301,11 @@ class Problem:
         ub: list[float],
         eps: float | None = None,
         comparator: Comparator | None = None,
-        constraints: list[Constraint] | None = None,
+        constraints: list[InequalityConstraint] | None = None,
         *,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
+        handler: ConstraintHandler | None = None,
     ):
         """
         Initialize Problem instance.
@@ -125,12 +332,16 @@ class Problem:
             Comparator instance to use. If None, auto-selected based on n_obj:
             n_obj == 1 -> SingleObjectiveComparator,
             n_obj >  1 -> NSGA2Comparator.
-        constraints : list[Constraint], optional
+        constraints : list[InequalityConstraint], optional
             List of inequality constraint definitions. Default: empty list.
         eps_cv : float, optional
             Epsilon for constraint violation feasibility threshold. Default: 1e-6.
         eps_obj : float, optional
             Epsilon for objective value equality comparison. Default: 1e-6.
+        handler : ConstraintHandler, optional
+            Constraint-handling strategy. If None, a StaticToleranceHandler
+            (sum-of-violations, fixed eps_cv) is used, reproducing the default
+            behavior.
         """
         if eps is not None:
             warnings.warn(
@@ -149,6 +360,9 @@ class Problem:
         self.ub = np.asarray(ub)
         self.func = func
         self.constraints = constraints if constraints is not None else []
+        self.handler = (
+            handler if handler is not None else StaticToleranceHandler(eps_cv=eps_cv)
+        )
 
         if comparator is not None:
             self.comparator = comparator
@@ -192,26 +406,35 @@ class Problem:
             Raw constraint values. shape = (n_constraints, )
             Empty array when no constraints are defined.
         cv : float
-            Aggregate constraint violation = sum(max(0, g_i - threshold_i)).
+            Aggregate constraint violation as computed by ``handler.compute_cv``.
             0.0 when no constraints are defined.
         """
         if not self.constraints:
             return np.empty(0, dtype=float), 0.0
         g = np.empty(len(self.constraints), dtype=float)
-        cv = 0.0
         for i, c in enumerate(self.constraints):
-            g[i], v = c.evaluate_with_violation(x)
-            cv += v
+            g[i] = c.evaluate(x)
+        cv = self.handler.compute_cv(self.constraints, x, g)
         return g, float(cv)
 
-    def evaluate(self, x: np.ndarray) -> np.ndarray:
+    def evaluate(self, x: np.ndarray, g: np.ndarray | None = None) -> np.ndarray:
         """
         Evaluate the objective function at given solution x.
+
+        After computing the raw objective, ``handler.augment_objective`` is
+        applied so that penalty-based or augmented-Lagrangian handlers can
+        transform the objective using constraint information. The default
+        ``StaticToleranceHandler`` leaves the objective unchanged.
 
         Parameters
         ----------
         x : np.ndarray
             The solution to evaluate.
+        g : np.ndarray, optional
+            Pre-computed raw constraint values g(x), shape = (n_constraints, ).
+            When None, constraints are evaluated internally if any are defined.
+            Pass this to avoid re-evaluating constraints when ``g`` is already
+            available (e.g. from :meth:`evaluate_constraints`).
 
         Returns
         -------
@@ -219,4 +442,7 @@ class Problem:
             The objective value(s) at solution x. shape = (n_obj, )
         """
         result = self.func(x)
-        return np.atleast_1d(np.asarray(result, dtype=float))
+        f = np.atleast_1d(np.asarray(result, dtype=float))
+        if g is None:
+            g, _ = self.evaluate_constraints(x)
+        return self.handler.augment_objective(f, self.constraints, x, g)
