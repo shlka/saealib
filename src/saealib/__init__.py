@@ -84,6 +84,7 @@ from saealib.population import (
 from saealib.problem import (
     Constraint,
     ConstraintHandler,
+    EqualityConstraint,
     InequalityConstraint,
     Problem,
     StaticToleranceHandler,
@@ -144,6 +145,7 @@ __all__ = [
     "DTSurrogate",
     "DensityManager",
     "EnsembleSurrogateManager",
+    "EqualityConstraint",
     "EvaluationResult",
     "Evaluator",
     "Event",
