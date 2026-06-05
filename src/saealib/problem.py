@@ -43,9 +43,31 @@ class InequalityConstraint:
         """Return the raw constraint value g(x)."""
         return float(self.func(x))
 
+    def violation_from_value(self, g: float) -> float:
+        """
+        Return the violation for an already-evaluated raw value g(x).
+
+        This is the single source of truth for the per-constraint violation
+        formula: :meth:`violation`, :meth:`evaluate_with_violation`, and
+        :class:`StaticToleranceHandler` all delegate to it. Subclasses (e.g.
+        :class:`EqualityConstraint`) override this one method to change how a
+        raw value maps to a violation, without re-evaluating ``func``.
+
+        Parameters
+        ----------
+        g : float
+            Raw constraint value g(x).
+
+        Returns
+        -------
+        float
+            Constraint violation: max(0, g - threshold).
+        """
+        return max(0.0, g - self.threshold)
+
     def violation(self, x: np.ndarray) -> float:
         """Return constraint violation: max(0, g(x) - threshold)."""
-        return max(0.0, self.evaluate(x) - self.threshold)
+        return self.violation_from_value(self.evaluate(x))
 
     def evaluate_with_violation(self, x: np.ndarray) -> tuple[float, float]:
         """
@@ -59,7 +81,7 @@ class InequalityConstraint:
             Constraint violation: max(0, g(x) - threshold).
         """
         g = self.evaluate(x)
-        return g, max(0.0, g - self.threshold)
+        return g, self.violation_from_value(g)
 
     def gradient(self, x: np.ndarray) -> np.ndarray | None:
         """
@@ -100,6 +122,41 @@ class Constraint(InequalityConstraint):
             stacklevel=2,
         )
         super().__init__(func, threshold)
+
+
+class EqualityConstraint(InequalityConstraint):
+    """
+    A single equality constraint: h(x) = 0, satisfied within a tolerance.
+
+    The violation is ``max(0, |h(x)| - tolerance)``, reusing the inequality
+    violation path so that mixed inequality/equality problems aggregate through
+    the same :class:`ConstraintHandler`. Only :meth:`violation_from_value` is
+    overridden; :meth:`violation` and :meth:`evaluate_with_violation` inherit
+    the equality behavior automatically.
+
+    Parameters
+    ----------
+    func : callable
+        Constraint function h(x). Should return a scalar float.
+    tolerance : float, optional
+        Feasibility tolerance for ``|h(x)| <= tolerance``. Default: 1e-6.
+        Set ``tolerance=0.0`` to defer the feasibility threshold to a handler
+        such as ``EpsilonConstraintHandler``, where the threshold is managed
+        externally rather than baked into the constraint.
+
+    Notes
+    -----
+    Provide an analytical Jacobian by overriding :meth:`gradient` to return
+    ``∇h(x)``; this enables gradient-based constraint handlers (e.g. repair).
+    """
+
+    def __init__(self, func: callable, tolerance: float = 1e-6):
+        super().__init__(func, threshold=0.0)
+        self.tolerance = tolerance
+
+    def violation_from_value(self, g: float) -> float:
+        """Return equality violation: max(0, |h(x)| - tolerance)."""
+        return max(0.0, abs(g) - self.tolerance)
 
 
 class ConstraintHandler(ABC):
@@ -229,8 +286,11 @@ class StaticToleranceHandler(ConstraintHandler):
     Default constraint handler reproducing the static-tolerance behavior.
 
     The constraint violation is the sum of per-constraint violations
-    ``sum(max(0, g_i - threshold_i))`` and the feasibility threshold is a
-    fixed ``eps_cv``. Objectives are not augmented.
+    ``sum(c_i.violation_from_value(g_i))`` and the feasibility threshold is a
+    fixed ``eps_cv``. Each constraint maps its own raw value to a violation,
+    so inequality (``max(0, g - threshold)``) and equality
+    (``max(0, |h| - tolerance)``) constraints can be mixed freely. Objectives
+    are not augmented.
 
     Parameters
     ----------
@@ -248,10 +308,10 @@ class StaticToleranceHandler(ConstraintHandler):
         x: np.ndarray,
         g: np.ndarray,
     ) -> float:
-        """Return the sum of per-constraint violations max(0, g_i - t_i)."""
+        """Return the sum of per-constraint ``c_i.violation_from_value(g_i)``."""
         cv = 0.0
         for gi, c in zip(g, constraints):
-            cv += max(0.0, float(gi) - c.threshold)
+            cv += c.violation_from_value(float(gi))
         return cv
 
     @property

@@ -12,7 +12,12 @@ Tests cover:
 import numpy as np
 import pytest
 
-from saealib.problem import Constraint, Problem
+from saealib.problem import (
+    Constraint,
+    EqualityConstraint,
+    InequalityConstraint,
+    Problem,
+)
 
 # ---------------------------------------------------------------------------
 # Constraint unit tests
@@ -199,3 +204,117 @@ class TestEvaluateConstraints:
         p = self._make_problem(constraints=constraints)
         p.evaluate_constraints(np.array([0.5, 0.5]))
         assert calls == [1, 1]
+
+
+# ---------------------------------------------------------------------------
+# EqualityConstraint
+# ---------------------------------------------------------------------------
+
+
+class TestEqualityConstraint:
+    def test_is_constraint_subclass(self):
+        """EqualityConstraint is a concrete subclass of the Constraint ABC."""
+        c = EqualityConstraint(lambda x: float(x[0]))
+        assert isinstance(c, InequalityConstraint)
+
+    def test_evaluate_returns_raw_value(self):
+        """evaluate(x) returns the raw h(x), not its absolute value."""
+        c = EqualityConstraint(lambda x: float(x[0]) - 1.0)
+        assert c.evaluate(np.array([-2.0])) == pytest.approx(-3.0)
+
+    def test_violation_uses_absolute_value(self):
+        """Both signs of h(x) violate symmetrically: |h(x)| - tolerance."""
+        c = EqualityConstraint(lambda x: float(x[0]), tolerance=0.0)
+        assert c.violation(np.array([0.3])) == pytest.approx(0.3)
+        assert c.violation(np.array([-0.3])) == pytest.approx(0.3)
+
+    def test_violation_within_tolerance_is_zero(self):
+        """|h(x)| <= tolerance → violation == 0."""
+        c = EqualityConstraint(lambda x: float(x[0]), tolerance=0.1)
+        assert c.violation(np.array([0.05])) == pytest.approx(0.0)
+        assert c.violation(np.array([-0.05])) == pytest.approx(0.0)
+
+    def test_violation_on_tolerance_boundary(self):
+        """|h(x)| == tolerance → violation == 0 (boundary is feasible)."""
+        c = EqualityConstraint(lambda x: float(x[0]), tolerance=0.1)
+        assert c.violation(np.array([0.1])) == pytest.approx(0.0)
+        assert c.violation(np.array([-0.1])) == pytest.approx(0.0)
+
+    def test_violation_outside_tolerance(self):
+        """|h(x)| > tolerance → violation == |h(x)| - tolerance."""
+        c = EqualityConstraint(lambda x: float(x[0]), tolerance=0.1)
+        assert c.violation(np.array([0.3])) == pytest.approx(0.2)
+        assert c.violation(np.array([-0.3])) == pytest.approx(0.2)
+
+    def test_default_tolerance(self):
+        """Default tolerance is 1e-6."""
+        c = EqualityConstraint(lambda x: float(x[0]))
+        assert c.tolerance == pytest.approx(1e-6)
+        assert c.violation(np.array([1e-7])) == pytest.approx(0.0)
+
+    def test_tolerance_zero_valid(self):
+        """tolerance=0.0 is valid (threshold managed externally by a handler)."""
+        c = EqualityConstraint(lambda x: float(x[0]), tolerance=0.0)
+        assert c.tolerance == pytest.approx(0.0)
+        assert c.violation(np.array([0.0])) == pytest.approx(0.0)
+        assert c.violation(np.array([1e-9])) == pytest.approx(1e-9)
+
+    def test_gradient_default_none(self):
+        """gradient(x) defaults to None unless overridden."""
+        c = EqualityConstraint(lambda x: float(x[0]))
+        assert c.gradient(np.array([0.5])) is None
+
+    def test_evaluate_with_violation_single_call(self):
+        """(g, cv) is consistent and computed with a single function evaluation."""
+        calls = {"n": 0}
+
+        def func(x):
+            calls["n"] += 1
+            return float(x[0]) - 1.0
+
+        c = EqualityConstraint(func, tolerance=0.0)
+        g, cv = c.evaluate_with_violation(np.array([0.4]))
+        assert g == pytest.approx(-0.6)
+        assert cv == pytest.approx(0.6)
+        assert calls["n"] == 1
+
+
+# ---------------------------------------------------------------------------
+# Mixed inequality + equality constraints
+# ---------------------------------------------------------------------------
+
+
+class TestMixedConstraints:
+    def _make_problem(self, constraints=None):
+        return Problem(
+            func=lambda x: float(x[0]),
+            dim=2,
+            n_obj=1,
+            weight=1.0,
+            lb=[0.0, 0.0],
+            ub=[1.0, 1.0],
+            constraints=constraints,
+        )
+
+    def test_mixed_cv_is_sum(self):
+        """cv aggregates inequality and equality violations through one handler."""
+        constraints = [
+            InequalityConstraint(lambda x: x[0] - 0.3),  # violated by 0.2 at 0.5
+            EqualityConstraint(lambda x: x[1] - 1.0, tolerance=0.0),  # |0.5-1|=0.5
+        ]
+        p = self._make_problem(constraints=constraints)
+        g, cv = p.evaluate_constraints(np.array([0.5, 0.5]))
+        assert g.shape == (2,)
+        assert g[0] == pytest.approx(0.2)
+        assert g[1] == pytest.approx(-0.5)  # raw equality value, signed
+        assert cv == pytest.approx(0.7)  # 0.2 + 0.5
+
+    def test_mixed_all_feasible(self):
+        """Feasible inequality and within-tolerance equality → cv == 0."""
+        constraints = [
+            InequalityConstraint(lambda x: x[0] - 0.8),  # satisfied at 0.5
+            EqualityConstraint(lambda x: x[1] - 0.5, tolerance=1e-6),  # exact
+        ]
+        p = self._make_problem(constraints=constraints)
+        _g, cv = p.evaluate_constraints(np.array([0.5, 0.5]))
+        assert cv == pytest.approx(0.0)
