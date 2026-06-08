@@ -69,8 +69,7 @@ class TerminationCondition:
     ) -> None:
         if not callable(func):
             raise TypeError(
-                "Termination condition must be callable, "
-                f"got {type(func).__name__}."
+                f"Termination condition must be callable, got {type(func).__name__}."
             )
         self._func = func
         self.__qualname__ = (
