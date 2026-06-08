@@ -7,7 +7,9 @@ Users can specify arbitrary termination conditions as callable objects.
 
 from __future__ import annotations
 
+import operator
 from collections.abc import Callable
+from functools import reduce
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -144,7 +146,7 @@ class Termination:
 
     Parameters
     ----------
-    *conditions : TerminationCondition
+    *conditions : ConditionFunc or TerminationCondition
         One or more callable conditions. Each must accept an
         ``OptimizationContext`` and return ``bool``.
 
@@ -163,9 +165,11 @@ class Termination:
     ...     max_fe(2000),
     ...     lambda ctx: ctx.archive.get("f").min() < 1e-6,
     ... )
+    >>> termination = Termination.all_of(max_fe(2000), max_gen(100))
+    >>> termination = Termination.not_(max_gen(100))
     """
 
-    def __init__(self, *conditions: TerminationCondition):
+    def __init__(self, *conditions: ConditionFunc | TerminationCondition):
         if not conditions:
             raise ValueError("At least one termination condition must be provided.")
         for cond in conditions:
@@ -174,11 +178,82 @@ class Termination:
                     "Termination condition must be callable, "
                     f"got {type(cond).__name__}."
                 )
-        self.conditions: tuple[TerminationCondition, ...] = conditions
+        self.conditions: tuple[ConditionFunc | TerminationCondition, ...] = conditions
+        # Combine all conditions with OR so that ``is_terminated`` evaluates a
+        # single composed ``TerminationCondition``.
+        self._combined: TerminationCondition = reduce(
+            operator.or_,
+            (TerminationCondition._coerce(cond) for cond in conditions),
+        )
+
+    @classmethod
+    def any_of(cls, *conditions: ConditionFunc | TerminationCondition) -> Termination:
+        """
+        Build a Termination that stops when **any** condition is met (OR).
+
+        Equivalent to ``Termination(*conditions)``; provided for symmetry
+        with :meth:`all_of` and :meth:`not_`.
+
+        Parameters
+        ----------
+        *conditions : ConditionFunc or TerminationCondition
+            One or more callable conditions.
+
+        Returns
+        -------
+        Termination
+            A termination combining the conditions with OR.
+        """
+        return cls(*conditions)
+
+    @classmethod
+    def all_of(cls, *conditions: ConditionFunc | TerminationCondition) -> Termination:
+        """
+        Build a Termination that stops when **all** conditions are met (AND).
+
+        Parameters
+        ----------
+        *conditions : ConditionFunc or TerminationCondition
+            One or more callable conditions.
+
+        Returns
+        -------
+        Termination
+            A termination combining the conditions with AND.
+
+        Raises
+        ------
+        ValueError
+            If no conditions are provided.
+        """
+        if not conditions:
+            raise ValueError("At least one termination condition must be provided.")
+        combined = reduce(
+            operator.and_,
+            (TerminationCondition._coerce(cond) for cond in conditions),
+        )
+        return cls(combined)
+
+    @classmethod
+    def not_(cls, condition: ConditionFunc | TerminationCondition) -> Termination:
+        """
+        Build a Termination that stops when ``condition`` is **not** met (NOT).
+
+        Parameters
+        ----------
+        condition : ConditionFunc or TerminationCondition
+            The condition to negate.
+
+        Returns
+        -------
+        Termination
+            A termination that negates the given condition.
+        """
+        return cls(~TerminationCondition._coerce(condition))
 
     def is_terminated(self, ctx: OptimizationContext) -> bool:
         """
-        Check if any termination condition is met.
+        Check if the composed termination condition is met.
 
         Parameters
         ----------
@@ -188,9 +263,9 @@ class Termination:
         Returns
         -------
         bool
-            True if any termination condition is met, False otherwise.
+            True if the termination condition is met, False otherwise.
         """
-        return any(cond(ctx) for cond in self.conditions)
+        return self._combined(ctx)
 
 
 # Built-in termination condition factories
