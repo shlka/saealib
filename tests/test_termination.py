@@ -10,14 +10,41 @@ Tests cover:
 
 from types import SimpleNamespace
 
+import numpy as np
 import pytest
 
-from saealib.termination import Termination, max_fe, max_gen
+from saealib.termination import (
+    Termination,
+    TerminationCondition,
+    f_target,
+    max_fe,
+    max_gen,
+    stalled,
+)
 
 
 def _make_ctx(fe: int = 0, gen: int = 0) -> SimpleNamespace:
     """Create a minimal context-like object with fe and gen attributes."""
     return SimpleNamespace(fe=fe, gen=gen)
+
+
+def _make_obj_ctx(
+    f_values, weight: float = -1.0, gen: int = 0, fe: int = 0
+) -> SimpleNamespace:
+    """
+    Create a context-like object with an archive of objective values.
+
+    ``f_values`` is a sequence of single-objective values (shape ``(n,)``);
+    ``weight`` is the optimization direction (-1 minimize, +1 maximize).
+    """
+    f_arr = np.asarray(f_values, dtype=float).reshape(-1, 1)
+    archive = SimpleNamespace(get=lambda key: f_arr if key == "f" else None)
+    return SimpleNamespace(
+        archive=archive,
+        weight=np.array([weight], dtype=float),
+        gen=gen,
+        fe=fe,
+    )
 
 
 # ===========================================================================
@@ -28,15 +55,15 @@ class TestTerminationInit:
 
     def test_single_condition(self) -> None:
         t = Termination(max_fe(100))
-        assert len(t.conditions) == 1
+        assert isinstance(t.condition, TerminationCondition)
 
     def test_multiple_conditions(self) -> None:
         t = Termination(max_fe(100), max_gen(50))
-        assert len(t.conditions) == 2
+        assert isinstance(t.condition, TerminationCondition)
 
     def test_lambda_condition(self) -> None:
         t = Termination(lambda ctx: ctx.fe >= 10)
-        assert len(t.conditions) == 1
+        assert isinstance(t.condition, TerminationCondition)
 
     def test_no_conditions_raises_value_error(self) -> None:
         with pytest.raises(ValueError, match="At least one"):
@@ -50,9 +77,10 @@ class TestTerminationInit:
         with pytest.raises(TypeError, match="must be callable"):
             Termination(max_fe(100), "not_callable")
 
-    def test_conditions_stored_as_tuple(self) -> None:
+    def test_condition_is_read_only(self) -> None:
         t = Termination(max_fe(100))
-        assert isinstance(t.conditions, tuple)
+        with pytest.raises(AttributeError):
+            t.condition = max_gen(50)  # type: ignore[misc]
 
 
 # ===========================================================================
@@ -220,3 +248,163 @@ class TestTerminationEdgeCases:
                 assert t.is_terminated(ctx) is False
             else:
                 assert t.is_terminated(ctx) is True
+
+
+# ===========================================================================
+# TerminationCondition Operator Tests
+# ===========================================================================
+class TestTerminationConditionOperators:
+    """Tests for the composable TerminationCondition class."""
+
+    def test_factories_return_termination_condition(self) -> None:
+        assert isinstance(max_fe(100), TerminationCondition)
+        assert isinstance(max_gen(50), TerminationCondition)
+
+    def test_call_returns_bool(self) -> None:
+        cond = TerminationCondition(lambda ctx: ctx.fe)
+        result = cond(_make_ctx(fe=5))
+        assert result is True
+        assert isinstance(result, bool)
+
+    def test_or_operator(self) -> None:
+        cond = max_fe(100) | max_gen(50)
+        assert cond(_make_ctx(fe=10, gen=10)) is False
+        assert cond(_make_ctx(fe=100, gen=10)) is True
+        assert cond(_make_ctx(fe=10, gen=50)) is True
+
+    def test_and_operator(self) -> None:
+        cond = max_fe(100) & max_gen(50)
+        assert cond(_make_ctx(fe=100, gen=10)) is False
+        assert cond(_make_ctx(fe=10, gen=50)) is False
+        assert cond(_make_ctx(fe=100, gen=50)) is True
+
+    def test_invert_operator(self) -> None:
+        cond = ~max_gen(50)
+        assert cond(_make_ctx(gen=10)) is True
+        assert cond(_make_ctx(gen=50)) is False
+
+    def test_operators_accept_plain_callable(self) -> None:
+        cond = max_fe(100) & (lambda ctx: ctx.gen >= 5)
+        assert cond(_make_ctx(fe=100, gen=4)) is False
+        assert cond(_make_ctx(fe=100, gen=5)) is True
+
+    def test_reflected_operators_with_plain_callable_on_left(self) -> None:
+        and_cond = (lambda ctx: ctx.gen >= 5) & max_fe(100)
+        assert and_cond(_make_ctx(fe=100, gen=4)) is False
+        assert and_cond(_make_ctx(fe=100, gen=5)) is True
+
+        or_cond = (lambda ctx: ctx.gen >= 5) | max_fe(100)
+        assert or_cond(_make_ctx(fe=10, gen=4)) is False
+        assert or_cond(_make_ctx(fe=10, gen=5)) is True
+
+    def test_non_callable_raises_type_error(self) -> None:
+        with pytest.raises(TypeError, match="must be callable"):
+            TerminationCondition(42)
+
+    def test_qualname_reflects_composition(self) -> None:
+        assert "max_fe(100)" in (max_fe(100) | max_gen(50)).__qualname__
+        assert "max_gen(50)" in (max_fe(100) | max_gen(50)).__qualname__
+
+    def test_repr(self) -> None:
+        assert repr(max_fe(100)) == "TerminationCondition(max_fe(100))"
+
+
+# ===========================================================================
+# Termination classmethod Tests (any_of / all_of / not_)
+# ===========================================================================
+class TestTerminationClassMethods:
+    """Tests for Termination.any_of / all_of / not_."""
+
+    def test_any_of_or_logic(self) -> None:
+        t = Termination.any_of(max_fe(100), max_gen(50))
+        assert t.is_terminated(_make_ctx(fe=10, gen=10)) is False
+        assert t.is_terminated(_make_ctx(fe=100, gen=10)) is True
+
+    def test_all_of_and_logic(self) -> None:
+        t = Termination.all_of(max_fe(100), max_gen(50))
+        assert t.is_terminated(_make_ctx(fe=100, gen=10)) is False
+        assert t.is_terminated(_make_ctx(fe=100, gen=50)) is True
+
+    def test_all_of_single_condition(self) -> None:
+        t = Termination.all_of(max_fe(100))
+        assert t.is_terminated(_make_ctx(fe=99)) is False
+        assert t.is_terminated(_make_ctx(fe=100)) is True
+
+    def test_all_of_no_conditions_raises(self) -> None:
+        with pytest.raises(ValueError, match="At least one"):
+            Termination.all_of()
+
+    def test_not_negates(self) -> None:
+        t = Termination.not_(max_gen(50))
+        assert t.is_terminated(_make_ctx(gen=10)) is True
+        assert t.is_terminated(_make_ctx(gen=50)) is False
+
+    def test_not_accepts_plain_callable(self) -> None:
+        t = Termination.not_(lambda ctx: ctx.fe >= 100)
+        assert t.is_terminated(_make_ctx(fe=10)) is True
+        assert t.is_terminated(_make_ctx(fe=100)) is False
+
+    def test_returns_termination_instance(self) -> None:
+        assert isinstance(Termination.any_of(max_fe(100)), Termination)
+        assert isinstance(Termination.all_of(max_fe(100)), Termination)
+        assert isinstance(Termination.not_(max_fe(100)), Termination)
+
+
+# ===========================================================================
+# f_target Tests
+# ===========================================================================
+class TestFTarget:
+    """Tests for the f_target factory function."""
+
+    def test_returns_termination_condition(self) -> None:
+        assert isinstance(f_target(1e-6), TerminationCondition)
+
+    def test_minimize_not_reached(self) -> None:
+        cond = f_target(1e-6)
+        assert cond(_make_obj_ctx([0.5, 0.1], weight=-1.0)) is False
+
+    def test_minimize_reached(self) -> None:
+        cond = f_target(1e-6)
+        assert cond(_make_obj_ctx([0.5, 1e-9], weight=-1.0)) is True
+
+    def test_maximize_not_reached(self) -> None:
+        cond = f_target(100.0)
+        assert cond(_make_obj_ctx([10.0, 50.0], weight=1.0)) is False
+
+    def test_maximize_reached(self) -> None:
+        cond = f_target(100.0)
+        assert cond(_make_obj_ctx([10.0, 150.0], weight=1.0)) is True
+
+    def test_empty_archive_returns_false(self) -> None:
+        cond = f_target(1e-6)
+        assert cond(_make_obj_ctx([], weight=-1.0)) is False
+
+
+# ===========================================================================
+# stalled Tests
+# ===========================================================================
+class TestStalled:
+    """Tests for the stalled factory function."""
+
+    def test_returns_termination_condition(self) -> None:
+        assert isinstance(stalled(5), TerminationCondition)
+
+    def test_terminates_after_window(self) -> None:
+        cond = stalled(3)
+        # First call sets the baseline best; no improvement afterwards.
+        assert cond(_make_obj_ctx([1.0], weight=-1.0, gen=0)) is False
+        assert cond(_make_obj_ctx([1.0], weight=-1.0, gen=1)) is False
+        assert cond(_make_obj_ctx([1.0], weight=-1.0, gen=2)) is False
+        assert cond(_make_obj_ctx([1.0], weight=-1.0, gen=3)) is True
+
+    def test_improvement_resets_counter(self) -> None:
+        cond = stalled(2)
+        assert cond(_make_obj_ctx([1.0], weight=-1.0, gen=0)) is False
+        assert cond(_make_obj_ctx([1.0], weight=-1.0, gen=1)) is False
+        # Improvement (lower is better when minimizing) resets the stall gen.
+        assert cond(_make_obj_ctx([0.5], weight=-1.0, gen=2)) is False
+        assert cond(_make_obj_ctx([0.5], weight=-1.0, gen=4)) is True
+
+    def test_empty_archive_returns_false(self) -> None:
+        cond = stalled(3)
+        assert cond(_make_obj_ctx([], weight=-1.0, gen=10)) is False

@@ -7,17 +7,131 @@ Users can specify arbitrary termination conditions as callable objects.
 
 from __future__ import annotations
 
+import operator
 from collections.abc import Callable
+from functools import reduce
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationContext
 
 
-#: Type alias for a termination condition function.
-#: A callable that takes an OptimizationContext and returns True
-#: when the optimization should stop.
-TerminationCondition = Callable[["OptimizationContext"], bool]
+#: Type alias for a plain termination condition function.
+#: A callable that takes an ``OptimizationContext`` and returns ``True``
+#: when the optimization should stop. Accepted everywhere a
+#: :class:`TerminationCondition` is, and wrapped automatically when composed.
+ConditionFunc = Callable[["OptimizationContext"], bool]
+
+
+class TerminationCondition:
+    """
+    Composable termination condition.
+
+    Wraps a callable ``ctx -> bool`` and adds logical operators so that
+    conditions can be combined declaratively:
+
+    - ``a | b`` : terminate when **either** ``a`` or ``b`` is met (OR)
+    - ``a & b`` : terminate when **both** ``a`` and ``b`` are met (AND)
+    - ``~a``    : terminate when ``a`` is **not** met (NOT)
+
+    The other operand may be a plain ``Callable[[ctx], bool]``; it is
+    wrapped automatically. Reflected operators (``__ror__`` / ``__rand__``)
+    let a plain callable appear on the left-hand side as well.
+
+    Parameters
+    ----------
+    func : Callable[[OptimizationContext], bool]
+        The underlying condition callable.
+    name : str, optional
+        Human-readable name used for ``repr`` and ``__qualname__``.
+        Defaults to ``func.__qualname__`` when available.
+    doc : str, optional
+        Docstring for the wrapped condition. Defaults to ``func.__doc__``.
+
+    Raises
+    ------
+    TypeError
+        If ``func`` is not callable.
+
+    Examples
+    --------
+    >>> cond = max_fe(2000) & (lambda ctx: ctx.archive.get("f").min() < 1e-6)
+    >>> cond = max_gen(100) | max_fe(2000)
+    >>> cond = ~stalled(20)
+    """
+
+    def __init__(
+        self,
+        func: ConditionFunc,
+        *,
+        name: str | None = None,
+        doc: str | None = None,
+    ) -> None:
+        if not callable(func):
+            raise TypeError(
+                f"Termination condition must be callable, got {type(func).__name__}."
+            )
+        self._func = func
+        self.__qualname__ = (
+            name if name is not None else getattr(func, "__qualname__", repr(func))
+        )
+        resolved_doc = doc if doc is not None else getattr(func, "__doc__", None)
+        if resolved_doc is not None:
+            self.__doc__ = resolved_doc
+
+    @staticmethod
+    def _coerce(cond: ConditionFunc | TerminationCondition) -> TerminationCondition:
+        """Wrap a plain callable into a ``TerminationCondition`` if needed."""
+        if isinstance(cond, TerminationCondition):
+            return cond
+        return TerminationCondition(cond)
+
+    def __call__(self, ctx: OptimizationContext) -> bool:
+        """Evaluate the wrapped condition against ``ctx``."""
+        return bool(self._func(ctx))
+
+    def __or__(
+        self, other: ConditionFunc | TerminationCondition
+    ) -> TerminationCondition:
+        """Compose with OR: terminate when either condition is met."""
+        other = self._coerce(other)
+        return TerminationCondition(
+            lambda ctx: self(ctx) or other(ctx),
+            name=f"({self.__qualname__} | {other.__qualname__})",
+        )
+
+    def __ror__(
+        self, other: ConditionFunc | TerminationCondition
+    ) -> TerminationCondition:
+        """Compose with OR when a plain callable is on the left-hand side."""
+        return self._coerce(other) | self
+
+    def __and__(
+        self, other: ConditionFunc | TerminationCondition
+    ) -> TerminationCondition:
+        """Compose with AND: terminate when both conditions are met."""
+        other = self._coerce(other)
+        return TerminationCondition(
+            lambda ctx: self(ctx) and other(ctx),
+            name=f"({self.__qualname__} & {other.__qualname__})",
+        )
+
+    def __rand__(
+        self, other: ConditionFunc | TerminationCondition
+    ) -> TerminationCondition:
+        """Compose with AND when a plain callable is on the left-hand side."""
+        return self._coerce(other) & self
+
+    def __invert__(self) -> TerminationCondition:
+        """Negate the condition with NOT."""
+        return TerminationCondition(
+            lambda ctx: not self(ctx),
+            name=f"~{self.__qualname__}",
+        )
+
+    def __repr__(self) -> str:
+        """Return a readable representation including the condition name."""
+        return f"TerminationCondition({self.__qualname__})"
 
 
 class Termination:
@@ -31,7 +145,7 @@ class Termination:
 
     Parameters
     ----------
-    *conditions : TerminationCondition
+    *conditions : ConditionFunc or TerminationCondition
         One or more callable conditions. Each must accept an
         ``OptimizationContext`` and return ``bool``.
 
@@ -50,9 +164,11 @@ class Termination:
     ...     max_fe(2000),
     ...     lambda ctx: ctx.archive.get("f").min() < 1e-6,
     ... )
+    >>> termination = Termination.all_of(max_fe(2000), max_gen(100))
+    >>> termination = Termination.not_(max_gen(100))
     """
 
-    def __init__(self, *conditions: TerminationCondition):
+    def __init__(self, *conditions: ConditionFunc | TerminationCondition):
         if not conditions:
             raise ValueError("At least one termination condition must be provided.")
         for cond in conditions:
@@ -61,11 +177,87 @@ class Termination:
                     "Termination condition must be callable, "
                     f"got {type(cond).__name__}."
                 )
-        self.conditions: tuple[TerminationCondition, ...] = conditions
+        # Combine all conditions with OR into a single composed
+        # ``TerminationCondition``, which is the sole source of truth used by
+        # ``is_terminated``.
+        self._condition: TerminationCondition = reduce(
+            operator.or_,
+            (TerminationCondition._coerce(cond) for cond in conditions),
+        )
+
+    @property
+    def condition(self) -> TerminationCondition:
+        """Return the composed termination condition (read-only)."""
+        return self._condition
+
+    @classmethod
+    def any_of(cls, *conditions: ConditionFunc | TerminationCondition) -> Termination:
+        """
+        Build a Termination that stops when **any** condition is met (OR).
+
+        Equivalent to ``Termination(*conditions)``; provided for symmetry
+        with :meth:`all_of` and :meth:`not_`.
+
+        Parameters
+        ----------
+        *conditions : ConditionFunc or TerminationCondition
+            One or more callable conditions.
+
+        Returns
+        -------
+        Termination
+            A termination combining the conditions with OR.
+        """
+        return cls(*conditions)
+
+    @classmethod
+    def all_of(cls, *conditions: ConditionFunc | TerminationCondition) -> Termination:
+        """
+        Build a Termination that stops when **all** conditions are met (AND).
+
+        Parameters
+        ----------
+        *conditions : ConditionFunc or TerminationCondition
+            One or more callable conditions.
+
+        Returns
+        -------
+        Termination
+            A termination combining the conditions with AND.
+
+        Raises
+        ------
+        ValueError
+            If no conditions are provided.
+        """
+        if not conditions:
+            raise ValueError("At least one termination condition must be provided.")
+        combined = reduce(
+            operator.and_,
+            (TerminationCondition._coerce(cond) for cond in conditions),
+        )
+        return cls(combined)
+
+    @classmethod
+    def not_(cls, condition: ConditionFunc | TerminationCondition) -> Termination:
+        """
+        Build a Termination that stops when ``condition`` is **not** met (NOT).
+
+        Parameters
+        ----------
+        condition : ConditionFunc or TerminationCondition
+            The condition to negate.
+
+        Returns
+        -------
+        Termination
+            A termination that negates the given condition.
+        """
+        return cls(~TerminationCondition._coerce(condition))
 
     def is_terminated(self, ctx: OptimizationContext) -> bool:
         """
-        Check if any termination condition is met.
+        Check if the composed termination condition is met.
 
         Parameters
         ----------
@@ -75,9 +267,9 @@ class Termination:
         Returns
         -------
         bool
-            True if any termination condition is met, False otherwise.
+            True if the termination condition is met, False otherwise.
         """
-        return any(cond(ctx) for cond in self.conditions)
+        return self._condition(ctx)
 
 
 # Built-in termination condition factories
@@ -95,19 +287,18 @@ def max_fe(value: int) -> TerminationCondition:
     Returns
     -------
     TerminationCondition
-        A callable that returns True when ``ctx.fe >= value``.
+        A composable condition that returns True when ``ctx.fe >= value``.
 
     Examples
     --------
     >>> termination = Termination(max_fe(2000))
+    >>> condition = max_fe(2000) & max_gen(100)
     """
-
-    def _condition(ctx: OptimizationContext) -> bool:
-        return ctx.fe >= value
-
-    _condition.__doc__ = f"Terminate when fe >= {value}."
-    _condition.__qualname__ = f"max_fe({value})"
-    return _condition
+    return TerminationCondition(
+        lambda ctx: ctx.fe >= value,
+        name=f"max_fe({value})",
+        doc=f"Terminate when fe >= {value}.",
+    )
 
 
 def max_gen(value: int) -> TerminationCondition:
@@ -122,16 +313,104 @@ def max_gen(value: int) -> TerminationCondition:
     Returns
     -------
     TerminationCondition
-        A callable that returns True when ``ctx.gen >= value``.
+        A composable condition that returns True when ``ctx.gen >= value``.
 
     Examples
     --------
     >>> termination = Termination(max_gen(100))
+    >>> condition = max_gen(100) | max_fe(2000)
+    """
+    return TerminationCondition(
+        lambda ctx: ctx.gen >= value,
+        name=f"max_gen({value})",
+        doc=f"Terminate when gen >= {value}.",
+    )
+
+
+def f_target(value: float) -> TerminationCondition:
+    """
+    Create a termination condition based on a target objective value.
+
+    Intended for single-objective problems. The direction is taken from
+    ``ctx.weight`` (``-1`` for minimization, ``+1`` for maximization), so the
+    condition is met when the best objective found reaches ``value`` from the
+    correct side (``best <= value`` when minimizing, ``best >= value`` when
+    maximizing). Returns ``False`` while the archive is empty.
+
+    Parameters
+    ----------
+    value : float
+        Target objective value.
+
+    Returns
+    -------
+    TerminationCondition
+        A composable condition that returns True when the best objective in
+        the archive reaches ``value``.
+
+    Examples
+    --------
+    >>> termination = Termination(max_fe(2000), f_target(1e-6))
     """
 
     def _condition(ctx: OptimizationContext) -> bool:
-        return ctx.gen >= value
+        f = ctx.archive.get("f")
+        if f is None or len(f) == 0:
+            return False
+        weight = ctx.weight
+        # Work in score space (higher is better) so a single comparison covers
+        # both minimization and maximization.
+        best_score = float((f @ weight).max())
+        return best_score >= value * float(weight[0])
 
-    _condition.__doc__ = f"Terminate when gen >= {value}."
-    _condition.__qualname__ = f"max_gen({value})"
-    return _condition
+    return TerminationCondition(
+        _condition,
+        name=f"f_target({value})",
+        doc=f"Terminate when the best objective reaches {value}.",
+    )
+
+
+def stalled(window: int, tol: float = 1e-8) -> TerminationCondition:
+    """
+    Create a termination condition based on lack of improvement (stagnation).
+
+    Terminates when the best score (``f @ weight``, higher is better) has not
+    improved by more than ``tol`` for ``window`` consecutive generations.
+    Improvement is tracked across calls using ``ctx.gen``; the returned
+    condition is therefore stateful and intended to be used once per run.
+
+    Parameters
+    ----------
+    window : int
+        Number of generations without improvement before terminating.
+    tol : float, optional
+        Minimum score increase counted as an improvement, by default ``1e-8``.
+
+    Returns
+    -------
+    TerminationCondition
+        A composable condition that returns True after ``window`` stagnant
+        generations.
+
+    Examples
+    --------
+    >>> termination = Termination(max_fe(2000), stalled(20))
+    """
+    state: dict[str, float | None] = {"best": None, "stall_gen": None}
+
+    def _condition(ctx: OptimizationContext) -> bool:
+        f = ctx.archive.get("f")
+        if f is None or len(f) == 0:
+            return False
+        best_score = float((f @ ctx.weight).max())
+        if state["best"] is None or best_score > state["best"] + tol:
+            state["best"] = best_score
+            state["stall_gen"] = ctx.gen
+            return False
+        return (ctx.gen - state["stall_gen"]) >= window
+
+    return TerminationCondition(
+        _condition,
+        name=f"stalled({window})",
+        doc=f"Terminate after {window} generations without improvement.",
+    )
