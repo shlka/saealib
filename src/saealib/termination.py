@@ -178,13 +178,18 @@ class Termination:
                     "Termination condition must be callable, "
                     f"got {type(cond).__name__}."
                 )
-        self.conditions: tuple[ConditionFunc | TerminationCondition, ...] = conditions
-        # Combine all conditions with OR so that ``is_terminated`` evaluates a
-        # single composed ``TerminationCondition``.
-        self._combined: TerminationCondition = reduce(
+        # Combine all conditions with OR into a single composed
+        # ``TerminationCondition``, which is the sole source of truth used by
+        # ``is_terminated``.
+        self._condition: TerminationCondition = reduce(
             operator.or_,
             (TerminationCondition._coerce(cond) for cond in conditions),
         )
+
+    @property
+    def condition(self) -> TerminationCondition:
+        """Return the composed termination condition (read-only)."""
+        return self._condition
 
     @classmethod
     def any_of(cls, *conditions: ConditionFunc | TerminationCondition) -> Termination:
@@ -265,7 +270,7 @@ class Termination:
         bool
             True if the termination condition is met, False otherwise.
         """
-        return self._combined(ctx)
+        return self._condition(ctx)
 
 
 # Built-in termination condition factories

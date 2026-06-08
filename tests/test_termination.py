@@ -12,7 +12,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from saealib.termination import Termination, max_fe, max_gen
+from saealib.termination import Termination, TerminationCondition, max_fe, max_gen
 
 
 def _make_ctx(fe: int = 0, gen: int = 0) -> SimpleNamespace:
@@ -28,15 +28,15 @@ class TestTerminationInit:
 
     def test_single_condition(self) -> None:
         t = Termination(max_fe(100))
-        assert len(t.conditions) == 1
+        assert isinstance(t.condition, TerminationCondition)
 
     def test_multiple_conditions(self) -> None:
         t = Termination(max_fe(100), max_gen(50))
-        assert len(t.conditions) == 2
+        assert isinstance(t.condition, TerminationCondition)
 
     def test_lambda_condition(self) -> None:
         t = Termination(lambda ctx: ctx.fe >= 10)
-        assert len(t.conditions) == 1
+        assert isinstance(t.condition, TerminationCondition)
 
     def test_no_conditions_raises_value_error(self) -> None:
         with pytest.raises(ValueError, match="At least one"):
@@ -50,9 +50,10 @@ class TestTerminationInit:
         with pytest.raises(TypeError, match="must be callable"):
             Termination(max_fe(100), "not_callable")
 
-    def test_conditions_stored_as_tuple(self) -> None:
+    def test_condition_is_read_only(self) -> None:
         t = Termination(max_fe(100))
-        assert isinstance(t.conditions, tuple)
+        with pytest.raises(AttributeError):
+            t.condition = max_gen(50)  # type: ignore[misc]
 
 
 # ===========================================================================
