@@ -276,7 +276,7 @@ class Termination:
 # Built-in termination condition factories
 
 
-def max_fe(value: int) -> ConditionFunc:
+def max_fe(value: int) -> TerminationCondition:
     """
     Create a termination condition based on maximum function evaluations.
 
@@ -287,23 +287,22 @@ def max_fe(value: int) -> ConditionFunc:
 
     Returns
     -------
-    ConditionFunc
-        A callable that returns True when ``ctx.fe >= value``.
+    TerminationCondition
+        A composable condition that returns True when ``ctx.fe >= value``.
 
     Examples
     --------
     >>> termination = Termination(max_fe(2000))
+    >>> condition = max_fe(2000) & max_gen(100)
     """
-
-    def _condition(ctx: OptimizationContext) -> bool:
-        return ctx.fe >= value
-
-    _condition.__doc__ = f"Terminate when fe >= {value}."
-    _condition.__qualname__ = f"max_fe({value})"
-    return _condition
+    return TerminationCondition(
+        lambda ctx: ctx.fe >= value,
+        name=f"max_fe({value})",
+        doc=f"Terminate when fe >= {value}.",
+    )
 
 
-def max_gen(value: int) -> ConditionFunc:
+def max_gen(value: int) -> TerminationCondition:
     """
     Create a termination condition based on maximum generations.
 
@@ -314,17 +313,16 @@ def max_gen(value: int) -> ConditionFunc:
 
     Returns
     -------
-    ConditionFunc
-        A callable that returns True when ``ctx.gen >= value``.
+    TerminationCondition
+        A composable condition that returns True when ``ctx.gen >= value``.
 
     Examples
     --------
     >>> termination = Termination(max_gen(100))
+    >>> condition = max_gen(100) | max_fe(2000)
     """
-
-    def _condition(ctx: OptimizationContext) -> bool:
-        return ctx.gen >= value
-
-    _condition.__doc__ = f"Terminate when gen >= {value}."
-    _condition.__qualname__ = f"max_gen({value})"
-    return _condition
+    return TerminationCondition(
+        lambda ctx: ctx.gen >= value,
+        name=f"max_gen({value})",
+        doc=f"Terminate when gen >= {value}.",
+    )
