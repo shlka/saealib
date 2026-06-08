@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0b3] - 2026-06-08
+
+Evaluation and constraint refactors — modular evaluation, constraint handling, and composable termination.
+
+### Added
+
+- **`Evaluator` abstraction**: pluggable evaluation interface with a batch evaluation API, decoupling true evaluation from the optimization loop ([#85](https://github.com/shlka/saealib/issues/85))
+- **`EqualityConstraint`**: equality constraint support alongside inequality constraints ([#87](https://github.com/shlka/saealib/issues/87))
+- **Composable `Termination`**: logical composition of termination conditions via `&` / `|` / `~` operators (and `all_of` / `any_of` / `not_` helpers); `max_fe` / `max_gen` now return a `TerminationCondition`, plus `f_target` and `stalled` built-in conditions ([#94](https://github.com/shlka/saealib/issues/94))
+
+### Changed
+
+- **`ConstraintHandler` abstraction** (breaking): constraint processing extracted into a modular handler, replacing inline constraint logic ([#108](https://github.com/shlka/saealib/issues/108))
+- **Pareto comparator sign convention unified** (breaking): consistent sign handling so the Pareto comparator supports maximization ([#93](https://github.com/shlka/saealib/issues/93))
+- **`Problem.eps` split into `eps_cv` and `eps_obj`** (breaking): separate tolerances for constraint violation and objective value ([#92](https://github.com/shlka/saealib/issues/92))
+
+### Performance
+
+- Eliminated the `np.vstack` loop in `GA.ask`, removing O(N²) reallocation ([#91](https://github.com/shlka/saealib/issues/91))
+
 ## [0.1.0b2] - 2026-05-21
 
 Surrogate API flexibility — concentrated breaking changes to decouple surrogate output from objective semantics.
@@ -46,5 +66,6 @@ Initial beta release of saealib.
 - **Termination criteria**: configurable stopping conditions
 - **Type hints**: fully typed public API, PEP 561 compliant (`py.typed` marker included)
 
+[0.1.0b3]: https://github.com/shlka/saealib/compare/v0.1.0b2...v0.1.0b3
 [0.1.0b2]: https://github.com/shlka/saealib/compare/v0.1.0b1...v0.1.0b2
 [0.1.0b1]: https://github.com/shlka/saealib/releases/tag/v0.1.0b1
