@@ -1,0 +1,35 @@
+﻿saealib.SerialEvaluator
+=======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SerialEvaluator
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SerialEvaluator.__init__
+   ~SerialEvaluator.evaluate_batch
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SerialEvaluator.__init__
+
+
+.. automethod:: saealib.SerialEvaluator.evaluate_batch
+
+
+

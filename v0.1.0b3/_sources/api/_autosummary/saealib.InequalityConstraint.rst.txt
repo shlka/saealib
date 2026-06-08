@@ -1,0 +1,51 @@
+﻿saealib.InequalityConstraint
+============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: InequalityConstraint
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~InequalityConstraint.__init__
+   ~InequalityConstraint.evaluate
+   ~InequalityConstraint.evaluate_with_violation
+   ~InequalityConstraint.gradient
+   ~InequalityConstraint.violation
+   ~InequalityConstraint.violation_from_value
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.InequalityConstraint.__init__
+
+
+.. automethod:: saealib.InequalityConstraint.evaluate
+
+
+.. automethod:: saealib.InequalityConstraint.evaluate_with_violation
+
+
+.. automethod:: saealib.InequalityConstraint.gradient
+
+
+.. automethod:: saealib.InequalityConstraint.violation
+
+
+.. automethod:: saealib.InequalityConstraint.violation_from_value
+
+
+
