@@ -326,3 +326,92 @@ def max_gen(value: int) -> TerminationCondition:
         name=f"max_gen({value})",
         doc=f"Terminate when gen >= {value}.",
     )
+
+
+def f_target(value: float) -> TerminationCondition:
+    """
+    Create a termination condition based on a target objective value.
+
+    Intended for single-objective problems. The direction is taken from
+    ``ctx.weight`` (``-1`` for minimization, ``+1`` for maximization), so the
+    condition is met when the best objective found reaches ``value`` from the
+    correct side (``best <= value`` when minimizing, ``best >= value`` when
+    maximizing). Returns ``False`` while the archive is empty.
+
+    Parameters
+    ----------
+    value : float
+        Target objective value.
+
+    Returns
+    -------
+    TerminationCondition
+        A composable condition that returns True when the best objective in
+        the archive reaches ``value``.
+
+    Examples
+    --------
+    >>> termination = Termination(max_fe(2000), f_target(1e-6))
+    """
+
+    def _condition(ctx: OptimizationContext) -> bool:
+        f = ctx.archive.get("f")
+        if f is None or len(f) == 0:
+            return False
+        weight = ctx.weight
+        # Work in score space (higher is better) so a single comparison covers
+        # both minimization and maximization.
+        best_score = float((f @ weight).max())
+        return best_score >= value * float(weight[0])
+
+    return TerminationCondition(
+        _condition,
+        name=f"f_target({value})",
+        doc=f"Terminate when the best objective reaches {value}.",
+    )
+
+
+def stalled(window: int, tol: float = 1e-8) -> TerminationCondition:
+    """
+    Create a termination condition based on lack of improvement (stagnation).
+
+    Terminates when the best score (``f @ weight``, higher is better) has not
+    improved by more than ``tol`` for ``window`` consecutive generations.
+    Improvement is tracked across calls using ``ctx.gen``; the returned
+    condition is therefore stateful and intended to be used once per run.
+
+    Parameters
+    ----------
+    window : int
+        Number of generations without improvement before terminating.
+    tol : float, optional
+        Minimum score increase counted as an improvement, by default ``1e-8``.
+
+    Returns
+    -------
+    TerminationCondition
+        A composable condition that returns True after ``window`` stagnant
+        generations.
+
+    Examples
+    --------
+    >>> termination = Termination(max_fe(2000), stalled(20))
+    """
+    state: dict[str, float | None] = {"best": None, "stall_gen": None}
+
+    def _condition(ctx: OptimizationContext) -> bool:
+        f = ctx.archive.get("f")
+        if f is None or len(f) == 0:
+            return False
+        best_score = float((f @ ctx.weight).max())
+        if state["best"] is None or best_score > state["best"] + tol:
+            state["best"] = best_score
+            state["stall_gen"] = ctx.gen
+            return False
+        return (ctx.gen - state["stall_gen"]) >= window
+
+    return TerminationCondition(
+        _condition,
+        name=f"stalled({window})",
+        doc=f"Terminate after {window} generations without improvement.",
+    )

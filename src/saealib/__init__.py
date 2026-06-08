@@ -119,7 +119,14 @@ from saealib.surrogate.sklearn_surrogate import (
     XGBSurrogate,
 )
 from saealib.surrogate.torch_surrogate import TorchSurrogate
-from saealib.termination import Termination, max_fe, max_gen
+from saealib.termination import (
+    Termination,
+    TerminationCondition,
+    f_target,
+    max_fe,
+    max_gen,
+    stalled,
+)
 from saealib.utils.indicators import hypervolume
 
 logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -207,6 +214,7 @@ __all__ = [
     "SurrogateStartEvent",
     "SurvivorSelection",
     "Termination",
+    "TerminationCondition",
     "TorchSurrogate",
     "TournamentSelection",
     "TruncationSelection",
@@ -214,6 +222,7 @@ __all__ = [
     "XGBSurrogate",
     "crowding_distance",
     "crowding_distance_all_fronts",
+    "f_target",
     "gaussian_kernel",
     "hypervolume",
     "logging_generation",
@@ -224,4 +233,5 @@ __all__ = [
     "minimize",
     "non_dominated_sort",
     "repair_clipping",
+    "stalled",
 ]
