@@ -35,6 +35,7 @@ from saealib import (
     gaussian_kernel,
     max_fe,
     non_dominated_sort,
+    spea2_fitness,
 )
 from saealib.comparators import (
     Dominator,
@@ -1432,3 +1433,112 @@ class TestEpsilonDominanceComparator:
     # -----------------------------------------------------------------------
     def test_is_subclass_of_pareto_comparator(self) -> None:
         assert issubclass(EpsilonDominanceComparator, ParetoComparator)
+
+
+# ===========================================================================
+# spea2_fitness Tests (#74)
+# ===========================================================================
+class TestSpea2Fitness:
+    """Tests for spea2_fitness (Zitzler et al., 2001, SPEA2)."""
+
+    # -----------------------------------------------------------------------
+    # 1. Non-dominated set: R==0 for all, F==D in (0, 0.5]
+    # -----------------------------------------------------------------------
+    def test_non_dominated_set_r_zero(self) -> None:
+        """Mutually non-dominating points all have R(i)==0 and F(i) in (0, 0.5]."""
+        # Points on the Pareto front of a 2-obj minimization problem
+        f = np.array([[0.0, 3.0], [1.0, 2.0], [2.0, 1.0], [3.0, 0.0]])
+        fitness = spea2_fitness(f)
+        # R == 0 for all (no one is dominated)
+        # Verify indirectly: F must equal D, and D in (0, 0.5]
+        assert fitness.shape == (4,)
+        assert np.all(fitness > 0.0)
+        assert np.all(fitness <= 0.5)
+
+    # -----------------------------------------------------------------------
+    # 2. Dominance chain: R ordering and non-dominated R==0
+    # -----------------------------------------------------------------------
+    def test_dominance_chain_r_ordering(self) -> None:
+        """In a clear dominance chain A→B→C, R(A) < R(B) < R(C) and R(A)==0."""
+        # A dominates B dominates C (2-obj minimization)
+        f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+        fitness = spea2_fitness(f)
+
+        # Reconstruct R manually to verify ordering
+        # S: A dominates B and C → S(A)=2; B dominates C → S(B)=1; S(C)=0
+        # R: R(A)=0 (no one dominates A); R(B)=S(A)=2; R(C)=S(A)+S(B)=3
+        # So fitness order: A < B < C (lower R = better)
+        assert fitness[0] < fitness[1]  # A better than B
+        assert fitness[1] < fitness[2]  # B better than C
+
+        # Non-dominated point (A) has R==0, so F(A) = D(A) <= 0.5 < 1
+        assert fitness[0] < 1.0
+
+    # -----------------------------------------------------------------------
+    # 3. direction for maximization flips non-dominated set
+    # -----------------------------------------------------------------------
+    def test_direction_maximization_flips_nondominated(self) -> None:
+        """With direction=+1 (maximize), the 'best' and 'worst' points swap."""
+        # Under minimization: [0,0] dominates [1,1]
+        # Under maximization: [1,1] dominates [0,0]
+        f = np.array([[0.0, 0.0], [1.0, 1.0]])
+        direction = np.array([1.0, 1.0])  # maximize both
+
+        fitness_max = spea2_fitness(f, direction=direction)
+        # Under maximization, f[1]=[1,1] is non-dominated → R==0 → F < 1
+        # f[0]=[0,0] is dominated → R > 0 → F >= R > 0
+        assert fitness_max[1] < fitness_max[0]
+        # Non-dominated point has R==0 → F <= 0.5
+        assert fitness_max[1] <= 0.5
+
+        # Under minimization (default), f[0] is non-dominated
+        fitness_min = spea2_fitness(f)
+        assert fitness_min[0] < fitness_min[1]
+        assert fitness_min[0] <= 0.5
+
+    # -----------------------------------------------------------------------
+    # 4. Output shape and N==1 edge case
+    # -----------------------------------------------------------------------
+    def test_output_shape(self) -> None:
+        """Returns shape (N,) for a general input."""
+        rng = np.random.default_rng(0)
+        f = rng.random((8, 3))
+        fitness = spea2_fitness(f)
+        assert fitness.shape == (8,)
+
+    def test_single_point_r_zero_finite(self) -> None:
+        """N==1 returns a single finite value with R==0 (F = D <= 0.5)."""
+        f = np.array([[1.0, 2.0]])
+        fitness = spea2_fitness(f)
+        assert fitness.shape == (1,)
+        assert np.isfinite(fitness[0])
+        # Single point is trivially non-dominated → R==0 → F <= 0.5
+        assert fitness[0] <= 0.5
+
+    def test_empty_input_returns_empty(self) -> None:
+        """N==0 returns an empty array of shape (0,)."""
+        f = np.empty((0, 2))
+        fitness = spea2_fitness(f)
+        assert fitness.shape == (0,)
+
+    # -----------------------------------------------------------------------
+    # 5. Custom dominator gives same result as default
+    # -----------------------------------------------------------------------
+    def test_custom_pareto_dominator_matches_default(self) -> None:
+        """Passing dominator=ParetoDominator() gives identical result to None."""
+        rng = np.random.default_rng(42)
+        f = rng.random((10, 2))
+        fitness_default = spea2_fitness(f)
+        fitness_explicit = spea2_fitness(f, dominator=ParetoDominator())
+        np.testing.assert_array_almost_equal(fitness_default, fitness_explicit)
+
+    # -----------------------------------------------------------------------
+    # 6. Lower-is-better orientation: strongly dominated point has largest F
+    # -----------------------------------------------------------------------
+    def test_strongly_dominated_has_largest_fitness(self) -> None:
+        """A point dominated by every other point has the largest SPEA2 fitness."""
+        # f[3] = [10, 10] is dominated by all others in minimization
+        f = np.array([[0.0, 3.0], [1.5, 1.5], [3.0, 0.0], [10.0, 10.0]])
+        fitness = spea2_fitness(f)
+        # The worst point must have the maximum fitness (lower = better)
+        assert fitness[3] == fitness.max()

@@ -938,6 +938,97 @@ def crowding_distance_all_fronts(
     return cd
 
 
+def spea2_fitness(
+    f: np.ndarray,
+    direction: np.ndarray | None = None,
+    dominator: Dominator | None = None,
+) -> np.ndarray:
+    """
+    Compute SPEA2 fitness values for a set of objective vectors.
+
+    Implements the fitness assignment procedure from Zitzler et al. (2001).
+    Lower fitness is better (this deviates from the library's general
+    higher-is-better score convention — do NOT pass the result directly
+    to comparators that assume higher = better).
+
+    Fitness components:
+
+    - **Strength** ``S(i)``: number of solutions that ``i`` dominates.
+    - **Raw fitness** ``R(i)``: sum of the strengths of all solutions that
+      dominate ``i``.  ``R(i) = 0`` iff ``i`` is non-dominated.
+    - **Density** ``D(i) = 1 / (sigma_i^k + 2)``, where ``sigma_i^k`` is the
+      Euclidean distance (in objective space) from ``i`` to its k-th nearest
+      neighbour. The ``+2`` keeps ``D in (0, 0.5]``.
+    - **Fitness** ``F(i) = R(i) + D(i)``.
+
+    .. note::
+        **Deviation from the paper**: Zitzler et al. (2001) define
+        ``k = floor(√(N + N̄))`` using the combined size of the population
+        and an external archive.  This utility operates on a single set of
+        ``N`` points, so it uses ``k = floor(√N)`` instead, clamped to
+        ``[0, N-1]``.
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Objective matrix.  shape: (N, n_obj).
+    direction : np.ndarray or None
+        Per-objective optimization direction: ``+1`` = maximize,
+        ``-1`` = minimize.  ``None`` defaults to minimization for all
+        objectives.  Passed directly to the dominator (same convention as
+        :class:`ParetoComparator`).
+    dominator : Dominator or None
+        Dominance predicate used to build the dominance matrix.  ``None``
+        defaults to :class:`ParetoDominator` (standard Pareto dominance).
+
+    Returns
+    -------
+    np.ndarray
+        SPEA2 fitness values ``F``, shape ``(N,)``.  **Lower = better.**
+
+    References
+    ----------
+    .. [1] Zitzler, E., Laumanns, M., & Thiele, L. (2001). SPEA2: Improving
+       the Strength Pareto Evolutionary Algorithm.  TIK-Report 103, ETH
+       Zurich, Switzerland.
+    """
+    f = np.asarray(f, dtype=float)
+    n_pts = len(f)
+
+    if n_pts == 0:
+        return np.empty(0, dtype=float)
+
+    _dom = dominator if dominator is not None else ParetoDominator()
+
+    # --- Strength and raw fitness ---
+    # dom_mat[i, j] = True iff i dominates j
+    dom_mat = _dom.dominance_matrix(f, direction)
+
+    # strength[i] = number of solutions that i dominates (row sum)
+    strength = dom_mat.sum(axis=1).astype(float)
+
+    # raw_fitness[i] = sum of strength[j] for all j that dominate i
+    # dom_mat[j, i] = True iff j dominates i; weight each by strength[j]
+    raw_fitness = dom_mat.T.astype(float) @ strength  # shape (n_pts,)
+
+    # --- Density ---
+    # Pairwise Euclidean distances in objective space; shape (n_pts, n_pts)
+    diff = f[:, None, :] - f[None, :, :]  # (n_pts, n_pts, n_obj)
+    dist_mat = np.sqrt((diff**2).sum(axis=2))  # (n_pts, n_pts)
+
+    # k-th nearest neighbour distance (self-distance 0 sits at index 0)
+    k = int(np.floor(np.sqrt(n_pts)))
+    k = min(k, n_pts - 1)  # clamp to valid index
+
+    # Sort each row ascending and take the k-th column
+    dist_sorted = np.sort(dist_mat, axis=1)  # (n_pts, n_pts)
+    sigma_k = dist_sorted[:, k]  # (n_pts,)
+
+    density = 1.0 / (sigma_k + 2.0)
+
+    return raw_fitness + density
+
+
 class ParetoComparator(Comparator):
     """
     Comparator for multi-objective optimization via non-dominated sorting only.

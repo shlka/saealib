@@ -49,6 +49,7 @@ from saealib.comparators import (
     crowding_distance_all_fronts,
     dda_non_dominated_sort,
     non_dominated_sort,
+    spea2_fitness,
 )
 from saealib.execution.evaluator import (
     EvaluationResult,
@@ -249,5 +250,6 @@ __all__ = [
     "minimize",
     "non_dominated_sort",
     "repair_clipping",
+    "spea2_fitness",
     "stalled",
 ]
