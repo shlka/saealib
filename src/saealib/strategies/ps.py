@@ -75,6 +75,9 @@ class PreSelectionStrategy(OptimizationStrategy):
             candidates[i].g = g_i
             candidates[i].cv = cv_i
             ctx.archive.add({"x": candidates[i].x, "f": f_i, "g": g_i, "cv": cv_i})
+            ctx.pareto_archive.add(
+                {"x": candidates[i].x, "f": f_i, "g": g_i, "cv": cv_i}
+            )
         ctx.count_fe(n_eval)
 
         evaluated = candidates.extract(list(range(n_eval)))

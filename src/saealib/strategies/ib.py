@@ -78,6 +78,9 @@ class IndividualBasedStrategy(OptimizationStrategy):
             offspring[i].g = g_i
             offspring[i].cv = cv_i
             ctx.archive.add({"x": offspring[i].x, "f": f_i, "g": g_i, "cv": cv_i})
+            ctx.pareto_archive.add(
+                {"x": offspring[i].x, "f": f_i, "g": g_i, "cv": cv_i}
+            )
         ctx.count_fe(n_eval)
 
         evaluated = offspring.extract(list(range(n_eval)))
