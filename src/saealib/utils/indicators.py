@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from saealib.comparators import _dominance_matrix
+
 
 def hypervolume(f: np.ndarray, reference_point: np.ndarray) -> float:
     """
@@ -66,16 +68,23 @@ def _hv(f: np.ndarray, ref: np.ndarray) -> float:
 
 
 def _non_dominated(f: np.ndarray) -> np.ndarray:
-    """Return non-dominated subset (minimization, O(n²))."""
+    """Return non-dominated subset (minimization).
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Objective matrix, shape (n, n_obj).  Must contain no NaN values.
+
+    Returns
+    -------
+    np.ndarray
+        Rows of ``f`` that are not dominated by any other row.
+    """
     n = len(f)
     if n <= 1:
         return f
-    dominated = np.zeros(n, dtype=bool)
-    for i in range(n):
-        for j in range(n):
-            if i == j:
-                continue
-            if np.all(f[j] <= f[i]) and np.any(f[j] < f[i]):
-                dominated[i] = True
-                break
+    # dom[i, j] = True iff row i dominates row j; a row is dominated when any
+    # column of dom is True for it (i.e. dom.any(axis=0)[j] is True).
+    dom = _dominance_matrix(f)
+    dominated = dom.any(axis=0)
     return f[~dominated]

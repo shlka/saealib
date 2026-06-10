@@ -9,12 +9,150 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import numpy as np
 
 if TYPE_CHECKING:
     from saealib.population import Population
+
+
+# ---------------------------------------------------------------------------
+# Dominator abstraction
+# ---------------------------------------------------------------------------
+
+
+class Dominator(ABC):
+    """
+    Abstract base for dominance predicates.
+
+    A ``Dominator`` encapsulates the definition of dominance between
+    objective vectors independently of the sorting algorithm.  Two concrete
+    operations are required and MUST agree with each other:
+
+    - ``dominance_matrix`` — batched NxN boolean matrix (primary operation).
+    - ``dominates`` — scalar pairwise predicate, derived from the matrix to
+      guarantee consistency.
+
+    Parameters are the same for both methods:
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Objective matrix. shape: (n, n_obj)  [``dominance_matrix``]
+    fa, fb : np.ndarray
+        Objective vectors. shape: (n_obj,)  [``dominates``]
+    direction : np.ndarray or None
+        Per-objective optimization direction: +1 = maximize, -1 = minimize.
+        ``None`` defaults to minimization for all objectives.
+    """
+
+    @abstractmethod
+    def dominance_matrix(
+        self,
+        f: np.ndarray,
+        direction: np.ndarray | None = None,
+    ) -> np.ndarray:
+        """
+        Compute the NxN boolean dominance matrix.
+
+        ``D[i, j]`` is True if row i dominates row j.
+
+        Parameters
+        ----------
+        f : np.ndarray
+            Objective matrix. shape: (n, n_obj).  Must contain no NaN values
+            (callers are responsible for pre-filtering).
+        direction : np.ndarray or None
+            Per-objective direction. ``None`` → minimize all.
+
+        Returns
+        -------
+        np.ndarray
+            Boolean matrix of shape (n, n).
+        """
+
+    def dominates(
+        self,
+        fa: np.ndarray,
+        fb: np.ndarray,
+        direction: np.ndarray | None = None,
+    ) -> bool:
+        """
+        Return True if fa dominates fb.
+
+        Derived from ``dominance_matrix`` on a 2-row stack to guarantee
+        agreement with the batched path.  NaN values in fa always return
+        False (consistent with ``dominance_matrix`` assuming finite input).
+
+        Parameters
+        ----------
+        fa, fb : np.ndarray
+            Objective vectors. shape: (n_obj,)
+        direction : np.ndarray or None
+            Per-objective direction. ``None`` → minimize all.
+
+        Returns
+        -------
+        bool
+        """
+        fa = np.asarray(fa, dtype=float)
+        fb = np.asarray(fb, dtype=float)
+        if np.any(np.isnan(fa)):
+            return False
+        # Replace NaN in fb with +inf so it appears infinitely bad (dominated).
+        fb_safe = np.where(np.isnan(fb), np.inf, fb)
+        stacked = np.stack([fa, fb_safe])
+        return bool(self.dominance_matrix(stacked, direction)[0, 1])
+
+
+class ParetoDominator(Dominator):
+    """
+    Pareto dominance predicate.
+
+    ``fa`` dominates ``fb`` iff ``fa`` is at most as large as ``fb`` in all
+    objectives and strictly smaller in at least one (after applying the
+    direction transform).
+
+    This is the default dominance relation used throughout the library.
+    """
+
+    def dominance_matrix(
+        self,
+        f: np.ndarray,
+        direction: np.ndarray | None = None,
+    ) -> np.ndarray:
+        """
+        Compute the NxN Pareto-dominance matrix.
+
+        Applies the ``f * (-direction)`` transform so that smaller is always
+        better, then accumulates per-objective ``leq_all`` / ``less_any``
+        comparisons.  Peak memory is O(N²); no (N, N, M) tensor is created.
+
+        Parameters
+        ----------
+        f : np.ndarray
+            Objective matrix. shape: (n, n_obj).  Must contain no NaN values.
+        direction : np.ndarray or None
+            Per-objective direction. ``None`` → minimize all.
+
+        Returns
+        -------
+        np.ndarray
+            Boolean matrix of shape (n, n).  ``D[i, j]`` = True iff row i
+            Pareto-dominates row j.
+        """
+        g = np.asarray(f, dtype=float)
+        if direction is not None:
+            g = g * (-direction)
+        k, m = g.shape
+        leq_all = np.ones((k, k), dtype=bool)
+        less_any = np.zeros((k, k), dtype=bool)
+        for obj in range(m):
+            col = g[:, obj]
+            leq_all &= col[:, None] <= col[None, :]
+            less_any |= col[:, None] < col[None, :]
+        return leq_all & less_any
 
 
 class Comparator(ABC):
@@ -289,6 +427,10 @@ class WeightedSumComparator(Comparator):
 # Non-dominated sorting utilities
 # ---------------------------------------------------------------------------
 
+# Module-level singleton used by legacy wrappers (_pareto_dominates,
+# _dominance_matrix) so callers that import them directly stay correct.
+_PARETO_DOMINATOR: ParetoDominator = ParetoDominator()
+
 
 def _pareto_dominates(
     fa: np.ndarray, fb: np.ndarray, direction: np.ndarray | None = None
@@ -298,6 +440,10 @@ def _pareto_dominates(
 
     NaN values in fa are treated as non-dominating (returns False).
 
+    .. deprecated::
+        Thin wrapper kept for backward compatibility.  Use
+        ``ParetoDominator().dominates(fa, fb, direction)`` instead.
+
     Parameters
     ----------
     fa, fb : np.ndarray
@@ -306,22 +452,49 @@ def _pareto_dominates(
         Per-objective optimization direction: +1 = maximize, -1 = minimize.
         None defaults to minimization for all objectives.
     """
-    fa = np.asarray(fa, float)
-    fb = np.asarray(fb, float)
-    if np.any(np.isnan(fa)):
-        return False
-    if direction is not None:
-        fa = fa * (-direction)
-        fb = fb * (-direction)
-    return bool(np.all(fa <= fb) and np.any(fa < fb))
+    return _PARETO_DOMINATOR.dominates(fa, fb, direction)
+
+
+def _dominance_matrix(g: np.ndarray) -> np.ndarray:
+    """
+    Compute the NxN boolean dominance matrix from a direction-transformed matrix.
+
+    ``D[i, j]`` is True if row i Pareto-dominates row j.  The input ``g``
+    must already have the direction transform applied (smaller = better for
+    every objective) and must contain no NaN values.
+
+    .. deprecated::
+        Thin wrapper kept for backward compatibility.  Use
+        ``ParetoDominator().dominance_matrix(g)`` instead.
+
+    Parameters
+    ----------
+    g : np.ndarray
+        Objective matrix after direction transform. shape: (k, n_obj).
+        Must contain no NaN values.
+
+    Returns
+    -------
+    np.ndarray
+        Boolean matrix of shape (k, k).
+    """
+    # g is already direction-transformed; pass direction=None so no second
+    # transform is applied inside ParetoDominator.
+    return _PARETO_DOMINATOR.dominance_matrix(g)
 
 
 def non_dominated_sort(
     f: np.ndarray,
     direction: np.ndarray | None = None,
+    *,
+    dominator: Dominator | None = None,
 ) -> tuple[np.ndarray, list[list[int]]]:
     """
-    O(MN^2) non-dominated sorting (Deb et al., 2002).
+    Non-dominated sorting (Deb et al., 2002) via a vectorized dominance matrix.
+
+    Time is O(MN^2), but the pairwise dominance relations are computed with a
+    NumPy dominance matrix accumulated one objective at a time (peak memory
+    O(N^2), no (N, N, M) tensor), replacing the original Python double loop.
 
     NaN rows are treated as infinitely bad and placed in the last front.
 
@@ -332,6 +505,9 @@ def non_dominated_sort(
     direction : np.ndarray or None
         Per-objective optimization direction: +1 = maximize, -1 = minimize.
         None defaults to minimization for all objectives.
+    dominator : Dominator or None
+        Dominance predicate to use.  ``None`` defaults to
+        ``ParetoDominator`` (standard Pareto dominance).
 
     Returns
     -------
@@ -340,48 +516,205 @@ def non_dominated_sort(
     fronts : list[list[int]]
         fronts[i] contains the local indices of individuals in front i.
     """
+    _dom = dominator if dominator is not None else _PARETO_DOMINATOR
+
     n = len(f)
     nan_mask = np.any(np.isnan(f), axis=1)
     valid = np.where(~nan_mask)[0]
 
-    dominated_by_count = np.zeros(n, int)
-    dominates_set: list[list[int]] = [[] for _ in range(n)]
     ranks = np.full(n, -1, int)
-    fronts: list[list[int]] = [[]]
+    fronts: list[list[int]] = []
 
-    for i in valid:
-        for j in valid:
-            if i == j:
-                continue
-            if _pareto_dominates(f[i], f[j], direction):
-                dominates_set[i].append(j)
-                dominated_by_count[j] += 1
+    if len(valid) > 0:
+        # Feed only direction-untransformed valid rows to the dominator; the
+        # dominator is responsible for applying the direction transform.
+        g = f[valid].astype(float)
 
-    for i in valid:
-        if dominated_by_count[i] == 0:
-            ranks[i] = 0
-            fronts[0].append(i)
+        # Build the full dominance matrix for valid individuals.
+        dom = _dom.dominance_matrix(g, direction)
 
-    k = 0
-    while fronts[k]:
-        next_front: list[int] = []
-        for i in fronts[k]:
-            for j in dominates_set[i]:
-                dominated_by_count[j] -= 1
-                if dominated_by_count[j] == 0:
-                    ranks[j] = k + 1
-                    next_front.append(j)
-        fronts.append(next_front)
-        k += 1
-    fronts.pop()  # remove trailing empty front
+        # Front-peel: iteratively collect individuals with zero dominators.
+        dominated_by_count = dom.sum(axis=0)  # (k,) — how many dominate each row
+        remaining = np.ones(len(valid), dtype=bool)
+        k = 0
+        while remaining.any():
+            # Local indices (within valid) of the current front.
+            front_local = np.where(remaining & (dominated_by_count == 0))[0]
+            # Map back to global indices.
+            front_global = valid[front_local].tolist()
+            ranks[valid[front_local]] = k
+            fronts.append(front_global)
+            # Remove this front and decrement counts for individuals they dominated.
+            remaining[front_local] = False
+            dominated_by_count -= dom[front_local].sum(axis=0)
+            k += 1
 
-    # Push NaN individuals to a final sentinel front
-    last_rank = k
+    # Push NaN individuals to a final sentinel front (one per NaN row).
+    last_rank = len(fronts)
     for i in np.where(nan_mask)[0]:
         ranks[i] = last_rank
         fronts.append([int(i)])
 
     return ranks, fronts
+
+
+def dda_non_dominated_sort(
+    f: np.ndarray,
+    direction: np.ndarray | None = None,
+    *,
+    dominator: Dominator | None = None,
+) -> tuple[np.ndarray, list[list[int]]]:
+    """
+    Non-dominated sorting via the Dominance-Degree Approach (DDA-ENS).
+
+    Produces **identical** ``(ranks, fronts)`` to :func:`non_dominated_sort`
+    and satisfies the :class:`NonDominatedSorter` Protocol.  It is intended
+    as a scalable drop-in for large *N* and/or large *M* (M > 100).
+
+    The dominance relation is computed once as an *NxN* boolean matrix
+    (peak memory O(N^2), **independent of M**; no (N, N, M) tensor is ever
+    allocated).  Front assignment then follows the DDA-ENS scheme: solutions
+    are ordered by ascending dominance-in-degree (number of solutions that
+    dominate them), so that a solution's dominators are always processed
+    before the solution itself.  Each solution is assigned to the first
+    existing front whose members do **not** dominate it, creating a new
+    front when necessary.
+
+    NaN handling is identical to :func:`non_dominated_sort`: rows that
+    contain any NaN value are excluded from the dominance computation and
+    appended afterwards as individual sentinel fronts at rank
+    ``len(real_fronts)``.
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Objective matrix.  shape: (n, n_obj)
+    direction : np.ndarray or None
+        Per-objective optimization direction: +1 = maximize, -1 = minimize.
+        ``None`` defaults to minimization for all objectives.
+    dominator : Dominator or None
+        Dominance predicate to use.  ``None`` defaults to
+        ``ParetoDominator`` (standard Pareto dominance).
+
+    Returns
+    -------
+    ranks : np.ndarray
+        Pareto front index for each individual (0 = first/best front).
+        shape: (n,), dtype int.
+    fronts : list[list[int]]
+        ``fronts[i]`` contains the global indices of individuals in front i.
+
+    References
+    ----------
+    .. [1] Zhou, Y., Chen, Z., & Zhang, J. (2017). Ranking Vectors by Means of
+       the Dominance Degree Matrix. IEEE Transactions on Evolutionary
+       Computation, 21(1), 34-51. https://ieeexplore.ieee.org/document/7469397
+    .. [2] DDA-ENS: Dominance Degree Approach based Efficient Non-dominated
+       Sort. IEEE Conference Publication (2020).
+       https://ieeexplore.ieee.org/document/9282978
+    """
+    _dom = dominator if dominator is not None else _PARETO_DOMINATOR
+
+    n = len(f)
+    nan_mask = np.any(np.isnan(f), axis=1)
+    valid = np.where(~nan_mask)[0]
+
+    ranks = np.full(n, -1, int)
+    fronts: list[list[int]] = []
+
+    if len(valid) > 0:
+        g = f[valid].astype(float)
+        k = len(valid)
+
+        # Build dominance matrix once: D[i, j] = True means valid[i] dominates valid[j].
+        # Memory O(N²), no (N, N, M) tensor.
+        dom_mat = _dom.dominance_matrix(g, direction)
+
+        # in_degree[i] = number of solutions that dominate solution i (locally).
+        in_degree = dom_mat.sum(axis=0)  # (k,)
+
+        # Process solutions in ascending in-degree order so that dominators of
+        # a solution are always assigned to a front before the solution itself.
+        # This guarantees each solution can be placed in the correct front in a
+        # single pass.
+        order = np.argsort(in_degree, kind="stable")
+
+        # front_members[r] = list of local indices assigned to front r.
+        front_members: list[list[int]] = []
+
+        local_ranks = np.full(k, -1, int)
+
+        for i in order:
+            assigned = False
+            # Scan fronts in increasing rank order; assign to the first front
+            # where no current member dominates solution i.
+            for r, members in enumerate(front_members):
+                # dom_mat[m, i] is True if member m dominates solution i.
+                dominated = any(dom_mat[m, i] for m in members)
+                if not dominated:
+                    front_members[r].append(i)
+                    local_ranks[i] = r
+                    assigned = True
+                    break
+            if not assigned:
+                # No existing front is safe; open a new one.
+                local_ranks[i] = len(front_members)
+                front_members.append([i])
+
+        # Map local indices back to global indices and build output.
+        for members in front_members:
+            global_members = valid[members].tolist()
+            fronts.append(global_members)
+            ranks[valid[members]] = local_ranks[members]
+
+    # Append NaN individuals as individual sentinel fronts (same contract as
+    # non_dominated_sort: each NaN row gets rank = len(real_fronts)).
+    last_rank = len(fronts)
+    for i in np.where(nan_mask)[0]:
+        ranks[i] = last_rank
+        fronts.append([int(i)])
+
+    return ranks, fronts
+
+
+class NonDominatedSorter(Protocol):
+    """
+    Protocol for non-dominated sorting callables.
+
+    Any callable that accepts an objective matrix ``f``, an optional
+    per-objective direction array, and an optional ``dominator`` keyword
+    argument and returns ``(ranks, fronts)`` satisfies this protocol.
+    The free function ``non_dominated_sort`` is the default implementation.
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Objective matrix.  shape: (n, n_obj)
+    direction : np.ndarray or None
+        Per-objective optimization direction: +1 = maximize, -1 = minimize.
+        ``None`` defaults to minimization for all objectives.
+    dominator : Dominator or None
+        Dominance predicate to use.  ``None`` defaults to
+        ``ParetoDominator``.
+
+    Returns
+    -------
+    ranks : np.ndarray
+        Pareto front index for each individual (0 = first/best front).
+        shape: (n,)
+    fronts : list[list[int]]
+        ``fronts[i]`` contains the local indices of individuals in front i.
+    """
+
+    def __call__(
+        self,
+        f: np.ndarray,
+        direction: np.ndarray | None = None,
+        *,
+        dominator: Dominator | None = None,
+    ) -> tuple[np.ndarray, list[list[int]]]:
+        """Sort individuals into non-dominated fronts."""
+        ...
 
 
 def crowding_distance(f_front: np.ndarray) -> np.ndarray:
@@ -482,6 +815,8 @@ class ParetoComparator(Comparator):
         *,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
+        sorter: NonDominatedSorter = non_dominated_sort,
+        dominator: Dominator | None = None,
     ):
         if eps is not None:
             warnings.warn(
@@ -493,6 +828,21 @@ class ParetoComparator(Comparator):
             eps_cv = eps
         w = np.asarray(weights, dtype=float) if weights is not None else np.empty(0)
         super().__init__(w, eps_cv, eps_obj)
+        self._sorter = sorter
+        # Use None-sentinel to avoid a shared mutable default.
+        self._dominator: Dominator = (
+            dominator if dominator is not None else ParetoDominator()
+        )
+
+    @property
+    def sorter(self) -> NonDominatedSorter:
+        """The non-dominated sorting callable used by this comparator."""
+        return self._sorter
+
+    @property
+    def dominator(self) -> Dominator:
+        """The dominance predicate used by this comparator."""
+        return self._dominator
 
     @property
     def _direction(self) -> np.ndarray | None:
@@ -509,7 +859,9 @@ class ParetoComparator(Comparator):
 
         sorted_feasible = np.empty(0, int)
         if len(feasible):
-            ranks, _ = non_dominated_sort(f[feasible], direction=self._direction)
+            ranks, _ = self._sorter(
+                f[feasible], direction=self._direction, dominator=self._dominator
+            )
             order = np.argsort(ranks, kind="stable")
             sorted_feasible = feasible[order]
 
@@ -539,9 +891,9 @@ class ParetoComparator(Comparator):
             return -1
 
         direction = self._direction
-        if _pareto_dominates(fa, fb, direction):
+        if self._dominator.dominates(fa, fb, direction):
             return -1
-        if _pareto_dominates(fb, fa, direction):
+        if self._dominator.dominates(fb, fa, direction):
             return 1
         return 0
 
@@ -575,6 +927,8 @@ class NSGA2Comparator(ParetoComparator):
         *,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
+        sorter: NonDominatedSorter = non_dominated_sort,
+        dominator: Dominator | None = None,
     ):
         if eps is not None:
             warnings.warn(
@@ -584,7 +938,9 @@ class NSGA2Comparator(ParetoComparator):
                 stacklevel=2,
             )
             eps_cv = eps
-        super().__init__(weights, eps_cv=eps_cv, eps_obj=eps_obj)
+        super().__init__(
+            weights, eps_cv=eps_cv, eps_obj=eps_obj, sorter=sorter, dominator=dominator
+        )
 
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort by Pareto front rank then crowding distance (NSGA-II style)."""
@@ -599,7 +955,9 @@ class NSGA2Comparator(ParetoComparator):
 
         sorted_feasible = np.empty(0, int)
         if len(feasible):
-            ranks, fronts = non_dominated_sort(f[feasible], direction=self._direction)
+            ranks, fronts = self._sorter(
+                f[feasible], direction=self._direction, dominator=self._dominator
+            )
             cd = crowding_distance_all_fronts(f[feasible], fronts)
             order = np.lexsort((-cd, ranks))
             sorted_feasible = feasible[order]

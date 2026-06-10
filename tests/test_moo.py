@@ -14,6 +14,7 @@ Tests cover:
 import logging
 
 import numpy as np
+import pytest
 
 from saealib import (
     GA,
@@ -21,6 +22,7 @@ from saealib import (
     IndividualBasedStrategy,
     LHSInitializer,
     MutationUniform,
+    NonDominatedSorter,
     Optimizer,
     Problem,
     RBFsurrogate,
@@ -35,11 +37,15 @@ from saealib import (
     non_dominated_sort,
 )
 from saealib.comparators import (
+    Dominator,
     NSGA2Comparator,
     ParetoComparator,
+    ParetoDominator,
     SingleObjectiveComparator,
+    _pareto_dominates,
 )
 from saealib.population import Population, PopulationAttribute
+from saealib.utils.indicators import _non_dominated
 
 logging.getLogger("saealib.surrogate.rbf").setLevel(logging.CRITICAL)
 
@@ -130,6 +136,148 @@ class TestNonDominatedSort:
         ranks, _fronts = non_dominated_sort(f)
         assert ranks[0] == 0
         assert ranks[1] == 1
+
+    # -----------------------------------------------------------------------
+    # New tests for vectorised implementation (#89)
+    # -----------------------------------------------------------------------
+
+    @pytest.mark.parametrize("n,m", [(1, 1), (2, 1), (50, 2), (50, 5)])
+    def test_equivalence_random(self, n: int, m: int) -> None:
+        """Vectorised result matches a brute-force reference using _pareto_dominates."""
+        rng = np.random.default_rng(seed=n * 100 + m)
+        f = rng.random((n, m))
+
+        ranks, fronts = non_dominated_sort(f)
+
+        # Brute-force: build dominance via _pareto_dominates oracle.
+        dom_count = np.zeros(n, int)
+        dom_set: list[list[int]] = [[] for _ in range(n)]
+        for i in range(n):
+            for j in range(n):
+                if i != j and _pareto_dominates(f[i], f[j]):
+                    dom_set[i].append(j)
+                    dom_count[j] += 1
+        ref_ranks = np.full(n, -1, int)
+        ref_fronts: list[list[int]] = [[]]
+        for i in range(n):
+            if dom_count[i] == 0:
+                ref_ranks[i] = 0
+                ref_fronts[0].append(i)
+        k = 0
+        while ref_fronts[k]:
+            nxt: list[int] = []
+            for i in ref_fronts[k]:
+                for j in dom_set[i]:
+                    dom_count[j] -= 1
+                    if dom_count[j] == 0:
+                        ref_ranks[j] = k + 1
+                        nxt.append(j)
+            ref_fronts.append(nxt)
+            k += 1
+        ref_fronts.pop()
+
+        np.testing.assert_array_equal(ranks, ref_ranks)
+        assert len(fronts) == len(ref_fronts)
+        for f_new, f_ref in zip(fronts, ref_fronts):
+            assert set(f_new) == set(f_ref)
+
+    def test_direction_maximize(self) -> None:
+        """With direction=+1 (maximize), [3,3] dominates [1,1]."""
+        f = np.array([[3.0, 3.0], [1.0, 1.0]])
+        direction = np.array([1.0, 1.0])
+        ranks, fronts = non_dominated_sort(f, direction=direction)
+        assert ranks[0] == 0
+        assert ranks[1] == 1
+        assert 0 in fronts[0]
+        assert 1 in fronts[1]
+
+    def test_all_nan_input(self) -> None:
+        """When every row is NaN, all individuals become sentinel fronts."""
+        f = np.array([[np.nan, np.nan], [np.nan, np.nan]])
+        ranks, fronts = non_dominated_sort(f)
+        # No valid front; both rows become individual sentinel fronts at rank 0.
+        assert ranks[0] == 0
+        assert ranks[1] == 0
+        assert len(fronts) == 2
+        assert fronts[0] == [0]
+        assert fronts[1] == [1]
+
+    def test_mixed_nan_multiple_nan_rows(self) -> None:
+        """Each NaN row gets its own sentinel front; valid ranks are lower."""
+        f = np.array(
+            [
+                [0.0, 0.0],
+                [np.nan, np.nan],
+                [1.0, 1.0],
+                [np.nan, 2.0],
+            ]
+        )
+        ranks, fronts = non_dominated_sort(f)
+        # Valid individuals: 0 (front 0) and 2 (front 1)
+        assert ranks[0] == 0
+        assert ranks[2] == 1
+        # Both NaN rows get rank == number of real fronts (2)
+        assert ranks[1] == 2
+        assert ranks[3] == 2
+        # Each NaN row is its own front
+        nan_fronts = fronts[2:]
+        nan_indices = {f[0] for f in nan_fronts}
+        assert nan_indices == {1, 3}
+        for nf in nan_fronts:
+            assert len(nf) == 1
+
+    def test_all_equal_rows_single_front(self) -> None:
+        """Identical rows are mutually non-dominating → all in front 0."""
+        f = np.array([[1.0, 2.0], [1.0, 2.0], [1.0, 2.0]])
+        ranks, fronts = non_dominated_sort(f)
+        assert np.all(ranks == 0)
+        assert len(fronts) == 1
+        assert sorted(fronts[0]) == [0, 1, 2]
+
+
+# ===========================================================================
+# _non_dominated Tests (indicators.py, vectorised kernel parity)
+# ===========================================================================
+class TestNonDominatedIndicator:
+    """Tests for _non_dominated (used internally by hypervolume)."""
+
+    def test_parity_with_brute_force(self) -> None:
+        """Vectorised _non_dominated returns same rows as brute-force reference."""
+        rng = np.random.default_rng(42)
+        f = rng.random((20, 3))
+
+        result = _non_dominated(f)
+
+        # Brute-force reference (minimisation)
+        n = len(f)
+        dominated = np.zeros(n, dtype=bool)
+        for i in range(n):
+            for j in range(n):
+                if i != j and np.all(f[j] <= f[i]) and np.any(f[j] < f[i]):
+                    dominated[i] = True
+                    break
+        expected = f[~dominated]
+
+        # Compare as sets of tuples (row order may differ)
+        assert {tuple(r) for r in result} == {tuple(r) for r in expected}
+
+    def test_single_row_returned_unchanged(self) -> None:
+        f = np.array([[0.5, 0.5]])
+        result = _non_dominated(f)
+        np.testing.assert_array_equal(result, f)
+
+    def test_all_non_dominated(self) -> None:
+        """Points on the Pareto front are all returned."""
+        f = np.array([[0.0, 1.0], [1.0, 0.0]])
+        result = _non_dominated(f)
+        assert len(result) == 2
+
+    def test_one_dominated(self) -> None:
+        """Only the dominating point is returned."""
+        f = np.array([[0.0, 0.0], [1.0, 1.0]])
+        result = _non_dominated(f)
+        assert len(result) == 1
+        np.testing.assert_array_equal(result[0], [0.0, 0.0])
 
 
 # ===========================================================================
@@ -612,3 +760,393 @@ class TestMOOIntegration:
         best_f2 = archive_f[:, 1].min()
         assert best_f1 >= 0.0
         assert best_f2 >= 0.0
+
+
+# ===========================================================================
+# NonDominatedSorter injection tests (#89)
+# ===========================================================================
+class TestNonDominatedSorterInjection:
+    """Tests for the NonDominatedSorter injection seam in Pareto-based comparators."""
+
+    # -----------------------------------------------------------------------
+    # Helpers
+    # -----------------------------------------------------------------------
+    def _make_spy_sorter(self) -> tuple[list[tuple], object]:
+        """Return (call_log, spy_sorter).
+
+        The spy delegates to non_dominated_sort and records every call as
+        (f_arg, direction_arg) in call_log.
+        """
+        call_log: list[tuple] = []
+
+        def spy(
+            f: np.ndarray,
+            direction: np.ndarray | None = None,
+            *,
+            dominator=None,
+        ) -> tuple[np.ndarray, list[list[int]]]:
+            call_log.append((f, direction))
+            return non_dominated_sort(f, direction)
+
+        return call_log, spy
+
+    # -----------------------------------------------------------------------
+    # 1. Spy: verifies the injected sorter is called with the right arguments
+    # -----------------------------------------------------------------------
+    def test_pareto_comparator_calls_injected_sorter(self) -> None:
+        """ParetoComparator.sort_population invokes the injected sorter."""
+        call_log, spy = self._make_spy_sorter()
+        weights = np.array([-1.0, -1.0])
+        comp = ParetoComparator(weights=weights, sorter=spy)
+
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
+        pop = _make_pop(f)
+        comp.sort_population(pop)
+
+        assert len(call_log) == 1
+        f_passed, dir_passed = call_log[0]
+        # The comparator passes the feasible-subset objective matrix.
+        assert f_passed.shape == (3, 2)
+        # direction should be np.sign(weights) = [-1, -1]
+        np.testing.assert_array_equal(dir_passed, np.sign(weights))
+
+    def test_nsga2_comparator_calls_injected_sorter(self) -> None:
+        """NSGA2Comparator.sort_population invokes the injected sorter."""
+        call_log, spy = self._make_spy_sorter()
+        weights = np.array([-1.0, -1.0])
+        comp = NSGA2Comparator(weights=weights, sorter=spy)
+
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
+        pop = _make_pop(f)
+        comp.sort_population(pop)
+
+        assert len(call_log) == 1
+        f_passed, dir_passed = call_log[0]
+        assert f_passed.shape == (3, 2)
+        np.testing.assert_array_equal(dir_passed, np.sign(weights))
+
+    def test_spy_receives_feasible_subset_only(self) -> None:
+        """The sorter only receives the feasible-individual rows."""
+        call_log, spy = self._make_spy_sorter()
+        comp = ParetoComparator(sorter=spy)
+
+        # idx=2 is infeasible
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [99.0, 99.0]])
+        cv = np.array([0.0, 0.0, 5.0])
+        pop = _make_pop(f, cv)
+        comp.sort_population(pop)
+
+        assert len(call_log) == 1
+        f_passed, _ = call_log[0]
+        # Only the 2 feasible rows should be passed to the sorter.
+        assert f_passed.shape == (2, 2)
+
+    def test_nsga2_spy_receives_feasible_subset_only(self) -> None:
+        """NSGA2Comparator passes only feasible rows to the sorter."""
+        call_log, spy = self._make_spy_sorter()
+        comp = NSGA2Comparator(sorter=spy)
+
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [99.0, 99.0]])
+        cv = np.array([0.0, 0.0, 5.0])
+        pop = _make_pop(f, cv)
+        comp.sort_population(pop)
+
+        assert len(call_log) == 1
+        f_passed, _ = call_log[0]
+        assert f_passed.shape == (2, 2)
+
+    # -----------------------------------------------------------------------
+    # 2. Alternate sorter: honors the ranks/fronts returned by the injected sorter
+    # -----------------------------------------------------------------------
+    def test_pareto_comparator_honors_injected_ranks(self) -> None:
+        """ParetoComparator.sort_population respects ranks from the injected sorter.
+
+        We inject a sorter that inverts the natural ranking so that the
+        *worst* objective point is declared front-0.
+        """
+        f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+        # Natural order: idx 0 (front-0) → idx 1 (front-1) → idx 2 (front-2).
+        # Inverted sorter: rank 0 → idx 2, rank 1 → idx 1, rank 2 → idx 0.
+
+        def inverted_sorter(
+            f_sub: np.ndarray,
+            direction: np.ndarray | None = None,
+            *,
+            dominator=None,
+        ) -> tuple[np.ndarray, list[list[int]]]:
+            n = len(f_sub)
+            # Assign ranks in reverse order.
+            ranks = np.arange(n - 1, -1, -1, dtype=int)
+            fronts = [[i] for i in range(n - 1, -1, -1)]
+            return ranks, fronts
+
+        comp = ParetoComparator(sorter=inverted_sorter)
+        pop = _make_pop(f)
+        order = comp.sort_population(pop)
+
+        # Inverted: global index 2 should be first (rank 0 for its local index 2).
+        assert order[0] == 2
+
+    def test_nsga2_comparator_honors_injected_ranks(self) -> None:
+        """NSGA2Comparator.sort_population respects ranks from the injected sorter."""
+        f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+
+        def inverted_sorter(
+            f_sub: np.ndarray,
+            direction: np.ndarray | None = None,
+            *,
+            dominator=None,
+        ) -> tuple[np.ndarray, list[list[int]]]:
+            n = len(f_sub)
+            ranks = np.arange(n - 1, -1, -1, dtype=int)
+            fronts = [[i] for i in range(n - 1, -1, -1)]
+            return ranks, fronts
+
+        comp = NSGA2Comparator(sorter=inverted_sorter)
+        pop = _make_pop(f)
+        order = comp.sort_population(pop)
+
+        # Inverted: global index 2 should appear first.
+        assert order[0] == 2
+
+    # -----------------------------------------------------------------------
+    # 3. Default behavior and public API
+    # -----------------------------------------------------------------------
+    def test_default_sorter_is_non_dominated_sort(self) -> None:
+        """When sorter is not specified, non_dominated_sort is used (default)."""
+        comp = ParetoComparator()
+        assert comp.sorter is non_dominated_sort
+
+    def test_nsga2_default_sorter_is_non_dominated_sort(self) -> None:
+        """NSGA2Comparator default sorter is non_dominated_sort."""
+        comp = NSGA2Comparator()
+        assert comp.sorter is non_dominated_sort
+
+    def test_non_dominated_sorter_importable_from_saealib(self) -> None:
+        """NonDominatedSorter is importable from the top-level saealib package."""
+        # Import is done at module level; this test confirms it succeeds.
+        assert NonDominatedSorter is not None
+
+    def test_non_dominated_sort_satisfies_protocol(self) -> None:
+        """non_dominated_sort can be passed wherever NonDominatedSorter is expected."""
+        # Passing the free function as the sorter kwarg should not raise.
+        comp = ParetoComparator(sorter=non_dominated_sort)
+        f = np.array([[0.0, 1.0], [1.0, 0.0]])
+        pop = _make_pop(f)
+        order = comp.sort_population(pop)
+        assert len(order) == 2
+
+    # -----------------------------------------------------------------------
+    # Cache behavior must remain intact for NSGA2Comparator
+    # -----------------------------------------------------------------------
+    def test_nsga2_injected_sorter_cached_result(self) -> None:
+        """Cache still works when a custom sorter is injected."""
+        call_log, spy = self._make_spy_sorter()
+        comp = NSGA2Comparator(sorter=spy)
+
+        f = np.array([[0.0, 1.0], [1.0, 0.0]])
+        pop = _make_pop(f)
+
+        order1 = comp.sort_population(pop)
+        order2 = comp.sort_population(pop)
+
+        # Second call should use cache; spy called only once.
+        assert len(call_log) == 1
+        assert order1 is order2
+
+
+# ===========================================================================
+# Dominator abstraction tests (#89)
+# ===========================================================================
+class TestParetoDominator:
+    """Tests for ParetoDominator and the Dominator ABC seam."""
+
+    # -----------------------------------------------------------------------
+    # 1. dominates() parity with legacy _pareto_dominates
+    # -----------------------------------------------------------------------
+    def test_dominates_parity_random_pairs(self) -> None:
+        """ParetoDominator.dominates agrees with legacy _pareto_dominates."""
+        rng = np.random.default_rng(0)
+        dom = ParetoDominator()
+        for _ in range(200):
+            fa = rng.random(3)
+            fb = rng.random(3)
+            assert dom.dominates(fa, fb) == _pareto_dominates(fa, fb), (fa, fb)
+
+    def test_dominates_nan_in_fa_returns_false(self) -> None:
+        """NaN in fa → never dominates (consistent with legacy behaviour)."""
+        dom = ParetoDominator()
+        fa = np.array([np.nan, 0.0])
+        fb = np.array([1.0, 1.0])
+        assert not dom.dominates(fa, fb)
+        assert not _pareto_dominates(fa, fb)
+
+    def test_dominates_direction_maximize(self) -> None:
+        """With direction=+1, larger values are better."""
+        dom = ParetoDominator()
+        direction = np.array([1.0, 1.0])
+        fa = np.array([3.0, 3.0])
+        fb = np.array([1.0, 1.0])
+        assert dom.dominates(fa, fb, direction)
+        assert _pareto_dominates(fa, fb, direction)
+        assert not dom.dominates(fb, fa, direction)
+
+    def test_dominates_direction_minimize(self) -> None:
+        """With direction=-1 (explicit minimize), lower values are better."""
+        dom = ParetoDominator()
+        direction = np.array([-1.0, -1.0])
+        fa = np.array([1.0, 1.0])
+        fb = np.array([3.0, 3.0])
+        assert dom.dominates(fa, fb, direction)
+        assert _pareto_dominates(fa, fb, direction)
+
+    # -----------------------------------------------------------------------
+    # 2. dominance_matrix() parity with brute-force and scalar↔batched
+    # -----------------------------------------------------------------------
+    @pytest.mark.parametrize("n,m", [(3, 2), (10, 3), (20, 2)])
+    def test_dominance_matrix_brute_force_parity(self, n: int, m: int) -> None:
+        """dominance_matrix matches a brute-force reference built with dominates."""
+        rng = np.random.default_rng(seed=n * 10 + m)
+        f = rng.random((n, m))
+        dom = ParetoDominator()
+        mat = dom.dominance_matrix(f)
+        for i in range(n):
+            for j in range(n):
+                expected = dom.dominates(f[i], f[j])
+                assert mat[i, j] == expected, f"Mismatch at ({i},{j})"
+
+    def test_dominance_matrix_scalar_batched_consistency(self) -> None:
+        """Every (i,j) entry of dominance_matrix equals dominates(f[i], f[j])."""
+        rng = np.random.default_rng(42)
+        f = rng.random((8, 2))
+        dom = ParetoDominator()
+        mat = dom.dominance_matrix(f)
+        n = len(f)
+        for i in range(n):
+            for j in range(n):
+                assert mat[i, j] == dom.dominates(f[i], f[j])
+
+    # -----------------------------------------------------------------------
+    # 3. Custom Dominator injection: compare() and sort_population() both honor it
+    # -----------------------------------------------------------------------
+    def test_custom_dominator_affects_compare(self) -> None:
+        """Injecting a custom Dominator changes compare() behaviour."""
+
+        class AllDominatesDominator(Dominator):
+            """Toy: every solution dominates every other (a > b always)."""
+
+            def dominance_matrix(
+                self,
+                f: np.ndarray,
+                direction: np.ndarray | None = None,
+            ) -> np.ndarray:
+                n = len(f)
+                # All off-diagonal True → every pair mutually dominated.
+                return np.ones((n, n), dtype=bool) & ~np.eye(n, dtype=bool)
+
+        comp = ParetoComparator(dominator=AllDominatesDominator())
+        # Under AllDominatesDominator, fa dominates fb → compare returns -1.
+        fa = np.array([5.0, 5.0])
+        fb = np.array([0.0, 0.0])
+        # Both would dominate each other; first check wins → -1.
+        result = comp.compare(fa, 0.0, fb, 0.0)
+        assert result == -1
+
+    def test_custom_dominator_affects_sort_population(self) -> None:
+        """Injecting a custom Dominator changes sort_population() output."""
+
+        class ReverseParetoDominator(Dominator):
+            """Toy: transpose the normal Pareto matrix (worse = better)."""
+
+            def dominance_matrix(
+                self,
+                f: np.ndarray,
+                direction: np.ndarray | None = None,
+            ) -> np.ndarray:
+                # Standard Pareto matrix, then transpose so dominated → dominator.
+                _dom = ParetoDominator()
+                return _dom.dominance_matrix(f, direction).T
+
+        f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+        pop = _make_pop(f)
+        comp = ParetoComparator(dominator=ReverseParetoDominator())
+        order = comp.sort_population(pop)
+        # Under reversed dominance, [2,2] becomes "best" (front-0).
+        assert order[0] == 2
+
+    def test_custom_dominator_nsga2_sort_population(self) -> None:
+        """Injecting a custom Dominator into NSGA2Comparator also takes effect."""
+
+        class ReverseParetoDominator(Dominator):
+            def dominance_matrix(
+                self,
+                f: np.ndarray,
+                direction: np.ndarray | None = None,
+            ) -> np.ndarray:
+                return ParetoDominator().dominance_matrix(f, direction).T
+
+        f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+        pop = _make_pop(f)
+        comp = NSGA2Comparator(dominator=ReverseParetoDominator())
+        order = comp.sort_population(pop)
+        assert order[0] == 2
+
+    # -----------------------------------------------------------------------
+    # 4. non_dominated_sort(..., dominator=ParetoDominator()) == default call
+    # -----------------------------------------------------------------------
+    @pytest.mark.parametrize("n,m", [(1, 2), (5, 2), (20, 3)])
+    def test_non_dominated_sort_explicit_pareto_dominator_equals_default(
+        self, n: int, m: int
+    ) -> None:
+        """dominator=ParetoDominator() yields identical result to the default."""
+        rng = np.random.default_rng(seed=n * 7 + m)
+        f = rng.random((n, m))
+        ranks_default, fronts_default = non_dominated_sort(f)
+        ranks_explicit, fronts_explicit = non_dominated_sort(
+            f, dominator=ParetoDominator()
+        )
+        np.testing.assert_array_equal(ranks_default, ranks_explicit)
+        assert len(fronts_default) == len(fronts_explicit)
+        for fd, fe in zip(fronts_default, fronts_explicit):
+            assert set(fd) == set(fe)
+
+    def test_non_dominated_sort_explicit_dominator_with_direction(self) -> None:
+        """dominator kwarg also works correctly when direction is passed."""
+        f = np.array([[3.0, 3.0], [1.0, 1.0]])
+        direction = np.array([1.0, 1.0])  # maximize
+        ranks_default, _ = non_dominated_sort(f, direction=direction)
+        ranks_explicit, _ = non_dominated_sort(
+            f, direction=direction, dominator=ParetoDominator()
+        )
+        np.testing.assert_array_equal(ranks_default, ranks_explicit)
+
+    # -----------------------------------------------------------------------
+    # 5. Public API: Dominator and ParetoDominator importable from saealib
+    # -----------------------------------------------------------------------
+    def test_dominator_importable_from_saealib(self) -> None:
+        from saealib import Dominator as ImportedDominator
+        from saealib import ParetoDominator as ImportedParetoDominator
+
+        assert issubclass(ParetoDominator, Dominator)
+        assert issubclass(ImportedParetoDominator, ImportedDominator)
+
+    def test_pareto_comparator_dominator_property(self) -> None:
+        """ParetoComparator exposes a .dominator property."""
+        comp = ParetoComparator()
+        assert isinstance(comp.dominator, ParetoDominator)
+
+    def test_nsga2_comparator_dominator_property(self) -> None:
+        """NSGA2Comparator exposes a .dominator property (inherited)."""
+        comp = NSGA2Comparator()
+        assert isinstance(comp.dominator, ParetoDominator)
+
+    def test_custom_dominator_stored_on_property(self) -> None:
+        """Injected dominator is retrievable via .dominator property."""
+
+        class MyDominator(Dominator):
+            def dominance_matrix(self, f, direction=None):
+                return np.zeros((len(f), len(f)), dtype=bool)
+
+        d = MyDominator()
+        comp = ParetoComparator(dominator=d)
+        assert comp.dominator is d
