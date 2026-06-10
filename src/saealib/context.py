@@ -9,7 +9,7 @@ import numpy as np
 
 if TYPE_CHECKING:
     from saealib.comparators import Comparator
-    from saealib.population import Archive, Population
+    from saealib.population import Archive, ParetoArchive, Population
     from saealib.problem import Problem
 
 
@@ -42,6 +42,7 @@ class OptimizationContext:
 
     population: Population
     archive: Archive
+    pareto_archive: ParetoArchive
     rng: np.random.Generator
 
     fe: int = 0

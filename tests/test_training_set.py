@@ -7,7 +7,7 @@ import pytest
 
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationContext
-from saealib.population import Archive, Population, PopulationAttribute
+from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.surrogate.training_set import (
     ArchiveObjectiveSet,
@@ -87,10 +87,12 @@ def _make_ctx(
     problem = _make_problem(eps_cv=eps_cv)
     arc = archive if archive is not None else _make_archive()
     pop = population if population is not None else _make_population_with_cv([0.0] * 5)
+    pareto_arc = ParetoArchive(_ATTRS, init_capacity=20, direction=np.array([-1.0]))
     return OptimizationContext(
         problem=problem,
         population=pop,
         archive=arc,
+        pareto_archive=pareto_arc,
         rng=np.random.default_rng(0),
         fe=10,
         gen=1,
