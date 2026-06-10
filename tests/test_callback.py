@@ -37,7 +37,7 @@ from saealib.callback import (
 )
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationContext
-from saealib.population import Archive, Population, PopulationAttribute
+from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.surrogate.manager import (
     EnsembleSurrogateManager,
@@ -92,6 +92,10 @@ def _make_population(n: int = 5, rng_seed: int = 7) -> Population:
     return pop
 
 
+def _make_pareto_archive() -> ParetoArchive:
+    return ParetoArchive(_ATTRS_1OBJ, init_capacity=30, direction=np.array([-1.0]))
+
+
 class _MockProvider:
     """Minimal ComponentProvider that records dispatched events."""
 
@@ -114,6 +118,7 @@ def _make_ctx(
         problem=problem,
         population=pop,
         archive=arc,
+        pareto_archive=_make_pareto_archive(),
         rng=np.random.default_rng(0),
         fe=10,
         gen=1,
@@ -426,10 +431,14 @@ class TestLoggingGenerationHandler:
             ub=[5.0] * DIM,
         )
         pop = Population(attrs, init_capacity=5)
+        pareto_arc = ParetoArchive(
+            attrs, init_capacity=30, direction=np.array([-1.0, -1.0])
+        )
         return OptimizationContext(
             problem=problem,
             population=pop,
             archive=arc,
+            pareto_archive=pareto_arc,
             rng=np.random.default_rng(0),
             fe=10,
             gen=1,

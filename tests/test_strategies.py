@@ -19,7 +19,7 @@ from saealib.acquisition import MeanPrediction
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationContext
 from saealib.execution.evaluator import SerialEvaluator
-from saealib.population import Archive, Population, PopulationAttribute
+from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
@@ -69,10 +69,14 @@ def _make_ctx(n_pop: int = N_POP, rng_seed: int = 0) -> OptimizationContext:
     arc = Archive(_ATTRS, init_capacity=n_pop + 5)
     arc.extend({"x": xs, "f": fs, "g": np.zeros((n_pop, 0)), "cv": np.zeros(n_pop)})
 
+    pareto_arc = ParetoArchive(
+        _ATTRS, init_capacity=n_pop + 5, direction=np.array([-1.0])
+    )
     return OptimizationContext(
         problem=problem,
         population=pop,
         archive=arc,
+        pareto_archive=pareto_arc,
         rng=np.random.default_rng(rng_seed + 1),
     )
 

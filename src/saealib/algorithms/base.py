@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 from saealib.context import OptimizationContext
-from saealib.population import Archive, Population, PopulationAttribute
+from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
 if TYPE_CHECKING:
@@ -32,6 +32,24 @@ class Algorithm(ABC):
     def archive_class(self) -> type[Archive]:
         """Return the archive class."""
         pass
+
+    @property
+    def pareto_archive_class(self) -> type[ParetoArchive]:
+        """Return the Pareto archive class."""
+        return ParetoArchive
+
+    def create_pareto_archive(
+        self,
+        attrs: list[PopulationAttribute],
+        init_capacity: int,
+        problem: Problem,
+    ) -> ParetoArchive:
+        """Create a ParetoArchive with the correct direction for the problem."""
+        return self.pareto_archive_class(
+            attrs=attrs,
+            init_capacity=init_capacity,
+            direction=problem.weight,
+        )
 
     @abstractmethod
     def ask(

@@ -9,7 +9,7 @@ import scipy.stats
 
 from saealib.context import OptimizationContext
 from saealib.optimizer import ComponentProvider
-from saealib.population import Archive, Population, PopulationAttribute
+from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
 
@@ -52,6 +52,7 @@ class Initializer(ABC):
         self,
         problem: Problem,
         archive: Archive,
+        pareto_archive: ParetoArchive,
         population: Population,
         rng: np.random.Generator,
     ) -> OptimizationContext:
@@ -64,6 +65,8 @@ class Initializer(ABC):
             The problem instance.
         archive : Archive
             The archive instance.
+        pareto_archive : ParetoArchive
+            The Pareto archive instance.
         population : Population
             The population instance.
         rng : np.random.Generator
@@ -78,6 +81,7 @@ class Initializer(ABC):
             problem=problem,
             population=population,
             archive=archive,
+            pareto_archive=pareto_archive,
             rng=rng,
             fe=len(archive),
             gen=0,
@@ -154,6 +158,9 @@ class LHSInitializer(Initializer):
         archive = provider.algorithm.archive_class(
             attrs=attrs, init_capacity=self.n_init_archive
         )
+        pareto_archive = provider.algorithm.create_pareto_archive(
+            attrs=attrs, init_capacity=self.n_init_archive, problem=problem
+        )
 
         # TODO: Assign different metadata per dimension (mixed variable support).
         # TODO: Support initialization of CV and other attributes.
@@ -165,14 +172,14 @@ class LHSInitializer(Initializer):
 
         # TODO: Register algorithm-specific attributes in the archive.
         for i in range(self.n_init_archive):
-            archive.add(
-                {
-                    "x": archive_x[i],
-                    "f": result.f[i],
-                    "g": result.g[i],
-                    "cv": float(result.cv[i]),
-                }
-            )
+            data = {
+                "x": archive_x[i],
+                "f": result.f[i],
+                "g": result.g[i],
+                "cv": float(result.cv[i]),
+            }
+            archive.add(data)
+            pareto_archive.add(data)
 
         sorted_idx = problem.comparator.sort_population(archive)
         archive_sorted = archive.extract(sorted_idx)
@@ -181,4 +188,4 @@ class LHSInitializer(Initializer):
 
         population.extend(archive[: self.n_init_population])
 
-        return self._create_context(problem, archive, population, rng)
+        return self._create_context(problem, archive, pareto_archive, population, rng)

@@ -72,6 +72,9 @@ class GenerationBasedStrategy(OptimizationStrategy):
             offspring[i].g = g_i
             offspring[i].cv = cv_i
             ctx.archive.add({"x": offspring[i].x, "f": f_i, "g": g_i, "cv": cv_i})
+            ctx.pareto_archive.add(
+                {"x": offspring[i].x, "f": f_i, "g": g_i, "cv": cv_i}
+            )
         ctx.count_fe(n_offspring)
 
         provider.dispatch(

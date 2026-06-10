@@ -30,7 +30,7 @@ from saealib.operators.mutation import (
     MutationPolynomial,
 )
 from saealib.operators.selection import RouletteWheelSelection
-from saealib.population import Archive, Population, PopulationAttribute
+from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
 # ---------------------------------------------------------------------------
@@ -73,10 +73,12 @@ def _make_ctx(n_pop: int = 10, rng_seed: int = 0) -> OptimizationContext:
     cvs = np.zeros(n_pop)
     pop.extend({"x": xs, "f": fs, "g": gs, "cv": cvs})
     arc = Archive(_ATTRS, init_capacity=5)
+    pareto_arc = ParetoArchive(_ATTRS, init_capacity=5, direction=np.array([-1.0]))
     return OptimizationContext(
         problem=problem,
         population=pop,
         archive=arc,
+        pareto_archive=pareto_arc,
         rng=np.random.default_rng(rng_seed),
     )
 

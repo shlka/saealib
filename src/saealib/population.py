@@ -6,10 +6,13 @@ import warnings
 import weakref
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 import numpy as np
 from typing_extensions import Self
+
+if TYPE_CHECKING:
+    from saealib.comparators import Dominator
 
 T_Population = TypeVar("T_Population", bound="Population")
 T_Individual = TypeVar("T_Individual", bound="Individual")
@@ -773,6 +776,204 @@ class ArchiveMixin:
 
 class Archive(ArchiveMixin, Population):
     """Concrete archive: ``ArchiveMixin`` mixed into ``Population``."""
+
+    pass
+
+
+class ParetoMixin:
+    """
+    A mixin that maintains a Pareto-non-dominated archive.
+
+    Must be used via multiple inheritance together with ``Population``
+    (or a subclass thereof).  Only non-dominated solutions are retained:
+    when a new solution is added any existing solutions it dominates are
+    removed, and if the new solution is itself dominated it is discarded.
+
+    Feasibility-first dominance is applied:
+
+    - A feasible solution (cv ≤ eps_cv) dominates every infeasible one.
+    - Among two infeasible solutions the one with lower cv dominates.
+    - Among two feasible solutions ``dominator.dominates`` is used.
+
+    Parameters
+    ----------
+    attrs : list[PopulationAttribute]
+        Forwarded to ``Population.__init__``.
+    init_capacity : int, optional
+        Forwarded to ``Population.__init__``.
+    direction : np.ndarray or None, optional
+        Per-objective direction (+1 maximize, -1 minimize).
+        ``None`` defaults to all-minimize.
+    dominator : Dominator or None, optional
+        Dominance predicate.  ``None`` defaults to ``ParetoDominator()``.
+    eps_cv : float, optional
+        Feasibility threshold for constraint violation, by default 0.0.
+    """
+
+    def __init__(
+        self,
+        attrs: list[PopulationAttribute],
+        init_capacity: int = 100,
+        direction: np.ndarray | None = None,
+        dominator: Dominator | None = None,
+        eps_cv: float = 0.0,
+        **kwargs,
+    ):
+        super().__init__(attrs=attrs, init_capacity=init_capacity, **kwargs)
+
+        # Import here to avoid circular imports at module load time.
+        from saealib.comparators import ParetoDominator
+
+        self.direction = direction
+        self.dominator: Dominator = (
+            dominator if dominator is not None else ParetoDominator()
+        )
+        self.eps_cv = eps_cv
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _extract_fv(
+        self, element: Individual | dict[str, Any] | None, kwargs: dict[str, Any]
+    ) -> tuple[np.ndarray | None, float]:
+        """
+        Extract (f, cv) from the supplied element / kwargs.
+
+        Returns
+        -------
+        f : np.ndarray or None
+            Objective vector, or None when the key is absent or all-NaN.
+        cv : float
+            Constraint violation (0.0 when absent).
+        """
+        # --- f ---
+        f_val = kwargs.get("f")
+        if f_val is None:
+            if isinstance(element, dict):
+                f_val = element.get("f")
+            elif element is not None and hasattr(element, "f"):
+                f_val = getattr(element, "f")
+
+        if f_val is None:
+            f = None
+        else:
+            f = np.asarray(f_val, dtype=float).ravel()
+            if np.all(np.isnan(f)):
+                f = None
+
+        # --- cv ---
+        cv_val = kwargs.get("cv")
+        if cv_val is None:
+            if isinstance(element, dict):
+                cv_val = element.get("cv")
+            elif element is not None and hasattr(element, "cv"):
+                cv_val = getattr(element, "cv")
+
+        cv: float = float(cv_val) if cv_val is not None else 0.0
+
+        return f, cv
+
+    def _new_dominates_existing(
+        self,
+        f_new: np.ndarray | None,
+        cv_new: float,
+        f_ex: np.ndarray | None,
+        cv_ex: float,
+    ) -> bool:
+        """Return True if the new solution dominates the existing one."""
+        new_feasible = cv_new <= self.eps_cv
+        ex_feasible = cv_ex <= self.eps_cv
+
+        if new_feasible and not ex_feasible:
+            return True
+        if not new_feasible and ex_feasible:
+            return False
+        if new_feasible and ex_feasible:
+            # Both feasible — use objective-space dominance.
+            if f_new is None:
+                return False
+            if f_ex is None:
+                # Existing has no objective value → new dominates it.
+                return True
+            return bool(self.dominator.dominates(f_new, f_ex, self.direction))
+        # Both infeasible — lower cv wins.
+        return cv_new < cv_ex
+
+    def _existing_dominates_new(
+        self,
+        f_new: np.ndarray | None,
+        cv_new: float,
+        f_ex: np.ndarray | None,
+        cv_ex: float,
+    ) -> bool:
+        """Return True if an existing solution dominates the new one."""
+        return self._new_dominates_existing(f_ex, cv_ex, f_new, cv_new)
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def add(self, element: Individual | dict[str, Any] | None = None, **kwargs) -> int:
+        """
+        Add a solution to the Pareto archive.
+
+        The solution is accepted only if it is not dominated by any existing
+        member.  After insertion all existing members that are dominated by
+        the new solution are removed.
+
+        Parameters
+        ----------
+        element : Individual | dict | None
+            Data for the new solution.
+        **kwargs :
+            Attribute values that override or supplement ``element``.
+
+        Returns
+        -------
+        idx : int
+            Index assigned to the new solution, or -1 when it was rejected.
+
+        Examples
+        --------
+        >>> archive.add(ind)
+        >>> archive.add({"x": x_val, "f": f_val})
+        >>> archive.add(x=x_val, f=f_val)
+        """
+        f_new, cv_new = self._extract_fv(element, kwargs)
+
+        # Check whether any existing solution dominates the new one.
+        if self._size > 0:
+            f_arr = self.get_array("f") if "f" in self._schema else None
+            cv_arr = self.get_array("cv") if "cv" in self._schema else None
+
+            for i in range(self._size):
+                f_ex = f_arr[i] if f_arr is not None else None
+                cv_ex = float(cv_arr[i]) if cv_arr is not None else 0.0
+                if self._existing_dominates_new(f_new, cv_new, f_ex, cv_ex):
+                    return -1
+
+            # Collect indices of existing solutions dominated by the new one.
+            dominated_mask = np.zeros(self._size, dtype=bool)
+            for i in range(self._size):
+                f_ex = f_arr[i] if f_arr is not None else None
+                cv_ex = float(cv_arr[i]) if cv_arr is not None else 0.0
+                if self._new_dominates_existing(f_new, cv_new, f_ex, cv_ex):
+                    dominated_mask[i] = True
+
+            # Remove dominated solutions in one pass using delete().
+            if np.any(dominated_mask):
+                dominated_indices = np.where(dominated_mask)[0]
+                self.delete(dominated_indices)
+
+        # Append the new solution and return its index.
+        new_idx: int = self._size
+        super().append(element, **kwargs)  # type: ignore[misc]
+        return new_idx
+
+
+class ParetoArchive(ParetoMixin, Population):
+    """Concrete Pareto archive: ``ParetoMixin`` mixed into ``Population``."""
 
     pass
 

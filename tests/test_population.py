@@ -21,6 +21,7 @@ import pytest
 from saealib.population import (
     Archive,
     Individual,
+    ParetoArchive,
     Population,
     PopulationAttribute,
     bind_property,
@@ -67,6 +68,21 @@ def archive_attrs() -> list[PopulationAttribute]:
 def archive(archive_attrs: list[PopulationAttribute]) -> Archive:
     """Basic Archive instance."""
     return Archive(archive_attrs, init_capacity=10)
+
+
+@pytest.fixture
+def moo_attrs() -> list[PopulationAttribute]:
+    """Attribute list for ParetoArchive (x: 2-dim, f: 2-dim objective, cv: scalar)."""
+    return [
+        PopulationAttribute(name="x", dtype=np.float64, shape=(2,)),
+        PopulationAttribute(name="f", dtype=np.float64, shape=(2,)),
+        PopulationAttribute(name="cv", dtype=np.float64, shape=()),
+    ]
+
+
+@pytest.fixture
+def pareto_archive(moo_attrs: list[PopulationAttribute]) -> ParetoArchive:
+    return ParetoArchive(moo_attrs, init_capacity=20)
 
 
 # ===========================================================================
@@ -666,6 +682,96 @@ class TestArchive:
         # extract is also available
         sub = archive.extract([0])
         assert len(sub) == 1
+
+
+# ===========================================================================
+# ParetoArchive Tests
+# ===========================================================================
+class TestParetoArchive:
+    """Tests for ParetoArchive (Pareto-non-dominated archive)."""
+
+    def test_add_to_empty(self, pareto_archive: ParetoArchive) -> None:
+        idx = pareto_archive.add(x=np.array([0.5, 0.5]), f=np.array([0.0, 1.0]), cv=0.0)
+        assert idx == 0
+        assert len(pareto_archive) == 1
+
+    def test_add_non_dominated(self, pareto_archive: ParetoArchive) -> None:
+        pareto_archive.add(x=np.array([0.0, 0.0]), f=np.array([0.0, 1.0]), cv=0.0)
+        idx = pareto_archive.add(x=np.array([1.0, 1.0]), f=np.array([1.0, 0.0]), cv=0.0)
+        assert idx >= 0
+        assert len(pareto_archive) == 2
+
+    def test_add_dominated_rejected(self, pareto_archive: ParetoArchive) -> None:
+        pareto_archive.add(x=np.array([0.0, 0.0]), f=np.array([1.0, 1.0]), cv=0.0)
+        idx = pareto_archive.add(x=np.array([1.0, 1.0]), f=np.array([2.0, 2.0]), cv=0.0)
+        assert idx == -1
+        assert len(pareto_archive) == 1
+
+    def test_add_dominates_existing(self, pareto_archive: ParetoArchive) -> None:
+        pareto_archive.add(x=np.array([0.0, 0.0]), f=np.array([2.0, 2.0]), cv=0.0)
+        pareto_archive.add(x=np.array([1.0, 1.0]), f=np.array([1.0, 1.0]), cv=0.0)
+        assert len(pareto_archive) == 1
+        np.testing.assert_array_equal(pareto_archive.get_array("f")[0], [1.0, 1.0])
+
+    def test_add_dominates_multiple(self, pareto_archive: ParetoArchive) -> None:
+        pareto_archive.add(x=np.array([0.0, 0.0]), f=np.array([3.0, 3.0]), cv=0.0)
+        pareto_archive.add(x=np.array([1.0, 0.0]), f=np.array([4.0, 2.0]), cv=0.0)
+        pareto_archive.add(x=np.array([0.0, 1.0]), f=np.array([2.0, 4.0]), cv=0.0)
+        pareto_archive.add(x=np.array([0.5, 0.5]), f=np.array([1.0, 1.0]), cv=0.0)
+        assert len(pareto_archive) == 1
+        np.testing.assert_array_equal(pareto_archive.get_array("f")[0], [1.0, 1.0])
+
+    def test_feasible_dominates_infeasible(self, pareto_archive: ParetoArchive) -> None:
+        pareto_archive.add(x=np.array([0.0, 0.0]), f=np.array([5.0, 5.0]), cv=1.0)
+        pareto_archive.add(x=np.array([1.0, 1.0]), f=np.array([9.0, 9.0]), cv=0.0)
+        assert len(pareto_archive) == 1
+        assert float(pareto_archive.get_array("cv")[0]) == pytest.approx(0.0)
+
+    def test_infeasible_rejected_by_feasible(
+        self, pareto_archive: ParetoArchive
+    ) -> None:
+        pareto_archive.add(x=np.array([0.0, 0.0]), f=np.array([1.0, 1.0]), cv=0.0)
+        idx = pareto_archive.add(x=np.array([1.0, 1.0]), f=np.array([0.5, 0.5]), cv=1.0)
+        assert idx == -1
+        assert len(pareto_archive) == 1
+
+    def test_infeasible_lower_cv_wins(self, pareto_archive: ParetoArchive) -> None:
+        pareto_archive.add(x=np.array([0.0, 0.0]), f=np.array([1.0, 1.0]), cv=2.0)
+        pareto_archive.add(x=np.array([1.0, 1.0]), f=np.array([1.0, 1.0]), cv=1.0)
+        assert len(pareto_archive) == 1
+        assert float(pareto_archive.get_array("cv")[0]) == pytest.approx(1.0)
+
+    def test_add_from_dict(self, pareto_archive: ParetoArchive) -> None:
+        idx = pareto_archive.add(
+            {"x": np.array([0.0, 0.0]), "f": np.array([1.0, 2.0]), "cv": 0.0}
+        )
+        assert idx >= 0
+
+    def test_add_from_kwargs(self, pareto_archive: ParetoArchive) -> None:
+        idx = pareto_archive.add(x=np.array([0.0, 0.0]), f=np.array([1.0, 2.0]), cv=0.0)
+        assert idx >= 0
+
+    def test_pareto_archive_inherits_population(
+        self, pareto_archive: ParetoArchive
+    ) -> None:
+        """ParetoArchive can use Population methods."""
+        pareto_archive.add(x=np.array([0.0, 0.0]), f=np.array([0.0, 1.0]), cv=0.0)
+        pareto_archive.add(x=np.array([1.0, 1.0]), f=np.array([1.0, 0.0]), cv=0.0)
+        assert len(pareto_archive) == 2
+        f_arr = pareto_archive.get_array("f")
+        assert f_arr.shape == (2, 2)
+
+    def test_custom_direction_maximize(
+        self, moo_attrs: list[PopulationAttribute]
+    ) -> None:
+        """direction=[1,1] means maximize both objectives."""
+        archive = ParetoArchive(
+            moo_attrs, init_capacity=20, direction=np.array([1.0, 1.0])
+        )
+        archive.add(x=np.array([0.0, 0.0]), f=np.array([1.0, 1.0]), cv=0.0)
+        archive.add(x=np.array([1.0, 1.0]), f=np.array([2.0, 2.0]), cv=0.0)
+        assert len(archive) == 1
+        np.testing.assert_array_equal(archive.get_array("f")[0], [2.0, 2.0])
 
 
 # ===========================================================================
