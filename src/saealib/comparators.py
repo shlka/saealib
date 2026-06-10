@@ -1126,3 +1126,80 @@ class NSGA2Comparator(ParetoComparator):
         result = np.concatenate([sorted_feasible, sorted_infeasible]).astype(int)
         population.set_cache("pareto_sort", result)
         return result
+
+
+class EpsilonDominanceComparator(ParetoComparator):
+    """
+    Comparator using ε-box dominance instead of standard Pareto dominance.
+
+    Wraps :class:`EpsilonDominator` and injects it into the
+    :class:`ParetoComparator` dominance seam via the ``dominator=`` argument.
+    Front ranking, infeasibility handling, and constraint-domination logic are
+    all inherited unchanged from :class:`ParetoComparator`.
+
+    The ε-dominance relation is defined in:
+
+        Laumanns, M., Thiele, L., Deb, K., & Zitzler, E. (2002).
+        Combining convergence and diversity in evolutionary multiobjective
+        optimization. *Evolutionary Computation*, 10(3), 263-282.
+
+    Each objective axis is divided into ε-boxes of width ``eps``.  Two
+    solutions that fall in the **same** ε-box are mutually non-dominating;
+    a solution whose box index is strictly better in *every* objective
+    dominates the other.  As ``eps → 0`` the relation recovers ordinary
+    Pareto dominance.
+
+    .. note::
+        ε-box **representative selection** (the archive rule that keeps one
+        solution per box — cf. Deb, Mohan & Mishra (2005), ε-MOEA) is **not**
+        handled here.  That is an archive-truncation responsibility and will
+        be added separately.
+
+    Parameters
+    ----------
+    eps : float or np.ndarray
+        Box size(s).  A scalar broadcasts to all objectives; an array of
+        shape ``(n_obj,)`` sets per-objective widths.  All values must be
+        strictly positive (> 0).
+    mode : {"additive", "multiplicative"}
+        Quantization mode passed to :class:`EpsilonDominator`.
+        ``"additive"`` (default): box index = ``floor(f_i / eps_i)``.
+        ``"multiplicative"``: box index = ``floor(log f_i / log(1 + eps_i))``;
+        requires strictly positive objective values.
+    weights : np.ndarray or None
+        See :class:`ParetoComparator`.
+    eps_cv : float
+        See :class:`ParetoComparator`.
+    eps_obj : float
+        See :class:`ParetoComparator`.
+    sorter : NonDominatedSorter
+        See :class:`ParetoComparator`.
+    """
+
+    def __init__(
+        self,
+        eps: float | np.ndarray,
+        mode: str = "additive",
+        weights: np.ndarray | None = None,
+        *,
+        eps_cv: float = 1e-6,
+        eps_obj: float = 1e-6,
+        sorter: NonDominatedSorter = non_dominated_sort,
+    ):
+        super().__init__(
+            weights,
+            eps_cv=eps_cv,
+            eps_obj=eps_obj,
+            sorter=sorter,
+            dominator=EpsilonDominator(eps, mode),
+        )
+
+    @property
+    def eps(self) -> float | np.ndarray:
+        """Box size(s) used by the underlying EpsilonDominator."""
+        return self._dominator.eps  # type: ignore[attr-defined]
+
+    @property
+    def mode(self) -> str:
+        """Quantization mode of the underlying EpsilonDominator."""
+        return self._dominator.mode  # type: ignore[attr-defined]

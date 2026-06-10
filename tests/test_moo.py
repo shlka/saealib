@@ -38,6 +38,7 @@ from saealib import (
 )
 from saealib.comparators import (
     Dominator,
+    EpsilonDominanceComparator,
     EpsilonDominator,
     NSGA2Comparator,
     ParetoComparator,
@@ -1295,3 +1296,139 @@ class TestEpsilonDominator:
         fb = np.array([0.9, 0.8])
         assert not dom.dominates(fa, fb)
         assert not dom.dominates(fb, fa)
+
+
+# ===========================================================================
+# EpsilonDominanceComparator Tests
+# ===========================================================================
+class TestEpsilonDominanceComparator:
+    """Tests for EpsilonDominanceComparator (ε-box dominance, Laumanns 2002)."""
+
+    # -----------------------------------------------------------------------
+    # 1. Import from top-level package
+    # -----------------------------------------------------------------------
+    def test_import_from_saealib(self) -> None:
+        """EpsilonDominanceComparator can be imported from saealib directly."""
+        import saealib
+
+        assert saealib.EpsilonDominanceComparator is EpsilonDominanceComparator
+
+    # -----------------------------------------------------------------------
+    # 2. eps / mode properties reflect constructor args
+    # -----------------------------------------------------------------------
+    def test_eps_property_scalar(self) -> None:
+        comp = EpsilonDominanceComparator(eps=0.5)
+        assert comp.eps == 0.5
+
+    def test_mode_property_default(self) -> None:
+        comp = EpsilonDominanceComparator(eps=0.5)
+        assert comp.mode == "additive"
+
+    def test_mode_property_multiplicative(self) -> None:
+        comp = EpsilonDominanceComparator(eps=0.5, mode="multiplicative")
+        assert comp.mode == "multiplicative"
+
+    def test_eps_property_array(self) -> None:
+        eps_arr = np.array([0.1, 0.2])
+        comp = EpsilonDominanceComparator(eps=eps_arr)
+        np.testing.assert_array_equal(comp.eps, eps_arr)
+
+    # -----------------------------------------------------------------------
+    # 3. Tiny eps behaves like standard Pareto (compare matches ParetoComparator)
+    # -----------------------------------------------------------------------
+    def test_tiny_eps_matches_pareto_comparator(self) -> None:
+        """With eps→0, compare_population agrees with ParetoComparator."""
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
+        pop = _make_pop(f)
+        pareto = ParetoComparator()
+        eps_comp = EpsilonDominanceComparator(eps=1e-9)
+        for i in range(len(f)):
+            for j in range(len(f)):
+                if i == j:
+                    continue
+                expected = pareto.compare_population(pop, i, j)
+                actual = eps_comp.compare_population(pop, i, j)
+                assert actual == expected, f"Mismatch at ({i}, {j})"
+
+    # -----------------------------------------------------------------------
+    # 4. Same ε-box → compare returns 0 where plain Pareto would return ±1
+    # -----------------------------------------------------------------------
+    def test_same_box_compare_returns_zero(self) -> None:
+        """Two points in the same ε-box are non-dominated (compare == 0)."""
+        # eps=1.0: (0.1, 0.2) and (0.9, 0.8) both fall in box (0, 0).
+        # Under plain Pareto, (0.1, 0.2) dominates (0.9, 0.8).
+        f = np.array([[0.1, 0.2], [0.9, 0.8]])
+        pop = _make_pop(f)
+
+        pareto = ParetoComparator()
+        assert pareto.compare_population(pop, 0, 1) == -1  # plain Pareto: 0 dominates 1
+
+        eps_comp = EpsilonDominanceComparator(eps=1.0)
+        assert eps_comp.compare_population(pop, 0, 1) == 0  # same box → non-dominated
+        assert eps_comp.compare_population(pop, 1, 0) == 0
+
+    # -----------------------------------------------------------------------
+    # 5. sort_population produces valid permutation; infeasible ranked last
+    # -----------------------------------------------------------------------
+    def test_sort_population_valid_permutation(self) -> None:
+        """sort_population returns all indices exactly once."""
+        f = np.array([[0.0, 3.0], [3.0, 0.0], [2.0, 2.0]])
+        pop = _make_pop(f)
+        comp = EpsilonDominanceComparator(eps=0.5)
+        order = comp.sort_population(pop)
+        assert sorted(order) == [0, 1, 2]
+
+    def test_sort_population_output_is_int_array(self) -> None:
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
+        pop = _make_pop(f)
+        comp = EpsilonDominanceComparator(eps=0.5)
+        order = comp.sort_population(pop)
+        assert np.issubdtype(order.dtype, np.integer)
+
+    def test_sort_population_infeasible_last(self) -> None:
+        """Infeasible individuals appear after all feasible ones."""
+        f = np.array([[10.0, 10.0], [0.0, 0.0], [1.0, 1.0]])
+        cv = np.array([1.0, 0.0, 0.0])
+        pop = _make_pop(f, cv)
+        comp = EpsilonDominanceComparator(eps=0.5)
+        order = comp.sort_population(pop)
+        assert order[-1] == 0  # infeasible individual is last
+
+    def test_sort_population_infeasible_by_ascending_cv(self) -> None:
+        """Multiple infeasible individuals are sorted by ascending cv."""
+        f = np.array([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]])
+        cv = np.array([2.0, 0.5, 1.0])
+        pop = _make_pop(f, cv)
+        comp = EpsilonDominanceComparator(eps=0.5)
+        order = comp.sort_population(pop)
+        assert list(order) == [1, 2, 0]
+
+    # -----------------------------------------------------------------------
+    # 6. Multiplicative mode works on strictly-positive objectives
+    # -----------------------------------------------------------------------
+    def test_multiplicative_mode_compare(self) -> None:
+        """Multiplicative mode: point in lower box dominates point in higher box."""
+        # eps=0.5, log(1.5)≈0.405
+        # f[0]=(1.1,1.1): box=floor(log(1.1)/log(1.5))=0 each
+        # f[1]=(2.5,2.5): box=floor(log(2.5)/log(1.5))=2 each
+        # → f[0] dominates f[1]
+        f = np.array([[1.1, 1.1], [2.5, 2.5]])
+        pop = _make_pop(f)
+        comp = EpsilonDominanceComparator(eps=0.5, mode="multiplicative")
+        assert comp.compare_population(pop, 0, 1) == -1
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    def test_multiplicative_mode_same_box_non_dominated(self) -> None:
+        """Multiplicative mode: two points in the same ε-box are non-dominated."""
+        # eps=1.0: log(2)≈0.693; f[0]=(1.1,1.1),f[1]=(1.9,1.9) → both box 0
+        f = np.array([[1.1, 1.1], [1.9, 1.9]])
+        pop = _make_pop(f)
+        comp = EpsilonDominanceComparator(eps=1.0, mode="multiplicative")
+        assert comp.compare_population(pop, 0, 1) == 0
+        assert comp.compare_population(pop, 1, 0) == 0
+
+    # -----------------------------------------------------------------------
+    # 7. Subclass relationship
+    # -----------------------------------------------------------------------
+    def test_is_subclass_of_pareto_comparator(self) -> None:
+        assert issubclass(EpsilonDominanceComparator, ParetoComparator)
