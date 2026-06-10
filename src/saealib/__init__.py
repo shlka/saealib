@@ -45,6 +45,7 @@ from saealib.comparators import (
     WeightedSumComparator,
     crowding_distance,
     crowding_distance_all_fronts,
+    dda_non_dominated_sort,
     non_dominated_sort,
 )
 from saealib.execution.evaluator import (
@@ -228,6 +229,7 @@ __all__ = [
     "XGBSurrogate",
     "crowding_distance",
     "crowding_distance_all_fronts",
+    "dda_non_dominated_sort",
     "f_target",
     "gaussian_kernel",
     "hypervolume",

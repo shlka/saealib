@@ -558,6 +558,125 @@ def non_dominated_sort(
     return ranks, fronts
 
 
+def dda_non_dominated_sort(
+    f: np.ndarray,
+    direction: np.ndarray | None = None,
+    *,
+    dominator: Dominator | None = None,
+) -> tuple[np.ndarray, list[list[int]]]:
+    """
+    Non-dominated sorting via the Dominance-Degree Approach (DDA-ENS).
+
+    Produces **identical** ``(ranks, fronts)`` to :func:`non_dominated_sort`
+    and satisfies the :class:`NonDominatedSorter` Protocol.  It is intended
+    as a scalable drop-in for large *N* and/or large *M* (M > 100).
+
+    The dominance relation is computed once as an *NxN* boolean matrix
+    (peak memory O(N^2), **independent of M**; no (N, N, M) tensor is ever
+    allocated).  Front assignment then follows the DDA-ENS scheme: solutions
+    are ordered by ascending dominance-in-degree (number of solutions that
+    dominate them), so that a solution's dominators are always processed
+    before the solution itself.  Each solution is assigned to the first
+    existing front whose members do **not** dominate it, creating a new
+    front when necessary.
+
+    NaN handling is identical to :func:`non_dominated_sort`: rows that
+    contain any NaN value are excluded from the dominance computation and
+    appended afterwards as individual sentinel fronts at rank
+    ``len(real_fronts)``.
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Objective matrix.  shape: (n, n_obj)
+    direction : np.ndarray or None
+        Per-objective optimization direction: +1 = maximize, -1 = minimize.
+        ``None`` defaults to minimization for all objectives.
+    dominator : Dominator or None
+        Dominance predicate to use.  ``None`` defaults to
+        ``ParetoDominator`` (standard Pareto dominance).
+
+    Returns
+    -------
+    ranks : np.ndarray
+        Pareto front index for each individual (0 = first/best front).
+        shape: (n,), dtype int.
+    fronts : list[list[int]]
+        ``fronts[i]`` contains the global indices of individuals in front i.
+
+    References
+    ----------
+    .. [1] Zhou, Y., Chen, Z., & Zhang, J. (2017). Ranking Vectors by Means of
+       the Dominance Degree Matrix. IEEE Transactions on Evolutionary
+       Computation, 21(1), 34-51. https://ieeexplore.ieee.org/document/7469397
+    .. [2] DDA-ENS: Dominance Degree Approach based Efficient Non-dominated
+       Sort. IEEE Conference Publication (2020).
+       https://ieeexplore.ieee.org/document/9282978
+    """
+    _dom = dominator if dominator is not None else _PARETO_DOMINATOR
+
+    n = len(f)
+    nan_mask = np.any(np.isnan(f), axis=1)
+    valid = np.where(~nan_mask)[0]
+
+    ranks = np.full(n, -1, int)
+    fronts: list[list[int]] = []
+
+    if len(valid) > 0:
+        g = f[valid].astype(float)
+        k = len(valid)
+
+        # Build dominance matrix once: D[i, j] = True means valid[i] dominates valid[j].
+        # Memory O(N²), no (N, N, M) tensor.
+        dom_mat = _dom.dominance_matrix(g, direction)
+
+        # in_degree[i] = number of solutions that dominate solution i (locally).
+        in_degree = dom_mat.sum(axis=0)  # (k,)
+
+        # Process solutions in ascending in-degree order so that dominators of
+        # a solution are always assigned to a front before the solution itself.
+        # This guarantees each solution can be placed in the correct front in a
+        # single pass.
+        order = np.argsort(in_degree, kind="stable")
+
+        # front_members[r] = list of local indices assigned to front r.
+        front_members: list[list[int]] = []
+
+        local_ranks = np.full(k, -1, int)
+
+        for i in order:
+            assigned = False
+            # Scan fronts in increasing rank order; assign to the first front
+            # where no current member dominates solution i.
+            for r, members in enumerate(front_members):
+                # dom_mat[m, i] is True if member m dominates solution i.
+                dominated = any(dom_mat[m, i] for m in members)
+                if not dominated:
+                    front_members[r].append(i)
+                    local_ranks[i] = r
+                    assigned = True
+                    break
+            if not assigned:
+                # No existing front is safe; open a new one.
+                local_ranks[i] = len(front_members)
+                front_members.append([i])
+
+        # Map local indices back to global indices and build output.
+        for members in front_members:
+            global_members = valid[members].tolist()
+            fronts.append(global_members)
+            ranks[valid[members]] = local_ranks[members]
+
+    # Append NaN individuals as individual sentinel fronts (same contract as
+    # non_dominated_sort: each NaN row gets rank = len(real_fronts)).
+    last_rank = len(fronts)
+    for i in np.where(nan_mask)[0]:
+        ranks[i] = last_rank
+        fronts.append([int(i)])
+
+    return ranks, fronts
+
+
 class NonDominatedSorter(Protocol):
     """
     Protocol for non-dominated sorting callables.
