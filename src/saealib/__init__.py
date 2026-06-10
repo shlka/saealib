@@ -36,6 +36,7 @@ from saealib.callback import (
 )
 from saealib.comparators import (
     Comparator,
+    NonDominatedSorter,
     NSGA2Comparator,
     ParetoComparator,
     SingleObjectiveComparator,
@@ -179,6 +180,7 @@ __all__ = [
     "NNSurrogate",
     "NSGA2Comparator",
     "NichingManager",
+    "NonDominatedSorter",
     "NoveltyManager",
     "OptimizationStrategy",
     "Optimizer",

@@ -22,6 +22,7 @@ from saealib import (
     IndividualBasedStrategy,
     LHSInitializer,
     MutationUniform,
+    NonDominatedSorter,
     Optimizer,
     Problem,
     RBFsurrogate,
@@ -757,3 +758,190 @@ class TestMOOIntegration:
         best_f2 = archive_f[:, 1].min()
         assert best_f1 >= 0.0
         assert best_f2 >= 0.0
+
+
+# ===========================================================================
+# NonDominatedSorter injection tests (#89)
+# ===========================================================================
+class TestNonDominatedSorterInjection:
+    """Tests for the NonDominatedSorter injection seam in Pareto-based comparators."""
+
+    # -----------------------------------------------------------------------
+    # Helpers
+    # -----------------------------------------------------------------------
+    def _make_spy_sorter(self) -> tuple[list[tuple], object]:
+        """Return (call_log, spy_sorter).
+
+        The spy delegates to non_dominated_sort and records every call as
+        (f_arg, direction_arg) in call_log.
+        """
+        call_log: list[tuple] = []
+
+        def spy(
+            f: np.ndarray,
+            direction: np.ndarray | None = None,
+        ) -> tuple[np.ndarray, list[list[int]]]:
+            call_log.append((f, direction))
+            return non_dominated_sort(f, direction)
+
+        return call_log, spy
+
+    # -----------------------------------------------------------------------
+    # 1. Spy: verifies the injected sorter is called with the right arguments
+    # -----------------------------------------------------------------------
+    def test_pareto_comparator_calls_injected_sorter(self) -> None:
+        """ParetoComparator.sort_population invokes the injected sorter."""
+        call_log, spy = self._make_spy_sorter()
+        weights = np.array([-1.0, -1.0])
+        comp = ParetoComparator(weights=weights, sorter=spy)
+
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
+        pop = _make_pop(f)
+        comp.sort_population(pop)
+
+        assert len(call_log) == 1
+        f_passed, dir_passed = call_log[0]
+        # The comparator passes the feasible-subset objective matrix.
+        assert f_passed.shape == (3, 2)
+        # direction should be np.sign(weights) = [-1, -1]
+        np.testing.assert_array_equal(dir_passed, np.sign(weights))
+
+    def test_nsga2_comparator_calls_injected_sorter(self) -> None:
+        """NSGA2Comparator.sort_population invokes the injected sorter."""
+        call_log, spy = self._make_spy_sorter()
+        weights = np.array([-1.0, -1.0])
+        comp = NSGA2Comparator(weights=weights, sorter=spy)
+
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
+        pop = _make_pop(f)
+        comp.sort_population(pop)
+
+        assert len(call_log) == 1
+        f_passed, dir_passed = call_log[0]
+        assert f_passed.shape == (3, 2)
+        np.testing.assert_array_equal(dir_passed, np.sign(weights))
+
+    def test_spy_receives_feasible_subset_only(self) -> None:
+        """The sorter only receives the feasible-individual rows."""
+        call_log, spy = self._make_spy_sorter()
+        comp = ParetoComparator(sorter=spy)
+
+        # idx=2 is infeasible
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [99.0, 99.0]])
+        cv = np.array([0.0, 0.0, 5.0])
+        pop = _make_pop(f, cv)
+        comp.sort_population(pop)
+
+        assert len(call_log) == 1
+        f_passed, _ = call_log[0]
+        # Only the 2 feasible rows should be passed to the sorter.
+        assert f_passed.shape == (2, 2)
+
+    def test_nsga2_spy_receives_feasible_subset_only(self) -> None:
+        """NSGA2Comparator passes only feasible rows to the sorter."""
+        call_log, spy = self._make_spy_sorter()
+        comp = NSGA2Comparator(sorter=spy)
+
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [99.0, 99.0]])
+        cv = np.array([0.0, 0.0, 5.0])
+        pop = _make_pop(f, cv)
+        comp.sort_population(pop)
+
+        assert len(call_log) == 1
+        f_passed, _ = call_log[0]
+        assert f_passed.shape == (2, 2)
+
+    # -----------------------------------------------------------------------
+    # 2. Alternate sorter: honors the ranks/fronts returned by the injected sorter
+    # -----------------------------------------------------------------------
+    def test_pareto_comparator_honors_injected_ranks(self) -> None:
+        """ParetoComparator.sort_population respects ranks from the injected sorter.
+
+        We inject a sorter that inverts the natural ranking so that the
+        *worst* objective point is declared front-0.
+        """
+        f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+        # Natural order: idx 0 (front-0) → idx 1 (front-1) → idx 2 (front-2).
+        # Inverted sorter: rank 0 → idx 2, rank 1 → idx 1, rank 2 → idx 0.
+
+        def inverted_sorter(
+            f_sub: np.ndarray,
+            direction: np.ndarray | None = None,
+        ) -> tuple[np.ndarray, list[list[int]]]:
+            n = len(f_sub)
+            # Assign ranks in reverse order.
+            ranks = np.arange(n - 1, -1, -1, dtype=int)
+            fronts = [[i] for i in range(n - 1, -1, -1)]
+            return ranks, fronts
+
+        comp = ParetoComparator(sorter=inverted_sorter)
+        pop = _make_pop(f)
+        order = comp.sort_population(pop)
+
+        # Inverted: global index 2 should be first (rank 0 for its local index 2).
+        assert order[0] == 2
+
+    def test_nsga2_comparator_honors_injected_ranks(self) -> None:
+        """NSGA2Comparator.sort_population respects ranks from the injected sorter."""
+        f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+
+        def inverted_sorter(
+            f_sub: np.ndarray,
+            direction: np.ndarray | None = None,
+        ) -> tuple[np.ndarray, list[list[int]]]:
+            n = len(f_sub)
+            ranks = np.arange(n - 1, -1, -1, dtype=int)
+            fronts = [[i] for i in range(n - 1, -1, -1)]
+            return ranks, fronts
+
+        comp = NSGA2Comparator(sorter=inverted_sorter)
+        pop = _make_pop(f)
+        order = comp.sort_population(pop)
+
+        # Inverted: global index 2 should appear first.
+        assert order[0] == 2
+
+    # -----------------------------------------------------------------------
+    # 3. Default behavior and public API
+    # -----------------------------------------------------------------------
+    def test_default_sorter_is_non_dominated_sort(self) -> None:
+        """When sorter is not specified, non_dominated_sort is used (default)."""
+        comp = ParetoComparator()
+        assert comp.sorter is non_dominated_sort
+
+    def test_nsga2_default_sorter_is_non_dominated_sort(self) -> None:
+        """NSGA2Comparator default sorter is non_dominated_sort."""
+        comp = NSGA2Comparator()
+        assert comp.sorter is non_dominated_sort
+
+    def test_non_dominated_sorter_importable_from_saealib(self) -> None:
+        """NonDominatedSorter is importable from the top-level saealib package."""
+        # Import is done at module level; this test confirms it succeeds.
+        assert NonDominatedSorter is not None
+
+    def test_non_dominated_sort_satisfies_protocol(self) -> None:
+        """non_dominated_sort can be passed wherever NonDominatedSorter is expected."""
+        # Passing the free function as the sorter kwarg should not raise.
+        comp = ParetoComparator(sorter=non_dominated_sort)
+        f = np.array([[0.0, 1.0], [1.0, 0.0]])
+        pop = _make_pop(f)
+        order = comp.sort_population(pop)
+        assert len(order) == 2
+
+    # -----------------------------------------------------------------------
+    # Cache behavior must remain intact for NSGA2Comparator
+    # -----------------------------------------------------------------------
+    def test_nsga2_injected_sorter_cached_result(self) -> None:
+        """Cache still works when a custom sorter is injected."""
+        call_log, spy = self._make_spy_sorter()
+        comp = NSGA2Comparator(sorter=spy)
+
+        f = np.array([[0.0, 1.0], [1.0, 0.0]])
+        pop = _make_pop(f)
+
+        order1 = comp.sort_population(pop)
+        order2 = comp.sort_population(pop)
+
+        # Second call should use cache; spy called only once.
+        assert len(call_log) == 1
+        assert order1 is order2

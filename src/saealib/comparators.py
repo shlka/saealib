@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import numpy as np
 
@@ -419,6 +419,41 @@ def non_dominated_sort(
     return ranks, fronts
 
 
+class NonDominatedSorter(Protocol):
+    """
+    Protocol for non-dominated sorting callables.
+
+    Any callable that accepts an objective matrix ``f`` and an optional
+    per-objective direction array and returns ``(ranks, fronts)`` satisfies
+    this protocol.  The free function ``non_dominated_sort`` is the default
+    implementation.
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Objective matrix.  shape: (n, n_obj)
+    direction : np.ndarray or None
+        Per-objective optimization direction: +1 = maximize, -1 = minimize.
+        ``None`` defaults to minimization for all objectives.
+
+    Returns
+    -------
+    ranks : np.ndarray
+        Pareto front index for each individual (0 = first/best front).
+        shape: (n,)
+    fronts : list[list[int]]
+        ``fronts[i]`` contains the local indices of individuals in front i.
+    """
+
+    def __call__(
+        self,
+        f: np.ndarray,
+        direction: np.ndarray | None = None,
+    ) -> tuple[np.ndarray, list[list[int]]]:
+        """Sort individuals into non-dominated fronts."""
+        ...
+
+
 def crowding_distance(f_front: np.ndarray) -> np.ndarray:
     """
     Compute crowding distance for a single Pareto front (NSGA-II).
@@ -517,6 +552,7 @@ class ParetoComparator(Comparator):
         *,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
+        sorter: NonDominatedSorter = non_dominated_sort,
     ):
         if eps is not None:
             warnings.warn(
@@ -528,6 +564,12 @@ class ParetoComparator(Comparator):
             eps_cv = eps
         w = np.asarray(weights, dtype=float) if weights is not None else np.empty(0)
         super().__init__(w, eps_cv, eps_obj)
+        self._sorter = sorter
+
+    @property
+    def sorter(self) -> NonDominatedSorter:
+        """The non-dominated sorting callable used by this comparator."""
+        return self._sorter
 
     @property
     def _direction(self) -> np.ndarray | None:
@@ -544,7 +586,7 @@ class ParetoComparator(Comparator):
 
         sorted_feasible = np.empty(0, int)
         if len(feasible):
-            ranks, _ = non_dominated_sort(f[feasible], direction=self._direction)
+            ranks, _ = self._sorter(f[feasible], direction=self._direction)
             order = np.argsort(ranks, kind="stable")
             sorted_feasible = feasible[order]
 
@@ -610,6 +652,7 @@ class NSGA2Comparator(ParetoComparator):
         *,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
+        sorter: NonDominatedSorter = non_dominated_sort,
     ):
         if eps is not None:
             warnings.warn(
@@ -619,7 +662,7 @@ class NSGA2Comparator(ParetoComparator):
                 stacklevel=2,
             )
             eps_cv = eps
-        super().__init__(weights, eps_cv=eps_cv, eps_obj=eps_obj)
+        super().__init__(weights, eps_cv=eps_cv, eps_obj=eps_obj, sorter=sorter)
 
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort by Pareto front rank then crowding distance (NSGA-II style)."""
@@ -634,7 +677,7 @@ class NSGA2Comparator(ParetoComparator):
 
         sorted_feasible = np.empty(0, int)
         if len(feasible):
-            ranks, fronts = non_dominated_sort(f[feasible], direction=self._direction)
+            ranks, fronts = self._sorter(f[feasible], direction=self._direction)
             cd = crowding_distance_all_fronts(f[feasible], fronts)
             order = np.lexsort((-cd, ranks))
             sorted_feasible = feasible[order]
