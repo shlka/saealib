@@ -316,12 +316,50 @@ def _pareto_dominates(
     return bool(np.all(fa <= fb) and np.any(fa < fb))
 
 
+def _dominance_matrix(g: np.ndarray) -> np.ndarray:
+    """
+    Compute the NxN boolean dominance matrix from a direction-transformed matrix.
+
+    ``D[i, j]`` is True if row i Pareto-dominates row j (i.e. i is at least as
+    good as j in all objectives and strictly better in at least one).  The
+    matrix is built by accumulating per-objective comparisons one column at a
+    time, so the peak memory footprint is O(N²) and no (N, N, M) tensor is ever
+    materialised.
+
+    Parameters
+    ----------
+    g : np.ndarray
+        Objective matrix after direction transform (smaller = better for every
+        objective).  shape: (k, n_obj).  Must contain no NaN values.
+
+    Returns
+    -------
+    np.ndarray
+        Boolean matrix of shape (k, k).  ``D[i, j]`` = True iff row i
+        dominates row j.
+    """
+    k, m = g.shape
+    # leq_all[i, j] = True when i <= j in every objective seen so far
+    leq_all = np.ones((k, k), dtype=bool)
+    # less_any[i, j] = True when i < j in at least one objective seen so far
+    less_any = np.zeros((k, k), dtype=bool)
+    for obj in range(m):
+        col = g[:, obj]
+        leq_all &= col[:, None] <= col[None, :]
+        less_any |= col[:, None] < col[None, :]
+    return leq_all & less_any
+
+
 def non_dominated_sort(
     f: np.ndarray,
     direction: np.ndarray | None = None,
 ) -> tuple[np.ndarray, list[list[int]]]:
     """
-    O(MN^2) non-dominated sorting (Deb et al., 2002).
+    Non-dominated sorting (Deb et al., 2002) via a vectorized dominance matrix.
+
+    Time is O(MN^2), but the pairwise dominance relations are computed with a
+    NumPy dominance matrix accumulated one objective at a time (peak memory
+    O(N^2), no (N, N, M) tensor), replacing the original Python double loop.
 
     NaN rows are treated as infinitely bad and placed in the last front.
 
@@ -344,39 +382,36 @@ def non_dominated_sort(
     nan_mask = np.any(np.isnan(f), axis=1)
     valid = np.where(~nan_mask)[0]
 
-    dominated_by_count = np.zeros(n, int)
-    dominates_set: list[list[int]] = [[] for _ in range(n)]
     ranks = np.full(n, -1, int)
-    fronts: list[list[int]] = [[]]
+    fronts: list[list[int]] = []
 
-    for i in valid:
-        for j in valid:
-            if i == j:
-                continue
-            if _pareto_dominates(f[i], f[j], direction):
-                dominates_set[i].append(j)
-                dominated_by_count[j] += 1
+    if len(valid) > 0:
+        # Apply direction transform so that smaller values are always better.
+        g = f[valid].astype(float)
+        if direction is not None:
+            g = g * (-direction)
 
-    for i in valid:
-        if dominated_by_count[i] == 0:
-            ranks[i] = 0
-            fronts[0].append(i)
+        # Build the full dominance matrix for valid individuals.
+        dom = _dominance_matrix(g)
 
-    k = 0
-    while fronts[k]:
-        next_front: list[int] = []
-        for i in fronts[k]:
-            for j in dominates_set[i]:
-                dominated_by_count[j] -= 1
-                if dominated_by_count[j] == 0:
-                    ranks[j] = k + 1
-                    next_front.append(j)
-        fronts.append(next_front)
-        k += 1
-    fronts.pop()  # remove trailing empty front
+        # Front-peel: iteratively collect individuals with zero dominators.
+        dominated_by_count = dom.sum(axis=0)  # (k,) — how many dominate each row
+        remaining = np.ones(len(valid), dtype=bool)
+        k = 0
+        while remaining.any():
+            # Local indices (within valid) of the current front.
+            front_local = np.where(remaining & (dominated_by_count == 0))[0]
+            # Map back to global indices.
+            front_global = valid[front_local].tolist()
+            ranks[valid[front_local]] = k
+            fronts.append(front_global)
+            # Remove this front and decrement counts for individuals they dominated.
+            remaining[front_local] = False
+            dominated_by_count -= dom[front_local].sum(axis=0)
+            k += 1
 
-    # Push NaN individuals to a final sentinel front
-    last_rank = k
+    # Push NaN individuals to a final sentinel front (one per NaN row).
+    last_rank = len(fronts)
     for i in np.where(nan_mask)[0]:
         ranks[i] = last_rank
         fronts.append([int(i)])

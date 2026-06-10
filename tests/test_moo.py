@@ -14,6 +14,7 @@ Tests cover:
 import logging
 
 import numpy as np
+import pytest
 
 from saealib import (
     GA,
@@ -38,8 +39,10 @@ from saealib.comparators import (
     NSGA2Comparator,
     ParetoComparator,
     SingleObjectiveComparator,
+    _pareto_dominates,
 )
 from saealib.population import Population, PopulationAttribute
+from saealib.utils.indicators import _non_dominated
 
 logging.getLogger("saealib.surrogate.rbf").setLevel(logging.CRITICAL)
 
@@ -130,6 +133,148 @@ class TestNonDominatedSort:
         ranks, _fronts = non_dominated_sort(f)
         assert ranks[0] == 0
         assert ranks[1] == 1
+
+    # -----------------------------------------------------------------------
+    # New tests for vectorised implementation (#89)
+    # -----------------------------------------------------------------------
+
+    @pytest.mark.parametrize("n,m", [(1, 1), (2, 1), (50, 2), (50, 5)])
+    def test_equivalence_random(self, n: int, m: int) -> None:
+        """Vectorised result matches a brute-force reference using _pareto_dominates."""
+        rng = np.random.default_rng(seed=n * 100 + m)
+        f = rng.random((n, m))
+
+        ranks, fronts = non_dominated_sort(f)
+
+        # Brute-force: build dominance via _pareto_dominates oracle.
+        dom_count = np.zeros(n, int)
+        dom_set: list[list[int]] = [[] for _ in range(n)]
+        for i in range(n):
+            for j in range(n):
+                if i != j and _pareto_dominates(f[i], f[j]):
+                    dom_set[i].append(j)
+                    dom_count[j] += 1
+        ref_ranks = np.full(n, -1, int)
+        ref_fronts: list[list[int]] = [[]]
+        for i in range(n):
+            if dom_count[i] == 0:
+                ref_ranks[i] = 0
+                ref_fronts[0].append(i)
+        k = 0
+        while ref_fronts[k]:
+            nxt: list[int] = []
+            for i in ref_fronts[k]:
+                for j in dom_set[i]:
+                    dom_count[j] -= 1
+                    if dom_count[j] == 0:
+                        ref_ranks[j] = k + 1
+                        nxt.append(j)
+            ref_fronts.append(nxt)
+            k += 1
+        ref_fronts.pop()
+
+        np.testing.assert_array_equal(ranks, ref_ranks)
+        assert len(fronts) == len(ref_fronts)
+        for f_new, f_ref in zip(fronts, ref_fronts):
+            assert set(f_new) == set(f_ref)
+
+    def test_direction_maximize(self) -> None:
+        """With direction=+1 (maximize), [3,3] dominates [1,1]."""
+        f = np.array([[3.0, 3.0], [1.0, 1.0]])
+        direction = np.array([1.0, 1.0])
+        ranks, fronts = non_dominated_sort(f, direction=direction)
+        assert ranks[0] == 0
+        assert ranks[1] == 1
+        assert 0 in fronts[0]
+        assert 1 in fronts[1]
+
+    def test_all_nan_input(self) -> None:
+        """When every row is NaN, all individuals become sentinel fronts."""
+        f = np.array([[np.nan, np.nan], [np.nan, np.nan]])
+        ranks, fronts = non_dominated_sort(f)
+        # No valid front; both rows become individual sentinel fronts at rank 0.
+        assert ranks[0] == 0
+        assert ranks[1] == 0
+        assert len(fronts) == 2
+        assert fronts[0] == [0]
+        assert fronts[1] == [1]
+
+    def test_mixed_nan_multiple_nan_rows(self) -> None:
+        """Each NaN row gets its own sentinel front; valid ranks are lower."""
+        f = np.array(
+            [
+                [0.0, 0.0],
+                [np.nan, np.nan],
+                [1.0, 1.0],
+                [np.nan, 2.0],
+            ]
+        )
+        ranks, fronts = non_dominated_sort(f)
+        # Valid individuals: 0 (front 0) and 2 (front 1)
+        assert ranks[0] == 0
+        assert ranks[2] == 1
+        # Both NaN rows get rank == number of real fronts (2)
+        assert ranks[1] == 2
+        assert ranks[3] == 2
+        # Each NaN row is its own front
+        nan_fronts = fronts[2:]
+        nan_indices = {f[0] for f in nan_fronts}
+        assert nan_indices == {1, 3}
+        for nf in nan_fronts:
+            assert len(nf) == 1
+
+    def test_all_equal_rows_single_front(self) -> None:
+        """Identical rows are mutually non-dominating → all in front 0."""
+        f = np.array([[1.0, 2.0], [1.0, 2.0], [1.0, 2.0]])
+        ranks, fronts = non_dominated_sort(f)
+        assert np.all(ranks == 0)
+        assert len(fronts) == 1
+        assert sorted(fronts[0]) == [0, 1, 2]
+
+
+# ===========================================================================
+# _non_dominated Tests (indicators.py, vectorised kernel parity)
+# ===========================================================================
+class TestNonDominatedIndicator:
+    """Tests for _non_dominated (used internally by hypervolume)."""
+
+    def test_parity_with_brute_force(self) -> None:
+        """Vectorised _non_dominated returns same rows as brute-force reference."""
+        rng = np.random.default_rng(42)
+        f = rng.random((20, 3))
+
+        result = _non_dominated(f)
+
+        # Brute-force reference (minimisation)
+        n = len(f)
+        dominated = np.zeros(n, dtype=bool)
+        for i in range(n):
+            for j in range(n):
+                if i != j and np.all(f[j] <= f[i]) and np.any(f[j] < f[i]):
+                    dominated[i] = True
+                    break
+        expected = f[~dominated]
+
+        # Compare as sets of tuples (row order may differ)
+        assert {tuple(r) for r in result} == {tuple(r) for r in expected}
+
+    def test_single_row_returned_unchanged(self) -> None:
+        f = np.array([[0.5, 0.5]])
+        result = _non_dominated(f)
+        np.testing.assert_array_equal(result, f)
+
+    def test_all_non_dominated(self) -> None:
+        """Points on the Pareto front are all returned."""
+        f = np.array([[0.0, 1.0], [1.0, 0.0]])
+        result = _non_dominated(f)
+        assert len(result) == 2
+
+    def test_one_dominated(self) -> None:
+        """Only the dominating point is returned."""
+        f = np.array([[0.0, 0.0], [1.0, 1.0]])
+        result = _non_dominated(f)
+        assert len(result) == 1
+        np.testing.assert_array_equal(result[0], [0.0, 0.0])
 
 
 # ===========================================================================
