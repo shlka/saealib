@@ -38,6 +38,7 @@ from saealib import (
 )
 from saealib.comparators import (
     Dominator,
+    EpsilonDominator,
     NSGA2Comparator,
     ParetoComparator,
     ParetoDominator,
@@ -1150,3 +1151,147 @@ class TestParetoDominator:
         d = MyDominator()
         comp = ParetoComparator(dominator=d)
         assert comp.dominator is d
+
+
+# ===========================================================================
+# EpsilonDominator Tests (#74)
+# ===========================================================================
+class TestEpsilonDominator:
+    """Tests for EpsilonDominator (ε-box dominance, Laumanns et al. 2002)."""
+
+    # -----------------------------------------------------------------------
+    # 1. Same ε-box → mutually non-dominating
+    # -----------------------------------------------------------------------
+    def test_same_box_mutual_non_domination(self) -> None:
+        """Two points in the same ε-box are mutually non-dominating."""
+        # eps=1.0: both (0.1, 0.2) and (0.9, 0.8) fall in box (0, 0).
+        dom = EpsilonDominator(eps=1.0)
+        f = np.array([[0.1, 0.2], [0.9, 0.8]])
+        mat = dom.dominance_matrix(f)
+        assert not mat[0, 1]
+        assert not mat[1, 0]
+
+    # -----------------------------------------------------------------------
+    # 2. Strictly better box → dominance
+    # -----------------------------------------------------------------------
+    def test_better_box_dominates(self) -> None:
+        """A point in a strictly better box dominates one in a worse box."""
+        # eps=1.0: (0.5, 0.5) → box (0, 0); (1.5, 1.5) → box (1, 1).
+        dom = EpsilonDominator(eps=1.0)
+        f = np.array([[0.5, 0.5], [1.5, 1.5]])
+        mat = dom.dominance_matrix(f)
+        assert mat[0, 1]  # (0,0) box dominates (1,1) box
+        assert not mat[1, 0]
+
+    # -----------------------------------------------------------------------
+    # 3. Tiny eps recovers ordinary Pareto dominance
+    # -----------------------------------------------------------------------
+    def test_tiny_eps_recovers_pareto(self) -> None:
+        """Additive mode with tiny eps recovers ParetoDominator exactly."""
+        rng = np.random.default_rng(7)
+        f = rng.random((12, 3))
+        eps = 1e-9  # boxes effectively as small as floating-point resolution
+        dom_eps = EpsilonDominator(eps=eps)
+        dom_pareto = ParetoDominator()
+        mat_eps = dom_eps.dominance_matrix(f)
+        mat_pareto = dom_pareto.dominance_matrix(f)
+        np.testing.assert_array_equal(mat_eps, mat_pareto)
+
+    # -----------------------------------------------------------------------
+    # 4. direction for a maximize objective
+    # -----------------------------------------------------------------------
+    def test_direction_maximize(self) -> None:
+        """With direction=+1 (maximize), a higher-box point dominates."""
+        # Under minimization, (0.5, 0.5) box (0,0) would dominate (1.5, 1.5) box (1,1).
+        # Under maximization, the opposite holds.
+        dom = EpsilonDominator(eps=1.0)
+        f = np.array([[0.5, 0.5], [1.5, 1.5]])
+        direction = np.array([1.0, 1.0])  # maximize both objectives
+        mat = dom.dominance_matrix(f, direction=direction)
+        # (1.5, 1.5) is in the larger box → better under maximization.
+        assert mat[1, 0]
+        assert not mat[0, 1]
+
+    # -----------------------------------------------------------------------
+    # 5. Per-objective eps array (different box widths per objective)
+    # -----------------------------------------------------------------------
+    def test_per_objective_eps_array(self) -> None:
+        """Different eps per objective correctly places points in distinct boxes."""
+        # eps = [2.0, 0.5]:
+        #   f[0] = (0.5, 0.1) → box (0, 0)
+        #   f[1] = (1.5, 0.6) → box (0, 1)  [same box on obj-0, different on obj-1]
+        # → non-dominated (different on obj-1, same on obj-0)
+        dom = EpsilonDominator(eps=np.array([2.0, 0.5]))
+        f = np.array([[0.5, 0.1], [1.5, 0.6]])
+        mat = dom.dominance_matrix(f)
+        # obj-0 box: both 0; obj-1 box: 0 vs 1 → f[0] dominates f[1]
+        assert mat[0, 1]
+        assert not mat[1, 0]
+
+    # -----------------------------------------------------------------------
+    # 6. Multiplicative mode: basic dominance case
+    # -----------------------------------------------------------------------
+    def test_multiplicative_mode_basic(self) -> None:
+        """Multiplicative mode: lower-box point dominates in a clear case."""
+        # eps=0.5: log(1+0.5)=log(1.5) ≈ 0.405
+        # f[0]=(1.1, 1.1): box = floor(log(1.1)/log(1.5)) = floor(0.228) = 0
+        # f[1]=(2.5, 2.5): box = floor(log(2.5)/log(1.5)) = floor(2.27)  = 2
+        dom = EpsilonDominator(eps=0.5, mode="multiplicative")
+        f = np.array([[1.1, 1.1], [2.5, 2.5]])
+        mat = dom.dominance_matrix(f)
+        assert mat[0, 1]  # box (0,0) dominates box (2,2)
+        assert not mat[1, 0]
+
+    # -----------------------------------------------------------------------
+    # 7. Multiplicative mode raises on non-positive values
+    # -----------------------------------------------------------------------
+    def test_multiplicative_raises_on_nonpositive(self) -> None:
+        """Multiplicative mode raises ValueError when f contains non-positive values."""
+        dom = EpsilonDominator(eps=0.5, mode="multiplicative")
+        f_zero = np.array([[0.0, 1.0], [1.0, 2.0]])
+        with pytest.raises(ValueError, match="strictly positive"):
+            dom.dominance_matrix(f_zero)
+
+        f_neg = np.array([[-1.0, 1.0], [1.0, 2.0]])
+        with pytest.raises(ValueError, match="strictly positive"):
+            dom.dominance_matrix(f_neg)
+
+    # -----------------------------------------------------------------------
+    # 8. Non-positive / zero eps raises ValueError
+    # -----------------------------------------------------------------------
+    def test_zero_eps_raises(self) -> None:
+        """eps=0 raises ValueError at construction."""
+        with pytest.raises(ValueError, match="strictly positive"):
+            EpsilonDominator(eps=0.0)
+
+    def test_negative_eps_raises(self) -> None:
+        """Negative eps raises ValueError at construction."""
+        with pytest.raises(ValueError, match="strictly positive"):
+            EpsilonDominator(eps=-0.1)
+
+    def test_partial_nonpositive_eps_array_raises(self) -> None:
+        """An eps array with any non-positive element raises ValueError."""
+        with pytest.raises(ValueError, match="strictly positive"):
+            EpsilonDominator(eps=np.array([1.0, 0.0]))
+
+    # -----------------------------------------------------------------------
+    # 9. dominates() (scalar path) agrees with dominance_matrix()
+    # -----------------------------------------------------------------------
+    def test_dominates_agrees_with_matrix(self) -> None:
+        """dominates() on a 2-row stack matches dominance_matrix()[0,1]."""
+        dom = EpsilonDominator(eps=1.0)
+        # (0.5, 0.5) box (0,0) and (1.5, 1.5) box (1,1)
+        fa = np.array([0.5, 0.5])
+        fb = np.array([1.5, 1.5])
+        f = np.stack([fa, fb])
+        mat = dom.dominance_matrix(f)
+        assert dom.dominates(fa, fb) == bool(mat[0, 1])
+        assert dom.dominates(fb, fa) == bool(mat[1, 0])
+
+    def test_dominates_same_box_returns_false(self) -> None:
+        """dominates() returns False when both points are in the same ε-box."""
+        dom = EpsilonDominator(eps=1.0)
+        fa = np.array([0.1, 0.2])
+        fb = np.array([0.9, 0.8])
+        assert not dom.dominates(fa, fb)
+        assert not dom.dominates(fb, fa)

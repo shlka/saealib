@@ -37,6 +37,7 @@ from saealib.callback import (
 from saealib.comparators import (
     Comparator,
     Dominator,
+    EpsilonDominator,
     NonDominatedSorter,
     NSGA2Comparator,
     ParetoComparator,
@@ -159,6 +160,7 @@ __all__ = [
     "DensityManager",
     "Dominator",
     "EnsembleSurrogateManager",
+    "EpsilonDominator",
     "EqualityConstraint",
     "EvaluationResult",
     "Evaluator",
