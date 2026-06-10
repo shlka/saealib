@@ -36,9 +36,11 @@ from saealib.callback import (
 )
 from saealib.comparators import (
     Comparator,
+    Dominator,
     NonDominatedSorter,
     NSGA2Comparator,
     ParetoComparator,
+    ParetoDominator,
     SingleObjectiveComparator,
     WeightedSumComparator,
     crowding_distance,
@@ -152,6 +154,7 @@ __all__ = [
     "CrossoverUniform",
     "DTSurrogate",
     "DensityManager",
+    "Dominator",
     "EnsembleSurrogateManager",
     "EqualityConstraint",
     "EvaluationResult",
@@ -186,6 +189,7 @@ __all__ = [
     "Optimizer",
     "ParentSelection",
     "ParetoComparator",
+    "ParetoDominator",
     "PerObjectiveSurrogate",
     "Population",
     "PopulationAttribute",
