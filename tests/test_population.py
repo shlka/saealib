@@ -731,9 +731,7 @@ class TestParetoArchive:
         self, pareto_archive: ParetoArchive
     ) -> None:
         pareto_archive.add(x=np.array([0.0, 0.0]), f=np.array([1.0, 1.0]), cv=0.0)
-        idx = pareto_archive.add(
-            x=np.array([1.0, 1.0]), f=np.array([0.5, 0.5]), cv=1.0
-        )
+        idx = pareto_archive.add(x=np.array([1.0, 1.0]), f=np.array([0.5, 0.5]), cv=1.0)
         assert idx == -1
         assert len(pareto_archive) == 1
 
