@@ -12,7 +12,6 @@ from saealib.acquisition.mean import MeanPrediction
 from saealib.algorithms.ga import GA
 from saealib.algorithms.pso import PSO
 from saealib.callback import GenerationStartEvent, logging_generation
-from saealib.comparators import non_dominated_sort
 from saealib.context import OptimizationContext
 from saealib.execution.initializer import LHSInitializer
 from saealib.operators.crossover import CrossoverBLXAlpha
@@ -172,11 +171,18 @@ def _build_result(ctx: OptimizationContext) -> Result:
         best_x = archive_x[best_idx]
         best_f = archive_f[best_idx]
     else:
-        direction = np.sign(weight)
-        _, fronts = non_dominated_sort(archive_f[pool], direction=direction)
-        pareto_idx = pool[fronts[0]]
-        best_x = archive_x[pareto_idx]
-        best_f = archive_f[pareto_idx]
+        if len(ctx.pareto_archive) > 0:
+            best_x = ctx.pareto_archive.get_array("x")
+            best_f = ctx.pareto_archive.get_array("f")
+        else:
+            # Fallback: pareto_archive is empty (should not happen in normal use)
+            from saealib.comparators import non_dominated_sort
+
+            direction = np.sign(weight)
+            _, fronts = non_dominated_sort(archive_f[pool], direction=direction)
+            pareto_idx = pool[fronts[0]]
+            best_x = archive_x[pareto_idx]
+            best_f = archive_f[pareto_idx]
 
     return Result(X=best_x, F=best_f, fe=ctx.fe, gen=ctx.gen, ctx=ctx)
 
