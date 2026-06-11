@@ -48,7 +48,7 @@ from saealib.comparators import (
     _pareto_dominates,
 )
 from saealib.population import Population, PopulationAttribute
-from saealib.utils.indicators import _non_dominated
+from saealib.utils.indicators import _non_dominated, hypervolume_contributions
 
 logging.getLogger("saealib.surrogate.rbf").setLevel(logging.CRITICAL)
 
@@ -1722,3 +1722,184 @@ class TestSPEA2Comparator:
 
         assert issubclass(SPEA2Comparator, Comparator)
         assert not issubclass(SPEA2Comparator, ParetoComparator)
+
+
+# ===========================================================================
+# hypervolume_contributions Tests (#74, Beume et al. 2007)
+# ===========================================================================
+class TestHypervolumeContributions:
+    """Tests for hypervolume_contributions (exclusive HV contribution).
+
+    Reference: Beume, N., Naujoks, B., & Emmerich, M. (2007).
+    SMS-EMOA: Multiobjective selection based on dominated hypervolume.
+    European Journal of Operational Research, 181(3), 1653-1669.
+    """
+
+    # -----------------------------------------------------------------------
+    # 1. Known 2D case with explicit reference point
+    # -----------------------------------------------------------------------
+    def test_two_point_front_known_values(self) -> None:
+        """2-point 2D minimization front: verify contributions analytically.
+
+        f = [[0, 2], [1, 0]], reference = [2, 3].
+
+        Leave-one-out hypervolumes (minimization convention):
+          HV(S, ref=[2,3])          = 4   (total dominated area)
+          HV({[1,0]}, ref=[2,3])    = (2-1)*(3-0) = 3
+          HV({[0,2]}, ref=[2,3])    = (2-0)*(3-2) = 2
+          contrib[0] = 4 - 3 = 1
+          contrib[1] = 4 - 2 = 2
+
+        The exclusive contributions do NOT generally sum to the total HV
+        (overlap between exclusive regions is counted only once in HV but
+        twice in the individual HV calls).  The sum equals 3 here, not 4.
+        """
+        f = np.array([[0.0, 2.0], [1.0, 0.0]])
+        ref = np.array([2.0, 3.0])
+
+        from saealib.utils.indicators import hypervolume
+
+        contrib = hypervolume_contributions(f, reference_point=ref)
+        total = hypervolume(f, ref)
+
+        assert contrib.shape == (2,)
+        assert np.all(contrib > 0)
+        np.testing.assert_allclose(total, 4.0, rtol=1e-10)
+
+        # Verify exact leave-one-out values.
+        np.testing.assert_allclose(contrib[0], 1.0, rtol=1e-10)
+        np.testing.assert_allclose(contrib[1], 2.0, rtol=1e-10)
+
+        # Point 1 (1,0) has a larger exclusive contribution than point 0 (0,2).
+        assert contrib[1] > contrib[0]
+
+    def test_three_point_front_contributions_positive(self) -> None:
+        """3 mutually non-dominated 2D points: all contributions are positive."""
+        f = np.array([[0.0, 3.0], [1.5, 1.5], [3.0, 0.0]])
+        ref = np.array([4.0, 4.0])
+        contrib = hypervolume_contributions(f, reference_point=ref)
+        assert contrib.shape == (3,)
+        assert np.all(contrib > 0)
+
+    # -----------------------------------------------------------------------
+    # 2. Dominated point gets contribution 0
+    # -----------------------------------------------------------------------
+    def test_dominated_point_zero_contribution(self) -> None:
+        """A dominated point contributes 0 to the hypervolume.
+
+        f[0]=[0,2] and f[1]=[2,0] are mutually non-dominated.
+        f[2]=[3,3] is dominated by both → its contribution must be 0.
+        """
+        f = np.array([[0.0, 2.0], [2.0, 0.0], [3.0, 3.0]])
+        ref = np.array([4.0, 4.0])
+        contrib = hypervolume_contributions(f, reference_point=ref)
+        # f[2] is dominated by f[0] and f[1] → contribution must be 0.
+        assert contrib[2] == 0.0
+        # Non-dominated points should have positive contributions.
+        assert contrib[0] > 0.0
+        assert contrib[1] > 0.0
+
+    # -----------------------------------------------------------------------
+    # 3. direction for maximization
+    # -----------------------------------------------------------------------
+    def test_direction_maximization_equivalent_to_negation(self) -> None:
+        """Maximization via direction is equivalent to negating the objectives."""
+        f = np.array([[3.0, 0.0], [0.0, 3.0], [1.0, 1.0]])
+        ref_max = np.array([-1.0, -1.0])  # reference in maximize space
+        direction = np.array([1.0, 1.0])
+
+        # Contributions with direction=maximize
+        contrib_dir = hypervolume_contributions(
+            f, reference_point=ref_max, direction=direction
+        )
+
+        # Equivalent: negate f and reference_point, minimize
+        f_neg = -f
+        ref_neg = -ref_max  # = [1,1]
+        contrib_neg = hypervolume_contributions(f_neg, reference_point=ref_neg)
+
+        np.testing.assert_allclose(contrib_dir, contrib_neg, rtol=1e-10)
+
+    # -----------------------------------------------------------------------
+    # 4. Auto reference point (reference_point=None)
+    # -----------------------------------------------------------------------
+    def test_auto_reference_point_all_nonneg(self) -> None:
+        """Auto reference point gives non-negative contributions to all points."""
+        f = np.array([[0.0, 3.0], [1.5, 1.5], [3.0, 0.0]])
+        contrib = hypervolume_contributions(f)
+        assert contrib.shape == (3,)
+        assert np.all(contrib >= 0.0)
+
+    def test_auto_reference_point_nondominated_positive(self) -> None:
+        """Non-dominated points get positive contribution with auto reference."""
+        f = np.array([[0.0, 2.0], [1.0, 0.0], [3.0, 3.0]])
+        # f[2] is dominated by both f[0] and f[1].
+        contrib = hypervolume_contributions(f)
+        assert contrib[0] > 0.0
+        assert contrib[1] > 0.0
+
+    def test_auto_reference_degenerate_single_axis(self) -> None:
+        """Auto reference handles a degenerate axis (all points equal on one obj)."""
+        # All points have f[:, 1] == 1.0 → span[1] == 0.
+        f = np.array([[0.0, 1.0], [1.0, 1.0]])
+        contrib = hypervolume_contributions(f)
+        assert contrib.shape == (2,)
+        assert np.all(contrib >= 0.0)
+
+    # -----------------------------------------------------------------------
+    # 5. Shape and edge cases
+    # -----------------------------------------------------------------------
+    def test_output_shape(self) -> None:
+        """Returns shape (N,) for general inputs."""
+        rng = np.random.default_rng(0)
+        f = rng.random((7, 2))
+        contrib = hypervolume_contributions(f)
+        assert contrib.shape == (7,)
+
+    def test_n_equals_zero_returns_empty(self) -> None:
+        """Empty input returns empty array."""
+        f = np.empty((0, 2))
+        contrib = hypervolume_contributions(f)
+        assert contrib.shape == (0,)
+
+    def test_n_equals_one_returns_total_hv(self) -> None:
+        """N==1: removing the only point leaves HV=0 → contribution equals total HV."""
+        f = np.array([[1.0, 2.0]])
+        ref = np.array([3.0, 4.0])
+
+        from saealib.utils.indicators import hypervolume
+
+        contrib = hypervolume_contributions(f, reference_point=ref)
+        assert contrib.shape == (1,)
+        assert contrib[0] > 0.0
+        np.testing.assert_allclose(contrib[0], hypervolume(f, ref), rtol=1e-10)
+
+    def test_1d_input_reshaped(self) -> None:
+        """1-D input is treated as a single-point (1, n_obj) matrix."""
+        f = np.array([1.0, 2.0])
+        ref = np.array([3.0, 4.0])
+        contrib = hypervolume_contributions(f, reference_point=ref)
+        assert contrib.shape == (1,)
+        assert contrib[0] > 0.0
+
+    def test_all_values_nonneg(self) -> None:
+        """All returned contributions are >= 0 (no negative floating noise)."""
+        rng = np.random.default_rng(99)
+        f = rng.random((12, 3))
+        contrib = hypervolume_contributions(f)
+        assert np.all(contrib >= 0.0)
+
+    # -----------------------------------------------------------------------
+    # 6. Import from both saealib and saealib.utils
+    # -----------------------------------------------------------------------
+    def test_import_from_saealib(self) -> None:
+        """hypervolume_contributions is importable from top-level saealib."""
+        from saealib import hypervolume_contributions as hvc
+
+        assert hvc is not None
+
+    def test_import_from_saealib_utils(self) -> None:
+        """hypervolume_contributions is importable from saealib.utils."""
+        from saealib.utils import hypervolume_contributions as hvc
+
+        assert hvc is not None
