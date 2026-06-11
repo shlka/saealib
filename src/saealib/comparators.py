@@ -1219,6 +1219,212 @@ class NSGA2Comparator(ParetoComparator):
         return result
 
 
+class SPEA2Comparator(Comparator):
+    """
+    Comparator implementing SPEA2 fitness-based ranking (Zitzler et al., 2001).
+
+    SPEA2 fitness ``F(i) = R(i) + D(i)`` is computed over the **entire feasible
+    set** and used as the ranking criterion — lower is better.  Because the
+    fitness depends on the whole population, pairwise comparison of two isolated
+    points is undefined.
+
+    Ordering rules:
+
+    - **Feasible block**: sorted by ascending SPEA2 fitness (lower = better).
+      See :func:`spea2_fitness` for the ``k = √N`` density reduction note.
+    - **Infeasible block**: always placed after feasible individuals, ordered by
+      ascending constraint violation (Deb 2000 feasibility rule).
+
+    .. note::
+        ``compare()`` raises :exc:`NotImplementedError` because SPEA2 fitness is
+        population-relative.  Components that require pairwise comparison (e.g.
+        PSO pbest update, ``PairwiseComparisonSet``) should use a
+        :class:`ParetoComparator` instead.  Tournament selection should call
+        ``compare_population()``, which IS defined and safe to use.
+
+    Parameters
+    ----------
+    weights : np.ndarray or None
+        Per-objective weights.  Sign determines optimization direction:
+        ``-1`` = minimize, ``+1`` = maximize.  ``None`` defaults to minimization
+        for all objectives.
+    eps_cv : float
+        Feasibility threshold for constraint violation.
+    eps_obj : float
+        Epsilon for objective-value equality (stored for interface compatibility).
+    dominator : Dominator or None
+        Dominance predicate.  ``None`` defaults to :class:`ParetoDominator`.
+
+    References
+    ----------
+    .. [1] Zitzler, E., Laumanns, M., & Thiele, L. (2001). SPEA2: Improving the
+       Strength Pareto Evolutionary Algorithm.  TIK-Report 103, ETH Zurich.
+    .. [2] Deb, K. (2000). An efficient constraint handling method for genetic
+       algorithms.  Computer Methods in Applied Mechanics and Engineering,
+       186(2-4), 311-338.
+    """
+
+    is_population_relative: bool = True
+    """Marker indicating that ``compare()`` is unavailable for this comparator."""
+
+    def __init__(
+        self,
+        weights: np.ndarray | None = None,
+        *,
+        eps_cv: float = 1e-6,
+        eps_obj: float = 1e-6,
+        dominator: Dominator | None = None,
+    ):
+        w = np.asarray(weights, dtype=float) if weights is not None else np.empty(0)
+        super().__init__(w, eps_cv, eps_obj)
+        self._dominator: Dominator = (
+            dominator if dominator is not None else ParetoDominator()
+        )
+
+    @property
+    def dominator(self) -> Dominator:
+        """The dominance predicate used by this comparator."""
+        return self._dominator
+
+    @property
+    def _direction(self) -> np.ndarray | None:
+        if self.weights.size == 0:
+            return None
+        return np.sign(self.weights)
+
+    def _fitness(self, population: Population) -> np.ndarray:
+        """
+        Return the length-N SPEA2 fitness array, computing and caching as needed.
+
+        Infeasible individuals (cv > eps_cv) receive ``+inf`` so they naturally
+        sort to the end.  Feasible rows with any NaN objective also receive
+        ``+inf`` so they sort to the end of the feasible block.
+        """
+        cached = population.get_cache("spea2_fitness")
+        if cached is not None:
+            return cached
+
+        f_arr = population.get("f")
+        cv_arr = population.get("cv")
+        n = len(f_arr)
+
+        fitness_all = np.full(n, np.inf)  # infeasible -> +inf (sort last)
+        feasible = np.where(cv_arr <= self.eps_cv)[0]
+        if len(feasible):
+            f_feasible = spea2_fitness(
+                f_arr[feasible],
+                direction=self._direction,
+                dominator=self._dominator,
+            )
+            # Rows with any NaN objective -> +inf so they sort after valid feasibles
+            nan_mask = np.isnan(f_arr[feasible]).any(axis=1)
+            f_feasible = np.where(nan_mask, np.inf, f_feasible)
+            fitness_all[feasible] = f_feasible
+
+        population.set_cache("spea2_fitness", fitness_all)
+        return fitness_all
+
+    def sort_population(self, population: Population) -> np.ndarray:
+        """
+        Sort by SPEA2 fitness (ascending); infeasible individuals come last.
+
+        Parameters
+        ----------
+        population : Population
+            The population to sort.
+
+        Returns
+        -------
+        np.ndarray
+            Sorted population indices (int).
+        """
+        cv_arr = population.get("cv")
+        fitness_all = self._fitness(population)
+
+        feasible = np.where(cv_arr <= self.eps_cv)[0]
+        infeasible = np.where(cv_arr > self.eps_cv)[0]
+
+        sorted_feasible: np.ndarray = np.empty(0, int)
+        if len(feasible):
+            order = np.argsort(fitness_all[feasible], kind="stable")
+            sorted_feasible = feasible[order]
+
+        sorted_infeasible: np.ndarray = np.empty(0, int)
+        if len(infeasible):
+            inf_order = np.argsort(cv_arr[infeasible], kind="stable")
+            sorted_infeasible = infeasible[inf_order]
+
+        return np.concatenate([sorted_feasible, sorted_infeasible]).astype(int)
+
+    def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
+        """
+        Compare two individuals using constraint-domination then SPEA2 fitness.
+
+        Returns ``-1`` if ``a`` is better, ``1`` if ``b`` is better, ``0`` if
+        equal.  The feasibility rule (Deb 2000) is applied first: feasible
+        individuals always beat infeasible ones.  Among both-infeasible pairs,
+        lower constraint violation wins.  Among both-feasible pairs, lower SPEA2
+        fitness wins.
+
+        Parameters
+        ----------
+        population : Population
+            The population containing both individuals.
+        idx_a : int
+            Index of the first individual.
+        idx_b : int
+            Index of the second individual.
+
+        Returns
+        -------
+        int
+            ``-1``, ``0``, or ``1``.
+        """
+        cv_arr = population.get("cv")
+        cv_a = float(cv_arr[idx_a])
+        cv_b = float(cv_arr[idx_b])
+
+        # Both infeasible: lower cv wins
+        if cv_a > self.eps_cv and cv_b > self.eps_cv:
+            if cv_a < cv_b:
+                return -1
+            elif cv_a > cv_b:
+                return 1
+            return 0
+
+        # One infeasible: feasible wins
+        if cv_a > self.eps_cv:
+            return 1
+        if cv_b > self.eps_cv:
+            return -1
+
+        # Both feasible: lower SPEA2 fitness wins
+        fitness_all = self._fitness(population)
+        fa = fitness_all[idx_a]
+        fb = fitness_all[idx_b]
+        if fa < fb:
+            return -1
+        elif fa > fb:
+            return 1
+        return 0
+
+    def compare(
+        self,
+        fa: np.ndarray,
+        cv_a: float,
+        fb: np.ndarray,
+        cv_b: float,
+    ) -> int:
+        """Raise NotImplementedError — SPEA2 fitness is population-relative."""
+        raise NotImplementedError(
+            "SPEA2Comparator.compare() is undefined: SPEA2 fitness is "
+            "population-relative and cannot be computed from two isolated "
+            "points. Use compare_population() / sort_population(), or supply "
+            "a ParetoComparator for components that require pairwise "
+            "compare() (e.g. PSO pbest update, PairwiseComparisonSet)."
+        )
+
+
 class EpsilonDominanceComparator(ParetoComparator):
     """
     Comparator using ε-box dominance instead of standard Pareto dominance.

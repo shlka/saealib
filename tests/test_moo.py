@@ -1542,3 +1542,183 @@ class TestSpea2Fitness:
         fitness = spea2_fitness(f)
         # The worst point must have the maximum fitness (lower = better)
         assert fitness[3] == fitness.max()
+
+
+# ===========================================================================
+# SPEA2Comparator Tests (#74)
+# ===========================================================================
+class TestSPEA2Comparator:
+    """Tests for SPEA2Comparator (Zitzler et al., 2001)."""
+
+    # -----------------------------------------------------------------------
+    # 1. Class marker
+    # -----------------------------------------------------------------------
+    def test_is_population_relative_marker(self) -> None:
+        """SPEA2Comparator.is_population_relative is True."""
+        from saealib.comparators import SPEA2Comparator
+
+        assert SPEA2Comparator.is_population_relative is True
+
+    # -----------------------------------------------------------------------
+    # 2. compare() raises NotImplementedError
+    # -----------------------------------------------------------------------
+    def test_compare_raises(self) -> None:
+        """compare() raises NotImplementedError with a guiding message."""
+        from saealib.comparators import SPEA2Comparator
+
+        comp = SPEA2Comparator()
+        with pytest.raises(NotImplementedError, match="population-relative"):
+            comp.compare(
+                np.array([0.0, 0.0]),
+                0.0,
+                np.array([1.0, 1.0]),
+                0.0,
+            )
+
+    # -----------------------------------------------------------------------
+    # 3. sort_population: dominance chain
+    # -----------------------------------------------------------------------
+    def test_sort_population_dominance_chain(self) -> None:
+        """A dominates B dominates C → A first, then B, then C."""
+        from saealib.comparators import SPEA2Comparator
+
+        # 2-obj minimization: A=[0,0] dom B=[1,1] dom C=[2,2]
+        f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+        pop = _make_pop(f)
+        comp = SPEA2Comparator()
+        order = comp.sort_population(pop)
+        # Non-dominated A must be first; dominated C must be last
+        assert order[0] == 0
+        assert order[1] == 1
+        assert order[2] == 2
+
+    # -----------------------------------------------------------------------
+    # 4. sort_population: feasibility — infeasible placed last
+    # -----------------------------------------------------------------------
+    def test_sort_population_infeasible_last(self) -> None:
+        """Infeasible individuals appear after all feasible ones."""
+        from saealib.comparators import SPEA2Comparator
+
+        f = np.array([[10.0, 10.0], [0.0, 0.0], [1.0, 1.0]])
+        cv = np.array([1.0, 0.0, 0.0])  # idx=0 infeasible
+        pop = _make_pop(f, cv)
+        comp = SPEA2Comparator()
+        order = comp.sort_population(pop)
+        assert order[-1] == 0  # infeasible is last
+
+    def test_sort_population_infeasible_by_ascending_cv(self) -> None:
+        """Multiple infeasible individuals are sorted by ascending cv."""
+        from saealib.comparators import SPEA2Comparator
+
+        f = np.array([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]])
+        cv = np.array([2.0, 0.5, 1.0])  # all infeasible
+        pop = _make_pop(f, cv)
+        comp = SPEA2Comparator()
+        order = comp.sort_population(pop)
+        # Sorted ascending by cv: idx 1 (0.5), idx 2 (1.0), idx 0 (2.0)
+        assert list(order) == [1, 2, 0]
+
+    def test_sort_population_feasible_before_infeasible(self) -> None:
+        """Feasible individuals always appear before infeasible ones."""
+        from saealib.comparators import SPEA2Comparator
+
+        f = np.array([[5.0, 5.0], [0.0, 0.0], [3.0, 3.0]])
+        cv = np.array([0.0, 1.0, 0.0])  # idx=1 infeasible
+        pop = _make_pop(f, cv)
+        comp = SPEA2Comparator()
+        order = comp.sort_population(pop)
+        # idx=1 must be last; idx=0 and idx=2 are feasible and come first
+        assert order[-1] == 1
+        assert set(order[:2]) == {0, 2}
+
+    # -----------------------------------------------------------------------
+    # 5. compare_population: pairwise comparisons
+    # -----------------------------------------------------------------------
+    def test_compare_population_dominant_wins(self) -> None:
+        """A dominating point has lower SPEA2 fitness → compare returns -1."""
+        from saealib.comparators import SPEA2Comparator
+
+        f = np.array([[0.0, 0.0], [1.0, 1.0]])  # idx 0 dominates idx 1
+        pop = _make_pop(f)
+        comp = SPEA2Comparator()
+        assert comp.compare_population(pop, 0, 1) == -1
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    def test_compare_population_feasible_beats_infeasible(self) -> None:
+        """Feasible always beats infeasible regardless of objectives."""
+        from saealib.comparators import SPEA2Comparator
+
+        f = np.array([[100.0, 100.0], [0.0, 0.0]])
+        # idx=0 feasible (bad obj), idx=1 infeasible (good obj)
+        cv = np.array([0.0, 1.0])
+        pop = _make_pop(f, cv)
+        comp = SPEA2Comparator()
+        assert comp.compare_population(pop, 0, 1) == -1  # feasible wins
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    def test_compare_population_both_infeasible_lower_cv_wins(self) -> None:
+        """Both infeasible: lower constraint violation wins."""
+        from saealib.comparators import SPEA2Comparator
+
+        f = np.array([[0.0, 0.0], [0.0, 0.0]])
+        cv = np.array([0.5, 2.0])
+        pop = _make_pop(f, cv)
+        comp = SPEA2Comparator()
+        assert comp.compare_population(pop, 0, 1) == -1
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    # -----------------------------------------------------------------------
+    # 6. Tournament-selection safety (compare_population loop)
+    # -----------------------------------------------------------------------
+    def test_compare_population_no_exception_all_pairs(self) -> None:
+        """compare_population works for all index pairs without raising."""
+        from saealib.comparators import SPEA2Comparator
+
+        rng = np.random.default_rng(0)
+        n = 10
+        f = rng.random((n, 2))
+        cv = np.zeros(n)
+        cv[[2, 5]] = rng.uniform(0.1, 1.0, 2)  # make two individuals infeasible
+        pop = _make_pop(f, cv)
+        comp = SPEA2Comparator()
+        for i in range(n):
+            for j in range(n):
+                result = comp.compare_population(pop, i, j)
+                assert result in (-1, 0, 1)
+
+    # -----------------------------------------------------------------------
+    # 7. Import from top-level saealib package
+    # -----------------------------------------------------------------------
+    def test_import_from_saealib(self) -> None:
+        """SPEA2Comparator can be imported from saealib directly."""
+        from saealib import SPEA2Comparator
+
+        assert SPEA2Comparator is not None
+
+    # -----------------------------------------------------------------------
+    # 8. dominator property and weights direction
+    # -----------------------------------------------------------------------
+    def test_dominator_property_default(self) -> None:
+        """Default dominator is ParetoDominator."""
+        from saealib.comparators import SPEA2Comparator
+
+        comp = SPEA2Comparator()
+        assert isinstance(comp.dominator, ParetoDominator)
+
+    def test_weights_direction_maximize(self) -> None:
+        """Weights with +1 interpret objectives as maximize."""
+        from saealib.comparators import SPEA2Comparator
+
+        # f[0]=[3,3] is best under maximization; f[1]=[1,1] is dominated
+        f = np.array([[3.0, 3.0], [1.0, 1.0]])
+        pop = _make_pop(f)
+        comp = SPEA2Comparator(weights=np.array([1.0, 1.0]))
+        order = comp.sort_population(pop)
+        assert order[0] == 0  # [3,3] should be first under maximize
+
+    def test_is_subclass_of_comparator(self) -> None:
+        """SPEA2Comparator is a direct subclass of Comparator (not ParetoComparator)."""
+        from saealib.comparators import Comparator, SPEA2Comparator
+
+        assert issubclass(SPEA2Comparator, Comparator)
+        assert not issubclass(SPEA2Comparator, ParetoComparator)
