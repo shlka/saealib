@@ -155,6 +155,163 @@ class ParetoDominator(Dominator):
         return leq_all & less_any
 
 
+class EpsilonDominator(Dominator):
+    """
+    ε-dominance predicate (Laumanns et al., 2002).
+
+    Quantizes each objective into ε-boxes and applies ordinary Pareto
+    dominance on the resulting integer box coordinates.  Two solutions that
+    fall in the same ε-box are mutually non-dominating; a solution in a
+    strictly better box (lower box index in every minimization objective,
+    higher in every maximization objective) dominates the other.
+
+    Two quantization modes are supported:
+
+    - **additive** (default): box index = ``floor(f_i / eps_i)``.
+      As ``eps → 0`` the boxes shrink to individual points and the relation
+      recovers ordinary Pareto dominance.
+
+    - **multiplicative**: box index = ``floor(log f_i / log(1 + eps_i))``.
+      Requires strictly positive objective values (``f > 0``).
+
+    Parameters
+    ----------
+    eps : float or np.ndarray
+        Box width per objective.  A scalar applies the same width to every
+        objective; an array of shape ``(n_obj,)`` sets per-objective widths.
+        All values must be strictly positive (> 0).
+    mode : {"additive", "multiplicative"}
+        Quantization mode.  Default is ``"additive"``.
+
+    Raises
+    ------
+    ValueError
+        If any element of ``eps`` is not strictly positive (≤ 0).
+    ValueError
+        If ``mode`` is not one of ``"additive"`` or ``"multiplicative"``.
+
+    Notes
+    -----
+    Additive box rule::
+
+        b_i = floor(f_i / eps_i)
+
+    Multiplicative box rule (requires f_i > 0 for all i)::
+
+        b_i = floor(log(f_i) / log(1 + eps_i))
+
+    Because ``log(1 + eps_i) = log1p(eps_i)`` is used internally, the
+    multiplicative rule is numerically stable for small ``eps``.
+
+    The dominance-matrix computation delegates entirely to an internal
+    :class:`ParetoDominator` instance operating on the quantized box
+    coordinates.  This guarantees that :meth:`dominates` (inherited from
+    :class:`Dominator`) and :meth:`dominance_matrix` always agree.
+
+    References
+    ----------
+    .. [1] Laumanns, M., Thiele, L., Deb, K., & Zitzler, E. (2002).
+       Combining Convergence and Diversity in Evolutionary Multiobjective
+       Optimization. *Evolutionary Computation*, 10(3), 263-282.
+       https://doi.org/10.1162/106365602760234108
+    """
+
+    def __init__(
+        self,
+        eps: float | np.ndarray,
+        mode: str = "additive",
+    ) -> None:
+        eps_arr = np.atleast_1d(np.asarray(eps, dtype=float))
+        if np.any(eps_arr <= 0):
+            raise ValueError(
+                f"All eps values must be strictly positive (> 0); got {eps_arr}"
+            )
+        if mode not in ("additive", "multiplicative"):
+            raise ValueError(
+                f"mode must be 'additive' or 'multiplicative'; got {mode!r}"
+            )
+        self._eps = eps_arr
+        self._mode = mode
+        # Internal delegate: Pareto dominance on box coordinates.
+        self._pareto = ParetoDominator()
+
+    @property
+    def eps(self) -> np.ndarray:
+        """Box widths per objective."""
+        return self._eps
+
+    @property
+    def mode(self) -> str:
+        """Quantization mode ('additive' or 'multiplicative')."""
+        return self._mode
+
+    def _quantize(self, f: np.ndarray) -> np.ndarray:
+        """
+        Map objective matrix *f* to integer ε-box coordinates.
+
+        Parameters
+        ----------
+        f : np.ndarray
+            Objective matrix, shape (n, n_obj).
+
+        Returns
+        -------
+        np.ndarray
+            Integer box-index matrix, shape (n, n_obj), dtype float64
+            (floor of real-valued box coordinates; kept as float so that
+            ParetoDominator can operate on them without type issues).
+
+        Raises
+        ------
+        ValueError
+            In multiplicative mode, if any element of *f* is ≤ 0.
+        """
+        if self._mode == "additive":
+            return np.floor(f / self._eps)
+        # multiplicative mode
+        if np.any(f <= 0):
+            raise ValueError(
+                "Multiplicative ε-dominance requires all objective values to be "
+                "strictly positive (f > 0).  Found non-positive values in f."
+            )
+        return np.floor(np.log(f) / np.log1p(self._eps))
+
+    def dominance_matrix(
+        self,
+        f: np.ndarray,
+        direction: np.ndarray | None = None,
+    ) -> np.ndarray:
+        """
+        Compute the NxN ε-dominance matrix.
+
+        Quantizes *f* into ε-box coordinates and delegates to
+        :class:`ParetoDominator` on those coordinates so that direction
+        handling and the accumulation logic are not duplicated.
+
+        ``D[i, j]`` is True if row i ε-dominates row j.
+
+        Parameters
+        ----------
+        f : np.ndarray
+            Objective matrix. shape: (n, n_obj).  Must contain no NaN values
+            (callers are responsible for pre-filtering).
+        direction : np.ndarray or None
+            Per-objective direction. ``None`` → minimize all.
+
+        Returns
+        -------
+        np.ndarray
+            Boolean matrix of shape (n, n).
+
+        Raises
+        ------
+        ValueError
+            In multiplicative mode, if any element of *f* is ≤ 0.
+        """
+        b = self._quantize(np.asarray(f, dtype=float))
+        return self._pareto.dominance_matrix(b, direction)
+
+
 class Comparator(ABC):
     """
     Base class for comparator.
@@ -781,6 +938,97 @@ def crowding_distance_all_fronts(
     return cd
 
 
+def spea2_fitness(
+    f: np.ndarray,
+    direction: np.ndarray | None = None,
+    dominator: Dominator | None = None,
+) -> np.ndarray:
+    """
+    Compute SPEA2 fitness values for a set of objective vectors.
+
+    Implements the fitness assignment procedure from Zitzler et al. (2001).
+    Lower fitness is better (this deviates from the library's general
+    higher-is-better score convention — do NOT pass the result directly
+    to comparators that assume higher = better).
+
+    Fitness components:
+
+    - **Strength** ``S(i)``: number of solutions that ``i`` dominates.
+    - **Raw fitness** ``R(i)``: sum of the strengths of all solutions that
+      dominate ``i``.  ``R(i) = 0`` iff ``i`` is non-dominated.
+    - **Density** ``D(i) = 1 / (sigma_i^k + 2)``, where ``sigma_i^k`` is the
+      Euclidean distance (in objective space) from ``i`` to its k-th nearest
+      neighbour. The ``+2`` keeps ``D in (0, 0.5]``.
+    - **Fitness** ``F(i) = R(i) + D(i)``.
+
+    .. note::
+        **Deviation from the paper**: Zitzler et al. (2001) define
+        ``k = floor(√(N + N̄))`` using the combined size of the population
+        and an external archive.  This utility operates on a single set of
+        ``N`` points, so it uses ``k = floor(√N)`` instead, clamped to
+        ``[0, N-1]``.
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Objective matrix.  shape: (N, n_obj).
+    direction : np.ndarray or None
+        Per-objective optimization direction: ``+1`` = maximize,
+        ``-1`` = minimize.  ``None`` defaults to minimization for all
+        objectives.  Passed directly to the dominator (same convention as
+        :class:`ParetoComparator`).
+    dominator : Dominator or None
+        Dominance predicate used to build the dominance matrix.  ``None``
+        defaults to :class:`ParetoDominator` (standard Pareto dominance).
+
+    Returns
+    -------
+    np.ndarray
+        SPEA2 fitness values ``F``, shape ``(N,)``.  **Lower = better.**
+
+    References
+    ----------
+    .. [1] Zitzler, E., Laumanns, M., & Thiele, L. (2001). SPEA2: Improving
+       the Strength Pareto Evolutionary Algorithm.  TIK-Report 103, ETH
+       Zurich, Switzerland.
+    """
+    f = np.asarray(f, dtype=float)
+    n_pts = len(f)
+
+    if n_pts == 0:
+        return np.empty(0, dtype=float)
+
+    _dom = dominator if dominator is not None else ParetoDominator()
+
+    # --- Strength and raw fitness ---
+    # dom_mat[i, j] = True iff i dominates j
+    dom_mat = _dom.dominance_matrix(f, direction)
+
+    # strength[i] = number of solutions that i dominates (row sum)
+    strength = dom_mat.sum(axis=1).astype(float)
+
+    # raw_fitness[i] = sum of strength[j] for all j that dominate i
+    # dom_mat[j, i] = True iff j dominates i; weight each by strength[j]
+    raw_fitness = dom_mat.T.astype(float) @ strength  # shape (n_pts,)
+
+    # --- Density ---
+    # Pairwise Euclidean distances in objective space; shape (n_pts, n_pts)
+    diff = f[:, None, :] - f[None, :, :]  # (n_pts, n_pts, n_obj)
+    dist_mat = np.sqrt((diff**2).sum(axis=2))  # (n_pts, n_pts)
+
+    # k-th nearest neighbour distance (self-distance 0 sits at index 0)
+    k = int(np.floor(np.sqrt(n_pts)))
+    k = min(k, n_pts - 1)  # clamp to valid index
+
+    # Sort each row ascending and take the k-th column
+    dist_sorted = np.sort(dist_mat, axis=1)  # (n_pts, n_pts)
+    sigma_k = dist_sorted[:, k]  # (n_pts,)
+
+    density = 1.0 / (sigma_k + 2.0)
+
+    return raw_fitness + density
+
+
 class ParetoComparator(Comparator):
     """
     Comparator for multi-objective optimization via non-dominated sorting only.
@@ -969,3 +1217,552 @@ class NSGA2Comparator(ParetoComparator):
         result = np.concatenate([sorted_feasible, sorted_infeasible]).astype(int)
         population.set_cache("pareto_sort", result)
         return result
+
+
+class SPEA2Comparator(Comparator):
+    """
+    Comparator implementing SPEA2 fitness-based ranking (Zitzler et al., 2001).
+
+    SPEA2 fitness ``F(i) = R(i) + D(i)`` is computed over the **entire feasible
+    set** and used as the ranking criterion — lower is better.  Because the
+    fitness depends on the whole population, pairwise comparison of two isolated
+    points is undefined.
+
+    Ordering rules:
+
+    - **Feasible block**: sorted by ascending SPEA2 fitness (lower = better).
+      See :func:`spea2_fitness` for the ``k = √N`` density reduction note.
+    - **Infeasible block**: always placed after feasible individuals, ordered by
+      ascending constraint violation (Deb 2000 feasibility rule).
+
+    .. note::
+        ``compare()`` raises :exc:`NotImplementedError` because SPEA2 fitness is
+        population-relative.  Components that require pairwise comparison (e.g.
+        PSO pbest update, ``PairwiseComparisonSet``) should use a
+        :class:`ParetoComparator` instead.  Tournament selection should call
+        ``compare_population()``, which IS defined and safe to use.
+
+    Parameters
+    ----------
+    weights : np.ndarray or None
+        Per-objective weights.  Sign determines optimization direction:
+        ``-1`` = minimize, ``+1`` = maximize.  ``None`` defaults to minimization
+        for all objectives.
+    eps_cv : float
+        Feasibility threshold for constraint violation.
+    eps_obj : float
+        Epsilon for objective-value equality (stored for interface compatibility).
+    dominator : Dominator or None
+        Dominance predicate.  ``None`` defaults to :class:`ParetoDominator`.
+
+    References
+    ----------
+    .. [1] Zitzler, E., Laumanns, M., & Thiele, L. (2001). SPEA2: Improving the
+       Strength Pareto Evolutionary Algorithm.  TIK-Report 103, ETH Zurich.
+    .. [2] Deb, K. (2000). An efficient constraint handling method for genetic
+       algorithms.  Computer Methods in Applied Mechanics and Engineering,
+       186(2-4), 311-338.
+    """
+
+    is_population_relative: bool = True
+    """Marker indicating that ``compare()`` is unavailable for this comparator."""
+
+    def __init__(
+        self,
+        weights: np.ndarray | None = None,
+        *,
+        eps_cv: float = 1e-6,
+        eps_obj: float = 1e-6,
+        dominator: Dominator | None = None,
+    ):
+        w = np.asarray(weights, dtype=float) if weights is not None else np.empty(0)
+        super().__init__(w, eps_cv, eps_obj)
+        self._dominator: Dominator = (
+            dominator if dominator is not None else ParetoDominator()
+        )
+
+    @property
+    def dominator(self) -> Dominator:
+        """The dominance predicate used by this comparator."""
+        return self._dominator
+
+    @property
+    def _direction(self) -> np.ndarray | None:
+        if self.weights.size == 0:
+            return None
+        return np.sign(self.weights)
+
+    def _fitness(self, population: Population) -> np.ndarray:
+        """
+        Return the length-N SPEA2 fitness array, computing and caching as needed.
+
+        Infeasible individuals (cv > eps_cv) receive ``+inf`` so they naturally
+        sort to the end.  Feasible rows with any NaN objective also receive
+        ``+inf`` so they sort to the end of the feasible block.
+        """
+        cached = population.get_cache("spea2_fitness")
+        if cached is not None:
+            return cached
+
+        f_arr = population.get("f")
+        cv_arr = population.get("cv")
+        n = len(f_arr)
+
+        fitness_all = np.full(n, np.inf)  # infeasible -> +inf (sort last)
+        feasible = np.where(cv_arr <= self.eps_cv)[0]
+        if len(feasible):
+            f_feasible = spea2_fitness(
+                f_arr[feasible],
+                direction=self._direction,
+                dominator=self._dominator,
+            )
+            # Rows with any NaN objective -> +inf so they sort after valid feasibles
+            nan_mask = np.isnan(f_arr[feasible]).any(axis=1)
+            f_feasible = np.where(nan_mask, np.inf, f_feasible)
+            fitness_all[feasible] = f_feasible
+
+        population.set_cache("spea2_fitness", fitness_all)
+        return fitness_all
+
+    def sort_population(self, population: Population) -> np.ndarray:
+        """
+        Sort by SPEA2 fitness (ascending); infeasible individuals come last.
+
+        Parameters
+        ----------
+        population : Population
+            The population to sort.
+
+        Returns
+        -------
+        np.ndarray
+            Sorted population indices (int).
+        """
+        cv_arr = population.get("cv")
+        fitness_all = self._fitness(population)
+
+        feasible = np.where(cv_arr <= self.eps_cv)[0]
+        infeasible = np.where(cv_arr > self.eps_cv)[0]
+
+        sorted_feasible: np.ndarray = np.empty(0, int)
+        if len(feasible):
+            order = np.argsort(fitness_all[feasible], kind="stable")
+            sorted_feasible = feasible[order]
+
+        sorted_infeasible: np.ndarray = np.empty(0, int)
+        if len(infeasible):
+            inf_order = np.argsort(cv_arr[infeasible], kind="stable")
+            sorted_infeasible = infeasible[inf_order]
+
+        return np.concatenate([sorted_feasible, sorted_infeasible]).astype(int)
+
+    def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
+        """
+        Compare two individuals using constraint-domination then SPEA2 fitness.
+
+        Returns ``-1`` if ``a`` is better, ``1`` if ``b`` is better, ``0`` if
+        equal.  The feasibility rule (Deb 2000) is applied first: feasible
+        individuals always beat infeasible ones.  Among both-infeasible pairs,
+        lower constraint violation wins.  Among both-feasible pairs, lower SPEA2
+        fitness wins.
+
+        Parameters
+        ----------
+        population : Population
+            The population containing both individuals.
+        idx_a : int
+            Index of the first individual.
+        idx_b : int
+            Index of the second individual.
+
+        Returns
+        -------
+        int
+            ``-1``, ``0``, or ``1``.
+        """
+        cv_arr = population.get("cv")
+        cv_a = float(cv_arr[idx_a])
+        cv_b = float(cv_arr[idx_b])
+
+        # Both infeasible: lower cv wins
+        if cv_a > self.eps_cv and cv_b > self.eps_cv:
+            if cv_a < cv_b:
+                return -1
+            elif cv_a > cv_b:
+                return 1
+            return 0
+
+        # One infeasible: feasible wins
+        if cv_a > self.eps_cv:
+            return 1
+        if cv_b > self.eps_cv:
+            return -1
+
+        # Both feasible: lower SPEA2 fitness wins
+        fitness_all = self._fitness(population)
+        fa = fitness_all[idx_a]
+        fb = fitness_all[idx_b]
+        if fa < fb:
+            return -1
+        elif fa > fb:
+            return 1
+        return 0
+
+    def compare(
+        self,
+        fa: np.ndarray,
+        cv_a: float,
+        fb: np.ndarray,
+        cv_b: float,
+    ) -> int:
+        """Raise NotImplementedError — SPEA2 fitness is population-relative."""
+        raise NotImplementedError(
+            "SPEA2Comparator.compare() is undefined: SPEA2 fitness is "
+            "population-relative and cannot be computed from two isolated "
+            "points. Use compare_population() / sort_population(), or supply "
+            "a ParetoComparator for components that require pairwise "
+            "compare() (e.g. PSO pbest update, PairwiseComparisonSet)."
+        )
+
+
+class HypervolumeComparator(ParetoComparator):
+    """Comparator using front rank and exclusive HV contribution (SMS-EMOA style).
+
+    Ordering rules:
+
+    - **Feasibility first** (Deb 2000): infeasible individuals (cv > eps_cv)
+      are placed after all feasible ones, ordered by ascending constraint
+      violation.
+    - **Primary key**: non-dominated front rank (ascending, lower = better).
+    - **Secondary key** (within a front): exclusive hypervolume contribution
+      (descending, higher = better).
+
+    .. note::
+        **Generalization from SMS-EMOA.** The original SMS-EMOA
+        (Beume et al., 2007) computes HV contributions only on the *last*
+        (worst) front to determine the single removal candidate at each
+        generation.  This comparator applies HV-contribution ordering *within
+        every front* to produce a full ranking over the entire population.
+        This is a deliberate generalization that enables use in standard
+        survivor-selection and tournament-selection contexts.
+
+    .. warning::
+        Computing hypervolume is exponential in the number of objectives, and
+        :func:`~saealib.utils.indicators.hypervolume_contributions` performs
+        O(N) hypervolume evaluations per front (leave-one-out).  For large
+        populations or many objectives this becomes expensive.
+
+    .. note::
+        ``compare()`` raises :exc:`NotImplementedError` because the
+        hypervolume contribution of a point depends on the other points in
+        the population (it is population-relative).  Components that require
+        pairwise comparison (e.g. PSO pbest update,
+        ``PairwiseComparisonSet``) should use a :class:`ParetoComparator`
+        instead.  Tournament selection should call ``compare_population()``,
+        which IS defined and safe to use.
+
+    Parameters
+    ----------
+    weights : np.ndarray or None
+        Per-objective weights.  Sign determines optimization direction:
+        ``-1`` = minimize, ``+1`` = maximize.  ``None`` defaults to
+        minimization for all objectives.
+    eps_cv : float
+        Feasibility threshold for constraint violation.
+    eps_obj : float
+        Epsilon for objective-value equality (stored for interface
+        compatibility).
+    reference_point : np.ndarray or None
+        Reference point in the *original* objective space, shape
+        ``(n_obj,)``.  If ``None``, it is auto-computed from the data
+        with fractional padding controlled by ``margin``.
+    margin : float
+        Fractional padding used when auto-computing the reference point.
+        Ignored when ``reference_point`` is provided.
+    sorter : NonDominatedSorter
+        Non-dominated sorting callable.
+    dominator : Dominator or None
+        Dominance predicate.  ``None`` defaults to :class:`ParetoDominator`.
+
+    References
+    ----------
+    .. [1] Beume, N., Naujoks, B., & Emmerich, M. (2007).
+       SMS-EMOA: Multiobjective selection based on dominated hypervolume.
+       *European Journal of Operational Research*, 181(3), 1653-1669.
+       https://doi.org/10.1016/j.ejor.2006.08.008
+    .. [2] Deb, K. (2000). An efficient constraint handling method for genetic
+       algorithms.  *Computer Methods in Applied Mechanics and Engineering*,
+       186(2-4), 311-338.
+    """
+
+    is_population_relative: bool = True
+    """Marker indicating that ``compare()`` is unavailable for this comparator."""
+
+    def __init__(
+        self,
+        weights: np.ndarray | None = None,
+        *,
+        eps_cv: float = 1e-6,
+        eps_obj: float = 1e-6,
+        reference_point: np.ndarray | None = None,
+        margin: float = 0.1,
+        sorter: NonDominatedSorter = non_dominated_sort,
+        dominator: Dominator | None = None,
+    ):
+        super().__init__(
+            weights,
+            eps_cv=eps_cv,
+            eps_obj=eps_obj,
+            sorter=sorter,
+            dominator=dominator,
+        )
+        self._reference_point = (
+            None
+            if reference_point is None
+            else np.asarray(reference_point, dtype=float)
+        )
+        self._margin = float(margin)
+
+    @property
+    def reference_point(self) -> np.ndarray | None:
+        """Reference point used for hypervolume computation, or None for auto."""
+        return self._reference_point
+
+    @property
+    def margin(self) -> float:
+        """Fractional padding applied when auto-computing the reference point."""
+        return self._margin
+
+    def _keys(self, population: Population) -> tuple[np.ndarray, np.ndarray]:
+        """Return per-individual ``(rank_all, contrib_all)`` arrays, cached.
+
+        Arrays have length N (population size).  Infeasible individuals
+        receive ``+inf`` rank and ``-inf`` contribution so they sort last.
+        Results are cached under the key ``"hv_keys"``.
+        """
+        cached = population.get_cache("hv_keys")
+        if cached is not None:
+            return cached  # type: ignore[return-value]
+
+        # Lazy import avoids a circular dependency at module load time.
+        from saealib.utils.indicators import hypervolume_contributions
+
+        f_arr = population.get("f")
+        cv_arr = population.get("cv")
+        n = len(f_arr)
+
+        rank_all = np.full(n, np.inf)  # infeasible → +inf (worst rank)
+        contrib_all = np.full(n, -np.inf)  # infeasible → -inf (worst contrib)
+
+        feasible = np.where(cv_arr <= self.eps_cv)[0]
+        if len(feasible):
+            ranks, fronts = self._sorter(
+                f_arr[feasible],
+                direction=self._direction,
+                dominator=self._dominator,
+            )
+            rank_all[feasible] = ranks
+
+            for front in fronts:  # front = local indices into feasible subset
+                local = np.asarray(front, dtype=int)
+                gidx = feasible[local]
+                contribs = hypervolume_contributions(
+                    f_arr[gidx],
+                    reference_point=self._reference_point,
+                    direction=self._direction,
+                    margin=self._margin,
+                )
+                contrib_all[gidx] = contribs
+
+        keys = (rank_all, contrib_all)
+        population.set_cache("hv_keys", keys)
+        return keys
+
+    def sort_population(self, population: Population) -> np.ndarray:
+        """
+        Sort by front rank then HV contribution; infeasible individuals last.
+
+        Within the feasible block the primary sort key is non-dominated front
+        rank (ascending) and the secondary key is exclusive hypervolume
+        contribution (descending).  Infeasible individuals follow, sorted by
+        ascending constraint violation.
+
+        Parameters
+        ----------
+        population : Population
+            The population to sort.
+
+        Returns
+        -------
+        np.ndarray
+            Sorted population indices (int).
+        """
+        cv_arr = population.get("cv")
+        rank_all, contrib_all = self._keys(population)
+
+        feasible = np.where(cv_arr <= self.eps_cv)[0]
+        infeasible = np.where(cv_arr > self.eps_cv)[0]
+
+        sorted_feasible: np.ndarray = np.empty(0, int)
+        if len(feasible):
+            # lexsort: last key is primary -> rank ascending, then -contrib ascending
+            order = np.lexsort((-contrib_all[feasible], rank_all[feasible]))
+            sorted_feasible = feasible[order]
+
+        sorted_infeasible: np.ndarray = np.empty(0, int)
+        if len(infeasible):
+            sorted_infeasible = infeasible[np.argsort(cv_arr[infeasible])]
+
+        return np.concatenate([sorted_feasible, sorted_infeasible]).astype(int)
+
+    def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
+        """
+        Compare two individuals using constraint-domination then HV ranking.
+
+        Returns ``-1`` if ``a`` is better, ``1`` if ``b`` is better, ``0``
+        if equal.  The feasibility rule (Deb 2000) is applied first.  Among
+        both-feasible pairs, lower front rank wins; within the same front,
+        higher HV contribution wins.
+
+        Parameters
+        ----------
+        population : Population
+            The population containing both individuals.
+        idx_a : int
+            Index of the first individual.
+        idx_b : int
+            Index of the second individual.
+
+        Returns
+        -------
+        int
+            ``-1``, ``0``, or ``1``.
+        """
+        cv_arr = population.get("cv")
+        cv_a = float(cv_arr[idx_a])
+        cv_b = float(cv_arr[idx_b])
+
+        # Both infeasible: lower cv wins
+        if cv_a > self.eps_cv and cv_b > self.eps_cv:
+            if cv_a < cv_b:
+                return -1
+            elif cv_a > cv_b:
+                return 1
+            return 0
+
+        # One infeasible: feasible wins
+        if cv_a > self.eps_cv:
+            return 1
+        if cv_b > self.eps_cv:
+            return -1
+
+        # Both feasible: lower rank wins; tie-break on higher HV contribution
+        rank_all, contrib_all = self._keys(population)
+        ra = rank_all[idx_a]
+        rb = rank_all[idx_b]
+        if ra < rb:
+            return -1
+        elif ra > rb:
+            return 1
+
+        ca = contrib_all[idx_a]
+        cb = contrib_all[idx_b]
+        if ca > cb:
+            return -1
+        elif ca < cb:
+            return 1
+        return 0
+
+    def compare(
+        self,
+        fa: np.ndarray,
+        cv_a: float,
+        fb: np.ndarray,
+        cv_b: float,
+    ) -> int:
+        """Raise NotImplementedError — HV contribution is population-relative."""
+        raise NotImplementedError(
+            "HypervolumeComparator.compare() is undefined: the exclusive "
+            "hypervolume contribution of a point is population-relative and "
+            "cannot be computed from two isolated points.  Use "
+            "compare_population() / sort_population(), or supply a "
+            "ParetoComparator for components that require pairwise "
+            "compare() (e.g. PSO pbest update, PairwiseComparisonSet)."
+        )
+
+
+class EpsilonDominanceComparator(ParetoComparator):
+    """
+    Comparator using ε-box dominance instead of standard Pareto dominance.
+
+    Wraps :class:`EpsilonDominator` and injects it into the
+    :class:`ParetoComparator` dominance seam via the ``dominator=`` argument.
+    Front ranking, infeasibility handling, and constraint-domination logic are
+    all inherited unchanged from :class:`ParetoComparator`.
+
+    The ε-dominance relation is defined in:
+
+        Laumanns, M., Thiele, L., Deb, K., & Zitzler, E. (2002).
+        Combining convergence and diversity in evolutionary multiobjective
+        optimization. *Evolutionary Computation*, 10(3), 263-282.
+
+    Each objective axis is divided into ε-boxes of width ``eps``.  Two
+    solutions that fall in the **same** ε-box are mutually non-dominating;
+    a solution whose box index is strictly better in *every* objective
+    dominates the other.  As ``eps → 0`` the relation recovers ordinary
+    Pareto dominance.
+
+    .. note::
+        ε-box **representative selection** (the archive rule that keeps one
+        solution per box — cf. Deb, Mohan & Mishra (2005), ε-MOEA) is **not**
+        handled here.  That is an archive-truncation responsibility and will
+        be added separately.
+
+    Parameters
+    ----------
+    eps : float or np.ndarray
+        Box size(s).  A scalar broadcasts to all objectives; an array of
+        shape ``(n_obj,)`` sets per-objective widths.  All values must be
+        strictly positive (> 0).
+    mode : {"additive", "multiplicative"}
+        Quantization mode passed to :class:`EpsilonDominator`.
+        ``"additive"`` (default): box index = ``floor(f_i / eps_i)``.
+        ``"multiplicative"``: box index = ``floor(log f_i / log(1 + eps_i))``;
+        requires strictly positive objective values.
+    weights : np.ndarray or None
+        See :class:`ParetoComparator`.
+    eps_cv : float
+        See :class:`ParetoComparator`.
+    eps_obj : float
+        See :class:`ParetoComparator`.
+    sorter : NonDominatedSorter
+        See :class:`ParetoComparator`.
+    """
+
+    def __init__(
+        self,
+        eps: float | np.ndarray,
+        mode: str = "additive",
+        weights: np.ndarray | None = None,
+        *,
+        eps_cv: float = 1e-6,
+        eps_obj: float = 1e-6,
+        sorter: NonDominatedSorter = non_dominated_sort,
+    ):
+        super().__init__(
+            weights,
+            eps_cv=eps_cv,
+            eps_obj=eps_obj,
+            sorter=sorter,
+            dominator=EpsilonDominator(eps, mode),
+        )
+
+    @property
+    def eps(self) -> float | np.ndarray:
+        """Box size(s) used by the underlying EpsilonDominator."""
+        return self._dominator.eps  # type: ignore[attr-defined]
+
+    @property
+    def mode(self) -> str:
+        """Quantization mode of the underlying EpsilonDominator."""
+        return self._dominator.mode  # type: ignore[attr-defined]

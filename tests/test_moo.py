@@ -35,9 +35,12 @@ from saealib import (
     gaussian_kernel,
     max_fe,
     non_dominated_sort,
+    spea2_fitness,
 )
 from saealib.comparators import (
     Dominator,
+    EpsilonDominanceComparator,
+    EpsilonDominator,
     NSGA2Comparator,
     ParetoComparator,
     ParetoDominator,
@@ -45,7 +48,7 @@ from saealib.comparators import (
     _pareto_dominates,
 )
 from saealib.population import Population, PopulationAttribute
-from saealib.utils.indicators import _non_dominated
+from saealib.utils.indicators import _non_dominated, hypervolume_contributions
 
 logging.getLogger("saealib.surrogate.rbf").setLevel(logging.CRITICAL)
 
@@ -1150,3 +1153,957 @@ class TestParetoDominator:
         d = MyDominator()
         comp = ParetoComparator(dominator=d)
         assert comp.dominator is d
+
+
+# ===========================================================================
+# EpsilonDominator Tests (#74)
+# ===========================================================================
+class TestEpsilonDominator:
+    """Tests for EpsilonDominator (ε-box dominance, Laumanns et al. 2002)."""
+
+    # -----------------------------------------------------------------------
+    # 1. Same ε-box → mutually non-dominating
+    # -----------------------------------------------------------------------
+    def test_same_box_mutual_non_domination(self) -> None:
+        """Two points in the same ε-box are mutually non-dominating."""
+        # eps=1.0: both (0.1, 0.2) and (0.9, 0.8) fall in box (0, 0).
+        dom = EpsilonDominator(eps=1.0)
+        f = np.array([[0.1, 0.2], [0.9, 0.8]])
+        mat = dom.dominance_matrix(f)
+        assert not mat[0, 1]
+        assert not mat[1, 0]
+
+    # -----------------------------------------------------------------------
+    # 2. Strictly better box → dominance
+    # -----------------------------------------------------------------------
+    def test_better_box_dominates(self) -> None:
+        """A point in a strictly better box dominates one in a worse box."""
+        # eps=1.0: (0.5, 0.5) → box (0, 0); (1.5, 1.5) → box (1, 1).
+        dom = EpsilonDominator(eps=1.0)
+        f = np.array([[0.5, 0.5], [1.5, 1.5]])
+        mat = dom.dominance_matrix(f)
+        assert mat[0, 1]  # (0,0) box dominates (1,1) box
+        assert not mat[1, 0]
+
+    # -----------------------------------------------------------------------
+    # 3. Tiny eps recovers ordinary Pareto dominance
+    # -----------------------------------------------------------------------
+    def test_tiny_eps_recovers_pareto(self) -> None:
+        """Additive mode with tiny eps recovers ParetoDominator exactly."""
+        rng = np.random.default_rng(7)
+        f = rng.random((12, 3))
+        eps = 1e-9  # boxes effectively as small as floating-point resolution
+        dom_eps = EpsilonDominator(eps=eps)
+        dom_pareto = ParetoDominator()
+        mat_eps = dom_eps.dominance_matrix(f)
+        mat_pareto = dom_pareto.dominance_matrix(f)
+        np.testing.assert_array_equal(mat_eps, mat_pareto)
+
+    # -----------------------------------------------------------------------
+    # 4. direction for a maximize objective
+    # -----------------------------------------------------------------------
+    def test_direction_maximize(self) -> None:
+        """With direction=+1 (maximize), a higher-box point dominates."""
+        # Under minimization, (0.5, 0.5) box (0,0) would dominate (1.5, 1.5) box (1,1).
+        # Under maximization, the opposite holds.
+        dom = EpsilonDominator(eps=1.0)
+        f = np.array([[0.5, 0.5], [1.5, 1.5]])
+        direction = np.array([1.0, 1.0])  # maximize both objectives
+        mat = dom.dominance_matrix(f, direction=direction)
+        # (1.5, 1.5) is in the larger box → better under maximization.
+        assert mat[1, 0]
+        assert not mat[0, 1]
+
+    # -----------------------------------------------------------------------
+    # 5. Per-objective eps array (different box widths per objective)
+    # -----------------------------------------------------------------------
+    def test_per_objective_eps_array(self) -> None:
+        """Different eps per objective correctly places points in distinct boxes."""
+        # eps = [2.0, 0.5]:
+        #   f[0] = (0.5, 0.1) → box (0, 0)
+        #   f[1] = (1.5, 0.6) → box (0, 1)  [same box on obj-0, different on obj-1]
+        # → non-dominated (different on obj-1, same on obj-0)
+        dom = EpsilonDominator(eps=np.array([2.0, 0.5]))
+        f = np.array([[0.5, 0.1], [1.5, 0.6]])
+        mat = dom.dominance_matrix(f)
+        # obj-0 box: both 0; obj-1 box: 0 vs 1 → f[0] dominates f[1]
+        assert mat[0, 1]
+        assert not mat[1, 0]
+
+    # -----------------------------------------------------------------------
+    # 6. Multiplicative mode: basic dominance case
+    # -----------------------------------------------------------------------
+    def test_multiplicative_mode_basic(self) -> None:
+        """Multiplicative mode: lower-box point dominates in a clear case."""
+        # eps=0.5: log(1+0.5)=log(1.5) ≈ 0.405
+        # f[0]=(1.1, 1.1): box = floor(log(1.1)/log(1.5)) = floor(0.228) = 0
+        # f[1]=(2.5, 2.5): box = floor(log(2.5)/log(1.5)) = floor(2.27)  = 2
+        dom = EpsilonDominator(eps=0.5, mode="multiplicative")
+        f = np.array([[1.1, 1.1], [2.5, 2.5]])
+        mat = dom.dominance_matrix(f)
+        assert mat[0, 1]  # box (0,0) dominates box (2,2)
+        assert not mat[1, 0]
+
+    # -----------------------------------------------------------------------
+    # 7. Multiplicative mode raises on non-positive values
+    # -----------------------------------------------------------------------
+    def test_multiplicative_raises_on_nonpositive(self) -> None:
+        """Multiplicative mode raises ValueError when f contains non-positive values."""
+        dom = EpsilonDominator(eps=0.5, mode="multiplicative")
+        f_zero = np.array([[0.0, 1.0], [1.0, 2.0]])
+        with pytest.raises(ValueError, match="strictly positive"):
+            dom.dominance_matrix(f_zero)
+
+        f_neg = np.array([[-1.0, 1.0], [1.0, 2.0]])
+        with pytest.raises(ValueError, match="strictly positive"):
+            dom.dominance_matrix(f_neg)
+
+    # -----------------------------------------------------------------------
+    # 8. Non-positive / zero eps raises ValueError
+    # -----------------------------------------------------------------------
+    def test_zero_eps_raises(self) -> None:
+        """eps=0 raises ValueError at construction."""
+        with pytest.raises(ValueError, match="strictly positive"):
+            EpsilonDominator(eps=0.0)
+
+    def test_negative_eps_raises(self) -> None:
+        """Negative eps raises ValueError at construction."""
+        with pytest.raises(ValueError, match="strictly positive"):
+            EpsilonDominator(eps=-0.1)
+
+    def test_partial_nonpositive_eps_array_raises(self) -> None:
+        """An eps array with any non-positive element raises ValueError."""
+        with pytest.raises(ValueError, match="strictly positive"):
+            EpsilonDominator(eps=np.array([1.0, 0.0]))
+
+    # -----------------------------------------------------------------------
+    # 9. dominates() (scalar path) agrees with dominance_matrix()
+    # -----------------------------------------------------------------------
+    def test_dominates_agrees_with_matrix(self) -> None:
+        """dominates() on a 2-row stack matches dominance_matrix()[0,1]."""
+        dom = EpsilonDominator(eps=1.0)
+        # (0.5, 0.5) box (0,0) and (1.5, 1.5) box (1,1)
+        fa = np.array([0.5, 0.5])
+        fb = np.array([1.5, 1.5])
+        f = np.stack([fa, fb])
+        mat = dom.dominance_matrix(f)
+        assert dom.dominates(fa, fb) == bool(mat[0, 1])
+        assert dom.dominates(fb, fa) == bool(mat[1, 0])
+
+    def test_dominates_same_box_returns_false(self) -> None:
+        """dominates() returns False when both points are in the same ε-box."""
+        dom = EpsilonDominator(eps=1.0)
+        fa = np.array([0.1, 0.2])
+        fb = np.array([0.9, 0.8])
+        assert not dom.dominates(fa, fb)
+        assert not dom.dominates(fb, fa)
+
+
+# ===========================================================================
+# EpsilonDominanceComparator Tests
+# ===========================================================================
+class TestEpsilonDominanceComparator:
+    """Tests for EpsilonDominanceComparator (ε-box dominance, Laumanns 2002)."""
+
+    # -----------------------------------------------------------------------
+    # 1. Import from top-level package
+    # -----------------------------------------------------------------------
+    def test_import_from_saealib(self) -> None:
+        """EpsilonDominanceComparator can be imported from saealib directly."""
+        import saealib
+
+        assert saealib.EpsilonDominanceComparator is EpsilonDominanceComparator
+
+    # -----------------------------------------------------------------------
+    # 2. eps / mode properties reflect constructor args
+    # -----------------------------------------------------------------------
+    def test_eps_property_scalar(self) -> None:
+        comp = EpsilonDominanceComparator(eps=0.5)
+        assert comp.eps == 0.5
+
+    def test_mode_property_default(self) -> None:
+        comp = EpsilonDominanceComparator(eps=0.5)
+        assert comp.mode == "additive"
+
+    def test_mode_property_multiplicative(self) -> None:
+        comp = EpsilonDominanceComparator(eps=0.5, mode="multiplicative")
+        assert comp.mode == "multiplicative"
+
+    def test_eps_property_array(self) -> None:
+        eps_arr = np.array([0.1, 0.2])
+        comp = EpsilonDominanceComparator(eps=eps_arr)
+        np.testing.assert_array_equal(comp.eps, eps_arr)
+
+    # -----------------------------------------------------------------------
+    # 3. Tiny eps behaves like standard Pareto (compare matches ParetoComparator)
+    # -----------------------------------------------------------------------
+    def test_tiny_eps_matches_pareto_comparator(self) -> None:
+        """With eps→0, compare_population agrees with ParetoComparator."""
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
+        pop = _make_pop(f)
+        pareto = ParetoComparator()
+        eps_comp = EpsilonDominanceComparator(eps=1e-9)
+        for i in range(len(f)):
+            for j in range(len(f)):
+                if i == j:
+                    continue
+                expected = pareto.compare_population(pop, i, j)
+                actual = eps_comp.compare_population(pop, i, j)
+                assert actual == expected, f"Mismatch at ({i}, {j})"
+
+    # -----------------------------------------------------------------------
+    # 4. Same ε-box → compare returns 0 where plain Pareto would return ±1
+    # -----------------------------------------------------------------------
+    def test_same_box_compare_returns_zero(self) -> None:
+        """Two points in the same ε-box are non-dominated (compare == 0)."""
+        # eps=1.0: (0.1, 0.2) and (0.9, 0.8) both fall in box (0, 0).
+        # Under plain Pareto, (0.1, 0.2) dominates (0.9, 0.8).
+        f = np.array([[0.1, 0.2], [0.9, 0.8]])
+        pop = _make_pop(f)
+
+        pareto = ParetoComparator()
+        assert pareto.compare_population(pop, 0, 1) == -1  # plain Pareto: 0 dominates 1
+
+        eps_comp = EpsilonDominanceComparator(eps=1.0)
+        assert eps_comp.compare_population(pop, 0, 1) == 0  # same box → non-dominated
+        assert eps_comp.compare_population(pop, 1, 0) == 0
+
+    # -----------------------------------------------------------------------
+    # 5. sort_population produces valid permutation; infeasible ranked last
+    # -----------------------------------------------------------------------
+    def test_sort_population_valid_permutation(self) -> None:
+        """sort_population returns all indices exactly once."""
+        f = np.array([[0.0, 3.0], [3.0, 0.0], [2.0, 2.0]])
+        pop = _make_pop(f)
+        comp = EpsilonDominanceComparator(eps=0.5)
+        order = comp.sort_population(pop)
+        assert sorted(order) == [0, 1, 2]
+
+    def test_sort_population_output_is_int_array(self) -> None:
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
+        pop = _make_pop(f)
+        comp = EpsilonDominanceComparator(eps=0.5)
+        order = comp.sort_population(pop)
+        assert np.issubdtype(order.dtype, np.integer)
+
+    def test_sort_population_infeasible_last(self) -> None:
+        """Infeasible individuals appear after all feasible ones."""
+        f = np.array([[10.0, 10.0], [0.0, 0.0], [1.0, 1.0]])
+        cv = np.array([1.0, 0.0, 0.0])
+        pop = _make_pop(f, cv)
+        comp = EpsilonDominanceComparator(eps=0.5)
+        order = comp.sort_population(pop)
+        assert order[-1] == 0  # infeasible individual is last
+
+    def test_sort_population_infeasible_by_ascending_cv(self) -> None:
+        """Multiple infeasible individuals are sorted by ascending cv."""
+        f = np.array([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]])
+        cv = np.array([2.0, 0.5, 1.0])
+        pop = _make_pop(f, cv)
+        comp = EpsilonDominanceComparator(eps=0.5)
+        order = comp.sort_population(pop)
+        assert list(order) == [1, 2, 0]
+
+    # -----------------------------------------------------------------------
+    # 6. Multiplicative mode works on strictly-positive objectives
+    # -----------------------------------------------------------------------
+    def test_multiplicative_mode_compare(self) -> None:
+        """Multiplicative mode: point in lower box dominates point in higher box."""
+        # eps=0.5, log(1.5)≈0.405
+        # f[0]=(1.1,1.1): box=floor(log(1.1)/log(1.5))=0 each
+        # f[1]=(2.5,2.5): box=floor(log(2.5)/log(1.5))=2 each
+        # → f[0] dominates f[1]
+        f = np.array([[1.1, 1.1], [2.5, 2.5]])
+        pop = _make_pop(f)
+        comp = EpsilonDominanceComparator(eps=0.5, mode="multiplicative")
+        assert comp.compare_population(pop, 0, 1) == -1
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    def test_multiplicative_mode_same_box_non_dominated(self) -> None:
+        """Multiplicative mode: two points in the same ε-box are non-dominated."""
+        # eps=1.0: log(2)≈0.693; f[0]=(1.1,1.1),f[1]=(1.9,1.9) → both box 0
+        f = np.array([[1.1, 1.1], [1.9, 1.9]])
+        pop = _make_pop(f)
+        comp = EpsilonDominanceComparator(eps=1.0, mode="multiplicative")
+        assert comp.compare_population(pop, 0, 1) == 0
+        assert comp.compare_population(pop, 1, 0) == 0
+
+    # -----------------------------------------------------------------------
+    # 7. Subclass relationship
+    # -----------------------------------------------------------------------
+    def test_is_subclass_of_pareto_comparator(self) -> None:
+        assert issubclass(EpsilonDominanceComparator, ParetoComparator)
+
+
+# ===========================================================================
+# spea2_fitness Tests (#74)
+# ===========================================================================
+class TestSpea2Fitness:
+    """Tests for spea2_fitness (Zitzler et al., 2001, SPEA2)."""
+
+    # -----------------------------------------------------------------------
+    # 1. Non-dominated set: R==0 for all, F==D in (0, 0.5]
+    # -----------------------------------------------------------------------
+    def test_non_dominated_set_r_zero(self) -> None:
+        """Mutually non-dominating points all have R(i)==0 and F(i) in (0, 0.5]."""
+        # Points on the Pareto front of a 2-obj minimization problem
+        f = np.array([[0.0, 3.0], [1.0, 2.0], [2.0, 1.0], [3.0, 0.0]])
+        fitness = spea2_fitness(f)
+        # R == 0 for all (no one is dominated)
+        # Verify indirectly: F must equal D, and D in (0, 0.5]
+        assert fitness.shape == (4,)
+        assert np.all(fitness > 0.0)
+        assert np.all(fitness <= 0.5)
+
+    # -----------------------------------------------------------------------
+    # 2. Dominance chain: R ordering and non-dominated R==0
+    # -----------------------------------------------------------------------
+    def test_dominance_chain_r_ordering(self) -> None:
+        """In a clear dominance chain A→B→C, R(A) < R(B) < R(C) and R(A)==0."""
+        # A dominates B dominates C (2-obj minimization)
+        f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+        fitness = spea2_fitness(f)
+
+        # Reconstruct R manually to verify ordering
+        # S: A dominates B and C → S(A)=2; B dominates C → S(B)=1; S(C)=0
+        # R: R(A)=0 (no one dominates A); R(B)=S(A)=2; R(C)=S(A)+S(B)=3
+        # So fitness order: A < B < C (lower R = better)
+        assert fitness[0] < fitness[1]  # A better than B
+        assert fitness[1] < fitness[2]  # B better than C
+
+        # Non-dominated point (A) has R==0, so F(A) = D(A) <= 0.5 < 1
+        assert fitness[0] < 1.0
+
+    # -----------------------------------------------------------------------
+    # 3. direction for maximization flips non-dominated set
+    # -----------------------------------------------------------------------
+    def test_direction_maximization_flips_nondominated(self) -> None:
+        """With direction=+1 (maximize), the 'best' and 'worst' points swap."""
+        # Under minimization: [0,0] dominates [1,1]
+        # Under maximization: [1,1] dominates [0,0]
+        f = np.array([[0.0, 0.0], [1.0, 1.0]])
+        direction = np.array([1.0, 1.0])  # maximize both
+
+        fitness_max = spea2_fitness(f, direction=direction)
+        # Under maximization, f[1]=[1,1] is non-dominated → R==0 → F < 1
+        # f[0]=[0,0] is dominated → R > 0 → F >= R > 0
+        assert fitness_max[1] < fitness_max[0]
+        # Non-dominated point has R==0 → F <= 0.5
+        assert fitness_max[1] <= 0.5
+
+        # Under minimization (default), f[0] is non-dominated
+        fitness_min = spea2_fitness(f)
+        assert fitness_min[0] < fitness_min[1]
+        assert fitness_min[0] <= 0.5
+
+    # -----------------------------------------------------------------------
+    # 4. Output shape and N==1 edge case
+    # -----------------------------------------------------------------------
+    def test_output_shape(self) -> None:
+        """Returns shape (N,) for a general input."""
+        rng = np.random.default_rng(0)
+        f = rng.random((8, 3))
+        fitness = spea2_fitness(f)
+        assert fitness.shape == (8,)
+
+    def test_single_point_r_zero_finite(self) -> None:
+        """N==1 returns a single finite value with R==0 (F = D <= 0.5)."""
+        f = np.array([[1.0, 2.0]])
+        fitness = spea2_fitness(f)
+        assert fitness.shape == (1,)
+        assert np.isfinite(fitness[0])
+        # Single point is trivially non-dominated → R==0 → F <= 0.5
+        assert fitness[0] <= 0.5
+
+    def test_empty_input_returns_empty(self) -> None:
+        """N==0 returns an empty array of shape (0,)."""
+        f = np.empty((0, 2))
+        fitness = spea2_fitness(f)
+        assert fitness.shape == (0,)
+
+    # -----------------------------------------------------------------------
+    # 5. Custom dominator gives same result as default
+    # -----------------------------------------------------------------------
+    def test_custom_pareto_dominator_matches_default(self) -> None:
+        """Passing dominator=ParetoDominator() gives identical result to None."""
+        rng = np.random.default_rng(42)
+        f = rng.random((10, 2))
+        fitness_default = spea2_fitness(f)
+        fitness_explicit = spea2_fitness(f, dominator=ParetoDominator())
+        np.testing.assert_array_almost_equal(fitness_default, fitness_explicit)
+
+    # -----------------------------------------------------------------------
+    # 6. Lower-is-better orientation: strongly dominated point has largest F
+    # -----------------------------------------------------------------------
+    def test_strongly_dominated_has_largest_fitness(self) -> None:
+        """A point dominated by every other point has the largest SPEA2 fitness."""
+        # f[3] = [10, 10] is dominated by all others in minimization
+        f = np.array([[0.0, 3.0], [1.5, 1.5], [3.0, 0.0], [10.0, 10.0]])
+        fitness = spea2_fitness(f)
+        # The worst point must have the maximum fitness (lower = better)
+        assert fitness[3] == fitness.max()
+
+
+# ===========================================================================
+# SPEA2Comparator Tests (#74)
+# ===========================================================================
+class TestSPEA2Comparator:
+    """Tests for SPEA2Comparator (Zitzler et al., 2001)."""
+
+    # -----------------------------------------------------------------------
+    # 1. Class marker
+    # -----------------------------------------------------------------------
+    def test_is_population_relative_marker(self) -> None:
+        """SPEA2Comparator.is_population_relative is True."""
+        from saealib.comparators import SPEA2Comparator
+
+        assert SPEA2Comparator.is_population_relative is True
+
+    # -----------------------------------------------------------------------
+    # 2. compare() raises NotImplementedError
+    # -----------------------------------------------------------------------
+    def test_compare_raises(self) -> None:
+        """compare() raises NotImplementedError with a guiding message."""
+        from saealib.comparators import SPEA2Comparator
+
+        comp = SPEA2Comparator()
+        with pytest.raises(NotImplementedError, match="population-relative"):
+            comp.compare(
+                np.array([0.0, 0.0]),
+                0.0,
+                np.array([1.0, 1.0]),
+                0.0,
+            )
+
+    # -----------------------------------------------------------------------
+    # 3. sort_population: dominance chain
+    # -----------------------------------------------------------------------
+    def test_sort_population_dominance_chain(self) -> None:
+        """A dominates B dominates C → A first, then B, then C."""
+        from saealib.comparators import SPEA2Comparator
+
+        # 2-obj minimization: A=[0,0] dom B=[1,1] dom C=[2,2]
+        f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+        pop = _make_pop(f)
+        comp = SPEA2Comparator()
+        order = comp.sort_population(pop)
+        # Non-dominated A must be first; dominated C must be last
+        assert order[0] == 0
+        assert order[1] == 1
+        assert order[2] == 2
+
+    # -----------------------------------------------------------------------
+    # 4. sort_population: feasibility — infeasible placed last
+    # -----------------------------------------------------------------------
+    def test_sort_population_infeasible_last(self) -> None:
+        """Infeasible individuals appear after all feasible ones."""
+        from saealib.comparators import SPEA2Comparator
+
+        f = np.array([[10.0, 10.0], [0.0, 0.0], [1.0, 1.0]])
+        cv = np.array([1.0, 0.0, 0.0])  # idx=0 infeasible
+        pop = _make_pop(f, cv)
+        comp = SPEA2Comparator()
+        order = comp.sort_population(pop)
+        assert order[-1] == 0  # infeasible is last
+
+    def test_sort_population_infeasible_by_ascending_cv(self) -> None:
+        """Multiple infeasible individuals are sorted by ascending cv."""
+        from saealib.comparators import SPEA2Comparator
+
+        f = np.array([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]])
+        cv = np.array([2.0, 0.5, 1.0])  # all infeasible
+        pop = _make_pop(f, cv)
+        comp = SPEA2Comparator()
+        order = comp.sort_population(pop)
+        # Sorted ascending by cv: idx 1 (0.5), idx 2 (1.0), idx 0 (2.0)
+        assert list(order) == [1, 2, 0]
+
+    def test_sort_population_feasible_before_infeasible(self) -> None:
+        """Feasible individuals always appear before infeasible ones."""
+        from saealib.comparators import SPEA2Comparator
+
+        f = np.array([[5.0, 5.0], [0.0, 0.0], [3.0, 3.0]])
+        cv = np.array([0.0, 1.0, 0.0])  # idx=1 infeasible
+        pop = _make_pop(f, cv)
+        comp = SPEA2Comparator()
+        order = comp.sort_population(pop)
+        # idx=1 must be last; idx=0 and idx=2 are feasible and come first
+        assert order[-1] == 1
+        assert set(order[:2]) == {0, 2}
+
+    # -----------------------------------------------------------------------
+    # 5. compare_population: pairwise comparisons
+    # -----------------------------------------------------------------------
+    def test_compare_population_dominant_wins(self) -> None:
+        """A dominating point has lower SPEA2 fitness → compare returns -1."""
+        from saealib.comparators import SPEA2Comparator
+
+        f = np.array([[0.0, 0.0], [1.0, 1.0]])  # idx 0 dominates idx 1
+        pop = _make_pop(f)
+        comp = SPEA2Comparator()
+        assert comp.compare_population(pop, 0, 1) == -1
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    def test_compare_population_feasible_beats_infeasible(self) -> None:
+        """Feasible always beats infeasible regardless of objectives."""
+        from saealib.comparators import SPEA2Comparator
+
+        f = np.array([[100.0, 100.0], [0.0, 0.0]])
+        # idx=0 feasible (bad obj), idx=1 infeasible (good obj)
+        cv = np.array([0.0, 1.0])
+        pop = _make_pop(f, cv)
+        comp = SPEA2Comparator()
+        assert comp.compare_population(pop, 0, 1) == -1  # feasible wins
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    def test_compare_population_both_infeasible_lower_cv_wins(self) -> None:
+        """Both infeasible: lower constraint violation wins."""
+        from saealib.comparators import SPEA2Comparator
+
+        f = np.array([[0.0, 0.0], [0.0, 0.0]])
+        cv = np.array([0.5, 2.0])
+        pop = _make_pop(f, cv)
+        comp = SPEA2Comparator()
+        assert comp.compare_population(pop, 0, 1) == -1
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    # -----------------------------------------------------------------------
+    # 6. Tournament-selection safety (compare_population loop)
+    # -----------------------------------------------------------------------
+    def test_compare_population_no_exception_all_pairs(self) -> None:
+        """compare_population works for all index pairs without raising."""
+        from saealib.comparators import SPEA2Comparator
+
+        rng = np.random.default_rng(0)
+        n = 10
+        f = rng.random((n, 2))
+        cv = np.zeros(n)
+        cv[[2, 5]] = rng.uniform(0.1, 1.0, 2)  # make two individuals infeasible
+        pop = _make_pop(f, cv)
+        comp = SPEA2Comparator()
+        for i in range(n):
+            for j in range(n):
+                result = comp.compare_population(pop, i, j)
+                assert result in (-1, 0, 1)
+
+    # -----------------------------------------------------------------------
+    # 7. Import from top-level saealib package
+    # -----------------------------------------------------------------------
+    def test_import_from_saealib(self) -> None:
+        """SPEA2Comparator can be imported from saealib directly."""
+        from saealib import SPEA2Comparator
+
+        assert SPEA2Comparator is not None
+
+    # -----------------------------------------------------------------------
+    # 8. dominator property and weights direction
+    # -----------------------------------------------------------------------
+    def test_dominator_property_default(self) -> None:
+        """Default dominator is ParetoDominator."""
+        from saealib.comparators import SPEA2Comparator
+
+        comp = SPEA2Comparator()
+        assert isinstance(comp.dominator, ParetoDominator)
+
+    def test_weights_direction_maximize(self) -> None:
+        """Weights with +1 interpret objectives as maximize."""
+        from saealib.comparators import SPEA2Comparator
+
+        # f[0]=[3,3] is best under maximization; f[1]=[1,1] is dominated
+        f = np.array([[3.0, 3.0], [1.0, 1.0]])
+        pop = _make_pop(f)
+        comp = SPEA2Comparator(weights=np.array([1.0, 1.0]))
+        order = comp.sort_population(pop)
+        assert order[0] == 0  # [3,3] should be first under maximize
+
+    def test_is_subclass_of_comparator(self) -> None:
+        """SPEA2Comparator is a direct subclass of Comparator (not ParetoComparator)."""
+        from saealib.comparators import Comparator, SPEA2Comparator
+
+        assert issubclass(SPEA2Comparator, Comparator)
+        assert not issubclass(SPEA2Comparator, ParetoComparator)
+
+
+# ===========================================================================
+# hypervolume_contributions Tests (#74, Beume et al. 2007)
+# ===========================================================================
+class TestHypervolumeContributions:
+    """Tests for hypervolume_contributions (exclusive HV contribution).
+
+    Reference: Beume, N., Naujoks, B., & Emmerich, M. (2007).
+    SMS-EMOA: Multiobjective selection based on dominated hypervolume.
+    European Journal of Operational Research, 181(3), 1653-1669.
+    """
+
+    # -----------------------------------------------------------------------
+    # 1. Known 2D case with explicit reference point
+    # -----------------------------------------------------------------------
+    def test_two_point_front_known_values(self) -> None:
+        """2-point 2D minimization front: verify contributions analytically.
+
+        f = [[0, 2], [1, 0]], reference = [2, 3].
+
+        Leave-one-out hypervolumes (minimization convention):
+          HV(S, ref=[2,3])          = 4   (total dominated area)
+          HV({[1,0]}, ref=[2,3])    = (2-1)*(3-0) = 3
+          HV({[0,2]}, ref=[2,3])    = (2-0)*(3-2) = 2
+          contrib[0] = 4 - 3 = 1
+          contrib[1] = 4 - 2 = 2
+
+        The exclusive contributions do NOT generally sum to the total HV
+        (overlap between exclusive regions is counted only once in HV but
+        twice in the individual HV calls).  The sum equals 3 here, not 4.
+        """
+        f = np.array([[0.0, 2.0], [1.0, 0.0]])
+        ref = np.array([2.0, 3.0])
+
+        from saealib.utils.indicators import hypervolume
+
+        contrib = hypervolume_contributions(f, reference_point=ref)
+        total = hypervolume(f, ref)
+
+        assert contrib.shape == (2,)
+        assert np.all(contrib > 0)
+        np.testing.assert_allclose(total, 4.0, rtol=1e-10)
+
+        # Verify exact leave-one-out values.
+        np.testing.assert_allclose(contrib[0], 1.0, rtol=1e-10)
+        np.testing.assert_allclose(contrib[1], 2.0, rtol=1e-10)
+
+        # Point 1 (1,0) has a larger exclusive contribution than point 0 (0,2).
+        assert contrib[1] > contrib[0]
+
+    def test_three_point_front_contributions_positive(self) -> None:
+        """3 mutually non-dominated 2D points: all contributions are positive."""
+        f = np.array([[0.0, 3.0], [1.5, 1.5], [3.0, 0.0]])
+        ref = np.array([4.0, 4.0])
+        contrib = hypervolume_contributions(f, reference_point=ref)
+        assert contrib.shape == (3,)
+        assert np.all(contrib > 0)
+
+    # -----------------------------------------------------------------------
+    # 2. Dominated point gets contribution 0
+    # -----------------------------------------------------------------------
+    def test_dominated_point_zero_contribution(self) -> None:
+        """A dominated point contributes 0 to the hypervolume.
+
+        f[0]=[0,2] and f[1]=[2,0] are mutually non-dominated.
+        f[2]=[3,3] is dominated by both → its contribution must be 0.
+        """
+        f = np.array([[0.0, 2.0], [2.0, 0.0], [3.0, 3.0]])
+        ref = np.array([4.0, 4.0])
+        contrib = hypervolume_contributions(f, reference_point=ref)
+        # f[2] is dominated by f[0] and f[1] → contribution must be 0.
+        assert contrib[2] == 0.0
+        # Non-dominated points should have positive contributions.
+        assert contrib[0] > 0.0
+        assert contrib[1] > 0.0
+
+    # -----------------------------------------------------------------------
+    # 3. direction for maximization
+    # -----------------------------------------------------------------------
+    def test_direction_maximization_equivalent_to_negation(self) -> None:
+        """Maximization via direction is equivalent to negating the objectives."""
+        f = np.array([[3.0, 0.0], [0.0, 3.0], [1.0, 1.0]])
+        ref_max = np.array([-1.0, -1.0])  # reference in maximize space
+        direction = np.array([1.0, 1.0])
+
+        # Contributions with direction=maximize
+        contrib_dir = hypervolume_contributions(
+            f, reference_point=ref_max, direction=direction
+        )
+
+        # Equivalent: negate f and reference_point, minimize
+        f_neg = -f
+        ref_neg = -ref_max  # = [1,1]
+        contrib_neg = hypervolume_contributions(f_neg, reference_point=ref_neg)
+
+        np.testing.assert_allclose(contrib_dir, contrib_neg, rtol=1e-10)
+
+    # -----------------------------------------------------------------------
+    # 4. Auto reference point (reference_point=None)
+    # -----------------------------------------------------------------------
+    def test_auto_reference_point_all_nonneg(self) -> None:
+        """Auto reference point gives non-negative contributions to all points."""
+        f = np.array([[0.0, 3.0], [1.5, 1.5], [3.0, 0.0]])
+        contrib = hypervolume_contributions(f)
+        assert contrib.shape == (3,)
+        assert np.all(contrib >= 0.0)
+
+    def test_auto_reference_point_nondominated_positive(self) -> None:
+        """Non-dominated points get positive contribution with auto reference."""
+        f = np.array([[0.0, 2.0], [1.0, 0.0], [3.0, 3.0]])
+        # f[2] is dominated by both f[0] and f[1].
+        contrib = hypervolume_contributions(f)
+        assert contrib[0] > 0.0
+        assert contrib[1] > 0.0
+
+    def test_auto_reference_degenerate_single_axis(self) -> None:
+        """Auto reference handles a degenerate axis (all points equal on one obj)."""
+        # All points have f[:, 1] == 1.0 → span[1] == 0.
+        f = np.array([[0.0, 1.0], [1.0, 1.0]])
+        contrib = hypervolume_contributions(f)
+        assert contrib.shape == (2,)
+        assert np.all(contrib >= 0.0)
+
+    # -----------------------------------------------------------------------
+    # 5. Shape and edge cases
+    # -----------------------------------------------------------------------
+    def test_output_shape(self) -> None:
+        """Returns shape (N,) for general inputs."""
+        rng = np.random.default_rng(0)
+        f = rng.random((7, 2))
+        contrib = hypervolume_contributions(f)
+        assert contrib.shape == (7,)
+
+    def test_n_equals_zero_returns_empty(self) -> None:
+        """Empty input returns empty array."""
+        f = np.empty((0, 2))
+        contrib = hypervolume_contributions(f)
+        assert contrib.shape == (0,)
+
+    def test_n_equals_one_returns_total_hv(self) -> None:
+        """N==1: removing the only point leaves HV=0 → contribution equals total HV."""
+        f = np.array([[1.0, 2.0]])
+        ref = np.array([3.0, 4.0])
+
+        from saealib.utils.indicators import hypervolume
+
+        contrib = hypervolume_contributions(f, reference_point=ref)
+        assert contrib.shape == (1,)
+        assert contrib[0] > 0.0
+        np.testing.assert_allclose(contrib[0], hypervolume(f, ref), rtol=1e-10)
+
+    def test_1d_input_reshaped(self) -> None:
+        """1-D input is treated as a single-point (1, n_obj) matrix."""
+        f = np.array([1.0, 2.0])
+        ref = np.array([3.0, 4.0])
+        contrib = hypervolume_contributions(f, reference_point=ref)
+        assert contrib.shape == (1,)
+        assert contrib[0] > 0.0
+
+    def test_all_values_nonneg(self) -> None:
+        """All returned contributions are >= 0 (no negative floating noise)."""
+        rng = np.random.default_rng(99)
+        f = rng.random((12, 3))
+        contrib = hypervolume_contributions(f)
+        assert np.all(contrib >= 0.0)
+
+    # -----------------------------------------------------------------------
+    # 6. Import from both saealib and saealib.utils
+    # -----------------------------------------------------------------------
+    def test_import_from_saealib(self) -> None:
+        """hypervolume_contributions is importable from top-level saealib."""
+        from saealib import hypervolume_contributions as hvc
+
+        assert hvc is not None
+
+    def test_import_from_saealib_utils(self) -> None:
+        """hypervolume_contributions is importable from saealib.utils."""
+        from saealib.utils import hypervolume_contributions as hvc
+
+        assert hvc is not None
+
+
+# ===========================================================================
+# HypervolumeComparator Tests
+# ===========================================================================
+class TestHypervolumeComparator:
+    """Tests for HypervolumeComparator (Beume et al., 2007)."""
+
+    # -----------------------------------------------------------------------
+    # 1. Class marker
+    # -----------------------------------------------------------------------
+    def test_is_population_relative_marker(self) -> None:
+        """HypervolumeComparator.is_population_relative is True."""
+        from saealib.comparators import HypervolumeComparator
+
+        assert HypervolumeComparator.is_population_relative is True
+
+    # -----------------------------------------------------------------------
+    # 2. compare() raises NotImplementedError
+    # -----------------------------------------------------------------------
+    def test_compare_raises(self) -> None:
+        """compare() raises NotImplementedError with a guiding message."""
+        from saealib.comparators import HypervolumeComparator
+
+        comp = HypervolumeComparator()
+        with pytest.raises(NotImplementedError, match="population-relative"):
+            comp.compare(
+                np.array([0.0, 0.0]),
+                0.0,
+                np.array([1.0, 1.0]),
+                0.0,
+            )
+
+    # -----------------------------------------------------------------------
+    # 3. sort_population: dominated point sorts after first-front points;
+    #    within a front the highest-HV-contribution point comes first
+    # -----------------------------------------------------------------------
+    def test_sort_population_front_rank_ordering(self) -> None:
+        """Dominated point (front 1) sorts after the non-dominated point."""
+        from saealib.comparators import HypervolumeComparator
+
+        # idx 0 = [0,0] is non-dominated (Pareto front 0);
+        # idx 1 = [2,1] and idx 2 = [1,2] are in front 1 (both dominated by idx 0).
+        f = np.array([[0.0, 0.0], [2.0, 1.0], [1.0, 2.0]])
+        pop = _make_pop(f)
+        comp = HypervolumeComparator()
+        order = comp.sort_population(pop)
+        # idx 0 (front 0) must come first
+        assert order[0] == 0
+        # idx 1 and 2 (front 1) occupy the last two positions
+        assert set(order[1:]) == {1, 2}
+
+    def test_sort_population_hv_contribution_within_front(self) -> None:
+        """Within front 0, the point with smallest HV contribution sorts last."""
+        from saealib.comparators import HypervolumeComparator
+
+        # Three non-dominated points (minimize).
+        # [0,4] and [4,0] are extreme; [3.9, 0.1] is very close to [4,0]
+        # and therefore has a small exclusive HV contribution.
+        # Verified: hypervolume_contributions gives approx [1.56, 0.39, 0.04]
+        # → idx 2 ([4,0]) has the smallest contribution and must sort last.
+        f = np.array([[0.0, 4.0], [3.9, 0.1], [4.0, 0.0]])
+        pop = _make_pop(f)
+        comp = HypervolumeComparator()
+        order = comp.sort_population(pop)
+        # idx 2 has the smallest HV contribution and must be last
+        assert order[-1] == 2
+
+    # -----------------------------------------------------------------------
+    # 4. Feasibility: infeasible individuals placed last, ordered by cv
+    # -----------------------------------------------------------------------
+    def test_sort_population_infeasible_last(self) -> None:
+        """Infeasible individuals appear after all feasible ones."""
+        from saealib.comparators import HypervolumeComparator
+
+        f = np.array([[10.0, 10.0], [0.0, 0.0], [1.0, 1.0]])
+        cv = np.array([1.0, 0.0, 0.0])  # idx=0 infeasible
+        pop = _make_pop(f, cv)
+        comp = HypervolumeComparator()
+        order = comp.sort_population(pop)
+        assert order[-1] == 0
+
+    def test_sort_population_infeasible_by_ascending_cv(self) -> None:
+        """Multiple infeasible individuals are sorted by ascending cv."""
+        from saealib.comparators import HypervolumeComparator
+
+        f = np.array([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]])
+        cv = np.array([2.0, 0.5, 1.0])  # all infeasible
+        pop = _make_pop(f, cv)
+        comp = HypervolumeComparator()
+        order = comp.sort_population(pop)
+        # Sorted ascending by cv: idx 1 (0.5), idx 2 (1.0), idx 0 (2.0)
+        assert list(order) == [1, 2, 0]
+
+    # -----------------------------------------------------------------------
+    # 5. compare_population: pairwise comparisons
+    # -----------------------------------------------------------------------
+    def test_compare_population_first_front_beats_second_front(self) -> None:
+        """A first-front point compares < 0 against a second-front point."""
+        from saealib.comparators import HypervolumeComparator
+
+        # idx 0 is non-dominated; idx 1 is dominated
+        f = np.array([[0.0, 0.0], [1.0, 1.0]])
+        pop = _make_pop(f)
+        comp = HypervolumeComparator()
+        assert comp.compare_population(pop, 0, 1) == -1
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    def test_compare_population_same_front_higher_contrib_wins(self) -> None:
+        """Within the same front, the higher-contribution point wins."""
+        from saealib.comparators import HypervolumeComparator
+
+        # Three non-dominated points; idx 0 [0,4] has the highest HV contribution
+        # (~1.56); idx 2 [4,0] has the smallest (~0.04) because [3.9,0.1] is nearby.
+        # Verified: hypervolume_contributions ≈ [1.56, 0.39, 0.04]
+        f = np.array([[0.0, 4.0], [3.9, 0.1], [4.0, 0.0]])
+        pop = _make_pop(f)
+        comp = HypervolumeComparator()
+        # idx 0 (highest contrib) beats idx 2 (lowest contrib)
+        assert comp.compare_population(pop, 0, 2) == -1
+        assert comp.compare_population(pop, 2, 0) == 1
+
+    def test_compare_population_feasible_beats_infeasible(self) -> None:
+        """Feasible always beats infeasible regardless of objectives."""
+        from saealib.comparators import HypervolumeComparator
+
+        f = np.array([[100.0, 100.0], [0.0, 0.0]])
+        cv = np.array([0.0, 1.0])  # idx=0 feasible (bad obj), idx=1 infeasible
+        pop = _make_pop(f, cv)
+        comp = HypervolumeComparator()
+        assert comp.compare_population(pop, 0, 1) == -1
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    def test_compare_population_both_infeasible_lower_cv_wins(self) -> None:
+        """Both infeasible: lower constraint violation wins."""
+        from saealib.comparators import HypervolumeComparator
+
+        f = np.array([[0.0, 0.0], [0.0, 0.0]])
+        cv = np.array([0.5, 2.0])
+        pop = _make_pop(f, cv)
+        comp = HypervolumeComparator()
+        assert comp.compare_population(pop, 0, 1) == -1
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    # -----------------------------------------------------------------------
+    # 6. Tournament-safety: compare_population works for all index pairs
+    # -----------------------------------------------------------------------
+    def test_compare_population_no_exception_all_pairs(self) -> None:
+        """compare_population works for all index pairs without raising."""
+        from saealib.comparators import HypervolumeComparator
+
+        rng = np.random.default_rng(42)
+        n = 10
+        f = rng.random((n, 2))
+        cv = np.zeros(n)
+        cv[[2, 5]] = rng.uniform(0.1, 1.0, 2)  # two infeasible individuals
+        pop = _make_pop(f, cv)
+        comp = HypervolumeComparator()
+        for i in range(n):
+            for j in range(n):
+                result = comp.compare_population(pop, i, j)
+                assert result in (-1, 0, 1)
+
+    # -----------------------------------------------------------------------
+    # 7. Custom reference_point is honored
+    # -----------------------------------------------------------------------
+    def test_custom_reference_point_honored(self) -> None:
+        """A custom reference_point is stored and used during ranking."""
+        from saealib.comparators import HypervolumeComparator
+
+        f = np.array([[0.0, 3.0], [1.5, 1.5], [3.0, 0.0]])
+        ref = np.array([5.0, 5.0])
+        pop = _make_pop(f)
+        comp = HypervolumeComparator(reference_point=ref)
+        # reference_point property should be set
+        np.testing.assert_array_equal(comp.reference_point, ref)
+        # sort_population must run without error and return a valid permutation
+        order = comp.sort_population(pop)
+        assert set(order) == {0, 1, 2}
+        assert order.dtype == int or np.issubdtype(order.dtype, np.integer)
+
+    def test_custom_reference_point_affects_ranking(self) -> None:
+        """Custom reference point runs without error and produces valid ranking."""
+        from saealib.comparators import HypervolumeComparator
+
+        # Two non-dominated points: [0.0, 2.0] and [2.0, 0.0]
+        # With ref=[3.0, 3.0] both extreme points have equal-ish contributions;
+        # we just verify the ranking runs and produces valid output.
+        f = np.array([[0.0, 2.0], [2.0, 0.0], [1.5, 1.5]])
+        ref = np.array([4.0, 4.0])
+        pop = _make_pop(f)
+        comp = HypervolumeComparator(reference_point=ref)
+        order = comp.sort_population(pop)
+        # The dominated middle point should still be last
+        assert order[-1] == 2
+
+    # -----------------------------------------------------------------------
+    # 8. Import from saealib top-level package
+    # -----------------------------------------------------------------------
+    def test_import_from_saealib(self) -> None:
+        """HypervolumeComparator can be imported from saealib directly."""
+        from saealib import HypervolumeComparator
+
+        assert HypervolumeComparator is not None

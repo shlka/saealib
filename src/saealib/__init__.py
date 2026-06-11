@@ -37,16 +37,21 @@ from saealib.callback import (
 from saealib.comparators import (
     Comparator,
     Dominator,
+    EpsilonDominanceComparator,
+    EpsilonDominator,
+    HypervolumeComparator,
     NonDominatedSorter,
     NSGA2Comparator,
     ParetoComparator,
     ParetoDominator,
     SingleObjectiveComparator,
+    SPEA2Comparator,
     WeightedSumComparator,
     crowding_distance,
     crowding_distance_all_fronts,
     dda_non_dominated_sort,
     non_dominated_sort,
+    spea2_fitness,
 )
 from saealib.execution.evaluator import (
     EvaluationResult,
@@ -133,7 +138,7 @@ from saealib.termination import (
     max_gen,
     stalled,
 )
-from saealib.utils.indicators import hypervolume
+from saealib.utils.indicators import hypervolume, hypervolume_contributions
 
 logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -159,6 +164,8 @@ __all__ = [
     "DensityManager",
     "Dominator",
     "EnsembleSurrogateManager",
+    "EpsilonDominanceComparator",
+    "EpsilonDominator",
     "EqualityConstraint",
     "EvaluationResult",
     "Evaluator",
@@ -169,6 +176,7 @@ __all__ = [
     "GenerationEndEvent",
     "GenerationStartEvent",
     "GlobalSurrogateManager",
+    "HypervolumeComparator",
     "Individual",
     "IndividualBasedStrategy",
     "InequalityConstraint",
@@ -212,6 +220,7 @@ __all__ = [
     "RouletteWheelSelection",
     "RunEndEvent",
     "RunStartEvent",
+    "SPEA2Comparator",
     "SVMSurrogate",
     "SequentialSelection",
     "SerialEvaluator",
@@ -237,6 +246,7 @@ __all__ = [
     "f_target",
     "gaussian_kernel",
     "hypervolume",
+    "hypervolume_contributions",
     "logging_generation",
     "logging_generation_hv",
     "max_fe",
@@ -245,5 +255,6 @@ __all__ = [
     "minimize",
     "non_dominated_sort",
     "repair_clipping",
+    "spea2_fitness",
     "stalled",
 ]
