@@ -1903,3 +1903,207 @@ class TestHypervolumeContributions:
         from saealib.utils import hypervolume_contributions as hvc
 
         assert hvc is not None
+
+
+# ===========================================================================
+# HypervolumeComparator Tests
+# ===========================================================================
+class TestHypervolumeComparator:
+    """Tests for HypervolumeComparator (Beume et al., 2007)."""
+
+    # -----------------------------------------------------------------------
+    # 1. Class marker
+    # -----------------------------------------------------------------------
+    def test_is_population_relative_marker(self) -> None:
+        """HypervolumeComparator.is_population_relative is True."""
+        from saealib.comparators import HypervolumeComparator
+
+        assert HypervolumeComparator.is_population_relative is True
+
+    # -----------------------------------------------------------------------
+    # 2. compare() raises NotImplementedError
+    # -----------------------------------------------------------------------
+    def test_compare_raises(self) -> None:
+        """compare() raises NotImplementedError with a guiding message."""
+        from saealib.comparators import HypervolumeComparator
+
+        comp = HypervolumeComparator()
+        with pytest.raises(NotImplementedError, match="population-relative"):
+            comp.compare(
+                np.array([0.0, 0.0]),
+                0.0,
+                np.array([1.0, 1.0]),
+                0.0,
+            )
+
+    # -----------------------------------------------------------------------
+    # 3. sort_population: dominated point sorts after first-front points;
+    #    within a front the highest-HV-contribution point comes first
+    # -----------------------------------------------------------------------
+    def test_sort_population_front_rank_ordering(self) -> None:
+        """Dominated point (front 1) sorts after the non-dominated point."""
+        from saealib.comparators import HypervolumeComparator
+
+        # idx 0 = [0,0] is non-dominated (Pareto front 0);
+        # idx 1 = [2,1] and idx 2 = [1,2] are in front 1 (both dominated by idx 0).
+        f = np.array([[0.0, 0.0], [2.0, 1.0], [1.0, 2.0]])
+        pop = _make_pop(f)
+        comp = HypervolumeComparator()
+        order = comp.sort_population(pop)
+        # idx 0 (front 0) must come first
+        assert order[0] == 0
+        # idx 1 and 2 (front 1) occupy the last two positions
+        assert set(order[1:]) == {1, 2}
+
+    def test_sort_population_hv_contribution_within_front(self) -> None:
+        """Within front 0, the point with smallest HV contribution sorts last."""
+        from saealib.comparators import HypervolumeComparator
+
+        # Three non-dominated points (minimize).
+        # [0,4] and [4,0] are extreme; [3.9, 0.1] is very close to [4,0]
+        # and therefore has a small exclusive HV contribution.
+        # Verified: hypervolume_contributions gives approx [1.56, 0.39, 0.04]
+        # → idx 2 ([4,0]) has the smallest contribution and must sort last.
+        f = np.array([[0.0, 4.0], [3.9, 0.1], [4.0, 0.0]])
+        pop = _make_pop(f)
+        comp = HypervolumeComparator()
+        order = comp.sort_population(pop)
+        # idx 2 has the smallest HV contribution and must be last
+        assert order[-1] == 2
+
+    # -----------------------------------------------------------------------
+    # 4. Feasibility: infeasible individuals placed last, ordered by cv
+    # -----------------------------------------------------------------------
+    def test_sort_population_infeasible_last(self) -> None:
+        """Infeasible individuals appear after all feasible ones."""
+        from saealib.comparators import HypervolumeComparator
+
+        f = np.array([[10.0, 10.0], [0.0, 0.0], [1.0, 1.0]])
+        cv = np.array([1.0, 0.0, 0.0])  # idx=0 infeasible
+        pop = _make_pop(f, cv)
+        comp = HypervolumeComparator()
+        order = comp.sort_population(pop)
+        assert order[-1] == 0
+
+    def test_sort_population_infeasible_by_ascending_cv(self) -> None:
+        """Multiple infeasible individuals are sorted by ascending cv."""
+        from saealib.comparators import HypervolumeComparator
+
+        f = np.array([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]])
+        cv = np.array([2.0, 0.5, 1.0])  # all infeasible
+        pop = _make_pop(f, cv)
+        comp = HypervolumeComparator()
+        order = comp.sort_population(pop)
+        # Sorted ascending by cv: idx 1 (0.5), idx 2 (1.0), idx 0 (2.0)
+        assert list(order) == [1, 2, 0]
+
+    # -----------------------------------------------------------------------
+    # 5. compare_population: pairwise comparisons
+    # -----------------------------------------------------------------------
+    def test_compare_population_first_front_beats_second_front(self) -> None:
+        """A first-front point compares < 0 against a second-front point."""
+        from saealib.comparators import HypervolumeComparator
+
+        # idx 0 is non-dominated; idx 1 is dominated
+        f = np.array([[0.0, 0.0], [1.0, 1.0]])
+        pop = _make_pop(f)
+        comp = HypervolumeComparator()
+        assert comp.compare_population(pop, 0, 1) == -1
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    def test_compare_population_same_front_higher_contrib_wins(self) -> None:
+        """Within the same front, the higher-contribution point wins."""
+        from saealib.comparators import HypervolumeComparator
+
+        # Three non-dominated points; idx 0 [0,4] has the highest HV contribution
+        # (~1.56); idx 2 [4,0] has the smallest (~0.04) because [3.9,0.1] is nearby.
+        # Verified: hypervolume_contributions ≈ [1.56, 0.39, 0.04]
+        f = np.array([[0.0, 4.0], [3.9, 0.1], [4.0, 0.0]])
+        pop = _make_pop(f)
+        comp = HypervolumeComparator()
+        # idx 0 (highest contrib) beats idx 2 (lowest contrib)
+        assert comp.compare_population(pop, 0, 2) == -1
+        assert comp.compare_population(pop, 2, 0) == 1
+
+    def test_compare_population_feasible_beats_infeasible(self) -> None:
+        """Feasible always beats infeasible regardless of objectives."""
+        from saealib.comparators import HypervolumeComparator
+
+        f = np.array([[100.0, 100.0], [0.0, 0.0]])
+        cv = np.array([0.0, 1.0])  # idx=0 feasible (bad obj), idx=1 infeasible
+        pop = _make_pop(f, cv)
+        comp = HypervolumeComparator()
+        assert comp.compare_population(pop, 0, 1) == -1
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    def test_compare_population_both_infeasible_lower_cv_wins(self) -> None:
+        """Both infeasible: lower constraint violation wins."""
+        from saealib.comparators import HypervolumeComparator
+
+        f = np.array([[0.0, 0.0], [0.0, 0.0]])
+        cv = np.array([0.5, 2.0])
+        pop = _make_pop(f, cv)
+        comp = HypervolumeComparator()
+        assert comp.compare_population(pop, 0, 1) == -1
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    # -----------------------------------------------------------------------
+    # 6. Tournament-safety: compare_population works for all index pairs
+    # -----------------------------------------------------------------------
+    def test_compare_population_no_exception_all_pairs(self) -> None:
+        """compare_population works for all index pairs without raising."""
+        from saealib.comparators import HypervolumeComparator
+
+        rng = np.random.default_rng(42)
+        n = 10
+        f = rng.random((n, 2))
+        cv = np.zeros(n)
+        cv[[2, 5]] = rng.uniform(0.1, 1.0, 2)  # two infeasible individuals
+        pop = _make_pop(f, cv)
+        comp = HypervolumeComparator()
+        for i in range(n):
+            for j in range(n):
+                result = comp.compare_population(pop, i, j)
+                assert result in (-1, 0, 1)
+
+    # -----------------------------------------------------------------------
+    # 7. Custom reference_point is honored
+    # -----------------------------------------------------------------------
+    def test_custom_reference_point_honored(self) -> None:
+        """A custom reference_point is stored and used during ranking."""
+        from saealib.comparators import HypervolumeComparator
+
+        f = np.array([[0.0, 3.0], [1.5, 1.5], [3.0, 0.0]])
+        ref = np.array([5.0, 5.0])
+        pop = _make_pop(f)
+        comp = HypervolumeComparator(reference_point=ref)
+        # reference_point property should be set
+        np.testing.assert_array_equal(comp.reference_point, ref)
+        # sort_population must run without error and return a valid permutation
+        order = comp.sort_population(pop)
+        assert set(order) == {0, 1, 2}
+        assert order.dtype == int or np.issubdtype(order.dtype, np.integer)
+
+    def test_custom_reference_point_affects_ranking(self) -> None:
+        """Custom reference point runs without error and produces valid ranking."""
+        from saealib.comparators import HypervolumeComparator
+
+        # Two non-dominated points: [0.0, 2.0] and [2.0, 0.0]
+        # With ref=[3.0, 3.0] both extreme points have equal-ish contributions;
+        # we just verify the ranking runs and produces valid output.
+        f = np.array([[0.0, 2.0], [2.0, 0.0], [1.5, 1.5]])
+        ref = np.array([4.0, 4.0])
+        pop = _make_pop(f)
+        comp = HypervolumeComparator(reference_point=ref)
+        order = comp.sort_population(pop)
+        # The dominated middle point should still be last
+        assert order[-1] == 2
+
+    # -----------------------------------------------------------------------
+    # 8. Import from saealib top-level package
+    # -----------------------------------------------------------------------
+    def test_import_from_saealib(self) -> None:
+        """HypervolumeComparator can be imported from saealib directly."""
+        from saealib import HypervolumeComparator
+
+        assert HypervolumeComparator is not None

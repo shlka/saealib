@@ -1425,6 +1425,272 @@ class SPEA2Comparator(Comparator):
         )
 
 
+class HypervolumeComparator(ParetoComparator):
+    """Comparator using front rank and exclusive HV contribution (SMS-EMOA style).
+
+    Ordering rules:
+
+    - **Feasibility first** (Deb 2000): infeasible individuals (cv > eps_cv)
+      are placed after all feasible ones, ordered by ascending constraint
+      violation.
+    - **Primary key**: non-dominated front rank (ascending, lower = better).
+    - **Secondary key** (within a front): exclusive hypervolume contribution
+      (descending, higher = better).
+
+    .. note::
+        **Generalization from SMS-EMOA.** The original SMS-EMOA
+        (Beume et al., 2007) computes HV contributions only on the *last*
+        (worst) front to determine the single removal candidate at each
+        generation.  This comparator applies HV-contribution ordering *within
+        every front* to produce a full ranking over the entire population.
+        This is a deliberate generalization that enables use in standard
+        survivor-selection and tournament-selection contexts.
+
+    .. warning::
+        Computing hypervolume is exponential in the number of objectives, and
+        :func:`~saealib.utils.indicators.hypervolume_contributions` performs
+        O(N) hypervolume evaluations per front (leave-one-out).  For large
+        populations or many objectives this becomes expensive.
+
+    .. note::
+        ``compare()`` raises :exc:`NotImplementedError` because the
+        hypervolume contribution of a point depends on the other points in
+        the population (it is population-relative).  Components that require
+        pairwise comparison (e.g. PSO pbest update,
+        ``PairwiseComparisonSet``) should use a :class:`ParetoComparator`
+        instead.  Tournament selection should call ``compare_population()``,
+        which IS defined and safe to use.
+
+    Parameters
+    ----------
+    weights : np.ndarray or None
+        Per-objective weights.  Sign determines optimization direction:
+        ``-1`` = minimize, ``+1`` = maximize.  ``None`` defaults to
+        minimization for all objectives.
+    eps_cv : float
+        Feasibility threshold for constraint violation.
+    eps_obj : float
+        Epsilon for objective-value equality (stored for interface
+        compatibility).
+    reference_point : np.ndarray or None
+        Reference point in the *original* objective space, shape
+        ``(n_obj,)``.  If ``None``, it is auto-computed from the data
+        with fractional padding controlled by ``margin``.
+    margin : float
+        Fractional padding used when auto-computing the reference point.
+        Ignored when ``reference_point`` is provided.
+    sorter : NonDominatedSorter
+        Non-dominated sorting callable.
+    dominator : Dominator or None
+        Dominance predicate.  ``None`` defaults to :class:`ParetoDominator`.
+
+    References
+    ----------
+    .. [1] Beume, N., Naujoks, B., & Emmerich, M. (2007).
+       SMS-EMOA: Multiobjective selection based on dominated hypervolume.
+       *European Journal of Operational Research*, 181(3), 1653-1669.
+       https://doi.org/10.1016/j.ejor.2006.08.008
+    .. [2] Deb, K. (2000). An efficient constraint handling method for genetic
+       algorithms.  *Computer Methods in Applied Mechanics and Engineering*,
+       186(2-4), 311-338.
+    """
+
+    is_population_relative: bool = True
+    """Marker indicating that ``compare()`` is unavailable for this comparator."""
+
+    def __init__(
+        self,
+        weights: np.ndarray | None = None,
+        *,
+        eps_cv: float = 1e-6,
+        eps_obj: float = 1e-6,
+        reference_point: np.ndarray | None = None,
+        margin: float = 0.1,
+        sorter: NonDominatedSorter = non_dominated_sort,
+        dominator: Dominator | None = None,
+    ):
+        super().__init__(
+            weights,
+            eps_cv=eps_cv,
+            eps_obj=eps_obj,
+            sorter=sorter,
+            dominator=dominator,
+        )
+        self._reference_point = (
+            None
+            if reference_point is None
+            else np.asarray(reference_point, dtype=float)
+        )
+        self._margin = float(margin)
+
+    @property
+    def reference_point(self) -> np.ndarray | None:
+        """Reference point used for hypervolume computation, or None for auto."""
+        return self._reference_point
+
+    @property
+    def margin(self) -> float:
+        """Fractional padding applied when auto-computing the reference point."""
+        return self._margin
+
+    def _keys(self, population: Population) -> tuple[np.ndarray, np.ndarray]:
+        """Return per-individual ``(rank_all, contrib_all)`` arrays, cached.
+
+        Arrays have length N (population size).  Infeasible individuals
+        receive ``+inf`` rank and ``-inf`` contribution so they sort last.
+        Results are cached under the key ``"hv_keys"``.
+        """
+        cached = population.get_cache("hv_keys")
+        if cached is not None:
+            return cached  # type: ignore[return-value]
+
+        # Lazy import avoids a circular dependency at module load time.
+        from saealib.utils.indicators import hypervolume_contributions
+
+        f_arr = population.get("f")
+        cv_arr = population.get("cv")
+        n = len(f_arr)
+
+        rank_all = np.full(n, np.inf)  # infeasible → +inf (worst rank)
+        contrib_all = np.full(n, -np.inf)  # infeasible → -inf (worst contrib)
+
+        feasible = np.where(cv_arr <= self.eps_cv)[0]
+        if len(feasible):
+            ranks, fronts = self._sorter(
+                f_arr[feasible],
+                direction=self._direction,
+                dominator=self._dominator,
+            )
+            rank_all[feasible] = ranks
+
+            for front in fronts:  # front = local indices into feasible subset
+                local = np.asarray(front, dtype=int)
+                gidx = feasible[local]
+                contribs = hypervolume_contributions(
+                    f_arr[gidx],
+                    reference_point=self._reference_point,
+                    direction=self._direction,
+                    margin=self._margin,
+                )
+                contrib_all[gidx] = contribs
+
+        keys = (rank_all, contrib_all)
+        population.set_cache("hv_keys", keys)
+        return keys
+
+    def sort_population(self, population: Population) -> np.ndarray:
+        """
+        Sort by front rank then HV contribution; infeasible individuals last.
+
+        Within the feasible block the primary sort key is non-dominated front
+        rank (ascending) and the secondary key is exclusive hypervolume
+        contribution (descending).  Infeasible individuals follow, sorted by
+        ascending constraint violation.
+
+        Parameters
+        ----------
+        population : Population
+            The population to sort.
+
+        Returns
+        -------
+        np.ndarray
+            Sorted population indices (int).
+        """
+        cv_arr = population.get("cv")
+        rank_all, contrib_all = self._keys(population)
+
+        feasible = np.where(cv_arr <= self.eps_cv)[0]
+        infeasible = np.where(cv_arr > self.eps_cv)[0]
+
+        sorted_feasible: np.ndarray = np.empty(0, int)
+        if len(feasible):
+            # lexsort: last key is primary -> rank ascending, then -contrib ascending
+            order = np.lexsort((-contrib_all[feasible], rank_all[feasible]))
+            sorted_feasible = feasible[order]
+
+        sorted_infeasible: np.ndarray = np.empty(0, int)
+        if len(infeasible):
+            sorted_infeasible = infeasible[np.argsort(cv_arr[infeasible])]
+
+        return np.concatenate([sorted_feasible, sorted_infeasible]).astype(int)
+
+    def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
+        """
+        Compare two individuals using constraint-domination then HV ranking.
+
+        Returns ``-1`` if ``a`` is better, ``1`` if ``b`` is better, ``0``
+        if equal.  The feasibility rule (Deb 2000) is applied first.  Among
+        both-feasible pairs, lower front rank wins; within the same front,
+        higher HV contribution wins.
+
+        Parameters
+        ----------
+        population : Population
+            The population containing both individuals.
+        idx_a : int
+            Index of the first individual.
+        idx_b : int
+            Index of the second individual.
+
+        Returns
+        -------
+        int
+            ``-1``, ``0``, or ``1``.
+        """
+        cv_arr = population.get("cv")
+        cv_a = float(cv_arr[idx_a])
+        cv_b = float(cv_arr[idx_b])
+
+        # Both infeasible: lower cv wins
+        if cv_a > self.eps_cv and cv_b > self.eps_cv:
+            if cv_a < cv_b:
+                return -1
+            elif cv_a > cv_b:
+                return 1
+            return 0
+
+        # One infeasible: feasible wins
+        if cv_a > self.eps_cv:
+            return 1
+        if cv_b > self.eps_cv:
+            return -1
+
+        # Both feasible: lower rank wins; tie-break on higher HV contribution
+        rank_all, contrib_all = self._keys(population)
+        ra = rank_all[idx_a]
+        rb = rank_all[idx_b]
+        if ra < rb:
+            return -1
+        elif ra > rb:
+            return 1
+
+        ca = contrib_all[idx_a]
+        cb = contrib_all[idx_b]
+        if ca > cb:
+            return -1
+        elif ca < cb:
+            return 1
+        return 0
+
+    def compare(
+        self,
+        fa: np.ndarray,
+        cv_a: float,
+        fb: np.ndarray,
+        cv_b: float,
+    ) -> int:
+        """Raise NotImplementedError — HV contribution is population-relative."""
+        raise NotImplementedError(
+            "HypervolumeComparator.compare() is undefined: the exclusive "
+            "hypervolume contribution of a point is population-relative and "
+            "cannot be computed from two isolated points.  Use "
+            "compare_population() / sort_population(), or supply a "
+            "ParetoComparator for components that require pairwise "
+            "compare() (e.g. PSO pbest update, PairwiseComparisonSet)."
+        )
+
+
 class EpsilonDominanceComparator(ParetoComparator):
     """
     Comparator using ε-box dominance instead of standard Pareto dominance.
