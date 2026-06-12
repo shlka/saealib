@@ -432,7 +432,7 @@ class Problem:
             )
         else:
             self.comparator = NSGA2Comparator(
-                weights=weight, eps_cv=eps_cv, eps_obj=eps_obj
+                direction=weight, eps_cv=eps_cv, eps_obj=eps_obj
             )
 
     @property

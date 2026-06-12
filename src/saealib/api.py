@@ -119,7 +119,7 @@ def _resolve_surrogate(
             rbf = RBFsurrogate(gaussian_kernel, problem.dim)
             return LocalSurrogateManager(
                 rbf,
-                MeanPrediction(weights=problem.weight),
+                MeanPrediction(direction=problem.weight),
                 training_set=KNNObjectiveSet(n_neighbors),
             )
         raise ValueError(
@@ -130,7 +130,7 @@ def _resolve_surrogate(
 
     return LocalSurrogateManager(
         surrogate,
-        MeanPrediction(weights=problem.weight),
+        MeanPrediction(direction=problem.weight),
         training_set=KNNObjectiveSet(n_neighbors),
     )
 
