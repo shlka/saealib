@@ -24,9 +24,8 @@ from saealib.decomposition import (
     TchebycheffDecomposition,
     WeightedSumDecomposition,
 )
-from saealib.utils.weight_vectors import uniform_weight_vectors
 from saealib.population import Population, PopulationAttribute
-
+from saealib.utils.weight_vectors import uniform_weight_vectors
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -120,7 +119,8 @@ class TestWeightedSumDecomposition:
         np.testing.assert_array_equal(s1, s2)
 
     def test_output_shape(self) -> None:
-        f = np.random.rand(10, 3)
+        rng = np.random.default_rng(0)
+        f = rng.random((10, 3))
         w = np.array([0.3, 0.3, 0.4])
         z = np.zeros(3)
         scores = self.ws.aggregate(f, w, z)
@@ -176,7 +176,8 @@ class TestTchebycheffDecomposition:
         np.testing.assert_allclose(scores, [1.0])
 
     def test_output_shape(self) -> None:
-        f = np.random.rand(7, 3)
+        rng = np.random.default_rng(0)
+        f = rng.random((7, 3))
         w = np.array([0.4, 0.3, 0.3])
         z = np.zeros(3)
         assert self.tch.aggregate(f, w, z).shape == (7,)
@@ -226,8 +227,9 @@ class TestPBIDecomposition:
         assert s_high > s_low
 
     def test_output_shape(self) -> None:
+        rng = np.random.default_rng(0)
         pbi = PBIDecomposition()
-        f = np.random.rand(8, 2)
+        f = rng.random((8, 2))
         w = np.array([0.5, 0.5])
         z = np.zeros(2)
         assert pbi.aggregate(f, w, z).shape == (8,)
@@ -359,11 +361,15 @@ class TestDecompositionComparatorCompare:
         assert result == -1
 
     def test_feasible_beats_infeasible(self) -> None:
-        result = self.cmp.compare(np.array([10.0, 10.0]), 0.0, np.array([0.0, 0.0]), 1.0)
+        result = self.cmp.compare(
+            np.array([10.0, 10.0]), 0.0, np.array([0.0, 0.0]), 1.0
+        )
         assert result == -1
 
     def test_infeasible_loses_to_feasible(self) -> None:
-        result = self.cmp.compare(np.array([0.0, 0.0]), 1.0, np.array([10.0, 10.0]), 0.0)
+        result = self.cmp.compare(
+            np.array([0.0, 0.0]), 1.0, np.array([10.0, 10.0]), 0.0
+        )
         assert result == 1
 
     def test_compare_population_consistent(self) -> None:

@@ -14,9 +14,9 @@ References
 ----------
 .. [1] Zhang, Q., & Li, H. (2007). MOEA/D: A multiobjective evolutionary
    algorithm based on decomposition. *IEEE Transactions on Evolutionary
-   Computation*, 11(6), 712–731.
+   Computation*, 11(6), 712-731.
 .. [2] Das, I., & Dennis, J. E. (1998). Normal-boundary intersection.
-   *SIAM Journal on Optimization*, 8(3), 631–657.
+   *SIAM Journal on Optimization*, 8(3), 631-657.
 """
 
 from __future__ import annotations
@@ -113,7 +113,7 @@ class WeightedSumDecomposition(Decomposition):
     ----------
     .. [1] Zhang, Q., & Li, H. (2007). MOEA/D: A multiobjective evolutionary
        algorithm based on decomposition. *IEEE Transactions on Evolutionary
-       Computation*, 11(6), 712–731.
+       Computation*, 11(6), 712-731.
     """
 
     def aggregate(
@@ -159,7 +159,7 @@ class TchebycheffDecomposition(Decomposition):
     ----------
     .. [1] Zhang, Q., & Li, H. (2007). MOEA/D: A multiobjective evolutionary
        algorithm based on decomposition. *IEEE Transactions on Evolutionary
-       Computation*, 11(6), 712–731.
+       Computation*, 11(6), 712-731.
     """
 
     _EPS_WEIGHT: float = 1e-6
@@ -220,7 +220,7 @@ class PBIDecomposition(Decomposition):
     ----------
     .. [1] Zhang, Q., & Li, H. (2007). MOEA/D: A multiobjective evolutionary
        algorithm based on decomposition. *IEEE Transactions on Evolutionary
-       Computation*, 11(6), 712–731.
+       Computation*, 11(6), 712-731.
     """
 
     def __init__(self, theta: float = 5.0) -> None:
@@ -259,10 +259,7 @@ class PBIDecomposition(Decomposition):
         z = np.asarray(ideal_point, dtype=float)
 
         w_norm = np.linalg.norm(w)
-        if w_norm < 1e-12:
-            w_hat = np.ones_like(w) / np.sqrt(len(w))
-        else:
-            w_hat = w / w_norm
+        w_hat = np.ones_like(w) / np.sqrt(len(w)) if w_norm < 1e-12 else w / w_norm
 
         diff = f - z  # (N, n_obj)
         # Scalar projection onto w_hat: (N,)
@@ -327,10 +324,10 @@ class DecompositionComparator(Comparator):
     ----------
     .. [1] Zhang, Q., & Li, H. (2007). MOEA/D: A multiobjective evolutionary
        algorithm based on decomposition. *IEEE Transactions on Evolutionary
-       Computation*, 11(6), 712–731.
+       Computation*, 11(6), 712-731.
     .. [2] Deb, K. (2000). An efficient constraint handling method for genetic
        algorithms. *Computer Methods in Applied Mechanics and Engineering*,
-       186(2-4), 311–338.
+       186(2-4), 311-338.
     """
 
     def __init__(

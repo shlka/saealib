@@ -79,7 +79,7 @@ def _fill(
 ) -> None:
     """Enumerate integer partitions of *n_divisions* into *n_obj* parts."""
     if len(current) == n_obj - 1:
-        rows.append(current + [remaining])
+        rows.append([*current, remaining])
         return
     for k in range(remaining + 1):
-        _fill(n_obj, remaining - k, n_divisions, current + [k], rows)
+        _fill(n_obj, remaining - k, n_divisions, [*current, k], rows)
