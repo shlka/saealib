@@ -53,6 +53,13 @@ from saealib.comparators import (
     non_dominated_sort,
     spea2_fitness,
 )
+from saealib.decomposition import (
+    Decomposition,
+    DecompositionComparator,
+    PBIDecomposition,
+    TchebycheffDecomposition,
+    WeightedSumDecomposition,
+)
 from saealib.execution.evaluator import (
     EvaluationResult,
     Evaluator,
@@ -139,6 +146,7 @@ from saealib.termination import (
     stalled,
 )
 from saealib.utils.indicators import hypervolume, hypervolume_contributions
+from saealib.utils.weight_vectors import uniform_weight_vectors
 
 logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -153,6 +161,8 @@ __all__ = [
     "CallbackManager",
     "Comparator",
     "Constraint",
+    "Decomposition",
+    "DecompositionComparator",
     "ConstraintHandler",
     "Crossover",
     "CrossoverBLXAlpha",
@@ -193,6 +203,7 @@ __all__ = [
     "MutationUniform",
     "NNSurrogate",
     "NSGA2Comparator",
+    "PBIDecomposition",
     "NichingManager",
     "NonDominatedSorter",
     "NoveltyManager",
@@ -235,10 +246,12 @@ __all__ = [
     "SurvivorSelection",
     "Termination",
     "TerminationCondition",
+    "TchebycheffDecomposition",
     "TorchSurrogate",
     "TournamentSelection",
     "TruncationSelection",
     "WeightedSumComparator",
+    "WeightedSumDecomposition",
     "XGBSurrogate",
     "crowding_distance",
     "crowding_distance_all_fronts",
@@ -257,4 +270,5 @@ __all__ = [
     "repair_clipping",
     "spea2_fitness",
     "stalled",
+    "uniform_weight_vectors",
 ]
