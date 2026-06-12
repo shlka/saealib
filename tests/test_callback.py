@@ -66,7 +66,7 @@ def _make_problem() -> Problem:
         func=lambda x: np.array([np.sum(x**2)]),
         dim=DIM,
         n_obj=N_OBJ,
-        weight=np.array([-1.0]),
+        direction=np.array([-1.0]),
         lb=[-5.0] * DIM,
         ub=[5.0] * DIM,
         comparator=SingleObjectiveComparator(),
@@ -426,7 +426,7 @@ class TestLoggingGenerationHandler:
             func=lambda x: np.array([np.sum(x**2), np.sum((x - 2.0) ** 2)]),
             dim=DIM,
             n_obj=2,
-            weight=np.array([-1.0, -1.0]),
+            direction=np.array([-1.0, -1.0]),
             lb=[-5.0] * DIM,
             ub=[5.0] * DIM,
         )

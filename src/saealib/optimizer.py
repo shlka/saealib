@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+
+import numpy as np
 from typing import TYPE_CHECKING, Protocol
 
 from saealib.acquisition.mean import MeanPrediction
@@ -146,7 +148,7 @@ class Optimizer:
 
         self.surrogate_manager = LocalSurrogateManager(
             surrogate,
-            MeanPrediction(direction=self.problem.weight),
+            MeanPrediction(direction=self.problem.direction),
             training_set=KNNObjectiveSet(n_neighbors=n_neighbors),
         )
         return self

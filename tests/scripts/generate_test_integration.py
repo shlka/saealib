@@ -62,7 +62,7 @@ def run_benchmark(seed: int):
         func=sphere,
         dim=dim,
         n_obj=1,
-        weight=np.array([-1.0]),
+        direction=np.array([-1.0]),
         lb=lb,
         ub=ub,
     )

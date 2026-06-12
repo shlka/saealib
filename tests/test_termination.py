@@ -41,7 +41,7 @@ def _make_obj_ctx(
     archive = SimpleNamespace(get=lambda key: f_arr if key == "f" else None)
     return SimpleNamespace(
         archive=archive,
-        weight=np.array([weight], dtype=float),
+        direction=np.array([weight], dtype=float),
         gen=gen,
         fe=fe,
     )

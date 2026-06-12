@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+
+import numpy as np
 from typing import TYPE_CHECKING
 
 from saealib.context import OptimizationContext
@@ -48,7 +50,7 @@ class Algorithm(ABC):
         return self.pareto_archive_class(
             attrs=attrs,
             init_capacity=init_capacity,
-            direction=problem.weight,
+            direction=problem.direction,
         )
 
     @abstractmethod

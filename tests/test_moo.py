@@ -657,7 +657,7 @@ class TestProblemComparatorAutoSelection:
             func=lambda x: np.sum(x**2),
             dim=2,
             n_obj=1,
-            weight=np.array([-1.0]),
+            direction=np.array([-1.0]),
             lb=[-5.0, -5.0],
             ub=[5.0, 5.0],
         )
@@ -668,7 +668,7 @@ class TestProblemComparatorAutoSelection:
             func=lambda x: np.array([np.sum(x**2), np.sum((x - 1) ** 2)]),
             dim=2,
             n_obj=2,
-            weight=np.array([-1.0, -1.0]),
+            direction=np.array([-1.0, -1.0]),
             lb=[-5.0, -5.0],
             ub=[5.0, 5.0],
         )
@@ -680,7 +680,7 @@ class TestProblemComparatorAutoSelection:
             func=lambda x: np.array([np.sum(x**2), np.sum((x - 1) ** 2)]),
             dim=2,
             n_obj=2,
-            weight=np.array([-1.0, -1.0]),
+            direction=np.array([-1.0, -1.0]),
             lb=[-5.0, -5.0],
             ub=[5.0, 5.0],
             comparator=custom,
@@ -692,7 +692,7 @@ class TestProblemComparatorAutoSelection:
             func=lambda x: np.array([np.sum(x**2), np.sum((x - 1) ** 2)]),
             dim=2,
             n_obj=2,
-            weight=np.array([-1.0, -1.0]),
+            direction=np.array([-1.0, -1.0]),
             lb=[-5.0, -5.0],
             ub=[5.0, 5.0],
         )
@@ -725,7 +725,7 @@ class TestMOOIntegration:
             func=bisphere,
             dim=dim,
             n_obj=2,
-            weight=np.array([-1.0, -1.0]),
+            direction=np.array([-1.0, -1.0]),
             lb=[0.0] * dim,
             ub=[2.0] * dim,
         )

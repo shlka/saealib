@@ -330,8 +330,9 @@ class Problem:
         Dimension of the design variables.
     n_obj : int
         Number of objectives.
-    weight : np.ndarray
-        Weights for objectives. shape = (n_obj, )
+    direction : np.ndarray
+        Optimization direction per objective. shape = (n_obj, )
+        Each element must be +1 (maximize) or -1 (minimize).
     lb : np.ndarray
         Lower bounds for design variables. shape = (dim, )
     ub : np.ndarray
@@ -356,7 +357,7 @@ class Problem:
         func: callable,
         dim: int,
         n_obj: int,
-        weight: np.ndarray,
+        direction: np.ndarray,
         lb: list[float],
         ub: list[float],
         eps: float | None = None,
@@ -378,10 +379,9 @@ class Problem:
             Dimension of the design variables.
         n_obj : int
             Number of objectives.
-        weight : np.ndarray
-            Weights for objectives. shape = (n_obj, )
-            Used by SingleObjectiveComparator and WeightedSumComparator.
-            Not used by NSGA2Comparator.
+        direction : np.ndarray
+            Optimization direction per objective. shape = (n_obj, )
+            Each element must be +1 (maximize) or -1 (minimize).
         lb : list[float]
             Lower bounds for design variables. length = dim
         ub : list[float]
@@ -411,9 +411,12 @@ class Problem:
                 stacklevel=2,
             )
             eps_cv = eps_obj = eps
+        direction = np.asarray(direction, dtype=float)
+        if not np.all(np.abs(direction) == 1):
+            raise ValueError("direction elements must be +1 or -1")
         self.dim = dim
         self.n_obj = n_obj
-        self.weight = weight
+        self.direction = direction
         self.eps_cv = eps_cv
         self.eps_obj = eps_obj
         self.lb = np.asarray(lb)
@@ -428,11 +431,11 @@ class Problem:
             self.comparator = comparator
         elif n_obj == 1:
             self.comparator = SingleObjectiveComparator(
-                weight=weight, eps_cv=eps_cv, eps_obj=eps_obj
+                weight=direction[0], eps_cv=eps_cv, eps_obj=eps_obj
             )
         else:
             self.comparator = NSGA2Comparator(
-                direction=weight, eps_cv=eps_cv, eps_obj=eps_obj
+                direction=direction, eps_cv=eps_cv, eps_obj=eps_obj
             )
 
     @property
