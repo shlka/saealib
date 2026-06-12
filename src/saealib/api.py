@@ -65,20 +65,37 @@ class Result:
 # ---------------------------------------------------------------------------
 
 
+def _resolve_direction(
+    direction: np.ndarray | list[str] | None,
+    n_obj: int,
+    default: float,
+) -> np.ndarray:
+    """Convert direction argument to a ±1 float array."""
+    if direction is None:
+        return np.full(n_obj, default)
+    if isinstance(direction, np.ndarray):
+        return direction
+    _map = {"minimize": -1.0, "maximize": 1.0}
+    try:
+        return np.array([_map[d] for d in direction])
+    except KeyError as e:
+        raise ValueError(f"Unknown direction {e}. Use 'minimize' or 'maximize'.") from e
+
+
 def _ensure_problem(
     func: Callable | Problem,
     dim: int | None,
     lb,
     ub,
     n_obj: int,
-    weight: np.ndarray,
+    direction: np.ndarray,
 ) -> Problem:
     """Return a Problem, building one from a callable if needed."""
     if isinstance(func, Problem):
         return func
     if dim is None or lb is None or ub is None:
         raise ValueError("dim, lb, and ub are required when func is a callable.")
-    return Problem(func=func, dim=dim, n_obj=n_obj, weight=weight, lb=lb, ub=ub)
+    return Problem(func=func, dim=dim, n_obj=n_obj, direction=direction, lb=lb, ub=ub)
 
 
 def _resolve_algorithm(algorithm: str | Algorithm) -> Algorithm:
@@ -119,7 +136,7 @@ def _resolve_surrogate(
             rbf = RBFsurrogate(gaussian_kernel, problem.dim)
             return LocalSurrogateManager(
                 rbf,
-                MeanPrediction(weights=problem.weight),
+                MeanPrediction(direction=problem.direction),
                 training_set=KNNObjectiveSet(n_neighbors),
             )
         raise ValueError(
@@ -130,7 +147,7 @@ def _resolve_surrogate(
 
     return LocalSurrogateManager(
         surrogate,
-        MeanPrediction(weights=problem.weight),
+        MeanPrediction(direction=problem.direction),
         training_set=KNNObjectiveSet(n_neighbors),
     )
 
@@ -159,14 +176,14 @@ def _build_result(ctx: OptimizationContext) -> Result:
     archive_x = ctx.archive.get_array("x")
     archive_f = ctx.archive.get_array("f")
     archive_cv = ctx.archive.get_array("cv")
-    weight = ctx.problem.weight
+    direction = ctx.problem.direction
     eps = ctx.problem.eps_cv
 
     feasible = np.where(archive_cv <= eps)[0]
     pool = feasible if len(feasible) else np.array([int(np.argmin(archive_cv))])
 
     if ctx.problem.n_obj == 1:
-        scores = archive_f[pool] @ weight
+        scores = archive_f[pool] @ direction
         best_idx = pool[int(np.argmax(scores))]
         best_x = archive_x[best_idx]
         best_f = archive_f[best_idx]
@@ -178,7 +195,6 @@ def _build_result(ctx: OptimizationContext) -> Result:
             # Fallback: pareto_archive is empty (should not happen in normal use)
             from saealib.comparators import non_dominated_sort
 
-            direction = np.sign(weight)
             _, fronts = non_dominated_sort(archive_f[pool], direction=direction)
             pareto_idx = pool[fronts[0]]
             best_x = archive_x[pareto_idx]
@@ -244,6 +260,7 @@ def minimize(
     lb=None,
     ub=None,
     n_obj: int = 1,
+    direction: np.ndarray | list[str] | None = None,
     surrogate: str | Surrogate | SurrogateManager | None = "rbf",
     strategy: str | OptimizationStrategy | None = "ib",
     max_fe: int | None = None,
@@ -270,6 +287,9 @@ def minimize(
         Upper bounds of length *dim*. Required when *func* is a callable.
     n_obj : int
         Number of objectives. Ignored when *func* is a :class:`Problem`. Default: 1.
+    direction : np.ndarray, list[str], or None
+        Optimization direction per objective. Each element is ``-1``/``"minimize"``
+        (minimize) or ``+1``/``"maximize"`` (maximize). Default: all minimize.
     surrogate : str, Surrogate, SurrogateManager, or None
         ``'rbf'``, a :class:`Surrogate`, or a :class:`SurrogateManager`.
         Default: ``'rbf'``.
@@ -299,8 +319,8 @@ def minimize(
     ...                   max_fe=500, seed=0, verbose=False)
     >>> result.X, result.F
     """
-    weight = np.full(n_obj, -1.0)
-    problem = _ensure_problem(func, dim, lb, ub, n_obj, weight)
+    direction_arr = _resolve_direction(direction, n_obj, default=-1.0)
+    problem = _ensure_problem(func, dim, lb, ub, n_obj, direction_arr)
     return _run(
         problem,
         algorithm,
@@ -322,6 +342,7 @@ def maximize(
     lb=None,
     ub=None,
     n_obj: int = 1,
+    direction: np.ndarray | list[str] | None = None,
     surrogate: str | Surrogate | SurrogateManager | None = "rbf",
     strategy: str | OptimizationStrategy | None = "ib",
     max_fe: int | None = None,
@@ -333,7 +354,7 @@ def maximize(
     """Run surrogate-assisted maximization.
 
     Identical to :func:`minimize` except that all objectives are maximized
-    (``weight = +1``).
+    (``direction = +1``).
 
     Parameters
     ----------
@@ -350,6 +371,9 @@ def maximize(
         Upper bounds of length *dim*. Required when *func* is a callable.
     n_obj : int
         Number of objectives. Ignored when *func* is a :class:`Problem`. Default: 1.
+    direction : np.ndarray, list[str], or None
+        Optimization direction per objective. Each element is ``-1``/``"minimize"``
+        (minimize) or ``+1``/``"maximize"`` (maximize). Default: all maximize.
     surrogate : str, Surrogate, SurrogateManager, or None
         ``'rbf'``, a :class:`Surrogate`, or a :class:`SurrogateManager`.
         Default: ``'rbf'``.
@@ -379,8 +403,8 @@ def maximize(
     ...                   max_fe=500, seed=0, verbose=False)
     >>> result.X, result.F
     """
-    weight = np.full(n_obj, +1.0)
-    problem = _ensure_problem(func, dim, lb, ub, n_obj, weight)
+    direction_arr = _resolve_direction(direction, n_obj, default=+1.0)
+    problem = _ensure_problem(func, dim, lb, ub, n_obj, direction_arr)
     return _run(
         problem,
         algorithm,

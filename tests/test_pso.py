@@ -44,12 +44,12 @@ class _DummyProvider:
 
 
 def _make_problem() -> Problem:
-    # weight=-1.0 in SingleObjectiveComparator: sort_population puts lowest f first
+    # direction=-1.0 in SingleObjectiveComparator: sort_population puts lowest f first
     return Problem(
         func=lambda x: np.array([np.sum(x**2)]),
         dim=DIM,
         n_obj=1,
-        weight=np.array([-1.0]),
+        direction=np.array([-1.0]),
         lb=[-5.0] * DIM,
         ub=[5.0] * DIM,
         comparator=SingleObjectiveComparator(weight=-1.0),

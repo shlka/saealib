@@ -56,7 +56,7 @@ def _make_problem() -> Problem:
         func=lambda x: np.array([np.sum(x**2)]),
         dim=DIM,
         n_obj=1,
-        weight=np.array([-1.0]),
+        direction=np.array([-1.0]),
         lb=[-5.0] * DIM,
         ub=[5.0] * DIM,
         comparator=SingleObjectiveComparator(),

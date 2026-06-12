@@ -48,7 +48,7 @@ class Algorithm(ABC):
         return self.pareto_archive_class(
             attrs=attrs,
             init_capacity=init_capacity,
-            direction=problem.weight,
+            direction=problem.direction,
         )
 
     @abstractmethod

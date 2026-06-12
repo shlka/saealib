@@ -29,12 +29,23 @@ class MeanPrediction(AcquisitionFunction):
     Parameters
     ----------
     weights : np.ndarray or None
-        Weights for scalarizing multi-objective predictions.
-        shape: (n_obj,). If None, uses the first objective only.
+        Weights for magnitude-aware scalarization of multi-objective predictions.
+        shape: (n_obj,). If None and direction is also None, uses the first
+        objective only.
+    direction : np.ndarray or None
+        Per-objective optimization directions (+1 = maximize, -1 = minimize).
+        Used for direction-only scalarization when magnitude does not matter.
+        Takes precedence over weights when both are provided.
     """
 
-    def __init__(self, weights: np.ndarray | None = None, reference: Any = None):
+    def __init__(
+        self,
+        weights: np.ndarray | None = None,
+        reference: Any = None,
+        direction: np.ndarray | None = None,
+    ):
         self.weights = weights
+        self.direction = direction
         self.reference = reference
 
     def compute_reference(self, archive: Archive) -> Any:
@@ -62,6 +73,8 @@ class MeanPrediction(AcquisitionFunction):
             Scores. shape: (n_samples,)
         """
         m = prediction.value  # (n_samples, n_obj)
+        if self.direction is not None:
+            return m @ np.asarray(self.direction)  # (n_samples,)
         if self.weights is not None:
             return m @ np.asarray(self.weights)  # (n_samples,)
         return m[:, 0]  # single-objective default

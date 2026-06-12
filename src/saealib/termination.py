@@ -332,7 +332,7 @@ def f_target(value: float) -> TerminationCondition:
     Create a termination condition based on a target objective value.
 
     Intended for single-objective problems. The direction is taken from
-    ``ctx.weight`` (``-1`` for minimization, ``+1`` for maximization), so the
+    ``ctx.direction`` (``-1`` for minimization, ``+1`` for maximization), so the
     condition is met when the best objective found reaches ``value`` from the
     correct side (``best <= value`` when minimizing, ``best >= value`` when
     maximizing). Returns ``False`` while the archive is empty.
@@ -357,11 +357,11 @@ def f_target(value: float) -> TerminationCondition:
         f = ctx.archive.get("f")
         if f is None or len(f) == 0:
             return False
-        weight = ctx.weight
+        direction = ctx.direction
         # Work in score space (higher is better) so a single comparison covers
         # both minimization and maximization.
-        best_score = float((f @ weight).max())
-        return best_score >= value * float(weight[0])
+        best_score = float((f @ direction).max())
+        return best_score >= value * float(direction[0])
 
     return TerminationCondition(
         _condition,
@@ -374,7 +374,7 @@ def stalled(window: int, tol: float = 1e-8) -> TerminationCondition:
     """
     Create a termination condition based on lack of improvement (stagnation).
 
-    Terminates when the best score (``f @ weight``, higher is better) has not
+    Terminates when the best score (``f @ direction``, higher is better) has not
     improved by more than ``tol`` for ``window`` consecutive generations.
     Improvement is tracked across calls using ``ctx.gen``; the returned
     condition is therefore stateful and intended to be used once per run.
@@ -402,7 +402,7 @@ def stalled(window: int, tol: float = 1e-8) -> TerminationCondition:
         f = ctx.archive.get("f")
         if f is None or len(f) == 0:
             return False
-        best_score = float((f @ ctx.weight).max())
+        best_score = float((f @ ctx.direction).max())
         if state["best"] is None or best_score > state["best"] + tol:
             state["best"] = best_score
             state["stall_gen"] = ctx.gen

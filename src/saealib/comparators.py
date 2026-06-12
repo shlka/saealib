@@ -324,13 +324,23 @@ class Comparator(ABC):
         Epsilon for constraint violation feasibility threshold.
     eps_obj : float
         Epsilon for objective value equality comparison.
+    direction : np.ndarray or None
+        Per-objective optimization directions (+1 = maximize, -1 = minimize).
+        None means all objectives are minimized.
     """
 
     @abstractmethod
-    def __init__(self, weights: np.ndarray, eps_cv: float, eps_obj: float):
+    def __init__(
+        self,
+        weights: np.ndarray,
+        eps_cv: float,
+        eps_obj: float,
+        direction: np.ndarray | None = None,
+    ):
         self.weights = weights
         self.eps_cv = eps_cv
         self.eps_obj = eps_obj
+        self.direction = direction
 
     @property
     def eps(self) -> float:
@@ -1050,15 +1060,16 @@ class ParetoComparator(Comparator):
 
     Parameters
     ----------
-    weights : np.ndarray or None
-        Stored for interface compatibility but not used in Pareto ranking.
+    direction : np.ndarray or None
+        Per-objective optimization directions (+1 = maximize, -1 = minimize).
+        None means all objectives are minimized (standard Pareto dominance).
     eps : float
         Epsilon tolerance for constraint violation.
     """
 
     def __init__(
         self,
-        weights: np.ndarray | None = None,
+        direction: np.ndarray | None = None,
         eps: float | None = None,
         *,
         eps_cv: float = 1e-6,
@@ -1074,8 +1085,10 @@ class ParetoComparator(Comparator):
                 stacklevel=2,
             )
             eps_cv = eps
-        w = np.asarray(weights, dtype=float) if weights is not None else np.empty(0)
-        super().__init__(w, eps_cv, eps_obj)
+        direction_arr = (
+            np.asarray(direction, dtype=float) if direction is not None else None
+        )
+        super().__init__(np.empty(0), eps_cv, eps_obj, direction=direction_arr)
         self._sorter = sorter
         # Use None-sentinel to avoid a shared mutable default.
         self._dominator: Dominator = (
@@ -1092,12 +1105,6 @@ class ParetoComparator(Comparator):
         """The dominance predicate used by this comparator."""
         return self._dominator
 
-    @property
-    def _direction(self) -> np.ndarray | None:
-        if self.weights.size == 0:
-            return None
-        return np.sign(self.weights)
-
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort by Pareto front rank; infeasible individuals come last."""
         f = population.get("f")
@@ -1108,7 +1115,7 @@ class ParetoComparator(Comparator):
         sorted_feasible = np.empty(0, int)
         if len(feasible):
             ranks, _ = self._sorter(
-                f[feasible], direction=self._direction, dominator=self._dominator
+                f[feasible], direction=self.direction, dominator=self._dominator
             )
             order = np.argsort(ranks, kind="stable")
             sorted_feasible = feasible[order]
@@ -1138,10 +1145,9 @@ class ParetoComparator(Comparator):
         elif cv_b > self.eps_cv:
             return -1
 
-        direction = self._direction
-        if self._dominator.dominates(fa, fb, direction):
+        if self._dominator.dominates(fa, fb, self.direction):
             return -1
-        if self._dominator.dominates(fb, fa, direction):
+        if self._dominator.dominates(fb, fa, self.direction):
             return 1
         return 0
 
@@ -1162,15 +1168,16 @@ class NSGA2Comparator(ParetoComparator):
 
     Parameters
     ----------
-    weights : np.ndarray or None
-        Stored for interface compatibility but not used in Pareto ranking.
+    direction : np.ndarray or None
+        Per-objective optimization directions (+1 = maximize, -1 = minimize).
+        None means all objectives are minimized.
     eps : float
         Epsilon tolerance for constraint violation.
     """
 
     def __init__(
         self,
-        weights: np.ndarray | None = None,
+        direction: np.ndarray | None = None,
         eps: float | None = None,
         *,
         eps_cv: float = 1e-6,
@@ -1187,7 +1194,11 @@ class NSGA2Comparator(ParetoComparator):
             )
             eps_cv = eps
         super().__init__(
-            weights, eps_cv=eps_cv, eps_obj=eps_obj, sorter=sorter, dominator=dominator
+            direction,
+            eps_cv=eps_cv,
+            eps_obj=eps_obj,
+            sorter=sorter,
+            dominator=dominator,
         )
 
     def sort_population(self, population: Population) -> np.ndarray:
@@ -1204,7 +1215,7 @@ class NSGA2Comparator(ParetoComparator):
         sorted_feasible = np.empty(0, int)
         if len(feasible):
             ranks, fronts = self._sorter(
-                f[feasible], direction=self._direction, dominator=self._dominator
+                f[feasible], direction=self.direction, dominator=self._dominator
             )
             cd = crowding_distance_all_fronts(f[feasible], fronts)
             order = np.lexsort((-cd, ranks))
@@ -1244,10 +1255,9 @@ class SPEA2Comparator(Comparator):
 
     Parameters
     ----------
-    weights : np.ndarray or None
-        Per-objective weights.  Sign determines optimization direction:
-        ``-1`` = minimize, ``+1`` = maximize.  ``None`` defaults to minimization
-        for all objectives.
+    direction : np.ndarray or None
+        Per-objective optimization directions (+1 = maximize, -1 = minimize).
+        None defaults to minimization for all objectives.
     eps_cv : float
         Feasibility threshold for constraint violation.
     eps_obj : float
@@ -1269,14 +1279,16 @@ class SPEA2Comparator(Comparator):
 
     def __init__(
         self,
-        weights: np.ndarray | None = None,
+        direction: np.ndarray | None = None,
         *,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
         dominator: Dominator | None = None,
     ):
-        w = np.asarray(weights, dtype=float) if weights is not None else np.empty(0)
-        super().__init__(w, eps_cv, eps_obj)
+        direction_arr = (
+            np.asarray(direction, dtype=float) if direction is not None else None
+        )
+        super().__init__(np.empty(0), eps_cv, eps_obj, direction=direction_arr)
         self._dominator: Dominator = (
             dominator if dominator is not None else ParetoDominator()
         )
@@ -1285,12 +1297,6 @@ class SPEA2Comparator(Comparator):
     def dominator(self) -> Dominator:
         """The dominance predicate used by this comparator."""
         return self._dominator
-
-    @property
-    def _direction(self) -> np.ndarray | None:
-        if self.weights.size == 0:
-            return None
-        return np.sign(self.weights)
 
     def _fitness(self, population: Population) -> np.ndarray:
         """
@@ -1313,7 +1319,7 @@ class SPEA2Comparator(Comparator):
         if len(feasible):
             f_feasible = spea2_fitness(
                 f_arr[feasible],
-                direction=self._direction,
+                direction=self.direction,
                 dominator=self._dominator,
             )
             # Rows with any NaN objective -> +inf so they sort after valid feasibles
@@ -1463,10 +1469,9 @@ class HypervolumeComparator(ParetoComparator):
 
     Parameters
     ----------
-    weights : np.ndarray or None
-        Per-objective weights.  Sign determines optimization direction:
-        ``-1`` = minimize, ``+1`` = maximize.  ``None`` defaults to
-        minimization for all objectives.
+    direction : np.ndarray or None
+        Per-objective optimization directions (+1 = maximize, -1 = minimize).
+        None defaults to minimization for all objectives.
     eps_cv : float
         Feasibility threshold for constraint violation.
     eps_obj : float
@@ -1500,7 +1505,7 @@ class HypervolumeComparator(ParetoComparator):
 
     def __init__(
         self,
-        weights: np.ndarray | None = None,
+        direction: np.ndarray | None = None,
         *,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
@@ -1510,7 +1515,7 @@ class HypervolumeComparator(ParetoComparator):
         dominator: Dominator | None = None,
     ):
         super().__init__(
-            weights,
+            direction,
             eps_cv=eps_cv,
             eps_obj=eps_obj,
             sorter=sorter,
@@ -1558,7 +1563,7 @@ class HypervolumeComparator(ParetoComparator):
         if len(feasible):
             ranks, fronts = self._sorter(
                 f_arr[feasible],
-                direction=self._direction,
+                direction=self.direction,
                 dominator=self._dominator,
             )
             rank_all[feasible] = ranks
@@ -1569,7 +1574,7 @@ class HypervolumeComparator(ParetoComparator):
                 contribs = hypervolume_contributions(
                     f_arr[gidx],
                     reference_point=self._reference_point,
-                    direction=self._direction,
+                    direction=self.direction,
                     margin=self._margin,
                 )
                 contrib_all[gidx] = contribs
@@ -1729,7 +1734,7 @@ class EpsilonDominanceComparator(ParetoComparator):
         ``"additive"`` (default): box index = ``floor(f_i / eps_i)``.
         ``"multiplicative"``: box index = ``floor(log f_i / log(1 + eps_i))``;
         requires strictly positive objective values.
-    weights : np.ndarray or None
+    direction : np.ndarray or None
         See :class:`ParetoComparator`.
     eps_cv : float
         See :class:`ParetoComparator`.
@@ -1743,14 +1748,14 @@ class EpsilonDominanceComparator(ParetoComparator):
         self,
         eps: float | np.ndarray,
         mode: str = "additive",
-        weights: np.ndarray | None = None,
+        direction: np.ndarray | None = None,
         *,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
         sorter: NonDominatedSorter = non_dominated_sort,
     ):
         super().__init__(
-            weights,
+            direction,
             eps_cv=eps_cv,
             eps_obj=eps_obj,
             sorter=sorter,

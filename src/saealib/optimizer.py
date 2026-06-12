@@ -146,7 +146,7 @@ class Optimizer:
 
         self.surrogate_manager = LocalSurrogateManager(
             surrogate,
-            MeanPrediction(weights=self.problem.weight),
+            MeanPrediction(direction=self.problem.direction),
             training_set=KNNObjectiveSet(n_neighbors=n_neighbors),
         )
         return self
@@ -207,10 +207,17 @@ class Optimizer:
                 "call set_surrogate_manager() or set_surrogate()"
             )
 
-        weights = getattr(self.problem.comparator, "weights", None)
-        if weights is not None and len(weights) != self.problem.n_obj:
+        _dim = getattr(self.problem.comparator, "direction", None)
+        if _dim is None:
+            _dim = getattr(self.problem.comparator, "weights", None)
+        if (
+            _dim is not None
+            and hasattr(_dim, "__len__")
+            and len(_dim) > 0
+            and len(_dim) != self.problem.n_obj
+        ):
             issues.append(
-                f"comparator.weights length ({len(weights)}) does not match "
+                f"comparator direction/weights length ({len(_dim)}) does not match "
                 f"problem.n_obj ({self.problem.n_obj})"
             )
 

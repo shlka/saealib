@@ -530,13 +530,24 @@ class TestParetoComparator:
         assert comp.compare_population(pop, 0, 1) == -1
 
     def test_weights_direction_affects_ranking(self) -> None:
-        """Weights sign determines optimization direction."""
+        """direction sign determines optimization direction."""
         f = np.array([[3.0, 3.0], [1.0, 1.0]])
         pop = _make_pop(f)
-        comp_min = ParetoComparator(weights=np.array([-1.0, -1.0]))
-        comp_max = ParetoComparator(weights=np.array([1.0, 1.0]))
+        comp_min = ParetoComparator(direction=np.array([-1.0, -1.0]))
+        comp_max = ParetoComparator(direction=np.array([1.0, 1.0]))
         assert comp_min.sort_population(pop)[0] == 1  # [1,1] wins under minimization
         assert comp_max.sort_population(pop)[0] == 0  # [3,3] wins under maximization
+
+    def test_direction_interface_stored_as_attribute(self) -> None:
+        """direction= kwarg is stored as comparator.direction attribute."""
+        d = np.array([-1.0, 1.0])
+        comp = ParetoComparator(direction=d)
+        np.testing.assert_array_equal(comp.direction, d)
+
+    def test_no_direction_defaults_to_none(self) -> None:
+        """Without direction, comparator.direction is None (all-minimize)."""
+        comp = ParetoComparator()
+        assert comp.direction is None
 
 
 # ===========================================================================
@@ -623,10 +634,10 @@ class TestNSGA2Comparator:
         assert order.dtype == np.intp or np.issubdtype(order.dtype, np.integer)
 
     def test_weights_direction_affects_sorting(self) -> None:
-        """Weights sign determines optimization direction."""
+        """direction sign determines optimization direction."""
         f = np.array([[3.0, 3.0], [1.0, 1.0]])
-        comp_min = NSGA2Comparator(weights=np.array([-1.0, -1.0]))
-        comp_max = NSGA2Comparator(weights=np.array([1.0, 1.0]))
+        comp_min = NSGA2Comparator(direction=np.array([-1.0, -1.0]))
+        comp_max = NSGA2Comparator(direction=np.array([1.0, 1.0]))
         assert (
             comp_min.sort_population(_make_pop(f))[0] == 1
         )  # [1,1] wins under minimization
@@ -646,7 +657,7 @@ class TestProblemComparatorAutoSelection:
             func=lambda x: np.sum(x**2),
             dim=2,
             n_obj=1,
-            weight=np.array([-1.0]),
+            direction=np.array([-1.0]),
             lb=[-5.0, -5.0],
             ub=[5.0, 5.0],
         )
@@ -657,7 +668,7 @@ class TestProblemComparatorAutoSelection:
             func=lambda x: np.array([np.sum(x**2), np.sum((x - 1) ** 2)]),
             dim=2,
             n_obj=2,
-            weight=np.array([-1.0, -1.0]),
+            direction=np.array([-1.0, -1.0]),
             lb=[-5.0, -5.0],
             ub=[5.0, 5.0],
         )
@@ -669,7 +680,7 @@ class TestProblemComparatorAutoSelection:
             func=lambda x: np.array([np.sum(x**2), np.sum((x - 1) ** 2)]),
             dim=2,
             n_obj=2,
-            weight=np.array([-1.0, -1.0]),
+            direction=np.array([-1.0, -1.0]),
             lb=[-5.0, -5.0],
             ub=[5.0, 5.0],
             comparator=custom,
@@ -681,7 +692,7 @@ class TestProblemComparatorAutoSelection:
             func=lambda x: np.array([np.sum(x**2), np.sum((x - 1) ** 2)]),
             dim=2,
             n_obj=2,
-            weight=np.array([-1.0, -1.0]),
+            direction=np.array([-1.0, -1.0]),
             lb=[-5.0, -5.0],
             ub=[5.0, 5.0],
         )
@@ -714,7 +725,7 @@ class TestMOOIntegration:
             func=bisphere,
             dim=dim,
             n_obj=2,
-            weight=np.array([-1.0, -1.0]),
+            direction=np.array([-1.0, -1.0]),
             lb=[0.0] * dim,
             ub=[2.0] * dim,
         )
@@ -800,7 +811,7 @@ class TestNonDominatedSorterInjection:
         """ParetoComparator.sort_population invokes the injected sorter."""
         call_log, spy = self._make_spy_sorter()
         weights = np.array([-1.0, -1.0])
-        comp = ParetoComparator(weights=weights, sorter=spy)
+        comp = ParetoComparator(direction=weights, sorter=spy)
 
         f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
         pop = _make_pop(f)
@@ -810,14 +821,14 @@ class TestNonDominatedSorterInjection:
         f_passed, dir_passed = call_log[0]
         # The comparator passes the feasible-subset objective matrix.
         assert f_passed.shape == (3, 2)
-        # direction should be np.sign(weights) = [-1, -1]
-        np.testing.assert_array_equal(dir_passed, np.sign(weights))
+        # direction is passed directly as given
+        np.testing.assert_array_equal(dir_passed, weights)
 
     def test_nsga2_comparator_calls_injected_sorter(self) -> None:
         """NSGA2Comparator.sort_population invokes the injected sorter."""
         call_log, spy = self._make_spy_sorter()
         weights = np.array([-1.0, -1.0])
-        comp = NSGA2Comparator(weights=weights, sorter=spy)
+        comp = NSGA2Comparator(direction=weights, sorter=spy)
 
         f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
         pop = _make_pop(f)
@@ -826,7 +837,7 @@ class TestNonDominatedSorterInjection:
         assert len(call_log) == 1
         f_passed, dir_passed = call_log[0]
         assert f_passed.shape == (3, 2)
-        np.testing.assert_array_equal(dir_passed, np.sign(weights))
+        np.testing.assert_array_equal(dir_passed, weights)
 
     def test_spy_receives_feasible_subset_only(self) -> None:
         """The sorter only receives the feasible-individual rows."""
@@ -1706,15 +1717,23 @@ class TestSPEA2Comparator:
         assert isinstance(comp.dominator, ParetoDominator)
 
     def test_weights_direction_maximize(self) -> None:
-        """Weights with +1 interpret objectives as maximize."""
+        """direction with +1 interpret objectives as maximize."""
         from saealib.comparators import SPEA2Comparator
 
         # f[0]=[3,3] is best under maximization; f[1]=[1,1] is dominated
         f = np.array([[3.0, 3.0], [1.0, 1.0]])
         pop = _make_pop(f)
-        comp = SPEA2Comparator(weights=np.array([1.0, 1.0]))
+        comp = SPEA2Comparator(direction=np.array([1.0, 1.0]))
         order = comp.sort_population(pop)
         assert order[0] == 0  # [3,3] should be first under maximize
+
+    def test_direction_attribute_stored(self) -> None:
+        """direction= kwarg is accessible as comparator.direction."""
+        from saealib.comparators import SPEA2Comparator
+
+        d = np.array([1.0, -1.0])
+        comp = SPEA2Comparator(direction=d)
+        np.testing.assert_array_equal(comp.direction, d)
 
     def test_is_subclass_of_comparator(self) -> None:
         """SPEA2Comparator is a direct subclass of Comparator (not ParetoComparator)."""

@@ -71,9 +71,9 @@ class OptimizationContext:
         return self.problem.ub
 
     @property
-    def weight(self) -> np.ndarray:
-        """Return the weights of the objectives."""
-        return self.problem.weight
+    def direction(self) -> np.ndarray:
+        """Return the optimization direction of the problem."""
+        return self.problem.direction
 
     @property
     def comparator(self) -> Comparator:
