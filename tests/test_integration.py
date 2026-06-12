@@ -73,7 +73,7 @@ def test_integration(seed_str: str, expected_f: float):
         func=sphere,
         dim=dim,
         n_obj=1,
-        weight=np.array([-1.0]),
+        direction=np.array([-1.0]),
         lb=lb,
         ub=ub,
     )
