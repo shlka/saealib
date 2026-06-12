@@ -1085,7 +1085,9 @@ class ParetoComparator(Comparator):
                 stacklevel=2,
             )
             eps_cv = eps
-        direction_arr = np.asarray(direction, dtype=float) if direction is not None else None
+        direction_arr = (
+            np.asarray(direction, dtype=float) if direction is not None else None
+        )
         super().__init__(np.empty(0), eps_cv, eps_obj, direction=direction_arr)
         self._sorter = sorter
         # Use None-sentinel to avoid a shared mutable default.
@@ -1192,7 +1194,11 @@ class NSGA2Comparator(ParetoComparator):
             )
             eps_cv = eps
         super().__init__(
-            direction, eps_cv=eps_cv, eps_obj=eps_obj, sorter=sorter, dominator=dominator
+            direction,
+            eps_cv=eps_cv,
+            eps_obj=eps_obj,
+            sorter=sorter,
+            dominator=dominator,
         )
 
     def sort_population(self, population: Population) -> np.ndarray:
@@ -1279,7 +1285,9 @@ class SPEA2Comparator(Comparator):
         eps_obj: float = 1e-6,
         dominator: Dominator | None = None,
     ):
-        direction_arr = np.asarray(direction, dtype=float) if direction is not None else None
+        direction_arr = (
+            np.asarray(direction, dtype=float) if direction is not None else None
+        )
         super().__init__(np.empty(0), eps_cv, eps_obj, direction=direction_arr)
         self._dominator: Dominator = (
             dominator if dominator is not None else ParetoDominator()

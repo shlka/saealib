@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-
-import numpy as np
 from typing import TYPE_CHECKING, Protocol
 
 from saealib.acquisition.mean import MeanPrediction
@@ -212,7 +210,12 @@ class Optimizer:
         _dim = getattr(self.problem.comparator, "direction", None)
         if _dim is None:
             _dim = getattr(self.problem.comparator, "weights", None)
-        if _dim is not None and hasattr(_dim, "__len__") and len(_dim) > 0 and len(_dim) != self.problem.n_obj:
+        if (
+            _dim is not None
+            and hasattr(_dim, "__len__")
+            and len(_dim) > 0
+            and len(_dim) != self.problem.n_obj
+        ):
             issues.append(
                 f"comparator direction/weights length ({len(_dim)}) does not match "
                 f"problem.n_obj ({self.problem.n_obj})"

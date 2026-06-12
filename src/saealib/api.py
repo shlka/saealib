@@ -79,9 +79,7 @@ def _resolve_direction(
     try:
         return np.array([_map[d] for d in direction])
     except KeyError as e:
-        raise ValueError(
-            f"Unknown direction {e}. Use 'minimize' or 'maximize'."
-        ) from e
+        raise ValueError(f"Unknown direction {e}. Use 'minimize' or 'maximize'.") from e
 
 
 def _ensure_problem(

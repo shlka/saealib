@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-
-import numpy as np
 from typing import TYPE_CHECKING
 
 from saealib.context import OptimizationContext
