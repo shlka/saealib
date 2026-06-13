@@ -104,10 +104,13 @@ from saealib.population import (
 from saealib.problem import (
     Constraint,
     ConstraintHandler,
+    EpsilonConstraintHandler,
     EqualityConstraint,
     InequalityConstraint,
     Problem,
     StaticToleranceHandler,
+    exponential_epsilon_schedule,
+    linear_epsilon_schedule,
 )
 from saealib.strategies.base import OptimizationStrategy
 from saealib.strategies.gb import GenerationBasedStrategy
@@ -176,6 +179,7 @@ __all__ = [
     "DensityManager",
     "Dominator",
     "EnsembleSurrogateManager",
+    "EpsilonConstraintHandler",
     "EpsilonDominanceComparator",
     "EpsilonDominator",
     "EqualityConstraint",
@@ -260,10 +264,12 @@ __all__ = [
     "crowding_distance",
     "crowding_distance_all_fronts",
     "dda_non_dominated_sort",
+    "exponential_epsilon_schedule",
     "f_target",
     "gaussian_kernel",
     "hypervolume",
     "hypervolume_contributions",
+    "linear_epsilon_schedule",
     "logging_generation",
     "logging_generation_hv",
     "max_fe",
