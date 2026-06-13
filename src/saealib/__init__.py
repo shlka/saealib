@@ -14,7 +14,7 @@ from saealib.acquisition import (
     ProbabilityOfFeasibility,
 )
 from saealib.algorithms.base import Algorithm
-from saealib.algorithms.ga import GA, RepairFunc
+from saealib.algorithms.ga import GA
 from saealib.algorithms.pso import PSO
 from saealib.api import Result, maximize, minimize
 from saealib.callback import (
@@ -234,7 +234,6 @@ __all__ = [
     "Problem",
     "RBFsurrogate",
     "RNSGA2Comparator",
-    "RepairFunc",
     "Result",
     "RouletteWheelSelection",
     "RunEndEvent",

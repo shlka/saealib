@@ -216,16 +216,15 @@ class TestPSOAsk:
         v = cand.get_array("velocity")
         assert np.all(np.abs(v) <= v_max + 1e-9)
 
-    def test_no_repair_allows_out_of_bounds(self):
-        # With large velocity and no repair, positions can exceed bounds.
-        pso = PSO(w=100.0, c1=0.0, c2=0.0, repair=None)
+    def test_repair_clips_to_bounds(self):
+        # Large velocity: handler.repair (default = clip) keeps positions in bounds.
+        pso = PSO(w=100.0, c1=0.0, c2=0.0)
         ctx = _make_pso_ctx(init_pbest=True, init_velocity=True)
         cand = pso.ask(ctx, _DummyProvider())
         x = cand.get_array("x")
         lb = np.array(ctx.problem.lb)
         ub = np.array(ctx.problem.ub)
-        # At least some positions should violate bounds
-        assert np.any(x < lb) or np.any(x > ub)
+        assert np.all(x >= lb) and np.all(x <= ub)
 
 
 # ---------------------------------------------------------------------------
@@ -270,7 +269,7 @@ class TestPSOPbestInit:
 class TestPSOVelocityUpdate:
     def test_pure_inertia(self):
         # w=1, c1=0, c2=0 → v_new = v_old
-        pso = PSO(w=1.0, c1=0.0, c2=0.0, repair=None)
+        pso = PSO(w=1.0, c1=0.0, c2=0.0)
         ctx = _make_pso_ctx(init_pbest=True, init_velocity=True)
         v_before = ctx.population.get_array("velocity").copy()
         cand = pso.ask(ctx, _DummyProvider())
@@ -278,7 +277,7 @@ class TestPSOVelocityUpdate:
 
     def test_zero_velocity_when_at_pbest_no_social(self):
         # w=0, c1=1, c2=0, x == pbest_x → cognitive term is 0 → v_new = 0
-        pso = PSO(w=0.0, c1=1.0, c2=0.0, repair=None)
+        pso = PSO(w=0.0, c1=1.0, c2=0.0)
         ctx = _make_pso_ctx(init_pbest=True)
         # Force x == pbest_x so (pbest_x - x) = 0
         x = ctx.population.get_array("x")

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -10,14 +9,11 @@ import numpy as np
 from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent
 from saealib.context import OptimizationContext
-from saealib.operators.repair import repair_clipping
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
 
 if TYPE_CHECKING:
     from saealib.optimizer import ComponentProvider
-
-RepairFunc = Callable[[np.ndarray, tuple[np.ndarray, np.ndarray]], np.ndarray]
 
 
 class PSO(Algorithm):
@@ -41,8 +37,6 @@ class PSO(Algorithm):
         Social coefficient (global best attraction).
     v_max : float or None
         Maximum velocity magnitude per dimension. ``None`` disables clamping.
-    repair : RepairFunc or None
-        Repair function applied after position update.
     """
 
     def __init__(
@@ -51,7 +45,6 @@ class PSO(Algorithm):
         c1: float = 1.5,
         c2: float = 1.5,
         v_max: float | None = None,
-        repair: RepairFunc | None = repair_clipping,
     ):
         """
         Initialize PSO.
@@ -66,16 +59,12 @@ class PSO(Algorithm):
             Social coefficient. Defaults to 1.5.
         v_max : float or None, optional
             Maximum velocity per dimension. Defaults to ``None`` (no clamping).
-        repair : RepairFunc or None, optional
-            Repair function applied after position update.
-            Defaults to ``repair_clipping``. Pass ``None`` to disable repair.
         """
         super().__init__()
         self.w = w
         self.c1 = c1
         self.c2 = c2
         self.v_max = v_max
-        self.repair = repair
 
     def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
         """
@@ -172,8 +161,10 @@ class PSO(Algorithm):
             v_new = np.clip(v_new, -self.v_max, self.v_max)
 
         x_new = x + v_new
-        if self.repair is not None:
-            x_new = self.repair(x_new, (lb, ub))
+        handler = ctx.problem.handler
+        constraints = ctx.problem.constraints
+        for i in range(len(x_new)):
+            x_new[i] = handler.repair(x_new[i], constraints, lb, ub)
 
         cand_pop = pop.empty_like(capacity=popsize)
         cand_pop.extend(
