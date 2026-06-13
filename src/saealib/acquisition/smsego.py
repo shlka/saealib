@@ -123,7 +123,8 @@ class SMSEGOAcquisition(AcquisitionFunction):
             if np.any(y >= ref_point):
                 continue
             combined = (
-                y[np.newaxis] if len(pareto_f) == 0
+                y[np.newaxis]
+                if len(pareto_f) == 0
                 else np.vstack([pareto_f, y[np.newaxis]])
             )
             hvi[i] = max(hypervolume(combined, ref_point) - base_hv, 0.0)

@@ -65,8 +65,8 @@ class ParEGOAcquisition(AcquisitionFunction):
         z_star: np.ndarray,
     ) -> np.ndarray:
         """Augmented Tchebycheff scalarization (Chugh 2020 Eq. 8)."""
-        diff = np.abs(f - z_star)            # (..., n_obj)
-        weighted = weights * diff            # (..., n_obj)
+        diff = np.abs(f - z_star)  # (..., n_obj)
+        weighted = weights * diff  # (..., n_obj)
         return weighted.max(axis=-1) + self.alpha * weighted.sum(axis=-1)
 
     def compute_reference(
@@ -126,8 +126,8 @@ class ParEGOAcquisition(AcquisitionFunction):
             )
         z_star, weights, f_best = reference
 
-        mu_s = self._scalarize(prediction.value, weights, z_star)   # (n,)
-        sigma_s = (weights * prediction.std).sum(axis=-1)            # (n,)
+        mu_s = self._scalarize(prediction.value, weights, z_star)  # (n,)
+        sigma_s = (weights * prediction.std).sum(axis=-1)  # (n,)
         sigma_s = np.maximum(sigma_s, 1e-9)
 
         z = (f_best - mu_s) / sigma_s

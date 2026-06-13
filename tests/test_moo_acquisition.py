@@ -214,7 +214,8 @@ class TestEHVIAcquisition:
     def test_output_shape(self) -> None:
         arc = _archive([1.0, 2.0], [2.0, 1.0])
         af = EHVIAcquisition(
-            n_samples=32, reference_point=[3.0, 3.0],
+            n_samples=32,
+            reference_point=[3.0, 3.0],
             rng=np.random.default_rng(0),
         )
         ref = af.compute_reference(arc)
@@ -225,7 +226,8 @@ class TestEHVIAcquisition:
     def test_nonnegative(self) -> None:
         arc = _archive([1.0, 3.0], [3.0, 1.0])
         af = EHVIAcquisition(
-            n_samples=32, reference_point=[5.0, 5.0],
+            n_samples=32,
+            reference_point=[5.0, 5.0],
             rng=np.random.default_rng(0),
         )
         ref = af.compute_reference(arc)
@@ -241,7 +243,8 @@ class TestEHVIAcquisition:
         """Candidate well dominated by Pareto front has near-zero EHVI."""
         arc = _archive([1.0, 1.0])
         af = EHVIAcquisition(
-            n_samples=64, reference_point=[3.0, 3.0],
+            n_samples=64,
+            reference_point=[3.0, 3.0],
             rng=np.random.default_rng(0),
         )
         ref = af.compute_reference(arc)
@@ -254,7 +257,8 @@ class TestEHVIAcquisition:
         """Candidate that is likely to improve HV has positive EHVI."""
         arc = _archive([2.0, 2.0])
         af = EHVIAcquisition(
-            n_samples=128, reference_point=[4.0, 4.0],
+            n_samples=128,
+            reference_point=[4.0, 4.0],
             rng=np.random.default_rng(0),
         )
         ref = af.compute_reference(arc)
@@ -267,7 +271,8 @@ class TestEHVIAcquisition:
         """Candidate closer to ideal point has higher EHVI."""
         arc = _archive([2.0, 2.0])
         af = EHVIAcquisition(
-            n_samples=256, reference_point=[4.0, 4.0],
+            n_samples=256,
+            reference_point=[4.0, 4.0],
             rng=np.random.default_rng(0),
         )
         ref = af.compute_reference(arc)
@@ -291,7 +296,8 @@ class TestEHVIAcquisition:
         ref_pt = [3.0, 3.0]
         for n in [16, 128]:
             af = EHVIAcquisition(
-                n_samples=n, reference_point=ref_pt,
+                n_samples=n,
+                reference_point=ref_pt,
                 rng=np.random.default_rng(0),
             )
             ref = af.compute_reference(arc)

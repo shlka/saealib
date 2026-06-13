@@ -114,8 +114,8 @@ class EHVIAcquisition(AcquisitionFunction):
                 "(prediction.std must not be None)."
             )
         pareto_f, ref_point, base_hv = reference
-        mu = prediction.value    # (n_cand, n_obj)
-        sigma = prediction.std   # (n_cand, n_obj)
+        mu = prediction.value  # (n_cand, n_obj)
+        sigma = prediction.std  # (n_cand, n_obj)
         n_cand, n_obj = mu.shape
 
         # Draw all MC samples at once: (n_samples, n_cand, n_obj)
@@ -130,7 +130,8 @@ class EHVIAcquisition(AcquisitionFunction):
                 if np.any(y >= ref_point):
                     continue
                 combined = (
-                    y[np.newaxis] if len(pareto_f) == 0
+                    y[np.newaxis]
+                    if len(pareto_f) == 0
                     else np.vstack([pareto_f, y[np.newaxis]])
                 )
                 hvi_sum += max(hypervolume(combined, ref_point) - base_hv, 0.0)
