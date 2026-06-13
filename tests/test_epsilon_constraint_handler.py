@@ -184,3 +184,84 @@ def test_problem_feasibility_threshold_from_handler():
     h = _make_handler(eps0=0.5, n_gen=10)
     prob = _make_constrained_problem(h)
     assert prob.handler.feasibility_threshold == pytest.approx(0.5)
+
+
+# ---------------------------------------------------------------------------
+# Runner integration: comparator.eps_cv tracks handler.feasibility_threshold
+# ---------------------------------------------------------------------------
+
+
+def _make_optimizer(problem, n_gen: int):
+    from saealib import (
+        GA,
+        CrossoverBLXAlpha,
+        IndividualBasedStrategy,
+        LHSInitializer,
+        MutationUniform,
+        Optimizer,
+        SequentialSelection,
+        Termination,
+        TruncationSelection,
+        max_gen,
+    )
+    from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+
+    return (
+        Optimizer(problem)
+        .set_initializer(LHSInitializer(n_init_archive=8, n_init_population=6, seed=0))
+        .set_algorithm(
+            GA(
+                crossover=CrossoverBLXAlpha(crossover_rate=0.9, alpha=0.4),
+                mutation=MutationUniform(mutation_rate=0.1),
+                parent_selection=SequentialSelection(),
+                survivor_selection=TruncationSelection(),
+            )
+        )
+        .set_surrogate(RBFsurrogate(gaussian_kernel, problem.dim), n_neighbors=5)
+        .set_strategy(IndividualBasedStrategy(evaluation_ratio=1.0))
+        .set_termination(Termination(max_gen(n_gen)))
+    )
+
+
+def test_comparator_eps_cv_synced_at_start():
+    """comparator.eps_cv equals handler.feasibility_threshold before gen 0."""
+    from saealib import RunStartEvent
+
+    eps0 = 0.5
+    h = EpsilonConstraintHandler(linear_epsilon_schedule(eps0=eps0, n_gen=20))
+    prob = _make_constrained_problem(h)
+    opt = _make_optimizer(prob, n_gen=1)
+
+    eps_at_start = []
+
+    def _capture(e):
+        eps_at_start.append(e.ctx.comparator.eps_cv)
+
+    opt.cbmanager.register(RunStartEvent, _capture)
+    opt.run()
+
+    assert len(eps_at_start) == 1
+    assert eps_at_start[0] == pytest.approx(eps0)
+
+
+def test_comparator_eps_cv_decreases_each_generation():
+    """comparator.eps_cv is updated after every generation via on_generation_end."""
+    from saealib import GenerationEndEvent
+
+    n_gen = 5
+    h = EpsilonConstraintHandler(linear_epsilon_schedule(eps0=1.0, n_gen=n_gen))
+    prob = _make_constrained_problem(h)
+    opt = _make_optimizer(prob, n_gen=n_gen)
+
+    eps_history = []
+
+    def _capture(e):
+        eps_history.append(e.ctx.comparator.eps_cv)
+
+    opt.cbmanager.register(GenerationEndEvent, _capture)
+    opt.run()
+
+    assert len(eps_history) == n_gen
+    for i in range(1, len(eps_history)):
+        assert eps_history[i] < eps_history[i - 1]
+    assert eps_history[-1] == pytest.approx(0.0)
