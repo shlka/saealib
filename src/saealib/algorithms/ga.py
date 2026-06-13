@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -11,7 +10,6 @@ import numpy as np
 from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent, PostCrossoverEvent, PostMutationEvent
 from saealib.context import OptimizationContext
-from saealib.operators.repair import repair_clipping
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -20,8 +18,6 @@ if TYPE_CHECKING:
     from saealib.operators.mutation import Mutation
     from saealib.operators.selection import ParentSelection, SurvivorSelection
     from saealib.optimizer import ComponentProvider
-
-RepairFunc = Callable[[np.ndarray, tuple[np.ndarray, np.ndarray]], np.ndarray]
 
 
 class GA(Algorithm):
@@ -46,7 +42,6 @@ class GA(Algorithm):
         mutation: Mutation,
         parent_selection: ParentSelection,
         survivor_selection: SurvivorSelection,
-        repair: RepairFunc | None = repair_clipping,
     ):
         """
         Initialize GA (Genetic Algorithm) class.
@@ -61,16 +56,12 @@ class GA(Algorithm):
             Parent selection operator.
         survivor_selection : SurvivorSelection
             Survivor selection operator.
-        repair : RepairFunc or None, optional
-            Repair function applied after crossover and after mutation.
-            Defaults to ``repair_clipping``. Pass ``None`` to disable repair.
         """
         super().__init__()
         self.crossover = crossover
         self.mutation = mutation
         self.parent_selection = parent_selection
         self.survivor_selection = survivor_selection
-        self.repair = repair
 
     def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
         """Return algorithm-specific attributes (GA needs none beyond the defaults)."""
@@ -125,6 +116,9 @@ class GA(Algorithm):
             )
             % popsize
         )
+        handler = ctx.problem.handler
+        constraints = ctx.problem.constraints
+
         cand = np.empty((n_pair * n_children, ctx.dim))
         for i in range(n_pair):
             parent = pop[parent_idx_m[i]]
@@ -133,8 +127,8 @@ class GA(Algorithm):
             else:
                 c = parent[:n_children].copy()
             cand[i * n_children : (i + 1) * n_children] = c
-        if self.repair is not None:
-            cand = self.repair(cand, (lb, ub))
+        for i in range(len(cand)):
+            cand[i] = handler.repair(cand[i], constraints, lb, ub)
         post_co = PostCrossoverEvent(ctx=ctx, provider=provider, candidates=cand)
         provider.dispatch(post_co)
         cand = post_co.candidates
@@ -142,8 +136,7 @@ class GA(Algorithm):
         cand_len = len(cand)
         for i in range(cand_len):
             cand[i] = self.mutation.mutate(cand[i], (lb, ub), rng=ctx.rng)
-        if self.repair is not None:
-            cand = self.repair(cand, (lb, ub))
+            cand[i] = handler.repair(cand[i], constraints, lb, ub)
         post_mut = PostMutationEvent(ctx=ctx, provider=provider, candidates=cand)
         provider.dispatch(post_mut)
         cand = post_mut.candidates

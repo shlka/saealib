@@ -14,7 +14,7 @@ from saealib.acquisition import (
     ProbabilityOfFeasibility,
 )
 from saealib.algorithms.base import Algorithm
-from saealib.algorithms.ga import GA, RepairFunc
+from saealib.algorithms.ga import GA
 from saealib.algorithms.pso import PSO
 from saealib.api import Result, maximize, minimize
 from saealib.callback import (
@@ -106,6 +106,7 @@ from saealib.problem import (
     ConstraintHandler,
     EpsilonConstraintHandler,
     EqualityConstraint,
+    GradientRepairHandler,
     InequalityConstraint,
     Problem,
     StaticToleranceHandler,
@@ -192,6 +193,7 @@ __all__ = [
     "GenerationEndEvent",
     "GenerationStartEvent",
     "GlobalSurrogateManager",
+    "GradientRepairHandler",
     "HypervolumeComparator",
     "Individual",
     "IndividualBasedStrategy",
@@ -234,7 +236,6 @@ __all__ = [
     "Problem",
     "RBFsurrogate",
     "RNSGA2Comparator",
-    "RepairFunc",
     "Result",
     "RouletteWheelSelection",
     "RunEndEvent",

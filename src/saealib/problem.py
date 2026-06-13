@@ -172,37 +172,56 @@ class ConstraintHandler(ABC):
 
     Lifecycle::
 
-        Ask            -> [repair(x, constraints)]
+        Ask            -> [repair(x, constraints, lb, ub)]
                        -> evaluate f, g
                        -> [compute_cv(constraints, x, g)]        -> cv
                        -> [augment_objective(f, constraints, x, g)] -> f'
         Tell           -> Comparator(f', cv) with eps_cv = feasibility_threshold
         Generation end -> [on_generation_end(gen, population)]
 
-    Only :meth:`compute_cv` is abstract; the remaining hooks default to no-ops
-    so that subclasses implement just what they need.
+    Only :meth:`compute_cv` is abstract; the remaining hooks have sensible
+    defaults so that subclasses implement just what they need.
     """
 
     def repair(
-        self, x: np.ndarray, constraints: list[InequalityConstraint]
+        self,
+        x: np.ndarray,
+        constraints: list[InequalityConstraint],
+        lb: np.ndarray,
+        ub: np.ndarray,
+        **kwargs,
     ) -> np.ndarray:
         """
         Repair a design vector before evaluation.
+
+        Called by the algorithm after each variation operator (crossover /
+        mutation) and before objective evaluation. The default clips ``x`` to
+        ``[lb, ub]``, reproducing the behaviour of ``repair_clipping``.
+
+        Subclasses override this to add domain-constraint repair (e.g. a
+        Newton step toward an equality-constraint manifold) on top of—or
+        instead of—bounds clipping.
 
         Parameters
         ----------
         x : np.ndarray
             The design vector to repair. shape = (dim, )
         constraints : list[InequalityConstraint]
-            The problem's inequality constraints.
+            The problem's domain constraints.
+        lb : np.ndarray
+            Lower bounds. shape = (dim, )
+        ub : np.ndarray
+            Upper bounds. shape = (dim, )
+        **kwargs
+            Reserved for future use (e.g. parent solution for reflection
+            repair).
 
         Returns
         -------
         np.ndarray
-            The (possibly) repaired design vector. The default returns ``x``
-            unchanged.
+            The repaired design vector. shape = (dim, )
         """
-        return x
+        return np.clip(x, lb, ub)
 
     @abstractmethod
     def compute_cv(
@@ -391,6 +410,78 @@ class EpsilonConstraintHandler(ConstraintHandler):
     def on_generation_end(self, gen: int, population: Population) -> None:
         """Update internal ε to ``schedule(gen)``."""
         self._eps = float(self._schedule(gen))
+
+
+class GradientRepairHandler(ConstraintHandler):
+    """
+    Gradient-based constraint repair handler.
+
+    For each :class:`EqualityConstraint` whose :meth:`~InequalityConstraint.gradient`
+    returns a non-``None`` vector, applies one Newton-like step that projects
+    the design vector toward the constraint manifold ``h(x) = 0``::
+
+        x <- x - h(x) * grad_h(x) / (||grad_h(x)||^2 + ridge)
+
+    The step is repeated ``max_iter`` times.  After all iterations the result
+    is clipped to ``[lb, ub]`` so bounds feasibility is always guaranteed.
+
+    :class:`InequalityConstraint` objects and any :class:`EqualityConstraint`
+    whose ``gradient()`` returns ``None`` are skipped during repair; they still
+    contribute to ``cv`` via :meth:`compute_cv`.
+
+    Parameters
+    ----------
+    max_iter : int, optional
+        Number of Newton steps per call. Default: 1.
+    ridge : float, optional
+        Regularisation term added to ``‖∇h‖²`` for numerical stability.
+        Default: 1e-12.
+
+    References
+    ----------
+    Chootinan, P., & Chen, A. (2006).
+    *Constraint handling in genetic algorithms using a gradient-based repair
+    method.*
+    Computers & Operations Research, 33(8), 2263-2281.
+    https://doi.org/10.1016/j.cor.2005.02.002
+    """
+
+    def __init__(self, max_iter: int = 1, ridge: float = 1e-12):
+        self.max_iter = max_iter
+        self.ridge = ridge
+
+    def repair(
+        self,
+        x: np.ndarray,
+        constraints: list[InequalityConstraint],
+        lb: np.ndarray,
+        ub: np.ndarray,
+        **kwargs,
+    ) -> np.ndarray:
+        """Apply Newton steps toward equality-constraint manifolds, then clip."""
+        x = x.copy()
+        for _ in range(self.max_iter):
+            for c in constraints:
+                if not isinstance(c, EqualityConstraint):
+                    continue
+                grad = c.gradient(x)
+                if grad is None:
+                    continue
+                h = c.evaluate(x)
+                x = x - h * grad / (np.dot(grad, grad) + self.ridge)
+        return np.clip(x, lb, ub)
+
+    def compute_cv(
+        self,
+        constraints: list[InequalityConstraint],
+        x: np.ndarray,
+        g: np.ndarray,
+    ) -> float:
+        """Return sum of per-constraint violations (same as StaticToleranceHandler)."""
+        cv = 0.0
+        for gi, c in zip(g, constraints):
+            cv += c.violation_from_value(float(gi))
+        return cv
 
 
 def linear_epsilon_schedule(eps0: float, n_gen: int) -> Callable[[int], float]:
