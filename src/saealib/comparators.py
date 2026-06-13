@@ -2035,3 +2035,169 @@ class NSGA3Comparator(ParetoComparator):
         return result
 
 
+class RNSGA2Comparator(ParetoComparator):
+    """
+    Comparator for multi-objective optimization via R-NSGA-II style ranking.
+
+    Extends ParetoComparator with reference-point-based secondary ordering:
+
+    - sort_population: non-dominated sorting + reference-point proximity ordering
+    - compare_population: inherited from ParetoComparator (Pareto dominance)
+
+    The R-NSGA-II selection mechanism (Deb & Sundar 2006):
+
+    1. Non-dominated sorting (same fronts as NSGA-II).
+    2. Normalize objectives by range (min-max per objective).
+    3. Associate each individual with the nearest reference point (Euclidean
+       distance in normalized objective space).
+    4. Within each front, sort by ``(niche_count[assoc], dist_to_nearest_ref)``
+       ascending. Apply ε-clearing: solutions within ``epsilon`` of a
+       higher-ranked solution with the same associated reference point are moved
+       to the back of their reference-point group.
+
+    Parameters
+    ----------
+    reference_points : np.ndarray
+        Shape ``(n_ref, n_obj)``. User-supplied reference points (aspiration
+        points) in the objective space. Unlike NSGA-III, these need not lie on
+        the unit simplex.
+    epsilon : float
+        ε-clearing radius in normalized objective space. Solutions within
+        ``epsilon`` of a better-ranked solution sharing the same reference
+        point are deprioritized.
+    direction : np.ndarray or None
+        Per-objective optimization directions (``+1`` maximize, ``-1`` minimize).
+        ``None`` means all objectives are minimized.
+    eps_cv : float
+        Constraint-violation tolerance.
+    eps_obj : float
+        Objective tolerance (passed to base class).
+    sorter : NonDominatedSorter
+        Non-dominated sorting callable.
+    dominator : Dominator or None
+        Dominance predicate.
+
+    References
+    ----------
+    .. [1] Deb, K., & Sundar, J. (2006). Reference Point Based Multi-Objective
+       Optimization Using Evolutionary Algorithms. Proceedings of GECCO 2006,
+       635-642. https://doi.org/10.1145/1143997.1144112
+    """
+
+    def __init__(
+        self,
+        reference_points: np.ndarray,
+        epsilon: float = 0.001,
+        direction: np.ndarray | None = None,
+        *,
+        eps_cv: float = 1e-6,
+        eps_obj: float = 1e-6,
+        sorter: NonDominatedSorter = non_dominated_sort,
+        dominator: Dominator | None = None,
+    ) -> None:
+        super().__init__(
+            direction,
+            eps_cv=eps_cv,
+            eps_obj=eps_obj,
+            sorter=sorter,
+            dominator=dominator,
+        )
+        self._reference_points = np.asarray(reference_points, dtype=float)
+        self._epsilon = float(epsilon)
+
+    @property
+    def reference_points(self) -> np.ndarray:
+        """Reference points used for preference-based ordering."""
+        return self._reference_points
+
+    @property
+    def epsilon(self) -> float:
+        """ε-clearing radius in normalized objective space."""
+        return self._epsilon
+
+    def sort_population(self, population: Population) -> np.ndarray:
+        """Sort by Pareto front rank then reference-point proximity (R-NSGA-II)."""
+        cached = population.get_cache("pareto_sort")
+        if cached is not None:
+            return cached
+
+        f = population.get("f")
+        cv = population.get("cv")
+        feasible = np.where(cv <= self.eps_cv)[0]
+        infeasible = np.where(cv > self.eps_cv)[0]
+
+        sorted_feasible: list[int] = []
+        if len(feasible):
+            _ranks, fronts = self._sorter(
+                f[feasible], direction=self.direction, dominator=self._dominator
+            )
+
+            # Range normalization in minimize-sense
+            f_signed = (
+                f[feasible] * self.direction
+                if self.direction is not None
+                else f[feasible]
+            )
+            f_min = f_signed.min(axis=0)
+            f_max = f_signed.max(axis=0)
+            f_norm = (f_signed - f_min) / np.maximum(f_max - f_min, 1e-12)
+
+            # Euclidean distance to each reference point
+            diff = f_norm[:, None, :] - self._reference_points[None, :, :]
+            dist_matrix = np.linalg.norm(diff, axis=2)  # (n_feasible, n_ref)
+            assoc_idx = np.argmin(dist_matrix, axis=1)   # (n_feasible,)
+            dist_min = dist_matrix[np.arange(len(feasible)), assoc_idx]
+
+            niche_count = np.zeros(len(self._reference_points), dtype=int)
+
+            for front_list in fronts:
+                front_local = np.array(front_list, dtype=int)
+                ordered = self._order_front(
+                    front_local, assoc_idx, dist_min, niche_count
+                )
+                for idx in ordered:
+                    niche_count[assoc_idx[idx]] += 1
+                sorted_feasible.extend(feasible[ordered].tolist())
+
+        sorted_infeasible: np.ndarray = np.empty(0, int)
+        if len(infeasible):
+            sorted_infeasible = infeasible[np.argsort(cv[infeasible])]
+
+        result = np.concatenate(
+            [np.array(sorted_feasible, dtype=int), sorted_infeasible]
+        ).astype(int)
+        population.set_cache("pareto_sort", result)
+        return result
+
+    def _order_front(
+        self,
+        front_local: np.ndarray,
+        assoc_idx: np.ndarray,
+        dist_min: np.ndarray,
+        niche_count: np.ndarray,
+    ) -> np.ndarray:
+        """Order a single front by (niche_count, dist) with ε-clearing."""
+        # Primary sort: (niche_count of associated ref, distance)
+        nc = niche_count[assoc_idx[front_local]]
+        d = dist_min[front_local]
+        base_order = np.lexsort((d, nc))  # ascending both
+        ordered = front_local[base_order]
+
+        # ε-clearing: within each reference-point group, move solutions
+        # that are within epsilon of a higher-ranked solution to the back.
+        selected: list[int] = []
+        cleared: list[int] = []
+        # track the lowest dist already accepted per reference point
+        best_dist: dict[int, float] = {}
+
+        for idx in ordered:
+            ref = int(assoc_idx[idx])
+            d_val = float(dist_min[idx])
+            if ref in best_dist and abs(d_val - best_dist[ref]) < self._epsilon:
+                cleared.append(idx)
+            else:
+                selected.append(idx)
+                if ref not in best_dist:
+                    best_dist[ref] = d_val
+
+        return np.array(selected + cleared, dtype=int)

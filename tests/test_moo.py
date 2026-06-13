@@ -2214,3 +2214,83 @@ class TestNSGA3Comparator:
 # ===========================================================================
 # RNSGA2Comparator Tests
 # ===========================================================================
+    RNSGA2Comparator,
+class TestRNSGA2Comparator:
+    """Tests for RNSGA2Comparator (R-NSGA-II preference-based ordering)."""
+
+    def test_is_subclass_of_pareto_comparator(self) -> None:
+        assert issubclass(RNSGA2Comparator, ParetoComparator)
+
+    def test_sort_population_returns_int_array(self) -> None:
+        ref = np.array([[0.0, 1.0], [1.0, 0.0]])
+        f = np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
+        pop = _make_pop(f)
+        comp = RNSGA2Comparator(ref)
+        order = comp.sort_population(pop)
+        assert np.issubdtype(order.dtype, np.integer)
+
+    def test_sort_population_contains_all_indices(self) -> None:
+        ref = np.array([[0.0, 1.0], [1.0, 0.0]])
+        f = np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
+        pop = _make_pop(f)
+        comp = RNSGA2Comparator(ref)
+        order = comp.sort_population(pop)
+        assert set(order.tolist()) == {0, 1, 2}
+
+    def test_front_0_before_front_1(self) -> None:
+        """Non-dominated solutions ranked before dominated ones."""
+        ref = np.array([[0.0, 1.0], [1.0, 0.0]])
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [2.0, 2.0]])
+        pop = _make_pop(f)
+        comp = RNSGA2Comparator(ref)
+        order = comp.sort_population(pop)
+        assert set(order[:2].tolist()) == {0, 1}
+        assert order[2] == 2
+
+    def test_infeasible_last(self) -> None:
+        ref = np.array([[0.0, 1.0], [1.0, 0.0]])
+        f = np.array([[10.0, 10.0], [0.0, 1.0], [1.0, 0.0]])
+        cv = np.array([1.0, 0.0, 0.0])
+        pop = _make_pop(f, cv)
+        comp = RNSGA2Comparator(ref)
+        order = comp.sort_population(pop)
+        assert order[-1] == 0
+
+    def test_solution_near_reference_point_ranked_first(self) -> None:
+        """Within the same front, solution closest to a reference point ranks first."""
+        ref = np.array([[0.0, 1.0]])
+        # idx 0 is near ref [0,1], idx 1 is far
+        f = np.array([[0.1, 0.9], [0.9, 0.1]])  # single front (non-dominated)
+        pop = _make_pop(f)
+        comp = RNSGA2Comparator(ref)
+        order = comp.sort_population(pop)
+        assert order[0] == 0
+
+    def test_sort_population_cached(self) -> None:
+        ref = np.array([[0.0, 1.0], [1.0, 0.0]])
+        f = np.array([[0.0, 1.0], [1.0, 0.0]])
+        pop = _make_pop(f)
+        comp = RNSGA2Comparator(ref)
+        order1 = comp.sort_population(pop)
+        order2 = comp.sort_population(pop)
+        np.testing.assert_array_equal(order1, order2)
+        assert pop.get_cache("pareto_sort") is not None
+
+    def test_reference_points_property(self) -> None:
+        ref = np.array([[0.0, 1.0], [1.0, 0.0]])
+        comp = RNSGA2Comparator(ref)
+        np.testing.assert_array_equal(comp.reference_points, ref)
+
+    def test_epsilon_property(self) -> None:
+        ref = np.array([[0.5, 0.5]])
+        comp = RNSGA2Comparator(ref, epsilon=0.05)
+        assert comp.epsilon == 0.05
+
+    def test_direction_maximize(self) -> None:
+        """direction=[1,1] selects higher values first."""
+        ref = np.array([[0.5, 0.5]])
+        f = np.array([[3.0, 3.0], [1.0, 1.0]])
+        pop = _make_pop(f)
+        comp = RNSGA2Comparator(ref, direction=np.array([1.0, 1.0]))
+        order = comp.sort_population(pop)
+        assert order[0] == 0  # [3,3] dominates under maximization

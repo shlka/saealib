@@ -274,3 +274,5 @@ __all__ = [
 ]
     NSGA3Comparator,
     "NSGA3Comparator",
+    RNSGA2Comparator,
+    "RNSGA2Comparator",
