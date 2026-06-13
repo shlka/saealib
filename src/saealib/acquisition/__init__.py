@@ -7,17 +7,23 @@ scores used to rank candidates for true evaluation.
 """
 
 from saealib.acquisition.base import AcquisitionFunction
+from saealib.acquisition.ehvi import EHVIAcquisition
 from saealib.acquisition.ei import ExpectedImprovement
 from saealib.acquisition.lcb import LowerConfidenceBound
 from saealib.acquisition.mean import MeanPrediction
+from saealib.acquisition.parego import ParEGOAcquisition
 from saealib.acquisition.pof import ProbabilityOfFeasibility
+from saealib.acquisition.smsego import SMSEGOAcquisition
 from saealib.acquisition.uncertainty import MaxUncertainty
 
 __all__ = [
     "AcquisitionFunction",
+    "EHVIAcquisition",
     "ExpectedImprovement",
     "LowerConfidenceBound",
     "MaxUncertainty",
     "MeanPrediction",
+    "ParEGOAcquisition",
     "ProbabilityOfFeasibility",
+    "SMSEGOAcquisition",
 ]
