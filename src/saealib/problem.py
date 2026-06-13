@@ -172,37 +172,56 @@ class ConstraintHandler(ABC):
 
     Lifecycle::
 
-        Ask            -> [repair(x, constraints)]
+        Ask            -> [repair(x, constraints, lb, ub)]
                        -> evaluate f, g
                        -> [compute_cv(constraints, x, g)]        -> cv
                        -> [augment_objective(f, constraints, x, g)] -> f'
         Tell           -> Comparator(f', cv) with eps_cv = feasibility_threshold
         Generation end -> [on_generation_end(gen, population)]
 
-    Only :meth:`compute_cv` is abstract; the remaining hooks default to no-ops
-    so that subclasses implement just what they need.
+    Only :meth:`compute_cv` is abstract; the remaining hooks have sensible
+    defaults so that subclasses implement just what they need.
     """
 
     def repair(
-        self, x: np.ndarray, constraints: list[InequalityConstraint]
+        self,
+        x: np.ndarray,
+        constraints: list[InequalityConstraint],
+        lb: np.ndarray,
+        ub: np.ndarray,
+        **kwargs,
     ) -> np.ndarray:
         """
         Repair a design vector before evaluation.
+
+        Called by the algorithm after each variation operator (crossover /
+        mutation) and before objective evaluation. The default clips ``x`` to
+        ``[lb, ub]``, reproducing the behaviour of ``repair_clipping``.
+
+        Subclasses override this to add domain-constraint repair (e.g. a
+        Newton step toward an equality-constraint manifold) on top of—or
+        instead of—bounds clipping.
 
         Parameters
         ----------
         x : np.ndarray
             The design vector to repair. shape = (dim, )
         constraints : list[InequalityConstraint]
-            The problem's inequality constraints.
+            The problem's domain constraints.
+        lb : np.ndarray
+            Lower bounds. shape = (dim, )
+        ub : np.ndarray
+            Upper bounds. shape = (dim, )
+        **kwargs
+            Reserved for future use (e.g. parent solution for reflection
+            repair).
 
         Returns
         -------
         np.ndarray
-            The (possibly) repaired design vector. The default returns ``x``
-            unchanged.
+            The repaired design vector. shape = (dim, )
         """
-        return x
+        return np.clip(x, lb, ub)
 
     @abstractmethod
     def compute_cv(

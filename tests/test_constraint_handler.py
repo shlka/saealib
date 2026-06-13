@@ -107,6 +107,48 @@ class TestStaticToleranceHandler:
 
 
 # ---------------------------------------------------------------------------
+# ConstraintHandler.repair default
+# ---------------------------------------------------------------------------
+
+
+class TestConstraintHandlerRepair:
+    def test_default_repair_clips_to_bounds(self):
+        h = StaticToleranceHandler()
+        x = np.array([1.5, -0.5])
+        lb = np.zeros(2)
+        ub = np.ones(2)
+        out = h.repair(x, [], lb, ub)
+        np.testing.assert_array_equal(out, [1.0, 0.0])
+
+    def test_default_repair_within_bounds_unchanged(self):
+        h = StaticToleranceHandler()
+        x = np.array([0.3, 0.7])
+        lb, ub = np.zeros(2), np.ones(2)
+        np.testing.assert_array_equal(h.repair(x, [], lb, ub), x)
+
+    def test_default_repair_does_not_mutate_input(self):
+        h = StaticToleranceHandler()
+        x = np.array([2.0, -1.0])
+        x_orig = x.copy()
+        h.repair(x, [], np.zeros(2), np.ones(2))
+        np.testing.assert_array_equal(x, x_orig)
+
+    def test_custom_repair_overridable(self):
+        class ReflectHandler(ConstraintHandler):
+            def compute_cv(self, constraints, x, g):
+                return 0.0
+
+            def repair(self, x, constraints, lb, ub, **kwargs):
+                return np.clip(2 * ub - x, lb, ub)
+
+        h = ReflectHandler()
+        x = np.array([1.2, 0.5])
+        out = h.repair(x, [], np.zeros(2), np.ones(2))
+        # 2*ub - x = [0.8, 1.5], clipped to [0,1] -> [0.8, 1.0]
+        np.testing.assert_array_almost_equal(out, [0.8, 1.0])
+
+
+# ---------------------------------------------------------------------------
 # Problem integration
 # ---------------------------------------------------------------------------
 
