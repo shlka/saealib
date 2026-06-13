@@ -2145,7 +2145,7 @@ class RNSGA2Comparator(ParetoComparator):
             # Euclidean distance to each reference point
             diff = f_norm[:, None, :] - self._reference_points[None, :, :]
             dist_matrix = np.linalg.norm(diff, axis=2)  # (n_feasible, n_ref)
-            assoc_idx = np.argmin(dist_matrix, axis=1)   # (n_feasible,)
+            assoc_idx = np.argmin(dist_matrix, axis=1)  # (n_feasible,)
             dist_min = dist_matrix[np.arange(len(feasible)), assoc_idx]
 
             niche_count = np.zeros(len(self._reference_points), dtype=int)

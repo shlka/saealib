@@ -2192,6 +2192,7 @@ class TestNSGA3Comparator:
     def test_three_objectives_uniform_refs(self) -> None:
         """Works with 3-objective uniform reference points from Das-Dennis method."""
         from saealib.utils.weight_vectors import uniform_weight_vectors
+
         ref = uniform_weight_vectors(3, 4)
         f = np.random.default_rng(42).random((10, 3))
         pop = _make_pop(f)
