@@ -42,8 +42,10 @@ from saealib.comparators import (
     EpsilonDominanceComparator,
     EpsilonDominator,
     NSGA2Comparator,
+    NSGA3Comparator,
     ParetoComparator,
     ParetoDominator,
+    RNSGA2Comparator,
     SingleObjectiveComparator,
     _pareto_dominates,
 )
@@ -2126,9 +2128,6 @@ class TestHypervolumeComparator:
         from saealib import HypervolumeComparator
 
         assert HypervolumeComparator is not None
-    NSGA3Comparator,
-
-        assert HypervolumeComparator is not None
 
 
 # ===========================================================================
@@ -2214,7 +2213,6 @@ class TestNSGA3Comparator:
 # ===========================================================================
 # RNSGA2Comparator Tests
 # ===========================================================================
-    RNSGA2Comparator,
 class TestRNSGA2Comparator:
     """Tests for RNSGA2Comparator (R-NSGA-II preference-based ordering)."""
 
