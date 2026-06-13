@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -318,6 +319,124 @@ class StaticToleranceHandler(ConstraintHandler):
     def feasibility_threshold(self) -> float:
         """Fixed feasibility threshold ``eps_cv``."""
         return self._eps_cv
+
+
+class EpsilonConstraintHandler(ConstraintHandler):
+    """
+    Dynamic ε-constraint handler.
+
+    The feasibility threshold ε starts at ``schedule(0)`` and is updated
+    to ``schedule(gen)`` at the end of each generation via
+    :meth:`on_generation_end`. As ε decreases toward 0 the population is
+    gradually driven into the feasible region.
+
+    Each call to :meth:`on_generation_end` sets
+    ``comparator.eps_cv = feasibility_threshold`` via the runner, so the
+    comparator's feasibility criterion tightens in sync with ε.
+
+    Parameters
+    ----------
+    schedule : callable
+        Maps generation index (int) → current ε value (float).
+        ``schedule(0)`` is the initial ε; it should decrease toward 0
+        over generations.
+
+    Notes
+    -----
+    :meth:`compute_cv` aggregates violations as:
+
+    - *Equality* constraints: ``|h(x)|``  (raw absolute value; the
+      ``EqualityConstraint.tolerance`` field is intentionally bypassed so
+      that ε controls the feasibility threshold globally).
+    - *Inequality* constraints: ``max(0, g(x) - threshold)``  (standard
+      positive part; the constraint's ``threshold`` still applies).
+
+    This is a simplified form of the sum-of-constraint-violation measure
+    in Eq. (7) of Mezura-Montes & Coello Coello (2011) — inequality
+    violations are not squared and values are not normalised.
+
+    References
+    ----------
+    Mezura-Montes, E., & Coello Coello, C. A. (2011).
+    *Constraint-handling in nature-inspired numerical optimization: Past,
+    present and future.*
+    Swarm and Evolutionary Computation, 1(4), 173-194.
+    https://doi.org/10.1016/j.swevo.2011.10.001
+    """
+
+    def __init__(self, schedule: Callable[[int], float]):
+        self._schedule = schedule
+        self._eps: float = float(schedule(0))
+
+    def compute_cv(
+        self,
+        constraints: list[InequalityConstraint],
+        x: np.ndarray,
+        g: np.ndarray,
+    ) -> float:
+        """Return ``|h|`` for equality and ``max(0, g-threshold)`` for inequality."""
+        cv = 0.0
+        for gi, c in zip(g, constraints):
+            if isinstance(c, EqualityConstraint):
+                cv += abs(float(gi))
+            else:
+                cv += max(0.0, float(gi) - c.threshold)
+        return cv
+
+    @property
+    def feasibility_threshold(self) -> float:
+        """Current ε; the comparator treats ``cv <= ε`` as feasible."""
+        return self._eps
+
+    def on_generation_end(self, gen: int, population: Population) -> None:
+        """Update internal ε to ``schedule(gen)``."""
+        self._eps = float(self._schedule(gen))
+
+
+def linear_epsilon_schedule(eps0: float, n_gen: int) -> Callable[[int], float]:
+    """
+    Return a linear ε schedule: ``eps0`` at gen 0, ``0.0`` at gen ``n_gen``.
+
+    Parameters
+    ----------
+    eps0 : float
+        Initial ε value (gen 0).
+    n_gen : int
+        Generation at which ε reaches 0.
+
+    Returns
+    -------
+    callable
+        ``schedule(gen) -> float``
+    """
+
+    def _schedule(gen: int) -> float:
+        return max(0.0, eps0 * (1.0 - gen / n_gen))
+
+    return _schedule
+
+
+def exponential_epsilon_schedule(eps0: float, decay: float) -> Callable[[int], float]:
+    """
+    Return an exponential ε schedule: ``eps0 * decay**gen``.
+
+    Parameters
+    ----------
+    eps0 : float
+        Initial ε value (gen 0).
+    decay : float
+        Multiplicative decay factor per generation (0 < decay < 1).
+
+    Returns
+    -------
+    callable
+        ``schedule(gen) -> float``
+    """
+
+    def _schedule(gen: int) -> float:
+        return eps0 * (decay**gen)
+
+    return _schedule
 
 
 class Problem:
