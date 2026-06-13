@@ -272,3 +272,5 @@ __all__ = [
     "stalled",
     "uniform_weight_vectors",
 ]
+    NSGA3Comparator,
+    "NSGA3Comparator",

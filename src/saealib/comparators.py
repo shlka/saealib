@@ -1771,3 +1771,267 @@ class EpsilonDominanceComparator(ParetoComparator):
     def mode(self) -> str:
         """Quantization mode of the underlying EpsilonDominator."""
         return self._dominator.mode  # type: ignore[attr-defined]
+
+
+def _normalize_objectives(
+    f: np.ndarray,
+    direction: np.ndarray | None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Normalize objectives using NSGA-III ideal point + hyperplane intercepts.
+
+    Deb & Jain (2014), Section IV-B.
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Shape ``(n, n_obj)``.
+    direction : np.ndarray or None
+        ``+1`` maximize, ``-1`` minimize. ``None`` means all-minimize.
+
+    Returns
+    -------
+    f_norm : np.ndarray
+        Shape ``(n, n_obj)``. Normalized objectives.
+    ideal : np.ndarray
+        Shape ``(n_obj,)``. Ideal point used for translation.
+    intercepts : np.ndarray
+        Shape ``(n_obj,)``. Hyperplane intercepts used for scaling.
+    """
+    f_signed = f * direction if direction is not None else f
+    ideal = f_signed.min(axis=0)
+    f_trans = f_signed - ideal
+
+    n_obj = f_trans.shape[1]
+    eps_asf = 1e-6
+    extreme = np.empty((n_obj, n_obj))
+    for j in range(n_obj):
+        w = np.full(n_obj, eps_asf)
+        w[j] = 1.0
+        asf = np.max(f_trans / w, axis=1)
+        extreme[j] = f_trans[np.argmin(asf)]
+
+    try:
+        intercepts = np.linalg.solve(extreme, np.ones(n_obj))
+        if np.any(intercepts <= 0):
+            raise np.linalg.LinAlgError
+    except np.linalg.LinAlgError:
+        intercepts = f_trans.max(axis=0).astype(float)
+        intercepts[intercepts <= 0] = 1.0
+
+    f_norm = f_trans / intercepts
+    return f_norm, ideal, intercepts
+
+
+def _associate_to_reference_points(
+    f_norm: np.ndarray,
+    reference_points: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Associate each individual with the closest reference line.
+
+    Deb & Jain (2014), Section IV-C. Uses perpendicular distance from
+    ``f_norm[i]`` to the ray from the origin through ``reference_points[r]``.
+
+    Parameters
+    ----------
+    f_norm : np.ndarray
+        Shape ``(n, n_obj)``.
+    reference_points : np.ndarray
+        Shape ``(n_ref, n_obj)``.
+
+    Returns
+    -------
+    assoc_idx : np.ndarray
+        Shape ``(n,)`` int. Index of the nearest reference point for each individual.
+    dist : np.ndarray
+        Shape ``(n,)`` float. Perpendicular distance to that reference line.
+    """
+    ref_norms_sq = np.sum(reference_points**2, axis=1)  # (n_ref,)
+    ref_norms_sq = np.maximum(ref_norms_sq, 1e-30)
+
+    # scalar projection coefficients: (n, n_ref)
+    scalars = f_norm @ reference_points.T / ref_norms_sq  # (n, n_ref)
+    # projected vectors: (n, n_ref, n_obj)
+    proj = scalars[:, :, None] * reference_points[None, :, :]
+    # perpendicular distances: (n, n_ref)
+    diff = f_norm[:, None, :] - proj
+    d_perp = np.linalg.norm(diff, axis=2)
+
+    assoc_idx = np.argmin(d_perp, axis=1)
+    dist = d_perp[np.arange(len(f_norm)), assoc_idx]
+    return assoc_idx, dist
+
+
+def _niche_count_select(
+    front_local: np.ndarray,
+    assoc: np.ndarray,
+    dist: np.ndarray,
+    niche_count: np.ndarray,
+    n_needed: int,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    """Order individuals in a front using NSGA-III niche-preservation.
+
+    Deb & Jain (2014), Algorithm 2. Selects ``n_needed`` individuals from
+    ``front_local`` in preference order, updating ``niche_count`` in-place.
+
+    Parameters
+    ----------
+    front_local : np.ndarray
+        Local indices (into feasible sub-array) of individuals in this front.
+    assoc : np.ndarray
+        Shape ``(n_feasible,)``. Reference-point association for each feasible
+        individual.
+    dist : np.ndarray
+        Shape ``(n_feasible,)``. Perpendicular distance to associated reference line.
+    niche_count : np.ndarray
+        Shape ``(n_ref,)``. Accumulated niche counts; updated in-place.
+    n_needed : int
+        Number of individuals to select (≤ len(front_local)).
+    rng : np.random.Generator
+        Random number generator for tie-breaking.
+
+    Returns
+    -------
+    np.ndarray
+        Shape ``(n_needed,)``. Selected indices from ``front_local`` in priority order.
+    """
+    pool = list(front_local)
+    selected = []
+    for _ in range(n_needed):
+        # reference points that still have candidates in the pool
+        pool_refs = {int(assoc[i]) for i in pool}
+        min_nc = min(niche_count[r] for r in pool_refs)
+        min_refs = [r for r in pool_refs if niche_count[r] == min_nc]
+        chosen_ref = int(rng.choice(min_refs))
+
+        candidates = [i for i in pool if assoc[i] == chosen_ref]
+        if niche_count[chosen_ref] == 0:
+            i_star = candidates[int(np.argmin(dist[candidates]))]
+        else:
+            i_star = int(rng.choice(candidates))
+
+        selected.append(i_star)
+        pool.remove(i_star)
+        niche_count[chosen_ref] += 1
+
+    return np.array(selected, dtype=int)
+
+
+class NSGA3Comparator(ParetoComparator):
+    """
+    Comparator for many-objective optimization via NSGA-III style ranking.
+
+    Extends ParetoComparator with reference-point-based niche preservation:
+
+    - sort_population: non-dominated sorting + normalization + niche preservation
+    - compare_population: inherited from ParetoComparator (Pareto dominance)
+
+    The NSGA-III selection mechanism (Deb & Jain 2014, Algorithm 1):
+
+    1. Non-dominated sorting (same fronts as NSGA-II).
+    2. Normalize objectives: translate by ideal point then scale by hyperplane
+       intercepts computed from extreme points (ASF minimizers).
+    3. Associate each individual with the nearest reference line (perpendicular
+       distance from the individual to the ray from origin through each
+       reference point).
+    4. Order each front using niche-count-based preference: reference points
+       with fewer associated individuals from earlier fronts are preferred;
+       ties broken randomly.
+
+    The total ordering returned by sort_population processes all fronts in order,
+    accumulating niche counts across fronts so that earlier fronts' niche counts
+    propagate to later ones—matching the selection pressure NSGA-III would apply
+    when truncating to a target population size.
+
+    Parameters
+    ----------
+    reference_points : np.ndarray
+        Shape ``(n_ref, n_obj)``. Reference points on the unit simplex.
+        Typically generated by
+        :func:`~saealib.utils.weight_vectors.uniform_weight_vectors`.
+    direction : np.ndarray or None
+        Per-objective optimization directions (``+1`` maximize, ``-1`` minimize).
+        ``None`` means all objectives are minimized.
+    eps_cv : float
+        Constraint-violation tolerance.
+    eps_obj : float
+        Objective tolerance (passed to base class).
+    sorter : NonDominatedSorter
+        Non-dominated sorting callable.
+    dominator : Dominator or None
+        Dominance predicate.
+    seed : int or None
+        Seed for the random number generator used in niche tie-breaking.
+
+    References
+    ----------
+    .. [1] Deb, K., & Jain, H. (2014). An Evolutionary Many-Objective
+       Optimization Algorithm Using Reference-Point-Based Nondominated
+       Sorting Approach, Part I. IEEE Transactions on Evolutionary
+       Computation, 18(4), 577-601. https://doi.org/10.1109/TEVC.2013.2281535
+    """
+
+    def __init__(
+        self,
+        reference_points: np.ndarray,
+        direction: np.ndarray | None = None,
+        *,
+        eps_cv: float = 1e-6,
+        eps_obj: float = 1e-6,
+        sorter: NonDominatedSorter = non_dominated_sort,
+        dominator: Dominator | None = None,
+        seed: int | None = None,
+    ) -> None:
+        super().__init__(
+            direction,
+            eps_cv=eps_cv,
+            eps_obj=eps_obj,
+            sorter=sorter,
+            dominator=dominator,
+        )
+        self._reference_points = np.asarray(reference_points, dtype=float)
+        self._rng = np.random.default_rng(seed)
+
+    @property
+    def reference_points(self) -> np.ndarray:
+        """Reference points used for niche preservation."""
+        return self._reference_points
+
+    def sort_population(self, population: Population) -> np.ndarray:
+        """Sort by Pareto front rank then NSGA-III niche preservation."""
+        cached = population.get_cache("pareto_sort")
+        if cached is not None:
+            return cached
+
+        f = population.get("f")
+        cv = population.get("cv")
+        feasible = np.where(cv <= self.eps_cv)[0]
+        infeasible = np.where(cv > self.eps_cv)[0]
+
+        sorted_feasible: list[int] = []
+        if len(feasible):
+            _ranks, fronts = self._sorter(
+                f[feasible], direction=self.direction, dominator=self._dominator
+            )
+            f_norm, _, _ = _normalize_objectives(f[feasible], self.direction)
+            assoc, dist = _associate_to_reference_points(f_norm, self._reference_points)
+            niche_count = np.zeros(len(self._reference_points), dtype=int)
+
+            for front_list in fronts:
+                front_local = np.array(front_list, dtype=int)
+                ordered = _niche_count_select(
+                    front_local, assoc, dist, niche_count, len(front_local), self._rng
+                )
+                sorted_feasible.extend(feasible[ordered].tolist())
+
+        sorted_infeasible: np.ndarray = np.empty(0, int)
+        if len(infeasible):
+            sorted_infeasible = infeasible[np.argsort(cv[infeasible])]
+
+        result = np.concatenate(
+            [np.array(sorted_feasible, dtype=int), sorted_infeasible]
+        ).astype(int)
+        population.set_cache("pareto_sort", result)
+        return result
+
+

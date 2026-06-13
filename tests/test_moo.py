@@ -2126,3 +2126,91 @@ class TestHypervolumeComparator:
         from saealib import HypervolumeComparator
 
         assert HypervolumeComparator is not None
+    NSGA3Comparator,
+
+        assert HypervolumeComparator is not None
+
+
+# ===========================================================================
+# NSGA3Comparator Tests
+# ===========================================================================
+class TestNSGA3Comparator:
+    """Tests for NSGA3Comparator (NSGA-III niche preservation)."""
+
+    def test_is_subclass_of_pareto_comparator(self) -> None:
+        assert issubclass(NSGA3Comparator, ParetoComparator)
+
+    def test_sort_population_returns_int_array(self) -> None:
+        ref = np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
+        f = np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
+        pop = _make_pop(f)
+        comp = NSGA3Comparator(ref, seed=0)
+        order = comp.sort_population(pop)
+        assert np.issubdtype(order.dtype, np.integer)
+
+    def test_sort_population_contains_all_indices(self) -> None:
+        ref = np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
+        f = np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
+        pop = _make_pop(f)
+        comp = NSGA3Comparator(ref, seed=0)
+        order = comp.sort_population(pop)
+        assert set(order.tolist()) == {0, 1, 2}
+
+    def test_front_0_before_front_1(self) -> None:
+        """Non-dominated solutions ranked before dominated ones."""
+        ref = np.array([[0.0, 1.0], [1.0, 0.0]])
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [2.0, 2.0]])
+        pop = _make_pop(f)
+        comp = NSGA3Comparator(ref, seed=0)
+        order = comp.sort_population(pop)
+        assert set(order[:2].tolist()) == {0, 1}
+        assert order[2] == 2
+
+    def test_infeasible_last(self) -> None:
+        ref = np.array([[0.0, 1.0], [1.0, 0.0]])
+        f = np.array([[10.0, 10.0], [0.0, 1.0], [1.0, 0.0]])
+        cv = np.array([1.0, 0.0, 0.0])
+        pop = _make_pop(f, cv)
+        comp = NSGA3Comparator(ref, seed=0)
+        order = comp.sort_population(pop)
+        assert order[-1] == 0
+
+    def test_sort_population_cached(self) -> None:
+        ref = np.array([[0.0, 1.0], [1.0, 0.0]])
+        f = np.array([[0.0, 1.0], [1.0, 0.0]])
+        pop = _make_pop(f)
+        comp = NSGA3Comparator(ref, seed=0)
+        order1 = comp.sort_population(pop)
+        order2 = comp.sort_population(pop)
+        np.testing.assert_array_equal(order1, order2)
+        assert pop.get_cache("pareto_sort") is not None
+
+    def test_reference_points_property(self) -> None:
+        ref = np.array([[0.0, 1.0], [1.0, 0.0]])
+        comp = NSGA3Comparator(ref)
+        np.testing.assert_array_equal(comp.reference_points, ref)
+
+    def test_three_objectives_uniform_refs(self) -> None:
+        """Works with 3-objective uniform reference points from Das-Dennis method."""
+        from saealib.utils.weight_vectors import uniform_weight_vectors
+        ref = uniform_weight_vectors(3, 4)
+        f = np.random.default_rng(42).random((10, 3))
+        pop = _make_pop(f)
+        comp = NSGA3Comparator(ref, seed=0)
+        order = comp.sort_population(pop)
+        assert len(order) == 10
+        assert set(order.tolist()) == set(range(10))
+
+    def test_direction_maximize(self) -> None:
+        """direction=[1,1] selects higher values first."""
+        ref = np.array([[0.5, 0.5]])
+        f = np.array([[3.0, 3.0], [1.0, 1.0]])
+        pop = _make_pop(f)
+        comp = NSGA3Comparator(ref, direction=np.array([1.0, 1.0]), seed=0)
+        order = comp.sort_population(pop)
+        assert order[0] == 0  # [3,3] dominates under maximization
+
+
+# ===========================================================================
+# RNSGA2Comparator Tests
+# ===========================================================================
