@@ -449,7 +449,9 @@ class SingleObjectiveComparator(Comparator):
                 stacklevel=2,
             )
             eps_cv = eps_obj = eps
-        super().__init__(np.array([direction]), eps_cv, eps_obj, direction=np.array([direction]))
+        super().__init__(
+            np.array([direction]), eps_cv, eps_obj, direction=np.array([direction])
+        )
 
     def sort_population(self, population: Population) -> np.ndarray:
         """
@@ -560,7 +562,9 @@ class WeightedSumComparator(Comparator):
             )
             direction = weights
         if direction is None:
-            raise TypeError("WeightedSumComparator() missing required argument: 'direction'")
+            raise TypeError(
+                "WeightedSumComparator() missing required argument: 'direction'"
+            )
         if eps is not None:
             warnings.warn(
                 "WeightedSumComparator(eps=...) is deprecated"
