@@ -144,7 +144,14 @@ class TestConstraintSurrogateG01:
         assert data.train_y.shape == (len(archive), _N_CONSTRAINTS)
 
     def test_feasible_solution_found(self) -> None:
-        """With enough budget, at least one feasible solution is archived."""
+        """With enough budget, at least one feasible solution is archived.
+
+        Note: the continuous [0, 1]^13 variant of G01 has ρ ≈ 64.6 % (g1–g3 are
+        always satisfied; the original binary x[10..12] reduce ρ to 0.011 %).
+        This test is therefore a smoke test for the EI × PoF pipeline, not a
+        surrogate-guidance validation.  See TestConstraintSurrogate2D for a
+        direct test of PoF scoring quality.
+        """
         problem = _make_g01_problem()
 
         ei_mgr = GlobalSurrogateManager(
@@ -171,7 +178,100 @@ class TestConstraintSurrogateG01:
             .set_termination(Termination(max_fe(60)))
         )
         ctx = optimizer.run()
-        assert ctx is not None
+        cv_arr = ctx.archive.get_array("cv")
+        assert np.any(cv_arr <= 1e-6), "Expected at least one feasible solution in archive"
+
+
+# ---------------------------------------------------------------------------
+# 2-D circle-constraint problem (continuous, ρ ≈ 12.6 %)
+# ---------------------------------------------------------------------------
+
+# g(x) = (x0 - 0.5)^2 + (x1 - 0.5)^2 - 0.04 ≤ 0
+# Feasibility rate: π·r² = π·0.04 ≈ 12.6 % of [0, 1]²
+_CIRCLE_R2 = 0.04
+
+
+def _circle_obj(x: np.ndarray) -> np.ndarray:
+    return np.array([-(x[0] + x[1])])  # minimize → maximise x0 + x1
+
+
+def _make_circle_problem() -> Problem:
+    return Problem(
+        func=_circle_obj,
+        dim=2,
+        n_obj=1,
+        direction=np.array([-1.0]),
+        lb=[0.0, 0.0],
+        ub=[1.0, 1.0],
+        constraints=[
+            InequalityConstraint(
+                lambda x: (x[0] - 0.5) ** 2 + (x[1] - 0.5) ** 2 - _CIRCLE_R2
+            )
+        ],
+        handler=StaticToleranceHandler(eps_cv=1e-6),
+    )
+
+
+class TestConstraintSurrogate2D:
+    """Functional test: PoF surrogate correctly ranks feasible vs. infeasible candidates."""
+
+    def test_pof_scores_distinguish_feasibility(self) -> None:
+        """PoF surrogate trained on archive scores feasible candidates higher than infeasible ones.
+
+        Uses a 2-D circle-constraint problem (ρ ≈ 12.6 %).  After seeding the archive
+        with 50 LHS points (~6 expected feasible), the constraint surrogate should have
+        learned the feasibility boundary well enough to rank inside-circle candidates above
+        outside-circle candidates.
+        """
+        problem = _make_circle_problem()
+        optimizer = (
+            Optimizer(problem)
+            .set_initializer(
+                LHSInitializer(n_init_archive=50, n_init_population=10, seed=0)
+            )
+            .set_algorithm(_make_ga())
+            .set_strategy(PreSelectionStrategy(n_candidates=20, n_select=3))
+            .set_surrogate_manager(
+                GlobalSurrogateManager(GPSurrogate(), ExpectedImprovement())
+            )
+            .set_termination(Termination(max_fe(50)))
+        )
+        ctx = optimizer.run()
+        archive = ctx.archive
+
+        pof_mgr = GlobalSurrogateManager(
+            PerObjectiveSurrogate([GPSurrogate()]),
+            ProductOfFeasibility(),
+            training_set=ConstraintObjectiveSet(),
+        )
+
+        # Points clearly inside circle (g < 0)
+        inside = np.array([
+            [0.50, 0.50],  # centre: g = -0.04
+            [0.55, 0.50],  # g = -0.0375
+            [0.50, 0.55],  # g = -0.0375
+            [0.45, 0.50],  # g = -0.0375
+            [0.50, 0.45],  # g = -0.0375
+        ])
+        # Points clearly outside circle (g >> 0)
+        outside = np.array([
+            [0.0, 0.0],   # g = 0.46
+            [1.0, 0.0],   # g = 0.46
+            [0.0, 1.0],   # g = 0.46
+            [1.0, 1.0],   # g = 0.46
+            [0.5, 1.0],   # g = 0.21
+        ])
+
+        candidates = np.vstack([inside, outside])
+        scores, _ = pof_mgr.score_candidates(candidates, archive)
+
+        pof_inside = scores[: len(inside)]
+        pof_outside = scores[len(inside):]
+
+        assert np.mean(pof_inside) > np.mean(pof_outside), (
+            f"PoF should be higher for feasible candidates: "
+            f"inside={np.mean(pof_inside):.3f}, outside={np.mean(pof_outside):.3f}"
+        )
 
 
 # ---------------------------------------------------------------------------
