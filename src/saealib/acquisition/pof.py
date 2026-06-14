@@ -80,3 +80,90 @@ class ProbabilityOfFeasibility(AcquisitionFunction):
         sigma = prediction.std[:, self.obj_idx]  # (n_samples,)
         sigma = np.maximum(sigma, 1e-9)
         return norm.cdf((0.0 - mu) / sigma)  # P(g(x) <= 0)
+
+
+class ProductOfFeasibility(AcquisitionFunction):
+    r"""Joint probability of feasibility across all constraint columns.
+
+    Computes the product of per-constraint feasibility probabilities:
+
+    .. math::
+
+        \text{PoF}_{\text{joint}}(x) = \prod_{i=1}^{m}
+        \Phi\!\left(\frac{0 - \mu_i(x)}{\sigma_i(x)}\right)
+
+    where :math:`\mu_i` and :math:`\sigma_i` are the surrogate's predicted
+    mean and standard deviation for the *i*-th constraint column.
+
+    This is the standard acquisition function for constrained Bayesian
+    optimisation with independent constraint surrogates (Letham et al., 2019;
+    Eriksson & Poloczek, 2021). Use it with a surrogate trained on
+    ``ConstraintObjectiveSet`` (which returns ``archive.g`` as ``train_y``),
+    typically via ``PerObjectiveSurrogate([GP(), ...] * n_constraints)``.
+
+    To combine with an objective acquisition (e.g. EI), wrap both managers
+    in a ``CompositeSurrogateManager`` with ``product_combine``::
+
+        ei_manager = GlobalSurrogateManager(GP(), EI(), ArchiveObjectiveSet())
+        pof_manager = GlobalSurrogateManager(
+            PerObjectiveSurrogate([GP()] * n_constraints),
+            ProductOfFeasibility(),
+            ConstraintObjectiveSet(),
+        )
+        optimizer.set_surrogate_manager(
+            CompositeSurrogateManager([ei_manager, pof_manager], product_combine)
+        )
+
+    Requires a surrogate that provides uncertainty estimates (std).
+
+    Notes
+    -----
+    Assumes constraints are independent. When constraints are strongly
+    correlated, a multi-output GP with joint predictions is more accurate
+    but is not required by this acquisition function.
+    """
+
+    requires_uncertainty: bool = True
+
+    def compute_reference(self, archive: Archive) -> Any:
+        """Return None (no reference needed)."""
+        return None
+
+    def score(
+        self,
+        prediction: SurrogatePrediction,
+        reference: Any = None,
+    ) -> np.ndarray:
+        """
+        Compute joint probability of feasibility scores.
+
+        Parameters
+        ----------
+        prediction : SurrogatePrediction
+            Surrogate predictions of constraint values.
+            ``prediction.value`` shape: ``(n_samples, n_constraints)``.
+            Must have std (``has_uncertainty == True``).
+        reference : Any
+            Not used. Accepted for interface compatibility.
+
+        Returns
+        -------
+        np.ndarray
+            Joint PoF scores in [0, 1]. shape: ``(n_samples,)``.
+            Score is 1 when all constraints are clearly satisfied,
+            0 when any constraint is clearly violated.
+
+        Raises
+        ------
+        TypeError
+            If prediction does not contain uncertainty estimates.
+        """
+        if not prediction.has_uncertainty:
+            raise TypeError(
+                "ProductOfFeasibility requires a surrogate with uncertainty "
+                "estimates (prediction.std must not be None)."
+            )
+        mu = prediction.value  # (n_samples, n_constraints)
+        sigma = np.maximum(prediction.std, 1e-9)  # (n_samples, n_constraints)
+        pof = norm.cdf((0.0 - mu) / sigma)  # (n_samples, n_constraints)
+        return np.prod(pof, axis=1)  # (n_samples,)

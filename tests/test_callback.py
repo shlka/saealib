@@ -40,9 +40,10 @@ from saealib.context import OptimizationContext
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.surrogate.manager import (
-    EnsembleSurrogateManager,
+    CompositeSurrogateManager,
     GlobalSurrogateManager,
     LocalSurrogateManager,
+    product_combine,
 )
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
 from saealib.surrogate.training_set import KNNObjectiveSet
@@ -619,7 +620,7 @@ class TestPostSurrogateFitDispatch:
         candidates: np.ndarray,
         ctx: OptimizationContext,
     ) -> None:
-        """EnsembleSurrogateManager passes provider through to each sub-manager."""
+        """CompositeSurrogateManager passes provider through to each sub-manager."""
         prov = _MockProvider()
         m1 = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
@@ -627,7 +628,7 @@ class TestPostSurrogateFitDispatch:
         m2 = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
-        ensemble = EnsembleSurrogateManager([m1, m2])
+        ensemble = CompositeSurrogateManager([m1, m2], combine_fn=product_combine)
         ensemble.score_candidates(candidates, archive, provider=prov, ctx=ctx)
         fit_events = [
             e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)

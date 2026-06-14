@@ -11,7 +11,9 @@ from saealib.population import Archive, ParetoArchive, Population, PopulationAtt
 from saealib.problem import Problem
 from saealib.surrogate.training_set import (
     ArchiveObjectiveSet,
+    ConstraintObjectiveSet,
     FeasibilityClassificationSet,
+    KNNConstraintObjectiveSet,
     KNNObjectiveSet,
     LevelBasedSet,
     PairwiseComparisonSet,
@@ -25,11 +27,19 @@ from saealib.surrogate.training_set import (
 
 DIM = 2
 N_OBJ = 1
+N_CONSTRAINTS = 2
 
 _ATTRS = [
     PopulationAttribute(name="x", dtype=np.float64, shape=(DIM,)),
     PopulationAttribute(name="f", dtype=np.float64, shape=(N_OBJ,)),
     PopulationAttribute(name="g", dtype=np.float64, shape=(0,)),
+    PopulationAttribute(name="cv", dtype=np.float64, shape=()),
+]
+
+_ATTRS_G = [
+    PopulationAttribute(name="x", dtype=np.float64, shape=(DIM,)),
+    PopulationAttribute(name="f", dtype=np.float64, shape=(N_OBJ,)),
+    PopulationAttribute(name="g", dtype=np.float64, shape=(N_CONSTRAINTS,)),
     PopulationAttribute(name="cv", dtype=np.float64, shape=()),
 ]
 
@@ -54,6 +64,18 @@ def _make_archive(n: int = 10) -> Archive:
         x = rng.uniform(-2.0, 2.0, size=DIM)
         f = np.array([np.sum(x**2)])
         arc.add(x=x, f=f, cv=0.0)
+    return arc
+
+
+def _make_archive_with_g(n: int = 10) -> Archive:
+    """Archive with 2 constraint columns filled with known values."""
+    arc = Archive(_ATTRS_G, init_capacity=n + 5)
+    rng = np.random.default_rng(7)
+    for i in range(n):
+        x = rng.uniform(-2.0, 2.0, size=DIM)
+        f = np.array([np.sum(x**2)])
+        g = np.array([float(i), float(-i)])  # known values for assertion
+        arc.add(x=x, f=f, g=g, cv=0.0)
     return arc
 
 
@@ -162,6 +184,73 @@ class TestKNNObjectiveSet:
         cand = np.zeros(DIM)
         data = ts.build(arc, None, None, candidate_x=cand)
         assert data.train_x.shape[0] <= 8
+
+
+# ===========================================================================
+# ConstraintObjectiveSet
+# ===========================================================================
+class TestConstraintObjectiveSet:
+    def test_returns_all_archive_points(self) -> None:
+        arc = _make_archive_with_g(8)
+        ts = ConstraintObjectiveSet()
+        data = ts.build(arc, None, None)
+        assert data.train_x.shape == (8, DIM)
+        assert data.train_y.shape == (8, N_CONSTRAINTS)
+        np.testing.assert_array_equal(data.train_y, arc.g)
+
+    def test_train_y_is_g_not_f(self) -> None:
+        arc = _make_archive_with_g(5)
+        ts = ConstraintObjectiveSet()
+        data = ts.build(arc, None, None)
+        # train_y must differ from f (different columns)
+        assert data.train_y.shape[1] == N_CONSTRAINTS
+        assert data.train_y.shape[1] != arc.f.shape[1] or not np.allclose(
+            data.train_y, arc.f
+        )
+
+    def test_raises_on_zero_constraints(self) -> None:
+        arc = _make_archive(5)  # uses _ATTRS with shape=(0,) for g
+        ts = ConstraintObjectiveSet()
+        with pytest.raises(ValueError, match="0 columns"):
+            ts.build(arc, None, None)
+
+    def test_candidate_x_is_ignored(self) -> None:
+        arc = _make_archive_with_g(6)
+        ts = ConstraintObjectiveSet()
+        candidate = np.zeros(DIM)
+        data = ts.build(arc, None, None, candidate_x=candidate)
+        assert data.train_x.shape[0] == 6
+
+
+# ===========================================================================
+# KNNConstraintObjectiveSet
+# ===========================================================================
+class TestKNNConstraintObjectiveSet:
+    def test_returns_k_neighbours(self) -> None:
+        arc = _make_archive_with_g(10)
+        ts = KNNConstraintObjectiveSet(n_neighbors=5)
+        candidate = np.zeros(DIM)
+        data = ts.build(arc, None, None, candidate_x=candidate)
+        assert data.train_x.shape == (5, DIM)
+        assert data.train_y.shape == (5, N_CONSTRAINTS)
+
+    def test_requires_candidate_x(self) -> None:
+        arc = _make_archive_with_g(5)
+        ts = KNNConstraintObjectiveSet(n_neighbors=3)
+        with pytest.raises(ValueError, match="candidate_x"):
+            ts.build(arc, None, None, candidate_x=None)
+
+    def test_raises_on_zero_constraints(self) -> None:
+        arc = _make_archive(5)
+        ts = KNNConstraintObjectiveSet(n_neighbors=3)
+        with pytest.raises(ValueError, match="0 columns"):
+            ts.build(arc, None, None, candidate_x=np.zeros(DIM))
+
+    def test_clamped_to_archive_size(self) -> None:
+        arc = _make_archive_with_g(4)
+        ts = KNNConstraintObjectiveSet(n_neighbors=50)
+        data = ts.build(arc, None, None, candidate_x=np.zeros(DIM))
+        assert data.train_x.shape[0] == 4
 
 
 # ===========================================================================

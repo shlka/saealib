@@ -21,6 +21,7 @@ from saealib.acquisition import (
     MaxUncertainty,
     MeanPrediction,
     ProbabilityOfFeasibility,
+    ProductOfFeasibility,
 )
 from saealib.surrogate.prediction import SurrogatePrediction
 
@@ -334,3 +335,60 @@ class TestProbabilityOfFeasibility:
         s1 = ProbabilityOfFeasibility(obj_idx=1).score(pred, reference=None)
         assert s0[0] > 0.99  # mu=-5: clearly feasible
         assert s1[0] < 0.01  # mu=+5: clearly infeasible
+
+
+# ===========================================================================
+# ProductOfFeasibility Tests
+# ===========================================================================
+class TestProductOfFeasibility:
+    """Tests for ProductOfFeasibility acquisition function."""
+
+    def test_requires_uncertainty(self) -> None:
+        pred = _pred(value=[[0.5, 0.5]])
+        with pytest.raises(TypeError, match="uncertainty"):
+            ProductOfFeasibility().score(pred, reference=None)
+
+    def test_output_shape(self) -> None:
+        pred = _pred(value=np.zeros((5, 2)), std=np.ones((5, 2)))
+        scores = ProductOfFeasibility().score(pred, reference=None)
+        assert scores.shape == (5,)
+
+    def test_scores_in_0_1(self) -> None:
+        rng = np.random.default_rng(2)
+        pred = _pred(
+            value=rng.standard_normal((20, 3)),
+            std=np.abs(rng.standard_normal((20, 3))) + 0.01,
+        )
+        scores = ProductOfFeasibility().score(pred, reference=None)
+        assert np.all(scores >= 0.0)
+        assert np.all(scores <= 1.0)
+
+    def test_single_constraint_matches_pof(self) -> None:
+        """With one constraint column, equals ProbabilityOfFeasibility(obj_idx=0)."""
+        rng = np.random.default_rng(3)
+        mu = rng.standard_normal((10, 1))
+        sigma = np.abs(rng.standard_normal((10, 1))) + 0.01
+        pred = _pred(value=mu, std=sigma)
+        pof_scores = ProbabilityOfFeasibility(obj_idx=0).score(pred)
+        product_scores = ProductOfFeasibility().score(pred)
+        np.testing.assert_allclose(product_scores, pof_scores, rtol=1e-6)
+
+    def test_all_feasible_scores_near_one(self) -> None:
+        """If all mu << 0, joint PoF is near 1."""
+        pred = _pred(value=[[-10.0, -10.0]], std=[[0.1, 0.1]])
+        scores = ProductOfFeasibility().score(pred)
+        assert scores[0] > 0.99
+
+    def test_one_infeasible_constraint_pulls_score_to_zero(self) -> None:
+        """Even if one constraint has mu >> 0, joint PoF is near 0."""
+        pred = _pred(value=[[-10.0, 10.0]], std=[[0.1, 0.1]])
+        scores = ProductOfFeasibility().score(pred)
+        assert scores[0] < 0.01
+
+    def test_product_formula(self) -> None:
+        """PoF_joint = Phi(-mu1/s1) * Phi(-mu2/s2)."""
+        mu1, s1, mu2, s2 = -1.0, 0.5, 0.5, 1.0
+        expected = norm.cdf(-mu1 / s1) * norm.cdf(-mu2 / s2)
+        pred = _pred(value=[[mu1, mu2]], std=[[s1, s2]])
+        scores = ProductOfFeasibility().score(pred)
+        assert scores[0] == pytest.approx(expected, rel=1e-5)

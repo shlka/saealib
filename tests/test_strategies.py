@@ -25,7 +25,11 @@ from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate.archive_manager import DensityManager, NoveltyManager
-from saealib.surrogate.manager import EnsembleSurrogateManager, LocalSurrogateManager
+from saealib.surrogate.manager import (
+    CompositeSurrogateManager,
+    LocalSurrogateManager,
+    rank_weighted_combine,
+)
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
 
@@ -219,29 +223,29 @@ class TestPreSelectionStrategy:
 
 
 # ---------------------------------------------------------------------------
-# IndividualBasedStrategy + NoveltyManager (via EnsembleSurrogateManager)
+# IndividualBasedStrategy + NoveltyManager (via CompositeSurrogateManager)
 # ---------------------------------------------------------------------------
 
 
-def _make_ensemble_novelty() -> EnsembleSurrogateManager:
+def _make_ensemble_novelty() -> CompositeSurrogateManager:
     """Regression surrogate first (finite tell_f) + NoveltyManager second."""
-    return EnsembleSurrogateManager(
+    return CompositeSurrogateManager(
         [
             LocalSurrogateManager(RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()),
             NoveltyManager(k=3),
         ],
-        weights=np.array([0.7, 0.3]),
+        combine_fn=rank_weighted_combine(np.array([0.7, 0.3])),
     )
 
 
-def _make_ensemble_density() -> EnsembleSurrogateManager:
+def _make_ensemble_density() -> CompositeSurrogateManager:
     """Regression surrogate first (finite tell_f) + DensityManager second."""
-    return EnsembleSurrogateManager(
+    return CompositeSurrogateManager(
         [
             LocalSurrogateManager(RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()),
             DensityManager(eps=1.0),
         ],
-        weights=np.array([0.7, 0.3]),
+        combine_fn=rank_weighted_combine(np.array([0.7, 0.3])),
     )
 
 

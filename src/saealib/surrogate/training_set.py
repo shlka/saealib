@@ -24,6 +24,9 @@ Literature patterns covered by this module:
 | P5 | CSEA / pre-selection (general)         | ``KNNObjectiveSet``,             |
 |    |                                        | ``ArchiveObjectiveSet``          |
 +----+----------------------------------------+----------------------------------+
+| P6 | Constraint BO (Regis & Shoemaker 2005) | ``ConstraintObjectiveSet``,      |
+|    | Letham et al. (2019)                   | ``KNNConstraintObjectiveSet``    |
++----+----------------------------------------+----------------------------------+
 """
 
 from __future__ import annotations
@@ -145,6 +148,83 @@ class KNNObjectiveSet(TrainingSet):
             raise ValueError("KNNObjectiveSet requires candidate_x.")
         idx, _ = archive.get_knn(candidate_x, self.n_neighbors)
         return TrainingData(train_x=archive.x[idx], train_y=archive.f[idx])
+
+
+# ---------------------------------------------------------------------------
+# Constraint regression (raw g values)
+# ---------------------------------------------------------------------------
+
+
+class ConstraintObjectiveSet(TrainingSet):
+    """Use the entire archive as training data with raw constraint values.
+
+    Analogue of :class:`ArchiveObjectiveSet` for constraint surrogates.
+    Returns ``(archive.x, archive.g)`` so that a surrogate can learn to
+    predict the raw constraint values ``g(x)``.
+
+    Raises
+    ------
+    ValueError
+        If the archive has no constraint columns (``archive.g.shape[1] == 0``).
+        Use this class only with problems that define at least one constraint.
+    """
+
+    def build(
+        self,
+        archive: Archive,
+        population: Population | None,
+        ctx: OptimizationContext | None,
+        candidate_x: np.ndarray | None = None,
+    ) -> TrainingData:
+        """Return all archive points with raw constraint values."""
+        g = archive.g
+        if g.shape[1] == 0:
+            raise ValueError(
+                "ConstraintObjectiveSet requires at least one constraint "
+                "(archive.g has 0 columns)."
+            )
+        return TrainingData(train_x=archive.x, train_y=g)
+
+
+class KNNConstraintObjectiveSet(TrainingSet):
+    """Retrieve the *k* nearest archive neighbours of ``candidate_x``.
+
+    Analogue of :class:`KNNObjectiveSet` for constraint surrogates.
+    Returns the k-NN subset of ``(archive.x, archive.g)`` centred on
+    ``candidate_x``.
+
+    Parameters
+    ----------
+    n_neighbors:
+        Number of nearest neighbours to retrieve.
+
+    Raises
+    ------
+    ValueError
+        If ``candidate_x`` is None, or if the archive has no constraint columns.
+    """
+
+    def __init__(self, n_neighbors: int = 50) -> None:
+        self.n_neighbors = n_neighbors
+
+    def build(
+        self,
+        archive: Archive,
+        population: Population | None,
+        ctx: OptimizationContext | None,
+        candidate_x: np.ndarray | None = None,
+    ) -> TrainingData:
+        """Return k nearest-neighbour archive points with raw constraint values."""
+        if candidate_x is None:
+            raise ValueError("KNNConstraintObjectiveSet requires candidate_x.")
+        g = archive.g
+        if g.shape[1] == 0:
+            raise ValueError(
+                "KNNConstraintObjectiveSet requires at least one constraint "
+                "(archive.g has 0 columns)."
+            )
+        idx, _ = archive.get_knn(candidate_x, self.n_neighbors)
+        return TrainingData(train_x=archive.x[idx], train_y=g[idx])
 
 
 # ---------------------------------------------------------------------------

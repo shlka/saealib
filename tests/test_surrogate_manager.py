@@ -6,7 +6,7 @@ Tests cover:
 - _rank_normalize: rank-based normalization to [0, 1]
 - GlobalSurrogateManager: fits on full archive, batch predict and score
 - LocalSurrogateManager: KNN per candidate, per-candidate fit and score
-- EnsembleSurrogateManager: rank-normalized weighted aggregation of sub-managers
+- CompositeSurrogateManager: combines scores from multiple sub-managers via combine_fn
 """
 
 import numpy as np
@@ -21,12 +21,14 @@ from saealib.surrogate.archive_manager import (
     NoveltyManager,
 )
 from saealib.surrogate.manager import (
-    EnsembleSurrogateManager,
+    CompositeSurrogateManager,
     GlobalSurrogateManager,
     LocalSurrogateManager,
     SurrogateManager,
     _rank_normalize,
     _split_prediction,
+    product_combine,
+    rank_weighted_combine,
 )
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
@@ -458,87 +460,82 @@ class TestLocalSurrogateManager:
 
 
 # ===========================================================================
-# EnsembleSurrogateManager Tests
+# CompositeSurrogateManager Tests
 # ===========================================================================
-class TestEnsembleSurrogateManager:
-    """Tests for EnsembleSurrogateManager."""
+class TestCompositeSurrogateManager:
+    """Tests for CompositeSurrogateManager."""
 
     def test_empty_managers_raises_value_error(self) -> None:
         with pytest.raises(ValueError, match="at least one"):
-            EnsembleSurrogateManager([])
+            CompositeSurrogateManager([], combine_fn=product_combine)
 
-    def test_uniform_weights_by_default(self) -> None:
+    def test_product_combine_scores_shape(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
         m1 = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         m2 = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
-        ensemble = EnsembleSurrogateManager([m1, m2])
-        np.testing.assert_array_almost_equal(ensemble.weights, [0.5, 0.5])
+        mgr = CompositeSurrogateManager([m1, m2], combine_fn=product_combine)
+        scores, _ = mgr.score_candidates(candidates, archive_1obj)
+        assert scores.shape == (len(candidates),)
 
-    def test_custom_weights_are_normalized(self) -> None:
+    def test_rank_weighted_combine_scores_in_0_1(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
         m1 = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         m2 = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
-        ensemble = EnsembleSurrogateManager([m1, m2], weights=np.array([1.0, 3.0]))
-        np.testing.assert_array_almost_equal(ensemble.weights, [0.25, 0.75])
+        mgr = CompositeSurrogateManager([m1, m2], combine_fn=rank_weighted_combine())
+        scores, _ = mgr.score_candidates(candidates, archive_1obj)
+        assert np.all(scores >= 0.0)
+        assert np.all(scores <= 1.0)
 
-    def test_scores_shape(self, archive_1obj: Archive, candidates: np.ndarray) -> None:
+    def test_rank_weighted_combine_custom_weights(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
         m1 = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         m2 = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
-        ensemble = EnsembleSurrogateManager([m1, m2])
-        scores, _ = ensemble.score_candidates(candidates, archive_1obj)
+        mgr = CompositeSurrogateManager(
+            [m1, m2], combine_fn=rank_weighted_combine(np.array([1.0, 3.0]))
+        )
+        scores, _ = mgr.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
 
     def test_predictions_from_first_manager(
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
-        """EnsembleSurrogateManager returns predictions from the first sub-manager."""
+        """predictions always come from managers[0]."""
         m1 = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         m2 = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
-        ensemble = EnsembleSurrogateManager([m1, m2])
-        _, predictions = ensemble.score_candidates(candidates, archive_1obj)
+        mgr = CompositeSurrogateManager([m1, m2], combine_fn=product_combine)
+        _, predictions = mgr.score_candidates(candidates, archive_1obj)
         assert len(predictions) == len(candidates)
         for p in predictions:
             assert isinstance(p, SurrogatePrediction)
 
-    def test_scores_in_0_1_range(
-        self, archive_1obj: Archive, candidates: np.ndarray
-    ) -> None:
-        """Aggregated scores are rank-normalized weighted averages, so in [0, 1]."""
-        m1 = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        m2 = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        ensemble = EnsembleSurrogateManager([m1, m2])
-        scores, _ = ensemble.score_candidates(candidates, archive_1obj)
-        assert np.all(scores >= 0.0)
-        assert np.all(scores <= 1.0)
-
-    def test_single_manager_ensemble(
+    def test_single_manager(
         self,
         surrogate_1obj: RBFsurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
-        """An ensemble with one manager propagates scores correctly."""
         m = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        ensemble = EnsembleSurrogateManager([m])
-        scores, _ = ensemble.score_candidates(candidates, archive_1obj)
+        mgr = CompositeSurrogateManager([m], combine_fn=product_combine)
+        scores, _ = mgr.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
 
 
@@ -763,10 +760,10 @@ class TestNichingManager:
 
 
 # ===========================================================================
-# EnsembleSurrogateManager + ArchiveBasedManager Integration Tests
+# CompositeSurrogateManager + ArchiveBasedManager Integration Tests
 # ===========================================================================
-class TestEnsembleSurrogateManagerWithArchiveBased:
-    """Integration tests: EnsembleSurrogateManager with ArchiveBasedManager."""
+class TestCompositeSurrogateManagerWithArchiveBased:
+    """Integration tests: CompositeSurrogateManager with ArchiveBasedManager."""
 
     def test_regression_novelty_ensemble_scores_shape(
         self, archive_1obj: Archive, candidates: np.ndarray
@@ -774,10 +771,11 @@ class TestEnsembleSurrogateManagerWithArchiveBased:
         m_reg = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
-        ensemble = EnsembleSurrogateManager(
-            [m_reg, NoveltyManager(k=3)], weights=np.array([0.7, 0.3])
+        mgr = CompositeSurrogateManager(
+            [m_reg, NoveltyManager(k=3)],
+            combine_fn=rank_weighted_combine(np.array([0.7, 0.3])),
         )
-        scores, _ = ensemble.score_candidates(candidates, archive_1obj)
+        scores, _ = mgr.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
 
     def test_regression_novelty_ensemble_scores_in_0_1(
@@ -786,8 +784,10 @@ class TestEnsembleSurrogateManagerWithArchiveBased:
         m_reg = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
-        ensemble = EnsembleSurrogateManager([m_reg, NoveltyManager(k=3)])
-        scores, _ = ensemble.score_candidates(candidates, archive_1obj)
+        mgr = CompositeSurrogateManager(
+            [m_reg, NoveltyManager(k=3)], combine_fn=rank_weighted_combine()
+        )
+        scores, _ = mgr.score_candidates(candidates, archive_1obj)
         assert np.all(scores >= 0.0) and np.all(scores <= 1.0)
 
     def test_regression_first_tell_f_is_finite(
@@ -797,8 +797,10 @@ class TestEnsembleSurrogateManagerWithArchiveBased:
         m_reg = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
-        ensemble = EnsembleSurrogateManager([m_reg, NoveltyManager(k=3)])
-        _, preds = ensemble.score_candidates(candidates, archive_1obj)
+        mgr = CompositeSurrogateManager(
+            [m_reg, NoveltyManager(k=3)], combine_fn=rank_weighted_combine()
+        )
+        _, preds = mgr.score_candidates(candidates, archive_1obj)
         for p in preds:
             assert np.all(np.isfinite(p.tell_f))
 
@@ -806,8 +808,10 @@ class TestEnsembleSurrogateManagerWithArchiveBased:
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
         """ArchiveBasedManager alone → predictions have NaN tell_f."""
-        ensemble = EnsembleSurrogateManager([NoveltyManager(k=3)])
-        _, preds = ensemble.score_candidates(candidates, archive_1obj)
+        mgr = CompositeSurrogateManager(
+            [NoveltyManager(k=3)], combine_fn=rank_weighted_combine()
+        )
+        _, preds = mgr.score_candidates(candidates, archive_1obj)
         for p in preds:
             assert p.has_tell_f
             assert np.all(np.isnan(p.tell_f))
@@ -818,10 +822,11 @@ class TestEnsembleSurrogateManagerWithArchiveBased:
         m_reg = GlobalSurrogateManager(
             RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
-        ensemble = EnsembleSurrogateManager(
-            [m_reg, DensityManager(eps=0.5)], weights=np.array([0.6, 0.4])
+        mgr = CompositeSurrogateManager(
+            [m_reg, DensityManager(eps=0.5)],
+            combine_fn=rank_weighted_combine(np.array([0.6, 0.4])),
         )
-        scores, preds = ensemble.score_candidates(candidates, archive_1obj)
+        scores, preds = mgr.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
         for p in preds:
             assert np.all(np.isfinite(p.tell_f))
