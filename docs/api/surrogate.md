@@ -21,7 +21,9 @@
    saealib.SurrogateManager
    saealib.GlobalSurrogateManager
    saealib.LocalSurrogateManager
-   saealib.EnsembleSurrogateManager
+   saealib.CompositeSurrogateManager
+   saealib.product_combine
+   saealib.rank_weighted_combine
 ```
 
 ## RBF Surrogate
