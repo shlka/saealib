@@ -125,10 +125,12 @@ from saealib.surrogate.archive_manager import (
 )
 from saealib.surrogate.base import Surrogate
 from saealib.surrogate.manager import (
-    EnsembleSurrogateManager,
+    CompositeSurrogateManager,
     GlobalSurrogateManager,
     LocalSurrogateManager,
     SurrogateManager,
+    product_combine,
+    rank_weighted_combine,
 )
 from saealib.surrogate.per_objective import PerObjectiveSurrogate
 from saealib.surrogate.prediction import SurrogatePrediction
@@ -166,6 +168,7 @@ __all__ = [
     "ArchiveMixin",
     "CallbackManager",
     "Comparator",
+    "CompositeSurrogateManager",
     "Constraint",
     "ConstraintHandler",
     "Crossover",
@@ -179,7 +182,6 @@ __all__ = [
     "DecompositionComparator",
     "DensityManager",
     "Dominator",
-    "EnsembleSurrogateManager",
     "EpsilonConstraintHandler",
     "EpsilonDominanceComparator",
     "EpsilonDominator",
@@ -278,6 +280,8 @@ __all__ = [
     "maximize",
     "minimize",
     "non_dominated_sort",
+    "product_combine",
+    "rank_weighted_combine",
     "repair_clipping",
     "spea2_fitness",
     "stalled",

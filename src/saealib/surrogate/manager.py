@@ -5,11 +5,28 @@ Responsibility split:
   Surrogate           -- fits a model and predicts SurrogatePrediction
   AcquisitionFunction -- converts SurrogatePrediction to scalar scores
   SurrogateManager    -- coordinates the two above; exposes score_candidates()
+
+Classes
+-------
+GlobalSurrogateManager
+    Fits once on the full archive; batch predict and score.
+LocalSurrogateManager
+    Fits a local KNN model per candidate.
+CompositeSurrogateManager
+    Combines scores from multiple sub-managers via an injectable combine_fn.
+
+Combine functions
+-----------------
+product_combine
+    Element-wise product of score arrays (e.g. EI x PoF).
+rank_weighted_combine
+    Returns a combine function that rank-normalises then takes a weighted average.
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -242,37 +259,99 @@ class LocalSurrogateManager(SurrogateManager):
         return self._sanitize_nan(scores, predictions)
 
 
-class EnsembleSurrogateManager(SurrogateManager):
-    """
-    Surrogate manager that aggregates scores from multiple sub-managers.
+def product_combine(scores: list[np.ndarray]) -> np.ndarray:
+    """Combine scores by element-wise product.
 
-    Each sub-manager produces scores, which are rank-normalized to [0, 1]
-    before being aggregated via a weighted average. Rank normalization
-    ensures scores from managers with incompatible scales (e.g., EI vs.
-    raw mean) are made comparable before combining.
+    Parameters
+    ----------
+    scores : list[np.ndarray]
+        Score arrays, each shape ``(n_candidates,)``.
+
+    Returns
+    -------
+    np.ndarray
+        Element-wise product. shape: ``(n_candidates,)``.
+    """
+    return np.prod(np.stack(scores, axis=0), axis=0)
+
+
+def rank_weighted_combine(
+    weights: np.ndarray | None = None,
+) -> Callable[[list[np.ndarray]], np.ndarray]:
+    """Return a combine function that rank-normalises then takes a weighted average.
+
+    Parameters
+    ----------
+    weights : np.ndarray or None
+        Weights for each manager. If None, uniform weights are used.
+        Need not sum to 1; they are normalised internally.
+
+    Returns
+    -------
+    callable
+        A function ``(list[np.ndarray]) -> np.ndarray`` suitable for
+        ``CompositeSurrogateManager``.
+    """
+    if weights is not None:
+        w = np.asarray(weights, dtype=float)
+        w = w / w.sum()
+    else:
+        w = None  # resolved lazily to uniform at call time
+
+    def _combine(score_list: list[np.ndarray]) -> np.ndarray:
+        normalized = [_rank_normalize(s) for s in score_list]
+        _w = w if w is not None else np.full(len(normalized), 1.0 / len(normalized))
+        return (np.stack(normalized, axis=0) * _w[:, None]).sum(axis=0)
+
+    return _combine
+
+
+class CompositeSurrogateManager(SurrogateManager):
+    """Surrogate manager that combines scores from multiple sub-managers.
+
+    Each sub-manager's ``score_candidates`` is called independently.
+    The resulting score arrays are combined by ``combine_fn``.
+    Predictions (for ``tell_f`` assignment) are taken from ``managers[0]``.
 
     Parameters
     ----------
     managers : list[SurrogateManager]
-        Sub-managers to aggregate.
-    weights : np.ndarray or None
-        Weights for the weighted average. shape: (len(managers),).
-        If None, uniform weights are used.
+        Sub-managers to combine. Must be non-empty.
+        ``managers[0]`` provides the ``SurrogatePrediction`` objects returned
+        by ``score_candidates``; its predicted objective values flow into
+        ``assign_tell_f`` in the strategies.
+    combine_fn : callable(list[np.ndarray]) -> np.ndarray
+        Accepts a list of score arrays (each shape ``(n_candidates,)``) and
+        returns a single combined score array of the same shape.
+        Use :func:`product_combine` for element-wise product (e.g. EI x PoF)
+        or :func:`rank_weighted_combine` for rank-normalised weighted average.
+
+    Examples
+    --------
+    EI x PoF (objective x feasibility product):
+
+    >>> manager = CompositeSurrogateManager(
+    ...     [ei_manager, pof_manager],
+    ...     combine_fn=product_combine,
+    ... )
+
+    Rank-normalised ensemble (equivalent to former EnsembleSurrogateManager):
+
+    >>> manager = CompositeSurrogateManager(
+    ...     [m1, m2],
+    ...     combine_fn=rank_weighted_combine(weights=[0.3, 0.7]),
+    ... )
     """
 
     def __init__(
         self,
         managers: list[SurrogateManager],
-        weights: np.ndarray | None = None,
+        combine_fn: Callable[[list[np.ndarray]], np.ndarray],
     ):
         if not managers:
-            raise ValueError("EnsembleSurrogateManager requires at least one manager.")
+            raise ValueError("CompositeSurrogateManager requires at least one manager.")
         self.managers = managers
-        if weights is not None:
-            w = np.asarray(weights, dtype=float)
-            self.weights = w / w.sum()
-        else:
-            self.weights = np.full(len(managers), 1.0 / len(managers))
+        self.combine_fn = combine_fn
 
     def score_candidates(
         self,
@@ -281,10 +360,9 @@ class EnsembleSurrogateManager(SurrogateManager):
         provider: ComponentProvider | None = None,
         ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
-        """
-        Aggregate rank-normalized scores from all sub-managers.
+        """Combine scores from all sub-managers using ``combine_fn``.
 
-        Returns the predictions from the first sub-manager as representative.
+        Returns the predictions from ``managers[0]`` as representative.
         """
         all_scores: list[np.ndarray] = []
         first_predictions: list[SurrogatePrediction] | None = None
@@ -293,13 +371,12 @@ class EnsembleSurrogateManager(SurrogateManager):
             scores, preds = manager.score_candidates(
                 candidates_x, archive, provider, ctx
             )
-            all_scores.append(_rank_normalize(scores))
+            all_scores.append(scores)
             if i == 0:
                 first_predictions = preds
 
-        combined = np.stack(all_scores, axis=0)  # (n_managers, n_candidates)
-        aggregated = (self.weights[:, None] * combined).sum(axis=0)  # (n_candidates,)
-        return aggregated, first_predictions  # type: ignore[return-value]
+        combined = self.combine_fn(all_scores)
+        return self._sanitize_nan(combined, first_predictions)  # type: ignore[arg-type]
 
 
 def _split_prediction(prediction: SurrogatePrediction) -> list[SurrogatePrediction]:
