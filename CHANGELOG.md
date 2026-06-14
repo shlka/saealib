@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0b4] - 2026-06-15
+
+Multi-objective optimization and constraint surrogate — full MOO algorithm stack, decomposition strategies, and surrogate-assisted constraint handling.
+
+### Added
+
+- **Pareto Archive**: non-dominated solution archive maintaining the current Pareto front across generations ([#76](https://github.com/shlka/saealib/issues/76))
+- **Multi-objective comparators**: SPEA2 fitness, hypervolume contribution, and ε-dominance comparators for population selection ([#74](https://github.com/shlka/saealib/issues/74))
+- **MOO acquisition functions**: ParEGO (scalarized EI), SMS-EGO (hypervolume-based), and HV-based acquisition for multi-objective surrogate-assisted search ([#75](https://github.com/shlka/saealib/issues/75))
+- **MOEA/D decomposition strategies**: Tchebycheff, PBI, and WeightedSum decomposition for the MOEA/D framework ([#88](https://github.com/shlka/saealib/issues/88))
+- **Reference-point-based MOO**: NSGA-III and R-NSGA-II algorithms for many-objective optimization ([#77](https://github.com/shlka/saealib/issues/77))
+- **`EpsilonConstraintHandler`**: dynamic ε-constraint method that progressively tightens the feasibility threshold over generations ([#109](https://github.com/shlka/saealib/issues/109))
+- **`GradientRepairHandler`**: gradient-based constraint repair that projects infeasible candidates onto the feasible boundary ([#110](https://github.com/shlka/saealib/issues/110))
+- **Constraint surrogate path**: `ConstraintObjectiveSet` and `KNNConstraintObjectiveSet` training sets for `g`-value surrogate training; `ProductOfFeasibility` acquisition function combining per-constraint PoF scores into a joint feasibility score ([#86](https://github.com/shlka/saealib/issues/86))
+
+### Changed
+
+- **`CompositeSurrogateManager` replaces `EnsembleSurrogateManager`** (breaking): composable manager that combines independent surrogate managers (e.g., f-surrogate × PoF-manager) with explicit score aggregation
+- **`direction` replaces `weights` in Pareto-based comparators** (breaking): comparators now accept `direction` (±1 per objective) to declare minimization/maximization per dimension, decoupling sign convention from scalarization magnitude ([#118](https://github.com/shlka/saealib/issues/118))
+
+### Performance
+
+- Efficient Non-Dominated Sort: eliminated O(N²) Python loop, replacing with a vectorized dominance check ([#89](https://github.com/shlka/saealib/issues/89))
+
 ## [0.1.0b3] - 2026-06-08
 
 Evaluation and constraint refactors — modular evaluation, constraint handling, and composable termination.
