@@ -12,6 +12,7 @@ from saealib.acquisition import (
     MaxUncertainty,
     MeanPrediction,
     ProbabilityOfFeasibility,
+    ProductOfFeasibility,
 )
 from saealib.algorithms.base import Algorithm
 from saealib.algorithms.ga import GA
@@ -236,6 +237,7 @@ __all__ = [
     "PreSelectionStrategy",
     "ProbabilityOfFeasibility",
     "Problem",
+    "ProductOfFeasibility",
     "RBFsurrogate",
     "RNSGA2Comparator",
     "Result",

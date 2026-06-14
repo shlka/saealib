@@ -12,7 +12,7 @@ from saealib.acquisition.ei import ExpectedImprovement
 from saealib.acquisition.lcb import LowerConfidenceBound
 from saealib.acquisition.mean import MeanPrediction
 from saealib.acquisition.parego import ParEGOAcquisition
-from saealib.acquisition.pof import ProbabilityOfFeasibility
+from saealib.acquisition.pof import ProbabilityOfFeasibility, ProductOfFeasibility
 from saealib.acquisition.smsego import SMSEGOAcquisition
 from saealib.acquisition.uncertainty import MaxUncertainty
 
@@ -25,5 +25,6 @@ __all__ = [
     "MeanPrediction",
     "ParEGOAcquisition",
     "ProbabilityOfFeasibility",
+    "ProductOfFeasibility",
     "SMSEGOAcquisition",
 ]
