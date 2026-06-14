@@ -426,12 +426,21 @@ class SingleObjectiveComparator(Comparator):
 
     def __init__(
         self,
-        weight: float = 1.0,
+        direction: float = 1.0,
         eps: float | None = None,
         *,
+        weight: float | None = None,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
     ):
+        if weight is not None:
+            warnings.warn(
+                "SingleObjectiveComparator(weight=...) is deprecated"
+                " and will be removed in 0.1.0. Use direction=.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            direction = weight
         if eps is not None:
             warnings.warn(
                 "SingleObjectiveComparator(eps=...) is deprecated"
@@ -440,7 +449,7 @@ class SingleObjectiveComparator(Comparator):
                 stacklevel=2,
             )
             eps_cv = eps_obj = eps
-        super().__init__(np.array([weight]), eps_cv, eps_obj)
+        super().__init__(np.array([direction]), eps_cv, eps_obj, direction=np.array([direction]))
 
     def sort_population(self, population: Population) -> np.ndarray:
         """
@@ -510,7 +519,7 @@ class SingleObjectiveComparator(Comparator):
             Sorted indices of the solutions.
         """
         cv_key = np.where(cv > self.eps_cv, cv, 0)
-        obj_key = fitness.flatten() * self.weights[0]
+        obj_key = fitness.flatten() * self.direction[0]
         return np.lexsort((-obj_key, cv_key))
 
 

@@ -641,7 +641,7 @@ class Problem:
             self.comparator = comparator
         elif n_obj == 1:
             self.comparator = SingleObjectiveComparator(
-                weight=direction[0], eps_cv=eps_cv, eps_obj=eps_obj
+                direction=direction[0], eps_cv=eps_cv, eps_obj=eps_obj
             )
         else:
             self.comparator = NSGA2Comparator(

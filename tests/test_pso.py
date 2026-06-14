@@ -52,7 +52,7 @@ def _make_problem() -> Problem:
         direction=np.array([-1.0]),
         lb=[-5.0] * DIM,
         ub=[5.0] * DIM,
-        comparator=SingleObjectiveComparator(weight=-1.0),
+        comparator=SingleObjectiveComparator(direction=-1.0),
     )
 
 
