@@ -74,7 +74,7 @@ def _make_archive_with_g(n: int = 10) -> Archive:
     for i in range(n):
         x = rng.uniform(-2.0, 2.0, size=DIM)
         f = np.array([np.sum(x**2)])
-        g = np.array([float(i), float(-i)])   # known values for assertion
+        g = np.array([float(i), float(-i)])  # known values for assertion
         arc.add(x=x, f=f, g=g, cv=0.0)
     return arc
 
@@ -209,7 +209,7 @@ class TestConstraintObjectiveSet:
         )
 
     def test_raises_on_zero_constraints(self) -> None:
-        arc = _make_archive(5)   # uses _ATTRS with shape=(0,) for g
+        arc = _make_archive(5)  # uses _ATTRS with shape=(0,) for g
         ts = ConstraintObjectiveSet()
         with pytest.raises(ValueError, match="0 columns"):
             ts.build(arc, None, None)
