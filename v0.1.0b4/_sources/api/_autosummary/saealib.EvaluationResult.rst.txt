@@ -1,0 +1,31 @@
+﻿saealib.EvaluationResult
+========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: EvaluationResult
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~EvaluationResult.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.EvaluationResult.__init__
+
+
+

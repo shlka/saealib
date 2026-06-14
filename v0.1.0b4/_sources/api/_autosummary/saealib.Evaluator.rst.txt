@@ -1,0 +1,35 @@
+﻿saealib.Evaluator
+=================
+
+.. currentmodule:: saealib
+
+.. autoclass:: Evaluator
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~Evaluator.__init__
+   ~Evaluator.evaluate_batch
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.Evaluator.__init__
+
+
+.. automethod:: saealib.Evaluator.evaluate_batch
+
+
+

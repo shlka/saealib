@@ -1,0 +1,35 @@
+﻿saealib.CompositeSurrogateManager
+=================================
+
+.. currentmodule:: saealib
+
+.. autoclass:: CompositeSurrogateManager
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~CompositeSurrogateManager.__init__
+   ~CompositeSurrogateManager.score_candidates
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.CompositeSurrogateManager.__init__
+
+
+.. automethod:: saealib.CompositeSurrogateManager.score_candidates
+
+
+
