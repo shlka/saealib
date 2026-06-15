@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import warnings
 import weakref
+from collections.abc import Hashable
 from dataclasses import dataclass
 from types import MappingProxyType
-from collections.abc import Hashable
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 import numpy as np
