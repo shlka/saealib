@@ -55,7 +55,7 @@ class TestInequalityConstraint:
         assert issubclass(Constraint, InequalityConstraint)
 
     def test_constraint_alias_warns(self):
-        with pytest.warns(DeprecationWarning):
+        with pytest.warns(FutureWarning):
             Constraint(lambda x: float(x[0]))
 
     def test_inequality_constraint_does_not_warn(self):
