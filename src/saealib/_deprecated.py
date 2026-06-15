@@ -10,7 +10,9 @@ from typing import TypeVar
 F = TypeVar("F", bound=Callable)
 
 
-def warn_deprecated(old: str, replacement: str, version: str, stacklevel: int = 2) -> None:
+def warn_deprecated(
+    old: str, replacement: str, version: str, stacklevel: int = 2
+) -> None:
     """Emit a FutureWarning for a deprecated name."""
     warnings.warn(
         f"'{old}' is deprecated and will be removed in {version}. "
@@ -21,7 +23,7 @@ def warn_deprecated(old: str, replacement: str, version: str, stacklevel: int = 
 
 
 def deprecated_param(old: str, new: str, version: str) -> Callable[[F], F]:
-    """Decorator: transparently rename a kwarg with a FutureWarning."""
+    """Transparently rename a kwarg with a FutureWarning."""
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
@@ -37,7 +39,7 @@ def deprecated_param(old: str, new: str, version: str) -> Callable[[F], F]:
 
 
 def deprecated_class(replacement: str) -> Callable[[type], type]:
-    """Decorator: emit FutureWarning when a deprecated class is instantiated."""
+    """Emit FutureWarning when a deprecated class is instantiated."""
 
     def decorator(cls: type) -> type:
         original_init = cls.__init__

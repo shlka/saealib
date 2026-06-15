@@ -10,9 +10,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Protocol
 
-from saealib._deprecated import deprecated_param, warn_deprecated
-
 import numpy as np
+
+from saealib._deprecated import deprecated_param, warn_deprecated
 
 if TYPE_CHECKING:
     from saealib.population import Population

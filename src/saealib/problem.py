@@ -11,10 +11,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from saealib._deprecated import deprecated_class, warn_deprecated
-
 import numpy as np
 
+from saealib._deprecated import deprecated_class, warn_deprecated
 from saealib.comparators import (
     Comparator,
     NSGA2Comparator,
