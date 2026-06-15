@@ -168,6 +168,44 @@ class SurrogateManager(ABC):
         )
         return new
 
+    def on_generation_end(
+        self,
+        gen: int,
+        archive: Archive,
+        ctx: OptimizationContext | None = None,
+    ) -> None:
+        """End-of-generation hook; override to update internal state."""
+
+    def with_on_generation_end(
+        self,
+        fn: Callable[[int, Archive, OptimizationContext | None], None],
+    ) -> SurrogateManager:
+        """Return a copy of this manager with ``fn`` appended to the hook.
+
+        Parameters
+        ----------
+        fn : callable
+            ``fn(gen, archive, ctx) -> None``
+
+        Returns
+        -------
+        SurrogateManager
+            Shallow copy with the hook registered.
+        """
+        new = copy.copy(self)
+        prev = self.on_generation_end
+
+        def _chained(
+            gen: int,
+            archive: Archive,
+            ctx: OptimizationContext | None = None,
+        ) -> None:
+            prev(gen, archive, ctx)
+            fn(gen, archive, ctx)
+
+        new.on_generation_end = _chained
+        return new
+
 
 class GlobalSurrogateManager(SurrogateManager):
     """
