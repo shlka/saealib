@@ -1,8 +1,20 @@
+from saealib.comparators.comparators import (
+    Comparator,
+    EpsilonDominanceComparator,
+    HypervolumeComparator,
+    NSGA2Comparator,
+    NSGA3Comparator,
+    ParetoComparator,
+    RNSGA2Comparator,
+    SingleObjectiveComparator,
+    SPEA2Comparator,
+    WeightedSumComparator,
+)
 from saealib.comparators.dominance import (
+    _PARETO_DOMINATOR,
     Dominator,
     EpsilonDominator,
     ParetoDominator,
-    _PARETO_DOMINATOR,
     _dominance_matrix,
     _pareto_dominates,
 )
@@ -14,18 +26,6 @@ from saealib.comparators.nds import (
     non_dominated_sort,
     spea2_fitness,
 )
-from saealib.comparators.comparators import (
-    Comparator,
-    EpsilonDominanceComparator,
-    HypervolumeComparator,
-    NSGA2Comparator,
-    NSGA3Comparator,
-    ParetoComparator,
-    RNSGA2Comparator,
-    SPEA2Comparator,
-    SingleObjectiveComparator,
-    WeightedSumComparator,
-)
 
 __all__ = [
     "Comparator",
@@ -33,14 +33,14 @@ __all__ = [
     "EpsilonDominanceComparator",
     "EpsilonDominator",
     "HypervolumeComparator",
-    "NonDominatedSorter",
     "NSGA2Comparator",
     "NSGA3Comparator",
+    "NonDominatedSorter",
     "ParetoComparator",
     "ParetoDominator",
     "RNSGA2Comparator",
-    "SingleObjectiveComparator",
     "SPEA2Comparator",
+    "SingleObjectiveComparator",
     "WeightedSumComparator",
     "crowding_distance",
     "crowding_distance_all_fronts",

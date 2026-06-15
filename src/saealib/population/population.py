@@ -12,7 +12,7 @@ import numpy as np
 from typing_extensions import Self
 
 if TYPE_CHECKING:
-    from saealib.comparators import Dominator
+    pass
 
 T_Population = TypeVar("T_Population", bound="Population")
 T_Individual = TypeVar("T_Individual", bound="Individual")

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from saealib._deprecated import deprecated_class, warn_deprecated
+from saealib._deprecated import deprecated_class
 
 if TYPE_CHECKING:
     from saealib.population import Population

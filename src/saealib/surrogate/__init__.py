@@ -5,6 +5,14 @@ from saealib.surrogate.archive_manager import (
     NoveltyManager,
 )
 from saealib.surrogate.base import Surrogate
+from saealib.surrogate.manager import (
+    CompositeSurrogateManager,
+    GlobalSurrogateManager,
+    LocalSurrogateManager,
+    SurrogateManager,
+    product_combine,
+    rank_weighted_combine,
+)
 from saealib.surrogate.per_objective import PerObjectiveSurrogate
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
@@ -16,14 +24,6 @@ from saealib.surrogate.sklearn_surrogate import (
     SklearnSurrogate,
     SVMSurrogate,
     XGBSurrogate,
-)
-from saealib.surrogate.manager import (
-    CompositeSurrogateManager,
-    GlobalSurrogateManager,
-    LocalSurrogateManager,
-    SurrogateManager,
-    product_combine,
-    rank_weighted_combine,
 )
 from saealib.surrogate.torch_surrogate import TorchSurrogate
 from saealib.surrogate.training_set import (
