@@ -138,7 +138,7 @@ from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
 from saealib.surrogate.sklearn_surrogate import (
     DTSurrogate,
-    GPSurrogate,
+    GPRSurrogate,
     LGBMSurrogate,
     NNSurrogate,
     SklearnSurrogate,
@@ -191,7 +191,7 @@ __all__ = [
     "Evaluator",
     "Event",
     "ExpectedImprovement",
-    "GPSurrogate",
+    "GPRSurrogate",
     "GenerationBasedStrategy",
     "GenerationEndEvent",
     "GenerationStartEvent",
@@ -289,3 +289,11 @@ __all__ = [
     "stalled",
     "uniform_weight_vectors",
 ]
+
+
+def __getattr__(name: str) -> object:
+    if name == "GPSurrogate":
+        from saealib.surrogate._deprecated import GPSurrogate
+
+        return GPSurrogate
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
