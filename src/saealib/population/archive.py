@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from saealib.population.base import Individual, Population, PopulationAttribute
+from saealib.population.population import Individual, Population, PopulationAttribute
 
 if TYPE_CHECKING:
     from saealib.comparators import Dominator

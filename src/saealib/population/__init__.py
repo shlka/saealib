@@ -1,4 +1,4 @@
-from saealib.population.base import (
+from saealib.population.population import (
     Individual,
     Population,
     PopulationAttribute,
