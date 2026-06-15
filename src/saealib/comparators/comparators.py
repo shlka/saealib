@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from saealib._deprecated import deprecated_param, warn_deprecated
-from saealib.dominance import (
+from saealib.comparators.dominance import (
     _PARETO_DOMINATOR,  # noqa: F401
     Dominator,
     EpsilonDominator,
@@ -21,7 +21,7 @@ from saealib.dominance import (
     _dominance_matrix,  # noqa: F401
     _pareto_dominates,  # noqa: F401
 )
-from saealib.nds import (
+from saealib.comparators.nds import (
     NonDominatedSorter,
     crowding_distance,  # noqa: F401
     crowding_distance_all_fronts,
