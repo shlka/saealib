@@ -16,7 +16,6 @@ from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationContext
-    from saealib.optimizer import ComponentProvider
     from saealib.population import Archive
 
 
@@ -55,7 +54,6 @@ class ArchiveBasedManager(SurrogateManager):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        provider: ComponentProvider | None = None,
         ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """Compute scores and wrap results in SurrogatePrediction with tell_f=NaN."""

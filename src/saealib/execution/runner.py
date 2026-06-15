@@ -48,16 +48,16 @@ class Runner:
         ctx = opt.initializer.initialize(opt, opt.problem)
         ctx.comparator.eps_cv = ctx.problem.handler.feasibility_threshold
 
-        opt.dispatch(RunStartEvent(ctx=ctx, provider=opt))
+        opt.dispatch(RunStartEvent(ctx=ctx))
         yield ctx
 
         while not opt.termination.is_terminated(ctx):
-            opt.dispatch(GenerationStartEvent(ctx=ctx, provider=opt))
+            opt.dispatch(GenerationStartEvent(ctx=ctx))
             opt.strategy.step(ctx, opt)
             handler = ctx.problem.handler
             handler.on_generation_end(ctx.gen, ctx.population)
             ctx.comparator.eps_cv = handler.feasibility_threshold
-            opt.dispatch(GenerationEndEvent(ctx=ctx, provider=opt))
+            opt.dispatch(GenerationEndEvent(ctx=ctx))
             yield ctx
 
-        opt.dispatch(RunEndEvent(ctx=ctx, provider=opt))
+        opt.dispatch(RunEndEvent(ctx=ctx))

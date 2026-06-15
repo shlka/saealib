@@ -126,24 +126,20 @@ class GA(Algorithm):
                 c = self.crossover.crossover(parent, rng=ctx.rng)
             else:
                 c = parent[:n_children].copy()
+            c = self.crossover.post_crossover(c, parent, ctx.rng, ctx)
             cand[i * n_children : (i + 1) * n_children] = c
         for i in range(len(cand)):
             cand[i] = handler.repair(cand[i], constraints, lb, ub)
-        post_co = PostCrossoverEvent(ctx=ctx, provider=provider, candidates=cand)
-        provider.dispatch(post_co)
-        cand = post_co.candidates
+        provider.dispatch(PostCrossoverEvent(ctx=ctx, candidates=cand))
 
         cand_len = len(cand)
         for i in range(cand_len):
             cand[i] = self.mutation.mutate(cand[i], (lb, ub), rng=ctx.rng)
+            cand[i] = self.mutation.post_mutation(cand[i], (lb, ub), ctx.rng, ctx)
             cand[i] = handler.repair(cand[i], constraints, lb, ub)
-        post_mut = PostMutationEvent(ctx=ctx, provider=provider, candidates=cand)
-        provider.dispatch(post_mut)
-        cand = post_mut.candidates
+        provider.dispatch(PostMutationEvent(ctx=ctx, candidates=cand))
 
-        post_ask = PostAskEvent(ctx=ctx, provider=provider, candidates=cand)
-        provider.dispatch(post_ask)
-        cand = post_ask.candidates
+        provider.dispatch(PostAskEvent(ctx=ctx, candidates=cand))
 
         cand_pop = ctx.population.empty_like(capacity=target)
         cand_pop.extend({"x": cand[:target]})

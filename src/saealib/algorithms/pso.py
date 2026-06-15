@@ -180,8 +180,7 @@ class PSO(Algorithm):
             }
         )
 
-        post_ask = PostAskEvent(ctx=ctx, provider=provider, candidates=x_new)
-        provider.dispatch(post_ask)
+        provider.dispatch(PostAskEvent(ctx=ctx, candidates=x_new))
 
         return cand_pop
 

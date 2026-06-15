@@ -5,7 +5,6 @@ Tests cover:
 - CallbackManager: register, dispatch, unregister, replace
 - Event hierarchy: base class and subclass field definitions
 - Built-in handlers: logging_generation, logging_generation_hv
-- PostSurrogateFitEvent dispatch from SurrogateManager implementations
 - PostEvaluationEvent dispatch from IndividualBasedStrategy
 """
 
@@ -17,7 +16,6 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from saealib.acquisition import MeanPrediction
 from saealib.callback import (
     CallbackManager,
     Event,
@@ -39,14 +37,7 @@ from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationContext
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
-from saealib.surrogate.manager import (
-    CompositeSurrogateManager,
-    GlobalSurrogateManager,
-    LocalSurrogateManager,
-    product_combine,
-)
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
-from saealib.surrogate.training_set import KNNObjectiveSet
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -136,35 +127,11 @@ def cbmanager() -> CallbackManager:
     return CallbackManager()
 
 
-@pytest.fixture
-def provider() -> _MockProvider:
-    return _MockProvider()
-
-
-@pytest.fixture
-def archive() -> Archive:
-    return _make_archive()
-
-
-@pytest.fixture
-def candidates() -> np.ndarray:
-    rng = np.random.default_rng(7)
-    return rng.uniform(-1.0, 1.0, size=(5, DIM))
-
-
-@pytest.fixture
-def ctx(archive: Archive) -> OptimizationContext:
-    return _make_ctx(archive=archive)
-
-
 # ===========================================================================
 # CallbackManager Tests
 # ===========================================================================
 class TestCallbackManager:
     """Tests for CallbackManager: register, dispatch, unregister, replace."""
-
-    def _event(self, ctx, provider) -> RunStartEvent:
-        return RunStartEvent(ctx=ctx, provider=provider)
 
     def test_register_stores_handler(self, cbmanager: CallbackManager) -> None:
         handler = MagicMock()
@@ -174,9 +141,8 @@ class TestCallbackManager:
     def test_dispatch_calls_handler(self, cbmanager: CallbackManager) -> None:
         handler = MagicMock()
         cbmanager.register(RunStartEvent, handler)
-        prov = _MockProvider()
         ctx = _make_ctx()
-        event = RunStartEvent(ctx=ctx, provider=prov)
+        event = RunStartEvent(ctx=ctx)
         cbmanager.dispatch(event)
         handler.assert_called_once_with(event)
 
@@ -185,9 +151,8 @@ class TestCallbackManager:
     ) -> None:
         received = []
         cbmanager.register(RunStartEvent, received.append)
-        prov = _MockProvider()
         ctx = _make_ctx()
-        event = RunStartEvent(ctx=ctx, provider=prov)
+        event = RunStartEvent(ctx=ctx)
         cbmanager.dispatch(event)
         assert received[0] is event
 
@@ -198,9 +163,8 @@ class TestCallbackManager:
         cbmanager.register(RunStartEvent, lambda _: order.append(1))
         cbmanager.register(RunStartEvent, lambda _: order.append(2))
         cbmanager.register(RunStartEvent, lambda _: order.append(3))
-        prov = _MockProvider()
         ctx = _make_ctx()
-        cbmanager.dispatch(RunStartEvent(ctx=ctx, provider=prov))
+        cbmanager.dispatch(RunStartEvent(ctx=ctx))
         assert order == [1, 2, 3]
 
     def test_dispatch_ignores_other_event_types(
@@ -208,25 +172,22 @@ class TestCallbackManager:
     ) -> None:
         handler = MagicMock()
         cbmanager.register(RunEndEvent, handler)
-        prov = _MockProvider()
         ctx = _make_ctx()
-        cbmanager.dispatch(RunStartEvent(ctx=ctx, provider=prov))
+        cbmanager.dispatch(RunStartEvent(ctx=ctx))
         handler.assert_not_called()
 
     def test_dispatch_with_no_handlers_does_not_raise(
         self, cbmanager: CallbackManager
     ) -> None:
-        prov = _MockProvider()
         ctx = _make_ctx()
-        cbmanager.dispatch(RunStartEvent(ctx=ctx, provider=prov))  # should not raise
+        cbmanager.dispatch(RunStartEvent(ctx=ctx))  # should not raise
 
     def test_unregister_removes_handler(self, cbmanager: CallbackManager) -> None:
         handler = MagicMock()
         cbmanager.register(RunStartEvent, handler)
         cbmanager.unregister(RunStartEvent, handler)
-        prov = _MockProvider()
         ctx = _make_ctx()
-        cbmanager.dispatch(RunStartEvent(ctx=ctx, provider=prov))
+        cbmanager.dispatch(RunStartEvent(ctx=ctx))
         handler.assert_not_called()
 
     def test_unregister_unknown_raises_value_error(
@@ -241,9 +202,8 @@ class TestCallbackManager:
         new = MagicMock()
         cbmanager.register(RunStartEvent, old)
         cbmanager.replace(RunStartEvent, old, new)
-        prov = _MockProvider()
         ctx = _make_ctx()
-        cbmanager.dispatch(RunStartEvent(ctx=ctx, provider=prov))
+        cbmanager.dispatch(RunStartEvent(ctx=ctx))
         old.assert_not_called()
         new.assert_called_once()
 
@@ -267,9 +227,8 @@ class TestCallbackManager:
             order.append("new")
 
         cbmanager.replace(RunStartEvent, h2, new)
-        prov = _MockProvider()
         ctx = _make_ctx()
-        cbmanager.dispatch(RunStartEvent(ctx=ctx, provider=prov))
+        cbmanager.dispatch(RunStartEvent(ctx=ctx))
         assert order == ["h1", "new", "h3"]
 
     def test_replace_unknown_old_raises_value_error(
@@ -289,9 +248,8 @@ class TestCallbackManager:
 
         cbmanager.register(RunStartEvent, handler)
         cbmanager.register(RunStartEvent, handler)
-        prov = _MockProvider()
         ctx = _make_ctx()
-        cbmanager.dispatch(RunStartEvent(ctx=ctx, provider=prov))
+        cbmanager.dispatch(RunStartEvent(ctx=ctx))
         assert counter[0] == 2
 
 
@@ -301,15 +259,10 @@ class TestCallbackManager:
 class TestEventClasses:
     """Tests that event dataclasses expose the expected fields."""
 
-    def _prov(self) -> _MockProvider:
-        return _MockProvider()
-
-    def test_event_requires_ctx_and_provider(self) -> None:
-        prov = self._prov()
+    def test_event_has_ctx(self) -> None:
         ctx = _make_ctx()
-        e = RunStartEvent(ctx=ctx, provider=prov)
+        e = RunStartEvent(ctx=ctx)
         assert e.ctx is ctx
-        assert e.provider is prov
 
     @pytest.mark.parametrize(
         "cls",
@@ -321,55 +274,47 @@ class TestEventClasses:
         ],
     )
     def test_lifecycle_events_are_event_subclasses(self, cls) -> None:
-        prov = self._prov()
         ctx = _make_ctx()
-        e = cls(ctx=ctx, provider=prov)
+        e = cls(ctx=ctx)
         assert isinstance(e, Event)
 
     def test_post_crossover_event_has_candidates(self) -> None:
-        prov = self._prov()
         ctx = _make_ctx()
         cand = np.zeros((3, DIM))
-        e = PostCrossoverEvent(ctx=ctx, provider=prov, candidates=cand)
+        e = PostCrossoverEvent(ctx=ctx, candidates=cand)
         np.testing.assert_array_equal(e.candidates, cand)
 
     def test_post_mutation_event_has_candidates(self) -> None:
-        prov = self._prov()
         ctx = _make_ctx()
         cand = np.ones((4, DIM))
-        e = PostMutationEvent(ctx=ctx, provider=prov, candidates=cand)
+        e = PostMutationEvent(ctx=ctx, candidates=cand)
         np.testing.assert_array_equal(e.candidates, cand)
 
     def test_post_ask_event_has_candidates(self) -> None:
-        prov = self._prov()
         ctx = _make_ctx()
         cand = np.eye(DIM)
-        e = PostAskEvent(ctx=ctx, provider=prov, candidates=cand)
+        e = PostAskEvent(ctx=ctx, candidates=cand)
         np.testing.assert_array_equal(e.candidates, cand)
 
     def test_surrogate_start_event_has_offspring(self) -> None:
-        prov = self._prov()
         ctx = _make_ctx()
         pop = _make_population(3)
-        e = SurrogateStartEvent(ctx=ctx, provider=prov, offspring=pop)
+        e = SurrogateStartEvent(ctx=ctx, offspring=pop)
         assert e.offspring is pop
 
     def test_surrogate_end_event_has_offspring(self) -> None:
-        prov = self._prov()
         ctx = _make_ctx()
         pop = _make_population(3)
-        e = SurrogateEndEvent(ctx=ctx, provider=prov, offspring=pop)
+        e = SurrogateEndEvent(ctx=ctx, offspring=pop)
         assert e.offspring is pop
 
     def test_post_surrogate_fit_event_fields(self) -> None:
-        prov = self._prov()
         ctx = _make_ctx()
         surrogate = RBFsurrogate(gaussian_kernel, DIM)
         train_x = np.zeros((10, DIM))
         train_f = np.zeros((10, N_OBJ))
         e = PostSurrogateFitEvent(
             ctx=ctx,
-            provider=prov,
             surrogate=surrogate,
             train_x=train_x,
             train_f=train_f,
@@ -379,24 +324,21 @@ class TestEventClasses:
         np.testing.assert_array_equal(e.train_f, train_f)
 
     def test_post_surrogate_fit_event_defaults_none(self) -> None:
-        prov = self._prov()
         ctx = _make_ctx()
-        e = PostSurrogateFitEvent(ctx=ctx, provider=prov)
+        e = PostSurrogateFitEvent(ctx=ctx)
         assert e.surrogate is None
         assert e.train_x is None
         assert e.train_f is None
 
     def test_post_evaluation_event_has_offspring(self) -> None:
-        prov = self._prov()
         ctx = _make_ctx()
         pop = _make_population(2)
-        e = PostEvaluationEvent(ctx=ctx, provider=prov, offspring=pop)
+        e = PostEvaluationEvent(ctx=ctx, offspring=pop)
         assert e.offspring is pop
 
     def test_post_evaluation_event_default_offspring_none(self) -> None:
-        prov = self._prov()
         ctx = _make_ctx()
-        e = PostEvaluationEvent(ctx=ctx, provider=prov)
+        e = PostEvaluationEvent(ctx=ctx)
         assert e.offspring is None
 
 
@@ -447,24 +389,21 @@ class TestLoggingGenerationHandler:
 
     def test_logging_generation_single_obj_does_not_raise(self, caplog) -> None:
         ctx = self._make_1obj_ctx()
-        prov = _MockProvider()
-        event = GenerationStartEvent(ctx=ctx, provider=prov)
+        event = GenerationStartEvent(ctx=ctx)
         with caplog.at_level(logging.INFO, logger="saealib.callback"):
             logging_generation(event)
         assert "Generation" in caplog.text
 
     def test_logging_generation_single_obj_logs_best_f(self, caplog) -> None:
         ctx = self._make_1obj_ctx()
-        prov = _MockProvider()
-        event = GenerationStartEvent(ctx=ctx, provider=prov)
+        event = GenerationStartEvent(ctx=ctx)
         with caplog.at_level(logging.INFO, logger="saealib.callback"):
             logging_generation(event)
         assert "Best f" in caplog.text
 
     def test_logging_generation_multi_obj_does_not_raise(self, caplog) -> None:
         ctx = self._make_2obj_ctx()
-        prov = _MockProvider()
-        event = GenerationStartEvent(ctx=ctx, provider=prov)
+        event = GenerationStartEvent(ctx=ctx)
         with caplog.at_level(logging.INFO, logger="saealib.callback"):
             logging_generation(event)
         assert "Front1" in caplog.text
@@ -476,10 +415,9 @@ class TestLoggingGenerationHandler:
 
     def test_logging_generation_hv_does_not_raise(self, caplog) -> None:
         ctx = self._make_2obj_ctx()
-        prov = _MockProvider()
         ref = np.array([10.0, 10.0])
         handler = logging_generation_hv(ref)
-        event = GenerationStartEvent(ctx=ctx, provider=prov)
+        event = GenerationStartEvent(ctx=ctx)
         with caplog.at_level(logging.INFO, logger="saealib.callback"):
             handler(event)
 
@@ -490,166 +428,8 @@ class TestLoggingGenerationHandler:
         ctx = self._make_1obj_ctx()
         prov = _MockProvider()
         prov.cbmanager = cbm
-        event = GenerationStartEvent(ctx=ctx, provider=prov)
+        event = GenerationStartEvent(ctx=ctx)
         cbm.dispatch(event)  # should not raise
-
-
-# ===========================================================================
-# PostSurrogateFitEvent dispatch Tests
-# ===========================================================================
-class TestPostSurrogateFitDispatch:
-    """Tests that SurrogateManager implementations dispatch PostSurrogateFitEvent."""
-
-    def test_global_dispatches_once_with_provider(
-        self,
-        archive: Archive,
-        candidates: np.ndarray,
-        ctx: OptimizationContext,
-    ) -> None:
-        prov = _MockProvider()
-        manager = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        manager.score_candidates(candidates, archive, provider=prov, ctx=ctx)
-        fit_events = [
-            e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)
-        ]
-        assert len(fit_events) == 1
-
-    def test_global_no_dispatch_without_provider(
-        self,
-        archive: Archive,
-        candidates: np.ndarray,
-    ) -> None:
-        manager = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        # provider=None (default) — should not raise and fire no events
-        scores, _predictions = manager.score_candidates(candidates, archive)
-        assert scores.shape == (len(candidates),)
-
-    def test_global_event_carries_surrogate_and_training_data(
-        self,
-        archive: Archive,
-        candidates: np.ndarray,
-        ctx: OptimizationContext,
-    ) -> None:
-        prov = _MockProvider()
-        surrogate = RBFsurrogate(gaussian_kernel, DIM)
-        manager = GlobalSurrogateManager(surrogate, MeanPrediction())
-        manager.score_candidates(candidates, archive, provider=prov, ctx=ctx)
-        event: PostSurrogateFitEvent = prov.dispatched[0]
-        assert event.surrogate is surrogate
-        assert event.train_x is not None
-        assert event.train_f is not None
-        assert event.train_x.shape == (len(archive), DIM)
-        assert event.train_f.shape == (len(archive), N_OBJ)
-
-    def test_global_event_has_correct_ctx_and_provider(
-        self,
-        archive: Archive,
-        candidates: np.ndarray,
-        ctx: OptimizationContext,
-    ) -> None:
-        prov = _MockProvider()
-        manager = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        manager.score_candidates(candidates, archive, provider=prov, ctx=ctx)
-        event: PostSurrogateFitEvent = prov.dispatched[0]
-        assert event.ctx is ctx
-        assert event.provider is prov
-
-    def test_local_dispatches_once_per_candidate(
-        self,
-        archive: Archive,
-        candidates: np.ndarray,
-        ctx: OptimizationContext,
-    ) -> None:
-        prov = _MockProvider()
-        manager = LocalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM),
-            MeanPrediction(),
-            training_set=KNNObjectiveSet(10),
-        )
-        manager.score_candidates(candidates, archive, provider=prov, ctx=ctx)
-        fit_events = [
-            e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)
-        ]
-        assert len(fit_events) == len(candidates)
-
-    def test_local_no_dispatch_without_provider(
-        self,
-        archive: Archive,
-        candidates: np.ndarray,
-    ) -> None:
-        manager = LocalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM),
-            MeanPrediction(),
-            training_set=KNNObjectiveSet(10),
-        )
-        scores, _ = manager.score_candidates(candidates, archive)
-        assert scores.shape == (len(candidates),)
-
-    def test_local_each_event_carries_local_training_data(
-        self,
-        archive: Archive,
-        candidates: np.ndarray,
-        ctx: OptimizationContext,
-    ) -> None:
-        n_neighbors = 10
-        prov = _MockProvider()
-        manager = LocalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM),
-            MeanPrediction(),
-            training_set=KNNObjectiveSet(n_neighbors),
-        )
-        manager.score_candidates(candidates, archive, provider=prov, ctx=ctx)
-        fit_events = [
-            e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)
-        ]
-        for event in fit_events:
-            assert event.train_x is not None
-            assert event.train_f is not None
-            assert event.train_x.shape == (n_neighbors, DIM)
-            assert event.train_f.shape == (n_neighbors, N_OBJ)
-
-    def test_ensemble_propagates_to_sub_managers(
-        self,
-        archive: Archive,
-        candidates: np.ndarray,
-        ctx: OptimizationContext,
-    ) -> None:
-        """CompositeSurrogateManager passes provider through to each sub-manager."""
-        prov = _MockProvider()
-        m1 = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        m2 = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        ensemble = CompositeSurrogateManager([m1, m2], combine_fn=product_combine)
-        ensemble.score_candidates(candidates, archive, provider=prov, ctx=ctx)
-        fit_events = [
-            e for e in prov.dispatched if isinstance(e, PostSurrogateFitEvent)
-        ]
-        # One PostSurrogateFitEvent per sub-manager (each fits once on full archive)
-        assert len(fit_events) == 2
-
-    def test_no_dispatch_when_only_ctx_given(
-        self,
-        archive: Archive,
-        candidates: np.ndarray,
-        ctx: OptimizationContext,
-    ) -> None:
-        """provider=None with ctx given: no dispatch (both required)."""
-        manager = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        scores, _ = manager.score_candidates(
-            candidates, archive, provider=None, ctx=ctx
-        )
-        assert scores.shape == (len(candidates),)
 
 
 # ===========================================================================
@@ -695,7 +475,6 @@ class TestPostEvaluationDispatch:
             .set_strategy(IndividualBasedStrategy(evaluation_ratio=evaluation_ratio))
             .set_termination(Termination(max_fe(100)))
         )
-        # Initialize the context
         ctx = opt.initializer.initialize(opt, problem)
         return ctx, opt
 
@@ -740,7 +519,6 @@ class TestPostEvaluationDispatch:
 
         event = received[0]
         offspring = event.offspring
-        # Each evaluated individual's f should equal sphere(x)
         for i in range(len(offspring)):
             x = offspring[i].x
             f = offspring[i].f
