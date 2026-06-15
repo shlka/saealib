@@ -16,6 +16,7 @@ Tests cover:
 import numpy as np
 import pytest
 
+from saealib import GA, SequentialSelection, TruncationSelection
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationContext
 from saealib.operators.crossover import (
@@ -28,6 +29,7 @@ from saealib.operators.crossover import (
 from saealib.operators.mutation import (
     MutationGaussian,
     MutationPolynomial,
+    MutationUniform,
 )
 from saealib.operators.selection import RouletteWheelSelection
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
@@ -356,3 +358,201 @@ class TestRouletteWheelSelection:
                 counts[i] += 1
 
         assert counts[best_idx] > counts[worst_idx]
+
+
+# ---------------------------------------------------------------------------
+# Crossover lifecycle hooks
+# ---------------------------------------------------------------------------
+
+
+class TestCrossoverHooks:
+    def _op(self):
+        return CrossoverBLXAlpha(crossover_rate=0.9, alpha=0.4)
+
+    def _parents(self, rng=None):
+        rng = rng if rng is not None else np.random.default_rng(0)
+        return rng.uniform(-1.0, 1.0, size=(2, DIM))
+
+    def test_post_crossover_default_is_noop(self):
+        op = self._op()
+        rng = np.random.default_rng(0)
+        parents = self._parents(rng)
+        offspring = op.crossover(parents, rng=rng)
+        result = op.post_crossover(offspring.copy(), parents, rng)
+        np.testing.assert_array_equal(result, offspring)
+
+    def test_with_post_transforms_offspring(self):
+        op = self._op().with_post(lambda o, p, rng, ctx: np.zeros_like(o))
+        rng = np.random.default_rng(0)
+        parents = self._parents(rng)
+        offspring = op.crossover(parents, rng=rng)
+        result = op.post_crossover(offspring, parents, rng)
+        np.testing.assert_array_equal(result, np.zeros_like(offspring))
+
+    def test_with_post_fn_receives_correct_args(self):
+        received = {}
+
+        def hook(offspring, parents, rng, ctx):
+            received["offspring_shape"] = offspring.shape
+            received["parents_shape"] = parents.shape
+            received["ctx"] = ctx
+            return offspring
+
+        ctx = _make_ctx()
+        op = self._op().with_post(hook)
+        rng = np.random.default_rng(0)
+        parents = self._parents(rng)
+        offspring = op.crossover(parents, rng=rng)
+        op.post_crossover(offspring, parents, rng, ctx)
+        assert received["offspring_shape"] == (2, DIM)
+        assert received["parents_shape"] == (2, DIM)
+        assert received["ctx"] is ctx
+
+    def test_with_post_chains_in_order(self):
+        log = []
+        op = (
+            self._op()
+            .with_post(lambda o, p, rng, ctx: (log.append(1), o)[1])
+            .with_post(lambda o, p, rng, ctx: (log.append(2), o)[1])
+        )
+        rng = np.random.default_rng(0)
+        parents = self._parents(rng)
+        offspring = op.crossover(parents, rng=rng)
+        op.post_crossover(offspring, parents, rng)
+        assert log == [1, 2]
+
+    def test_with_post_does_not_mutate_original(self):
+        op = self._op()
+        _ = op.with_post(lambda o, p, rng, ctx: np.zeros_like(o))
+        rng = np.random.default_rng(0)
+        parents = self._parents(rng)
+        offspring = op.crossover(parents, rng=rng)
+        result = op.post_crossover(offspring.copy(), parents, rng)
+        np.testing.assert_array_equal(result, offspring)
+
+
+# ---------------------------------------------------------------------------
+# Mutation lifecycle hooks
+# ---------------------------------------------------------------------------
+
+
+class TestMutationHooks:
+    def _op(self):
+        return MutationPolynomial(mutation_rate=1.0, eta=20.0)
+
+    def _individual(self, rng=None):
+        rng = rng if rng is not None else np.random.default_rng(0)
+        return rng.uniform(-3.0, 3.0, size=DIM)
+
+    def _range(self):
+        return np.full(DIM, -5.0), np.full(DIM, 5.0)
+
+    def test_post_mutation_default_is_noop(self):
+        op = self._op()
+        rng = np.random.default_rng(0)
+        p = self._individual(rng)
+        mutated = op.mutate(p, self._range(), rng=rng)
+        result = op.post_mutation(mutated.copy(), self._range(), rng)
+        np.testing.assert_array_equal(result, mutated)
+
+    def test_with_post_transforms_individual(self):
+        op = self._op().with_post(lambda o, mr, rng, ctx: np.zeros_like(o))
+        rng = np.random.default_rng(0)
+        p = self._individual(rng)
+        mutated = op.mutate(p, self._range(), rng=rng)
+        result = op.post_mutation(mutated, self._range(), rng)
+        np.testing.assert_array_equal(result, np.zeros(DIM))
+
+    def test_with_post_fn_receives_correct_args(self):
+        received = {}
+
+        def hook(offspring, mutate_range, rng, ctx):
+            received["shape"] = offspring.shape
+            received["ctx"] = ctx
+            return offspring
+
+        ctx = _make_ctx()
+        op = self._op().with_post(hook)
+        rng = np.random.default_rng(0)
+        p = self._individual(rng)
+        mutated = op.mutate(p, self._range(), rng=rng)
+        op.post_mutation(mutated, self._range(), rng, ctx)
+        assert received["shape"] == (DIM,)
+        assert received["ctx"] is ctx
+
+    def test_with_post_chains_in_order(self):
+        log = []
+        op = (
+            self._op()
+            .with_post(lambda o, mr, rng, ctx: (log.append(1), o)[1])
+            .with_post(lambda o, mr, rng, ctx: (log.append(2), o)[1])
+        )
+        rng = np.random.default_rng(0)
+        p = self._individual(rng)
+        mutated = op.mutate(p, self._range(), rng=rng)
+        op.post_mutation(mutated, self._range(), rng)
+        assert log == [1, 2]
+
+    def test_with_post_does_not_mutate_original(self):
+        op = self._op()
+        _ = op.with_post(lambda o, mr, rng, ctx: np.zeros_like(o))
+        rng = np.random.default_rng(0)
+        p = self._individual(rng)
+        mutated = op.mutate(p, self._range(), rng=rng)
+        result = op.post_mutation(mutated.copy(), self._range(), rng)
+        np.testing.assert_array_equal(result, mutated)
+
+
+# ---------------------------------------------------------------------------
+# GA hook invocation (integration)
+# ---------------------------------------------------------------------------
+
+
+class _DispatchOnlyProvider:
+    def dispatch(self, event):
+        pass
+
+
+class TestGAHookInvocation:
+    """Verify that GA.ask() calls post_crossover and post_mutation hooks."""
+
+    def _make_ctx(self):
+        return _make_ctx()
+
+    def test_post_crossover_called_during_ask(self):
+        call_count = [0]
+
+        def hook(offspring, parents, rng, ctx):
+            call_count[0] += 1
+            return offspring
+
+        crossover = CrossoverBLXAlpha(crossover_rate=1.0, alpha=0.4).with_post(hook)
+        ga = GA(
+            crossover=crossover,
+            mutation=MutationUniform(mutation_rate=0.0),
+            parent_selection=SequentialSelection(),
+            survivor_selection=TruncationSelection(),
+        )
+        provider = _DispatchOnlyProvider()
+        ctx = _make_ctx()
+        ga.ask(ctx, provider)
+        assert call_count[0] > 0
+
+    def test_post_mutation_called_once_per_offspring(self):
+        call_count = [0]
+
+        def hook(offspring, mutate_range, rng, ctx):
+            call_count[0] += 1
+            return offspring
+
+        mutation = MutationUniform(mutation_rate=0.0).with_post(hook)
+        ga = GA(
+            crossover=CrossoverBLXAlpha(crossover_rate=0.9, alpha=0.4),
+            mutation=mutation,
+            parent_selection=SequentialSelection(),
+            survivor_selection=TruncationSelection(),
+        )
+        provider = _DispatchOnlyProvider()
+        ctx = _make_ctx()
+        candidates = ga.ask(ctx, provider)
+        assert call_count[0] == len(candidates)

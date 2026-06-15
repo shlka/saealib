@@ -1,8 +1,16 @@
 """Crossover operators for evolutionary algorithms."""
 
+from __future__ import annotations
+
+import copy
 from abc import ABC, abstractmethod
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from saealib.context import OptimizationContext
 
 
 class Crossover(ABC):
@@ -43,6 +51,59 @@ class Crossover(ABC):
             Offspring individuals. shape = (n_offspring, dim)
         """
         pass
+
+    def post_crossover(
+        self,
+        offspring: np.ndarray,
+        parents: np.ndarray,
+        rng: np.random.Generator,
+        ctx: OptimizationContext | None = None,
+    ) -> np.ndarray:
+        """Post-crossover lifecycle hook; override to inject custom processing.
+
+        Parameters
+        ----------
+        offspring : np.ndarray
+            Offspring produced by crossover. shape = (n_children, dim)
+        parents : np.ndarray
+            Parent individuals. shape = (n_parents, dim)
+        rng : np.random.Generator
+            Random number generator.
+        ctx : OptimizationContext or None, optional
+            Current optimization context.
+
+        Returns
+        -------
+        np.ndarray
+            Processed offspring. shape = (n_children, dim)
+        """
+        return offspring
+
+    def with_post(
+        self,
+        fn: Callable[
+            [np.ndarray, np.ndarray, np.random.Generator, OptimizationContext | None],
+            np.ndarray,
+        ],
+    ) -> Crossover:
+        """Return a copy of this operator with ``fn`` appended to the hook.
+
+        Parameters
+        ----------
+        fn : callable
+            ``fn(offspring, parents, rng, ctx) -> np.ndarray``
+
+        Returns
+        -------
+        Crossover
+            Shallow copy with the hook registered.
+        """
+        new = copy.copy(self)
+        prev = self.post_crossover
+        new.post_crossover = lambda offspring, parents, rng, ctx=None: fn(
+            prev(offspring, parents, rng, ctx), parents, rng, ctx
+        )
+        return new
 
 
 class CrossoverBLXAlpha(Crossover):

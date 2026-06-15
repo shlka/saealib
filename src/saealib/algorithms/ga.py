@@ -126,6 +126,7 @@ class GA(Algorithm):
                 c = self.crossover.crossover(parent, rng=ctx.rng)
             else:
                 c = parent[:n_children].copy()
+            c = self.crossover.post_crossover(c, parent, ctx.rng, ctx)
             cand[i * n_children : (i + 1) * n_children] = c
         for i in range(len(cand)):
             cand[i] = handler.repair(cand[i], constraints, lb, ub)
@@ -134,6 +135,7 @@ class GA(Algorithm):
         cand_len = len(cand)
         for i in range(cand_len):
             cand[i] = self.mutation.mutate(cand[i], (lb, ub), rng=ctx.rng)
+            cand[i] = self.mutation.post_mutation(cand[i], (lb, ub), ctx.rng, ctx)
             cand[i] = handler.repair(cand[i], constraints, lb, ub)
         provider.dispatch(PostMutationEvent(ctx=ctx, candidates=cand))
 

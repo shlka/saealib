@@ -1,8 +1,16 @@
 """Mutation operators for evolutionary algorithms."""
 
+from __future__ import annotations
+
+import copy
 from abc import ABC, abstractmethod
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from saealib.context import OptimizationContext
 
 
 class Mutation(ABC):
@@ -33,6 +41,59 @@ class Mutation(ABC):
             Mutated individual. shape = (dim,)
         """
         pass
+
+    def post_mutation(
+        self,
+        offspring: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator,
+        ctx: OptimizationContext | None = None,
+    ) -> np.ndarray:
+        """Post-mutation lifecycle hook; override to inject custom processing.
+
+        Parameters
+        ----------
+        offspring : np.ndarray
+            Individual after mutation. shape = (dim,)
+        mutate_range : tuple
+            Tuple of (lower_bound, upper_bound) used for mutation.
+        rng : np.random.Generator
+            Random number generator.
+        ctx : OptimizationContext or None, optional
+            Current optimization context.
+
+        Returns
+        -------
+        np.ndarray
+            Processed individual. shape = (dim,)
+        """
+        return offspring
+
+    def with_post(
+        self,
+        fn: Callable[
+            [np.ndarray, tuple, np.random.Generator, OptimizationContext | None],
+            np.ndarray,
+        ],
+    ) -> Mutation:
+        """Return a copy of this operator with ``fn`` appended to the hook.
+
+        Parameters
+        ----------
+        fn : callable
+            ``fn(offspring, mutate_range, rng, ctx) -> np.ndarray``
+
+        Returns
+        -------
+        Mutation
+            Shallow copy with the hook registered.
+        """
+        new = copy.copy(self)
+        prev = self.post_mutation
+        new.post_mutation = lambda offspring, mutate_range, rng, ctx=None: fn(
+            prev(offspring, mutate_range, rng, ctx), mutate_range, rng, ctx
+        )
+        return new
 
 
 class MutationUniform(Mutation):
