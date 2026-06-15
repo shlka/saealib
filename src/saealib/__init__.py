@@ -226,9 +226,8 @@ _TIER2_MAP: dict[str, str] = {
     "logging_generation": "saealib.callback",
     "logging_generation_hv": "saealib.callback",
     # utils
-    "uniform_weight_vectors": "saealib.utils.weight_vectors",
-    # surrogate internals (will be made private in a follow-up commit)
     "gaussian_kernel": "saealib.surrogate.rbf",
+    "uniform_weight_vectors": "saealib.utils.weight_vectors",
 }
 
 
