@@ -881,11 +881,9 @@ class TestSurrogateHooks:
         self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
     ) -> None:
         log: list[int] = []
-        surrogate = (
-            surrogate_1obj
-            .with_post_fit(lambda tx, ty, ctx: log.append(1))
-            .with_post_fit(lambda tx, ty, ctx: log.append(2))
-        )
+        surrogate = surrogate_1obj.with_post_fit(
+            lambda tx, ty, ctx: log.append(1)
+        ).with_post_fit(lambda tx, ty, ctx: log.append(2))
         train_x, train_y = archive_1obj.x, archive_1obj.f
         surrogate.post_fit(train_x, train_y, ctx=None)
         assert log == [1, 2]
@@ -964,9 +962,7 @@ class TestSurrogateManagerHooks:
         candidates: np.ndarray,
     ) -> None:
         manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        _ = manager.with_post_score(
-            lambda s, p, ctx: (np.zeros_like(s), p)
-        )
+        _ = manager.with_post_score(lambda s, p, ctx: (np.zeros_like(s), p))
         scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert not np.all(scores == 0.0)
 

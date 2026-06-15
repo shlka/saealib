@@ -44,9 +44,7 @@ class GenerationBasedStrategy(OptimizationStrategy):
             ctx.count_generation()
             offspring = provider.algorithm.ask(ctx, provider)
 
-            provider.dispatch(
-                SurrogateStartEvent(ctx=ctx, offspring=offspring)
-            )
+            provider.dispatch(SurrogateStartEvent(ctx=ctx, offspring=offspring))
 
             _, predictions = provider.surrogate_manager.score_candidates(
                 offspring.x, ctx.archive, ctx
@@ -54,9 +52,7 @@ class GenerationBasedStrategy(OptimizationStrategy):
             for i, pred in enumerate(predictions):
                 assign_tell_f(offspring[i], pred, ctx)
 
-            provider.dispatch(
-                SurrogateEndEvent(ctx=ctx, offspring=offspring)
-            )
+            provider.dispatch(SurrogateEndEvent(ctx=ctx, offspring=offspring))
 
             provider.algorithm.tell(ctx, provider, offspring)
 
@@ -77,8 +73,6 @@ class GenerationBasedStrategy(OptimizationStrategy):
             )
         ctx.count_fe(n_offspring)
 
-        provider.dispatch(
-            PostEvaluationEvent(ctx=ctx, offspring=offspring)
-        )
+        provider.dispatch(PostEvaluationEvent(ctx=ctx, offspring=offspring))
 
         provider.algorithm.tell(ctx, provider, offspring)
