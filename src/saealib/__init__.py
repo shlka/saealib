@@ -67,6 +67,12 @@ from saealib.termination import (
     stalled,
 )
 from saealib.utils.indicators import hypervolume, hypervolume_contributions
+from saealib.variables import (
+    CategoricalVariable,
+    ContinuousVariable,
+    IntegerVariable,
+    Variable,
+)
 
 logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -136,6 +142,10 @@ __all__ = [
     "TournamentSelection",
     "TruncationSelection",
     "ValidationError",
+    "Variable",
+    "ContinuousVariable",
+    "IntegerVariable",
+    "CategoricalVariable",
     "f_target",
     # Indicators
     "hypervolume",
