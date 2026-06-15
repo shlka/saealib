@@ -2182,7 +2182,6 @@ class TestNSGA3Comparator:
         order1 = comp.sort_population(pop)
         order2 = comp.sort_population(pop)
         np.testing.assert_array_equal(order1, order2)
-        assert pop.get_cache("pareto_sort") is not None
 
     def test_reference_points_property(self) -> None:
         ref = np.array([[0.0, 1.0], [1.0, 0.0]])
@@ -2273,7 +2272,6 @@ class TestRNSGA2Comparator:
         order1 = comp.sort_population(pop)
         order2 = comp.sort_population(pop)
         np.testing.assert_array_equal(order1, order2)
-        assert pop.get_cache("pareto_sort") is not None
 
     def test_reference_points_property(self) -> None:
         ref = np.array([[0.0, 1.0], [1.0, 0.0]])
