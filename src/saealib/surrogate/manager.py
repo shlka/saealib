@@ -25,6 +25,7 @@ rank_weighted_combine
 
 from __future__ import annotations
 
+import copy
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING
@@ -117,6 +118,56 @@ class SurrogateManager(ABC):
         """
         ...
 
+    def post_score(
+        self,
+        scores: np.ndarray,
+        predictions: list[SurrogatePrediction],
+        ctx: OptimizationContext | None = None,
+    ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
+        """Post-score lifecycle hook; override to inject custom processing.
+
+        Parameters
+        ----------
+        scores : np.ndarray
+            Acquisition scores. shape: (n_candidates,)
+        predictions : list[SurrogatePrediction]
+            Surrogate predictions for each candidate.
+        ctx : OptimizationContext or None, optional
+            Current optimization context.
+
+        Returns
+        -------
+        tuple[np.ndarray, list[SurrogatePrediction]]
+            Processed scores and predictions.
+        """
+        return scores, predictions
+
+    def with_post_score(
+        self,
+        fn: Callable[
+            [np.ndarray, list[SurrogatePrediction], OptimizationContext | None],
+            tuple[np.ndarray, list[SurrogatePrediction]],
+        ],
+    ) -> SurrogateManager:
+        """Return a copy of this manager with ``fn`` appended to the hook.
+
+        Parameters
+        ----------
+        fn : callable
+            ``fn(scores, predictions, ctx) -> (scores, predictions)``
+
+        Returns
+        -------
+        SurrogateManager
+            Shallow copy with the hook registered.
+        """
+        new = copy.copy(self)
+        prev = self.post_score
+        new.post_score = lambda scores, predictions, ctx=None: fn(
+            *prev(scores, predictions, ctx), ctx
+        )
+        return new
+
 
 class GlobalSurrogateManager(SurrogateManager):
     """
@@ -159,6 +210,7 @@ class GlobalSurrogateManager(SurrogateManager):
         population = ctx.population if ctx is not None else None
         data = self.training_set.build(archive, population, ctx, candidate_x=None)
         self.surrogate.fit(data.train_x, data.train_y)
+        self.surrogate.post_fit(data.train_x, data.train_y, ctx)
 
         reference = self.acquisition.compute_reference(archive)
         prediction = self.surrogate.predict(candidates_x)  # mean: (n_candidates, n_obj)
@@ -166,7 +218,8 @@ class GlobalSurrogateManager(SurrogateManager):
 
         # Split batch prediction into per-candidate SurrogatePrediction objects
         predictions = _split_prediction(prediction)
-        return self._sanitize_nan(scores, predictions)
+        scores, predictions = self._sanitize_nan(scores, predictions)
+        return self.post_score(scores, predictions, ctx)
 
 
 class LocalSurrogateManager(SurrogateManager):
@@ -222,13 +275,15 @@ class LocalSurrogateManager(SurrogateManager):
         for x in candidates_x:
             data = self.training_set.build(archive, population, ctx, candidate_x=x)
             self.surrogate.fit(data.train_x, data.train_y)
+            self.surrogate.post_fit(data.train_x, data.train_y, ctx)
             pred = self.surrogate.predict(x)  # mean: (1, n_obj)
             predictions.append(pred)
 
         scores = np.array(
             [self.acquisition.score(p, reference)[0] for p in predictions]
         )
-        return self._sanitize_nan(scores, predictions)
+        scores, predictions = self._sanitize_nan(scores, predictions)
+        return self.post_score(scores, predictions, ctx)
 
 
 def product_combine(scores: list[np.ndarray]) -> np.ndarray:
@@ -345,7 +400,8 @@ class CompositeSurrogateManager(SurrogateManager):
                 first_predictions = preds
 
         combined = self.combine_fn(all_scores)
-        return self._sanitize_nan(combined, first_predictions)  # type: ignore[arg-type]
+        scores, predictions = self._sanitize_nan(combined, first_predictions)  # type: ignore[arg-type]
+        return self.post_score(scores, predictions, ctx)
 
 
 def _split_prediction(prediction: SurrogatePrediction) -> list[SurrogatePrediction]:

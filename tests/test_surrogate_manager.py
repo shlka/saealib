@@ -830,3 +830,176 @@ class TestCompositeSurrogateManagerWithArchiveBased:
         assert scores.shape == (len(candidates),)
         for p in preds:
             assert np.all(np.isfinite(p.tell_f))
+
+
+# ===========================================================================
+# Surrogate lifecycle hooks (post_fit / with_post_fit)
+# ===========================================================================
+
+
+class TestSurrogateHooks:
+    """Tests for Surrogate.post_fit and with_post_fit."""
+
+    def test_post_fit_default_is_noop(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        train_x, train_y = archive_1obj.x, archive_1obj.f
+        surrogate_1obj.fit(train_x, train_y)
+        result = surrogate_1obj.post_fit(train_x, train_y, ctx=None)
+        assert result is None
+
+    def test_with_post_fit_fn_is_called(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        called = [False]
+
+        def hook(train_x, train_y, ctx):
+            called[0] = True
+
+        surrogate = surrogate_1obj.with_post_fit(hook)
+        train_x, train_y = archive_1obj.x, archive_1obj.f
+        surrogate.fit(train_x, train_y)
+        surrogate.post_fit(train_x, train_y, ctx=None)
+        assert called[0]
+
+    def test_with_post_fit_fn_receives_correct_args(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        received = {}
+
+        def hook(train_x, train_y, ctx):
+            received["train_x_shape"] = train_x.shape
+            received["train_y_shape"] = train_y.shape
+
+        surrogate = surrogate_1obj.with_post_fit(hook)
+        train_x, train_y = archive_1obj.x, archive_1obj.f
+        surrogate.post_fit(train_x, train_y, ctx=None)
+        assert received["train_x_shape"] == train_x.shape
+        assert received["train_y_shape"] == train_y.shape
+
+    def test_with_post_fit_chains_in_order(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        log: list[int] = []
+        surrogate = (
+            surrogate_1obj
+            .with_post_fit(lambda tx, ty, ctx: log.append(1))
+            .with_post_fit(lambda tx, ty, ctx: log.append(2))
+        )
+        train_x, train_y = archive_1obj.x, archive_1obj.f
+        surrogate.post_fit(train_x, train_y, ctx=None)
+        assert log == [1, 2]
+
+    def test_with_post_fit_does_not_mutate_original(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        called = [False]
+
+        def hook(tx, ty, ctx):
+            called[0] = True
+
+        _ = surrogate_1obj.with_post_fit(hook)
+        train_x, train_y = archive_1obj.x, archive_1obj.f
+        surrogate_1obj.post_fit(train_x, train_y, ctx=None)
+        assert not called[0]
+
+
+# ===========================================================================
+# SurrogateManager lifecycle hooks (post_score / with_post_score)
+# ===========================================================================
+
+
+class TestSurrogateManagerHooks:
+    """Tests for SurrogateManager.post_score and with_post_score."""
+
+    def test_post_score_default_is_noop(
+        self,
+        surrogate_1obj: RBFsurrogate,
+        archive_1obj: Archive,
+        candidates: np.ndarray,
+    ) -> None:
+        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
+        scores, predictions = manager.score_candidates(candidates, archive_1obj)
+        result_s, result_p = manager.post_score(scores, predictions, ctx=None)
+        np.testing.assert_array_equal(result_s, scores)
+        assert result_p is predictions
+
+    def test_with_post_score_transforms_scores(
+        self,
+        surrogate_1obj: RBFsurrogate,
+        archive_1obj: Archive,
+        candidates: np.ndarray,
+    ) -> None:
+        def zero_scores(scores, predictions, ctx):
+            return np.zeros_like(scores), predictions
+
+        manager = GlobalSurrogateManager(
+            surrogate_1obj, MeanPrediction()
+        ).with_post_score(zero_scores)
+        scores, _ = manager.score_candidates(candidates, archive_1obj)
+        np.testing.assert_array_equal(scores, np.zeros(len(candidates)))
+
+    def test_with_post_score_called_once_per_score_candidates(
+        self,
+        surrogate_1obj: RBFsurrogate,
+        archive_1obj: Archive,
+        candidates: np.ndarray,
+    ) -> None:
+        call_count = [0]
+
+        def hook(scores, predictions, ctx):
+            call_count[0] += 1
+            return scores, predictions
+
+        manager = LocalSurrogateManager(
+            surrogate_1obj, MeanPrediction(), training_set=KNNObjectiveSet(10)
+        ).with_post_score(hook)
+        manager.score_candidates(candidates, archive_1obj)
+        assert call_count[0] == 1
+
+    def test_with_post_score_does_not_mutate_original(
+        self,
+        surrogate_1obj: RBFsurrogate,
+        archive_1obj: Archive,
+        candidates: np.ndarray,
+    ) -> None:
+        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
+        _ = manager.with_post_score(
+            lambda s, p, ctx: (np.zeros_like(s), p)
+        )
+        scores, _ = manager.score_candidates(candidates, archive_1obj)
+        assert not np.all(scores == 0.0)
+
+    def test_post_fit_called_in_global_manager(
+        self,
+        surrogate_1obj: RBFsurrogate,
+        archive_1obj: Archive,
+        candidates: np.ndarray,
+    ) -> None:
+        called = [False]
+
+        def hook(tx, ty, ctx):
+            called[0] = True
+
+        surrogate = surrogate_1obj.with_post_fit(hook)
+        manager = GlobalSurrogateManager(surrogate, MeanPrediction())
+        manager.score_candidates(candidates, archive_1obj)
+        assert called[0]
+
+    def test_post_fit_called_per_candidate_in_local_manager(
+        self,
+        surrogate_1obj: RBFsurrogate,
+        archive_1obj: Archive,
+        candidates: np.ndarray,
+    ) -> None:
+        call_count = [0]
+
+        def hook(tx, ty, ctx):
+            call_count[0] += 1
+
+        surrogate = surrogate_1obj.with_post_fit(hook)
+        manager = LocalSurrogateManager(
+            surrogate, MeanPrediction(), training_set=KNNObjectiveSet(10)
+        )
+        manager.score_candidates(candidates, archive_1obj)
+        assert call_count[0] == len(candidates)
