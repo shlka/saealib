@@ -169,7 +169,6 @@ class GlobalSurrogateManager(SurrogateManager):
             provider.dispatch(
                 PostSurrogateFitEvent(
                     ctx=ctx,
-                    provider=provider,
                     surrogate=self.surrogate,
                     train_x=data.train_x,
                     train_f=data.train_y,
@@ -244,7 +243,6 @@ class LocalSurrogateManager(SurrogateManager):
                 provider.dispatch(
                     PostSurrogateFitEvent(
                         ctx=ctx,
-                        provider=provider,
                         surrogate=self.surrogate,
                         train_x=data.train_x,
                         train_f=data.train_y,

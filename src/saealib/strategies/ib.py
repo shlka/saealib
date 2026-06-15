@@ -53,7 +53,7 @@ class IndividualBasedStrategy(OptimizationStrategy):
         n_eval = max(1, int(self.evaluation_ratio * n_offspring))
 
         provider.dispatch(
-            SurrogateStartEvent(ctx=ctx, provider=provider, offspring=offspring)
+            SurrogateStartEvent(ctx=ctx, offspring=offspring)
         )
 
         # 2. score candidates via surrogate manager
@@ -64,7 +64,7 @@ class IndividualBasedStrategy(OptimizationStrategy):
             assign_tell_f(offspring[i], pred, ctx)
 
         provider.dispatch(
-            SurrogateEndEvent(ctx=ctx, provider=provider, offspring=offspring)
+            SurrogateEndEvent(ctx=ctx, offspring=offspring)
         )
 
         # 3. top-k selection and true evaluation
@@ -85,7 +85,7 @@ class IndividualBasedStrategy(OptimizationStrategy):
 
         evaluated = offspring.extract(list(range(n_eval)))
         provider.dispatch(
-            PostEvaluationEvent(ctx=ctx, provider=provider, offspring=evaluated)
+            PostEvaluationEvent(ctx=ctx, offspring=evaluated)
         )
 
         # 4. update algorithm with offspring (algorithm.tell)

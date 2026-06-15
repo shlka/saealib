@@ -51,7 +51,7 @@ class PreSelectionStrategy(OptimizationStrategy):
         )
 
         provider.dispatch(
-            SurrogateStartEvent(ctx=ctx, provider=provider, offspring=candidates)
+            SurrogateStartEvent(ctx=ctx, offspring=candidates)
         )
 
         scores, predictions = provider.surrogate_manager.score_candidates(
@@ -61,7 +61,7 @@ class PreSelectionStrategy(OptimizationStrategy):
             assign_tell_f(candidates[i], pred, ctx)
 
         provider.dispatch(
-            SurrogateEndEvent(ctx=ctx, provider=provider, offspring=candidates)
+            SurrogateEndEvent(ctx=ctx, offspring=candidates)
         )
 
         idx = np.argsort(-scores)
@@ -82,7 +82,7 @@ class PreSelectionStrategy(OptimizationStrategy):
 
         evaluated = candidates.extract(list(range(n_eval)))
         provider.dispatch(
-            PostEvaluationEvent(ctx=ctx, provider=provider, offspring=evaluated)
+            PostEvaluationEvent(ctx=ctx, offspring=evaluated)
         )
 
         provider.algorithm.tell(ctx, provider, candidates)

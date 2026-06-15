@@ -9,7 +9,6 @@ import numpy as np
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationContext
-    from saealib.optimizer import ComponentProvider
     from saealib.population import Population
     from saealib.surrogate.base import Surrogate
 
@@ -22,13 +21,11 @@ class Event:
     Attributes
     ----------
     ctx : OptimizationContext
-        The current optimization context.
-    provider : ComponentProvider
-        The component provider (e.g. Optimizer) that fired this event.
+        The current optimization context. Read-only by convention; handlers
+        should not mutate ctx. Use component lifecycle hooks for mutation.
     """
 
     ctx: OptimizationContext
-    provider: ComponentProvider
 
 
 # --- Optimizer.run events ---
