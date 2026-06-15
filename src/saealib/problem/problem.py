@@ -10,6 +10,7 @@ from saealib.comparators import (
     NSGA2Comparator,
     SingleObjectiveComparator,
 )
+from saealib.exceptions import ValidationError
 from saealib.problem.constraint import (
     ConstraintHandler,
     InequalityConstraint,
@@ -105,7 +106,7 @@ class Problem:
             eps_cv = eps_obj = eps
         direction = np.asarray(direction, dtype=float)
         if not np.all(np.abs(direction) == 1):
-            raise ValueError("direction elements must be +1 or -1")
+            raise ValidationError("direction elements must be +1 or -1")
         self.dim = dim
         self.n_obj = n_obj
         self.direction = direction

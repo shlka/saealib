@@ -22,6 +22,7 @@ from saealib.callback import (
     RunStartEvent,
 )
 from saealib.comparators import Comparator, NSGA2Comparator, SingleObjectiveComparator
+from saealib.exceptions import ConfigurationError, SaealibError, ValidationError
 from saealib.execution.evaluator import EvaluationResult, Evaluator, SerialEvaluator
 from saealib.execution.initializer import Initializer, LHSInitializer
 from saealib.operators import (
@@ -81,6 +82,7 @@ __all__ = [
     # Callbacks (core)
     "CallbackManager",
     "Comparator",
+    "ConfigurationError",
     # Problem
     "ConstraintHandler",
     "Crossover",
@@ -121,6 +123,7 @@ __all__ = [
     "Result",
     "RunEndEvent",
     "RunStartEvent",
+    "SaealibError",
     "SerialEvaluator",
     "SingleObjectiveComparator",
     "StaticToleranceHandler",
@@ -132,6 +135,7 @@ __all__ = [
     "TerminationCondition",
     "TournamentSelection",
     "TruncationSelection",
+    "ValidationError",
     "f_target",
     # Indicators
     "hypervolume",

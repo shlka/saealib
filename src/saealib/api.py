@@ -13,6 +13,7 @@ from saealib.algorithms.ga import GA
 from saealib.algorithms.pso import PSO
 from saealib.callback import GenerationStartEvent, logging_generation
 from saealib.context import OptimizationContext
+from saealib.exceptions import ValidationError
 from saealib.execution.initializer import LHSInitializer
 from saealib.operators.crossover import CrossoverBLXAlpha
 from saealib.operators.mutation import MutationUniform
@@ -79,7 +80,9 @@ def _resolve_direction(
     try:
         return np.array([_map[d] for d in direction])
     except KeyError as e:
-        raise ValueError(f"Unknown direction {e}. Use 'minimize' or 'maximize'.") from e
+        raise ValidationError(
+            f"Unknown direction {e}. Use 'minimize' or 'maximize'."
+        ) from e
 
 
 def _ensure_problem(
@@ -94,7 +97,7 @@ def _ensure_problem(
     if isinstance(func, Problem):
         return func
     if dim is None or lb is None or ub is None:
-        raise ValueError("dim, lb, and ub are required when func is a callable.")
+        raise ValidationError("dim, lb, and ub are required when func is a callable.")
     return Problem(func=func, dim=dim, n_obj=n_obj, direction=direction, lb=lb, ub=ub)
 
 
@@ -110,7 +113,7 @@ def _resolve_algorithm(algorithm: str | Algorithm) -> Algorithm:
             )
         if name == "PSO":
             return PSO()
-        raise ValueError(
+        raise ValidationError(
             f"Unknown algorithm: {algorithm!r}. "
             "Use 'GA', 'PSO', or an Algorithm instance."
         )
@@ -123,7 +126,7 @@ def _resolve_surrogate(
     n_neighbors: int,
 ) -> SurrogateManager:
     if surrogate is None:
-        raise ValueError(
+        raise ValidationError(
             "surrogate=None is not supported. "
             "Use 'rbf' or a Surrogate/SurrogateManager instance."
         )
@@ -139,7 +142,7 @@ def _resolve_surrogate(
                 MeanPrediction(direction=problem.direction),
                 training_set=KNNObjectiveSet(n_neighbors),
             )
-        raise ValueError(
+        raise ValidationError(
             f"Unknown surrogate: {surrogate!r}. "
             "Use 'rbf' or a Surrogate/SurrogateManager instance."
         )
@@ -165,7 +168,7 @@ def _resolve_strategy(
         if name == "ps":
             n_select = max(1, pop_size // 10)
             return PreSelectionStrategy(n_candidates=pop_size, n_select=n_select)
-        raise ValueError(
+        raise ValidationError(
             f"Unknown strategy: {strategy!r}. "
             "Use 'ib', 'gb', 'ps', or an OptimizationStrategy instance."
         )
