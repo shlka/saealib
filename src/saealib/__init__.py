@@ -5,89 +5,31 @@ from importlib.metadata import version
 
 __version__ = version("saealib")
 
-from saealib.acquisition import (
-    AcquisitionFunction,
-    ExpectedImprovement,
-    LowerConfidenceBound,
-    MaxUncertainty,
-    MeanPrediction,
-    ProbabilityOfFeasibility,
-    ProductOfFeasibility,
-)
-from saealib.algorithms.base import Algorithm
-from saealib.algorithms.ga import GA
-from saealib.algorithms.pso import PSO
+# ---------------------------------------------------------------------------
+# Tier 1 — eager imports (always available, listed in __all__)
+# ---------------------------------------------------------------------------
+
+from saealib.acquisition import AcquisitionFunction, ExpectedImprovement
+from saealib.algorithms import GA, PSO, Algorithm
 from saealib.api import Result, maximize, minimize
 from saealib.callback import (
     CallbackManager,
     Event,
     GenerationEndEvent,
     GenerationStartEvent,
-    PostAskEvent,
-    PostCrossoverEvent,
     PostEvaluationEvent,
-    PostMutationEvent,
-    PostSurrogateFitEvent,
     RunEndEvent,
     RunStartEvent,
-    SurrogateEndEvent,
-    SurrogateStartEvent,
-    logging_generation,
-    logging_generation_hv,
 )
-from saealib.comparators import (
-    Comparator,
-    Dominator,
-    EpsilonDominanceComparator,
-    EpsilonDominator,
-    HypervolumeComparator,
-    NonDominatedSorter,
-    NSGA2Comparator,
-    NSGA3Comparator,
-    ParetoComparator,
-    ParetoDominator,
-    RNSGA2Comparator,
-    SingleObjectiveComparator,
-    SPEA2Comparator,
-    WeightedSumComparator,
-    crowding_distance,
-    crowding_distance_all_fronts,
-    dda_non_dominated_sort,
-    non_dominated_sort,
-    spea2_fitness,
-)
-from saealib.decomposition import (
-    Decomposition,
-    DecompositionComparator,
-    PBIDecomposition,
-    TchebycheffDecomposition,
-    WeightedSumDecomposition,
-)
-from saealib.execution.evaluator import (
-    EvaluationResult,
-    Evaluator,
-    SerialEvaluator,
-)
+from saealib.comparators import Comparator, NSGA2Comparator, SingleObjectiveComparator
+from saealib.execution.evaluator import EvaluationResult, Evaluator, SerialEvaluator
 from saealib.execution.initializer import Initializer, LHSInitializer
-from saealib.operators.crossover import (
+from saealib.operators import (
     Crossover,
-    CrossoverBLXAlpha,
-    CrossoverOnePoint,
     CrossoverSBX,
-    CrossoverTwoPoint,
-    CrossoverUniform,
-)
-from saealib.operators.mutation import (
     Mutation,
-    MutationGaussian,
     MutationPolynomial,
-    MutationUniform,
-)
-from saealib.operators.repair import repair_clipping
-from saealib.operators.selection import (
     ParentSelection,
-    RouletteWheelSelection,
-    SequentialSelection,
     SurvivorSelection,
     TournamentSelection,
     TruncationSelection,
@@ -95,57 +37,26 @@ from saealib.operators.selection import (
 from saealib.optimizer import Optimizer
 from saealib.population import (
     Archive,
-    ArchiveMixin,
     Individual,
     ParetoArchive,
-    ParetoMixin,
     Population,
     PopulationAttribute,
 )
 from saealib.problem import (
-    Constraint,
     ConstraintHandler,
     EpsilonConstraintHandler,
     EqualityConstraint,
-    GradientRepairHandler,
     InequalityConstraint,
     Problem,
     StaticToleranceHandler,
-    exponential_epsilon_schedule,
-    linear_epsilon_schedule,
 )
-from saealib.strategies.base import OptimizationStrategy
-from saealib.strategies.gb import GenerationBasedStrategy
-from saealib.strategies.ib import IndividualBasedStrategy
-from saealib.strategies.ps import PreSelectionStrategy
-from saealib.surrogate.archive_manager import (
-    ArchiveBasedManager,
-    DensityManager,
-    NichingManager,
-    NoveltyManager,
+from saealib.strategies import (
+    GenerationBasedStrategy,
+    IndividualBasedStrategy,
+    OptimizationStrategy,
+    PreSelectionStrategy,
 )
-from saealib.surrogate.base import Surrogate
-from saealib.surrogate.manager import (
-    CompositeSurrogateManager,
-    GlobalSurrogateManager,
-    LocalSurrogateManager,
-    SurrogateManager,
-    product_combine,
-    rank_weighted_combine,
-)
-from saealib.surrogate.per_objective import PerObjectiveSurrogate
-from saealib.surrogate.prediction import SurrogatePrediction
-from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
-from saealib.surrogate.sklearn_surrogate import (
-    DTSurrogate,
-    GPRSurrogate,
-    LGBMSurrogate,
-    NNSurrogate,
-    SklearnSurrogate,
-    SVMSurrogate,
-    XGBSurrogate,
-)
-from saealib.surrogate.torch_surrogate import TorchSurrogate
+from saealib.surrogate import GPRSurrogate, Surrogate, SurrogateManager
 from saealib.termination import (
     Termination,
     TerminationCondition,
@@ -155,145 +66,185 @@ from saealib.termination import (
     stalled,
 )
 from saealib.utils.indicators import hypervolume, hypervolume_contributions
-from saealib.utils.weight_vectors import uniform_weight_vectors
 
 logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
+    # Algorithms
     "GA",
     "PSO",
+    # Core abstractions
     "AcquisitionFunction",
     "Algorithm",
+    # Population & data
     "Archive",
-    "ArchiveBasedManager",
-    "ArchiveMixin",
+    # Callbacks (core)
     "CallbackManager",
     "Comparator",
-    "CompositeSurrogateManager",
-    "Constraint",
+    # Problem
     "ConstraintHandler",
     "Crossover",
-    "CrossoverBLXAlpha",
-    "CrossoverOnePoint",
+    # Operators (common)
     "CrossoverSBX",
-    "CrossoverTwoPoint",
-    "CrossoverUniform",
-    "DTSurrogate",
-    "Decomposition",
-    "DecompositionComparator",
-    "DensityManager",
-    "Dominator",
     "EpsilonConstraintHandler",
-    "EpsilonDominanceComparator",
-    "EpsilonDominator",
     "EqualityConstraint",
     "EvaluationResult",
+    # Execution
     "Evaluator",
     "Event",
+    # Acquisition (core)
     "ExpectedImprovement",
+    # Surrogate (core)
     "GPRSurrogate",
+    # Strategies
     "GenerationBasedStrategy",
     "GenerationEndEvent",
     "GenerationStartEvent",
-    "GlobalSurrogateManager",
-    "GradientRepairHandler",
-    "HypervolumeComparator",
     "Individual",
     "IndividualBasedStrategy",
     "InequalityConstraint",
     "Initializer",
-    "LGBMSurrogate",
     "LHSInitializer",
-    "LocalSurrogateManager",
-    "LowerConfidenceBound",
-    "MaxUncertainty",
-    "MeanPrediction",
     "Mutation",
-    "MutationGaussian",
     "MutationPolynomial",
-    "MutationUniform",
-    "NNSurrogate",
+    # Comparators (common)
     "NSGA2Comparator",
-    "NSGA3Comparator",
-    "NichingManager",
-    "NonDominatedSorter",
-    "NoveltyManager",
     "OptimizationStrategy",
     "Optimizer",
-    "PBIDecomposition",
     "ParentSelection",
     "ParetoArchive",
-    "ParetoComparator",
-    "ParetoDominator",
-    "ParetoMixin",
-    "PerObjectiveSurrogate",
     "Population",
     "PopulationAttribute",
-    "PostAskEvent",
-    "PostCrossoverEvent",
     "PostEvaluationEvent",
-    "PostMutationEvent",
-    "PostSurrogateFitEvent",
     "PreSelectionStrategy",
-    "ProbabilityOfFeasibility",
     "Problem",
-    "ProductOfFeasibility",
-    "RBFsurrogate",
-    "RNSGA2Comparator",
     "Result",
-    "RouletteWheelSelection",
     "RunEndEvent",
     "RunStartEvent",
-    "SPEA2Comparator",
-    "SVMSurrogate",
-    "SequentialSelection",
     "SerialEvaluator",
     "SingleObjectiveComparator",
-    "SklearnSurrogate",
     "StaticToleranceHandler",
     "Surrogate",
-    "SurrogateEndEvent",
     "SurrogateManager",
-    "SurrogatePrediction",
-    "SurrogateStartEvent",
     "SurvivorSelection",
-    "TchebycheffDecomposition",
+    # Termination
     "Termination",
     "TerminationCondition",
-    "TorchSurrogate",
     "TournamentSelection",
     "TruncationSelection",
-    "WeightedSumComparator",
-    "WeightedSumDecomposition",
-    "XGBSurrogate",
-    "crowding_distance",
-    "crowding_distance_all_fronts",
-    "dda_non_dominated_sort",
-    "exponential_epsilon_schedule",
     "f_target",
-    "gaussian_kernel",
+    # Indicators
     "hypervolume",
     "hypervolume_contributions",
-    "linear_epsilon_schedule",
-    "logging_generation",
-    "logging_generation_hv",
     "max_fe",
     "max_gen",
+    # API entry points
     "maximize",
     "minimize",
-    "non_dominated_sort",
-    "product_combine",
-    "rank_weighted_combine",
-    "repair_clipping",
-    "spea2_fitness",
     "stalled",
-    "uniform_weight_vectors",
 ]
+
+# ---------------------------------------------------------------------------
+# Tier 2 — lazy imports (accessible as saealib.<name>, shown in dir())
+# ---------------------------------------------------------------------------
+
+_TIER2_MAP: dict[str, str] = {
+    # comparators (less common)
+    "Dominator": "saealib.comparators",
+    "EpsilonDominanceComparator": "saealib.comparators",
+    "EpsilonDominator": "saealib.comparators",
+    "HypervolumeComparator": "saealib.comparators",
+    "NonDominatedSorter": "saealib.comparators",
+    "NSGA3Comparator": "saealib.comparators",
+    "ParetoComparator": "saealib.comparators",
+    "ParetoDominator": "saealib.comparators",
+    "RNSGA2Comparator": "saealib.comparators",
+    "SPEA2Comparator": "saealib.comparators",
+    "WeightedSumComparator": "saealib.comparators",
+    "crowding_distance": "saealib.comparators",
+    "crowding_distance_all_fronts": "saealib.comparators",
+    "dda_non_dominated_sort": "saealib.comparators",
+    "non_dominated_sort": "saealib.comparators",
+    "spea2_fitness": "saealib.comparators",
+    # decomposition
+    "Decomposition": "saealib.decomposition",
+    "DecompositionComparator": "saealib.decomposition",
+    "PBIDecomposition": "saealib.decomposition",
+    "TchebycheffDecomposition": "saealib.decomposition",
+    "WeightedSumDecomposition": "saealib.decomposition",
+    # operators (less common)
+    "CrossoverBLXAlpha": "saealib.operators",
+    "CrossoverOnePoint": "saealib.operators",
+    "CrossoverTwoPoint": "saealib.operators",
+    "CrossoverUniform": "saealib.operators",
+    "MutationGaussian": "saealib.operators",
+    "MutationUniform": "saealib.operators",
+    "RouletteWheelSelection": "saealib.operators",
+    "SequentialSelection": "saealib.operators",
+    "repair_clipping": "saealib.operators",
+    # acquisition (less common)
+    "LowerConfidenceBound": "saealib.acquisition",
+    "MaxUncertainty": "saealib.acquisition",
+    "MeanPrediction": "saealib.acquisition",
+    "ProbabilityOfFeasibility": "saealib.acquisition",
+    "ProductOfFeasibility": "saealib.acquisition",
+    # surrogate (specialized)
+    "ArchiveBasedManager": "saealib.surrogate",
+    "CompositeSurrogateManager": "saealib.surrogate",
+    "DensityManager": "saealib.surrogate",
+    "DTSurrogate": "saealib.surrogate",
+    "GlobalSurrogateManager": "saealib.surrogate",
+    "LGBMSurrogate": "saealib.surrogate",
+    "LocalSurrogateManager": "saealib.surrogate",
+    "NichingManager": "saealib.surrogate",
+    "NNSurrogate": "saealib.surrogate",
+    "NoveltyManager": "saealib.surrogate",
+    "PerObjectiveSurrogate": "saealib.surrogate",
+    "RBFsurrogate": "saealib.surrogate",
+    "SklearnSurrogate": "saealib.surrogate",
+    "SVMSurrogate": "saealib.surrogate",
+    "SurrogatePrediction": "saealib.surrogate",
+    "TorchSurrogate": "saealib.surrogate",
+    "XGBSurrogate": "saealib.surrogate",
+    "product_combine": "saealib.surrogate",
+    "rank_weighted_combine": "saealib.surrogate",
+    # problem (less common)
+    "Constraint": "saealib.problem",
+    "GradientRepairHandler": "saealib.problem",
+    "exponential_epsilon_schedule": "saealib.problem",
+    "linear_epsilon_schedule": "saealib.problem",
+    # population (mixins)
+    "ArchiveMixin": "saealib.population",
+    "ParetoMixin": "saealib.population",
+    # callbacks (less common)
+    "PostAskEvent": "saealib.callback",
+    "PostCrossoverEvent": "saealib.callback",
+    "PostMutationEvent": "saealib.callback",
+    "PostSurrogateFitEvent": "saealib.callback",
+    "SurrogateEndEvent": "saealib.callback",
+    "SurrogateStartEvent": "saealib.callback",
+    "logging_generation": "saealib.callback",
+    "logging_generation_hv": "saealib.callback",
+    # utils
+    "gaussian_kernel": "saealib.surrogate.rbf",
+    "uniform_weight_vectors": "saealib.utils.weight_vectors",
+}
 
 
 def __getattr__(name: str) -> object:
+    if name in _TIER2_MAP:
+        import importlib
+
+        mod = importlib.import_module(_TIER2_MAP[name])
+        obj = getattr(mod, name)
+        globals()[name] = obj  # cache to avoid repeated lookup
+        return obj
     if name == "GPSurrogate":
         from saealib.surrogate._deprecated import GPSurrogate
 
         return GPSurrogate
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__() -> list[str]:
+    return sorted(__all__ + list(_TIER2_MAP))
