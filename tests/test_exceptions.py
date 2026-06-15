@@ -40,13 +40,13 @@ class TestTopLevelExport:
         assert "ConfigurationError" in saealib.__all__
 
     def test_importable_from_top_level(self):
-        from saealib import ConfigurationError as CE
-        from saealib import SaealibError as SE
-        from saealib import ValidationError as VE
+        from saealib import ConfigurationError as CfgErr
+        from saealib import SaealibError as BaseErr
+        from saealib import ValidationError as ValErr
 
-        assert SE is SaealibError
-        assert VE is ValidationError
-        assert CE is ConfigurationError
+        assert BaseErr is SaealibError
+        assert ValErr is ValidationError
+        assert CfgErr is ConfigurationError
 
 
 class TestMinimizeBoundary:
@@ -60,21 +60,15 @@ class TestMinimizeBoundary:
 
     def test_surrogate_none(self):
         with pytest.raises(ValidationError):
-            saealib.minimize(
-                lambda x: x, dim=1, lb=[0], ub=[1], surrogate=None
-            )
+            saealib.minimize(lambda x: x, dim=1, lb=[0], ub=[1], surrogate=None)
 
     def test_unknown_surrogate(self):
         with pytest.raises(ValidationError):
-            saealib.minimize(
-                lambda x: x, dim=1, lb=[0], ub=[1], surrogate="unknown"
-            )
+            saealib.minimize(lambda x: x, dim=1, lb=[0], ub=[1], surrogate="unknown")
 
     def test_unknown_strategy(self):
         with pytest.raises(ValidationError):
-            saealib.minimize(
-                lambda x: x, dim=1, lb=[0], ub=[1], strategy="unknown"
-            )
+            saealib.minimize(lambda x: x, dim=1, lb=[0], ub=[1], strategy="unknown")
 
     def test_missing_dim(self):
         with pytest.raises(ValidationError):
@@ -82,9 +76,7 @@ class TestMinimizeBoundary:
 
     def test_unknown_direction(self):
         with pytest.raises(ValidationError):
-            saealib.minimize(
-                lambda x: x, dim=1, lb=[0], ub=[1], direction=["minimise"]
-            )
+            saealib.minimize(lambda x: x, dim=1, lb=[0], ub=[1], direction=["minimise"])
 
 
 class TestOptimizerBoundary:
