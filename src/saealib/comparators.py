@@ -426,12 +426,21 @@ class SingleObjectiveComparator(Comparator):
 
     def __init__(
         self,
-        weight: float = 1.0,
+        direction: float = 1.0,
         eps: float | None = None,
         *,
+        weight: float | None = None,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
     ):
+        if weight is not None:
+            warnings.warn(
+                "SingleObjectiveComparator(weight=...) is deprecated"
+                " and will be removed in 0.1.0. Use direction=.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            direction = weight
         if eps is not None:
             warnings.warn(
                 "SingleObjectiveComparator(eps=...) is deprecated"
@@ -440,7 +449,9 @@ class SingleObjectiveComparator(Comparator):
                 stacklevel=2,
             )
             eps_cv = eps_obj = eps
-        super().__init__(np.array([weight]), eps_cv, eps_obj)
+        super().__init__(
+            np.array([direction]), eps_cv, eps_obj, direction=np.array([direction])
+        )
 
     def sort_population(self, population: Population) -> np.ndarray:
         """
@@ -510,7 +521,7 @@ class SingleObjectiveComparator(Comparator):
             Sorted indices of the solutions.
         """
         cv_key = np.where(cv > self.eps_cv, cv, 0)
-        obj_key = fitness.flatten() * self.weights[0]
+        obj_key = fitness.flatten() * self.direction[0]
         return np.lexsort((-obj_key, cv_key))
 
 
@@ -527,20 +538,33 @@ class WeightedSumComparator(Comparator):
 
     Parameters
     ----------
-    weights : np.ndarray
-        Weights for objectives. shape = (n_obj,)
+    direction : np.ndarray
+        Per-objective optimization directions (±1). shape = (n_obj,)
     eps : float
         Epsilon tolerance for constraint violation and fitness comparison.
     """
 
     def __init__(
         self,
-        weights: np.ndarray,
+        direction: np.ndarray | None = None,
         eps: float | None = None,
         *,
+        weights: np.ndarray | None = None,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
     ):
+        if weights is not None:
+            warnings.warn(
+                "WeightedSumComparator(weights=...) is deprecated"
+                " and will be removed in 0.1.0. Use direction=.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            direction = weights
+        if direction is None:
+            raise TypeError(
+                "WeightedSumComparator() missing required argument: 'direction'"
+            )
         if eps is not None:
             warnings.warn(
                 "WeightedSumComparator(eps=...) is deprecated"
@@ -549,13 +573,14 @@ class WeightedSumComparator(Comparator):
                 stacklevel=2,
             )
             eps_cv = eps_obj = eps
-        super().__init__(np.asarray(weights, dtype=float), eps_cv, eps_obj)
+        _dir = np.asarray(direction, dtype=float)
+        super().__init__(_dir, eps_cv, eps_obj, direction=_dir)
 
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort population by weighted sum of objectives, with feasibility first."""
         f = population.get("f")  # (n_ind, n_obj)
         cv = population.get("cv")  # (n_ind,)
-        scalar = f @ self.weights  # (n_ind,) weighted sum per individual
+        scalar = f @ self.direction  # (n_ind,) weighted sum per individual
         cv_key = np.where(cv > self.eps_cv, cv, 0)
         return np.lexsort((-scalar, cv_key))
 
@@ -581,8 +606,8 @@ class WeightedSumComparator(Comparator):
             return 1
         elif cv_b > self.eps_cv:
             return -1
-        sa = float(np.dot(fa, self.weights))
-        sb = float(np.dot(fb, self.weights))
+        sa = float(np.dot(fa, self.direction))
+        sb = float(np.dot(fb, self.direction))
         if sa > sb + self.eps_obj:
             return -1
         elif sa < sb - self.eps_obj:

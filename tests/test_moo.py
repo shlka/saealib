@@ -376,7 +376,7 @@ class TestWeightedSumComparator:
         # weights = [-1, -1] → score = -(f1+f2); lower sum → higher score
         f = np.array([[1.0, 1.0], [0.5, 0.5], [2.0, 2.0]])
         pop = _make_pop(f)
-        comp = WeightedSumComparator(weights=np.array([-1.0, -1.0]))
+        comp = WeightedSumComparator(direction=np.array([-1.0, -1.0]))
         order = comp.sort_population(pop)
         # sorted by weighted sum descending: idx=1 (sum=1), idx=0 (sum=2), idx=2 (sum=4)
         assert order[0] == 1
@@ -387,7 +387,7 @@ class TestWeightedSumComparator:
         f = np.array([[1.0, 1.0], [0.1, 0.1], [0.5, 0.5]])
         cv = np.array([0.0, 0.5, 0.0])  # idx=1 is infeasible
         pop = _make_pop(f, cv)
-        comp = WeightedSumComparator(weights=np.array([-1.0, -1.0]))
+        comp = WeightedSumComparator(direction=np.array([-1.0, -1.0]))
         order = comp.sort_population(pop)
         # idx=1 (infeasible) should appear last
         assert order[-1] == 1
@@ -395,21 +395,21 @@ class TestWeightedSumComparator:
     def test_compare_population_a_better(self) -> None:
         f = np.array([[0.5, 0.5], [1.0, 1.0]])
         pop = _make_pop(f)
-        comp = WeightedSumComparator(weights=np.array([-1.0, -1.0]))
+        comp = WeightedSumComparator(direction=np.array([-1.0, -1.0]))
         result = comp.compare_population(pop, 0, 1)
         assert result == -1  # a has lower sum → better
 
     def test_compare_population_b_better(self) -> None:
         f = np.array([[2.0, 2.0], [1.0, 1.0]])
         pop = _make_pop(f)
-        comp = WeightedSumComparator(weights=np.array([-1.0, -1.0]))
+        comp = WeightedSumComparator(direction=np.array([-1.0, -1.0]))
         result = comp.compare_population(pop, 0, 1)
         assert result == 1  # b has lower sum → better
 
     def test_compare_population_equal(self) -> None:
         f = np.array([[1.0, 1.0], [1.0, 1.0]])
         pop = _make_pop(f)
-        comp = WeightedSumComparator(weights=np.array([-1.0, -1.0]))
+        comp = WeightedSumComparator(direction=np.array([-1.0, -1.0]))
         result = comp.compare_population(pop, 0, 1)
         assert result == 0
 
@@ -418,7 +418,7 @@ class TestWeightedSumComparator:
         f = np.array([[100.0, 100.0], [0.0, 0.0]])
         cv = np.array([0.5, 0.0])  # idx=0 infeasible, idx=1 feasible
         pop = _make_pop(f, cv)
-        comp = WeightedSumComparator(weights=np.array([-1.0, -1.0]))
+        comp = WeightedSumComparator(direction=np.array([-1.0, -1.0]))
         result = comp.compare_population(pop, 0, 1)
         assert result == 1  # b (feasible) is better
 
@@ -426,7 +426,7 @@ class TestWeightedSumComparator:
         """WeightedSumComparator with n_obj=1 behaves like SingleObjectiveComparator."""
         f = np.array([[2.0], [1.0], [3.0]])
         pop = _make_pop(f)
-        comp = WeightedSumComparator(weights=np.array([-1.0]))
+        comp = WeightedSumComparator(direction=np.array([-1.0]))
         order = comp.sort_population(pop)
         # ascending order of f: idx=1(1.0), idx=0(2.0), idx=2(3.0)
         assert order[0] == 1
@@ -677,7 +677,7 @@ class TestProblemComparatorAutoSelection:
         assert isinstance(p.comparator, NSGA2Comparator)
 
     def test_custom_comparator_overrides_auto_selection(self) -> None:
-        custom = WeightedSumComparator(weights=np.array([-1.0, -1.0]))
+        custom = WeightedSumComparator(direction=np.array([-1.0, -1.0]))
         p = Problem(
             func=lambda x: np.array([np.sum(x**2), np.sum((x - 1) ** 2)]),
             dim=2,

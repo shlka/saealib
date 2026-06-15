@@ -123,8 +123,8 @@ def test_strategy_requires_surrogate_present():
 
 def test_comparator_weight_mismatch():
     opt = _fully_configured()
-    opt.problem.comparator.weights = np.array([1.0, 1.0])  # len 2 != n_obj=1
-    assert any("weights" in m for m in opt.validate())
+    opt.problem.comparator.direction = np.array([1.0, 1.0])  # len 2 != n_obj=1
+    assert any("direction" in m for m in opt.validate())
 
 
 # ---------------------------------------------------------------------------
