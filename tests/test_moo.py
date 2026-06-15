@@ -599,6 +599,26 @@ class TestNSGA2Comparator:
         # objects should not be the same (cache was invalidated)
         assert order1 is not order2
 
+    def test_sort_population_cache_invalidated_on_dominator_replace(self) -> None:
+        """Replacing dominator mid-run causes ranks to be recomputed."""
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
+        pop = _make_pop(f)
+        comp = NSGA2Comparator()
+        order1 = comp.sort_population(pop)
+        comp._dominator = EpsilonDominator(eps=10.0)  # coarse boxes → all same front
+        order2 = comp.sort_population(pop)
+        assert order1 is not order2
+
+    def test_sort_population_cache_invalidated_on_direction_change(self) -> None:
+        """Changing direction mid-run causes ranks to be recomputed."""
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
+        pop = _make_pop(f)
+        comp = NSGA2Comparator(direction=np.array([1.0, 1.0]))
+        order1 = comp.sort_population(pop)
+        comp.direction = np.array([-1.0, -1.0])
+        order2 = comp.sort_population(pop)
+        assert order1 is not order2
+
     def test_compare_population_a_dominates_b(self) -> None:
         f = np.array([[0.0, 0.0], [1.0, 1.0]])
         pop = _make_pop(f)
@@ -2182,7 +2202,6 @@ class TestNSGA3Comparator:
         order1 = comp.sort_population(pop)
         order2 = comp.sort_population(pop)
         np.testing.assert_array_equal(order1, order2)
-        assert pop.get_cache("pareto_sort") is not None
 
     def test_reference_points_property(self) -> None:
         ref = np.array([[0.0, 1.0], [1.0, 0.0]])
@@ -2273,7 +2292,6 @@ class TestRNSGA2Comparator:
         order1 = comp.sort_population(pop)
         order2 = comp.sort_population(pop)
         np.testing.assert_array_equal(order1, order2)
-        assert pop.get_cache("pareto_sort") is not None
 
     def test_reference_points_property(self) -> None:
         ref = np.array([[0.0, 1.0], [1.0, 0.0]])

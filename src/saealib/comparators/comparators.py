@@ -460,7 +460,11 @@ class NSGA2Comparator(ParetoComparator):
 
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort by Pareto front rank then crowding distance (NSGA-II style)."""
-        cached = population.get_cache("pareto_sort")
+        _dir_key = (
+            tuple(self.direction.tolist()) if self.direction is not None else None
+        )
+        _cache_key = ("pareto_sort", self._sorter, self._dominator, _dir_key)
+        cached = population.get_cache(_cache_key)
         if cached is not None:
             return cached
 
@@ -483,7 +487,7 @@ class NSGA2Comparator(ParetoComparator):
             sorted_infeasible = infeasible[np.argsort(cv[infeasible])]
 
         result = np.concatenate([sorted_feasible, sorted_infeasible]).astype(int)
-        population.set_cache("pareto_sort", result)
+        population.set_cache(_cache_key, result)
         return result
 
 
@@ -1256,7 +1260,11 @@ class NSGA3Comparator(ParetoComparator):
 
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort by Pareto front rank then NSGA-III niche preservation."""
-        cached = population.get_cache("pareto_sort")
+        _dir_key = (
+            tuple(self.direction.tolist()) if self.direction is not None else None
+        )
+        _cache_key = ("pareto_sort", self._sorter, self._dominator, _dir_key)
+        cached = population.get_cache(_cache_key)
         if cached is not None:
             return cached
 
@@ -1288,7 +1296,7 @@ class NSGA3Comparator(ParetoComparator):
         result = np.concatenate(
             [np.array(sorted_feasible, dtype=int), sorted_infeasible]
         ).astype(int)
-        population.set_cache("pareto_sort", result)
+        population.set_cache(_cache_key, result)
         return result
 
 
@@ -1374,7 +1382,11 @@ class RNSGA2Comparator(ParetoComparator):
 
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort by Pareto front rank then reference-point proximity (R-NSGA-II)."""
-        cached = population.get_cache("pareto_sort")
+        _dir_key = (
+            tuple(self.direction.tolist()) if self.direction is not None else None
+        )
+        _cache_key = ("pareto_sort", self._sorter, self._dominator, _dir_key)
+        cached = population.get_cache(_cache_key)
         if cached is not None:
             return cached
 
@@ -1423,7 +1435,7 @@ class RNSGA2Comparator(ParetoComparator):
         result = np.concatenate(
             [np.array(sorted_feasible, dtype=int), sorted_infeasible]
         ).astype(int)
-        population.set_cache("pareto_sort", result)
+        population.set_cache(_cache_key, result)
         return result
 
     def _order_front(
