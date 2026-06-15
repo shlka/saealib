@@ -4,7 +4,7 @@ from typing import Protocol
 
 import numpy as np
 
-from saealib.dominance import Dominator, ParetoDominator, _PARETO_DOMINATOR
+from saealib.dominance import _PARETO_DOMINATOR, Dominator, ParetoDominator
 
 
 def non_dominated_sort(
