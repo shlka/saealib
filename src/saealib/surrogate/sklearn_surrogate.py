@@ -146,7 +146,7 @@ class DTSurrogate(SklearnSurrogate):
         super().__init__(RandomForestRegressor(**kwargs))
 
 
-class GPSurrogate(SklearnSurrogate):
+class GPRSurrogate(SklearnSurrogate):
     """
     Gaussian Process Regressor surrogate.
 
