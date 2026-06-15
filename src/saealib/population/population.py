@@ -6,6 +6,7 @@ import warnings
 import weakref
 from dataclasses import dataclass
 from types import MappingProxyType
+from collections.abc import Hashable
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 import numpy as np
@@ -211,7 +212,7 @@ class Population(Generic[T_Individual]):
         self._structure_version += 1
         self.mod_value()
 
-    def set_cache(self, key: str, value: Any) -> None:
+    def set_cache(self, key: Hashable, value: Any) -> None:
         """
         Set a cache value.
 
@@ -220,14 +221,14 @@ class Population(Generic[T_Individual]):
 
         Parameters
         ----------
-        key : str
+        key : Hashable
             The key of the cache.
         value : Any
             The value to be cached.
         """
         self._cache[key] = value
 
-    def get_cache(self, key: str) -> Any | None:
+    def get_cache(self, key: Hashable) -> Any | None:
         """
         Get a cached value.
 
@@ -235,7 +236,7 @@ class Population(Generic[T_Individual]):
 
         Parameters
         ----------
-        key : str
+        key : Hashable
             The key of the cache.
 
         Returns
