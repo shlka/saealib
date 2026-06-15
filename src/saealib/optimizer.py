@@ -13,6 +13,7 @@ from saealib.callback import (
     logging_generation,
 )
 from saealib.context import OptimizationContext
+from saealib.exceptions import ConfigurationError
 from saealib.execution.evaluator import Evaluator, SerialEvaluator
 from saealib.execution.runner import Runner
 from saealib.surrogate.manager import LocalSurrogateManager, SurrogateManager
@@ -247,7 +248,7 @@ class Optimizer:
         """
         issues = self.validate()
         if issues:
-            raise ValueError(
+            raise ConfigurationError(
                 "Optimizer misconfigured:\n" + "\n".join(f"  - {m}" for m in issues)
             )
         return Runner(self).iterate()
@@ -263,7 +264,7 @@ class Optimizer:
         """
         issues = self.validate()
         if issues:
-            raise ValueError(
+            raise ConfigurationError(
                 "Optimizer misconfigured:\n" + "\n".join(f"  - {m}" for m in issues)
             )
         return Runner(self).run()
