@@ -999,3 +999,67 @@ class TestSurrogateManagerHooks:
         )
         manager.score_candidates(candidates, archive_1obj)
         assert call_count[0] == len(candidates)
+
+
+# ===========================================================================
+# SurrogateManager.on_generation_end / with_on_generation_end
+# ===========================================================================
+
+
+class TestSurrogateManagerGenerationHook:
+    """Tests for SurrogateManager.on_generation_end and with_on_generation_end."""
+
+    def test_on_generation_end_default_is_noop(
+        self,
+        surrogate_1obj: RBFsurrogate,
+        archive_1obj: Archive,
+    ) -> None:
+        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
+        assert manager.on_generation_end(0, archive_1obj, ctx=None) is None
+
+    def test_with_on_generation_end_fn_is_called(
+        self,
+        surrogate_1obj: RBFsurrogate,
+        archive_1obj: Archive,
+    ) -> None:
+        calls: list[tuple] = []
+
+        def hook(gen, archive, ctx):
+            calls.append((gen, archive, ctx))
+
+        manager = GlobalSurrogateManager(
+            surrogate_1obj, MeanPrediction()
+        ).with_on_generation_end(hook)
+        manager.on_generation_end(3, archive_1obj, ctx=None)
+
+        assert len(calls) == 1
+        assert calls[0] == (3, archive_1obj, None)
+
+    def test_with_on_generation_end_chains_in_order(
+        self,
+        surrogate_1obj: RBFsurrogate,
+        archive_1obj: Archive,
+    ) -> None:
+        order: list[int] = []
+        manager = (
+            GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
+            .with_on_generation_end(lambda g, a, ctx: order.append(1))
+            .with_on_generation_end(lambda g, a, ctx: order.append(2))
+        )
+        manager.on_generation_end(0, archive_1obj)
+        assert order == [1, 2]
+
+    def test_with_on_generation_end_does_not_mutate_original(
+        self,
+        surrogate_1obj: RBFsurrogate,
+        archive_1obj: Archive,
+    ) -> None:
+        called = [False]
+
+        def hook(g, a, ctx):
+            called[0] = True
+
+        original = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
+        _ = original.with_on_generation_end(hook)
+        original.on_generation_end(0, archive_1obj)
+        assert not called[0]

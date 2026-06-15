@@ -57,6 +57,9 @@ class Runner:
             handler = ctx.problem.handler
             handler.on_generation_end(ctx.gen, ctx.population)
             ctx.comparator.eps_cv = handler.feasibility_threshold
+            sm = getattr(opt, "surrogate_manager", None)
+            if sm is not None:
+                sm.on_generation_end(ctx.gen, ctx.archive, ctx)
             opt.dispatch(GenerationEndEvent(ctx=ctx))
             yield ctx
 
