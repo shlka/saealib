@@ -7,9 +7,10 @@ for ranking and comparing solutions in single- and multi-objective optimization.
 
 from __future__ import annotations
 
-import warnings
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Protocol
+
+from saealib._deprecated import deprecated_param, warn_deprecated
 
 import numpy as np
 
@@ -345,12 +346,7 @@ class Comparator(ABC):
     @property
     def eps(self) -> float:
         """Deprecated. Use eps_cv or eps_obj."""
-        warnings.warn(
-            "Comparator.eps is deprecated and will be removed in 0.1.0. "
-            "Use eps_cv or eps_obj.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
+        warn_deprecated("Comparator.eps", "eps_cv or eps_obj", "0.1.0")
         return self.eps_cv
 
     @abstractmethod
@@ -424,30 +420,17 @@ class Comparator(ABC):
 class SingleObjectiveComparator(Comparator):
     """Comparator for single-objective optimization."""
 
+    @deprecated_param("weight", "direction", "0.1.0")
     def __init__(
         self,
         direction: float = 1.0,
         eps: float | None = None,
         *,
-        weight: float | None = None,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
     ):
-        if weight is not None:
-            warnings.warn(
-                "SingleObjectiveComparator(weight=...) is deprecated"
-                " and will be removed in 0.1.0. Use direction=.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            direction = weight
         if eps is not None:
-            warnings.warn(
-                "SingleObjectiveComparator(eps=...) is deprecated"
-                " and will be removed in 0.1.0. Use eps_cv and eps_obj.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+            warn_deprecated("eps", "eps_cv and eps_obj", "0.1.0")
             eps_cv = eps_obj = eps
         super().__init__(
             np.array([direction]), eps_cv, eps_obj, direction=np.array([direction])
@@ -544,34 +527,21 @@ class WeightedSumComparator(Comparator):
         Epsilon tolerance for constraint violation and fitness comparison.
     """
 
+    @deprecated_param("weights", "direction", "0.1.0")
     def __init__(
         self,
         direction: np.ndarray | None = None,
         eps: float | None = None,
         *,
-        weights: np.ndarray | None = None,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
     ):
-        if weights is not None:
-            warnings.warn(
-                "WeightedSumComparator(weights=...) is deprecated"
-                " and will be removed in 0.1.0. Use direction=.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            direction = weights
         if direction is None:
             raise TypeError(
                 "WeightedSumComparator() missing required argument: 'direction'"
             )
         if eps is not None:
-            warnings.warn(
-                "WeightedSumComparator(eps=...) is deprecated"
-                " and will be removed in 0.1.0. Use eps_cv and eps_obj.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+            warn_deprecated("eps", "eps_cv and eps_obj", "0.1.0")
             eps_cv = eps_obj = eps
         _dir = np.asarray(direction, dtype=float)
         super().__init__(_dir, eps_cv, eps_obj, direction=_dir)
@@ -1103,12 +1073,7 @@ class ParetoComparator(Comparator):
         dominator: Dominator | None = None,
     ):
         if eps is not None:
-            warnings.warn(
-                "ParetoComparator(eps=...) is deprecated and will be removed in 0.1.0. "
-                "Use eps_cv.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+            warn_deprecated("eps", "eps_cv", "0.1.0")
             eps_cv = eps
         direction_arr = (
             np.asarray(direction, dtype=float) if direction is not None else None
@@ -1211,12 +1176,7 @@ class NSGA2Comparator(ParetoComparator):
         dominator: Dominator | None = None,
     ):
         if eps is not None:
-            warnings.warn(
-                "NSGA2Comparator(eps=...) is deprecated and will be removed in 0.1.0. "
-                "Use eps_cv.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+            warn_deprecated("eps", "eps_cv", "0.1.0")
             eps_cv = eps
         super().__init__(
             direction,

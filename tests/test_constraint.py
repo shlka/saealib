@@ -24,6 +24,7 @@ from saealib.problem import (
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 class TestConstraint:
     def test_evaluate_returns_func_value(self):
         c = Constraint(lambda x: x[0] ** 2 - 1.0)

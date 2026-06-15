@@ -7,10 +7,11 @@ Comparator classes and Pareto-related utilities are in saealib.comparators.
 
 from __future__ import annotations
 
-import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING
+
+from saealib._deprecated import deprecated_class, warn_deprecated
 
 import numpy as np
 
@@ -106,6 +107,7 @@ class InequalityConstraint:
         return None
 
 
+@deprecated_class("InequalityConstraint")
 class Constraint(InequalityConstraint):
     """
     Deprecated alias of :class:`InequalityConstraint`.
@@ -116,12 +118,6 @@ class Constraint(InequalityConstraint):
     """
 
     def __init__(self, func: callable, threshold: float = 0.0):
-        warnings.warn(
-            "Constraint is deprecated and will be removed in a future release. "
-            "Use InequalityConstraint instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
         super().__init__(func, threshold)
 
 
@@ -614,12 +610,7 @@ class Problem:
             behavior.
         """
         if eps is not None:
-            warnings.warn(
-                "Problem(eps=...) is deprecated and will be removed in 0.1.0. "
-                "Use eps_cv and eps_obj.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+            warn_deprecated("eps", "eps_cv and eps_obj", "0.1.0")
             eps_cv = eps_obj = eps
         direction = np.asarray(direction, dtype=float)
         if not np.all(np.abs(direction) == 1):
@@ -651,12 +642,7 @@ class Problem:
     @property
     def eps(self) -> float:
         """Deprecated. Use eps_cv or eps_obj."""
-        warnings.warn(
-            "Problem.eps is deprecated and will be removed in 0.1.0. "
-            "Use eps_cv or eps_obj.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
+        warn_deprecated("Problem.eps", "eps_cv or eps_obj", "0.1.0")
         return self.eps_cv
 
     @property

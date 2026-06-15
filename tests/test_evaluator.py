@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 
 from saealib import EvaluationResult, Evaluator, Optimizer, SerialEvaluator
-from saealib.problem import Constraint, Problem
+from saealib.problem import InequalityConstraint, Problem
 
 
 def _sphere_problem(constraints=None):
@@ -33,7 +33,7 @@ class TestSerialEvaluator:
         assert issubclass(SerialEvaluator, Evaluator)
 
     def test_batch_shapes_with_constraints(self):
-        p = _sphere_problem(constraints=[Constraint(lambda x: x[0] - 1.0)])
+        p = _sphere_problem(constraints=[InequalityConstraint(lambda x: x[0] - 1.0)])
         x = np.array([[0.0, 0.0], [2.0, 0.0]])
         result = SerialEvaluator().evaluate_batch(x, p)
         assert isinstance(result, EvaluationResult)
@@ -42,7 +42,7 @@ class TestSerialEvaluator:
         assert result.cv.shape == (2,)
 
     def test_values_match_per_candidate(self):
-        p = _sphere_problem(constraints=[Constraint(lambda x: x[0] - 1.0)])
+        p = _sphere_problem(constraints=[InequalityConstraint(lambda x: x[0] - 1.0)])
         x = np.array([[0.0, 0.0], [2.0, 0.0], [-3.0, 1.0]])
         result = SerialEvaluator().evaluate_batch(x, p)
         for i, xi in enumerate(x):
@@ -52,7 +52,7 @@ class TestSerialEvaluator:
             assert result.cv[i] == pytest.approx(cv_i)
 
     def test_cv_aggregation(self):
-        p = _sphere_problem(constraints=[Constraint(lambda x: x[0] - 1.0)])
+        p = _sphere_problem(constraints=[InequalityConstraint(lambda x: x[0] - 1.0)])
         x = np.array([[0.0, 0.0], [2.0, 0.0]])
         result = SerialEvaluator().evaluate_batch(x, p)
         assert result.cv == pytest.approx([0.0, 1.0])
