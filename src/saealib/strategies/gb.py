@@ -49,7 +49,7 @@ class GenerationBasedStrategy(OptimizationStrategy):
             )
 
             _, predictions = provider.surrogate_manager.score_candidates(
-                offspring.x, ctx.archive, provider, ctx
+                offspring.x, ctx.archive, ctx
             )
             for i, pred in enumerate(predictions):
                 assign_tell_f(offspring[i], pred, ctx)

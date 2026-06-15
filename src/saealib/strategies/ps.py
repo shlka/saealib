@@ -55,7 +55,7 @@ class PreSelectionStrategy(OptimizationStrategy):
         )
 
         scores, predictions = provider.surrogate_manager.score_candidates(
-            candidates.x, ctx.archive, provider, ctx
+            candidates.x, ctx.archive, ctx
         )
         for i, pred in enumerate(predictions):
             assign_tell_f(candidates[i], pred, ctx)

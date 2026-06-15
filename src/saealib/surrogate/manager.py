@@ -31,7 +31,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from saealib.callback import PostSurrogateFitEvent
 from saealib.surrogate.base import Surrogate
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.training_set import (
@@ -43,7 +42,6 @@ from saealib.surrogate.training_set import (
 if TYPE_CHECKING:
     from saealib.acquisition.base import AcquisitionFunction
     from saealib.context import OptimizationContext
-    from saealib.optimizer import ComponentProvider
     from saealib.population import Archive
 
 
@@ -94,7 +92,6 @@ class SurrogateManager(ABC):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        provider: ComponentProvider | None = None,
         ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """
@@ -106,11 +103,9 @@ class SurrogateManager(ABC):
             Candidate design variable matrix. shape: (n_candidates, dim)
         archive : Archive
             Archive of evaluated solutions used for surrogate training.
-        provider : ComponentProvider or None, optional
-            Component provider used to dispatch ``PostSurrogateFitEvent``
-            after each surrogate fit. If ``None``, no event is dispatched.
         ctx : OptimizationContext or None, optional
-            Current optimization context. Required when ``provider`` is given.
+            Current optimization context. Passed to ``TrainingSet.build``
+            for strategies that require comparator or population access.
 
         Returns
         -------
@@ -158,22 +153,12 @@ class GlobalSurrogateManager(SurrogateManager):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        provider: ComponentProvider | None = None,
         ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """Fit on full archive, predict and score all candidates at once."""
         population = ctx.population if ctx is not None else None
         data = self.training_set.build(archive, population, ctx, candidate_x=None)
         self.surrogate.fit(data.train_x, data.train_y)
-        if provider is not None and ctx is not None:
-            provider.dispatch(
-                PostSurrogateFitEvent(
-                    ctx=ctx,
-                    surrogate=self.surrogate,
-                    train_x=data.train_x,
-                    train_f=data.train_y,
-                )
-            )
 
         reference = self.acquisition.compute_reference(archive)
         prediction = self.surrogate.predict(candidates_x)  # mean: (n_candidates, n_obj)
@@ -227,27 +212,16 @@ class LocalSurrogateManager(SurrogateManager):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        provider: ComponentProvider | None = None,
         ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """Fit a local model per candidate and score each individually."""
         predictions: list[SurrogatePrediction] = []
-        _dispatch = provider is not None and ctx is not None
         reference = self.acquisition.compute_reference(archive)
         population = ctx.population if ctx is not None else None
 
         for x in candidates_x:
             data = self.training_set.build(archive, population, ctx, candidate_x=x)
             self.surrogate.fit(data.train_x, data.train_y)
-            if _dispatch:
-                provider.dispatch(
-                    PostSurrogateFitEvent(
-                        ctx=ctx,
-                        surrogate=self.surrogate,
-                        train_x=data.train_x,
-                        train_f=data.train_y,
-                    )
-                )
             pred = self.surrogate.predict(x)  # mean: (1, n_obj)
             predictions.append(pred)
 
@@ -355,7 +329,6 @@ class CompositeSurrogateManager(SurrogateManager):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        provider: ComponentProvider | None = None,
         ctx: OptimizationContext | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """Combine scores from all sub-managers using ``combine_fn``.
@@ -366,9 +339,7 @@ class CompositeSurrogateManager(SurrogateManager):
         first_predictions: list[SurrogatePrediction] | None = None
 
         for i, manager in enumerate(self.managers):
-            scores, preds = manager.score_candidates(
-                candidates_x, archive, provider, ctx
-            )
+            scores, preds = manager.score_candidates(candidates_x, archive, ctx)
             all_scores.append(scores)
             if i == 0:
                 first_predictions = preds
