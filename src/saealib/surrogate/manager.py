@@ -31,7 +31,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from saealib.acquisition.base import AcquisitionFunction
 from saealib.callback import PostSurrogateFitEvent
 from saealib.surrogate.base import Surrogate
 from saealib.surrogate.prediction import SurrogatePrediction
@@ -42,6 +41,7 @@ from saealib.surrogate.training_set import (
 )
 
 if TYPE_CHECKING:
+    from saealib.acquisition.base import AcquisitionFunction
     from saealib.context import OptimizationContext
     from saealib.optimizer import ComponentProvider
     from saealib.population import Archive

@@ -12,10 +12,9 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from saealib.surrogate.prediction import SurrogatePrediction
-
 if TYPE_CHECKING:
     from saealib.population import Archive
+    from saealib.surrogate.prediction import SurrogatePrediction
 
 
 class AcquisitionFunction(ABC):
