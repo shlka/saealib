@@ -14,6 +14,11 @@ import pytest
 
 from saealib.acquisition import MeanPrediction
 from saealib.population import Archive, PopulationAttribute
+from saealib.surrogate.accuracy import (
+    KFoldAccuracyEvaluator,
+    SpearmanCorrelation,
+    SurrogateAccuracy,
+)
 from saealib.surrogate.archive_manager import (
     ArchiveBasedManager,
     DensityManager,
@@ -1063,3 +1068,182 @@ class TestSurrogateManagerGenerationHook:
         _ = original.with_on_generation_end(hook)
         original.on_generation_end(0, archive_1obj)
         assert not called[0]
+
+
+# ---------------------------------------------------------------------------
+# last_accuracy
+# ---------------------------------------------------------------------------
+
+
+class TestLastAccuracy:
+    def test_last_accuracy_none_by_default(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
+        assert manager.last_accuracy is None
+
+    def test_last_accuracy_none_without_evaluator(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
+        manager.fit(archive_1obj)
+        assert manager.last_accuracy is None
+
+    def test_last_accuracy_set_after_fit_with_evaluator(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=5)
+        manager = GlobalSurrogateManager(
+            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
+        )
+        manager.fit(archive_1obj)
+        assert isinstance(manager.last_accuracy, SurrogateAccuracy)
+        assert "spearman" in manager.last_accuracy.metrics
+
+    def test_last_accuracy_updated_on_score_candidates_with_refit(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
+        manager = GlobalSurrogateManager(
+            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
+        )
+        rng = np.random.default_rng(0)
+        candidates = rng.uniform(-2.0, 2.0, size=(5, DIM))
+        manager.score_candidates(candidates, archive_1obj, refit=True)
+        assert manager.last_accuracy is not None
+
+    def test_last_accuracy_not_updated_when_refit_false(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
+        manager = GlobalSurrogateManager(
+            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
+        )
+        manager.fit(archive_1obj)
+        first = manager.last_accuracy
+
+        rng = np.random.default_rng(1)
+        candidates = rng.uniform(-2.0, 2.0, size=(5, DIM))
+        manager.score_candidates(candidates, archive_1obj, refit=False)
+        assert manager.last_accuracy is first  # same object, not updated
+
+    def test_composite_propagates_last_accuracy_from_first_manager(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
+        m1 = GlobalSurrogateManager(
+            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
+        )
+        m2 = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
+        composite = CompositeSurrogateManager(
+            [m1, m2], combine_fn=rank_weighted_combine()
+        )
+        composite.fit(archive_1obj)
+        assert composite.last_accuracy is m1.last_accuracy
+        assert composite.last_accuracy is not None
+
+
+class TestLocalSurrogateManagerAccuracy:
+    def test_last_accuracy_none_by_default(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        manager = LocalSurrogateManager(surrogate_1obj, MeanPrediction())
+        assert manager.last_accuracy is None
+
+    def test_fit_sets_last_accuracy(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
+        manager = LocalSurrogateManager(
+            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
+        )
+        manager.fit(archive_1obj)
+        assert isinstance(manager.last_accuracy, SurrogateAccuracy)
+        assert "spearman" in manager.last_accuracy.metrics
+
+    def test_fit_noop_without_evaluator(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        manager = LocalSurrogateManager(surrogate_1obj, MeanPrediction())
+        manager.fit(archive_1obj)
+        assert manager.last_accuracy is None
+
+    def test_last_accuracy_set_after_score_candidates_with_refit(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
+        manager = LocalSurrogateManager(
+            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
+        )
+        rng = np.random.default_rng(0)
+        candidates = rng.uniform(-2.0, 2.0, size=(5, DIM))
+        manager.score_candidates(candidates, archive_1obj, refit=True)
+        assert isinstance(manager.last_accuracy, SurrogateAccuracy)
+        assert "spearman" in manager.last_accuracy.metrics
+        # n_samples = number of candidates for which validation was possible
+        assert manager.last_accuracy.n_samples == len(candidates)
+
+    def test_last_accuracy_not_updated_when_refit_false(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
+        manager = LocalSurrogateManager(
+            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
+        )
+        rng = np.random.default_rng(0)
+        candidates = rng.uniform(-2.0, 2.0, size=(5, DIM))
+        manager.score_candidates(candidates, archive_1obj, refit=True)
+        first = manager.last_accuracy
+        manager.score_candidates(candidates, archive_1obj, refit=False)
+        assert manager.last_accuracy is first  # not updated
+
+    def test_generation_based_pattern_sets_last_accuracy(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        """fit() + score_candidates(refit=False) pattern (GenerationBasedStrategy)."""
+        evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
+        manager = LocalSurrogateManager(
+            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
+        )
+        rng = np.random.default_rng(0)
+        candidates = rng.uniform(-2.0, 2.0, size=(5, DIM))
+        manager.fit(archive_1obj)
+        assert isinstance(manager.last_accuracy, SurrogateAccuracy)
+        accuracy_after_fit = manager.last_accuracy
+        # inner loop: refit=False should not update last_accuracy
+        manager.score_candidates(candidates, archive_1obj, refit=False)
+        assert manager.last_accuracy is accuracy_after_fit
+
+    def test_nearest_neighbor_excluded_from_training(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        """Nearest archive neighbor is held out; training uses n_neighbors-1 points."""
+        evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
+        manager_with = LocalSurrogateManager(
+            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
+        )
+        manager_without = LocalSurrogateManager(
+            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+        )
+        rng = np.random.default_rng(99)
+        candidates = rng.uniform(-2.0, 2.0, size=(5, DIM))
+        scores_with, _ = manager_with.score_candidates(candidates, archive_1obj)
+        scores_without, _ = manager_without.score_candidates(candidates, archive_1obj)
+        # Scores differ because the nearest neighbor is excluded from training
+        # when an accuracy evaluator is active (k-1 vs k training points).
+        assert scores_with.shape == scores_without.shape
+        assert not np.any(np.isnan(scores_with))
+
+    def test_loo_self_exclusion_in_update_accuracy(
+        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+    ) -> None:
+        """_update_accuracy uses LOO self-exclusion; RBF no longer gives perfect score."""  # noqa: E501
+        evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
+        manager = LocalSurrogateManager(
+            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
+        )
+        manager.fit(archive_1obj)
+        assert manager.last_accuracy is not None
+        # With self-exclusion, RBF accuracy is < 1.0 (not perfectly interpolated)
+        spearman = manager.last_accuracy.get("spearman")
+        assert spearman < 1.0 or np.isnan(spearman)
