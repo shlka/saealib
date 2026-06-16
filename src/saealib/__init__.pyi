@@ -139,6 +139,10 @@ from saealib.surrogate import PerObjectiveSurrogate as PerObjectiveSurrogate
 from saealib.surrogate import RBFsurrogate as RBFsurrogate
 from saealib.surrogate import SklearnSurrogate as SklearnSurrogate
 from saealib.surrogate import Surrogate as Surrogate
+from saealib.surrogate import AccuracyBasedSurrogateSwitcher as AccuracyBasedSurrogateSwitcher
+from saealib.surrogate import GenCtrlSwitcher as GenCtrlSwitcher
+from saealib.surrogate import ManagerSwitcher as ManagerSwitcher
+from saealib.surrogate import StrategySwitcher as StrategySwitcher
 from saealib.surrogate import SurrogateManager as SurrogateManager
 from saealib.surrogate import SurrogatePrediction as SurrogatePrediction
 from saealib.surrogate import SVMSurrogate as SVMSurrogate

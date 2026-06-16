@@ -25,6 +25,12 @@ from saealib.surrogate.manager import (
     rank_weighted_combine,
 )
 from saealib.surrogate.per_objective import PerObjectiveSurrogate
+from saealib.surrogate.switching import (
+    AccuracyBasedSurrogateSwitcher,
+    GenCtrlSwitcher,
+    ManagerSwitcher,
+    StrategySwitcher,
+)
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
 from saealib.surrogate.sklearn_surrogate import (
@@ -83,8 +89,12 @@ __all__ = [
     "Surrogate",
     "SurrogateAccuracy",
     "SurrogateAccuracyMetric",
+    "AccuracyBasedSurrogateSwitcher",
+    "GenCtrlSwitcher",
+    "ManagerSwitcher",
     "SurrogateManager",
     "SurrogatePrediction",
+    "StrategySwitcher",
     "TopKBipartitionSet",
     "TorchSurrogate",
     "TrainingData",

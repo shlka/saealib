@@ -5,6 +5,8 @@ Each call to ``step`` runs ``gen_ctrl`` surrogate-only generations followed
 by one generation of true objective evaluations.
 """
 
+from __future__ import annotations
+
 from saealib.callback import PostEvaluationEvent, SurrogateEndEvent, SurrogateStartEvent
 from saealib.context import OptimizationContext
 from saealib.optimizer import ComponentProvider
@@ -12,25 +14,22 @@ from saealib.strategies.base import OptimizationStrategy, assign_tell_f
 
 
 class GenerationBasedStrategy(OptimizationStrategy):
-    """Generation-based strategy."""
+    """Generation-based strategy.
+
+    Parameters
+    ----------
+    gen_ctrl : int
+        Number of surrogate-only generations executed inside each :meth:`step`
+        call before one generation of true objective evaluation.
+    """
 
     requires_surrogate: bool = True
 
-    def __init__(self, gen_ctrl: int):
-        """
-        Initialize GenerationBasedStrategy.
-
-        Parameters
-        ----------
-        gen_ctrl : int
-            Number of surrogate-only generations executed inside each ``step``
-            call before one generation of true objective evaluation.
-        """
+    def __init__(self, gen_ctrl: int) -> None:
         self.gen_ctrl = gen_ctrl
 
     def step(self, ctx: OptimizationContext, provider: ComponentProvider) -> None:
-        """
-        Run ``gen_ctrl`` surrogate-only generations, then one true-evaluation step.
+        """Run ``gen_ctrl`` surrogate-only generations, then one true-evaluation step.
 
         Parameters
         ----------
