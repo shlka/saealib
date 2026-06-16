@@ -180,6 +180,8 @@ _TIER2_MAP: dict[str, str] = {
     "dda_non_dominated_sort": "saealib.comparators",
     "non_dominated_sort": "saealib.comparators",
     "spea2_fitness": "saealib.comparators",
+    # execution (parallel)
+    "JoblibEvaluator": "saealib.execution.evaluator",
     # decomposition
     "Decomposition": "saealib.decomposition",
     "DecompositionComparator": "saealib.decomposition",

@@ -1588,6 +1588,9 @@ dependencies = [
 lightgbm = [
     { name = "lightgbm" },
 ]
+parallel = [
+    { name = "joblib" },
+]
 sklearn = [
     { name = "scikit-learn", version = "1.7.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scikit-learn", version = "1.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -1627,6 +1630,7 @@ docs = [
 
 [package.metadata]
 requires-dist = [
+    { name = "joblib", marker = "extra == 'parallel'", specifier = ">=1.0.0" },
     { name = "lightgbm", marker = "extra == 'lightgbm'", specifier = ">=3.0.0" },
     { name = "numpy", specifier = ">=1.22.1" },
     { name = "scikit-learn", marker = "extra == 'sklearn'", specifier = ">=1.0.0" },
@@ -1635,7 +1639,7 @@ requires-dist = [
     { name = "typing-extensions", specifier = ">=4.15.0" },
     { name = "xgboost", marker = "extra == 'xgboost'", specifier = ">=1.7.0" },
 ]
-provides-extras = ["lightgbm", "sklearn", "torch", "xgboost"]
+provides-extras = ["lightgbm", "parallel", "sklearn", "torch", "xgboost"]
 
 [package.metadata.requires-dev]
 dev = [
