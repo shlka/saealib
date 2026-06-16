@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 def on_initial_evaluation_start(event: InitialEvaluationStartEvent) -> None:
+    """Log the number and range of sampled candidates."""
     x = event.candidates_x
     logger.info(
         "Initial evaluation: %d candidates, x in [%.3f, %.3f]",
@@ -52,6 +53,7 @@ def on_initial_evaluation_start(event: InitialEvaluationStartEvent) -> None:
 
 
 def on_initial_evaluation_end(event: InitialEvaluationEndEvent) -> None:
+    """Log archive statistics and remove outliers beyond mean + 2*std."""
     archive = event.archive
     f_vals = np.array([archive[i].f[0] for i in range(len(archive))])
 
@@ -99,7 +101,9 @@ def main():
 
     opt = (
         Optimizer(problem)
-        .set_initializer(LHSInitializer(n_init_archive=5 * dim, n_init_population=4 * dim, seed=seed))
+        .set_initializer(
+            LHSInitializer(n_init_archive=5 * dim, n_init_population=4 * dim, seed=seed)
+        )
         .set_algorithm(
             GA(
                 crossover=CrossoverBLXAlpha(crossover_rate=0.7, alpha=0.4),

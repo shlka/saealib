@@ -11,7 +11,6 @@ Tests cover:
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from saealib import (
     GA,
@@ -34,8 +33,7 @@ from saealib.callback import (
     InitialEvaluationStartEvent,
 )
 from saealib.comparators import SingleObjectiveComparator
-from saealib.context import OptimizationContext
-from saealib.population import Archive, Population, PopulationAttribute
+from saealib.population import Archive
 from saealib.problem import Problem
 
 DIM = 2
@@ -164,7 +162,8 @@ class TestInitialEvaluationEventDispatch:
 
         order: list[type] = []
         opt.cbmanager.register(
-            InitialEvaluationStartEvent, lambda _: order.append(InitialEvaluationStartEvent)
+            InitialEvaluationStartEvent,
+            lambda _: order.append(InitialEvaluationStartEvent),
         )
         opt.cbmanager.register(
             InitialEvaluationEndEvent, lambda _: order.append(InitialEvaluationEndEvent)
@@ -180,7 +179,8 @@ class TestInitialEvaluationEventDispatch:
 
         order: list[type] = []
         opt.cbmanager.register(
-            InitialEvaluationStartEvent, lambda _: order.append(InitialEvaluationStartEvent)
+            InitialEvaluationStartEvent,
+            lambda _: order.append(InitialEvaluationStartEvent),
         )
         opt.cbmanager.register(
             InitialEvaluationEndEvent, lambda _: order.append(InitialEvaluationEndEvent)
@@ -290,7 +290,7 @@ class TestInitialEvaluationEndEventMutation:
         assert len(ctx.archive) == n_keep
 
     def test_population_uses_trimmed_archive(self) -> None:
-        """Population is built from the archive after EndEvent, so mutation is reflected."""
+        """Population is built from the archive after EndEvent, reflecting mutations."""
         problem = _make_problem()
         n_init_pop = 3
         opt = (
