@@ -26,6 +26,8 @@ from saealib.callback import CallbackManager as CallbackManager
 from saealib.callback import Event as Event
 from saealib.callback import GenerationEndEvent as GenerationEndEvent
 from saealib.callback import GenerationStartEvent as GenerationStartEvent
+from saealib.callback import InitialEvaluationEndEvent as InitialEvaluationEndEvent
+from saealib.callback import InitialEvaluationStartEvent as InitialEvaluationStartEvent
 from saealib.callback import PostAskEvent as PostAskEvent
 from saealib.callback import PostCrossoverEvent as PostCrossoverEvent
 from saealib.callback import PostEvaluationEvent as PostEvaluationEvent
