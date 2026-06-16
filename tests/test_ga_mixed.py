@@ -8,6 +8,7 @@ import pytest
 from saealib import (
     GA,
     CategoricalVariable,
+    ConfigurationError,
     ContinuousVariable,
     IntegerVariable,
     Problem,
@@ -23,6 +24,7 @@ from saealib.operators import (
     TournamentSelection,
     TruncationSelection,
 )
+from saealib.operators.crossover import Crossover
 
 
 def _make_ga(**kwargs):
@@ -59,6 +61,35 @@ def _make_problem_continuous():
         lb=[0.0, 0.0, 0.0],
         ub=[1.0, 1.0, 1.0],
     )
+
+
+# ---------------------------------------------------------------------------
+# Stub crossovers with non-default n_children / n_parents
+# ---------------------------------------------------------------------------
+
+
+class _CrossoverN1C(Crossover):
+    """n_children=1 stub."""
+
+    n_children = 1
+
+    def __init__(self):
+        self.crossover_rate = 1.0
+
+    def crossover(self, p, rng=np.random.default_rng()):
+        return p[:1].copy()
+
+
+class _CrossoverP3(Crossover):
+    """n_parents=3 stub."""
+
+    n_parents = 3
+
+    def __init__(self):
+        self.crossover_rate = 1.0
+
+    def crossover(self, p, rng=np.random.default_rng()):
+        return p[:2].copy()
 
 
 # ---------------------------------------------------------------------------
@@ -108,6 +139,26 @@ class TestGADefaults:
         custom = MutationCategorical(0.3)
         ga = _make_ga(categorical_mutation=custom)
         assert ga.categorical_mutation is custom
+
+    def test_integer_crossover_n_children_mismatch_raises(self):
+        with pytest.raises(ConfigurationError, match=r"integer_crossover\.n_children"):
+            _make_ga(integer_crossover=_CrossoverN1C())
+
+    def test_categorical_crossover_n_children_mismatch_raises(self):
+        with pytest.raises(
+            ConfigurationError, match=r"categorical_crossover\.n_children"
+        ):
+            _make_ga(categorical_crossover=_CrossoverN1C())
+
+    def test_integer_crossover_n_parents_mismatch_raises(self):
+        with pytest.raises(ConfigurationError, match=r"integer_crossover\.n_parents"):
+            _make_ga(integer_crossover=_CrossoverP3())
+
+    def test_categorical_crossover_n_parents_mismatch_raises(self):
+        with pytest.raises(
+            ConfigurationError, match=r"categorical_crossover\.n_parents"
+        ):
+            _make_ga(categorical_crossover=_CrossoverP3())
 
 
 # ---------------------------------------------------------------------------

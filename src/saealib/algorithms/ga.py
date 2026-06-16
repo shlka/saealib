@@ -10,6 +10,7 @@ import numpy as np
 from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent, PostCrossoverEvent, PostMutationEvent
 from saealib.context import OptimizationContext
+from saealib.exceptions import ConfigurationError
 from saealib.operators.crossover import CrossoverCategorical, CrossoverIntegerSBX
 from saealib.operators.mutation import MutationCategorical, MutationIntegerUniform
 from saealib.population import Archive, Population, PopulationAttribute
@@ -172,6 +173,23 @@ class GA(Algorithm):
             if categorical_mutation is not None
             else MutationCategorical(_mr)
         )
+
+        for _name, _op in [
+            ("integer_crossover", self.integer_crossover),
+            ("categorical_crossover", self.categorical_crossover),
+        ]:
+            if _op.n_children != self.crossover.n_children:
+                raise ConfigurationError(
+                    f"{_name}.n_children={_op.n_children} must equal "
+                    f"crossover.n_children={self.crossover.n_children} "
+                    "for mixed-variable routing"
+                )
+            if _op.n_parents != self.crossover.n_parents:
+                raise ConfigurationError(
+                    f"{_name}.n_parents={_op.n_parents} must equal "
+                    f"crossover.n_parents={self.crossover.n_parents} "
+                    "for mixed-variable routing"
+                )
 
     def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
         """Return algorithm-specific attributes (GA needs none beyond the defaults)."""
