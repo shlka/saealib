@@ -31,6 +31,11 @@ class ComponentProvider(Protocol):
     """The interface for components that can be used by the Optimizer."""
 
     @property
+    def seed(self) -> int | None:
+        """Return the master random seed."""
+        ...
+
+    @property
     def algorithm(self) -> Algorithm:
         """Return the algorithm instance."""
         ...
@@ -89,10 +94,8 @@ class Optimizer:
         The archive of evaluated solutions.
     popsize : int
         The population size.
-    seed : int
-        The random seed.
-    rng : numpy.random.Generator
-        The random number generator.
+    seed : int or None
+        The master random seed.  ``None`` means non-deterministic.
     fe : int
         The current number of function evaluations.
     gen : int
@@ -103,7 +106,7 @@ class Optimizer:
         The name of the optimizer instance.
     """
 
-    def __init__(self, problem: Problem):
+    def __init__(self, problem: Problem, seed: int | None = None):
         """
         Initialize the Optimizer.
 
@@ -111,8 +114,12 @@ class Optimizer:
         ----------
         problem : Problem
             The optimization problem.
+        seed : int or None, optional
+            Master random seed propagated to the initializer.  ``None`` (default)
+            means non-deterministic.
         """
         self.problem: Problem = problem
+        self.seed: int | None = seed
         self.cbmanager: CallbackManager = CallbackManager()
         self.cbmanager.register(GenerationStartEvent, logging_generation)
         self.initializer: Initializer | None = None
@@ -120,6 +127,11 @@ class Optimizer:
         self.instance_name: str = ""
 
     # --- setters (all return self for chaining) ---
+
+    def set_seed(self, seed: int | None) -> Optimizer:
+        """Set the master random seed. Returns self."""
+        self.seed = seed
+        return self
 
     def set_initializer(self, initializer: Initializer) -> Optimizer:
         """Set the initializer. Returns self."""
