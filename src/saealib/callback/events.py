@@ -9,7 +9,7 @@ import numpy as np
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationContext
-    from saealib.population import Population
+    from saealib.population import Archive, Population
     from saealib.surrogate.base import Surrogate
 
 
@@ -138,3 +138,32 @@ class PostEvaluationEvent(Event):
     """
 
     offspring: Population | None = None
+
+
+# --- Initializer events ---
+
+
+@dataclass
+class InitialEvaluationStartEvent(Event):
+    """Fired after initial sampling, before initial archive evaluation.
+
+    Attributes
+    ----------
+    candidates_x : np.ndarray or None
+        Design vectors to be evaluated, shape (n_init_archive, dim).
+    """
+
+    candidates_x: np.ndarray | None = None
+
+
+@dataclass
+class InitialEvaluationEndEvent(Event):
+    """Fired after initial archive evaluation, before archive sorting.
+
+    Attributes
+    ----------
+    archive : Archive or None
+        The archive populated with initial evaluation results.
+    """
+
+    archive: Archive | None = None

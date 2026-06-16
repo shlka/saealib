@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import scipy.stats
 
+from saealib.callback import InitialEvaluationEndEvent, InitialEvaluationStartEvent
 from saealib.context import OptimizationContext
 from saealib.optimizer import ComponentProvider
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
@@ -162,12 +163,17 @@ class LHSInitializer(Initializer):
             attrs=attrs, init_capacity=self.n_init_archive, problem=problem
         )
 
+        ctx = self._create_context(problem, archive, pareto_archive, population, rng)
+
         # TODO: Assign different metadata per dimension (mixed variable support).
         # TODO: Support initialization of CV and other attributes.
         archive_x = scipy.stats.qmc.LatinHypercube(d=problem.dim, rng=rng).random(
             self.n_init_archive
         )
         archive_x = scipy.stats.qmc.scale(archive_x, problem.lb, problem.ub)
+
+        provider.dispatch(InitialEvaluationStartEvent(ctx=ctx, candidates_x=archive_x))
+
         result = provider.evaluator.evaluate_batch(archive_x, problem)
 
         # TODO: Register algorithm-specific attributes in the archive.
@@ -181,6 +187,10 @@ class LHSInitializer(Initializer):
             archive.add(data)
             pareto_archive.add(data)
 
+        ctx.count_fe(self.n_init_archive)
+
+        provider.dispatch(InitialEvaluationEndEvent(ctx=ctx, archive=archive))
+
         sorted_idx = problem.comparator.sort_population(archive)
         archive_sorted = archive.extract(sorted_idx)
         archive.clear()
@@ -188,4 +198,4 @@ class LHSInitializer(Initializer):
 
         population.extend(archive[: self.n_init_population])
 
-        return self._create_context(problem, archive, pareto_archive, population, rng)
+        return ctx
