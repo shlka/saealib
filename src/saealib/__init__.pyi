@@ -122,22 +122,28 @@ from saealib.strategies import GenerationBasedStrategy as GenerationBasedStrateg
 from saealib.strategies import IndividualBasedStrategy as IndividualBasedStrategy
 from saealib.strategies import OptimizationStrategy as OptimizationStrategy
 from saealib.strategies import PreSelectionStrategy as PreSelectionStrategy
+from saealib.surrogate import (
+    AccuracyBasedSurrogateSwitcher as AccuracyBasedSurrogateSwitcher,
+)
 
 # surrogate (specialized)
 from saealib.surrogate import ArchiveBasedManager as ArchiveBasedManager
 from saealib.surrogate import CompositeSurrogateManager as CompositeSurrogateManager
 from saealib.surrogate import DensityManager as DensityManager
 from saealib.surrogate import DTSurrogate as DTSurrogate
+from saealib.surrogate import GenCtrlSwitcher as GenCtrlSwitcher
 from saealib.surrogate import GlobalSurrogateManager as GlobalSurrogateManager
 from saealib.surrogate import GPRSurrogate as GPRSurrogate
 from saealib.surrogate import LGBMSurrogate as LGBMSurrogate
 from saealib.surrogate import LocalSurrogateManager as LocalSurrogateManager
+from saealib.surrogate import ManagerSwitcher as ManagerSwitcher
 from saealib.surrogate import NichingManager as NichingManager
 from saealib.surrogate import NNSurrogate as NNSurrogate
 from saealib.surrogate import NoveltyManager as NoveltyManager
 from saealib.surrogate import PerObjectiveSurrogate as PerObjectiveSurrogate
 from saealib.surrogate import RBFsurrogate as RBFsurrogate
 from saealib.surrogate import SklearnSurrogate as SklearnSurrogate
+from saealib.surrogate import StrategySwitcher as StrategySwitcher
 from saealib.surrogate import Surrogate as Surrogate
 from saealib.surrogate import SurrogateManager as SurrogateManager
 from saealib.surrogate import SurrogatePrediction as SurrogatePrediction

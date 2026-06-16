@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from saealib.surrogate.accuracy import AccuracyEvaluator, SurrogateAccuracy
 from saealib.surrogate.base import Surrogate
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.training_set import (
@@ -54,7 +55,15 @@ class SurrogateManager(ABC):
     returns both scalar acquisition scores and the underlying predictions
     so that callers (e.g. IndividualBasedStrategy) can assign predicted
     objective values to offspring.
+
+    Attributes
+    ----------
+    last_accuracy : SurrogateAccuracy or None
+        Accuracy metrics computed after the most recent :meth:`fit` call.
+        ``None`` until the first fit or when no evaluator is configured.
     """
+
+    last_accuracy: SurrogateAccuracy | None = None
 
     @staticmethod
     def _sanitize_nan(
@@ -252,6 +261,9 @@ class GlobalSurrogateManager(SurrogateManager):
     training_set : TrainingSet or None
         Strategy object for building training data. Defaults to
         ``ArchiveObjectiveSet()``, which preserves the previous behaviour.
+    accuracy_evaluator : AccuracyEvaluator or None
+        If provided, :meth:`fit` computes accuracy metrics after each fit
+        and stores them in :attr:`last_accuracy`.
     """
 
     def __init__(
@@ -259,23 +271,34 @@ class GlobalSurrogateManager(SurrogateManager):
         surrogate: Surrogate,
         acquisition: AcquisitionFunction,
         training_set: TrainingSet | None = None,
+        accuracy_evaluator: AccuracyEvaluator | None = None,
     ):
         self.surrogate = surrogate
         self.acquisition = acquisition
         self.training_set: TrainingSet = (
             training_set if training_set is not None else ArchiveObjectiveSet()
         )
+        self.accuracy_evaluator = accuracy_evaluator
 
     def fit(
         self,
         archive: Archive,
         ctx: OptimizationContext | None = None,
     ) -> None:
-        """Fit the surrogate on the full archive."""
+        """Fit the surrogate on the full archive.
+
+        If an ``accuracy_evaluator`` was supplied at construction, accuracy
+        metrics are computed immediately after fitting and stored in
+        :attr:`last_accuracy`.
+        """
         population = ctx.population if ctx is not None else None
         data = self.training_set.build(archive, population, ctx, candidate_x=None)
         self.surrogate.fit(data.train_x, data.train_y)
         self.surrogate.post_fit(data.train_x, data.train_y, ctx)
+        if self.accuracy_evaluator is not None:
+            self.last_accuracy = self.accuracy_evaluator.evaluate(
+                self.surrogate, data.train_x, data.train_y
+            )
 
     def score_candidates(
         self,
@@ -322,6 +345,11 @@ class LocalSurrogateManager(SurrogateManager):
         Strategy object for building training data per candidate. Defaults to
         ``KNNObjectiveSet(n_neighbors=50)``, which preserves the previous
         behaviour.
+    accuracy_evaluator : AccuracyEvaluator or None
+        If provided, :meth:`score_candidates` computes accuracy metrics when
+        ``refit=True`` and stores them in :attr:`last_accuracy`.  Accuracy is
+        estimated by fitting a local model for each archive point via the same
+        ``training_set`` and comparing the prediction against the true value.
     """
 
     def __init__(
@@ -329,6 +357,7 @@ class LocalSurrogateManager(SurrogateManager):
         surrogate: Surrogate,
         acquisition: AcquisitionFunction,
         training_set: TrainingSet | None = None,
+        accuracy_evaluator: AccuracyEvaluator | None = None,
     ):
         self.surrogate = surrogate
         self.acquisition = acquisition
@@ -337,6 +366,25 @@ class LocalSurrogateManager(SurrogateManager):
             if training_set is not None
             else KNNObjectiveSet(n_neighbors=50)
         )
+        self.accuracy_evaluator = accuracy_evaluator
+
+    def fit(
+        self,
+        archive: Archive,
+        ctx: OptimizationContext | None = None,
+    ) -> None:
+        """Compute accuracy metrics from the archive (no global model is fitted).
+
+        For ``LocalSurrogateManager``, there is no persistent global surrogate
+        to pre-fit; local models are always built per candidate inside
+        :meth:`score_candidates`.  However, calling :meth:`fit` explicitly
+        (as ``GenerationBasedStrategy`` does before its inner loop) still
+        triggers accuracy evaluation so that :attr:`last_accuracy` is available
+        regardless of which strategy is used.
+        """
+        if self.accuracy_evaluator is not None:
+            population = ctx.population if ctx is not None else None
+            self._update_accuracy(archive, population, ctx)
 
     def score_candidates(
         self,
@@ -346,23 +394,129 @@ class LocalSurrogateManager(SurrogateManager):
         *,
         refit: bool = True,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
-        """Fit a local model per candidate and score each individually."""
+        """Fit a local model per candidate and score each individually.
+
+        When ``refit=True`` and an ``accuracy_evaluator`` is configured,
+        accuracy is estimated inline using the nearest-neighbor holdout method
+        (Hanawa et al., 2025): for each candidate, the closest archive neighbor
+        is reserved as a validation point and excluded from training.  Metrics
+        are averaged over all candidates and stored in :attr:`last_accuracy`.
+
+        Because the holdout point is excluded from training, the effective
+        training-set size is ``n_neighbors - 1`` when an accuracy evaluator is
+        active.  Without an accuracy evaluator the full ``n_neighbors`` points
+        are always used.
+        """
         predictions: list[SurrogatePrediction] = []
         reference = self.acquisition.compute_reference(archive)
         population = ctx.population if ctx is not None else None
+        compute_accuracy = refit and self.accuracy_evaluator is not None
+        y_true_list: list[np.ndarray] = []
+        y_pred_list: list[np.ndarray] = []
 
         for x in candidates_x:
             data = self.training_set.build(archive, population, ctx, candidate_x=x)
-            self.surrogate.fit(data.train_x, data.train_y)
-            self.surrogate.post_fit(data.train_x, data.train_y, ctx)
+
+            if compute_accuracy and len(data.train_x) >= 2:
+                # Hold out the nearest neighbor (index 0 when KNN-sorted) as
+                # validation to get an unbiased estimate of local model accuracy.
+                val_x = data.train_x[0:1]
+                val_y = np.atleast_2d(data.train_y[0:1].T).T
+                train_x = data.train_x[1:]
+                train_y = data.train_y[1:]
+            else:
+                val_x = val_y = None
+                train_x = data.train_x
+                train_y = data.train_y
+
+            self.surrogate.fit(train_x, train_y)
+            self.surrogate.post_fit(train_x, train_y, ctx)
             pred = self.surrogate.predict(x)  # mean: (1, n_obj)
             predictions.append(pred)
+
+            if val_x is not None:
+                try:
+                    val_pred = self.surrogate.predict(val_x)
+                    y_true_list.append(val_y[0])
+                    y_pred_list.append(val_pred.value[0])
+                except Exception:
+                    pass
 
         scores = np.array(
             [self.acquisition.score(p, reference)[0] for p in predictions]
         )
         scores, predictions = self._sanitize_nan(scores, predictions)
+
+        if compute_accuracy:
+            if y_true_list:
+                y_true = np.stack(y_true_list)
+                y_pred = np.stack(y_pred_list)
+                metrics = self.accuracy_evaluator._compute_metrics(y_true, y_pred)  # type: ignore[union-attr]
+                self.last_accuracy = SurrogateAccuracy(
+                    metrics=metrics, n_samples=len(y_true_list)
+                )
+            else:
+                self.last_accuracy = SurrogateAccuracy(n_samples=0)
+
         return self.post_score(scores, predictions, ctx)
+
+    def _update_accuracy(
+        self,
+        archive: Archive,
+        population: object,
+        ctx: OptimizationContext | None,
+    ) -> None:
+        """Compute accuracy via LOO with self-exclusion on archive points.
+
+        Called by :meth:`fit` for the ``GenerationBasedStrategy`` pattern.
+        For each archive point ``x_i``, the local model is built from the
+        ``n_neighbors`` nearest neighbors of ``x_i`` **excluding ``x_i``
+        itself**, and then predicts ``x_i``.  This avoids the self-inclusion
+        bias that occurs when an interpolating surrogate (e.g. RBF) is fitted
+        on data that includes the query point.
+        """
+        archive_x = archive.x
+        archive_y = np.atleast_2d(archive.f.T).T
+        n = len(archive_x)
+
+        if n < 2:
+            self.last_accuracy = SurrogateAccuracy(n_samples=n)
+            return
+
+        n_neighbors = min(getattr(self.training_set, "n_neighbors", n), n - 1)
+        y_true_list: list[np.ndarray] = []
+        y_pred_list: list[np.ndarray] = []
+
+        for i in range(n):
+            # Exclude x_i from its own neighborhood (LOO self-exclusion)
+            mask = np.ones(n, dtype=bool)
+            mask[i] = False
+            loo_x = archive_x[mask]
+            loo_y = archive_y[mask]
+
+            dists = np.sum((loo_x - archive_x[i]) ** 2, axis=1)
+            k = min(n_neighbors, len(loo_x))
+            idx = np.argsort(dists)[:k]
+            train_x = loo_x[idx]
+            train_y = loo_y[idx]
+
+            surrogate_copy = copy.deepcopy(self.surrogate)
+            try:
+                surrogate_copy.fit(train_x, train_y)
+                pred = surrogate_copy.predict(archive_x[i : i + 1])
+                y_true_list.append(archive_y[i])
+                y_pred_list.append(pred.value[0])
+            except Exception:
+                continue
+
+        if not y_true_list:
+            self.last_accuracy = SurrogateAccuracy(n_samples=n)
+            return
+
+        y_true = np.stack(y_true_list)
+        y_pred = np.stack(y_pred_list)
+        metrics = self.accuracy_evaluator._compute_metrics(y_true, y_pred)  # type: ignore[union-attr]
+        self.last_accuracy = SurrogateAccuracy(metrics=metrics, n_samples=n)
 
 
 def product_combine(scores: list[np.ndarray]) -> np.ndarray:
@@ -464,9 +618,14 @@ class CompositeSurrogateManager(SurrogateManager):
         archive: Archive,
         ctx: OptimizationContext | None = None,
     ) -> None:
-        """Pre-fit all sub-managers."""
+        """Pre-fit all sub-managers.
+
+        :attr:`last_accuracy` is propagated from ``managers[0]`` so callers
+        can read a representative accuracy value from this composite manager.
+        """
         for manager in self.managers:
             manager.fit(archive, ctx)
+        self.last_accuracy = self.managers[0].last_accuracy
 
     def score_candidates(
         self,
