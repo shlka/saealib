@@ -29,6 +29,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+parallel = ["joblib>=1.0.0"]
 sklearn = ["scikit-learn>=1.0.0"]
 xgboost = ["xgboost>=1.7.0"]
 lightgbm = ["lightgbm>=3.0.0"]
