@@ -40,7 +40,7 @@ class ProbabilityOfFeasibility(AcquisitionFunction):
         self.obj_idx = obj_idx
         self.reference = reference
 
-    def compute_reference(self, archive: Archive) -> Any:
+    def compute_reference(self, archive: Archive, rng: np.random.Generator | None = None) -> Any:
         """Return fixed reference if set, otherwise None."""
         return self.reference
 
@@ -48,6 +48,7 @@ class ProbabilityOfFeasibility(AcquisitionFunction):
         self,
         prediction: SurrogatePrediction,
         reference: Any = None,
+        rng: np.random.Generator | None = None,
     ) -> np.ndarray:
         """
         Compute Probability of Feasibility scores.
@@ -125,7 +126,7 @@ class ProductOfFeasibility(AcquisitionFunction):
 
     requires_uncertainty: bool = True
 
-    def compute_reference(self, archive: Archive) -> Any:
+    def compute_reference(self, archive: Archive, rng: np.random.Generator | None = None) -> Any:
         """Return None (no reference needed)."""
         return None
 
@@ -133,6 +134,7 @@ class ProductOfFeasibility(AcquisitionFunction):
         self,
         prediction: SurrogatePrediction,
         reference: Any = None,
+        rng: np.random.Generator | None = None,
     ) -> np.ndarray:
         """
         Compute joint probability of feasibility scores.

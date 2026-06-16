@@ -70,7 +70,9 @@ class ParEGOAcquisition(AcquisitionFunction):
         return weighted.max(axis=-1) + self.alpha * weighted.sum(axis=-1)
 
     def compute_reference(
-        self, archive: Archive
+        self,
+        archive: Archive,
+        rng: np.random.Generator | None = None,
     ) -> tuple[np.ndarray, np.ndarray, float]:
         """
         Sample a new weight vector and compute the ideal point.
@@ -79,6 +81,10 @@ class ParEGOAcquisition(AcquisitionFunction):
         ----------
         archive : Archive
             Archive of evaluated solutions.
+        rng : np.random.Generator or None, optional
+            Random number generator.  When provided (e.g. ``ctx.rng``), it is
+            used instead of the instance-level ``_rng`` so all randomness flows
+            through the master RNG.
 
         Returns
         -------
@@ -90,7 +96,7 @@ class ParEGOAcquisition(AcquisitionFunction):
         """
         n_obj = archive.f.shape[1]
         z_star = archive.f.min(axis=0)
-        weights = self._rng.dirichlet(np.ones(n_obj))
+        weights = (rng if rng is not None else self._rng).dirichlet(np.ones(n_obj))
         f_best = float(self._scalarize(archive.f, weights, z_star).min())
         return z_star, weights, f_best
 
@@ -98,6 +104,7 @@ class ParEGOAcquisition(AcquisitionFunction):
         self,
         prediction: SurrogatePrediction,
         reference: Any,
+        rng: np.random.Generator | None = None,
     ) -> np.ndarray:
         """
         Compute EI on the Augmented Tchebycheff scalarised prediction.

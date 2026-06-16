@@ -54,7 +54,9 @@ class EHVIAcquisition(AcquisitionFunction):
         self._rng = rng if rng is not None else np.random.default_rng()
 
     def compute_reference(
-        self, archive: Archive
+        self,
+        archive: Archive,
+        rng: np.random.Generator | None = None,
     ) -> tuple[np.ndarray, np.ndarray, float]:
         """
         Extract the Pareto front and (if needed) compute the reference point.
@@ -87,6 +89,7 @@ class EHVIAcquisition(AcquisitionFunction):
         self,
         prediction: SurrogatePrediction,
         reference: Any,
+        rng: np.random.Generator | None = None,
     ) -> np.ndarray:
         """
         Estimate EHVI via Monte Carlo sampling.
@@ -97,6 +100,10 @@ class EHVIAcquisition(AcquisitionFunction):
             Surrogate predictions.  Must have std (has_uncertainty == True).
         reference : tuple
             ``(pareto_f, ref_point, base_hv)`` from ``compute_reference``.
+        rng : np.random.Generator or None, optional
+            Random number generator.  When provided (e.g. ``ctx.rng``), it is
+            used instead of the instance-level ``_rng`` so all randomness flows
+            through the master RNG.
 
         Returns
         -------
@@ -119,7 +126,8 @@ class EHVIAcquisition(AcquisitionFunction):
         n_cand, n_obj = mu.shape
 
         # Draw all MC samples at once: (n_samples, n_cand, n_obj)
-        eps = self._rng.standard_normal((self.n_samples, n_cand, n_obj))
+        _rng = rng if rng is not None else self._rng
+        eps = _rng.standard_normal((self.n_samples, n_cand, n_obj))
         mc_samples = mu[np.newaxis] + sigma[np.newaxis] * eps
 
         ehvi = np.zeros(n_cand)
