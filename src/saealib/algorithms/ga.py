@@ -130,6 +130,7 @@ class GA(Algorithm):
             cand[i * n_children : (i + 1) * n_children] = c
         for i in range(len(cand)):
             cand[i] = handler.repair(cand[i], constraints, lb, ub)
+            cand[i] = ctx.problem.repair(cand[i])
         provider.dispatch(PostCrossoverEvent(ctx=ctx, candidates=cand))
 
         cand_len = len(cand)
@@ -137,6 +138,7 @@ class GA(Algorithm):
             cand[i] = self.mutation.mutate(cand[i], (lb, ub), rng=ctx.rng)
             cand[i] = self.mutation.post_mutation(cand[i], (lb, ub), ctx.rng, ctx)
             cand[i] = handler.repair(cand[i], constraints, lb, ub)
+            cand[i] = ctx.problem.repair(cand[i])
         provider.dispatch(PostMutationEvent(ctx=ctx, candidates=cand))
 
         provider.dispatch(PostAskEvent(ctx=ctx, candidates=cand))
