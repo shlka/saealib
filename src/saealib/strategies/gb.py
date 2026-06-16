@@ -40,6 +40,8 @@ class GenerationBasedStrategy(OptimizationStrategy):
             Component provider.
         """
         # --- surrogate inner loop ---
+        if self.gen_ctrl > 0:
+            provider.surrogate_manager.fit(ctx.archive, ctx)
         for _ in range(self.gen_ctrl):
             ctx.count_generation()
             offspring = provider.algorithm.ask(ctx, provider)
@@ -47,7 +49,7 @@ class GenerationBasedStrategy(OptimizationStrategy):
             provider.dispatch(SurrogateStartEvent(ctx=ctx, offspring=offspring))
 
             _, predictions = provider.surrogate_manager.score_candidates(
-                offspring.x, ctx.archive, ctx
+                offspring.x, ctx.archive, ctx, refit=False
             )
             for i, pred in enumerate(predictions):
                 assign_tell_f(offspring[i], pred, ctx)
