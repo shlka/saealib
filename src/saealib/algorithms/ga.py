@@ -10,6 +10,8 @@ import numpy as np
 from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent, PostCrossoverEvent, PostMutationEvent
 from saealib.context import OptimizationContext
+from saealib.operators.crossover import CrossoverCategorical, CrossoverIntegerSBX
+from saealib.operators.mutation import MutationCategorical, MutationIntegerUniform
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -20,6 +22,66 @@ if TYPE_CHECKING:
     from saealib.optimizer import ComponentProvider
 
 
+def _route_crossover(
+    parent: np.ndarray,
+    rng: np.random.Generator,
+    problem: Problem,
+    cont_op: Crossover,
+    int_op: Crossover,
+    cat_op: Crossover,
+) -> np.ndarray:
+    """Apply per-type crossover and reassemble offspring."""
+    i_mask = problem.integer_mask
+    cat_mask = problem.categorical_mask
+    if not i_mask.any() and not cat_mask.any():
+        return cont_op.crossover(parent, rng=rng)
+
+    n_children = cont_op.n_children
+    dim = parent.shape[1]
+    offspring = np.empty((n_children, dim))
+    c_mask = problem.continuous_mask
+
+    if c_mask.any():
+        offspring[:, c_mask] = cont_op.crossover(parent[:, c_mask], rng=rng)
+    if i_mask.any():
+        offspring[:, i_mask] = int_op.crossover(parent[:, i_mask], rng=rng)
+    if cat_mask.any():
+        offspring[:, cat_mask] = cat_op.crossover(parent[:, cat_mask], rng=rng)
+
+    return offspring
+
+
+def _route_mutation(
+    p: np.ndarray,
+    lb: np.ndarray,
+    ub: np.ndarray,
+    rng: np.random.Generator,
+    problem: Problem,
+    cont_op: Mutation,
+    int_op: Mutation,
+    cat_op: Mutation,
+) -> np.ndarray:
+    """Apply per-type mutation and reassemble offspring."""
+    i_mask = problem.integer_mask
+    cat_mask = problem.categorical_mask
+    if not i_mask.any() and not cat_mask.any():
+        return cont_op.mutate(p, (lb, ub), rng=rng)
+
+    result = p.copy()
+    c_mask = problem.continuous_mask
+
+    if c_mask.any():
+        result[c_mask] = cont_op.mutate(p[c_mask], (lb[c_mask], ub[c_mask]), rng=rng)
+    if i_mask.any():
+        result[i_mask] = int_op.mutate(p[i_mask], (lb[i_mask], ub[i_mask]), rng=rng)
+    if cat_mask.any():
+        result[cat_mask] = cat_op.mutate(
+            p[cat_mask], (lb[cat_mask], ub[cat_mask]), rng=rng
+        )
+
+    return result
+
+
 class GA(Algorithm):
     """
     Genetic Algorithm class.
@@ -27,13 +89,21 @@ class GA(Algorithm):
     Attributes
     ----------
     crossover : Crossover
-        Crossover operator.
+        Crossover operator for continuous dimensions.
     mutation : Mutation
-        Mutation operator.
+        Mutation operator for continuous dimensions.
     parent_selection : ParentSelection
         Parent selection operator.
     survivor_selection : SurvivorSelection
         Survivor selection operator.
+    integer_crossover : Crossover
+        Crossover operator for integer dimensions.
+    integer_mutation : Mutation
+        Mutation operator for integer dimensions.
+    categorical_crossover : Crossover
+        Crossover operator for categorical dimensions.
+    categorical_mutation : Mutation
+        Mutation operator for categorical dimensions.
     """
 
     def __init__(
@@ -42,6 +112,11 @@ class GA(Algorithm):
         mutation: Mutation,
         parent_selection: ParentSelection,
         survivor_selection: SurvivorSelection,
+        *,
+        integer_crossover: Crossover | None = None,
+        integer_mutation: Mutation | None = None,
+        categorical_crossover: Crossover | None = None,
+        categorical_mutation: Mutation | None = None,
     ):
         """
         Initialize GA (Genetic Algorithm) class.
@@ -49,19 +124,54 @@ class GA(Algorithm):
         Parameters
         ----------
         crossover : Crossover
-            Crossover operator.
+            Crossover operator for continuous dimensions.
         mutation : Mutation
-            Mutation operator.
+            Mutation operator for continuous dimensions.
         parent_selection : ParentSelection
             Parent selection operator.
         survivor_selection : SurvivorSelection
             Survivor selection operator.
+        integer_crossover : Crossover, optional
+            Crossover operator for integer dimensions.
+            Defaults to ``CrossoverIntegerSBX`` with the same rate as *crossover*.
+        integer_mutation : Mutation, optional
+            Mutation operator for integer dimensions.
+            Defaults to ``MutationIntegerUniform`` with the same rate as *mutation*.
+        categorical_crossover : Crossover, optional
+            Crossover operator for categorical dimensions.
+            Defaults to ``CrossoverCategorical`` with the same rate as *crossover*.
+        categorical_mutation : Mutation, optional
+            Mutation operator for categorical dimensions.
+            Defaults to ``MutationCategorical`` with the same rate as *mutation*.
         """
         super().__init__()
         self.crossover = crossover
         self.mutation = mutation
         self.parent_selection = parent_selection
         self.survivor_selection = survivor_selection
+
+        _cr = getattr(crossover, "crossover_rate", 1.0)
+        _mr = getattr(mutation, "mutation_rate", 0.1)
+        self.integer_crossover: Crossover = (
+            integer_crossover
+            if integer_crossover is not None
+            else CrossoverIntegerSBX(_cr, eta=20.0)
+        )
+        self.integer_mutation: Mutation = (
+            integer_mutation
+            if integer_mutation is not None
+            else MutationIntegerUniform(_mr)
+        )
+        self.categorical_crossover: Crossover = (
+            categorical_crossover
+            if categorical_crossover is not None
+            else CrossoverCategorical(_cr)
+        )
+        self.categorical_mutation: Mutation = (
+            categorical_mutation
+            if categorical_mutation is not None
+            else MutationCategorical(_mr)
+        )
 
     def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
         """Return algorithm-specific attributes (GA needs none beyond the defaults)."""
@@ -123,7 +233,14 @@ class GA(Algorithm):
         for i in range(n_pair):
             parent = pop[parent_idx_m[i]]
             if ctx.rng.random() < self.crossover.crossover_rate:
-                c = self.crossover.crossover(parent, rng=ctx.rng)
+                c = _route_crossover(
+                    parent,
+                    ctx.rng,
+                    ctx.problem,
+                    self.crossover,
+                    self.integer_crossover,
+                    self.categorical_crossover,
+                )
             else:
                 c = parent[:n_children].copy()
             c = self.crossover.post_crossover(c, parent, ctx.rng, ctx)
@@ -135,7 +252,16 @@ class GA(Algorithm):
 
         cand_len = len(cand)
         for i in range(cand_len):
-            cand[i] = self.mutation.mutate(cand[i], (lb, ub), rng=ctx.rng)
+            cand[i] = _route_mutation(
+                cand[i],
+                lb,
+                ub,
+                ctx.rng,
+                ctx.problem,
+                self.mutation,
+                self.integer_mutation,
+                self.categorical_mutation,
+            )
             cand[i] = self.mutation.post_mutation(cand[i], (lb, ub), ctx.rng, ctx)
             cand[i] = handler.repair(cand[i], constraints, lb, ub)
             cand[i] = ctx.problem.repair(cand[i])

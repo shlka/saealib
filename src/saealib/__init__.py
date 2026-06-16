@@ -87,10 +87,12 @@ __all__ = [
     "Archive",
     # Callbacks (core)
     "CallbackManager",
+    "CategoricalVariable",
     "Comparator",
     "ConfigurationError",
     # Problem
     "ConstraintHandler",
+    "ContinuousVariable",
     "Crossover",
     # Operators (common)
     "CrossoverSBX",
@@ -112,6 +114,7 @@ __all__ = [
     "IndividualBasedStrategy",
     "InequalityConstraint",
     "Initializer",
+    "IntegerVariable",
     "LHSInitializer",
     "Mutation",
     "MutationPolynomial",
@@ -143,9 +146,6 @@ __all__ = [
     "TruncationSelection",
     "ValidationError",
     "Variable",
-    "ContinuousVariable",
-    "IntegerVariable",
-    "CategoricalVariable",
     "f_target",
     # Indicators
     "hypervolume",
