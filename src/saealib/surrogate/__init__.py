@@ -1,3 +1,14 @@
+from saealib.surrogate.accuracy import (
+    RMSE,
+    AccuracyEvaluator,
+    HeldOutAccuracyEvaluator,
+    KFoldAccuracyEvaluator,
+    LOOAccuracyEvaluator,
+    R2Score,
+    SpearmanCorrelation,
+    SurrogateAccuracy,
+    SurrogateAccuracyMetric,
+)
 from saealib.surrogate.archive_manager import (
     ArchiveBasedManager,
     DensityManager,
@@ -40,6 +51,8 @@ from saealib.surrogate.training_set import (
 )
 
 __all__ = [
+    "RMSE",
+    "AccuracyEvaluator",
     "ArchiveBasedManager",
     "ArchiveObjectiveSet",
     "CompositeSurrogateManager",
@@ -49,9 +62,12 @@ __all__ = [
     "FeasibilityClassificationSet",
     "GPRSurrogate",
     "GlobalSurrogateManager",
+    "HeldOutAccuracyEvaluator",
+    "KFoldAccuracyEvaluator",
     "KNNConstraintObjectiveSet",
     "KNNObjectiveSet",
     "LGBMSurrogate",
+    "LOOAccuracyEvaluator",
     "LevelBasedSet",
     "LocalSurrogateManager",
     "NNSurrogate",
@@ -59,10 +75,14 @@ __all__ = [
     "NoveltyManager",
     "PairwiseComparisonSet",
     "PerObjectiveSurrogate",
+    "R2Score",
     "RBFsurrogate",
     "SVMSurrogate",
     "SklearnSurrogate",
+    "SpearmanCorrelation",
     "Surrogate",
+    "SurrogateAccuracy",
+    "SurrogateAccuracyMetric",
     "SurrogateManager",
     "SurrogatePrediction",
     "TopKBipartitionSet",
