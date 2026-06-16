@@ -25,12 +25,6 @@ from saealib.surrogate.manager import (
     rank_weighted_combine,
 )
 from saealib.surrogate.per_objective import PerObjectiveSurrogate
-from saealib.surrogate.switching import (
-    AccuracyBasedSurrogateSwitcher,
-    GenCtrlSwitcher,
-    ManagerSwitcher,
-    StrategySwitcher,
-)
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
 from saealib.surrogate.sklearn_surrogate import (
@@ -41,6 +35,12 @@ from saealib.surrogate.sklearn_surrogate import (
     SklearnSurrogate,
     SVMSurrogate,
     XGBSurrogate,
+)
+from saealib.surrogate.switching import (
+    AccuracyBasedSurrogateSwitcher,
+    GenCtrlSwitcher,
+    ManagerSwitcher,
+    StrategySwitcher,
 )
 from saealib.surrogate.torch_surrogate import TorchSurrogate
 from saealib.surrogate.training_set import (
@@ -58,6 +58,7 @@ from saealib.surrogate.training_set import (
 
 __all__ = [
     "RMSE",
+    "AccuracyBasedSurrogateSwitcher",
     "AccuracyEvaluator",
     "ArchiveBasedManager",
     "ArchiveObjectiveSet",
@@ -67,6 +68,7 @@ __all__ = [
     "DensityManager",
     "FeasibilityClassificationSet",
     "GPRSurrogate",
+    "GenCtrlSwitcher",
     "GlobalSurrogateManager",
     "HeldOutAccuracyEvaluator",
     "KFoldAccuracyEvaluator",
@@ -76,6 +78,7 @@ __all__ = [
     "LOOAccuracyEvaluator",
     "LevelBasedSet",
     "LocalSurrogateManager",
+    "ManagerSwitcher",
     "NNSurrogate",
     "NichingManager",
     "NoveltyManager",
@@ -86,15 +89,12 @@ __all__ = [
     "SVMSurrogate",
     "SklearnSurrogate",
     "SpearmanCorrelation",
+    "StrategySwitcher",
     "Surrogate",
     "SurrogateAccuracy",
     "SurrogateAccuracyMetric",
-    "AccuracyBasedSurrogateSwitcher",
-    "GenCtrlSwitcher",
-    "ManagerSwitcher",
     "SurrogateManager",
     "SurrogatePrediction",
-    "StrategySwitcher",
     "TopKBipartitionSet",
     "TorchSurrogate",
     "TrainingData",

@@ -211,9 +211,8 @@ class GenCtrlSwitcher(AccuracyBasedSurrogateSwitcher[int]):
             if math.isfinite(v):
                 eps = self._to_error(v)
                 self.smoothed_error = (
-                    (1.0 - self.update_rate) * self.smoothed_error
-                    + self.update_rate * eps
-                )
+                    1.0 - self.update_rate
+                ) * self.smoothed_error + self.update_rate * eps
         gm = round((1.0 - self.smoothed_error) * self.gm_max)
         return max(self.gm_min, min(self.gm_max, gm))
 
