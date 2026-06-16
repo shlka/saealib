@@ -88,12 +88,36 @@ class SurrogateManager(ABC):
             )
         return scores, predictions
 
+    def fit(
+        self,
+        archive: Archive,
+        ctx: OptimizationContext | None = None,
+    ) -> None:
+        """
+        Pre-fit the surrogate on the archive.
+
+        Call once before a sequence of ``score_candidates(..., refit=False)``
+        calls when the archive does not change between calls (e.g. the
+        surrogate-only inner loop of ``GenerationBasedStrategy``).
+        The default implementation is a no-op; override in managers that
+        maintain a fitted surrogate model.
+
+        Parameters
+        ----------
+        archive : Archive
+            Archive of evaluated solutions used for surrogate training.
+        ctx : OptimizationContext or None, optional
+            Current optimization context.
+        """
+
     @abstractmethod
     def score_candidates(
         self,
         candidates_x: np.ndarray,
         archive: Archive,
         ctx: OptimizationContext | None = None,
+        *,
+        refit: bool = True,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """
         Score candidate solutions using the surrogate model.
@@ -107,6 +131,10 @@ class SurrogateManager(ABC):
         ctx : OptimizationContext or None, optional
             Current optimization context. Passed to ``TrainingSet.build``
             for strategies that require comparator or population access.
+        refit : bool, optional
+            If ``True`` (default), fit the surrogate before scoring.
+            Pass ``False`` after an explicit :meth:`fit` call to skip
+            redundant re-fitting when the archive has not changed.
 
         Returns
         -------
@@ -238,17 +266,28 @@ class GlobalSurrogateManager(SurrogateManager):
             training_set if training_set is not None else ArchiveObjectiveSet()
         )
 
+    def fit(
+        self,
+        archive: Archive,
+        ctx: OptimizationContext | None = None,
+    ) -> None:
+        """Fit the surrogate on the full archive."""
+        population = ctx.population if ctx is not None else None
+        data = self.training_set.build(archive, population, ctx, candidate_x=None)
+        self.surrogate.fit(data.train_x, data.train_y)
+        self.surrogate.post_fit(data.train_x, data.train_y, ctx)
+
     def score_candidates(
         self,
         candidates_x: np.ndarray,
         archive: Archive,
         ctx: OptimizationContext | None = None,
+        *,
+        refit: bool = True,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """Fit on full archive, predict and score all candidates at once."""
-        population = ctx.population if ctx is not None else None
-        data = self.training_set.build(archive, population, ctx, candidate_x=None)
-        self.surrogate.fit(data.train_x, data.train_y)
-        self.surrogate.post_fit(data.train_x, data.train_y, ctx)
+        if refit:
+            self.fit(archive, ctx)
 
         reference = self.acquisition.compute_reference(archive)
         prediction = self.surrogate.predict(candidates_x)  # mean: (n_candidates, n_obj)
@@ -304,6 +343,8 @@ class LocalSurrogateManager(SurrogateManager):
         candidates_x: np.ndarray,
         archive: Archive,
         ctx: OptimizationContext | None = None,
+        *,
+        refit: bool = True,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """Fit a local model per candidate and score each individually."""
         predictions: list[SurrogatePrediction] = []
@@ -418,11 +459,22 @@ class CompositeSurrogateManager(SurrogateManager):
         self.managers = managers
         self.combine_fn = combine_fn
 
+    def fit(
+        self,
+        archive: Archive,
+        ctx: OptimizationContext | None = None,
+    ) -> None:
+        """Pre-fit all sub-managers."""
+        for manager in self.managers:
+            manager.fit(archive, ctx)
+
     def score_candidates(
         self,
         candidates_x: np.ndarray,
         archive: Archive,
         ctx: OptimizationContext | None = None,
+        *,
+        refit: bool = True,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """Combine scores from all sub-managers using ``combine_fn``.
 
@@ -432,7 +484,9 @@ class CompositeSurrogateManager(SurrogateManager):
         first_predictions: list[SurrogatePrediction] | None = None
 
         for i, manager in enumerate(self.managers):
-            scores, preds = manager.score_candidates(candidates_x, archive, ctx)
+            scores, preds = manager.score_candidates(
+                candidates_x, archive, ctx, refit=refit
+            )
             all_scores.append(scores)
             if i == 0:
                 first_predictions = preds

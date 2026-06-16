@@ -6,6 +6,8 @@ Tests cover:
 - PreSelectionStrategy: fe count equals n_select, archive growth, n_select cap
 """
 
+import operator
+
 import numpy as np
 
 from saealib import (
@@ -27,6 +29,7 @@ from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate.archive_manager import DensityManager, NoveltyManager
 from saealib.surrogate.manager import (
     CompositeSurrogateManager,
+    GlobalSurrogateManager,
     LocalSurrogateManager,
     rank_weighted_combine,
 )
@@ -97,7 +100,10 @@ def _make_ga() -> GA:
 class _MockSurrogateManager:
     """Returns uniform scores and constant predictions."""
 
-    def score_candidates(self, candidates_x, archive, ctx=None):
+    def fit(self, archive, ctx=None):
+        pass
+
+    def score_candidates(self, candidates_x, archive, ctx=None, *, refit=True):
         n = len(candidates_x)
         scores = np.linspace(1.0, 0.0, n)
         predictions = [
@@ -170,6 +176,40 @@ class TestGenerationBasedStrategy:
         strategy.step(ctx, provider)
         assert ctx.gen == 1
         assert ctx.fe == len(ctx.population)
+
+    def test_surrogate_fit_called_once_per_step(self):
+        """fit() must be called exactly once per step(), not once per surrogate gen."""
+        fit_count = [0]
+
+        ctx = _make_ctx()
+        surrogate = RBFsurrogate(gaussian_kernel, DIM).with_post_fit(
+            lambda tx, ty, c: operator.setitem(fit_count, 0, fit_count[0] + 1)
+        )
+        manager = GlobalSurrogateManager(surrogate, MeanPrediction())
+        provider = _MockProvider(_make_ga(), manager)
+        strategy = GenerationBasedStrategy(gen_ctrl=3)
+
+        strategy.step(ctx, provider)
+
+        assert fit_count[0] == 1
+
+    def test_local_surrogate_refit_false_ignored(self):
+        """LocalSurrogateManager always fits per candidate; refit=False is a no-op."""
+        fit_count = [0]
+
+        ctx = _make_ctx()
+        surrogate = RBFsurrogate(gaussian_kernel, DIM).with_post_fit(
+            lambda tx, ty, c: operator.setitem(fit_count, 0, fit_count[0] + 1)
+        )
+        manager = LocalSurrogateManager(surrogate, MeanPrediction())
+        provider = _MockProvider(_make_ga(), manager)
+        strategy = GenerationBasedStrategy(gen_ctrl=1)
+
+        strategy.step(ctx, provider)
+
+        # LocalSurrogateManager always fits per candidate; refit=False is ignored
+        n_offspring = len(ctx.population)
+        assert fit_count[0] == n_offspring
 
 
 # ---------------------------------------------------------------------------

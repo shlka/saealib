@@ -55,6 +55,8 @@ class ArchiveBasedManager(SurrogateManager):
         candidates_x: np.ndarray,
         archive: Archive,
         ctx: OptimizationContext | None = None,
+        *,
+        refit: bool = True,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """Compute scores and wrap results in SurrogatePrediction with tell_f=NaN."""
         scores = self.compute_scores(candidates_x, archive, ctx)
