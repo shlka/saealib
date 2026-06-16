@@ -16,6 +16,12 @@ from saealib.problem.constraint import (
     InequalityConstraint,
     StaticToleranceHandler,
 )
+from saealib.variables import (
+    CategoricalVariable,
+    ContinuousVariable,
+    IntegerVariable,
+    Variable,
+)
 
 
 class Problem:
@@ -35,6 +41,8 @@ class Problem:
         Lower bounds for design variables. shape = (dim, )
     ub : np.ndarray
         Upper bounds for design variables. shape = (dim, )
+    variables : list[Variable]
+        Per-dimension variable definitions.
     comparator : Comparator
         Comparator instance to compare solutions.
     eps_cv : float
@@ -56,8 +64,8 @@ class Problem:
         dim: int,
         n_obj: int,
         direction: np.ndarray,
-        lb: list[float],
-        ub: list[float],
+        lb: list[float] | None = None,
+        ub: list[float] | None = None,
         eps: float | None = None,
         comparator: Comparator | None = None,
         constraints: list[InequalityConstraint] | None = None,
@@ -65,6 +73,7 @@ class Problem:
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
         handler: ConstraintHandler | None = None,
+        variables: list[Variable] | None = None,
     ):
         """
         Initialize Problem instance.
@@ -80,10 +89,12 @@ class Problem:
         direction : np.ndarray
             Optimization direction per objective. shape = (n_obj, )
             Each element must be +1 (maximize) or -1 (minimize).
-        lb : list[float]
-            Lower bounds for design variables. length = dim
-        ub : list[float]
-            Upper bounds for design variables. length = dim
+        lb : list[float], optional
+            Lower bounds for design variables. length = dim.
+            Required when *variables* is not provided.
+        ub : list[float], optional
+            Upper bounds for design variables. length = dim.
+            Required when *variables* is not provided.
         eps : float, optional
             Deprecated. Use eps_cv and eps_obj. Will be removed in 0.1.0.
         comparator : Comparator, optional
@@ -100,6 +111,10 @@ class Problem:
             Constraint-handling strategy. If None, a StaticToleranceHandler
             (sum-of-violations, fixed eps_cv) is used, reproducing the default
             behavior.
+        variables : list[Variable], optional
+            Per-dimension variable definitions.  When provided, *lb* and *ub*
+            are derived from the variable bounds.  ``len(variables)`` must equal
+            *dim*.
         """
         if eps is not None:
             warn_deprecated("eps", "eps_cv and eps_obj", "0.1.0")
@@ -107,13 +122,48 @@ class Problem:
         direction = np.asarray(direction, dtype=float)
         if not np.all(np.abs(direction) == 1):
             raise ValidationError("direction elements must be +1 or -1")
+
+        if variables is not None:
+            if len(variables) != dim:
+                raise ValidationError(
+                    f"len(variables)={len(variables)} does not match dim={dim}"
+                )
+            self.variables: list[Variable] = list(variables)
+            self.lb = np.array([v.lb for v in self.variables], dtype=float)
+            self.ub = np.array([v.ub for v in self.variables], dtype=float)
+        else:
+            if lb is None or ub is None:
+                raise ValidationError(
+                    "lb and ub are required when variables is not provided"
+                )
+            self.lb = np.asarray(lb, dtype=float)
+            self.ub = np.asarray(ub, dtype=float)
+            self.variables = [
+                ContinuousVariable(float(self.lb[i]), float(self.ub[i]))
+                for i in range(dim)
+            ]
+
+        # Cache type masks (computed once).
+        self._integer_mask = np.array(
+            [isinstance(v, IntegerVariable) for v in self.variables]
+        )
+        self._categorical_mask = np.array(
+            [isinstance(v, CategoricalVariable) for v in self.variables]
+        )
+        self._continuous_mask = ~(self._integer_mask | self._categorical_mask)
+        self._n_categories = np.array(
+            [
+                v.n_categories if isinstance(v, CategoricalVariable) else 0
+                for v in self.variables
+            ],
+            dtype=int,
+        )
+
         self.dim = dim
         self.n_obj = n_obj
         self.direction = direction
         self.eps_cv = eps_cv
         self.eps_obj = eps_obj
-        self.lb = np.asarray(lb)
-        self.ub = np.asarray(ub)
         self.func = func
         self.constraints = constraints if constraints is not None else []
         self.handler = (
@@ -141,6 +191,52 @@ class Problem:
     def n_constraints(self) -> int:
         """Number of constraint functions."""
         return len(self.constraints)
+
+    @property
+    def continuous_mask(self) -> np.ndarray:
+        """Boolean mask of continuous dimensions. shape = (dim,)."""
+        return self._continuous_mask
+
+    @property
+    def integer_mask(self) -> np.ndarray:
+        """Boolean mask of integer dimensions. shape = (dim,)."""
+        return self._integer_mask
+
+    @property
+    def categorical_mask(self) -> np.ndarray:
+        """Boolean mask of categorical dimensions. shape = (dim,)."""
+        return self._categorical_mask
+
+    @property
+    def n_categories(self) -> np.ndarray:
+        """Category counts per dimension (0 for non-categorical). shape = (dim,)."""
+        return self._n_categories
+
+    def repair(self, x: np.ndarray) -> np.ndarray:
+        """Project *x* onto valid variable domains.
+
+        Rounds integer dimensions to the nearest integer and clips to bounds.
+        Rounds categorical dimensions to the nearest valid index.
+        Clips continuous dimensions to ``[lb, ub]``.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Design variable array. shape = ``(dim,)`` or ``(n, dim)``.
+
+        Returns
+        -------
+        np.ndarray
+            Repaired array, same shape as *x*.
+        """
+        x = np.asarray(x, dtype=float)
+        scalar = x.ndim == 1
+        if scalar:
+            x = x[np.newaxis, :]
+        result = x.copy()
+        for i, v in enumerate(self.variables):
+            result[:, i] = v.repair(result[:, i])
+        return result[0] if scalar else result
 
     def evaluate_constraints(self, x: np.ndarray) -> tuple[np.ndarray, float]:
         """

@@ -67,6 +67,12 @@ from saealib.termination import (
     stalled,
 )
 from saealib.utils.indicators import hypervolume, hypervolume_contributions
+from saealib.variables import (
+    CategoricalVariable,
+    ContinuousVariable,
+    IntegerVariable,
+    Variable,
+)
 
 logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -81,10 +87,12 @@ __all__ = [
     "Archive",
     # Callbacks (core)
     "CallbackManager",
+    "CategoricalVariable",
     "Comparator",
     "ConfigurationError",
     # Problem
     "ConstraintHandler",
+    "ContinuousVariable",
     "Crossover",
     # Operators (common)
     "CrossoverSBX",
@@ -106,6 +114,7 @@ __all__ = [
     "IndividualBasedStrategy",
     "InequalityConstraint",
     "Initializer",
+    "IntegerVariable",
     "LHSInitializer",
     "Mutation",
     "MutationPolynomial",
@@ -136,6 +145,7 @@ __all__ = [
     "TournamentSelection",
     "TruncationSelection",
     "ValidationError",
+    "Variable",
     "f_target",
     # Indicators
     "hypervolume",
@@ -178,10 +188,14 @@ _TIER2_MAP: dict[str, str] = {
     "WeightedSumDecomposition": "saealib.decomposition",
     # operators (less common)
     "CrossoverBLXAlpha": "saealib.operators",
+    "CrossoverCategorical": "saealib.operators",
+    "CrossoverIntegerSBX": "saealib.operators",
     "CrossoverOnePoint": "saealib.operators",
     "CrossoverTwoPoint": "saealib.operators",
     "CrossoverUniform": "saealib.operators",
+    "MutationCategorical": "saealib.operators",
     "MutationGaussian": "saealib.operators",
+    "MutationIntegerUniform": "saealib.operators",
     "MutationUniform": "saealib.operators",
     "RouletteWheelSelection": "saealib.operators",
     "SequentialSelection": "saealib.operators",

@@ -21,13 +21,17 @@ from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationContext
 from saealib.operators.crossover import (
     CrossoverBLXAlpha,
+    CrossoverCategorical,
+    CrossoverIntegerSBX,
     CrossoverOnePoint,
     CrossoverSBX,
     CrossoverTwoPoint,
     CrossoverUniform,
 )
 from saealib.operators.mutation import (
+    MutationCategorical,
     MutationGaussian,
+    MutationIntegerUniform,
     MutationPolynomial,
     MutationUniform,
 )
@@ -556,3 +560,183 @@ class TestGAHookInvocation:
         ctx = _make_ctx()
         candidates = ga.ask(ctx, provider)
         assert call_count[0] == len(candidates)
+
+
+# ---------------------------------------------------------------------------
+# CrossoverIntegerSBX
+# ---------------------------------------------------------------------------
+
+
+class TestCrossoverIntegerSBX:
+    _rng = np.random.default_rng(0)
+    _parents = np.array([[1.0, 3.0, 5.0], [3.0, 7.0, 9.0]])
+
+    def test_output_shape(self):
+        op = CrossoverIntegerSBX(crossover_rate=1.0, eta=2.0)
+        c = op.crossover(self._parents, rng=np.random.default_rng(0))
+        assert c.shape == (2, 3)
+
+    def test_offspring_are_integers(self):
+        op = CrossoverIntegerSBX(crossover_rate=1.0, eta=2.0)
+        rng = np.random.default_rng(42)
+        for _ in range(20):
+            c = op.crossover(self._parents, rng=rng)
+            assert np.all(c == np.round(c)), "offspring must be integers"
+
+    def test_crossover_rate_attribute(self):
+        op = CrossoverIntegerSBX(crossover_rate=0.8, eta=5.0)
+        assert op.crossover_rate == 0.8
+
+    def test_n_children(self):
+        assert CrossoverIntegerSBX(crossover_rate=1.0, eta=2.0).n_children == 2
+
+    def test_determinism(self):
+        op = CrossoverIntegerSBX(crossover_rate=1.0, eta=2.0)
+        c1 = op.crossover(self._parents, rng=np.random.default_rng(7))
+        c2 = op.crossover(self._parents, rng=np.random.default_rng(7))
+        np.testing.assert_array_equal(c1, c2)
+
+
+# ---------------------------------------------------------------------------
+# CrossoverCategorical
+# ---------------------------------------------------------------------------
+
+
+class TestCrossoverCategorical:
+    _parents = np.array([[0.0, 2.0, 1.0], [2.0, 0.0, 2.0]])
+
+    def test_output_shape(self):
+        op = CrossoverCategorical(crossover_rate=1.0)
+        c = op.crossover(self._parents, rng=np.random.default_rng(0))
+        assert c.shape == (2, 3)
+
+    def test_offspring_values_from_parents(self):
+        op = CrossoverCategorical(crossover_rate=1.0)
+        rng = np.random.default_rng(0)
+        for _ in range(50):
+            c = op.crossover(self._parents, rng=rng)
+            for dim in range(self._parents.shape[1]):
+                valid = {self._parents[0, dim], self._parents[1, dim]}
+                assert c[0, dim] in valid
+                assert c[1, dim] in valid
+
+    def test_complementary_swap(self):
+        op = CrossoverCategorical(crossover_rate=1.0)
+        rng = np.random.default_rng(0)
+        for _ in range(50):
+            c = op.crossover(self._parents, rng=rng)
+            for dim in range(self._parents.shape[1]):
+                # if c1 took p2's value, c2 must have taken p1's
+                p_sum = self._parents[0, dim] + self._parents[1, dim]
+                assert c[0, dim] + c[1, dim] == p_sum
+
+    def test_crossover_rate_attribute(self):
+        assert CrossoverCategorical(crossover_rate=0.9).crossover_rate == 0.9
+
+    def test_n_children(self):
+        assert CrossoverCategorical(crossover_rate=1.0).n_children == 2
+
+    def test_determinism(self):
+        op = CrossoverCategorical(crossover_rate=1.0)
+        c1 = op.crossover(self._parents, rng=np.random.default_rng(3))
+        c2 = op.crossover(self._parents, rng=np.random.default_rng(3))
+        np.testing.assert_array_equal(c1, c2)
+
+
+# ---------------------------------------------------------------------------
+# MutationIntegerUniform
+# ---------------------------------------------------------------------------
+
+
+class TestMutationIntegerUniform:
+    _lb = np.array([0.0, 1.0, 3.0])
+    _ub = np.array([5.0, 4.0, 8.0])
+
+    def test_output_shape(self):
+        op = MutationIntegerUniform(mutation_rate=1.0)
+        p = np.array([2.0, 2.0, 5.0])
+        c = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(0))
+        assert c.shape == (3,)
+
+    def test_offspring_are_integers(self):
+        op = MutationIntegerUniform(mutation_rate=1.0)
+        rng = np.random.default_rng(0)
+        p = np.array([2.0, 2.0, 5.0])
+        for _ in range(30):
+            c = op.mutate(p, (self._lb, self._ub), rng=rng)
+            assert np.all(c == np.round(c))
+
+    def test_values_within_bounds(self):
+        op = MutationIntegerUniform(mutation_rate=1.0)
+        rng = np.random.default_rng(1)
+        p = np.array([2.0, 2.0, 5.0])
+        for _ in range(50):
+            c = op.mutate(p, (self._lb, self._ub), rng=rng)
+            assert np.all(c >= self._lb)
+            assert np.all(c <= self._ub)
+
+    def test_zero_rate_unchanged(self):
+        op = MutationIntegerUniform(mutation_rate=0.0)
+        p = np.array([2.0, 3.0, 6.0])
+        c = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(0))
+        np.testing.assert_array_equal(c, p)
+
+    def test_determinism(self):
+        op = MutationIntegerUniform(mutation_rate=0.5)
+        p = np.array([2.0, 2.0, 5.0])
+        c1 = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(5))
+        c2 = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(5))
+        np.testing.assert_array_equal(c1, c2)
+
+
+# ---------------------------------------------------------------------------
+# MutationCategorical
+# ---------------------------------------------------------------------------
+
+
+class TestMutationCategorical:
+    # 3 categorical dims with 3, 2, 4 categories respectively
+    _lb = np.array([0.0, 0.0, 0.0])
+    _ub = np.array([2.0, 1.0, 3.0])
+
+    def test_output_shape(self):
+        op = MutationCategorical(mutation_rate=1.0)
+        p = np.array([1.0, 0.0, 2.0])
+        c = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(0))
+        assert c.shape == (3,)
+
+    def test_offspring_are_valid_indices(self):
+        op = MutationCategorical(mutation_rate=1.0)
+        rng = np.random.default_rng(0)
+        p = np.array([1.0, 0.0, 2.0])
+        for _ in range(50):
+            c = op.mutate(p, (self._lb, self._ub), rng=rng)
+            assert np.all(c >= self._lb)
+            assert np.all(c <= self._ub)
+            assert np.all(c == np.round(c))
+
+    def test_uniform_distribution(self):
+        op = MutationCategorical(mutation_rate=1.0)
+        rng = np.random.default_rng(0)
+        p = np.array([0.0])
+        lb = np.array([0.0])
+        ub = np.array([3.0])  # 4 categories
+        counts = np.zeros(4)
+        for _ in range(4000):
+            c = op.mutate(p, (lb, ub), rng=rng)
+            counts[int(c[0])] += 1
+        # Each category should appear roughly 25% of the time
+        assert np.all(counts > 800), f"distribution not uniform: {counts}"
+
+    def test_zero_rate_unchanged(self):
+        op = MutationCategorical(mutation_rate=0.0)
+        p = np.array([1.0, 0.0, 2.0])
+        c = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(0))
+        np.testing.assert_array_equal(c, p)
+
+    def test_determinism(self):
+        op = MutationCategorical(mutation_rate=0.5)
+        p = np.array([1.0, 0.0, 2.0])
+        c1 = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(9))
+        c2 = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(9))
+        np.testing.assert_array_equal(c1, c2)
