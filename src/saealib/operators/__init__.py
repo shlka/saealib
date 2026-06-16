@@ -1,6 +1,8 @@
 from saealib.operators.crossover import (
     Crossover,
     CrossoverBLXAlpha,
+    CrossoverCategorical,
+    CrossoverIntegerSBX,
     CrossoverOnePoint,
     CrossoverSBX,
     CrossoverTwoPoint,
@@ -8,7 +10,9 @@ from saealib.operators.crossover import (
 )
 from saealib.operators.mutation import (
     Mutation,
+    MutationCategorical,
     MutationGaussian,
+    MutationIntegerUniform,
     MutationPolynomial,
     MutationUniform,
 )
@@ -25,12 +29,16 @@ from saealib.operators.selection import (
 __all__ = [
     "Crossover",
     "CrossoverBLXAlpha",
+    "CrossoverCategorical",
+    "CrossoverIntegerSBX",
     "CrossoverOnePoint",
     "CrossoverSBX",
     "CrossoverTwoPoint",
     "CrossoverUniform",
     "Mutation",
+    "MutationCategorical",
     "MutationGaussian",
+    "MutationIntegerUniform",
     "MutationPolynomial",
     "MutationUniform",
     "ParentSelection",

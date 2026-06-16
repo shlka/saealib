@@ -375,3 +375,118 @@ class CrossoverTwoPoint(Crossover):
         c1 = np.concatenate([p1[:pt1], p2[pt1:pt2], p1[pt2:]])
         c2 = np.concatenate([p2[:pt1], p1[pt1:pt2], p2[pt2:]])
         return np.array([c1, c2])
+
+
+class CrossoverIntegerSBX(Crossover):
+    """
+    Simulated Binary Crossover (SBX) for integer-valued dimensions.
+
+    Applies SBX then rounds offspring to the nearest integer.
+
+    Attributes
+    ----------
+    crossover_rate : float
+        Crossover rate.
+    eta : float
+        Distribution index. Larger values produce offspring closer to parents.
+    """
+
+    def __init__(self, crossover_rate: float, eta: float):
+        """
+        Initialize integer SBX crossover operator.
+
+        Parameters
+        ----------
+        crossover_rate : float
+            Crossover rate.
+        eta : float
+            Distribution index.
+        """
+        super().__init__()
+        self.crossover_rate = crossover_rate
+        self.eta = eta
+
+    def crossover(
+        self, p: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+    ) -> np.ndarray:
+        """
+        Execute integer SBX crossover.
+
+        Parameters
+        ----------
+        p : np.ndarray
+            Parent individuals. shape = (2, dim)
+        rng : np.random.Generator, optional
+            Random number generator, by default np.random.default_rng()
+
+        Returns
+        -------
+        np.ndarray
+            Offspring individuals with integer values. shape = (2, dim)
+        """
+        p1 = p[0]
+        p2 = p[1]
+        dim = len(p1)
+        u = rng.uniform(0.0, 1.0, size=dim)
+        beta_q = np.where(
+            u <= 0.5,
+            (2.0 * u) ** (1.0 / (self.eta + 1)),
+            (1.0 / (2.0 * (1.0 - u))) ** (1.0 / (self.eta + 1)),
+        )
+        mid = 0.5 * (p1 + p2)
+        half_diff = 0.5 * beta_q * (p2 - p1)
+        c1 = np.round(mid - half_diff)
+        c2 = np.round(mid + half_diff)
+        return np.array([c1, c2])
+
+
+class CrossoverCategorical(Crossover):
+    """
+    Uniform crossover for categorical dimensions.
+
+    Each dimension independently inherits one parent's value with equal
+    probability (50/50).  Offspring are always exact copies of a parent
+    value, preserving the validity of categorical indices.
+
+    Attributes
+    ----------
+    crossover_rate : float
+        Crossover rate.
+    """
+
+    def __init__(self, crossover_rate: float):
+        """
+        Initialize categorical crossover operator.
+
+        Parameters
+        ----------
+        crossover_rate : float
+            Crossover rate.
+        """
+        super().__init__()
+        self.crossover_rate = crossover_rate
+
+    def crossover(
+        self, p: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+    ) -> np.ndarray:
+        """
+        Execute categorical crossover.
+
+        Parameters
+        ----------
+        p : np.ndarray
+            Parent individuals. shape = (2, dim)
+        rng : np.random.Generator, optional
+            Random number generator, by default np.random.default_rng()
+
+        Returns
+        -------
+        np.ndarray
+            Offspring individuals. shape = (2, dim)
+        """
+        p1 = p[0]
+        p2 = p[1]
+        mask = rng.random(len(p1)) < 0.5
+        c1 = np.where(mask, p2, p1)
+        c2 = np.where(mask, p1, p2)
+        return np.array([c1, c2])

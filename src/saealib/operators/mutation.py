@@ -274,3 +274,96 @@ class MutationGaussian(Mutation):
             if rng.random() < self.mutation_rate:
                 c[i] = c[i] + rng.normal(0.0, self.sigma)
         return c
+
+
+class _MutationDiscreteUniform(Mutation):
+    """Shared implementation for discrete uniform mutation.
+
+    Replaces each dimension's value with a uniform random integer draw
+    from ``[lb[i], ub[i]]`` (both inclusive).
+    """
+
+    def __init__(self, mutation_rate: float):
+        super().__init__()
+        self.mutation_rate = mutation_rate
+
+    def mutate(
+        self,
+        p: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator = np.random.default_rng(),
+    ) -> np.ndarray:
+        """
+        Execute discrete uniform mutation.
+
+        Parameters
+        ----------
+        p : np.ndarray
+            Parent individual. shape = (dim,)
+        mutate_range : tuple
+            Tuple of (lower_bound, upper_bound) arrays.
+        rng : np.random.Generator, optional
+            Random number generator, by default np.random.default_rng()
+
+        Returns
+        -------
+        np.ndarray
+            Mutated individual.
+        """
+        c = p.copy()
+        lb, ub = mutate_range
+        for i in range(len(p)):
+            if rng.random() < self.mutation_rate:
+                c[i] = float(rng.integers(int(lb[i]), int(ub[i]) + 1))
+        return c
+
+
+class MutationIntegerUniform(_MutationDiscreteUniform):
+    """
+    Uniform integer mutation.
+
+    Replaces each dimension's value with a uniform random integer draw
+    from ``[lb[i], ub[i]]`` (both inclusive).
+
+    Attributes
+    ----------
+    mutation_rate : float
+        The probability of mutating each dimension.
+    """
+
+    def __init__(self, mutation_rate: float):
+        """
+        Initialize integer uniform mutation operator.
+
+        Parameters
+        ----------
+        mutation_rate : float
+            The probability of mutating each dimension.
+        """
+        super().__init__(mutation_rate)
+
+
+class MutationCategorical(_MutationDiscreteUniform):
+    """
+    Uniform categorical mutation.
+
+    Replaces each dimension's category index with a uniform random draw
+    from ``{0, 1, ..., n_categories - 1}``.  The valid range is inferred
+    from ``mutate_range``, where ``ub[i] == n_categories - 1``.
+
+    Attributes
+    ----------
+    mutation_rate : float
+        The probability of mutating each dimension.
+    """
+
+    def __init__(self, mutation_rate: float):
+        """
+        Initialize categorical mutation operator.
+
+        Parameters
+        ----------
+        mutation_rate : float
+            The probability of mutating each dimension.
+        """
+        super().__init__(mutation_rate)
