@@ -344,7 +344,7 @@ class LocalSurrogateManager(SurrogateManager):
         archive: Archive,
         ctx: OptimizationContext | None = None,
         *,
-        refit: bool = True,  # noqa: ARG002 — per-candidate fit is always done
+        refit: bool = True,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """Fit a local model per candidate and score each individually."""
         predictions: list[SurrogatePrediction] = []

@@ -207,7 +207,7 @@ class TestGenerationBasedStrategy:
 
         strategy.step(ctx, provider)
 
-        # refit=False passed by gb.py, but LocalSurrogateManager still fits per candidate
+        # LocalSurrogateManager always fits per candidate; refit=False is ignored
         n_offspring = len(ctx.population)
         assert fit_count[0] == n_offspring
 
