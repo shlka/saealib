@@ -32,7 +32,11 @@ class AcquisitionFunction(ABC):
     requires_uncertainty: bool = False
 
     @abstractmethod
-    def compute_reference(self, archive: Archive) -> Any:
+    def compute_reference(
+        self,
+        archive: Archive,
+        rng: np.random.Generator | None = None,
+    ) -> Any:
         """
         Compute the reference value required by this acquisition function.
 
@@ -46,6 +50,10 @@ class AcquisitionFunction(ABC):
         ----------
         archive : Archive
             Archive of evaluated solutions.
+        rng : np.random.Generator or None, optional
+            Random number generator from ``ctx.rng``.  Implementations that
+            require randomness should prefer this over a stored ``_rng`` so
+            that all randomness flows through the single master RNG.
 
         Returns
         -------
@@ -60,6 +68,7 @@ class AcquisitionFunction(ABC):
         self,
         prediction: SurrogatePrediction,
         reference: Any,
+        rng: np.random.Generator | None = None,
     ) -> np.ndarray:
         """
         Compute acquisition scores for a set of candidates.
@@ -70,6 +79,8 @@ class AcquisitionFunction(ABC):
             Predictions from a surrogate model.
         reference : Any
             Reference value produced by ``compute_reference``.
+        rng : np.random.Generator or None, optional
+            Random number generator from ``ctx.rng``.
 
         Returns
         -------

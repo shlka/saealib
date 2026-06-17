@@ -150,7 +150,10 @@ class LHSInitializer(Initializer):
         -------
         OptimizationContext
         """
-        rng = np.random.default_rng(self.seed)
+        provider_seed = getattr(provider, "seed", None)
+        rng = np.random.default_rng(
+            provider_seed if provider_seed is not None else self.seed
+        )
         attrs = self._create_attrs(problem, provider)
 
         population = provider.algorithm.population_class(

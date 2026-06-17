@@ -54,7 +54,9 @@ class SMSEGOAcquisition(AcquisitionFunction):
         )
 
     def compute_reference(
-        self, archive: Archive
+        self,
+        archive: Archive,
+        rng: np.random.Generator | None = None,
     ) -> tuple[np.ndarray, np.ndarray, float]:
         """
         Extract the Pareto front and (if needed) compute the reference point.
@@ -87,6 +89,7 @@ class SMSEGOAcquisition(AcquisitionFunction):
         self,
         prediction: SurrogatePrediction,
         reference: Any,
+        rng: np.random.Generator | None = None,
     ) -> np.ndarray:
         """
         Compute hypervolume improvement of the LCB-predicted candidates.

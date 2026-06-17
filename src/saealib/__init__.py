@@ -23,6 +23,7 @@ from saealib.callback import (
     RunEndEvent,
     RunStartEvent,
 )
+from saealib.checkpoint import CheckpointCallback
 from saealib.comparators import Comparator, NSGA2Comparator, SingleObjectiveComparator
 from saealib.exceptions import ConfigurationError, SaealibError, ValidationError
 from saealib.execution.evaluator import EvaluationResult, Evaluator, SerialEvaluator
@@ -79,36 +80,27 @@ from saealib.variables import (
 logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
-    # Algorithms
     "GA",
     "PSO",
-    # Core abstractions
     "AcquisitionFunction",
     "Algorithm",
-    # Population & data
     "Archive",
-    # Callbacks (core)
     "CallbackManager",
     "CategoricalVariable",
+    "CheckpointCallback",
     "Comparator",
     "ConfigurationError",
-    # Problem
     "ConstraintHandler",
     "ContinuousVariable",
     "Crossover",
-    # Operators (common)
     "CrossoverSBX",
     "EpsilonConstraintHandler",
     "EqualityConstraint",
     "EvaluationResult",
-    # Execution
     "Evaluator",
     "Event",
-    # Acquisition (core)
     "ExpectedImprovement",
-    # Surrogate (core)
     "GPRSurrogate",
-    # Strategies
     "GenerationBasedStrategy",
     "GenerationEndEvent",
     "GenerationStartEvent",
@@ -122,7 +114,6 @@ __all__ = [
     "LHSInitializer",
     "Mutation",
     "MutationPolynomial",
-    # Comparators (common)
     "NSGA2Comparator",
     "OptimizationStrategy",
     "Optimizer",
@@ -143,7 +134,6 @@ __all__ = [
     "Surrogate",
     "SurrogateManager",
     "SurvivorSelection",
-    # Termination
     "Termination",
     "TerminationCondition",
     "TournamentSelection",
@@ -151,12 +141,10 @@ __all__ = [
     "ValidationError",
     "Variable",
     "f_target",
-    # Indicators
     "hypervolume",
     "hypervolume_contributions",
     "max_fe",
     "max_gen",
-    # API entry points
     "maximize",
     "minimize",
     "stalled",

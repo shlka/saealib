@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import operator
 from collections.abc import Callable
-from functools import reduce
+from functools import partial, reduce
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -275,6 +275,14 @@ class Termination:
 # Built-in termination condition factories
 
 
+def _fe_reached(ctx: OptimizationContext, value: int) -> bool:
+    return ctx.fe >= value
+
+
+def _gen_reached(ctx: OptimizationContext, value: int) -> bool:
+    return ctx.gen >= value
+
+
 def max_fe(value: int) -> TerminationCondition:
     """
     Create a termination condition based on maximum function evaluations.
@@ -295,7 +303,7 @@ def max_fe(value: int) -> TerminationCondition:
     >>> condition = max_fe(2000) & max_gen(100)
     """
     return TerminationCondition(
-        lambda ctx: ctx.fe >= value,
+        partial(_fe_reached, value=value),
         name=f"max_fe({value})",
         doc=f"Terminate when fe >= {value}.",
     )
@@ -321,7 +329,7 @@ def max_gen(value: int) -> TerminationCondition:
     >>> condition = max_gen(100) | max_fe(2000)
     """
     return TerminationCondition(
-        lambda ctx: ctx.gen >= value,
+        partial(_gen_reached, value=value),
         name=f"max_gen({value})",
         doc=f"Terminate when gen >= {value}.",
     )

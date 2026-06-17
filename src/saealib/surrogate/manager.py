@@ -312,9 +312,10 @@ class GlobalSurrogateManager(SurrogateManager):
         if refit:
             self.fit(archive, ctx)
 
-        reference = self.acquisition.compute_reference(archive)
+        rng = ctx.rng if ctx is not None else None
+        reference = self.acquisition.compute_reference(archive, rng=rng)
         prediction = self.surrogate.predict(candidates_x)  # mean: (n_candidates, n_obj)
-        scores = self.acquisition.score(prediction, reference)
+        scores = self.acquisition.score(prediction, reference, rng=rng)
 
         # Split batch prediction into per-candidate SurrogatePrediction objects
         predictions = _split_prediction(prediction)
@@ -408,7 +409,8 @@ class LocalSurrogateManager(SurrogateManager):
         are always used.
         """
         predictions: list[SurrogatePrediction] = []
-        reference = self.acquisition.compute_reference(archive)
+        rng = ctx.rng if ctx is not None else None
+        reference = self.acquisition.compute_reference(archive, rng=rng)
         population = ctx.population if ctx is not None else None
         compute_accuracy = refit and self.accuracy_evaluator is not None
         y_true_list: list[np.ndarray] = []
@@ -443,7 +445,7 @@ class LocalSurrogateManager(SurrogateManager):
                     pass
 
         scores = np.array(
-            [self.acquisition.score(p, reference)[0] for p in predictions]
+            [self.acquisition.score(p, reference, rng=rng)[0] for p in predictions]
         )
         scores, predictions = self._sanitize_nan(scores, predictions)
 

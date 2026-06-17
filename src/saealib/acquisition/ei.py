@@ -46,7 +46,9 @@ class ExpectedImprovement(AcquisitionFunction):
         self.obj_idx = obj_idx
         self.reference = reference
 
-    def compute_reference(self, archive: Archive) -> np.ndarray:
+    def compute_reference(
+        self, archive: Archive, rng: np.random.Generator | None = None
+    ) -> np.ndarray:
         """Return fixed reference if set, otherwise component-wise best from archive."""
         if self.reference is not None:
             return self.reference
@@ -56,6 +58,7 @@ class ExpectedImprovement(AcquisitionFunction):
         self,
         prediction: SurrogatePrediction,
         reference: Any,
+        rng: np.random.Generator | None = None,
     ) -> np.ndarray:
         """
         Compute Expected Improvement scores.
