@@ -151,6 +151,7 @@ class ArchiveMixin:
         return dup_pop
 
     def delete(self, index):
+        """Delete element(s) and invalidate the kNN cache."""
         super().delete(index)
         self._kdtree = None
 
