@@ -169,4 +169,4 @@ Contributions are welcome! Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) fo
 
 ## License
 
-[MIT License](LICENSE) (Assuming standard open source license, please verify)
+[Apache License 2.0](LICENSE)
