@@ -11,4 +11,5 @@ constraints
 acquisition_functions
 callbacks
 custom_components
+checkpoint
 ```
