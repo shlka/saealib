@@ -40,7 +40,9 @@ class ProbabilityOfFeasibility(AcquisitionFunction):
         self.obj_idx = obj_idx
         self.reference = reference
 
-    def compute_reference(self, archive: Archive, rng: np.random.Generator | None = None) -> Any:
+    def compute_reference(
+        self, archive: Archive, rng: np.random.Generator | None = None
+    ) -> Any:
         """Return fixed reference if set, otherwise None."""
         return self.reference
 
@@ -126,7 +128,9 @@ class ProductOfFeasibility(AcquisitionFunction):
 
     requires_uncertainty: bool = True
 
-    def compute_reference(self, archive: Archive, rng: np.random.Generator | None = None) -> Any:
+    def compute_reference(
+        self, archive: Archive, rng: np.random.Generator | None = None
+    ) -> Any:
         """Return None (no reference needed)."""
         return None
 

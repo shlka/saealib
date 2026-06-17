@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -55,8 +56,7 @@ class CheckpointCallback:
     ) -> None:
         if format not in self._VALID_FORMATS:
             raise ValueError(
-                f"format must be one of {sorted(self._VALID_FORMATS)!r}, "
-                f"got {format!r}"
+                f"format must be one of {sorted(self._VALID_FORMATS)!r}, got {format!r}"
             )
         if format in ("pickle", "both") and optimizer is None:
             raise ValueError(
@@ -100,8 +100,6 @@ class CheckpointCallback:
         if not self.delete_on_success:
             return
         for p in self._saved:
-            try:
+            with contextlib.suppress(OSError):
                 p.unlink(missing_ok=True)
-            except OSError:
-                pass
         self._saved.clear()

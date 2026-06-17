@@ -274,6 +274,7 @@ class Termination:
 
 # Built-in termination condition factories
 
+
 def _fe_reached(ctx: OptimizationContext, value: int) -> bool:
     return ctx.fe >= value
 

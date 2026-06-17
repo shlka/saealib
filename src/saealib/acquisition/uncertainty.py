@@ -36,7 +36,9 @@ class MaxUncertainty(AcquisitionFunction):
         self.weights = weights
         self.reference = reference
 
-    def compute_reference(self, archive: Archive, rng: np.random.Generator | None = None) -> Any:
+    def compute_reference(
+        self, archive: Archive, rng: np.random.Generator | None = None
+    ) -> Any:
         """Return fixed reference if set, otherwise None."""
         return self.reference
 

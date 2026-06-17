@@ -129,15 +129,19 @@ class OptimizationContext:
         for name, attr in self.archive.schema.items():
             arr = self.archive._data[name]
             default = attr.default
-            default_json: object = "__nan__" if (
-                isinstance(default, float) and np.isnan(default)
-            ) else default
-            schema.append({
-                "name": name,
-                "dtype": arr.dtype.str,
-                "shape": list(arr.shape[1:]),
-                "default": default_json,
-            })
+            default_json: object = (
+                "__nan__"
+                if (isinstance(default, float) and np.isnan(default))
+                else default
+            )
+            schema.append(
+                {
+                    "name": name,
+                    "dtype": arr.dtype.str,
+                    "shape": list(arr.shape[1:]),
+                    "default": default_json,
+                }
+            )
         save_dict["_schema"] = np.frombuffer(
             json.dumps(schema).encode(), dtype=np.uint8
         )
@@ -189,7 +193,12 @@ class OptimizationContext:
         -------
         OptimizationContext
         """
-        from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
+        from saealib.population import (
+            Archive,
+            ParetoArchive,
+            Population,
+            PopulationAttribute,
+        )
 
         p = Path(path)
         if not p.suffix:
@@ -204,12 +213,14 @@ class OptimizationContext:
             default = s["default"]
             if default == "__nan__":
                 default = np.nan
-            attrs.append(PopulationAttribute(
-                name=s["name"],
-                dtype=np.dtype(s["dtype"]),
-                shape=tuple(s["shape"]),
-                default=default,
-            ))
+            attrs.append(
+                PopulationAttribute(
+                    name=s["name"],
+                    dtype=np.dtype(s["dtype"]),
+                    shape=tuple(s["shape"]),
+                    default=default,
+                )
+            )
 
         n_arch = int(data["_archive_size"])
         n_pop = int(data["_pop_size"])
@@ -230,7 +241,9 @@ class OptimizationContext:
             direction=problem.direction,
         )
         if n_pareto > 0:
-            pareto_archive.extend({name: data[f"pareto__{name}"] for name in attr_names})
+            pareto_archive.extend(
+                {name: data[f"pareto__{name}"] for name in attr_names}
+            )
 
         # Restore RNG to exact saved state
         rng_state = json.loads(bytes(data["_rng_state"]).decode())

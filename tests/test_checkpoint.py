@@ -51,7 +51,9 @@ def _make_problem() -> Problem:
     )
 
 
-def _make_optimizer(problem: Problem, seed: int | None = None, n_gen: int = 4) -> Optimizer:
+def _make_optimizer(
+    problem: Problem, seed: int | None = None, n_gen: int = 4
+) -> Optimizer:
     return (
         Optimizer(problem, seed=seed)
         .set_initializer(LHSInitializer(N_INIT_ARCHIVE, N_INIT_POP))
@@ -189,7 +191,7 @@ def test_pickle_roundtrip(tmp_path):
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
-        opt2, ctx2 = Optimizer.load_pickle(p)
+        _opt2, ctx2 = Optimizer.load_pickle(p)
 
     np.testing.assert_array_equal(ctx2.archive.x, ctx.archive.x)
     assert ctx2.gen == ctx.gen

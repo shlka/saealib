@@ -441,9 +441,7 @@ class Optimizer:
             pickle.dump((self, ctx), f)
 
     @classmethod
-    def load_pickle(
-        cls, path: str | Path
-    ) -> tuple[Optimizer, OptimizationContext]:
+    def load_pickle(cls, path: str | Path) -> tuple[Optimizer, OptimizationContext]:
         """
         Load an optimizer and context from a pickle checkpoint.
 
