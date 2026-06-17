@@ -36,6 +36,12 @@ class Runner:
             pass
         return ctx
 
+    def run_from(self, ctx: OptimizationContext) -> OptimizationContext:
+        """Resume from an existing context and run to completion."""
+        for ctx in self.iterate_from(ctx):
+            pass
+        return ctx
+
     def iterate(self) -> Generator[OptimizationContext, None, None]:
         """
         Iterate the optimization loop, yielding the context after each generation.
@@ -46,6 +52,26 @@ class Runner:
         """
         opt = self.optimizer
         ctx = opt.initializer.initialize(opt, opt.problem)
+        yield from self.iterate_from(ctx)
+
+    def iterate_from(
+        self, ctx: OptimizationContext
+    ) -> Generator[OptimizationContext, None, None]:
+        """
+        Resume the optimization loop from an existing context.
+
+        Skips initialization; useful after loading a checkpoint.
+
+        Parameters
+        ----------
+        ctx : OptimizationContext
+            Previously saved (or freshly constructed) context to resume from.
+
+        Returns
+        -------
+        Generator[OptimizationContext, None, None]
+        """
+        opt = self.optimizer
         ctx.comparator.eps_cv = ctx.problem.handler.feasibility_threshold
 
         opt.dispatch(RunStartEvent(ctx=ctx))

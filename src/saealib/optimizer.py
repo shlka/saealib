@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import pickle
+import warnings
 from collections.abc import Generator
+from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 from saealib.acquisition.mean import MeanPrediction
@@ -192,8 +195,16 @@ class Optimizer:
 
     # --- run ---
 
-    def validate(self) -> list[str]:
-        """Check configuration consistency. Returns list of issues."""
+    def validate(self, *, require_initializer: bool = True) -> list[str]:
+        """
+        Check configuration consistency. Returns list of issues.
+
+        Parameters
+        ----------
+        require_initializer : bool, optional
+            When False, skip the initializer presence check.  Use this when
+            resuming from a checkpoint where initialization is not needed.
+        """
         issues: list[str] = []
 
         algorithm = getattr(self, "algorithm", None)
@@ -205,7 +216,7 @@ class Optimizer:
             issues.append("algorithm is not set; call set_algorithm()")
         if strategy is None:
             issues.append("strategy is not set; call set_strategy()")
-        if self.initializer is None:
+        if require_initializer and self.initializer is None:
             issues.append("initializer is not set; call set_initializer()")
         if termination is None:
             issues.append("termination is not set; call set_termination()")
@@ -280,3 +291,115 @@ class Optimizer:
                 "Optimizer misconfigured:\n" + "\n".join(f"  - {m}" for m in issues)
             )
         return Runner(self).run()
+
+    def iterate_from(
+        self, ctx: OptimizationContext
+    ) -> Generator[OptimizationContext, None, None]:
+        """
+        Resume iteration from an existing context (e.g. loaded from checkpoint).
+
+        Does not call the initializer; all other components must be configured.
+
+        Parameters
+        ----------
+        ctx : OptimizationContext
+            Context to resume from.
+
+        Returns
+        -------
+        Generator[OptimizationContext, None, None]
+        """
+        issues = self.validate(require_initializer=False)
+        if issues:
+            raise ConfigurationError(
+                "Optimizer misconfigured:\n" + "\n".join(f"  - {m}" for m in issues)
+            )
+        return Runner(self).iterate_from(ctx)
+
+    def run_from(self, ctx: OptimizationContext) -> OptimizationContext:
+        """
+        Resume and run to completion from an existing context.
+
+        Parameters
+        ----------
+        ctx : OptimizationContext
+            Context to resume from.
+
+        Returns
+        -------
+        OptimizationContext
+            The final optimization context.
+        """
+        issues = self.validate(require_initializer=False)
+        if issues:
+            raise ConfigurationError(
+                "Optimizer misconfigured:\n" + "\n".join(f"  - {m}" for m in issues)
+            )
+        return Runner(self).run_from(ctx)
+
+    # ------------------------------------------------------------------
+    # Checkpoint: pickle (limited complete reproducibility)
+    # ------------------------------------------------------------------
+
+    _PICKLE_WARNING = (
+        "Pickle checkpoints are version-sensitive. "
+        "Reproducibility is only guaranteed within the same Python "
+        "and library versions."
+    )
+
+    def save_pickle(self, ctx: OptimizationContext, path: str | Path) -> None:
+        """
+        Save the optimizer and context together as a pickle checkpoint.
+
+        This preserves fitted surrogate state and all component objects,
+        offering complete reproducibility within the same environment.
+
+        .. warning::
+            Pickle files are tied to specific Python and library versions.
+            Use :meth:`OptimizationContext.save` for a more portable format.
+
+        Parameters
+        ----------
+        ctx : OptimizationContext
+            Current optimization context.
+        path : str or Path
+            Destination file path.  The ``.pkl`` extension is added if absent.
+        """
+        warnings.warn(self._PICKLE_WARNING, UserWarning, stacklevel=2)
+        p = Path(path)
+        if not p.suffix:
+            p = p.with_suffix(".pkl")
+        with open(p, "wb") as f:
+            pickle.dump((self, ctx), f)
+
+    @classmethod
+    def load_pickle(
+        cls, path: str | Path
+    ) -> tuple[Optimizer, OptimizationContext]:
+        """
+        Load an optimizer and context from a pickle checkpoint.
+
+        The returned context has ``resumed=True``.  Call
+        :meth:`run_from` or :meth:`iterate_from` on the returned optimizer
+        to continue the optimization.
+
+        .. warning::
+            Pickle files are tied to specific Python and library versions.
+
+        Parameters
+        ----------
+        path : str or Path
+            Path to the ``.pkl`` file.  The extension is added if absent.
+
+        Returns
+        -------
+        tuple[Optimizer, OptimizationContext]
+        """
+        warnings.warn(cls._PICKLE_WARNING, UserWarning, stacklevel=2)
+        p = Path(path)
+        if not p.suffix:
+            p = p.with_suffix(".pkl")
+        with open(p, "rb") as f:
+            optimizer, ctx = pickle.load(f)
+        ctx.resumed = True
+        return optimizer, ctx
