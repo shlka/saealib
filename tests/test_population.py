@@ -668,6 +668,19 @@ class TestArchive:
         idx, _dist = archive.get_knn(np.array([1.0, 2.0]), k=100)
         assert len(idx) == 1
 
+    def test_get_knn_kdtree_built_on_demand(self, archive: Archive) -> None:
+        archive.add(x=np.array([0.0, 0.0]), f=0.0)
+        assert archive._kdtree is None
+        archive.get_knn(np.array([0.0, 0.0]), k=1)
+        assert archive._kdtree is not None
+
+    def test_get_knn_cache_invalidated_on_add(self, archive: Archive) -> None:
+        archive.add(x=np.array([0.0, 0.0]), f=0.0)
+        archive.get_knn(np.array([0.0, 0.0]), k=1)
+        assert archive._kdtree is not None
+        archive.add(x=np.array([1.0, 0.0]), f=1.0)
+        assert archive._kdtree is None
+
     def test_invalid_key_attr_raises(
         self, archive_attrs: list[PopulationAttribute]
     ) -> None:
