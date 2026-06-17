@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+from scipy.spatial import cKDTree
 
 from saealib.population.population import Individual, Population, PopulationAttribute
 
@@ -52,6 +53,7 @@ class ArchiveMixin:
         self.key_attr = key_attr
         self.atol = atol
         self.rtol = rtol
+        self._kdtree: cKDTree | None = None
 
     def add(self, element: Individual | dict[str, Any] | None = None, **kwargs) -> int:
         """
@@ -95,6 +97,7 @@ class ArchiveMixin:
             new_idx = self._size
             super().append(element, **kwargs)
             self._duplicate_indices.append(new_idx)
+            self._kdtree = None
             return new_idx
 
     def _find_idx(self, element: np.ndarray | np.floating) -> int | None:
@@ -147,6 +150,14 @@ class ArchiveMixin:
         dup_pop._structure_version = self._structure_version
         return dup_pop
 
+    def delete(self, index):
+        super().delete(index)
+        self._kdtree = None
+
+    def _ensure_kdtree(self) -> None:
+        if self._kdtree is None:
+            self._kdtree = cKDTree(self.get_array(self.key_attr))
+
     def get_knn(self, x: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
         """
         Get k-nearest neighbors of the given solution from the archive.
@@ -161,15 +172,14 @@ class ArchiveMixin:
         Returns
         -------
         tuple[np.ndarray, np.ndarray]
-            The k-nearest neighbors' solutions and their objective values.
+            Indices and distances of the k-nearest neighbors.
         """
         if self._size == 0:
             return np.array([]), np.array([])
-        key_attr_arr = self.get_array(self.key_attr)
-        dist = np.linalg.norm(key_attr_arr - x, axis=1)
+        self._ensure_kdtree()
         k = min(k, self._size)
-        idx = np.argsort(dist)[:k]
-        return idx, dist[idx]
+        dist, idx = self._kdtree.query(x, k=k)
+        return np.atleast_1d(idx), np.atleast_1d(dist)
 
 
 class Archive(ArchiveMixin, Population):
