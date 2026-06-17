@@ -260,9 +260,45 @@ class Optimizer:
 
         return issues
 
-    def iterate(self) -> Generator[OptimizationContext, None, None]:
+    def _register_checkpoint(
+        self,
+        path: str | Path,
+        interval: int,
+        format: str,
+        delete_on_success: bool,
+    ) -> None:
+        from saealib.checkpoint import CheckpointCallback
+
+        cb = CheckpointCallback(
+            path=path,
+            interval=interval,
+            format=format,
+            delete_on_success=delete_on_success,
+            optimizer=self if format in ("pickle", "both") else None,
+        )
+        cb.register(self.cbmanager)
+
+    def iterate(
+        self,
+        checkpoint_path: str | Path | None = None,
+        checkpoint_interval: int = 1,
+        checkpoint_format: str = "npz",
+        checkpoint_delete_on_success: bool = False,
+    ) -> Generator[OptimizationContext, None, None]:
         """
         Iterate the optimization process.
+
+        Parameters
+        ----------
+        checkpoint_path : str, Path, or None, optional
+            If provided, checkpoints are saved to this directory every
+            *checkpoint_interval* generations.
+        checkpoint_interval : int, optional
+            Generations between checkpoints.  Default: 1.
+        checkpoint_format : {'npz', 'pickle', 'both'}, optional
+            Checkpoint format.  Default: ``'npz'``.
+        checkpoint_delete_on_success : bool, optional
+            Delete checkpoints on normal termination.  Default: False.
 
         Returns
         -------
@@ -274,11 +310,36 @@ class Optimizer:
             raise ConfigurationError(
                 "Optimizer misconfigured:\n" + "\n".join(f"  - {m}" for m in issues)
             )
+        if checkpoint_path is not None:
+            self._register_checkpoint(
+                checkpoint_path,
+                checkpoint_interval,
+                checkpoint_format,
+                checkpoint_delete_on_success,
+            )
         return Runner(self).iterate()
 
-    def run(self) -> OptimizationContext:
+    def run(
+        self,
+        checkpoint_path: str | Path | None = None,
+        checkpoint_interval: int = 1,
+        checkpoint_format: str = "npz",
+        checkpoint_delete_on_success: bool = False,
+    ) -> OptimizationContext:
         """
         Run the optimization process.
+
+        Parameters
+        ----------
+        checkpoint_path : str, Path, or None, optional
+            If provided, checkpoints are saved to this directory every
+            *checkpoint_interval* generations.
+        checkpoint_interval : int, optional
+            Generations between checkpoints.  Default: 1.
+        checkpoint_format : {'npz', 'pickle', 'both'}, optional
+            Checkpoint format.  Default: ``'npz'``.
+        checkpoint_delete_on_success : bool, optional
+            Delete checkpoints on normal termination.  Default: False.
 
         Returns
         -------
@@ -289,6 +350,13 @@ class Optimizer:
         if issues:
             raise ConfigurationError(
                 "Optimizer misconfigured:\n" + "\n".join(f"  - {m}" for m in issues)
+            )
+        if checkpoint_path is not None:
+            self._register_checkpoint(
+                checkpoint_path,
+                checkpoint_interval,
+                checkpoint_format,
+                checkpoint_delete_on_success,
             )
         return Runner(self).run()
 

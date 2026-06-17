@@ -10,6 +10,7 @@ __version__ = version("saealib")
 # ---------------------------------------------------------------------------
 
 from saealib.acquisition import AcquisitionFunction, ExpectedImprovement
+from saealib.checkpoint import CheckpointCallback
 from saealib.algorithms import GA, PSO, Algorithm
 from saealib.api import Result, maximize, minimize
 from saealib.callback import (
@@ -84,6 +85,8 @@ __all__ = [
     "PSO",
     # Core abstractions
     "AcquisitionFunction",
+    # Checkpoint
+    "CheckpointCallback",
     "Algorithm",
     # Population & data
     "Archive",
