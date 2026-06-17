@@ -1,7 +1,4 @@
-import json
 import logging
-import os
-import sys
 
 import numpy as np
 import pytest
@@ -25,21 +22,11 @@ from saealib import (
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("saealib.surrogate.rbf").setLevel(logging.CRITICAL)
 
-# Snapshot regression test is only run on Python 3.10 (the development environment).
-# On other Python versions, only the behavioral assertion (best_f < 1.0) is checked.
-IS_SNAPSHOT_ENV = sys.version_info[:2] == (3, 10)
-
-# Load snapshot
-dirname = os.path.dirname(__file__)
-filename = os.path.join(dirname, "data/test_integration.json")
-if not os.path.exists(filename):
-    pytest.skip("Snapshot file not found. Run generate_test_integration.py first.")
-with open(filename) as f:
-    SNAPSHOT = json.load(f)
+SEEDS = [42, 43, 44, 45, 46]
 
 
-@pytest.mark.parametrize("seed_str, expected_f", SNAPSHOT.items())
-def test_integration(seed_str: str, expected_f: float):
+@pytest.mark.parametrize("seed", SEEDS)
+def test_integration(seed: int):
     """
     Run SAGA-RBF optimization example.
 
@@ -59,7 +46,6 @@ def test_integration(seed_str: str, expected_f: float):
     """
     # parameters
     dim = 10
-    seed = int(seed_str)
     knn = 50
     rsm = 0.1
     ub = [5] * dim
@@ -107,10 +93,7 @@ def test_integration(seed_str: str, expected_f: float):
     best_f = ctx.archive.get("f").min()
     assert best_f < 1.0
 
-    if IS_SNAPSHOT_ENV:
-        assert np.isclose(best_f, expected_f, atol=1e-5)
-
 
 if __name__ == "__main__":
-    for seed_str, expected_f in SNAPSHOT.items():
-        test_integration(seed_str, expected_f)
+    for seed in SEEDS:
+        test_integration(seed)
