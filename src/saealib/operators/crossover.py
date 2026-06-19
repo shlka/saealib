@@ -135,14 +135,14 @@ class CrossoverBLXAlpha(Crossover):
         self.alpha = alpha
 
     def crossover(
-        self, p: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
     ) -> np.ndarray:
         """
         Execute BLX-alpha crossover.
 
         Parameters
         ----------
-        p : np.ndarray
+        parent : np.ndarray
             Parent individuals. shape = (2, dim)
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
@@ -152,8 +152,8 @@ class CrossoverBLXAlpha(Crossover):
         np.ndarray
             Offspring individuals. shape = (2, dim)
         """
-        p1 = p[0]
-        p2 = p[1]
+        p1 = parent[0]
+        p2 = parent[1]
         dim = len(p1)
         blend = rng.uniform(-self.alpha, 1 + self.alpha, size=dim)
         c1 = blend * p1 + (1 - blend) * p2
@@ -189,14 +189,14 @@ class CrossoverSBX(Crossover):
         self.eta = eta
 
     def crossover(
-        self, p: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
     ) -> np.ndarray:
         """
         Execute SBX crossover.
 
         Parameters
         ----------
-        p : np.ndarray
+        parent : np.ndarray
             Parent individuals. shape = (2, dim)
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
@@ -206,8 +206,8 @@ class CrossoverSBX(Crossover):
         np.ndarray
             Offspring individuals. shape = (2, dim)
         """
-        p1 = p[0]
-        p2 = p[1]
+        p1 = parent[0]
+        p2 = parent[1]
         dim = len(p1)
         u = rng.uniform(0.0, 1.0, size=dim)
         beta_q = np.where(
@@ -253,14 +253,14 @@ class CrossoverUniform(Crossover):
         self.swap_rate = swap_rate
 
     def crossover(
-        self, p: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
     ) -> np.ndarray:
         """
         Execute uniform crossover.
 
         Parameters
         ----------
-        p : np.ndarray
+        parent : np.ndarray
             Parent individuals. shape = (2, dim)
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
@@ -270,8 +270,8 @@ class CrossoverUniform(Crossover):
         np.ndarray
             Offspring individuals. shape = (2, dim)
         """
-        p1 = p[0]
-        p2 = p[1]
+        p1 = parent[0]
+        p2 = parent[1]
         mask = rng.random(len(p1)) < self.swap_rate
         c1 = np.where(mask, p2, p1)
         c2 = np.where(mask, p1, p2)
@@ -301,14 +301,14 @@ class CrossoverOnePoint(Crossover):
         self.crossover_rate = crossover_rate
 
     def crossover(
-        self, p: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
     ) -> np.ndarray:
         """
         Execute one-point crossover.
 
         Parameters
         ----------
-        p : np.ndarray
+        parent : np.ndarray
             Parent individuals. shape = (2, dim)
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
@@ -318,8 +318,8 @@ class CrossoverOnePoint(Crossover):
         np.ndarray
             Offspring individuals. shape = (2, dim)
         """
-        p1 = p[0]
-        p2 = p[1]
+        p1 = parent[0]
+        p2 = parent[1]
         dim = len(p1)
         point = rng.integers(1, dim)
         c1 = np.concatenate([p1[:point], p2[point:]])
@@ -350,14 +350,14 @@ class CrossoverTwoPoint(Crossover):
         self.crossover_rate = crossover_rate
 
     def crossover(
-        self, p: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
     ) -> np.ndarray:
         """
         Execute two-point crossover.
 
         Parameters
         ----------
-        p : np.ndarray
+        parent : np.ndarray
             Parent individuals. shape = (2, dim)
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
@@ -367,8 +367,8 @@ class CrossoverTwoPoint(Crossover):
         np.ndarray
             Offspring individuals. shape = (2, dim)
         """
-        p1 = p[0]
-        p2 = p[1]
+        p1 = parent[0]
+        p2 = parent[1]
         dim = len(p1)
         pts = np.sort(rng.choice(dim + 1, size=2, replace=False))
         pt1, pt2 = pts[0], pts[1]
@@ -407,14 +407,14 @@ class CrossoverIntegerSBX(Crossover):
         self.eta = eta
 
     def crossover(
-        self, p: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
     ) -> np.ndarray:
         """
         Execute integer SBX crossover.
 
         Parameters
         ----------
-        p : np.ndarray
+        parent : np.ndarray
             Parent individuals. shape = (2, dim)
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
@@ -424,8 +424,8 @@ class CrossoverIntegerSBX(Crossover):
         np.ndarray
             Offspring individuals with integer values. shape = (2, dim)
         """
-        p1 = p[0]
-        p2 = p[1]
+        p1 = parent[0]
+        p2 = parent[1]
         dim = len(p1)
         u = rng.uniform(0.0, 1.0, size=dim)
         beta_q = np.where(
@@ -467,14 +467,14 @@ class CrossoverCategorical(Crossover):
         self.crossover_rate = crossover_rate
 
     def crossover(
-        self, p: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
     ) -> np.ndarray:
         """
         Execute categorical crossover.
 
         Parameters
         ----------
-        p : np.ndarray
+        parent : np.ndarray
             Parent individuals. shape = (2, dim)
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
@@ -484,8 +484,8 @@ class CrossoverCategorical(Crossover):
         np.ndarray
             Offspring individuals. shape = (2, dim)
         """
-        p1 = p[0]
-        p2 = p[1]
+        p1 = parent[0]
+        p2 = parent[1]
         mask = rng.random(len(p1)) < 0.5
         c1 = np.where(mask, p2, p1)
         c2 = np.where(mask, p1, p2)

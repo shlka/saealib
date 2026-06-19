@@ -807,7 +807,7 @@ class TestNonDominatedSorterInjection:
     # -----------------------------------------------------------------------
     # Helpers
     # -----------------------------------------------------------------------
-    def _make_spy_sorter(self) -> tuple[list[tuple], object]:
+    def _make_spy_sorter(self) -> tuple[list[tuple], NonDominatedSorter]:
         """Return (call_log, spy_sorter).
 
         The spy delegates to non_dominated_sort and records every call as
@@ -905,12 +905,12 @@ class TestNonDominatedSorterInjection:
         # Inverted sorter: rank 0 → idx 2, rank 1 → idx 1, rank 2 → idx 0.
 
         def inverted_sorter(
-            f_sub: np.ndarray,
+            f: np.ndarray,
             direction: np.ndarray | None = None,
             *,
             dominator=None,
         ) -> tuple[np.ndarray, list[list[int]]]:
-            n = len(f_sub)
+            n = len(f)
             # Assign ranks in reverse order.
             ranks = np.arange(n - 1, -1, -1, dtype=int)
             fronts = [[i] for i in range(n - 1, -1, -1)]
@@ -928,12 +928,12 @@ class TestNonDominatedSorterInjection:
         f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
 
         def inverted_sorter(
-            f_sub: np.ndarray,
+            f: np.ndarray,
             direction: np.ndarray | None = None,
             *,
             dominator=None,
         ) -> tuple[np.ndarray, list[list[int]]]:
-            n = len(f_sub)
+            n = len(f)
             ranks = np.arange(n - 1, -1, -1, dtype=int)
             fronts = [[i] for i in range(n - 1, -1, -1)]
             return ranks, fronts

@@ -7,7 +7,7 @@ import weakref
 from collections.abc import Hashable
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 
 import numpy as np
 from typing_extensions import Self
@@ -513,6 +513,12 @@ class Population(Generic[T_Individual]):
             self.update_array(name, value)
         else:
             super().__setattr__(name, value)
+
+    @overload
+    def __getitem__(self, index: int) -> T_Individual: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Self: ...
 
     def __getitem__(self, index: int | slice) -> T_Individual | Self:
         """

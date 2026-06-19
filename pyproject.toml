@@ -81,14 +81,14 @@ python-version = "3.10"
 unresolved-attribute = "warn"
 unknown-argument = "warn"
 invalid-assignment = "warn"
-invalid-method-override = "warn"
+invalid-method-override = "error"
 invalid-argument-type = "warn"
 unsupported-operator = "warn"
 no-matching-overload = "warn"
 invalid-return-type = "warn"
 
 [[tool.ty.overrides]]
-path = "tests/**"
+include = ["tests/**"]
 
 [tool.ty.overrides.rules]
 not-subscriptable = "warn"
