@@ -74,6 +74,26 @@ docs = [
     "sphinxcontrib-mermaid>=1.0.0",
 ]
 
+[tool.ty.environment]
+python-version = "3.10"
+
+[tool.ty.rules]
+unresolved-attribute = "warn"
+unknown-argument = "warn"
+invalid-assignment = "warn"
+invalid-method-override = "warn"
+invalid-argument-type = "warn"
+unsupported-operator = "warn"
+no-matching-overload = "warn"
+invalid-return-type = "warn"
+
+[[tool.ty.overrides]]
+path = "tests/**"
+
+[tool.ty.overrides.rules]
+not-subscriptable = "warn"
+call-non-callable = "warn"
+
 [tool.ruff]
 target-version = "py310"
 line-length = 88

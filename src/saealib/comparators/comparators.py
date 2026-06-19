@@ -224,6 +224,7 @@ class SingleObjectiveComparator(Comparator):
         np.ndarray
             Sorted indices of the solutions.
         """
+        assert self.direction is not None
         cv_key = np.where(cv > self.eps_cv, cv, 0)
         obj_key = fitness.flatten() * self.direction[0]
         return np.lexsort((-obj_key, cv_key))

@@ -436,7 +436,7 @@ class LocalSurrogateManager(SurrogateManager):
             pred = self.surrogate.predict(x)  # mean: (1, n_obj)
             predictions.append(pred)
 
-            if val_x is not None:
+            if val_x is not None and val_y is not None:
                 try:
                     val_pred = self.surrogate.predict(val_x)
                     y_true_list.append(val_y[0])

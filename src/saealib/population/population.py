@@ -479,7 +479,7 @@ class Population(Generic[T_Individual]):
         view.flags.writeable = False
         return view
 
-    def update_array(self, key: str, value: Any) -> np.ndarray:
+    def update_array(self, key: str, value: Any) -> None:
         """Update array in place and bump the value version."""
         self.get_array(key)[:] = value
         self.mod_value()
@@ -523,7 +523,7 @@ class Population(Generic[T_Individual]):
         if isinstance(index, int):
             if index < 0 or index >= self._size:
                 raise IndexError("Index out of range")
-            return self.individual_class(self, index)
+            return self.individual_class(self, index)  # type: ignore
         elif isinstance(index, slice):
             return self.extract(index)
         else:

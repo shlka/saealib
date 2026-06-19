@@ -104,6 +104,8 @@ class _RBFModel:
         test = np.asarray(test_x)
         if test.ndim == 1:
             test = test.reshape(1, -1)
+        assert self.train_x is not None
+        assert self.weights is not None and self.train_y is not None
         k = self.kernel(self.train_x, test, sigma=self.sigma)
         preds = k.T.dot(self.weights) + np.mean(self.train_y)
         return np.asarray(preds).flatten()
@@ -173,6 +175,7 @@ class RBFsurrogate(Surrogate):
             prediction.value shape: (n_samples, n_obj)
             prediction.std  is None (RBF interpolation provides no uncertainty)
         """
+        assert self._models is not None
         preds = [m.predict(test_x) for m in self._models]
         value = np.column_stack(preds)  # (n_samples, n_obj)
         return SurrogatePrediction(value=value)

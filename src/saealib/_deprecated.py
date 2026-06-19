@@ -33,7 +33,7 @@ def deprecated_param(old: str, new: str, version: str) -> Callable[[F], F]:
                 kwargs.setdefault(new, kwargs.pop(old))
             return func(*args, **kwargs)
 
-        return wrapper  # type: ignore[return-value]
+        return wrapper  # type: ignore[return-value, invalid-return-type]
 
     return decorator
 

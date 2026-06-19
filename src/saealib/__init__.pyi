@@ -41,6 +41,7 @@ from saealib.callback import SurrogateStartEvent as SurrogateStartEvent
 # callbacks (less common)
 from saealib.callback import logging_generation as logging_generation
 from saealib.callback import logging_generation_hv as logging_generation_hv
+from saealib.checkpoint import CheckpointCallback as CheckpointCallback
 from saealib.comparators import Comparator as Comparator
 from saealib.comparators import Dominator as Dominator
 from saealib.comparators import EpsilonDominanceComparator as EpsilonDominanceComparator
@@ -74,6 +75,9 @@ from saealib.decomposition import DecompositionComparator as DecompositionCompar
 from saealib.decomposition import PBIDecomposition as PBIDecomposition
 from saealib.decomposition import TchebycheffDecomposition as TchebycheffDecomposition
 from saealib.decomposition import WeightedSumDecomposition as WeightedSumDecomposition
+from saealib.exceptions import ConfigurationError as ConfigurationError
+from saealib.exceptions import SaealibError as SaealibError
+from saealib.exceptions import ValidationError as ValidationError
 from saealib.execution.evaluator import EvaluationResult as EvaluationResult
 from saealib.execution.evaluator import Evaluator as Evaluator
 from saealib.execution.evaluator import SerialEvaluator as SerialEvaluator
@@ -173,3 +177,6 @@ from saealib.utils.indicators import (
 from saealib.utils.weight_vectors import (
     uniform_weight_vectors as uniform_weight_vectors,
 )
+from saealib.variables import CategoricalVariable as CategoricalVariable
+from saealib.variables import ContinuousVariable as ContinuousVariable
+from saealib.variables import IntegerVariable as IntegerVariable

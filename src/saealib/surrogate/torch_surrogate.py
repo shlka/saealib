@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -49,7 +50,7 @@ class TorchSurrogate(Surrogate):
         model: torch.nn.Module,
         optimizer_cls: type | None = None,
         optimizer_kwargs: dict | None = None,
-        loss_fn: object | None = None,
+        loss_fn: Callable[..., Any] | None = None,
         epochs: int = 100,
     ) -> None:
         try:

@@ -32,3 +32,12 @@ jobs:
 
       - name: Run Ruff (Format)
         run: ruff format --check .
+
+  ty:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Run ty
+        run: uvx ty check src/saealib tests/

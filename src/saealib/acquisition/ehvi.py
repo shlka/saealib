@@ -121,6 +121,7 @@ class EHVIAcquisition(AcquisitionFunction):
                 "(prediction.std must not be None)."
             )
         pareto_f, ref_point, base_hv = reference
+        assert prediction.std is not None
         mu = prediction.value  # (n_cand, n_obj)
         sigma = prediction.std  # (n_cand, n_obj)
         n_cand, n_obj = mu.shape

@@ -83,6 +83,7 @@ class SklearnSurrogate(Surrogate):
         test = np.asarray(test_x)
         if test.ndim == 1:
             test = test.reshape(1, -1)
+        assert self._models is not None
         preds = [m.predict(test) for m in self._models]
         value = np.column_stack(preds)
         return SurrogatePrediction(value=value)
@@ -189,6 +190,7 @@ class GPRSurrogate(SklearnSurrogate):
         test = np.asarray(test_x)
         if test.ndim == 1:
             test = test.reshape(1, -1)
+        assert self._models is not None
         means, stds = [], []
         for m in self._models:
             mu, sigma = m.predict(test, return_std=True)
