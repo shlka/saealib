@@ -7,6 +7,8 @@ independent RBF model per objective (ensemble approach).
 """
 
 import logging
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 import scipy.spatial
@@ -47,7 +49,7 @@ class _RBFModel:
     block by RBFsurrogate to support multi-objective problems.
     """
 
-    def __init__(self, kernel: callable, dim: int):
+    def __init__(self, kernel: Callable[..., Any], dim: int):
         self.kernel = kernel
         self.dim = dim
         self.train_x: np.ndarray | None = None
@@ -125,7 +127,7 @@ class RBFsurrogate(Surrogate):
         Number of objectives. Set on first fit call.
     """
 
-    def __init__(self, kernel: callable, dim: int):
+    def __init__(self, kernel: Callable[..., Any], dim: int):
         self.kernel = kernel
         self.dim = dim
         self.n_obj: int | None = None

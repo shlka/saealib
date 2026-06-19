@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -26,7 +26,7 @@ class InequalityConstraint:
         Right-hand side of the constraint g(x) <= threshold. Default: 0.0.
     """
 
-    def __init__(self, func: callable, threshold: float = 0.0):
+    def __init__(self, func: Callable[..., Any], threshold: float = 0.0):
         self.func = func
         self.threshold = threshold
 
@@ -106,7 +106,7 @@ class Constraint(InequalityConstraint):
         in a future release.
     """
 
-    def __init__(self, func: callable, threshold: float = 0.0):
+    def __init__(self, func: Callable[..., Any], threshold: float = 0.0):
         super().__init__(func, threshold)
 
 
@@ -136,7 +136,7 @@ class EqualityConstraint(InequalityConstraint):
     ``∇h(x)``; this enables gradient-based constraint handlers (e.g. repair).
     """
 
-    def __init__(self, func: callable, tolerance: float = 1e-6):
+    def __init__(self, func: Callable[..., Any], tolerance: float = 1e-6):
         super().__init__(func, threshold=0.0)
         self.tolerance = tolerance
 

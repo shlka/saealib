@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 import numpy as np
 
 from saealib._deprecated import warn_deprecated
@@ -60,7 +63,7 @@ class Problem:
 
     def __init__(
         self,
-        func: callable,
+        func: Callable[..., Any],
         dim: int,
         n_obj: int,
         direction: np.ndarray,
