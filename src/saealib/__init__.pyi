@@ -150,7 +150,7 @@ from saealib.surrogate import NichingManager as NichingManager
 from saealib.surrogate import NNSurrogate as NNSurrogate
 from saealib.surrogate import NoveltyManager as NoveltyManager
 from saealib.surrogate import PerObjectiveSurrogate as PerObjectiveSurrogate
-from saealib.surrogate import RBFsurrogate as RBFsurrogate
+from saealib.surrogate import RBFSurrogate as RBFSurrogate
 from saealib.surrogate import SklearnSurrogate as SklearnSurrogate
 from saealib.surrogate import StrategySwitcher as StrategySwitcher
 from saealib.surrogate import Surrogate as Surrogate
