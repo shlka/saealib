@@ -127,7 +127,7 @@ class Population(Generic[T_Individual]):
         self._structure_version = 0
         self._value_version = 0
         self._data: dict[str, np.ndarray] = {}
-        self._cache: dict[str, Any] = {}
+        self._cache: dict[Hashable, Any] = {}
         for attr in attrs:
             self._init_column(attr, self._capacity)
         self._schema = {attr.name: attr for attr in attrs}

@@ -53,7 +53,7 @@ def deprecated_class(replacement: str) -> Callable[[type], type]:
             )
             original_init(self, *args, **kwargs)
 
-        cls.__init__ = new_init
+        cls.__init__ = new_init  # type: ignore
         return cls
 
     return decorator

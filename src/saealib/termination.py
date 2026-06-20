@@ -415,7 +415,9 @@ def stalled(window: int, tol: float = 1e-8) -> TerminationCondition:
             state["best"] = best_score
             state["stall_gen"] = ctx.gen
             return False
-        return (ctx.gen - state["stall_gen"]) >= window
+        stall_gen = state["stall_gen"]
+        assert stall_gen is not None
+        return (ctx.gen - stall_gen) >= window
 
     return TerminationCondition(
         _condition,

@@ -200,7 +200,7 @@ class SurrogateManager(ABC):
         """
         new = copy.copy(self)
         prev = self.post_score
-        new.post_score = lambda scores, predictions, ctx=None: fn(
+        new.post_score = lambda scores, predictions, ctx=None: fn(  # type: ignore
             *prev(scores, predictions, ctx), ctx
         )
         return new
@@ -240,7 +240,7 @@ class SurrogateManager(ABC):
             prev(gen, archive, ctx)
             fn(gen, archive, ctx)
 
-        new.on_generation_end = _chained
+        new.on_generation_end = _chained  # type: ignore
         return new
 
 
@@ -653,7 +653,7 @@ class CompositeSurrogateManager(SurrogateManager):
                 first_predictions = preds
 
         combined = self.combine_fn(all_scores)
-        scores, predictions = self._sanitize_nan(combined, first_predictions)  # type: ignore[arg-type]
+        scores, predictions = self._sanitize_nan(combined, first_predictions)  # type: ignore
         return self.post_score(scores, predictions, ctx)
 
 

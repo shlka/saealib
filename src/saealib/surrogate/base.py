@@ -99,5 +99,5 @@ class Surrogate(ABC):
             prev(train_x, train_y, ctx)
             fn(train_x, train_y, ctx)
 
-        new.post_fit = _hook
+        new.post_fit = _hook  # type: ignore
         return new

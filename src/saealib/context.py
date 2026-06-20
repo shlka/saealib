@@ -173,7 +173,7 @@ class OptimizationContext:
         for name, arr in self.pareto_archive._data.items():
             save_dict[f"pareto__{name}"] = arr[:n_pareto]
 
-        np.savez(p, **save_dict)
+        np.savez(p, **save_dict)  # type: ignore
 
     @classmethod
     def load(cls, path: str | Path, problem: Problem) -> OptimizationContext:

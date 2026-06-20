@@ -100,7 +100,7 @@ class Crossover(ABC):
         """
         new = copy.copy(self)
         prev = self.post_crossover
-        new.post_crossover = lambda offspring, parents, rng, ctx=None: fn(
+        new.post_crossover = lambda offspring, parents, rng, ctx=None: fn(  # type: ignore
             prev(offspring, parents, rng, ctx), parents, rng, ctx
         )
         return new

@@ -108,7 +108,7 @@ class TestPopulationAttribute:
     def test_frozen(self) -> None:
         attr = PopulationAttribute(name="x", dtype=np.float64)
         with pytest.raises(AttributeError):
-            attr.name = "y"
+            attr.name = "y"  # type: ignore
 
 
 # ===========================================================================
@@ -131,7 +131,7 @@ class TestPopulationInit:
     def test_schema_is_immutable(self, pop: Population) -> None:
         schema = pop.schema
         with pytest.raises(TypeError):
-            schema["new_key"] = None
+            schema["new_key"] = None  # type: ignore
 
     def test_attrs_property(self, pop: Population) -> None:
         attrs = pop.attrs

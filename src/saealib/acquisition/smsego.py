@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+import numpy.typing as npt
 
 from saealib.acquisition.base import AcquisitionFunction
 from saealib.surrogate.prediction import SurrogatePrediction
@@ -44,7 +45,7 @@ class SMSEGOAcquisition(AcquisitionFunction):
     def __init__(
         self,
         lam: float = 1.0,
-        reference_point: np.ndarray | None = None,
+        reference_point: npt.ArrayLike | None = None,
     ) -> None:
         self.lam = lam
         self.reference_point = (

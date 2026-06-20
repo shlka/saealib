@@ -56,7 +56,7 @@ class _RBFModel:
         self.train_y: np.ndarray | None = None
         self.weights: np.ndarray | None = None
         self.kernel_matrix: np.ndarray | None = None
-        self.sigma: float | None = None
+        self.sigma: np.floating[Any] | float | None = None
 
     def fit(self, train_x: np.ndarray, train_y_1d: np.ndarray) -> None:
         """

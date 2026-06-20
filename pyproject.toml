@@ -80,7 +80,7 @@ python-version = "3.10"
 [tool.ty.rules]
 unresolved-attribute = "warn"
 unknown-argument = "warn"
-invalid-assignment = "warn"
+invalid-assignment = "error"
 invalid-method-override = "error"
 invalid-argument-type = "warn"
 unsupported-operator = "warn"
@@ -93,6 +93,8 @@ include = ["tests/**"]
 [tool.ty.overrides.rules]
 not-subscriptable = "warn"
 call-non-callable = "warn"
+invalid-argument-type = "warn"
+invalid-assignment = "warn"
 
 [tool.ruff]
 target-version = "py310"

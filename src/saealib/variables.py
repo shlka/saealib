@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 import numpy as np
+import numpy.typing as npt
 
 from saealib.exceptions import ValidationError
 
@@ -30,7 +31,7 @@ class Variable(ABC):
         """Upper bound in encoded (float) space."""
 
     @abstractmethod
-    def repair(self, x: np.ndarray) -> np.ndarray:
+    def repair(self, x: npt.ArrayLike) -> np.ndarray:
         """Project *x* onto the valid domain.
 
         Parameters
@@ -70,7 +71,7 @@ class ContinuousVariable(Variable):
         """Upper bound."""
         return self._ub
 
-    def repair(self, x: np.ndarray) -> np.ndarray:
+    def repair(self, x: npt.ArrayLike) -> np.ndarray:
         """Clip *x* to ``[lb, ub]``.
 
         Parameters
@@ -113,7 +114,7 @@ class IntegerVariable(Variable):
         """Upper bound as float."""
         return float(self._ub)
 
-    def repair(self, x: np.ndarray) -> np.ndarray:
+    def repair(self, x: npt.ArrayLike) -> np.ndarray:
         """Round *x* to the nearest integer and clip to ``[lb, ub]``.
 
         Parameters
@@ -176,7 +177,7 @@ class CategoricalVariable(Variable):
         """Ordered list of category values (copy)."""
         return list(self._categories)
 
-    def repair(self, x: np.ndarray) -> np.ndarray:
+    def repair(self, x: npt.ArrayLike) -> np.ndarray:
         """Round *x* and clip to a valid category index.
 
         Parameters

@@ -519,6 +519,7 @@ class TestPostEvaluationDispatch:
 
         event = received[0]
         offspring = event.offspring
+        assert offspring is not None
         for i in range(len(offspring)):
             x = offspring[i].x
             f = offspring[i].f
@@ -540,6 +541,7 @@ class TestPostEvaluationDispatch:
         popsize = len(ctx.population)
         n_eval = max(1, int(rsm * popsize))
         event = received[0]
+        assert event.offspring is not None
         assert len(event.offspring) == n_eval
 
     def test_post_evaluation_fires_after_surrogate_end(self) -> None:

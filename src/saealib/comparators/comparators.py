@@ -298,6 +298,7 @@ class WeightedSumComparator(Comparator):
             return 1
         elif cv_b > self.eps_cv:
             return -1
+        assert self.direction is not None
         sa = float(np.dot(fa, self.direction))
         sb = float(np.dot(fb, self.direction))
         if sa > sb + self.eps_obj:
