@@ -55,6 +55,7 @@ packages = ["src/saealib"]
 dev = [
     "opfunu>=1.0.4",
     "pytest>=9.0.2",
+    "pytest-cov>=5.0.0",
     "setuptools>=80.9.0",
     "ruff",
     "scikit-learn>=1.0.0",
@@ -135,6 +136,19 @@ include = ["tests/test_integration.py"]
 
 [tool.ty.overrides.rules]
 invalid-argument-type = "warn"
+
+[tool.coverage.run]
+branch = true
+source = ["saealib"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "@overload",
+    "raise NotImplementedError",
+    '\.\.\.',
+]
 
 [tool.ruff]
 target-version = "py310"

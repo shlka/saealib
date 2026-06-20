@@ -1,5 +1,6 @@
 # saealib
 ![Status: Alpha](https://img.shields.io/badge/Status-Alpha-orange)
+[![codecov](https://codecov.io/gh/shlka/saealib/branch/main/graph/badge.svg)](https://codecov.io/gh/shlka/saealib)
 
 **Status: Active Development (Alpha)**
 > **Warning**: This project is under active development. APIs are subject to change without notice. Operation is not guaranteed in production environments.
