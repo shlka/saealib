@@ -34,7 +34,7 @@ from saealib.surrogate.manager import (
     rank_weighted_combine,
 )
 from saealib.surrogate.prediction import SurrogatePrediction
-from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
 
 # ---------------------------------------------------------------------------
 # Shared fixtures
@@ -182,7 +182,7 @@ class TestGenerationBasedStrategy:
         fit_count = [0]
 
         ctx = _make_ctx()
-        surrogate = RBFsurrogate(gaussian_kernel, DIM).with_post_fit(
+        surrogate = RBFSurrogate(gaussian_kernel, DIM).with_post_fit(
             lambda tx, ty, c: operator.setitem(fit_count, 0, fit_count[0] + 1)
         )
         manager = GlobalSurrogateManager(surrogate, MeanPrediction())
@@ -198,7 +198,7 @@ class TestGenerationBasedStrategy:
         fit_count = [0]
 
         ctx = _make_ctx()
-        surrogate = RBFsurrogate(gaussian_kernel, DIM).with_post_fit(
+        surrogate = RBFSurrogate(gaussian_kernel, DIM).with_post_fit(
             lambda tx, ty, c: operator.setitem(fit_count, 0, fit_count[0] + 1)
         )
         manager = LocalSurrogateManager(surrogate, MeanPrediction())
@@ -271,7 +271,7 @@ def _make_ensemble_novelty() -> CompositeSurrogateManager:
     """Regression surrogate first (finite tell_f) + NoveltyManager second."""
     return CompositeSurrogateManager(
         [
-            LocalSurrogateManager(RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()),
+            LocalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()),
             NoveltyManager(k=3),
         ],
         combine_fn=rank_weighted_combine(np.array([0.7, 0.3])),
@@ -282,7 +282,7 @@ def _make_ensemble_density() -> CompositeSurrogateManager:
     """Regression surrogate first (finite tell_f) + DensityManager second."""
     return CompositeSurrogateManager(
         [
-            LocalSurrogateManager(RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()),
+            LocalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()),
             DensityManager(eps=1.0),
         ],
         combine_fn=rank_weighted_combine(np.array([0.7, 0.3])),

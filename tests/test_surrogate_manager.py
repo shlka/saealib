@@ -36,7 +36,7 @@ from saealib.surrogate.manager import (
     rank_weighted_combine,
 )
 from saealib.surrogate.prediction import SurrogatePrediction
-from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
 from saealib.surrogate.training_set import KNNObjectiveSet
 
 # ---------------------------------------------------------------------------
@@ -86,13 +86,13 @@ def candidates() -> np.ndarray:
 
 
 @pytest.fixture
-def surrogate_1obj() -> RBFsurrogate:
-    return RBFsurrogate(gaussian_kernel, DIM)
+def surrogate_1obj() -> RBFSurrogate:
+    return RBFSurrogate(gaussian_kernel, DIM)
 
 
 @pytest.fixture
-def surrogate_2obj() -> RBFsurrogate:
-    return RBFsurrogate(gaussian_kernel, DIM)
+def surrogate_2obj() -> RBFSurrogate:
+    return RBFSurrogate(gaussian_kernel, DIM)
 
 
 # ===========================================================================
@@ -304,7 +304,7 @@ class TestGlobalSurrogateManager:
 
     def test_score_candidates_returns_tuple(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -315,7 +315,7 @@ class TestGlobalSurrogateManager:
 
     def test_scores_shape(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -325,7 +325,7 @@ class TestGlobalSurrogateManager:
 
     def test_predictions_count(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -335,7 +335,7 @@ class TestGlobalSurrogateManager:
 
     def test_predictions_are_surrogate_prediction(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -346,7 +346,7 @@ class TestGlobalSurrogateManager:
 
     def test_prediction_mean_shape_per_candidate(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -357,7 +357,7 @@ class TestGlobalSurrogateManager:
 
     def test_scores_finite(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -367,7 +367,7 @@ class TestGlobalSurrogateManager:
 
     def test_biobj_scores_shape(
         self,
-        surrogate_2obj: RBFsurrogate,
+        surrogate_2obj: RBFSurrogate,
         archive_2obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -390,7 +390,7 @@ class TestLocalSurrogateManager:
 
     def test_score_candidates_returns_tuple(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -402,7 +402,7 @@ class TestLocalSurrogateManager:
 
     def test_scores_shape(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -414,7 +414,7 @@ class TestLocalSurrogateManager:
 
     def test_predictions_count(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -426,7 +426,7 @@ class TestLocalSurrogateManager:
 
     def test_prediction_mean_shape(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -439,7 +439,7 @@ class TestLocalSurrogateManager:
 
     def test_n_neighbors_default(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -453,7 +453,7 @@ class TestLocalSurrogateManager:
 
     def test_scores_finite(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -478,10 +478,10 @@ class TestCompositeSurrogateManager:
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
         m1 = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         m2 = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         mgr = CompositeSurrogateManager([m1, m2], combine_fn=product_combine)
         scores, _ = mgr.score_candidates(candidates, archive_1obj)
@@ -491,10 +491,10 @@ class TestCompositeSurrogateManager:
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
         m1 = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         m2 = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         mgr = CompositeSurrogateManager([m1, m2], combine_fn=rank_weighted_combine())
         scores, _ = mgr.score_candidates(candidates, archive_1obj)
@@ -505,10 +505,10 @@ class TestCompositeSurrogateManager:
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
         m1 = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         m2 = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         mgr = CompositeSurrogateManager(
             [m1, m2], combine_fn=rank_weighted_combine(np.array([1.0, 3.0]))
@@ -521,10 +521,10 @@ class TestCompositeSurrogateManager:
     ) -> None:
         """predictions always come from managers[0]."""
         m1 = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         m2 = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         mgr = CompositeSurrogateManager([m1, m2], combine_fn=product_combine)
         _, predictions = mgr.score_candidates(candidates, archive_1obj)
@@ -534,7 +534,7 @@ class TestCompositeSurrogateManager:
 
     def test_single_manager(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -774,7 +774,7 @@ class TestCompositeSurrogateManagerWithArchiveBased:
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
         m_reg = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         mgr = CompositeSurrogateManager(
             [m_reg, NoveltyManager(k=3)],
@@ -787,7 +787,7 @@ class TestCompositeSurrogateManagerWithArchiveBased:
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
         m_reg = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         mgr = CompositeSurrogateManager(
             [m_reg, NoveltyManager(k=3)], combine_fn=rank_weighted_combine()
@@ -800,7 +800,7 @@ class TestCompositeSurrogateManagerWithArchiveBased:
     ) -> None:
         """Regression surrogate listed first → predictions returned are finite."""
         m_reg = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         mgr = CompositeSurrogateManager(
             [m_reg, NoveltyManager(k=3)], combine_fn=rank_weighted_combine()
@@ -825,7 +825,7 @@ class TestCompositeSurrogateManagerWithArchiveBased:
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
         m_reg = GlobalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         mgr = CompositeSurrogateManager(
             [m_reg, DensityManager(eps=0.5)],
@@ -846,7 +846,7 @@ class TestSurrogateHooks:
     """Tests for Surrogate.post_fit and with_post_fit."""
 
     def test_post_fit_default_is_noop(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         train_x, train_y = archive_1obj.x, archive_1obj.f
         surrogate_1obj.fit(train_x, train_y)
@@ -854,7 +854,7 @@ class TestSurrogateHooks:
         assert result is None
 
     def test_with_post_fit_fn_is_called(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         called = [False]
 
@@ -868,7 +868,7 @@ class TestSurrogateHooks:
         assert called[0]
 
     def test_with_post_fit_fn_receives_correct_args(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         received = {}
 
@@ -883,7 +883,7 @@ class TestSurrogateHooks:
         assert received["train_y_shape"] == train_y.shape
 
     def test_with_post_fit_chains_in_order(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         log: list[int] = []
         surrogate = surrogate_1obj.with_post_fit(
@@ -894,7 +894,7 @@ class TestSurrogateHooks:
         assert log == [1, 2]
 
     def test_with_post_fit_does_not_mutate_original(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         called = [False]
 
@@ -917,7 +917,7 @@ class TestSurrogateManagerHooks:
 
     def test_post_score_default_is_noop(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -929,7 +929,7 @@ class TestSurrogateManagerHooks:
 
     def test_with_post_score_transforms_scores(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -944,7 +944,7 @@ class TestSurrogateManagerHooks:
 
     def test_with_post_score_called_once_per_score_candidates(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -962,7 +962,7 @@ class TestSurrogateManagerHooks:
 
     def test_with_post_score_does_not_mutate_original(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -973,7 +973,7 @@ class TestSurrogateManagerHooks:
 
     def test_post_fit_called_in_global_manager(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -989,7 +989,7 @@ class TestSurrogateManagerHooks:
 
     def test_post_fit_called_per_candidate_in_local_manager(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
@@ -1016,7 +1016,7 @@ class TestSurrogateManagerGenerationHook:
 
     def test_on_generation_end_default_is_noop(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
     ) -> None:
         manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
@@ -1024,7 +1024,7 @@ class TestSurrogateManagerGenerationHook:
 
     def test_with_on_generation_end_fn_is_called(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
     ) -> None:
         calls: list[tuple] = []
@@ -1042,7 +1042,7 @@ class TestSurrogateManagerGenerationHook:
 
     def test_with_on_generation_end_chains_in_order(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
     ) -> None:
         order: list[int] = []
@@ -1056,7 +1056,7 @@ class TestSurrogateManagerGenerationHook:
 
     def test_with_on_generation_end_does_not_mutate_original(
         self,
-        surrogate_1obj: RBFsurrogate,
+        surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
     ) -> None:
         called = [False]
@@ -1077,20 +1077,20 @@ class TestSurrogateManagerGenerationHook:
 
 class TestLastAccuracy:
     def test_last_accuracy_none_by_default(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
         assert manager.last_accuracy is None
 
     def test_last_accuracy_none_without_evaluator(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
         manager.fit(archive_1obj)
         assert manager.last_accuracy is None
 
     def test_last_accuracy_set_after_fit_with_evaluator(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=5)
         manager = GlobalSurrogateManager(
@@ -1101,7 +1101,7 @@ class TestLastAccuracy:
         assert "spearman" in manager.last_accuracy.metrics
 
     def test_last_accuracy_updated_on_score_candidates_with_refit(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
         manager = GlobalSurrogateManager(
@@ -1113,7 +1113,7 @@ class TestLastAccuracy:
         assert manager.last_accuracy is not None
 
     def test_last_accuracy_not_updated_when_refit_false(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
         manager = GlobalSurrogateManager(
@@ -1128,7 +1128,7 @@ class TestLastAccuracy:
         assert manager.last_accuracy is first  # same object, not updated
 
     def test_composite_propagates_last_accuracy_from_first_manager(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
         m1 = GlobalSurrogateManager(
@@ -1145,13 +1145,13 @@ class TestLastAccuracy:
 
 class TestLocalSurrogateManagerAccuracy:
     def test_last_accuracy_none_by_default(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         manager = LocalSurrogateManager(surrogate_1obj, MeanPrediction())
         assert manager.last_accuracy is None
 
     def test_fit_sets_last_accuracy(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
         manager = LocalSurrogateManager(
@@ -1162,14 +1162,14 @@ class TestLocalSurrogateManagerAccuracy:
         assert "spearman" in manager.last_accuracy.metrics
 
     def test_fit_noop_without_evaluator(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         manager = LocalSurrogateManager(surrogate_1obj, MeanPrediction())
         manager.fit(archive_1obj)
         assert manager.last_accuracy is None
 
     def test_last_accuracy_set_after_score_candidates_with_refit(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
         manager = LocalSurrogateManager(
@@ -1184,7 +1184,7 @@ class TestLocalSurrogateManagerAccuracy:
         assert manager.last_accuracy.n_samples == len(candidates)
 
     def test_last_accuracy_not_updated_when_refit_false(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
         manager = LocalSurrogateManager(
@@ -1198,7 +1198,7 @@ class TestLocalSurrogateManagerAccuracy:
         assert manager.last_accuracy is first  # not updated
 
     def test_generation_based_pattern_sets_last_accuracy(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         """fit() + score_candidates(refit=False) pattern (GenerationBasedStrategy)."""
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
@@ -1215,7 +1215,7 @@ class TestLocalSurrogateManagerAccuracy:
         assert manager.last_accuracy is accuracy_after_fit
 
     def test_nearest_neighbor_excluded_from_training(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         """Nearest archive neighbor is held out; training uses n_neighbors-1 points."""
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
@@ -1223,7 +1223,7 @@ class TestLocalSurrogateManagerAccuracy:
             surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
         )
         manager_without = LocalSurrogateManager(
-            RBFsurrogate(gaussian_kernel, DIM), MeanPrediction()
+            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
         )
         rng = np.random.default_rng(99)
         candidates = rng.uniform(-2.0, 2.0, size=(5, DIM))
@@ -1235,7 +1235,7 @@ class TestLocalSurrogateManagerAccuracy:
         assert not np.any(np.isnan(scores_with))
 
     def test_loo_self_exclusion_in_update_accuracy(
-        self, surrogate_1obj: RBFsurrogate, archive_1obj: Archive
+        self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         """_update_accuracy uses LOO self-exclusion; RBF no longer gives perfect score."""  # noqa: E501
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)

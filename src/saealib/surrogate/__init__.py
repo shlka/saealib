@@ -26,7 +26,7 @@ from saealib.surrogate.manager import (
 )
 from saealib.surrogate.per_objective import PerObjectiveSurrogate
 from saealib.surrogate.prediction import SurrogatePrediction
-from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
 from saealib.surrogate.sklearn_surrogate import (
     DTSurrogate,
     GPRSurrogate,
@@ -85,7 +85,7 @@ __all__ = [
     "PairwiseComparisonSet",
     "PerObjectiveSurrogate",
     "R2Score",
-    "RBFsurrogate",
+    "RBFSurrogate",
     "SVMSurrogate",
     "SklearnSurrogate",
     "SpearmanCorrelation",
@@ -111,4 +111,8 @@ def __getattr__(name: str) -> object:
         from saealib.surrogate._deprecated import GPSurrogate
 
         return GPSurrogate
+    if name == "RBFsurrogate":
+        from saealib.surrogate.rbf import RBFSurrogate
+
+        return RBFSurrogate
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -24,7 +24,7 @@ from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate.manager import LocalSurrogateManager, SurrogateManager
-from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
 from saealib.termination import Termination
 from saealib.termination import max_fe as max_fe_cond
 
@@ -40,10 +40,10 @@ class Result:
 
     Attributes
     ----------
-    X : np.ndarray
+    x : np.ndarray
         Best design variables. Shape ``(dim,)`` for single-objective,
         ``(n_pareto, dim)`` for multi-objective.
-    F : np.ndarray
+    f : np.ndarray
         Best objective values. Shape ``(n_obj,)`` for single-objective,
         ``(n_pareto, n_obj)`` for multi-objective.
     fe : int
@@ -54,8 +54,8 @@ class Result:
         Full optimization context providing access to the archive and more.
     """
 
-    X: np.ndarray
-    F: np.ndarray
+    x: np.ndarray
+    f: np.ndarray
     fe: int
     gen: int
     ctx: OptimizationContext
@@ -136,7 +136,7 @@ def _resolve_surrogate(
         if surrogate.lower() == "rbf":
             from saealib.surrogate.training_set import KNNObjectiveSet
 
-            rbf = RBFsurrogate(gaussian_kernel, problem.dim)
+            rbf = RBFSurrogate(gaussian_kernel, problem.dim)
             return LocalSurrogateManager(
                 rbf,
                 MeanPrediction(direction=problem.direction),
@@ -203,7 +203,7 @@ def _build_result(ctx: OptimizationContext) -> Result:
             best_x = archive_x[pareto_idx]
             best_f = archive_f[pareto_idx]
 
-    return Result(X=best_x, F=best_f, fe=ctx.fe, gen=ctx.gen, ctx=ctx)
+    return Result(x=best_x, f=best_f, fe=ctx.fe, gen=ctx.gen, ctx=ctx)
 
 
 def _run(
@@ -320,7 +320,7 @@ def minimize(
     >>> import numpy as np
     >>> result = minimize(lambda x: np.sum(x**2), dim=5, lb=[-5]*5, ub=[5]*5,
     ...                   max_fe=500, seed=0, verbose=False)
-    >>> result.X, result.F
+    >>> result.x, result.f
     """
     direction_arr = _resolve_direction(direction, n_obj, default=-1.0)
     problem = _ensure_problem(func, dim, lb, ub, n_obj, direction_arr)
@@ -404,7 +404,7 @@ def maximize(
     >>> import numpy as np
     >>> result = maximize(lambda x: -np.sum(x**2) + 10, dim=5, lb=[-5]*5, ub=[5]*5,
     ...                   max_fe=500, seed=0, verbose=False)
-    >>> result.X, result.F
+    >>> result.x, result.f
     """
     direction_arr = _resolve_direction(direction, n_obj, default=+1.0)
     problem = _ensure_problem(func, dim, lb, ub, n_obj, direction_arr)

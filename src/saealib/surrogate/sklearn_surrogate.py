@@ -14,7 +14,7 @@ class SklearnSurrogate(Surrogate):
 
     Wraps any estimator that implements ``fit(X, y)`` and ``predict(X)``.
     Multi-objective problems are handled by fitting one cloned estimator
-    per objective, following the same pattern as ``RBFsurrogate``.
+    per objective, following the same pattern as ``RBFSurrogate``.
 
     Parameters
     ----------

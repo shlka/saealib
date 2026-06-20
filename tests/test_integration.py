@@ -11,7 +11,7 @@ from saealib import (
     MutationUniform,
     Optimizer,
     Problem,
-    RBFsurrogate,
+    RBFSurrogate,
     SequentialSelection,
     Termination,
     TruncationSelection,
@@ -40,7 +40,7 @@ def test_integration(seed: int):
     - ParentSelection (SequentialSelection)
     - SurvivorSelection (TruncationSelection)
     - Termination
-    - Surrogate (RBFsurrogate)
+    - Surrogate (RBFSurrogate)
     - Strategy (IndividualBasedStrategy)
     - Callback (logging_generation, repair_clipping)
     """
@@ -75,7 +75,7 @@ def test_integration(seed: int):
         survivor_selection=TruncationSelection(),
     )
     termination = Termination(max_fe(200 * dim))
-    surrogate = RBFsurrogate(gaussian_kernel, dim)
+    surrogate = RBFSurrogate(gaussian_kernel, dim)
     strategy = IndividualBasedStrategy(evaluation_ratio=rsm)
 
     opt = (

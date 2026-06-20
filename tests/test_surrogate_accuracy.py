@@ -13,7 +13,7 @@ from saealib.surrogate.accuracy import (
     SpearmanCorrelation,
     SurrogateAccuracy,
 )
-from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -23,8 +23,8 @@ DIM = 1
 N_OBJ = 1
 
 
-def _make_surrogate() -> RBFsurrogate:
-    return RBFsurrogate(kernel=gaussian_kernel, dim=DIM)
+def _make_surrogate() -> RBFSurrogate:
+    return RBFSurrogate(kernel=gaussian_kernel, dim=DIM)
 
 
 def _sphere_data(n: int = 30, rng_seed: int = 0) -> tuple[np.ndarray, np.ndarray]:

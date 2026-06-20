@@ -25,7 +25,7 @@ from saealib import (
     NonDominatedSorter,
     Optimizer,
     Problem,
-    RBFsurrogate,
+    RBFSurrogate,
     SequentialSelection,
     Termination,
     TruncationSelection,
@@ -763,7 +763,7 @@ class TestMOOIntegration:
             survivor_selection=TruncationSelection(),
         )
         termination = Termination(max_fe(80 * dim))
-        surrogate = RBFsurrogate(gaussian_kernel, dim)
+        surrogate = RBFSurrogate(gaussian_kernel, dim)
         strategy = IndividualBasedStrategy(evaluation_ratio=0.1)
 
         opt = (

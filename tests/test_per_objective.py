@@ -20,7 +20,7 @@ from saealib.surrogate.base import Surrogate
 from saealib.surrogate.manager import GlobalSurrogateManager
 from saealib.surrogate.per_objective import PerObjectiveSurrogate
 from saealib.surrogate.prediction import SurrogatePrediction
-from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
 from saealib.surrogate.sklearn_surrogate import DTSurrogate, SVMSurrogate
 
 # ---------------------------------------------------------------------------
@@ -105,7 +105,7 @@ class TestPerObjectiveSurrogate:
 
     def test_fit_predict_1obj_single_surrogate(self, train_data_1obj, test_x) -> None:
         X, y = train_data_1obj
-        s = PerObjectiveSurrogate([RBFsurrogate(gaussian_kernel, DIM)])
+        s = PerObjectiveSurrogate([RBFSurrogate(gaussian_kernel, DIM)])
         s.fit(X, y)
         pred = s.predict(test_x)
         assert pred.value.shape == (5, 1)
@@ -113,7 +113,7 @@ class TestPerObjectiveSurrogate:
     def test_fit_predict_2obj_two_surrogates(self, train_data_2obj, test_x) -> None:
         X, y = train_data_2obj
         s = PerObjectiveSurrogate(
-            [RBFsurrogate(gaussian_kernel, DIM), RBFsurrogate(gaussian_kernel, DIM)]
+            [RBFSurrogate(gaussian_kernel, DIM), RBFSurrogate(gaussian_kernel, DIM)]
         )
         s.fit(X, y)
         pred = s.predict(test_x)
@@ -130,13 +130,13 @@ class TestPerObjectiveSurrogate:
 
     def test_nobj_mismatch_raises(self, train_data_2obj) -> None:
         X, y = train_data_2obj
-        s = PerObjectiveSurrogate([RBFsurrogate(gaussian_kernel, DIM)])
+        s = PerObjectiveSurrogate([RBFSurrogate(gaussian_kernel, DIM)])
         with pytest.raises(ValueError, match="n_obj=2"):
             s.fit(X, y)
 
     def test_predict_1d_input(self, train_data_1obj) -> None:
         X, y = train_data_1obj
-        s = PerObjectiveSurrogate([RBFsurrogate(gaussian_kernel, DIM)])
+        s = PerObjectiveSurrogate([RBFSurrogate(gaussian_kernel, DIM)])
         s.fit(X, y)
         pred = s.predict(X[0])
         assert pred.value.shape == (1, 1)
@@ -144,14 +144,14 @@ class TestPerObjectiveSurrogate:
     def test_std_none_when_no_uncertainty(self, train_data_2obj, test_x) -> None:
         X, y = train_data_2obj
         s = PerObjectiveSurrogate(
-            [RBFsurrogate(gaussian_kernel, DIM), RBFsurrogate(gaussian_kernel, DIM)]
+            [RBFSurrogate(gaussian_kernel, DIM), RBFSurrogate(gaussian_kernel, DIM)]
         )
         s.fit(X, y)
         assert s.predict(test_x).std is None
 
     def test_provides_uncertainty_false_if_any_missing(self) -> None:
         s = PerObjectiveSurrogate(
-            [_StubSurrogateWithUncertainty(), RBFsurrogate(gaussian_kernel, DIM)]
+            [_StubSurrogateWithUncertainty(), RBFSurrogate(gaussian_kernel, DIM)]
         )
         assert s.provides_uncertainty is False
 
@@ -177,7 +177,7 @@ class TestPerObjectiveSurrogate:
     def test_1d_train_y_accepted(self, train_data_1obj, test_x) -> None:
         X, y = train_data_1obj
         assert y.ndim == 1
-        s = PerObjectiveSurrogate([RBFsurrogate(gaussian_kernel, DIM)])
+        s = PerObjectiveSurrogate([RBFSurrogate(gaussian_kernel, DIM)])
         s.fit(X, y)
         assert s.predict(test_x).value.shape == (5, 1)
 
