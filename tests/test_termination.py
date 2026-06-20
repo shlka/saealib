@@ -80,7 +80,7 @@ class TestTerminationInit:
     def test_condition_is_read_only(self) -> None:
         t = Termination(max_fe(100))
         with pytest.raises(AttributeError):
-            t.condition = max_gen(50)  # type: ignore[misc]
+            t.condition = max_gen(50)  # type: ignore  # assigning condition slot; declared type is wider than TerminationCondition
 
 
 # ===========================================================================

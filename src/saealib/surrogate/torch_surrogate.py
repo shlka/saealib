@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -49,7 +50,7 @@ class TorchSurrogate(Surrogate):
         model: torch.nn.Module,
         optimizer_cls: type | None = None,
         optimizer_kwargs: dict | None = None,
-        loss_fn: object | None = None,
+        loss_fn: Callable[..., Any] | None = None,
         epochs: int = 100,
     ) -> None:
         try:
@@ -100,7 +101,7 @@ class TorchSurrogate(Surrogate):
 
         for _ in range(self.epochs):
             optimizer.zero_grad()
-            pred = self.model(x_tensor)  # type: ignore[operator]
+            pred = self.model(x_tensor)  # type: ignore[operator]  # torch Module.__call__ not typed as callable in stubs
             loss = loss_fn(pred, y_tensor)
             loss.backward()
             optimizer.step()
@@ -130,7 +131,7 @@ class TorchSurrogate(Surrogate):
         with torch.no_grad():
             device = next(self.model.parameters()).device
             x_tensor = torch.tensor(test, dtype=torch.float32).to(device)
-            pred = self.model(x_tensor).detach().cpu().numpy()  # type: ignore[operator]
+            pred = self.model(x_tensor).detach().cpu().numpy()  # type: ignore[operator]  # torch Module.__call__ not typed as callable in stubs
 
         if pred.ndim == 1:
             pred = pred.reshape(-1, 1)

@@ -7,7 +7,7 @@ import weakref
 from collections.abc import Hashable
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 
 import numpy as np
 from typing_extensions import Self
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 T_Population = TypeVar("T_Population", bound="Population")
 T_Individual = TypeVar("T_Individual", bound="Individual")
+_T_Default = TypeVar("_T_Default")
 
 
 @dataclass(frozen=True)
@@ -127,7 +128,7 @@ class Population(Generic[T_Individual]):
         self._structure_version = 0
         self._value_version = 0
         self._data: dict[str, np.ndarray] = {}
-        self._cache: dict[str, Any] = {}
+        self._cache: dict[Hashable, Any] = {}
         for attr in attrs:
             self._init_column(attr, self._capacity)
         self._schema = {attr.name: attr for attr in attrs}
@@ -447,7 +448,15 @@ class Population(Generic[T_Individual]):
             capacity = self._capacity
         return self.__class__(self.attrs, capacity)
 
-    def get(self, key: str, default=None) -> np.ndarray:
+    @overload
+    def get(self, key: str) -> np.ndarray | None: ...
+
+    @overload
+    def get(self, key: str, default: _T_Default) -> np.ndarray | _T_Default: ...
+
+    def get(
+        self, key: str, default: _T_Default | None = None
+    ) -> np.ndarray | _T_Default | None:
         """
         Get the array of a specific attribute.
 
@@ -455,8 +464,13 @@ class Population(Generic[T_Individual]):
         ----------
         key : str
             The attribute name to get the array for.
-        default : Any
-            Returned when the key is absent.
+        default : any, optional
+            Returned when the key is absent. Defaults to ``None``.
+
+        Returns
+        -------
+        np.ndarray or default
+            The attribute array if ``key`` exists, otherwise ``default``.
         """
         if key in self._data:
             return self.get_array(key)
@@ -479,7 +493,7 @@ class Population(Generic[T_Individual]):
         view.flags.writeable = False
         return view
 
-    def update_array(self, key: str, value: Any) -> np.ndarray:
+    def update_array(self, key: str, value: Any) -> None:
         """Update array in place and bump the value version."""
         self.get_array(key)[:] = value
         self.mod_value()
@@ -514,6 +528,12 @@ class Population(Generic[T_Individual]):
         else:
             super().__setattr__(name, value)
 
+    @overload
+    def __getitem__(self, index: int) -> T_Individual: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Self: ...
+
     def __getitem__(self, index: int | slice) -> T_Individual | Self:
         """
         Support bracket access.
@@ -523,7 +543,7 @@ class Population(Generic[T_Individual]):
         if isinstance(index, int):
             if index < 0 or index >= self._size:
                 raise IndexError("Index out of range")
-            return self.individual_class(self, index)
+            return self.individual_class(self, index)  # type: ignore  # individual_class is generic; ty can't verify constructor signature
         elif isinstance(index, slice):
             return self.extract(index)
         else:

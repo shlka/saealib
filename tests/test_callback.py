@@ -475,6 +475,7 @@ class TestPostEvaluationDispatch:
             .set_strategy(IndividualBasedStrategy(evaluation_ratio=evaluation_ratio))
             .set_termination(Termination(max_fe(100)))
         )
+        assert opt.initializer is not None
         ctx = opt.initializer.initialize(opt, problem)
         return ctx, opt
 
@@ -519,6 +520,7 @@ class TestPostEvaluationDispatch:
 
         event = received[0]
         offspring = event.offspring
+        assert offspring is not None
         for i in range(len(offspring)):
             x = offspring[i].x
             f = offspring[i].f
@@ -540,6 +542,7 @@ class TestPostEvaluationDispatch:
         popsize = len(ctx.population)
         n_eval = max(1, int(rsm * popsize))
         event = received[0]
+        assert event.offspring is not None
         assert len(event.offspring) == n_eval
 
     def test_post_evaluation_fires_after_surrogate_end(self) -> None:

@@ -82,6 +82,7 @@ class LowerConfidenceBound(AcquisitionFunction):
                 "LowerConfidenceBound requires a surrogate with uncertainty "
                 "estimates (prediction.std must not be None)."
             )
+        assert prediction.std is not None
         mu = prediction.value[:, self.obj_idx]  # (n_samples,)
         sigma = prediction.std[:, self.obj_idx]  # (n_samples,)
         return -(mu - self.kappa * sigma)  # negate: higher = better

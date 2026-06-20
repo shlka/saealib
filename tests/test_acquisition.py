@@ -44,14 +44,14 @@ class TestAcquisitionFunctionABC:
 
     def test_cannot_instantiate_directly(self) -> None:
         with pytest.raises(TypeError):
-            AcquisitionFunction()  # type: ignore[abstract]
+            AcquisitionFunction()  # type: ignore[abstract]  # intentional: testing abstract instantiation raises TypeError
 
     def test_concrete_subclass_must_implement_score(self) -> None:
         class IncompleteAF(AcquisitionFunction):
             pass
 
         with pytest.raises(TypeError):
-            IncompleteAF()  # type: ignore[abstract]
+            IncompleteAF()  # type: ignore[abstract]  # intentional: testing abstract instantiation raises TypeError
 
 
 # ===========================================================================

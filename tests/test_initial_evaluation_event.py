@@ -78,6 +78,11 @@ def _make_optimizer(problem: Problem | None = None) -> Optimizer:
     )
 
 
+def _initialize(opt: Optimizer, problem: Problem):
+    assert opt.initializer is not None
+    return opt.initializer.initialize(opt, problem)
+
+
 # ===========================================================================
 # Event field tests
 # ===========================================================================
@@ -87,21 +92,21 @@ class TestInitialEvaluationEventFields:
     def test_start_event_is_event_subclass(self) -> None:
         problem = _make_problem()
         opt = _make_optimizer(problem)
-        ctx = opt.initializer.initialize(opt, problem)
+        ctx = _initialize(opt, problem)
         e = InitialEvaluationStartEvent(ctx=ctx)
         assert isinstance(e, Event)
 
     def test_end_event_is_event_subclass(self) -> None:
         problem = _make_problem()
         opt = _make_optimizer(problem)
-        ctx = opt.initializer.initialize(opt, problem)
+        ctx = _initialize(opt, problem)
         e = InitialEvaluationEndEvent(ctx=ctx)
         assert isinstance(e, Event)
 
     def test_start_event_has_candidates_x(self) -> None:
         problem = _make_problem()
         opt = _make_optimizer(problem)
-        ctx = opt.initializer.initialize(opt, problem)
+        ctx = _initialize(opt, problem)
         x = np.zeros((N_INIT_ARCHIVE, DIM))
         e = InitialEvaluationStartEvent(ctx=ctx, candidates_x=x)
         assert e.candidates_x is x
@@ -109,21 +114,21 @@ class TestInitialEvaluationEventFields:
     def test_start_event_candidates_x_default_none(self) -> None:
         problem = _make_problem()
         opt = _make_optimizer(problem)
-        ctx = opt.initializer.initialize(opt, problem)
+        ctx = _initialize(opt, problem)
         e = InitialEvaluationStartEvent(ctx=ctx)
         assert e.candidates_x is None
 
     def test_end_event_has_archive(self) -> None:
         problem = _make_problem()
         opt = _make_optimizer(problem)
-        ctx = opt.initializer.initialize(opt, problem)
+        ctx = _initialize(opt, problem)
         e = InitialEvaluationEndEvent(ctx=ctx, archive=ctx.archive)
         assert e.archive is ctx.archive
 
     def test_end_event_archive_default_none(self) -> None:
         problem = _make_problem()
         opt = _make_optimizer(problem)
-        ctx = opt.initializer.initialize(opt, problem)
+        ctx = _initialize(opt, problem)
         e = InitialEvaluationEndEvent(ctx=ctx)
         assert e.archive is None
 
@@ -141,7 +146,7 @@ class TestInitialEvaluationEventDispatch:
         received: list[InitialEvaluationStartEvent] = []
         opt.cbmanager.register(InitialEvaluationStartEvent, received.append)
 
-        opt.initializer.initialize(opt, problem)
+        _initialize(opt, problem)
 
         assert len(received) == 1
 
@@ -152,7 +157,7 @@ class TestInitialEvaluationEventDispatch:
         received: list[InitialEvaluationEndEvent] = []
         opt.cbmanager.register(InitialEvaluationEndEvent, received.append)
 
-        opt.initializer.initialize(opt, problem)
+        _initialize(opt, problem)
 
         assert len(received) == 1
 
@@ -169,7 +174,7 @@ class TestInitialEvaluationEventDispatch:
             InitialEvaluationEndEvent, lambda _: order.append(InitialEvaluationEndEvent)
         )
 
-        opt.initializer.initialize(opt, problem)
+        _initialize(opt, problem)
 
         assert order == [InitialEvaluationStartEvent, InitialEvaluationEndEvent]
 
@@ -199,7 +204,7 @@ class TestInitialEvaluationEventDispatch:
         received: list[InitialEvaluationStartEvent] = []
         opt.cbmanager.register(InitialEvaluationStartEvent, received.append)
 
-        opt.initializer.initialize(opt, problem)
+        _initialize(opt, problem)
 
         x = received[0].candidates_x
         assert x is not None
@@ -216,7 +221,7 @@ class TestInitialEvaluationEventDispatch:
             lambda e: archive_len_at_start.append(len(e.ctx.archive)),
         )
 
-        opt.initializer.initialize(opt, problem)
+        _initialize(opt, problem)
 
         assert archive_len_at_start[0] == 0
 
@@ -230,7 +235,7 @@ class TestInitialEvaluationEventDispatch:
             lambda e: archive_len_at_end.append(len(e.ctx.archive)),
         )
 
-        opt.initializer.initialize(opt, problem)
+        _initialize(opt, problem)
 
         assert archive_len_at_end[0] == N_INIT_ARCHIVE
 
@@ -244,7 +249,7 @@ class TestInitialEvaluationEventDispatch:
             lambda e: captured.append((e.archive, e.ctx.archive)),
         )
 
-        opt.initializer.initialize(opt, problem)
+        _initialize(opt, problem)
 
         event_archive, ctx_archive = captured[0]
         assert event_archive is ctx_archive
@@ -259,7 +264,7 @@ class TestInitialEvaluationEventDispatch:
             lambda e: fe_at_end.append(e.ctx.fe),
         )
 
-        opt.initializer.initialize(opt, problem)
+        _initialize(opt, problem)
 
         assert fe_at_end[0] == N_INIT_ARCHIVE
 
@@ -279,13 +284,14 @@ class TestInitialEvaluationEndEventMutation:
 
         def _trim_archive(event: InitialEvaluationEndEvent) -> None:
             arc = event.archive
+            assert arc is not None
             kept = arc.extract(list(range(n_keep)))
             arc.clear()
             arc.extend(kept)
 
         opt.cbmanager.register(InitialEvaluationEndEvent, _trim_archive)
 
-        ctx = opt.initializer.initialize(opt, problem)
+        ctx = _initialize(opt, problem)
 
         assert len(ctx.archive) == n_keep
 
@@ -319,12 +325,13 @@ class TestInitialEvaluationEndEventMutation:
 
         def _trim_archive(event: InitialEvaluationEndEvent) -> None:
             arc = event.archive
+            assert arc is not None
             kept = arc.extract(list(range(n_keep)))
             arc.clear()
             arc.extend(kept)
 
         opt.cbmanager.register(InitialEvaluationEndEvent, _trim_archive)
 
-        ctx = opt.initializer.initialize(opt, problem)
+        ctx = _initialize(opt, problem)
 
         assert len(ctx.population) == min(n_init_pop, n_keep)

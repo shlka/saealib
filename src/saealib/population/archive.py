@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from scipy.spatial import cKDTree
+from scipy.spatial import cKDTree  # type: ignore  # cKDTree has no bundled type stubs
 
 from saealib.population.population import Individual, Population, PopulationAttribute
 
@@ -377,7 +377,7 @@ class ParetoMixin:
 
         # Append the new solution and return its index.
         new_idx: int = self._size
-        super().append(element, **kwargs)  # type: ignore[misc]
+        super().append(element, **kwargs)  # type: ignore[misc]  # super().append resolves via MRO; ty can't verify through mixin
         return new_idx
 
 

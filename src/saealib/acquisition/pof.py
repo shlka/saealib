@@ -79,6 +79,7 @@ class ProbabilityOfFeasibility(AcquisitionFunction):
                 "ProbabilityOfFeasibility requires a surrogate with uncertainty "
                 "estimates (prediction.std must not be None)."
             )
+        assert prediction.std is not None
         mu = prediction.value[:, self.obj_idx]  # (n_samples,)
         sigma = prediction.std[:, self.obj_idx]  # (n_samples,)
         sigma = np.maximum(sigma, 1e-9)
@@ -169,6 +170,7 @@ class ProductOfFeasibility(AcquisitionFunction):
                 "ProductOfFeasibility requires a surrogate with uncertainty "
                 "estimates (prediction.std must not be None)."
             )
+        assert prediction.std is not None
         mu = prediction.value  # (n_samples, n_constraints)
         sigma = np.maximum(prediction.std, 1e-9)  # (n_samples, n_constraints)
         pof = norm.cdf((0.0 - mu) / sigma)  # (n_samples, n_constraints)

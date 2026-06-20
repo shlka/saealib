@@ -33,7 +33,7 @@ def deprecated_param(old: str, new: str, version: str) -> Callable[[F], F]:
                 kwargs.setdefault(new, kwargs.pop(old))
             return func(*args, **kwargs)
 
-        return wrapper  # type: ignore[return-value]
+        return wrapper  # type: ignore  # decorator return type varies; ty cannot resolve through overload
 
     return decorator
 
@@ -53,7 +53,7 @@ def deprecated_class(replacement: str) -> Callable[[type], type]:
             )
             original_init(self, *args, **kwargs)
 
-        cls.__init__ = new_init
+        cls.__init__ = new_init  # type: ignore  # patching __init__ at class level; type stub marks it read-only
         return cls
 
     return decorator

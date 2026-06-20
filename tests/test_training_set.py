@@ -127,7 +127,7 @@ def _make_ctx(
 class TestTrainingSetABC:
     def test_cannot_instantiate_abstract(self) -> None:
         with pytest.raises(TypeError):
-            TrainingSet()  # type: ignore[abstract]
+            TrainingSet()  # type: ignore[abstract]  # intentional: testing abstract instantiation raises TypeError
 
 
 # ===========================================================================

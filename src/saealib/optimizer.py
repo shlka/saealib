@@ -8,6 +8,8 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
+from typing_extensions import Self
+
 from saealib.acquisition.mean import MeanPrediction
 from saealib.callback import (
     CallbackManager,
@@ -131,27 +133,27 @@ class Optimizer:
 
     # --- setters (all return self for chaining) ---
 
-    def set_seed(self, seed: int | None) -> Optimizer:
+    def set_seed(self, seed: int | None) -> Self:
         """Set the master random seed. Returns self."""
         self.seed = seed
         return self
 
-    def set_initializer(self, initializer: Initializer) -> Optimizer:
+    def set_initializer(self, initializer: Initializer) -> Self:
         """Set the initializer. Returns self."""
         self.initializer = initializer
         return self
 
-    def set_algorithm(self, algorithm: Algorithm) -> Optimizer:
+    def set_algorithm(self, algorithm: Algorithm) -> Self:
         """Set the evolutionary algorithm. Returns self."""
         self.algorithm = algorithm
         return self
 
-    def set_surrogate_manager(self, manager: SurrogateManager) -> Optimizer:
+    def set_surrogate_manager(self, manager: SurrogateManager) -> Self:
         """Set the surrogate manager. Returns self."""
         self.surrogate_manager = manager
         return self
 
-    def set_surrogate(self, surrogate: Surrogate, n_neighbors: int = 50) -> Optimizer:
+    def set_surrogate(self, surrogate: Surrogate, n_neighbors: int = 50) -> Self:
         """
         Wrap a raw Surrogate in a LocalSurrogateManager. Returns self.
 
@@ -167,22 +169,22 @@ class Optimizer:
         )
         return self
 
-    def set_strategy(self, strategy: OptimizationStrategy) -> Optimizer:
+    def set_strategy(self, strategy: OptimizationStrategy) -> Self:
         """Set the optimization strategy. Returns self."""
         self.strategy = strategy
         return self
 
-    def set_evaluator(self, evaluator: Evaluator) -> Optimizer:
+    def set_evaluator(self, evaluator: Evaluator) -> Self:
         """Set the evaluator. Returns self."""
         self.evaluator = evaluator
         return self
 
-    def set_termination(self, termination: Termination) -> Optimizer:
+    def set_termination(self, termination: Termination) -> Self:
         """Set the termination condition. Returns self."""
         self.termination = termination
         return self
 
-    def set_instance_name(self, name: str) -> Optimizer:
+    def set_instance_name(self, name: str) -> Self:
         """Set the instance name. Returns self."""
         self.instance_name = name
         return self

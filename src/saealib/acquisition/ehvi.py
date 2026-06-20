@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+import numpy.typing as npt
 
 from saealib.acquisition.base import AcquisitionFunction
 from saealib.surrogate.prediction import SurrogatePrediction
@@ -42,7 +43,7 @@ class EHVIAcquisition(AcquisitionFunction):
     def __init__(
         self,
         n_samples: int = 256,
-        reference_point: np.ndarray | None = None,
+        reference_point: npt.ArrayLike | None = None,
         rng: np.random.Generator | None = None,
     ) -> None:
         self.n_samples = n_samples
@@ -121,6 +122,7 @@ class EHVIAcquisition(AcquisitionFunction):
                 "(prediction.std must not be None)."
             )
         pareto_f, ref_point, base_hv = reference
+        assert prediction.std is not None
         mu = prediction.value  # (n_cand, n_obj)
         sigma = prediction.std  # (n_cand, n_obj)
         n_cand, n_obj = mu.shape

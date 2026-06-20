@@ -118,10 +118,12 @@ class TestGPRSurrogate:
         gp = GPRSurrogate()
         gp.fit(X, y)
         pred = gp.predict(test_x)
+        assert pred.std is not None
         assert pred.std.shape == (5, 2)
 
     def test_std_nonnegative(self, fitted_gp, test_x) -> None:
         pred = fitted_gp.predict(test_x)
+        assert pred.std is not None
         assert np.all(pred.std >= 0.0)
 
     def test_provides_uncertainty_class_attribute(self) -> None:
@@ -151,12 +153,14 @@ class TestGPRSurrogate:
         gp.fit(X2, y2)
         pred = gp.predict(test_x)
         assert pred.value.shape == (5, 2)
+        assert pred.std is not None
         assert pred.std.shape == (5, 2)
 
     def test_models_are_cloned_per_objective(self, train_data_2obj) -> None:
         X, y = train_data_2obj
         gp = GPRSurrogate()
         gp.fit(X, y)
+        assert gp._models is not None
         assert gp._models[0] is not gp._models[1]
 
 
