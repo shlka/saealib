@@ -212,7 +212,7 @@ _TIER2_MAP: dict[str, str] = {
     "NNSurrogate": "saealib.surrogate",
     "NoveltyManager": "saealib.surrogate",
     "PerObjectiveSurrogate": "saealib.surrogate",
-    "RBFsurrogate": "saealib.surrogate",
+    "RBFSurrogate": "saealib.surrogate",
     "SklearnSurrogate": "saealib.surrogate",
     "SVMSurrogate": "saealib.surrogate",
     "SurrogatePrediction": "saealib.surrogate",
@@ -255,6 +255,10 @@ def __getattr__(name: str) -> object:
         from saealib.surrogate._deprecated import GPSurrogate
 
         return GPSurrogate
+    if name == "RBFsurrogate":
+        from saealib.surrogate.rbf import RBFSurrogate
+
+        return RBFSurrogate
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

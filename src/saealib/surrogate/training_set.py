@@ -406,7 +406,7 @@ class PairwiseComparisonSet(TrainingSet):
 
     .. warning::
         ``train_x`` has shape ``(n_pairs, 2 * dim)``, which is incompatible with
-        standard regression surrogates (e.g. ``RBFsurrogate``).  Use a
+        standard regression surrogates (e.g. ``RBFSurrogate``).  Use a
         pairwise-specific surrogate that expects concatenated feature pairs.
 
     Parameters

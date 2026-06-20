@@ -15,7 +15,7 @@ from saealib.problem import Problem
 from saealib.strategies.base import OptimizationStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.surrogate.manager import GlobalSurrogateManager
-from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
 
 DIM = 2
 N_OBJ = 1
@@ -109,7 +109,7 @@ def test_strategy_requires_surrogate_present():
     opt.set_strategy(IndividualBasedStrategy())
     opt.set_surrogate_manager(
         GlobalSurrogateManager(
-            RBFsurrogate(kernel=gaussian_kernel, dim=DIM),
+            RBFSurrogate(kernel=gaussian_kernel, dim=DIM),
             MeanPrediction(),
         )
     )
@@ -136,7 +136,7 @@ def test_acquisition_uncertainty_mismatch():
     opt = _fully_configured()
     opt.set_surrogate_manager(
         GlobalSurrogateManager(
-            RBFsurrogate(kernel=gaussian_kernel, dim=DIM),
+            RBFSurrogate(kernel=gaussian_kernel, dim=DIM),
             ExpectedImprovement(),
         )
     )
@@ -147,7 +147,7 @@ def test_mean_prediction_with_rbf_ok():
     opt = _fully_configured()
     opt.set_surrogate_manager(
         GlobalSurrogateManager(
-            RBFsurrogate(kernel=gaussian_kernel, dim=DIM),
+            RBFSurrogate(kernel=gaussian_kernel, dim=DIM),
             MeanPrediction(),
         )
     )

@@ -19,7 +19,7 @@ from saealib import (
     LHSInitializer,
     MutationUniform,
     Optimizer,
-    RBFsurrogate,
+    RBFSurrogate,
     RunStartEvent,
     SequentialSelection,
     Termination,
@@ -72,7 +72,7 @@ def _make_optimizer(problem: Problem | None = None) -> Optimizer:
                 survivor_selection=TruncationSelection(),
             )
         )
-        .set_surrogate(RBFsurrogate(gaussian_kernel, DIM), n_neighbors=5)
+        .set_surrogate(RBFSurrogate(gaussian_kernel, DIM), n_neighbors=5)
         .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.5))
         .set_termination(Termination(max_fe(50)))
     )
@@ -316,7 +316,7 @@ class TestInitialEvaluationEndEventMutation:
                     survivor_selection=TruncationSelection(),
                 )
             )
-            .set_surrogate(RBFsurrogate(gaussian_kernel, DIM), n_neighbors=5)
+            .set_surrogate(RBFSurrogate(gaussian_kernel, DIM), n_neighbors=5)
             .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.5))
             .set_termination(Termination(max_fe(50)))
         )

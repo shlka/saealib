@@ -2,7 +2,7 @@
 RBF surrogate model module.
 
 This module defines the Radial Basis Function (RBF) surrogate model.
-RBFsurrogate supports multi-objective problems by maintaining one
+RBFSurrogate supports multi-objective problems by maintaining one
 independent RBF model per objective (ensemble approach).
 """
 
@@ -46,7 +46,7 @@ class _RBFModel:
     Single-objective RBF interpolation model (internal use only).
 
     Holds all state for one objective's RBF fit. Used as a building
-    block by RBFsurrogate to support multi-objective problems.
+    block by RBFSurrogate to support multi-objective problems.
     """
 
     def __init__(self, kernel: Callable[..., Any], dim: int):
@@ -111,7 +111,7 @@ class _RBFModel:
         return np.asarray(preds).flatten()
 
 
-class RBFsurrogate(Surrogate):
+class RBFSurrogate(Surrogate):
     """
     Radial Basis Function (RBF) Interpolation surrogate model.
 
