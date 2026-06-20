@@ -137,6 +137,19 @@ include = ["tests/test_integration.py"]
 [tool.ty.overrides.rules]
 invalid-argument-type = "warn"
 
+[tool.coverage.run]
+branch = true
+source = ["saealib"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "@overload",
+    "raise NotImplementedError",
+    '\.\.\.',
+]
+
 [tool.ruff]
 target-version = "py310"
 line-length = 88
