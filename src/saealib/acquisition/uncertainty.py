@@ -74,6 +74,7 @@ class MaxUncertainty(AcquisitionFunction):
                 "(prediction.std must not be None)."
             )
         std = prediction.std  # (n_samples, n_obj)
+        assert std is not None
         if self.weights is not None:
             return std @ np.asarray(self.weights)
         return std.mean(axis=1)  # mean uncertainty across objectives

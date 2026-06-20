@@ -1028,12 +1028,12 @@ class EpsilonDominanceComparator(ParetoComparator):
     @property
     def eps(self) -> float | np.ndarray:
         """Box size(s) used by the underlying EpsilonDominator."""
-        return self._dominator.eps  # type: ignore[attr-defined]
+        return self._dominator.eps  # type: ignore
 
     @property
     def mode(self) -> str:
         """Quantization mode of the underlying EpsilonDominator."""
-        return self._dominator.mode  # type: ignore[attr-defined]
+        return self._dominator.mode  # type: ignore
 
 
 def _normalize_objectives(

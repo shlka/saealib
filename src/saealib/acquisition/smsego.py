@@ -118,6 +118,7 @@ class SMSEGOAcquisition(AcquisitionFunction):
                 "(prediction.std must not be None)."
             )
         pareto_f, ref_point, base_hv = reference
+        assert prediction.std is not None
         lcb = prediction.value - self.lam * prediction.std  # (n, n_obj)
         n = lcb.shape[0]
         hvi = np.zeros(n)

@@ -51,6 +51,7 @@ class Runner:
         Generator[OptimizationContext, None, None]
         """
         opt = self.optimizer
+        assert opt.initializer is not None
         ctx = opt.initializer.initialize(opt, opt.problem)
         yield from self.iterate_from(ctx)
 

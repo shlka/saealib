@@ -30,6 +30,7 @@ class Crossover(ABC):
 
     n_parents: int = 2
     n_children: int = 2
+    crossover_rate: float = 1.0
 
     @abstractmethod
     def crossover(

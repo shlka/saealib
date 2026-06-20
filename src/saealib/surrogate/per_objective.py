@@ -83,5 +83,5 @@ class PerObjectiveSurrogate(Surrogate):
         value = np.column_stack([p.value for p in preds])
         std = None
         if self.provides_uncertainty:
-            std = np.column_stack([p.std for p in preds])
+            std = np.column_stack([p.std for p in preds])  # type: ignore
         return SurrogatePrediction(value=value, std=std)

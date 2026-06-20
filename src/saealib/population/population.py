@@ -460,7 +460,7 @@ class Population(Generic[T_Individual]):
         """
         if key in self._data:
             return self.get_array(key)
-        return default
+        return default  # type: ignore
 
     def get_array(self, key: str) -> np.ndarray:
         """

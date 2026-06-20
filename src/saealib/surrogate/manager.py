@@ -453,7 +453,7 @@ class LocalSurrogateManager(SurrogateManager):
             if y_true_list:
                 y_true = np.stack(y_true_list)
                 y_pred = np.stack(y_pred_list)
-                metrics = self.accuracy_evaluator._compute_metrics(y_true, y_pred)  # type: ignore[union-attr]
+                metrics = self.accuracy_evaluator._compute_metrics(y_true, y_pred)
                 self.last_accuracy = SurrogateAccuracy(
                     metrics=metrics, n_samples=len(y_true_list)
                 )
@@ -517,7 +517,7 @@ class LocalSurrogateManager(SurrogateManager):
 
         y_true = np.stack(y_true_list)
         y_pred = np.stack(y_pred_list)
-        metrics = self.accuracy_evaluator._compute_metrics(y_true, y_pred)  # type: ignore[union-attr]
+        metrics = self.accuracy_evaluator._compute_metrics(y_true, y_pred)  # type: ignore
         self.last_accuracy = SurrogateAccuracy(metrics=metrics, n_samples=n)
 
 
