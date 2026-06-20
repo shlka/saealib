@@ -36,10 +36,10 @@ def logging_generation(event: GenerationStartEvent) -> None:
         cmp = ctx.comparator
         sorted_idxs = cmp.sort_population(ctx.archive)
         best_idx = sorted_idxs[0]
-        best_f = ctx.archive.get("f")[best_idx]
+        best_f = ctx.archive.get_array("f")[best_idx]
         logger.info(f"Generation {ctx.gen} started. fe: {ctx.fe}. Best f: {best_f}")
     else:
-        f = ctx.archive.get("f")
+        f = ctx.archive.get_array("f")
         _, fronts = non_dominated_sort(f)
         front1_idxs = fronts[0] if fronts else []
         front1_size = len(front1_idxs)
@@ -87,7 +87,7 @@ def logging_generation_hv(reference_point: np.ndarray):
 
     def _callback(event: GenerationStartEvent) -> None:
         ctx: OptimizationContext = event.ctx
-        f = ctx.archive.get("f")
+        f = ctx.archive.get_array("f")
         _, fronts = non_dominated_sort(f)
         if not fronts or not fronts[0]:
             return

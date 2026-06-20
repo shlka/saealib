@@ -200,7 +200,7 @@ class SurrogateManager(ABC):
         """
         new = copy.copy(self)
         prev = self.post_score
-        new.post_score = lambda scores, predictions, ctx=None: fn(  # type: ignore
+        new.post_score = lambda scores, predictions, ctx=None: fn(  # type: ignore  # lambda hook; slot type stricter than inferred lambda signature
             *prev(scores, predictions, ctx), ctx
         )
         return new
@@ -240,7 +240,7 @@ class SurrogateManager(ABC):
             prev(gen, archive, ctx)
             fn(gen, archive, ctx)
 
-        new.on_generation_end = _chained  # type: ignore
+        new.on_generation_end = _chained  # type: ignore  # chained callable; hook slot type narrower than Callable
         return new
 
 
@@ -517,7 +517,7 @@ class LocalSurrogateManager(SurrogateManager):
 
         y_true = np.stack(y_true_list)
         y_pred = np.stack(y_pred_list)
-        metrics = self.accuracy_evaluator._compute_metrics(y_true, y_pred)  # type: ignore
+        metrics = self.accuracy_evaluator._compute_metrics(y_true, y_pred)  # type: ignore  # caller guarantees non-None; ty doesn't narrow across method boundary
         self.last_accuracy = SurrogateAccuracy(metrics=metrics, n_samples=n)
 
 
@@ -653,7 +653,7 @@ class CompositeSurrogateManager(SurrogateManager):
                 first_predictions = preds
 
         combined = self.combine_fn(all_scores)
-        scores, predictions = self._sanitize_nan(combined, first_predictions)  # type: ignore
+        scores, predictions = self._sanitize_nan(combined, first_predictions)  # type: ignore  # _sanitize_nan return typed as Any; tuple unpacking safe at runtime
         return self.post_score(scores, predictions, ctx)
 
 

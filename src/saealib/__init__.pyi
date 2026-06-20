@@ -3,6 +3,8 @@
 Covers both Tier 1 (eager imports) and Tier 2 (lazy-loaded via __getattr__).
 """
 
+__all__: list[str]
+
 # ---------------------------------------------------------------------------
 # Tier 1
 # ---------------------------------------------------------------------------
@@ -80,6 +82,7 @@ from saealib.exceptions import SaealibError as SaealibError
 from saealib.exceptions import ValidationError as ValidationError
 from saealib.execution.evaluator import EvaluationResult as EvaluationResult
 from saealib.execution.evaluator import Evaluator as Evaluator
+from saealib.execution.evaluator import JoblibEvaluator as JoblibEvaluator
 from saealib.execution.evaluator import SerialEvaluator as SerialEvaluator
 from saealib.execution.initializer import Initializer as Initializer
 from saealib.execution.initializer import LHSInitializer as LHSInitializer

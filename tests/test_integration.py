@@ -90,7 +90,7 @@ def test_integration(seed: int):
 
     assert ctx is not None
 
-    best_f = ctx.archive.get("f").min()
+    best_f = ctx.archive.get_array("f").min()
     assert best_f < 1.0
 
 

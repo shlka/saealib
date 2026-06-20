@@ -256,4 +256,4 @@ class LGBMSurrogate(SklearnSurrogate):
                 "lightgbm is required for LGBMSurrogate. "
                 "Install it with: pip install saealib[lightgbm]"
             ) from e
-        super().__init__(LGBMRegressor(**kwargs))
+        super().__init__(LGBMRegressor(**kwargs))  # type: ignore  # LightGBM stubs mistype __init__ kwargs

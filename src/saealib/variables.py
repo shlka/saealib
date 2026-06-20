@@ -127,7 +127,7 @@ class IntegerVariable(Variable):
         np.ndarray
             Rounded and clipped values.
         """
-        return np.clip(np.round(x), self._lb, self._ub)  # type: ignore
+        return np.clip(np.round(x), self._lb, self._ub)  # type: ignore  # np.round(ArrayLike) returns Any in NumPy stubs
 
 
 class CategoricalVariable(Variable):
@@ -190,7 +190,7 @@ class CategoricalVariable(Variable):
         np.ndarray
             Rounded and clipped values in ``[0, n_categories - 1]``.
         """
-        return np.clip(np.round(x), 0, self._n - 1)  # type: ignore
+        return np.clip(np.round(x), 0, self._n - 1)  # type: ignore  # np.round(ArrayLike) returns Any in NumPy stubs
 
     def encode(self, category) -> int:
         """Return the integer index for *category*.

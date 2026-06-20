@@ -475,6 +475,7 @@ class TestPostEvaluationDispatch:
             .set_strategy(IndividualBasedStrategy(evaluation_ratio=evaluation_ratio))
             .set_termination(Termination(max_fe(100)))
         )
+        assert opt.initializer is not None
         ctx = opt.initializer.initialize(opt, problem)
         return ctx, opt
 

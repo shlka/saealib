@@ -28,7 +28,7 @@ def _acc(spearman: float, n: int = 10) -> SurrogateAccuracy:
 
 def test_abc_is_abstract() -> None:
     with pytest.raises(TypeError):
-        AccuracyBasedSurrogateSwitcher()  # type: ignore[abstract]
+        AccuracyBasedSurrogateSwitcher()  # type: ignore[abstract]  # intentional: testing abstract instantiation raises TypeError
 
 
 # ---------------------------------------------------------------------------

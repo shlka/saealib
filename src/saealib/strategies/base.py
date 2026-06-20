@@ -31,7 +31,7 @@ def assign_tell_f(
     f = pred.tell_f[0]
     if np.any(np.isnan(f)):
         order = ctx.problem.comparator.sort_population(ctx.population)
-        f = ctx.population.get("f")[order[-1]].copy()
+        f = ctx.population.get_array("f")[order[-1]].copy()
     individual.f = f
 
 

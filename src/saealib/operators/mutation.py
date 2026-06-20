@@ -90,7 +90,7 @@ class Mutation(ABC):
         """
         new = copy.copy(self)
         prev = self.post_mutation
-        new.post_mutation = lambda offspring, mutate_range, rng, ctx=None: fn(  # type: ignore
+        new.post_mutation = lambda offspring, mutate_range, rng, ctx=None: fn(  # type: ignore  # lambda hook; slot type stricter than inferred lambda signature
             prev(offspring, mutate_range, rng, ctx), mutate_range, rng, ctx
         )
         return new

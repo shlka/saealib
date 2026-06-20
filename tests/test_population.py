@@ -108,7 +108,7 @@ class TestPopulationAttribute:
     def test_frozen(self) -> None:
         attr = PopulationAttribute(name="x", dtype=np.float64)
         with pytest.raises(AttributeError):
-            attr.name = "y"  # type: ignore
+            attr.name = "y"  # type: ignore  # intentional: testing read-only attribute assignment raises
 
 
 # ===========================================================================
@@ -131,7 +131,7 @@ class TestPopulationInit:
     def test_schema_is_immutable(self, pop: Population) -> None:
         schema = pop.schema
         with pytest.raises(TypeError):
-            schema["new_key"] = None  # type: ignore
+            schema["new_key"] = None  # type: ignore  # intentional: testing invalid schema value raises
 
     def test_attrs_property(self, pop: Population) -> None:
         attrs = pop.attrs
@@ -471,7 +471,7 @@ class TestPopulationAccess:
 
     def test_bracket_invalid_type_raises(self, populated_pop: Population) -> None:
         with pytest.raises(TypeError):
-            _ = populated_pop["invalid"]
+            _ = populated_pop["invalid"]  # type: ignore  # intentional: testing invalid index type raises TypeError
 
 
 # ===========================================================================

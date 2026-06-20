@@ -171,14 +171,14 @@ class SingleObjectiveComparator(Comparator):
         np.ndarray
             Sorted population indices.
         """
-        f = population.get("f")
-        cv = population.get("cv")
+        f = population.get_array("f")
+        cv = population.get_array("cv")
         return self._sort(f, cv)
 
     def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
         """Compare individuals a and b; returns -1/0/1."""
-        f = population.get("f")
-        cv = population.get("cv")
+        f = population.get_array("f")
+        cv = population.get_array("cv")
         return self.compare(f[idx_a], cv[idx_a], f[idx_b], cv[idx_b])
 
     def compare(self, fa: np.ndarray, cv_a: float, fb: np.ndarray, cv_b: float) -> int:
@@ -270,16 +270,16 @@ class WeightedSumComparator(Comparator):
 
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort population by weighted sum of objectives, with feasibility first."""
-        f = population.get("f")  # (n_ind, n_obj)
-        cv = population.get("cv")  # (n_ind,)
+        f = population.get_array("f")  # (n_ind, n_obj)
+        cv = population.get_array("cv")  # (n_ind,)
         scalar = f @ self.direction  # (n_ind,) weighted sum per individual
         cv_key = np.where(cv > self.eps_cv, cv, 0)
         return np.lexsort((-scalar, cv_key))
 
     def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
         """Compare two individuals by weighted sum; -1=a better, 1=b better, 0=equal."""
-        f = population.get("f")
-        cv = population.get("cv")
+        f = population.get_array("f")
+        cv = population.get_array("cv")
         return self.compare(f[idx_a], float(cv[idx_a]), f[idx_b], float(cv[idx_b]))
 
     def compare(self, fa: np.ndarray, cv_a: float, fb: np.ndarray, cv_b: float) -> int:
@@ -371,8 +371,8 @@ class ParetoComparator(Comparator):
 
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort by Pareto front rank; infeasible individuals come last."""
-        f = population.get("f")
-        cv = population.get("cv")
+        f = population.get_array("f")
+        cv = population.get_array("cv")
         feasible = np.where(cv <= self.eps_cv)[0]
         infeasible = np.where(cv > self.eps_cv)[0]
 
@@ -392,8 +392,8 @@ class ParetoComparator(Comparator):
 
     def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
         """Compare via Pareto dominance; -1=a dominates, 1=b dominates, 0=equal."""
-        f = population.get("f")
-        cv = population.get("cv")
+        f = population.get_array("f")
+        cv = population.get_array("cv")
         return self.compare(f[idx_a], float(cv[idx_a]), f[idx_b], float(cv[idx_b]))
 
     def compare(self, fa: np.ndarray, cv_a: float, fb: np.ndarray, cv_b: float) -> int:
@@ -470,8 +470,8 @@ class NSGA2Comparator(ParetoComparator):
         if cached is not None:
             return cached
 
-        f = population.get("f")  # (n, n_obj)
-        cv = population.get("cv")  # (n,)
+        f = population.get_array("f")  # (n, n_obj)
+        cv = population.get_array("cv")  # (n,)
         feasible = np.where(cv <= self.eps_cv)[0]
         infeasible = np.where(cv > self.eps_cv)[0]
 
@@ -573,8 +573,8 @@ class SPEA2Comparator(Comparator):
         if cached is not None:
             return cached
 
-        f_arr = population.get("f")
-        cv_arr = population.get("cv")
+        f_arr = population.get_array("f")
+        cv_arr = population.get_array("cv")
         n = len(f_arr)
 
         fitness_all = np.full(n, np.inf)  # infeasible -> +inf (sort last)
@@ -607,7 +607,7 @@ class SPEA2Comparator(Comparator):
         np.ndarray
             Sorted population indices (int).
         """
-        cv_arr = population.get("cv")
+        cv_arr = population.get_array("cv")
         fitness_all = self._fitness(population)
 
         feasible = np.where(cv_arr <= self.eps_cv)[0]
@@ -649,7 +649,7 @@ class SPEA2Comparator(Comparator):
         int
             ``-1``, ``0``, or ``1``.
         """
-        cv_arr = population.get("cv")
+        cv_arr = population.get_array("cv")
         cv_a = float(cv_arr[idx_a])
         cv_b = float(cv_arr[idx_b])
 
@@ -810,13 +810,13 @@ class HypervolumeComparator(ParetoComparator):
         """
         cached = population.get_cache("hv_keys")
         if cached is not None:
-            return cached  # type: ignore[return-value]
+            return cached  # type: ignore[return-value]  # cached value is Any; runtime type matches return annotation
 
         # Lazy import avoids a circular dependency at module load time.
         from saealib.utils.indicators import hypervolume_contributions
 
-        f_arr = population.get("f")
-        cv_arr = population.get("cv")
+        f_arr = population.get_array("f")
+        cv_arr = population.get_array("cv")
         n = len(f_arr)
 
         rank_all = np.full(n, np.inf)  # infeasible → +inf (worst rank)
@@ -865,7 +865,7 @@ class HypervolumeComparator(ParetoComparator):
         np.ndarray
             Sorted population indices (int).
         """
-        cv_arr = population.get("cv")
+        cv_arr = population.get_array("cv")
         rank_all, contrib_all = self._keys(population)
 
         feasible = np.where(cv_arr <= self.eps_cv)[0]
@@ -906,7 +906,7 @@ class HypervolumeComparator(ParetoComparator):
         int
             ``-1``, ``0``, or ``1``.
         """
-        cv_arr = population.get("cv")
+        cv_arr = population.get_array("cv")
         cv_a = float(cv_arr[idx_a])
         cv_b = float(cv_arr[idx_b])
 
@@ -1028,12 +1028,12 @@ class EpsilonDominanceComparator(ParetoComparator):
     @property
     def eps(self) -> float | np.ndarray:
         """Box size(s) used by the underlying EpsilonDominator."""
-        return self._dominator.eps  # type: ignore
+        return self._dominator.eps  # type: ignore  # eps defined in concrete subclass; not visible through abstract base
 
     @property
     def mode(self) -> str:
         """Quantization mode of the underlying EpsilonDominator."""
-        return self._dominator.mode  # type: ignore
+        return self._dominator.mode  # type: ignore  # mode defined in concrete subclass; not visible through abstract base
 
 
 def _normalize_objectives(
@@ -1270,8 +1270,8 @@ class NSGA3Comparator(ParetoComparator):
         if cached is not None:
             return cached
 
-        f = population.get("f")
-        cv = population.get("cv")
+        f = population.get_array("f")
+        cv = population.get_array("cv")
         feasible = np.where(cv <= self.eps_cv)[0]
         infeasible = np.where(cv > self.eps_cv)[0]
 
@@ -1392,8 +1392,8 @@ class RNSGA2Comparator(ParetoComparator):
         if cached is not None:
             return cached
 
-        f = population.get("f")
-        cv = population.get("cv")
+        f = population.get_array("f")
+        cv = population.get_array("cv")
         feasible = np.where(cv <= self.eps_cv)[0]
         infeasible = np.where(cv > self.eps_cv)[0]
 

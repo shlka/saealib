@@ -144,6 +144,7 @@ class TestSklearnSurrogate:
         estimator = Ridge()
         s = SklearnSurrogate(estimator)
         s.fit(X, y)
+        assert s._models is not None
         assert s._models[0] is not s._models[1]
         assert s._models[0] is not estimator
 

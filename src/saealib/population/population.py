@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 T_Population = TypeVar("T_Population", bound="Population")
 T_Individual = TypeVar("T_Individual", bound="Individual")
+_T_Default = TypeVar("_T_Default")
 
 
 @dataclass(frozen=True)
@@ -447,7 +448,15 @@ class Population(Generic[T_Individual]):
             capacity = self._capacity
         return self.__class__(self.attrs, capacity)
 
-    def get(self, key: str, default=None) -> np.ndarray:
+    @overload
+    def get(self, key: str) -> np.ndarray | None: ...
+
+    @overload
+    def get(self, key: str, default: _T_Default) -> np.ndarray | _T_Default: ...
+
+    def get(
+        self, key: str, default: _T_Default | None = None
+    ) -> np.ndarray | _T_Default | None:
         """
         Get the array of a specific attribute.
 
@@ -455,12 +464,17 @@ class Population(Generic[T_Individual]):
         ----------
         key : str
             The attribute name to get the array for.
-        default : Any
-            Returned when the key is absent.
+        default : any, optional
+            Returned when the key is absent. Defaults to ``None``.
+
+        Returns
+        -------
+        np.ndarray or default
+            The attribute array if ``key`` exists, otherwise ``default``.
         """
         if key in self._data:
             return self.get_array(key)
-        return default  # type: ignore
+        return default
 
     def get_array(self, key: str) -> np.ndarray:
         """
@@ -529,7 +543,7 @@ class Population(Generic[T_Individual]):
         if isinstance(index, int):
             if index < 0 or index >= self._size:
                 raise IndexError("Index out of range")
-            return self.individual_class(self, index)  # type: ignore
+            return self.individual_class(self, index)  # type: ignore  # individual_class is generic; ty can't verify constructor signature
         elif isinstance(index, slice):
             return self.extract(index)
         else:

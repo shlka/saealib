@@ -93,7 +93,7 @@ class CheckpointCallback:
             p = self._base / f"{stem}.pkl"
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
-                self._optimizer.save_pickle(ctx, p)  # type: ignore
+                self._optimizer.save_pickle(ctx, p)  # type: ignore  # save_pickle typing incomplete in stubs
             self._saved.append(p)
 
     def _on_run_end(self, event: RunEndEvent) -> None:

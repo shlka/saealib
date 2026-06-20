@@ -114,7 +114,7 @@ class TestSurrogateAccuracy:
 
 def test_accuracy_evaluator_is_abstract():
     with pytest.raises(TypeError):
-        AccuracyEvaluator()  # type: ignore[abstract]
+        AccuracyEvaluator()  # type: ignore[abstract]  # intentional: testing abstract instantiation raises TypeError
 
 
 # ---------------------------------------------------------------------------

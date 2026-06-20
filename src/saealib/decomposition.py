@@ -373,10 +373,10 @@ class DecompositionComparator(Comparator):
         """
         cached = population.get_cache("decomp_scores")
         if cached is not None:
-            return cached  # type: ignore[return-value]
+            return cached  # type: ignore[return-value]  # cached value is Any; runtime type matches return annotation
 
-        f_arr = population.get("f")
-        cv_arr = population.get("cv")
+        f_arr = population.get_array("f")
+        cv_arr = population.get_array("cv")
         n = len(f_arr)
 
         scores = np.full(n, np.inf)
@@ -407,7 +407,7 @@ class DecompositionComparator(Comparator):
         np.ndarray
             Sorted population indices (int).
         """
-        cv_arr = population.get("cv")
+        cv_arr = population.get_array("cv")
         scores = self._scores(population)
 
         feasible = np.where(cv_arr <= self.eps_cv)[0]
@@ -441,7 +441,7 @@ class DecompositionComparator(Comparator):
         -------
         int
         """
-        cv_arr = population.get("cv")
+        cv_arr = population.get_array("cv")
         cv_a = float(cv_arr[idx_a])
         cv_b = float(cv_arr[idx_b])
 

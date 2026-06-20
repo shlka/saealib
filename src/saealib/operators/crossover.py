@@ -101,7 +101,7 @@ class Crossover(ABC):
         """
         new = copy.copy(self)
         prev = self.post_crossover
-        new.post_crossover = lambda offspring, parents, rng, ctx=None: fn(  # type: ignore
+        new.post_crossover = lambda offspring, parents, rng, ctx=None: fn(  # type: ignore  # lambda hook; slot type stricter than inferred lambda signature
             prev(offspring, parents, rng, ctx), parents, rng, ctx
         )
         return new
