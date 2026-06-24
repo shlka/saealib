@@ -42,7 +42,9 @@ class OptimizationStrategy(ABC):
     requires_surrogate: bool = False
 
     @abstractmethod
-    def step(self, ctx: OptimizationState, provider: ComponentProvider) -> None:
+    def step(
+        self, ctx: OptimizationState, provider: ComponentProvider
+    ) -> OptimizationState | None:
         """
         Perform one generation step: generate, score, evaluate, and update.
 
@@ -52,5 +54,12 @@ class OptimizationStrategy(ABC):
             Current optimization context.
         provider : ComponentProvider
             Component provider.
+
+        Returns
+        -------
+        OptimizationState or None
+            Updated state when the strategy uses the functional Pipeline API.
+            ``None`` for strategies that mutate *ctx* in-place (legacy style).
+            Callers must handle both: ``ctx = result if result is not None else ctx``.
         """
         pass

@@ -80,7 +80,9 @@ class Runner:
 
         while not opt.termination.is_terminated(ctx):
             opt.dispatch(GenerationStartEvent(ctx=ctx))
-            opt.strategy.step(ctx, opt)
+            result = opt.strategy.step(ctx, opt)
+            if result is not None:
+                ctx = result
             handler = ctx.problem.handler
             handler.on_generation_end(ctx.gen, ctx.population)
             ctx.comparator.eps_cv = handler.feasibility_threshold

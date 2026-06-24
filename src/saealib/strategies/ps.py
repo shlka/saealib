@@ -1,20 +1,44 @@
-"""
-Pre-selection strategy.
+"""Pre-selection strategy.
 
 Generates a large pool of candidates, screens them with the surrogate,
 and selects the top-k for true objective evaluation.
 """
 
-import numpy as np
+from __future__ import annotations
 
-from saealib.callback import PostEvaluationEvent, SurrogateEndEvent, SurrogateStartEvent
-from saealib.context import OptimizationState
-from saealib.optimizer import ComponentProvider
-from saealib.strategies.base import OptimizationStrategy, assign_tell_f
+from typing import TYPE_CHECKING
+
+from saealib.pipeline import Pipeline
+from saealib.stages import (
+    ArchiveUpdateStage,
+    AskStage,
+    CountGenerationStage,
+    SurrogateScoreStage,
+    TellStage,
+    TopKSelectionStage,
+    TrueEvaluationStage,
+)
+from saealib.strategies.base import OptimizationStrategy
+
+if TYPE_CHECKING:
+    from saealib.context import OptimizationState
+    from saealib.optimizer import ComponentProvider
 
 
 class PreSelectionStrategy(OptimizationStrategy):
-    """Pre-selection strategy."""
+    """Pre-selection strategy.
+
+    Generates ``n_candidates`` offspring, scores them with the surrogate,
+    and true-evaluates only the top ``n_select`` candidates.
+
+    Parameters
+    ----------
+    n_candidates : int
+        Number of candidates to generate and score with the surrogate.
+    n_select : int
+        Number of top-scoring candidates to evaluate with the true
+        objective function.
+    """
 
     requires_surrogate: bool = True
 
@@ -33,7 +57,9 @@ class PreSelectionStrategy(OptimizationStrategy):
         self.n_candidates = n_candidates
         self.n_select = n_select
 
-    def step(self, ctx: OptimizationState, provider: ComponentProvider) -> None:
+    def step(
+        self, ctx: OptimizationState, provider: ComponentProvider
+    ) -> OptimizationState:
         """
         Generate a large candidate pool, screen with surrogate, true-evaluate top-k.
 
@@ -43,40 +69,26 @@ class PreSelectionStrategy(OptimizationStrategy):
             Current optimization context.
         provider : ComponentProvider
             Component provider.
+
+        Returns
+        -------
+        OptimizationState
+            Updated state after one generation step.
         """
-        ctx.count_generation()
-
-        candidates = provider.algorithm.ask(
-            ctx, provider, n_offspring=self.n_candidates
+        cbmanager = getattr(provider, "cbmanager", None)
+        pipeline = Pipeline(
+            [
+                CountGenerationStage(),
+                AskStage(
+                    provider.algorithm,
+                    n_offspring=self.n_candidates,
+                    cbmanager=cbmanager,
+                ),
+                SurrogateScoreStage(provider.surrogate_manager, cbmanager=cbmanager),
+                TopKSelectionStage(k=self.n_select),
+                TrueEvaluationStage(provider.evaluator, cbmanager=cbmanager),
+                ArchiveUpdateStage(),
+                TellStage(provider.algorithm),
+            ]
         )
-
-        provider.dispatch(SurrogateStartEvent(ctx=ctx, offspring=candidates))
-
-        scores, predictions = provider.surrogate_manager.score_candidates(
-            candidates.x, ctx.archive, ctx
-        )
-        for i, pred in enumerate(predictions):
-            assign_tell_f(candidates[i], pred, ctx)
-
-        provider.dispatch(SurrogateEndEvent(ctx=ctx, offspring=candidates))
-
-        idx = np.argsort(-scores)
-        candidates = candidates.extract(idx)
-        n_eval = min(self.n_select, len(candidates))
-
-        result = provider.evaluator.evaluate_batch(candidates.x[:n_eval], ctx.problem)
-        for i in range(n_eval):
-            f_i, g_i, cv_i = result.f[i], result.g[i], float(result.cv[i])
-            candidates[i].f = f_i
-            candidates[i].g = g_i
-            candidates[i].cv = cv_i
-            ctx.archive.add({"x": candidates[i].x, "f": f_i, "g": g_i, "cv": cv_i})
-            ctx.pareto_archive.add(
-                {"x": candidates[i].x, "f": f_i, "g": g_i, "cv": cv_i}
-            )
-        ctx.count_fe(n_eval)
-
-        evaluated = candidates.extract(list(range(n_eval)))
-        provider.dispatch(PostEvaluationEvent(ctx=ctx, offspring=evaluated))
-
-        provider.algorithm.tell(ctx, provider, candidates)
+        return pipeline.execute(ctx)

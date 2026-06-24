@@ -28,7 +28,7 @@ class GenerationBasedStrategy(OptimizationStrategy):
     def __init__(self, gen_ctrl: int) -> None:
         self.gen_ctrl = gen_ctrl
 
-    def step(self, ctx: OptimizationState, provider: ComponentProvider) -> None:
+    def step(self, ctx: OptimizationState, provider: ComponentProvider) -> None:  # type: ignore[override]
         """Run ``gen_ctrl`` surrogate-only generations, then one true-evaluation step.
 
         Parameters

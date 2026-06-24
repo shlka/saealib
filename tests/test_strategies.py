@@ -238,18 +238,18 @@ class TestPreSelectionStrategy:
 
     def test_fe_equals_n_select(self):
         ctx, provider, strategy = self._setup(n_candidates=20, n_select=5)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.fe == 5
 
     def test_archive_grows_by_n_select(self):
         ctx, provider, strategy = self._setup(n_candidates=20, n_select=5)
         before = len(ctx.archive)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert len(ctx.archive) == before + 5
 
     def test_generation_count_incremented_once(self):
         ctx, provider, strategy = self._setup()
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.gen == 1
 
     def test_n_select_capped_by_n_candidates(self):
@@ -258,13 +258,13 @@ class TestPreSelectionStrategy:
         ctx, provider, strategy = self._setup(
             n_candidates=n_candidates, n_select=n_candidates + 10
         )
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.fe == n_candidates
 
     def test_fe_not_equal_n_candidates(self):
         # Surrogate screening saves real evaluations: fe << n_candidates
         ctx, provider, strategy = self._setup(n_candidates=30, n_select=3)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.fe == 3
         assert ctx.fe < 30
 
@@ -342,11 +342,11 @@ class TestPreSelectionStrategyWithDensityManager:
 
     def test_step_runs_without_error(self):
         ctx, provider, strategy = self._setup()
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
 
     def test_fe_equals_n_select(self):
         ctx, provider, strategy = self._setup(n_candidates=20, n_select=5)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.fe == 5
 
     def test_archive_grows_after_step(self):
@@ -354,10 +354,10 @@ class TestPreSelectionStrategyWithDensityManager:
         n_select = 5
         ctx, provider, strategy = self._setup(n_candidates=20, n_select=n_select)
         before = len(ctx.archive)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert before < len(ctx.archive) <= before + n_select
 
     def test_generation_count_incremented(self):
         ctx, provider, strategy = self._setup()
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.gen == 1

@@ -34,7 +34,7 @@ class IndividualBasedStrategy(OptimizationStrategy):
         """
         self.evaluation_ratio = evaluation_ratio
 
-    def step(self, ctx: OptimizationState, provider: ComponentProvider) -> None:
+    def step(self, ctx: OptimizationState, provider: ComponentProvider) -> None:  # type: ignore[override]
         """
         Score all offspring with the surrogate, then true-evaluate the top fraction.
 
