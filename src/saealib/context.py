@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from saealib.comparators import Comparator
     from saealib.population import Archive, ParetoArchive, Population
     from saealib.problem import Problem
+    from saealib.surrogate.prediction import SurrogatePrediction
 
 
 @dataclass
@@ -47,10 +48,24 @@ class OptimizationState:
         Number of function evaluations.
     gen : int
         Number of generations.
+    offspring : Population or None
+        Candidate population produced by the current generation's ask step.
+        Set by :class:`~saealib.stages.AskStage`; consumed and updated by
+        downstream stages.
+    evaluated_offspring : Population or None
+        Sub-population that has received true objective values.
+        Set by :class:`~saealib.stages.TrueEvaluationStage`; consumed by
+        :class:`~saealib.stages.ArchiveUpdateStage`.
+    scores : np.ndarray or None
+        Acquisition scores for ``offspring``, shape ``(n_candidates,)``.
+        Set by :class:`~saealib.stages.SurrogateScoreStage`.
+    predictions : list[SurrogatePrediction] or None
+        Per-candidate surrogate predictions for ``offspring``.
+        Set by :class:`~saealib.stages.SurrogateScoreStage`.
     data : dict[str, Any]
-        Ephemeral inter-stage data.  Pass values between stages via
-        ``state.replace(data={**state.data, "key": value})``.
-        Never mutate this dict in place.
+        User-extensible key-value store.  Custom stages and callbacks may
+        store arbitrary values here.  Use ``state.replace(data={**state.data,
+        "key": value})`` — never mutate this dict in place.
     """
 
     problem: Problem
@@ -63,6 +78,13 @@ class OptimizationState:
     fe: int = 0
     gen: int = 0
 
+    # Pipeline stage data (typed)
+    offspring: Population | None = None
+    evaluated_offspring: Population | None = None
+    scores: np.ndarray | None = None
+    predictions: list[SurrogatePrediction] | None = None
+
+    # User-extensible data
     data: dict[str, Any] = field(default_factory=dict)
 
     def replace(self, **kwargs: Any) -> OptimizationState:

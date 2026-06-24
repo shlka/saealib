@@ -39,6 +39,7 @@ from saealib.operators import (
     TruncationSelection,
 )
 from saealib.optimizer import Optimizer
+from saealib.pipeline import Pipeline, Stage
 from saealib.population import (
     Archive,
     Individual,
@@ -54,7 +55,16 @@ from saealib.problem import (
     Problem,
     StaticToleranceHandler,
 )
-from saealib.stage import Pipeline, Stage
+from saealib.stages import (
+    ArchiveUpdateStage,
+    AskStage,
+    CountGenerationStage,
+    SurrogateFitStage,
+    SurrogateScoreStage,
+    TellStage,
+    TopKSelectionStage,
+    TrueEvaluationStage,
+)
 from saealib.strategies import (
     GenerationBasedStrategy,
     IndividualBasedStrategy,
@@ -86,6 +96,8 @@ __all__ = [
     "AcquisitionFunction",
     "Algorithm",
     "Archive",
+    "ArchiveUpdateStage",
+    "AskStage",
     "CallbackManager",
     "CategoricalVariable",
     "CheckpointCallback",
@@ -93,6 +105,7 @@ __all__ = [
     "ConfigurationError",
     "ConstraintHandler",
     "ContinuousVariable",
+    "CountGenerationStage",
     "Crossover",
     "CrossoverSBX",
     "EpsilonConstraintHandler",
@@ -135,11 +148,16 @@ __all__ = [
     "Stage",
     "StaticToleranceHandler",
     "Surrogate",
+    "SurrogateFitStage",
     "SurrogateManager",
+    "SurrogateScoreStage",
     "SurvivorSelection",
+    "TellStage",
     "Termination",
     "TerminationCondition",
+    "TopKSelectionStage",
     "TournamentSelection",
+    "TrueEvaluationStage",
     "TruncationSelection",
     "ValidationError",
     "Variable",
