@@ -54,6 +54,7 @@ from saealib.problem import (
     Problem,
     StaticToleranceHandler,
 )
+from saealib.stage import Pipeline, Stage
 from saealib.strategies import (
     GenerationBasedStrategy,
     IndividualBasedStrategy,
@@ -119,6 +120,7 @@ __all__ = [
     "Optimizer",
     "ParentSelection",
     "ParetoArchive",
+    "Pipeline",
     "Population",
     "PopulationAttribute",
     "PostEvaluationEvent",
@@ -130,6 +132,7 @@ __all__ = [
     "SaealibError",
     "SerialEvaluator",
     "SingleObjectiveComparator",
+    "Stage",
     "StaticToleranceHandler",
     "Surrogate",
     "SurrogateManager",
