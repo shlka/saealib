@@ -15,7 +15,7 @@ import pytest
 
 from saealib.algorithms.pso import PSO
 from saealib.comparators import SingleObjectiveComparator
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -60,9 +60,9 @@ def _make_pso_ctx(
     rng_seed: int = 0,
     init_pbest: bool = False,
     init_velocity: bool = False,
-) -> OptimizationContext:
+) -> OptimizationState:
     """
-    Build an OptimizationContext with a PSO-capable population.
+    Build an OptimizationState with a PSO-capable population.
 
     Parameters
     ----------
@@ -106,7 +106,7 @@ def _make_pso_ctx(
     )
     arc = Archive(_PSO_ATTRS, init_capacity=5)
     pareto_arc = ParetoArchive(_PSO_ATTRS, init_capacity=5, direction=np.array([-1.0]))
-    return OptimizationContext(
+    return OptimizationState(
         problem=problem,
         population=pop,
         archive=arc,
@@ -116,7 +116,7 @@ def _make_pso_ctx(
 
 
 def _make_offspring(
-    ctx: OptimizationContext,
+    ctx: OptimizationState,
     f_new: np.ndarray,
     pbest_f: np.ndarray,
     pbest_x: np.ndarray | None = None,

@@ -13,14 +13,14 @@ from functools import partial, reduce
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from saealib.context import OptimizationContext
+    from saealib.context import OptimizationState
 
 
 #: Type alias for a plain termination condition function.
-#: A callable that takes an ``OptimizationContext`` and returns ``True``
+#: A callable that takes an ``OptimizationState`` and returns ``True``
 #: when the optimization should stop. Accepted everywhere a
 #: :class:`TerminationCondition` is, and wrapped automatically when composed.
-ConditionFunc = Callable[["OptimizationContext"], bool]
+ConditionFunc = Callable[["OptimizationState"], bool]
 
 
 class TerminationCondition:
@@ -40,7 +40,7 @@ class TerminationCondition:
 
     Parameters
     ----------
-    func : Callable[[OptimizationContext], bool]
+    func : Callable[[OptimizationState], bool]
         The underlying condition callable.
     name : str, optional
         Human-readable name used for ``repr`` and ``__qualname__``.
@@ -86,7 +86,7 @@ class TerminationCondition:
             return cond
         return TerminationCondition(cond)
 
-    def __call__(self, ctx: OptimizationContext) -> bool:
+    def __call__(self, ctx: OptimizationState) -> bool:
         """Evaluate the wrapped condition against ``ctx``."""
         return bool(self._func(ctx))
 
@@ -139,7 +139,7 @@ class Termination:
     Termination class to determine when to stop the optimization process.
 
     Accepts one or more callable conditions. Each condition receives
-    an ``OptimizationContext`` and returns ``True`` when the process
+    an ``OptimizationState`` and returns ``True`` when the process
     should terminate. The optimization stops when **any** condition
     evaluates to ``True``.
 
@@ -147,7 +147,7 @@ class Termination:
     ----------
     *conditions : ConditionFunc or TerminationCondition
         One or more callable conditions. Each must accept an
-        ``OptimizationContext`` and return ``bool``.
+        ``OptimizationState`` and return ``bool``.
 
     Raises
     ------
@@ -255,13 +255,13 @@ class Termination:
         """
         return cls(~TerminationCondition._coerce(condition))
 
-    def is_terminated(self, ctx: OptimizationContext) -> bool:
+    def is_terminated(self, ctx: OptimizationState) -> bool:
         """
         Check if the composed termination condition is met.
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             The current optimization context.
 
         Returns
@@ -275,11 +275,11 @@ class Termination:
 # Built-in termination condition factories
 
 
-def _fe_reached(ctx: OptimizationContext, value: int) -> bool:
+def _fe_reached(ctx: OptimizationState, value: int) -> bool:
     return ctx.fe >= value
 
 
-def _gen_reached(ctx: OptimizationContext, value: int) -> bool:
+def _gen_reached(ctx: OptimizationState, value: int) -> bool:
     return ctx.gen >= value
 
 
@@ -361,7 +361,7 @@ def f_target(value: float) -> TerminationCondition:
     >>> termination = Termination(max_fe(2000), f_target(1e-6))
     """
 
-    def _condition(ctx: OptimizationContext) -> bool:
+    def _condition(ctx: OptimizationState) -> bool:
         f = ctx.archive.get("f")
         if f is None or len(f) == 0:
             return False
@@ -406,7 +406,7 @@ def stalled(window: int, tol: float = 1e-8) -> TerminationCondition:
     """
     state: dict[str, float | None] = {"best": None, "stall_gen": None}
 
-    def _condition(ctx: OptimizationContext) -> bool:
+    def _condition(ctx: OptimizationState) -> bool:
         f = ctx.archive.get("f")
         if f is None or len(f) == 0:
             return False

@@ -34,7 +34,7 @@ from saealib.callback import (
     logging_generation_hv,
 )
 from saealib.comparators import SingleObjectiveComparator
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
@@ -102,11 +102,11 @@ class _MockProvider:
 
 def _make_ctx(
     archive: Archive | None = None, population: Population | None = None
-) -> OptimizationContext:
+) -> OptimizationState:
     problem = _make_problem()
     arc = archive if archive is not None else _make_archive()
     pop = population if population is not None else _make_population()
-    return OptimizationContext(
+    return OptimizationState(
         problem=problem,
         population=pop,
         archive=arc,
@@ -348,11 +348,11 @@ class TestEventClasses:
 class TestLoggingGenerationHandler:
     """Tests for logging_generation and logging_generation_hv."""
 
-    def _make_1obj_ctx(self) -> OptimizationContext:
+    def _make_1obj_ctx(self) -> OptimizationState:
         arc = _make_archive(20)
         return _make_ctx(archive=arc)
 
-    def _make_2obj_ctx(self) -> OptimizationContext:
+    def _make_2obj_ctx(self) -> OptimizationState:
         attrs = [
             PopulationAttribute(name="x", dtype=np.float64, shape=(DIM,)),
             PopulationAttribute(name="f", dtype=np.float64, shape=(2,)),
@@ -377,7 +377,7 @@ class TestLoggingGenerationHandler:
         pareto_arc = ParetoArchive(
             attrs, init_capacity=30, direction=np.array([-1.0, -1.0])
         )
-        return OptimizationContext(
+        return OptimizationState(
             problem=problem,
             population=pop,
             archive=arc,

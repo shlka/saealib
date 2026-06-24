@@ -12,7 +12,7 @@ import numpy as np
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
-    from saealib.context import OptimizationContext
+    from saealib.context import OptimizationState
 
 
 class Surrogate(ABC):
@@ -62,7 +62,7 @@ class Surrogate(ABC):
         self,
         train_x: np.ndarray,
         train_y: np.ndarray,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
     ) -> None:
         """Post-fit lifecycle hook; override to inject custom processing.
 
@@ -72,13 +72,13 @@ class Surrogate(ABC):
             Training input data used for this fit. shape: (n_samples, n_features)
         train_y : np.ndarray
             Training output data used for this fit. shape: (n_samples, n_obj)
-        ctx : OptimizationContext or None, optional
+        ctx : OptimizationState or None, optional
             Current optimization context.
         """
 
     def with_post_fit(
         self,
-        fn: Callable[[np.ndarray, np.ndarray, OptimizationContext | None], None],
+        fn: Callable[[np.ndarray, np.ndarray, OptimizationState | None], None],
     ) -> Surrogate:
         """Return a copy of this surrogate with ``fn`` appended to the post-fit hook.
 

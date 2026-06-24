@@ -8,7 +8,7 @@ by one generation of true objective evaluations.
 from __future__ import annotations
 
 from saealib.callback import PostEvaluationEvent, SurrogateEndEvent, SurrogateStartEvent
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.optimizer import ComponentProvider
 from saealib.strategies.base import OptimizationStrategy, assign_tell_f
 
@@ -28,12 +28,12 @@ class GenerationBasedStrategy(OptimizationStrategy):
     def __init__(self, gen_ctrl: int) -> None:
         self.gen_ctrl = gen_ctrl
 
-    def step(self, ctx: OptimizationContext, provider: ComponentProvider) -> None:
+    def step(self, ctx: OptimizationState, provider: ComponentProvider) -> None:
         """Run ``gen_ctrl`` surrogate-only generations, then one true-evaluation step.
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Current optimization context.
         provider : ComponentProvider
             Component provider.

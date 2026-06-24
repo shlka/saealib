@@ -11,7 +11,7 @@ from saealib.callback import (
     RunEndEvent,
     RunStartEvent,
 )
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 
 if TYPE_CHECKING:
     from saealib.optimizer import Optimizer
@@ -30,25 +30,25 @@ class Runner:
     def __init__(self, optimizer: Optimizer):
         self.optimizer = optimizer
 
-    def run(self) -> OptimizationContext:
+    def run(self) -> OptimizationState:
         """Run to completion and return the final context."""
         for ctx in self.iterate():
             pass
         return ctx
 
-    def run_from(self, ctx: OptimizationContext) -> OptimizationContext:
+    def run_from(self, ctx: OptimizationState) -> OptimizationState:
         """Resume from an existing context and run to completion."""
         for ctx in self.iterate_from(ctx):
             pass
         return ctx
 
-    def iterate(self) -> Generator[OptimizationContext, None, None]:
+    def iterate(self) -> Generator[OptimizationState, None, None]:
         """
         Iterate the optimization loop, yielding the context after each generation.
 
         Returns
         -------
-        Generator[OptimizationContext, None, None]
+        Generator[OptimizationState, None, None]
         """
         opt = self.optimizer
         assert opt.initializer is not None
@@ -56,8 +56,8 @@ class Runner:
         yield from self.iterate_from(ctx)
 
     def iterate_from(
-        self, ctx: OptimizationContext
-    ) -> Generator[OptimizationContext, None, None]:
+        self, ctx: OptimizationState
+    ) -> Generator[OptimizationState, None, None]:
         """
         Resume the optimization loop from an existing context.
 
@@ -65,12 +65,12 @@ class Runner:
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Previously saved (or freshly constructed) context to resume from.
 
         Returns
         -------
-        Generator[OptimizationContext, None, None]
+        Generator[OptimizationState, None, None]
         """
         opt = self.optimizer
         ctx.comparator.eps_cv = ctx.problem.handler.feasibility_threshold

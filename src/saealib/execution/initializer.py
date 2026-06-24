@@ -1,4 +1,4 @@
-"""Initializer: builds the initial Population, Archive, and OptimizationContext."""
+"""Initializer: builds the initial Population, Archive, and OptimizationState."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import numpy as np
 import scipy.stats
 
 from saealib.callback import InitialEvaluationEndEvent, InitialEvaluationStartEvent
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.optimizer import ComponentProvider
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
@@ -56,9 +56,9 @@ class Initializer(ABC):
         pareto_archive: ParetoArchive,
         population: Population,
         rng: np.random.Generator,
-    ) -> OptimizationContext:
+    ) -> OptimizationState:
         """
-        Create an OptimizationContext.
+        Create an OptimizationState.
 
         Parameters
         ----------
@@ -75,10 +75,10 @@ class Initializer(ABC):
 
         Returns
         -------
-        OptimizationContext
+        OptimizationState
             The optimization context.
         """
-        return OptimizationContext(
+        return OptimizationState(
             problem=problem,
             population=population,
             archive=archive,
@@ -91,11 +91,11 @@ class Initializer(ABC):
     @abstractmethod
     def initialize(
         self, provider: ComponentProvider, problem: Problem
-    ) -> OptimizationContext:
+    ) -> OptimizationState:
         """
         Initialize Population and Archive.
 
-        Use them to generate an OptimizationContext.
+        Use them to generate an OptimizationState.
 
         Parameters
         ----------
@@ -106,7 +106,7 @@ class Initializer(ABC):
 
         Returns
         -------
-        OptimizationContext
+        OptimizationState
             The optimization context.
         """
         pass
@@ -135,7 +135,7 @@ class LHSInitializer(Initializer):
 
     def initialize(
         self, provider: ComponentProvider, problem: Problem
-    ) -> OptimizationContext:
+    ) -> OptimizationState:
         """
         Initialize Population and Archive with LHS samples.
 
@@ -148,7 +148,7 @@ class LHSInitializer(Initializer):
 
         Returns
         -------
-        OptimizationContext
+        OptimizationState
         """
         provider_seed = getattr(provider, "seed", None)
         rng = np.random.default_rng(

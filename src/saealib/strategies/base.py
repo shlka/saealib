@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.optimizer import ComponentProvider
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 def assign_tell_f(
     individual: Individual,
     pred: SurrogatePrediction,
-    ctx: OptimizationContext,
+    ctx: OptimizationState,
 ) -> None:
     """Assign predicted objective to individual, replacing NaN with worst population f.
 
@@ -42,13 +42,13 @@ class OptimizationStrategy(ABC):
     requires_surrogate: bool = False
 
     @abstractmethod
-    def step(self, ctx: OptimizationContext, provider: ComponentProvider) -> None:
+    def step(self, ctx: OptimizationState, provider: ComponentProvider) -> None:
         """
         Perform one generation step: generate, score, evaluate, and update.
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Current optimization context.
         provider : ComponentProvider
             Component provider.

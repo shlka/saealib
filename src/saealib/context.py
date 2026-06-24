@@ -1,11 +1,12 @@
-"""OptimizationContext: shared mutable state passed through the optimization loop."""
+"""OptimizationState: immutable-style state passed through the optimization pipeline."""
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -16,11 +17,19 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class OptimizationContext:
+class OptimizationState:
     """
-    Optimization Context class.
+    Optimization State class.
 
-    Manage the state of the optimization process.
+    Holds the state of the optimization process.  Passed through the pipeline
+    as a value object; use :meth:`replace` to produce an updated copy rather
+    than mutating fields directly.
+
+    Controlled mutable exceptions (documented):
+
+    - ``archive`` is append-only; copying on every evaluation would incur
+      O(FE²) cost, so in-place appends are permitted.
+    - ``rng`` advances its internal state as a controlled side effect.
 
     Attributes
     ----------
@@ -29,17 +38,19 @@ class OptimizationContext:
     population : Population
         Population instance.
     archive : Archive
-        Archive instance.
+        Archive instance.  Append-only in-place mutation is permitted.
+    pareto_archive : ParetoArchive
+        Pareto archive instance.
     rng : np.random.Generator
-        Random number generator.
+        Random number generator.  Advances its state as a side effect.
     fe : int
         Number of function evaluations.
     gen : int
         Number of generations.
-    resumed : bool
-        True when this context was restored from a checkpoint.
-    metadata : dict
-        Metadata.
+    data : dict[str, Any]
+        Ephemeral inter-stage data.  Pass values between stages via
+        ``state.replace(data={**state.data, "key": value})``.
+        Never mutate this dict in place.
     """
 
     problem: Problem
@@ -51,9 +62,26 @@ class OptimizationContext:
 
     fe: int = 0
     gen: int = 0
-    resumed: bool = False
 
-    metadata: dict = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
+
+    def replace(self, **kwargs: Any) -> OptimizationState:
+        """Return a new state with the given fields replaced.
+
+        Parameters
+        ----------
+        **kwargs
+            Field names and new values.
+
+        Returns
+        -------
+        OptimizationState
+        """
+        return dataclasses.replace(self, **kwargs)
+
+    # ------------------------------------------------------------------
+    # Convenience properties (delegate to problem)
+    # ------------------------------------------------------------------
 
     @property
     def dim(self) -> int:
@@ -176,11 +204,11 @@ class OptimizationContext:
         np.savez(p, **save_dict)  # type: ignore  # np.savez **kwargs typed as ArrayLike; save_dict is dict[str, Any]
 
     @classmethod
-    def load(cls, path: str | Path, problem: Problem) -> OptimizationContext:
+    def load(cls, path: str | Path, problem: Problem) -> OptimizationState:
         """
-        Restore an OptimizationContext from an npz checkpoint file.
+        Restore an OptimizationState from an npz checkpoint file.
 
-        The returned context has ``resumed=True``.
+        The returned state has ``data["resumed"] = True``.
 
         Parameters
         ----------
@@ -191,7 +219,7 @@ class OptimizationContext:
 
         Returns
         -------
-        OptimizationContext
+        OptimizationState
         """
         from saealib.population import (
             Archive,
@@ -258,5 +286,12 @@ class OptimizationContext:
             rng=rng,
             fe=int(data["_fe"]),
             gen=int(data["_gen"]),
-            resumed=True,
+            data={"resumed": True},
         )
+
+
+# ---------------------------------------------------------------------------
+# Backward-compatibility alias
+# ---------------------------------------------------------------------------
+
+OptimizationContext = OptimizationState

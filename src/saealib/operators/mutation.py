@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from saealib.context import OptimizationContext
+    from saealib.context import OptimizationState
 
 
 class Mutation(ABC):
@@ -47,7 +47,7 @@ class Mutation(ABC):
         offspring: np.ndarray,
         mutate_range: tuple,
         rng: np.random.Generator,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
     ) -> np.ndarray:
         """Post-mutation lifecycle hook; override to inject custom processing.
 
@@ -59,7 +59,7 @@ class Mutation(ABC):
             Tuple of (lower_bound, upper_bound) used for mutation.
         rng : np.random.Generator
             Random number generator.
-        ctx : OptimizationContext or None, optional
+        ctx : OptimizationState or None, optional
             Current optimization context.
 
         Returns
@@ -72,7 +72,7 @@ class Mutation(ABC):
     def with_post(
         self,
         fn: Callable[
-            [np.ndarray, tuple, np.random.Generator, OptimizationContext | None],
+            [np.ndarray, tuple, np.random.Generator, OptimizationState | None],
             np.ndarray,
         ],
     ) -> Mutation:

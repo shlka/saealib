@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -54,7 +54,7 @@ class Algorithm(ABC):
     @abstractmethod
     def ask(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         provider: Dispatchable,
         n_offspring: int | None = None,
     ) -> Population:
@@ -63,7 +63,7 @@ class Algorithm(ABC):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Context instance.
         provider : Dispatchable
             Provider instance.
@@ -81,7 +81,7 @@ class Algorithm(ABC):
     @abstractmethod
     def tell(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         provider: Dispatchable,
         offspring: Population,
     ) -> None:
@@ -90,7 +90,7 @@ class Algorithm(ABC):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Context instance.
         provider : Dispatchable
             Provider instance.

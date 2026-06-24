@@ -8,7 +8,7 @@ and selects the top-k for true objective evaluation.
 import numpy as np
 
 from saealib.callback import PostEvaluationEvent, SurrogateEndEvent, SurrogateStartEvent
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.optimizer import ComponentProvider
 from saealib.strategies.base import OptimizationStrategy, assign_tell_f
 
@@ -33,13 +33,13 @@ class PreSelectionStrategy(OptimizationStrategy):
         self.n_candidates = n_candidates
         self.n_select = n_select
 
-    def step(self, ctx: OptimizationContext, provider: ComponentProvider) -> None:
+    def step(self, ctx: OptimizationState, provider: ComponentProvider) -> None:
         """
         Generate a large candidate pool, screen with surrogate, true-evaluate top-k.
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Current optimization context.
         provider : ComponentProvider
             Component provider.

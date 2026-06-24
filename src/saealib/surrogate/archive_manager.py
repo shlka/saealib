@@ -15,7 +15,7 @@ from saealib.surrogate.manager import SurrogateManager
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
-    from saealib.context import OptimizationContext
+    from saealib.context import OptimizationState
     from saealib.population import Archive
 
 
@@ -33,7 +33,7 @@ class ArchiveBasedManager(SurrogateManager):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
     ) -> np.ndarray:
         """
         Compute and return scores (higher = more promising).
@@ -54,7 +54,7 @@ class ArchiveBasedManager(SurrogateManager):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
         *,
         refit: bool = True,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
@@ -86,7 +86,7 @@ class NoveltyManager(ArchiveBasedManager):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
     ) -> np.ndarray:
         """Compute mean k-NN distance from each candidate to the archive."""
         if len(archive) == 0:
@@ -113,7 +113,7 @@ class DensityManager(ArchiveBasedManager):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
     ) -> np.ndarray:
         """Compute inverse ε-NN density for each candidate."""
         if len(archive) == 0:
@@ -137,7 +137,7 @@ class NichingManager(ArchiveBasedManager):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
     ) -> np.ndarray:
         """Compute min intra-candidate distance plus min archive distance."""
         n = len(candidates_x)

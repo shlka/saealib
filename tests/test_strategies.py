@@ -20,7 +20,7 @@ from saealib import (
 from saealib.acquisition import MeanPrediction
 from saealib.callback import CallbackManager
 from saealib.comparators import SingleObjectiveComparator
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.execution.evaluator import SerialEvaluator
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
@@ -66,7 +66,7 @@ def _make_problem() -> Problem:
     )
 
 
-def _make_ctx(n_pop: int = N_POP, rng_seed: int = 0) -> OptimizationContext:
+def _make_ctx(n_pop: int = N_POP, rng_seed: int = 0) -> OptimizationState:
     problem = _make_problem()
     rng = np.random.default_rng(rng_seed)
 
@@ -81,7 +81,7 @@ def _make_ctx(n_pop: int = N_POP, rng_seed: int = 0) -> OptimizationContext:
     pareto_arc = ParetoArchive(
         _ATTRS, init_capacity=n_pop + 5, direction=np.array([-1.0])
     )
-    return OptimizationContext(
+    return OptimizationState(
         problem=problem,
         population=pop,
         archive=arc,

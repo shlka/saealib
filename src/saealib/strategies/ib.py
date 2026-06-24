@@ -8,7 +8,7 @@ surrogate model. The top-evaluation_ratio fraction are selected for true evaluat
 import numpy as np
 
 from saealib.callback import PostEvaluationEvent, SurrogateEndEvent, SurrogateStartEvent
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.optimizer import ComponentProvider
 from saealib.strategies.base import OptimizationStrategy, assign_tell_f
 
@@ -34,13 +34,13 @@ class IndividualBasedStrategy(OptimizationStrategy):
         """
         self.evaluation_ratio = evaluation_ratio
 
-    def step(self, ctx: OptimizationContext, provider: ComponentProvider) -> None:
+    def step(self, ctx: OptimizationState, provider: ComponentProvider) -> None:
         """
         Score all offspring with the surrogate, then true-evaluate the top fraction.
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Current optimization context.
         provider : ComponentProvider
             Component provider.

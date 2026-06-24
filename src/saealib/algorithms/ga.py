@@ -9,7 +9,7 @@ import numpy as np
 
 from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent, PostCrossoverEvent, PostMutationEvent
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.exceptions import ConfigurationError
 from saealib.operators.crossover import CrossoverCategorical, CrossoverIntegerSBX
 from saealib.operators.mutation import MutationCategorical, MutationIntegerUniform
@@ -207,7 +207,7 @@ class GA(Algorithm):
 
     def ask(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         provider: Dispatchable,
         n_offspring: int | None = None,
     ) -> Population:
@@ -216,7 +216,7 @@ class GA(Algorithm):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Current optimization context.
         provider : Dispatchable
             Component provider.
@@ -293,7 +293,7 @@ class GA(Algorithm):
 
     def tell(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         provider: Dispatchable,
         offspring: Population,
     ):
@@ -302,7 +302,7 @@ class GA(Algorithm):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Current optimization context.
         provider : Dispatchable
             Component provider.

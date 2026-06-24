@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import pickle
 import warnings
 from collections.abc import Generator
@@ -17,7 +18,7 @@ from saealib.callback import (
     GenerationStartEvent,
     logging_generation,
 )
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.exceptions import ConfigurationError
 from saealib.execution.evaluator import Evaluator, SerialEvaluator
 from saealib.execution.runner import Runner
@@ -294,7 +295,7 @@ class Optimizer:
         checkpoint_interval: int = 1,
         checkpoint_format: str = "npz",
         checkpoint_delete_on_success: bool = False,
-    ) -> Generator[OptimizationContext, None, None]:
+    ) -> Generator[OptimizationState, None, None]:
         """
         Iterate the optimization process.
 
@@ -312,8 +313,8 @@ class Optimizer:
 
         Returns
         -------
-        Generator[OptimizationContext]
-            Generator of OptimizationContext.
+        Generator[OptimizationState]
+            Generator of OptimizationState.
         """
         issues = self.validate()
         if issues:
@@ -335,7 +336,7 @@ class Optimizer:
         checkpoint_interval: int = 1,
         checkpoint_format: str = "npz",
         checkpoint_delete_on_success: bool = False,
-    ) -> OptimizationContext:
+    ) -> OptimizationState:
         """
         Run the optimization process.
 
@@ -353,7 +354,7 @@ class Optimizer:
 
         Returns
         -------
-        OptimizationContext
+        OptimizationState
             The optimization context.
         """
         issues = self.validate()
@@ -371,8 +372,8 @@ class Optimizer:
         return Runner(self).run()
 
     def iterate_from(
-        self, ctx: OptimizationContext
-    ) -> Generator[OptimizationContext, None, None]:
+        self, ctx: OptimizationState
+    ) -> Generator[OptimizationState, None, None]:
         """
         Resume iteration from an existing context (e.g. loaded from checkpoint).
 
@@ -380,12 +381,12 @@ class Optimizer:
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Context to resume from.
 
         Returns
         -------
-        Generator[OptimizationContext, None, None]
+        Generator[OptimizationState, None, None]
         """
         issues = self.validate(require_initializer=False)
         if issues:
@@ -394,18 +395,18 @@ class Optimizer:
             )
         return Runner(self).iterate_from(ctx)
 
-    def run_from(self, ctx: OptimizationContext) -> OptimizationContext:
+    def run_from(self, ctx: OptimizationState) -> OptimizationState:
         """
         Resume and run to completion from an existing context.
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Context to resume from.
 
         Returns
         -------
-        OptimizationContext
+        OptimizationState
             The final optimization context.
         """
         issues = self.validate(require_initializer=False)
@@ -425,7 +426,7 @@ class Optimizer:
         "and library versions."
     )
 
-    def save_pickle(self, ctx: OptimizationContext, path: str | Path) -> None:
+    def save_pickle(self, ctx: OptimizationState, path: str | Path) -> None:
         """
         Save the optimizer and context together as a pickle checkpoint.
 
@@ -434,11 +435,11 @@ class Optimizer:
 
         .. warning::
             Pickle files are tied to specific Python and library versions.
-            Use :meth:`OptimizationContext.save` for a more portable format.
+            Use :meth:`OptimizationState.save` for a more portable format.
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Current optimization context.
         path : str or Path
             Destination file path.  The ``.pkl`` extension is added if absent.
@@ -451,7 +452,7 @@ class Optimizer:
             pickle.dump((self, ctx), f)
 
     @classmethod
-    def load_pickle(cls, path: str | Path) -> tuple[Optimizer, OptimizationContext]:
+    def load_pickle(cls, path: str | Path) -> tuple[Optimizer, OptimizationState]:
         """
         Load an optimizer and context from a pickle checkpoint.
 
@@ -469,7 +470,7 @@ class Optimizer:
 
         Returns
         -------
-        tuple[Optimizer, OptimizationContext]
+        tuple[Optimizer, OptimizationState]
         """
         warnings.warn(cls._PICKLE_WARNING, UserWarning, stacklevel=2)
         p = Path(path)
@@ -477,5 +478,5 @@ class Optimizer:
             p = p.with_suffix(".pkl")
         with open(p, "rb") as f:
             optimizer, ctx = pickle.load(f)
-        ctx.resumed = True
+        ctx = dataclasses.replace(ctx, data={**ctx.data, "resumed": True})
         return optimizer, ctx
