@@ -214,6 +214,14 @@ class GA(Algorithm):
             r"$\mathcal{Q} \leftarrow \mathrm{mutate}(\mathcal{Q})$",
         ]
 
+    @property
+    def tell_notation(self) -> list[str]:
+        r"""LaTeX notation lines for GA.tell(): $(\mu + \lambda)$ survivor selection."""
+        return [
+            r"$P \leftarrow \mathrm{select}_{(\mu+\lambda)}"
+            r"(P \cup \mathcal{Q},\, \mu)$",
+        ]
+
     def ask(
         self,
         ctx: OptimizationState,

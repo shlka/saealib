@@ -115,6 +115,14 @@ class PSO(Algorithm):
             r"$x \leftarrow x + v$",
         ]
 
+    @property
+    def tell_notation(self) -> list[str]:
+        """LaTeX notation lines for PSO.tell(): pbest update."""
+        return [
+            r"$p_{best,i} \leftarrow x_i$ if $f(x_i) \prec f(p_{best,i})$",
+            r"$P \leftarrow \mathcal{Q}$",
+        ]
+
     def ask(
         self,
         ctx: OptimizationState,

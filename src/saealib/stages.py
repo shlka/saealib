@@ -389,6 +389,18 @@ class TellStage(Stage):
         self._algorithm = algorithm
         self._proxy = _DispatchProxy()
 
+    def to_pseudocode(self, *, expand: bool = False, indent: int = 0) -> str:
+        r"""Expand into per-step lines via ``Algorithm.tell_notation``."""
+        prefix = "  " * indent
+        tell_notation: list[str] | None = getattr(
+            self._algorithm, "tell_notation", None
+        )
+        if expand and tell_notation:
+            label = self.label or self.name
+            lines = "\n".join(f"{prefix}  \\State {n}" for n in tell_notation)
+            return f"{prefix}\\Comment{{{label}}}\n{lines}"
+        return f"{prefix}\\State {self.notation}"
+
     def execute(self, state: OptimizationState) -> OptimizationState:
         self._algorithm.tell(state, self._proxy, state.offspring)
         return state

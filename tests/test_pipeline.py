@@ -260,7 +260,9 @@ class TestSurrogateOnlyLoopPseudocode:
         assert r"\mathrm{crossover}" in out
         assert r"\mathrm{mutate}" in out
         assert r"\text{score}" in out
-        assert r"\text{tell}" in out
+        # TellStage with GA expands via tell_notation
+        assert r"Update population" in out
+        assert r"(\mu+\lambda)" in out
 
     def test_gen_ctrl_zero_has_no_for_block(self):
         out = self._make(gen_ctrl=0).to_pseudocode(expand=True)

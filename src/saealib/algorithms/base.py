@@ -98,6 +98,17 @@ class Algorithm(ABC):
         """
         pass
 
+    @property
+    def tell_notation(self) -> list[str] | None:
+        r"""LaTeX notation lines describing the internal steps of :meth:`tell`.
+
+        Returns ``None`` by default; :class:`~saealib.stages.TellStage` then
+        renders a single collapsed ``\State`` line.  Override to return a list
+        of LaTeX math strings so that ``TellStage.to_pseudocode(expand=True)``
+        expands them inside a ``\Comment`` block.
+        """
+        return None
+
     @abstractmethod
     def tell(
         self,
