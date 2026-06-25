@@ -28,6 +28,7 @@ if TYPE_CHECKING:
 
 
 def _n_eval_by_ratio(state: OptimizationState, *, ratio: float) -> int:
+    assert state.offspring is not None
     return max(1, int(ratio * len(state.offspring)))
 
 

@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from saealib.algorithms.base import Algorithm
-    from saealib.callback import CallbackManager
+    from saealib.callback import CallbackManager, Event
     from saealib.context import OptimizationState
     from saealib.execution.evaluator import Evaluator
     from saealib.execution.initializer import Initializer
@@ -56,9 +56,9 @@ class _DispatchProxy:
     def __init__(self, cbmanager: CallbackManager | None = None) -> None:
         self._cbmanager = cbmanager
 
-    def dispatch(self, event: object) -> None:
+    def dispatch(self, event: Event) -> None:
         if self._cbmanager is not None:
-            self._cbmanager.dispatch(event)  # type: ignore[arg-type]
+            self._cbmanager.dispatch(event)
 
     @property
     def algorithm(self) -> None:
@@ -190,6 +190,7 @@ class SurrogateScoreStage(Stage):
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         candidates = state.offspring
+        assert candidates is not None
 
         if self._cbmanager is not None:
             self._cbmanager.dispatch(
@@ -257,6 +258,8 @@ class TopKSelectionStage(Stage):
         self._k = k
 
     def execute(self, state: OptimizationState) -> OptimizationState:
+        assert state.offspring is not None
+        assert state.scores is not None
         idx = np.argsort(-state.scores)
         selected = state.offspring.extract(idx[: self._k])
         return state.replace(offspring=selected)
@@ -278,6 +281,8 @@ class SortByScoreStage(Stage):
     notation = r"$\mathcal{Q} \leftarrow \text{sort\_desc}(\mathcal{Q},\,\mathbf{s})$"
 
     def execute(self, state: OptimizationState) -> OptimizationState:
+        assert state.offspring is not None
+        assert state.scores is not None
         idx = np.argsort(-state.scores)
         return state.replace(
             offspring=state.offspring.extract(idx),
@@ -323,12 +328,13 @@ class TrueEvaluationStage(Stage):
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         candidates = state.offspring
-        if callable(self._n_eval):
-            n = self._n_eval(state)
-        elif self._n_eval is not None:
+        assert candidates is not None
+        if self._n_eval is None:
+            n = len(candidates)
+        elif isinstance(self._n_eval, int):
             n = self._n_eval
         else:
-            n = len(candidates)
+            n = self._n_eval(state)
         n = min(n, len(candidates))
 
         result = self._evaluator.evaluate_batch(candidates.x[:n], state.problem)
@@ -365,6 +371,7 @@ class ArchiveUpdateStage(Stage):
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         evaluated = state.evaluated_offspring
+        assert evaluated is not None
         for i in range(len(evaluated)):
             ind = evaluated[i]
             entry = {"x": ind.x, "f": ind.f, "g": ind.g, "cv": float(ind.cv)}
@@ -408,6 +415,7 @@ class TellStage(Stage):
         return f"{prefix}\\State {self.notation}"
 
     def execute(self, state: OptimizationState) -> OptimizationState:
+        assert state.offspring is not None
         self._algorithm.tell(state, self._proxy, state.offspring)
         return state
 
@@ -453,7 +461,7 @@ class SurrogateOnlyLoopStage(Stage):
         self._gen_ctrl = gen_ctrl
         self._sm = surrogate_manager
         if gen_ctrl > 0:
-            self._inner: Pipeline | None = Pipeline(
+            self._inner = Pipeline(
                 [
                     CountGenerationStage(),
                     AskStage(algorithm, cbmanager=cbmanager),
@@ -465,7 +473,7 @@ class SurrogateOnlyLoopStage(Stage):
             )
             self.stages = self._inner.stages
         else:
-            self._inner = None
+            self._inner = Pipeline([])
 
     def to_pseudocode(self, *, expand: bool = False, indent: int = 0) -> str:
         r"""Render as a ``\For`` loop block when *expand* is True."""
@@ -485,7 +493,7 @@ class SurrogateOnlyLoopStage(Stage):
         if self._gen_ctrl > 0:
             self._sm.fit(state.archive, state)
             for _ in range(self._gen_ctrl):
-                state = self._inner.execute(state)  # type: ignore[union-attr]
+                state = self._inner.execute(state)
         return state
 
 
