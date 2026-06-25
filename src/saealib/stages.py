@@ -434,8 +434,24 @@ class SurrogateOnlyLoopStage(Stage):
                     TellStage(algorithm),
                 ]
             )
+            self.stages = self._inner.stages
         else:
             self._inner = None
+            self.stages = []
+
+    def to_pseudocode(self, *, expand: bool = False, indent: int = 0) -> str:
+        r"""Render as a ``\For`` loop block when *expand* is True."""
+        prefix = "  " * indent
+        if expand and self.stages:
+            inner_lines = "\n".join(
+                s.to_pseudocode(expand=True, indent=indent + 1) for s in self.stages
+            )
+            return (
+                f"{prefix}\\For{{$i = 1, \\ldots, gen\\_ctrl$}}\n"
+                f"{inner_lines}\n"
+                f"{prefix}\\EndFor"
+            )
+        return f"{prefix}\\State {self.notation}"
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         if self._gen_ctrl > 0:
