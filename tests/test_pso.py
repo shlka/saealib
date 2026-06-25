@@ -364,3 +364,28 @@ class TestPSOLeaderSelection:
         pbest_cv = ctx.population.get_array("pbest_cv").copy()
         leader = pso._select_leader(ctx, pbest_x, pbest_f, pbest_cv)
         assert leader.shape == (DIM,)
+
+
+# ---------------------------------------------------------------------------
+# PSO class-level properties
+# ---------------------------------------------------------------------------
+
+
+class TestPSOProperties:
+    def test_population_class(self):
+        assert PSO().population_class is Population
+
+    def test_archive_class(self):
+        assert PSO().archive_class is Archive
+
+    def test_ask_notation_is_list_of_strings(self):
+        n = PSO().ask_notation
+        assert isinstance(n, list)
+        assert len(n) == 2
+        assert all(isinstance(s, str) for s in n)
+
+    def test_tell_notation_is_list_of_strings(self):
+        n = PSO().tell_notation
+        assert isinstance(n, list)
+        assert len(n) == 2
+        assert all(isinstance(s, str) for s in n)

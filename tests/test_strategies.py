@@ -184,6 +184,13 @@ class TestGenerationBasedStrategy:
         assert ctx.gen == 1
         assert ctx.fe == len(ctx.population)
 
+    def test_pipeline_cached_after_first_step(self):
+        ctx, provider, strategy = self._setup(gen_ctrl=3)
+        ctx = strategy.step(ctx, provider)
+        pipeline_ref = strategy.pipeline
+        strategy.step(ctx, provider)
+        assert strategy.pipeline is pipeline_ref
+
     def test_surrogate_fit_called_once_per_step(self):
         """fit() must be called exactly once per step(), not once per surrogate gen."""
         fit_count = [0]

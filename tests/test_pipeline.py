@@ -10,8 +10,10 @@ from saealib import (
     SequentialSelection,
     TruncationSelection,
 )
+from saealib.algorithms.base import Algorithm
 from saealib.execution.evaluator import SerialEvaluator
 from saealib.pipeline import Pipeline
+from saealib.population import Archive, Population
 from saealib.stages import (
     ArchiveUpdateStage,
     AskStage,
@@ -23,6 +25,28 @@ from saealib.stages import (
     TrueEvaluationStage,
 )
 from saealib.surrogate.prediction import SurrogatePrediction
+
+
+class _MinimalAlgo(Algorithm):
+    """Concrete Algorithm that does not override ask_notation / tell_notation."""
+
+    def get_required_attrs(self, problem):
+        return []
+
+    @property
+    def population_class(self):
+        return Population
+
+    @property
+    def archive_class(self):
+        return Archive
+
+    def ask(self, ctx, provider, n_offspring=None):
+        return ctx.population
+
+    def tell(self, ctx, provider, offspring):
+        pass
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -168,6 +192,17 @@ class TestLeafStagePseudocode:
         stage = CountGenerationStage()
         out2 = stage.to_pseudocode(indent=2)
         assert out2.startswith("    ")
+
+    def test_notation_kwarg_overrides_class_attr(self):
+        stage = CountGenerationStage(notation=r"$gen \mathrel{+}= 1$")
+        assert r"$gen \mathrel{+}= 1$" in stage.to_pseudocode()
+
+    def test_expand_true_with_manual_substages_emits_comment(self):
+        outer = CountGenerationStage()
+        outer.stages = [CountGenerationStage()]
+        out = outer.to_pseudocode(expand=True)
+        assert r"\Comment" in out
+        assert r"gen \leftarrow gen + 1" in out
 
 
 # ---------------------------------------------------------------------------
@@ -379,6 +414,16 @@ class TestPipelineFind:
         stage = p.find("ask", recursive=True)
         assert stage.name == "ask"
 
+    def test_find_recursive_inner_miss_then_hit(self):
+        # inner1 has sub-stages but does not contain "ask"
+        # inner2 has "ask" — _find_recursive returns None for inner1, then hits inner2
+        p = _make_provider()
+        inner1 = Pipeline([CountGenerationStage()], name="loop1")
+        inner2 = Pipeline([AskStage(p.algorithm)], name="loop2")
+        outer = Pipeline([inner1, inner2])
+        stage = outer.find("ask", recursive=True)
+        assert stage.name == "ask"
+
 
 # ---------------------------------------------------------------------------
 # Pipeline.__len__ / __iter__ / __repr__
@@ -421,3 +466,35 @@ class TestPipelineDunderMethods:
         r = repr(p)
         assert "CountGenerationStage" in r
         assert "AskStage" in r
+
+
+# ---------------------------------------------------------------------------
+# TellStage.to_pseudocode
+# ---------------------------------------------------------------------------
+
+
+class TestTellStagePseudocode:
+    def test_expand_false_returns_single_state_line(self):
+        stage = TellStage(_make_provider().algorithm)
+        out = stage.to_pseudocode(expand=False)
+        assert r"\State" in out
+        assert "\n" not in out
+
+    def test_expand_true_with_algorithm_that_has_no_tell_notation(self):
+        stage = TellStage(_MinimalAlgo())
+        out = stage.to_pseudocode(expand=True)
+        assert r"\State" in out
+        assert "\n" not in out
+
+
+# ---------------------------------------------------------------------------
+# Algorithm.ask_notation / tell_notation defaults
+# ---------------------------------------------------------------------------
+
+
+class TestAlgorithmNotationDefaults:
+    def test_ask_notation_default_is_none(self):
+        assert _MinimalAlgo().ask_notation is None
+
+    def test_tell_notation_default_is_none(self):
+        assert _MinimalAlgo().tell_notation is None
