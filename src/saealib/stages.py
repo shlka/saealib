@@ -39,6 +39,9 @@ if TYPE_CHECKING:
     from saealib.callback import CallbackManager
     from saealib.context import OptimizationState
     from saealib.execution.evaluator import Evaluator
+    from saealib.execution.initializer import Initializer
+    from saealib.optimizer import ComponentProvider
+    from saealib.problem import Problem
     from saealib.surrogate.manager import SurrogateManager
 
 
@@ -440,3 +443,45 @@ class SurrogateOnlyLoopStage(Stage):
             for _ in range(self._gen_ctrl):
                 state = self._inner.execute(state)  # type: ignore[union-attr]
         return state
+
+
+class InitializationStage(Stage):
+    """Wrap an :class:`~saealib.execution.initializer.Initializer` as a Stage.
+
+    Delegates to ``initializer.initialize(provider, problem)`` and returns the
+    resulting :class:`~saealib.context.OptimizationState`.  The *state*
+    argument passed to :meth:`execute` is **ignored** — initialization always
+    produces a fresh state from scratch.
+
+    This stage is intended for use at the head of a user-defined Pipeline when
+    the initializer itself should participate in the pipeline abstraction (e.g.
+    to build custom init-then-optimize flows or to inspect / swap the
+    initialization step via ``Pipeline["initialization"]``).
+
+    Parameters
+    ----------
+    initializer : Initializer
+        The concrete initializer (e.g.
+        :class:`~saealib.execution.initializer.LHSInitializer`).
+    provider : ComponentProvider
+        Component provider forwarded to ``Initializer.initialize()``.
+    problem : Problem
+        The optimization problem.
+    """
+
+    name = "initialization"
+    label = "Initialize population"
+    notation = r"$\mathcal{A}_0,\,P_0 \leftarrow \mathrm{init}(n_{\mathrm{init}})$"
+
+    def __init__(
+        self,
+        initializer: Initializer,
+        provider: ComponentProvider,
+        problem: Problem,
+    ) -> None:
+        self._initializer = initializer
+        self._provider = provider
+        self._problem = problem
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        return self._initializer.initialize(self._provider, self._problem)
