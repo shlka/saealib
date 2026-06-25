@@ -45,9 +45,9 @@ class ArchiveMixin:
         rtol: float = 0.0,
         **kwargs,
     ):
-        super().__init__(attrs=attrs, init_capacity=init_capacity)
+        super().__init__(attrs=attrs, init_capacity=init_capacity)  # ty: ignore[unknown-argument]
 
-        if key_attr not in self.schema:
+        if key_attr not in self.schema:  # ty: ignore[unresolved-attribute]
             raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
         self._duplicate_indices: list[int] = []
         self.key_attr = key_attr
@@ -94,8 +94,8 @@ class ArchiveMixin:
             self._duplicate_indices.append(idx)
             return idx
         else:
-            new_idx = self._size
-            super().append(element, **kwargs)
+            new_idx = self._size  # ty: ignore[unresolved-attribute]
+            super().append(element, **kwargs)  # ty: ignore[unresolved-attribute]
             self._duplicate_indices.append(new_idx)
             self._kdtree = None
             return new_idx
@@ -114,11 +114,11 @@ class ArchiveMixin:
         int | None
             Duplicate index. Return None if it does not exist.
         """
-        if self._size == 0:
+        if self._size == 0:  # ty: ignore[unresolved-attribute]
             return None
         # TODO: Handling cases where the element is not a np.ndarray
-        key_attr_arr = self.get_array(self.key_attr)
-        element = np.array(element, dtype=self._schema[self.key_attr].dtype)
+        key_attr_arr = self.get_array(self.key_attr)  # ty: ignore[unresolved-attribute]
+        element = np.array(element, dtype=self._schema[self.key_attr].dtype)  # ty: ignore[unresolved-attribute]
         if element.ndim == 0:
             element = element.reshape(1)
         if element.shape != key_attr_arr.shape[1:]:
@@ -141,23 +141,24 @@ class ArchiveMixin:
         """
         all_length = len(self._duplicate_indices)
         dup_pop = Population(
-            attrs=list(self._schema.values()), init_capacity=all_length
+            attrs=list(self._schema.values()),  # ty: ignore[unresolved-attribute]
+            init_capacity=all_length,
         )
         indices = np.array(self._duplicate_indices)
-        for k, v in self._data.items():
+        for k, v in self._data.items():  # ty: ignore[unresolved-attribute]
             dup_pop._data[k][:all_length] = v[indices]
         dup_pop._size = all_length
-        dup_pop._structure_version = self._structure_version
+        dup_pop._structure_version = self._structure_version  # ty: ignore[unresolved-attribute]
         return dup_pop
 
     def delete(self, index):
         """Delete element(s) and invalidate the kNN cache."""
-        super().delete(index)
+        super().delete(index)  # ty: ignore[unresolved-attribute]
         self._kdtree = None
 
     def _ensure_kdtree(self) -> None:
         if self._kdtree is None:
-            self._kdtree = cKDTree(self.get_array(self.key_attr))
+            self._kdtree = cKDTree(self.get_array(self.key_attr))  # ty: ignore[unresolved-attribute]
 
     def get_knn(self, x: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
         """
@@ -175,11 +176,11 @@ class ArchiveMixin:
         tuple[np.ndarray, np.ndarray]
             Indices and distances of the k-nearest neighbors.
         """
-        if self._size == 0:
+        if self._size == 0:  # ty: ignore[unresolved-attribute]
             return np.array([]), np.array([])
         self._ensure_kdtree()
-        k = min(k, self._size)
-        dist, idx = self._kdtree.query(x, k=k)
+        k = min(k, self._size)  # ty: ignore[unresolved-attribute]
+        dist, idx = self._kdtree.query(x, k=k)  # ty: ignore[unresolved-attribute]
         return np.atleast_1d(idx), np.atleast_1d(dist)
 
 
@@ -228,7 +229,7 @@ class ParetoMixin:
         eps_cv: float = 0.0,
         **kwargs,
     ):
-        super().__init__(attrs=attrs, init_capacity=init_capacity, **kwargs)
+        super().__init__(attrs=attrs, init_capacity=init_capacity, **kwargs)  # ty: ignore[unknown-argument]
 
         # Import here to avoid circular imports at module load time.
         from saealib.comparators import ParetoDominator
@@ -352,19 +353,19 @@ class ParetoMixin:
         f_new, cv_new = self._extract_fv(element, kwargs)
 
         # Check whether any existing solution dominates the new one.
-        if self._size > 0:
-            f_arr = self.get_array("f") if "f" in self._schema else None
-            cv_arr = self.get_array("cv") if "cv" in self._schema else None
+        if self._size > 0:  # ty: ignore[unresolved-attribute]
+            f_arr = self.get_array("f") if "f" in self._schema else None  # ty: ignore[unresolved-attribute]
+            cv_arr = self.get_array("cv") if "cv" in self._schema else None  # ty: ignore[unresolved-attribute]
 
-            for i in range(self._size):
+            for i in range(self._size):  # ty: ignore[unresolved-attribute]
                 f_ex = f_arr[i] if f_arr is not None else None
                 cv_ex = float(cv_arr[i]) if cv_arr is not None else 0.0
                 if self._existing_dominates_new(f_new, cv_new, f_ex, cv_ex):
                     return -1
 
             # Collect indices of existing solutions dominated by the new one.
-            dominated_mask = np.zeros(self._size, dtype=bool)
-            for i in range(self._size):
+            dominated_mask = np.zeros(self._size, dtype=bool)  # ty: ignore[unresolved-attribute]
+            for i in range(self._size):  # ty: ignore[unresolved-attribute]
                 f_ex = f_arr[i] if f_arr is not None else None
                 cv_ex = float(cv_arr[i]) if cv_arr is not None else 0.0
                 if self._new_dominates_existing(f_new, cv_new, f_ex, cv_ex):
@@ -373,11 +374,11 @@ class ParetoMixin:
             # Remove dominated solutions in one pass using delete().
             if np.any(dominated_mask):
                 dominated_indices = np.where(dominated_mask)[0]
-                self.delete(dominated_indices)
+                self.delete(dominated_indices)  # ty: ignore[unresolved-attribute]
 
         # Append the new solution and return its index.
-        new_idx: int = self._size
-        super().append(element, **kwargs)  # type: ignore[misc]  # super().append resolves via MRO; ty can't verify through mixin
+        new_idx: int = self._size  # ty: ignore[unresolved-attribute]
+        super().append(element, **kwargs)  # type: ignore[misc]  # ty: ignore[unresolved-attribute]
         return new_idx
 
 

@@ -32,6 +32,14 @@ if TYPE_CHECKING:
     from saealib.termination import Termination
 
 
+class Dispatchable(Protocol):
+    """Minimal interface for objects that can dispatch callback events."""
+
+    def dispatch(self, event: Event) -> None:
+        """Dispatch a callback event."""
+        ...
+
+
 class ComponentProvider(Protocol):
     """The interface for components that can be used by the Optimizer."""
 

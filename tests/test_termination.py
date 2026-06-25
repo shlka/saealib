@@ -9,10 +9,12 @@ Tests cover:
 """
 
 from types import SimpleNamespace
+from typing import cast
 
 import numpy as np
 import pytest
 
+from saealib.context import OptimizationContext
 from saealib.termination import (
     Termination,
     TerminationCondition,
@@ -22,28 +24,42 @@ from saealib.termination import (
     stalled,
 )
 
+_DUMMY_ARCHIVE = SimpleNamespace(get=lambda key: np.zeros((0, 1)))
+_DUMMY_DIRECTION = np.array([-1.0], dtype=float)
 
-def _make_ctx(fe: int = 0, gen: int = 0) -> SimpleNamespace:
-    """Create a minimal context-like object with fe and gen attributes."""
-    return SimpleNamespace(fe=fe, gen=gen)
+
+def _make_ctx(fe: int = 0, gen: int = 0) -> OptimizationContext:
+    """Create a minimal context stub with fe and gen for termination tests."""
+    return cast(
+        OptimizationContext,
+        SimpleNamespace(
+            fe=fe,
+            gen=gen,
+            archive=_DUMMY_ARCHIVE,
+            direction=_DUMMY_DIRECTION,
+        ),
+    )
 
 
 def _make_obj_ctx(
     f_values, weight: float = -1.0, gen: int = 0, fe: int = 0
-) -> SimpleNamespace:
+) -> OptimizationContext:
     """
-    Create a context-like object with an archive of objective values.
+    Create a context stub with an archive of objective values.
 
     ``f_values`` is a sequence of single-objective values (shape ``(n,)``);
     ``weight`` is the optimization direction (-1 minimize, +1 maximize).
     """
     f_arr = np.asarray(f_values, dtype=float).reshape(-1, 1)
     archive = SimpleNamespace(get=lambda key: f_arr if key == "f" else None)
-    return SimpleNamespace(
-        archive=archive,
-        direction=np.array([weight], dtype=float),
-        gen=gen,
-        fe=fe,
+    return cast(
+        OptimizationContext,
+        SimpleNamespace(
+            archive=archive,
+            direction=np.array([weight], dtype=float),
+            gen=gen,
+            fe=fe,
+        ),
     )
 
 
@@ -71,11 +87,11 @@ class TestTerminationInit:
 
     def test_non_callable_raises_type_error(self) -> None:
         with pytest.raises(TypeError, match="must be callable"):
-            Termination(42)
+            Termination(42)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
     def test_mixed_callable_and_non_callable_raises(self) -> None:
         with pytest.raises(TypeError, match="must be callable"):
-            Termination(max_fe(100), "not_callable")
+            Termination(max_fe(100), "not_callable")  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
     def test_condition_is_read_only(self) -> None:
         t = Termination(max_fe(100))
@@ -171,7 +187,7 @@ class TestMaxFe:
 
     def test_doc(self) -> None:
         cond = max_fe(500)
-        assert "500" in cond.__doc__
+        assert cond.__doc__ is not None and "500" in cond.__doc__
 
 
 # ===========================================================================
@@ -206,7 +222,7 @@ class TestMaxGen:
 
     def test_doc(self) -> None:
         cond = max_gen(200)
-        assert "200" in cond.__doc__
+        assert cond.__doc__ is not None and "200" in cond.__doc__
 
 
 # ===========================================================================
@@ -261,7 +277,7 @@ class TestTerminationConditionOperators:
         assert isinstance(max_gen(50), TerminationCondition)
 
     def test_call_returns_bool(self) -> None:
-        cond = TerminationCondition(lambda ctx: ctx.fe)
+        cond = TerminationCondition(lambda ctx: ctx.fe)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
         result = cond(_make_ctx(fe=5))
         assert result is True
         assert isinstance(result, bool)
@@ -299,7 +315,7 @@ class TestTerminationConditionOperators:
 
     def test_non_callable_raises_type_error(self) -> None:
         with pytest.raises(TypeError, match="must be callable"):
-            TerminationCondition(42)
+            TerminationCondition(42)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
     def test_qualname_reflects_composition(self) -> None:
         assert "max_fe(100)" in (max_fe(100) | max_gen(50)).__qualname__

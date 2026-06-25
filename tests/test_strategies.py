@@ -18,6 +18,7 @@ from saealib import (
     TruncationSelection,
 )
 from saealib.acquisition import MeanPrediction
+from saealib.callback import CallbackManager
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationContext
 from saealib.execution.evaluator import SerialEvaluator
@@ -35,6 +36,7 @@ from saealib.surrogate.manager import (
 )
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
+from saealib.termination import Termination, max_gen
 
 # ---------------------------------------------------------------------------
 # Shared fixtures
@@ -119,10 +121,15 @@ class _MockSurrogateManager:
 
 
 class _MockProvider:
+    seed: int | None = None
+    strategy = IndividualBasedStrategy(evaluation_ratio=0.1)
+    termination: Termination = Termination(max_gen(100_000))
+
     def __init__(self, algorithm, surrogate_manager):
         self.algorithm = algorithm
         self.surrogate_manager = surrogate_manager
         self.evaluator = SerialEvaluator()
+        self.cbmanager = CallbackManager()
 
     def dispatch(self, event):
         pass

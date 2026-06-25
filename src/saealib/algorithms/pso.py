@@ -13,7 +13,7 @@ from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
 
 if TYPE_CHECKING:
-    from saealib.optimizer import ComponentProvider
+    from saealib.optimizer import Dispatchable
 
 
 class PSO(Algorithm):
@@ -110,7 +110,7 @@ class PSO(Algorithm):
     def ask(
         self,
         ctx: OptimizationContext,
-        provider: ComponentProvider,
+        provider: Dispatchable,
         n_offspring: int | None = None,
     ) -> Population:
         """
@@ -120,7 +120,7 @@ class PSO(Algorithm):
         ----------
         ctx : OptimizationContext
             Current optimization context.
-        provider : ComponentProvider
+        provider : Dispatchable
             Component provider.
         n_offspring : int or None, optional
             Ignored; output count equals population size.
@@ -187,7 +187,7 @@ class PSO(Algorithm):
     def tell(
         self,
         ctx: OptimizationContext,
-        provider: ComponentProvider,
+        provider: Dispatchable,
         offspring: Population,
     ) -> None:
         """
@@ -197,7 +197,7 @@ class PSO(Algorithm):
         ----------
         ctx : OptimizationContext
             Current optimization context.
-        provider : ComponentProvider
+        provider : Dispatchable
             Component provider.
         offspring : Population
             Evaluated offspring population.
