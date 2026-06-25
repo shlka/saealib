@@ -29,10 +29,12 @@ from saealib.callback import (
     SurrogateEndEvent,
     SurrogateStartEvent,
 )
-from saealib.pipeline import Stage
+from saealib.pipeline import Pipeline, Stage
 from saealib.strategies.base import assign_tell_f
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from saealib.algorithms.base import Algorithm
     from saealib.callback import CallbackManager
     from saealib.context import OptimizationState
@@ -243,6 +245,29 @@ class TopKSelectionStage(Stage):
         return state.replace(offspring=selected)
 
 
+class SortByScoreStage(Stage):
+    """Sort all offspring by surrogate score descending, keeping every candidate.
+
+    Unlike :class:`TopKSelectionStage`, no candidates are discarded.  Used in
+    IB-style strategies where :class:`TellStage` receives *all* offspring sorted
+    by score while only a top fraction receives true evaluation.
+
+    Reads ``state.scores`` and ``state.offspring``, returns state with both
+    arrays reordered by descending score.
+    """
+
+    name = "sort_by_score"
+    label = "Sort offspring by score"
+    notation = r"$\mathcal{Q} \leftarrow \text{sort\_desc}(\mathcal{Q},\,\mathbf{s})$"
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        idx = np.argsort(-state.scores)
+        return state.replace(
+            offspring=state.offspring.extract(idx),
+            scores=state.scores[idx],
+        )
+
+
 class TrueEvaluationStage(Stage):
     """Evaluate offspring with the true objective function.
 
@@ -256,9 +281,12 @@ class TrueEvaluationStage(Stage):
         Evaluator that calls the true objective function.
     cbmanager : CallbackManager or None
         If provided, PostEvaluationEvent is dispatched after evaluation.
-    n_eval : int or None
+    n_eval : int, callable, or None
         Number of candidates to evaluate from the head of the offspring
-        population.  ``None`` means evaluate all.
+        population.  If callable, it receives the current
+        :class:`~saealib.context.OptimizationState` and must return an int
+        (e.g. ``lambda s: max(1, int(ratio * len(s.offspring)))``).
+        ``None`` means evaluate all.
     """
 
     name = "true_evaluation"
@@ -269,7 +297,7 @@ class TrueEvaluationStage(Stage):
         self,
         evaluator: Evaluator,
         cbmanager: CallbackManager | None = None,
-        n_eval: int | None = None,
+        n_eval: int | Callable[[OptimizationState], int] | None = None,
     ) -> None:
         self._evaluator = evaluator
         self._cbmanager = cbmanager
@@ -277,7 +305,12 @@ class TrueEvaluationStage(Stage):
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         candidates = state.offspring
-        n = self._n_eval if self._n_eval is not None else len(candidates)
+        if callable(self._n_eval):
+            n = self._n_eval(state)
+        elif self._n_eval is not None:
+            n = self._n_eval
+        else:
+            n = len(candidates)
         n = min(n, len(candidates))
 
         result = self._evaluator.evaluate_batch(candidates.x[:n], state.problem)
@@ -345,4 +378,65 @@ class TellStage(Stage):
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         self._algorithm.tell(state, self._proxy, state.offspring)
+        return state
+
+
+class SurrogateOnlyLoopStage(Stage):
+    """Run *gen_ctrl* surrogate-only generations before real evaluation.
+
+    Fits the surrogate model once on the current archive, then repeats
+    ``gen_ctrl`` times: CountGeneration → Ask → SurrogateScore(refit=False)
+    → Tell.  If *gen_ctrl* is 0 this stage is a no-op.
+
+    Used by :class:`~saealib.strategies.gb.GenerationBasedStrategy` to
+    execute inner surrogate-driven generations before a single true-evaluation
+    generation.
+
+    Parameters
+    ----------
+    algorithm : Algorithm
+        Evolutionary algorithm for ask/tell.
+    surrogate_manager : SurrogateManager
+        Manager used for fitting and scoring.
+    gen_ctrl : int
+        Number of surrogate-only generations.
+    cbmanager : CallbackManager or None
+        Forwarded to inner stages for event dispatching.
+    """
+
+    name = "surrogate_only_loop"
+    label = "Surrogate-only generations"
+    notation = (
+        r"$\text{for}\;i=1\dots gen\_ctrl$: "
+        r"$P \leftarrow \mathrm{tell}(P,\,\mathrm{score}(\mathrm{ask}(P)))$"
+    )
+
+    def __init__(
+        self,
+        algorithm: Algorithm,
+        surrogate_manager: SurrogateManager,
+        gen_ctrl: int,
+        cbmanager: CallbackManager | None = None,
+    ) -> None:
+        self._gen_ctrl = gen_ctrl
+        self._sm = surrogate_manager
+        if gen_ctrl > 0:
+            self._inner: Pipeline | None = Pipeline(
+                [
+                    CountGenerationStage(),
+                    AskStage(algorithm, cbmanager=cbmanager),
+                    SurrogateScoreStage(
+                        surrogate_manager, cbmanager=cbmanager, refit=False
+                    ),
+                    TellStage(algorithm),
+                ]
+            )
+        else:
+            self._inner = None
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        if self._gen_ctrl > 0:
+            self._sm.fit(state.archive, state)
+            for _ in range(self._gen_ctrl):
+                state = self._inner.execute(state)  # type: ignore[union-attr]
         return state

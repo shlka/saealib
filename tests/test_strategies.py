@@ -154,12 +154,12 @@ class TestGenerationBasedStrategy:
     def test_generation_count_per_step(self):
         gen_ctrl = 3
         ctx, provider, strategy = self._setup(gen_ctrl=gen_ctrl)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.gen == gen_ctrl + 1
 
     def test_fe_count_is_offspring_count(self):
         ctx, provider, strategy = self._setup(gen_ctrl=2)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         # Only the final real-evaluation generation counts fe
         n_offspring = len(ctx.population)
         assert ctx.fe == n_offspring
@@ -167,20 +167,20 @@ class TestGenerationBasedStrategy:
     def test_archive_grows_by_offspring_count(self):
         ctx, provider, strategy = self._setup(gen_ctrl=2)
         before = len(ctx.archive)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         n_offspring = len(ctx.population)
         assert len(ctx.archive) == before + n_offspring
 
     def test_surrogate_only_gens_do_not_increment_fe(self):
         gen_ctrl = 4
         ctx, provider, strategy = self._setup(gen_ctrl=gen_ctrl)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         # fe should only reflect the single real-evaluation generation
         assert ctx.fe < len(ctx.population) * (gen_ctrl + 1)
 
     def test_gen_ctrl_zero_runs_one_real_generation(self):
         ctx, provider, strategy = self._setup(gen_ctrl=0)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.gen == 1
         assert ctx.fe == len(ctx.population)
 
@@ -312,7 +312,7 @@ class TestIndividualBasedStrategyWithNoveltyManager:
     def test_fe_equals_evaluation_ratio_times_offspring(self):
         evaluation_ratio = 0.5
         ctx, provider, strategy = self._setup(evaluation_ratio=evaluation_ratio)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         n_offspring = len(ctx.population)
         expected_fe = max(1, int(evaluation_ratio * n_offspring))
         assert ctx.fe == expected_fe
@@ -321,13 +321,13 @@ class TestIndividualBasedStrategyWithNoveltyManager:
         evaluation_ratio = 0.5
         ctx, provider, strategy = self._setup(evaluation_ratio=evaluation_ratio)
         before = len(ctx.archive)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         n_eval = max(1, int(evaluation_ratio * len(ctx.population)))
         assert len(ctx.archive) == before + n_eval
 
     def test_generation_count_incremented(self):
         ctx, provider, strategy = self._setup()
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.gen == 1
 
 

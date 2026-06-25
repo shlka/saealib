@@ -5,12 +5,25 @@ For each offspring, the surrogate manager scores candidates using a local
 surrogate model. The top-evaluation_ratio fraction are selected for true evaluation.
 """
 
-import numpy as np
+from __future__ import annotations
 
-from saealib.callback import PostEvaluationEvent, SurrogateEndEvent, SurrogateStartEvent
-from saealib.context import OptimizationState
-from saealib.optimizer import ComponentProvider
-from saealib.strategies.base import OptimizationStrategy, assign_tell_f
+from typing import TYPE_CHECKING
+
+from saealib.pipeline import Pipeline
+from saealib.stages import (
+    ArchiveUpdateStage,
+    AskStage,
+    CountGenerationStage,
+    SortByScoreStage,
+    SurrogateScoreStage,
+    TellStage,
+    TrueEvaluationStage,
+)
+from saealib.strategies.base import OptimizationStrategy
+
+if TYPE_CHECKING:
+    from saealib.context import OptimizationState
+    from saealib.optimizer import ComponentProvider
 
 
 class IndividualBasedStrategy(OptimizationStrategy):
@@ -34,7 +47,9 @@ class IndividualBasedStrategy(OptimizationStrategy):
         """
         self.evaluation_ratio = evaluation_ratio
 
-    def step(self, ctx: OptimizationState, provider: ComponentProvider) -> None:  # type: ignore[override]
+    def step(
+        self, ctx: OptimizationState, provider: ComponentProvider
+    ) -> OptimizationState:
         """
         Score all offspring with the surrogate, then true-evaluate the top fraction.
 
@@ -45,42 +60,21 @@ class IndividualBasedStrategy(OptimizationStrategy):
         provider : ComponentProvider
             Component provider.
         """
-        ctx.count_generation()
-
-        # 1. get candidate solutions as "offspring" (algorithm.ask)
-        offspring = provider.algorithm.ask(ctx, provider)
-        n_offspring = len(offspring)
-        n_eval = max(1, int(self.evaluation_ratio * n_offspring))
-
-        provider.dispatch(SurrogateStartEvent(ctx=ctx, offspring=offspring))
-
-        # 2. score candidates via surrogate manager
-        scores, predictions = provider.surrogate_manager.score_candidates(
-            offspring.x, ctx.archive, ctx
+        cbmanager = getattr(provider, "cbmanager", None)
+        ratio = self.evaluation_ratio
+        pipeline = Pipeline(
+            [
+                CountGenerationStage(),
+                AskStage(provider.algorithm, cbmanager=cbmanager),
+                SurrogateScoreStage(provider.surrogate_manager, cbmanager=cbmanager),
+                SortByScoreStage(),
+                TrueEvaluationStage(
+                    provider.evaluator,
+                    cbmanager=cbmanager,
+                    n_eval=lambda s: max(1, int(ratio * len(s.offspring))),
+                ),
+                ArchiveUpdateStage(),
+                TellStage(provider.algorithm),
+            ]
         )
-        for i, pred in enumerate(predictions):
-            assign_tell_f(offspring[i], pred, ctx)
-
-        provider.dispatch(SurrogateEndEvent(ctx=ctx, offspring=offspring))
-
-        # 3. top-k selection and true evaluation
-        idx = np.argsort(-scores)
-        offspring = offspring.extract(idx)
-
-        result = provider.evaluator.evaluate_batch(offspring.x[:n_eval], ctx.problem)
-        for i in range(n_eval):
-            f_i, g_i, cv_i = result.f[i], result.g[i], float(result.cv[i])
-            offspring[i].f = f_i
-            offspring[i].g = g_i
-            offspring[i].cv = cv_i
-            ctx.archive.add({"x": offspring[i].x, "f": f_i, "g": g_i, "cv": cv_i})
-            ctx.pareto_archive.add(
-                {"x": offspring[i].x, "f": f_i, "g": g_i, "cv": cv_i}
-            )
-        ctx.count_fe(n_eval)
-
-        evaluated = offspring.extract(list(range(n_eval)))
-        provider.dispatch(PostEvaluationEvent(ctx=ctx, offspring=evaluated))
-
-        # 4. update algorithm with offspring (algorithm.tell)
-        provider.algorithm.tell(ctx, provider, offspring)
+        return pipeline.execute(ctx)
