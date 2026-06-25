@@ -38,7 +38,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from saealib.context import OptimizationContext
+    from saealib.context import OptimizationState
     from saealib.population import Archive, Population
 
 
@@ -72,7 +72,7 @@ class TrainingSet(ABC):
         self,
         archive: Archive,
         population: Population | None,
-        ctx: OptimizationContext | None,
+        ctx: OptimizationState | None,
         candidate_x: np.ndarray | None = None,
     ) -> TrainingData:
         """Build and return the training data.
@@ -114,7 +114,7 @@ class ArchiveObjectiveSet(TrainingSet):
         self,
         archive: Archive,
         population: Population | None,
-        ctx: OptimizationContext | None,
+        ctx: OptimizationState | None,
         candidate_x: np.ndarray | None = None,
     ) -> TrainingData:
         """Return all archive points with raw objective values."""
@@ -140,7 +140,7 @@ class KNNObjectiveSet(TrainingSet):
         self,
         archive: Archive,
         population: Population | None,
-        ctx: OptimizationContext | None,
+        ctx: OptimizationState | None,
         candidate_x: np.ndarray | None = None,
     ) -> TrainingData:
         """Return k nearest-neighbour archive points around ``candidate_x``."""
@@ -173,7 +173,7 @@ class ConstraintObjectiveSet(TrainingSet):
         self,
         archive: Archive,
         population: Population | None,
-        ctx: OptimizationContext | None,
+        ctx: OptimizationState | None,
         candidate_x: np.ndarray | None = None,
     ) -> TrainingData:
         """Return all archive points with raw constraint values."""
@@ -211,7 +211,7 @@ class KNNConstraintObjectiveSet(TrainingSet):
         self,
         archive: Archive,
         population: Population | None,
-        ctx: OptimizationContext | None,
+        ctx: OptimizationState | None,
         candidate_x: np.ndarray | None = None,
     ) -> TrainingData:
         """Return k nearest-neighbour archive points with raw constraint values."""
@@ -260,7 +260,7 @@ class FeasibilityClassificationSet(TrainingSet):
         self,
         archive: Archive,
         population: Population | None,
-        ctx: OptimizationContext | None,
+        ctx: OptimizationState | None,
         candidate_x: np.ndarray | None = None,
     ) -> TrainingData:
         """Return feasibility binary labels (1 = feasible, 0 = infeasible)."""
@@ -314,7 +314,7 @@ class TopKBipartitionSet(TrainingSet):
         self,
         archive: Archive,
         population: Population | None,
-        ctx: OptimizationContext | None,
+        ctx: OptimizationState | None,
         candidate_x: np.ndarray | None = None,
     ) -> TrainingData:
         """Return bipartition labels based on sorted rank."""
@@ -365,7 +365,7 @@ class LevelBasedSet(TrainingSet):
         self,
         archive: Archive,
         population: Population | None,
-        ctx: OptimizationContext | None,
+        ctx: OptimizationState | None,
         candidate_x: np.ndarray | None = None,
     ) -> TrainingData:
         """Return level labels from equal-size sorted groups."""
@@ -442,7 +442,7 @@ class PairwiseComparisonSet(TrainingSet):
         self,
         archive: Archive,
         population: Population | None,
-        ctx: OptimizationContext | None,
+        ctx: OptimizationState | None,
         candidate_x: np.ndarray | None = None,
     ) -> TrainingData:
         """Return pairwise comparison training data."""

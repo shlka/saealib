@@ -7,10 +7,22 @@ by one generation of true objective evaluations.
 
 from __future__ import annotations
 
-from saealib.callback import PostEvaluationEvent, SurrogateEndEvent, SurrogateStartEvent
-from saealib.context import OptimizationContext
-from saealib.optimizer import ComponentProvider
-from saealib.strategies.base import OptimizationStrategy, assign_tell_f
+from typing import TYPE_CHECKING
+
+from saealib.pipeline import Pipeline
+from saealib.stages import (
+    ArchiveUpdateStage,
+    AskStage,
+    CountGenerationStage,
+    SurrogateOnlyLoopStage,
+    TellStage,
+    TrueEvaluationStage,
+)
+from saealib.strategies.base import OptimizationStrategy
+
+if TYPE_CHECKING:
+    from saealib.context import OptimizationState
+    from saealib.optimizer import ComponentProvider
 
 
 class GenerationBasedStrategy(OptimizationStrategy):
@@ -27,53 +39,38 @@ class GenerationBasedStrategy(OptimizationStrategy):
 
     def __init__(self, gen_ctrl: int) -> None:
         self.gen_ctrl = gen_ctrl
+        self.pipeline: Pipeline | None = None
 
-    def step(self, ctx: OptimizationContext, provider: ComponentProvider) -> None:
+    def _build_pipeline(self, provider: ComponentProvider) -> Pipeline:
+        cbmanager = getattr(provider, "cbmanager", None)
+        return Pipeline(
+            [
+                SurrogateOnlyLoopStage(
+                    provider.algorithm,
+                    provider.surrogate_manager,
+                    self.gen_ctrl,
+                    cbmanager,
+                ),
+                CountGenerationStage(),
+                AskStage(provider.algorithm, cbmanager=cbmanager),
+                TrueEvaluationStage(provider.evaluator, cbmanager=cbmanager),
+                ArchiveUpdateStage(),
+                TellStage(provider.algorithm),
+            ]
+        )
+
+    def step(
+        self, ctx: OptimizationState, provider: ComponentProvider
+    ) -> OptimizationState:
         """Run ``gen_ctrl`` surrogate-only generations, then one true-evaluation step.
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Current optimization context.
         provider : ComponentProvider
             Component provider.
         """
-        # --- surrogate inner loop ---
-        if self.gen_ctrl > 0:
-            provider.surrogate_manager.fit(ctx.archive, ctx)
-        for _ in range(self.gen_ctrl):
-            ctx.count_generation()
-            offspring = provider.algorithm.ask(ctx, provider)
-
-            provider.dispatch(SurrogateStartEvent(ctx=ctx, offspring=offspring))
-
-            _, predictions = provider.surrogate_manager.score_candidates(
-                offspring.x, ctx.archive, ctx, refit=False
-            )
-            for i, pred in enumerate(predictions):
-                assign_tell_f(offspring[i], pred, ctx)
-
-            provider.dispatch(SurrogateEndEvent(ctx=ctx, offspring=offspring))
-
-            provider.algorithm.tell(ctx, provider, offspring)
-
-        # --- real evaluation generation ---
-        ctx.count_generation()
-        offspring = provider.algorithm.ask(ctx, provider)
-        n_offspring = len(offspring)
-
-        result = provider.evaluator.evaluate_batch(offspring.x, ctx.problem)
-        for i in range(n_offspring):
-            f_i, g_i, cv_i = result.f[i], result.g[i], float(result.cv[i])
-            offspring[i].f = f_i
-            offspring[i].g = g_i
-            offspring[i].cv = cv_i
-            ctx.archive.add({"x": offspring[i].x, "f": f_i, "g": g_i, "cv": cv_i})
-            ctx.pareto_archive.add(
-                {"x": offspring[i].x, "f": f_i, "g": g_i, "cv": cv_i}
-            )
-        ctx.count_fe(n_offspring)
-
-        provider.dispatch(PostEvaluationEvent(ctx=ctx, offspring=offspring))
-
-        provider.algorithm.tell(ctx, provider, offspring)
+        if self.pipeline is None:
+            self.pipeline = self._build_pipeline(provider)
+        return self.pipeline.execute(ctx)

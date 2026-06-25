@@ -131,6 +131,9 @@ convention = "numpy"
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 "tests/*" = ["D", "N802", "N806"]
+# D102: Stage.execute() is documented in the ABC (pipeline.py); concrete
+# implementations in stages.py inherit the docstring and need not repeat it.
+"src/saealib/stages.py" = ["D102"]
 
 [tool.ruff.format]
 quote-style = "double"

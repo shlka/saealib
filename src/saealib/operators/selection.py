@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.population import Population
 
 
@@ -16,7 +16,7 @@ class ParentSelection(ABC):
     @abstractmethod
     def select(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         population: Population,
         n_pair: int,
         n_parents: int,
@@ -27,7 +27,7 @@ class ParentSelection(ABC):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Optimization context.
         population : Population
             Population to select from.
@@ -56,7 +56,7 @@ class TournamentSelection(ParentSelection):
 
     def select(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         population: Population,
         n_pair: int,
         n_parents: int,
@@ -67,7 +67,7 @@ class TournamentSelection(ParentSelection):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Optimization context.
         population : Population
             Population to select from.
@@ -115,7 +115,7 @@ class SequentialSelection(ParentSelection):
 
     def select(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         population: Population,
         n_pair: int,
         n_parents: int,
@@ -128,7 +128,7 @@ class SequentialSelection(ParentSelection):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Optimization context.
         population : Population
             Population to select from.
@@ -168,7 +168,7 @@ class RouletteWheelSelection(ParentSelection):
 
     def select(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         population: Population,
         n_pair: int,
         n_parents: int,
@@ -179,7 +179,7 @@ class RouletteWheelSelection(ParentSelection):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Optimization context.
         population : Population
             Population to select from.
@@ -211,7 +211,7 @@ class SurvivorSelection(ABC):
     @abstractmethod
     def select(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         pool: Population,
         n_survivors: int,
     ) -> np.ndarray:
@@ -224,7 +224,7 @@ class SurvivorSelection(ABC):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Optimization context.
         pool : Population
             Selection pool to choose survivors from.
@@ -244,7 +244,7 @@ class TruncationSelection(SurvivorSelection):
 
     def select(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         pool: Population,
         n_survivors: int,
     ) -> np.ndarray:
@@ -253,7 +253,7 @@ class TruncationSelection(SurvivorSelection):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Optimization context.
         pool : Population
             Selection pool to choose survivors from.

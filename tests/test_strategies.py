@@ -20,7 +20,7 @@ from saealib import (
 from saealib.acquisition import MeanPrediction
 from saealib.callback import CallbackManager
 from saealib.comparators import SingleObjectiveComparator
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.execution.evaluator import SerialEvaluator
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
@@ -66,7 +66,7 @@ def _make_problem() -> Problem:
     )
 
 
-def _make_ctx(n_pop: int = N_POP, rng_seed: int = 0) -> OptimizationContext:
+def _make_ctx(n_pop: int = N_POP, rng_seed: int = 0) -> OptimizationState:
     problem = _make_problem()
     rng = np.random.default_rng(rng_seed)
 
@@ -81,7 +81,7 @@ def _make_ctx(n_pop: int = N_POP, rng_seed: int = 0) -> OptimizationContext:
     pareto_arc = ParetoArchive(
         _ATTRS, init_capacity=n_pop + 5, direction=np.array([-1.0])
     )
-    return OptimizationContext(
+    return OptimizationState(
         problem=problem,
         population=pop,
         archive=arc,
@@ -154,12 +154,12 @@ class TestGenerationBasedStrategy:
     def test_generation_count_per_step(self):
         gen_ctrl = 3
         ctx, provider, strategy = self._setup(gen_ctrl=gen_ctrl)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.gen == gen_ctrl + 1
 
     def test_fe_count_is_offspring_count(self):
         ctx, provider, strategy = self._setup(gen_ctrl=2)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         # Only the final real-evaluation generation counts fe
         n_offspring = len(ctx.population)
         assert ctx.fe == n_offspring
@@ -167,22 +167,29 @@ class TestGenerationBasedStrategy:
     def test_archive_grows_by_offspring_count(self):
         ctx, provider, strategy = self._setup(gen_ctrl=2)
         before = len(ctx.archive)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         n_offspring = len(ctx.population)
         assert len(ctx.archive) == before + n_offspring
 
     def test_surrogate_only_gens_do_not_increment_fe(self):
         gen_ctrl = 4
         ctx, provider, strategy = self._setup(gen_ctrl=gen_ctrl)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         # fe should only reflect the single real-evaluation generation
         assert ctx.fe < len(ctx.population) * (gen_ctrl + 1)
 
     def test_gen_ctrl_zero_runs_one_real_generation(self):
         ctx, provider, strategy = self._setup(gen_ctrl=0)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.gen == 1
         assert ctx.fe == len(ctx.population)
+
+    def test_pipeline_cached_after_first_step(self):
+        ctx, provider, strategy = self._setup(gen_ctrl=3)
+        ctx = strategy.step(ctx, provider)
+        pipeline_ref = strategy.pipeline
+        strategy.step(ctx, provider)
+        assert strategy.pipeline is pipeline_ref
 
     def test_surrogate_fit_called_once_per_step(self):
         """fit() must be called exactly once per step(), not once per surrogate gen."""
@@ -238,18 +245,18 @@ class TestPreSelectionStrategy:
 
     def test_fe_equals_n_select(self):
         ctx, provider, strategy = self._setup(n_candidates=20, n_select=5)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.fe == 5
 
     def test_archive_grows_by_n_select(self):
         ctx, provider, strategy = self._setup(n_candidates=20, n_select=5)
         before = len(ctx.archive)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert len(ctx.archive) == before + 5
 
     def test_generation_count_incremented_once(self):
         ctx, provider, strategy = self._setup()
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.gen == 1
 
     def test_n_select_capped_by_n_candidates(self):
@@ -258,13 +265,13 @@ class TestPreSelectionStrategy:
         ctx, provider, strategy = self._setup(
             n_candidates=n_candidates, n_select=n_candidates + 10
         )
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.fe == n_candidates
 
     def test_fe_not_equal_n_candidates(self):
         # Surrogate screening saves real evaluations: fe << n_candidates
         ctx, provider, strategy = self._setup(n_candidates=30, n_select=3)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.fe == 3
         assert ctx.fe < 30
 
@@ -312,7 +319,7 @@ class TestIndividualBasedStrategyWithNoveltyManager:
     def test_fe_equals_evaluation_ratio_times_offspring(self):
         evaluation_ratio = 0.5
         ctx, provider, strategy = self._setup(evaluation_ratio=evaluation_ratio)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         n_offspring = len(ctx.population)
         expected_fe = max(1, int(evaluation_ratio * n_offspring))
         assert ctx.fe == expected_fe
@@ -321,13 +328,13 @@ class TestIndividualBasedStrategyWithNoveltyManager:
         evaluation_ratio = 0.5
         ctx, provider, strategy = self._setup(evaluation_ratio=evaluation_ratio)
         before = len(ctx.archive)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         n_eval = max(1, int(evaluation_ratio * len(ctx.population)))
         assert len(ctx.archive) == before + n_eval
 
     def test_generation_count_incremented(self):
         ctx, provider, strategy = self._setup()
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.gen == 1
 
 
@@ -342,11 +349,11 @@ class TestPreSelectionStrategyWithDensityManager:
 
     def test_step_runs_without_error(self):
         ctx, provider, strategy = self._setup()
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
 
     def test_fe_equals_n_select(self):
         ctx, provider, strategy = self._setup(n_candidates=20, n_select=5)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.fe == 5
 
     def test_archive_grows_after_step(self):
@@ -354,10 +361,81 @@ class TestPreSelectionStrategyWithDensityManager:
         n_select = 5
         ctx, provider, strategy = self._setup(n_candidates=20, n_select=n_select)
         before = len(ctx.archive)
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert before < len(ctx.archive) <= before + n_select
 
     def test_generation_count_incremented(self):
         ctx, provider, strategy = self._setup()
-        strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, provider)
         assert ctx.gen == 1
+
+
+# ---------------------------------------------------------------------------
+# Strategy.pipeline caching
+# ---------------------------------------------------------------------------
+
+
+from saealib.pipeline import Pipeline  # noqa: E402
+
+
+class TestStrategyPipelineAttribute:
+    """Strategy.pipeline is None before first step, Pipeline after."""
+
+    def _providers_and_strategies(self):
+        ga = _make_ga()
+        sm = _MockSurrogateManager()
+        provider = _MockProvider(ga, sm)
+        return provider, {
+            "ps": PreSelectionStrategy(n_candidates=20, n_select=5),
+            "ib": IndividualBasedStrategy(evaluation_ratio=0.5),
+            "gb": GenerationBasedStrategy(gen_ctrl=2),
+        }
+
+    def test_ps_pipeline_none_before_step(self):
+        _, strategies = self._providers_and_strategies()
+        assert strategies["ps"].pipeline is None
+
+    def test_ib_pipeline_none_before_step(self):
+        _, strategies = self._providers_and_strategies()
+        assert strategies["ib"].pipeline is None
+
+    def test_gb_pipeline_none_before_step(self):
+        _, strategies = self._providers_and_strategies()
+        assert strategies["gb"].pipeline is None
+
+    def test_ps_pipeline_is_pipeline_after_step(self):
+        provider, strategies = self._providers_and_strategies()
+        ctx = _make_ctx()
+        strategies["ps"].step(ctx, provider)
+        assert isinstance(strategies["ps"].pipeline, Pipeline)
+
+    def test_ib_pipeline_is_pipeline_after_step(self):
+        provider, strategies = self._providers_and_strategies()
+        ctx = _make_ctx()
+        strategies["ib"].step(ctx, provider)
+        assert isinstance(strategies["ib"].pipeline, Pipeline)
+
+    def test_gb_pipeline_is_pipeline_after_step(self):
+        provider, strategies = self._providers_and_strategies()
+        ctx = _make_ctx()
+        strategies["gb"].step(ctx, provider)
+        assert isinstance(strategies["gb"].pipeline, Pipeline)
+
+    def test_ps_pipeline_reused_across_steps(self):
+        provider, strategies = self._providers_and_strategies()
+        ctx = _make_ctx()
+        s = strategies["ps"]
+        s.step(ctx, provider)
+        first = s.pipeline
+        s.step(ctx, provider)
+        assert s.pipeline is first
+
+    def test_ps_pipeline_rebuilds_when_reset(self):
+        provider, strategies = self._providers_and_strategies()
+        ctx = _make_ctx()
+        s = strategies["ps"]
+        s.step(ctx, provider)
+        first = s.pipeline
+        s.pipeline = None
+        s.step(ctx, provider)
+        assert s.pipeline is not first

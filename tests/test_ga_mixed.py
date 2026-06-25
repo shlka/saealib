@@ -316,7 +316,7 @@ class _NoopProvider:
 
 
 def _make_ctx_for(problem, n_pop=4, seed=42):
-    from saealib.context import OptimizationContext
+    from saealib.context import OptimizationState
     from saealib.population import (
         Archive,
         ParetoArchive,
@@ -344,7 +344,7 @@ def _make_ctx_for(problem, n_pop=4, seed=42):
     pop.extend({"x": xs, "f": fs, "g": np.zeros((n_pop, 0)), "cv": np.zeros(n_pop)})
     arc.extend({"x": xs, "f": fs, "g": np.zeros((n_pop, 0)), "cv": np.zeros(n_pop)})
 
-    return OptimizationContext(
+    return OptimizationState(
         problem=problem,
         population=pop,
         archive=arc,

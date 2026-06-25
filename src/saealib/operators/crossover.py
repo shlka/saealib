@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from saealib.context import OptimizationContext
+    from saealib.context import OptimizationState
 
 
 class Crossover(ABC):
@@ -58,7 +58,7 @@ class Crossover(ABC):
         offspring: np.ndarray,
         parents: np.ndarray,
         rng: np.random.Generator,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
     ) -> np.ndarray:
         """Post-crossover lifecycle hook; override to inject custom processing.
 
@@ -70,7 +70,7 @@ class Crossover(ABC):
             Parent individuals. shape = (n_parents, dim)
         rng : np.random.Generator
             Random number generator.
-        ctx : OptimizationContext or None, optional
+        ctx : OptimizationState or None, optional
             Current optimization context.
 
         Returns
@@ -83,7 +83,7 @@ class Crossover(ABC):
     def with_post(
         self,
         fn: Callable[
-            [np.ndarray, np.ndarray, np.random.Generator, OptimizationContext | None],
+            [np.ndarray, np.ndarray, np.random.Generator, OptimizationState | None],
             np.ndarray,
         ],
     ) -> Crossover:

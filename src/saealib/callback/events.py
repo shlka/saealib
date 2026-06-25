@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from saealib.context import OptimizationContext
+    from saealib.context import OptimizationState
     from saealib.population import Archive, Population
     from saealib.surrogate.base import Surrogate
 
@@ -20,12 +20,12 @@ class Event:
 
     Attributes
     ----------
-    ctx : OptimizationContext
+    ctx : OptimizationState
         The current optimization context. Read-only by convention; handlers
         should not mutate ctx. Use component lifecycle hooks for mutation.
     """
 
-    ctx: OptimizationContext
+    ctx: OptimizationState
 
 
 # --- Optimizer.run events ---

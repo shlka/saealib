@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -51,10 +51,30 @@ class Algorithm(ABC):
             direction=problem.direction,
         )
 
+    @property
+    def ask_notation(self) -> list[str] | None:
+        r"""LaTeX notation lines describing the internal steps of :meth:`ask`.
+
+        Returns ``None`` by default; :class:`~saealib.stages.AskStage` then
+        renders a single collapsed ``\\State`` line.  Override to return a list
+        of LaTeX math strings (one per logical step) so that
+        ``AskStage.to_pseudocode(expand=True)`` expands them inside a
+        ``\\Comment`` block.
+
+        Example (GA)::
+
+            return [
+                r"$I_m \\leftarrow \\mathrm{select}(P,\\, n_{pair})$",
+                r"$\\mathcal{Q} \\leftarrow \\mathrm{crossover}(P[I_m])$",
+                r"$\\mathcal{Q} \\leftarrow \\mathrm{mutate}(\\mathcal{Q})$",
+            ]
+        """
+        return None
+
     @abstractmethod
     def ask(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         provider: Dispatchable,
         n_offspring: int | None = None,
     ) -> Population:
@@ -63,7 +83,7 @@ class Algorithm(ABC):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Context instance.
         provider : Dispatchable
             Provider instance.
@@ -78,10 +98,21 @@ class Algorithm(ABC):
         """
         pass
 
+    @property
+    def tell_notation(self) -> list[str] | None:
+        r"""LaTeX notation lines describing the internal steps of :meth:`tell`.
+
+        Returns ``None`` by default; :class:`~saealib.stages.TellStage` then
+        renders a single collapsed ``\State`` line.  Override to return a list
+        of LaTeX math strings so that ``TellStage.to_pseudocode(expand=True)``
+        expands them inside a ``\Comment`` block.
+        """
+        return None
+
     @abstractmethod
     def tell(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         provider: Dispatchable,
         offspring: Population,
     ) -> None:
@@ -90,7 +121,7 @@ class Algorithm(ABC):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Context instance.
         provider : Dispatchable
             Provider instance.

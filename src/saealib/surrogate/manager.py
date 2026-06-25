@@ -43,7 +43,7 @@ from saealib.surrogate.training_set import (
 
 if TYPE_CHECKING:
     from saealib.acquisition.base import AcquisitionFunction
-    from saealib.context import OptimizationContext
+    from saealib.context import OptimizationState
     from saealib.population import Archive
 
 
@@ -100,7 +100,7 @@ class SurrogateManager(ABC):
     def fit(
         self,
         archive: Archive,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
     ) -> None:
         """
         Pre-fit the surrogate on the archive.
@@ -115,7 +115,7 @@ class SurrogateManager(ABC):
         ----------
         archive : Archive
             Archive of evaluated solutions used for surrogate training.
-        ctx : OptimizationContext or None, optional
+        ctx : OptimizationState or None, optional
             Current optimization context.
         """
 
@@ -124,7 +124,7 @@ class SurrogateManager(ABC):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
         *,
         refit: bool = True,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
@@ -137,7 +137,7 @@ class SurrogateManager(ABC):
             Candidate design variable matrix. shape: (n_candidates, dim)
         archive : Archive
             Archive of evaluated solutions used for surrogate training.
-        ctx : OptimizationContext or None, optional
+        ctx : OptimizationState or None, optional
             Current optimization context. Passed to ``TrainingSet.build``
             for strategies that require comparator or population access.
         refit : bool, optional
@@ -159,7 +159,7 @@ class SurrogateManager(ABC):
         self,
         scores: np.ndarray,
         predictions: list[SurrogatePrediction],
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
         """Post-score lifecycle hook; override to inject custom processing.
 
@@ -169,7 +169,7 @@ class SurrogateManager(ABC):
             Acquisition scores. shape: (n_candidates,)
         predictions : list[SurrogatePrediction]
             Surrogate predictions for each candidate.
-        ctx : OptimizationContext or None, optional
+        ctx : OptimizationState or None, optional
             Current optimization context.
 
         Returns
@@ -182,7 +182,7 @@ class SurrogateManager(ABC):
     def with_post_score(
         self,
         fn: Callable[
-            [np.ndarray, list[SurrogatePrediction], OptimizationContext | None],
+            [np.ndarray, list[SurrogatePrediction], OptimizationState | None],
             tuple[np.ndarray, list[SurrogatePrediction]],
         ],
     ) -> SurrogateManager:
@@ -209,13 +209,13 @@ class SurrogateManager(ABC):
         self,
         gen: int,
         archive: Archive,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
     ) -> None:
         """End-of-generation hook; override to update internal state."""
 
     def with_on_generation_end(
         self,
-        fn: Callable[[int, Archive, OptimizationContext | None], None],
+        fn: Callable[[int, Archive, OptimizationState | None], None],
     ) -> SurrogateManager:
         """Return a copy of this manager with ``fn`` appended to the hook.
 
@@ -235,7 +235,7 @@ class SurrogateManager(ABC):
         def _chained(
             gen: int,
             archive: Archive,
-            ctx: OptimizationContext | None = None,
+            ctx: OptimizationState | None = None,
         ) -> None:
             prev(gen, archive, ctx)
             fn(gen, archive, ctx)
@@ -283,7 +283,7 @@ class GlobalSurrogateManager(SurrogateManager):
     def fit(
         self,
         archive: Archive,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
     ) -> None:
         """Fit the surrogate on the full archive.
 
@@ -304,7 +304,7 @@ class GlobalSurrogateManager(SurrogateManager):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
         *,
         refit: bool = True,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
@@ -372,7 +372,7 @@ class LocalSurrogateManager(SurrogateManager):
     def fit(
         self,
         archive: Archive,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
     ) -> None:
         """Compute accuracy metrics from the archive (no global model is fitted).
 
@@ -391,7 +391,7 @@ class LocalSurrogateManager(SurrogateManager):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
         *,
         refit: bool = True,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
@@ -466,7 +466,7 @@ class LocalSurrogateManager(SurrogateManager):
         self,
         archive: Archive,
         population: object,
-        ctx: OptimizationContext | None,
+        ctx: OptimizationState | None,
     ) -> None:
         """Compute accuracy via LOO with self-exclusion on archive points.
 
@@ -618,7 +618,7 @@ class CompositeSurrogateManager(SurrogateManager):
     def fit(
         self,
         archive: Archive,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
     ) -> None:
         """Pre-fit all sub-managers.
 
@@ -633,7 +633,7 @@ class CompositeSurrogateManager(SurrogateManager):
         self,
         candidates_x: np.ndarray,
         archive: Archive,
-        ctx: OptimizationContext | None = None,
+        ctx: OptimizationState | None = None,
         *,
         refit: bool = True,
     ) -> tuple[np.ndarray, list[SurrogatePrediction]]:

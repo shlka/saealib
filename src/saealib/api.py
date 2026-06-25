@@ -12,7 +12,7 @@ from saealib.acquisition.mean import MeanPrediction
 from saealib.algorithms.ga import GA
 from saealib.algorithms.pso import PSO
 from saealib.callback import GenerationStartEvent, logging_generation
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.exceptions import ValidationError
 from saealib.execution.initializer import LHSInitializer
 from saealib.operators.crossover import CrossoverBLXAlpha
@@ -50,7 +50,7 @@ class Result:
         Total number of true function evaluations used.
     gen : int
         Total number of generations completed.
-    ctx : OptimizationContext
+    ctx : OptimizationState
         Full optimization context providing access to the archive and more.
     """
 
@@ -58,7 +58,7 @@ class Result:
     f: np.ndarray
     fe: int
     gen: int
-    ctx: OptimizationContext
+    ctx: OptimizationState
 
 
 # ---------------------------------------------------------------------------
@@ -175,7 +175,7 @@ def _resolve_strategy(
     return strategy
 
 
-def _build_result(ctx: OptimizationContext) -> Result:
+def _build_result(ctx: OptimizationState) -> Result:
     archive_x = ctx.archive.get_array("x")
     archive_f = ctx.archive.get_array("f")
     archive_cv = ctx.archive.get_array("cv")

@@ -8,7 +8,7 @@ import numpy as np
 
 from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -107,9 +107,25 @@ class PSO(Algorithm):
         """Return the archive class."""
         return Archive
 
+    @property
+    def ask_notation(self) -> list[str]:
+        """LaTeX notation lines for PSO.ask(): velocity update and position update."""
+        return [
+            r"$v \leftarrow w v + c_1 r_1 (p_{best} - x) + c_2 r_2 (g_{best} - x)$",
+            r"$x \leftarrow x + v$",
+        ]
+
+    @property
+    def tell_notation(self) -> list[str]:
+        """LaTeX notation lines for PSO.tell(): pbest update."""
+        return [
+            r"$p_{best,i} \leftarrow x_i$ if $f(x_i) \prec f(p_{best,i})$",
+            r"$P \leftarrow \mathcal{Q}$",
+        ]
+
     def ask(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         provider: Dispatchable,
         n_offspring: int | None = None,
     ) -> Population:
@@ -118,7 +134,7 @@ class PSO(Algorithm):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Current optimization context.
         provider : Dispatchable
             Component provider.
@@ -186,7 +202,7 @@ class PSO(Algorithm):
 
     def tell(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         provider: Dispatchable,
         offspring: Population,
     ) -> None:
@@ -195,7 +211,7 @@ class PSO(Algorithm):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Current optimization context.
         provider : Dispatchable
             Component provider.
@@ -244,7 +260,7 @@ class PSO(Algorithm):
 
     def _select_leader(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         pbest_x: np.ndarray,
         pbest_f: np.ndarray,
         pbest_cv: np.ndarray,
@@ -257,7 +273,7 @@ class PSO(Algorithm):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Optimization context.
         pbest_x : np.ndarray
             Personal best positions, shape (popsize, dim).

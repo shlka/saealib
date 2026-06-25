@@ -9,7 +9,7 @@ import numpy as np
 
 from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent, PostCrossoverEvent, PostMutationEvent
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.exceptions import ConfigurationError
 from saealib.operators.crossover import CrossoverCategorical, CrossoverIntegerSBX
 from saealib.operators.mutation import MutationCategorical, MutationIntegerUniform
@@ -205,9 +205,26 @@ class GA(Algorithm):
         """Return the archive class."""
         return Archive
 
+    @property
+    def ask_notation(self) -> list[str]:
+        """LaTeX notation lines for GA.ask(): select → crossover → mutate."""
+        return [
+            r"$I_m \leftarrow \mathrm{select}(P,\, n_{pair})$",
+            r"$\mathcal{Q} \leftarrow \mathrm{crossover}(P[I_m])$",
+            r"$\mathcal{Q} \leftarrow \mathrm{mutate}(\mathcal{Q})$",
+        ]
+
+    @property
+    def tell_notation(self) -> list[str]:
+        r"""LaTeX notation lines for GA.tell(): $(\mu + \lambda)$ survivor selection."""
+        return [
+            r"$P \leftarrow \mathrm{select}_{(\mu+\lambda)}"
+            r"(P \cup \mathcal{Q},\, \mu)$",
+        ]
+
     def ask(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         provider: Dispatchable,
         n_offspring: int | None = None,
     ) -> Population:
@@ -216,7 +233,7 @@ class GA(Algorithm):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Current optimization context.
         provider : Dispatchable
             Component provider.
@@ -293,7 +310,7 @@ class GA(Algorithm):
 
     def tell(
         self,
-        ctx: OptimizationContext,
+        ctx: OptimizationState,
         provider: Dispatchable,
         offspring: Population,
     ):
@@ -302,7 +319,7 @@ class GA(Algorithm):
 
         Parameters
         ----------
-        ctx : OptimizationContext
+        ctx : OptimizationState
             Current optimization context.
         provider : Dispatchable
             Component provider.

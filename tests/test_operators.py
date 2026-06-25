@@ -18,7 +18,7 @@ import pytest
 
 from saealib import GA, SequentialSelection, TruncationSelection
 from saealib.comparators import SingleObjectiveComparator
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.operators.crossover import (
     CrossoverBLXAlpha,
     CrossoverCategorical,
@@ -69,7 +69,7 @@ def _make_problem() -> Problem:
     )
 
 
-def _make_ctx(n_pop: int = 10, rng_seed: int = 0) -> OptimizationContext:
+def _make_ctx(n_pop: int = 10, rng_seed: int = 0) -> OptimizationState:
     problem = _make_problem()
     rng = np.random.default_rng(rng_seed)
     pop = Population(_ATTRS, init_capacity=n_pop + 5)
@@ -80,7 +80,7 @@ def _make_ctx(n_pop: int = 10, rng_seed: int = 0) -> OptimizationContext:
     pop.extend({"x": xs, "f": fs, "g": gs, "cv": cvs})
     arc = Archive(_ATTRS, init_capacity=5)
     pareto_arc = ParetoArchive(_ATTRS, init_capacity=5, direction=np.array([-1.0]))
-    return OptimizationContext(
+    return OptimizationState(
         problem=problem,
         population=pop,
         archive=arc,

@@ -15,7 +15,7 @@ import pytest
 
 from saealib.algorithms.pso import PSO
 from saealib.comparators import SingleObjectiveComparator
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -60,9 +60,9 @@ def _make_pso_ctx(
     rng_seed: int = 0,
     init_pbest: bool = False,
     init_velocity: bool = False,
-) -> OptimizationContext:
+) -> OptimizationState:
     """
-    Build an OptimizationContext with a PSO-capable population.
+    Build an OptimizationState with a PSO-capable population.
 
     Parameters
     ----------
@@ -106,7 +106,7 @@ def _make_pso_ctx(
     )
     arc = Archive(_PSO_ATTRS, init_capacity=5)
     pareto_arc = ParetoArchive(_PSO_ATTRS, init_capacity=5, direction=np.array([-1.0]))
-    return OptimizationContext(
+    return OptimizationState(
         problem=problem,
         population=pop,
         archive=arc,
@@ -116,7 +116,7 @@ def _make_pso_ctx(
 
 
 def _make_offspring(
-    ctx: OptimizationContext,
+    ctx: OptimizationState,
     f_new: np.ndarray,
     pbest_f: np.ndarray,
     pbest_x: np.ndarray | None = None,
@@ -364,3 +364,28 @@ class TestPSOLeaderSelection:
         pbest_cv = ctx.population.get_array("pbest_cv").copy()
         leader = pso._select_leader(ctx, pbest_x, pbest_f, pbest_cv)
         assert leader.shape == (DIM,)
+
+
+# ---------------------------------------------------------------------------
+# PSO class-level properties
+# ---------------------------------------------------------------------------
+
+
+class TestPSOProperties:
+    def test_population_class(self):
+        assert PSO().population_class is Population
+
+    def test_archive_class(self):
+        assert PSO().archive_class is Archive
+
+    def test_ask_notation_is_list_of_strings(self):
+        n = PSO().ask_notation
+        assert isinstance(n, list)
+        assert len(n) == 2
+        assert all(isinstance(s, str) for s in n)
+
+    def test_tell_notation_is_list_of_strings(self):
+        n = PSO().tell_notation
+        assert isinstance(n, list)
+        assert len(n) == 2
+        assert all(isinstance(s, str) for s in n)

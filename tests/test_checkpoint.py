@@ -23,7 +23,7 @@ from saealib import (
     max_gen,
 )
 from saealib.comparators import SingleObjectiveComparator
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.problem import Problem
 
 # ---------------------------------------------------------------------------
@@ -124,7 +124,7 @@ def test_lhs_uses_optimizer_seed_over_own():
 
 
 # ---------------------------------------------------------------------------
-# OptimizationContext.save / load (npz)
+# OptimizationState.save / load (npz)
 # ---------------------------------------------------------------------------
 
 
@@ -136,7 +136,7 @@ def test_npz_roundtrip(tmp_path):
     ctx.save(p)
     assert p.exists()
 
-    loaded = OptimizationContext.load(p, problem)
+    loaded = OptimizationState.load(p, problem)
     np.testing.assert_array_equal(loaded.archive.x, ctx.archive.x)
     np.testing.assert_array_equal(loaded.archive.f, ctx.archive.f)
     np.testing.assert_array_equal(loaded.population.x, ctx.population.x)
@@ -158,19 +158,19 @@ def test_npz_rng_state_preserved(tmp_path):
 
     p = tmp_path / "ckpt.npz"
     ctx.save(p)
-    loaded = OptimizationContext.load(p, problem)
+    loaded = OptimizationState.load(p, problem)
     assert loaded.rng.bit_generator.state == state_before
 
 
 def test_resumed_flag_npz(tmp_path):
     problem = _make_problem()
     ctx = _make_optimizer(problem, seed=0, n_gen=2).run()
-    assert ctx.resumed is False
+    assert ctx.data.get("resumed", False) is False
 
     p = tmp_path / "ckpt.npz"
     ctx.save(p)
-    loaded = OptimizationContext.load(p, problem)
-    assert loaded.resumed is True
+    loaded = OptimizationState.load(p, problem)
+    assert loaded.data.get("resumed") is True
 
 
 # ---------------------------------------------------------------------------
@@ -207,7 +207,7 @@ def test_resumed_flag_pickle(tmp_path):
         warnings.simplefilter("ignore", UserWarning)
         opt.save_pickle(ctx, p)
         _, ctx2 = Optimizer.load_pickle(p)
-    assert ctx2.resumed is True
+    assert ctx2.data.get("resumed") is True
 
 
 def test_pickle_extension_added(tmp_path):
@@ -231,9 +231,9 @@ def test_run_from_npz_resumed_flag(tmp_path):
     p = tmp_path / "ckpt.npz"
     ctx_mid.save(p)
 
-    loaded = OptimizationContext.load(p, problem)
+    loaded = OptimizationState.load(p, problem)
     ctx_final = _make_optimizer(problem, seed=42, n_gen=4).run_from(loaded)
-    assert ctx_final.resumed is True
+    assert ctx_final.data.get("resumed") is True
     assert ctx_final.gen == 4
 
 
@@ -249,7 +249,7 @@ def test_run_from_npz_matches_full_run(tmp_path):
     p = tmp_path / "ckpt.npz"
     ctx_mid.save(p)
 
-    ctx_loaded = OptimizationContext.load(p, problem)
+    ctx_loaded = OptimizationState.load(p, problem)
     ctx_resumed = _make_optimizer(problem, seed=42, n_gen=4).run_from(ctx_loaded)
 
     np.testing.assert_array_equal(ctx_full.archive.x, ctx_resumed.archive.x)
@@ -283,7 +283,7 @@ def test_iterate_from_yields_correct_gen(tmp_path):
     p = tmp_path / "ckpt.npz"
     ctx_mid.save(p)
 
-    loaded = OptimizationContext.load(p, problem)
+    loaded = OptimizationState.load(p, problem)
     gens = [ctx.gen for ctx in _make_optimizer(problem, n_gen=4).iterate_from(loaded)]
     assert gens[-1] == 4
 
