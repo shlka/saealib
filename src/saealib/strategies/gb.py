@@ -39,21 +39,11 @@ class GenerationBasedStrategy(OptimizationStrategy):
 
     def __init__(self, gen_ctrl: int) -> None:
         self.gen_ctrl = gen_ctrl
+        self.pipeline: Pipeline | None = None
 
-    def step(
-        self, ctx: OptimizationState, provider: ComponentProvider
-    ) -> OptimizationState:
-        """Run ``gen_ctrl`` surrogate-only generations, then one true-evaluation step.
-
-        Parameters
-        ----------
-        ctx : OptimizationState
-            Current optimization context.
-        provider : ComponentProvider
-            Component provider.
-        """
+    def _build_pipeline(self, provider: ComponentProvider) -> Pipeline:
         cbmanager = getattr(provider, "cbmanager", None)
-        pipeline = Pipeline(
+        return Pipeline(
             [
                 SurrogateOnlyLoopStage(
                     provider.algorithm,
@@ -68,4 +58,19 @@ class GenerationBasedStrategy(OptimizationStrategy):
                 TellStage(provider.algorithm),
             ]
         )
-        return pipeline.execute(ctx)
+
+    def step(
+        self, ctx: OptimizationState, provider: ComponentProvider
+    ) -> OptimizationState:
+        """Run ``gen_ctrl`` surrogate-only generations, then one true-evaluation step.
+
+        Parameters
+        ----------
+        ctx : OptimizationState
+            Current optimization context.
+        provider : ComponentProvider
+            Component provider.
+        """
+        if self.pipeline is None:
+            self.pipeline = self._build_pipeline(provider)
+        return self.pipeline.execute(ctx)

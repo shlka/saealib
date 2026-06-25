@@ -56,6 +56,25 @@ class PreSelectionStrategy(OptimizationStrategy):
         """
         self.n_candidates = n_candidates
         self.n_select = n_select
+        self.pipeline: Pipeline | None = None
+
+    def _build_pipeline(self, provider: ComponentProvider) -> Pipeline:
+        cbmanager = getattr(provider, "cbmanager", None)
+        return Pipeline(
+            [
+                CountGenerationStage(),
+                AskStage(
+                    provider.algorithm,
+                    n_offspring=self.n_candidates,
+                    cbmanager=cbmanager,
+                ),
+                SurrogateScoreStage(provider.surrogate_manager, cbmanager=cbmanager),
+                TopKSelectionStage(k=self.n_select),
+                TrueEvaluationStage(provider.evaluator, cbmanager=cbmanager),
+                ArchiveUpdateStage(),
+                TellStage(provider.algorithm),
+            ]
+        )
 
     def step(
         self, ctx: OptimizationState, provider: ComponentProvider
@@ -75,20 +94,6 @@ class PreSelectionStrategy(OptimizationStrategy):
         OptimizationState
             Updated state after one generation step.
         """
-        cbmanager = getattr(provider, "cbmanager", None)
-        pipeline = Pipeline(
-            [
-                CountGenerationStage(),
-                AskStage(
-                    provider.algorithm,
-                    n_offspring=self.n_candidates,
-                    cbmanager=cbmanager,
-                ),
-                SurrogateScoreStage(provider.surrogate_manager, cbmanager=cbmanager),
-                TopKSelectionStage(k=self.n_select),
-                TrueEvaluationStage(provider.evaluator, cbmanager=cbmanager),
-                ArchiveUpdateStage(),
-                TellStage(provider.algorithm),
-            ]
-        )
-        return pipeline.execute(ctx)
+        if self.pipeline is None:
+            self.pipeline = self._build_pipeline(provider)
+        return self.pipeline.execute(ctx)

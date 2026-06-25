@@ -7,6 +7,7 @@ surrogate model. The top-evaluation_ratio fraction are selected for true evaluat
 
 from __future__ import annotations
 
+import functools
 from typing import TYPE_CHECKING
 
 from saealib.pipeline import Pipeline
@@ -24,6 +25,10 @@ from saealib.strategies.base import OptimizationStrategy
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
     from saealib.optimizer import ComponentProvider
+
+
+def _n_eval_by_ratio(state: OptimizationState, *, ratio: float) -> int:
+    return max(1, int(ratio * len(state.offspring)))
 
 
 class IndividualBasedStrategy(OptimizationStrategy):
@@ -46,6 +51,27 @@ class IndividualBasedStrategy(OptimizationStrategy):
             configured on the SurrogateManager (e.g. LocalSurrogateManager).
         """
         self.evaluation_ratio = evaluation_ratio
+        self.pipeline: Pipeline | None = None
+
+    def _build_pipeline(self, provider: ComponentProvider) -> Pipeline:
+        cbmanager = getattr(provider, "cbmanager", None)
+        return Pipeline(
+            [
+                CountGenerationStage(),
+                AskStage(provider.algorithm, cbmanager=cbmanager),
+                SurrogateScoreStage(provider.surrogate_manager, cbmanager=cbmanager),
+                SortByScoreStage(),
+                TrueEvaluationStage(
+                    provider.evaluator,
+                    cbmanager=cbmanager,
+                    n_eval=functools.partial(
+                        _n_eval_by_ratio, ratio=self.evaluation_ratio
+                    ),
+                ),
+                ArchiveUpdateStage(),
+                TellStage(provider.algorithm),
+            ]
+        )
 
     def step(
         self, ctx: OptimizationState, provider: ComponentProvider
@@ -60,21 +86,6 @@ class IndividualBasedStrategy(OptimizationStrategy):
         provider : ComponentProvider
             Component provider.
         """
-        cbmanager = getattr(provider, "cbmanager", None)
-        ratio = self.evaluation_ratio
-        pipeline = Pipeline(
-            [
-                CountGenerationStage(),
-                AskStage(provider.algorithm, cbmanager=cbmanager),
-                SurrogateScoreStage(provider.surrogate_manager, cbmanager=cbmanager),
-                SortByScoreStage(),
-                TrueEvaluationStage(
-                    provider.evaluator,
-                    cbmanager=cbmanager,
-                    n_eval=lambda s: max(1, int(ratio * len(s.offspring))),
-                ),
-                ArchiveUpdateStage(),
-                TellStage(provider.algorithm),
-            ]
-        )
-        return pipeline.execute(ctx)
+        if self.pipeline is None:
+            self.pipeline = self._build_pipeline(provider)
+        return self.pipeline.execute(ctx)

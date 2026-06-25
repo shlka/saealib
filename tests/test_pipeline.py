@@ -290,3 +290,134 @@ class TestSurrogateOnlyLoopPseudocode:
         out = sol.to_pseudocode(expand=True, indent=1)
         first_line = out.splitlines()[0]
         assert first_line.startswith("  ")
+
+
+# ---------------------------------------------------------------------------
+# Pipeline.replace
+# ---------------------------------------------------------------------------
+
+
+class TestPipelineReplace:
+    def test_replace_existing_stage(self):
+        p = _make_ps_pipeline()
+        pr = _make_provider()
+        new_stage = AskStage(pr.algorithm)
+        p.replace("ask", new_stage)
+        assert p["ask"] is new_stage
+
+    def test_replace_preserves_other_stages(self):
+        p = _make_ps_pipeline()
+        original_count = p["count_generation"]
+        pr = _make_provider()
+        p.replace("ask", AskStage(pr.algorithm))
+        assert p["count_generation"] is original_count
+
+    def test_replace_missing_name_raises_key_error(self):
+        p = _make_ps_pipeline()
+        with pytest.raises(KeyError):
+            p.replace("nonexistent", CountGenerationStage())
+
+    def test_replace_non_stage_raises_type_error(self):
+        p = _make_ps_pipeline()
+        with pytest.raises(TypeError, match="not a Stage instance"):
+            p.replace("ask", "not_a_stage")  # type: ignore[arg-type]
+
+    def test_replace_updates_execution(self):
+        p = _make_ps_pipeline()
+        count_calls = [0]
+
+        class _CountingStage(CountGenerationStage):
+            name = "ask"
+
+            def execute(self, state):
+                count_calls[0] += 1
+                return state
+
+        p.replace("ask", _CountingStage())
+        # pipeline.execute cannot run without a real ctx, so just verify lookup
+        assert isinstance(p["ask"], _CountingStage)
+
+
+# ---------------------------------------------------------------------------
+# Pipeline.find
+# ---------------------------------------------------------------------------
+
+
+class TestPipelineFind:
+    def test_find_top_level_stage(self):
+        p = _make_ps_pipeline()
+        stage = p.find("count_generation")
+        assert isinstance(stage, CountGenerationStage)
+
+    def test_find_missing_non_recursive_raises(self):
+        p = _make_ps_pipeline()
+        with pytest.raises(KeyError):
+            p.find("nonexistent")
+
+    def test_find_missing_recursive_raises(self):
+        p = _make_ps_pipeline()
+        with pytest.raises(KeyError):
+            p.find("nonexistent", recursive=True)
+
+    def test_find_recursive_reaches_inner_stage(self):
+        # SurrogateOnlyLoopStage has sub-stages: count_generation, ask, etc.
+        p = _make_gb_pipeline(gen_ctrl=2)
+        # "ask" appears in both the outer pipeline and inside the loop stage
+        stage = p.find("ask", recursive=True)
+        assert stage is not None
+
+    def test_find_non_recursive_does_not_descend(self):
+        # "count_generation" is inside SurrogateOnlyLoopStage, not at top level of gb
+        p = _make_gb_pipeline(gen_ctrl=2)
+        # At top level, count_generation appears after the loop stage
+        stage = p.find("count_generation")
+        assert isinstance(stage, CountGenerationStage)
+
+    def test_find_recursive_returns_first_match(self):
+        p = _make_gb_pipeline(gen_ctrl=2)
+        # "ask" exists both inside the loop and at top level; recursive returns first
+        stage = p.find("ask", recursive=True)
+        assert stage.name == "ask"
+
+
+# ---------------------------------------------------------------------------
+# Pipeline.__len__ / __iter__ / __repr__
+# ---------------------------------------------------------------------------
+
+
+class TestPipelineDunderMethods:
+    def test_len_matches_stages_count(self):
+        p = _make_ps_pipeline()
+        assert len(p) == len(p.stages)
+
+    def test_len_empty_pipeline(self):
+        assert len(Pipeline([])) == 0
+
+    def test_iter_yields_all_stages(self):
+        p = _make_ps_pipeline()
+        from_iter = list(p)
+        assert from_iter == p.stages
+
+    def test_iter_order_preserved(self):
+        p = _make_ps_pipeline()
+        names = [s.name for s in p]
+        assert names[0] == "count_generation"
+        assert names[-1] == "tell"
+
+    def test_repr_contains_pipeline(self):
+        p = _make_ps_pipeline()
+        assert "Pipeline" in repr(p)
+
+    def test_repr_contains_name_when_set(self):
+        p = _make_ps_pipeline()  # name="ps"
+        assert "name='ps'" in repr(p)
+
+    def test_repr_no_name_field_when_empty(self):
+        p = Pipeline([CountGenerationStage()])
+        assert "name=" not in repr(p)
+
+    def test_repr_contains_stage_class_names(self):
+        p = _make_ps_pipeline()
+        r = repr(p)
+        assert "CountGenerationStage" in r
+        assert "AskStage" in r

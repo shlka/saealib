@@ -79,6 +79,17 @@ class Stage(ABC):
         return f"{prefix}\\State {notation}"
 
 
+def _find_recursive(stages: list[Stage], name: str) -> Stage | None:
+    for stage in stages:
+        if stage.name == name:
+            return stage
+        if stage.stages:
+            result = _find_recursive(stage.stages, name)
+            if result is not None:
+                return result
+    return None
+
+
 class Pipeline(Stage):
     """
     A sequential composition of :class:`Stage` objects.
@@ -144,6 +155,78 @@ class Pipeline(Stage):
             if stage.name == name:
                 return stage
         raise KeyError(name)
+
+    def replace(self, name: str, stage: Stage) -> None:
+        """Replace the stage named *name* in the top-level stages list.
+
+        Parameters
+        ----------
+        name : str
+            The ``name`` of the stage to replace.
+        stage : Stage
+            Replacement stage.
+
+        Raises
+        ------
+        KeyError
+            If no stage with the given name exists.
+        TypeError
+            If *stage* is not a ``Stage`` instance.
+        """
+        if not isinstance(stage, Stage):
+            raise TypeError(
+                f"{stage!r} is not a Stage instance; "
+                "replacement must be a Stage subclass"
+            )
+        for i, s in enumerate(self.stages):
+            if s.name == name:
+                self.stages[i] = stage
+                return
+        raise KeyError(name)
+
+    def find(self, name: str, *, recursive: bool = False) -> Stage:
+        """Look up a stage by name, optionally descending into nested stages.
+
+        Parameters
+        ----------
+        name : str
+            The ``name`` of the stage to find.
+        recursive : bool, optional
+            If ``True``, descend into stages that expose a ``stages`` attribute
+            (e.g., nested :class:`Pipeline` or
+            :class:`~saealib.stages.SurrogateOnlyLoopStage`).
+            Defaults to ``False``.
+
+        Returns
+        -------
+        Stage
+
+        Raises
+        ------
+        KeyError
+            If no stage with the given name exists.
+        """
+        if not recursive:
+            return self[name]
+        result = _find_recursive(self.stages, name)
+        if result is not None:
+            return result
+        raise KeyError(name)
+
+    def __len__(self) -> int:
+        """Return the number of top-level stages."""
+        return len(self.stages)
+
+    def __iter__(self):
+        """Iterate over the top-level stages."""
+        return iter(self.stages)
+
+    def __repr__(self) -> str:
+        """Return a concise developer-facing string for this pipeline."""
+        names = ", ".join(type(s).__name__ for s in self.stages)
+        if self.name:
+            return f"Pipeline(name={self.name!r}, stages=[{names}])"
+        return f"Pipeline(stages=[{names}])"
 
     def to_pseudocode(self, *, expand: bool = False, indent: int = 0) -> str:
         """Render this pipeline as a LaTeX algorithmic block."""

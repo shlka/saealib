@@ -361,3 +361,74 @@ class TestPreSelectionStrategyWithDensityManager:
         ctx, provider, strategy = self._setup()
         ctx = strategy.step(ctx, provider)
         assert ctx.gen == 1
+
+
+# ---------------------------------------------------------------------------
+# Strategy.pipeline caching
+# ---------------------------------------------------------------------------
+
+
+from saealib.pipeline import Pipeline  # noqa: E402
+
+
+class TestStrategyPipelineAttribute:
+    """Strategy.pipeline is None before first step, Pipeline after."""
+
+    def _providers_and_strategies(self):
+        ga = _make_ga()
+        sm = _MockSurrogateManager()
+        provider = _MockProvider(ga, sm)
+        return provider, {
+            "ps": PreSelectionStrategy(n_candidates=20, n_select=5),
+            "ib": IndividualBasedStrategy(evaluation_ratio=0.5),
+            "gb": GenerationBasedStrategy(gen_ctrl=2),
+        }
+
+    def test_ps_pipeline_none_before_step(self):
+        _, strategies = self._providers_and_strategies()
+        assert strategies["ps"].pipeline is None
+
+    def test_ib_pipeline_none_before_step(self):
+        _, strategies = self._providers_and_strategies()
+        assert strategies["ib"].pipeline is None
+
+    def test_gb_pipeline_none_before_step(self):
+        _, strategies = self._providers_and_strategies()
+        assert strategies["gb"].pipeline is None
+
+    def test_ps_pipeline_is_pipeline_after_step(self):
+        provider, strategies = self._providers_and_strategies()
+        ctx = _make_ctx()
+        strategies["ps"].step(ctx, provider)
+        assert isinstance(strategies["ps"].pipeline, Pipeline)
+
+    def test_ib_pipeline_is_pipeline_after_step(self):
+        provider, strategies = self._providers_and_strategies()
+        ctx = _make_ctx()
+        strategies["ib"].step(ctx, provider)
+        assert isinstance(strategies["ib"].pipeline, Pipeline)
+
+    def test_gb_pipeline_is_pipeline_after_step(self):
+        provider, strategies = self._providers_and_strategies()
+        ctx = _make_ctx()
+        strategies["gb"].step(ctx, provider)
+        assert isinstance(strategies["gb"].pipeline, Pipeline)
+
+    def test_ps_pipeline_reused_across_steps(self):
+        provider, strategies = self._providers_and_strategies()
+        ctx = _make_ctx()
+        s = strategies["ps"]
+        s.step(ctx, provider)
+        first = s.pipeline
+        s.step(ctx, provider)
+        assert s.pipeline is first
+
+    def test_ps_pipeline_rebuilds_when_reset(self):
+        provider, strategies = self._providers_and_strategies()
+        ctx = _make_ctx()
+        s = strategies["ps"]
+        s.step(ctx, provider)
+        first = s.pipeline
+        s.pipeline = None
+        s.step(ctx, provider)
+        assert s.pipeline is not first
