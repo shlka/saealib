@@ -191,16 +191,20 @@ class TestPipelinePseudocode:
         p = _make_ps_pipeline()
         out = p.to_pseudocode(expand=True)
         assert r"gen \leftarrow gen + 1" in out
-        assert r"\text{ask}" in out
+        # AskStage with GA expands to \Comment{Generate offspring} + sub-stages
+        assert r"Generate offspring" in out
+        assert r"\mathrm{select}" in out
+        assert r"\mathrm{crossover}" in out
+        assert r"\mathrm{mutate}" in out
         assert r"\text{score}" in out
         assert r"\text{top-}" in out
         assert r"\text{eval}" in out
 
-    def test_expand_true_line_count_equals_stages_plus_header(self):
+    def test_expand_true_line_count_more_than_stages_when_ask_expands(self):
         p = _make_ps_pipeline()
         lines = p.to_pseudocode(expand=True).splitlines()
-        # 1 Comment header + 7 stages
-        assert len(lines) == 1 + len(p.stages)
+        # AskStage expands into sub-stages, so line count > 1 + len(p.stages)
+        assert len(lines) > 1 + len(p.stages)
 
     def test_no_name_falls_back_to_notation(self):
         stage = CountGenerationStage()
@@ -238,7 +242,9 @@ class TestSurrogateOnlyLoopPseudocode:
     def test_expand_true_contains_inner_stages(self):
         out = self._make().to_pseudocode(expand=True)
         assert r"gen \leftarrow gen + 1" in out
-        assert r"\text{ask}" in out
+        # AskStage with GA expands: \Comment{Generate offspring} + sub-stages
+        assert r"Generate offspring" in out
+        assert r"\mathrm{select}" in out
         assert r"\text{score}" in out
         assert r"\text{tell}" in out
 

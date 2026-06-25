@@ -90,6 +90,74 @@ class _DispatchProxy:
 
 
 # ---------------------------------------------------------------------------
+# Pseudocode-only sub-stages (used by Algorithm.ask_stages)
+# ---------------------------------------------------------------------------
+
+
+class ParentSelectionStage(Stage):
+    """Pseudocode representation of parent selection inside GA.ask().
+
+    This stage is metadata only: ``execute()`` is a no-op.
+    It is intended to be returned by ``GA.ask_stages`` so that
+    ``AskStage.to_pseudocode(expand=True)`` can render the GA ask loop
+    with individual operator steps.
+    """
+
+    name = "parent_selection"
+    label = "Parent selection"
+    notation = r"$I_m \leftarrow \mathrm{select}(P,\, n_{pair})$"
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        return state
+
+
+class CrossoverStage(Stage):
+    """Pseudocode representation of crossover inside GA.ask().
+
+    This stage is metadata only: ``execute()`` is a no-op.
+    """
+
+    name = "crossover"
+    label = "Crossover"
+    notation = r"$\mathcal{Q} \leftarrow \mathrm{crossover}(P[I_m])$"
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        return state
+
+
+class MutationStage(Stage):
+    """Pseudocode representation of mutation inside GA.ask().
+
+    This stage is metadata only: ``execute()`` is a no-op.
+    """
+
+    name = "mutation"
+    label = "Mutation"
+    notation = r"$\mathcal{Q} \leftarrow \mathrm{mutate}(\mathcal{Q})$"
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        return state
+
+
+class VelocityUpdateStage(Stage):
+    """Pseudocode representation of PSO velocity and position update.
+
+    This stage is metadata only: ``execute()`` is a no-op.
+    It is intended to be returned by ``PSO.ask_stages``.
+    """
+
+    name = "velocity_update"
+    label = "Velocity and position update"
+    notation = (
+        r"$v \leftarrow w v + c_1 r_1 (p_{best} - x) + c_2 r_2 (g_{best} - x)$;"
+        r"$\quad x \leftarrow x + v$"
+    )
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        return state
+
+
+# ---------------------------------------------------------------------------
 # Concrete stages
 # ---------------------------------------------------------------------------
 
@@ -135,6 +203,7 @@ class AskStage(Stage):
         self._algorithm = algorithm
         self._n_offspring = n_offspring
         self._proxy = _DispatchProxy(cbmanager)
+        self.stages = algorithm.ask_stages
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         candidates = self._algorithm.ask(state, self._proxy, self._n_offspring)

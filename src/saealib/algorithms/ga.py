@@ -205,6 +205,13 @@ class GA(Algorithm):
         """Return the archive class."""
         return Archive
 
+    @property
+    def ask_stages(self):
+        """Return pseudocode-only sub-stages for GA.ask()."""
+        from saealib.stages import CrossoverStage, MutationStage, ParentSelectionStage
+
+        return [ParentSelectionStage(), CrossoverStage(), MutationStage()]
+
     def ask(
         self,
         ctx: OptimizationState,

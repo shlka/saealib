@@ -11,6 +11,7 @@ from saealib.problem import Problem
 
 if TYPE_CHECKING:
     from saealib.optimizer import Dispatchable
+    from saealib.pipeline import Stage
 
 
 class Algorithm(ABC):
@@ -50,6 +51,18 @@ class Algorithm(ABC):
             init_capacity=init_capacity,
             direction=problem.direction,
         )
+
+    @property
+    def ask_stages(self) -> list[Stage] | None:
+        """Sub-stages that describe :meth:`ask` for pseudocode generation.
+
+        Returns ``None`` by default.  Subclasses may override to return a list
+        of :class:`~saealib.pipeline.Stage` objects (pseudocode-only; their
+        ``execute()`` methods are no-ops).  When set, :class:`~saealib.stages.AskStage`
+        exposes these via its ``stages`` attribute so that
+        ``to_pseudocode(expand=True)`` renders the internal ask logic.
+        """
+        return None
 
     @abstractmethod
     def ask(

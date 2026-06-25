@@ -107,6 +107,13 @@ class PSO(Algorithm):
         """Return the archive class."""
         return Archive
 
+    @property
+    def ask_stages(self):
+        """Return pseudocode-only sub-stages for PSO.ask()."""
+        from saealib.stages import VelocityUpdateStage
+
+        return [VelocityUpdateStage()]
+
     def ask(
         self,
         ctx: OptimizationState,
