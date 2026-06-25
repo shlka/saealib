@@ -191,7 +191,7 @@ class TestPipelinePseudocode:
         p = _make_ps_pipeline()
         out = p.to_pseudocode(expand=True)
         assert r"gen \leftarrow gen + 1" in out
-        # AskStage with GA expands to \Comment{Generate offspring} + sub-stages
+        # AskStage with GA expands via ask_notation: \Comment + 3 lines
         assert r"Generate offspring" in out
         assert r"\mathrm{select}" in out
         assert r"\mathrm{crossover}" in out
@@ -200,11 +200,23 @@ class TestPipelinePseudocode:
         assert r"\text{top-}" in out
         assert r"\text{eval}" in out
 
-    def test_expand_true_line_count_more_than_stages_when_ask_expands(self):
+    def test_expand_true_ask_expands_when_algorithm_has_notation(self):
         p = _make_ps_pipeline()
-        lines = p.to_pseudocode(expand=True).splitlines()
-        # AskStage expands into sub-stages, so line count > 1 + len(p.stages)
-        assert len(lines) > 1 + len(p.stages)
+        out = p.to_pseudocode(expand=True)
+        # GA has ask_notation → AskStage expands to Comment + 3 lines
+        # so total lines > 1 (header) + len(p.stages)
+        assert len(out.splitlines()) > 1 + len(p.stages)
+
+    def test_expand_true_ask_does_not_expand_without_notation(self):
+        """AskStage with an algorithm that has no ask_notation stays as one line."""
+
+        class _NoNotationAlgo:
+            pass
+
+        stage = AskStage(_NoNotationAlgo())
+        out = stage.to_pseudocode(expand=True)
+        assert "\n" not in out
+        assert r"\State" in out
 
     def test_no_name_falls_back_to_notation(self):
         stage = CountGenerationStage()
@@ -242,9 +254,11 @@ class TestSurrogateOnlyLoopPseudocode:
     def test_expand_true_contains_inner_stages(self):
         out = self._make().to_pseudocode(expand=True)
         assert r"gen \leftarrow gen + 1" in out
-        # AskStage with GA expands: \Comment{Generate offspring} + sub-stages
+        # AskStage with GA expands via ask_notation
         assert r"Generate offspring" in out
         assert r"\mathrm{select}" in out
+        assert r"\mathrm{crossover}" in out
+        assert r"\mathrm{mutate}" in out
         assert r"\text{score}" in out
         assert r"\text{tell}" in out
 

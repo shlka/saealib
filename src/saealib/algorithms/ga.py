@@ -206,11 +206,13 @@ class GA(Algorithm):
         return Archive
 
     @property
-    def ask_stages(self):
-        """Return pseudocode-only sub-stages for GA.ask()."""
-        from saealib.stages import CrossoverStage, MutationStage, ParentSelectionStage
-
-        return [ParentSelectionStage(), CrossoverStage(), MutationStage()]
+    def ask_notation(self) -> list[str]:
+        """LaTeX notation lines for GA.ask(): select → crossover → mutate."""
+        return [
+            r"$I_m \leftarrow \mathrm{select}(P,\, n_{pair})$",
+            r"$\mathcal{Q} \leftarrow \mathrm{crossover}(P[I_m])$",
+            r"$\mathcal{Q} \leftarrow \mathrm{mutate}(\mathcal{Q})$",
+        ]
 
     def ask(
         self,

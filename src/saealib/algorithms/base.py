@@ -11,7 +11,6 @@ from saealib.problem import Problem
 
 if TYPE_CHECKING:
     from saealib.optimizer import Dispatchable
-    from saealib.pipeline import Stage
 
 
 class Algorithm(ABC):
@@ -53,14 +52,22 @@ class Algorithm(ABC):
         )
 
     @property
-    def ask_stages(self) -> list[Stage] | None:
-        """Sub-stages that describe :meth:`ask` for pseudocode generation.
+    def ask_notation(self) -> list[str] | None:
+        r"""LaTeX notation lines describing the internal steps of :meth:`ask`.
 
-        Returns ``None`` by default.  Subclasses may override to return a list
-        of :class:`~saealib.pipeline.Stage` objects (pseudocode-only; their
-        ``execute()`` methods are no-ops).  When set, :class:`~saealib.stages.AskStage`
-        exposes these via its ``stages`` attribute so that
-        ``to_pseudocode(expand=True)`` renders the internal ask logic.
+        Returns ``None`` by default; :class:`~saealib.stages.AskStage` then
+        renders a single collapsed ``\\State`` line.  Override to return a list
+        of LaTeX math strings (one per logical step) so that
+        ``AskStage.to_pseudocode(expand=True)`` expands them inside a
+        ``\\Comment`` block.
+
+        Example (GA)::
+
+            return [
+                r"$I_m \\leftarrow \\mathrm{select}(P,\\, n_{pair})$",
+                r"$\\mathcal{Q} \\leftarrow \\mathrm{crossover}(P[I_m])$",
+                r"$\\mathcal{Q} \\leftarrow \\mathrm{mutate}(\\mathcal{Q})$",
+            ]
         """
         return None
 

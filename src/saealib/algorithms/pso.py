@@ -108,11 +108,12 @@ class PSO(Algorithm):
         return Archive
 
     @property
-    def ask_stages(self):
-        """Return pseudocode-only sub-stages for PSO.ask()."""
-        from saealib.stages import VelocityUpdateStage
-
-        return [VelocityUpdateStage()]
+    def ask_notation(self) -> list[str]:
+        """LaTeX notation lines for PSO.ask(): velocity update and position update."""
+        return [
+            r"$v \leftarrow w v + c_1 r_1 (p_{best} - x) + c_2 r_2 (g_{best} - x)$",
+            r"$x \leftarrow x + v$",
+        ]
 
     def ask(
         self,
