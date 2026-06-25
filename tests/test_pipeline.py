@@ -105,7 +105,7 @@ def _make_gb_pipeline(gen_ctrl: int = 3):
 class TestPipelineValidation:
     def test_non_stage_raises(self):
         with pytest.raises(TypeError, match="not a Stage instance"):
-            Pipeline([CountGenerationStage(), "not_a_stage"])  # type: ignore[list-item]
+            Pipeline([CountGenerationStage(), "not_a_stage"])  # type: ignore[list-item]  # ty: ignore[invalid-argument-type]
 
     def test_empty_pipeline_allowed(self):
         p = Pipeline([])
@@ -213,7 +213,7 @@ class TestPipelinePseudocode:
         class _NoNotationAlgo:
             pass
 
-        stage = AskStage(_NoNotationAlgo())
+        stage = AskStage(_NoNotationAlgo())  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
         out = stage.to_pseudocode(expand=True)
         assert "\n" not in out
         assert r"\State" in out
