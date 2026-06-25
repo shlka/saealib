@@ -88,54 +88,6 @@ unsupported-operator = "error"
 no-matching-overload = "error"
 invalid-return-type = "error"
 
-# archive.py: ArchiveMixin accesses Population attributes (schema, _size, etc.)
-# that ty cannot resolve statically because the mixin's MRO is determined at
-# class-composition time.  Changing the pattern to Protocol/Generic would
-# require a breaking API change and is deferred.
-[[tool.ty.overrides]]
-include = ["src/saealib/population/archive.py"]
-
-[tool.ty.overrides.rules]
-unresolved-attribute = "warn"
-unknown-argument = "warn"
-
-# test_termination.py: SimpleNamespace is used as a lightweight
-# OptimizationContext stub (68 invalid-argument-type) and the `in` operator
-# is applied to `str | None` intentionally to test stall detection
-# (2 unsupported-operator).  Replacing with a full mock or TypedDict would
-# add ~100 lines of boilerplate with no semantic value for these unit tests.
-[[tool.ty.overrides]]
-include = ["tests/test_termination.py"]
-
-[tool.ty.overrides.rules]
-invalid-argument-type = "warn"
-unsupported-operator = "warn"
-
-# test_pso.py: _DummyProvider is a minimal ComponentProvider stub that
-# exposes only the fields needed by PSO.ask/tell.  Inheriting from
-# ComponentProvider would require wiring unrelated components.
-[[tool.ty.overrides]]
-include = ["tests/test_pso.py"]
-
-[tool.ty.overrides.rules]
-invalid-argument-type = "warn"
-
-# test_strategies.py / test_operators.py: _MockProvider / _DispatchOnlyProvider
-# are minimal stubs used to test strategy.step() and ga.ask() in isolation.
-[[tool.ty.overrides]]
-include = ["tests/test_strategies.py", "tests/test_operators.py"]
-
-[tool.ty.overrides.rules]
-invalid-argument-type = "warn"
-
-# test_integration.py: problem fixture uses list[int] for lb/ub where
-# Problem.__init__ expects list[int | float].  The values are valid at
-# runtime; widening the test literals would obscure intent.
-[[tool.ty.overrides]]
-include = ["tests/test_integration.py"]
-
-[tool.ty.overrides.rules]
-invalid-argument-type = "warn"
 
 [tool.coverage.run]
 branch = true

@@ -10,7 +10,7 @@ from saealib.population import Archive, ParetoArchive, Population, PopulationAtt
 from saealib.problem import Problem
 
 if TYPE_CHECKING:
-    from saealib.optimizer import ComponentProvider
+    from saealib.optimizer import Dispatchable
 
 
 class Algorithm(ABC):
@@ -55,7 +55,7 @@ class Algorithm(ABC):
     def ask(
         self,
         ctx: OptimizationContext,
-        provider: ComponentProvider,
+        provider: Dispatchable,
         n_offspring: int | None = None,
     ) -> Population:
         """
@@ -65,7 +65,7 @@ class Algorithm(ABC):
         ----------
         ctx : OptimizationContext
             Context instance.
-        provider : ComponentProvider
+        provider : Dispatchable
             Provider instance.
         n_offspring : int or None, optional
             Number of offspring to generate. If ``None``, the algorithm
@@ -82,7 +82,7 @@ class Algorithm(ABC):
     def tell(
         self,
         ctx: OptimizationContext,
-        provider: ComponentProvider,
+        provider: Dispatchable,
         offspring: Population,
     ) -> None:
         """
@@ -92,7 +92,7 @@ class Algorithm(ABC):
         ----------
         ctx : OptimizationContext
             Context instance.
-        provider : ComponentProvider
+        provider : Dispatchable
             Provider instance.
         offspring : Population
             Offspring solutions.

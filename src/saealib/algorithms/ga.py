@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from saealib.operators.crossover import Crossover
     from saealib.operators.mutation import Mutation
     from saealib.operators.selection import ParentSelection, SurvivorSelection
-    from saealib.optimizer import ComponentProvider
+    from saealib.optimizer import Dispatchable
 
 
 def _route_crossover(
@@ -208,7 +208,7 @@ class GA(Algorithm):
     def ask(
         self,
         ctx: OptimizationContext,
-        provider: ComponentProvider,
+        provider: Dispatchable,
         n_offspring: int | None = None,
     ) -> Population:
         """
@@ -218,7 +218,7 @@ class GA(Algorithm):
         ----------
         ctx : OptimizationContext
             Current optimization context.
-        provider : ComponentProvider
+        provider : Dispatchable
             Component provider.
         n_offspring : int or None, optional
             Number of offspring. Defaults to the current population size.
@@ -294,7 +294,7 @@ class GA(Algorithm):
     def tell(
         self,
         ctx: OptimizationContext,
-        provider: ComponentProvider,
+        provider: Dispatchable,
         offspring: Population,
     ):
         """
@@ -304,7 +304,7 @@ class GA(Algorithm):
         ----------
         ctx : OptimizationContext
             Current optimization context.
-        provider : ComponentProvider
+        provider : Dispatchable
             Component provider.
         offspring : Population
             Offspring population.

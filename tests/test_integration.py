@@ -48,8 +48,8 @@ def test_integration(seed: int):
     dim = 10
     knn = 50
     rsm = 0.1
-    ub = [5] * dim
-    lb = [-5] * dim
+    ub = [5.0] * dim
+    lb = [-5.0] * dim
 
     # benchmark function
     def sphere(x: np.ndarray) -> float:
