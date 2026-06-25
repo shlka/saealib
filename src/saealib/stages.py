@@ -132,6 +132,7 @@ class AskStage(Stage):
         n_offspring: int | None = None,
         cbmanager: CallbackManager | None = None,
     ) -> None:
+        super().__init__()
         self._algorithm = algorithm
         self._n_offspring = n_offspring
         self._proxy = _DispatchProxy(cbmanager)
@@ -182,6 +183,7 @@ class SurrogateScoreStage(Stage):
         *,
         refit: bool = True,
     ) -> None:
+        super().__init__()
         self._sm = surrogate_manager
         self._cbmanager = cbmanager
         self._refit = refit
@@ -226,6 +228,7 @@ class SurrogateFitStage(Stage):
     notation = r"$\hat{f} \leftarrow \text{fit}(\mathcal{A})$"
 
     def __init__(self, surrogate_manager: SurrogateManager) -> None:
+        super().__init__()
         self._sm = surrogate_manager
 
     def execute(self, state: OptimizationState) -> OptimizationState:
@@ -250,6 +253,7 @@ class TopKSelectionStage(Stage):
     notation = r"$\mathcal{Q} \leftarrow \text{top-}k(\mathcal{Q}, \mathbf{s})$"
 
     def __init__(self, k: int) -> None:
+        super().__init__()
         self._k = k
 
     def execute(self, state: OptimizationState) -> OptimizationState:
@@ -312,6 +316,7 @@ class TrueEvaluationStage(Stage):
         cbmanager: CallbackManager | None = None,
         n_eval: int | Callable[[OptimizationState], int] | None = None,
     ) -> None:
+        super().__init__()
         self._evaluator = evaluator
         self._cbmanager = cbmanager
         self._n_eval = n_eval
@@ -386,6 +391,7 @@ class TellStage(Stage):
     notation = r"$P \leftarrow \text{tell}(P, \mathcal{Q})$"
 
     def __init__(self, algorithm: Algorithm) -> None:
+        super().__init__()
         self._algorithm = algorithm
         self._proxy = _DispatchProxy()
 
@@ -443,6 +449,7 @@ class SurrogateOnlyLoopStage(Stage):
         gen_ctrl: int,
         cbmanager: CallbackManager | None = None,
     ) -> None:
+        super().__init__()
         self._gen_ctrl = gen_ctrl
         self._sm = surrogate_manager
         if gen_ctrl > 0:
@@ -459,7 +466,6 @@ class SurrogateOnlyLoopStage(Stage):
             self.stages = self._inner.stages
         else:
             self._inner = None
-            self.stages = []
 
     def to_pseudocode(self, *, expand: bool = False, indent: int = 0) -> str:
         r"""Render as a ``\For`` loop block when *expand* is True."""
@@ -517,6 +523,7 @@ class InitializationStage(Stage):
         provider: ComponentProvider,
         problem: Problem,
     ) -> None:
+        super().__init__()
         self._initializer = initializer
         self._provider = provider
         self._problem = problem

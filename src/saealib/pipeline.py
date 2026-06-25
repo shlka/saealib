@@ -27,14 +27,41 @@ class Stage(ABC):
         Human-readable description of what this stage does.
     notation : str
         LaTeX math expression used by :meth:`to_pseudocode`.
-    stages : list[Stage] or None
-        Sub-pipeline for composite stages.  ``None`` for leaf stages.
+    stages : list[Stage]
+        Sub-pipeline for composite stages.  Empty list for leaf stages.
     """
 
     name: str = ""
     label: str = ""
     notation: str = ""
-    stages: list[Stage] | None = None
+    stages: list[Stage]
+
+    def __init__(
+        self,
+        *,
+        name: str = "",
+        label: str = "",
+        notation: str = "",
+    ) -> None:
+        """
+        Initialize base Stage attributes.
+
+        Parameters
+        ----------
+        name : str, optional
+            Override the class-level ``name``.
+        label : str, optional
+            Override the class-level ``label``.
+        notation : str, optional
+            Override the class-level ``notation``.
+        """
+        if name:
+            self.name = name
+        if label:
+            self.label = label
+        if notation:
+            self.notation = notation
+        self.stages: list[Stage] = []
 
     @abstractmethod
     def execute(self, state: OptimizationState) -> OptimizationState:
@@ -116,10 +143,8 @@ class Pipeline(Stage):
         label: str = "",
         notation: str = "",
     ) -> None:
+        super().__init__(name=name, label=label, notation=notation)
         self.stages = stages
-        self.name = name
-        self.label = label
-        self.notation = notation
         self._validate()
 
     def _validate(self) -> None:
