@@ -49,6 +49,7 @@ from saealib.comparators import (
     SingleObjectiveComparator,
     _pareto_dominates,
 )
+from saealib.comparators.comparators import _normalize_objectives
 from saealib.population import Population, PopulationAttribute
 from saealib.utils.indicators import _non_dominated, hypervolume_contributions
 
@@ -2256,6 +2257,50 @@ class TestNSGA3Comparator:
 
 
 # ===========================================================================
+# _normalize_objectives Tests
+# ===========================================================================
+class TestNormalizeObjectives:
+    def test_direction_minimize_orientation(self) -> None:
+        """direction=-1: f_norm must reflect raw f geometry, not -f.
+
+        With 3 axis-aligned extreme points the individual with f=[1,0,0]
+        must end up with f_norm close to [1,0,0], associating with ref [1,0,0].
+        Before the Bug1 fix, f_signed=-f reversed this mapping.
+        """
+        f = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+        direction = np.array([-1.0, -1.0, -1.0])
+        f_norm, _, _ = _normalize_objectives(f, direction)
+        # f_norm[0] should be extreme along axis 0
+        assert f_norm[0, 0] > f_norm[0, 1]
+        assert f_norm[0, 0] > f_norm[0, 2]
+
+    def test_non_identity_intercepts(self) -> None:
+        """Bug2: intercepts = 1/plane_coefficients, not plane_coefficients.
+
+        For extreme matrix [[0,1,1],[1,0,1],[1,1,0]] the hyperplane
+        coefficients are [0.5,0.5,0.5], so the true intercepts are [2,2,2].
+        """
+        # Pareto front: three axis-aligned points on a non-identity simplex
+        # extreme rows of f_trans will be [0,1,1],[1,0,1],[1,1,0]
+        f = np.array(
+            [
+                [2.0, 0.0, 0.0],  # extreme in obj 0
+                [0.0, 2.0, 0.0],  # extreme in obj 1
+                [0.0, 0.0, 2.0],  # extreme in obj 2
+                [0.5, 0.5, 0.5],  # interior
+            ]
+        )
+        # direction=None → f_pos = f (all-minimize)
+        f_norm, _ideal, intercepts = _normalize_objectives(f, None)
+        # ideal = [0,0,0]; extreme = [[2,0,0],[0,2,0],[0,0,2]] = 2*I
+        # plane = linalg.solve(2I, ones) = [0.5,0.5,0.5]
+        # intercepts (Bug2 fix) = 1/[0.5,...] = [2,2,2]
+        np.testing.assert_allclose(intercepts, [2.0, 2.0, 2.0], atol=1e-9)
+        # f_norm[0] should be [1,0,0] (extreme point / intercept = [2,0,0]/2)
+        np.testing.assert_allclose(f_norm[0], [1.0, 0.0, 0.0], atol=1e-9)
+
+
+# ===========================================================================
 # RNSGA2Comparator Tests
 # ===========================================================================
 class TestRNSGA2Comparator:
@@ -2336,3 +2381,17 @@ class TestRNSGA2Comparator:
         comp = RNSGA2Comparator(ref, direction=np.array([1.0, 1.0]))
         order = comp.sort_population(pop)
         assert order[0] == 0  # [3,3] dominates under maximization
+
+    def test_direction_minimize_ref_association(self) -> None:
+        """direction=-1: reference point must associate with the correct individual.
+
+        With ref=[0.1, 0.9] (small f1, large f2) the individual [0.1, 0.9]
+        should rank before [0.9, 0.1].  Before the Bug1 fix, f*direction=-f
+        reversed the normalization and the wrong individual ranked first.
+        """
+        ref = np.array([[0.1, 0.9]])
+        f = np.array([[0.1, 0.9], [0.9, 0.1]])
+        pop = _make_pop(f)
+        comp = RNSGA2Comparator(ref, direction=np.array([-1.0, -1.0]))
+        order = comp.sort_population(pop)
+        assert order[0] == 0  # [0.1, 0.9] is closer to ref [0.1, 0.9]
