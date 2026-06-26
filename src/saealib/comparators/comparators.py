@@ -500,7 +500,7 @@ class NSGA2Comparator(ParetoComparator):
         return result
 
     def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
-        """Compare via NSGA-II crowded comparison operator (Deb 2002 Definition 2)."""
+        """Compare via NSGA-II crowded comparison operator (Deb et al. 2002)."""
         cv = population.get_array("cv")
         cv_a = float(cv[idx_a])
         cv_b = float(cv[idx_b])
