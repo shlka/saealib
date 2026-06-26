@@ -522,7 +522,9 @@ class NSGA2Comparator(ParetoComparator):
             tuple(self.direction.tolist()) if self.direction is not None else None
         )
         _rc_key = ("nsga2_rank_cd", self._sorter, self._dominator, _dir_key)
-        rank_full, cd_full = population.get_cache(_rc_key)
+        cached = population.get_cache(_rc_key)
+        assert cached is not None
+        rank_full, cd_full = cached
         rank_a, rank_b = rank_full[idx_a], rank_full[idx_b]
         if rank_a < rank_b:
             return -1
