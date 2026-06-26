@@ -667,6 +667,31 @@ class TestNSGA2Comparator:
             comp_max.sort_population(_make_pop(f))[0] == 0
         )  # [3,3] wins under maximization
 
+    def test_compare_population_same_front_higher_cd_wins(self) -> None:
+        # 3 points on the same front; boundary points (idx 0, 1) get cd=inf,
+        # interior point (idx 2) gets finite cd → boundary beats interior.
+        f = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])
+        pop = _make_pop(f)
+        comp = NSGA2Comparator()
+        assert comp.compare_population(pop, 0, 2) == -1  # boundary beats interior
+        assert comp.compare_population(pop, 1, 2) == -1
+        assert comp.compare_population(pop, 2, 0) == 1
+
+    def test_compare_population_lower_rank_beats_higher_cd(self) -> None:
+        # idx=2 is on rank 1; idx=0 and idx=1 are on rank 0 regardless of cd.
+        f = np.array([[0.0, 0.0], [0.1, 0.1], [5.0, 5.0]])
+        pop = _make_pop(f)
+        comp = NSGA2Comparator()
+        assert comp.compare_population(pop, 0, 2) == -1
+        assert comp.compare_population(pop, 1, 2) == -1
+
+    def test_compare_population_non_dominated_two_points_tie(self) -> None:
+        # Two-point front: both are boundary points with cd=inf → tie.
+        f = np.array([[0.0, 1.0], [1.0, 0.0]])
+        pop = _make_pop(f)
+        comp = NSGA2Comparator()
+        assert comp.compare_population(pop, 0, 1) == 0
+
 
 # ===========================================================================
 # Problem Comparator Auto-selection Tests

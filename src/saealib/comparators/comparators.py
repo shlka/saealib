@@ -475,6 +475,9 @@ class NSGA2Comparator(ParetoComparator):
         feasible = np.where(cv <= self.eps_cv)[0]
         infeasible = np.where(cv > self.eps_cv)[0]
 
+        rank_full = np.full(len(population), np.inf)
+        cd_full = np.zeros(len(population))
+
         sorted_feasible = np.empty(0, int)
         if len(feasible):
             ranks, fronts = self._sorter(
@@ -483,6 +486,8 @@ class NSGA2Comparator(ParetoComparator):
             cd = crowding_distance_all_fronts(f[feasible], fronts)
             order = np.lexsort((-cd, ranks))
             sorted_feasible = feasible[order]
+            rank_full[feasible] = ranks
+            cd_full[feasible] = cd
 
         sorted_infeasible = np.empty(0, int)
         if len(infeasible):
@@ -490,7 +495,47 @@ class NSGA2Comparator(ParetoComparator):
 
         result = np.concatenate([sorted_feasible, sorted_infeasible]).astype(int)
         population.set_cache(_cache_key, result)
+        _rc_key = ("nsga2_rank_cd", self._sorter, self._dominator, _dir_key)
+        population.set_cache(_rc_key, (rank_full, cd_full))
         return result
+
+    def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
+        """Compare via NSGA-II crowded comparison operator (Deb et al. 2002)."""
+        cv = population.get_array("cv")
+        cv_a = float(cv[idx_a])
+        cv_b = float(cv[idx_b])
+
+        if cv_a > self.eps_cv and cv_b > self.eps_cv:
+            if cv_a < cv_b:
+                return -1
+            if cv_a > cv_b:
+                return 1
+            return 0
+        if cv_a > self.eps_cv:
+            return 1
+        if cv_b > self.eps_cv:
+            return -1
+
+        # Both feasible: rank first, then crowding distance (higher = better).
+        self.sort_population(population)
+        _dir_key = (
+            tuple(self.direction.tolist()) if self.direction is not None else None
+        )
+        _rc_key = ("nsga2_rank_cd", self._sorter, self._dominator, _dir_key)
+        cached = population.get_cache(_rc_key)
+        assert cached is not None
+        rank_full, cd_full = cached
+        rank_a, rank_b = rank_full[idx_a], rank_full[idx_b]
+        if rank_a < rank_b:
+            return -1
+        if rank_a > rank_b:
+            return 1
+        cd_a, cd_b = cd_full[idx_a], cd_full[idx_b]
+        if cd_a > cd_b:
+            return -1
+        if cd_a < cd_b:
+            return 1
+        return 0
 
 
 class SPEA2Comparator(Comparator):
