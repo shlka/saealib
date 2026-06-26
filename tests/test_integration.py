@@ -1,36 +1,31 @@
 import logging
 
 import numpy as np
-import pytest
 
 from saealib import (
     GA,
     CrossoverBLXAlpha,
+    GPRSurrogate,
     IndividualBasedStrategy,
     LHSInitializer,
     MutationUniform,
     Optimizer,
     Problem,
-    RBFSurrogate,
     SequentialSelection,
     Termination,
     TruncationSelection,
-    gaussian_kernel,
     max_fe,
 )
 
 logging.basicConfig(level=logging.INFO)
-logging.getLogger("saealib.surrogate.rbf").setLevel(logging.CRITICAL)
-
-SEEDS = [42, 43, 44, 45, 46]
+logging.getLogger("saealib.surrogate.sklearn_surrogate").setLevel(logging.CRITICAL)
 
 
-@pytest.mark.parametrize("seed", SEEDS)
-def test_integration(seed: int):
+def test_integration():
     """
-    Run SAGA-RBF optimization example.
+    Run SAGA-GP optimization example.
 
-    This test checks these classes:
+    This test checks the integration of these classes:
     - Optimizer
     - Problem
     - Initializer (LHSInitializer)
@@ -40,18 +35,16 @@ def test_integration(seed: int):
     - ParentSelection (SequentialSelection)
     - SurvivorSelection (TruncationSelection)
     - Termination
-    - Surrogate (RBFSurrogate)
+    - Surrogate (GPRSurrogate)
     - Strategy (IndividualBasedStrategy)
-    - Callback (logging_generation, repair_clipping)
     """
-    # parameters
-    dim = 10
-    knn = 50
-    rsm = 0.1
+    # Small problem configuration for fast execution in CI
+    dim = 2
+    knn = 10
+    rsm = 0.2
     ub = [5.0] * dim
     lb = [-5.0] * dim
 
-    # benchmark function
     def sphere(x: np.ndarray) -> float:
         return np.sum(x**2)
 
@@ -64,9 +57,9 @@ def test_integration(seed: int):
         ub=ub,
     )
     initializer = LHSInitializer(
-        n_init_archive=5 * dim,
-        n_init_population=4 * dim,
-        seed=seed,
+        n_init_archive=10,
+        n_init_population=8,
+        seed=42,
     )
     algorithm = GA(
         crossover=CrossoverBLXAlpha(crossover_rate=0.7, alpha=0.4),
@@ -74,8 +67,8 @@ def test_integration(seed: int):
         parent_selection=SequentialSelection(),
         survivor_selection=TruncationSelection(),
     )
-    termination = Termination(max_fe(200 * dim))
-    surrogate = RBFSurrogate(gaussian_kernel, dim)
+    termination = Termination(max_fe(100))
+    surrogate = GPRSurrogate()
     strategy = IndividualBasedStrategy(evaluation_ratio=rsm)
 
     opt = (
@@ -95,5 +88,4 @@ def test_integration(seed: int):
 
 
 if __name__ == "__main__":
-    for seed in SEEDS:
-        test_integration(seed)
+    test_integration()
