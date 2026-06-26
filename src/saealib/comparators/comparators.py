@@ -1105,9 +1105,8 @@ def _normalize_objectives(
     intercepts : np.ndarray
         Shape ``(n_obj,)``. Hyperplane intercepts used for scaling.
     """
-    f_signed = f * direction if direction is not None else f
-    ideal = f_signed.min(axis=0)
-    f_trans = f_signed - ideal
+    ideal = f.min(axis=0)
+    f_trans = f - ideal
 
     n_obj = f_trans.shape[1]
     eps_asf = 1e-6
@@ -1119,9 +1118,10 @@ def _normalize_objectives(
         extreme[j] = f_trans[np.argmin(asf)]
 
     try:
-        intercepts = np.linalg.solve(extreme, np.ones(n_obj))
-        if np.any(intercepts <= 0):
+        plane = np.linalg.solve(extreme, np.ones(n_obj))
+        if np.any(plane <= 0):
             raise np.linalg.LinAlgError
+        intercepts = 1.0 / plane
     except np.linalg.LinAlgError:
         intercepts = f_trans.max(axis=0).astype(float)
         intercepts[intercepts <= 0] = 1.0
@@ -1448,15 +1448,10 @@ class RNSGA2Comparator(ParetoComparator):
                 f[feasible], direction=self.direction, dominator=self._dominator
             )
 
-            # Range normalization in minimize-sense
-            f_signed = (
-                f[feasible] * self.direction
-                if self.direction is not None
-                else f[feasible]
-            )
-            f_min = f_signed.min(axis=0)
-            f_max = f_signed.max(axis=0)
-            f_norm = (f_signed - f_min) / np.maximum(f_max - f_min, 1e-12)
+            f_feasible = f[feasible]
+            f_min = f_feasible.min(axis=0)
+            f_max = f_feasible.max(axis=0)
+            f_norm = (f_feasible - f_min) / np.maximum(f_max - f_min, 1e-12)
 
             # Euclidean distance to each reference point
             diff = f_norm[:, None, :] - self._reference_points[None, :, :]
