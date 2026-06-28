@@ -88,6 +88,34 @@ class SklearnSurrogate(Surrogate):
         value = np.column_stack(preds)
         return SurrogatePrediction(value=value)
 
+    def predict_proba(self, test_x: np.ndarray) -> np.ndarray:
+        """Return win probability for binary pairwise classification.
+
+        For classifiers (models with ``predict_proba``): returns the
+        probability of class 1 from the first fitted model.
+        For regressors (no ``predict_proba``): clips ``predict()`` output
+        to ``[0, 1]`` as an approximation (valid when labels are 0/1).
+
+        Parameters
+        ----------
+        test_x : np.ndarray
+            Input data. shape: (n_samples, n_features)
+
+        Returns
+        -------
+        np.ndarray
+            Win probability estimates. shape: (n_samples,)
+        """
+        test = np.asarray(test_x)
+        if test.ndim == 1:
+            test = test.reshape(1, -1)
+        assert self._models is not None
+        model = self._models[0]
+        if hasattr(model, "predict_proba"):
+            proba = model.predict_proba(test)
+            return proba[:, 1]
+        return np.clip(model.predict(test), 0.0, 1.0)
+
 
 class SVMSurrogate(SklearnSurrogate):
     """

@@ -14,6 +14,8 @@ LocalSurrogateManager
     Fits a local KNN model per candidate.
 CompositeSurrogateManager
     Combines scores from multiple sub-managers via an injectable combine_fn.
+PairwiseSurrogateManager
+    Fits a pairwise classifier; scores by win rate against archive references.
 
 Combine functions
 -----------------
@@ -38,6 +40,7 @@ from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.training_set import (
     ArchiveObjectiveSet,
     KNNObjectiveSet,
+    PairwiseComparisonSet,
     TrainingSet,
 )
 
@@ -654,6 +657,137 @@ class CompositeSurrogateManager(SurrogateManager):
 
         combined = self.combine_fn(all_scores)
         scores, predictions = self._sanitize_nan(combined, first_predictions)  # type: ignore  # _sanitize_nan return typed as Any; tuple unpacking safe at runtime
+        return self.post_score(scores, predictions, ctx)
+
+
+class PairwiseSurrogateManager(SurrogateManager):
+    """Surrogate manager for pairwise comparison classifiers.
+
+    Scores candidates by pairing each with reference points sampled from
+    the archive and averaging the predicted win probability over all pairs.
+
+    The surrogate must expose ``predict_proba(test_x) -> np.ndarray`` returning
+    win probabilities with shape ``(n_samples,)``.  If the surrogate lacks this
+    method, :meth:`score_candidates` raises ``ValueError``.
+
+    Parameters
+    ----------
+    surrogate : Surrogate
+        Pairwise classifier surrogate.  Must support ``predict_proba()``.
+        ``DTSurrogate`` and other ``SklearnSurrogate`` subclasses provide
+        ``predict_proba()`` out of the box.
+    training_set : TrainingSet or None
+        Training data builder.  Defaults to ``PairwiseComparisonSet()``.
+        ``ctx`` is required when using ``PairwiseComparisonSet``.
+    n_ref : int
+        Number of archive points sampled as reference per candidate.
+        When the archive has fewer than ``n_ref`` points all are used.
+    """
+
+    def __init__(
+        self,
+        surrogate: Surrogate,
+        training_set: TrainingSet | None = None,
+        n_ref: int = 10,
+    ):
+        self.surrogate = surrogate
+        self.training_set: TrainingSet = (
+            training_set if training_set is not None else PairwiseComparisonSet()
+        )
+        self.n_ref = n_ref
+
+    def fit(
+        self,
+        archive: Archive,
+        ctx: OptimizationState | None = None,
+    ) -> None:
+        """Fit the surrogate on pairwise comparison training data.
+
+        Parameters
+        ----------
+        archive : Archive
+            Archive of evaluated solutions.
+        ctx : OptimizationState or None
+            Required when the training set is ``PairwiseComparisonSet``
+            (provides the comparator and rng).
+        """
+        population = ctx.population if ctx is not None else None
+        data = self.training_set.build(archive, population, ctx, candidate_x=None)
+        self.surrogate.fit(data.train_x, data.train_y)
+        self.surrogate.post_fit(data.train_x, data.train_y, ctx)
+
+    def score_candidates(
+        self,
+        candidates_x: np.ndarray,
+        archive: Archive,
+        ctx: OptimizationState | None = None,
+        *,
+        refit: bool = True,
+    ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
+        """Score candidates by mean win rate against archive reference points.
+
+        Parameters
+        ----------
+        candidates_x : np.ndarray
+            Candidate design variable matrix. shape: (n_candidates, dim)
+        archive : Archive
+            Archive of evaluated solutions.
+        ctx : OptimizationState or None
+            Optimization context.  Required when ``refit=True`` and the
+            training set is ``PairwiseComparisonSet``.
+        refit : bool
+            If ``True`` (default), fit the surrogate before scoring.
+
+        Returns
+        -------
+        scores : np.ndarray
+            Win rate scores. shape: (n_candidates,). Higher is better.
+        predictions : list[SurrogatePrediction]
+            One ``SurrogatePrediction`` per candidate.  ``value`` holds the
+            scalar win rate (shape ``(1,)``); ``_tell_f`` is NaN so that
+            strategies skip pbest assignment.
+
+        Raises
+        ------
+        ValueError
+            If the surrogate does not expose ``predict_proba()``.
+        """
+        if refit:
+            self.fit(archive, ctx)
+
+        rng = ctx.rng if ctx is not None else np.random.default_rng()
+
+        archive_x = archive.x
+        n_archive = len(archive_x)
+        n_ref = min(self.n_ref, n_archive)
+        if n_ref < n_archive:
+            ref_idx = rng.choice(n_archive, size=n_ref, replace=False)
+            ref_x = archive_x[ref_idx]
+        else:
+            ref_x = archive_x
+
+        scores = np.empty(len(candidates_x))
+        predictions: list[SurrogatePrediction] = []
+
+        for i, x_c in enumerate(candidates_x):
+            pairs = np.stack([np.concatenate([x_c, x_r]) for x_r in ref_x])
+            try:
+                win_probs = self.surrogate.predict_proba(pairs)
+            except AttributeError as exc:
+                raise ValueError(
+                    f"PairwiseSurrogateManager requires a surrogate with "
+                    f"predict_proba(). {type(self.surrogate).__name__} does "
+                    f"not support it."
+                ) from exc
+            win_rate = float(np.mean(win_probs))
+            scores[i] = win_rate
+            predictions.append(
+                SurrogatePrediction(
+                    value=np.full((1,), win_rate),
+                    _tell_f=np.full((1,), np.nan),
+                )
+            )
+
         return self.post_score(scores, predictions, ctx)
 
 
