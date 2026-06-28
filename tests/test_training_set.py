@@ -17,6 +17,7 @@ from saealib.surrogate.training_set import (
     KNNObjectiveSet,
     LevelBasedSet,
     PairwiseComparisonSet,
+    ReferencePointComparisonSet,
     TopKBipartitionSet,
     TrainingSet,
 )
@@ -571,3 +572,82 @@ class TestPairwiseComparisonSet:
         data = ts.build(arc, None, ctx)
         # Each row in train_x is unique (half-vector x_a or full [x_a, x_b])
         assert len(data.train_x) == len(np.unique(data.train_x, axis=0))
+
+
+# ===========================================================================
+# ReferencePointComparisonSet
+# ===========================================================================
+
+
+class TestReferencePointComparisonSet:
+    def test_shape_archive_best(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0])
+        ctx = _make_ctx(archive=arc)
+        ts = ReferencePointComparisonSet(ref_source="archive_best")
+        data = ts.build(arc, None, ctx)
+        assert data.train_x.shape == (4, DIM)
+        assert data.train_y.shape == (4,)
+
+    def test_shape_population_best(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0, 3.0])
+        pop = _make_population_with_cv([0.0, 0.0, 0.0])
+        ctx = _make_ctx(archive=arc, population=pop)
+        ts = ReferencePointComparisonSet(ref_source="population_best")
+        data = ts.build(arc, pop, ctx)
+        assert data.train_x.shape == (3, DIM)
+        assert data.train_y.shape == (3,)
+
+    def test_labels_are_binary(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0])
+        ctx = _make_ctx(archive=arc)
+        ts = ReferencePointComparisonSet(ref_source="archive_best")
+        data = ts.build(arc, None, ctx)
+        assert set(data.train_y.tolist()).issubset({0.0, 1.0})
+
+    def test_ctx_none_raises(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0])
+        ts = ReferencePointComparisonSet(ref_source="archive_best")
+        with pytest.raises(ValueError, match="ctx"):
+            ts.build(arc, None, None)
+
+    def test_population_none_raises_for_population_best(self) -> None:
+        arc = _make_archive_with_f([1.0, 2.0])
+        ctx = _make_ctx(archive=arc)
+        ts = ReferencePointComparisonSet(ref_source="population_best")
+        with pytest.raises(ValueError, match="population"):
+            ts.build(arc, None, ctx)
+
+    def test_archive_best_reference_gets_label_one(self) -> None:
+        """The best archive point dominates itself, so its label must be 1."""
+        arc = _make_archive_with_f([1.0, 5.0, 10.0])
+        ctx = _make_ctx(archive=arc)
+        ts = ReferencePointComparisonSet(ref_source="archive_best")
+        data = ts.build(arc, None, ctx)
+        # The point with f=1.0 is best (minimization); it equals the reference
+        # so compare(...) == 0 → label 1
+        assert 1.0 in data.train_y
+
+    def test_default_ref_source(self) -> None:
+        ts = ReferencePointComparisonSet()
+        assert ts.ref_source == "population_best"
+
+    def test_e2e_global_surrogate_manager(self) -> None:
+        """ReferencePointComparisonSet works end-to-end with GlobalSurrogateManager."""
+        from saealib.acquisition.mean import MeanPrediction
+        from saealib.surrogate.manager import GlobalSurrogateManager
+        from saealib.surrogate.sklearn_surrogate import DTSurrogate
+
+        arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
+        pop = _make_population_with_cv([0.0, 0.0, 0.0])
+        ctx = _make_ctx(archive=arc, population=pop)
+        ts = ReferencePointComparisonSet(ref_source="population_best")
+        # MeanPrediction with direction=[1.0]: higher predicted label = higher score
+        mgr = GlobalSurrogateManager(
+            surrogate=DTSurrogate(),
+            acquisition=MeanPrediction(direction=np.array([1.0])),
+            training_set=ts,
+        )
+        candidates_x = np.random.default_rng(0).uniform(-2.0, 2.0, size=(5, DIM))
+        scores, predictions = mgr.score_candidates(candidates_x, arc, ctx)
+        assert scores.shape == (5,)
+        assert len(predictions) == 5
