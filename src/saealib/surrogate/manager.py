@@ -672,7 +672,7 @@ class PairwiseSurrogateManager(SurrogateManager):
     Parameters
     ----------
     surrogate : ComparisonSurrogate
-        Pairwise comparison surrogate (e.g. ``RFCClassificationSurrogate``).
+        Pairwise comparison surrogate (e.g. ``SklearnRFCClassificationSurrogate``).
     training_set : TrainingSet or None
         Training data builder.  Defaults to ``PairwiseComparisonSet()``.
         ``ctx`` is required when using ``PairwiseComparisonSet``.

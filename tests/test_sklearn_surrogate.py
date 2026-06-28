@@ -3,8 +3,8 @@ Tests for sklearn-based surrogate adapters.
 
 Covers:
 - SklearnSurrogate: fit/predict, single/multi-objective, missing sklearn
-- SVMSurrogate, NNSurrogate, DTSurrogate: smoke tests
-- XGBSurrogate, LGBMSurrogate: smoke tests
+- SklearnSVMSurrogate, SklearnNNSurrogate, SklearnRFRSurrogate: smoke tests
+- SklearnXGBSurrogate, SklearnLGBMSurrogate: smoke tests
 - Integration with GlobalSurrogateManager
 """
 
@@ -18,15 +18,15 @@ from saealib.population import Archive, PopulationAttribute
 from saealib.surrogate.manager import GlobalSurrogateManager
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.sklearn_surrogate import (
-    DTSurrogate,
-    LGBMSurrogate,
-    NNSurrogate,
-    RFCClassificationSurrogate,
     SklearnClassificationSurrogate,
+    SklearnLGBMSurrogate,
+    SklearnNNSurrogate,
+    SklearnRFCClassificationSurrogate,
+    SklearnRFRSurrogate,
     SklearnSurrogate,
-    SVCClassificationSurrogate,
-    SVMSurrogate,
-    XGBSurrogate,
+    SklearnSVCClassificationSurrogate,
+    SklearnSVMSurrogate,
+    SklearnXGBSurrogate,
 )
 
 # ---------------------------------------------------------------------------
@@ -153,18 +153,18 @@ class TestSklearnSurrogate:
 
 
 # ===========================================================================
-# SVMSurrogate Tests
+# SklearnSVMSurrogate Tests
 # ===========================================================================
-class TestSVMSurrogate:
+class TestSklearnSVMSurrogate:
     def test_fit_predict_1obj(self, train_data_1obj, test_x) -> None:
-        s = SVMSurrogate()
+        s = SklearnSVMSurrogate()
         X, y = train_data_1obj
         s.fit(X, y)
         pred = s.predict(test_x)
         assert pred.value.shape == (5, 1)
 
     def test_fit_predict_2obj(self, train_data_2obj, test_x) -> None:
-        s = SVMSurrogate()
+        s = SklearnSVMSurrogate()
         X, y = train_data_2obj
         s.fit(X, y)
         assert s.predict(test_x).value.shape == (5, 2)
@@ -172,61 +172,61 @@ class TestSVMSurrogate:
     def test_kwargs_forwarded(self) -> None:
         from sklearn.svm import SVR
 
-        s = SVMSurrogate(kernel="linear", C=10.0)
+        s = SklearnSVMSurrogate(kernel="linear", C=10.0)
         assert isinstance(s.estimator, SVR)
         assert s.estimator.kernel == "linear"
         assert s.estimator.C == 10.0
 
 
 # ===========================================================================
-# NNSurrogate Tests
+# SklearnNNSurrogate Tests
 # ===========================================================================
-class TestNNSurrogate:
+class TestSklearnNNSurrogate:
     def test_fit_predict_1obj(self, train_data_1obj, test_x) -> None:
-        s = NNSurrogate(max_iter=200, random_state=0)
+        s = SklearnNNSurrogate(max_iter=200, random_state=0)
         X, y = train_data_1obj
         s.fit(X, y)
         pred = s.predict(test_x)
         assert pred.value.shape == (5, 1)
 
     def test_fit_predict_2obj(self, train_data_2obj, test_x) -> None:
-        s = NNSurrogate(max_iter=200, random_state=0)
+        s = SklearnNNSurrogate(max_iter=200, random_state=0)
         X, y = train_data_2obj
         s.fit(X, y)
         assert s.predict(test_x).value.shape == (5, 2)
 
 
 # ===========================================================================
-# DTSurrogate Tests
+# SklearnRFRSurrogate Tests
 # ===========================================================================
-class TestDTSurrogate:
+class TestSklearnRFRSurrogate:
     def test_fit_predict_1obj(self, train_data_1obj, test_x) -> None:
-        s = DTSurrogate(n_estimators=10, random_state=0)
+        s = SklearnRFRSurrogate(n_estimators=10, random_state=0)
         X, y = train_data_1obj
         s.fit(X, y)
         pred = s.predict(test_x)
         assert pred.value.shape == (5, 1)
 
     def test_fit_predict_2obj(self, train_data_2obj, test_x) -> None:
-        s = DTSurrogate(n_estimators=10, random_state=0)
+        s = SklearnRFRSurrogate(n_estimators=10, random_state=0)
         X, y = train_data_2obj
         s.fit(X, y)
         assert s.predict(test_x).value.shape == (5, 2)
 
 
 # ===========================================================================
-# XGBSurrogate Tests
+# SklearnXGBSurrogate Tests
 # ===========================================================================
-class TestXGBSurrogate:
+class TestSklearnXGBSurrogate:
     def test_fit_predict_1obj(self, train_data_1obj, test_x) -> None:
-        s = XGBSurrogate(n_estimators=10, random_state=0, verbosity=0)
+        s = SklearnXGBSurrogate(n_estimators=10, random_state=0, verbosity=0)
         X, y = train_data_1obj
         s.fit(X, y)
         pred = s.predict(test_x)
         assert pred.value.shape == (5, 1)
 
     def test_fit_predict_2obj(self, train_data_2obj, test_x) -> None:
-        s = XGBSurrogate(n_estimators=10, random_state=0, verbosity=0)
+        s = SklearnXGBSurrogate(n_estimators=10, random_state=0, verbosity=0)
         X, y = train_data_2obj
         s.fit(X, y)
         assert s.predict(test_x).value.shape == (5, 2)
@@ -234,22 +234,22 @@ class TestXGBSurrogate:
     def test_missing_xgboost_raises(self, monkeypatch) -> None:
         monkeypatch.setitem(sys.modules, "xgboost", None)
         with pytest.raises(ImportError, match="xgboost"):
-            XGBSurrogate()
+            SklearnXGBSurrogate()
 
 
 # ===========================================================================
-# LGBMSurrogate Tests
+# SklearnLGBMSurrogate Tests
 # ===========================================================================
-class TestLGBMSurrogate:
+class TestSklearnLGBMSurrogate:
     def test_fit_predict_1obj(self, train_data_1obj, test_x) -> None:
-        s = LGBMSurrogate(n_estimators=10, random_state=0, verbose=-1)
+        s = SklearnLGBMSurrogate(n_estimators=10, random_state=0, verbose=-1)
         X, y = train_data_1obj
         s.fit(X, y)
         pred = s.predict(test_x)
         assert pred.value.shape == (5, 1)
 
     def test_fit_predict_2obj(self, train_data_2obj, test_x) -> None:
-        s = LGBMSurrogate(n_estimators=10, random_state=0, verbose=-1)
+        s = SklearnLGBMSurrogate(n_estimators=10, random_state=0, verbose=-1)
         X, y = train_data_2obj
         s.fit(X, y)
         assert s.predict(test_x).value.shape == (5, 2)
@@ -257,7 +257,7 @@ class TestLGBMSurrogate:
     def test_missing_lightgbm_raises(self, monkeypatch) -> None:
         monkeypatch.setitem(sys.modules, "lightgbm", None)
         with pytest.raises(ImportError, match="lightgbm"):
-            LGBMSurrogate()
+            SklearnLGBMSurrogate()
 
 
 # ===========================================================================
@@ -265,30 +265,30 @@ class TestLGBMSurrogate:
 # ===========================================================================
 class TestSklearnSurrogateIntegration:
     def test_global_manager_svm(self, archive_1obj, candidates) -> None:
-        manager = GlobalSurrogateManager(SVMSurrogate(), MeanPrediction())
+        manager = GlobalSurrogateManager(SklearnSVMSurrogate(), MeanPrediction())
         scores, preds = manager.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
         assert len(preds) == len(candidates)
         for p in preds:
             assert p.value.shape == (1, 1)
 
-    def test_global_manager_dt(self, archive_1obj, candidates) -> None:
+    def test_global_manager_rfr(self, archive_1obj, candidates) -> None:
         manager = GlobalSurrogateManager(
-            DTSurrogate(n_estimators=10, random_state=0), MeanPrediction()
+            SklearnRFRSurrogate(n_estimators=10, random_state=0), MeanPrediction()
         )
         scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
 
     def test_global_manager_xgb(self, archive_1obj, candidates) -> None:
         manager = GlobalSurrogateManager(
-            XGBSurrogate(n_estimators=10, verbosity=0), MeanPrediction()
+            SklearnXGBSurrogate(n_estimators=10, verbosity=0), MeanPrediction()
         )
         scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
 
     def test_global_manager_lgbm(self, archive_1obj, candidates) -> None:
         manager = GlobalSurrogateManager(
-            LGBMSurrogate(n_estimators=10, verbose=-1), MeanPrediction()
+            SklearnLGBMSurrogate(n_estimators=10, verbose=-1), MeanPrediction()
         )
         scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
@@ -370,14 +370,14 @@ class TestSklearnClassificationSurrogate:
         assert pred.value.shape == (1, 1)
 
 
-class TestRFCClassificationSurrogate:
+class TestSklearnRFCClassificationSurrogate:
     def test_fit_predict_proba(
         self,
         train_data_1obj: tuple[np.ndarray, np.ndarray],
         binary_labels: np.ndarray,
     ) -> None:
         X, _ = train_data_1obj
-        sur = RFCClassificationSurrogate(n_estimators=5, random_state=0)
+        sur = SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0)
         sur.fit(X, binary_labels)
         pred = sur.predict_proba(X[:3])
         assert pred.value.shape == (3, 1)
@@ -385,14 +385,14 @@ class TestRFCClassificationSurrogate:
         assert np.all(pred.value <= 1.0)
 
 
-class TestSVCClassificationSurrogate:
+class TestSklearnSVCClassificationSurrogate:
     def test_fit_predict_proba(
         self,
         train_data_1obj: tuple[np.ndarray, np.ndarray],
         binary_labels: np.ndarray,
     ) -> None:
         X, _ = train_data_1obj
-        sur = SVCClassificationSurrogate(random_state=0)
+        sur = SklearnSVCClassificationSurrogate(random_state=0)
         sur.fit(X, binary_labels)
         pred = sur.predict_proba(X[:3])
         assert pred.value.shape == (3, 1)
