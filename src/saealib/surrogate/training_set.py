@@ -482,3 +482,68 @@ class PairwiseComparisonSet(TrainingSet):
             ]
         )
         return TrainingData(train_x=train_x, train_y=train_y)
+
+
+# ---------------------------------------------------------------------------
+# Reference point comparison
+# ---------------------------------------------------------------------------
+
+
+class ReferencePointComparisonSet(TrainingSet):
+    """Binary labels: 1 if archive point dominates the reference point, 0 otherwise.
+
+    Unlike PairwiseComparisonSet, train_x has shape (n_archive, dim),
+    making it compatible with GlobalSurrogateManager and LocalSurrogateManager.
+
+    Parameters
+    ----------
+    ref_source : str
+        How to select the reference point:
+        - ``"population_best"`` (default): best individual in the current population
+        - ``"archive_best"``: best individual in the archive
+
+    Raises
+    ------
+    ValueError
+        If ctx is None (comparator required).
+    ValueError
+        If ref_source="population_best" and population is None.
+    """
+
+    def __init__(self, ref_source: str = "population_best") -> None:
+        self.ref_source = ref_source
+
+    def build(
+        self,
+        archive: Archive,
+        population: Population | None,
+        ctx: OptimizationState | None,
+        candidate_x: np.ndarray | None = None,
+    ) -> TrainingData:
+        """Return binary labels: 1 if archive point dominates reference, 0 otherwise."""
+        if ctx is None:
+            raise ValueError("ReferencePointComparisonSet requires ctx.")
+        if self.ref_source == "population_best":
+            if population is None:
+                raise ValueError(
+                    "ReferencePointComparisonSet: ref_source='population_best' "
+                    "requires population."
+                )
+            ref_src = population
+        else:
+            ref_src = archive
+        sorted_idx = ctx.comparator.sort_population(ref_src)
+        ref_idx = sorted_idx[0]
+        f_ref = ref_src.get_array("f")[ref_idx]
+        cv_ref = ref_src.get_array("cv")[ref_idx]
+        f_arc = archive.get_array("f")
+        cv_arc = archive.get_array("cv")
+        cmp = ctx.comparator
+        n = len(archive)
+        labels = np.array(
+            [
+                1.0 if cmp.compare(f_arc[i], cv_arc[i], f_ref, cv_ref) <= 0 else 0.0
+                for i in range(n)
+            ]
+        )
+        return TrainingData(train_x=archive.x, train_y=labels)
