@@ -10,15 +10,22 @@ from saealib import (
     CrossoverBLXAlpha,
     LHSInitializer,
     MutationUniform,
-    RandomInitializer,
     SequentialSelection,
-    SobolInitializer,
+    Termination,
     TruncationSelection,
+    max_gen,
 )
 from saealib.comparators import SingleObjectiveComparator
 from saealib.execution.evaluator import SerialEvaluator
-from saealib.execution.initializer import Initializer
+from saealib.execution.initializer import (
+    Initializer,
+    RandomInitializer,
+    SobolInitializer,
+)
 from saealib.problem import Problem
+from saealib.strategies.base import OptimizationStrategy
+from saealib.strategies.direct import DirectStrategy
+from saealib.surrogate import SurrogateManager
 
 DIM = 3
 N_ARCHIVE = 8
@@ -40,8 +47,16 @@ def _make_problem() -> Problem:
     )
 
 
+class _MockSurrogateManager:
+    def fit(self, archive, ctx=None): pass
+    def score_candidates(self, candidates_x, archive, ctx=None, *, refit=True):
+        return np.zeros(len(candidates_x)), []
+
+
 class _MockProvider:
     seed: int | None = None
+    strategy: OptimizationStrategy = DirectStrategy()
+    termination: Termination = Termination(max_gen(100_000))
 
     def __init__(self):
         from saealib.callback import CallbackManager
@@ -52,6 +67,7 @@ class _MockProvider:
             parent_selection=SequentialSelection(),
             survivor_selection=TruncationSelection(),
         )
+        self.surrogate_manager: SurrogateManager = _MockSurrogateManager()  # type: ignore
         self.evaluator = SerialEvaluator()
         self.cbmanager = CallbackManager()
 
@@ -116,13 +132,15 @@ class TestInitializerContract:
 def test_random_initializer_importable_from_top_level():
     import saealib
 
-    assert saealib.RandomInitializer is RandomInitializer
+    assert hasattr(saealib, "RandomInitializer")
+    assert saealib.RandomInitializer is RandomInitializer  # type: ignore[attr-defined]
 
 
 def test_sobol_initializer_importable_from_top_level():
     import saealib
 
-    assert saealib.SobolInitializer is SobolInitializer
+    assert hasattr(saealib, "SobolInitializer")
+    assert saealib.SobolInitializer is SobolInitializer  # type: ignore[attr-defined]
 
 
 def test_random_initializer_importable_from_execution():

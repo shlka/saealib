@@ -7,7 +7,6 @@ import numpy as np
 from saealib import (
     GA,
     CrossoverBLXAlpha,
-    DirectStrategy,
     LHSInitializer,
     MutationUniform,
     Optimizer,
@@ -24,6 +23,8 @@ from saealib.pipeline import Pipeline
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.strategies.base import OptimizationStrategy
+from saealib.strategies.direct import DirectStrategy
+from saealib.surrogate import SurrogateManager
 
 DIM = 4
 N_OBJ = 1
@@ -79,11 +80,20 @@ def _make_ga() -> GA:
     )
 
 
+class _MockSurrogateManager:
+    def fit(self, archive, ctx=None): pass
+    def score_candidates(self, candidates_x, archive, ctx=None, *, refit=True):
+        return np.zeros(len(candidates_x)), []
+
+
 class _MockProvider:
     seed: int | None = None
+    strategy: OptimizationStrategy = DirectStrategy()
+    termination: Termination = Termination(max_gen(100_000))
 
     def __init__(self):
         self.algorithm = _make_ga()
+        self.surrogate_manager: SurrogateManager = _MockSurrogateManager()  # type: ignore
         self.evaluator = SerialEvaluator()
         self.cbmanager = CallbackManager()
 
@@ -168,7 +178,8 @@ def test_minimize_without_surrogate_manager():
 def test_importable_from_top_level():
     import saealib
 
-    assert saealib.DirectStrategy is DirectStrategy
+    assert hasattr(saealib, "DirectStrategy")
+    assert saealib.DirectStrategy is DirectStrategy  # type: ignore[attr-defined]
 
 
 def test_importable_from_strategies():
