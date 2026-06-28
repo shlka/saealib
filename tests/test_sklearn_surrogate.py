@@ -21,7 +21,10 @@ from saealib.surrogate.sklearn_surrogate import (
     DTSurrogate,
     LGBMSurrogate,
     NNSurrogate,
+    RFCClassificationSurrogate,
+    SklearnClassificationSurrogate,
     SklearnSurrogate,
+    SVCClassificationSurrogate,
     SVMSurrogate,
     XGBSurrogate,
 )
@@ -289,3 +292,109 @@ class TestSklearnSurrogateIntegration:
         )
         scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
+
+
+# ===========================================================================
+# SklearnClassificationSurrogate Tests
+# ===========================================================================
+
+
+@pytest.fixture
+def binary_labels(train_data_1obj: tuple[np.ndarray, np.ndarray]) -> np.ndarray:
+    _, y = train_data_1obj
+    return (y > np.median(y)).astype(float)
+
+
+class TestSklearnClassificationSurrogate:
+    def test_fit_predict_proba_shape(
+        self,
+        train_data_1obj: tuple[np.ndarray, np.ndarray],
+        binary_labels: np.ndarray,
+    ) -> None:
+        from sklearn.ensemble import RandomForestClassifier
+
+        X, _ = train_data_1obj
+        sur = SklearnClassificationSurrogate(
+            RandomForestClassifier(n_estimators=5, random_state=0)
+        )
+        sur.fit(X, binary_labels)
+        pred = sur.predict_proba(X[:3])
+        assert pred.value.shape == (3, 1)
+        assert np.all(pred.value >= 0.0)
+        assert np.all(pred.value <= 1.0)
+
+    def test_predict_delegates_to_predict_proba(
+        self,
+        train_data_1obj: tuple[np.ndarray, np.ndarray],
+        binary_labels: np.ndarray,
+    ) -> None:
+        from sklearn.ensemble import RandomForestClassifier
+
+        X, _ = train_data_1obj
+        sur = SklearnClassificationSurrogate(
+            RandomForestClassifier(n_estimators=5, random_state=0)
+        )
+        sur.fit(X, binary_labels)
+        np.testing.assert_array_equal(
+            sur.predict(X[:3]).value, sur.predict_proba(X[:3]).value
+        )
+
+    def test_fit_twice_refits_model(
+        self,
+        train_data_1obj: tuple[np.ndarray, np.ndarray],
+        binary_labels: np.ndarray,
+    ) -> None:
+        from sklearn.ensemble import RandomForestClassifier
+
+        X, _ = train_data_1obj
+        sur = SklearnClassificationSurrogate(
+            RandomForestClassifier(n_estimators=5, random_state=0)
+        )
+        sur.fit(X, binary_labels)
+        sur.fit(X, binary_labels)
+        assert sur.predict_proba(X[:3]).value.shape == (3, 1)
+
+    def test_predict_proba_1d_input(
+        self,
+        train_data_1obj: tuple[np.ndarray, np.ndarray],
+        binary_labels: np.ndarray,
+    ) -> None:
+        from sklearn.ensemble import RandomForestClassifier
+
+        X, _ = train_data_1obj
+        sur = SklearnClassificationSurrogate(
+            RandomForestClassifier(n_estimators=5, random_state=0)
+        )
+        sur.fit(X, binary_labels)
+        pred = sur.predict_proba(X[0])
+        assert pred.value.shape == (1, 1)
+
+
+class TestRFCClassificationSurrogate:
+    def test_fit_predict_proba(
+        self,
+        train_data_1obj: tuple[np.ndarray, np.ndarray],
+        binary_labels: np.ndarray,
+    ) -> None:
+        X, _ = train_data_1obj
+        sur = RFCClassificationSurrogate(n_estimators=5, random_state=0)
+        sur.fit(X, binary_labels)
+        pred = sur.predict_proba(X[:3])
+        assert pred.value.shape == (3, 1)
+        assert np.all(pred.value >= 0.0)
+        assert np.all(pred.value <= 1.0)
+
+
+class TestSVCClassificationSurrogate:
+    def test_fit_predict_proba(
+        self,
+        train_data_1obj: tuple[np.ndarray, np.ndarray],
+        binary_labels: np.ndarray,
+    ) -> None:
+        X, _ = train_data_1obj
+        sur = SVCClassificationSurrogate(random_state=0)
+        sur.fit(X, binary_labels)
+        pred = sur.predict_proba(X[:3])
+        assert pred.value.shape == (3, 1)
+        assert np.all(pred.value >= 0.0)
+        assert np.all(pred.value <= 1.0)

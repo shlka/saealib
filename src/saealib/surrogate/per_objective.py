@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from saealib.surrogate.base import Surrogate
+from saealib.surrogate.base import RegressionSurrogate, Surrogate
 from saealib.surrogate.prediction import SurrogatePrediction
 
 
-class PerObjectiveSurrogate(Surrogate):
+class PerObjectiveSurrogate(RegressionSurrogate):
     """
     Assigns a different surrogate model to each objective function.
 

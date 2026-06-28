@@ -101,3 +101,42 @@ class Surrogate(ABC):
 
         new.post_fit = _hook  # type: ignore  # hook callable; slot type stricter than inferred function signature
         return new
+
+
+class RegressionSurrogate(Surrogate):
+    """Marker base class for absolute-fitness (regression) surrogates.
+
+    Subclass this when ``train_y`` represents real-valued objective outputs
+    and ``predict().value`` is a continuous fitness estimate.
+    """
+
+
+class ComparisonSurrogate(Surrogate):
+    """Base class for relative-fitness (comparison) surrogates.
+
+    Subclass this when ``train_y`` holds binary comparison labels ``{0, 1}``
+    and predictions are win-probability estimates in ``[0, 1]``.
+
+    ``predict_proba`` is the primary interface; ``predict`` delegates to it
+    by default so that managers designed for ``Surrogate`` still work.
+    """
+
+    @abstractmethod
+    def predict_proba(self, test_x: np.ndarray) -> SurrogatePrediction:
+        """Return win-probability estimates.
+
+        Parameters
+        ----------
+        test_x : np.ndarray
+            Input data. shape: (n_samples, n_features)
+
+        Returns
+        -------
+        SurrogatePrediction
+            ``value`` shape: ``(n_samples, 1)``, values in ``[0, 1]``.
+            ``std`` is ``None`` unless the model supports uncertainty.
+        """
+
+    def predict(self, test_x: np.ndarray) -> SurrogatePrediction:
+        """Delegate to ``predict_proba``."""
+        return self.predict_proba(test_x)
