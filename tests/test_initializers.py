@@ -48,7 +48,9 @@ def _make_problem() -> Problem:
 
 
 class _MockSurrogateManager:
-    def fit(self, archive, ctx=None): pass
+    def fit(self, archive, ctx=None):
+        pass
+
     def score_candidates(self, candidates_x, archive, ctx=None, *, refit=True):
         return np.zeros(len(candidates_x)), []
 
