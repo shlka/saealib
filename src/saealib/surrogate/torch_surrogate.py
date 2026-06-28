@@ -10,11 +10,11 @@ import numpy as np
 if TYPE_CHECKING:
     import torch
 
-from saealib.surrogate.base import Surrogate
+from saealib.surrogate.base import RegressionSurrogate
 from saealib.surrogate.prediction import SurrogatePrediction
 
 
-class TorchSurrogate(Surrogate):
+class TorchSurrogate(RegressionSurrogate):
     """
     Surrogate adapter for PyTorch ``nn.Module`` models.
 

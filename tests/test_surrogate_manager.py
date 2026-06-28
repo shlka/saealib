@@ -7,13 +7,17 @@ Tests cover:
 - GlobalSurrogateManager: fits on full archive, batch predict and score
 - LocalSurrogateManager: KNN per candidate, per-candidate fit and score
 - CompositeSurrogateManager: combines scores from multiple sub-managers via combine_fn
+- PairwiseSurrogateManager: scores by win rate against archive reference points
 """
 
 import numpy as np
 import pytest
 
 from saealib.acquisition import MeanPrediction
-from saealib.population import Archive, PopulationAttribute
+from saealib.comparators import SingleObjectiveComparator
+from saealib.context import OptimizationState
+from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
+from saealib.problem import Problem
 from saealib.surrogate.accuracy import (
     KFoldAccuracyEvaluator,
     SpearmanCorrelation,
@@ -29,6 +33,7 @@ from saealib.surrogate.manager import (
     CompositeSurrogateManager,
     GlobalSurrogateManager,
     LocalSurrogateManager,
+    PairwiseSurrogateManager,
     SurrogateManager,
     _rank_normalize,
     _split_prediction,
@@ -37,7 +42,8 @@ from saealib.surrogate.manager import (
 )
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
-from saealib.surrogate.training_set import KNNObjectiveSet
+from saealib.surrogate.sklearn_surrogate import RFCClassificationSurrogate
+from saealib.surrogate.training_set import KNNObjectiveSet, PairwiseComparisonSet
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -1247,3 +1253,136 @@ class TestLocalSurrogateManagerAccuracy:
         # With self-exclusion, RBF accuracy is < 1.0 (not perfectly interpolated)
         spearman = manager.last_accuracy.get("spearman")
         assert spearman < 1.0 or np.isnan(spearman)
+
+
+# ===========================================================================
+# PairwiseSurrogateManager Tests
+# ===========================================================================
+
+_PAIRWISE_ATTRS = [
+    PopulationAttribute(name="x", dtype=np.float64, shape=(DIM,)),
+    PopulationAttribute(name="f", dtype=np.float64, shape=(N_OBJ,)),
+    PopulationAttribute(name="g", dtype=np.float64, shape=(0,)),
+    PopulationAttribute(name="cv", dtype=np.float64, shape=()),
+]
+
+
+@pytest.fixture
+def archive_pairwise() -> Archive:
+    """Archive pre-filled with 20 single-objective training points including cv."""
+    arc = Archive(_PAIRWISE_ATTRS, init_capacity=30)
+    rng = np.random.default_rng(42)
+    for _ in range(20):
+        x = rng.uniform(-2.0, 2.0, size=DIM)
+        f = np.array([np.sum(x**2)])
+        arc.add(x=x, f=f, cv=0.0)
+    return arc
+
+
+@pytest.fixture
+def ctx_pairwise(archive_pairwise: Archive) -> OptimizationState:
+    """OptimizationState with a single-objective comparator."""
+    problem = Problem(
+        func=lambda x: np.array([np.sum(x**2)]),
+        dim=DIM,
+        n_obj=N_OBJ,
+        direction=np.array([-1.0]),
+        lb=[-5.0] * DIM,
+        ub=[5.0] * DIM,
+        eps_cv=1e-6,
+        comparator=SingleObjectiveComparator(),
+    )
+    pop_attrs = _PAIRWISE_ATTRS
+    pop = Population(pop_attrs, init_capacity=10)
+    rng = np.random.default_rng(0)
+    xs = rng.uniform(-2.0, 2.0, size=(5, DIM))
+    fs = np.array([[np.sum(x**2)] for x in xs])
+    pop.extend({"x": xs, "f": fs, "cv": np.zeros(5)})
+    pareto_arc = ParetoArchive(pop_attrs, init_capacity=20, direction=np.array([-1.0]))
+    return OptimizationState(
+        problem=problem,
+        population=pop,
+        archive=archive_pairwise,
+        pareto_archive=pareto_arc,
+        rng=np.random.default_rng(1),
+        fe=20,
+        gen=1,
+    )
+
+
+class TestPairwiseSurrogateManager:
+    """E2E tests for PairwiseSurrogateManager with RFCClassificationSurrogate."""
+
+    def test_score_candidates_returns_correct_shape(
+        self,
+        archive_pairwise: Archive,
+        ctx_pairwise: OptimizationState,
+        candidates: np.ndarray,
+    ) -> None:
+        manager = PairwiseSurrogateManager(
+            RFCClassificationSurrogate(n_estimators=5, random_state=0),
+            n_ref=5,
+        )
+        scores, predictions = manager.score_candidates(
+            candidates, archive_pairwise, ctx_pairwise
+        )
+        assert scores.shape == (len(candidates),)
+        assert len(predictions) == len(candidates)
+
+    def test_fit_then_score_refit_false(
+        self,
+        archive_pairwise: Archive,
+        ctx_pairwise: OptimizationState,
+        candidates: np.ndarray,
+    ) -> None:
+        """fit() + score_candidates(refit=False) pattern works without error."""
+        manager = PairwiseSurrogateManager(
+            RFCClassificationSurrogate(n_estimators=5, random_state=0),
+            n_ref=5,
+        )
+        manager.fit(archive_pairwise, ctx_pairwise)
+        scores, predictions = manager.score_candidates(
+            candidates, archive_pairwise, ctx_pairwise, refit=False
+        )
+        assert scores.shape == (len(candidates),)
+        assert len(predictions) == len(candidates)
+
+    def test_predictions_have_nan_tell_f(
+        self,
+        archive_pairwise: Archive,
+        ctx_pairwise: OptimizationState,
+        candidates: np.ndarray,
+    ) -> None:
+        """tell_f is NaN so strategies skip pbest assignment."""
+        manager = PairwiseSurrogateManager(
+            RFCClassificationSurrogate(n_estimators=5, random_state=0),
+            n_ref=5,
+        )
+        _, predictions = manager.score_candidates(
+            candidates, archive_pairwise, ctx_pairwise
+        )
+        for p in predictions:
+            assert p.has_tell_f
+            assert np.all(np.isnan(p.tell_f))
+
+    def test_scores_in_0_1_range(
+        self,
+        archive_pairwise: Archive,
+        ctx_pairwise: OptimizationState,
+        candidates: np.ndarray,
+    ) -> None:
+        """Win probabilities from predict_proba are always in [0, 1]."""
+        manager = PairwiseSurrogateManager(
+            RFCClassificationSurrogate(n_estimators=5, random_state=0),
+            n_ref=5,
+        )
+        scores, _ = manager.score_candidates(candidates, archive_pairwise, ctx_pairwise)
+        assert np.all(scores >= 0.0)
+        assert np.all(scores <= 1.0)
+
+    def test_default_training_set_is_pairwise(self) -> None:
+        """Default training_set is PairwiseComparisonSet when none supplied."""
+        manager = PairwiseSurrogateManager(
+            RFCClassificationSurrogate(n_estimators=5, random_state=0)
+        )
+        assert isinstance(manager.training_set, PairwiseComparisonSet)
