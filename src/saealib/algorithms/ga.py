@@ -244,6 +244,26 @@ class GA(Algorithm):
         -------
         Population
         """
+        # Re-validate per-type crossover consistency here because operators may be
+        # replaced or mutated after __init__, bypassing constructor checks.
+        if ctx.problem.integer_mask.any() or ctx.problem.categorical_mask.any():
+            for _name, _op in [
+                ("integer_crossover", self.integer_crossover),
+                ("categorical_crossover", self.categorical_crossover),
+            ]:
+                if _op.n_children != self.crossover.n_children:
+                    raise ConfigurationError(
+                        f"{_name}.n_children={_op.n_children} must equal "
+                        f"crossover.n_children={self.crossover.n_children} "
+                        "for mixed-variable routing"
+                    )
+                if _op.n_parents != self.crossover.n_parents:
+                    raise ConfigurationError(
+                        f"{_name}.n_parents={_op.n_parents} must equal "
+                        f"crossover.n_parents={self.crossover.n_parents} "
+                        "for mixed-variable routing"
+                    )
+
         pop = ctx.population.get_array("x")
         popsize = len(pop)
         target = n_offspring if n_offspring is not None else popsize

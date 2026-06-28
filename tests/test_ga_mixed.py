@@ -394,3 +394,23 @@ class TestGAMixedAsk:
         ctx = _make_ctx_for(problem)
         offspring = ga.ask(ctx, _NoopProvider(), n_offspring=4)
         assert offspring.get_array("x").shape == (4, 3)
+
+    def test_ask_raises_when_primary_n_children_mutated(self):
+        """Mutating crossover.n_children after init must raise ConfigurationError."""
+        problem = _make_problem_mixed()
+        ga = _make_ga()
+        # Bypass __init__ validation by directly changing the attribute.
+        ga.crossover.n_children = 1
+        ctx = _make_ctx_for(problem)
+        with pytest.raises(ConfigurationError, match=r"integer_crossover\.n_children"):
+            ga.ask(ctx, _NoopProvider())
+
+    def test_ask_raises_when_integer_crossover_replaced_with_mismatched(self):
+        """Replacing integer_crossover with a different n_children must raise."""
+        problem = _make_problem_mixed()
+        ga = _make_ga()
+        # _CrossoverN1C has n_children=1; crossover has n_children=2.
+        ga.integer_crossover = _CrossoverN1C()
+        ctx = _make_ctx_for(problem)
+        with pytest.raises(ConfigurationError, match=r"integer_crossover\.n_children"):
+            ga.ask(ctx, _NoopProvider())
