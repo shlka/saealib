@@ -2395,3 +2395,64 @@ class TestRNSGA2Comparator:
         comp = RNSGA2Comparator(ref, direction=np.array([-1.0, -1.0]))
         order = comp.sort_population(pop)
         assert order[0] == 0  # [0.1, 0.9] is closer to ref [0.1, 0.9]
+
+    # compare_population tests
+
+    def test_compare_population_lower_rank_wins(self) -> None:
+        """Lower Pareto rank beats higher rank regardless of ref-point distance."""
+        ref = np.array([[0.5, 0.5]])
+        # idx 0 dominates idx 1 (lower rank); idx 1 might be closer to ref
+        f = np.array([[0.0, 0.0], [5.0, 5.0]])
+        pop = _make_pop(f)
+        comp = RNSGA2Comparator(ref)
+        assert comp.compare_population(pop, 0, 1) == -1
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    def test_compare_population_same_front_closer_ref_wins(self) -> None:
+        """Within the same front, the individual closer to a reference point wins."""
+        ref = np.array([[0.0, 1.0]])
+        # Both non-dominated; idx 0 is near ref [0,1], idx 1 is far
+        f = np.array([[0.1, 0.9], [0.9, 0.1]])
+        pop = _make_pop(f)
+        comp = RNSGA2Comparator(ref)
+        assert comp.compare_population(pop, 0, 1) == -1  # idx 0 closer to ref
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    def test_compare_population_feasible_beats_infeasible(self) -> None:
+        """A feasible individual always beats an infeasible one."""
+        ref = np.array([[0.5, 0.5]])
+        f = np.array([[0.0, 0.0], [0.0, 0.0]])
+        cv = np.array([1.0, 0.0])  # idx 0 infeasible, idx 1 feasible
+        pop = _make_pop(f, cv)
+        comp = RNSGA2Comparator(ref)
+        assert comp.compare_population(pop, 0, 1) == 1  # infeasible loses
+        assert comp.compare_population(pop, 1, 0) == -1  # feasible wins
+
+    def test_compare_population_both_infeasible_lower_cv_wins(self) -> None:
+        """Both infeasible: lower constraint violation wins."""
+        ref = np.array([[0.5, 0.5]])
+        f = np.array([[0.0, 0.0], [0.0, 0.0]])
+        cv = np.array([0.5, 2.0])
+        pop = _make_pop(f, cv)
+        comp = RNSGA2Comparator(ref)
+        assert comp.compare_population(pop, 0, 1) == -1
+        assert comp.compare_population(pop, 1, 0) == 1
+
+    def test_compare_population_tie(self) -> None:
+        """Identical individuals on the same front at the same distance tie."""
+        ref = np.array([[0.5, 0.5]])
+        f = np.array([[0.5, 0.5], [0.5, 0.5]])
+        pop = _make_pop(f)
+        comp = RNSGA2Comparator(ref)
+        assert comp.compare_population(pop, 0, 1) == 0
+
+    def test_compare_population_three_fronts(self) -> None:
+        """Three-level domination: rank 0 < rank 1 < rank 2."""
+        ref = np.array([[0.5, 0.5]])
+        # idx 0 dominates idx 1 dominates idx 2
+        f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+        pop = _make_pop(f)
+        comp = RNSGA2Comparator(ref)
+        assert comp.compare_population(pop, 0, 1) == -1
+        assert comp.compare_population(pop, 1, 2) == -1
+        assert comp.compare_population(pop, 0, 2) == -1
