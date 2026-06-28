@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from saealib.surrogate.base import RegressionSurrogate
+from saealib.surrogate.base import ComparisonSurrogate, RegressionSurrogate
 from saealib.surrogate.prediction import SurrogatePrediction
 
 
@@ -87,35 +87,6 @@ class SklearnSurrogate(RegressionSurrogate):
         preds = [m.predict(test) for m in self._models]
         value = np.column_stack(preds)
         return SurrogatePrediction(value=value)
-
-    def predict_proba(self, test_x: np.ndarray) -> np.ndarray:
-        """Return win probability for binary pairwise classification.
-
-        For classifiers (models with ``predict_proba``): returns the
-        probability of class 1 from the first fitted model.
-        For regressors (no ``predict_proba``): clips ``predict()`` output
-        to ``[0, 1]`` as an approximation (valid when labels are 0/1).
-
-        Parameters
-        ----------
-        test_x : np.ndarray
-            Input data. shape: (n_samples, n_features)
-
-        Returns
-        -------
-        np.ndarray
-            Win probability estimates. shape: (n_samples,)
-        """
-        test = np.asarray(test_x)
-        if test.ndim == 1:
-            test = test.reshape(1, -1)
-        assert self._models is not None
-        model = self._models[0]
-        if hasattr(model, "predict_proba"):
-            proba = model.predict_proba(test)
-            return proba[:, 1]
-        return np.clip(model.predict(test), 0.0, 1.0)
-
 
 class SVMSurrogate(SklearnSurrogate):
     """
@@ -285,3 +256,114 @@ class LGBMSurrogate(SklearnSurrogate):
                 "Install it with: pip install saealib[lightgbm]"
             ) from e
         super().__init__(LGBMRegressor(**kwargs))  # type: ignore  # LightGBM stubs mistype __init__ kwargs
+
+
+class SklearnClassificationSurrogate(ComparisonSurrogate):
+    """
+    Surrogate adapter for scikit-learn compatible binary classifiers.
+
+    Wraps any estimator that implements ``fit(X, y)`` and
+    ``predict_proba(X)``.  ``train_y`` must be binary labels ``{0, 1}``.
+
+    Parameters
+    ----------
+    estimator : sklearn estimator
+        A scikit-learn compatible classifier with ``predict_proba`` support
+        (e.g. ``SVC(probability=True)`` or ``RandomForestClassifier()``).
+
+    Raises
+    ------
+    ImportError
+        If scikit-learn is not installed.
+    """
+
+    def __init__(self, estimator: object) -> None:
+        try:
+            import sklearn  # noqa: F401
+        except ImportError as e:
+            raise ImportError(
+                "scikit-learn is required for SklearnClassificationSurrogate. "
+                "Install it with: pip install saealib[sklearn]"
+            ) from e
+        self.estimator = estimator
+        self._model: object | None = None
+
+    def fit(self, train_x: np.ndarray, train_y: np.ndarray) -> None:
+        """
+        Fit the classifier.
+
+        Parameters
+        ----------
+        train_x : np.ndarray
+            Training input data. shape: (n_samples, n_features)
+        train_y : np.ndarray
+            Binary labels. shape: (n_samples,), values in ``{0, 1}``.
+        """
+        from sklearn.base import clone
+
+        labels = np.asarray(train_y, dtype=float).ravel()
+        if self._model is None:
+            self._model = clone(self.estimator)
+        self._model.fit(train_x, labels)  # type: ignore[union-attr]
+
+    def predict_proba(self, test_x: np.ndarray) -> SurrogatePrediction:
+        """
+        Return class-1 probability estimates.
+
+        Parameters
+        ----------
+        test_x : np.ndarray
+            Input data. shape: (n_samples, n_features) or (n_features,)
+
+        Returns
+        -------
+        SurrogatePrediction
+            ``value`` shape: ``(n_samples, 1)``, values in ``[0, 1]``.
+        """
+        test = np.asarray(test_x)
+        if test.ndim == 1:
+            test = test.reshape(1, -1)
+        assert self._model is not None
+        proba = self._model.predict_proba(test)  # type: ignore[union-attr]
+        return SurrogatePrediction(value=proba[:, 1:2])
+
+
+class SVCClassificationSurrogate(SklearnClassificationSurrogate):
+    """
+    Support Vector Classification surrogate.
+
+    Convenience wrapper around ``SklearnClassificationSurrogate`` using
+    ``sklearn.svm.SVC(probability=True)``.
+
+    Parameters
+    ----------
+    **kwargs
+        Keyword arguments forwarded to ``sklearn.svm.SVC``.
+        ``probability=True`` is always set.
+    """
+
+    def __init__(self, **kwargs: object) -> None:
+        from sklearn.svm import SVC
+
+        kwargs["probability"] = True
+        super().__init__(SVC(**kwargs))
+
+
+class RFCClassificationSurrogate(SklearnClassificationSurrogate):
+    """
+    Random Forest Classification surrogate.
+
+    Convenience wrapper around ``SklearnClassificationSurrogate`` using
+    ``sklearn.ensemble.RandomForestClassifier``.
+
+    Parameters
+    ----------
+    **kwargs
+        Keyword arguments forwarded to
+        ``sklearn.ensemble.RandomForestClassifier``.
+    """
+
+    def __init__(self, **kwargs: object) -> None:
+        from sklearn.ensemble import RandomForestClassifier
+
+        super().__init__(RandomForestClassifier(**kwargs))

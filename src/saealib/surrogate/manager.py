@@ -661,21 +661,18 @@ class CompositeSurrogateManager(SurrogateManager):
 
 
 class PairwiseSurrogateManager(SurrogateManager):
-    """Surrogate manager for pairwise comparison classifiers.
+    """Surrogate manager for pairwise comparison surrogates.
 
     Scores candidates by pairing each with reference points sampled from
     the archive and averaging the predicted win probability over all pairs.
 
-    The surrogate must expose ``predict_proba(test_x) -> np.ndarray`` returning
-    win probabilities with shape ``(n_samples,)``.  If the surrogate lacks this
-    method, :meth:`score_candidates` raises ``ValueError``.
+    The surrogate must be a :class:`~saealib.surrogate.base.ComparisonSurrogate`
+    that implements ``predict_proba()``.
 
     Parameters
     ----------
-    surrogate : Surrogate
-        Pairwise classifier surrogate.  Must support ``predict_proba()``.
-        ``DTSurrogate`` and other ``SklearnSurrogate`` subclasses provide
-        ``predict_proba()`` out of the box.
+    surrogate : ComparisonSurrogate
+        Pairwise comparison surrogate (e.g. ``RFCClassificationSurrogate``).
     training_set : TrainingSet or None
         Training data builder.  Defaults to ``PairwiseComparisonSet()``.
         ``ctx`` is required when using ``PairwiseComparisonSet``.
@@ -746,11 +743,6 @@ class PairwiseSurrogateManager(SurrogateManager):
             One ``SurrogatePrediction`` per candidate.  ``value`` holds the
             scalar win rate (shape ``(1,)``); ``_tell_f`` is NaN so that
             strategies skip pbest assignment.
-
-        Raises
-        ------
-        ValueError
-            If the surrogate does not expose ``predict_proba()``.
         """
         if refit:
             self.fit(archive, ctx)
@@ -771,15 +763,8 @@ class PairwiseSurrogateManager(SurrogateManager):
 
         for i, x_c in enumerate(candidates_x):
             pairs = np.stack([np.concatenate([x_c, x_r]) for x_r in ref_x])
-            try:
-                win_probs = self.surrogate.predict_proba(pairs)
-            except AttributeError as exc:
-                raise ValueError(
-                    f"PairwiseSurrogateManager requires a surrogate with "
-                    f"predict_proba(). {type(self.surrogate).__name__} does "
-                    f"not support it."
-                ) from exc
-            win_rate = float(np.mean(win_probs))
+            pred = self.surrogate.predict_proba(pairs)
+            win_rate = float(np.mean(pred.value[:, 0]))
             scores[i] = win_rate
             predictions.append(
                 SurrogatePrediction(
