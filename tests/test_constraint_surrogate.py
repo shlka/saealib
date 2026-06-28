@@ -25,13 +25,13 @@ from saealib import (
     Problem,
     ProductOfFeasibility,
     SequentialSelection,
-    SklearnGPRSurrogate,
     StaticToleranceHandler,
     Termination,
     TruncationSelection,
     max_fe,
     product_combine,
 )
+from saealib.surrogate import SklearnGPRSurrogate
 from saealib.surrogate.training_set import ArchiveObjectiveSet, ConstraintObjectiveSet
 
 # ---------------------------------------------------------------------------

@@ -74,7 +74,7 @@ from saealib.strategies import (
     OptimizationStrategy,
     PreSelectionStrategy,
 )
-from saealib.surrogate import SklearnGPRSurrogate, Surrogate, SurrogateManager
+from saealib.surrogate import Surrogate, SurrogateManager
 from saealib.termination import (
     Termination,
     TerminationCondition,
@@ -148,7 +148,6 @@ __all__ = [
     "SaealibError",
     "SerialEvaluator",
     "SingleObjectiveComparator",
-    "SklearnGPRSurrogate",
     "SortByScoreStage",
     "Stage",
     "StaticToleranceHandler",

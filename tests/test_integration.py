@@ -11,11 +11,11 @@ from saealib import (
     Optimizer,
     Problem,
     SequentialSelection,
-    SklearnGPRSurrogate,
     Termination,
     TruncationSelection,
     max_fe,
 )
+from saealib.surrogate import SklearnGPRSurrogate
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("saealib.surrogate.sklearn_surrogate").setLevel(logging.CRITICAL)
