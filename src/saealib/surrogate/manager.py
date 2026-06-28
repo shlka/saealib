@@ -35,7 +35,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from saealib.surrogate.accuracy import AccuracyEvaluator, SurrogateAccuracy
-from saealib.surrogate.base import Surrogate
+from saealib.surrogate.base import ComparisonSurrogate, Surrogate
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.training_set import (
     ArchiveObjectiveSet,
@@ -683,7 +683,7 @@ class PairwiseSurrogateManager(SurrogateManager):
 
     def __init__(
         self,
-        surrogate: Surrogate,
+        surrogate: ComparisonSurrogate,
         training_set: TrainingSet | None = None,
         n_ref: int = 10,
     ):

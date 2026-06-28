@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from saealib.surrogate.base import ComparisonSurrogate, RegressionSurrogate
@@ -87,6 +89,7 @@ class SklearnSurrogate(RegressionSurrogate):
         preds = [m.predict(test) for m in self._models]
         value = np.column_stack(preds)
         return SurrogatePrediction(value=value)
+
 
 class SVMSurrogate(SklearnSurrogate):
     """
@@ -286,7 +289,7 @@ class SklearnClassificationSurrogate(ComparisonSurrogate):
                 "Install it with: pip install saealib[sklearn]"
             ) from e
         self.estimator = estimator
-        self._model: object | None = None
+        self._model: Any = None
 
     def fit(self, train_x: np.ndarray, train_y: np.ndarray) -> None:
         """
@@ -304,7 +307,7 @@ class SklearnClassificationSurrogate(ComparisonSurrogate):
         labels = np.asarray(train_y, dtype=float).ravel()
         if self._model is None:
             self._model = clone(self.estimator)
-        self._model.fit(train_x, labels)  # type: ignore[union-attr]
+        self._model.fit(train_x, labels)
 
     def predict_proba(self, test_x: np.ndarray) -> SurrogatePrediction:
         """
@@ -324,7 +327,7 @@ class SklearnClassificationSurrogate(ComparisonSurrogate):
         if test.ndim == 1:
             test = test.reshape(1, -1)
         assert self._model is not None
-        proba = self._model.predict_proba(test)  # type: ignore[union-attr]
+        proba = self._model.predict_proba(test)
         return SurrogatePrediction(value=proba[:, 1:2])
 
 
