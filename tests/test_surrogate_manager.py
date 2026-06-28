@@ -42,7 +42,7 @@ from saealib.surrogate.manager import (
 )
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
-from saealib.surrogate.sklearn_surrogate import RFCClassificationSurrogate
+from saealib.surrogate.sklearn_surrogate import SklearnRFCClassificationSurrogate
 from saealib.surrogate.training_set import KNNObjectiveSet, PairwiseComparisonSet
 
 # ---------------------------------------------------------------------------
@@ -1311,7 +1311,7 @@ def ctx_pairwise(archive_pairwise: Archive) -> OptimizationState:
 
 
 class TestPairwiseSurrogateManager:
-    """E2E tests for PairwiseSurrogateManager with RFCClassificationSurrogate."""
+    """E2E tests for PairwiseSurrogateManager with SklearnRFCClassificationSurrogate."""
 
     def test_score_candidates_returns_correct_shape(
         self,
@@ -1320,7 +1320,7 @@ class TestPairwiseSurrogateManager:
         candidates: np.ndarray,
     ) -> None:
         manager = PairwiseSurrogateManager(
-            RFCClassificationSurrogate(n_estimators=5, random_state=0),
+            SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0),
             n_ref=5,
         )
         scores, predictions = manager.score_candidates(
@@ -1337,7 +1337,7 @@ class TestPairwiseSurrogateManager:
     ) -> None:
         """fit() + score_candidates(refit=False) pattern works without error."""
         manager = PairwiseSurrogateManager(
-            RFCClassificationSurrogate(n_estimators=5, random_state=0),
+            SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0),
             n_ref=5,
         )
         manager.fit(archive_pairwise, ctx_pairwise)
@@ -1355,7 +1355,7 @@ class TestPairwiseSurrogateManager:
     ) -> None:
         """tell_f is NaN so strategies skip pbest assignment."""
         manager = PairwiseSurrogateManager(
-            RFCClassificationSurrogate(n_estimators=5, random_state=0),
+            SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0),
             n_ref=5,
         )
         _, predictions = manager.score_candidates(
@@ -1373,7 +1373,7 @@ class TestPairwiseSurrogateManager:
     ) -> None:
         """Win probabilities from predict_proba are always in [0, 1]."""
         manager = PairwiseSurrogateManager(
-            RFCClassificationSurrogate(n_estimators=5, random_state=0),
+            SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0),
             n_ref=5,
         )
         scores, _ = manager.score_candidates(candidates, archive_pairwise, ctx_pairwise)
@@ -1383,6 +1383,6 @@ class TestPairwiseSurrogateManager:
     def test_default_training_set_is_pairwise(self) -> None:
         """Default training_set is PairwiseComparisonSet when none supplied."""
         manager = PairwiseSurrogateManager(
-            RFCClassificationSurrogate(n_estimators=5, random_state=0)
+            SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0)
         )
         assert isinstance(manager.training_set, PairwiseComparisonSet)

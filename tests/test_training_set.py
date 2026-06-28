@@ -635,7 +635,7 @@ class TestReferencePointComparisonSet:
         """ReferencePointComparisonSet works end-to-end with GlobalSurrogateManager."""
         from saealib.acquisition.mean import MeanPrediction
         from saealib.surrogate.manager import GlobalSurrogateManager
-        from saealib.surrogate.sklearn_surrogate import DTSurrogate
+        from saealib.surrogate.sklearn_surrogate import SklearnRFRSurrogate
 
         arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
         pop = _make_population_with_cv([0.0, 0.0, 0.0])
@@ -643,7 +643,7 @@ class TestReferencePointComparisonSet:
         ts = ReferencePointComparisonSet(ref_source="population_best")
         # MeanPrediction with direction=[1.0]: higher predicted label = higher score
         mgr = GlobalSurrogateManager(
-            surrogate=DTSurrogate(),
+            surrogate=SklearnRFRSurrogate(),
             acquisition=MeanPrediction(direction=np.array([1.0])),
             training_set=ts,
         )

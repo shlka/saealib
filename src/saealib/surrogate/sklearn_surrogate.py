@@ -91,7 +91,7 @@ class SklearnSurrogate(RegressionSurrogate):
         return SurrogatePrediction(value=value)
 
 
-class SVMSurrogate(SklearnSurrogate):
+class SklearnSVMSurrogate(SklearnSurrogate):
     """
     Support Vector Regression surrogate.
 
@@ -110,7 +110,7 @@ class SVMSurrogate(SklearnSurrogate):
         super().__init__(SVR(**kwargs))
 
 
-class NNSurrogate(SklearnSurrogate):
+class SklearnNNSurrogate(SklearnSurrogate):
     """
     Multi-layer Perceptron surrogate.
 
@@ -129,9 +129,9 @@ class NNSurrogate(SklearnSurrogate):
         super().__init__(MLPRegressor(**kwargs))
 
 
-class DTSurrogate(SklearnSurrogate):
+class SklearnRFRSurrogate(SklearnSurrogate):
     """
-    Random Forest surrogate.
+    Random Forest Regressor surrogate.
 
     Convenience wrapper around ``SklearnSurrogate`` using
     ``sklearn.ensemble.RandomForestRegressor``.
@@ -149,7 +149,7 @@ class DTSurrogate(SklearnSurrogate):
         super().__init__(RandomForestRegressor(**kwargs))
 
 
-class GPRSurrogate(SklearnSurrogate):
+class SklearnGPRSurrogate(SklearnSurrogate):
     """
     Gaussian Process Regressor surrogate.
 
@@ -203,7 +203,7 @@ class GPRSurrogate(SklearnSurrogate):
         return SurrogatePrediction(value=value, std=std)
 
 
-class XGBSurrogate(SklearnSurrogate):
+class SklearnXGBSurrogate(SklearnSurrogate):
     """
     XGBoost surrogate.
 
@@ -226,13 +226,13 @@ class XGBSurrogate(SklearnSurrogate):
             from xgboost import XGBRegressor
         except ImportError as e:
             raise ImportError(
-                "xgboost is required for XGBSurrogate. "
+                "xgboost is required for SklearnXGBSurrogate. "
                 "Install it with: pip install saealib[xgboost]"
             ) from e
         super().__init__(XGBRegressor(**kwargs))
 
 
-class LGBMSurrogate(SklearnSurrogate):
+class SklearnLGBMSurrogate(SklearnSurrogate):
     """
     LightGBM surrogate.
 
@@ -255,7 +255,7 @@ class LGBMSurrogate(SklearnSurrogate):
             from lightgbm import LGBMRegressor
         except ImportError as e:
             raise ImportError(
-                "lightgbm is required for LGBMSurrogate. "
+                "lightgbm is required for SklearnLGBMSurrogate. "
                 "Install it with: pip install saealib[lightgbm]"
             ) from e
         super().__init__(LGBMRegressor(**kwargs))  # type: ignore  # LightGBM stubs mistype __init__ kwargs
@@ -331,7 +331,7 @@ class SklearnClassificationSurrogate(ComparisonSurrogate):
         return SurrogatePrediction(value=proba[:, 1:2])
 
 
-class SVCClassificationSurrogate(SklearnClassificationSurrogate):
+class SklearnSVCClassificationSurrogate(SklearnClassificationSurrogate):
     """
     Support Vector Classification surrogate.
 
@@ -352,7 +352,7 @@ class SVCClassificationSurrogate(SklearnClassificationSurrogate):
         super().__init__(SVC(**kwargs))
 
 
-class RFCClassificationSurrogate(SklearnClassificationSurrogate):
+class SklearnRFCClassificationSurrogate(SklearnClassificationSurrogate):
     """
     Random Forest Classification surrogate.
 

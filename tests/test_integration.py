@@ -5,13 +5,13 @@ import numpy as np
 from saealib import (
     GA,
     CrossoverBLXAlpha,
-    GPRSurrogate,
     IndividualBasedStrategy,
     LHSInitializer,
     MutationUniform,
     Optimizer,
     Problem,
     SequentialSelection,
+    SklearnGPRSurrogate,
     Termination,
     TruncationSelection,
     max_fe,
@@ -35,7 +35,7 @@ def test_integration():
     - ParentSelection (SequentialSelection)
     - SurvivorSelection (TruncationSelection)
     - Termination
-    - Surrogate (GPRSurrogate)
+    - Surrogate (SklearnGPRSurrogate)
     - Strategy (IndividualBasedStrategy)
     """
     # Small problem configuration for fast execution in CI
@@ -68,7 +68,7 @@ def test_integration():
         survivor_selection=TruncationSelection(),
     )
     termination = Termination(max_fe(100))
-    surrogate = GPRSurrogate()
+    surrogate = SklearnGPRSurrogate()
     strategy = IndividualBasedStrategy(evaluation_ratio=rsm)
 
     opt = (

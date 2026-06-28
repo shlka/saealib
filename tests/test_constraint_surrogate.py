@@ -16,7 +16,6 @@ from saealib import (
     CrossoverBLXAlpha,
     ExpectedImprovement,
     GlobalSurrogateManager,
-    GPRSurrogate,
     InequalityConstraint,
     LHSInitializer,
     MutationUniform,
@@ -26,6 +25,7 @@ from saealib import (
     Problem,
     ProductOfFeasibility,
     SequentialSelection,
+    SklearnGPRSurrogate,
     StaticToleranceHandler,
     Termination,
     TruncationSelection,
@@ -94,12 +94,14 @@ class TestConstraintSurrogateG01:
         problem = _make_g01_problem()
 
         ei_mgr = GlobalSurrogateManager(
-            GPRSurrogate(),
+            SklearnGPRSurrogate(),
             ExpectedImprovement(),
             training_set=ArchiveObjectiveSet(),
         )
         pof_mgr = GlobalSurrogateManager(
-            PerObjectiveSurrogate([GPRSurrogate() for _ in range(_N_CONSTRAINTS)]),
+            PerObjectiveSurrogate(
+                [SklearnGPRSurrogate() for _ in range(_N_CONSTRAINTS)]
+            ),
             ProductOfFeasibility(),
             training_set=ConstraintObjectiveSet(),
         )
@@ -132,7 +134,7 @@ class TestConstraintSurrogateG01:
             .set_algorithm(_make_ga())
             .set_strategy(PreSelectionStrategy(n_candidates=20, n_select=3))
             .set_surrogate_manager(
-                GlobalSurrogateManager(GPRSurrogate(), ExpectedImprovement())
+                GlobalSurrogateManager(SklearnGPRSurrogate(), ExpectedImprovement())
             )
             .set_termination(Termination(max_fe(15)))
         )
@@ -155,12 +157,14 @@ class TestConstraintSurrogateG01:
         problem = _make_g01_problem()
 
         ei_mgr = GlobalSurrogateManager(
-            GPRSurrogate(),
+            SklearnGPRSurrogate(),
             ExpectedImprovement(),
             training_set=ArchiveObjectiveSet(),
         )
         pof_mgr = GlobalSurrogateManager(
-            PerObjectiveSurrogate([GPRSurrogate() for _ in range(_N_CONSTRAINTS)]),
+            PerObjectiveSurrogate(
+                [SklearnGPRSurrogate() for _ in range(_N_CONSTRAINTS)]
+            ),
             ProductOfFeasibility(),
             training_set=ConstraintObjectiveSet(),
         )
@@ -233,7 +237,7 @@ class TestConstraintSurrogate2D:
             .set_algorithm(_make_ga())
             .set_strategy(PreSelectionStrategy(n_candidates=20, n_select=3))
             .set_surrogate_manager(
-                GlobalSurrogateManager(GPRSurrogate(), ExpectedImprovement())
+                GlobalSurrogateManager(SklearnGPRSurrogate(), ExpectedImprovement())
             )
             .set_termination(Termination(max_fe(50)))
         )
@@ -241,7 +245,7 @@ class TestConstraintSurrogate2D:
         archive = ctx.archive
 
         pof_mgr = GlobalSurrogateManager(
-            PerObjectiveSurrogate([GPRSurrogate()]),
+            PerObjectiveSurrogate([SklearnGPRSurrogate()]),
             ProductOfFeasibility(),
             training_set=ConstraintObjectiveSet(),
         )
@@ -305,7 +309,7 @@ class TestConstraintSurrogateBackwardCompat:
             .set_algorithm(_make_ga())
             .set_strategy(PreSelectionStrategy(n_candidates=10, n_select=2))
             .set_surrogate_manager(
-                GlobalSurrogateManager(GPRSurrogate(), ExpectedImprovement())
+                GlobalSurrogateManager(SklearnGPRSurrogate(), ExpectedImprovement())
             )
             .set_termination(Termination(max_fe(20)))
         )

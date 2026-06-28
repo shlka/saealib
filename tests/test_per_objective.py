@@ -21,7 +21,7 @@ from saealib.surrogate.manager import GlobalSurrogateManager
 from saealib.surrogate.per_objective import PerObjectiveSurrogate
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
-from saealib.surrogate.sklearn_surrogate import DTSurrogate, SVMSurrogate
+from saealib.surrogate.sklearn_surrogate import SklearnRFRSurrogate, SklearnSVMSurrogate
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -122,7 +122,7 @@ class TestPerObjectiveSurrogate:
     def test_mixed_surrogate_types(self, train_data_2obj, test_x) -> None:
         X, y = train_data_2obj
         s = PerObjectiveSurrogate(
-            [SVMSurrogate(), DTSurrogate(n_estimators=5, random_state=0)]
+            [SklearnSVMSurrogate(), SklearnRFRSurrogate(n_estimators=5, random_state=0)]
         )
         s.fit(X, y)
         pred = s.predict(test_x)
@@ -188,7 +188,10 @@ class TestPerObjectiveSurrogate:
 class TestPerObjectiveSurrogateIntegration:
     def test_global_manager_2obj(self, archive_2obj, candidates) -> None:
         s = PerObjectiveSurrogate(
-            [SVMSurrogate(), DTSurrogate(n_estimators=10, random_state=0)]
+            [
+                SklearnSVMSurrogate(),
+                SklearnRFRSurrogate(n_estimators=10, random_state=0),
+            ]
         )
         weights = np.array([-1.0, -1.0])
         manager = GlobalSurrogateManager(s, MeanPrediction(weights=weights))
