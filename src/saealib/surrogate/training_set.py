@@ -340,9 +340,9 @@ class LevelBasedSet(TrainingSet):
     """Multi-class labels from equal-division of a sorted population (CA-LLSO, P1).
 
     Individuals are sorted by ``ctx.comparator.sort_population`` (best-first),
-    then divided into ``n_levels`` equally-sized groups.  Group 0 (best) receives
-    label 0, group ``n_levels - 1`` (worst) receives the highest label.
-    Remainder individuals are appended to the last (worst) group.
+    then divided into ``n_levels`` equally-sized groups.  The best group receives
+    label ``n_levels - 1`` and the worst group receives label 0.  Remainder
+    individuals are appended to the worst (label 0) group.
 
     Parameters
     ----------
@@ -383,11 +383,11 @@ class LevelBasedSet(TrainingSet):
         x = src.get_array("x")[sorted_idx]
         n = len(x)
         per = n // self.n_levels
-        labels = np.repeat(np.arange(self.n_levels), per)
-        # Remainder goes to the last (worst) level
+        labels = np.repeat(np.arange(self.n_levels - 1, -1, -1), per)
+        # Remainder goes to the worst (label 0) group
         remainder = n - len(labels)
         if remainder > 0:
-            labels = np.concatenate([labels, np.full(remainder, self.n_levels - 1)])
+            labels = np.concatenate([labels, np.full(remainder, 0)])
         return TrainingData(train_x=x, train_y=labels.astype(float))
 
 

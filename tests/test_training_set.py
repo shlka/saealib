@@ -410,30 +410,30 @@ class TestTopKBipartitionSet:
 
 class TestLevelBasedSet:
     def test_three_levels_equal_split(self) -> None:
-        """6 individuals, 3 levels → 2 per level, labels [0,0,1,1,2,2]."""
+        """6 individuals, 3 levels → 2 per level, labels [2,2,1,1,0,0]."""
         arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
         ctx = _make_ctx(archive=arc)
         ts = LevelBasedSet(source="archive", n_levels=3)
         data = ts.build(arc, None, ctx)
-        np.testing.assert_array_equal(data.train_y, [0.0, 0.0, 1.0, 1.0, 2.0, 2.0])
+        np.testing.assert_array_equal(data.train_y, [2.0, 2.0, 1.0, 1.0, 0.0, 0.0])
 
     def test_remainder_goes_to_last_level(self) -> None:
-        """7 individuals, 3 levels → per=2; labels [0,0,1,1,2,2,2]."""
+        """7 individuals, 3 levels → per=2; labels [2,2,1,1,0,0,0]."""
         arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0])
         ctx = _make_ctx(archive=arc)
         ts = LevelBasedSet(source="archive", n_levels=3)
         data = ts.build(arc, None, ctx)
-        np.testing.assert_array_equal(data.train_y, [0.0, 0.0, 1.0, 1.0, 2.0, 2.0, 2.0])
+        np.testing.assert_array_equal(data.train_y, [2.0, 2.0, 1.0, 1.0, 0.0, 0.0, 0.0])
 
-    def test_best_individuals_get_level_zero(self) -> None:
-        """Level 0 corresponds to best-sorted (smallest f for minimization)."""
+    def test_best_individuals_get_highest_label(self) -> None:
+        """Best-sorted individuals receive the highest label (n_levels - 1)."""
         arc = _make_archive_with_f([5.0, 1.0, 3.0, 2.0])
         ctx = _make_ctx(archive=arc)
         ts = LevelBasedSet(source="archive", n_levels=2)
         data = ts.build(arc, None, ctx)
-        # sorted order: f=1.0, f=2.0 → level 0; f=3.0, f=5.0 → level 1
-        np.testing.assert_array_equal(data.train_y[:2], [0.0, 0.0])
-        np.testing.assert_array_equal(data.train_y[2:], [1.0, 1.0])
+        # sorted order: f=1.0, f=2.0 → label 1; f=3.0, f=5.0 → label 0
+        np.testing.assert_array_equal(data.train_y[:2], [1.0, 1.0])
+        np.testing.assert_array_equal(data.train_y[2:], [0.0, 0.0])
 
     def test_default_n_levels(self) -> None:
         ts = LevelBasedSet()
@@ -466,6 +466,20 @@ class TestLevelBasedSet:
         ts = LevelBasedSet(source="archive", n_levels=3)
         data = ts.build(arc, None, ctx)
         assert data.train_y.dtype == float
+
+    def test_score_increases_with_quality(self) -> None:
+        """MeanPrediction(direction=[1.0]) scores best individuals highest."""
+        from saealib.acquisition.mean import MeanPrediction
+        from saealib.surrogate.prediction import SurrogatePrediction
+
+        arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0])
+        ctx = _make_ctx(archive=arc)
+        ts = LevelBasedSet(source="archive", n_levels=2)
+        data = ts.build(arc, None, ctx)
+        pred = SurrogatePrediction(value=data.train_y.reshape(-1, 1))
+        acq = MeanPrediction(direction=np.array([1.0]))
+        scores = acq.score(pred)
+        assert scores[:2].min() > scores[2:].max()
 
 
 # ===========================================================================
