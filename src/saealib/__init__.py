@@ -27,7 +27,12 @@ from saealib.checkpoint import CheckpointCallback
 from saealib.comparators import Comparator, NSGA2Comparator, SingleObjectiveComparator
 from saealib.exceptions import ConfigurationError, SaealibError, ValidationError
 from saealib.execution.evaluator import EvaluationResult, Evaluator, SerialEvaluator
-from saealib.execution.initializer import Initializer, LHSInitializer
+from saealib.execution.initializer import (
+    Initializer,
+    LHSInitializer,
+    RandomInitializer,
+    SobolInitializer,
+)
 from saealib.operators import (
     Crossover,
     CrossoverSBX,
@@ -142,12 +147,14 @@ __all__ = [
     "PostEvaluationEvent",
     "PreSelectionStrategy",
     "Problem",
+    "RandomInitializer",
     "Result",
     "RunEndEvent",
     "RunStartEvent",
     "SaealibError",
     "SerialEvaluator",
     "SingleObjectiveComparator",
+    "SobolInitializer",
     "SortByScoreStage",
     "Stage",
     "StaticToleranceHandler",

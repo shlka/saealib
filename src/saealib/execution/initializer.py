@@ -202,3 +202,180 @@ class LHSInitializer(Initializer):
         population.extend(archive[: self.n_init_population])
 
         return ctx
+
+
+class RandomInitializer(Initializer):
+    """
+    Random uniform sampling initializer.
+
+    Attributes
+    ----------
+    n_init_archive : int
+        The number of individuals to initialize in the archive.
+    n_init_population : int
+        The number of individuals to initialize in the population.
+    seed : int | None
+        The seed for the random number generator.
+    """
+
+    def __init__(
+        self, n_init_archive: int, n_init_population: int, seed: int | None = None
+    ):
+        self.n_init_archive = n_init_archive
+        self.n_init_population = n_init_population
+        self.seed = seed
+
+    def initialize(
+        self, provider: ComponentProvider, problem: Problem
+    ) -> OptimizationState:
+        """
+        Initialize Population and Archive with uniform random samples.
+
+        Parameters
+        ----------
+        provider : ComponentProvider
+            The component provider instance.
+        problem : Problem
+            The problem instance.
+
+        Returns
+        -------
+        OptimizationState
+        """
+        provider_seed = getattr(provider, "seed", None)
+        rng = np.random.default_rng(
+            provider_seed if provider_seed is not None else self.seed
+        )
+        attrs = self._create_attrs(problem, provider)
+
+        population = provider.algorithm.population_class(
+            attrs=attrs, init_capacity=self.n_init_population
+        )
+        archive = provider.algorithm.archive_class(
+            attrs=attrs, init_capacity=self.n_init_archive
+        )
+        pareto_archive = provider.algorithm.create_pareto_archive(
+            attrs=attrs, init_capacity=self.n_init_archive, problem=problem
+        )
+
+        ctx = self._create_context(problem, archive, pareto_archive, population, rng)
+
+        archive_x = rng.uniform(
+            problem.lb, problem.ub, size=(self.n_init_archive, problem.dim)
+        )
+
+        provider.dispatch(InitialEvaluationStartEvent(ctx=ctx, candidates_x=archive_x))
+
+        result = provider.evaluator.evaluate_batch(archive_x, problem)
+
+        for i in range(self.n_init_archive):
+            data = {
+                "x": archive_x[i],
+                "f": result.f[i],
+                "g": result.g[i],
+                "cv": float(result.cv[i]),
+            }
+            archive.add(data)
+            pareto_archive.add(data)
+
+        ctx.count_fe(self.n_init_archive)
+
+        provider.dispatch(InitialEvaluationEndEvent(ctx=ctx, archive=archive))
+
+        sorted_idx = problem.comparator.sort_population(archive)
+        archive_sorted = archive.extract(sorted_idx)
+        archive.clear()
+        archive.extend(archive_sorted)
+
+        population.extend(archive[: self.n_init_population])
+
+        return ctx
+
+
+class SobolInitializer(Initializer):
+    """
+    Sobol quasi-random sequence initializer.
+
+    Attributes
+    ----------
+    n_init_archive : int
+        The number of individuals to initialize in the archive.
+    n_init_population : int
+        The number of individuals to initialize in the population.
+    seed : int | None
+        The seed for the random number generator.
+    """
+
+    def __init__(
+        self, n_init_archive: int, n_init_population: int, seed: int | None = None
+    ):
+        self.n_init_archive = n_init_archive
+        self.n_init_population = n_init_population
+        self.seed = seed
+
+    def initialize(
+        self, provider: ComponentProvider, problem: Problem
+    ) -> OptimizationState:
+        """
+        Initialize Population and Archive with scrambled Sobol samples.
+
+        Parameters
+        ----------
+        provider : ComponentProvider
+            The component provider instance.
+        problem : Problem
+            The problem instance.
+
+        Returns
+        -------
+        OptimizationState
+        """
+        provider_seed = getattr(provider, "seed", None)
+        rng = np.random.default_rng(
+            provider_seed if provider_seed is not None else self.seed
+        )
+        attrs = self._create_attrs(problem, provider)
+
+        population = provider.algorithm.population_class(
+            attrs=attrs, init_capacity=self.n_init_population
+        )
+        archive = provider.algorithm.archive_class(
+            attrs=attrs, init_capacity=self.n_init_archive
+        )
+        pareto_archive = provider.algorithm.create_pareto_archive(
+            attrs=attrs, init_capacity=self.n_init_archive, problem=problem
+        )
+
+        ctx = self._create_context(problem, archive, pareto_archive, population, rng)
+
+        archive_x = scipy.stats.qmc.Sobol(
+            d=problem.dim, scramble=True, seed=rng
+        ).random(self.n_init_archive)
+        archive_x = scipy.stats.qmc.scale(archive_x, problem.lb, problem.ub)
+
+        provider.dispatch(InitialEvaluationStartEvent(ctx=ctx, candidates_x=archive_x))
+
+        result = provider.evaluator.evaluate_batch(archive_x, problem)
+
+        for i in range(self.n_init_archive):
+            data = {
+                "x": archive_x[i],
+                "f": result.f[i],
+                "g": result.g[i],
+                "cv": float(result.cv[i]),
+            }
+            archive.add(data)
+            pareto_archive.add(data)
+
+        ctx.count_fe(self.n_init_archive)
+
+        provider.dispatch(InitialEvaluationEndEvent(ctx=ctx, archive=archive))
+
+        sorted_idx = problem.comparator.sort_population(archive)
+        archive_sorted = archive.extract(sorted_idx)
+        archive.clear()
+        archive.extend(archive_sorted)
+
+        population.extend(archive[: self.n_init_population])
+
+        return ctx
