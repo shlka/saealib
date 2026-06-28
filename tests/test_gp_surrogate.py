@@ -1,8 +1,8 @@
 """
-Tests for GPRSurrogate.
+Tests for SklearnGPRSurrogate.
 
 Covers:
-- GPRSurrogate: fit/predict, single/multi-objective, std population
+- SklearnGPRSurrogate: fit/predict, single/multi-objective, std population
 - provides_uncertainty flag
 - Custom kernel
 - Integration with EI, LCB, MaxUncertainty, PoF acquisition functions
@@ -21,7 +21,7 @@ from saealib.acquisition import (
 from saealib.population import Archive, PopulationAttribute
 from saealib.surrogate.manager import GlobalSurrogateManager
 from saealib.surrogate.prediction import SurrogatePrediction
-from saealib.surrogate.sklearn_surrogate import GPRSurrogate
+from saealib.surrogate.sklearn_surrogate import SklearnGPRSurrogate
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -55,7 +55,7 @@ def test_x():
 @pytest.fixture
 def fitted_gp(train_data_1obj):
     X, y = train_data_1obj
-    gp = GPRSurrogate()
+    gp = SklearnGPRSurrogate()
     gp.fit(X, y)
     return gp
 
@@ -82,12 +82,12 @@ def candidates():
 
 
 # ===========================================================================
-# GPRSurrogate Tests
+# SklearnGPRSurrogate Tests
 # ===========================================================================
-class TestGPRSurrogate:
+class TestSklearnGPRSurrogate:
     def test_fit_predict_1obj(self, train_data_1obj, test_x) -> None:
         X, y = train_data_1obj
-        gp = GPRSurrogate()
+        gp = SklearnGPRSurrogate()
         gp.fit(X, y)
         pred = gp.predict(test_x)
         assert isinstance(pred, SurrogatePrediction)
@@ -95,7 +95,7 @@ class TestGPRSurrogate:
 
     def test_fit_predict_2obj(self, train_data_2obj, test_x) -> None:
         X, y = train_data_2obj
-        gp = GPRSurrogate()
+        gp = SklearnGPRSurrogate()
         gp.fit(X, y)
         pred = gp.predict(test_x)
         assert pred.value.shape == (5, 2)
@@ -115,7 +115,7 @@ class TestGPRSurrogate:
 
     def test_std_shape_2obj(self, train_data_2obj, test_x) -> None:
         X, y = train_data_2obj
-        gp = GPRSurrogate()
+        gp = SklearnGPRSurrogate()
         gp.fit(X, y)
         pred = gp.predict(test_x)
         assert pred.std is not None
@@ -127,7 +127,7 @@ class TestGPRSurrogate:
         assert np.all(pred.std >= 0.0)
 
     def test_provides_uncertainty_class_attribute(self) -> None:
-        assert GPRSurrogate.provides_uncertainty is True
+        assert SklearnGPRSurrogate.provides_uncertainty is True
 
     def test_has_uncertainty_true(self, fitted_gp, test_x) -> None:
         pred = fitted_gp.predict(test_x)
@@ -137,7 +137,7 @@ class TestGPRSurrogate:
         from sklearn.gaussian_process.kernels import Matern
 
         X, y = train_data_1obj
-        gp = GPRSurrogate(kernel=Matern(nu=2.5))
+        gp = SklearnGPRSurrogate(kernel=Matern(nu=2.5))
         gp.fit(X, y)
         pred = gp.predict(test_x)
         assert pred.value.shape == (5, 1)
@@ -148,7 +148,7 @@ class TestGPRSurrogate:
     ) -> None:
         X1, y1 = train_data_1obj
         X2, y2 = train_data_2obj
-        gp = GPRSurrogate()
+        gp = SklearnGPRSurrogate()
         gp.fit(X1, y1)
         gp.fit(X2, y2)
         pred = gp.predict(test_x)
@@ -158,16 +158,16 @@ class TestGPRSurrogate:
 
     def test_models_are_cloned_per_objective(self, train_data_2obj) -> None:
         X, y = train_data_2obj
-        gp = GPRSurrogate()
+        gp = SklearnGPRSurrogate()
         gp.fit(X, y)
         assert gp._models is not None
         assert gp._models[0] is not gp._models[1]
 
 
 # ===========================================================================
-# GPRSurrogate + Acquisition Function Integration Tests
+# SklearnGPRSurrogate + Acquisition Function Integration Tests
 # ===========================================================================
-class TestGPRSurrogateWithAcquisition:
+class TestSklearnGPRSurrogateWithAcquisition:
     def test_ei_integration(self, fitted_gp, test_x) -> None:
         pred = fitted_gp.predict(test_x)
         scores = ExpectedImprovement().score(pred, reference=1.0)
@@ -196,9 +196,9 @@ class TestGPRSurrogateWithAcquisition:
 # ===========================================================================
 # Integration: GlobalSurrogateManager
 # ===========================================================================
-class TestGPRSurrogateManager:
+class TestSklearnGPRSurrogateManager:
     def test_global_manager_ei(self, archive_1obj, candidates) -> None:
-        manager = GlobalSurrogateManager(GPRSurrogate(), ExpectedImprovement())
+        manager = GlobalSurrogateManager(SklearnGPRSurrogate(), ExpectedImprovement())
         scores, preds = manager.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
         assert np.all(scores >= 0.0)
@@ -207,11 +207,30 @@ class TestGPRSurrogateManager:
             assert p.std is not None
 
     def test_global_manager_lcb(self, archive_1obj, candidates) -> None:
-        manager = GlobalSurrogateManager(GPRSurrogate(), LowerConfidenceBound())
+        manager = GlobalSurrogateManager(SklearnGPRSurrogate(), LowerConfidenceBound())
         scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
 
     def test_global_manager_max_uncertainty(self, archive_1obj, candidates) -> None:
-        manager = GlobalSurrogateManager(GPRSurrogate(), MaxUncertainty())
+        manager = GlobalSurrogateManager(SklearnGPRSurrogate(), MaxUncertainty())
         scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
+
+
+# ===========================================================================
+# GPSurrogate deprecated alias
+# ===========================================================================
+class TestGPSurrogateDeprecated:
+    def test_instantiation_warns(self, train_data_1obj, test_x) -> None:
+        import warnings
+
+        from saealib.surrogate._deprecated import GPSurrogate
+
+        X, y = train_data_1obj
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            s = GPSurrogate()
+            assert any("SklearnGPRSurrogate" in str(warning.message) for warning in w)
+        s.fit(X, y)
+        pred = s.predict(test_x)
+        assert pred.value.shape == (5, 1)

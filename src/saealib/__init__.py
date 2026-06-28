@@ -74,7 +74,7 @@ from saealib.strategies import (
     OptimizationStrategy,
     PreSelectionStrategy,
 )
-from saealib.surrogate import GPRSurrogate, Surrogate, SurrogateManager
+from saealib.surrogate import Surrogate, SurrogateManager
 from saealib.termination import (
     Termination,
     TerminationCondition,
@@ -117,7 +117,6 @@ __all__ = [
     "Evaluator",
     "Event",
     "ExpectedImprovement",
-    "GPRSurrogate",
     "GenerationBasedStrategy",
     "GenerationEndEvent",
     "GenerationStartEvent",
@@ -231,20 +230,21 @@ _TIER2_MAP: dict[str, str] = {
     "ArchiveBasedManager": "saealib.surrogate",
     "CompositeSurrogateManager": "saealib.surrogate",
     "DensityManager": "saealib.surrogate",
-    "DTSurrogate": "saealib.surrogate",
     "GlobalSurrogateManager": "saealib.surrogate",
-    "LGBMSurrogate": "saealib.surrogate",
     "LocalSurrogateManager": "saealib.surrogate",
     "NichingManager": "saealib.surrogate",
-    "NNSurrogate": "saealib.surrogate",
     "NoveltyManager": "saealib.surrogate",
     "PerObjectiveSurrogate": "saealib.surrogate",
     "RBFSurrogate": "saealib.surrogate",
+    "SklearnGPRSurrogate": "saealib.surrogate",
+    "SklearnLGBMSurrogate": "saealib.surrogate",
+    "SklearnNNSurrogate": "saealib.surrogate",
+    "SklearnRFRSurrogate": "saealib.surrogate",
     "SklearnSurrogate": "saealib.surrogate",
-    "SVMSurrogate": "saealib.surrogate",
+    "SklearnSVMSurrogate": "saealib.surrogate",
+    "SklearnXGBSurrogate": "saealib.surrogate",
     "SurrogatePrediction": "saealib.surrogate",
     "TorchSurrogate": "saealib.surrogate",
-    "XGBSurrogate": "saealib.surrogate",
     "product_combine": "saealib.surrogate",
     "rank_weighted_combine": "saealib.surrogate",
     # problem (less common)
