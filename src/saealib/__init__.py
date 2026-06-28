@@ -74,6 +74,7 @@ from saealib.stages import (
     TrueEvaluationStage,
 )
 from saealib.strategies import (
+    DirectStrategy,
     GenerationBasedStrategy,
     IndividualBasedStrategy,
     OptimizationStrategy,
@@ -116,6 +117,7 @@ __all__ = [
     "CountGenerationStage",
     "Crossover",
     "CrossoverSBX",
+    "DirectStrategy",
     "EpsilonConstraintHandler",
     "EqualityConstraint",
     "EvaluationResult",
