@@ -13,7 +13,7 @@ from typing import Any
 import numpy as np
 import scipy.spatial
 
-from saealib.surrogate.base import Surrogate
+from saealib.surrogate.base import RegressionSurrogate
 from saealib.surrogate.prediction import SurrogatePrediction
 
 logger = logging.getLogger(__name__)
@@ -111,7 +111,7 @@ class _RBFModel:
         return np.asarray(preds).flatten()
 
 
-class RBFSurrogate(Surrogate):
+class RBFSurrogate(RegressionSurrogate):
     """
     Radial Basis Function (RBF) Interpolation surrogate model.
 

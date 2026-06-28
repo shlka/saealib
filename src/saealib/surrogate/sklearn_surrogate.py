@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from saealib.surrogate.base import Surrogate
+from saealib.surrogate.base import RegressionSurrogate
 from saealib.surrogate.prediction import SurrogatePrediction
 
 
-class SklearnSurrogate(Surrogate):
+class SklearnSurrogate(RegressionSurrogate):
     """
     Surrogate adapter for scikit-learn compatible estimators.
 

@@ -15,7 +15,7 @@ from saealib.surrogate.archive_manager import (
     NichingManager,
     NoveltyManager,
 )
-from saealib.surrogate.base import Surrogate
+from saealib.surrogate.base import ComparisonSurrogate, RegressionSurrogate, Surrogate
 from saealib.surrogate.manager import (
     CompositeSurrogateManager,
     GlobalSurrogateManager,
@@ -64,6 +64,7 @@ __all__ = [
     "AccuracyEvaluator",
     "ArchiveBasedManager",
     "ArchiveObjectiveSet",
+    "ComparisonSurrogate",
     "CompositeSurrogateManager",
     "ConstraintObjectiveSet",
     "DTSurrogate",
@@ -90,6 +91,7 @@ __all__ = [
     "R2Score",
     "RBFSurrogate",
     "ReferencePointComparisonSet",
+    "RegressionSurrogate",
     "SVMSurrogate",
     "SklearnSurrogate",
     "SpearmanCorrelation",
