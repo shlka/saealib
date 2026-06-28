@@ -1,8 +1,8 @@
 """
-Tests for SklearnSklearnGPRSurrogate.
+Tests for SklearnGPRSurrogate.
 
 Covers:
-- SklearnSklearnGPRSurrogate: fit/predict, single/multi-objective, std population
+- SklearnGPRSurrogate: fit/predict, single/multi-objective, std population
 - provides_uncertainty flag
 - Custom kernel
 - Integration with EI, LCB, MaxUncertainty, PoF acquisition functions
@@ -215,3 +215,22 @@ class TestSklearnGPRSurrogateManager:
         manager = GlobalSurrogateManager(SklearnGPRSurrogate(), MaxUncertainty())
         scores, _ = manager.score_candidates(candidates, archive_1obj)
         assert scores.shape == (len(candidates),)
+
+
+# ===========================================================================
+# GPSurrogate deprecated alias
+# ===========================================================================
+class TestGPSurrogateDeprecated:
+    def test_instantiation_warns(self, train_data_1obj, test_x) -> None:
+        import warnings
+
+        from saealib.surrogate._deprecated import GPSurrogate
+
+        X, y = train_data_1obj
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            s = GPSurrogate()
+            assert any("SklearnGPRSurrogate" in str(warning.message) for warning in w)
+        s.fit(X, y)
+        pred = s.predict(test_x)
+        assert pred.value.shape == (5, 1)
