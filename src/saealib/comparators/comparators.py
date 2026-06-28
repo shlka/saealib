@@ -1442,6 +1442,9 @@ class RNSGA2Comparator(ParetoComparator):
         feasible = np.where(cv <= self.eps_cv)[0]
         infeasible = np.where(cv > self.eps_cv)[0]
 
+        rank_full = np.full(len(population), np.inf)
+        dist_min_full = np.full(len(population), np.inf)
+
         sorted_feasible: list[int] = []
         if len(feasible):
             _ranks, fronts = self._sorter(
@@ -1458,6 +1461,9 @@ class RNSGA2Comparator(ParetoComparator):
             dist_matrix = np.linalg.norm(diff, axis=2)  # (n_feasible, n_ref)
             assoc_idx = np.argmin(dist_matrix, axis=1)  # (n_feasible,)
             dist_min = dist_matrix[np.arange(len(feasible)), assoc_idx]
+
+            rank_full[feasible] = _ranks
+            dist_min_full[feasible] = dist_min
 
             niche_count = np.zeros(len(self._reference_points), dtype=int)
 
@@ -1478,7 +1484,54 @@ class RNSGA2Comparator(ParetoComparator):
             [np.array(sorted_feasible, dtype=int), sorted_infeasible]
         ).astype(int)
         population.set_cache(_cache_key, result)
+        _rd_key = ("rnsga2_rank_dist", self._sorter, self._dominator, _dir_key)
+        population.set_cache(_rd_key, (rank_full, dist_min_full))
         return result
+
+    def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
+        """Compare via R-NSGA-II operator: rank first, then reference-point distance.
+
+        Lower rank wins; within the same rank, closer to the nearest reference
+        point wins (smaller distance is better, opposite of NSGA-II crowding
+        distance). Infeasibility is handled with the standard constraint-
+        domination rule (Deb 2000).
+        """
+        cv = population.get_array("cv")
+        cv_a = float(cv[idx_a])
+        cv_b = float(cv[idx_b])
+
+        if cv_a > self.eps_cv and cv_b > self.eps_cv:
+            if cv_a < cv_b:
+                return -1
+            if cv_a > cv_b:
+                return 1
+            return 0
+        if cv_a > self.eps_cv:
+            return 1
+        if cv_b > self.eps_cv:
+            return -1
+
+        # Both feasible: rank first, then distance to nearest reference point
+        # (smaller distance = better, i.e. closer to user preference).
+        self.sort_population(population)
+        _dir_key = (
+            tuple(self.direction.tolist()) if self.direction is not None else None
+        )
+        _rd_key = ("rnsga2_rank_dist", self._sorter, self._dominator, _dir_key)
+        cached = population.get_cache(_rd_key)
+        assert cached is not None
+        rank_full, dist_min_full = cached
+        rank_a, rank_b = rank_full[idx_a], rank_full[idx_b]
+        if rank_a < rank_b:
+            return -1
+        if rank_a > rank_b:
+            return 1
+        dist_a, dist_b = dist_min_full[idx_a], dist_min_full[idx_b]
+        if dist_a < dist_b:
+            return -1
+        if dist_a > dist_b:
+            return 1
+        return 0
 
     def _order_front(
         self,
