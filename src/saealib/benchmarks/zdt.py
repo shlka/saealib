@@ -15,7 +15,7 @@ from __future__ import annotations
 import numpy as np
 
 from saealib.problem.problem import Problem
-from saealib.variables import IntegerVariable
+from saealib.variables import IntegerVariable, Variable
 
 __all__ = ["zdt1", "zdt2", "zdt3", "zdt4", "zdt5", "zdt6"]
 
@@ -181,7 +181,7 @@ def zdt5(
     Zitzler, Deb & Thiele (2000) EC 8(2), Section 4 Def. 4, Eq. (11).
     """
     n_var = n_bits_b1 + n_rest * n_bits_rest
-    variables = [IntegerVariable(lb=0, ub=1) for _ in range(n_var)]
+    variables: list[Variable] = [IntegerVariable(lb=0, ub=1) for _ in range(n_var)]
 
     def func(x: np.ndarray) -> np.ndarray:
         xi = np.round(x).astype(int)
