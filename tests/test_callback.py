@@ -466,7 +466,7 @@ class TestPostEvaluationDispatch:
             .set_algorithm(
                 GA(
                     crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.5),
-                    mutation=MutationUniform(mutation_rate=0.1),
+                    mutation=MutationUniform(prob_var=0.1),
                     parent_selection=SequentialSelection(),
                     survivor_selection=TruncationSelection(),
                 )

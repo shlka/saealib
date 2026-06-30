@@ -30,7 +30,7 @@ from saealib.operators.crossover import Crossover
 def _make_ga(**kwargs):
     return GA(
         crossover=CrossoverSBX(1.0, eta=20.0),
-        mutation=MutationPolynomial(0.1, eta=20.0),
+        mutation=MutationPolynomial(eta=20.0, prob_var=0.1),
         parent_selection=TournamentSelection(2),
         survivor_selection=TruncationSelection(),
         **kwargs,
@@ -124,11 +124,11 @@ class TestGADefaults:
 
     def test_default_integer_mutation_rate_inherits(self):
         ga = _make_ga()
-        assert ga.integer_mutation.mutation_rate == pytest.approx(0.1)
+        assert ga.integer_mutation.prob_var == pytest.approx(0.1)
 
     def test_default_categorical_mutation_rate_inherits(self):
         ga = _make_ga()
-        assert ga.categorical_mutation.mutation_rate == pytest.approx(0.1)
+        assert ga.categorical_mutation.prob_var == pytest.approx(0.1)
 
     def test_custom_integer_crossover(self):
         custom = CrossoverIntegerSBX(0.5, eta=5.0)

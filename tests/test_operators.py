@@ -268,14 +268,14 @@ class TestMutationPolynomial:
         return lb, ub
 
     def test_output_shape(self):
-        op = MutationPolynomial(mutation_rate=0.5, eta=20.0)
+        op = MutationPolynomial(prob_var=0.5, eta=20.0)
         rng = np.random.default_rng(0)
         p = rng.uniform(-2.0, 2.0, size=DIM)
         c = op.mutate(p, self._range(), rng=rng)
         assert c.shape == (DIM,)
 
     def test_within_bounds(self):
-        op = MutationPolynomial(mutation_rate=1.0, eta=20.0)
+        op = MutationPolynomial(prob_var=1.0, eta=20.0)
         lb, ub = self._range()
         rng = np.random.default_rng(0)
         for _ in range(20):
@@ -284,7 +284,7 @@ class TestMutationPolynomial:
             assert np.all(c >= lb) and np.all(c <= ub)
 
     def test_zero_rate_no_change(self):
-        op = MutationPolynomial(mutation_rate=0.0, eta=20.0)
+        op = MutationPolynomial(prob_var=0.0, eta=20.0)
         rng = np.random.default_rng(0)
         p = rng.uniform(-2.0, 2.0, size=DIM)
         c = op.mutate(p, self._range(), rng=rng)
@@ -303,21 +303,21 @@ class TestMutationGaussian:
         return lb, ub
 
     def test_output_shape(self):
-        op = MutationGaussian(mutation_rate=0.5, sigma=0.1)
+        op = MutationGaussian(prob_var=0.5, sigma=0.1)
         rng = np.random.default_rng(0)
         p = rng.uniform(-2.0, 2.0, size=DIM)
         c = op.mutate(p, self._range(), rng=rng)
         assert c.shape == (DIM,)
 
     def test_zero_rate_no_change(self):
-        op = MutationGaussian(mutation_rate=0.0, sigma=1.0)
+        op = MutationGaussian(prob_var=0.0, sigma=1.0)
         rng = np.random.default_rng(0)
         p = rng.uniform(-2.0, 2.0, size=DIM)
         c = op.mutate(p, self._range(), rng=rng)
         np.testing.assert_array_equal(c, p)
 
     def test_zero_sigma_no_change(self):
-        op = MutationGaussian(mutation_rate=1.0, sigma=0.0)
+        op = MutationGaussian(prob_var=1.0, sigma=0.0)
         rng = np.random.default_rng(0)
         p = rng.uniform(-2.0, 2.0, size=DIM)
         c = op.mutate(p, self._range(), rng=rng)
@@ -442,7 +442,7 @@ class TestCrossoverHooks:
 
 class TestMutationHooks:
     def _op(self):
-        return MutationPolynomial(mutation_rate=1.0, eta=20.0)
+        return MutationPolynomial(prob_var=1.0, eta=20.0)
 
     def _individual(self, rng=None):
         rng = rng if rng is not None else np.random.default_rng(0)
@@ -533,7 +533,7 @@ class TestGAHookInvocation:
         crossover = CrossoverBLXAlpha(prob=1.0, alpha=0.4).with_post(hook)
         ga = GA(
             crossover=crossover,
-            mutation=MutationUniform(mutation_rate=0.0),
+            mutation=MutationUniform(prob_var=0.0),
             parent_selection=SequentialSelection(),
             survivor_selection=TruncationSelection(),
         )
@@ -549,7 +549,7 @@ class TestGAHookInvocation:
             call_count[0] += 1
             return offspring
 
-        mutation = MutationUniform(mutation_rate=0.0).with_post(hook)
+        mutation = MutationUniform(prob_var=0.0).with_post(hook)
         ga = GA(
             crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.4),
             mutation=mutation,
@@ -653,13 +653,13 @@ class TestMutationIntegerUniform:
     _ub = np.array([5.0, 4.0, 8.0])
 
     def test_output_shape(self):
-        op = MutationIntegerUniform(mutation_rate=1.0)
+        op = MutationIntegerUniform(prob_var=1.0)
         p = np.array([2.0, 2.0, 5.0])
         c = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(0))
         assert c.shape == (3,)
 
     def test_offspring_are_integers(self):
-        op = MutationIntegerUniform(mutation_rate=1.0)
+        op = MutationIntegerUniform(prob_var=1.0)
         rng = np.random.default_rng(0)
         p = np.array([2.0, 2.0, 5.0])
         for _ in range(30):
@@ -667,7 +667,7 @@ class TestMutationIntegerUniform:
             assert np.all(c == np.round(c))
 
     def test_values_within_bounds(self):
-        op = MutationIntegerUniform(mutation_rate=1.0)
+        op = MutationIntegerUniform(prob_var=1.0)
         rng = np.random.default_rng(1)
         p = np.array([2.0, 2.0, 5.0])
         for _ in range(50):
@@ -676,13 +676,13 @@ class TestMutationIntegerUniform:
             assert np.all(c <= self._ub)
 
     def test_zero_rate_unchanged(self):
-        op = MutationIntegerUniform(mutation_rate=0.0)
+        op = MutationIntegerUniform(prob_var=0.0)
         p = np.array([2.0, 3.0, 6.0])
         c = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(0))
         np.testing.assert_array_equal(c, p)
 
     def test_determinism(self):
-        op = MutationIntegerUniform(mutation_rate=0.5)
+        op = MutationIntegerUniform(prob_var=0.5)
         p = np.array([2.0, 2.0, 5.0])
         c1 = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(5))
         c2 = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(5))
@@ -700,13 +700,13 @@ class TestMutationCategorical:
     _ub = np.array([2.0, 1.0, 3.0])
 
     def test_output_shape(self):
-        op = MutationCategorical(mutation_rate=1.0)
+        op = MutationCategorical(prob_var=1.0)
         p = np.array([1.0, 0.0, 2.0])
         c = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(0))
         assert c.shape == (3,)
 
     def test_offspring_are_valid_indices(self):
-        op = MutationCategorical(mutation_rate=1.0)
+        op = MutationCategorical(prob_var=1.0)
         rng = np.random.default_rng(0)
         p = np.array([1.0, 0.0, 2.0])
         for _ in range(50):
@@ -716,7 +716,7 @@ class TestMutationCategorical:
             assert np.all(c == np.round(c))
 
     def test_uniform_distribution(self):
-        op = MutationCategorical(mutation_rate=1.0)
+        op = MutationCategorical(prob_var=1.0)
         rng = np.random.default_rng(0)
         p = np.array([0.0])
         lb = np.array([0.0])
@@ -729,13 +729,13 @@ class TestMutationCategorical:
         assert np.all(counts > 800), f"distribution not uniform: {counts}"
 
     def test_zero_rate_unchanged(self):
-        op = MutationCategorical(mutation_rate=0.0)
+        op = MutationCategorical(prob_var=0.0)
         p = np.array([1.0, 0.0, 2.0])
         c = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(0))
         np.testing.assert_array_equal(c, p)
 
     def test_determinism(self):
-        op = MutationCategorical(mutation_rate=0.5)
+        op = MutationCategorical(prob_var=0.5)
         p = np.array([1.0, 0.0, 2.0])
         c1 = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(9))
         c2 = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(9))

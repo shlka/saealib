@@ -160,7 +160,7 @@ class GA(Algorithm):
         self.survivor_selection = survivor_selection
 
         _cr = getattr(crossover, "prob", 1.0)
-        _mr = getattr(mutation, "mutation_rate", 0.1)
+        _pv = getattr(mutation, "prob_var", None)
         self.integer_crossover: Crossover = (
             integer_crossover
             if integer_crossover is not None
@@ -169,7 +169,7 @@ class GA(Algorithm):
         self.integer_mutation: Mutation = (
             integer_mutation
             if integer_mutation is not None
-            else MutationIntegerUniform(_mr)
+            else MutationIntegerUniform(prob_var=_pv)
         )
         self.categorical_crossover: Crossover = (
             categorical_crossover
@@ -179,7 +179,7 @@ class GA(Algorithm):
         self.categorical_mutation: Mutation = (
             categorical_mutation
             if categorical_mutation is not None
-            else MutationCategorical(_mr)
+            else MutationCategorical(prob_var=_pv)
         )
 
         for _name, _op in [

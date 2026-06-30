@@ -75,7 +75,7 @@ def _make_g01_problem() -> Problem:
 def _make_ga() -> GA:
     return GA(
         crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.4),
-        mutation=MutationUniform(mutation_rate=0.1),
+        mutation=MutationUniform(prob_var=0.1),
         parent_selection=SequentialSelection(),
         survivor_selection=TruncationSelection(),
     )

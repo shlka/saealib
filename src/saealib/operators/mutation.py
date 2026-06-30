@@ -14,7 +14,20 @@ if TYPE_CHECKING:
 
 
 class Mutation(ABC):
-    """Base class for mutation operators."""
+    """Base class for mutation operators.
+
+    Attributes
+    ----------
+    prob : float
+        Individual-level mutation probability. When ``rng.random() >= prob``,
+        the individual is returned unchanged.
+    prob_var : float or None
+        Per-variable mutation probability. ``None`` means the effective value
+        is resolved at call time as ``min(0.5, 1 / dim)``.
+    """
+
+    prob: float = 1.0
+    prob_var: float | None = None
 
     @abstractmethod
     def mutate(
@@ -102,21 +115,27 @@ class MutationUniform(Mutation):
 
     Attributes
     ----------
-    mutation_rate : float
-        The probability of mutating each dimension.
+    prob : float
+        Individual-level mutation probability.
+    prob_var : float or None
+        Per-variable mutation probability. Defaults to ``min(0.5, 1/dim)``
+        when ``None``.
     """
 
-    def __init__(self, mutation_rate: float):
+    def __init__(self, prob: float = 1.0, *, prob_var: float | None = None):
         """
         Initialize uniform mutation operator.
 
         Parameters
         ----------
-        mutation_rate : float
-            The probability of mutating each dimension.
+        prob : float, optional
+            Individual-level mutation probability, by default 1.0.
+        prob_var : float or None, optional
+            Per-variable mutation probability. ``None`` uses ``min(0.5, 1/dim)``.
         """
         super().__init__()
-        self.mutation_rate = mutation_rate
+        self.prob = prob
+        self.prob_var = prob_var
 
     def mutate(
         self,
@@ -141,11 +160,14 @@ class MutationUniform(Mutation):
         np.ndarray
             Mutated individual.
         """
+        if rng.random() >= self.prob:
+            return p.copy()
         dim = len(p)
+        p_var = self.prob_var if self.prob_var is not None else min(0.5, 1.0 / dim)
         c = p.copy()
         lb, ub = mutate_range
         for i in range(dim):
-            if rng.random() < self.mutation_rate:
+            if rng.random() < p_var:
                 c[i] = rng.uniform(lb[i], ub[i])
         return c
 
@@ -156,26 +178,32 @@ class MutationPolynomial(Mutation):
 
     Attributes
     ----------
-    mutation_rate : float
-        The probability of mutating each dimension.
+    prob : float
+        Individual-level mutation probability.
     eta : float
         Distribution index. Larger values produce smaller perturbations.
+    prob_var : float or None
+        Per-variable mutation probability. Defaults to ``min(0.5, 1/dim)``
+        when ``None``.
     """
 
-    def __init__(self, mutation_rate: float, eta: float):
+    def __init__(self, prob: float = 1.0, *, eta: float, prob_var: float | None = None):
         """
         Initialize polynomial mutation operator.
 
         Parameters
         ----------
-        mutation_rate : float
-            The probability of mutating each dimension.
+        prob : float, optional
+            Individual-level mutation probability, by default 1.0.
         eta : float
             Distribution index.
+        prob_var : float or None, optional
+            Per-variable mutation probability. ``None`` uses ``min(0.5, 1/dim)``.
         """
         super().__init__()
-        self.mutation_rate = mutation_rate
+        self.prob = prob
         self.eta = eta
+        self.prob_var = prob_var
 
     def mutate(
         self,
@@ -200,10 +228,14 @@ class MutationPolynomial(Mutation):
         np.ndarray
             Mutated individual.
         """
+        if rng.random() >= self.prob:
+            return p.copy()
+        dim = len(p)
+        p_var = self.prob_var if self.prob_var is not None else min(0.5, 1.0 / dim)
         c = p.copy()
         lb, ub = mutate_range
-        for i in range(len(p)):
-            if rng.random() < self.mutation_rate:
+        for i in range(dim):
+            if rng.random() < p_var:
                 delta = min(c[i] - lb[i], ub[i] - c[i]) / (ub[i] - lb[i])
                 u = rng.random()
                 if u <= 0.5:
@@ -225,26 +257,34 @@ class MutationGaussian(Mutation):
 
     Attributes
     ----------
-    mutation_rate : float
-        The probability of mutating each dimension.
+    prob : float
+        Individual-level mutation probability.
     sigma : float
         Standard deviation of the Gaussian perturbation.
+    prob_var : float or None
+        Per-variable mutation probability. Defaults to ``min(0.5, 1/dim)``
+        when ``None``.
     """
 
-    def __init__(self, mutation_rate: float, sigma: float):
+    def __init__(
+        self, prob: float = 1.0, *, sigma: float, prob_var: float | None = None
+    ):
         """
         Initialize Gaussian mutation operator.
 
         Parameters
         ----------
-        mutation_rate : float
-            The probability of mutating each dimension.
+        prob : float, optional
+            Individual-level mutation probability, by default 1.0.
         sigma : float
             Standard deviation of the Gaussian perturbation.
+        prob_var : float or None, optional
+            Per-variable mutation probability. ``None`` uses ``min(0.5, 1/dim)``.
         """
         super().__init__()
-        self.mutation_rate = mutation_rate
+        self.prob = prob
         self.sigma = sigma
+        self.prob_var = prob_var
 
     def mutate(
         self,
@@ -269,9 +309,13 @@ class MutationGaussian(Mutation):
         np.ndarray
             Mutated individual.
         """
+        if rng.random() >= self.prob:
+            return p.copy()
+        dim = len(p)
+        p_var = self.prob_var if self.prob_var is not None else min(0.5, 1.0 / dim)
         c = p.copy()
-        for i in range(len(p)):
-            if rng.random() < self.mutation_rate:
+        for i in range(dim):
+            if rng.random() < p_var:
                 c[i] = c[i] + rng.normal(0.0, self.sigma)
         return c
 
@@ -283,9 +327,10 @@ class _MutationDiscreteUniform(Mutation):
     from ``[lb[i], ub[i]]`` (both inclusive).
     """
 
-    def __init__(self, mutation_rate: float):
+    def __init__(self, prob: float = 1.0, *, prob_var: float | None = None):
         super().__init__()
-        self.mutation_rate = mutation_rate
+        self.prob = prob
+        self.prob_var = prob_var
 
     def mutate(
         self,
@@ -310,10 +355,14 @@ class _MutationDiscreteUniform(Mutation):
         np.ndarray
             Mutated individual.
         """
+        if rng.random() >= self.prob:
+            return p.copy()
+        dim = len(p)
+        p_var = self.prob_var if self.prob_var is not None else min(0.5, 1.0 / dim)
         c = p.copy()
         lb, ub = mutate_range
-        for i in range(len(p)):
-            if rng.random() < self.mutation_rate:
+        for i in range(dim):
+            if rng.random() < p_var:
                 c[i] = float(rng.integers(int(lb[i]), int(ub[i]) + 1))
         return c
 
@@ -327,20 +376,25 @@ class MutationIntegerUniform(_MutationDiscreteUniform):
 
     Attributes
     ----------
-    mutation_rate : float
-        The probability of mutating each dimension.
+    prob : float
+        Individual-level mutation probability.
+    prob_var : float or None
+        Per-variable mutation probability. Defaults to ``min(0.5, 1/dim)``
+        when ``None``.
     """
 
-    def __init__(self, mutation_rate: float):
+    def __init__(self, prob: float = 1.0, *, prob_var: float | None = None):
         """
         Initialize integer uniform mutation operator.
 
         Parameters
         ----------
-        mutation_rate : float
-            The probability of mutating each dimension.
+        prob : float, optional
+            Individual-level mutation probability, by default 1.0.
+        prob_var : float or None, optional
+            Per-variable mutation probability. ``None`` uses ``min(0.5, 1/dim)``.
         """
-        super().__init__(mutation_rate)
+        super().__init__(prob, prob_var=prob_var)
 
 
 class MutationCategorical(_MutationDiscreteUniform):
@@ -353,17 +407,22 @@ class MutationCategorical(_MutationDiscreteUniform):
 
     Attributes
     ----------
-    mutation_rate : float
-        The probability of mutating each dimension.
+    prob : float
+        Individual-level mutation probability.
+    prob_var : float or None
+        Per-variable mutation probability. Defaults to ``min(0.5, 1/dim)``
+        when ``None``.
     """
 
-    def __init__(self, mutation_rate: float):
+    def __init__(self, prob: float = 1.0, *, prob_var: float | None = None):
         """
         Initialize categorical mutation operator.
 
         Parameters
         ----------
-        mutation_rate : float
-            The probability of mutating each dimension.
+        prob : float, optional
+            Individual-level mutation probability, by default 1.0.
+        prob_var : float or None, optional
+            Per-variable mutation probability. ``None`` uses ``min(0.5, 1/dim)``.
         """
-        super().__init__(mutation_rate)
+        super().__init__(prob, prob_var=prob_var)
