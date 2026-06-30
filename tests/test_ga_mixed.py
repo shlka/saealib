@@ -30,7 +30,7 @@ from saealib.operators.crossover import Crossover
 def _make_ga(**kwargs):
     return GA(
         crossover=CrossoverSBX(1.0, eta=20.0),
-        mutation=MutationPolynomial(0.1, eta=20.0),
+        mutation=MutationPolynomial(eta=20.0, prob_var=0.1),
         parent_selection=TournamentSelection(2),
         survivor_selection=TruncationSelection(),
         **kwargs,
@@ -74,9 +74,9 @@ class _CrossoverN1C(Crossover):
     n_children = 1
 
     def __init__(self):
-        self.crossover_rate = 1.0
+        self.prob = 1.0
 
-    def crossover(self, parent, rng=np.random.default_rng()):
+    def crossover(self, parent, bounds=None, rng=np.random.default_rng()):
         return parent[:1].copy()
 
 
@@ -86,9 +86,9 @@ class _CrossoverP3(Crossover):
     n_parents = 3
 
     def __init__(self):
-        self.crossover_rate = 1.0
+        self.prob = 1.0
 
-    def crossover(self, parent, rng=np.random.default_rng()):
+    def crossover(self, parent, bounds=None, rng=np.random.default_rng()):
         return parent[:2].copy()
 
 
@@ -116,19 +116,19 @@ class TestGADefaults:
 
     def test_default_integer_crossover_rate_inherits(self):
         ga = _make_ga()
-        assert ga.integer_crossover.crossover_rate == pytest.approx(1.0)
+        assert ga.integer_crossover.prob == pytest.approx(1.0)
 
     def test_default_categorical_crossover_rate_inherits(self):
         ga = _make_ga()
-        assert ga.categorical_crossover.crossover_rate == pytest.approx(1.0)
+        assert ga.categorical_crossover.prob == pytest.approx(1.0)
 
     def test_default_integer_mutation_rate_inherits(self):
         ga = _make_ga()
-        assert ga.integer_mutation.mutation_rate == pytest.approx(0.1)
+        assert ga.integer_mutation.prob_var == pytest.approx(0.1)
 
     def test_default_categorical_mutation_rate_inherits(self):
         ga = _make_ga()
-        assert ga.categorical_mutation.mutation_rate == pytest.approx(0.1)
+        assert ga.categorical_mutation.prob_var == pytest.approx(0.1)
 
     def test_custom_integer_crossover(self):
         custom = CrossoverIntegerSBX(0.5, eta=5.0)
@@ -179,16 +179,30 @@ class TestRouteCrossover:
         rng1 = np.random.default_rng(42)
         rng2 = np.random.default_rng(42)
         result = _route_crossover(
-            parent, rng1, problem, self.cont_op, self.int_op, self.cat_op
+            parent,
+            problem.lb,
+            problem.ub,
+            rng1,
+            problem,
+            self.cont_op,
+            self.int_op,
+            self.cat_op,
         )
-        expected = self.cont_op.crossover(parent, rng=rng2)
+        expected = self.cont_op.crossover(parent, (problem.lb, problem.ub), rng=rng2)
         np.testing.assert_array_equal(result, expected)
 
     def test_mixed_output_shape(self):
         problem = _make_problem_mixed()
         parent = np.array([[0.5, 3.0, 1.0], [0.8, 7.0, 2.0]])
         result = _route_crossover(
-            parent, self.rng, problem, self.cont_op, self.int_op, self.cat_op
+            parent,
+            problem.lb,
+            problem.ub,
+            self.rng,
+            problem,
+            self.cont_op,
+            self.int_op,
+            self.cat_op,
         )
         assert result.shape == (2, 3)
 
@@ -198,7 +212,14 @@ class TestRouteCrossover:
         for _ in range(20):
             parent = np.array([[0.5, 3.0, 1.0], [0.8, 7.0, 2.0]])
             result = _route_crossover(
-                parent, rng, problem, self.cont_op, self.int_op, self.cat_op
+                parent,
+                problem.lb,
+                problem.ub,
+                rng,
+                problem,
+                self.cont_op,
+                self.int_op,
+                self.cat_op,
             )
             assert result[0, 1] == round(result[0, 1])
             assert result[1, 1] == round(result[1, 1])
@@ -209,7 +230,14 @@ class TestRouteCrossover:
         for _ in range(20):
             parent = np.array([[0.5, 3.0, 0.0], [0.8, 7.0, 2.0]])
             result = _route_crossover(
-                parent, rng, problem, self.cont_op, self.int_op, self.cat_op
+                parent,
+                problem.lb,
+                problem.ub,
+                rng,
+                problem,
+                self.cont_op,
+                self.int_op,
+                self.cat_op,
             )
             assert result[0, 2] in {0.0, 2.0}
             assert result[1, 2] in {0.0, 2.0}
@@ -220,7 +248,14 @@ class TestRouteCrossover:
         parent = np.array([[0.1, 3.0, 1.0], [0.9, 7.0, 0.0]])
         results = [
             _route_crossover(
-                parent, rng, problem, self.cont_op, self.int_op, self.cat_op
+                parent,
+                problem.lb,
+                problem.ub,
+                rng,
+                problem,
+                self.cont_op,
+                self.int_op,
+                self.cat_op,
             )
             for _ in range(30)
         ]

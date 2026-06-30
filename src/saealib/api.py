@@ -106,8 +106,8 @@ def _resolve_algorithm(algorithm: str | Algorithm) -> Algorithm:
         name = algorithm.upper()
         if name == "GA":
             return GA(
-                crossover=CrossoverBLXAlpha(crossover_rate=0.7, alpha=0.4),
-                mutation=MutationUniform(mutation_rate=0.3),
+                crossover=CrossoverBLXAlpha(prob=0.7, alpha=0.4),
+                mutation=MutationUniform(prob_var=0.3),
                 parent_selection=SequentialSelection(),
                 survivor_selection=TruncationSelection(),
             )

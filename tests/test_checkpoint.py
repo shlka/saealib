@@ -59,8 +59,8 @@ def _make_optimizer(
         .set_initializer(LHSInitializer(N_INIT_ARCHIVE, N_INIT_POP))
         .set_algorithm(
             GA(
-                crossover=CrossoverBLXAlpha(crossover_rate=0.9, alpha=0.5),
-                mutation=MutationUniform(mutation_rate=0.1),
+                crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.5),
+                mutation=MutationUniform(prob_var=0.1),
                 parent_selection=SequentialSelection(),
                 survivor_selection=TruncationSelection(),
             )
@@ -106,8 +106,8 @@ def test_lhs_uses_optimizer_seed_over_own():
         .set_initializer(LHSInitializer(N_INIT_ARCHIVE, N_INIT_POP, seed=999))
         .set_algorithm(
             GA(
-                crossover=CrossoverBLXAlpha(crossover_rate=0.9, alpha=0.5),
-                mutation=MutationUniform(mutation_rate=0.1),
+                crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.5),
+                mutation=MutationUniform(prob_var=0.1),
                 parent_selection=SequentialSelection(),
                 survivor_selection=TruncationSelection(),
             )

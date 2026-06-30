@@ -76,8 +76,8 @@ def _make_state() -> OptimizationState:
 
 def _make_ga() -> GA:
     return GA(
-        crossover=CrossoverBLXAlpha(crossover_rate=0.9, alpha=0.4),
-        mutation=MutationUniform(mutation_rate=0.1),
+        crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.4),
+        mutation=MutationUniform(prob_var=0.1),
         parent_selection=SequentialSelection(),
         survivor_selection=TruncationSelection(),
     )
