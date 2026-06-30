@@ -781,16 +781,41 @@ class TestCrossoverSBXBounded:
         np.testing.assert_array_equal(c[0], p[0])
         np.testing.assert_array_equal(c[1], p[1])
 
-    def test_bounded_center_preserved(self):
+    def test_symmetric_margins_preserve_center(self):
+        # Equal margins to lb/ub make beta_q identical for both children,
+        # so the offspring center matches the parent center (special case
+        # of the asymmetric formula, not a general guarantee).
         op = CrossoverSBX(prob=1.0, eta=20.0, prob_var=1.0)
-        lb, ub = self._bounds()
         rng = np.random.default_rng(3)
         for _ in range(30):
-            p = rng.uniform(0.1, 0.9, size=(2, 3))
+            p = rng.uniform(0.4, 0.6, size=(2, 3))
+            margin = rng.uniform(0.05, 0.3, size=3)
+            y1 = np.minimum(p[0], p[1])
+            y2 = np.maximum(p[0], p[1])
+            lb = y1 - margin
+            ub = y2 + margin
             c = op.crossover(p, (lb, ub), rng=rng)
             mid_p = 0.5 * (p[0] + p[1])
             mid_c = 0.5 * (c[0] + c[1])
-            np.testing.assert_allclose(mid_c, mid_p, atol=1e-10)
+            np.testing.assert_allclose(mid_c, mid_p, atol=1e-9)
+
+    def test_asymmetric_bounds_produce_unequal_offsets(self):
+        # With lb close to the parents and ub far away, beta_q must differ
+        # between c1 (constrained by lb) and c2 (constrained by ub), so the
+        # offspring are not symmetric about the parent center.
+        op = CrossoverSBX(prob=1.0, eta=20.0, prob_var=1.0)
+        lb = np.array([0.0])
+        ub = np.array([1.0])
+        p = np.array([[0.01], [0.5]])
+        rng = np.random.default_rng(3)
+        max_gap = 0.0
+        for _ in range(30):
+            c = op.crossover(p, (lb, ub), rng=rng)
+            mid = 0.5 * (p[0] + p[1])
+            offset1 = mid - c[0]
+            offset2 = c[1] - mid
+            max_gap = max(max_gap, np.abs(offset1 - offset2).max())
+        assert max_gap > 1e-6
 
     def test_identical_parents_unchanged(self):
         op = CrossoverSBX(prob=1.0, eta=20.0, prob_var=1.0)
