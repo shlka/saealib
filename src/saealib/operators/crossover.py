@@ -178,10 +178,9 @@ class CrossoverSBX(Crossover):
     """
     Simulated Binary Crossover (SBX) operator.
 
-    When *bounds* are provided and finite, the bounded variant from
-    Deb & Agrawal (1995, Section 2.2) is used, which constrains offspring
-    to ``[lb, ub]``.  When *bounds* is ``None`` or contains infinite values,
-    the unbounded variant is used.
+    When *bounds* are provided and finite, the bounded variant is used,
+    which constrains offspring to ``[lb, ub]``.  When *bounds* is ``None``
+    or contains infinite values, the unbounded variant is used.
 
     Attributes
     ----------
@@ -226,7 +225,7 @@ class CrossoverSBX(Crossover):
             Parent individuals. shape = (2, dim)
         bounds : tuple of (np.ndarray, np.ndarray) or None
             Lower and upper bounds. When provided and finite, the bounded
-            SBX variant (Deb & Agrawal, 1995, §2.2) is applied.
+            SBX variant is applied.
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
 
@@ -251,24 +250,27 @@ class CrossoverSBX(Crossover):
             y2 = np.maximum(p1, p2)
             diff = y2 - y1
             separated = diff > 1e-14
-
-            beta_limit = np.where(
-                separated,
-                1.0
-                + 2.0 * np.minimum(y1 - lb, ub - y2) / np.where(separated, diff, 1.0),
-                1.0,
-            )
-            alpha = 2.0 - beta_limit ** (-(self.eta + 1))
+            safe_diff = np.where(separated, diff, 1.0)
             u = rng.uniform(0.0, 1.0, size=dim)
-            beta_q = np.where(
-                u <= 1.0 / alpha,
-                (alpha * u) ** (1.0 / (self.eta + 1)),
-                (1.0 / (2.0 - alpha * u)) ** (1.0 / (self.eta + 1)),
-            )
-            mid = 0.5 * (y1 + y2)
-            half_diff = 0.5 * beta_q * diff
-            c1_sbx = np.clip(mid - half_diff, lb, ub)
-            c2_sbx = np.clip(mid + half_diff, lb, ub)
+
+            def _beta_q(beta_limit: np.ndarray) -> np.ndarray:
+                alpha = 2.0 - beta_limit ** (-(self.eta + 1))
+                return np.where(
+                    u <= 1.0 / alpha,
+                    (alpha * u) ** (1.0 / (self.eta + 1)),
+                    (1.0 / (2.0 - alpha * u)) ** (1.0 / (self.eta + 1)),
+                )
+
+            beta_q1 = _beta_q(1.0 + 2.0 * (y1 - lb) / safe_diff)
+            beta_q2 = _beta_q(1.0 + 2.0 * (ub - y2) / safe_diff)
+            o1 = np.clip(0.5 * ((y1 + y2) - beta_q1 * diff), lb, ub)
+            o2 = np.clip(0.5 * ((y1 + y2) + beta_q2 * diff), lb, ub)
+            # assign the lower/upper-side offspring to c1/c2 with a fresh
+            # 50/50 draw per dimension, independent of parent identity
+            # (matches DEAP's cxSimulatedBinaryBounded and pymoo's net effect)
+            swap = rng.random(size=dim) < 0.5
+            c1_sbx = np.where(swap, o2, o1)
+            c2_sbx = np.where(swap, o1, o2)
             # skip crossover where parents are identical
             c1_sbx = np.where(separated, c1_sbx, p1)
             c2_sbx = np.where(separated, c2_sbx, p2)
@@ -534,24 +536,24 @@ class CrossoverIntegerSBX(Crossover):
             y2 = np.maximum(p1, p2)
             diff = y2 - y1
             separated = diff > 1e-14
-
-            beta_limit = np.where(
-                separated,
-                1.0
-                + 2.0 * np.minimum(y1 - lb, ub - y2) / np.where(separated, diff, 1.0),
-                1.0,
-            )
-            alpha = 2.0 - beta_limit ** (-(self.eta + 1))
+            safe_diff = np.where(separated, diff, 1.0)
             u = rng.uniform(0.0, 1.0, size=dim)
-            beta_q = np.where(
-                u <= 1.0 / alpha,
-                (alpha * u) ** (1.0 / (self.eta + 1)),
-                (1.0 / (2.0 - alpha * u)) ** (1.0 / (self.eta + 1)),
-            )
-            mid = 0.5 * (y1 + y2)
-            half_diff = 0.5 * beta_q * diff
-            c1_sbx = np.clip(np.round(mid - half_diff), lb, ub)
-            c2_sbx = np.clip(np.round(mid + half_diff), lb, ub)
+
+            def _beta_q(beta_limit: np.ndarray) -> np.ndarray:
+                alpha = 2.0 - beta_limit ** (-(self.eta + 1))
+                return np.where(
+                    u <= 1.0 / alpha,
+                    (alpha * u) ** (1.0 / (self.eta + 1)),
+                    (1.0 / (2.0 - alpha * u)) ** (1.0 / (self.eta + 1)),
+                )
+
+            beta_q1 = _beta_q(1.0 + 2.0 * (y1 - lb) / safe_diff)
+            beta_q2 = _beta_q(1.0 + 2.0 * (ub - y2) / safe_diff)
+            o1 = np.clip(np.round(0.5 * ((y1 + y2) - beta_q1 * diff)), lb, ub)
+            o2 = np.clip(np.round(0.5 * ((y1 + y2) + beta_q2 * diff)), lb, ub)
+            swap = rng.random(size=dim) < 0.5
+            c1_sbx = np.where(swap, o2, o1)
+            c2_sbx = np.where(swap, o1, o2)
             c1_sbx = np.where(separated, c1_sbx, p1)
             c2_sbx = np.where(separated, c2_sbx, p2)
         else:
