@@ -211,7 +211,7 @@ def _make_optimizer(problem, n_gen: int):
         .set_initializer(LHSInitializer(n_init_archive=8, n_init_population=6, seed=0))
         .set_algorithm(
             GA(
-                crossover=CrossoverBLXAlpha(crossover_rate=0.9, alpha=0.4),
+                crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.4),
                 mutation=MutationUniform(mutation_rate=0.1),
                 parent_selection=SequentialSelection(),
                 survivor_selection=TruncationSelection(),

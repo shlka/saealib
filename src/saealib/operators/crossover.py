@@ -26,15 +26,20 @@ class Crossover(ABC):
         Number of offspring produced per crossover call. Default is 2.
         Subclasses may override this class attribute if they produce a
         different number of offspring.
+    prob : float
+        Individual-level crossover probability.
     """
 
     n_parents: int = 2
     n_children: int = 2
-    crossover_rate: float = 1.0
+    prob: float = 1.0
 
     @abstractmethod
     def crossover(
-        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+        self,
+        parent: np.ndarray,
+        bounds: tuple[np.ndarray, np.ndarray] | None = None,
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Execute crossover.
@@ -43,6 +48,8 @@ class Crossover(ABC):
         ----------
         parent : np.ndarray
             Parent individuals. shape = (n_parents, dim)
+        bounds : tuple of (np.ndarray, np.ndarray) or None
+            Lower and upper bounds for each variable. ``None`` means unbounded.
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
 
@@ -113,30 +120,33 @@ class CrossoverBLXAlpha(Crossover):
 
     Attributes
     ----------
-    crossover_rate : float
-        Crossover rate.
+    prob : float
+        Individual-level crossover probability.
     alpha : float
         Alpha parameter for BLX-alpha crossover. Controls how far outside
         the parents' range offspring can be generated.
     """
 
-    def __init__(self, crossover_rate: float, alpha: float):
+    def __init__(self, prob: float, alpha: float):
         """
         Initialize BLX-alpha crossover operator.
 
         Parameters
         ----------
-        crossover_rate : float
-            Crossover rate.
+        prob : float
+            Individual-level crossover probability.
         alpha : float
             Alpha parameter for BLX-alpha crossover.
         """
         super().__init__()
-        self.crossover_rate = crossover_rate
+        self.prob = prob
         self.alpha = alpha
 
     def crossover(
-        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+        self,
+        parent: np.ndarray,
+        bounds: tuple[np.ndarray, np.ndarray] | None = None,
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Execute BLX-alpha crossover.
@@ -145,6 +155,8 @@ class CrossoverBLXAlpha(Crossover):
         ----------
         parent : np.ndarray
             Parent individuals. shape = (2, dim)
+        bounds : tuple of (np.ndarray, np.ndarray) or None
+            Ignored; BLX-alpha is inherently unbounded.
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
 
@@ -166,31 +178,44 @@ class CrossoverSBX(Crossover):
     """
     Simulated Binary Crossover (SBX) operator.
 
+    When *bounds* are provided and finite, the bounded variant from
+    Deb & Agrawal (1995, Section 2.2) is used, which constrains offspring
+    to ``[lb, ub]``.  When *bounds* is ``None`` or contains infinite values,
+    the unbounded variant is used.
+
     Attributes
     ----------
-    crossover_rate : float
-        Crossover rate.
+    prob : float
+        Individual-level crossover probability.
     eta : float
         Distribution index. Larger values produce offspring closer to parents.
+    prob_var : float
+        Per-variable crossover probability. Default is 0.5.
     """
 
-    def __init__(self, crossover_rate: float, eta: float):
+    def __init__(self, prob: float, eta: float, *, prob_var: float = 0.5):
         """
         Initialize SBX crossover operator.
 
         Parameters
         ----------
-        crossover_rate : float
-            Crossover rate.
+        prob : float
+            Individual-level crossover probability.
         eta : float
             Distribution index.
+        prob_var : float, optional
+            Per-variable crossover probability, by default 0.5.
         """
         super().__init__()
-        self.crossover_rate = crossover_rate
+        self.prob = prob
         self.eta = eta
+        self.prob_var = prob_var
 
     def crossover(
-        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+        self,
+        parent: np.ndarray,
+        bounds: tuple[np.ndarray, np.ndarray] | None = None,
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Execute SBX crossover.
@@ -199,6 +224,9 @@ class CrossoverSBX(Crossover):
         ----------
         parent : np.ndarray
             Parent individuals. shape = (2, dim)
+        bounds : tuple of (np.ndarray, np.ndarray) or None
+            Lower and upper bounds. When provided and finite, the bounded
+            SBX variant (Deb & Agrawal, 1995, §2.2) is applied.
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
 
@@ -210,16 +238,55 @@ class CrossoverSBX(Crossover):
         p1 = parent[0]
         p2 = parent[1]
         dim = len(p1)
-        u = rng.uniform(0.0, 1.0, size=dim)
-        beta_q = np.where(
-            u <= 0.5,
-            (2.0 * u) ** (1.0 / (self.eta + 1)),
-            (1.0 / (2.0 * (1.0 - u))) ** (1.0 / (self.eta + 1)),
+
+        use_bounded = (
+            bounds is not None
+            and np.all(np.isfinite(bounds[0]))
+            and np.all(np.isfinite(bounds[1]))
         )
-        mid = 0.5 * (p1 + p2)
-        half_diff = 0.5 * beta_q * (p2 - p1)
-        c1 = mid - half_diff
-        c2 = mid + half_diff
+
+        if use_bounded:
+            lb, ub = bounds  # type: ignore[misc]
+            y1 = np.minimum(p1, p2)
+            y2 = np.maximum(p1, p2)
+            diff = y2 - y1
+            separated = diff > 1e-14
+
+            beta_limit = np.where(
+                separated,
+                1.0
+                + 2.0 * np.minimum(y1 - lb, ub - y2) / np.where(separated, diff, 1.0),
+                1.0,
+            )
+            alpha = 2.0 - beta_limit ** (-(self.eta + 1))
+            u = rng.uniform(0.0, 1.0, size=dim)
+            beta_q = np.where(
+                u <= 1.0 / alpha,
+                (alpha * u) ** (1.0 / (self.eta + 1)),
+                (1.0 / (2.0 - alpha * u)) ** (1.0 / (self.eta + 1)),
+            )
+            mid = 0.5 * (y1 + y2)
+            half_diff = 0.5 * beta_q * diff
+            c1_sbx = np.clip(mid - half_diff, lb, ub)
+            c2_sbx = np.clip(mid + half_diff, lb, ub)
+            # skip crossover where parents are identical
+            c1_sbx = np.where(separated, c1_sbx, p1)
+            c2_sbx = np.where(separated, c2_sbx, p2)
+        else:
+            u = rng.uniform(0.0, 1.0, size=dim)
+            beta_q = np.where(
+                u <= 0.5,
+                (2.0 * u) ** (1.0 / (self.eta + 1)),
+                (1.0 / (2.0 * (1.0 - u))) ** (1.0 / (self.eta + 1)),
+            )
+            mid = 0.5 * (p1 + p2)
+            half_diff = 0.5 * beta_q * (p2 - p1)
+            c1_sbx = mid - half_diff
+            c2_sbx = mid + half_diff
+
+        do_cross = rng.random(size=dim) < self.prob_var
+        c1 = np.where(do_cross, c1_sbx, p1)
+        c2 = np.where(do_cross, c2_sbx, p2)
         return np.array([c1, c2])
 
 
@@ -232,29 +299,32 @@ class CrossoverUniform(Crossover):
 
     Attributes
     ----------
-    crossover_rate : float
-        Crossover rate.
+    prob : float
+        Individual-level crossover probability.
     swap_rate : float
         Per-dimension swap probability. Default is 0.5.
     """
 
-    def __init__(self, crossover_rate: float, swap_rate: float = 0.5):
+    def __init__(self, prob: float, swap_rate: float = 0.5):
         """
         Initialize uniform crossover operator.
 
         Parameters
         ----------
-        crossover_rate : float
-            Crossover rate.
+        prob : float
+            Individual-level crossover probability.
         swap_rate : float, optional
             Per-dimension swap probability, by default 0.5.
         """
         super().__init__()
-        self.crossover_rate = crossover_rate
+        self.prob = prob
         self.swap_rate = swap_rate
 
     def crossover(
-        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+        self,
+        parent: np.ndarray,
+        bounds: tuple[np.ndarray, np.ndarray] | None = None,
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Execute uniform crossover.
@@ -263,6 +333,8 @@ class CrossoverUniform(Crossover):
         ----------
         parent : np.ndarray
             Parent individuals. shape = (2, dim)
+        bounds : tuple of (np.ndarray, np.ndarray) or None
+            Ignored.
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
 
@@ -285,24 +357,27 @@ class CrossoverOnePoint(Crossover):
 
     Attributes
     ----------
-    crossover_rate : float
-        Crossover rate.
+    prob : float
+        Individual-level crossover probability.
     """
 
-    def __init__(self, crossover_rate: float):
+    def __init__(self, prob: float):
         """
         Initialize one-point crossover operator.
 
         Parameters
         ----------
-        crossover_rate : float
-            Crossover rate.
+        prob : float
+            Individual-level crossover probability.
         """
         super().__init__()
-        self.crossover_rate = crossover_rate
+        self.prob = prob
 
     def crossover(
-        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+        self,
+        parent: np.ndarray,
+        bounds: tuple[np.ndarray, np.ndarray] | None = None,
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Execute one-point crossover.
@@ -311,6 +386,8 @@ class CrossoverOnePoint(Crossover):
         ----------
         parent : np.ndarray
             Parent individuals. shape = (2, dim)
+        bounds : tuple of (np.ndarray, np.ndarray) or None
+            Ignored.
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
 
@@ -334,24 +411,27 @@ class CrossoverTwoPoint(Crossover):
 
     Attributes
     ----------
-    crossover_rate : float
-        Crossover rate.
+    prob : float
+        Individual-level crossover probability.
     """
 
-    def __init__(self, crossover_rate: float):
+    def __init__(self, prob: float):
         """
         Initialize two-point crossover operator.
 
         Parameters
         ----------
-        crossover_rate : float
-            Crossover rate.
+        prob : float
+            Individual-level crossover probability.
         """
         super().__init__()
-        self.crossover_rate = crossover_rate
+        self.prob = prob
 
     def crossover(
-        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+        self,
+        parent: np.ndarray,
+        bounds: tuple[np.ndarray, np.ndarray] | None = None,
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Execute two-point crossover.
@@ -360,6 +440,8 @@ class CrossoverTwoPoint(Crossover):
         ----------
         parent : np.ndarray
             Parent individuals. shape = (2, dim)
+        bounds : tuple of (np.ndarray, np.ndarray) or None
+            Ignored.
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
 
@@ -386,29 +468,37 @@ class CrossoverIntegerSBX(Crossover):
 
     Attributes
     ----------
-    crossover_rate : float
-        Crossover rate.
+    prob : float
+        Individual-level crossover probability.
     eta : float
         Distribution index. Larger values produce offspring closer to parents.
+    prob_var : float
+        Per-variable crossover probability. Default is 0.5.
     """
 
-    def __init__(self, crossover_rate: float, eta: float):
+    def __init__(self, prob: float, eta: float, *, prob_var: float = 0.5):
         """
         Initialize integer SBX crossover operator.
 
         Parameters
         ----------
-        crossover_rate : float
-            Crossover rate.
+        prob : float
+            Individual-level crossover probability.
         eta : float
             Distribution index.
+        prob_var : float, optional
+            Per-variable crossover probability, by default 0.5.
         """
         super().__init__()
-        self.crossover_rate = crossover_rate
+        self.prob = prob
         self.eta = eta
+        self.prob_var = prob_var
 
     def crossover(
-        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+        self,
+        parent: np.ndarray,
+        bounds: tuple[np.ndarray, np.ndarray] | None = None,
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Execute integer SBX crossover.
@@ -417,6 +507,9 @@ class CrossoverIntegerSBX(Crossover):
         ----------
         parent : np.ndarray
             Parent individuals. shape = (2, dim)
+        bounds : tuple of (np.ndarray, np.ndarray) or None
+            Lower and upper bounds. When provided and finite, the bounded
+            SBX variant is applied before rounding.
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
 
@@ -428,16 +521,54 @@ class CrossoverIntegerSBX(Crossover):
         p1 = parent[0]
         p2 = parent[1]
         dim = len(p1)
-        u = rng.uniform(0.0, 1.0, size=dim)
-        beta_q = np.where(
-            u <= 0.5,
-            (2.0 * u) ** (1.0 / (self.eta + 1)),
-            (1.0 / (2.0 * (1.0 - u))) ** (1.0 / (self.eta + 1)),
+
+        use_bounded = (
+            bounds is not None
+            and np.all(np.isfinite(bounds[0]))
+            and np.all(np.isfinite(bounds[1]))
         )
-        mid = 0.5 * (p1 + p2)
-        half_diff = 0.5 * beta_q * (p2 - p1)
-        c1 = np.round(mid - half_diff)
-        c2 = np.round(mid + half_diff)
+
+        if use_bounded:
+            lb, ub = bounds  # type: ignore[misc]
+            y1 = np.minimum(p1, p2)
+            y2 = np.maximum(p1, p2)
+            diff = y2 - y1
+            separated = diff > 1e-14
+
+            beta_limit = np.where(
+                separated,
+                1.0
+                + 2.0 * np.minimum(y1 - lb, ub - y2) / np.where(separated, diff, 1.0),
+                1.0,
+            )
+            alpha = 2.0 - beta_limit ** (-(self.eta + 1))
+            u = rng.uniform(0.0, 1.0, size=dim)
+            beta_q = np.where(
+                u <= 1.0 / alpha,
+                (alpha * u) ** (1.0 / (self.eta + 1)),
+                (1.0 / (2.0 - alpha * u)) ** (1.0 / (self.eta + 1)),
+            )
+            mid = 0.5 * (y1 + y2)
+            half_diff = 0.5 * beta_q * diff
+            c1_sbx = np.clip(np.round(mid - half_diff), lb, ub)
+            c2_sbx = np.clip(np.round(mid + half_diff), lb, ub)
+            c1_sbx = np.where(separated, c1_sbx, p1)
+            c2_sbx = np.where(separated, c2_sbx, p2)
+        else:
+            u = rng.uniform(0.0, 1.0, size=dim)
+            beta_q = np.where(
+                u <= 0.5,
+                (2.0 * u) ** (1.0 / (self.eta + 1)),
+                (1.0 / (2.0 * (1.0 - u))) ** (1.0 / (self.eta + 1)),
+            )
+            mid = 0.5 * (p1 + p2)
+            half_diff = 0.5 * beta_q * (p2 - p1)
+            c1_sbx = np.round(mid - half_diff)
+            c2_sbx = np.round(mid + half_diff)
+
+        do_cross = rng.random(size=dim) < self.prob_var
+        c1 = np.where(do_cross, c1_sbx, p1)
+        c2 = np.where(do_cross, c2_sbx, p2)
         return np.array([c1, c2])
 
 
@@ -451,24 +582,27 @@ class CrossoverCategorical(Crossover):
 
     Attributes
     ----------
-    crossover_rate : float
-        Crossover rate.
+    prob : float
+        Individual-level crossover probability.
     """
 
-    def __init__(self, crossover_rate: float):
+    def __init__(self, prob: float):
         """
         Initialize categorical crossover operator.
 
         Parameters
         ----------
-        crossover_rate : float
-            Crossover rate.
+        prob : float
+            Individual-level crossover probability.
         """
         super().__init__()
-        self.crossover_rate = crossover_rate
+        self.prob = prob
 
     def crossover(
-        self, parent: np.ndarray, rng: np.random.Generator = np.random.default_rng()
+        self,
+        parent: np.ndarray,
+        bounds: tuple[np.ndarray, np.ndarray] | None = None,
+        rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
         Execute categorical crossover.
@@ -477,6 +611,8 @@ class CrossoverCategorical(Crossover):
         ----------
         parent : np.ndarray
             Parent individuals. shape = (2, dim)
+        bounds : tuple of (np.ndarray, np.ndarray) or None
+            Ignored.
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
 

@@ -96,18 +96,18 @@ def _make_ctx(n_pop: int = 10, rng_seed: int = 0) -> OptimizationState:
 
 class TestCrossoverBLXAlpha:
     def test_alpha_attribute(self):
-        op = CrossoverBLXAlpha(crossover_rate=0.7, alpha=0.4)
+        op = CrossoverBLXAlpha(prob=0.7, alpha=0.4)
         assert op.alpha == pytest.approx(0.4)
 
     def test_output_shape(self):
-        op = CrossoverBLXAlpha(crossover_rate=0.7, alpha=0.4)
+        op = CrossoverBLXAlpha(prob=0.7, alpha=0.4)
         rng = np.random.default_rng(0)
         p = _make_parents(rng)
         c = op.crossover(p, rng=rng)
         assert c.shape == (2, DIM)
 
     def test_deterministic_with_seed(self):
-        op = CrossoverBLXAlpha(crossover_rate=0.7, alpha=0.4)
+        op = CrossoverBLXAlpha(prob=0.7, alpha=0.4)
         p = _make_parents(np.random.default_rng(1))
         c1 = op.crossover(p, rng=np.random.default_rng(42))
         c2 = op.crossover(p, rng=np.random.default_rng(42))
@@ -121,7 +121,7 @@ class TestCrossoverBLXAlpha:
 
 class TestCrossoverSBX:
     def test_output_shape(self):
-        op = CrossoverSBX(crossover_rate=0.9, eta=2.0)
+        op = CrossoverSBX(prob=0.9, eta=2.0)
         rng = np.random.default_rng(0)
         p = _make_parents(rng)
         c = op.crossover(p, rng=rng)
@@ -129,14 +129,14 @@ class TestCrossoverSBX:
 
     def test_center_preservation(self):
         """Mid-point of children equals mid-point of parents (SBX property)."""
-        op = CrossoverSBX(crossover_rate=0.9, eta=2.0)
+        op = CrossoverSBX(prob=0.9, eta=2.0)
         rng = np.random.default_rng(5)
         p = _make_parents(rng)
         c = op.crossover(p, rng=rng)
         np.testing.assert_allclose((c[0] + c[1]) / 2, (p[0] + p[1]) / 2, atol=1e-10)
 
     def test_deterministic_with_seed(self):
-        op = CrossoverSBX(crossover_rate=0.9, eta=2.0)
+        op = CrossoverSBX(prob=0.9, eta=2.0)
         p = _make_parents(np.random.default_rng(1))
         c1 = op.crossover(p, rng=np.random.default_rng(42))
         c2 = op.crossover(p, rng=np.random.default_rng(42))
@@ -150,7 +150,7 @@ class TestCrossoverSBX:
 
 class TestCrossoverUniform:
     def test_output_shape(self):
-        op = CrossoverUniform(crossover_rate=0.8)
+        op = CrossoverUniform(prob=0.8)
         rng = np.random.default_rng(0)
         p = _make_parents(rng)
         c = op.crossover(p, rng=rng)
@@ -158,7 +158,7 @@ class TestCrossoverUniform:
 
     def test_swap_rate_zero(self):
         """swap_rate=0: c1==p1 and c2==p2."""
-        op = CrossoverUniform(crossover_rate=0.8, swap_rate=0.0)
+        op = CrossoverUniform(prob=0.8, swap_rate=0.0)
         rng = np.random.default_rng(0)
         p = _make_parents(rng)
         c = op.crossover(p, rng=rng)
@@ -167,7 +167,7 @@ class TestCrossoverUniform:
 
     def test_swap_rate_one(self):
         """swap_rate=1: c1==p2 and c2==p1."""
-        op = CrossoverUniform(crossover_rate=0.8, swap_rate=1.0)
+        op = CrossoverUniform(prob=0.8, swap_rate=1.0)
         rng = np.random.default_rng(0)
         p = _make_parents(rng)
         c = op.crossover(p, rng=rng)
@@ -182,7 +182,7 @@ class TestCrossoverUniform:
 
 class TestCrossoverOnePoint:
     def test_output_shape(self):
-        op = CrossoverOnePoint(crossover_rate=0.8)
+        op = CrossoverOnePoint(prob=0.8)
         rng = np.random.default_rng(0)
         p = _make_parents(rng)
         c = op.crossover(p, rng=rng)
@@ -190,7 +190,7 @@ class TestCrossoverOnePoint:
 
     def test_segment_intact(self):
         """Before cut point, c1 == p1; from cut point onward, c1 == p2."""
-        op = CrossoverOnePoint(crossover_rate=0.8)
+        op = CrossoverOnePoint(prob=0.8)
         rng = np.random.default_rng(0)
         p = _make_parents(rng)
         # Fix cut point by seeding: integers(1, DIM) with seed=7 gives a known value
@@ -211,7 +211,7 @@ class TestCrossoverOnePoint:
 
 class TestCrossoverTwoPoint:
     def test_output_shape(self):
-        op = CrossoverTwoPoint(crossover_rate=0.8)
+        op = CrossoverTwoPoint(prob=0.8)
         rng = np.random.default_rng(0)
         p = _make_parents(rng)
         c = op.crossover(p, rng=rng)
@@ -219,7 +219,7 @@ class TestCrossoverTwoPoint:
 
     def test_segment_intact(self):
         """Between the two cut points, c1 == p2; outside, c1 == p1."""
-        op = CrossoverTwoPoint(crossover_rate=0.8)
+        op = CrossoverTwoPoint(prob=0.8)
         rng2 = np.random.default_rng(3)
         pts = np.sort(rng2.choice(DIM + 1, size=2, replace=False))
         pt1, pt2 = pts[0], pts[1]
@@ -239,11 +239,11 @@ class TestCrossoverTwoPoint:
 @pytest.mark.parametrize(
     "op",
     [
-        CrossoverBLXAlpha(crossover_rate=0.9, alpha=0.4),
-        CrossoverSBX(crossover_rate=0.9, eta=2.0),
-        CrossoverUniform(crossover_rate=0.9),
-        CrossoverOnePoint(crossover_rate=0.9),
-        CrossoverTwoPoint(crossover_rate=0.9),
+        CrossoverBLXAlpha(prob=0.9, alpha=0.4),
+        CrossoverSBX(prob=0.9, eta=2.0),
+        CrossoverUniform(prob=0.9),
+        CrossoverOnePoint(prob=0.9),
+        CrossoverTwoPoint(prob=0.9),
     ],
 )
 class TestCrossoverNChildren:
@@ -371,7 +371,7 @@ class TestRouletteWheelSelection:
 
 class TestCrossoverHooks:
     def _op(self):
-        return CrossoverBLXAlpha(crossover_rate=0.9, alpha=0.4)
+        return CrossoverBLXAlpha(prob=0.9, alpha=0.4)
 
     def _parents(self, rng=None):
         rng = rng if rng is not None else np.random.default_rng(0)
@@ -530,7 +530,7 @@ class TestGAHookInvocation:
             call_count[0] += 1
             return offspring
 
-        crossover = CrossoverBLXAlpha(crossover_rate=1.0, alpha=0.4).with_post(hook)
+        crossover = CrossoverBLXAlpha(prob=1.0, alpha=0.4).with_post(hook)
         ga = GA(
             crossover=crossover,
             mutation=MutationUniform(mutation_rate=0.0),
@@ -551,7 +551,7 @@ class TestGAHookInvocation:
 
         mutation = MutationUniform(mutation_rate=0.0).with_post(hook)
         ga = GA(
-            crossover=CrossoverBLXAlpha(crossover_rate=0.9, alpha=0.4),
+            crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.4),
             mutation=mutation,
             parent_selection=SequentialSelection(),
             survivor_selection=TruncationSelection(),
@@ -572,26 +572,26 @@ class TestCrossoverIntegerSBX:
     _parents = np.array([[1.0, 3.0, 5.0], [3.0, 7.0, 9.0]])
 
     def test_output_shape(self):
-        op = CrossoverIntegerSBX(crossover_rate=1.0, eta=2.0)
+        op = CrossoverIntegerSBX(prob=1.0, eta=2.0)
         c = op.crossover(self._parents, rng=np.random.default_rng(0))
         assert c.shape == (2, 3)
 
     def test_offspring_are_integers(self):
-        op = CrossoverIntegerSBX(crossover_rate=1.0, eta=2.0)
+        op = CrossoverIntegerSBX(prob=1.0, eta=2.0)
         rng = np.random.default_rng(42)
         for _ in range(20):
             c = op.crossover(self._parents, rng=rng)
             assert np.all(c == np.round(c)), "offspring must be integers"
 
     def test_crossover_rate_attribute(self):
-        op = CrossoverIntegerSBX(crossover_rate=0.8, eta=5.0)
-        assert op.crossover_rate == 0.8
+        op = CrossoverIntegerSBX(prob=0.8, eta=5.0)
+        assert op.prob == 0.8
 
     def test_n_children(self):
-        assert CrossoverIntegerSBX(crossover_rate=1.0, eta=2.0).n_children == 2
+        assert CrossoverIntegerSBX(prob=1.0, eta=2.0).n_children == 2
 
     def test_determinism(self):
-        op = CrossoverIntegerSBX(crossover_rate=1.0, eta=2.0)
+        op = CrossoverIntegerSBX(prob=1.0, eta=2.0)
         c1 = op.crossover(self._parents, rng=np.random.default_rng(7))
         c2 = op.crossover(self._parents, rng=np.random.default_rng(7))
         np.testing.assert_array_equal(c1, c2)
@@ -606,12 +606,12 @@ class TestCrossoverCategorical:
     _parents = np.array([[0.0, 2.0, 1.0], [2.0, 0.0, 2.0]])
 
     def test_output_shape(self):
-        op = CrossoverCategorical(crossover_rate=1.0)
+        op = CrossoverCategorical(prob=1.0)
         c = op.crossover(self._parents, rng=np.random.default_rng(0))
         assert c.shape == (2, 3)
 
     def test_offspring_values_from_parents(self):
-        op = CrossoverCategorical(crossover_rate=1.0)
+        op = CrossoverCategorical(prob=1.0)
         rng = np.random.default_rng(0)
         for _ in range(50):
             c = op.crossover(self._parents, rng=rng)
@@ -621,7 +621,7 @@ class TestCrossoverCategorical:
                 assert c[1, dim] in valid
 
     def test_complementary_swap(self):
-        op = CrossoverCategorical(crossover_rate=1.0)
+        op = CrossoverCategorical(prob=1.0)
         rng = np.random.default_rng(0)
         for _ in range(50):
             c = op.crossover(self._parents, rng=rng)
@@ -631,13 +631,13 @@ class TestCrossoverCategorical:
                 assert c[0, dim] + c[1, dim] == p_sum
 
     def test_crossover_rate_attribute(self):
-        assert CrossoverCategorical(crossover_rate=0.9).crossover_rate == 0.9
+        assert CrossoverCategorical(prob=0.9).prob == 0.9
 
     def test_n_children(self):
-        assert CrossoverCategorical(crossover_rate=1.0).n_children == 2
+        assert CrossoverCategorical(prob=1.0).n_children == 2
 
     def test_determinism(self):
-        op = CrossoverCategorical(crossover_rate=1.0)
+        op = CrossoverCategorical(prob=1.0)
         c1 = op.crossover(self._parents, rng=np.random.default_rng(3))
         c2 = op.crossover(self._parents, rng=np.random.default_rng(3))
         np.testing.assert_array_equal(c1, c2)

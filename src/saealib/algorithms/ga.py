@@ -25,6 +25,8 @@ if TYPE_CHECKING:
 
 def _route_crossover(
     parent: np.ndarray,
+    lb: np.ndarray,
+    ub: np.ndarray,
     rng: np.random.Generator,
     problem: Problem,
     cont_op: Crossover,
@@ -35,7 +37,7 @@ def _route_crossover(
     i_mask = problem.integer_mask
     cat_mask = problem.categorical_mask
     if not i_mask.any() and not cat_mask.any():
-        return cont_op.crossover(parent, rng=rng)
+        return cont_op.crossover(parent, (lb, ub), rng=rng)
 
     n_children = cont_op.n_children
     dim = parent.shape[1]
@@ -43,11 +45,17 @@ def _route_crossover(
     c_mask = problem.continuous_mask
 
     if c_mask.any():
-        offspring[:, c_mask] = cont_op.crossover(parent[:, c_mask], rng=rng)
+        offspring[:, c_mask] = cont_op.crossover(
+            parent[:, c_mask], (lb[c_mask], ub[c_mask]), rng=rng
+        )
     if i_mask.any():
-        offspring[:, i_mask] = int_op.crossover(parent[:, i_mask], rng=rng)
+        offspring[:, i_mask] = int_op.crossover(
+            parent[:, i_mask], (lb[i_mask], ub[i_mask]), rng=rng
+        )
     if cat_mask.any():
-        offspring[:, cat_mask] = cat_op.crossover(parent[:, cat_mask], rng=rng)
+        offspring[:, cat_mask] = cat_op.crossover(
+            parent[:, cat_mask], (lb[cat_mask], ub[cat_mask]), rng=rng
+        )
 
     return offspring
 
@@ -151,7 +159,7 @@ class GA(Algorithm):
         self.parent_selection = parent_selection
         self.survivor_selection = survivor_selection
 
-        _cr = getattr(crossover, "crossover_rate", 1.0)
+        _cr = getattr(crossover, "prob", 1.0)
         _mr = getattr(mutation, "mutation_rate", 0.1)
         self.integer_crossover: Crossover = (
             integer_crossover
@@ -287,9 +295,11 @@ class GA(Algorithm):
         cand = np.empty((n_pair * n_children, ctx.dim))
         for i in range(n_pair):
             parent = pop[parent_idx_m[i]]
-            if ctx.rng.random() < self.crossover.crossover_rate:
+            if ctx.rng.random() < self.crossover.prob:
                 c = _route_crossover(
                     parent,
+                    lb,
+                    ub,
                     ctx.rng,
                     ctx.problem,
                     self.crossover,
