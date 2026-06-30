@@ -76,7 +76,7 @@ class _CrossoverN1C(Crossover):
     def __init__(self):
         self.prob = 1.0
 
-    def crossover(self, parent, rng=np.random.default_rng()):
+    def crossover(self, parent, bounds=None, rng=np.random.default_rng()):
         return parent[:1].copy()
 
 
@@ -88,7 +88,7 @@ class _CrossoverP3(Crossover):
     def __init__(self):
         self.prob = 1.0
 
-    def crossover(self, parent, rng=np.random.default_rng()):
+    def crossover(self, parent, bounds=None, rng=np.random.default_rng()):
         return parent[:2].copy()
 
 
