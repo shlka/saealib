@@ -740,3 +740,106 @@ class TestMutationCategorical:
         c1 = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(9))
         c2 = op.mutate(p, (self._lb, self._ub), rng=np.random.default_rng(9))
         np.testing.assert_array_equal(c1, c2)
+
+
+# ---------------------------------------------------------------------------
+# CrossoverSBX: bounded variant and prob_var
+# ---------------------------------------------------------------------------
+
+
+class TestCrossoverSBXBounded:
+    def _parents(self):
+        return np.array([[0.1, 0.2, 0.5], [0.8, 0.9, 0.6]])
+
+    def _bounds(self):
+        lb = np.zeros(3)
+        ub = np.ones(3)
+        return lb, ub
+
+    def test_bounded_offspring_within_bounds(self):
+        op = CrossoverSBX(prob=1.0, eta=20.0, prob_var=1.0)
+        lb, ub = self._bounds()
+        rng = np.random.default_rng(0)
+        for _ in range(50):
+            c = op.crossover(self._parents(), (lb, ub), rng=rng)
+            assert np.all(c >= lb) and np.all(c <= ub)
+
+    def test_unbounded_fallback_when_bounds_none(self):
+        op = CrossoverSBX(prob=1.0, eta=2.0, prob_var=1.0)
+        rng1 = np.random.default_rng(7)
+        rng2 = np.random.default_rng(7)
+        p = self._parents()
+        c_none = op.crossover(p, None, rng=rng1)
+        c_default = op.crossover(p, rng=rng2)
+        np.testing.assert_array_equal(c_none, c_default)
+
+    def test_prob_var_zero_returns_parents(self):
+        op = CrossoverSBX(prob=1.0, eta=20.0, prob_var=0.0)
+        lb, ub = self._bounds()
+        p = self._parents()
+        c = op.crossover(p, (lb, ub), rng=np.random.default_rng(0))
+        np.testing.assert_array_equal(c[0], p[0])
+        np.testing.assert_array_equal(c[1], p[1])
+
+    def test_bounded_center_preserved(self):
+        op = CrossoverSBX(prob=1.0, eta=20.0, prob_var=1.0)
+        lb, ub = self._bounds()
+        rng = np.random.default_rng(3)
+        for _ in range(30):
+            p = rng.uniform(0.1, 0.9, size=(2, 3))
+            c = op.crossover(p, (lb, ub), rng=rng)
+            mid_p = 0.5 * (p[0] + p[1])
+            mid_c = 0.5 * (c[0] + c[1])
+            np.testing.assert_allclose(mid_c, mid_p, atol=1e-10)
+
+    def test_identical_parents_unchanged(self):
+        op = CrossoverSBX(prob=1.0, eta=20.0, prob_var=1.0)
+        lb, ub = self._bounds()
+        p = np.array([[0.5, 0.5, 0.5], [0.5, 0.5, 0.5]])
+        c = op.crossover(p, (lb, ub), rng=np.random.default_rng(0))
+        np.testing.assert_array_equal(c[0], p[0])
+        np.testing.assert_array_equal(c[1], p[1])
+
+
+# ---------------------------------------------------------------------------
+# Mutation: individual-level prob gate
+# ---------------------------------------------------------------------------
+
+
+class TestMutationProbGate:
+    def _range(self):
+        lb = np.zeros(5)
+        ub = np.ones(5)
+        return lb, ub
+
+    def test_prob_zero_returns_parent_unchanged(self):
+        op = MutationPolynomial(prob=0.0, eta=20.0, prob_var=1.0)
+        rng = np.random.default_rng(0)
+        p = rng.uniform(0.1, 0.9, size=5)
+        for _ in range(20):
+            c = op.mutate(p, self._range(), rng=rng)
+            np.testing.assert_array_equal(c, p)
+
+    def test_prob_zero_uniform(self):
+        op = MutationUniform(prob=0.0, prob_var=1.0)
+        rng = np.random.default_rng(0)
+        p = rng.uniform(0.1, 0.9, size=5)
+        for _ in range(20):
+            c = op.mutate(p, self._range(), rng=rng)
+            np.testing.assert_array_equal(c, p)
+
+    def test_prob_var_none_uses_adaptive_default(self):
+        dim = 10
+        op = MutationPolynomial(prob=1.0, eta=20.0, prob_var=None)
+        lb = np.zeros(dim)
+        ub = np.ones(dim)
+        p = np.full(dim, 0.5)
+        changed = np.zeros(dim)
+        rng = np.random.default_rng(1)
+        n_trials = 500
+        for _ in range(n_trials):
+            c = op.mutate(p, (lb, ub), rng=rng)
+            changed += (c != p).astype(float)
+        expected_rate = min(0.5, 1.0 / dim)
+        observed_rate = changed / n_trials
+        np.testing.assert_allclose(observed_rate, expected_rate, atol=0.05)
