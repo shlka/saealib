@@ -290,6 +290,23 @@ class TestMutationPolynomial:
         c = op.mutate(p, self._range(), rng=rng)
         np.testing.assert_array_equal(c, p)
 
+    def test_asymmetric_delta_allows_larger_boundary_excursion(self):
+        # p near lb, ub far away: the old shared min(delta1, delta2)
+        # formula reused the (tiny) lower-bound delta for the upward
+        # (u>0.5) branch too, capping upward excursions near zero. The
+        # asymmetric formula uses delta2 (upper-bound distance) for that
+        # branch instead, matching nsga2-gnuplot-v1.1.6 / pymoo / DEAP.
+        op = MutationPolynomial(prob_var=1.0, eta=20.0)
+        lb = np.array([0.0])
+        ub = np.array([100.0])
+        p = np.array([1.0])
+        rng = np.random.default_rng(0)
+        max_excursion = 0.0
+        for _ in range(50):
+            c = op.mutate(p, (lb, ub), rng=rng)
+            max_excursion = max(max_excursion, float(c[0] - p[0]))
+        assert max_excursion > 5.0
+
 
 # ---------------------------------------------------------------------------
 # MutationGaussian
