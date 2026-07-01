@@ -12,6 +12,7 @@ from saealib.callback import PostAskEvent, PostCrossoverEvent, PostMutationEvent
 from saealib.context import OptimizationState
 from saealib.exceptions import ConfigurationError
 from saealib.operators.crossover import CrossoverCategorical, CrossoverIntegerSBX
+from saealib.operators.dedup import DuplicateElimination
 from saealib.operators.mutation import MutationCategorical, MutationIntegerUniform
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
@@ -113,6 +114,10 @@ class GA(Algorithm):
         Crossover operator for categorical dimensions.
     categorical_mutation : Mutation
         Mutation operator for categorical dimensions.
+    duplicate_elimination : DuplicateElimination or None
+        When set, offspring that duplicate any member of the current population
+        are replaced by re-generated candidates (up to ``max_retries`` attempts).
+        ``None`` disables duplicate elimination (default behaviour).
     """
 
     def __init__(
@@ -122,6 +127,7 @@ class GA(Algorithm):
         parent_selection: ParentSelection,
         survivor_selection: SurvivorSelection,
         *,
+        duplicate_elimination: DuplicateElimination | None = None,
         integer_crossover: Crossover | None = None,
         integer_mutation: Mutation | None = None,
         categorical_crossover: Crossover | None = None,
@@ -140,6 +146,10 @@ class GA(Algorithm):
             Parent selection operator.
         survivor_selection : SurvivorSelection
             Survivor selection operator.
+        duplicate_elimination : DuplicateElimination, optional
+            When provided, offspring that duplicate any member of the current
+            population are replaced by re-generated candidates.  ``None``
+            (default) disables duplicate elimination.
         integer_crossover : Crossover, optional
             Crossover operator for integer dimensions.
             Defaults to ``CrossoverIntegerSBX`` with the same rate as *crossover*.
@@ -158,6 +168,7 @@ class GA(Algorithm):
         self.mutation = mutation
         self.parent_selection = parent_selection
         self.survivor_selection = survivor_selection
+        self.duplicate_elimination = duplicate_elimination
 
         _cr = getattr(crossover, "prob", 1.0)
         _pv = getattr(mutation, "prob_var", None)
@@ -332,11 +343,89 @@ class GA(Algorithm):
             cand[i] = ctx.problem.repair(cand[i])
         provider.dispatch(PostMutationEvent(ctx=ctx, candidates=cand))
 
+        if self.duplicate_elimination is not None:
+            pop_x = ctx.population.get_array("x")
+            de = self.duplicate_elimination
+            for _ in range(de.max_retries):
+                dup = de.find_duplicates(cand[:target], pop_x)
+                if not dup.any():
+                    break
+                dup_idx = np.where(dup)[0]
+                repl = self._make_offspring(
+                    ctx, len(dup_idx), pop, popsize, lb, ub, handler, constraints
+                )
+                cand[dup_idx] = repl[: len(dup_idx)]
+
         provider.dispatch(PostAskEvent(ctx=ctx, candidates=cand))
 
         cand_pop = ctx.population.empty_like(capacity=target)
         cand_pop.extend({"x": cand[:target]})
         return cand_pop
+
+    def _make_offspring(
+        self,
+        ctx: OptimizationState,
+        n_target: int,
+        pop: np.ndarray,
+        popsize: int,
+        lb: np.ndarray,
+        ub: np.ndarray,
+        handler,
+        constraints,
+    ) -> np.ndarray:
+        """Generate *n_target* offspring without dispatching events.
+
+        Used exclusively by the duplicate-elimination retry loop in
+        :meth:`ask` to silently replace duplicate candidates.
+        """
+        n_children = self.crossover.n_children
+        n_pair = math.ceil(n_target / n_children)
+        parent_idx = (
+            self.parent_selection.select(
+                ctx,
+                ctx.population,
+                n_pair=n_pair,
+                n_parents=self.crossover.n_parents,
+                rng=ctx.rng,
+            )
+            % popsize
+        )
+        batch = np.empty((n_pair * n_children, ctx.dim))
+        for i in range(n_pair):
+            parent = pop[parent_idx[i]]
+            if ctx.rng.random() < self.crossover.prob:
+                c = _route_crossover(
+                    parent,
+                    lb,
+                    ub,
+                    ctx.rng,
+                    ctx.problem,
+                    self.crossover,
+                    self.integer_crossover,
+                    self.categorical_crossover,
+                )
+            else:
+                c = parent[:n_children].copy()
+            c = self.crossover.post_crossover(c, parent, ctx.rng, ctx)
+            batch[i * n_children : (i + 1) * n_children] = c
+        for i in range(len(batch)):
+            batch[i] = handler.repair(batch[i], constraints, lb, ub)
+            batch[i] = ctx.problem.repair(batch[i])
+        for i in range(len(batch)):
+            batch[i] = _route_mutation(
+                batch[i],
+                lb,
+                ub,
+                ctx.rng,
+                ctx.problem,
+                self.mutation,
+                self.integer_mutation,
+                self.categorical_mutation,
+            )
+            batch[i] = self.mutation.post_mutation(batch[i], (lb, ub), ctx.rng, ctx)
+            batch[i] = handler.repair(batch[i], constraints, lb, ub)
+            batch[i] = ctx.problem.repair(batch[i])
+        return batch
 
     def tell(
         self,
