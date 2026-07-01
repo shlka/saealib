@@ -36,6 +36,7 @@ from saealib.execution.initializer import (
 from saealib.operators import (
     Crossover,
     CrossoverSBX,
+    DuplicateElimination,
     Mutation,
     MutationPolynomial,
     ParentSelection,
@@ -118,6 +119,7 @@ __all__ = [
     "Crossover",
     "CrossoverSBX",
     "DirectStrategy",
+    "DuplicateElimination",
     "EpsilonConstraintHandler",
     "EqualityConstraint",
     "EvaluationResult",

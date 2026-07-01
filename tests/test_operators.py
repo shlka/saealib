@@ -993,3 +993,121 @@ class TestMutationProbGate:
         expected_rate = min(0.5, 1.0 / dim)
         observed_rate = changed / n_trials
         np.testing.assert_allclose(observed_rate, expected_rate, atol=0.05)
+
+
+# ---------------------------------------------------------------------------
+# DuplicateElimination
+# ---------------------------------------------------------------------------
+
+
+class TestDuplicateElimination:
+    def test_exact_duplicate_detected(self):
+        from saealib.operators.dedup import DuplicateElimination
+
+        de = DuplicateElimination(atol=1e-16, rtol=0.0)
+        pop = np.array([[0.1, 0.2], [0.3, 0.4]])
+        off = np.array([[0.1, 0.2], [0.5, 0.6]])
+        mask = de.find_duplicates(off, pop)
+        assert mask[0]
+        assert not mask[1]
+
+    def test_within_tolerance_detected(self):
+        from saealib.operators.dedup import DuplicateElimination
+
+        de = DuplicateElimination(atol=1e-6, rtol=0.0)
+        pop = np.array([[0.1, 0.2]])
+        off = np.array([[0.1 + 1e-7, 0.2]])
+        mask = de.find_duplicates(off, pop)
+        assert mask[0]
+
+    def test_outside_tolerance_not_detected(self):
+        from saealib.operators.dedup import DuplicateElimination
+
+        de = DuplicateElimination(atol=1e-10, rtol=0.0)
+        pop = np.array([[0.1, 0.2]])
+        off = np.array([[0.1 + 1e-9, 0.2]])
+        mask = de.find_duplicates(off, pop)
+        assert not mask[0]
+
+    def test_empty_offspring_returns_empty_mask(self):
+        from saealib.operators.dedup import DuplicateElimination
+
+        de = DuplicateElimination()
+        pop = np.array([[0.1, 0.2]])
+        off = np.empty((0, 2))
+        mask = de.find_duplicates(off, pop)
+        assert mask.shape == (0,)
+        assert mask.dtype == bool
+
+    def test_no_duplicates_all_false(self):
+        from saealib.operators.dedup import DuplicateElimination
+
+        de = DuplicateElimination()
+        pop = np.array([[0.1, 0.2], [0.3, 0.4]])
+        off = np.array([[0.5, 0.6], [0.7, 0.8]])
+        mask = de.find_duplicates(off, pop)
+        assert not mask.any()
+
+    def test_ga_stores_duplicate_elimination_attribute(self):
+        from saealib.operators.dedup import DuplicateElimination
+
+        de = DuplicateElimination(atol=1e-10, rtol=0.0, max_retries=5)
+        ga = GA(
+            crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.4),
+            mutation=MutationPolynomial(prob=1.0, eta=20.0, prob_var=1.0),
+            parent_selection=SequentialSelection(),
+            survivor_selection=TruncationSelection(),
+            duplicate_elimination=de,
+        )
+        assert ga.duplicate_elimination is de
+
+    def test_ga_with_dedup_returns_correct_count(self):
+        """GA with duplicate_elimination set produces expected offspring count."""
+        from saealib.operators.dedup import DuplicateElimination
+
+        de = DuplicateElimination()
+        ga = GA(
+            crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.4),
+            mutation=MutationPolynomial(prob=1.0, eta=20.0, prob_var=1.0),
+            parent_selection=SequentialSelection(),
+            survivor_selection=TruncationSelection(),
+            duplicate_elimination=de,
+        )
+        provider = _DispatchOnlyProvider()
+        ctx = _make_ctx(n_pop=10)
+        candidates = ga.ask(ctx, provider)
+        assert len(candidates) == 10
+
+    def test_ga_dedup_retries_when_offspring_are_copies(self):
+        """With no-op crossover and no-op mutation, retries exhaust without crash."""
+        from saealib.operators.dedup import DuplicateElimination
+
+        # prob=0.0 crossover → offspring = parent copies (always duplicates)
+        # prob_var=0.0 mutation → no variables mutated → still copies after each retry
+        # dedup exhausts max_retries without fixing any, but must not raise
+        de = DuplicateElimination(atol=1e-14, rtol=0.0, max_retries=3)
+        ga = GA(
+            crossover=CrossoverBLXAlpha(prob=0.0, alpha=0.4),
+            mutation=MutationUniform(prob_var=0.0),
+            parent_selection=SequentialSelection(),
+            survivor_selection=TruncationSelection(),
+            duplicate_elimination=de,
+        )
+        provider = _DispatchOnlyProvider()
+        ctx = _make_ctx(n_pop=10)
+        candidates = ga.ask(ctx, provider)
+        assert len(candidates) == 10
+
+    def test_ga_none_dedup_preserves_behavior(self):
+        """GA with duplicate_elimination=None must not raise."""
+        ga = GA(
+            crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.4),
+            mutation=MutationPolynomial(prob=1.0, eta=20.0, prob_var=1.0),
+            parent_selection=SequentialSelection(),
+            survivor_selection=TruncationSelection(),
+            duplicate_elimination=None,
+        )
+        provider = _DispatchOnlyProvider()
+        ctx = _make_ctx(n_pop=10)
+        candidates = ga.ask(ctx, provider)
+        assert len(candidates) == 10
