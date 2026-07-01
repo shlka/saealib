@@ -240,7 +240,30 @@ class SurvivorSelection(ABC):
 
 
 class TruncationSelection(SurvivorSelection):
-    """Truncation selection operator."""
+    """
+    Truncation selection operator.
+
+    Attributes
+    ----------
+    randomize_ties : bool
+        When True, individuals tied at the truncation boundary (equal under
+        ``comparator.compare_population``) are shuffled before truncating,
+        matching pymoo's ``randomized_argsort`` treatment of the splitting
+        front. When False (default), ties keep the order returned by
+        ``comparator.sort_population`` (deterministic).
+    """
+
+    def __init__(self, randomize_ties: bool = False):
+        """
+        Initialize truncation selection operator.
+
+        Parameters
+        ----------
+        randomize_ties : bool, optional
+            Randomize the order of individuals tied at the truncation
+            boundary, by default False.
+        """
+        self.randomize_ties = randomize_ties
 
     def select(
         self,
@@ -267,4 +290,26 @@ class TruncationSelection(SurvivorSelection):
         """
         cmp = ctx.comparator
         sorted_idx = cmp.sort_population(pool)
-        return sorted_idx[:n_survivors]
+        if not self.randomize_ties or n_survivors >= len(sorted_idx):
+            return sorted_idx[:n_survivors]
+
+        boundary = sorted_idx[n_survivors - 1]
+        lo = n_survivors - 1
+        while (
+            lo > 0 and cmp.compare_population(pool, sorted_idx[lo - 1], boundary) == 0
+        ):
+            lo -= 1
+        hi = n_survivors
+        while (
+            hi < len(sorted_idx)
+            and cmp.compare_population(pool, sorted_idx[hi], boundary) == 0
+        ):
+            hi += 1
+        if hi - lo <= 1:
+            return sorted_idx[:n_survivors]
+
+        tie_block = sorted_idx[lo:hi].copy()
+        ctx.rng.shuffle(tie_block)
+        result = sorted_idx.copy()
+        result[lo:hi] = tie_block
+        return result[:n_survivors]

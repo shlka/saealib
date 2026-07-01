@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 from saealib import GA, SequentialSelection, TruncationSelection
-from saealib.comparators import SingleObjectiveComparator
+from saealib.comparators import NSGA2Comparator, SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.operators.crossover import (
     CrossoverBLXAlpha,
@@ -362,6 +362,114 @@ class TestRouletteWheelSelection:
                 counts[i] += 1
 
         assert counts[best_idx] > counts[worst_idx]
+
+
+# ---------------------------------------------------------------------------
+# TruncationSelection
+# ---------------------------------------------------------------------------
+
+
+def _make_moo_ctx(f_values: np.ndarray, rng_seed: int = 0) -> OptimizationState:
+    """MOO context with an NSGA2Comparator and explicit objective values."""
+    n, n_obj = f_values.shape
+    attrs = [
+        PopulationAttribute(name="x", dtype=np.float64, shape=(n_obj,)),
+        PopulationAttribute(name="f", dtype=np.float64, shape=(n_obj,)),
+        PopulationAttribute(name="cv", dtype=np.float64, shape=(), default=0.0),
+    ]
+    pop = Population(attrs, init_capacity=n + 1)
+    for row in f_values:
+        pop.append(x=row, f=row, cv=0.0)
+    direction = np.full(n_obj, -1.0)
+    comparator = NSGA2Comparator(direction=direction)
+    problem = Problem(
+        func=lambda x: x,
+        dim=n_obj,
+        n_obj=n_obj,
+        direction=direction,
+        lb=[-10.0] * n_obj,
+        ub=[10.0] * n_obj,
+        comparator=comparator,
+    )
+    arc = Archive(attrs, init_capacity=5)
+    pareto_arc = ParetoArchive(attrs, init_capacity=5, direction=direction)
+    return OptimizationState(
+        problem=problem,
+        population=pop,
+        archive=arc,
+        pareto_archive=pareto_arc,
+        rng=np.random.default_rng(rng_seed),
+    )
+
+
+class TestTruncationSelection:
+    # Front with a genuine crowding-distance tie between rows 2 and 4
+    # (both f=[0.5, 0.5], rank=0, cd=1.0), plus a dominated point (row 5).
+    # Verified via direct inspection of NSGA2Comparator's cached rank/cd:
+    # order=[0,1,2,4,3,5], rank=[0,0,0,0,0,1], cd=[inf,inf,1,0,1,inf].
+    _F_WITH_TIE = np.array(
+        [
+            [0.0, 1.0],
+            [1.0, 0.0],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [2.0, 2.0],
+        ]
+    )
+    # Unequal spacing along the tradeoff line so crowding distances differ
+    # (evenly-spaced points give symmetric, tied cd values by construction).
+    # Verified: order=[0,5,4,3,2,1], rank=all 0, cd=[inf,0.7,0.8,0.9,1.0,inf].
+    _F_NO_TIE = np.array(
+        [
+            [0.0, 1.0],
+            [0.1, 0.9],
+            [0.35, 0.65],
+            [0.5, 0.5],
+            [0.8, 0.2],
+            [1.0, 0.0],
+        ]
+    )
+
+    def test_default_matches_plain_sort(self):
+        op = TruncationSelection()
+        assert op.randomize_ties is False
+        ctx = _make_moo_ctx(self._F_WITH_TIE)
+        expected = ctx.comparator.sort_population(ctx.population)[:3]
+        result = op.select(ctx, ctx.population, 3)
+        np.testing.assert_array_equal(result, expected)
+
+    def test_randomize_ties_no_ties_matches_plain_sort(self):
+        op = TruncationSelection(randomize_ties=True)
+        ctx = _make_moo_ctx(self._F_NO_TIE)
+        expected = ctx.comparator.sort_population(ctx.population)[:3]
+        result = op.select(ctx, ctx.population, 3)
+        np.testing.assert_array_equal(result, expected)
+
+    def test_randomize_ties_preserves_non_tied_boundary(self):
+        op = TruncationSelection(randomize_ties=True)
+        for seed in range(10):
+            ctx = _make_moo_ctx(self._F_WITH_TIE, rng_seed=seed)
+            result = op.select(ctx, ctx.population, 3)
+            assert result.shape == (3,)
+            assert 0 in result and 1 in result  # cd=inf, always kept
+            assert 5 not in result  # dominated, never kept
+            assert set(result.tolist()) <= {0, 1, 2, 4}
+
+    def test_randomize_ties_varies_across_seeds(self):
+        op = TruncationSelection(randomize_ties=True)
+        outcomes = set()
+        for seed in range(20):
+            ctx = _make_moo_ctx(self._F_WITH_TIE, rng_seed=seed)
+            result = op.select(ctx, ctx.population, 3)
+            outcomes.add(frozenset(result.tolist()))
+        assert outcomes == {frozenset({0, 1, 2}), frozenset({0, 1, 4})}
+
+    def test_n_survivors_exceeds_pool(self):
+        op = TruncationSelection(randomize_ties=True)
+        ctx = _make_moo_ctx(self._F_WITH_TIE)
+        result = op.select(ctx, ctx.population, 10)
+        assert set(result.tolist()) == set(range(6))
 
 
 # ---------------------------------------------------------------------------
