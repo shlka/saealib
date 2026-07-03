@@ -7,13 +7,10 @@ assignees: ''
 ---
 
 ## Description
+<!-- What's wrong, and why it matters. -->
 
 ## Steps to Reproduce
-
-## Expected Behavior
-
-## Actual Behavior
-
-## Screenshots / Screen Recording
+<!-- Include actual vs. expected output inline where possible. -->
 
 ## Environment
+<!-- Optional — only if version/platform-specific. -->

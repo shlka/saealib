@@ -10,11 +10,7 @@ assignees: ''
 
 ## Acceptance Criteria
 - [ ]
-- [ ]
-
-## Implementation Tasks
-- [ ]
-- [ ]
 
 ## References
+<!-- Optional. -->
 -
