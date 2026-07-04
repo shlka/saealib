@@ -427,24 +427,32 @@ class Optimizer:
         return defaults["fallback"]
 
     def _build_surrogate_manager(self, spec: dict) -> SurrogateManager:
+        return self._build_surrogate_manager_from_spec(
+            spec, self.problem.dim, self.problem.direction
+        )
+
+    @staticmethod
+    def _build_surrogate_manager_from_spec(
+        spec: dict, dim: int, direction
+    ) -> SurrogateManager:
+        """Build a surrogate_manager preset spec, injecting dim/direction defaults.
+
+        Shared by ``Optimizer._resolve_defaults()`` and ``saealib.api``'s
+        ``'rbf'`` surrogate shorthand, so the injection logic is defined once.
+        """
         from saealib.registry import build, inject_params
 
         spec = copy.deepcopy(spec)
         params = spec.setdefault("params", {})
         params.setdefault(
             "surrogate",
-            {
-                "type": "RBFSurrogate",
-                "params": {"kernel": gaussian_kernel, "dim": self.problem.dim},
-            },
+            {"type": "RBFSurrogate", "params": {"kernel": gaussian_kernel, "dim": dim}},
         )
         params.setdefault(
             "acquisition",
-            {"type": "MeanPrediction", "params": {"direction": self.problem.direction}},
+            {"type": "MeanPrediction", "params": {"direction": direction}},
         )
-        spec = inject_params(
-            spec, dim=self.problem.dim, direction=self.problem.direction
-        )
+        spec = inject_params(spec, dim=dim, direction=direction)
         return build(spec)
 
     def _register_checkpoint(
