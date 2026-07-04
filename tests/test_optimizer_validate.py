@@ -155,17 +155,36 @@ def test_mean_prediction_with_rbf_ok():
 
 
 # ---------------------------------------------------------------------------
-# run() / iterate() raise on misconfiguration
+# run() / iterate() raise on misconfiguration that defaults cannot resolve
 # ---------------------------------------------------------------------------
 
 
-def test_run_raises_on_misconfiguration():
-    opt = Optimizer(_make_problem())
+def test_run_raises_on_unresolvable_misconfiguration():
+    opt = _fully_configured()
+    opt.problem.comparator.direction = np.array([1.0, 1.0])  # len 2 != n_obj=1
     with pytest.raises(ValueError, match="Optimizer misconfigured"):
         opt.run()
 
 
-def test_iterate_raises_on_misconfiguration():
-    opt = Optimizer(_make_problem())
+def test_iterate_raises_on_unresolvable_misconfiguration():
+    opt = _fully_configured()
+    opt.problem.comparator.direction = np.array([1.0, 1.0])  # len 2 != n_obj=1
     with pytest.raises(ValueError, match="Optimizer misconfigured"):
         opt.iterate()
+
+
+# ---------------------------------------------------------------------------
+# run() / iterate() auto-resolve unset components instead of raising
+# ---------------------------------------------------------------------------
+
+
+def test_run_succeeds_with_no_components_set():
+    opt = Optimizer(_make_problem())
+    ctx = opt.run()
+    assert ctx.fe > 0
+
+
+def test_iterate_succeeds_with_no_components_set():
+    opt = Optimizer(_make_problem())
+    ctx = next(opt.iterate())
+    assert ctx is not None

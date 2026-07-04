@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import dataclasses
 import pickle
 import warnings
@@ -23,6 +24,9 @@ from saealib.exceptions import ConfigurationError
 from saealib.execution.evaluator import Evaluator, SerialEvaluator
 from saealib.execution.runner import Runner
 from saealib.surrogate.manager import LocalSurrogateManager, SurrogateManager
+from saealib.surrogate.rbf import gaussian_kernel
+from saealib.termination import Termination
+from saealib.termination import max_fe as max_fe_cond
 
 if TYPE_CHECKING:
     from saealib.algorithms.base import Algorithm
@@ -30,7 +34,6 @@ if TYPE_CHECKING:
     from saealib.problem import Problem
     from saealib.strategies.base import OptimizationStrategy
     from saealib.surrogate.base import Surrogate
-    from saealib.termination import Termination
 
 
 class Dispatchable(Protocol):
@@ -271,6 +274,77 @@ class Optimizer:
 
         return issues
 
+    def _resolve_defaults(self) -> None:
+        """Fill unset components with library defaults (Registry + presets file).
+
+        Components already set via ``set_*()`` are never overwritten. Gaps
+        are filled from a preset selected by (1) the algorithm's registered
+        name if ``algorithm`` is set, else (2) a Problem-shape rule, else
+        (3) the universal fallback preset. ``initializer`` and
+        ``termination`` are computed directly from ``problem.dim`` and are
+        not part of the presets file.
+        """
+        from saealib.defaults import load_defaults
+        from saealib.registry import build
+
+        algorithm = getattr(self, "algorithm", None)
+        strategy = getattr(self, "strategy", None)
+        surrogate_manager = getattr(self, "surrogate_manager", None)
+
+        if algorithm is None or strategy is None or surrogate_manager is None:
+            defaults = load_defaults()
+            preset = defaults["presets"][self._select_preset_name(defaults, algorithm)]
+            if algorithm is None and "algorithm" in preset:
+                self.algorithm = build(preset["algorithm"])
+            if surrogate_manager is None and "surrogate_manager" in preset:
+                self.surrogate_manager = self._build_surrogate_manager(
+                    preset["surrogate_manager"]
+                )
+            if strategy is None and "strategy" in preset:
+                self.strategy = build(preset["strategy"])
+
+        if self.initializer is None:
+            from saealib.execution.initializer import LHSInitializer
+
+            dim = self.problem.dim
+            self.initializer = LHSInitializer(
+                n_init_archive=5 * dim, n_init_population=4 * dim, seed=self.seed
+            )
+
+        if getattr(self, "termination", None) is None:
+            self.termination = Termination(max_fe_cond(200 * self.problem.dim))
+
+    def _select_preset_name(self, defaults: dict, algorithm: Algorithm | None) -> str:
+        if algorithm is not None:
+            preset_name = defaults["by_algorithm"].get(type(algorithm).__name__)
+            if preset_name is not None:
+                return preset_name
+        for rule in defaults["by_problem_shape"]:
+            when = rule["when"]
+            if all(
+                getattr(self.problem, key, None) == value for key, value in when.items()
+            ):
+                return rule["preset"]
+        return defaults["fallback"]
+
+    def _build_surrogate_manager(self, spec: dict) -> SurrogateManager:
+        from saealib.registry import build
+
+        spec = copy.deepcopy(spec)
+        params = spec.setdefault("params", {})
+        params.setdefault(
+            "surrogate",
+            {
+                "type": "RBFSurrogate",
+                "params": {"kernel": gaussian_kernel, "dim": self.problem.dim},
+            },
+        )
+        params.setdefault(
+            "acquisition",
+            {"type": "MeanPrediction", "params": {"direction": self.problem.direction}},
+        )
+        return build(spec)
+
     def _register_checkpoint(
         self,
         path: str | Path,
@@ -316,6 +390,7 @@ class Optimizer:
         Generator[OptimizationState]
             Generator of OptimizationState.
         """
+        self._resolve_defaults()
         issues = self.validate()
         if issues:
             raise ConfigurationError(
@@ -357,6 +432,7 @@ class Optimizer:
         OptimizationState
             The optimization context.
         """
+        self._resolve_defaults()
         issues = self.validate()
         if issues:
             raise ConfigurationError(
