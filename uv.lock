@@ -1711,6 +1711,7 @@ source = { editable = "." }
 dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pyyaml" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "typing-extensions" },
@@ -1766,6 +1767,7 @@ requires-dist = [
     { name = "joblib", marker = "extra == 'parallel'", specifier = ">=1.0.0" },
     { name = "lightgbm", marker = "extra == 'lightgbm'", specifier = ">=3.0.0" },
     { name = "numpy", specifier = ">=1.22.1" },
+    { name = "pyyaml", specifier = ">=6.0" },
     { name = "scikit-learn", marker = "extra == 'sklearn'", specifier = ">=1.0.0" },
     { name = "scipy", specifier = ">=1.0.0" },
     { name = "torch", marker = "extra == 'torch'", specifier = ">=2.0.0" },

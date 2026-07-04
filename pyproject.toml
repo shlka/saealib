@@ -9,6 +9,7 @@ dependencies = [
     "numpy>=1.22.1",
     "scipy>=1.0.0",
     "typing-extensions>=4.15.0",
+    "pyyaml>=6.0",
 ]
 authors = [
     { name = "shlka", email = "82360718+shlka@users.noreply.github.com" }

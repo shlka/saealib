@@ -1,0 +1,37 @@
+# Named component-spec presets consumed by Optimizer's default resolution
+# (see saealib/defaults/loader.py). Each preset entry may hold "algorithm",
+# "surrogate_manager", and/or "strategy" specs in the Registry {type, params}
+# form. Runtime-dependent values (problem.dim, problem.direction, pop_size)
+# are not stored here; they are injected by the resolver before building.
+schema_version: 1
+
+presets:
+  ga_rbf_ib:
+    algorithm:
+      type: GA
+      params:
+        crossover: {type: CrossoverBLXAlpha, params: {prob: 0.7, alpha: 0.4}}
+        mutation: {type: MutationUniform, params: {prob_var: 0.3}}
+        parent_selection: {type: SequentialSelection}
+        survivor_selection: {type: TruncationSelection}
+    surrogate_manager:
+      type: LocalSurrogateManager
+      params:
+        training_set: {type: KNNObjectiveSet, params: {n_neighbors: 50}}
+    strategy:
+      type: IndividualBasedStrategy
+      params: {evaluation_ratio: 0.1}
+
+# Selects a preset by the (already-set) algorithm's registered type name.
+by_algorithm:
+  GA: ga_rbf_ib
+  PSO: ga_rbf_ib
+
+# Selects a preset by Problem shape, in order; first match wins. Used only
+# when no algorithm has been set at all.
+by_problem_shape:
+  - when: {n_obj: 1}
+    preset: ga_rbf_ib
+
+# Used when neither by_algorithm nor by_problem_shape matches.
+fallback: ga_rbf_ib
