@@ -1,9 +1,10 @@
-"""Unit tests for saealib.registry: register/get/build resolution."""
+"""Unit tests for saealib.registry: register/get/build/to_spec resolution."""
 
+import numpy as np
 import pytest
 
 from saealib.exceptions import ValidationError
-from saealib.registry import build, get, register
+from saealib.registry import build, get, register, to_spec
 
 
 class Engine:
@@ -15,6 +16,25 @@ class Car:
     def __init__(self, engine=None, wheels: int = 4):
         self.engine = engine
         self.wheels = wheels
+
+
+class Convoy:
+    """Constructor takes *args — exercises the vararg spec path."""
+
+    def __init__(self, *vehicles):
+        self.vehicles = vehicles
+
+
+class OptionalOnly:
+    def __init__(self, note: str = "default"):
+        self.note = note
+
+
+class Opaque:
+    """Opts out of generic reflection via ``_registry_spec``."""
+
+    def __init__(self, spec=None):
+        self._registry_spec = spec
 
 
 class TestRegisterAndGet:
@@ -96,3 +116,129 @@ class TestBuild:
         register("Needy")(Needy)
         with pytest.raises(ValidationError):
             build({"type": "Needy", "params": {}})
+
+
+class TestBuildVarargs:
+    def setup_method(self):
+        register("Engine")(Engine)
+        register("Convoy")(Convoy)
+
+    def test_list_params_call_positionally(self):
+        obj = build(
+            {
+                "type": "Convoy",
+                "params": [
+                    {"type": "Engine", "params": {"power": 1}},
+                    {"type": "Engine", "params": {"power": 2}},
+                ],
+            }
+        )
+        assert isinstance(obj, Convoy)
+        assert [v.power for v in obj.vehicles] == [1, 2]
+
+    def test_empty_list_params(self):
+        obj = build({"type": "Convoy", "params": []})
+        assert obj.vehicles == ()
+
+
+class TestToSpec:
+    def setup_method(self):
+        register("Engine")(Engine)
+        register("Car")(Car)
+        register("Convoy")(Convoy)
+        register("OptionalOnly")(OptionalOnly)
+        register("Opaque")(Opaque)
+
+    @pytest.mark.parametrize(
+        "value", [None, True, 1, 1.5, "s", [1, 2], (1, 2), {"a": 1}]
+    )
+    def test_primitives_and_containers_pass_through_structurally(self, value):
+        assert to_spec(value) == (list(value) if isinstance(value, tuple) else value)
+
+    def test_numpy_array_becomes_list(self):
+        assert to_spec(np.array([1.0, 2.0])) == [1.0, 2.0]
+
+    def test_function_becomes_dotted_path(self):
+        import math
+
+        assert to_spec(math.isnan) == "math.isnan"
+
+    def test_registered_instance_reflects_constructor_params(self):
+        obj = Engine(power=42)
+        assert to_spec(obj) == {"type": "Engine", "params": {"power": 42}}
+
+    def test_nested_registered_instance_recurses(self):
+        car = Car(engine=Engine(power=7), wheels=3)
+        assert to_spec(car) == {
+            "type": "Car",
+            "params": {
+                "engine": {"type": "Engine", "params": {"power": 7}},
+                "wheels": 3,
+            },
+        }
+
+    def test_unregistered_class_falls_back_to_dotted_path_type(self):
+        class NotRegistered:
+            def __init__(self, note: str = "default"):
+                self.note = note
+
+        spec = to_spec(NotRegistered(note="x"))
+        assert spec == {
+            "type": f"{__name__}.{NotRegistered.__qualname__}",
+            "params": {"note": "x"},
+        }
+
+    def test_missing_optional_attr_is_omitted(self):
+        obj = OptionalOnly()
+        del obj.note
+        assert to_spec(obj) == {"type": "OptionalOnly", "params": {}}
+
+    def test_missing_required_attr_raises_validation_error(self):
+        class Needy:
+            def __init__(self, required_arg):
+                pass  # does not store self.required_arg
+
+        register("Needy")(Needy)
+        with pytest.raises(ValidationError):
+            to_spec(Needy(1))
+
+    def test_var_positional_becomes_list_params(self):
+        convoy = Convoy(Engine(power=1), Engine(power=2))
+        assert to_spec(convoy) == {
+            "type": "Convoy",
+            "params": [
+                {"type": "Engine", "params": {"power": 1}},
+                {"type": "Engine", "params": {"power": 2}},
+            ],
+        }
+
+    def test_var_positional_missing_attr_raises_validation_error(self):
+        class BadConvoy:
+            def __init__(self, *vehicles):
+                pass  # does not store self.vehicles
+
+        register("BadConvoy")(BadConvoy)
+        with pytest.raises(ValidationError):
+            to_spec(BadConvoy())
+
+    def test_registry_spec_hook_used_instead_of_reflection(self):
+        obj = Opaque(spec={"type": "whatever", "params": {"x": 1}})
+        assert to_spec(obj) == {"type": "whatever", "params": {"x": 1}}
+
+    def test_registry_spec_hook_none_raises_validation_error(self):
+        obj = Opaque(spec=None)
+        with pytest.raises(ValidationError):
+            to_spec(obj)
+
+    def test_round_trip_build_to_spec_build(self):
+        original = Car(engine=Engine(power=9), wheels=6)
+        rebuilt = build(to_spec(original))
+        assert isinstance(rebuilt, Car)
+        assert rebuilt.wheels == 6
+        assert rebuilt.engine.power == 9
+
+    def test_round_trip_varargs(self):
+        original = Convoy(Engine(power=1), Engine(power=2))
+        rebuilt = build(to_spec(original))
+        assert isinstance(rebuilt, Convoy)
+        assert [v.power for v in rebuilt.vehicles] == [1, 2]

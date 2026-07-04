@@ -7,15 +7,26 @@ A "spec" is one of:
   ``"module.submodule.ClassName"`` if not registered) and instantiated with
   no arguments
 - a mapping ``{"type": "Name", "params": {...}}``, resolved the same way and
-  instantiated with ``params`` (values that are themselves specs are built
-  recursively first)
+  instantiated with ``params``. If ``params`` is a dict, it is passed as
+  keyword arguments (``cls(**params)``); if it is a list, as positional
+  arguments (``cls(*params)``), for constructors taking ``*args``. Values
+  that are themselves specs are built recursively first.
+
+``to_spec()`` is the reverse operation: it serializes a live instance back
+into a spec by reflecting its constructor signature and reading same-named
+attributes. A class opts out of this generic reflection by exposing a
+``_registry_spec`` attribute (a spec, or ``None`` if it cannot be
+serialized) which ``to_spec()`` uses directly instead.
 """
 
 from __future__ import annotations
 
 import importlib
+import inspect
 from collections.abc import Callable
 from typing import Any, TypeVar
+
+import numpy as np
 
 from saealib.exceptions import ValidationError
 
@@ -60,11 +71,95 @@ def build(spec: Any) -> Any:
         return get(spec)()
     if _is_spec(spec):
         cls = get(spec["type"])
-        params = {
-            k: build(v) if _is_spec(v) else v for k, v in spec.get("params", {}).items()
-        }
+        params = spec.get("params", {})
+        if isinstance(params, list):
+            args = [build(v) if _is_spec(v) else v for v in params]
+            try:
+                return cls(*args)
+            except TypeError as e:
+                raise ValidationError(f"Cannot construct {spec['type']!r}: {e}") from e
+        built_params = {k: build(v) if _is_spec(v) else v for k, v in params.items()}
         try:
-            return cls(**params)
+            return cls(**built_params)
         except TypeError as e:
             raise ValidationError(f"Cannot construct {spec['type']!r}: {e}") from e
     return spec
+
+
+def dotted_path(obj: Any) -> str:
+    """Return the ``module.qualname`` import path of a class or function."""
+    return f"{obj.__module__}.{obj.__qualname__}"
+
+
+def _find_registered_name(cls: type) -> str | None:
+    for name, registered_cls in _REGISTRY.items():
+        if registered_cls is cls:
+            return name
+    return None
+
+
+def to_spec(obj: Any) -> Any:
+    """Recursively serialize ``obj`` into a spec (the reverse of ``build()``).
+
+    Primitives, ``None``, lists/tuples, and dicts pass through structurally
+    (numpy arrays become lists). Functions/builtins become a dotted import
+    path string. Other objects are reflected via their constructor
+    signature: for each ``__init__`` parameter, the same-named attribute on
+    ``obj`` is read and serialized recursively. A single ``*args``
+    (``VAR_POSITIONAL``) parameter is serialized as a params *list* instead
+    of a dict, so it round-trips through ``build()``'s positional-call path.
+    """
+    if obj is None or isinstance(obj, bool | int | float | str):
+        return obj
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, list | tuple):
+        return [to_spec(v) for v in obj]
+    if isinstance(obj, dict):
+        return {k: to_spec(v) for k, v in obj.items()}
+    if inspect.isfunction(obj) or inspect.isbuiltin(obj):
+        return dotted_path(obj)
+
+    if hasattr(obj, "_registry_spec"):
+        spec = obj._registry_spec
+        if spec is None:
+            raise ValidationError(
+                f"{type(obj).__name__} instance has no recorded spec and "
+                "cannot be serialized."
+            )
+        return spec
+
+    cls = type(obj)
+    type_name = _find_registered_name(cls) or dotted_path(cls)
+    parameters = [
+        p
+        for name, p in inspect.signature(cls.__init__).parameters.items()
+        if name != "self"
+    ]
+
+    var_positional = [p for p in parameters if p.kind is p.VAR_POSITIONAL]
+    if var_positional:
+        (param,) = var_positional
+        if not hasattr(obj, param.name):
+            raise ValidationError(
+                f"Cannot serialize {type_name!r}: no attribute {param.name!r} "
+                f"matching *{param.name} constructor parameter."
+            )
+        return {
+            "type": type_name,
+            "params": [to_spec(v) for v in getattr(obj, param.name)],
+        }
+
+    params: dict[str, Any] = {}
+    for param in parameters:
+        if param.kind is param.VAR_KEYWORD:
+            continue
+        if not hasattr(obj, param.name):
+            if param.default is not param.empty:
+                continue
+            raise ValidationError(
+                f"Cannot serialize {type_name!r}: no attribute {param.name!r} "
+                "matching required constructor parameter."
+            )
+        params[param.name] = to_spec(getattr(obj, param.name))
+    return {"type": type_name, "params": params}
