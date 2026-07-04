@@ -37,6 +37,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from saealib.registry import register
+
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
     from saealib.population import Archive, Population
@@ -121,6 +123,7 @@ class ArchiveObjectiveSet(TrainingSet):
         return TrainingData(train_x=archive.x, train_y=archive.f)
 
 
+@register()
 class KNNObjectiveSet(TrainingSet):
     """Retrieve the *k* nearest archive neighbours of ``candidate_x``.
 

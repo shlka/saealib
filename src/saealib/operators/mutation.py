@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from saealib.registry import register
+
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
 
@@ -109,6 +111,7 @@ class Mutation(ABC):
         return new
 
 
+@register()
 class MutationUniform(Mutation):
     """
     Uniform mutation operator.

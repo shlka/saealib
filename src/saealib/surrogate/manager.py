@@ -34,6 +34,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from saealib.registry import register
 from saealib.surrogate.accuracy import AccuracyEvaluator, SurrogateAccuracy
 from saealib.surrogate.base import ComparisonSurrogate, Surrogate
 from saealib.surrogate.prediction import SurrogatePrediction
@@ -326,6 +327,7 @@ class GlobalSurrogateManager(SurrogateManager):
         return self.post_score(scores, predictions, ctx)
 
 
+@register()
 class LocalSurrogateManager(SurrogateManager):
     """
     Surrogate manager that fits a local model per candidate (pre-selection).

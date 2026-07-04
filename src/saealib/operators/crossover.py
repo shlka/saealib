@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from saealib.registry import register
+
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
 
@@ -114,6 +116,7 @@ class Crossover(ABC):
         return new
 
 
+@register()
 class CrossoverBLXAlpha(Crossover):
     """
     BLX-alpha crossover operator.

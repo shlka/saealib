@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from saealib.pipeline import Pipeline
+from saealib.registry import register
 from saealib.stages import (
     ArchiveUpdateStage,
     AskStage,
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
     from saealib.optimizer import ComponentProvider
 
 
+@register()
 class GenerationBasedStrategy(OptimizationStrategy):
     """Generation-based strategy.
 

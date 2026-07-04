@@ -8,6 +8,7 @@ import numpy as np
 
 from saealib.context import OptimizationState
 from saealib.population import Population
+from saealib.registry import register
 
 
 class ParentSelection(ABC):
@@ -106,6 +107,7 @@ class TournamentSelection(ParentSelection):
         return selected_idx
 
 
+@register()
 class SequentialSelection(ParentSelection):
     """Sequential selection operator."""
 
@@ -239,6 +241,7 @@ class SurvivorSelection(ABC):
         pass
 
 
+@register()
 class TruncationSelection(SurvivorSelection):
     """
     Truncation selection operator.
