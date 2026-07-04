@@ -20,7 +20,7 @@ from saealib.callback import (
     logging_generation,
 )
 from saealib.context import OptimizationState
-from saealib.exceptions import ConfigurationError
+from saealib.exceptions import ConfigurationError, ValidationError
 from saealib.execution.evaluator import Evaluator, SerialEvaluator
 from saealib.execution.runner import Runner
 from saealib.surrogate.manager import LocalSurrogateManager, SurrogateManager
@@ -142,6 +142,7 @@ class Optimizer:
         self.initializer: Initializer | None = None
         self.evaluator: Evaluator = SerialEvaluator()
         self.instance_name: str = ""
+        self._preset: dict | None = None
 
     # --- setters (all return self for chaining) ---
 
@@ -200,6 +201,71 @@ class Optimizer:
         """Set the instance name. Returns self."""
         self.instance_name = name
         return self
+
+    def set_preset(self, preset: str | Path | dict) -> Self:
+        """
+        Set a user-defined preset. Returns self.
+
+        The preset is only used to fill components not already configured
+        via ``set_*()`` (see ``_resolve_defaults()``); explicitly set
+        components always take precedence over the preset.
+        """
+        from saealib.defaults import load_preset
+
+        self._preset = load_preset(preset)
+        return self
+
+    # --- preset export ---
+
+    def save_preset(self, path: str | Path) -> Path:
+        """
+        Save the currently configured components as a reusable preset file.
+
+        Serializes ``algorithm``, ``surrogate_manager``, ``strategy``, and
+        ``termination`` (whichever are set via ``set_*()``) into a preset
+        dict and writes it as YAML. Problem-owned parameters (``dim``,
+        ``direction``) are stripped so the preset can be reused across
+        problems of different dimensionality.
+
+        Parameters
+        ----------
+        path : str or Path
+            Destination file path. The ``.yaml`` extension is added if absent.
+
+        Returns
+        -------
+        Path
+            The path the preset was written to.
+
+        Raises
+        ------
+        ValidationError
+            If no components are configured, or a configured component
+            cannot be serialized (e.g. holds a raw lambda).
+        """
+        from saealib.defaults import dump_preset
+        from saealib.registry import strip_params, to_spec
+
+        preset: dict = {}
+        for name in ("algorithm", "surrogate_manager", "strategy", "termination"):
+            component = getattr(self, name, None)
+            if component is None:
+                continue
+            try:
+                spec = to_spec(component)
+            except ValidationError as e:
+                raise ValidationError(
+                    f"Cannot save preset: {name} is not serializable: {e}"
+                ) from e
+            preset[name] = strip_params(spec, "dim", "direction")
+
+        if not preset:
+            raise ValidationError(
+                "Cannot save preset: no components are configured. Call "
+                "set_algorithm()/set_strategy()/set_surrogate_manager()/"
+                "set_termination() first."
+            )
+        return dump_preset(preset, path)
 
     # --- callbacks ---
 
@@ -278,18 +344,51 @@ class Optimizer:
         """Fill unset components with library defaults (Registry + presets file).
 
         Components already set via ``set_*()`` are never overwritten. Gaps
-        are filled from a preset selected by (1) the algorithm's registered
+        are filled first from a user preset (``set_preset()``), if any, then
+        from a bundled preset selected by (1) the algorithm's registered
         name if ``algorithm`` is set, else (2) a Problem-shape rule, else
-        (3) the universal fallback preset. ``initializer`` and
-        ``termination`` are computed directly from ``problem.dim`` and are
-        not part of the presets file.
+        (3) the universal fallback preset. ``initializer`` is computed
+        directly from ``problem.dim`` and is not part of any preset;
+        ``termination`` falls back to ``200 * problem.dim`` function
+        evaluations only if neither ``set_*()`` nor a preset supplies one.
         """
         from saealib.defaults import load_defaults
-        from saealib.registry import build
+        from saealib.registry import build, inject_params
 
         algorithm = getattr(self, "algorithm", None)
         strategy = getattr(self, "strategy", None)
         surrogate_manager = getattr(self, "surrogate_manager", None)
+
+        user_preset = getattr(self, "_preset", None)
+        if user_preset is not None:
+            dim = self.problem.dim
+            direction = self.problem.direction
+            if algorithm is None and "algorithm" in user_preset:
+                algorithm = build(
+                    inject_params(
+                        user_preset["algorithm"], dim=dim, direction=direction
+                    )
+                )
+                self.algorithm = algorithm
+            if surrogate_manager is None and "surrogate_manager" in user_preset:
+                surrogate_manager = self._build_surrogate_manager(
+                    user_preset["surrogate_manager"]
+                )
+                self.surrogate_manager = surrogate_manager
+            if strategy is None and "strategy" in user_preset:
+                strategy = build(
+                    inject_params(user_preset["strategy"], dim=dim, direction=direction)
+                )
+                self.strategy = strategy
+            if (
+                getattr(self, "termination", None) is None
+                and "termination" in user_preset
+            ):
+                self.termination = build(
+                    inject_params(
+                        user_preset["termination"], dim=dim, direction=direction
+                    )
+                )
 
         if algorithm is None or strategy is None or surrogate_manager is None:
             defaults = load_defaults()
@@ -328,7 +427,7 @@ class Optimizer:
         return defaults["fallback"]
 
     def _build_surrogate_manager(self, spec: dict) -> SurrogateManager:
-        from saealib.registry import build
+        from saealib.registry import build, inject_params
 
         spec = copy.deepcopy(spec)
         params = spec.setdefault("params", {})
@@ -342,6 +441,9 @@ class Optimizer:
         params.setdefault(
             "acquisition",
             {"type": "MeanPrediction", "params": {"direction": self.problem.direction}},
+        )
+        spec = inject_params(
+            spec, dim=self.problem.dim, direction=self.problem.direction
         )
         return build(spec)
 

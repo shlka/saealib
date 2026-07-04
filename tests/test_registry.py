@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from saealib.exceptions import ValidationError
-from saealib.registry import build, get, register, to_spec
+from saealib.registry import build, get, inject_params, register, strip_params, to_spec
 
 
 class Engine:
@@ -35,6 +35,13 @@ class Opaque:
 
     def __init__(self, spec=None):
         self._registry_spec = spec
+
+
+class Powered:
+    """Takes a callable param — exercises the callable-ref spec path."""
+
+    def __init__(self, kernel=None):
+        self.kernel = kernel
 
 
 class TestRegisterAndGet:
@@ -141,6 +148,24 @@ class TestBuildVarargs:
         assert obj.vehicles == ()
 
 
+class TestBuildCallableRef:
+    def setup_method(self):
+        register("Powered")(Powered)
+
+    def test_build_resolves_callable_ref_param(self):
+        import math
+
+        obj = build(
+            {"type": "Powered", "params": {"kernel": {"callable": "math.isnan"}}}
+        )
+        assert obj.kernel is math.isnan
+
+    def test_build_top_level_callable_ref(self):
+        import math
+
+        assert build({"callable": "math.isnan"}) is math.isnan
+
+
 class TestToSpec:
     def setup_method(self):
         register("Engine")(Engine)
@@ -148,6 +173,7 @@ class TestToSpec:
         register("Convoy")(Convoy)
         register("OptionalOnly")(OptionalOnly)
         register("Opaque")(Opaque)
+        register("Powered")(Powered)
 
     @pytest.mark.parametrize(
         "value", [None, True, 1, 1.5, "s", [1, 2], (1, 2), {"a": 1}]
@@ -158,10 +184,10 @@ class TestToSpec:
     def test_numpy_array_becomes_list(self):
         assert to_spec(np.array([1.0, 2.0])) == [1.0, 2.0]
 
-    def test_function_becomes_dotted_path(self):
+    def test_function_becomes_callable_ref(self):
         import math
 
-        assert to_spec(math.isnan) == "math.isnan"
+        assert to_spec(math.isnan) == {"callable": "math.isnan"}
 
     def test_registered_instance_reflects_constructor_params(self):
         obj = Engine(power=42)
@@ -242,3 +268,103 @@ class TestToSpec:
         rebuilt = build(to_spec(original))
         assert isinstance(rebuilt, Convoy)
         assert [v.power for v in rebuilt.vehicles] == [1, 2]
+
+    def test_round_trip_function_param(self):
+        import math
+
+        original = Powered(kernel=math.isnan)
+        spec = to_spec(original)
+        assert spec == {
+            "type": "Powered",
+            "params": {"kernel": {"callable": "math.isnan"}},
+        }
+        rebuilt = build(spec)
+        assert rebuilt.kernel is math.isnan
+
+    def test_lambda_raises_validation_error(self):
+        with pytest.raises(ValidationError):
+            to_spec(lambda x: x)
+
+    def test_nested_function_raises_validation_error(self):
+        def inner(x):
+            return x
+
+        with pytest.raises(ValidationError):
+            to_spec(inner)
+
+
+class TestStripParams:
+    def test_strips_key_from_flat_spec(self):
+        spec = {"type": "Engine", "params": {"power": 1, "dim": 3}}
+        stripped = strip_params(spec, "dim")
+        assert stripped == {"type": "Engine", "params": {"power": 1}}
+
+    def test_strips_recursively_from_nested_dict_params(self):
+        spec = {
+            "type": "Car",
+            "params": {
+                "engine": {"type": "Engine", "params": {"power": 1, "direction": [1]}},
+                "dim": 3,
+            },
+        }
+        stripped = strip_params(spec, "dim", "direction")
+        assert stripped == {
+            "type": "Car",
+            "params": {"engine": {"type": "Engine", "params": {"power": 1}}},
+        }
+
+    def test_strips_recursively_from_list_params(self):
+        spec = {
+            "type": "Convoy",
+            "params": [{"type": "Engine", "params": {"power": 1, "dim": 3}}],
+        }
+        stripped = strip_params(spec, "dim")
+        assert stripped == {
+            "type": "Convoy",
+            "params": [{"type": "Engine", "params": {"power": 1}}],
+        }
+
+    def test_is_non_destructive(self):
+        spec = {"type": "Engine", "params": {"power": 1, "dim": 3}}
+        strip_params(spec, "dim")
+        assert spec == {"type": "Engine", "params": {"power": 1, "dim": 3}}
+
+
+class TestInjectParams:
+    def setup_method(self):
+        register("Engine")(Engine)
+        register("Car")(Car)
+
+    def test_injects_missing_param(self):
+        spec = {"type": "Engine", "params": {}}
+        injected = inject_params(spec, power=250)
+        assert injected == {"type": "Engine", "params": {"power": 250}}
+
+    def test_does_not_overwrite_existing_param(self):
+        spec = {"type": "Engine", "params": {"power": 42}}
+        injected = inject_params(spec, power=250)
+        assert injected == {"type": "Engine", "params": {"power": 42}}
+
+    def test_does_not_inject_param_absent_from_signature(self):
+        spec = {"type": "Engine", "params": {}}
+        injected = inject_params(spec, not_a_param=1)
+        assert injected == {"type": "Engine", "params": {}}
+
+    def test_injects_into_nested_spec(self):
+        spec = {
+            "type": "Car",
+            "params": {"engine": {"type": "Engine", "params": {}}, "wheels": 4},
+        }
+        injected = inject_params(spec, power=99)
+        assert injected == {
+            "type": "Car",
+            "params": {
+                "engine": {"type": "Engine", "params": {"power": 99}},
+                "wheels": 4,
+            },
+        }
+
+    def test_is_non_destructive(self):
+        spec = {"type": "Engine", "params": {}}
+        inject_params(spec, power=250)
+        assert spec == {"type": "Engine", "params": {}}
