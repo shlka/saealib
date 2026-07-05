@@ -127,6 +127,10 @@ from saealib.problem import Problem as Problem
 from saealib.problem import StaticToleranceHandler as StaticToleranceHandler
 from saealib.problem import exponential_epsilon_schedule as exponential_epsilon_schedule
 from saealib.problem import linear_epsilon_schedule as linear_epsilon_schedule
+from saealib.registry import build as build
+from saealib.registry import get as get
+from saealib.registry import register as register
+from saealib.registry import to_spec as to_spec
 from saealib.strategies import GenerationBasedStrategy as GenerationBasedStrategy
 from saealib.strategies import IndividualBasedStrategy as IndividualBasedStrategy
 from saealib.strategies import OptimizationStrategy as OptimizationStrategy

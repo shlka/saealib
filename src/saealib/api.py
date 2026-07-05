@@ -22,14 +22,22 @@ from saealib.termination import Termination
 from saealib.termination import max_fe as max_fe_cond
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from saealib.algorithms.base import Algorithm
     from saealib.strategies.base import OptimizationStrategy
     from saealib.surrogate.base import Surrogate
 
+
 # Sentinel distinguishing "argument omitted" (defer to Optimizer's own
 # default resolution) from an explicit ``None`` passed by the caller (which
 # keeps its pre-existing meaning, e.g. surrogate=None raises ValidationError).
-_UNSET = object()
+class _UnsetType:
+    def __repr__(self) -> str:
+        return "UNSET"
+
+
+_UNSET = _UnsetType()
 
 
 @dataclass
@@ -213,6 +221,7 @@ def _run(
     pop_size: int | None,
     seed: int | None,
     verbose: bool,
+    preset: str | Path | dict | None,
 ) -> Result:
     dim = problem.dim
     if pop_size is None:
@@ -228,6 +237,9 @@ def _run(
     termination = Termination(max_fe_cond(max_fe))
 
     opt = Optimizer(problem).set_initializer(initializer).set_termination(termination)
+
+    if preset is not None:
+        opt.set_preset(preset)
 
     # Arguments left at _UNSET are not passed to set_*(); Optimizer.run()'s
     # _resolve_defaults() then fills them from the library's bundled preset.
@@ -263,6 +275,7 @@ def minimize(
     direction: np.ndarray | list[str] | None = None,
     surrogate: str | Surrogate | SurrogateManager | None = _UNSET,  # type: ignore
     strategy: str | OptimizationStrategy | None = _UNSET,  # type: ignore
+    preset: str | Path | dict | None = None,
     max_fe: int | None = None,
     pop_size: int | None = None,
     seed: int | None = None,
@@ -300,6 +313,10 @@ def minimize(
         ``'ib'``, ``'gb'``, ``'ps'``, or an :class:`OptimizationStrategy`. If
         omitted, the library's bundled default preset resolves it (currently
         individual-based).
+    preset : str, Path, dict, or None, optional
+        A preset (YAML file path or dict) providing default component
+        configuration. See :meth:`Optimizer.set_preset`. Components explicitly
+        passed via *algorithm*/*surrogate*/*strategy* still take precedence.
     max_fe : int or None
         Maximum true function evaluations. Default: ``200 * dim``.
     pop_size : int or None
@@ -332,6 +349,7 @@ def minimize(
         pop_size,
         seed,
         verbose,
+        preset,
     )
 
 
@@ -346,6 +364,7 @@ def maximize(
     direction: np.ndarray | list[str] | None = None,
     surrogate: str | Surrogate | SurrogateManager | None = _UNSET,  # type: ignore
     strategy: str | OptimizationStrategy | None = _UNSET,  # type: ignore
+    preset: str | Path | dict | None = None,
     max_fe: int | None = None,
     pop_size: int | None = None,
     seed: int | None = None,
@@ -385,6 +404,10 @@ def maximize(
         ``'ib'``, ``'gb'``, ``'ps'``, or an :class:`OptimizationStrategy`. If
         omitted, the library's bundled default preset resolves it (currently
         individual-based).
+    preset : str, Path, dict, or None, optional
+        A preset (YAML file path or dict) providing default component
+        configuration. See :meth:`Optimizer.set_preset`. Components explicitly
+        passed via *algorithm*/*surrogate*/*strategy* still take precedence.
     max_fe : int or None
         Maximum true function evaluations. Default: ``200 * dim``.
     pop_size : int or None
@@ -417,4 +440,5 @@ def maximize(
         pop_size,
         seed,
         verbose,
+        preset,
     )

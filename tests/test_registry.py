@@ -330,6 +330,24 @@ class TestStripParams:
         assert spec == {"type": "Engine", "params": {"power": 1, "dim": 3}}
 
 
+class TestTopLevelExport:
+    def test_importable_from_top_level(self):
+        import saealib
+
+        assert saealib.register is register
+        assert saealib.build is build
+        assert saealib.get is get
+        assert saealib.to_spec is to_spec
+
+    def test_exported_in_all(self):
+        import saealib
+
+        assert "register" in saealib.__all__
+        assert "build" in saealib.__all__
+        assert "get" in saealib.__all__
+        assert "to_spec" in saealib.__all__
+
+
 class TestInjectParams:
     def setup_method(self):
         register("Engine")(Engine)

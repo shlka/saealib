@@ -20,6 +20,22 @@ into a spec by reflecting its constructor signature and reading same-named
 attributes. A class opts out of this generic reflection by exposing a
 ``_registry_spec`` attribute (a spec, or ``None`` if it cannot be
 serialized) which ``to_spec()`` uses directly instead.
+
+Custom components are registered the same way as builtins, which lets them be
+referenced by a short name from preset YAML files just like ``GA`` or
+``RBFSurrogate``:
+
+>>> from saealib import register
+>>> from saealib.surrogate.base import Surrogate
+>>>
+>>> @register()
+... class MyCustomSurrogate(Surrogate):
+...     ...
+
+Once registered, ``"MyCustomSurrogate"`` (or ``{"type": "MyCustomSurrogate",
+"params": {...}}``) resolves via :func:`get`/:func:`build` exactly like a
+bundled component, including inside a preset passed to
+:meth:`~saealib.optimizer.Optimizer.set_preset`.
 """
 
 from __future__ import annotations
@@ -44,7 +60,24 @@ T = TypeVar("T", bound=_Named)
 
 
 def register(name: str | None = None) -> Callable[[T], T]:
-    """Register a class or function under ``name`` (default ``cls.__name__``)."""
+    """Register a class or function under ``name`` (default ``cls.__name__``).
+
+    Use this to make a custom ``Algorithm``/``Surrogate``/etc. subclass
+    resolvable by name from a preset YAML file, the same way bundled
+    components are:
+
+    >>> from saealib import register
+    >>> from saealib.surrogate.base import Surrogate
+    >>>
+    >>> @register()
+    ... class MyCustomSurrogate(Surrogate):
+    ...     ...
+
+    ``MyCustomSurrogate`` can now be referenced as ``"MyCustomSurrogate"`` or
+    ``{"type": "MyCustomSurrogate", "params": {...}}`` anywhere a spec is
+    accepted, e.g. in a preset consumed by
+    :meth:`~saealib.optimizer.Optimizer.set_preset`.
+    """
 
     def _decorator(cls: T) -> T:
         _REGISTRY[name or cls.__name__] = cls
