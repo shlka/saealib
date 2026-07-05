@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import dataclasses
+import importlib.util
 import pickle
 import warnings
 from collections.abc import Generator
@@ -666,3 +667,108 @@ class Optimizer:
             optimizer, ctx = pickle.load(f)
         ctx = dataclasses.replace(ctx, data={**ctx.data, "resumed": True})
         return optimizer, ctx
+
+    # ------------------------------------------------------------------
+    # Construction: from a problem definition file
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def from_problem_file(
+        cls,
+        problem_path: str | Path,
+        preset: str | Path | dict | None = None,
+    ) -> Optimizer:
+        """
+        Build an Optimizer from a Python file defining a problem.
+
+        The file at *problem_path* is executed as a standalone module (it is not
+        registered in ``sys.modules``) and must define a top-level ``problem``
+        variable holding a :class:`~saealib.problem.Problem` instance. If
+        *preset* is given, it is applied first via :meth:`set_preset`; any of
+        the top-level variables ``algorithm``, ``strategy``,
+        ``surrogate_manager``, ``termination`` defined in the file are then
+        applied via the corresponding ``set_*()`` method, so the file can
+        override individual components of the preset. A top-level ``seed``
+        variable, if present, is passed to the ``Optimizer`` constructor.
+
+        Parameters
+        ----------
+        problem_path : str or Path
+            Path to a ``.py`` file defining a top-level ``problem`` variable.
+        preset : str, Path, dict, or None, optional
+            Preset applied before the file's own component definitions, so
+            that the file can override individual components. See
+            :meth:`set_preset`.
+
+        Returns
+        -------
+        Optimizer
+            A configured, not-yet-run ``Optimizer`` instance. Call ``run()``
+            or ``iterate()`` on it.
+
+        Raises
+        ------
+        ValidationError
+            If the file does not define a top-level ``problem`` variable, or
+            it is not a ``Problem`` instance. Also raised if a top-level
+            ``algorithm``, ``strategy``, ``surrogate_manager``,
+            ``termination``, or ``seed`` variable is defined but is not an
+            instance of its expected type.
+        FileNotFoundError
+            If *problem_path* does not exist.
+
+        Examples
+        --------
+        >>> # problem.py:
+        >>> #     problem = Problem(func=..., dim=2, n_obj=1, direction=[-1])
+        >>> #     seed = 42
+        >>> opt = Optimizer.from_problem_file("problem.py", preset="preset.yaml")
+        >>> ctx = opt.run()  # doctest: +SKIP
+        """
+        from saealib.algorithms.base import Algorithm
+        from saealib.problem import Problem
+        from saealib.strategies.base import OptimizationStrategy
+        from saealib.surrogate.manager import SurrogateManager
+        from saealib.termination import Termination
+
+        p = Path(problem_path)
+        spec = importlib.util.spec_from_file_location(p.stem, p)
+        if spec is None or spec.loader is None:
+            raise ValidationError(f"Cannot load module from {p}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        problem = getattr(module, "problem", None)
+        if not isinstance(problem, Problem):
+            raise ValidationError(
+                f"{p} must define a top-level `problem` variable holding a "
+                "Problem instance"
+            )
+
+        seed = getattr(module, "seed", None)
+        if seed is not None and not isinstance(seed, int):
+            raise ValidationError(
+                f"{p}: top-level 'seed' must be an int instance, "
+                f"got {type(seed).__name__}"
+            )
+        opt = cls(problem, seed=seed) if seed is not None else cls(problem)
+
+        if preset is not None:
+            opt.set_preset(preset)
+
+        for name, setter, expected in (
+            ("algorithm", opt.set_algorithm, Algorithm),
+            ("strategy", opt.set_strategy, OptimizationStrategy),
+            ("surrogate_manager", opt.set_surrogate_manager, SurrogateManager),
+            ("termination", opt.set_termination, Termination),
+        ):
+            component = getattr(module, name, None)
+            if component is not None:
+                if not isinstance(component, expected):
+                    raise ValidationError(
+                        f"{p}: top-level '{name}' must be a {expected.__name__} "
+                        f"instance, got {type(component).__name__}"
+                    )
+                setter(component)
+
+        return opt
