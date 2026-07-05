@@ -15,6 +15,8 @@ import numpy as np
 import pytest
 
 from saealib.context import OptimizationContext
+from saealib.exceptions import ValidationError
+from saealib.registry import build, get, to_spec
 from saealib.termination import (
     Termination,
     TerminationCondition,
@@ -424,3 +426,75 @@ class TestStalled:
     def test_empty_archive_returns_false(self) -> None:
         cond = stalled(3)
         assert cond(_make_obj_ctx([], weight=-1.0, gen=10)) is False
+
+
+# ===========================================================================
+# Registry integration: to_spec()/build() round-tripping
+# ===========================================================================
+class TestRegistryIntegration:
+    """Factories record a _registry_spec; Termination keeps the original
+    conditions tuple, so both are serializable via Registry.to_spec()/build()."""
+
+    @pytest.mark.parametrize("name", ["max_fe", "max_gen", "f_target", "stalled"])
+    def test_factories_are_registered(self, name) -> None:
+        assert get(name).__name__ == name
+
+    def test_termination_is_registered(self) -> None:
+        assert get("Termination") is Termination
+
+    @pytest.mark.parametrize(
+        ("factory", "kwargs"),
+        [
+            (max_fe, {"value": 100}),
+            (max_gen, {"value": 50}),
+            (f_target, {"value": 1e-6}),
+            (stalled, {"window": 5, "tol": 1e-8}),
+        ],
+    )
+    def test_factory_condition_spec_round_trips(self, factory, kwargs) -> None:
+        cond = factory(**kwargs)
+        rebuilt = build(to_spec(cond))
+        assert isinstance(rebuilt, TerminationCondition)
+        assert rebuilt.__qualname__ == cond.__qualname__
+
+    def test_composed_condition_has_no_spec(self) -> None:
+        composed = max_fe(100) | max_gen(50)
+        with pytest.raises(ValidationError):
+            to_spec(composed)
+
+    def test_raw_lambda_condition_has_no_spec(self) -> None:
+        cond = TerminationCondition(lambda ctx: ctx.fe >= 10)
+        with pytest.raises(ValidationError):
+            to_spec(cond)
+
+    def test_termination_single_condition_round_trips(self) -> None:
+        t = Termination(max_fe(200))
+        spec = to_spec(t)
+        assert spec == {
+            "type": "Termination",
+            "params": [{"type": "max_fe", "params": {"value": 200}}],
+        }
+        rebuilt = build(spec)
+        assert isinstance(rebuilt, Termination)
+        assert rebuilt.is_terminated(_make_ctx(fe=200)) is True
+        assert rebuilt.is_terminated(_make_ctx(fe=199)) is False
+
+    def test_termination_multiple_conditions_round_trip(self) -> None:
+        t = Termination(max_fe(100), max_gen(50))
+        rebuilt = build(to_spec(t))
+        assert isinstance(rebuilt, Termination)
+        assert len(rebuilt.conditions) == 2
+        assert rebuilt.is_terminated(_make_ctx(fe=10, gen=50)) is True
+        assert rebuilt.is_terminated(_make_ctx(fe=10, gen=10)) is False
+
+    def test_termination_with_unspecced_condition_raises(self) -> None:
+        t = Termination(max_fe(100), lambda ctx: ctx.fe >= 10)
+        with pytest.raises(ValidationError):
+            to_spec(t)
+
+    def test_all_of_composition_is_not_serializable(self) -> None:
+        """all_of() collapses conditions into one AND-composed condition
+        before storing it — that composed condition carries no spec."""
+        t = Termination.all_of(max_fe(100), max_gen(50))
+        with pytest.raises(ValidationError):
+            to_spec(t)

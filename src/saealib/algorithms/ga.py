@@ -16,6 +16,7 @@ from saealib.operators.dedup import DuplicateElimination
 from saealib.operators.mutation import MutationCategorical, MutationIntegerUniform
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
+from saealib.registry import register
 
 if TYPE_CHECKING:
     from saealib.operators.crossover import Crossover
@@ -92,6 +93,7 @@ def _route_mutation(
     return result
 
 
+@register()
 class GA(Algorithm):
     """
     Genetic Algorithm class.

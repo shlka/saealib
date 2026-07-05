@@ -5,6 +5,7 @@
 
 highlevel
 optimizer
+registry
 problem
 population
 algorithms

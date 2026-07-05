@@ -11,6 +11,7 @@ import functools
 from typing import TYPE_CHECKING
 
 from saealib.pipeline import Pipeline
+from saealib.registry import register
 from saealib.stages import (
     ArchiveUpdateStage,
     AskStage,
@@ -32,6 +33,7 @@ def _n_eval_by_ratio(state: OptimizationState, *, ratio: float) -> int:
     return max(1, int(ratio * len(state.offspring)))
 
 
+@register()
 class IndividualBasedStrategy(OptimizationStrategy):
     """Individual-based strategy."""
 

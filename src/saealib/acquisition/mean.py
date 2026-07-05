@@ -7,12 +7,14 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from saealib.acquisition.base import AcquisitionFunction
+from saealib.registry import register
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
     from saealib.population import Archive
 
 
+@register()
 class MeanPrediction(AcquisitionFunction):
     """
     Acquisition function based on predicted mean value (exploitation).

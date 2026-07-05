@@ -11,11 +11,13 @@ from saealib.callback import PostAskEvent
 from saealib.context import OptimizationState
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
+from saealib.registry import register
 
 if TYPE_CHECKING:
     from saealib.optimizer import Dispatchable
 
 
+@register()
 class PSO(Algorithm):
     """
     Particle Swarm Optimization (PSO) for single-objective problems.

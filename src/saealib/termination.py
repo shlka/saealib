@@ -12,6 +12,8 @@ from collections.abc import Callable
 from functools import partial, reduce
 from typing import TYPE_CHECKING
 
+from saealib.registry import register
+
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
 
@@ -66,6 +68,7 @@ class TerminationCondition:
         *,
         name: str | None = None,
         doc: str | None = None,
+        spec: dict | None = None,
     ) -> None:
         if not callable(func):
             raise TypeError(
@@ -78,6 +81,11 @@ class TerminationCondition:
         resolved_doc = doc if doc is not None else getattr(func, "__doc__", None)
         if resolved_doc is not None:
             self.__doc__ = resolved_doc
+        # Registry.to_spec() reads this instead of reflecting the constructor
+        # (``func`` is a closure/partial and cannot be serialized generically).
+        # ``None`` for compositions (|, &, ~) and raw callables not built via
+        # a registered factory (max_fe, max_gen, f_target, stalled).
+        self._registry_spec = spec
 
     @staticmethod
     def _coerce(cond: ConditionFunc | TerminationCondition) -> TerminationCondition:
@@ -134,6 +142,7 @@ class TerminationCondition:
         return f"TerminationCondition({self.__qualname__})"
 
 
+@register()
 class Termination:
     """
     Termination class to determine when to stop the optimization process.
@@ -177,13 +186,15 @@ class Termination:
                     "Termination condition must be callable, "
                     f"got {type(cond).__name__}."
                 )
+        # Kept alongside the composed condition below so Registry.to_spec()
+        # can serialize each original condition (see TerminationCondition.spec).
+        self.conditions: tuple[TerminationCondition, ...] = tuple(
+            TerminationCondition._coerce(cond) for cond in conditions
+        )
         # Combine all conditions with OR into a single composed
         # ``TerminationCondition``, which is the sole source of truth used by
         # ``is_terminated``.
-        self._condition: TerminationCondition = reduce(
-            operator.or_,
-            (TerminationCondition._coerce(cond) for cond in conditions),
-        )
+        self._condition: TerminationCondition = reduce(operator.or_, self.conditions)
 
     @property
     def condition(self) -> TerminationCondition:
@@ -283,6 +294,7 @@ def _gen_reached(ctx: OptimizationState, value: int) -> bool:
     return ctx.gen >= value
 
 
+@register()
 def max_fe(value: int) -> TerminationCondition:
     """
     Create a termination condition based on maximum function evaluations.
@@ -306,9 +318,11 @@ def max_fe(value: int) -> TerminationCondition:
         partial(_fe_reached, value=value),
         name=f"max_fe({value})",
         doc=f"Terminate when fe >= {value}.",
+        spec={"type": "max_fe", "params": {"value": value}},
     )
 
 
+@register()
 def max_gen(value: int) -> TerminationCondition:
     """
     Create a termination condition based on maximum generations.
@@ -332,9 +346,11 @@ def max_gen(value: int) -> TerminationCondition:
         partial(_gen_reached, value=value),
         name=f"max_gen({value})",
         doc=f"Terminate when gen >= {value}.",
+        spec={"type": "max_gen", "params": {"value": value}},
     )
 
 
+@register()
 def f_target(value: float) -> TerminationCondition:
     """
     Create a termination condition based on a target objective value.
@@ -375,9 +391,11 @@ def f_target(value: float) -> TerminationCondition:
         _condition,
         name=f"f_target({value})",
         doc=f"Terminate when the best objective reaches {value}.",
+        spec={"type": "f_target", "params": {"value": value}},
     )
 
 
+@register()
 def stalled(window: int, tol: float = 1e-8) -> TerminationCondition:
     """
     Create a termination condition based on lack of improvement (stagnation).
@@ -423,4 +441,5 @@ def stalled(window: int, tol: float = 1e-8) -> TerminationCondition:
         _condition,
         name=f"stalled({window})",
         doc=f"Terminate after {window} generations without improvement.",
+        spec={"type": "stalled", "params": {"window": window, "tol": tol}},
     )

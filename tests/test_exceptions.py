@@ -80,7 +80,11 @@ class TestMinimizeBoundary:
 
 
 class TestOptimizerBoundary:
-    def _incomplete_optimizer(self) -> saealib.Optimizer:
+    def _misconfigured_optimizer(self) -> saealib.Optimizer:
+        """An Optimizer with an inconsistency that library defaults cannot
+        resolve (comparator direction length mismatched with n_obj), as
+        opposed to merely-unset components, which are auto-filled by
+        Optimizer._resolve_defaults() as of the Registry-based defaults."""
         import numpy as np
 
         problem = saealib.Problem(
@@ -91,16 +95,17 @@ class TestOptimizerBoundary:
             lb=[-5.0, -5.0],
             ub=[5.0, 5.0],
         )
-        return saealib.Optimizer(problem)  # no algorithm/strategy/termination set
+        problem.comparator.direction = np.array([1.0, 1.0])  # len 2 != n_obj=1
+        return saealib.Optimizer(problem)
 
     def test_misconfigured_run_raises_configuration_error(self):
         with pytest.raises(ConfigurationError, match="Optimizer misconfigured"):
-            self._incomplete_optimizer().run()
+            self._misconfigured_optimizer().run()
 
     def test_misconfigured_run_still_value_error(self):
         with pytest.raises(ValueError, match="Optimizer misconfigured"):
-            self._incomplete_optimizer().run()
+            self._misconfigured_optimizer().run()
 
     def test_misconfigured_iterate_raises_configuration_error(self):
         with pytest.raises(ConfigurationError, match="Optimizer misconfigured"):
-            next(self._incomplete_optimizer().iterate())
+            next(self._misconfigured_optimizer().iterate())

@@ -86,16 +86,23 @@ from saealib.execution.evaluator import JoblibEvaluator as JoblibEvaluator
 from saealib.execution.evaluator import SerialEvaluator as SerialEvaluator
 from saealib.execution.initializer import Initializer as Initializer
 from saealib.execution.initializer import LHSInitializer as LHSInitializer
+from saealib.execution.initializer import RandomInitializer as RandomInitializer
+from saealib.execution.initializer import SobolInitializer as SobolInitializer
 from saealib.operators import Crossover as Crossover
 
 # operators (less common)
 from saealib.operators import CrossoverBLXAlpha as CrossoverBLXAlpha
+from saealib.operators import CrossoverCategorical as CrossoverCategorical
+from saealib.operators import CrossoverIntegerSBX as CrossoverIntegerSBX
 from saealib.operators import CrossoverOnePoint as CrossoverOnePoint
 from saealib.operators import CrossoverSBX as CrossoverSBX
 from saealib.operators import CrossoverTwoPoint as CrossoverTwoPoint
 from saealib.operators import CrossoverUniform as CrossoverUniform
+from saealib.operators import DuplicateElimination as DuplicateElimination
 from saealib.operators import Mutation as Mutation
+from saealib.operators import MutationCategorical as MutationCategorical
 from saealib.operators import MutationGaussian as MutationGaussian
+from saealib.operators import MutationIntegerUniform as MutationIntegerUniform
 from saealib.operators import MutationPolynomial as MutationPolynomial
 from saealib.operators import MutationUniform as MutationUniform
 from saealib.operators import ParentSelection as ParentSelection
@@ -106,6 +113,8 @@ from saealib.operators import TournamentSelection as TournamentSelection
 from saealib.operators import TruncationSelection as TruncationSelection
 from saealib.operators import repair_clipping as repair_clipping
 from saealib.optimizer import Optimizer as Optimizer
+from saealib.pipeline import Pipeline as Pipeline
+from saealib.pipeline import Stage as Stage
 from saealib.population import Archive as Archive
 
 # population (mixins)
@@ -127,43 +136,56 @@ from saealib.problem import Problem as Problem
 from saealib.problem import StaticToleranceHandler as StaticToleranceHandler
 from saealib.problem import exponential_epsilon_schedule as exponential_epsilon_schedule
 from saealib.problem import linear_epsilon_schedule as linear_epsilon_schedule
+from saealib.registry import build as build
+from saealib.registry import get as get
+from saealib.registry import register as register
+from saealib.registry import to_spec as to_spec
+
+# stages
+from saealib.stages import ArchiveUpdateStage as ArchiveUpdateStage
+from saealib.stages import AskStage as AskStage
+from saealib.stages import CountGenerationStage as CountGenerationStage
+from saealib.stages import InitializationStage as InitializationStage
+from saealib.stages import SortByScoreStage as SortByScoreStage
+from saealib.stages import SurrogateFitStage as SurrogateFitStage
+from saealib.stages import SurrogateOnlyLoopStage as SurrogateOnlyLoopStage
+from saealib.stages import SurrogateScoreStage as SurrogateScoreStage
+from saealib.stages import TellStage as TellStage
+from saealib.stages import TopKSelectionStage as TopKSelectionStage
+from saealib.stages import TrueEvaluationStage as TrueEvaluationStage
+from saealib.strategies import DirectStrategy as DirectStrategy
 from saealib.strategies import GenerationBasedStrategy as GenerationBasedStrategy
 from saealib.strategies import IndividualBasedStrategy as IndividualBasedStrategy
 from saealib.strategies import OptimizationStrategy as OptimizationStrategy
 from saealib.strategies import PreSelectionStrategy as PreSelectionStrategy
-from saealib.surrogate import (
-    AccuracyBasedSurrogateSwitcher as AccuracyBasedSurrogateSwitcher,
-)
 
 # surrogate (specialized)
 from saealib.surrogate import ArchiveBasedManager as ArchiveBasedManager
 from saealib.surrogate import CompositeSurrogateManager as CompositeSurrogateManager
 from saealib.surrogate import DensityManager as DensityManager
-from saealib.surrogate import DTSurrogate as DTSurrogate
-from saealib.surrogate import GenCtrlSwitcher as GenCtrlSwitcher
 from saealib.surrogate import GlobalSurrogateManager as GlobalSurrogateManager
-from saealib.surrogate import GPRSurrogate as GPRSurrogate
-from saealib.surrogate import LGBMSurrogate as LGBMSurrogate
 from saealib.surrogate import LocalSurrogateManager as LocalSurrogateManager
-from saealib.surrogate import ManagerSwitcher as ManagerSwitcher
 from saealib.surrogate import NichingManager as NichingManager
-from saealib.surrogate import NNSurrogate as NNSurrogate
 from saealib.surrogate import NoveltyManager as NoveltyManager
 from saealib.surrogate import PerObjectiveSurrogate as PerObjectiveSurrogate
 from saealib.surrogate import RBFSurrogate as RBFSurrogate
+from saealib.surrogate import SklearnGPRSurrogate as SklearnGPRSurrogate
+from saealib.surrogate import SklearnLGBMSurrogate as SklearnLGBMSurrogate
+from saealib.surrogate import SklearnNNSurrogate as SklearnNNSurrogate
+from saealib.surrogate import SklearnRFRSurrogate as SklearnRFRSurrogate
 from saealib.surrogate import SklearnSurrogate as SklearnSurrogate
-from saealib.surrogate import StrategySwitcher as StrategySwitcher
+from saealib.surrogate import SklearnSVMSurrogate as SklearnSVMSurrogate
+from saealib.surrogate import SklearnXGBSurrogate as SklearnXGBSurrogate
 from saealib.surrogate import Surrogate as Surrogate
 from saealib.surrogate import SurrogateManager as SurrogateManager
 from saealib.surrogate import SurrogatePrediction as SurrogatePrediction
-from saealib.surrogate import SVMSurrogate as SVMSurrogate
 from saealib.surrogate import TorchSurrogate as TorchSurrogate
-from saealib.surrogate import XGBSurrogate as XGBSurrogate
 from saealib.surrogate import product_combine as product_combine
 from saealib.surrogate import rank_weighted_combine as rank_weighted_combine
 
 # deprecated
 from saealib.surrogate._deprecated import GPSurrogate as GPSurrogate
+from saealib.surrogate.rbf import RBFSurrogate as RBFsurrogate  # noqa: F401
 
 # utils
 from saealib.surrogate.rbf import gaussian_kernel as gaussian_kernel
@@ -183,3 +205,4 @@ from saealib.utils.weight_vectors import (
 from saealib.variables import CategoricalVariable as CategoricalVariable
 from saealib.variables import ContinuousVariable as ContinuousVariable
 from saealib.variables import IntegerVariable as IntegerVariable
+from saealib.variables import Variable as Variable

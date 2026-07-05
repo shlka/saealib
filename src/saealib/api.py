@@ -9,29 +9,35 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from saealib.acquisition.mean import MeanPrediction
-from saealib.algorithms.ga import GA
-from saealib.algorithms.pso import PSO
 from saealib.callback import GenerationStartEvent, logging_generation
 from saealib.context import OptimizationState
 from saealib.exceptions import ValidationError
 from saealib.execution.initializer import LHSInitializer
-from saealib.operators.crossover import CrossoverBLXAlpha
-from saealib.operators.mutation import MutationUniform
-from saealib.operators.selection import SequentialSelection, TruncationSelection
 from saealib.optimizer import Optimizer
 from saealib.problem import Problem
 from saealib.strategies.gb import GenerationBasedStrategy
-from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate.manager import LocalSurrogateManager, SurrogateManager
-from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
 from saealib.termination import Termination
 from saealib.termination import max_fe as max_fe_cond
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from saealib.algorithms.base import Algorithm
     from saealib.strategies.base import OptimizationStrategy
     from saealib.surrogate.base import Surrogate
+
+
+# Sentinel distinguishing "argument omitted" (defer to Optimizer's own
+# default resolution) from an explicit ``None`` passed by the caller (which
+# keeps its pre-existing meaning, e.g. surrogate=None raises ValidationError).
+class _UnsetType:
+    def __repr__(self) -> str:
+        return "UNSET"
+
+
+_UNSET = _UnsetType()
 
 
 @dataclass
@@ -101,18 +107,17 @@ def _ensure_problem(
     return Problem(func=func, dim=dim, n_obj=n_obj, direction=direction, lb=lb, ub=ub)
 
 
-def _resolve_algorithm(algorithm: str | Algorithm) -> Algorithm:
+def _resolve_algorithm(algorithm: str | Algorithm | None) -> Algorithm | None:
     if isinstance(algorithm, str):
+        from saealib.defaults import load_defaults
+        from saealib.registry import build, get
+
         name = algorithm.upper()
         if name == "GA":
-            return GA(
-                crossover=CrossoverBLXAlpha(prob=0.7, alpha=0.4),
-                mutation=MutationUniform(prob_var=0.3),
-                parent_selection=SequentialSelection(),
-                survivor_selection=TruncationSelection(),
-            )
+            spec = load_defaults()["presets"]["ga_rbf_ib"]["algorithm"]
+            return build(spec)
         if name == "PSO":
-            return PSO()
+            return get("PSO")()
         raise ValidationError(
             f"Unknown algorithm: {algorithm!r}. "
             "Use 'GA', 'PSO', or an Algorithm instance."
@@ -123,7 +128,6 @@ def _resolve_algorithm(algorithm: str | Algorithm) -> Algorithm:
 def _resolve_surrogate(
     surrogate: str | Surrogate | SurrogateManager | None,
     problem: Problem,
-    n_neighbors: int,
 ) -> SurrogateManager:
     if surrogate is None:
         raise ValidationError(
@@ -134,13 +138,11 @@ def _resolve_surrogate(
         return surrogate
     if isinstance(surrogate, str):
         if surrogate.lower() == "rbf":
-            from saealib.surrogate.training_set import KNNObjectiveSet
+            from saealib.defaults import load_defaults
 
-            rbf = RBFSurrogate(gaussian_kernel, problem.dim)
-            return LocalSurrogateManager(
-                rbf,
-                MeanPrediction(direction=problem.direction),
-                training_set=KNNObjectiveSet(n_neighbors),
+            spec = load_defaults()["presets"]["ga_rbf_ib"]["surrogate_manager"]
+            return Optimizer._build_surrogate_manager_from_spec(
+                spec, problem.dim, problem.direction
             )
         raise ValidationError(
             f"Unknown surrogate: {surrogate!r}. "
@@ -151,18 +153,22 @@ def _resolve_surrogate(
     return LocalSurrogateManager(
         surrogate,
         MeanPrediction(direction=problem.direction),
-        training_set=KNNObjectiveSet(n_neighbors),
+        training_set=KNNObjectiveSet(),
     )
 
 
 def _resolve_strategy(
     strategy: str | OptimizationStrategy | None,
     pop_size: int,
-) -> OptimizationStrategy:
-    if strategy is None or (isinstance(strategy, str) and strategy.lower() == "ib"):
-        return IndividualBasedStrategy(evaluation_ratio=0.1)
+) -> OptimizationStrategy | None:
     if isinstance(strategy, str):
         name = strategy.lower()
+        if name == "ib":
+            from saealib.defaults import load_defaults
+            from saealib.registry import build
+
+            spec = load_defaults()["presets"]["ga_rbf_ib"]["strategy"]
+            return build(spec)
         if name == "gb":
             return GenerationBasedStrategy(gen_ctrl=5)
         if name == "ps":
@@ -208,24 +214,20 @@ def _build_result(ctx: OptimizationState) -> Result:
 
 def _run(
     problem: Problem,
-    algorithm: str | Algorithm,
+    algorithm: str | Algorithm | None,
     surrogate: str | Surrogate | SurrogateManager | None,
     strategy: str | OptimizationStrategy | None,
     max_fe: int | None,
     pop_size: int | None,
-    n_neighbors: int,
     seed: int | None,
     verbose: bool,
+    preset: str | Path | dict | None,
 ) -> Result:
     dim = problem.dim
     if pop_size is None:
         pop_size = 4 * dim
     if max_fe is None:
         max_fe = 200 * dim
-
-    alg = _resolve_algorithm(algorithm)
-    sm = _resolve_surrogate(surrogate, problem, n_neighbors)
-    strat = _resolve_strategy(strategy, pop_size)
 
     initializer = LHSInitializer(
         n_init_archive=5 * dim,
@@ -234,14 +236,21 @@ def _run(
     )
     termination = Termination(max_fe_cond(max_fe))
 
-    opt = (
-        Optimizer(problem)
-        .set_initializer(initializer)
-        .set_algorithm(alg)
-        .set_termination(termination)
-        .set_surrogate_manager(sm)
-        .set_strategy(strat)
-    )
+    opt = Optimizer(problem).set_initializer(initializer).set_termination(termination)
+
+    if preset is not None:
+        opt.set_preset(preset)
+
+    # Arguments left at _UNSET are not passed to set_*(); Optimizer.run()'s
+    # _resolve_defaults() then fills them from the library's bundled preset.
+    if algorithm is not _UNSET:
+        # An explicit None resolves to None here, same as never calling
+        # set_algorithm(); Optimizer._resolve_defaults() then fills it in.
+        opt.set_algorithm(_resolve_algorithm(algorithm))  # type: ignore
+    if surrogate is not _UNSET:
+        opt.set_surrogate_manager(_resolve_surrogate(surrogate, problem))
+    if strategy is not _UNSET:
+        opt.set_strategy(_resolve_strategy(strategy, pop_size))  # type: ignore
 
     if not verbose:
         opt.cbmanager.unregister(GenerationStartEvent, logging_generation)
@@ -257,18 +266,18 @@ def _run(
 
 def minimize(
     func: Callable | Problem,
-    algorithm: str | Algorithm = "GA",
+    algorithm: str | Algorithm | None = _UNSET,  # type: ignore  # sentinel default
     *,
     dim: int | None = None,
     lb=None,
     ub=None,
     n_obj: int = 1,
     direction: np.ndarray | list[str] | None = None,
-    surrogate: str | Surrogate | SurrogateManager | None = "rbf",
-    strategy: str | OptimizationStrategy | None = "ib",
+    surrogate: str | Surrogate | SurrogateManager | None = _UNSET,  # type: ignore
+    strategy: str | OptimizationStrategy | None = _UNSET,  # type: ignore
+    preset: str | Path | dict | None = None,
     max_fe: int | None = None,
     pop_size: int | None = None,
-    n_neighbors: int = 50,
     seed: int | None = None,
     verbose: bool = True,
 ) -> Result:
@@ -280,8 +289,10 @@ def minimize(
         Objective function ``f(x) -> float | array``, or a fully configured
         :class:`Problem` instance (in which case ``dim``, ``lb``, ``ub``, and
         ``n_obj`` are ignored).
-    algorithm : str or Algorithm
-        ``'GA'``, ``'PSO'``, or an :class:`Algorithm` instance. Default: ``'GA'``.
+    algorithm : str, Algorithm, or None
+        ``'GA'``, ``'PSO'``, or an :class:`Algorithm` instance. If omitted,
+        the library's bundled default preset resolves it (currently GA with
+        BLX-alpha crossover and uniform mutation).
     dim : int, optional
         Number of design variables. Required when *func* is a callable.
     lb : array-like, optional
@@ -294,17 +305,22 @@ def minimize(
         Optimization direction per objective. Each element is ``-1``/``"minimize"``
         (minimize) or ``+1``/``"maximize"`` (maximize). Default: all minimize.
     surrogate : str, Surrogate, SurrogateManager, or None
-        ``'rbf'``, a :class:`Surrogate`, or a :class:`SurrogateManager`.
-        Default: ``'rbf'``.
-    strategy : str or OptimizationStrategy
-        ``'ib'``, ``'gb'``, ``'ps'``, or an :class:`OptimizationStrategy`.
-        Default: ``'ib'``.
+        ``'rbf'``, a :class:`Surrogate`, or a :class:`SurrogateManager`. If
+        omitted, the library's bundled default preset resolves it (currently
+        an RBF surrogate with mean-prediction acquisition). Passing ``None``
+        explicitly is not supported and raises :class:`ValidationError`.
+    strategy : str, OptimizationStrategy, or None
+        ``'ib'``, ``'gb'``, ``'ps'``, or an :class:`OptimizationStrategy`. If
+        omitted, the library's bundled default preset resolves it (currently
+        individual-based).
+    preset : str, Path, dict, or None, optional
+        A preset (YAML file path or dict) providing default component
+        configuration. See :meth:`Optimizer.set_preset`. Components explicitly
+        passed via *algorithm*/*surrogate*/*strategy* still take precedence.
     max_fe : int or None
         Maximum true function evaluations. Default: ``200 * dim``.
     pop_size : int or None
         Population size. Default: ``4 * dim``.
-    n_neighbors : int
-        Nearest neighbours for :class:`LocalSurrogateManager`. Default: 50.
     seed : int or None
         Random seed for :class:`LHSInitializer`.
     verbose : bool
@@ -331,26 +347,26 @@ def minimize(
         strategy,
         max_fe,
         pop_size,
-        n_neighbors,
         seed,
         verbose,
+        preset,
     )
 
 
 def maximize(
     func: Callable | Problem,
-    algorithm: str | Algorithm = "GA",
+    algorithm: str | Algorithm | None = _UNSET,  # type: ignore  # sentinel default
     *,
     dim: int | None = None,
     lb=None,
     ub=None,
     n_obj: int = 1,
     direction: np.ndarray | list[str] | None = None,
-    surrogate: str | Surrogate | SurrogateManager | None = "rbf",
-    strategy: str | OptimizationStrategy | None = "ib",
+    surrogate: str | Surrogate | SurrogateManager | None = _UNSET,  # type: ignore
+    strategy: str | OptimizationStrategy | None = _UNSET,  # type: ignore
+    preset: str | Path | dict | None = None,
     max_fe: int | None = None,
     pop_size: int | None = None,
-    n_neighbors: int = 50,
     seed: int | None = None,
     verbose: bool = True,
 ) -> Result:
@@ -364,8 +380,10 @@ def maximize(
     func : callable or Problem
         Objective function ``f(x) -> float | array``, or a fully configured
         :class:`Problem` instance.
-    algorithm : str or Algorithm
-        ``'GA'``, ``'PSO'``, or an :class:`Algorithm` instance. Default: ``'GA'``.
+    algorithm : str, Algorithm, or None
+        ``'GA'``, ``'PSO'``, or an :class:`Algorithm` instance. If omitted,
+        the library's bundled default preset resolves it (currently GA with
+        BLX-alpha crossover and uniform mutation).
     dim : int, optional
         Number of design variables. Required when *func* is a callable.
     lb : array-like, optional
@@ -378,17 +396,22 @@ def maximize(
         Optimization direction per objective. Each element is ``-1``/``"minimize"``
         (minimize) or ``+1``/``"maximize"`` (maximize). Default: all maximize.
     surrogate : str, Surrogate, SurrogateManager, or None
-        ``'rbf'``, a :class:`Surrogate`, or a :class:`SurrogateManager`.
-        Default: ``'rbf'``.
-    strategy : str or OptimizationStrategy
-        ``'ib'``, ``'gb'``, ``'ps'``, or an :class:`OptimizationStrategy`.
-        Default: ``'ib'``.
+        ``'rbf'``, a :class:`Surrogate`, or a :class:`SurrogateManager`. If
+        omitted, the library's bundled default preset resolves it (currently
+        an RBF surrogate with mean-prediction acquisition). Passing ``None``
+        explicitly is not supported and raises :class:`ValidationError`.
+    strategy : str, OptimizationStrategy, or None
+        ``'ib'``, ``'gb'``, ``'ps'``, or an :class:`OptimizationStrategy`. If
+        omitted, the library's bundled default preset resolves it (currently
+        individual-based).
+    preset : str, Path, dict, or None, optional
+        A preset (YAML file path or dict) providing default component
+        configuration. See :meth:`Optimizer.set_preset`. Components explicitly
+        passed via *algorithm*/*surrogate*/*strategy* still take precedence.
     max_fe : int or None
         Maximum true function evaluations. Default: ``200 * dim``.
     pop_size : int or None
         Population size. Default: ``4 * dim``.
-    n_neighbors : int
-        Nearest neighbours for :class:`LocalSurrogateManager`. Default: 50.
     seed : int or None
         Random seed for :class:`LHSInitializer`.
     verbose : bool
@@ -415,7 +438,7 @@ def maximize(
         strategy,
         max_fe,
         pop_size,
-        n_neighbors,
         seed,
         verbose,
+        preset,
     )
