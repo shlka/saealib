@@ -114,38 +114,10 @@ pytest
 
 1. **Smoke Tests**: Checks if the example code runs without errors.
 2. **Unit Tests**: Verifies data structures (`Population`) and deterministic logic (`Repair`, `Constraints`).
-3. **Regression Tests (Fixed Seed)**: Checks if the optimization results exactly match the recorded snapshots using a fixed random seed.
-
-#### Handling Regression Test Failures
-
-`test_integration` serves as both regression testing and integration testing.
-If `test_integration` fails, check the following:
-
-* **Case A: Refactoring (No logic change)**
-    * **Goal**: The results must match bit-for-bit.
-    * **Action**: If the test fails, you likely introduced a bug. Fix your code. **Do not update the snapshot.**
-
-
-* **Case B: Logic Change / Feature Addition**
-    * **Goal**: The results are expected to change.
-    * **Action**:
-        1. Run the snapshot generation script:
-        ```bash
-        python scripts/generate_test_integration.py
-        ```
-        2. Check the diff of `tests/data/test_integration.json`.
-        3. Verify if the performance has improved (lower objective value) or stayed within an acceptable range. **Significant degradation is not allowed.**
-        4. Commit the updated snapshot file along with your code changes.
+3. **Fixed-Seed Integration Tests**: Runs a full optimization with a fixed random seed and asserts the result stays within an acceptable threshold (e.g., `test_integration`). If this fails, check whether your change unintentionally degraded optimization performance.
 
 
 ### 5. Pull Request Guidelines
 
 1. Ensure all tests pass locally.
-2. If you updated the regression snapshots, please include a summary of the changes in the PR description:
-> **Regression Update**
-> * Seed 0: `1.234` -> `0.987` (Improved)
-> * Seed 1: `2.345` -> `2.350` (Neutral)
-> 
-
-
-3. Use the provided Pull Request Template.
+2. Use the provided Pull Request Template.
