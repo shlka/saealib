@@ -13,7 +13,9 @@ import numpy as np
 from saealib import (
     GA,
     CrossoverBLXAlpha,
+    LHSInitializer,
     MutationUniform,
+    Optimizer,
     SequentialSelection,
     TruncationSelection,
 )
@@ -32,6 +34,7 @@ from saealib.surrogate.manager import (
     CompositeSurrogateManager,
     GlobalSurrogateManager,
     LocalSurrogateManager,
+    SurrogateManager,
     rank_weighted_combine,
 )
 from saealib.surrogate.prediction import SurrogatePrediction
@@ -184,12 +187,12 @@ class TestGenerationBasedStrategy:
         assert ctx.gen == 1
         assert ctx.fe == len(ctx.population)
 
-    def test_pipeline_cached_after_first_step(self):
+    def test_pipeline_rebuilt_on_every_step(self):
         ctx, provider, strategy = self._setup(gen_ctrl=3)
         ctx = strategy.step(ctx, provider)
         pipeline_ref = strategy.pipeline
         strategy.step(ctx, provider)
-        assert strategy.pipeline is pipeline_ref
+        assert strategy.pipeline is not pipeline_ref
 
     def test_surrogate_fit_called_once_per_step(self):
         """fit() must be called exactly once per step(), not once per surrogate gen."""
@@ -421,21 +424,106 @@ class TestStrategyPipelineAttribute:
         strategies["gb"].step(ctx, provider)
         assert isinstance(strategies["gb"].pipeline, Pipeline)
 
-    def test_ps_pipeline_reused_across_steps(self):
+    def test_ps_pipeline_rebuilt_across_steps(self):
         provider, strategies = self._providers_and_strategies()
         ctx = _make_ctx()
         s = strategies["ps"]
         s.step(ctx, provider)
         first = s.pipeline
-        s.step(ctx, provider)
-        assert s.pipeline is first
-
-    def test_ps_pipeline_rebuilds_when_reset(self):
-        provider, strategies = self._providers_and_strategies()
-        ctx = _make_ctx()
-        s = strategies["ps"]
-        s.step(ctx, provider)
-        first = s.pipeline
-        s.pipeline = None
         s.step(ctx, provider)
         assert s.pipeline is not first
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for #196: rebuilding the pipeline every step means
+# component/parameter changes made mid-``iterate()`` take effect immediately.
+# ---------------------------------------------------------------------------
+
+
+class _SpyManager(SurrogateManager):
+    """Surrogate manager that counts score_candidates() calls."""
+
+    def __init__(self):
+        self.call_count = 0
+
+    def score_candidates(self, candidates_x, archive, ctx=None, *, refit=True):
+        self.call_count += 1
+        n = len(candidates_x)
+        scores = np.linspace(1.0, 0.0, n)
+        predictions = [
+            SurrogatePrediction(
+                value=np.array([[1.0]]), std=None, label=None, metadata={}
+            )
+            for _ in range(n)
+        ]
+        return scores, predictions
+
+
+class TestPipelineRebuildOnRuntimeReassignment:
+    """Regression tests for #196: pipeline must rebuild on every step()."""
+
+    def _make_optimizer(self, strategy, manager) -> Optimizer:
+        return (
+            Optimizer(_make_problem())
+            .set_initializer(
+                LHSInitializer(n_init_archive=N_POP, n_init_population=N_POP, seed=0)
+            )
+            .set_algorithm(_make_ga())
+            .set_strategy(strategy)
+            .set_surrogate_manager(manager)
+            .set_termination(Termination(max_gen(100)))
+        )
+
+    def test_reassigned_surrogate_manager_used_next_generation(self):
+        old_manager = _SpyManager()
+        new_manager = _SpyManager()
+        opt = self._make_optimizer(
+            IndividualBasedStrategy(evaluation_ratio=0.5), old_manager
+        )
+
+        gen = opt.iterate()
+        next(gen)  # initial ctx, before any strategy.step() call
+        next(gen)  # generation 1: uses old_manager
+        assert old_manager.call_count == 1
+        assert new_manager.call_count == 0
+
+        opt.set_surrogate_manager(new_manager)
+        next(gen)  # generation 2: pipeline is rebuilt, must use new_manager
+
+        assert new_manager.call_count == 1
+        assert old_manager.call_count == 1
+
+    def test_gen_ctrl_change_alters_surrogate_only_iteration_count(self):
+        manager = _SpyManager()
+        strategy = GenerationBasedStrategy(gen_ctrl=1)
+        opt = self._make_optimizer(strategy, manager)
+
+        gen = opt.iterate()
+        next(gen)  # initial ctx
+        next(gen)  # generation step with gen_ctrl=1
+        assert manager.call_count == 1
+
+        strategy.gen_ctrl = 3
+        next(gen)  # generation step with gen_ctrl=3
+
+        assert manager.call_count == 1 + 3
+
+    def test_evaluation_ratio_change_alters_true_eval_count(self):
+        manager = _SpyManager()
+        strategy = IndividualBasedStrategy(evaluation_ratio=0.2)
+        opt = self._make_optimizer(strategy, manager)
+
+        gen = opt.iterate()
+        ctx = next(gen)  # initial ctx, before any strategy.step() call
+        fe_before = ctx.fe
+        ctx = next(gen)  # generation step with evaluation_ratio=0.2
+        n_offspring = len(ctx.population)
+        fe_first_step = ctx.fe - fe_before
+        assert fe_first_step == max(1, int(0.2 * n_offspring))
+
+        strategy.evaluation_ratio = 0.6
+        fe_before = ctx.fe
+        ctx = next(gen)  # generation step with evaluation_ratio=0.6
+
+        fe_second_step = ctx.fe - fe_before
+        assert fe_second_step == max(1, int(0.6 * n_offspring))

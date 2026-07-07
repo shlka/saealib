@@ -84,6 +84,9 @@ class PreSelectionStrategy(OptimizationStrategy):
         """
         Generate a large candidate pool, screen with surrogate, true-evaluate top-k.
 
+        Rebuilds the pipeline each call so component/parameter changes take
+        effect immediately.
+
         Parameters
         ----------
         ctx : OptimizationState
@@ -96,6 +99,5 @@ class PreSelectionStrategy(OptimizationStrategy):
         OptimizationState
             Updated state after one generation step.
         """
-        if self.pipeline is None:
-            self.pipeline = self._build_pipeline(provider)
+        self.pipeline = self._build_pipeline(provider)
         return self.pipeline.execute(ctx)

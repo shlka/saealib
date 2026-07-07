@@ -82,6 +82,9 @@ class IndividualBasedStrategy(OptimizationStrategy):
         """
         Score all offspring with the surrogate, then true-evaluate the top fraction.
 
+        Rebuilds the pipeline each call so component/parameter changes take
+        effect immediately.
+
         Parameters
         ----------
         ctx : OptimizationState
@@ -89,6 +92,5 @@ class IndividualBasedStrategy(OptimizationStrategy):
         provider : ComponentProvider
             Component provider.
         """
-        if self.pipeline is None:
-            self.pipeline = self._build_pipeline(provider)
+        self.pipeline = self._build_pipeline(provider)
         return self.pipeline.execute(ctx)

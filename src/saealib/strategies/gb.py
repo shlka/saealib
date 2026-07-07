@@ -66,6 +66,9 @@ class GenerationBasedStrategy(OptimizationStrategy):
     ) -> OptimizationState:
         """Run ``gen_ctrl`` surrogate-only generations, then one true-evaluation step.
 
+        Rebuilds the pipeline each call so component/parameter changes take
+        effect immediately.
+
         Parameters
         ----------
         ctx : OptimizationState
@@ -73,6 +76,5 @@ class GenerationBasedStrategy(OptimizationStrategy):
         provider : ComponentProvider
             Component provider.
         """
-        if self.pipeline is None:
-            self.pipeline = self._build_pipeline(provider)
+        self.pipeline = self._build_pipeline(provider)
         return self.pipeline.execute(ctx)
