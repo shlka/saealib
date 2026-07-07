@@ -218,6 +218,10 @@ class ParetoMixin:
         Dominance predicate.  ``None`` defaults to ``ParetoDominator()``.
     eps_cv : float, optional
         Feasibility threshold for constraint violation, by default 0.0.
+        Under ``Optimizer`` execution this value is overwritten every
+        generation from ``problem.handler.feasibility_threshold``; the
+        default of 0.0 (strictly feasible only) is only meaningful for
+        standalone (non-``Optimizer``) use of ``ParetoArchive``.
     """
 
     def __init__(

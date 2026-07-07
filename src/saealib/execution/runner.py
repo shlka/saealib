@@ -31,6 +31,12 @@ class Runner:
     def __init__(self, optimizer: Optimizer):
         self.optimizer = optimizer
 
+    def _sync_eps_cv(self, ctx: OptimizationState) -> None:
+        """Sync ``eps_cv`` on ``comparator`` and ``pareto_archive`` from the handler."""
+        threshold = ctx.problem.handler.feasibility_threshold
+        ctx.comparator.eps_cv = threshold
+        ctx.pareto_archive.eps_cv = threshold
+
     def run(self) -> OptimizationState:
         """Run to completion and return the final context."""
         for ctx in self.iterate():
@@ -74,7 +80,7 @@ class Runner:
         Generator[OptimizationState, None, None]
         """
         opt = self.optimizer
-        ctx.comparator.eps_cv = ctx.problem.handler.feasibility_threshold
+        self._sync_eps_cv(ctx)
         if isinstance(ctx.comparator, NSGA3Comparator) and ctx.comparator._rng is None:
             ctx.comparator.rng = ctx.rng.spawn(1)[0]
 
@@ -88,7 +94,7 @@ class Runner:
                 ctx = result
             handler = ctx.problem.handler
             handler.on_generation_end(ctx.gen, ctx.population)
-            ctx.comparator.eps_cv = handler.feasibility_threshold
+            self._sync_eps_cv(ctx)
             sm = getattr(opt, "surrogate_manager", None)
             if sm is not None:
                 sm.on_generation_end(ctx.gen, ctx.archive, ctx)
