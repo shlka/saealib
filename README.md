@@ -82,7 +82,7 @@ from saealib import (
     GA,
     Optimizer,
     Problem,
-    RBFsurrogate,
+    RBFSurrogate,
     LHSInitializer,
     CrossoverBLXAlpha,
     MutationUniform,
@@ -105,7 +105,7 @@ problem = Problem(
     func=sphere,
     dim=dim,
     n_obj=1,
-    weight=np.array([-1.0]),  # -1.0 implies minimization
+    direction=np.array([-1.0]),  # -1.0 implies minimization
     lb=[-5.0] * dim,          # Lower bounds
     ub=[5.0] * dim,           # Upper bounds
 )
@@ -121,14 +121,14 @@ initializer = LHSInitializer(
 
 # Algorithm: Genetic Algorithm
 algorithm = GA(
-    crossover=CrossoverBLXAlpha(crossover_rate=0.7, alpha=0.4),
-    mutation=MutationUniform(mutation_rate=0.3),
+    crossover=CrossoverBLXAlpha(prob=0.7, alpha=0.4),
+    mutation=MutationUniform(prob_var=0.3),
     parent_selection=SequentialSelection(),
     survivor_selection=TruncationSelection(),
 )
 
 # Surrogate Model: RBF with Gaussian Kernel
-surrogate = RBFsurrogate(gaussian_kernel, dim)
+surrogate = RBFSurrogate(gaussian_kernel, dim)
 
 # Strategy: Individual-Based Management
 # evaluation_ratio=0.1: Ratio of offspring selected for true objective evaluation
