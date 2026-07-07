@@ -163,6 +163,12 @@ class OptimizationState:
         the same NumPy version and environment, but not guaranteed across
         versions.
 
+        Only ``self.rng`` is saved. Components that own a private RNG spawned
+        from ``self.rng`` (e.g. :class:`~saealib.comparators.NSGA3Comparator`'s
+        niche tie-breaking generator) are not serialized; on resume, such a
+        component gets a fresh spawn from the restored ``rng`` rather than a
+        continuation of its own pre-checkpoint draw sequence.
+
         Parameters
         ----------
         path : str or Path

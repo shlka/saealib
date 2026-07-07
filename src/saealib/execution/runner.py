@@ -11,6 +11,7 @@ from saealib.callback import (
     RunEndEvent,
     RunStartEvent,
 )
+from saealib.comparators import NSGA3Comparator
 from saealib.context import OptimizationState
 
 if TYPE_CHECKING:
@@ -74,6 +75,8 @@ class Runner:
         """
         opt = self.optimizer
         ctx.comparator.eps_cv = ctx.problem.handler.feasibility_threshold
+        if isinstance(ctx.comparator, NSGA3Comparator) and ctx.comparator._rng is None:
+            ctx.comparator.rng = ctx.rng.spawn(1)[0]
 
         opt.dispatch(RunStartEvent(ctx=ctx))
         yield ctx

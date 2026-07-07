@@ -8,6 +8,7 @@ import numpy as np
 import scipy.stats
 
 from saealib.callback import InitialEvaluationEndEvent, InitialEvaluationStartEvent
+from saealib.comparators import NSGA3Comparator
 from saealib.context import OptimizationState
 from saealib.optimizer import ComponentProvider
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
@@ -78,6 +79,12 @@ class Initializer(ABC):
         OptimizationState
             The optimization context.
         """
+        if (
+            isinstance(problem.comparator, NSGA3Comparator)
+            and problem.comparator._rng is None
+        ):
+            problem.comparator.rng = rng.spawn(1)[0]
+
         return OptimizationState(
             problem=problem,
             population=population,
