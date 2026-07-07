@@ -435,6 +435,48 @@ class TestWeightedSumComparator:
 
 
 # ===========================================================================
+# SingleObjectiveComparator Tests
+# ===========================================================================
+class TestSingleObjectiveComparator:
+    """Tests for SingleObjectiveComparator direction handling (Issue #197)."""
+
+    def test_maximize_compare_and_sort_agree(self) -> None:
+        """direction=+1: compare() and sort_population() must agree on ordering.
+
+        Before the fix, _compare() was hardcoded to minimize while _sort()
+        respected direction, so they disagreed under direction=+1.
+        """
+        f = np.array([[1.0], [3.0], [2.0]])
+        pop = _make_pop(f)
+        comp = SingleObjectiveComparator(direction=1.0)
+        order = comp.sort_population(pop)
+        assert order.tolist() == [1, 2, 0]  # descending: 3, 2, 1
+        assert comp.compare(f[1], 0.0, f[0], 0.0) == -1  # 3.0 better than 1.0
+        assert comp.compare(f[0], 0.0, f[1], 0.0) == 1
+        assert comp.compare(f[1], 0.0, f[2], 0.0) == -1  # 3.0 better than 2.0
+        assert comp.compare(f[0], 0.0, f[0], 0.0) == 0
+
+    def test_minimize_regression(self) -> None:
+        """direction=-1 behavior is unchanged: lower fitness is better."""
+        comp = SingleObjectiveComparator(direction=-1.0)
+        assert comp.compare(np.array([1.0]), 0.0, np.array([2.0]), 0.0) == -1
+        assert comp.compare(np.array([2.0]), 0.0, np.array([1.0]), 0.0) == 1
+        assert comp.compare(np.array([1.0]), 0.0, np.array([1.0]), 0.0) == 0
+
+    def test_direction_none_defaults_to_minimize(self) -> None:
+        """A standalone comparator with direction=None behaves as minimize."""
+        comp = SingleObjectiveComparator()
+        assert comp.direction is None
+        assert comp.compare(np.array([1.0]), 0.0, np.array([2.0]), 0.0) == -1
+        assert comp.compare(np.array([2.0]), 0.0, np.array([1.0]), 0.0) == 1
+
+        f = np.array([[3.0], [1.0], [2.0]])
+        pop = _make_pop(f)
+        order = comp.sort_population(pop)
+        assert order.tolist() == [1, 2, 0]  # ascending: 1, 2, 3
+
+
+# ===========================================================================
 # ParetoComparator Tests
 # ===========================================================================
 class TestParetoComparator:
@@ -734,6 +776,24 @@ class TestProblemComparatorAutoSelection:
             comparator=custom,
         )
         assert p.comparator is custom
+
+    def test_custom_comparator_with_none_direction_gets_injected(self) -> None:
+        """A comparator constructed with direction=None inherits Problem's direction."""
+        comp = SingleObjectiveComparator()
+        assert comp.direction is None
+        p = Problem(
+            func=lambda x: np.array([np.sum(x**2)]),
+            dim=2,
+            n_obj=1,
+            direction=np.array([-1.0]),
+            lb=[-5.0, -5.0],
+            ub=[5.0, 5.0],
+            comparator=comp,
+        )
+        assert p.comparator is comp
+        direction = p.comparator.direction
+        assert direction is not None
+        assert direction[0] == -1.0
 
     def test_problem_evaluate_returns_n_obj_values(self) -> None:
         p = Problem(
@@ -2254,6 +2314,27 @@ class TestNSGA3Comparator:
         comp = NSGA3Comparator(ref, direction=np.array([1.0, 1.0]), seed=0)
         order = comp.sort_population(pop)
         assert order[0] == 0  # [3,3] dominates under maximization
+
+    def test_direction_maximize_matches_negated_minimize(self) -> None:
+        """_normalize_objectives must respect direction (Issue #197).
+
+        Sorting a maximize (direction=+1) population must give the same
+        ordering as sorting the negated population under minimize
+        (direction=-1), since both represent the same preference over the
+        same underlying points.
+        """
+        ref = np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
+        f = np.array([[1.0, 4.0], [4.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
+
+        pop_max = _make_pop(f)
+        comp_max = NSGA3Comparator(ref, direction=np.array([1.0, 1.0]), seed=0)
+        order_max = comp_max.sort_population(pop_max)
+
+        pop_min = _make_pop(-f)
+        comp_min = NSGA3Comparator(ref, direction=np.array([-1.0, -1.0]), seed=0)
+        order_min = comp_min.sort_population(pop_min)
+
+        np.testing.assert_array_equal(order_max, order_min)
 
 
 # ===========================================================================

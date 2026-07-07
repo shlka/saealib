@@ -144,7 +144,7 @@ class SingleObjectiveComparator(Comparator):
     @deprecated_param("weight", "direction", "0.1.0")
     def __init__(
         self,
-        direction: float = 1.0,
+        direction: float | None = None,
         eps: float | None = None,
         *,
         eps_cv: float = 1e-6,
@@ -153,9 +153,9 @@ class SingleObjectiveComparator(Comparator):
         if eps is not None:
             warn_deprecated("eps", "eps_cv and eps_obj", "0.1.0")
             eps_cv = eps_obj = eps
-        super().__init__(
-            np.array([direction]), eps_cv, eps_obj, direction=np.array([direction])
-        )
+        direction_arr = np.array([direction]) if direction is not None else None
+        weights = direction_arr if direction_arr is not None else np.empty(0)
+        super().__init__(weights, eps_cv, eps_obj, direction=direction_arr)
 
     def sort_population(self, population: Population) -> np.ndarray:
         """
@@ -201,9 +201,12 @@ class SingleObjectiveComparator(Comparator):
         elif cv_a <= self.eps_cv and cv_b > self.eps_cv:
             return -1
         else:
-            if fitness_a[0] < fitness_b[0] - self.eps_obj:
+            d = self.direction[0] if self.direction is not None else -1.0
+            sa = fitness_a[0] * d
+            sb = fitness_b[0] * d
+            if sa > sb + self.eps_obj:
                 return -1
-            elif fitness_a[0] > fitness_b[0] + self.eps_obj:
+            elif sa < sb - self.eps_obj:
                 return 1
             else:
                 return 0
@@ -224,9 +227,9 @@ class SingleObjectiveComparator(Comparator):
         np.ndarray
             Sorted indices of the solutions.
         """
-        assert self.direction is not None
+        d = self.direction[0] if self.direction is not None else -1.0
         cv_key = np.where(cv > self.eps_cv, cv, 0)
-        obj_key = fitness.flatten() * self.direction[0]
+        obj_key = fitness.flatten() * d
         return np.lexsort((-obj_key, cv_key))
 
 
@@ -1095,6 +1098,8 @@ def _normalize_objectives(
         Shape ``(n, n_obj)``.
     direction : np.ndarray or None
         ``+1`` maximize, ``-1`` minimize. ``None`` means all-minimize.
+        Maximize objectives are internally converted to minimize-space
+        (negated) before computing the ideal point and intercepts.
 
     Returns
     -------
@@ -1105,6 +1110,7 @@ def _normalize_objectives(
     intercepts : np.ndarray
         Shape ``(n_obj,)``. Hyperplane intercepts used for scaling.
     """
+    f = f * (-direction) if direction is not None else f
     ideal = f.min(axis=0)
     f_trans = f - ideal
 
