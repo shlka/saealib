@@ -35,6 +35,8 @@ class ProbabilityOfFeasibility(AcquisitionFunction):
     """
 
     requires_uncertainty: bool = True
+    # Feasibility probability has no notion of objective direction.
+    direction_sensitive: bool = False
 
     def __init__(self, obj_idx: int = 0, reference: Any = None):
         self.obj_idx = obj_idx
@@ -128,6 +130,8 @@ class ProductOfFeasibility(AcquisitionFunction):
     """
 
     requires_uncertainty: bool = True
+    # Feasibility probability has no notion of objective direction.
+    direction_sensitive: bool = False
 
     def compute_reference(
         self, archive: Archive, rng: np.random.Generator | None = None

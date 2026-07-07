@@ -37,7 +37,8 @@ class MeanPrediction(AcquisitionFunction):
     direction : np.ndarray or None
         Per-objective optimization directions (+1 = maximize, -1 = minimize).
         Used for direction-only scalarization when magnitude does not matter.
-        Takes precedence over weights when both are provided.
+        Takes precedence over weights when both are provided. When unset,
+        it is auto-injected from ``problem.direction`` at run start.
     """
 
     def __init__(

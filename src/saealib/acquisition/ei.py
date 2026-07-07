@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from scipy.stats import norm
 
-from saealib.acquisition.base import AcquisitionFunction
+from saealib.acquisition.base import AcquisitionFunction, direction_to_minimize_sign
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
@@ -37,22 +37,39 @@ class ExpectedImprovement(AcquisitionFunction):
     obj_idx : int
         Index of the objective to optimize. Used for multi-objective
         problems where EI is applied to a single objective. Default: 0.
+    direction : np.ndarray or None
+        Per-objective optimization direction (+1 = maximize, -1 = minimize).
+        shape: (n_obj,). ``archive.f``, a user-supplied ``reference``, and
+        the predicted mean are converted to minimize-space via
+        ``direction_to_minimize_sign`` before the (minimize-only) EI formula
+        above runs. ``None`` (default) means already-minimize; when unset,
+        it is auto-injected from ``problem.direction`` at run start.
     """
 
     requires_uncertainty: bool = True
 
-    def __init__(self, xi: float = 0.01, obj_idx: int = 0, reference: Any = None):
+    def __init__(
+        self,
+        xi: float = 0.01,
+        obj_idx: int = 0,
+        reference: Any = None,
+        direction: np.ndarray | None = None,
+    ):
         self.xi = xi
         self.obj_idx = obj_idx
         self.reference = reference
+        self.direction = direction
 
     def compute_reference(
         self, archive: Archive, rng: np.random.Generator | None = None
     ) -> np.ndarray:
         """Return fixed reference if set, otherwise component-wise best from archive."""
         if self.reference is not None:
-            return self.reference
-        return archive.f.min(axis=0)
+            return np.asarray(self.reference, dtype=float) * direction_to_minimize_sign(
+                self.direction
+            )
+        s = direction_to_minimize_sign(self.direction)
+        return (archive.f * s).min(axis=0)
 
     def score(
         self,
@@ -87,7 +104,13 @@ class ExpectedImprovement(AcquisitionFunction):
                 "estimates (prediction.std must not be None)."
             )
         assert prediction.std is not None
-        mu = prediction.value[:, self.obj_idx]  # (n_samples,)
+        s = direction_to_minimize_sign(self.direction)
+        s_idx = (
+            s[self.obj_idx]  # type: ignore  # ty narrows bare np.ndarray isinstance to object dtype; s is float ndarray at runtime
+            if isinstance(s, np.ndarray)
+            else s
+        )
+        mu = prediction.value[:, self.obj_idx] * s_idx  # (n_samples,)
         sigma = prediction.std[:, self.obj_idx]  # (n_samples,)
 
         ref = np.asarray(reference, dtype=float)

@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import copy
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -158,6 +158,25 @@ class SurrogateManager(ABC):
             predictions[i].value shape: (1, n_obj)
         """
         ...
+
+    def iter_acquisitions(self) -> Iterator[AcquisitionFunction]:
+        """Yield every ``AcquisitionFunction`` owned by this manager.
+
+        Used by ``Optimizer._inject_acquisition_directions()`` to auto-inject
+        ``problem.direction`` into direction-sensitive acquisition functions
+        at run start. The default implementation yields ``self.acquisition``
+        if present (covers ``GlobalSurrogateManager``/``LocalSurrogateManager``)
+        and nothing otherwise (e.g. ``PairwiseSurrogateManager``, which has no
+        acquisition function). ``CompositeSurrogateManager`` overrides this to
+        delegate to its sub-managers.
+
+        Returns
+        -------
+        Iterator[AcquisitionFunction]
+        """
+        acq = getattr(self, "acquisition", None)
+        if acq is not None:
+            yield acq
 
     def post_score(
         self,
@@ -633,6 +652,11 @@ class CompositeSurrogateManager(SurrogateManager):
         for manager in self.managers:
             manager.fit(archive, ctx)
         self.last_accuracy = self.managers[0].last_accuracy
+
+    def iter_acquisitions(self) -> Iterator[AcquisitionFunction]:
+        """Yield the acquisition functions of every sub-manager."""
+        for manager in self.managers:
+            yield from manager.iter_acquisitions()
 
     def score_candidates(
         self,
