@@ -1304,12 +1304,37 @@ class NSGA3Comparator(ParetoComparator):
             dominator=dominator,
         )
         self._reference_points = np.asarray(reference_points, dtype=float)
-        self._rng = np.random.default_rng(seed)
+        self._rng = np.random.default_rng(seed) if seed is not None else None
 
     @property
     def reference_points(self) -> np.ndarray:
         """Reference points used for niche preservation."""
         return self._reference_points
+
+    @property
+    def rng(self) -> np.random.Generator:
+        """
+        Random number generator used for niche tie-breaking.
+
+        Lazily created on first access if no seed was supplied at
+        construction time, so a run-time owner (e.g.
+        :class:`~saealib.execution.runner.Runner`) can inject a generator
+        spawned from the master ``ctx.rng`` before this property is ever
+        read.
+
+        This generator is owned privately by the comparator once injected or
+        lazily created: it advances independently of ``ctx.rng`` and is not
+        part of :meth:`~saealib.context.OptimizationState.save`'s serialized
+        state, so checkpoint resume re-spawns a fresh one rather than
+        continuing this generator's own draw sequence.
+        """
+        if self._rng is None:
+            self._rng = np.random.default_rng()
+        return self._rng
+
+    @rng.setter
+    def rng(self, value: np.random.Generator) -> None:
+        self._rng = value
 
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort by Pareto front rank then NSGA-III niche preservation."""
@@ -1338,7 +1363,7 @@ class NSGA3Comparator(ParetoComparator):
             for front_list in fronts:
                 front_local = np.array(front_list, dtype=int)
                 ordered = _niche_count_select(
-                    front_local, assoc, dist, niche_count, len(front_local), self._rng
+                    front_local, assoc, dist, niche_count, len(front_local), self.rng
                 )
                 sorted_feasible.extend(feasible[ordered].tolist())
 

@@ -19,6 +19,7 @@ import pytest
 from saealib import (
     GA,
     CrossoverBLXAlpha,
+    DirectStrategy,
     IndividualBasedStrategy,
     LHSInitializer,
     MutationUniform,
@@ -34,6 +35,7 @@ from saealib import (
     crowding_distance_all_fronts,
     gaussian_kernel,
     max_fe,
+    max_gen,
     non_dominated_sort,
     spea2_fitness,
 )
@@ -81,6 +83,60 @@ def _make_pop(f_values: np.ndarray, cv_values: np.ndarray | None = None) -> Popu
     for i in range(n):
         pop.append(f=f_values[i], cv=float(cv_values[i]))
     return pop
+
+
+def _nsga3_tie_population_f() -> np.ndarray:
+    """5-point front with 3 exact duplicates in one niche (Issue #199).
+
+    All points lie on the segment f1+f2=1, so no point dominates another and
+    the whole set forms a single Pareto front. The 3 duplicates at (0.5, 0.5)
+    guarantee ``_niche_count_select``'s ``rng.choice(candidates)`` branch is
+    hit with more than one candidate at least once, exercising the tie-break.
+    """
+    return np.array(
+        [
+            [0.0, 1.0],
+            [1.0, 0.0],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+        ]
+    )
+
+
+def _nsga3_first_ctx(seed: int, reference_points: np.ndarray):
+    """Build an ``Optimizer(seed=seed)`` wired with an unseeded NSGA3Comparator.
+
+    Returns the context yielded immediately after ``RunStartEvent``, which is
+    already past the point where ``Runner`` injects a spawned ``rng`` into an
+    unseeded ``NSGA3Comparator`` (Issue #199), so no generation needs to run
+    to observe reproducibility.
+    """
+    dim = 2
+    problem = Problem(
+        func=lambda x: np.array([np.sum(x**2), np.sum((x - 2.0) ** 2)]),
+        dim=dim,
+        n_obj=2,
+        direction=np.array([-1.0, -1.0]),
+        lb=[0.0] * dim,
+        ub=[2.0] * dim,
+        comparator=NSGA3Comparator(reference_points, seed=None),
+    )
+    initializer = LHSInitializer(n_init_archive=10, n_init_population=8, seed=seed)
+    algorithm = GA(
+        crossover=CrossoverBLXAlpha(prob=0.7, alpha=0.4),
+        mutation=MutationUniform(prob_var=0.3),
+        parent_selection=SequentialSelection(),
+        survivor_selection=TruncationSelection(),
+    )
+    opt = (
+        Optimizer(problem, seed=seed)
+        .set_initializer(initializer)
+        .set_algorithm(algorithm)
+        .set_termination(Termination(max_gen(0)))
+        .set_strategy(DirectStrategy())
+    )
+    return next(opt.iterate())
 
 
 # ===========================================================================
@@ -2335,6 +2391,68 @@ class TestNSGA3Comparator:
         order_min = comp_min.sort_population(pop_min)
 
         np.testing.assert_array_equal(order_max, order_min)
+
+    # -----------------------------------------------------------------------
+    # seed=None reproducibility under a master Optimizer seed (Issue #199)
+    # -----------------------------------------------------------------------
+    def test_seed_none_does_not_eagerly_create_rng(self) -> None:
+        """seed=None must not eagerly call default_rng() at construction time."""
+        ref = np.array([[0.0, 1.0], [1.0, 0.0]])
+        comp = NSGA3Comparator(ref)
+        assert comp._rng is None
+
+    def test_seed_none_rng_property_lazily_created_and_cached(self) -> None:
+        """The `rng` property lazily creates a Generator and caches it."""
+        ref = np.array([[0.0, 1.0], [1.0, 0.0]])
+        comp = NSGA3Comparator(ref)
+        rng = comp.rng
+        assert isinstance(rng, np.random.Generator)
+        assert comp.rng is rng
+
+    def test_seed_none_standalone_sort_population_still_works(self) -> None:
+        """A standalone comparator (seed=None, never attached to an Optimizer)
+        can still call sort_population without error."""
+        ref = np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
+        f = np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
+        pop = _make_pop(f)
+        comp = NSGA3Comparator(ref)
+        order = comp.sort_population(pop)
+        assert set(order.tolist()) == {0, 1, 2}
+
+    def test_explicit_seed_reproducible_regression(self) -> None:
+        """NSGA3Comparator(seed=<int>) reproduces exactly as before the fix,
+        independent of any Optimizer/ctx.rng involvement (#199 regression)."""
+        ref = np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
+        f = _nsga3_tie_population_f()
+        comp_a = NSGA3Comparator(ref, seed=42)
+        comp_b = NSGA3Comparator(ref, seed=42)
+        order_a = comp_a.sort_population(_make_pop(f))
+        order_b = comp_b.sort_population(_make_pop(f))
+        np.testing.assert_array_equal(order_a, order_b)
+
+    def test_seed_none_reproducible_under_master_optimizer_seed(self) -> None:
+        """Two Optimizer(seed=42) runs must reproduce NSGA3Comparator ordering.
+
+        Covers Issue #199: an unseeded NSGA3Comparator's rng is injected by
+        Runner from a spawned ``ctx.rng`` at run start, so it must reproduce
+        under a fixed master seed like every other rng-consuming component.
+        Uses a tie-break-sensitive population (duplicate objective values in
+        the same niche) to actually exercise ``rng.choice`` tie-breaking.
+        """
+        ref = np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
+        f = _nsga3_tie_population_f()
+
+        ctx1 = _nsga3_first_ctx(42, ref)
+        ctx2 = _nsga3_first_ctx(42, ref)
+
+        pre_state = ctx1.comparator.rng.bit_generator.state["state"]["state"]
+        order1 = ctx1.comparator.sort_population(_make_pop(f))
+        post_state = ctx1.comparator.rng.bit_generator.state["state"]["state"]
+        # The tie-break population must actually consume randomness.
+        assert pre_state != post_state
+
+        order2 = ctx2.comparator.sort_population(_make_pop(f))
+        np.testing.assert_array_equal(order1, order2)
 
 
 # ===========================================================================
