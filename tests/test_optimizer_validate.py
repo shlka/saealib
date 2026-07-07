@@ -9,13 +9,17 @@ import pytest
 
 from saealib.acquisition.ei import ExpectedImprovement
 from saealib.acquisition.mean import MeanPrediction
+from saealib.acquisition.pof import ProbabilityOfFeasibility, ProductOfFeasibility
+from saealib.acquisition.uncertainty import MaxUncertainty
 from saealib.comparators import SingleObjectiveComparator
+from saealib.execution.initializer import LHSInitializer
 from saealib.optimizer import Optimizer
 from saealib.problem import Problem
 from saealib.strategies.base import OptimizationStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.surrogate.manager import GlobalSurrogateManager
 from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
+from saealib.surrogate.sklearn_surrogate import SklearnGPRSurrogate
 
 DIM = 2
 N_OBJ = 1
@@ -188,3 +192,103 @@ def test_iterate_succeeds_with_no_components_set():
     opt = Optimizer(_make_problem())
     ctx = next(opt.iterate())
     assert ctx is not None
+
+
+# ---------------------------------------------------------------------------
+# Acquisition direction auto-injection (Issue #198)
+# ---------------------------------------------------------------------------
+
+
+def test_acquisition_direction_length_mismatch():
+    opt = _fully_configured()
+    opt.set_surrogate_manager(
+        GlobalSurrogateManager(
+            RBFSurrogate(kernel=gaussian_kernel, dim=DIM),
+            ExpectedImprovement(direction=np.array([1.0, 1.0])),  # len 2 != n_obj=1
+        )
+    )
+    assert any("direction" in m for m in opt.validate())
+
+
+def test_inject_acquisition_directions_sets_from_problem():
+    problem = _make_problem(n_obj=2)
+    opt = Optimizer(problem)
+    opt.set_algorithm(MagicMock())
+    opt.set_strategy(_stub_strategy())
+    opt.initializer = MagicMock()
+    opt.set_termination(MagicMock())
+    acq = MeanPrediction()
+    opt.set_surrogate_manager(
+        GlobalSurrogateManager(RBFSurrogate(kernel=gaussian_kernel, dim=2), acq)
+    )
+    opt._inject_acquisition_directions()
+    np.testing.assert_array_equal(acq.direction, problem.direction)
+
+
+def test_inject_acquisition_directions_idempotent():
+    opt = _fully_configured()
+    acq = MeanPrediction()
+    opt.set_surrogate_manager(
+        GlobalSurrogateManager(RBFSurrogate(kernel=gaussian_kernel, dim=DIM), acq)
+    )
+    opt._inject_acquisition_directions()
+    first = acq.direction
+    opt._inject_acquisition_directions()
+    assert acq.direction is first
+
+
+def test_inject_acquisition_directions_preserves_explicit_direction():
+    opt = _fully_configured()
+    explicit = np.array([1.0])
+    acq = MeanPrediction(direction=explicit)
+    opt.set_surrogate_manager(
+        GlobalSurrogateManager(RBFSurrogate(kernel=gaussian_kernel, dim=DIM), acq)
+    )
+    opt._inject_acquisition_directions()
+    assert acq.direction is explicit
+
+
+def test_inject_acquisition_directions_skips_direction_insensitive():
+    """PoF/ProductOfFeasibility/MaxUncertainty opt out and never get a direction."""
+    opt = _fully_configured()
+    for acq in (
+        ProbabilityOfFeasibility(),
+        ProductOfFeasibility(),
+        MaxUncertainty(),
+    ):
+        opt.set_surrogate_manager(
+            GlobalSurrogateManager(RBFSurrogate(kernel=gaussian_kernel, dim=DIM), acq)
+        )
+        opt._inject_acquisition_directions()
+        # These acquisitions never declare a `direction` field at all; opting
+        # out via direction_sensitive=False means injection must not add one.
+        assert getattr(acq, "direction", None) is None
+
+
+def test_iterate_injects_acquisition_direction_end_to_end():
+    """End-to-end: iterate() auto-injects problem.direction into an unset
+    acquisition."""
+    dim = 2
+    problem = Problem(
+        func=lambda x: np.array([-np.sum(x**2)]),
+        dim=dim,
+        n_obj=1,
+        direction=np.array([1.0]),  # maximize
+        lb=[-5.0] * dim,
+        ub=[5.0] * dim,
+    )
+    acq = ExpectedImprovement()
+    opt = (
+        Optimizer(problem, seed=0)
+        .set_initializer(LHSInitializer(n_init_archive=10, n_init_population=8, seed=0))
+        .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.5))
+        .set_surrogate_manager(GlobalSurrogateManager(SklearnGPRSurrogate(), acq))
+    )
+    gen = opt.iterate()
+    next(gen)
+
+    np.testing.assert_array_equal(acq.direction, problem.direction)
+
+    # Idempotent: re-injecting does not change an already-set direction.
+    opt._inject_acquisition_directions()
+    np.testing.assert_array_equal(acq.direction, problem.direction)

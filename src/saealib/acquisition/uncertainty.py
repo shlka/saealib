@@ -31,6 +31,8 @@ class MaxUncertainty(AcquisitionFunction):
     """
 
     requires_uncertainty: bool = True
+    # Uncertainty magnitude has no notion of objective direction.
+    direction_sensitive: bool = False
 
     def __init__(self, weights: np.ndarray | None = None, reference: Any = None):
         self.weights = weights

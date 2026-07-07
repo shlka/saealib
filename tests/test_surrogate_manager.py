@@ -1386,3 +1386,41 @@ class TestPairwiseSurrogateManager:
             SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0)
         )
         assert isinstance(manager.training_set, PairwiseComparisonSet)
+
+
+# ===========================================================================
+# SurrogateManager.iter_acquisitions (Issue #198)
+# ===========================================================================
+class TestIterAcquisitions:
+    """Tests for iter_acquisitions(), used by Optimizer direction auto-injection."""
+
+    def test_global_manager_yields_single_acquisition(
+        self, surrogate_1obj: RBFSurrogate
+    ) -> None:
+        acq = MeanPrediction()
+        manager = GlobalSurrogateManager(surrogate_1obj, acq)
+        assert list(manager.iter_acquisitions()) == [acq]
+
+    def test_local_manager_yields_single_acquisition(
+        self, surrogate_1obj: RBFSurrogate
+    ) -> None:
+        acq = MeanPrediction()
+        manager = LocalSurrogateManager(surrogate_1obj, acq)
+        assert list(manager.iter_acquisitions()) == [acq]
+
+    def test_composite_manager_yields_all_sub_manager_acquisitions(
+        self, surrogate_1obj: RBFSurrogate
+    ) -> None:
+        acq1 = MeanPrediction()
+        acq2 = MeanPrediction()
+        m1 = GlobalSurrogateManager(surrogate_1obj, acq1)
+        m2 = GlobalSurrogateManager(surrogate_1obj, acq2)
+        composite = CompositeSurrogateManager([m1, m2], combine_fn=product_combine)
+        assert list(composite.iter_acquisitions()) == [acq1, acq2]
+
+    def test_pairwise_manager_yields_nothing(self) -> None:
+        """PairwiseSurrogateManager has no acquisition function at all."""
+        manager = PairwiseSurrogateManager(
+            SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0)
+        )
+        assert list(manager.iter_acquisitions()) == []

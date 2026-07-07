@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from scipy.stats import norm
 
-from saealib.acquisition.base import AcquisitionFunction
+from saealib.acquisition.base import AcquisitionFunction, direction_to_minimize_sign
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
@@ -46,6 +46,13 @@ class ParEGOAcquisition(AcquisitionFunction):
         Default: 0.05 (mlr3mbo convention).
     rng : np.random.Generator or None
         Random number generator for weight sampling.
+    direction : np.ndarray or None
+        Per-objective optimization direction (+1 = maximize, -1 = minimize).
+        shape: (n_obj,). ``archive.f`` and the predicted mean are converted
+        to minimize-space via ``direction_to_minimize_sign`` before the
+        (minimize-only) scalarisation above runs. ``None`` (default) means
+        already-minimize; when unset, it is auto-injected from
+        ``problem.direction`` at run start.
     """
 
     requires_uncertainty: bool = True
@@ -54,9 +61,11 @@ class ParEGOAcquisition(AcquisitionFunction):
         self,
         alpha: float = 0.05,
         rng: np.random.Generator | None = None,
+        direction: np.ndarray | None = None,
     ) -> None:
         self.alpha = alpha
         self._rng = rng if rng is not None else np.random.default_rng()
+        self.direction = direction
 
     def _scalarize(
         self,
@@ -95,9 +104,11 @@ class ParEGOAcquisition(AcquisitionFunction):
             these weights.
         """
         n_obj = archive.f.shape[1]
-        z_star = archive.f.min(axis=0)
+        s = direction_to_minimize_sign(self.direction)
+        f_conv = archive.f * s
+        z_star = f_conv.min(axis=0)
         weights = (rng if rng is not None else self._rng).dirichlet(np.ones(n_obj))
-        f_best = float(self._scalarize(archive.f, weights, z_star).min())
+        f_best = float(self._scalarize(f_conv, weights, z_star).min())
         return z_star, weights, f_best
 
     def score(
@@ -133,7 +144,9 @@ class ParEGOAcquisition(AcquisitionFunction):
             )
         z_star, weights, f_best = reference
 
-        mu_s = self._scalarize(prediction.value, weights, z_star)  # (n,)
+        s = direction_to_minimize_sign(self.direction)
+        mu_conv = prediction.value * s
+        mu_s = self._scalarize(mu_conv, weights, z_star)  # (n,)
         sigma_s = (weights * prediction.std).sum(axis=-1)  # (n,)
         sigma_s = np.maximum(sigma_s, 1e-9)
 

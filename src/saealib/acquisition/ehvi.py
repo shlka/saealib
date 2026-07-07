@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 import numpy.typing as npt
 
-from saealib.acquisition.base import AcquisitionFunction
+from saealib.acquisition.base import AcquisitionFunction, direction_to_minimize_sign
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.utils.indicators import _non_dominated, hypervolume
 
@@ -27,15 +27,26 @@ class EHVIAcquisition(AcquisitionFunction):
 
     where HVI(y, P, r) = HV(P u {y}, r) - HV(P, r).
 
+    ``archive.f``, ``reference_point``, and the predicted mean are internally
+    converted to minimisation convention via ``direction_to_minimize_sign``
+    (see ``direction`` below) before the formula above runs.
+
     Parameters
     ----------
     n_samples : int
         Number of MC samples per candidate.  Default: 256.
     reference_point : array-like or None
-        Hypervolume reference point (minimisation convention).  If None,
-        auto-computed from the archive nadir with a 10 % margin.
+        Hypervolume reference point, given in raw objective space (i.e. in
+        the same convention as ``problem.direction``, not necessarily
+        minimisation).  If None, auto-computed from the archive nadir with
+        a 10 % margin.
     rng : np.random.Generator or None
         Random number generator for MC sampling.
+    direction : np.ndarray or None
+        Per-objective optimization direction (+1 = maximize, -1 = minimize).
+        shape: (n_obj,). ``None`` (default) means already-minimize, so
+        behaviour for existing minimize-only callers is unchanged; when
+        unset, it is auto-injected from ``problem.direction`` at run start.
     """
 
     requires_uncertainty: bool = True
@@ -45,6 +56,7 @@ class EHVIAcquisition(AcquisitionFunction):
         n_samples: int = 256,
         reference_point: npt.ArrayLike | None = None,
         rng: np.random.Generator | None = None,
+        direction: np.ndarray | None = None,
     ) -> None:
         self.n_samples = n_samples
         self.reference_point = (
@@ -53,6 +65,7 @@ class EHVIAcquisition(AcquisitionFunction):
             else None
         )
         self._rng = rng if rng is not None else np.random.default_rng()
+        self.direction = direction
 
     def compute_reference(
         self,
@@ -73,11 +86,12 @@ class EHVIAcquisition(AcquisitionFunction):
             ``(pareto_f, ref_point, base_hv)`` — non-dominated objective
             matrix, hypervolume reference point, and current hypervolume.
         """
-        f = archive.f
+        s = direction_to_minimize_sign(self.direction)
+        f = archive.f * s
         pareto_f = _non_dominated(f)
 
         if self.reference_point is not None:
-            ref = self.reference_point
+            ref = self.reference_point * s
         else:
             nadir = f.max(axis=0)
             span = nadir - f.min(axis=0)
@@ -123,14 +137,15 @@ class EHVIAcquisition(AcquisitionFunction):
             )
         pareto_f, ref_point, base_hv = reference
         assert prediction.std is not None
-        mu = prediction.value  # (n_cand, n_obj)
+        s = direction_to_minimize_sign(self.direction)
+        mu_conv = prediction.value * s  # (n_cand, n_obj)
         sigma = prediction.std  # (n_cand, n_obj)
-        n_cand, n_obj = mu.shape
+        n_cand, n_obj = mu_conv.shape
 
         # Draw all MC samples at once: (n_samples, n_cand, n_obj)
         _rng = rng if rng is not None else self._rng
         eps = _rng.standard_normal((self.n_samples, n_cand, n_obj))
-        mc_samples = mu[np.newaxis] + sigma[np.newaxis] * eps
+        mc_samples = mu_conv[np.newaxis] + sigma[np.newaxis] * eps
 
         ehvi = np.zeros(n_cand)
         for i in range(n_cand):

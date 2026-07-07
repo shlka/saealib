@@ -17,6 +17,31 @@ if TYPE_CHECKING:
     from saealib.surrogate.prediction import SurrogatePrediction
 
 
+def direction_to_minimize_sign(direction: np.ndarray | None) -> np.ndarray | float:
+    """Return the multiplicative sign converting objectives to minimize-space.
+
+    Every direction-sensitive acquisition function's formulas are written
+    assuming minimization. Multiplying a raw-objective-space quantity
+    (``archive.f``, ``prediction.value``, a user-supplied ``reference``) by
+    this sign converts it into minimize-space before the formula runs.
+    Uncertainty magnitudes (``prediction.std``, ``sigma``) must never be
+    multiplied by this sign.
+
+    Parameters
+    ----------
+    direction : np.ndarray or None
+        Per-objective optimization direction (+1 = maximize, -1 = minimize).
+        shape: (n_obj,). ``None`` means already-minimize.
+
+    Returns
+    -------
+    np.ndarray or float
+        ``-direction`` if *direction* is given, else the scalar ``1.0``.
+        Both broadcast correctly against ``(n_obj,)`` or ``(n, n_obj)`` arrays.
+    """
+    return -direction if direction is not None else 1.0
+
+
 class AcquisitionFunction(ABC):
     """
     Abstract base class for acquisition functions (infill criteria).
@@ -30,6 +55,10 @@ class AcquisitionFunction(ABC):
 
     # Optimizer.validate() cross-checks this with surrogate.provides_uncertainty.
     requires_uncertainty: bool = False
+
+    # Optimizer._inject_acquisition_directions() only auto-injects
+    # problem.direction into acquisition functions that opt in via this flag.
+    direction_sensitive: bool = True
 
     @abstractmethod
     def compute_reference(

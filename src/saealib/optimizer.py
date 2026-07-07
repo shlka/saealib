@@ -339,6 +339,19 @@ class Optimizer:
                     "(provides_uncertainty=False)"
                 )
 
+            for acq in surrogate_manager.iter_acquisitions():
+                _adir = getattr(acq, "direction", None)
+                if (
+                    _adir is not None
+                    and hasattr(_adir, "__len__")
+                    and len(_adir) > 0
+                    and len(_adir) != self.problem.n_obj
+                ):
+                    issues.append(
+                        f"{type(acq).__name__} direction length ({len(_adir)}) does "
+                        f"not match problem.n_obj ({self.problem.n_obj})"
+                    )
+
         return issues
 
     def _resolve_defaults(self) -> None:
@@ -413,6 +426,24 @@ class Optimizer:
 
         if getattr(self, "termination", None) is None:
             self.termination = Termination(max_fe_cond(200 * self.problem.dim))
+
+    def _inject_acquisition_directions(self) -> None:
+        """Auto-inject ``problem.direction`` into unset acquisition directions.
+
+        Mirrors the "inherit from problem unless explicitly set" contract used
+        for ``NSGA3Comparator.rng`` and ``SingleObjectiveComparator.direction``:
+        an acquisition function that already has an explicit ``direction`` (or
+        opts out via ``direction_sensitive = False``) is left untouched.
+        """
+        surrogate_manager = getattr(self, "surrogate_manager", None)
+        if surrogate_manager is None:
+            return
+        for acq in surrogate_manager.iter_acquisitions():
+            if (
+                getattr(acq, "direction_sensitive", True)
+                and getattr(acq, "direction", None) is None
+            ):
+                acq.direction = self.problem.direction
 
     def _select_preset_name(self, defaults: dict, algorithm: Algorithm | None) -> str:
         if algorithm is not None:
@@ -507,6 +538,7 @@ class Optimizer:
             raise ConfigurationError(
                 "Optimizer misconfigured:\n" + "\n".join(f"  - {m}" for m in issues)
             )
+        self._inject_acquisition_directions()
         if checkpoint_path is not None:
             self._register_checkpoint(
                 checkpoint_path,
@@ -549,6 +581,7 @@ class Optimizer:
             raise ConfigurationError(
                 "Optimizer misconfigured:\n" + "\n".join(f"  - {m}" for m in issues)
             )
+        self._inject_acquisition_directions()
         if checkpoint_path is not None:
             self._register_checkpoint(
                 checkpoint_path,
@@ -580,6 +613,7 @@ class Optimizer:
             raise ConfigurationError(
                 "Optimizer misconfigured:\n" + "\n".join(f"  - {m}" for m in issues)
             )
+        self._inject_acquisition_directions()
         return Runner(self).iterate_from(ctx)
 
     def run_from(self, ctx: OptimizationState) -> OptimizationState:
@@ -601,6 +635,7 @@ class Optimizer:
             raise ConfigurationError(
                 "Optimizer misconfigured:\n" + "\n".join(f"  - {m}" for m in issues)
             )
+        self._inject_acquisition_directions()
         return Runner(self).run_from(ctx)
 
     # ------------------------------------------------------------------

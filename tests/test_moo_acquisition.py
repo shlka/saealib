@@ -304,3 +304,63 @@ class TestEHVIAcquisition:
             scores = af.score(pred, ref)
             assert scores.shape == (1,)
             assert scores[0] >= 0.0
+
+
+# ===========================================================================
+# Direction-aware minimize-space conversion (Issue #198)
+# ===========================================================================
+class TestParEGODirectionSensitivity:
+    """ParEGO's z_star must reflect the raw-space *maximum* under direction=+1."""
+
+    def test_z_star_is_negated_max_under_maximize_direction(self) -> None:
+        arc = _archive([1.0, 5.0], [3.0, 2.0], [0.5, 4.0])
+        af = ParEGOAcquisition(
+            rng=np.random.default_rng(0), direction=np.array([1.0, 1.0])
+        )
+        z_star, _, _ = af.compute_reference(arc)
+        raw_max = arc.f.max(axis=0)
+        np.testing.assert_array_almost_equal(z_star, -raw_max)
+
+    def test_z_star_is_raw_min_under_minimize_direction(self) -> None:
+        """direction=-1 is a no-op; z_star equals the raw archive minimum."""
+        arc = _archive([1.0, 5.0], [3.0, 2.0], [0.5, 4.0])
+        af = ParEGOAcquisition(
+            rng=np.random.default_rng(0), direction=np.array([-1.0, -1.0])
+        )
+        z_star, _, _ = af.compute_reference(arc)
+        np.testing.assert_array_almost_equal(z_star, arc.f.min(axis=0))
+
+
+class TestSMSEGODirectionSensitivity:
+    """Under direction=+1, larger predicted values must score higher."""
+
+    def test_maximize_prefers_larger_predicted_values(self) -> None:
+        arc = _archive([1.0, 1.0])
+        af = SMSEGOAcquisition(
+            reference_point=[0.0, 0.0], direction=np.array([1.0, 1.0])
+        )
+        ref = af.compute_reference(arc)
+        pred_better = _pred(value=[[3.0, 3.0]], std=[[0.01, 0.01]])
+        pred_worse = _pred(value=[[1.5, 1.5]], std=[[0.01, 0.01]])
+        s_better = af.score(pred_better, ref)
+        s_worse = af.score(pred_worse, ref)
+        assert s_better[0] > s_worse[0]
+
+
+class TestEHVIDirectionSensitivity:
+    """Under direction=+1, candidates closer to the maximizing ideal score higher."""
+
+    def test_maximize_prefers_larger_predicted_values(self) -> None:
+        arc = _archive([1.0, 1.0])
+        af = EHVIAcquisition(
+            n_samples=128,
+            reference_point=[0.0, 0.0],
+            rng=np.random.default_rng(0),
+            direction=np.array([1.0, 1.0]),
+        )
+        ref = af.compute_reference(arc)
+        pred_better = _pred(value=[[3.0, 3.0]], std=[[0.1, 0.1]])
+        pred_worse = _pred(value=[[1.2, 1.2]], std=[[0.1, 0.1]])
+        s_better = af.score(pred_better, ref)
+        s_worse = af.score(pred_worse, ref)
+        assert s_better[0] > s_worse[0]

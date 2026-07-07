@@ -8,6 +8,7 @@ Tests cover:
 - LowerConfidenceBound: negated LCB, kappa parameter, requires uncertainty
 - ProbabilityOfFeasibility: P(g<=0), requires uncertainty
 - AcquisitionFunction: abstract base class cannot be instantiated
+- direction-aware minimize-space conversion for EI/LCB (Issue #198)
 """
 
 import numpy as np
@@ -23,6 +24,7 @@ from saealib.acquisition import (
     ProbabilityOfFeasibility,
     ProductOfFeasibility,
 )
+from saealib.population import Archive, PopulationAttribute
 from saealib.surrogate.prediction import SurrogatePrediction
 
 
@@ -34,6 +36,18 @@ def _pred(value, std=None):
     m = np.asarray(value, dtype=float)
     s = np.asarray(std, dtype=float) if std is not None else None
     return SurrogatePrediction(value=m, std=s)
+
+
+def _archive(rows):
+    """Build a single-objective Archive from objective-value rows."""
+    attrs = [
+        PopulationAttribute(name="x", dtype=np.float64, shape=(1,)),
+        PopulationAttribute(name="f", dtype=np.float64, shape=(1,)),
+    ]
+    arc = Archive(attrs, init_capacity=len(rows) + 5)
+    for i, f_row in enumerate(rows):
+        arc.add(x=np.array([float(i)]), f=np.asarray(f_row, dtype=float))
+    return arc
 
 
 # ===========================================================================
@@ -392,3 +406,73 @@ class TestProductOfFeasibility:
         pred = _pred(value=[[mu1, mu2]], std=[[s1, s2]])
         scores = ProductOfFeasibility().score(pred)
         assert scores[0] == pytest.approx(expected, rel=1e-5)
+
+
+# ===========================================================================
+# Direction-aware minimize-space conversion (Issue #198)
+# ===========================================================================
+class TestDirectionSensitivity:
+    """
+    EI/LCB internally convert to minimize-space via ``direction`` before
+    running their (minimize-only) formulas. Scoring (mu, sigma) under
+    ``direction=+1`` (maximize) must mirror scoring (-mu, sigma) under
+    ``direction=-1`` (minimize) exactly, since ``direction=-1`` is a no-op
+    conversion (sign=+1.0), anchoring the maximize side to already-verified
+    minimize behavior.
+    """
+
+    def test_ei_maximize_mirrors_minimize_negated(self) -> None:
+        archive_rows = [[2.0], [0.0], [-1.0]]
+        mu = np.array([[1.0], [3.0], [-2.0], [0.5]])
+        sigma = np.full((4, 1), 0.5)
+
+        af_max = ExpectedImprovement(xi=0.0, direction=np.array([1.0]))
+        af_min = ExpectedImprovement(xi=0.0, direction=np.array([-1.0]))
+
+        ref_max = af_max.compute_reference(_archive(archive_rows))
+        ref_min = af_min.compute_reference(_archive([[-v[0]] for v in archive_rows]))
+
+        scores_max = af_max.score(_pred(mu, sigma), ref_max)
+        scores_min = af_min.score(_pred(-mu, sigma), ref_min)
+
+        np.testing.assert_allclose(scores_max, scores_min)
+        assert np.argsort(scores_max).tolist() == np.argsort(scores_min).tolist()
+
+    def test_lcb_maximize_mirrors_minimize_negated(self) -> None:
+        mu = np.array([[1.0], [3.0], [-2.0], [0.5]])
+        sigma = np.full((4, 1), 0.3)
+
+        af_max = LowerConfidenceBound(kappa=1.5, direction=np.array([1.0]))
+        af_min = LowerConfidenceBound(kappa=1.5, direction=np.array([-1.0]))
+
+        scores_max = af_max.score(_pred(mu, sigma), reference=None)
+        scores_min = af_min.score(_pred(-mu, sigma), reference=None)
+
+        np.testing.assert_allclose(scores_max, scores_min)
+        assert np.argsort(scores_max).tolist() == np.argsort(scores_min).tolist()
+
+    def test_ei_direction_none_matches_direction_minus_one(self) -> None:
+        """Default (direction=None) is a no-op, same as an explicit -1."""
+        pred = _pred(value=[[1.5]], std=[[0.5]])
+        s_default = ExpectedImprovement(xi=0.0).score(pred, reference=2.0)
+        s_explicit = ExpectedImprovement(xi=0.0, direction=np.array([-1.0])).score(
+            pred, reference=2.0
+        )
+        np.testing.assert_allclose(s_default, s_explicit)
+
+
+class TestDirectionSensitiveOptOut:
+    """PoF/ProductOfFeasibility/MaxUncertainty opt out via direction_sensitive=False."""
+
+    def test_probability_of_feasibility_opts_out(self) -> None:
+        assert ProbabilityOfFeasibility.direction_sensitive is False
+
+    def test_product_of_feasibility_opts_out(self) -> None:
+        assert ProductOfFeasibility.direction_sensitive is False
+
+    def test_max_uncertainty_opts_out(self) -> None:
+        assert MaxUncertainty.direction_sensitive is False
+
+    def test_ei_lcb_parego_smsego_ehvi_are_direction_sensitive(self) -> None:
+        assert ExpectedImprovement.direction_sensitive is True
+        assert LowerConfidenceBound.direction_sensitive is True
