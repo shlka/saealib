@@ -174,6 +174,8 @@ class Problem:
         )
 
         if comparator is not None:
+            if comparator.direction is None:
+                comparator.direction = direction
             self.comparator = comparator
         elif n_obj == 1:
             self.comparator = SingleObjectiveComparator(
