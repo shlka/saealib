@@ -125,14 +125,14 @@ class TestDirectStrategy:
         strategy.step(ctx, provider)
         assert isinstance(strategy.pipeline, Pipeline)
 
-    def test_pipeline_reused_across_steps(self):
+    def test_pipeline_rebuilt_across_steps(self):
         strategy = DirectStrategy()
         ctx = _make_ctx()
         provider = _MockProvider()
         strategy.step(ctx, provider)
         first = strategy.pipeline
         strategy.step(ctx, provider)
-        assert strategy.pipeline is first
+        assert strategy.pipeline is not first
 
     def test_generation_incremented(self):
         strategy = DirectStrategy()

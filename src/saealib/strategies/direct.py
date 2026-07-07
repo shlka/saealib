@@ -49,6 +49,9 @@ class DirectStrategy(OptimizationStrategy):
     ) -> OptimizationState:
         """Evaluate all offspring with the true objective function.
 
+        Rebuilds the pipeline each call so component/parameter changes take
+        effect immediately.
+
         Parameters
         ----------
         ctx : OptimizationState
@@ -56,6 +59,5 @@ class DirectStrategy(OptimizationStrategy):
         provider : ComponentProvider
             Component provider.
         """
-        if self.pipeline is None:
-            self.pipeline = self._build_pipeline(provider)
+        self.pipeline = self._build_pipeline(provider)
         return self.pipeline.execute(ctx)
