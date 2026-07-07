@@ -49,7 +49,12 @@ class Problem:
     comparator : Comparator
         Comparator instance to compare solutions.
     eps_cv : float
-        Epsilon for constraint violation feasibility threshold.
+        Epsilon for constraint violation feasibility threshold. Only used to
+        seed the default ``handler``/``comparator`` at construction time;
+        mutating this attribute afterwards has no runtime effect. The actual
+        running threshold is ``handler.feasibility_threshold``, which the
+        ``Runner`` syncs into ``comparator``/``pareto_archive`` every
+        generation.
     eps_obj : float
         Epsilon for objective value equality comparison.
     func : callable -> float

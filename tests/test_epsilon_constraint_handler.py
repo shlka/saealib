@@ -265,3 +265,35 @@ def test_comparator_eps_cv_decreases_each_generation():
     for i in range(1, len(eps_history)):
         assert eps_history[i] < eps_history[i - 1]
     assert eps_history[-1] == pytest.approx(0.0)
+
+
+def test_pareto_archive_eps_cv_synced_each_generation():
+    """ctx.pareto_archive.eps_cv tracks handler.feasibility_threshold (Issue #200)."""
+    from saealib import GenerationEndEvent
+
+    n_gen = 5
+    h = EpsilonConstraintHandler(linear_epsilon_schedule(eps0=1.0, n_gen=n_gen))
+    prob = _make_constrained_problem(h)
+    opt = _make_optimizer(prob, n_gen=n_gen)
+
+    def _check(e):
+        assert e.ctx.pareto_archive.eps_cv == pytest.approx(
+            e.ctx.problem.handler.feasibility_threshold
+        )
+        assert e.ctx.pareto_archive.eps_cv == pytest.approx(e.ctx.comparator.eps_cv)
+
+    opt.cbmanager.register(GenerationEndEvent, _check)
+    opt.run()
+
+
+def test_standalone_pareto_archive_eps_cv_default_unaffected():
+    """A ParetoArchive never touched by Runner keeps its 0.0 default (Issue #200)."""
+    from saealib.population import ParetoArchive, PopulationAttribute
+
+    attrs = [
+        PopulationAttribute(name="x", dtype=np.float64, shape=(1,)),
+        PopulationAttribute(name="f", dtype=np.float64, shape=(1,)),
+        PopulationAttribute(name="cv", dtype=np.float64, shape=()),
+    ]
+    archive = ParetoArchive(attrs, init_capacity=5)
+    assert archive.eps_cv == pytest.approx(0.0)

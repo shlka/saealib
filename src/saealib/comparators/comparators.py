@@ -43,7 +43,10 @@ class Comparator(ABC):
     weights : np.ndarray
         Weights for objectives. shape = (n_obj, )
     eps_cv : float
-        Epsilon for constraint violation feasibility threshold.
+        Epsilon for constraint violation feasibility threshold. Under
+        ``Optimizer`` execution this value is overwritten every generation
+        from ``problem.handler.feasibility_threshold``; the constructor
+        argument only matters for standalone (non-``Optimizer``) use.
     eps_obj : float
         Epsilon for objective value equality comparison.
     direction : np.ndarray or None
