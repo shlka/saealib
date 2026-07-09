@@ -121,3 +121,13 @@ pytest
 
 1. Ensure all tests pass locally.
 2. Use the provided Pull Request Template.
+
+### 6. Public API Export Tiers
+
+`src/saealib/__init__.py` exposes public components in three tiers (see the "Export tiers" comment at the top of that file for the authoritative version):
+
+* **Tier 1** (eager import, listed in `__all__`): entry points likely to be named in the first script or a subclass definition — the 5 root abstractions (`Algorithm`, `OptimizationStrategy`, `Surrogate`, `AcquisitionFunction`, `SurrogateManager`), one or two representative default implementations per concept, and the `Comparator`/`Evaluator`/`Initializer`/`Termination`/`Event` bases with their common defaults.
+* **Tier 2** (`_TIER2_MAP`, lazy import via `__getattr__`): every other public component. A name in a subpackage's `__all__` belongs here unless it is namespace-only.
+* **namespace-only** (not listed at the top level at all): generic-named bulk sets or domain toolkits, e.g. `saealib.benchmarks` (`sphere`/`zdt*`/`dtlz*`/...), `saealib.registry.get`/`build`/`to_spec`, and `saealib.defaults` (internal). Access these via their subpackage directly.
+
+When you add a new public class or function to a subpackage's `__all__`, add it to `_TIER2_MAP` (or the `NAMESPACE_ONLY` allowlist in `tests/test_exports.py` if it's a namespace-only case) and to `src/saealib/__init__.pyi` in the same PR — `tests/test_exports.py` fails otherwise.
