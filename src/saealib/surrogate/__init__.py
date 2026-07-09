@@ -116,15 +116,3 @@ __all__ = [
     "product_combine",
     "rank_weighted_combine",
 ]
-
-
-def __getattr__(name: str) -> object:
-    if name == "GPSurrogate":
-        from saealib.surrogate._deprecated import GPSurrogate
-
-        return GPSurrogate
-    if name == "RBFsurrogate":
-        from saealib.surrogate.rbf import RBFSurrogate
-
-        return RBFSurrogate
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

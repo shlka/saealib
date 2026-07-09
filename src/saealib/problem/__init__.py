@@ -1,5 +1,4 @@
 from saealib.problem.constraint import (
-    Constraint,
     ConstraintHandler,
     EpsilonConstraintHandler,
     EqualityConstraint,
@@ -12,7 +11,6 @@ from saealib.problem.constraint import (
 from saealib.problem.problem import Problem
 
 __all__ = [
-    "Constraint",
     "ConstraintHandler",
     "EpsilonConstraintHandler",
     "EqualityConstraint",

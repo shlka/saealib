@@ -33,7 +33,7 @@
    :toctree: _autosummary
    :nosignatures:
 
-   saealib.RBFsurrogate
+   saealib.RBFSurrogate
 ```
 
 ```{eval-rst}

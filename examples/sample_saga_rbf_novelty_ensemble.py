@@ -24,7 +24,7 @@ from saealib import (
     NoveltyManager,
     Optimizer,
     Problem,
-    RBFsurrogate,
+    RBFSurrogate,
     SequentialSelection,
     Termination,
     TruncationSelection,
@@ -79,7 +79,7 @@ def main():
     surrogate_manager = EnsembleSurrogateManager(
         managers=[
             LocalSurrogateManager(
-                RBFsurrogate(gaussian_kernel, dim),
+                RBFSurrogate(gaussian_kernel, dim),
                 MeanPrediction(weights=np.array([-1.0])),
             ),
             NoveltyManager(k=novelty_k),

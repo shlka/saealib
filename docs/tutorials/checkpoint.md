@@ -10,7 +10,7 @@
 import numpy as np
 from saealib import (
     GA, CrossoverBLXAlpha, IndividualBasedStrategy, LHSInitializer,
-    MutationUniform, Optimizer, RBFsurrogate, SequentialSelection,
+    MutationUniform, Optimizer, RBFSurrogate, SequentialSelection,
     Termination, TruncationSelection, gaussian_kernel, max_fe,
 )
 from saealib.comparators import SingleObjectiveComparator
@@ -39,7 +39,7 @@ def make_optimizer(seed=None):
             parent_selection=SequentialSelection(),
             survivor_selection=TruncationSelection(),
         ))
-        .set_surrogate(RBFsurrogate(gaussian_kernel, 5), n_neighbors=10)
+        .set_surrogate(RBFSurrogate(gaussian_kernel, 5), n_neighbors=10)
         .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.5))
         .set_termination(Termination(max_fe(200)))
     )

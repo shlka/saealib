@@ -25,7 +25,7 @@ from saealib import (
     MutationUniform,
     Optimizer,
     Problem,
-    RBFsurrogate,
+    RBFSurrogate,
     SequentialSelection,
     Termination,
     TruncationSelection,
@@ -113,7 +113,7 @@ def main():
             )
         )
         .set_termination(Termination(max_fe(200 * dim)))
-        .set_surrogate(RBFsurrogate(gaussian_kernel, dim), n_neighbors=knn)
+        .set_surrogate(RBFSurrogate(gaussian_kernel, dim), n_neighbors=knn)
         .set_strategy(IndividualBasedStrategy(evaluation_ratio=rsm))
         .set_evaluator(JoblibEvaluator())
     )

@@ -11,7 +11,7 @@ from saealib import (
     Optimizer,
     PreSelectionStrategy,
     Problem,
-    RBFsurrogate,
+    RBFSurrogate,
     SequentialSelection,
     Termination,
     TruncationSelection,
@@ -55,7 +55,7 @@ def main():
         survivor_selection=TruncationSelection(),
     )
     termination = Termination(max_fe(200 * dim))
-    surrogate = RBFsurrogate(gaussian_kernel, dim)
+    surrogate = RBFSurrogate(gaussian_kernel, dim)
     # n_candidates=40: screen 40 candidates with surrogate each generation
     # n_select=5: evaluate only the top 5 with the true objective
     strategy = PreSelectionStrategy(n_candidates=n_candidates, n_select=n_select)

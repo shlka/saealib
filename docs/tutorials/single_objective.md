@@ -117,7 +117,7 @@ from saealib.algorithms.ga import GA
 from saealib.operators.crossover import CrossoverBLXAlpha
 from saealib.operators.mutation import MutationUniform
 from saealib.operators.selection import SequentialSelection, TruncationSelection
-from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
 from saealib.surrogate.manager import LocalSurrogateManager
 from saealib.acquisition.mean import MeanPrediction
 from saealib.strategies.ib import IndividualBasedStrategy
@@ -141,7 +141,7 @@ algorithm = GA(
     survivor_selection=TruncationSelection(),
 )
 
-surrogate = RBFsurrogate(gaussian_kernel, dim=DIM)
+surrogate = RBFSurrogate(gaussian_kernel, dim=DIM)
 surrogate_manager = LocalSurrogateManager(
     surrogate,
     MeanPrediction(weights=np.array([-1.0])),
@@ -204,7 +204,7 @@ from saealib.surrogate.manager import GlobalSurrogateManager
 from saealib.acquisition.mean import MeanPrediction
 
 surrogate_manager = GlobalSurrogateManager(
-    surrogate=RBFsurrogate(gaussian_kernel, dim=DIM),
+    surrogate=RBFSurrogate(gaussian_kernel, dim=DIM),
     acquisition=MeanPrediction(weights=np.array([-1.0])),
 )
 ```
@@ -256,7 +256,7 @@ print("終了 — 評価回数:", ctx.fe)
 - {py:class}`saealib.GA` / {py:class}`saealib.PSO`
 - {py:class}`saealib.IndividualBasedStrategy` / {py:class}`saealib.GenerationBasedStrategy` / {py:class}`saealib.PreSelectionStrategy`
 - {py:class}`saealib.LocalSurrogateManager` / {py:class}`saealib.GlobalSurrogateManager`
-- {py:class}`saealib.RBFsurrogate`
+- {py:class}`saealib.RBFSurrogate`
 - {py:class}`saealib.MeanPrediction`
 - {py:class}`saealib.LHSInitializer`
 - {py:class}`saealib.Termination` / {py:func}`saealib.max_fe` / {py:func}`saealib.max_gen`
