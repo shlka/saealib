@@ -112,7 +112,6 @@ __all__ = [
     "TorchSurrogate",
     "TrainingData",
     "TrainingSet",
-    "XGBSurrogate",
     "gaussian_kernel",
     "product_combine",
     "rank_weighted_combine",
