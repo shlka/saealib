@@ -245,7 +245,7 @@ class Optimizer:
             cannot be serialized (e.g. holds a raw lambda).
         """
         from saealib.defaults import dump_preset
-        from saealib.registry import strip_params, to_spec
+        from saealib.registry import _strip_params, to_spec
 
         preset: dict = {}
         for name in ("algorithm", "surrogate_manager", "strategy", "termination"):
@@ -258,7 +258,7 @@ class Optimizer:
                 raise ValidationError(
                     f"Cannot save preset: {name} is not serializable: {e}"
                 ) from e
-            preset[name] = strip_params(spec, "dim", "direction")
+            preset[name] = _strip_params(spec, "dim", "direction")
 
         if not preset:
             raise ValidationError(
@@ -367,7 +367,7 @@ class Optimizer:
         evaluations only if neither ``set_*()`` nor a preset supplies one.
         """
         from saealib.defaults import load_defaults
-        from saealib.registry import build, inject_params
+        from saealib.registry import _inject_params, build
 
         algorithm = getattr(self, "algorithm", None)
         strategy = getattr(self, "strategy", None)
@@ -379,7 +379,7 @@ class Optimizer:
             direction = self.problem.direction
             if algorithm is None and "algorithm" in user_preset:
                 algorithm = build(
-                    inject_params(
+                    _inject_params(
                         user_preset["algorithm"], dim=dim, direction=direction
                     )
                 )
@@ -391,7 +391,9 @@ class Optimizer:
                 self.surrogate_manager = surrogate_manager
             if strategy is None and "strategy" in user_preset:
                 strategy = build(
-                    inject_params(user_preset["strategy"], dim=dim, direction=direction)
+                    _inject_params(
+                        user_preset["strategy"], dim=dim, direction=direction
+                    )
                 )
                 self.strategy = strategy
             if (
@@ -399,7 +401,7 @@ class Optimizer:
                 and "termination" in user_preset
             ):
                 self.termination = build(
-                    inject_params(
+                    _inject_params(
                         user_preset["termination"], dim=dim, direction=direction
                     )
                 )
@@ -472,7 +474,7 @@ class Optimizer:
         Shared by ``Optimizer._resolve_defaults()`` and ``saealib.api``'s
         ``'rbf'`` surrogate shorthand, so the injection logic is defined once.
         """
-        from saealib.registry import build, inject_params
+        from saealib.registry import _inject_params, build
 
         spec = copy.deepcopy(spec)
         params = spec.setdefault("params", {})
@@ -484,7 +486,7 @@ class Optimizer:
             "acquisition",
             {"type": "MeanPrediction", "params": {"direction": direction}},
         )
-        spec = inject_params(spec, dim=dim, direction=direction)
+        spec = _inject_params(spec, dim=dim, direction=direction)
         return build(spec)
 
     def _register_checkpoint(
