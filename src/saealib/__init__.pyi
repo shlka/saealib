@@ -10,14 +10,17 @@ __all__: list[str]
 # ---------------------------------------------------------------------------
 
 from saealib.acquisition import AcquisitionFunction as AcquisitionFunction
-from saealib.acquisition import ExpectedImprovement as ExpectedImprovement
 
 # acquisition (less common)
+from saealib.acquisition import EHVIAcquisition as EHVIAcquisition
+from saealib.acquisition import ExpectedImprovement as ExpectedImprovement
 from saealib.acquisition import LowerConfidenceBound as LowerConfidenceBound
 from saealib.acquisition import MaxUncertainty as MaxUncertainty
 from saealib.acquisition import MeanPrediction as MeanPrediction
+from saealib.acquisition import ParEGOAcquisition as ParEGOAcquisition
 from saealib.acquisition import ProbabilityOfFeasibility as ProbabilityOfFeasibility
 from saealib.acquisition import ProductOfFeasibility as ProductOfFeasibility
+from saealib.acquisition import SMSEGOAcquisition as SMSEGOAcquisition
 from saealib.algorithms import GA as GA
 from saealib.algorithms import PSO as PSO
 from saealib.algorithms import Algorithm as Algorithm
@@ -155,28 +158,76 @@ from saealib.strategies import GenerationBasedStrategy as GenerationBasedStrateg
 from saealib.strategies import IndividualBasedStrategy as IndividualBasedStrategy
 from saealib.strategies import OptimizationStrategy as OptimizationStrategy
 from saealib.strategies import PreSelectionStrategy as PreSelectionStrategy
+from saealib.surrogate import RMSE as RMSE
+
+# surrogate (switching)
+from saealib.surrogate import (
+    AccuracyBasedSurrogateSwitcher as AccuracyBasedSurrogateSwitcher,
+)
+
+# surrogate (accuracy evaluation)
+from saealib.surrogate import AccuracyEvaluator as AccuracyEvaluator
 
 # surrogate (specialized)
 from saealib.surrogate import ArchiveBasedManager as ArchiveBasedManager
+
+# surrogate (training-set builders)
+from saealib.surrogate import ArchiveObjectiveSet as ArchiveObjectiveSet
+
+# surrogate (other)
+from saealib.surrogate import ComparisonSurrogate as ComparisonSurrogate
 from saealib.surrogate import CompositeSurrogateManager as CompositeSurrogateManager
+from saealib.surrogate import ConstraintObjectiveSet as ConstraintObjectiveSet
 from saealib.surrogate import DensityManager as DensityManager
+from saealib.surrogate import (
+    FeasibilityClassificationSet as FeasibilityClassificationSet,
+)
+from saealib.surrogate import GenCtrlSwitcher as GenCtrlSwitcher
 from saealib.surrogate import GlobalSurrogateManager as GlobalSurrogateManager
+from saealib.surrogate import HeldOutAccuracyEvaluator as HeldOutAccuracyEvaluator
+from saealib.surrogate import KFoldAccuracyEvaluator as KFoldAccuracyEvaluator
+from saealib.surrogate import KNNConstraintObjectiveSet as KNNConstraintObjectiveSet
+from saealib.surrogate import KNNObjectiveSet as KNNObjectiveSet
+from saealib.surrogate import LevelBasedSet as LevelBasedSet
 from saealib.surrogate import LocalSurrogateManager as LocalSurrogateManager
+from saealib.surrogate import LOOAccuracyEvaluator as LOOAccuracyEvaluator
+from saealib.surrogate import ManagerSwitcher as ManagerSwitcher
 from saealib.surrogate import NichingManager as NichingManager
 from saealib.surrogate import NoveltyManager as NoveltyManager
+from saealib.surrogate import PairwiseComparisonSet as PairwiseComparisonSet
+from saealib.surrogate import PairwiseSurrogateManager as PairwiseSurrogateManager
 from saealib.surrogate import PerObjectiveSurrogate as PerObjectiveSurrogate
+from saealib.surrogate import R2Score as R2Score
 from saealib.surrogate import RBFSurrogate as RBFSurrogate
+from saealib.surrogate import ReferencePointComparisonSet as ReferencePointComparisonSet
+from saealib.surrogate import RegressionSurrogate as RegressionSurrogate
+from saealib.surrogate import (
+    SklearnClassificationSurrogate as SklearnClassificationSurrogate,
+)
 from saealib.surrogate import SklearnGPRSurrogate as SklearnGPRSurrogate
 from saealib.surrogate import SklearnLGBMSurrogate as SklearnLGBMSurrogate
 from saealib.surrogate import SklearnNNSurrogate as SklearnNNSurrogate
+from saealib.surrogate import (
+    SklearnRFCClassificationSurrogate as SklearnRFCClassificationSurrogate,
+)
 from saealib.surrogate import SklearnRFRSurrogate as SklearnRFRSurrogate
 from saealib.surrogate import SklearnSurrogate as SklearnSurrogate
+from saealib.surrogate import (
+    SklearnSVCClassificationSurrogate as SklearnSVCClassificationSurrogate,
+)
 from saealib.surrogate import SklearnSVMSurrogate as SklearnSVMSurrogate
 from saealib.surrogate import SklearnXGBSurrogate as SklearnXGBSurrogate
+from saealib.surrogate import SpearmanCorrelation as SpearmanCorrelation
+from saealib.surrogate import StrategySwitcher as StrategySwitcher
 from saealib.surrogate import Surrogate as Surrogate
+from saealib.surrogate import SurrogateAccuracy as SurrogateAccuracy
+from saealib.surrogate import SurrogateAccuracyMetric as SurrogateAccuracyMetric
 from saealib.surrogate import SurrogateManager as SurrogateManager
 from saealib.surrogate import SurrogatePrediction as SurrogatePrediction
+from saealib.surrogate import TopKBipartitionSet as TopKBipartitionSet
 from saealib.surrogate import TorchSurrogate as TorchSurrogate
+from saealib.surrogate import TrainingData as TrainingData
+from saealib.surrogate import TrainingSet as TrainingSet
 from saealib.surrogate import product_combine as product_combine
 from saealib.surrogate import rank_weighted_combine as rank_weighted_combine
 
@@ -203,3 +254,5 @@ from saealib.variables import CategoricalVariable as CategoricalVariable
 from saealib.variables import ContinuousVariable as ContinuousVariable
 from saealib.variables import IntegerVariable as IntegerVariable
 from saealib.variables import Variable as Variable
+
+_TIER2_MAP: dict[str, str]

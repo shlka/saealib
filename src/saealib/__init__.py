@@ -6,7 +6,23 @@ from importlib.metadata import version
 __version__ = version("saealib")
 
 # ---------------------------------------------------------------------------
-# Tier 1 — eager imports (always available, listed in __all__)
+# Export tiers
+#
+# Tier 1 (this section, eager import + __all__): entry points likely to be
+#   named in the first script or a subclass definition — the 5 root
+#   abstractions (Algorithm, OptimizationStrategy, Surrogate,
+#   AcquisitionFunction, SurrogateManager), one or two representative default
+#   implementations per concept, and the Comparator/Evaluator/Initializer/
+#   Termination/Event bases with their common defaults.
+# Tier 2 (_TIER2_MAP below, lazy import via __getattr__): every other public
+#   component. A name in a subpackage's __all__ belongs here unless it is
+#   namespace-only.
+# namespace-only (not listed at the top level at all): generic-named bulk
+#   sets or domain toolkits, e.g. saealib.benchmarks (sphere/zdt*/dtlz*/...),
+#   saealib.registry.get/build/to_spec, and saealib.defaults (internal).
+#   Access these via their subpackage directly. Tracked in
+#   tests/test_exports.py's NAMESPACE_ONLY allowlist so new subpackage
+#   exports can't silently drift out of this scheme.
 # ---------------------------------------------------------------------------
 
 from saealib.acquisition import AcquisitionFunction, ExpectedImprovement
@@ -234,11 +250,14 @@ _TIER2_MAP: dict[str, str] = {
     "SequentialSelection": "saealib.operators",
     "repair_clipping": "saealib.operators",
     # acquisition (less common)
+    "EHVIAcquisition": "saealib.acquisition",
     "LowerConfidenceBound": "saealib.acquisition",
     "MaxUncertainty": "saealib.acquisition",
     "MeanPrediction": "saealib.acquisition",
+    "ParEGOAcquisition": "saealib.acquisition",
     "ProbabilityOfFeasibility": "saealib.acquisition",
     "ProductOfFeasibility": "saealib.acquisition",
+    "SMSEGOAcquisition": "saealib.acquisition",
     # surrogate (specialized)
     "ArchiveBasedManager": "saealib.surrogate",
     "CompositeSurrogateManager": "saealib.surrogate",
@@ -260,6 +279,40 @@ _TIER2_MAP: dict[str, str] = {
     "TorchSurrogate": "saealib.surrogate",
     "product_combine": "saealib.surrogate",
     "rank_weighted_combine": "saealib.surrogate",
+    # surrogate (training-set builders)
+    "ArchiveObjectiveSet": "saealib.surrogate",
+    "ConstraintObjectiveSet": "saealib.surrogate",
+    "FeasibilityClassificationSet": "saealib.surrogate",
+    "KNNConstraintObjectiveSet": "saealib.surrogate",
+    "KNNObjectiveSet": "saealib.surrogate",
+    "LevelBasedSet": "saealib.surrogate",
+    "PairwiseComparisonSet": "saealib.surrogate",
+    "ReferencePointComparisonSet": "saealib.surrogate",
+    "TopKBipartitionSet": "saealib.surrogate",
+    "TrainingData": "saealib.surrogate",
+    "TrainingSet": "saealib.surrogate",
+    # surrogate (accuracy evaluation)
+    "AccuracyEvaluator": "saealib.surrogate",
+    "HeldOutAccuracyEvaluator": "saealib.surrogate",
+    "KFoldAccuracyEvaluator": "saealib.surrogate",
+    "LOOAccuracyEvaluator": "saealib.surrogate",
+    "R2Score": "saealib.surrogate",
+    "RMSE": "saealib.surrogate",
+    "SpearmanCorrelation": "saealib.surrogate",
+    "SurrogateAccuracy": "saealib.surrogate",
+    "SurrogateAccuracyMetric": "saealib.surrogate",
+    # surrogate (switching)
+    "AccuracyBasedSurrogateSwitcher": "saealib.surrogate",
+    "GenCtrlSwitcher": "saealib.surrogate",
+    "ManagerSwitcher": "saealib.surrogate",
+    "StrategySwitcher": "saealib.surrogate",
+    # surrogate (other)
+    "ComparisonSurrogate": "saealib.surrogate",
+    "PairwiseSurrogateManager": "saealib.surrogate",
+    "RegressionSurrogate": "saealib.surrogate",
+    "SklearnClassificationSurrogate": "saealib.surrogate",
+    "SklearnRFCClassificationSurrogate": "saealib.surrogate",
+    "SklearnSVCClassificationSurrogate": "saealib.surrogate",
     # problem (less common)
     "Constraint": "saealib.problem",
     "GradientRepairHandler": "saealib.problem",
