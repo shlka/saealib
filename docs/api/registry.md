@@ -6,7 +6,7 @@
    :nosignatures:
 
    saealib.register
-   saealib.build
-   saealib.get
-   saealib.to_spec
+   saealib.registry.build
+   saealib.registry.get
+   saealib.registry.to_spec
 ```

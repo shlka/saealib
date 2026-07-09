@@ -142,7 +142,7 @@ def build(spec: Any) -> Any:
     return spec
 
 
-def dotted_path(obj: Any) -> str:
+def _dotted_path(obj: Any) -> str:
     """Return the ``module.qualname`` import path of a class or function."""
     return f"{obj.__module__}.{obj.__qualname__}"
 
@@ -175,7 +175,7 @@ def to_spec(obj: Any) -> Any:
     if isinstance(obj, dict):
         return {k: to_spec(v) for k, v in obj.items()}
     if inspect.isfunction(obj) or inspect.isbuiltin(obj):
-        path = dotted_path(obj)
+        path = _dotted_path(obj)
         try:
             resolved = get(path)
         except ValidationError:
@@ -197,7 +197,7 @@ def to_spec(obj: Any) -> Any:
         return spec
 
     cls = type(obj)
-    type_name = _find_registered_name(cls) or dotted_path(cls)
+    type_name = _find_registered_name(cls) or _dotted_path(cls)
     parameters = [
         p
         for name, p in inspect.signature(cls.__init__).parameters.items()
@@ -232,7 +232,7 @@ def to_spec(obj: Any) -> Any:
     return {"type": type_name, "params": params}
 
 
-def strip_params(spec: Any, *names: str) -> Any:
+def _strip_params(spec: Any, *names: str) -> Any:
     """Return a copy of ``spec`` with the given param names removed recursively.
 
     Non-spec values (including lists of specs, encountered while descending
@@ -240,20 +240,20 @@ def strip_params(spec: Any, *names: str) -> Any:
     mutated.
     """
     if isinstance(spec, list):
-        return [strip_params(v, *names) for v in spec]
+        return [_strip_params(v, *names) for v in spec]
     if not _is_spec(spec):
         return spec
     params = spec.get("params", {})
     if isinstance(params, list):
-        new_params: Any = [strip_params(v, *names) for v in params]
+        new_params: Any = [_strip_params(v, *names) for v in params]
     else:
         new_params = {
-            k: strip_params(v, *names) for k, v in params.items() if k not in names
+            k: _strip_params(v, *names) for k, v in params.items() if k not in names
         }
     return {**spec, "params": new_params}
 
 
-def inject_params(spec: Any, **overrides: Any) -> Any:
+def _inject_params(spec: Any, **overrides: Any) -> Any:
     """Return a copy of ``spec`` with ``overrides`` injected recursively.
 
     For each ``{"type", "params": dict}`` node, an override is injected only
@@ -261,12 +261,12 @@ def inject_params(spec: Any, **overrides: Any) -> Any:
     already present in ``params``. ``spec`` itself is not mutated.
     """
     if isinstance(spec, list):
-        return [inject_params(spec_item, **overrides) for spec_item in spec]
+        return [_inject_params(spec_item, **overrides) for spec_item in spec]
     if not _is_spec(spec):
         return spec
     params = spec.get("params", {})
     if isinstance(params, list):
-        new_params: Any = [inject_params(v, **overrides) for v in params]
+        new_params: Any = [_inject_params(v, **overrides) for v in params]
         return {**spec, "params": new_params}
 
     target = get(spec["type"])
@@ -274,7 +274,7 @@ def inject_params(spec: Any, **overrides: Any) -> Any:
         target.__init__ if inspect.isclass(target) else target
     )
     accepted = signature.parameters
-    new_params = {k: inject_params(v, **overrides) for k, v in params.items()}
+    new_params = {k: _inject_params(v, **overrides) for k, v in params.items()}
     for name, value in overrides.items():
         if name in accepted and name not in new_params:
             new_params[name] = value

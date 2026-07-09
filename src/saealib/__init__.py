@@ -61,7 +61,7 @@ from saealib.problem import (
     Problem,
     StaticToleranceHandler,
 )
-from saealib.registry import build, get, register, to_spec
+from saealib.registry import register
 from saealib.stages import (
     ArchiveUpdateStage,
     AskStage,
@@ -178,9 +178,7 @@ __all__ = [
     "TruncationSelection",
     "ValidationError",
     "Variable",
-    "build",
     "f_target",
-    "get",
     "hypervolume",
     "hypervolume_contributions",
     "max_fe",
@@ -189,7 +187,6 @@ __all__ = [
     "minimize",
     "register",
     "stalled",
-    "to_spec",
 ]
 
 # ---------------------------------------------------------------------------

@@ -4,7 +4,14 @@ import numpy as np
 import pytest
 
 from saealib.exceptions import ValidationError
-from saealib.registry import build, get, inject_params, register, strip_params, to_spec
+from saealib.registry import (
+    _inject_params,
+    _strip_params,
+    build,
+    get,
+    register,
+    to_spec,
+)
 
 
 class Engine:
@@ -296,7 +303,7 @@ class TestToSpec:
 class TestStripParams:
     def test_strips_key_from_flat_spec(self):
         spec = {"type": "Engine", "params": {"power": 1, "dim": 3}}
-        stripped = strip_params(spec, "dim")
+        stripped = _strip_params(spec, "dim")
         assert stripped == {"type": "Engine", "params": {"power": 1}}
 
     def test_strips_recursively_from_nested_dict_params(self):
@@ -307,7 +314,7 @@ class TestStripParams:
                 "dim": 3,
             },
         }
-        stripped = strip_params(spec, "dim", "direction")
+        stripped = _strip_params(spec, "dim", "direction")
         assert stripped == {
             "type": "Car",
             "params": {"engine": {"type": "Engine", "params": {"power": 1}}},
@@ -318,7 +325,7 @@ class TestStripParams:
             "type": "Convoy",
             "params": [{"type": "Engine", "params": {"power": 1, "dim": 3}}],
         }
-        stripped = strip_params(spec, "dim")
+        stripped = _strip_params(spec, "dim")
         assert stripped == {
             "type": "Convoy",
             "params": [{"type": "Engine", "params": {"power": 1}}],
@@ -326,26 +333,33 @@ class TestStripParams:
 
     def test_is_non_destructive(self):
         spec = {"type": "Engine", "params": {"power": 1, "dim": 3}}
-        strip_params(spec, "dim")
+        _strip_params(spec, "dim")
         assert spec == {"type": "Engine", "params": {"power": 1, "dim": 3}}
 
 
 class TestTopLevelExport:
-    def test_importable_from_top_level(self):
+    def test_register_importable_from_top_level(self):
         import saealib
 
         assert saealib.register is register
-        assert saealib.build is build
-        assert saealib.get is get
-        assert saealib.to_spec is to_spec
+        assert "register" in saealib.__all__
 
-    def test_exported_in_all(self):
+    def test_get_build_to_spec_not_exported_at_top_level(self):
         import saealib
 
-        assert "register" in saealib.__all__
-        assert "build" in saealib.__all__
-        assert "get" in saealib.__all__
-        assert "to_spec" in saealib.__all__
+        assert "build" not in saealib.__all__
+        assert "get" not in saealib.__all__
+        assert "to_spec" not in saealib.__all__
+        assert not hasattr(saealib, "build")
+        assert not hasattr(saealib, "get")
+        assert not hasattr(saealib, "to_spec")
+
+    def test_get_build_to_spec_importable_via_registry_namespace(self):
+        import saealib.registry
+
+        assert saealib.registry.build is build
+        assert saealib.registry.get is get
+        assert saealib.registry.to_spec is to_spec
 
 
 class TestInjectParams:
@@ -355,17 +369,17 @@ class TestInjectParams:
 
     def test_injects_missing_param(self):
         spec = {"type": "Engine", "params": {}}
-        injected = inject_params(spec, power=250)
+        injected = _inject_params(spec, power=250)
         assert injected == {"type": "Engine", "params": {"power": 250}}
 
     def test_does_not_overwrite_existing_param(self):
         spec = {"type": "Engine", "params": {"power": 42}}
-        injected = inject_params(spec, power=250)
+        injected = _inject_params(spec, power=250)
         assert injected == {"type": "Engine", "params": {"power": 42}}
 
     def test_does_not_inject_param_absent_from_signature(self):
         spec = {"type": "Engine", "params": {}}
-        injected = inject_params(spec, not_a_param=1)
+        injected = _inject_params(spec, not_a_param=1)
         assert injected == {"type": "Engine", "params": {}}
 
     def test_injects_into_nested_spec(self):
@@ -373,7 +387,7 @@ class TestInjectParams:
             "type": "Car",
             "params": {"engine": {"type": "Engine", "params": {}}, "wheels": 4},
         }
-        injected = inject_params(spec, power=99)
+        injected = _inject_params(spec, power=99)
         assert injected == {
             "type": "Car",
             "params": {
@@ -384,5 +398,5 @@ class TestInjectParams:
 
     def test_is_non_destructive(self):
         spec = {"type": "Engine", "params": {}}
-        inject_params(spec, power=250)
+        _inject_params(spec, power=250)
         assert spec == {"type": "Engine", "params": {}}
