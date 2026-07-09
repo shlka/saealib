@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from saealib._deprecated import deprecated_param, warn_deprecated
 from saealib.comparators.dominance import (
     _PARETO_DOMINATOR,  # noqa: F401
     Dominator,
@@ -66,12 +65,6 @@ class Comparator(ABC):
         self.eps_cv = eps_cv
         self.eps_obj = eps_obj
         self.direction = direction
-
-    @property
-    def eps(self) -> float:
-        """Deprecated. Use eps_cv or eps_obj."""
-        warn_deprecated("Comparator.eps", "eps_cv or eps_obj", "0.1.0")
-        return self.eps_cv
 
     @abstractmethod
     def sort_population(self, population: Population) -> np.ndarray:
@@ -144,18 +137,13 @@ class Comparator(ABC):
 class SingleObjectiveComparator(Comparator):
     """Comparator for single-objective optimization."""
 
-    @deprecated_param("weight", "direction", "0.1.0")
     def __init__(
         self,
         direction: float | None = None,
-        eps: float | None = None,
         *,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
     ):
-        if eps is not None:
-            warn_deprecated("eps", "eps_cv and eps_obj", "0.1.0")
-            eps_cv = eps_obj = eps
         direction_arr = np.array([direction]) if direction is not None else None
         weights = direction_arr if direction_arr is not None else np.empty(0)
         super().__init__(weights, eps_cv, eps_obj, direction=direction_arr)
@@ -251,15 +239,11 @@ class WeightedSumComparator(Comparator):
     ----------
     direction : np.ndarray
         Per-objective optimization directions (±1). shape = (n_obj,)
-    eps : float
-        Epsilon tolerance for constraint violation and fitness comparison.
     """
 
-    @deprecated_param("weights", "direction", "0.1.0")
     def __init__(
         self,
         direction: np.ndarray | None = None,
-        eps: float | None = None,
         *,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
@@ -268,9 +252,6 @@ class WeightedSumComparator(Comparator):
             raise TypeError(
                 "WeightedSumComparator() missing required argument: 'direction'"
             )
-        if eps is not None:
-            warn_deprecated("eps", "eps_cv and eps_obj", "0.1.0")
-            eps_cv = eps_obj = eps
         _dir = np.asarray(direction, dtype=float)
         super().__init__(_dir, eps_cv, eps_obj, direction=_dir)
 
@@ -338,23 +319,17 @@ class ParetoComparator(Comparator):
     direction : np.ndarray or None
         Per-objective optimization directions (+1 = maximize, -1 = minimize).
         None means all objectives are minimized (standard Pareto dominance).
-    eps : float
-        Epsilon tolerance for constraint violation.
     """
 
     def __init__(
         self,
         direction: np.ndarray | None = None,
-        eps: float | None = None,
         *,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
         sorter: NonDominatedSorter = non_dominated_sort,
         dominator: Dominator | None = None,
     ):
-        if eps is not None:
-            warn_deprecated("eps", "eps_cv", "0.1.0")
-            eps_cv = eps
         direction_arr = (
             np.asarray(direction, dtype=float) if direction is not None else None
         )
@@ -441,23 +416,17 @@ class NSGA2Comparator(ParetoComparator):
     direction : np.ndarray or None
         Per-objective optimization directions (+1 = maximize, -1 = minimize).
         None means all objectives are minimized.
-    eps : float
-        Epsilon tolerance for constraint violation.
     """
 
     def __init__(
         self,
         direction: np.ndarray | None = None,
-        eps: float | None = None,
         *,
         eps_cv: float = 1e-6,
         eps_obj: float = 1e-6,
         sorter: NonDominatedSorter = non_dominated_sort,
         dominator: Dominator | None = None,
     ):
-        if eps is not None:
-            warn_deprecated("eps", "eps_cv", "0.1.0")
-            eps_cv = eps
         super().__init__(
             direction,
             eps_cv=eps_cv,

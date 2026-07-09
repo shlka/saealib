@@ -8,8 +8,6 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from saealib._deprecated import deprecated_class
-
 if TYPE_CHECKING:
     from saealib.population import Population
 
@@ -94,20 +92,6 @@ class InequalityConstraint:
             gradient is available.
         """
         return None
-
-
-@deprecated_class("InequalityConstraint")
-class Constraint(InequalityConstraint):
-    """
-    Deprecated alias of :class:`InequalityConstraint`.
-
-    .. deprecated::
-        Use :class:`InequalityConstraint`. ``Constraint`` will be removed
-        in a future release.
-    """
-
-    def __init__(self, func: Callable[..., Any], threshold: float = 0.0):
-        super().__init__(func, threshold)
 
 
 class EqualityConstraint(InequalityConstraint):

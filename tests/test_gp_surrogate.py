@@ -218,19 +218,21 @@ class TestSklearnGPRSurrogateManager:
 
 
 # ===========================================================================
-# GPSurrogate deprecated alias
+# GPSurrogate removed alias
 # ===========================================================================
-class TestGPSurrogateDeprecated:
-    def test_instantiation_warns(self, train_data_1obj, test_x) -> None:
-        import warnings
+class TestGPSurrogateRemoved:
+    def test_deprecated_module_no_longer_exists(self) -> None:
+        import importlib
 
-        from saealib.surrogate._deprecated import GPSurrogate
+        with pytest.raises(ModuleNotFoundError):
+            importlib.import_module("saealib.surrogate._deprecated")
 
-        X, y = train_data_1obj
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            s = GPSurrogate()
-            assert any("SklearnGPRSurrogate" in str(warning.message) for warning in w)
-        s.fit(X, y)
-        pred = s.predict(test_x)
-        assert pred.value.shape == (5, 1)
+    def test_not_accessible_from_surrogate_package(self) -> None:
+        import saealib.surrogate
+
+        assert not hasattr(saealib.surrogate, "GPSurrogate")
+
+    def test_not_accessible_from_top_level(self) -> None:
+        import saealib
+
+        assert not hasattr(saealib, "GPSurrogate")

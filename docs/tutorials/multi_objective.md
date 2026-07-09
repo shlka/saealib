@@ -89,7 +89,7 @@ from saealib.algorithms.ga import GA
 from saealib.operators.crossover import CrossoverBLXAlpha
 from saealib.operators.mutation import MutationUniform
 from saealib.operators.selection import SequentialSelection, TruncationSelection
-from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
 from saealib.surrogate.manager import LocalSurrogateManager
 from saealib.acquisition.mean import MeanPrediction
 from saealib.strategies.ib import IndividualBasedStrategy
@@ -114,7 +114,7 @@ algorithm = GA(
     survivor_selection=TruncationSelection(),
 )
 
-surrogate = RBFsurrogate(gaussian_kernel, dim=DIM)
+surrogate = RBFSurrogate(gaussian_kernel, dim=DIM)
 surrogate_manager = LocalSurrogateManager(
     surrogate,
     MeanPrediction(weights=np.array([-1.0, -1.0])),
@@ -170,15 +170,15 @@ print(f"pareto_f.shape: {pareto_f.shape}")  # (n_pareto, n_obj)
 ```python
 from saealib.surrogate.manager import LocalSurrogateManager, EnsembleSurrogateManager
 from saealib.acquisition.mean import MeanPrediction
-from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
 
 manager_f1 = LocalSurrogateManager(
-    RBFsurrogate(gaussian_kernel, dim=DIM),
+    RBFSurrogate(gaussian_kernel, dim=DIM),
     MeanPrediction(weights=np.array([-1.0, 0.0])),  # f1 のみを対象
     n_neighbors=30,
 )
 manager_f2 = LocalSurrogateManager(
-    RBFsurrogate(gaussian_kernel, dim=DIM),
+    RBFSurrogate(gaussian_kernel, dim=DIM),
     MeanPrediction(weights=np.array([0.0, -1.0])),  # f2 のみを対象
     n_neighbors=30,
 )
@@ -210,7 +210,7 @@ ctx = (
 - {py:class}`saealib.GA` / {py:class}`saealib.PSO`
 - {py:class}`saealib.IndividualBasedStrategy` / {py:class}`saealib.GenerationBasedStrategy` / {py:class}`saealib.PreSelectionStrategy`
 - {py:class}`saealib.LocalSurrogateManager` / {py:class}`saealib.EnsembleSurrogateManager`
-- {py:class}`saealib.RBFsurrogate`
+- {py:class}`saealib.RBFSurrogate`
 - {py:class}`saealib.MeanPrediction`
 - {py:func}`saealib.non_dominated_sort`
 - {py:class}`saealib.LHSInitializer`

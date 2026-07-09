@@ -146,7 +146,7 @@ from saealib.algorithms.ga import GA
 from saealib.operators.crossover import CrossoverBLXAlpha
 from saealib.operators.mutation import MutationUniform
 from saealib.operators.selection import SequentialSelection, TruncationSelection
-from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
 from saealib.surrogate.manager import LocalSurrogateManager
 from saealib.acquisition.mean import MeanPrediction
 from saealib.strategies.ib import IndividualBasedStrategy
@@ -159,7 +159,7 @@ algorithm = GA(
 )
 
 surrogate_manager = LocalSurrogateManager(
-    RBFsurrogate(gaussian_kernel, dim=2),
+    RBFSurrogate(gaussian_kernel, dim=2),
     MeanPrediction(weights=np.array([-1.0])),
     n_neighbors=20,
 )

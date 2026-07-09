@@ -2,7 +2,7 @@
 Tests for the ConstraintHandler abstraction (Issue #108).
 
 Tests cover:
-- InequalityConstraint: rename, gradient() default, deprecated Constraint alias
+- InequalityConstraint: rename, gradient() default, removed Constraint alias
 - StaticToleranceHandler: sum-of-violations cv, feasibility_threshold, identity augment
 - Problem: default handler reproduces previous behavior; custom handler is honored
 - ConstraintHandler: compute_cv delegation and augment_objective in Problem.evaluate
@@ -12,7 +12,6 @@ import numpy as np
 import pytest
 
 from saealib import (
-    Constraint,
     ConstraintHandler,
     InequalityConstraint,
     Problem,
@@ -34,7 +33,7 @@ def _make_problem(constraints=None, handler=None):
 
 
 # ---------------------------------------------------------------------------
-# InequalityConstraint / deprecated alias
+# InequalityConstraint / removed alias
 # ---------------------------------------------------------------------------
 
 
@@ -51,19 +50,15 @@ class TestInequalityConstraint:
         c = Linear(lambda x: float(x[0]))
         np.testing.assert_array_equal(c.gradient(np.zeros(2)), [1.0, 0.0])
 
-    def test_constraint_alias_is_subclass(self):
-        assert issubclass(Constraint, InequalityConstraint)
+    def test_constraint_alias_not_accessible_from_top_level(self):
+        import saealib
 
-    def test_constraint_alias_warns(self):
-        with pytest.warns(FutureWarning):
-            Constraint(lambda x: float(x[0]))
+        assert not hasattr(saealib, "Constraint")
 
-    def test_inequality_constraint_does_not_warn(self):
-        import warnings
+    def test_constraint_alias_not_accessible_from_problem_package(self):
+        import saealib.problem
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            InequalityConstraint(lambda x: float(x[0]))
+        assert not hasattr(saealib.problem, "Constraint")
 
 
 # ---------------------------------------------------------------------------

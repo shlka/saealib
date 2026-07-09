@@ -129,7 +129,6 @@ from saealib.population import Population as Population
 from saealib.population import PopulationAttribute as PopulationAttribute
 
 # problem (less common)
-from saealib.problem import Constraint as Constraint
 from saealib.problem import ConstraintHandler as ConstraintHandler
 from saealib.problem import EpsilonConstraintHandler as EpsilonConstraintHandler
 from saealib.problem import EqualityConstraint as EqualityConstraint
@@ -230,10 +229,6 @@ from saealib.surrogate import TrainingData as TrainingData
 from saealib.surrogate import TrainingSet as TrainingSet
 from saealib.surrogate import product_combine as product_combine
 from saealib.surrogate import rank_weighted_combine as rank_weighted_combine
-
-# deprecated
-from saealib.surrogate._deprecated import GPSurrogate as GPSurrogate
-from saealib.surrogate.rbf import RBFSurrogate as RBFsurrogate  # noqa: F401
 
 # utils
 from saealib.surrogate.rbf import gaussian_kernel as gaussian_kernel

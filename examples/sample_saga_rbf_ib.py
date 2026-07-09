@@ -11,7 +11,7 @@ from saealib import (
     MutationUniform,
     Optimizer,
     Problem,
-    RBFsurrogate,
+    RBFSurrogate,
     SequentialSelection,
     Termination,
     TruncationSelection,
@@ -56,7 +56,7 @@ def main():
         survivor_selection=TruncationSelection(),
     )
     termination = Termination(max_fe(200 * dim))
-    surrogate = RBFsurrogate(gaussian_kernel, dim)
+    surrogate = RBFSurrogate(gaussian_kernel, dim)
     strategy = IndividualBasedStrategy(evaluation_ratio=rsm)
 
     opt = (

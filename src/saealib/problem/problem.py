@@ -7,7 +7,6 @@ from typing import Any
 
 import numpy as np
 
-from saealib._deprecated import warn_deprecated
 from saealib.comparators import (
     Comparator,
     NSGA2Comparator,
@@ -74,7 +73,6 @@ class Problem:
         direction: np.ndarray,
         lb: list[float] | None = None,
         ub: list[float] | None = None,
-        eps: float | None = None,
         comparator: Comparator | None = None,
         constraints: list[InequalityConstraint] | None = None,
         *,
@@ -103,8 +101,6 @@ class Problem:
         ub : list[float], optional
             Upper bounds for design variables. length = dim.
             Required when *variables* is not provided.
-        eps : float, optional
-            Deprecated. Use eps_cv and eps_obj. Will be removed in 0.1.0.
         comparator : Comparator, optional
             Comparator instance to use. If None, auto-selected based on n_obj:
             n_obj == 1 -> SingleObjectiveComparator,
@@ -124,9 +120,6 @@ class Problem:
             are derived from the variable bounds.  ``len(variables)`` must equal
             *dim*.
         """
-        if eps is not None:
-            warn_deprecated("eps", "eps_cv and eps_obj", "0.1.0")
-            eps_cv = eps_obj = eps
         direction = np.asarray(direction, dtype=float)
         if not np.all(np.abs(direction) == 1):
             raise ValidationError("direction elements must be +1 or -1")
@@ -190,12 +183,6 @@ class Problem:
             self.comparator = NSGA2Comparator(
                 direction=direction, eps_cv=eps_cv, eps_obj=eps_obj
             )
-
-    @property
-    def eps(self) -> float:
-        """Deprecated. Use eps_cv or eps_obj."""
-        warn_deprecated("Problem.eps", "eps_cv or eps_obj", "0.1.0")
-        return self.eps_cv
 
     @property
     def n_constraints(self) -> int:

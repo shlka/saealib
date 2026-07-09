@@ -107,7 +107,7 @@ class ChebyshevScalarization(AcquisitionFunction):
 
 ```python
 from saealib.surrogate.manager import LocalSurrogateManager
-from saealib.surrogate.rbf import RBFsurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
 
 DIM = 10
 N_OBJ = 2
@@ -118,7 +118,7 @@ acquisition = ChebyshevScalarization(
 )
 
 surrogate_manager = LocalSurrogateManager(
-    RBFsurrogate(gaussian_kernel, dim=DIM),
+    RBFSurrogate(gaussian_kernel, dim=DIM),
     acquisition,
     n_neighbors=30,
 )

@@ -314,7 +314,6 @@ _TIER2_MAP: dict[str, str] = {
     "SklearnRFCClassificationSurrogate": "saealib.surrogate",
     "SklearnSVCClassificationSurrogate": "saealib.surrogate",
     # problem (less common)
-    "Constraint": "saealib.problem",
     "GradientRepairHandler": "saealib.problem",
     "exponential_epsilon_schedule": "saealib.problem",
     "linear_epsilon_schedule": "saealib.problem",
@@ -344,14 +343,6 @@ def __getattr__(name: str) -> object:
         obj = getattr(mod, name)
         globals()[name] = obj  # cache to avoid repeated lookup
         return obj
-    if name == "GPSurrogate":
-        from saealib.surrogate._deprecated import GPSurrogate
-
-        return GPSurrogate
-    if name == "RBFsurrogate":
-        from saealib.surrogate.rbf import RBFSurrogate
-
-        return RBFSurrogate
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
