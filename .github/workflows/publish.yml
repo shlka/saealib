@@ -6,6 +6,32 @@ on:
       - "v*"
 
 jobs:
+  check-tag:
+    name: Check tag is on main
+    runs-on: ubuntu-latest
+    outputs:
+      on_main: ${{ steps.check.outputs.on_main }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Tags cut from a release/vX.Y.x maintenance branch (patches to an old
+      # minor series, see CONTRIBUTING.md "Tagging and what it triggers")
+      # are not on main. These still get built, but publish goes through the
+      # pypi-legacy environment below instead of auto-publishing — backporting
+      # to an old series is a deliberate, infrequent action that should get a
+      # human's eyes on it, not an accident of pushing the wrong tag.
+      - id: check
+        name: Verify this tag is an ancestor of main
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          if git merge-base --is-ancestor "$TAG" origin/main; then
+            echo "on_main=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "on_main=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Tag $TAG is not on main (likely cut from a release/vX.Y.x maintenance branch) — publish will go through the pypi-legacy environment and require manual approval."
+          fi
+
   build:
     name: Build distribution
     runs-on: ubuntu-latest
@@ -29,10 +55,15 @@ jobs:
 
   publish:
     name: Publish to PyPI
-    needs: build
+    needs: [check-tag, build]
     runs-on: ubuntu-latest
     environment:
-      name: pypi
+      # main-derived tags publish immediately via `pypi`. Tags cut from a
+      # release/vX.Y.x maintenance branch go through `pypi-legacy` instead,
+      # which must have required reviewers configured in the repo's
+      # Environment settings (see CONTRIBUTING.md) so backporting to an old
+      # series always gets an explicit human approval before publishing.
+      name: ${{ needs.check-tag.outputs.on_main == 'true' && 'pypi' || 'pypi-legacy' }}
       url: https://pypi.org/project/saealib/
     permissions:
       id-token: write
