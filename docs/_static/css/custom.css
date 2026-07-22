@@ -1,0 +1,252 @@
+html[data-theme="light"] {
+    --pst-color-primary: #0d9488;
+}
+
+html[data-theme="dark"] {
+    --pst-color-primary: #2dd4bf;
+}
+
+/* -- Fonts -------------------------------------------------------------- */
+/* IBM Plex Sans (Latin, variable) and IBM Plex Sans JP (static weights),
+   self-hosted from google/fonts (OFL 1.1, see docs/_static/fonts/*/OFL.txt).
+   Both share the same IBM Plex design lineage, so mixed English/Japanese
+   text (e.g. code identifiers inside Japanese prose) keeps a consistent
+   look. `format("woff2")` alone covers variable fonts in current browsers. */
+/* Roman is declared *after* Italic on purpose: some browsers key
+   @font-face matching on (family, weight-range) alone and silently drop
+   the earlier rule when a later one shares that key, regardless of
+   font-style — normal-style text (the vast majority of this site's
+   content) must win that resolution, so it has to be last. */
+@font-face {
+    font-family: "IBM Plex Sans";
+    src: url("../fonts/ibm-plex-sans/IBMPlexSans-Italic.woff2") format("woff2");
+    font-weight: 100 700;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: "IBM Plex Sans";
+    src: url("../fonts/ibm-plex-sans/IBMPlexSans-Roman.woff2") format("woff2");
+    font-weight: 100 700;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: "IBM Plex Sans JP";
+    src: url("../fonts/ibm-plex-sans-jp/IBMPlexSansJP-Light.woff2") format("woff2");
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: "IBM Plex Sans JP";
+    src: url("../fonts/ibm-plex-sans-jp/IBMPlexSansJP-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: "IBM Plex Sans JP";
+    src: url("../fonts/ibm-plex-sans-jp/IBMPlexSansJP-SemiBold.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Monospace (code blocks) is intentionally left on the theme's system
+   stack so English and Japanese pages render code identically. */
+html {
+    --pst-font-family-base: "IBM Plex Sans", "IBM Plex Sans JP", var(--pst-font-family-base-system);
+    --pst-font-family-heading: "IBM Plex Sans", "IBM Plex Sans JP", var(--pst-font-family-base-system);
+}
+
+/* `button.` matches theme specificity below the 960px breakpoint; a plain class selector loses to it there. */
+button.version-switcher__button,
+button.lang-switcher__button {
+    font-size: 1rem;
+    padding-top: .5em;
+    padding-bottom: .5em;
+}
+
+/* No theme border rule for this custom template; without this it falls back to Bootstrap's transparent border. */
+.lang-switcher__button {
+    border-color: var(--pst-color-border);
+    color: var(--pst-color-text-base);
+}
+.lang-switcher__button:hover {
+    border-color: transparent;
+    box-shadow: 0 0 0 .1875rem var(--pst-color-secondary);
+}
+.lang-switcher__button:active {
+    border-color: var(--pst-color-border);
+    color: var(--pst-color-text-base);
+}
+.lang-switcher__button:focus-visible {
+    border-color: transparent;
+}
+
+/* Mirrors the theme's version-switcher__menu active styling; relies on lang-switch.js wrapping labels in <span>. */
+.version-switcher__menu,
+.lang-switcher__menu {
+    border-color: var(--pst-color-border);
+    border-radius: var(--bs-dropdown-border-radius);
+}
+.lang-switcher__menu a.list-group-item {
+    background-color: var(--pst-color-on-background);
+    color: var(--pst-color-text-base);
+    padding: .75rem 1.25rem;
+}
+.lang-switcher__menu a.list-group-item:not(:last-child) {
+    border-bottom: 1px solid var(--pst-color-border);
+}
+.lang-switcher__menu a.list-group-item:hover {
+    background-color: var(--pst-color-surface);
+    color: var(--pst-color-link-hover);
+    text-decoration: underline;
+    text-decoration-skip-ink: none;
+    text-decoration-thickness: max(1px, .0625rem);
+    text-underline-offset: .1578em;
+}
+.lang-switcher__menu a.list-group-item.active {
+    box-shadow: inset max(3px, .1875rem, .12em) 0 0 var(--pst-color-primary);
+    color: var(--pst-color-primary);
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+}
+.lang-switcher__menu a.list-group-item.active:focus-visible {
+    box-shadow: inset max(3px, .1875rem, .12em) 0 0 var(--pst-color-primary), 0 0 0 .1875rem var(--pst-color-accent);
+    outline: none;
+}
+.lang-switcher__menu a.list-group-item.active span:before {
+    content: "";
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: -1;
+}
+.lang-switcher__menu a.list-group-item:focus-visible {
+    z-index: 10;
+}
+
+/* No media query needed: only renders below the mobile breakpoint. Selector matches theme's 3-class specificity. */
+.bd-sidebar-primary .sidebar-header-items .sidebar-header-items__end {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .5rem;
+    margin-top: .75rem;
+}
+
+/* Cancels the theme's 1em margin-bottom (only unset above 960px), which would stack on this row's .5rem gap. */
+button.btn.version-switcher__button,
+button.btn.lang-switcher__button {
+    margin-bottom: 0;
+}
+
+/* -- Mermaid Flowcharts ------------------------------------------------ */
+div.mermaid-container,
+div.mermaid,
+pre.mermaid {
+    overflow-x: auto !important;
+    text-align: center !important;
+    padding: 0.5rem 0 !important;
+}
+
+/* 1:1 True Scale: SVG is rendered at native viewBox dimensions managed by mermaid-scale.js */
+div.mermaid svg,
+pre.mermaid > svg,
+.mermaid-container > pre > svg {
+    margin: 0 auto !important;
+    display: inline-block !important;
+}
+
+.mermaid .node rect,
+.mermaid .node circle,
+.mermaid .node polygon,
+.mermaid .node path {
+    stroke-width: 1.5px !important;
+}
+
+.mermaid .cluster rect {
+    rx: 8px !important;
+    ry: 8px !important;
+    stroke-width: 1.5px !important;
+}
+
+/* Subgraph (cluster) label layout & legend badge styling */
+.mermaid .cluster text,
+.mermaid .cluster label,
+.mermaid .cluster span,
+.mermaid .cluster div {
+    font-family: var(--pst-font-family-base) !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    line-height: 1.3 !important;
+    text-align: center !important;
+}
+
+/* Reset outer div inside cluster foreignObject */
+.mermaid g.cluster > g.label div,
+.mermaid g.cluster > .cluster-label div {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    display: flex !important;
+    justify-content: center !important;
+    margin-top: -12px !important; /* Pull badge up to center on the top border line */
+}
+
+/* Render ONLY the inner span as a single clean legend badge */
+.mermaid g.cluster > g.label span,
+.mermaid g.cluster > .cluster-label span {
+    background-color: var(--pst-color-background, #ffffff) !important;
+    color: var(--pst-color-text-base) !important;
+    padding: 3px 10px !important;
+    border-radius: 4px !important;
+    border: 1px solid var(--pst-color-border, #cccccc) !important;
+    display: inline-block !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+    white-space: nowrap !important;
+}
+
+/* Ensure foreignObject inside cluster title does not clip text */
+.mermaid g.cluster > g.label foreignObject,
+.mermaid g.cluster > .cluster-label foreignObject {
+    overflow: visible !important;
+}
+
+
+
+
+
+/* -- Details / Summary styling for collapsible content --------------- */
+details {
+    border: 1px solid var(--pst-color-border);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    margin: 1rem 0;
+    background-color: var(--pst-color-surface);
+}
+
+details summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0.25rem 0;
+    color: var(--pst-color-text-base);
+}
+
+details summary:hover {
+    color: var(--pst-color-primary);
+}
+
+details[open] summary {
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--pst-color-border);
+}
+
+
+

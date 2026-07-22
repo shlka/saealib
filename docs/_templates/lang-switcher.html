@@ -1,0 +1,25 @@
+{# Mirrors the theme's version-switcher.html; populated by lang-switch.js at
+   runtime since language is derived from the URL. Registered in
+   navbar_persistent (conf.py) to render twice (desktop + mobile), which
+   keeps it visible below the 960px breakpoint where .navbar-header-items
+   itself is display:none. #}
+{%- set button_id = unique_html_id("pst-lang-switcher-button") -%}
+{%- set dropdown_id = unique_html_id("pst-lang-switcher-list") -%}
+<div class="lang-switcher__container dropdown pst-js-only">
+  <button id="{{ button_id }}"
+    type="button"
+    class="lang-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="{{ dropdown_id }}"
+    aria-label="Language switcher list"
+  >
+    Language  <!-- this text is replaced by lang-switch.js on page load -->
+    <span class="caret"></span>
+  </button>
+  <div id="{{ dropdown_id }}"
+    class="lang-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="{{ button_id }}">
+    <!-- dropdown will be populated by lang-switch.js on page load -->
+  </div>
+</div>
