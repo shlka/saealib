@@ -16,7 +16,7 @@ saealibを初めて使う方へ。このセクションでは、saealibとは何
 :link: installation
 :link-type: doc
 
-saealib本体とオプションの追加パッケージ(scikit-learn、XGBoost、LightGBM、PyTorchなど)をインストールします。
+saealib本体とオプションの追加パッケージ（scikit-learn、XGBoost、LightGBM、PyTorchなど）をインストールします。
 :::
 
 :::{grid-item-card} クイックスタート

@@ -1,21 +1,21 @@
 # CORS-RBF（Constrained Optimization using Response Surfaces）
 
-CORS-RBFは、評価コストの高い目的関数を対象に、RBF(Radial Basis Function)補間による代理モデルを使って次の評価点を1点ずつ選ぶ逐次最適化の手法である。
-Regis & Shoemaker (2005)が提案した枠組みCORS(Constrained Optimization using Response Surfaces)を、RBF代理モデルで具体化した実装がCORS-RBFである。
+CORS-RBFは、評価コストの高い目的関数を対象に、RBF(Radial Basis Function)補間によるサロゲートモデルを使って次の評価点を1点ずつ選ぶ逐次最適化の手法です。
+Regis & Shoemaker (2005)が提案した枠組みCORS(Constrained Optimization using Response Surfaces)を、RBFサロゲートモデルで具体化した実装がCORS-RBFです。
 
 ## 概要
 
-RBF補間は、学習点を通る滑らかな曲面を再構成するだけで、GP回帰のような予測分散を持たない。
-そのため、代理モデルの予測値をそのまま最小化して次の評価点を選ぶ素朴な方法は、既に良い値が観測された点の周辺だけを繰り返し探索してしまい、真の関数の局所最小値ですらない点に収束しかねない。
+RBF補間は、学習点を通る滑らかな曲面を再構成するだけで、GP回帰のような予測分散を持ちません。
+そのため、サロゲートモデルの予測値をそのまま最小化して次の評価点を選ぶ素朴な方法は、既に良い値が観測された点の周辺だけを繰り返し探索してしまい、真の関数の局所最小値ですらない点に収束しかねません。
 
-CORSはこの問題を、候補点選択そのものに**距離制約**を組み込むことで回避する。
-各反復で解く補助問題は、代理モデル $\hat f_i(x)$ の最小化に加えて、次の候補点が既存の評価済み点すべてから距離 $\beta_i \Delta_i$ 以上離れていることを要求する制約付き最適化になる（$\Delta_i$は既存点集合からの最大最小距離）。
-$\beta_i$は反復ごとに、1に近い値(大域探索寄り)から0(局所探索寄り、つまり代理モデルの単純な最小化)まで周期的に変化する数列(**search pattern**)として与えられ、GPの予測分散が担っていた探索(exploration)の役割をこの距離制約が肩代わりする。
+CORSはこの問題を、候補点選択そのものに**距離制約**を組み込むことで回避します。
+各反復で解く補助問題は、サロゲートモデル $\hat f_i(x)$ の最小化に加えて、次の候補点が既存の評価済み点すべてから距離 $\beta_i \Delta_i$ 以上離れていることを要求する制約付き最適化になります（$\Delta_i$は既存点集合からの最大最小距離）。
+$\beta_i$は反復ごとに、1に近い値（大域探索寄り）から0（局所探索寄り、つまりサロゲートモデルの単純な最小化）まで周期的に変化する数列(**search pattern**)として与えられ、GPの予測分散が担っていた探索(exploration)の役割をこの距離制約が肩代わりします。
 
-この距離制約は副産物ではなく、CORSの核心である。
-search patternに0でない値が1つでも含まれていれば、代理モデルの種類や初期評価点の選び方によらず、任意の連続関数の大域最小値に収束することが証明されている。
+この距離制約は副産物ではなく、CORSの核心です。
+search patternに0でない値が1つでも含まれていれば、サロゲートモデルの種類や初期評価点の選び方によらず、任意の連続関数の大域最小値に収束することが証明されています。
 
-出典は{cite}`regis2005cors`。具体的な手順は次の擬似コードに示す。
+出典は{cite}`regis2005cors`。具体的な手順は次の擬似コードに示します。
 
 <!--
 参照情報（レビュー用）:
@@ -25,7 +25,7 @@ radial basis functions.
 Journal of Global Optimization, 31(1), 153-171.
 DOI: 10.1007/s10898-004-0570-0
 OCR: .claude/exp_ref/pdfs_ea_saea/user_provided/refs_EA_SAEA/regis2005_cors/regis2005_cors/auto/regis2005_cors.md
-（OCRファイル内のpage_idx(0始まり)に153を足すと実際の掲載ページ番号になることを、
+（OCRファイル内のpage_idx（0始まり）に153を足すと実際の掲載ページ番号になることを、
 _content_list.jsonのpage_number要素と突き合わせて確認済み: page_idx1→p.154, 3→p.156,
 4→p.157, 5→p.158, 9→p.162, 10→p.163, 11→p.164）。
 
@@ -76,7 +76,7 @@ NSGA-III/SPEA2の既知の課題と同様に実装上の不足として扱う。
 **Output** 最良解 $x^*$
 
 1. $S_1$ を真の関数 $f$ で評価し、$i := 1$ とする
-2. これまでの評価済みデータ $D_i = \{(x, f(x)) \mid x \in S_i\}$ にRBF代理モデル $\hat f_i$ をフィットする
+2. これまでの評価済みデータ $D_i = \{(x, f(x)) \mid x \in S_i\}$ にRBFサロゲートモデル $\hat f_i$ をフィットする
 3. 制約付き最小化問題 $\min_{x \in \mathcal{D}} \hat f_i(x) \ \mathrm{s.t.} \ \|x - x_j\| \geqslant \beta_i \Delta_i \ (j=1,\ldots,|S_i|)$ を解いて候補点 $x_{k+i}$ を求める（$\Delta_i$は既存評価点集合からの最大最小距離）
 4. $x_{k+i}$ を真の関数で評価し、$S_{i+1} := S_i \cup \{x_{k+i}\}$ に追加する
 5. 終了条件に達するまで、周期列に従い $\beta_i$ を更新して $i := i+1$ とし2へ戻る
@@ -89,7 +89,7 @@ flowchart TD
     INIT["Initializer<br/>初期集団をサンプリング<br/>→真の評価<br/>(L1)"] --> ASK
     subgraph GEN["1世代分 (IndividualBasedStrategy.step)"]
         direction TB
-        ASK["GA.ask()<br/>候補解を生成"] --> SCORE["SurrogateManager<br/>RBFをフィット (L2)<br/>→ 予測平均でスコアリング<br/>(L3)"]
+        ASK["GA.ask()<br/>候補点を生成"] --> SCORE["SurrogateManager<br/>RBFをフィット (L2)<br/>→ 予測平均でスコアリング<br/>(L3)"]
         SCORE --> SORT["予測平均上位<br/>evaluation_ratio割を選択"]
         SORT --> EVAL["真の評価 →<br/>アーカイブに追加<br/>(L4)"]
         EVAL --> TELL["GA.tell()<br/>母集団を更新"]
@@ -104,7 +104,7 @@ flowchart TD
 | 役割 | saealibでの実装 | 対応ステップ |
 |---|---|---|
 | 探索アルゴリズム本体 | `GA`（交叉・突然変異・選択の組み合わせ自体はCORSの定義に含まれない） | 候補点の生成 |
-| 代理モデル | `RBFSurrogate`（RBF補間。既定は`gaussian_kernel`だが、任意のカーネル関数を注入できる） | L2 |
+| サロゲートモデル | `RBFSurrogate`（RBF補間。既定は`gaussian_kernel`だが、任意のカーネル関数を注入できる） | L2 |
 | 獲得関数 | `MeanPrediction`（予測平均をそのままスコア化する） | L3 |
 | サロゲート管理 | `GlobalSurrogateManager`（アーカイブ全体でRBFをフィットする） | L2-3 |
 | 評価戦略 | `IndividualBasedStrategy`（予測平均上位の個体だけを真に評価する） | L3-4 |
@@ -154,22 +154,22 @@ opt = (
 ctx = opt.run()
 ```
 
-交叉・突然変異・選択の具体的な演算子はCORS自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられる。
+交叉・突然変異・選択の具体的な演算子はCORS自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられます。
 
 ## パラメータと変種
 
-**kernel（RBFカーネルの選択）**: `RBFSurrogate(kernel=...)`で任意のカーネル関数を注入できる。
-既定値は`gaussian_kernel`だが、文献の数値実験ではthin plate spline（$\phi(r) = r^2 \log r$）と1次多項式の付加項$p(x)$を組み合わせたモデルが使われている。
-saealibの`RBFSurrogate`は多項式項$p(x)$を持たない純粋なRBF補間（学習データの平均を差し引いた残差にフィットする）であるため、文献の設定を厳密に再現するにはカーネルの差し替えだけでは不十分である。
+**kernel（RBFカーネルの選択）**: `RBFSurrogate(kernel=...)`で任意のカーネル関数を注入できます。
+既定値は`gaussian_kernel`だが、文献の数値実験ではthin plate spline（$\phi(r) = r^2 \log r$）と1次多項式の付加項$p(x)$を組み合わせたモデルが使われています。
+saealibの`RBFSurrogate`は多項式項$p(x)$を持たない純粋なRBF補間（学習データの平均を差し引いた残差にフィットする）であるため、文献の設定を厳密に再現するにはカーネルの差し替えだけでは不十分です。
 
-**evaluation_ratio（逐次評価とバッチ評価の切り替え）**: 文献のCORSは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムである。
-saealibの`IndividualBasedStrategy`は、GAが生成した子個体群のうち予測平均上位`evaluation_ratio`割をまとめて真評価するバッチ拡張になっている。
-`evaluation_ratio`を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づく。
+**evaluation_ratio（逐次評価とバッチ評価の切り替え）**: 文献のCORSは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムです。
+saealibの`IndividualBasedStrategy`は、GAが生成した子個体群のうち予測平均上位`evaluation_ratio`割をまとめて真評価するバッチ拡張になっています。
+`evaluation_ratio`を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づきます。
 
 ## 関連
 
 - [文献リファレンス](../references.md) — 出典の完全な書誌情報
-- [Surrogate](../components/surrogate.md) — `RBFSurrogate`/`gaussian_kernel`を含む代理モデル一覧
+- [Surrogate](../components/surrogate.md) — `RBFSurrogate`/`gaussian_kernel`を含むサロゲートモデル一覧
 - [AcquisitionFunction](../components/acquisition_functions.md) — `MeanPrediction`を含む獲得関数一覧
 - [SurrogateManager](../components/surrogate_manager.md) — `GlobalSurrogateManager`の詳しい使い方
 - [OptimizationStrategy](../components/strategies.md) — `IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧

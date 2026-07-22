@@ -1,22 +1,22 @@
 # Mutation
 
-`GA`(`saealib.GA`)は、交叉で生成した子個体に摂動を加える処理を、`Mutation`という差し替え可能な演算子に委ねている。
-突然変異の方式を変えたいときは、`GA`本体ではなくこの`Mutation`だけを差し替えればよい。
+`GA`(`saealib.GA`)は、交叉で生成した子個体に摂動を加える処理を、`Mutation`という差し替え可能な演算子に委ねています。
+突然変異の方式を変えたいときは、`GA`本体ではなくこの`Mutation`だけを差し替えればよいです。
 
 ## Mutationの役割
 
-`Mutation`が実装を要求するメソッドは`mutate(p, mutate_range, rng=...)`の1つだけである。
-`p`には変異対象の個体が`shape (dim,)`で渡され、変異後の個体を同じ`shape (dim,)`で返す。
-`mutate_range`には設計変数の下限と上限が`(lb, ub)`のタプルで渡される。
+`Mutation`が実装を要求するメソッドは`mutate(p, mutate_range, rng=...)`の1つだけです。
+`p`には変異対象の個体が`shape (dim,)`で渡され、変異後の個体を同じ`shape (dim,)`で返します。
+`mutate_range`には設計変数の下限と上限が`(lb, ub)`のタプルで渡されます。
 
-個体レベルの変異確率は、クラス属性`prob`が保持する。
-`Crossover`では交叉を実行するかどうかの判定を`GA`側が担っていたが、`Mutation`ではこの判定を`mutate()`の実装自身が行う。
-組み込みクラスはいずれも`mutate()`の冒頭で`rng.random() >= self.prob`を確認し、満たさない場合は個体をそのまま複製して返す。
-そのため`GA`は個体レベルの確率を意識せず、選択された全個体に対して無条件に`mutate()`を呼び出すだけでよい。
-独自の`Mutation`を実装する際は、この`prob`判定を自分で書く必要がある点に注意する。
+個体レベルの変異確率は、クラス属性`prob`が保持します。
+`Crossover`では交叉を実行するかどうかの判定を`GA`側が担っていましたが、`Mutation`ではこの判定を`mutate()`の実装自身が行います。
+組み込みクラスはいずれも`mutate()`の冒頭で`rng.random() >= self.prob`を確認し、満たさない場合は個体をそのまま複製して返します。
+そのため`GA`は個体レベルの確率を意識せず、選択された全個体に対して無条件に`mutate()`を呼び出すだけでよいです。
+独自の`Mutation`を実装する際は、この`prob`判定を自分で書く必要がある点に注意してください。
 
-もう1つのクラス属性`prob_var`は、変数レベルの変異確率である。
-`None`の場合、`mutate()`の呼び出し時に`min(0.5, 1/dim)`へ解決される。
+もう1つのクラス属性`prob_var`は、変数レベルの変異確率です。
+`None`の場合、`mutate()`の呼び出し時に`min(0.5, 1/dim)`へ解決されます。
 
 ## 組み込みMutation
 
@@ -28,25 +28,25 @@
 | `MutationIntegerUniform` | `prob, *, prob_var=None` | `[lb[i], ub[i]]`（両端含む）の一様整数乱数で置き換える。整数変数向け |
 | `MutationCategorical` | `prob, *, prob_var=None` | `{0, ..., n_categories-1}`の一様整数乱数でカテゴリインデックスを置き換える。カテゴリ変数向け |
 
-連続変数だけの問題であれば、この中から1つを選んで`GA(mutation=..., ...)`に渡せばよい。
-探索の荒さを変数の値域そのものに合わせたいなら`MutationUniform`、既存の値の近傍だけを摂動したいなら`MutationGaussian`か`MutationPolynomial`を選ぶ、という判断が基本になる。
-`MutationGaussian`は`sigma`で摂動の大きさを直接指定するのに対し、`MutationPolynomial`は`eta`（分布指数）で摂動の集中度を指定し、値域からの相対的な摂動幅が自動的に決まる。
-`MutationIntegerUniform`と`MutationCategorical`は、乱数の生成方法（値域内の一様整数乱数への置き換え）を共通の非公開実装で共有しているだけで、公開APIとしては別クラスとして扱う。
+連続変数だけの問題であれば、この中から1つを選んで`GA(mutation=..., ...)`に渡せばよいです。
+探索の荒さを変数の値域そのものに合わせたいなら`MutationUniform`、既存の値の近傍だけを摂動したいなら`MutationGaussian`か`MutationPolynomial`を選ぶ、という判断が基本になります。
+`MutationGaussian`は`sigma`で摂動の大きさを直接指定するのに対し、`MutationPolynomial`は`eta`（分布指数）で摂動の集中度を指定し、値域からの相対的な摂動幅が自動的に決まります。
+`MutationIntegerUniform`と`MutationCategorical`は、乱数の生成方法（値域内の一様整数乱数への置き換え）を共通の非公開実装で共有しているだけで、公開APIとしては別クラスとして扱います。
 
-設計変数に整数変数やカテゴリ変数が混在する問題では、`GA`は変数の型ごとに異なる`Mutation`インスタンスを使い分ける。
-`GA`コンストラクタの`integer_mutation`/`categorical_mutation`引数を省略すると、それぞれ`MutationIntegerUniform`/`MutationCategorical`が自動的に補われる(`prob_var`は連続変数用の`mutation`から引き継がれる)。
-`GA.ask()`は個体を変数の型ごとの列に分割し、各`Mutation`を該当する列だけに適用してから結果を組み立て直す。
-変数の型と`Mutation`の対応づけは[Problem](problem.md)の`variables`引数で決まる。
+設計変数に整数変数やカテゴリ変数が混在する問題では、`GA`は変数の型ごとに異なる`Mutation`インスタンスを使い分けます。
+`GA`コンストラクタの`integer_mutation`/`categorical_mutation`引数を省略すると、それぞれ`MutationIntegerUniform`/`MutationCategorical`が自動的に補われます（`prob_var`は連続変数用の`mutation`から引き継がれます）。
+`GA.ask()`は個体を変数の型ごとの列に分割し、各`Mutation`を該当する列だけに適用してから結果を組み立て直します。
+変数の型と`Mutation`の対応づけは[Problem](problem.md)の`variables`引数で決まります。
 
 ```{note}
-`MutationUniform`のみ`@register()`済みで、他の4クラスは現状Registry未登録である。
-Registry経由でクラスを文字列から解決する使い方をする場合はこの違いに注意する。
+`MutationUniform`のみ`@register()`済みで、他の4クラスは現状Registry未登録です。
+Registry経由でクラスを文字列から解決する使い方をする場合はこの違いに注意してください。
 ```
 
 ## 拡張フック
 
-境界外に出た値を丸めるといった後処理だけを足したい場合、サブクラスを新設せずに`with_post(fn)`で既存の`Mutation`インスタンスへ処理を追加できる。
-`with_post`は元のインスタンスを変更せず、`fn`を追加したコピーを返す。
+境界外に出た値を丸めるといった後処理だけを足したい場合、サブクラスを新設せずに`with_post(fn)`で既存の`Mutation`インスタンスへ処理を追加できます。
+`with_post`は元のインスタンスを変更せず、`fn`を追加したコピーを返します。
 
 ```python
 import numpy as np
@@ -62,13 +62,13 @@ base = MutationUniform(prob=1.0)
 clipped = base.with_post(clip_offspring)
 ```
 
-`fn`のシグネチャは`fn(offspring, mutate_range, rng, ctx) -> np.ndarray`で、既存のフック（既定では何もしない恒等関数）の結果を受け取って追加の変換を返す。
-複数回`with_post`を呼べば、フックは呼び出した順に連結される。
+`fn`のシグネチャは`fn(offspring, mutate_range, rng, ctx) -> np.ndarray`で、既存のフック（既定では何もしない恒等関数）の結果を受け取って追加の変換を返します。
+複数回`with_post`を呼べば、フックは呼び出した順に連結されます。
 
 ## 独自Mutationの実装方法
 
-独自の突然変異方式が必要な場合は、`Mutation`を継承して`mutate()`だけを実装すればよい。
-次の例は、選ばれた次元を値域の中点へ置き換える単純な変異である。
+独自の突然変異方式が必要な場合は、`Mutation`を継承して`mutate()`だけを実装すればよいです。
+次の例は、選ばれた次元を値域の中点へ置き換える単純な変異です。
 
 ```python
 import numpy as np
@@ -94,8 +94,8 @@ class MidpointMutation(Mutation):
         return c
 ```
 
-`prob`による個体レベルの判定と`prob_var`による変数レベルの判定は、いずれも組み込みクラスと同じ流儀で自分で書く必要がある。
-これらの判定を省略すると、常に全次元が変異する実装になる。
+`prob`による個体レベルの判定と`prob_var`による変数レベルの判定は、いずれも組み込みクラスと同じ流儀で自分で書く必要があります。
+これらの判定を省略すると、常に全次元が変異する実装になります。
 
 ## 関連コンポーネント
 

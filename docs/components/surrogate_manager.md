@@ -1,32 +1,32 @@
 # SurrogateManager
 
-[Surrogate](surrogate.md)がfit/predictだけを担うのに対し、`SurrogateManager`はfit、predict、スコアリングのパイプライン全体を協調させる。
-`score_candidates()`はスカラースコアだけでなく元の予測値も返すため、呼び出し側（`IndividualBasedStrategy`など）は予測目的関数値を子個体へ割り当てられる。
+[Surrogate](surrogate.md)がfit/predictだけを担うのに対し、`SurrogateManager`はfit、predict、スコアリングのパイプライン全体を協調させます。
+`score_candidates()`はスカラースコアだけでなく元の予測値も返すため、呼び出し側（`IndividualBasedStrategy`など）は予測目的関数値を子個体へ割り当てられます。
 
-`Optimizer.set_surrogate_manager()`は、`Optimizer.set_surrogate()`（[Surrogate](surrogate.md)を`LocalSurrogateManager`でラップする簡易版）とは別のトップレベル差し替え点である。
+`Optimizer.set_surrogate_manager()`は、`Optimizer.set_surrogate()`（[Surrogate](surrogate.md)を`LocalSurrogateManager`でラップする簡易版）とは別のトップレベル差し替え点です。
 
 ## SurrogateManagerの役割
 
-`SurrogateManager`の抽象メソッドは`score_candidates()`の1つだけで、残りはフックとして既定実装を持つ。
+`SurrogateManager`の抽象メソッドは`score_candidates()`の1つだけで、残りはフックとして既定実装を持ちます。
 
-**`score_candidates(candidates_x, archive, ctx=None, *, refit=True) -> tuple[np.ndarray, list[SurrogatePrediction]]`**（抽象）：候補群をスコアリングする。
-`refit=True`（既定）ではスコアリング前にサロゲートを学習し直す。
+**`score_candidates(candidates_x, archive, ctx=None, *, refit=True) -> tuple[np.ndarray, list[SurrogatePrediction]]`**（抽象）：候補群をスコアリングします。
+`refit=True`（既定）ではスコアリング前にサロゲートを学習し直します。
 
 **`fit(archive, ctx=None) -> None`**：既定はno-op。
-`score_candidates(..., refit=False)`を連続で呼ぶ前に1回だけ呼ぶプレフィット用のフックで、アーカイブが変化しない場面（`GenerationBasedStrategy`のサロゲートのみ内部ループなど）で使う。
+`score_candidates(..., refit=False)`を連続で呼ぶ前に1回だけ呼ぶプレフィット用のフックで、アーカイブが変化しない場面（`GenerationBasedStrategy`のサロゲートのみ内部ループなど）で使います。
 
 **`last_accuracy: SurrogateAccuracy | None`**（クラス属性）：直近の`fit`が計算した精度指標。
-詳細は[サロゲート精度評価と動的切り替え](surrogate_switching.md)で扱う。
+詳細は[サロゲート精度評価と動的切り替え](surrogate_switching.md)で扱います。
 
 **`iter_acquisitions() -> Iterator[AcquisitionFunction]`**：`Optimizer`が`problem.direction`を各[AcquisitionFunction](acquisition_functions.md)へ自動注入するために使う内部フック。
-既定は`self.acquisition`があればそれを1つ返す。
-`PairwiseSurrogateManager`のように獲得関数を持たないマネージャーは何も返さず、`CompositeSurrogateManager`はサブマネージャーへ委譲する。
+既定は`self.acquisition`があればそれを1つ返します。
+`PairwiseSurrogateManager`のように獲得関数を持たないマネージャーは何も返さず、`CompositeSurrogateManager`はサブマネージャーへ委譲します。
 
 **`post_score(scores, predictions, ctx=None)`** / **`with_post_score(fn)`**：スコアリング後処理のライフサイクルフック。
-[Surrogate](surrogate.md)の`with_post_fit`と同型で、`with_post_score`は元のインスタンスを変更せずコピーにフックを追加する。
+[Surrogate](surrogate.md)の`with_post_fit`と同型で、`with_post_score`は元のインスタンスを変更せずコピーにフックを追加します。
 
 **`on_generation_end(gen, archive, ctx=None)`** / **`with_on_generation_end(fn)`**：世代末フック。
-同じくコピー＋チェーン方式で拡張できる。
+同じくコピー＋チェーン方式で拡張できます。
 
 ## 組み込みSurrogateManager
 
@@ -37,24 +37,24 @@
 | `CompositeSurrogateManager` | 複数マネージャーのスコアを合成 |
 | `PairwiseSurrogateManager` | ペア比較サロゲートによるスコアリング |
 
-`GlobalSurrogateManager(surrogate, acquisition, training_set=None, accuracy_evaluator=None)`は、`training_set`省略時に`ArchiveObjectiveSet()`が使われる。
+`GlobalSurrogateManager(surrogate, acquisition, training_set=None, accuracy_evaluator=None)`は、`training_set`省略時に`ArchiveObjectiveSet()`が使われます。
 
-`LocalSurrogateManager(surrogate, acquisition, training_set=None, accuracy_evaluator=None)`は、`training_set`省略時に`KNNObjectiveSet(n_neighbors=50)`が使われる。
-`n_neighbors`は`LocalSurrogateManager`自体のコンストラクタ引数ではなく、既定の`training_set`が持つパラメータである。
-候補間で同一の`surrogate`インスタンスを使い回して再フィットする実装のため、スレッドセーフではない。
+`LocalSurrogateManager(surrogate, acquisition, training_set=None, accuracy_evaluator=None)`は、`training_set`省略時に`KNNObjectiveSet(n_neighbors=50)`が使われます。
+`n_neighbors`は`LocalSurrogateManager`自体のコンストラクタ引数ではなく、既定の`training_set`が持つパラメータです。
+候補間で同一の`surrogate`インスタンスを使い回して再フィットする実装のため、スレッドセーフではありません。
 
-`CompositeSurrogateManager(managers, combine_fn)`は、各`managers`の`score_candidates`を独立に呼び、結果のスコア配列を`combine_fn`で合成する。
-`combine_fn`に渡す関数として、`product_combine`（要素積。例：EI×PoF）と`rank_weighted_combine(weights=None)`（ランク正規化した重み付き平均を返す関数を生成する）が用意されている。
+`CompositeSurrogateManager(managers, combine_fn)`は、各`managers`の`score_candidates`を独立に呼び、結果のスコア配列を`combine_fn`で合成します。
+`combine_fn`に渡す関数として、`product_combine`（要素積。例：EI×PoF）と`rank_weighted_combine(weights=None)`（ランク正規化した重み付き平均を返す関数を生成する）が用意されています。
 
-`PairwiseSurrogateManager(surrogate, training_set=None, n_ref=10)`は、`training_set`省略時に`PairwiseComparisonSet()`が使われる。
+`PairwiseSurrogateManager(surrogate, training_set=None, n_ref=10)`は、`training_set`省略時に`PairwiseComparisonSet()`が使われます。
 
-各マネージャーの`training_set`/`accuracy_evaluator`引数の詳細は、それぞれ[TrainingSet](training_set.md)と[サロゲート精度評価と動的切り替え](surrogate_switching.md)を参照する。
+各マネージャーの`training_set`/`accuracy_evaluator`引数の詳細は、それぞれ[TrainingSet](training_set.md)と[サロゲート精度評価と動的切り替え](surrogate_switching.md)を参照してください。
 
-### ArchiveBasedManager：サロゲートを学習しない系列
+### ArchiveBasedManager: サロゲートを学習しない系列
 
-`ArchiveBasedManager`は`SurrogateManager`の抽象サブクラスで、サロゲートモデルを一切学習せず、アーカイブから直接候補をスコアリングする。
-抽象メソッドは`compute_scores(candidates_x, archive, ctx=None) -> np.ndarray`だけで、`score_candidates()`は`compute_scores()`の結果を`tell_f=NaN`の`SurrogatePrediction`でラップする。
-スコアが目的関数値ではないため、そのまま`tell_f`として使うとpbestなどが汚染されてしまう。それを防ぐための設計である。
+`ArchiveBasedManager`は`SurrogateManager`の抽象サブクラスで、サロゲートモデルを一切学習せず、アーカイブから直接候補をスコアリングします。
+抽象メソッドは`compute_scores(candidates_x, archive, ctx=None) -> np.ndarray`だけで、`score_candidates()`は`compute_scores()`の結果を`tell_f=NaN`の`SurrogatePrediction`でラップします。
+スコアが目的関数値ではないため、そのまま`tell_f`として使うとpbestなどが汚染されてしまいます。それを防ぐための設計です。
 
 | クラス | パラメータ | スコアの意味 |
 |---|---|---|
@@ -64,8 +64,8 @@
 
 ## 独自SurrogateManagerの実装方法
 
-独自のスコアリング方式が必要な場合は、`SurrogateManager`を継承して`score_candidates()`だけを実装すればよい。
-サロゲートを学習せずアーカイブから直接スコアするパターンであれば、`ArchiveBasedManager`を継承して`compute_scores()`だけを実装するほうが軽量である。
+独自のスコアリング方式が必要な場合は、`SurrogateManager`を継承して`score_candidates()`だけを実装すればよいです。
+サロゲートを学習せずアーカイブから直接スコアするパターンであれば、`ArchiveBasedManager`を継承して`compute_scores()`だけを実装するほうが軽量です。
 
 ```python
 import numpy as np

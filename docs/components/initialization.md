@@ -1,12 +1,12 @@
 # Initializer
 
-`Optimizer`は実行を始める前に、初期`Population`/`Archive`/`ParetoArchive`と最初の`OptimizationState`を一括で構築する処理を、`Initializer`という差し替え可能なコンポーネントに委ねている。
-サンプリング方法を変えたいときは、`Optimizer`本体ではなくこの`Initializer`だけを差し替えればよい。
+`Optimizer`は実行を始める前に、初期`Population`/`Archive`/`ParetoArchive`と最初の`OptimizationState`を一括で構築する処理を、`Initializer`という差し替え可能なコンポーネントに委ねています。
+サンプリング方法を変えたいときは、`Optimizer`本体ではなくこの`Initializer`だけを差し替えればよいです。
 
 ## Initializerの役割
 
-`Initializer`が実装を要求するメソッドは`initialize(provider, problem) -> OptimizationState`の1つだけである。
-`provider`は`Algorithm`/`Evaluator`など構築済みの他コンポーネントへアクセスするための`ComponentProvider`、`problem`は解くべき[Problem](problem.md)である。
+`Initializer`が実装を要求するメソッドは`initialize(provider, problem) -> OptimizationState`の1つだけです。
+`provider`は`Algorithm`/`Evaluator`など構築済みの他コンポーネントへアクセスするための`ComponentProvider`、`problem`は解くべき[Problem](problem.md)です。
 
 ## 組み込みInitializer
 
@@ -16,8 +16,8 @@
 | `RandomInitializer` | `rng.uniform` |
 | `SobolInitializer` | `scipy.stats.qmc.Sobol(scramble=True)` |
 
-3クラスとも、コンストラクタは`(n_init_archive, n_init_population, seed=None)`で共通している。
-`n_init_archive`件をサンプリングして評価し、その中から`comparator`でソートした上位`n_init_population`件を初期`Population`へ投入する、という流れも共通である。
+3クラスとも、コンストラクタは`(n_init_archive, n_init_population, seed=None)`で共通しています。
+`n_init_archive`件をサンプリングして評価し、その中から`comparator`でソートした上位`n_init_population`件を初期`Population`へ投入する、という流れも共通です。
 
 ```
 サンプリング(n_init_archive件)
@@ -27,34 +27,34 @@
   -> 上位 n_init_population 件を population へ投入
 ```
 
-3クラスの実装はサンプリング方法の1行以外ほぼ重複しているが、これは意図的な単純さの選択であり、共通処理を過度に抽象化しない設計になっている。
+3クラスの実装はサンプリング方法の1行以外ほぼ重複していますが、これは意図的な単純さの選択であり、共通処理を過度に抽象化しない設計になっています。
 
 ## 基底クラスのヘルパーメソッド
 
-`Initializer`基底には、独自実装で再利用できる2つのヘルパーメソッドが用意されている。
+`Initializer`基底には、独自実装で再利用できる2つのヘルパーメソッドが用意されています。
 
-**`_create_attrs(problem, provider)`**：`Population`/`Archive`用の`PopulationAttribute`一覧を組み立てる。
-`x`/`f`/`g`/`cv`という標準属性に、`provider.algorithm.get_required_attrs(problem)`が返すアルゴリズム固有の属性（PSOの速度など）を追加する。
+**`_create_attrs(problem, provider)`**：`Population`/`Archive`用の`PopulationAttribute`一覧を組み立てます。
+`x`/`f`/`g`/`cv`という標準属性に、`provider.algorithm.get_required_attrs(problem)`が返すアルゴリズム固有の属性（PSOの速度など）を追加します。
 
-**`_create_context(problem, archive, pareto_archive, population, rng)`**：`OptimizationState`を構築する。
-`comparator`が`NSGA3Comparator`で、まだ内部rngを持たない場合はここで`rng.spawn(1)[0]`を注入する。
+**`_create_context(problem, archive, pareto_archive, population, rng)`**：`OptimizationState`を構築します。
+`comparator`が`NSGA3Comparator`で、まだ内部rngを持たない場合はここで`rng.spawn(1)[0]`を注入します。
 
 ## 独自Initializerの実装方法
 
-独自のサンプリング方法が必要な場合は、`Initializer`を継承して`initialize()`を実装する。
-組み込み3クラスの実装がそのままテンプレートになり、内部で担う責務は次の9ステップに整理できる。
+独自のサンプリング方法が必要な場合は、`Initializer`を継承して`initialize()`を実装します。
+組み込み3クラスの実装がそのままテンプレートになり、内部で担う責務は次の9ステップに整理できます。
 
-1. `provider.algorithm.population_class`/`archive_class`/`create_pareto_archive`で`Population`/`Archive`/`ParetoArchive`を構築する
-2. `_create_context`で`OptimizationState`を構築する
-3. 設計変数空間からサンプリングする
-4. `provider.dispatch(InitialEvaluationStartEvent(...))`を発火する
-5. `provider.evaluator.evaluate_batch(x, problem)`で評価する
-6. 結果を`archive`/`pareto_archive`へ`add`する
-7. `ctx.count_fe(...)`で評価回数を加算する
-8. `provider.dispatch(InitialEvaluationEndEvent(...))`を発火する
-9. `problem.comparator.sort_population`でソートし、上位件数を`population`へ投入する
+1. `provider.algorithm.population_class`/`archive_class`/`create_pareto_archive`で`Population`/`Archive`/`ParetoArchive`を構築します
+2. `_create_context`で`OptimizationState`を構築します
+3. 設計変数空間からサンプリングします
+4. `provider.dispatch(InitialEvaluationStartEvent(...))`を発火します
+5. `provider.evaluator.evaluate_batch(x, problem)`で評価します
+6. 結果を`archive`/`pareto_archive`へ`add`します
+7. `ctx.count_fe(...)`で評価回数を加算します
+8. `provider.dispatch(InitialEvaluationEndEvent(...))`を発火します
+9. `problem.comparator.sort_population`でソートし、上位件数を`population`へ投入します
 
-次の例は、`scipy.stats.qmc.Halton`で初期サンプルを生成する`Initializer`である。
+次の例は、`scipy.stats.qmc.Halton`で初期サンプルを生成する`Initializer`です。
 
 ```python
 import numpy as np
@@ -114,10 +114,10 @@ class HaltonInitializer(Initializer):
         return ctx
 ```
 
-`InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`は[CallbackManager](callbacks.md)経由で観察できるイベントである。
-評価そのものの詳細は[Evaluator](evaluation.md)を参照する。
+`InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`は[CallbackManager](callbacks.md)経由で観察できるイベントです。
+評価そのものの詳細は[Evaluator](evaluation.md)を参照してください。
 
-`Optimizer.set_initializer(initializer)`で差し替える。
+`Optimizer.set_initializer(initializer)`で差し替えます。
 
 ## 関連コンポーネント
 

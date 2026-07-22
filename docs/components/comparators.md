@@ -1,19 +1,19 @@
 # Comparator
 
-`Problem`は、解の優劣を判断する処理を`Comparator`という差し替え可能なトップレベルコンポーネントに委ねている。
-`Problem`の`comparator`引数で渡す。
+`Problem`は、解の優劣を判断する処理を`Comparator`という差し替え可能なトップレベルコンポーネントに委ねています。
+`Problem`の`comparator`引数で渡します。
 
 ## Comparatorの役割
 
-`Comparator`は、`__init__`自体を含めて4つのメソッド全てが抽象メソッドである。
+`Comparator`は、`__init__`自体を含めて4つのメソッド全てが抽象メソッドです。
 
-- **`__init__(weights, eps_cv, eps_obj, direction=None)`**：`weights`/`eps_cv`/`eps_obj`/`direction`を保持する
-- **`sort_population(population) -> np.ndarray`**：個体群全体を優劣順に並べたインデックス配列を返す
-- **`compare_population(population, idx_a, idx_b) -> int`**：個体群中の2個体を比較する（`-1`：aが優れる、`1`：bが優れる、`0`：同等）
+- **`__init__(weights, eps_cv, eps_obj, direction=None)`**：`weights`/`eps_cv`/`eps_obj`/`direction`を保持します
+- **`sort_population(population) -> np.ndarray`**：個体群全体を優劣順に並べたインデックス配列を返します
+- **`compare_population(population, idx_a, idx_b) -> int`**：個体群中の2個体を比較します（`-1`：aが優れる、`1`：bが優れる、`0`：同等）
 - **`compare(fa, cv_a, fb, cv_b) -> int`**：`Population`を介さず、目的関数値と制約違反から直接2点を比較する軽量版
 
-`__init__`が抽象メソッドである点は他のコンポーネントと異なる。
-独自の`Comparator`を実装するサブクラスは、必ず`super().__init__(weights, eps_cv, eps_obj, direction=...)`を呼ばなければならない。
+`__init__`が抽象メソッドである点は他のコンポーネントと異なります。
+独自の`Comparator`を実装するサブクラスは、必ず`super().__init__(weights, eps_cv, eps_obj, direction=...)`を呼ばなければなりません。
 
 ## 組み込みComparator
 
@@ -29,57 +29,57 @@
 | `NSGA3Comparator` | 参照点によるニッチ保存{cite}`deb2014nsga3` |
 | `RNSGA2Comparator` | ユーザー指定の参照点による選好誘導{cite}`deb2006rnsga2` |
 
-`SingleObjectiveComparator(direction=None, *, eps_cv=1e-6, eps_obj=1e-6)`は`direction`を省略でき、その場合は最小化として扱う。
+`SingleObjectiveComparator(direction=None, *, eps_cv=1e-6, eps_obj=1e-6)`は`direction`を省略でき、その場合は最小化として扱います。
 
-`WeightedSumComparator(direction, *, eps_cv=1e-6, eps_obj=1e-6)`は`direction`が必須で、省略すると`TypeError`になる。
-このクラスに限り、渡した`direction`がそのままスカラー化の重みとして使われる（`score = f @ direction`）。
-符号だけでなく大きさも重みとして機能するため、[Problem](problem.md)で述べた「`direction`は符号のみ、重みの大きさは別の概念」という一般的な役割分担とは異なる、このクラス固有の扱いである。
+`WeightedSumComparator(direction, *, eps_cv=1e-6, eps_obj=1e-6)`は`direction`が必須で、省略すると`TypeError`になります。
+このクラスに限り、渡した`direction`がそのままスカラー化の重みとして使われます（`score = f @ direction`）。
+符号だけでなく大きさも重みとして機能するため、[Problem](problem.md)で述べた「`direction`は符号のみ、重みの大きさは別の概念」という一般的な役割分担とは異なる、このクラス固有の扱いです。
 
-`ParetoComparator(direction=None, *, eps_cv=1e-6, eps_obj=1e-6, sorter=non_dominated_sort, dominator=None)`は、支配関係のみで個体群をランク付けする。
-`NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`の共通基底であり、具象クラスとして単独でも使える。
-`dominator`引数は[Dominator](dominance.md)、`sorter`引数は[NonDominatedSorter](nondominated_sorting.md)を注入する差し替え点で、互いに独立した軸である。
+`ParetoComparator(direction=None, *, eps_cv=1e-6, eps_obj=1e-6, sorter=non_dominated_sort, dominator=None)`は、支配関係のみで個体群をランク付けします。
+`NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`の共通基底であり、具象クラスとして単独でも使えます。
+`dominator`引数は[Dominator](dominance.md)、`sorter`引数は[NonDominatedSorter](nondominated_sorting.md)を注入する差し替え点で、互いに独立した軸です。
 
-`NSGA2Comparator`は、`ParetoComparator`に混雑度距離による副次的な順位付けを加える。
-ソート結果は`Population`のキャッシュ（`get_cache`/`set_cache`）に保存され、個体群が変更されるまで世代内で使い回される。
+`NSGA2Comparator`は、`ParetoComparator`に混雑度距離による副次的な順位付けを加えます。
+ソート結果は`Population`のキャッシュ（`get_cache`/`set_cache`）に保存され、個体群が変更されるまで世代内で使い回されます。
 
 ### 母集団相対的なComparator
 
-`SPEA2Comparator`と`HypervolumeComparator`は、いずれも`compare()`を呼ぶと`NotImplementedError`を送出する。
-SPEA2のfitnessも排他的HV寄与度も、母集団全体に依存する指標であり、2点だけからは計算できないためである。
-これはバグではなく意図した設計であり、`is_population_relative=True`というクラス属性がその旨を示すマーカーになっている。
+`SPEA2Comparator`と`HypervolumeComparator`は、いずれも`compare()`を呼ぶと`NotImplementedError`を送出します。
+SPEA2のfitnessも排他的HV寄与度も、母集団全体に依存する指標であり、2点だけからは計算できないためです。
+これはバグではなく意図した設計であり、`is_population_relative=True`というクラス属性がその旨を示すマーカーになっています。
 
-PSOのpbest更新や`PairwiseComparisonSet`のように、2点だけの比較（`compare()`）が必要な場面でこれらのComparatorは使えない。
-そのような場面では代わりに`ParetoComparator`を使う。
-`compare_population()`（個体群のインデックスを介した比較）はどちらのクラスでも定義されているため、トーナメント選択などはそのまま使える。
+PSOのpbest更新や`PairwiseComparisonSet`のように、2点だけの比較（`compare()`）が必要な場面でこれらのComparatorは使えません。
+そのような場面では代わりに`ParetoComparator`を使います。
+`compare_population()`（個体群のインデックスを介した比較）はどちらのクラスでも定義されているため、トーナメント選択などはそのまま使えます。
 
-`HypervolumeComparator`のHV計算は、フロットごとにO(N)回のleave-one-out評価を行う。
-目的数が多い問題では、この計算コストが大きくなる。
+`HypervolumeComparator`のHV計算は、フロットごとにO(N)回のleave-one-out評価を行います。
+目的数が多い問題では、この計算コストが大きくなります。
 
 ```{note}
-`HypervolumeComparator`の内部実装とは別に、`saealib.hypervolume(f, reference_point)`という公開関数がある。
-これは最適化後の結果を評価する性能指標として単体で使えるもので、`HypervolumeComparator`とは無関係である。
-詳細は[Utils](../api/utils.md)を参照する。
+`HypervolumeComparator`の内部実装とは別に、`saealib.hypervolume(f, reference_point)`という公開関数があります。
+これは最適化後の結果を評価する性能指標として単体で使えるもので、`HypervolumeComparator`とは無関係です。
+詳細は[Utils](../api/utils.md)を参照してください。
 ```
 
 ### 参照点を使うComparator
 
-`NSGA3Comparator(reference_points, direction=None, *, ...)`は、`reference_points`（`shape (n_ref, n_obj)`、単体シンプレックス上の点）が必須引数である。
-通常は`saealib.utils.weight_vectors.uniform_weight_vectors(n_obj, n_divisions)`で一様に生成したものを渡す。
-`rng`プロパティは遅延生成され、`Optimizer`実行時は`Runner`が`ctx.rng`からspawnした乱数生成器を注入する。
-この内部rngはチェックポイントの保存対象に含まれず、再開時は新しくspawnし直される。
+`NSGA3Comparator(reference_points, direction=None, *, ...)`は、`reference_points`（`shape (n_ref, n_obj)`、単体シンプレックス上の点）が必須引数です。
+通常は`saealib.utils.weight_vectors.uniform_weight_vectors(n_obj, n_divisions)`で一様に生成したものを渡します。
+`rng`プロパティは遅延生成され、`Optimizer`実行時は`Runner`が`ctx.rng`からspawnした乱数生成器を注入します。
+この内部rngはチェックポイントの保存対象に含まれず、再開時は新しくspawnし直されます。
 
-`RNSGA2Comparator(reference_points, epsilon=0.001, direction=None, *, ...)`は、`NSGA3Comparator`とは異なり参照点が単体シンプレックス上にある必要はなく、ユーザーが望む目的関数値（aspiration point）をそのまま指定できる。
-`epsilon`は、同じ参照点に近い解同士を間引くε-clearingの半径である。
+`RNSGA2Comparator(reference_points, epsilon=0.001, direction=None, *, ...)`は、`NSGA3Comparator`とは異なり参照点が単体シンプレックス上にある必要はなく、ユーザーが望む目的関数値（aspiration point）をそのまま指定できます。
+`epsilon`は、同じ参照点に近い解同士を間引くε-clearingの半径です。
 
-`EpsilonDominanceComparator(eps, mode="additive", direction=None, *, ...)`は、`ParetoComparator`の`dominator`を[EpsilonDominator](dominance.md)に差し替えるだけの薄いラッパーである。
+`EpsilonDominanceComparator(eps, mode="additive", direction=None, *, ...)`は、`ParetoComparator`の`dominator`を[EpsilonDominator](dominance.md)に差し替えるだけの薄いラッパーです。
 
-[DecompositionComparator](decomposition.md)は、MOEA/D風のスカラー化によるランク付けを行うComparatorである。
-詳細はそちらのページで扱う。
+[DecompositionComparator](decomposition.md)は、MOEA/D風のスカラー化によるランク付けを行うComparatorです。
+詳細はそちらのページで扱います。
 
 ## 独自Comparatorの実装方法
 
-独自の順位付け方式が必要な場合は、`Comparator`を継承して4つのメソッド全てを実装する。
-`__init__`は必ず`super().__init__(weights, eps_cv, eps_obj, direction=...)`を呼ぶ。
+独自の順位付け方式が必要な場合は、`Comparator`を継承して4つのメソッド全てを実装します。
+`__init__`は必ず`super().__init__(weights, eps_cv, eps_obj, direction=...)`を呼びます。
 
 ```python
 import numpy as np
@@ -108,7 +108,7 @@ class RandomComparator(Comparator):
         return 0
 ```
 
-`SPEA2Comparator`/`HypervolumeComparator`のように、母集団全体に依存する指標を実装する場合は、`is_population_relative = True`というクラス属性を立て、`compare()`で理由を説明する`NotImplementedError`を送出する設計パターンが使える。
+`SPEA2Comparator`/`HypervolumeComparator`のように、母集団全体に依存する指標を実装する場合は、`is_population_relative = True`というクラス属性を立て、`compare()`で理由を説明する`NotImplementedError`を送出する設計パターンが使えます。
 
 ## 関連コンポーネント
 
