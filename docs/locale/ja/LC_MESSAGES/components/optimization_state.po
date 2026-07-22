@@ -1,0 +1,277 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../components/optimization_state.md:1
+msgid "OptimizationState"
+msgstr ""
+
+#: ../../../components/optimization_state.md:3
+msgid ""
+"最適化パイプラインを構成する各コンポーネントは、実行中の状態を直接保持せず、`OptimizationState`という1つの値オブジェクトを介してやり取りする。"
+" `Algorithm.ask(ctx, "
+"...)`や`Stage.execute(state)`など、ほぼ全てのシグネチャに`ctx`または`state`として登場する。"
+msgstr ""
+
+#: ../../../components/optimization_state.md:6
+msgid "OptimizationStateが表すもの"
+msgstr ""
+
+#: ../../../components/optimization_state.md:8
+msgid ""
+"`OptimizationState`は、フィールドを直接書き換えるのではなく`replace()`で更新済みコピーを作って受け渡す、不変"
+"（immutable-style）な値オブジェクトとして設計されている。 "
+"`Initializer`が実行開始時に最初の状態を構築し、以後は各`Stage`が`replace()`で更新したコピーを次の`Stage`へ渡していく。"
+msgstr ""
+
+#: ../../../components/optimization_state.md:11
+msgid "ただし、この不変性には2つの制御された例外がある。"
+msgstr ""
+
+#: ../../../components/optimization_state.md:13
+msgid ""
+"**`archive`**は追記専用（append-only）であり、in-placeの追記が許容される。 "
+"評価のたびに複製すると評価回数の2乗に比例するコストになるため、意図的にこの部分だけ可変にしてある。"
+msgstr ""
+
+#: ../../../components/optimization_state.md:16
+msgid ""
+"**`rng`**は、呼び出すたびに内部状態が進むという副作用を持つ。 "
+"これはNumPyの`Generator`自体の性質であり、`OptimizationState`固有の設計ではない。"
+msgstr ""
+
+#: ../../../components/optimization_state.md:19
+msgid "この2つ以外のフィールドは、`replace()`による不変的な更新が原則である。"
+msgstr ""
+
+#: ../../../components/optimization_state.md:21
+msgid "主要フィールド"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "フィールド"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "内容"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "`problem`"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "解いている[Problem](problem.md)"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "`population`"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "現世代の[Population](population.md)"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "`archive`"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "評価済み解を蓄積する[Archive](population.md)"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "`pareto_archive`"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "非劣解集合を維持する[ParetoArchive](population.md)"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "`rng`"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "乱数生成器"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "`fe`"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "評価回数"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "`gen`"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "世代数"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "`data`"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "ユーザー拡張用のフリーフォームな辞書"
+msgstr ""
+
+#: ../../../components/optimization_state.md:34
+msgid "このほかに、パイプラインの各[Stage](stage.md)が読み書きする型付きフィールドがある。"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "書き込むStage"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "参照するStage"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "`offspring`"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "`AskStage`"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "後続の各Stage"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "`evaluated_offspring`"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "`TrueEvaluationStage`"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "`ArchiveUpdateStage`"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "`scores` / `predictions`"
+msgstr ""
+
+#: ../../../components/optimization_state.md
+msgid "`SurrogateScoreStage`"
+msgstr ""
+
+#: ../../../components/optimization_state.md:42
+#, python-brace-format
+msgid ""
+"`data`はユーザー拡張用の辞書で、独自の`Stage`や`Callback`が任意の値を追加する場所として使う。 "
+"`state.data[\"key\"] = "
+"value`という直接変更ではなく、`state.replace(data={**state.data, \"key\": "
+"value})`という形で新しい辞書を作って渡す。"
+msgstr ""
+
+#: ../../../components/optimization_state.md:45
+msgid "便利プロパティ"
+msgstr ""
+
+#: ../../../components/optimization_state.md:47
+msgid ""
+"`dim`/`n_obj`/`lb`/`ub`/`direction`/`comparator`は、いずれも`state.problem.xxx`への委譲プロパティである。"
+" `ctx.problem.dim`と書く代わりに`ctx.dim`と書けるショートハンドとして用意されている。"
+msgstr ""
+
+#: ../../../components/optimization_state.md:50
+msgid "replaceによる更新"
+msgstr ""
+
+#: ../../../components/optimization_state.md:52
+msgid ""
+"`replace(**kwargs) -> "
+"OptimizationState`は`dataclasses.replace`のラッパーで、パイプライン中で最も頻繁に使われる更新方法である。 "
+"たとえば世代数を進める`CountGenerationStage`は、`state.replace(gen=state.gen + "
+"1)`という形でフィールドを更新する。"
+msgstr ""
+
+#: ../../../components/optimization_state.md:55
+msgid ""
+"`OptimizationState`には`fe`/`gen`をインクリメントする`count_fe(count=1)`/`count_generation()`という補助メソッドも用意されているが、これらは`replace()`を経由しないその場限りのミューテーションである。"
+" "
+"組み込みパイプラインの中でこの2つが実際に呼ばれるのは、[Initializer](initialization.md)が初期評価件数を`fe`へ加算する箇所だけであり、世代ごとの`gen`/`fe`の更新（`CountGenerationStage`/`TrueEvaluationStage`）はいずれも`replace()`を使う経路に統一されている。"
+" 独自の`Stage`を書く場合も、`replace()`を使う経路に揃えたほうが一貫性を保ちやすい。"
+msgstr ""
+
+#: ../../../components/optimization_state.md:59
+msgid "チェックポイント"
+msgstr ""
+
+#: ../../../components/optimization_state.md:61
+msgid ""
+"`save(path)`/`load(path, "
+"problem)`（後者はクラスメソッド）は、`OptimizationState`をnpz形式で保存し復元する。 "
+"保存対象は`archive`/`population`/`pareto_archive`の配列と`rng`の完全なbit-"
+"generator状態のみで、再現性はベストエフォートである（同一NumPyバージョン、同一環境内でのビット完全な再開を意図しているが、バージョンをまたぐ再現は保証しない）。"
+msgstr ""
+
+#: ../../../components/optimization_state.md:64
+msgid ""
+"[NSGA3Comparator](comparators.md)が持つような、コンポーネント固有の内部rng（`state.rng`からspawnされたもの）は保存対象に含まれない。"
+" 再開時はそのような内部rngを`state.rng`から新しくspawnし直す。"
+msgstr ""
+
+#: ../../../components/optimization_state.md:67
+msgid ""
+"自動的なチェックポイント保存の使い方は[チェックポイント](../tutorials/checkpoint.md)を参照する。 "
+"ここで説明した`save`/`load`は、その内部で使われている`OptimizationState`自体の契約である。"
+msgstr ""
+
+#: ../../../components/optimization_state.md:70
+msgid "関連コンポーネント"
+msgstr ""
+
+#: ../../../components/optimization_state.md:72
+msgid ""
+"[Population](population.md) — "
+"`population`/`archive`/`pareto_archive`フィールドの実体"
+msgstr ""
+
+#: ../../../components/optimization_state.md:73
+msgid "[Initializer](initialization.md) — 最初の`OptimizationState`を構築する"
+msgstr ""
+
+#: ../../../components/optimization_state.md:74
+msgid "[Stage](stage.md) — `state.replace(...)`で状態を更新しながらパイプラインを進める"
+msgstr ""
+
+#: ../../../components/optimization_state.md:75
+msgid "[チェックポイント](../tutorials/checkpoint.md) — `CheckpointCallback`経由の自動保存の使い方"
+msgstr ""
+
+#: ../../../components/optimization_state.md:77
+msgid "参照"
+msgstr ""
+
+#: ../../../components/optimization_state.md:79
+#, python-brace-format
+msgid "{py:class}`saealib.OptimizationState`"
+msgstr ""
+

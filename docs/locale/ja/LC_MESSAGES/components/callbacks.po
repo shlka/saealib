@@ -1,0 +1,448 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../components/callbacks.md:1 ../../../components/callbacks.md:37
+msgid "CallbackManager"
+msgstr ""
+
+#: ../../../components/callbacks.md:3
+msgid ""
+"`Optimizer`は、最適化の進捗をイベントとして外部へ通知する仕組みを`CallbackManager`という差し替え可能なコンポーネントに委ねている。"
+" ログ記録、収束履歴の蓄積、条件付きのコンポーネント差し替えなど、パイプライン本体を書き換えずに観察したり介入したりする際に使う。"
+msgstr ""
+
+#: ../../../components/callbacks.md:6
+msgid "CallbackManagerの役割"
+msgstr ""
+
+#: ../../../components/callbacks.md:8
+msgid "`CallbackManager`は、イベント型ごとにハンドラのリストを保持する。"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "メソッド"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "内容"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`register(event_type, func)`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`event_type`のイベントが発火するたびに`func(event)`を呼ぶよう登録する"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`dispatch(event)`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "登録済みの全ハンドラを登録順に呼ぶ"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`unregister(event_type, func)`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "登録済みハンドラを削除する"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`replace(event_type, old, new)`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "登録済みハンドラを別のハンドラに差し替える"
+msgstr ""
+
+#: ../../../components/callbacks.md:17
+msgid ""
+"`Event`基底クラスは`ctx`（`OptimizationState`）だけを持つ。 "
+"慣例として`ctx`は読み取り専用として扱い、値の変更はコンポーネントのライフサイクルフック（`with_post`など）で行う。"
+msgstr ""
+
+#: ../../../components/callbacks.md:20
+msgid "利用可能なイベント一覧"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "イベント"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "発火タイミング"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "主なフィールド"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`RunStartEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "実行開始時に1回"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "—"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`RunEndEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "実行終了時に1回"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`GenerationStartEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "各世代の開始時"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`GenerationEndEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "各世代の終了時（状態をyieldする前）"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`SurrogateStartEvent` / `SurrogateEndEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "サロゲートによるスコアリングの前後"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`offspring`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`PostCrossoverEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "交叉と修復の後"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`candidates`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`PostMutationEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "突然変異と修復の後"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`PostAskEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`ask()`全体（交叉と突然変異）の後"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`PostSurrogateFitEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "サロゲートのフィット後"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`surrogate`, `train_x`, `train_f`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`PostEvaluationEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "選ばれた候補の真の評価後"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`InitialEvaluationStartEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "初期サンプリング後、初期評価の前"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`candidates_x`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`InitialEvaluationEndEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "初期評価後、アーカイブのソート前"
+msgstr ""
+
+#: ../../../components/callbacks.md
+msgid "`archive`"
+msgstr ""
+
+#: ../../../components/callbacks.md:38
+msgid ""
+"`PostSurrogateFitEvent`は型として定義され公開されているが、現行の組み込みパイプライン（`Stage`群）からは発火されない。"
+" 将来組み込まれる可能性のある拡張点として捉え、現時点では自分のパイプラインで明示的に発火させない限り観察できない。"
+msgstr ""
+
+#: ../../../components/callbacks.md:42
+msgid "デフォルトのログ出力"
+msgstr ""
+
+#: ../../../components/callbacks.md:44
+msgid ""
+"`Optimizer`は構築時に`logging_generation`を`GenerationStartEvent`へ自動登録する。 "
+"標準ライブラリの`logging`モジュールを設定すれば、世代ごとの進捗（評価回数、最良目的値、または多目的の場合は第一フロントのサイズと範囲）がログに出力される。"
+msgstr ""
+
+#: ../../../components/callbacks.md:47
+msgid "カスタムハンドラの登録と収束履歴の記録"
+msgstr ""
+
+#: ../../../components/callbacks.md:49
+msgid ""
+"`cbmanager.register(EventType, handler)`で任意のハンドラを登録できる。 "
+"収束履歴を記録したい場合は、クロージャで蓄積するリストを持つハンドラを登録する。"
+msgstr ""
+
+#: ../../../components/callbacks.md:68
+msgid "ハイパーボリューム追跡"
+msgstr ""
+
+#: ../../../components/callbacks.md:70
+msgid "`logging_generation_hv(reference_point)`は、指定した参照点に対する第一フロントのハイパーボリュームを世代ごとにログ出力するハンドラを返す。"
+msgstr ""
+
+#: ../../../components/callbacks.md:81
+msgid "デフォルトハンドラの差し替え"
+msgstr ""
+
+#: ../../../components/callbacks.md:83
+msgid ""
+"`unregister(event_type, "
+"func)`で自動登録された`logging_generation`を外したり、`replace(event_type, old, "
+"new)`で別のハンドラに差し替えたりできる。"
+msgstr ""
+
+#: ../../../components/callbacks.md:91
+msgid "candidatesフィールドは観測目的"
+msgstr ""
+
+#: ../../../components/callbacks.md:93
+msgid ""
+"`PostCrossoverEvent`/`PostMutationEvent`/`PostAskEvent`の`candidates`フィールドは観測用であり、ハンドラ内で再代入（`event.candidates"
+" = new_array`）してもパイプラインの出力には反映されない。 "
+"`GA`はイベント発火後も自分が持つローカルな配列参照をそのまま使い続けるため、in-place変更（`event.candidates[:] ="
+" ...`）であれば`GA`には反映される。 "
+"一方`PSO`は、`Population.extend()`で候補群のコピーが完了した後にこのイベントを発火するため、in-"
+"place変更すら手遅れで一切反映されない。"
+msgstr ""
+
+#: ../../../components/callbacks.md:97
+msgid ""
+"候補配列そのものを差し替えたい場合は、`CallbackManager`ではなく[Crossover](crossover.md)/[Mutation](mutation.md)の`with_post(fn)`を使う。"
+" "
+"`CallbackManager`は観測（ログ、記録、条件付きの分岐判断）のための仕組みであり、パイプラインのデータを書き換える手段ではない、という設計方針として理解する。"
+msgstr ""
+
+#: ../../../components/callbacks.md:100
+msgid "コンポーネントの実行時差し替え"
+msgstr ""
+
+#: ../../../components/callbacks.md:102
+msgid ""
+"`Event`はハンドラに`ctx`だけを渡し、`Optimizer`インスタンス自体は渡さない。 "
+"実行時にコンポーネントを差し替えたい場合は、ハンドラのクロージャで`Optimizer`インスタンスを直接捕捉し、`optimizer.algorithm`/`strategy`/`surrogate_manager`/`termination`を再代入するか、既存コンポーネントのパラメータを直接変更する。"
+msgstr ""
+
+#: ../../../components/callbacks.md:117
+msgid "[strategies](strategies.md)で説明したとおり、各Strategyは`step()`のたびにパイプラインを再構築するため、この差し替えは次世代から確実に反映される。"
+msgstr ""
+
+#: ../../../components/callbacks.md:119
+msgid "iterate()との使い分け"
+msgstr ""
+
+#: ../../../components/callbacks.md:37
+msgid "観点"
+msgstr ""
+
+#: ../../../components/callbacks.md:37
+msgid "`iterate()`"
+msgstr ""
+
+#: ../../../components/callbacks.md:37
+msgid "呼び出しの粒度"
+msgstr ""
+
+#: ../../../components/callbacks.md:37
+msgid "特定イベントの発生時"
+msgstr ""
+
+#: ../../../components/callbacks.md:37
+msgid "世代ごと（ホスト側のforループ）"
+msgstr ""
+
+#: ../../../components/callbacks.md:37
+msgid "主な用途"
+msgstr ""
+
+#: ../../../components/callbacks.md:37
+msgid "ログ記録、観察、条件付きの副作用"
+msgstr ""
+
+#: ../../../components/callbacks.md:37
+msgid "サロゲート精度に応じたコンポーネント切り替えなど、ループ構造そのものへの介入"
+msgstr ""
+
+#: ../../../components/callbacks.md:37
+msgid "`run()`との関係"
+msgstr ""
+
+#: ../../../components/callbacks.md:37
+msgid "`run()`/`iterate()`どちらでも動作する"
+msgstr ""
+
+#: ../../../components/callbacks.md:37
+msgid "`run()`の代わりにこちらを使う"
+msgstr ""
+
+#: ../../../components/callbacks.md:127
+msgid "[サロゲート精度評価と動的切り替え](surrogate_switching.md)のSwitcher系は、`iterate()`ループの中で使うことを前提にしている。"
+msgstr ""
+
+#: ../../../components/callbacks.md:129
+msgid "CheckpointCallback"
+msgstr ""
+
+#: ../../../components/callbacks.md:131
+msgid ""
+"`CheckpointCallback`は、あらかじめ用意されたCallbackの実例である。 "
+"一定世代ごとに[OptimizationState](optimization_state.md)の`save()`を呼び、npz/pickle形式でチェックポイントを保存する。"
+" 詳しい使い方は[チェックポイント](../tutorials/checkpoint.md)を参照する。 "
+"独自のCallbackを自作する際のお手本の1つとしても参照できる。"
+msgstr ""
+
+#: ../../../components/callbacks.md:136
+msgid "関連コンポーネント"
+msgstr ""
+
+#: ../../../components/callbacks.md:138
+msgid "[拡張のガイドライン](extension_guidelines.md) — `with_post`系フックとの使い分け"
+msgstr ""
+
+#: ../../../components/callbacks.md:139
+msgid "[Crossover](crossover.md) / [Mutation](mutation.md) — 候補配列を実際に差し替える手段"
+msgstr ""
+
+#: ../../../components/callbacks.md:140
+msgid "[strategies](strategies.md) — 実行時のコンポーネント差し替えが反映されるタイミング"
+msgstr ""
+
+#: ../../../components/callbacks.md:141
+msgid "[サロゲート精度評価と動的切り替え](surrogate_switching.md) — `iterate()`ループでの動的切り替え"
+msgstr ""
+
+#: ../../../components/callbacks.md:142
+msgid "[チェックポイント](../tutorials/checkpoint.md) — `CheckpointCallback`の使い方"
+msgstr ""
+
+#: ../../../components/callbacks.md:144
+msgid "参照"
+msgstr ""
+
+#: ../../../components/callbacks.md:146
+#, python-brace-format
+msgid "{py:class}`saealib.CallbackManager`"
+msgstr ""
+
+#: ../../../components/callbacks.md:147
+#, python-brace-format
+msgid "{py:class}`saealib.RunStartEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md:148
+#, python-brace-format
+msgid "{py:class}`saealib.RunEndEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md:149
+#, python-brace-format
+msgid "{py:class}`saealib.GenerationStartEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md:150
+#, python-brace-format
+msgid "{py:class}`saealib.GenerationEndEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md:151
+#, python-brace-format
+msgid "{py:class}`saealib.PostEvaluationEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md:152
+#, python-brace-format
+msgid "{py:class}`saealib.InitialEvaluationStartEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md:153
+#, python-brace-format
+msgid "{py:class}`saealib.InitialEvaluationEndEvent`"
+msgstr ""
+
+#: ../../../components/callbacks.md:154
+#, python-brace-format
+msgid "{py:func}`saealib.logging_generation`"
+msgstr ""
+
+#: ../../../components/callbacks.md:155
+#, python-brace-format
+msgid "{py:func}`saealib.logging_generation_hv`"
+msgstr ""
+
+#: ../../../components/callbacks.md:156
+#, python-brace-format
+msgid "{py:class}`saealib.CheckpointCallback`"
+msgstr ""
+

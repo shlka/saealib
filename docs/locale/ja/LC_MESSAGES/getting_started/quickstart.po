@@ -1,0 +1,83 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../getting_started/quickstart.md:1
+msgid "クイックスタート"
+msgstr ""
+
+#: ../../../getting_started/quickstart.md:2
+msgid "インストールは完了していますか？ インストール方法は[こちら](./installation.md)を参照してください。"
+msgstr ""
+
+#: ../../../getting_started/quickstart.md:5
+msgid "初めての実行"
+msgstr ""
+
+#: ../../../getting_started/quickstart.md:6
+msgid "まずは最小の記述で最適化問題を解いてみましょう。"
+msgstr ""
+
+#: ../../../getting_started/quickstart.md:18
+msgid ""
+"ここでは`saealib`が提供するベンチマークパッケージから、設計変数空間が10次元のRastrigin関数(`saealib.benchmarks.rastrigin`)の最小化問題を解いています。"
+" `minimize()` / `maximize()`は、パラメータを指定するだけで最適化を実行できる高レベルAPIです。"
+msgstr ""
+
+#: ../../../getting_started/quickstart.md:21
+msgid "任意の関数を最適化"
+msgstr ""
+
+#: ../../../getting_started/quickstart.md:22
+msgid ""
+"前節ではベンチマーク問題を使用しましたが、ここでは任意の関数を最適化する例を見てみましょう。 "
+"`saealib`のベンチマークパッケージを利用する場合は必要なパラメータが自動的にAPIへ渡されますが、任意の関数(`callable`)を渡す場合はいくつかのパラメータを自分で指定する必要があります。"
+msgstr ""
+
+#: ../../../getting_started/quickstart.md:37
+msgid ""
+"ここでは10次元のRastrigin関数を定義して最小化問題を解いています。 "
+"`func`パラメータはnumpy配列を受け取り評価値を返すような任意の`callable`オブジェクトを指定できます。 "
+"シミュレーション(CAE)や機械学習モデルの学習など、評価コストの高い目的関数をここに指定することで、効率的なパラメータ探索に応用できます。"
+msgstr ""
+
+#: ../../../getting_started/quickstart.md:41
+msgid "次のステップ"
+msgstr ""
+
+#: ../../../getting_started/quickstart.md:42
+msgid "ここで紹介した機能は`saealib`の一部分です。 詳細なガイドは次のページを参照してください。"
+msgstr ""
+
+#: ../../../getting_started/quickstart.md:45
+msgid "[チュートリアル](../tutorials/index.md): 具体的なシチュエーション別の使い方ガイド"
+msgstr ""
+
+#: ../../../getting_started/quickstart.md:46
+msgid "[コンポーネント](../components/index.md): コンポーネントごとの詳しい使い方"
+msgstr ""
+
+#: ../../../getting_started/quickstart.md:47
+msgid "[API Reference](../api/index.md): 全パラメータのリファレンス"
+msgstr ""
+
+#~ msgid "Quickstart"
+#~ msgstr ""
+

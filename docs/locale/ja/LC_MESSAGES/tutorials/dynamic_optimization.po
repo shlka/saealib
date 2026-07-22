@@ -1,0 +1,162 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../tutorials/dynamic_optimization.md:1
+msgid "サロゲート精度に応じた動的な切り替え"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:3
+msgid "サロゲートモデルの予測精度は、世代が進むにつれて変化します。"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:5
+msgid "学習データが少ない序盤は精度が低く、アーカイブが充実してくると精度が上がり、探索が収束して目的値の差が縮まると再び精度が落ちることもあります。"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:7
+msgid "この変化に応じて、評価戦略やサロゲートマネージャを実行中に切り替える方法を扱います。"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:9
+msgid "問題設定"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:11
+msgid "単目的最適化のチュートリアルと同じSphere関数を使います。"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:25
+msgid "サロゲート精度の追跡"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:27
+msgid "サロゲートマネージャに`accuracy_evaluator`を渡すと、フィットのたびに精度が計算され、`surrogate_manager.last_accuracy`に記録されます。"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:29
+msgid ""
+"`LOOAccuracyEvaluator`は、追加の保留データを用意せず、現在の学習データに対する交差検証(leave-one-"
+"out)で精度を求めます。"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:75
+msgid "`last_accuracy`は`SurrogateAccuracy`インスタンスで、`.get(\"spearman\")`のようにメトリック名を指定して値を取り出せます。"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:77
+msgid "最初の世代では`last_accuracy`が`None`である点に注意してください。"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:79
+msgid "StrategySwitcherによる評価戦略の切り替え"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:81
+msgid ""
+"`StrategySwitcher(primary, fallback, metric=\"spearman\", "
+"threshold=0.56)`は、精度が閾値以上なら`primary`を、そうでなければ`fallback`を返します。"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:83
+msgid "`switch()`が返す戦略は、`iterate()`ループの中で`optimizer.set_strategy(...)`に渡すことで、次の世代から反映されます。"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:108
+msgid "実行すると、序盤は精度が低く`IndividualBasedStrategy`のまま進み、精度が閾値を超えた世代から`PreSelectionStrategy`へ切り替わります。"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:110
+msgid "探索が進んで目的値の差が縮まり精度が再び落ちれば、`IndividualBasedStrategy`へ戻ります。"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:112
+msgid "他の切り替え"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:114
+msgid "同じ`switch()`インターフェースを持つ切り替え器が、`StrategySwitcher`以外にも用意されています。"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid "クラス"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid "切り替える対象"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid "`StrategySwitcher`"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid "2つの`OptimizationStrategy`(精度がしきい値以上か否か)"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid "`ManagerSwitcher`"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid "2つの`SurrogateManager`(精度がしきい値以上か否か)"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid "`GenCtrlSwitcher`"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid "`GenerationBasedStrategy`の`gen_ctrl`(精度を指数移動平均で平滑化して連続値へ写像)"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:122
+msgid "`GenCtrlSwitcher`は数値を返すので、`GenerationBasedStrategy`のインスタンスの`gen_ctrl`属性へ直接代入します。"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:136
+msgid "参照"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:138
+#, python-brace-format
+msgid ""
+"{py:class}`saealib.StrategySwitcher` / "
+"{py:class}`saealib.ManagerSwitcher` / {py:class}`saealib.GenCtrlSwitcher`"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:139
+#, python-brace-format
+msgid ""
+"{py:class}`saealib.LOOAccuracyEvaluator` / "
+"{py:class}`saealib.HeldOutAccuracyEvaluator` / "
+"{py:class}`saealib.KFoldAccuracyEvaluator`"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:140
+#, python-brace-format
+msgid "{py:class}`saealib.SurrogateAccuracy`"
+msgstr ""
+
+#: ../../../tutorials/dynamic_optimization.md:141
+#, python-brace-format
+msgid "{py:class}`saealib.Optimizer`"
+msgstr ""
+

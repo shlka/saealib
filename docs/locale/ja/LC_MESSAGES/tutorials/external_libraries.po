@@ -1,0 +1,192 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../tutorials/external_libraries.md:1
+msgid "外部ライブラリとの連携"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:3
+msgid "`saealib`は、外部の機械学習ライブラリを、独自の抽象基底クラスの背後に薄くラップしたアダプタを提供します。"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:5
+msgid "アダプタが翻訳するのは`Problem`/`Population`/`ctx`といった`saealib`側のデータ表現だけで、学習アルゴリズムそのものは外部ライブラリの実装をそのまま使います。"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:7
+msgid "現時点では、サロゲートモデルのアダプタ(scikit-learn、XGBoost、LightGBM、PyTorch)が実装されています。"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:9
+msgid "インストール"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:11
+msgid "各アダプタは、対応する`extra`を指定してインストールしたときだけ使えます。"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:17
+msgid "インストール方法とextra一覧の詳細は[インストール](../getting_started/installation.md)を参照してください。"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:19
+msgid "対応する`extra`をインストールしていない状態でアダプタをインポートすると、`ImportError`になります。"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:21
+msgid "サロゲートアダプタ"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:23
+msgid "各アダプタは`saealib`の`Surrogate`基底クラスを実装しており、組み込みの`RBFSurrogate`と同じように`surrogate`引数へ渡せます。"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "クラス"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "対応する`extra`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "ラップするモデル"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "`SklearnGPRSurrogate`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "`sklearn`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "Gaussian Process Regressor"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "`SklearnRFRSurrogate`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "Random Forest Regressor"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "`SklearnSVMSurrogate`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "Support Vector Regression"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "`SklearnNNSurrogate`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "Multi-layer Perceptron"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "`SklearnXGBSurrogate`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "`xgboost`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "XGBoost回帰"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "`SklearnLGBMSurrogate`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "`lightgbm`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "LightGBM回帰"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "`TorchSurrogate`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "`torch`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md
+msgid "任意のPyTorch `nn.Module`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:35
+msgid "コンストラクタへのキーワード引数は、そのまま対応するライブラリのモデルへ渡されます。"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:59
+msgid "`Surrogate`インスタンスを`surrogate`引数に渡す挙動は、[単目的最適化](single_objective.md)の「コンポーネントの切り替え」で示した`RBFSurrogate`の例と同じで、内部で`LocalSurrogateManager`にラップされます。"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:61
+msgid "分類問題向けのアダプタ(実行可能性分類など)や、各アダプタの詳細な引数は[Surrogate](../components/surrogate.md)を参照してください。"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:71
+msgid "参照"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:73
+#, python-brace-format
+msgid "{py:class}`saealib.Surrogate`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:74
+#, python-brace-format
+msgid ""
+"{py:class}`saealib.SklearnGPRSurrogate` / "
+"{py:class}`saealib.SklearnRFRSurrogate` / "
+"{py:class}`saealib.SklearnSVMSurrogate` / "
+"{py:class}`saealib.SklearnNNSurrogate`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:75
+#, python-brace-format
+msgid ""
+"{py:class}`saealib.SklearnXGBSurrogate` / "
+"{py:class}`saealib.SklearnLGBMSurrogate`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:76
+#, python-brace-format
+msgid "{py:class}`saealib.TorchSurrogate`"
+msgstr ""
+
+#: ../../../tutorials/external_libraries.md:77
+#, python-brace-format
+msgid "{py:func}`saealib.minimize`"
+msgstr ""
+

@@ -1,0 +1,218 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../algorithms/ego.md:1
+msgid "EGO（Efficient Global Optimization）"
+msgstr ""
+
+#: ../../../algorithms/ego.md:3
+msgid "概要"
+msgstr ""
+
+#: ../../../algorithms/ego.md:5
+msgid ""
+"EGOは、評価コストの高い目的関数を対象に、Gaussian Process回帰(GP)による代理モデルと**期待改善量**(Expected "
+"Improvement, EI)という獲得関数を組み合わせた逐次最適化の手法である。"
+msgstr ""
+
+#: ../../../algorithms/ego.md:7
+msgid ""
+"GPの予測分散は学習データから離れた領域ほど大きくなる。 "
+"EIはこの予測平均と予測分散の両方から計算されるスカラー値であるため、「予測値が良さそうな領域」と「予測の不確実性が高い領域」を自然に両方カバーし、探索(exploration)と活用(exploitation)のバランスを取る。"
+msgstr ""
+
+#: ../../../algorithms/ego.md:10
+#, python-brace-format
+msgid "出典は{cite}`jones1998ego`。具体的な手順は次の擬似コードに示す。"
+msgstr ""
+
+#: ../../../algorithms/ego.md:41
+msgid "擬似コード"
+msgstr ""
+
+#: ../../../algorithms/ego.md:43
+msgid "(EGO)"
+msgstr ""
+
+#: ../../../algorithms/ego.md:46
+msgid "**Inputs** 目的関数 $f$、探索範囲、初期サンプル数 $n_0$、評価予算 $N$ **Output** 最良解 $x^*$"
+msgstr ""
+
+#: ../../../algorithms/ego.md:49
+msgid "初期集団を $n_0$ 点サンプリングし、真の関数 $f$ で評価してアーカイブに追加する"
+msgstr ""
+
+#: ../../../algorithms/ego.md:50
+msgid "アーカイブ全体にGPを当てはめ、任意の点における予測平均 $\\mu(x)$ と予測標準偏差 $\\sigma(x)$ を得る"
+msgstr ""
+
+#: ../../../algorithms/ego.md:51
+#, python-brace-format
+msgid ""
+"期待改善量 $\\mathrm{EI}(x) = (f_{\\min} - \\mu(x) - \\xi)\\,\\Phi(z) + "
+"\\sigma(x)\\,\\phi(z)$（$z = (f_{\\min} - \\mu(x) - \\xi) / "
+"\\sigma(x)$）を最大化する点 $x^*$ を求める"
+msgstr ""
+
+#: ../../../algorithms/ego.md:52
+msgid "$x^*$ を真の関数で評価し、アーカイブに追加する"
+msgstr ""
+
+#: ../../../algorithms/ego.md:53
+msgid "評価予算 $N$ に達するまで2へ戻る"
+msgstr ""
+
+#: ../../../algorithms/ego.md:56
+msgid "フローチャート"
+msgstr ""
+
+#: ../../../algorithms/ego.md:73
+msgid "saealibでの構成"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "役割"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "saealibでの実装"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "対応する擬似コードのステップ"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "探索アルゴリズム本体"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "`GA`（交叉・突然変異・選択の組み合わせ自体はEGOの定義に含まれない）"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "候補解の生成（argmax EIの探索）"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "代理モデル"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "`SklearnGPRSurrogate`（GP回帰。`sklearn` extraが必要）"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "2"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "獲得関数"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "`ExpectedImprovement`"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "3"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "サロゲート管理"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "`GlobalSurrogateManager`（アーカイブ全体でGPをフィットする）"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "2-3"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "評価戦略"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "`IndividualBasedStrategy`（EI上位の個体だけを真に評価する）"
+msgstr ""
+
+#: ../../../algorithms/ego.md:58
+msgid "3-4"
+msgstr ""
+
+#: ../../../algorithms/ego.md:125
+msgid "交叉・突然変異・選択の具体的な演算子はEGO自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられる。"
+msgstr ""
+
+#: ../../../algorithms/ego.md:127
+msgid "パラメータと変種"
+msgstr ""
+
+#: ../../../algorithms/ego.md:129
+#, python-brace-format
+msgid ""
+"**ξ（探索と活用のトレードオフ）**: `ExpectedImprovement(xi=...)`で調整する。 "
+"既定値は`0.01`で、Brochu et al. (2010)が推奨する値に基づく{cite}`brochu2010tutorial`。 "
+"$\\xi=0$では活用(exploitation)寄りになり、大きくすると探索(exploration)寄りになる。"
+msgstr ""
+
+#: ../../../algorithms/ego.md:133
+msgid ""
+"**evaluation_ratio（逐次評価とバッチ評価の切り替え）**: "
+"文献のEGOは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムである。 "
+"saealibの`IndividualBasedStrategy`は、GAが生成した子個体群のうちEIスコア上位`evaluation_ratio`割をまとめて真評価するバッチ拡張になっている。"
+" `evaluation_ratio`を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づく。"
+msgstr ""
+
+#: ../../../algorithms/ego.md:137
+msgid "関連"
+msgstr ""
+
+#: ../../../algorithms/ego.md:139
+msgid "[文献リファレンス](../references.md) — 出典の完全な書誌情報と、EI以外の獲得関数の出典一覧"
+msgstr ""
+
+#: ../../../algorithms/ego.md:140
+msgid ""
+"[SurrogateManager](../components/surrogate_manager.md) — "
+"`GlobalSurrogateManager`の詳しい使い方"
+msgstr ""
+
+#: ../../../algorithms/ego.md:141
+msgid ""
+"[AcquisitionFunction](../components/acquisition_functions.md) — "
+"`ExpectedImprovement`を含む獲得関数一覧"
+msgstr ""
+
+#: ../../../algorithms/ego.md:142
+msgid ""
+"[Surrogate](../components/surrogate.md) — "
+"`SklearnGPRSurrogate`を含む代理モデル一覧と`sklearn` extraの説明"
+msgstr ""
+
+#: ../../../algorithms/ego.md:143
+msgid ""
+"[OptimizationStrategy](../components/strategies.md) — "
+"`IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧"
+msgstr ""
+

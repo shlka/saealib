@@ -1,0 +1,184 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../tutorials/multi_objective.md:1
+msgid "多目的最適化"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:3
+msgid "目的間にトレードオフのある多目的最適化問題を、`saealib`で解きます。"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:5
+msgid "アルゴリズム、サロゲート、評価戦略の切り替え方は、目的数によらず[単目的最適化](single_objective.md)の「コンポーネントの切り替え」と共通です。"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:7
+msgid "このページでは、目的数が2以上のときに固有の設定である、比較演算子の選択とパレートフロントの抽出を扱います。"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:9
+msgid "問題設定"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:11
+msgid "複数の目的関数がトレードオフの関係にあるとき、一方を改善するともう一方が悪化する解が存在します。"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:13
+msgid "この関係の下で、他のどの解にも全目的で優越されない解の集合を**パレートフロント**と呼びます。"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:15
+msgid "ここでは例として、`saealib`に組み込まれたZDT1関数を最小化します。"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:23
+msgid "`zdt1`は、凸形のパレートフロントを持つ2目的のベンチマーク問題を返す`Problem`インスタンスです。"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:25
+msgid "高レベルAPI: minimize"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:27
+msgid "`Problem`インスタンスを直接渡すと、目的数はそこから引き継がれます。"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:38
+msgid "単目的では1点だった`result.x`/`result.f`は、多目的ではパレートフロントを構成する複数の解になります。"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:40
+msgid "比較演算子の選択"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:42
+msgid "多目的では、候補解同士の優劣を`Comparator`が決めます。"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:44
+msgid ""
+"`Problem`の`comparator`引数を省略すると、目的数に応じて自動選択されます（`n_obj == "
+"1`なら`SingleObjectiveComparator`、`n_obj > 1`なら`NSGA2Comparator`）。"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md
+msgid "クラス"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md
+msgid "動作"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md
+msgid "`NSGA2Comparator`"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md
+msgid "非優越ソートと混雑度による多様性維持（デフォルト）"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md
+msgid "`SPEA2Comparator`"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md
+msgid "優越関係の強さと近傍密度によるフィットネス"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md
+msgid "`HypervolumeComparator`"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md
+msgid "ハイパーボリューム貢献度による優劣判定"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md
+msgid "`EpsilonDominanceComparator`"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md
+msgid "εドミナンスによる優越判定"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md
+msgid "`NSGA3Comparator`"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md
+msgid "参照点による多様性維持。`reference_points`が必須"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md
+msgid "`RNSGA2Comparator`"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md
+msgid "指定した参照点の近傍へ解を集中させる。`reference_points`が必須"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:55
+msgid "`comparator`は`Problem`インスタンスの属性として差し替えられます。"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:64
+msgid "パレートフロントの抽出"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:66
+msgid "実行後、`result.ctx.pareto_archive`には最終的なパレートフロントが保持されています。"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:73
+msgid "任意の目的値配列からパレートフロントを求めたい場合は、`non_dominated_sort`を直接使えます。"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:83
+msgid "参照"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:85
+#, python-brace-format
+msgid "{py:func}`saealib.minimize`"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:86
+#, python-brace-format
+msgid "{py:class}`saealib.Problem`"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:87
+#, python-brace-format
+msgid ""
+"{py:class}`saealib.NSGA2Comparator` / {py:class}`saealib.SPEA2Comparator`"
+" / {py:class}`saealib.HypervolumeComparator` / "
+"{py:class}`saealib.EpsilonDominanceComparator` / "
+"{py:class}`saealib.NSGA3Comparator` / "
+"{py:class}`saealib.RNSGA2Comparator`"
+msgstr ""
+
+#: ../../../tutorials/multi_objective.md:88
+#, python-brace-format
+msgid "{py:func}`saealib.non_dominated_sort`"
+msgstr ""
+

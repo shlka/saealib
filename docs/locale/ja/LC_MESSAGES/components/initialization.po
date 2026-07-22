@@ -1,0 +1,216 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../components/initialization.md:1
+msgid "Initializer"
+msgstr ""
+
+#: ../../../components/initialization.md:3
+msgid ""
+"`Optimizer`は実行を始める前に、初期`Population`/`Archive`/`ParetoArchive`と最初の`OptimizationState`を一括で構築する処理を、`Initializer`という差し替え可能なコンポーネントに委ねている。"
+" サンプリング方法を変えたいときは、`Optimizer`本体ではなくこの`Initializer`だけを差し替えればよい。"
+msgstr ""
+
+#: ../../../components/initialization.md:6
+msgid "Initializerの役割"
+msgstr ""
+
+#: ../../../components/initialization.md:8
+msgid ""
+"`Initializer`が実装を要求するメソッドは`initialize(provider, problem) -> "
+"OptimizationState`の1つだけである。 "
+"`provider`は`Algorithm`/`Evaluator`など構築済みの他コンポーネントへアクセスするための`ComponentProvider`、`problem`は解くべき[Problem](problem.md)である。"
+msgstr ""
+
+#: ../../../components/initialization.md:11
+msgid "組み込みInitializer"
+msgstr ""
+
+#: ../../../components/initialization.md
+msgid "クラス"
+msgstr ""
+
+#: ../../../components/initialization.md
+msgid "サンプリング方法"
+msgstr ""
+
+#: ../../../components/initialization.md
+msgid "`LHSInitializer`"
+msgstr ""
+
+#: ../../../components/initialization.md
+msgid "`scipy.stats.qmc.LatinHypercube`"
+msgstr ""
+
+#: ../../../components/initialization.md
+msgid "`RandomInitializer`"
+msgstr ""
+
+#: ../../../components/initialization.md
+msgid "`rng.uniform`"
+msgstr ""
+
+#: ../../../components/initialization.md
+msgid "`SobolInitializer`"
+msgstr ""
+
+#: ../../../components/initialization.md
+msgid "`scipy.stats.qmc.Sobol(scramble=True)`"
+msgstr ""
+
+#: ../../../components/initialization.md:19
+msgid ""
+"3クラスとも、コンストラクタは`(n_init_archive, n_init_population, seed=None)`で共通している。 "
+"`n_init_archive`件をサンプリングして評価し、その中から`comparator`でソートした上位`n_init_population`件を初期`Population`へ投入する、という流れも共通である。"
+msgstr ""
+
+#: ../../../components/initialization.md:30
+msgid "3クラスの実装はサンプリング方法の1行以外ほぼ重複しているが、これは意図的な単純さの選択であり、共通処理を過度に抽象化しない設計になっている。"
+msgstr ""
+
+#: ../../../components/initialization.md:32
+msgid "基底クラスのヘルパーメソッド"
+msgstr ""
+
+#: ../../../components/initialization.md:34
+msgid "`Initializer`基底には、独自実装で再利用できる2つのヘルパーメソッドが用意されている。"
+msgstr ""
+
+#: ../../../components/initialization.md:36
+msgid ""
+"**`_create_attrs(problem, "
+"provider)`**：`Population`/`Archive`用の`PopulationAttribute`一覧を組み立てる。 "
+"`x`/`f`/`g`/`cv`という標準属性に、`provider.algorithm.get_required_attrs(problem)`が返すアルゴリズム固有の属性（PSOの速度など）を追加する。"
+msgstr ""
+
+#: ../../../components/initialization.md:39
+msgid ""
+"**`_create_context(problem, archive, pareto_archive, population, "
+"rng)`**：`OptimizationState`を構築する。 "
+"`comparator`が`NSGA3Comparator`で、まだ内部rngを持たない場合はここで`rng.spawn(1)[0]`を注入する。"
+msgstr ""
+
+#: ../../../components/initialization.md:42
+msgid "独自Initializerの実装方法"
+msgstr ""
+
+#: ../../../components/initialization.md:44
+msgid ""
+"独自のサンプリング方法が必要な場合は、`Initializer`を継承して`initialize()`を実装する。 "
+"組み込み3クラスの実装がそのままテンプレートになり、内部で担う責務は次の9ステップに整理できる。"
+msgstr ""
+
+#: ../../../components/initialization.md:47
+msgid "`provider.algorithm.population_class`/`archive_class`/`create_pareto_archive`で`Population`/`Archive`/`ParetoArchive`を構築する"
+msgstr ""
+
+#: ../../../components/initialization.md:48
+msgid "`_create_context`で`OptimizationState`を構築する"
+msgstr ""
+
+#: ../../../components/initialization.md:49
+msgid "設計変数空間からサンプリングする"
+msgstr ""
+
+#: ../../../components/initialization.md:50
+msgid "`provider.dispatch(InitialEvaluationStartEvent(...))`を発火する"
+msgstr ""
+
+#: ../../../components/initialization.md:51
+msgid "`provider.evaluator.evaluate_batch(x, problem)`で評価する"
+msgstr ""
+
+#: ../../../components/initialization.md:52
+msgid "結果を`archive`/`pareto_archive`へ`add`する"
+msgstr ""
+
+#: ../../../components/initialization.md:53
+msgid "`ctx.count_fe(...)`で評価回数を加算する"
+msgstr ""
+
+#: ../../../components/initialization.md:54
+msgid "`provider.dispatch(InitialEvaluationEndEvent(...))`を発火する"
+msgstr ""
+
+#: ../../../components/initialization.md:55
+msgid "`problem.comparator.sort_population`でソートし、上位件数を`population`へ投入する"
+msgstr ""
+
+#: ../../../components/initialization.md:57
+msgid "次の例は、`scipy.stats.qmc.Halton`で初期サンプルを生成する`Initializer`である。"
+msgstr ""
+
+#: ../../../components/initialization.md:117
+msgid ""
+"`InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`は[CallbackManager](callbacks.md)経由で観察できるイベントである。"
+" 評価そのものの詳細は[Evaluator](evaluation.md)を参照する。"
+msgstr ""
+
+#: ../../../components/initialization.md:120
+msgid "`Optimizer.set_initializer(initializer)`で差し替える。"
+msgstr ""
+
+#: ../../../components/initialization.md:122
+msgid "関連コンポーネント"
+msgstr ""
+
+#: ../../../components/initialization.md:124
+msgid "[OptimizationState](optimization_state.md) — `initialize()`が最終的に返す状態オブジェクト"
+msgstr ""
+
+#: ../../../components/initialization.md:125
+msgid "[Population](population.md) — 構築対象の`Population`/`Archive`/`ParetoArchive`"
+msgstr ""
+
+#: ../../../components/initialization.md:126
+msgid "[Evaluator](evaluation.md) — 初期サンプルの評価に使う"
+msgstr ""
+
+#: ../../../components/initialization.md:127
+msgid ""
+"[CallbackManager](callbacks.md) — "
+"`InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`の観察"
+msgstr ""
+
+#: ../../../components/initialization.md:129
+msgid "参照"
+msgstr ""
+
+#: ../../../components/initialization.md:131
+#, python-brace-format
+msgid "{py:class}`saealib.Initializer`"
+msgstr ""
+
+#: ../../../components/initialization.md:132
+#, python-brace-format
+msgid "{py:class}`saealib.LHSInitializer`"
+msgstr ""
+
+#: ../../../components/initialization.md:133
+#, python-brace-format
+msgid "{py:class}`saealib.RandomInitializer`"
+msgstr ""
+
+#: ../../../components/initialization.md:134
+#, python-brace-format
+msgid "{py:class}`saealib.SobolInitializer`"
+msgstr ""
+
