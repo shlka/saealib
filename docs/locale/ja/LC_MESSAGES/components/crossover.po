@@ -1,0 +1,272 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../components/crossover.md:1
+msgid "Crossover"
+msgstr ""
+
+#: ../../../components/crossover.md:3
+msgid ""
+"`GA`(`saealib.GA`)は、選択した親個体から子個体を生成する処理を、`Crossover`という差し替え可能な演算子に委ねている。 "
+"交叉の方式を変えたいときは、`GA`本体ではなくこの`Crossover`だけを差し替えればよい。"
+msgstr ""
+
+#: ../../../components/crossover.md:6
+msgid "Crossoverの役割"
+msgstr ""
+
+#: ../../../components/crossover.md:8
+msgid ""
+"`Crossover`が実装を要求するメソッドは`crossover(parent, bounds=None, "
+"rng=...)`の1つだけである。 `parent`には交叉に使う親個体の配列が渡される。 既定では`n_parents = "
+"2`個の親をshape `(n_parents, dim)`で受け取り、`n_children = 2`個の子をshape "
+"`(n_children, dim)`で返す。 "
+"2親2子以外の交叉方式を実装する場合は、`n_parents`/`n_children`というクラス属性をサブクラス側で上書きする。 "
+"`bounds`には設計変数の下限と上限が`(lb, ub)`のタプルで渡され、`None`の場合は無制限として扱う。"
+msgstr ""
+
+#: ../../../components/crossover.md:14
+msgid ""
+"交叉を実行するかどうかを決める個体レベルの確率は、`crossover()`の内部ではなく呼び出し側が判定する。 "
+"`GA.ask()`は`ctx.rng.random() < "
+"self.crossover.prob`を満たしたペアだけに対して`crossover()`を呼び、満たさないペアは親をそのまま子として複製する。"
+" "
+"つまり`prob`というクラス属性自体は`Crossover`が保持しているが、それを読んで交叉を実行するかどうかを決めるのは`GA`側の責務であり、`crossover()`の実装は常に交叉が起こる前提で書いてよい。"
+msgstr ""
+
+#: ../../../components/crossover.md:18
+msgid "組み込みCrossover"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "クラス"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "パラメータ"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "特徴"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "`CrossoverBLXAlpha`"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "`prob, alpha`"
+msgstr ""
+
+#: ../../../components/crossover.md
+#, python-brace-format
+msgid "BLX-α交叉{cite}`eshelman1993blx`。`alpha`が大きいほど、子が親の値の範囲外まで広がりうる"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "`CrossoverSBX`"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "`prob, eta, *, prob_var=0.5`"
+msgstr ""
+
+#: ../../../components/crossover.md
+#, python-brace-format
+msgid ""
+"Simulated Binary "
+"Crossover{cite}`deb1995sbx`。`bounds`が有限値なら境界付き版に自動で切り替わる。`eta`が大きいほど子は親に近づく"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "`CrossoverUniform`"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "`prob, swap_rate=0.5`"
+msgstr ""
+
+#: ../../../components/crossover.md
+#, python-brace-format
+msgid "各次元を独立に`swap_rate`の確率で親同士を入れ替える{cite}`syswerda1989uniform`"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "`CrossoverOnePoint`"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "`prob`"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "1点交叉"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "`CrossoverTwoPoint`"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "2点交叉"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "`CrossoverIntegerSBX`"
+msgstr ""
+
+#: ../../../components/crossover.md
+#, python-brace-format
+msgid "`CrossoverSBX`{cite}`deb1995sbx`と同じ計算をしたのち整数に丸める。整数変数向け"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "`CrossoverCategorical`"
+msgstr ""
+
+#: ../../../components/crossover.md
+msgid "各次元を50/50でどちらかの親の値をそのままコピーする。カテゴリ変数向け"
+msgstr ""
+
+#: ../../../components/crossover.md:30
+msgid ""
+"連続変数だけの問題であれば、この中から1つを選んで`GA(crossover=..., ...)`に渡せばよい。 "
+"`CrossoverBLXAlpha`/`CrossoverUniform`は無制約な問題で素直に使え、境界を活かした交叉が必要なら`CrossoverSBX`を選ぶ、という判断が基本になる。"
+msgstr ""
+
+#: ../../../components/crossover.md:33
+msgid ""
+"設計変数に整数変数やカテゴリ変数が混在する問題では、`GA`は変数の型ごとに異なる`Crossover`インスタンスを使い分ける。 "
+"`GA`コンストラクタの`integer_crossover`/`categorical_crossover`引数を省略すると、それぞれ`CrossoverIntegerSBX`/`CrossoverCategorical`が自動的に補われる(`eta`や`prob`は連続変数用の`crossover`から引き継がれる)。"
+" `GA.ask()`は親個体を変数の型ごとの列に分割し、各`Crossover`を該当する列だけに適用してから結果を組み立て直す。 "
+"この仕組み上、`integer_crossover`/`categorical_crossover`に独自のクラスを渡す場合は、`n_children`/`n_parents`を連続変数用の`crossover`と一致させる必要がある。"
+" 一致しない場合は`ConfigurationError`になる。"
+msgstr ""
+
+#: ../../../components/crossover.md:39
+msgid "変数の型と`Crossover`の対応づけは[Problem](problem.md)の`variables`引数で決まる。"
+msgstr ""
+
+#: ../../../components/crossover.md:42
+msgid ""
+"`CrossoverBLXAlpha`のみ`@register()`済みで、他の6クラスは現状Registry未登録である。 "
+"Registry経由でクラスを文字列から解決する使い方をする場合はこの違いに注意する。"
+msgstr ""
+
+#: ../../../components/crossover.md:46
+msgid "拡張フック"
+msgstr ""
+
+#: ../../../components/crossover.md:48
+msgid ""
+"境界外に出た値を丸めるといった後処理だけを足したい場合、サブクラスを新設せずに`with_post(fn)`で既存の`Crossover`インスタンスへ処理を追加できる。"
+" `with_post`は元のインスタンスを変更せず、`fn`を追加したコピーを返す。"
+msgstr ""
+
+#: ../../../components/crossover.md:65
+msgid ""
+"`fn`のシグネチャは`fn(offspring, parents, rng, ctx) -> "
+"np.ndarray`で、既存のフック（既定では何もしない恒等関数）の結果を受け取って追加の変換を返す。 "
+"複数回`with_post`を呼べば、フックは呼び出した順に連結される。"
+msgstr ""
+
+#: ../../../components/crossover.md:68
+msgid "独自Crossoverの実装方法"
+msgstr ""
+
+#: ../../../components/crossover.md:70
+msgid ""
+"独自の交叉方式が必要な場合は、`Crossover`を継承して`crossover()`だけを実装すればよい。 "
+"次の例は、2つの親の平均を2個の子としてそのまま返す単純な交叉である。"
+msgstr ""
+
+#: ../../../components/crossover.md:88
+msgid "`n_parents`/`n_children`を2以外にしたい場合や、`bounds`を使う独自の丸め処理を加えたい場合は、クラス属性のオーバーライドと`crossover()`内での`bounds`の参照を追加すればよい。"
+msgstr ""
+
+#: ../../../components/crossover.md:90
+msgid "関連コンポーネント"
+msgstr ""
+
+#: ../../../components/crossover.md:92
+msgid "[Algorithm](algorithm.md) — `GA`が`Crossover`をどう組み合わせるか"
+msgstr ""
+
+#: ../../../components/crossover.md:93
+msgid "[Mutation](mutation.md) — 交叉の次に呼ばれる、対になる演算子"
+msgstr ""
+
+#: ../../../components/crossover.md:94
+msgid "[ParentSelection](parent_selection.md) — `Crossover`に渡す親個体を選ぶ演算子"
+msgstr ""
+
+#: ../../../components/crossover.md:95
+msgid "[Problem](problem.md) — 整数変数とカテゴリ変数の定義と、混合変数向けCrossoverの対応関係"
+msgstr ""
+
+#: ../../../components/crossover.md:96
+msgid "[拡張のガイドライン](extension_guidelines.md) — `with_post`系フックの一般的な設計思想"
+msgstr ""
+
+#: ../../../components/crossover.md:98
+msgid "参照"
+msgstr ""
+
+#: ../../../components/crossover.md:100
+#, python-brace-format
+msgid "{py:class}`saealib.Crossover`"
+msgstr ""
+
+#: ../../../components/crossover.md:101
+#, python-brace-format
+msgid "{py:class}`saealib.CrossoverBLXAlpha`"
+msgstr ""
+
+#: ../../../components/crossover.md:102
+#, python-brace-format
+msgid "{py:class}`saealib.CrossoverSBX`"
+msgstr ""
+
+#: ../../../components/crossover.md:103
+#, python-brace-format
+msgid "{py:class}`saealib.CrossoverUniform`"
+msgstr ""
+
+#: ../../../components/crossover.md:104
+#, python-brace-format
+msgid "{py:class}`saealib.CrossoverOnePoint`"
+msgstr ""
+
+#: ../../../components/crossover.md:105
+#, python-brace-format
+msgid "{py:class}`saealib.CrossoverTwoPoint`"
+msgstr ""
+
+#: ../../../components/crossover.md:106
+#, python-brace-format
+msgid "{py:class}`saealib.CrossoverIntegerSBX`"
+msgstr ""
+
+#: ../../../components/crossover.md:107
+#, python-brace-format
+msgid "{py:class}`saealib.CrossoverCategorical`"
+msgstr ""
+

@@ -1,0 +1,241 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../algorithms/rbf_cors.md:1
+msgid "CORS-RBF（Constrained Optimization using Response Surfaces）"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:3
+msgid ""
+"CORS-RBFは、評価コストの高い目的関数を対象に、RBF(Radial Basis "
+"Function)補間による代理モデルを使って次の評価点を1点ずつ選ぶ逐次最適化の手法である。 Regis & Shoemaker "
+"(2005)が提案した枠組みCORS(Constrained Optimization using Response Surfaces)を"
+"、RBF代理モデルで具体化した実装がCORS-RBFである。"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:6
+msgid "概要"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:8
+msgid ""
+"RBF補間は、学習点を通る滑らかな曲面を再構成するだけで、GP回帰のような予測分散を持たない。 "
+"そのため、代理モデルの予測値をそのまま最小化して次の評価点を選ぶ素朴な方法は、既に良い値が観測された点の周辺だけを繰り返し探索してしまい、真の関数の局所最小値ですらない点に収束しかねない。"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:11
+msgid ""
+"CORSはこの問題を、候補点選択そのものに**距離制約**を組み込むことで回避する。 各反復で解く補助問題は、代理モデル $\\hat "
+"f_i(x)$ の最小化に加えて、次の候補点が既存の評価済み点すべてから距離 $\\beta_i \\Delta_i$ "
+"以上離れていることを要求する制約付き最適化になる（$\\Delta_i$は既存点集合からの最大最小距離）。 "
+"$\\beta_i$は反復ごとに、1に近い値(大域探索寄り)から0(局所探索寄り、つまり代理モデルの単純な最小化)まで周期的に変化する数列(**search"
+" pattern**)として与えられ、GPの予測分散が担っていた探索(exploration)の役割をこの距離制約が肩代わりする。"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:15
+msgid ""
+"この距離制約は副産物ではなく、CORSの核心である。 search "
+"patternに0でない値が1つでも含まれていれば、代理モデルの種類や初期評価点の選び方によらず、任意の連続関数の大域最小値に収束することが証明されている。"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:18
+#, python-brace-format
+msgid "出典は{cite}`regis2005cors`。具体的な手順は次の擬似コードに示す。"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:70
+msgid "擬似コード"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:72
+msgid "(CORS-RBF)"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:75
+#, python-brace-format
+msgid ""
+"**Inputs** 目的関数 $f$、探索領域 $\\mathcal{D}$、初期評価点集合 $S_1 = \\{x_1, \\ldots, "
+"x_k\\}$、距離パラメータの周期列(search pattern) $\\langle \\beta_1, \\ldots, "
+"\\beta_{N+1}=0 \\rangle$ **Output** 最良解 $x^*$"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:78
+msgid "$S_1$ を真の関数 $f$ で評価し、$i := 1$ とする"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:79
+#, python-brace-format
+msgid ""
+"これまでの評価済みデータ $D_i = \\{(x, f(x)) \\mid x \\in S_i\\}$ にRBF代理モデル $\\hat "
+"f_i$ をフィットする"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:80
+msgid ""
+"制約付き最小化問題 $\\min_{x \\in \\mathcal{D}} \\hat f_i(x) \\ \\mathrm{s.t.} \\ "
+"\\|x - x_j\\| \\geqslant \\beta_i \\Delta_i \\ (j=1,\\ldots,|S_i|)$ "
+"を解いて候補点 $x_{k+i}$ を求める（$\\Delta_i$は既存評価点集合からの最大最小距離）"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:81
+msgid "$x_{k+i}$ を真の関数で評価し、$S_{i+1} := S_i \\cup \\{x_{k+i}\\}$ に追加する"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:82
+msgid "終了条件に達するまで、周期列に従い $\\beta_i$ を更新して $i := i+1$ とし2へ戻る"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:85
+msgid "フローチャート"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:102
+msgid "saealibでの構成"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "役割"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "saealibでの実装"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "対応する擬似コードのステップ"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "探索アルゴリズム本体"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "`GA`（交叉・突然変異・選択の組み合わせ自体はCORSの定義に含まれない）"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "候補点の生成"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "代理モデル"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "`RBFSurrogate`（RBF補間。既定は`gaussian_kernel`だが、任意のカーネル関数を注入できる）"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "2"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "獲得関数"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "`MeanPrediction`（予測平均をそのままスコア化する）"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "3"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "サロゲート管理"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "`GlobalSurrogateManager`（アーカイブ全体でRBFをフィットする）"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "2-3"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "評価戦略"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "`IndividualBasedStrategy`（予測平均上位の個体だけを真に評価する）"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:87
+msgid "3-4"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:157
+msgid "交叉・突然変異・選択の具体的な演算子はCORS自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられる。"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:159
+msgid "パラメータと変種"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:161
+msgid ""
+"**kernel（RBFカーネルの選択）**: `RBFSurrogate(kernel=...)`で任意のカーネル関数を注入できる。 "
+"既定値は`gaussian_kernel`だが、文献の数値実験ではthin plate spline（$\\phi(r) = r^2 \\log "
+"r$）と1次多項式の付加項$p(x)$を組み合わせたモデルが使われている。 "
+"saealibの`RBFSurrogate`は多項式項$p(x)$を持たない純粋なRBF補間（学習データの平均を差し引いた残差にフィットする）であるため、文献の設定を厳密に再現するにはカーネルの差し替えだけでは不十分である。"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:165
+msgid ""
+"**evaluation_ratio（逐次評価とバッチ評価の切り替え）**: "
+"文献のCORSは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムである。 "
+"saealibの`IndividualBasedStrategy`は、GAが生成した子個体群のうち予測平均上位`evaluation_ratio`割をまとめて真評価するバッチ拡張になっている。"
+" `evaluation_ratio`を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づく。"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:169
+msgid "関連"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:171
+msgid "[文献リファレンス](../references.md) — 出典の完全な書誌情報"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:172
+msgid ""
+"[Surrogate](../components/surrogate.md) — "
+"`RBFSurrogate`/`gaussian_kernel`を含む代理モデル一覧"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:173
+msgid ""
+"[AcquisitionFunction](../components/acquisition_functions.md) — "
+"`MeanPrediction`を含む獲得関数一覧"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:174
+msgid ""
+"[SurrogateManager](../components/surrogate_manager.md) — "
+"`GlobalSurrogateManager`の詳しい使い方"
+msgstr ""
+
+#: ../../../algorithms/rbf_cors.md:175
+msgid ""
+"[OptimizationStrategy](../components/strategies.md) — "
+"`IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧"
+msgstr ""
+

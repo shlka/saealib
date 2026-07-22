@@ -1,0 +1,96 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../tutorials/index.md:1
+msgid "チュートリアル"
+msgstr ""
+
+#: ../../../tutorials/index.md:3
+msgid "よくある最適化シナリオに対応する、シチュエーション別のセットアップガイドです。高レベルAPIから、手動で組み立てる`Optimizer`まで扱います。"
+msgstr ""
+
+#: ../../../tutorials/index.md:9
+msgid "単目的最適化"
+msgstr ""
+
+#: ../../../tutorials/index.md:13
+msgid "評価コストの高い単目的問題を、`minimize()`から手動で組み立てる`Optimizer`まで、段階的に解きます。"
+msgstr ""
+
+#: ../../../tutorials/index.md:16
+msgid "多目的最適化"
+msgstr ""
+
+#: ../../../tutorials/index.md:20
+msgid "目的間にトレードオフのある問題を解き、パレートフロントを抽出します。"
+msgstr ""
+
+#: ../../../tutorials/index.md:23
+msgid "制約付き最適化"
+msgstr ""
+
+#: ../../../tutorials/index.md:27
+msgid "不等式制約を定義し、実行不可能解の扱い方を制御します。"
+msgstr ""
+
+#: ../../../tutorials/index.md:30
+msgid "混合変数最適化"
+msgstr ""
+
+#: ../../../tutorials/index.md:34
+msgid "連続変数に加えて整数変数、カテゴリカル変数を含む問題を解きます。"
+msgstr ""
+
+#: ../../../tutorials/index.md:37
+msgid "動的な切り替え"
+msgstr ""
+
+#: ../../../tutorials/index.md:41
+msgid "サロゲートの予測精度に応じて、評価戦略やサロゲートマネージャを実行中に切り替えます。"
+msgstr ""
+
+#: ../../../tutorials/index.md:44
+msgid "再現性とチェックポイント"
+msgstr ""
+
+#: ../../../tutorials/index.md:48
+msgid "長時間実行する最適化を再現可能・再開可能にします。"
+msgstr ""
+
+#: ../../../tutorials/index.md:51
+msgid "進捗のログ記録"
+msgstr ""
+
+#: ../../../tutorials/index.md:55
+msgid "標準の`logging`モジュールで、最適化の進捗を記録します。"
+msgstr ""
+
+#: ../../../tutorials/index.md:58
+msgid "外部ライブラリとの連携"
+msgstr ""
+
+#: ../../../tutorials/index.md:62
+msgid "scikit-learnなど外部ライブラリのモデルを、サロゲートとして組み込みます。"
+msgstr ""
+
+#~ msgid "Tutorials"
+#~ msgstr ""
+

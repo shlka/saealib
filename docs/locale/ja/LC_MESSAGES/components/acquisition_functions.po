@@ -1,0 +1,299 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../components/acquisition_functions.md:1
+msgid "AcquisitionFunction"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:3
+msgid ""
+"[SurrogateManager](surrogate_manager.md)は、[Surrogate](surrogate.md)の予測結果をスカラースコアへ変換する処理を、`AcquisitionFunction`という差し替え可能なコンポーネントに委ねている。"
+" "
+"`AcquisitionFunction`は`Surrogate`の予測結果だけを受け取り、モデルの内部（どんなアルゴリズムで予測したか）を一切知らない。"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:6
+msgid "AcquisitionFunctionの役割"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:8
+msgid "`AcquisitionFunction`が実装を要求するメソッドは2つある。"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:10
+msgid ""
+"**`compute_reference(archive, rng=None) -> "
+"Any`**：スコアリングに使う参照値（現在の最良値など）をアーカイブから計算する。 参照値を使わない獲得関数は`None`を返してよい。"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:13
+msgid ""
+"**`score(prediction, reference, rng=None) -> "
+"np.ndarray`**：`SurrogatePrediction`と参照値からスコアを計算する。 "
+"`saealib`全体の規約どおり、スコアは高いほど良い。"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:16
+msgid ""
+"クラス属性`requires_uncertainty: "
+"bool`は、この獲得関数が`SurrogatePrediction.std`（不確実性）を必要とするかを示す。 "
+"`direction_sensitive: "
+"bool`（既定`True`）は、`Optimizer`が実行開始時に`problem.direction`をこの獲得関数へ自動注入する対象かどうかを示す。"
+" 実行可能性確率のように目的の方向という概念を持たない獲得関数は、`direction_sensitive = "
+"False`にしてこの自動注入を無効化する。"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:20
+msgid "組み込みAcquisitionFunction"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "クラス"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "特徴"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "`requires_uncertainty`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "`MeanPrediction`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "予測平均のみを使う、最も単純な獲得関数"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "`False`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "`ExpectedImprovement`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+#, python-brace-format
+msgid "期待改善量（EI）{cite}`jones1998ego`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "`True`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "`LowerConfidenceBound`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+#, python-brace-format
+msgid "信頼下限（LCB）{cite}`srinivas2012gpucb`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "`MaxUncertainty`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "予測の不確実性が大きいほど良い（探索寄り）"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "`EHVIAcquisition`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+#, python-brace-format
+msgid "期待ハイパーボリューム改善量{cite}`emmerich2006ehvi,hupkens2015ehvi,daulton2020ehvi`。多目的向け"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "`SMSEGOAcquisition`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+#, python-brace-format
+msgid "SMS-EMOA風のハイパーボリューム指標{cite}`ponweiser2008smsego`。多目的向け"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "`ParEGOAcquisition`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+#, python-brace-format
+msgid "ランダムスカラー化によるParEGO{cite}`knowles2006parego,chugh2020scalarizing`。多目的向け"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "`ProbabilityOfFeasibility`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+#, python-brace-format
+msgid "単一制約の実行可能性確率{cite}`schonlau1997pof,gelbart2014pof`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+msgid "`ProductOfFeasibility`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md
+#, python-brace-format
+msgid "複数制約の実行可能性確率の積{cite}`gelbart2014pof`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:34
+msgid ""
+"`MeanPrediction`以外の8クラス全てが`requires_uncertainty=True`である。 "
+"不確実性ベースの獲得関数を使うには、組み合わせる`Surrogate`が`std`を返す（`provides_uncertainty=True`）必要がある。"
+" 組み込みSurrogateでは`SklearnGPRSurrogate`だけがこれを満たす。 "
+"詳細は[Surrogate](surrogate.md)の不確実性対応表を参照する。"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:39
+msgid ""
+"`MaxUncertainty`/`ProbabilityOfFeasibility`/`ProductOfFeasibility`は`direction_sensitive"
+" = False`である。 不確実性の大きさや実行可能性確率は、目的の最大化と最小化という方向の概念を持たないためである。"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:42
+msgid ""
+"`ProbabilityOfFeasibility`/`ProductOfFeasibility`は、制約値`g`を予測する分類サロゲートや回帰サロゲートと組み合わせて使う。"
+" "
+"[TrainingSet](training_set.md)の`ConstraintObjectiveSet`で学習データを抽出し、目的側の獲得関数（EIなど）と`CompositeSurrogateManager`の`product_combine`で組み合わせるのが典型的な使い方である。"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:57
+msgid "weights/direction引数の意味"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:59
+msgid ""
+"`MeanPrediction`など一部の獲得関数は、`weights`引数で多目的予測をスカラー化できる。 "
+"`weights=np.array([-1.0])`のように、最小化したい目的には負の重みを使う。"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:62
+msgid ""
+"`direction`引数を指定すると、大きさを持たない符号だけのスカラー化になり、`weights`よりも優先される。 "
+"`direction`を明示しない場合、実行開始時に`problem.direction`が自動的に注入される（`direction_sensitive`が`True`の獲得関数のみ）。"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:65
+msgid "独自AcquisitionFunctionの実装方法"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:67
+msgid ""
+"独自のスコアリング方式が必要な場合は、`AcquisitionFunction`を継承して`compute_reference()`/`score()`を実装する。"
+" 次の例は、予測平均が閾値を下回る候補ほど高いスコアを与える単純な獲得関数である。"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:88
+msgid ""
+"`GlobalSurrogateManager(surrogate, acquisition, "
+"...)`のように、`SurrogateManager`のコンストラクタへ渡して組み合わせる。"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:91
+msgid ""
+"`Optimizer.validate()`は、獲得関数の`requires_uncertainty`とサロゲートの`provides_uncertainty`の不整合を検出して警告する。"
+" `requires_uncertainty=True`の獲得関数を`std`を返さないサロゲートと組み合わせた場合、この警告で気付ける。"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:95
+msgid "関連コンポーネント"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:97
+msgid "[Surrogate](surrogate.md) — `SurrogatePrediction`の提供元。不確実性対応表もこちらを参照する"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:98
+msgid ""
+"[SurrogateManager](surrogate_manager.md) — "
+"`AcquisitionFunction`を`Surrogate`と組み合わせる"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:99
+msgid ""
+"[TrainingSet](training_set.md) — "
+"`ProbabilityOfFeasibility`/`ProductOfFeasibility`と組み合わせる制約用データ抽出"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:101
+msgid "参照"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:103
+#, python-brace-format
+msgid "{py:class}`saealib.AcquisitionFunction`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:104
+#, python-brace-format
+msgid "{py:class}`saealib.MeanPrediction`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:105
+#, python-brace-format
+msgid "{py:class}`saealib.ExpectedImprovement`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:106
+#, python-brace-format
+msgid "{py:class}`saealib.LowerConfidenceBound`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:107
+#, python-brace-format
+msgid "{py:class}`saealib.MaxUncertainty`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:108
+#, python-brace-format
+msgid "{py:class}`saealib.EHVIAcquisition`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:109
+#, python-brace-format
+msgid "{py:class}`saealib.SMSEGOAcquisition`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:110
+#, python-brace-format
+msgid "{py:class}`saealib.ParEGOAcquisition`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:111
+#, python-brace-format
+msgid "{py:class}`saealib.ProbabilityOfFeasibility`"
+msgstr ""
+
+#: ../../../components/acquisition_functions.md:112
+#, python-brace-format
+msgid "{py:class}`saealib.ProductOfFeasibility`"
+msgstr ""
+

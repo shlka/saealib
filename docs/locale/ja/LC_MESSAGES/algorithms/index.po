@@ -1,0 +1,100 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../algorithms/index.md:1
+msgid "アルゴリズム"
+msgstr ""
+
+#: ../../../algorithms/index.md:3
+msgid ""
+"文献上の名前がついたアルゴリズムを、saealibのコンポーネントの組み合わせとしてどう再現するかをまとめたページです。 "
+"各ページは、そのアルゴリズムの理論的な概要(saealibに依存しない一般的な説明)と、saealibでの構成方法(コンポーネントの組み合わせとPythonコード)の2部構成です。"
+" 出典の完全な書誌情報は[文献リファレンス](../references.md)にまとめてあり、このセクションの各ページはそこへリンクします。"
+msgstr ""
+
+#: ../../../algorithms/index.md:7
+msgid "構成が理論上の定義と厳密に一致しない場合(近似)は、各ページにその旨を明記します。"
+msgstr ""
+
+#: ../../../algorithms/index.md:13
+msgid "EGO"
+msgstr ""
+
+#: ../../../algorithms/index.md:17
+msgid "Gaussian Process回帰と期待改善量(Expected Improvement)による逐次モデルベース最適化。"
+msgstr ""
+
+#: ../../../algorithms/index.md:20
+msgid "GP-UCB"
+msgstr ""
+
+#: ../../../algorithms/index.md:24
+msgid "Gaussian Process回帰と上側信頼限界(Upper Confidence Bound)による逐次モデルベース最適化。"
+msgstr ""
+
+#: ../../../algorithms/index.md:27
+msgid "MaxUnc"
+msgstr ""
+
+#: ../../../algorithms/index.md:31
+msgid "Gaussian Process回帰の予測不確実性のみを基準にする、探索専用の逐次モデルベース最適化。"
+msgstr ""
+
+#: ../../../algorithms/index.md:34
+msgid "CORS-RBF"
+msgstr ""
+
+#: ../../../algorithms/index.md:38
+msgid "RBF補間による代理モデルと、既存評価点からの距離制約による逐次モデルベース最適化。"
+msgstr ""
+
+#: ../../../algorithms/index.md:41
+msgid "NSGA-II"
+msgstr ""
+
+#: ../../../algorithms/index.md:45
+msgid "非優越ソートと混雑度距離による多目的遺伝アルゴリズム。多目的最適化の比較演算子の基礎。"
+msgstr ""
+
+#: ../../../algorithms/index.md:48
+msgid "SPEA2"
+msgstr ""
+
+#: ../../../algorithms/index.md:52
+msgid "支配関係に基づく強度と密度を組み合わせた適応度、固定サイズアーカイブによる多目的遺伝アルゴリズム。"
+msgstr ""
+
+#: ../../../algorithms/index.md:55
+msgid "NSGA-III"
+msgstr ""
+
+#: ../../../algorithms/index.md:59
+msgid "参照点ベースのニッチ保存による多目的遺伝アルゴリズム。四つ以上の目的を持つmany-objective最適化向け。"
+msgstr ""
+
+#: ../../../algorithms/index.md:62
+msgid "SMS-EMOA"
+msgstr ""
+
+#: ../../../algorithms/index.md:66
+msgid "被支配超体積を選択基準に直接組み込んだ、定常状態の多目的進化アルゴリズム。"
+msgstr ""
+

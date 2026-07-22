@@ -1,0 +1,316 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../components/surrogate_manager.md:1
+msgid "SurrogateManager"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:3
+msgid ""
+"[Surrogate](surrogate.md)がfit/predictだけを担うのに対し、`SurrogateManager`はfit、predict、スコアリングのパイプライン全体を協調させる。"
+" "
+"`score_candidates()`はスカラースコアだけでなく元の予測値も返すため、呼び出し側（`IndividualBasedStrategy`など）は予測目的関数値を子個体へ割り当てられる。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:6
+msgid "`Optimizer.set_surrogate_manager()`は、`Optimizer.set_surrogate()`（[Surrogate](surrogate.md)を`LocalSurrogateManager`でラップする簡易版）とは別のトップレベル差し替え点である。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:8
+msgid "SurrogateManagerの役割"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:10
+msgid "`SurrogateManager`の抽象メソッドは`score_candidates()`の1つだけで、残りはフックとして既定実装を持つ。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:12
+msgid ""
+"**`score_candidates(candidates_x, archive, ctx=None, *, refit=True) -> "
+"tuple[np.ndarray, list[SurrogatePrediction]]`**（抽象）：候補群をスコアリングする。 "
+"`refit=True`（既定）ではスコアリング前にサロゲートを学習し直す。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:15
+msgid ""
+"**`fit(archive, ctx=None) -> None`**：既定はno-op。 `score_candidates(..., "
+"refit=False)`を連続で呼ぶ前に1回だけ呼ぶプレフィット用のフックで、アーカイブが変化しない場面（`GenerationBasedStrategy`のサロゲートのみ内部ループなど）で使う。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:18
+msgid ""
+"**`last_accuracy: SurrogateAccuracy | None`**（クラス属性）：直近の`fit`が計算した精度指標。 "
+"詳細は[サロゲート精度評価と動的切り替え](surrogate_switching.md)で扱う。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:21
+msgid ""
+"**`iter_acquisitions() -> "
+"Iterator[AcquisitionFunction]`**：`Optimizer`が`problem.direction`を各[AcquisitionFunction](acquisition_functions.md)へ自動注入するために使う内部フック。"
+" 既定は`self.acquisition`があればそれを1つ返す。 "
+"`PairwiseSurrogateManager`のように獲得関数を持たないマネージャーは何も返さず、`CompositeSurrogateManager`はサブマネージャーへ委譲する。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:25
+msgid ""
+"**`post_score(scores, predictions, ctx=None)`** / "
+"**`with_post_score(fn)`**：スコアリング後処理のライフサイクルフック。 "
+"[Surrogate](surrogate.md)の`with_post_fit`と同型で、`with_post_score`は元のインスタンスを変更せずコピーにフックを追加する。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:28
+msgid ""
+"**`on_generation_end(gen, archive, ctx=None)`** / "
+"**`with_on_generation_end(fn)`**：世代末フック。 同じくコピー＋チェーン方式で拡張できる。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:31
+msgid "組み込みSurrogateManager"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "クラス"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "方式"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "`GlobalSurrogateManager`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "アーカイブ全体で1回グローバルにフィットし、全候補を一括predict/score"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "`LocalSurrogateManager`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+#, python-brace-format
+msgid "候補ごとにk近傍でローカルフィット{cite}`liu2014gpeme`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "`CompositeSurrogateManager`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "複数マネージャーのスコアを合成"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "`PairwiseSurrogateManager`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "ペア比較サロゲートによるスコアリング"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:40
+msgid ""
+"`GlobalSurrogateManager(surrogate, acquisition, training_set=None, "
+"accuracy_evaluator=None)`は、`training_set`省略時に`ArchiveObjectiveSet()`が使われる。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:42
+msgid ""
+"`LocalSurrogateManager(surrogate, acquisition, training_set=None, "
+"accuracy_evaluator=None)`は、`training_set`省略時に`KNNObjectiveSet(n_neighbors=50)`が使われる。"
+" "
+"`n_neighbors`は`LocalSurrogateManager`自体のコンストラクタ引数ではなく、既定の`training_set`が持つパラメータである。"
+" 候補間で同一の`surrogate`インスタンスを使い回して再フィットする実装のため、スレッドセーフではない。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:46
+msgid ""
+"`CompositeSurrogateManager(managers, "
+"combine_fn)`は、各`managers`の`score_candidates`を独立に呼び、結果のスコア配列を`combine_fn`で合成する。"
+" "
+"`combine_fn`に渡す関数として、`product_combine`（要素積。例：EI×PoF）と`rank_weighted_combine(weights=None)`（ランク正規化した重み付き平均を返す関数を生成する）が用意されている。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:49
+msgid ""
+"`PairwiseSurrogateManager(surrogate, training_set=None, "
+"n_ref=10)`は、`training_set`省略時に`PairwiseComparisonSet()`が使われる。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:51
+msgid "各マネージャーの`training_set`/`accuracy_evaluator`引数の詳細は、それぞれ[TrainingSet](training_set.md)と[サロゲート精度評価と動的切り替え](surrogate_switching.md)を参照する。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:53
+msgid "ArchiveBasedManager：サロゲートを学習しない系列"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:55
+msgid ""
+"`ArchiveBasedManager`は`SurrogateManager`の抽象サブクラスで、サロゲートモデルを一切学習せず、アーカイブから直接候補をスコアリングする。"
+" 抽象メソッドは`compute_scores(candidates_x, archive, ctx=None) -> "
+"np.ndarray`だけで、`score_candidates()`は`compute_scores()`の結果を`tell_f=NaN`の`SurrogatePrediction`でラップする。"
+" スコアが目的関数値ではないため、そのまま`tell_f`として使うとpbestなどが汚染されてしまう。それを防ぐための設計である。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "パラメータ"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "スコアの意味"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "`NoveltyManager`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "`k=1`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "アーカイブへのk近傍平均距離が大きいほど良い"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "`DensityManager`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "`eps=1.0`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "ε近傍密度の逆数（疎な領域を優先）"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "`NichingManager`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "なし"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md
+msgid "候補間の最小距離＋アーカイブとの最小距離"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:65
+msgid "独自SurrogateManagerの実装方法"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:67
+msgid ""
+"独自のスコアリング方式が必要な場合は、`SurrogateManager`を継承して`score_candidates()`だけを実装すればよい。"
+" "
+"サロゲートを学習せずアーカイブから直接スコアするパターンであれば、`ArchiveBasedManager`を継承して`compute_scores()`だけを実装するほうが軽量である。"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:82
+msgid "関連コンポーネント"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:84
+msgid "[Surrogate](surrogate.md) — `SurrogateManager`が協調させるfit/predictの実体"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:85
+msgid "[TrainingSet](training_set.md) — 各`SurrogateManager`が学習データの抽出に使う"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:86
+msgid ""
+"[AcquisitionFunction](acquisition_functions.md) — "
+"`GlobalSurrogateManager`/`LocalSurrogateManager`の`acquisition`引数"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:87
+msgid ""
+"[サロゲート精度評価と動的切り替え](surrogate_switching.md) — "
+"`accuracy_evaluator`/`last_accuracy`の詳細"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:88
+msgid "[strategies](strategies.md) — `score_candidates()`を呼ぶ側"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:90
+msgid "参照"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:92
+#, python-brace-format
+msgid "{py:class}`saealib.SurrogateManager`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:93
+#, python-brace-format
+msgid "{py:class}`saealib.GlobalSurrogateManager`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:94
+#, python-brace-format
+msgid "{py:class}`saealib.LocalSurrogateManager`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:95
+#, python-brace-format
+msgid "{py:class}`saealib.CompositeSurrogateManager`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:96
+#, python-brace-format
+msgid "{py:class}`saealib.PairwiseSurrogateManager`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:97
+#, python-brace-format
+msgid "{py:func}`saealib.product_combine`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:98
+#, python-brace-format
+msgid "{py:func}`saealib.rank_weighted_combine`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:99
+#, python-brace-format
+msgid "{py:class}`saealib.ArchiveBasedManager`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:100
+#, python-brace-format
+msgid "{py:class}`saealib.NoveltyManager`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:101
+#, python-brace-format
+msgid "{py:class}`saealib.DensityManager`"
+msgstr ""
+
+#: ../../../components/surrogate_manager.md:102
+#, python-brace-format
+msgid "{py:class}`saealib.NichingManager`"
+msgstr ""
+

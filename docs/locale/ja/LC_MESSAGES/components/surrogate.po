@@ -1,0 +1,471 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../components/surrogate.md:1
+msgid "Surrogate"
+msgstr ""
+
+#: ../../../components/surrogate.md:3
+msgid ""
+"`saealib`は、目的関数を近似する予測モデルの責務を`Surrogate`という差し替え可能なコンポーネントに限定している。 "
+"`Surrogate`はfit/predictだけを知り、予測値をどうスコアに変換するか（[AcquisitionFunction](acquisition_functions.md)）や、学習データをどこから集めるか（[TrainingSet](training_set.md)、[SurrogateManager](surrogate_manager.md)経由）は一切知らない。"
+msgstr ""
+
+#: ../../../components/surrogate.md:6
+msgid "Surrogateの役割"
+msgstr ""
+
+#: ../../../components/surrogate.md:8
+msgid "`Surrogate`が実装を要求するメソッドは2つある。"
+msgstr ""
+
+#: ../../../components/surrogate.md:10
+msgid ""
+"**`fit(train_x, train_y) -> None`**：`shape (n_samples, "
+"n_features)`の入力と`shape (n_samples, "
+"n_obj)`（単目的なら`(n_samples,)`も可）の出力でモデルを学習する。"
+msgstr ""
+
+#: ../../../components/surrogate.md:12
+msgid ""
+"**`predict(test_x) -> SurrogatePrediction`**：`shape (n_samples, "
+"n_features)`の入力に対する予測を返す。"
+msgstr ""
+
+#: ../../../components/surrogate.md:14
+msgid ""
+"クラス属性`provides_uncertainty: bool = False`は、予測が不確実性（標準偏差）を伴うかどうかを示す。 "
+"既定は`False`で、ガウス過程の実装だけが`True`にオーバーライドする。"
+msgstr ""
+
+#: ../../../components/surrogate.md:17
+msgid "`Surrogate`と`predict()`の間には2つのマーカー基底クラスがある。"
+msgstr ""
+
+#: ../../../components/surrogate.md:19
+msgid "**`RegressionSurrogate`**：`train_y`が実数値の目的関数出力である回帰サロゲート向けのマーカー。"
+msgstr ""
+
+#: ../../../components/surrogate.md:21
+#, python-brace-format
+msgid ""
+"**`ComparisonSurrogate`**：`train_y`が`{0, 1}`の二値比較ラベルである比較サロゲート向け。 "
+"`predict_proba(test_x) -> SurrogatePrediction`（値は`[0, "
+"1]`の勝率）が主インターフェースで、`predict()`は既定で`predict_proba()`に委譲する。"
+msgstr ""
+
+#: ../../../components/surrogate.md:24
+msgid "SurrogatePrediction"
+msgstr ""
+
+#: ../../../components/surrogate.md:26
+msgid "`predict()`の戻り値は`SurrogatePrediction`という統一データクラスである。"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "フィールド"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "内容"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "`value`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "予測値。`shape (n_samples, n_obj)`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "`std`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "不確実性（標準偏差）。提供しないサロゲートでは`None`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "`label`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "分類モデルのみが持つクラスラベル"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "`tell_f`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "`algorithm.tell()`を呼ぶ前に子個体の`f`へ代入する値（プロパティ）"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "`metadata`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "SHAP値など実装固有の付加情報を格納する`dict`"
+msgstr ""
+
+#: ../../../components/surrogate.md:36
+msgid ""
+"`tell_f`は、コンストラクタ引数`_tell_f`が未設定なら`value`にフォールバックするプロパティである。 "
+"`has_uncertainty`/`has_label`/`has_tell_f`という3つの真偽値プロパティで、それぞれの値が設定されているかを確認できる。"
+msgstr ""
+
+#: ../../../components/surrogate.md:39
+msgid ""
+"`_tell_f`にNaN配列を明示的に渡すと、`value`をそのまま`tell_f`として使わせないようにできる。 "
+"サロゲートの予測値が目的関数値ではない量（novelty scoreなど）を表す場合、この仕組みでpbestなどの汚染を防ぐ。 "
+"[SurrogateManager](surrogate_manager.md)の`ArchiveBasedManager`系がこの手法を使う。"
+msgstr ""
+
+#: ../../../components/surrogate.md:43
+msgid "組み込みSurrogate"
+msgstr ""
+
+#: ../../../components/surrogate.md:45
+#, python-brace-format
+msgid ""
+"**`RBFSurrogate(kernel, "
+"dim)`**：RBF補間によるサロゲート{cite}`hardy1971rbf,gutmann2001rbf,regis2005cors`。 "
+"`gaussian_kernel(x1, x2, "
+"sigma=2.0)`が既定で使われるカーネルだが、`kernel`引数はカーネル関数を公開APIとして受け取る設計であり、ユーザーが任意のカーネルを注入できる。"
+" `predict()`は`std=None`を明示的に返す（RBF補間は不確実性を提供しない）。"
+msgstr ""
+
+#: ../../../components/surrogate.md:49
+msgid ""
+"**`PerObjectiveSurrogate(surrogates)`**：`RegressionSurrogate`のサブクラスで、目的ごとに異なるサロゲートを割り当てる合成クラス。"
+" `fit`時に`train_y`の列数と`len(surrogates)`が一致しないと`ValueError`になる。 "
+"`provides_uncertainty`は、構成する全サロゲートが`True`の場合のみ`True`を返す複合判定になっている。"
+msgstr ""
+
+#: ../../../components/surrogate.md:53
+msgid "外部ライブラリアダプタ"
+msgstr ""
+
+#: ../../../components/surrogate.md:55
+msgid "scikit-learn互換API経由の回帰サロゲートには`Sklearn`という接頭辞が付く。"
+msgstr ""
+
+#: ../../../components/surrogate.md ../../../components/surrogate.md:82
+msgid "クラス"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "モデル"
+msgstr ""
+
+#: ../../../components/surrogate.md ../../../components/surrogate.md:82
+msgid "`SklearnGPRSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+#, python-brace-format
+msgid ""
+"Gaussian "
+"Process{cite}`sacks1989dace,rasmussen2006gpml`。`provides_uncertainty=True`の唯一の実装"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "`SklearnRFRSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "Random Forest回帰"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "`SklearnSVMSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "SVM"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "`SklearnNNSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "MLP"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "`SklearnXGBSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "XGBoost（`xgboost` extra）"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "`SklearnLGBMSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "LightGBM（`lightgbm` extra）"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "`TorchSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "PyTorchベースのモデル（`torch` extra）"
+msgstr ""
+
+#: ../../../components/surrogate.md:67
+msgid "`SklearnGPRSurrogate`は`return_std=True`でGPカーネルから標準偏差を計算し、`provides_uncertainty=True`を返す。"
+msgstr ""
+
+#: ../../../components/surrogate.md:69
+msgid "実行可能性予測向けの分類サロゲートには次のクラスがある。"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "`SklearnClassificationSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "scikit-learn互換の分類モデル全般"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "`SklearnRFCClassificationSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "Random Forest分類"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "`SklearnSVCClassificationSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md
+msgid "SVM分類"
+msgstr ""
+
+#: ../../../components/surrogate.md:77
+msgid ""
+"これらの分類サロゲートの学習データ抽出方法は[TrainingSet](training_set.md)の`FeasibilityClassificationSet`を参照する。"
+" "
+"ペア比較には、これらの分類サロゲートではなく`ComparisonSurrogate`系の専用実装を使い、[SurrogateManager](surrogate_manager.md)の`PairwiseSurrogateManager`および`PairwiseComparisonSet`と組み合わせる。"
+msgstr ""
+
+#: ../../../components/surrogate.md:80
+msgid "各extraのインストール方法は[インストール](../getting_started/installation.md)を参照する。"
+msgstr ""
+
+#: ../../../components/surrogate.md:83
+msgid ""
+"scikit-"
+"learn/XGBoost/LightGBM/PyTorch以外のBoTorch/SMTアダプタ、およびpymooのアルゴリズム/演算子アダプタは、現状`saealib`に実装されていない。"
+" `pyproject.toml`にも対応するextraは存在しない。"
+msgstr ""
+
+#: ../../../components/surrogate.md:87
+msgid "拡張フック"
+msgstr ""
+
+#: ../../../components/surrogate.md:89
+msgid ""
+"フィット後の後処理だけを足したい場合、サブクラスを新設せずに`with_post_fit(fn)`で既存の`Surrogate`インスタンスへ処理を追加できる。"
+" `with_post_fit`は元のインスタンスを変更せず、`fn`を追加したコピーを返す。"
+msgstr ""
+
+#: ../../../components/surrogate.md:104
+msgid "`fn`のシグネチャは`fn(train_x, train_y, ctx) -> None`である。"
+msgstr ""
+
+#: ../../../components/surrogate.md:106
+msgid "独自Surrogateの実装方法"
+msgstr ""
+
+#: ../../../components/surrogate.md:108
+msgid ""
+"独自の予測モデルが必要な場合は、`Surrogate`を継承して`fit()`/`predict()`を実装する。 "
+"回帰なら`RegressionSurrogate`、比較なら`ComparisonSurrogate`（`predict_proba()`を実装）を継承先に選ぶ。"
+msgstr ""
+
+#: ../../../components/surrogate.md:111
+msgid "次の例は、最近傍点の目的関数値をそのまま予測値として返す単純な回帰サロゲートである。"
+msgstr ""
+
+#: ../../../components/surrogate.md:133
+msgid "不確実性対応表"
+msgstr ""
+
+#: ../../../components/surrogate.md:135
+msgid "不確実性ベースの[AcquisitionFunction](acquisition_functions.md)を使うには、`Surrogate`が`std`を返す必要がある。"
+msgstr ""
+
+#: ../../../components/surrogate.md:82
+msgid "`provides_uncertainty`"
+msgstr ""
+
+#: ../../../components/surrogate.md:82
+msgid "`True`"
+msgstr ""
+
+#: ../../../components/surrogate.md:82
+msgid ""
+"`RBFSurrogate` / `SklearnRFRSurrogate` / `SklearnSVMSurrogate` / "
+"`SklearnNNSurrogate` / `SklearnXGBSurrogate` / `SklearnLGBMSurrogate` / "
+"`TorchSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:82
+msgid "`False`"
+msgstr ""
+
+#: ../../../components/surrogate.md:82
+msgid "`PerObjectiveSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:82
+msgid "構成する全サロゲートが`True`の場合のみ`True`"
+msgstr ""
+
+#: ../../../components/surrogate.md:143
+msgid "`Optimizer.validate()`は、`AcquisitionFunction`の`requires_uncertainty`と`Surrogate`の`provides_uncertainty`の不整合を検出して警告する。"
+msgstr ""
+
+#: ../../../components/surrogate.md:145
+msgid "関連コンポーネント"
+msgstr ""
+
+#: ../../../components/surrogate.md:147
+msgid ""
+"[SurrogateManager](surrogate_manager.md) — "
+"`Surrogate`のfit/predictを協調させ、スコアリングと組み合わせる"
+msgstr ""
+
+#: ../../../components/surrogate.md:148
+msgid "[TrainingSet](training_set.md) — `Surrogate`に渡す学習データの抽出方法"
+msgstr ""
+
+#: ../../../components/surrogate.md:149
+msgid "[AcquisitionFunction](acquisition_functions.md) — `predict()`の結果をスコアへ変換する"
+msgstr ""
+
+#: ../../../components/surrogate.md:150
+msgid "[サロゲート精度評価と動的切り替え](surrogate_switching.md) — サロゲートの汎化性能の評価"
+msgstr ""
+
+#: ../../../components/surrogate.md:151
+msgid "[インストール](../getting_started/installation.md) — 各extraのインストール方法"
+msgstr ""
+
+#: ../../../components/surrogate.md:153
+msgid "参照"
+msgstr ""
+
+#: ../../../components/surrogate.md:155
+#, python-brace-format
+msgid "{py:class}`saealib.Surrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:156
+#, python-brace-format
+msgid "{py:class}`saealib.RegressionSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:157
+#, python-brace-format
+msgid "{py:class}`saealib.ComparisonSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:158
+#, python-brace-format
+msgid "{py:class}`saealib.SurrogatePrediction`"
+msgstr ""
+
+#: ../../../components/surrogate.md:159
+#, python-brace-format
+msgid "{py:class}`saealib.RBFSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:160
+#, python-brace-format
+msgid "{py:func}`saealib.gaussian_kernel`"
+msgstr ""
+
+#: ../../../components/surrogate.md:161
+#, python-brace-format
+msgid "{py:class}`saealib.PerObjectiveSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:162
+#, python-brace-format
+msgid "{py:class}`saealib.SklearnGPRSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:163
+#, python-brace-format
+msgid "{py:class}`saealib.SklearnRFRSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:164
+#, python-brace-format
+msgid "{py:class}`saealib.SklearnSVMSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:165
+#, python-brace-format
+msgid "{py:class}`saealib.SklearnNNSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:166
+#, python-brace-format
+msgid "{py:class}`saealib.SklearnXGBSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:167
+#, python-brace-format
+msgid "{py:class}`saealib.SklearnLGBMSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:168
+#, python-brace-format
+msgid "{py:class}`saealib.TorchSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:169
+#, python-brace-format
+msgid "{py:class}`saealib.SklearnClassificationSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:170
+#, python-brace-format
+msgid "{py:class}`saealib.SklearnRFCClassificationSurrogate`"
+msgstr ""
+
+#: ../../../components/surrogate.md:171
+#, python-brace-format
+msgid "{py:class}`saealib.SklearnSVCClassificationSurrogate`"
+msgstr ""
+

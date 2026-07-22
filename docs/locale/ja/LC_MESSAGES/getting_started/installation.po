@@ -1,0 +1,156 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../getting_started/installation.md:1
+msgid "インストール"
+msgstr ""
+
+#: ../../../getting_started/installation.md:3
+msgid "動作要件"
+msgstr ""
+
+#: ../../../getting_started/installation.md:4
+msgid "Python >= 3.10"
+msgstr ""
+
+#: ../../../getting_started/installation.md:6
+msgid "依存パッケージの正確なバージョンは[pyproject.toml](https://github.com/shlka/saealib/blob/main/pyproject.toml)を参照してください。"
+msgstr ""
+
+#: ../../../getting_started/installation.md:8
+msgid "インストール方法"
+msgstr ""
+
+#: ../../../getting_started/installation.md:10
+msgid "pipによるインストールは次のように行います。 このインストールでは最小の依存関係のみインストールします。"
+msgstr ""
+
+#: ../../../getting_started/installation.md:15
+msgid "すべての依存関係をフルインストールする場合は次のように行います。"
+msgstr ""
+
+#: ../../../getting_started/installation.md:19
+msgid "オプションの指定については[こちら](#install-options)を参照してください。"
+msgstr ""
+
+#: ../../../getting_started/installation.md:21
+msgid "バージョンの指定"
+msgstr ""
+
+#: ../../../getting_started/installation.md:22
+msgid "バージョンの指定は次のように行います。"
+msgstr ""
+
+#: ../../../getting_started/installation.md:28
+msgid "最新のプレリリースバージョンは次のように指定します。"
+msgstr ""
+
+#: ../../../getting_started/installation.md:33
+msgid "プレリリースバージョンのAPIは予告なく変更・削除される可能性があります。"
+msgstr ""
+
+#: ../../../getting_started/installation.md:37
+msgid "オプションの指定"
+msgstr ""
+
+#: ../../../getting_started/installation.md:38
+msgid "一部のパッケージは依存関係を追加することで有効になります。 依存関係のインストールは次のようにオプションを指定することで同時にインストールできます。"
+msgstr ""
+
+#: ../../../getting_started/installation.md:45
+msgid "すべての依存関係をインストールする場合は次のように指定します。"
+msgstr ""
+
+#: ../../../getting_started/installation.md:49
+msgid "すべてのオプションは次の表に示す通りです。"
+msgstr ""
+
+#: ../../../getting_started/installation.md:32
+msgid "Extra"
+msgstr ""
+
+#: ../../../getting_started/installation.md:32
+msgid "Adds"
+msgstr ""
+
+#: ../../../getting_started/installation.md:32
+msgid "`sklearn`"
+msgstr ""
+
+#: ../../../getting_started/installation.md:32
+msgid "scikit-learn-based surrogates"
+msgstr ""
+
+#: ../../../getting_started/installation.md:32
+msgid "`xgboost`"
+msgstr ""
+
+#: ../../../getting_started/installation.md:32
+msgid "XGBoost surrogate"
+msgstr ""
+
+#: ../../../getting_started/installation.md:32
+msgid "`lightgbm`"
+msgstr ""
+
+#: ../../../getting_started/installation.md:32
+msgid "LightGBM surrogate"
+msgstr ""
+
+#: ../../../getting_started/installation.md:32
+msgid "`torch`"
+msgstr ""
+
+#: ../../../getting_started/installation.md:32
+msgid "PyTorch-based components"
+msgstr ""
+
+#: ../../../getting_started/installation.md:32
+msgid "`parallel`"
+msgstr ""
+
+#: ../../../getting_started/installation.md:32
+msgid "joblib-based parallel evaluation"
+msgstr ""
+
+#: ../../../getting_started/installation.md:32
+msgid "`all`"
+msgstr ""
+
+#: ../../../getting_started/installation.md:32
+msgid "everything above"
+msgstr ""
+
+#: ../../../getting_started/installation.md:59
+msgid "インストールの確認"
+msgstr ""
+
+#: ../../../getting_started/installation.md:60
+msgid "インストールが完了したら、次のコマンドでバージョンを確認できます。"
+msgstr ""
+
+#: ../../../getting_started/installation.md:66
+msgid "ソースからの開発用インストールについては[CONTRIBUTING.md](https://github.com/shlka/saealib/blob/main/CONTRIBUTING.md)を参照してください。"
+msgstr ""
+
+#~ msgid "Installation"
+#~ msgstr ""
+

@@ -1,0 +1,130 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../tutorials/logging.md:1
+msgid "進捗のログ記録"
+msgstr ""
+
+#: ../../../tutorials/logging.md:3
+msgid "最適化の進捗を、標準の`logging`モジュールで記録します。"
+msgstr ""
+
+#: ../../../tutorials/logging.md:5
+msgid "デフォルトの挙動"
+msgstr ""
+
+#: ../../../tutorials/logging.md:7
+msgid "`Optimizer`は、世代開始のたびに進捗を記録するハンドラ(`logging_generation`)を、`minimize`/`maximize`の`verbose=True`（デフォルト）のときだけ登録します。"
+msgstr ""
+
+#: ../../../tutorials/logging.md:9
+msgid "ただし、このハンドラは`logging.getLogger(__name__).info(...)`を呼ぶだけなので、Pythonの`logging`モジュール側でINFOレベルの出力を有効にしないかぎり、何も表示されません。"
+msgstr ""
+
+#: ../../../tutorials/logging.md:26
+msgid "進捗を表示するには、`logging.basicConfig`でINFOレベルを有効にします。"
+msgstr ""
+
+#: ../../../tutorials/logging.md:39
+msgid "`logging_generation`は目的数を見て記録内容を切り替え、単目的では最良の目的値を、多目的では第一非優越フロントのサイズと目的ごとの値の範囲を記録します。"
+msgstr ""
+
+#: ../../../tutorials/logging.md:41
+msgid "進捗の記録自体が不要な場合は、`verbose=False`を指定してハンドラの登録を止めます。"
+msgstr ""
+
+#: ../../../tutorials/logging.md:47
+msgid "ファイルへの出力"
+msgstr ""
+
+#: ../../../tutorials/logging.md:49
+msgid "`saealib.callback.handlers`ロガーに`FileHandler`を追加すると、進捗をファイルに書き出せます。"
+msgstr ""
+
+#: ../../../tutorials/logging.md:64
+msgid "多目的でのハイパーボリュームログ"
+msgstr ""
+
+#: ../../../tutorials/logging.md:66
+msgid "多目的問題では、`logging_generation_hv(reference_point)`が返すハンドラを登録すると、世代ごとのハイパーボリュームを記録できます。"
+msgstr ""
+
+#: ../../../tutorials/logging.md:94
+msgid "`reference_point`は最小化の慣例で、各目的の達成可能な最良値より大きい値を指定します。"
+msgstr ""
+
+#: ../../../tutorials/logging.md:96
+msgid "警告レベルのログ"
+msgstr ""
+
+#: ../../../tutorials/logging.md:98
+msgid "一部のコンポーネントは、数値的な問題を`logger.warning(...)`で記録します。"
+msgstr ""
+
+#: ../../../tutorials/logging.md:100
+msgid "例えば`RBFSurrogate`は、カーネル行列が悪条件になったときに警告を出します。"
+msgstr ""
+
+#: ../../../tutorials/logging.md:102
+msgid ""
+"`logging.basicConfig`を呼んでいなくても、WARNING以上のログはPythonの「handler of last "
+"resort」によって標準エラー出力に表示されます。"
+msgstr ""
+
+#: ../../../tutorials/logging.md:104
+msgid "INFOレベルの進捗ログとは異なり、この種の警告は設定なしでも見える点に注意してください。"
+msgstr ""
+
+#: ../../../tutorials/logging.md:106
+msgid "独自のログ処理"
+msgstr ""
+
+#: ../../../tutorials/logging.md:108
+msgid "`logging_generation`/`logging_generation_hv`が記録する内容以外を記録したい場合は、`CallbackManager`に独自のハンドラを登録します。"
+msgstr ""
+
+#: ../../../tutorials/logging.md:110
+msgid "詳しい仕組みは[CallbackManager](../components/callbacks.md)を参照してください。"
+msgstr ""
+
+#: ../../../tutorials/logging.md:112
+msgid "参照"
+msgstr ""
+
+#: ../../../tutorials/logging.md:114
+#, python-brace-format
+msgid ""
+"{py:func}`saealib.logging_generation` / "
+"{py:func}`saealib.logging_generation_hv`"
+msgstr ""
+
+#: ../../../tutorials/logging.md:115
+#, python-brace-format
+msgid ""
+"{py:class}`saealib.CallbackManager` / "
+"{py:class}`saealib.GenerationStartEvent`"
+msgstr ""
+
+#: ../../../tutorials/logging.md:116
+#, python-brace-format
+msgid "{py:func}`saealib.minimize`"
+msgstr ""
+

@@ -1,0 +1,262 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../components/algorithm.md:1
+msgid "Algorithm"
+msgstr ""
+
+#: ../../../components/algorithm.md:3
+msgid ""
+"`saealib`は、候補解の生成と個体群の更新をAsk-"
+"Tellという2つの手続きに分解し、その実装を`Algorithm`という差し替え可能なコンポーネントに委ねている。 "
+"`Optimizer.set_algorithm(algorithm)`で差し替える。"
+msgstr ""
+
+#: ../../../components/algorithm.md:6
+msgid "Algorithmの役割"
+msgstr ""
+
+#: ../../../components/algorithm.md:8
+msgid "`Algorithm`が実装を要求するメソッドは2つある。"
+msgstr ""
+
+#: ../../../components/algorithm.md:10
+msgid ""
+"**`ask(ctx, provider, n_offspring=None) -> Population`**：候補解を生成する。 "
+"`n_offspring`が`None`の場合、通常は現在の個体群サイズと同数の候補を生成する。"
+msgstr ""
+
+#: ../../../components/algorithm.md:13
+msgid ""
+"**`tell(ctx, provider, offspring) -> "
+"None`**：`ask()`が生成した候補群`offspring`を使って`ctx.population`を更新する。"
+msgstr ""
+
+#: ../../../components/algorithm.md:15
+msgid ""
+"このAsk-"
+"Tellという分割により、「どの候補を真に評価するか」という判断を`Algorithm`の外側（[OptimizationStrategy](strategies.md)）に切り出せる。"
+msgstr ""
+
+#: ../../../components/algorithm.md:17
+msgid "組み込みAlgorithm"
+msgstr ""
+
+#: ../../../components/algorithm.md
+msgid "クラス"
+msgstr ""
+
+#: ../../../components/algorithm.md
+msgid "探索方式"
+msgstr ""
+
+#: ../../../components/algorithm.md
+msgid "`GA`"
+msgstr ""
+
+#: ../../../components/algorithm.md
+msgid "交叉と突然変異による遺伝的アルゴリズム"
+msgstr ""
+
+#: ../../../components/algorithm.md
+msgid "`PSO`"
+msgstr ""
+
+#: ../../../components/algorithm.md
+msgid "速度と位置の更新による粒子群最適化"
+msgstr ""
+
+#: ../../../components/algorithm.md:24
+msgid "GA：演算子を組み合わせるコンテナ"
+msgstr ""
+
+#: ../../../components/algorithm.md:26
+msgid "`GA`は、それ自体が探索ロジックを持つのではなく、`crossover`/`mutation`/`parent_selection`/`survivor_selection`という4つの演算子を注入して組み立てるコンテナである。"
+msgstr ""
+
+#: ../../../components/algorithm.md:35
+msgid "各演算子の挙動とパラメータの詳細は、それぞれ独立したページで扱う。"
+msgstr ""
+
+#: ../../../components/algorithm.md:37
+msgid "[Crossover](crossover.md) — 親個体から子個体を生成する"
+msgstr ""
+
+#: ../../../components/algorithm.md:38
+msgid "[Mutation](mutation.md) — 子個体に摂動を加える"
+msgstr ""
+
+#: ../../../components/algorithm.md:39
+msgid "[ParentSelection](parent_selection.md) — 交叉に使う親個体を選ぶ"
+msgstr ""
+
+#: ../../../components/algorithm.md:40
+msgid "[SurvivorSelection](survivor_selection.md) — 次世代に残す個体を選ぶ"
+msgstr ""
+
+#: ../../../components/algorithm.md:42
+msgid ""
+"`GA.tell()`は、現世代の個体群と`ask()`が生成した子個体群を1つのプールへ統合し、`survivor_selection`でそのプールから生存個体を選ぶ、という(μ+λ)方式で個体群を更新する。"
+" プールに何を含めるか（親を含めるかどうか）は`GA`側の責務であり、`SurvivorSelection`のインターフェース自体には現れない。"
+msgstr ""
+
+#: ../../../components/algorithm.md:45
+msgid "GA：混合変数問題への対応"
+msgstr ""
+
+#: ../../../components/algorithm.md:47
+msgid ""
+"設計変数に整数変数とカテゴリ変数が混在する問題では、`GA`は連続変数用の`crossover`/`mutation`とは別に、型ごとの演算子を使い分ける。"
+" "
+"`integer_crossover`/`integer_mutation`/`categorical_crossover`/`categorical_mutation`を省略すると、それぞれ`CrossoverIntegerSBX`/`MutationIntegerUniform`/`CrossoverCategorical`/`MutationCategorical`が自動的に補われる。"
+" "
+"補われる演算子の確率パラメータ（`prob`/`prob_var`）は、連続変数用の`crossover`/`mutation`から引き継がれる。"
+msgstr ""
+
+#: ../../../components/algorithm.md:51
+msgid ""
+"型ごとに補う演算子であっても、`n_children`/`n_parents`は連続変数用の`crossover`と一致していなければならない。 "
+"一致しない場合は`ConfigurationError`になる。 "
+"これは、`GA`が親個体を変数の型ごとの列に分割し、各演算子を該当する列だけに適用してから結果を1つの個体へ組み立て直すという実装上、子の個体数と親の個体数が型ごとにずれてはならないためである。"
+msgstr ""
+
+#: ../../../components/algorithm.md:55
+msgid "変数の型は[Problem](problem.md)の`variables`引数で定義する。"
+msgstr ""
+
+#: ../../../components/algorithm.md:57
+msgid "GA：補助ユーティリティ"
+msgstr ""
+
+#: ../../../components/algorithm.md:59
+msgid ""
+"**`duplicate_elimination`**引数に`DuplicateElimination(atol=1e-16, rtol=0.0,"
+" max_retries=100)`を渡すと、現在の個体群と重複する子個体を再生成で置き換える。 "
+"重複判定の許容誤差は`atol`/`rtol`で、再生成の試行上限は`max_retries`で指定する。 "
+"省略時（既定の`None`）は重複除去を行わない。"
+msgstr ""
+
+#: ../../../components/algorithm.md:63
+msgid ""
+"`saealib.repair_clipping(candidates, bounds)`は、候補群を`(lb, "
+"ub)`の範囲へ`np.clip`するだけの独立したユーティリティ関数である。 "
+"`GA`自体は候補の修復を[ConstraintHandler](constraints.md)の`repair()`（既定はやはり`np.clip`）と`Problem.repair()`（`Variable`ごとの射影）を通じて行っており、`repair_clipping`はGAの内部処理に自動的に組み込まれているわけではない。"
+" "
+"`ConstraintHandler`を経由しない独自の評価パイプラインを書く場合など、同等のクリッピング処理を単体で使いたい場面向けに公開されている。"
+msgstr ""
+
+#: ../../../components/algorithm.md:67
+msgid "PSO"
+msgstr ""
+
+#: ../../../components/algorithm.md:69
+msgid ""
+"`PSO(w=0.7, c1=1.5, c2=1.5, "
+"v_max=None)`は、慣性項`w`、個体最良解への追従`c1`、群最良解への追従`c2`という重みで速度を更新し、その速度で位置を進める。 "
+"`v_max`を指定すると、各次元の速度の大きさをその値でクランプする。"
+msgstr ""
+
+#: ../../../components/algorithm.md:72
+msgid ""
+"`GA`とは異なり演算子を注入する構成ではなく、`ask()`/`tell()`の中で速度と位置の更新とpbest（個体ごとの最良解）の追跡を直接行う。"
+" "
+"群最良解（リーダー）は、全粒子のpbestから`ctx.comparator`を使って選ばれるため、単目的の`Comparator`であればどれを使っても自動的に対応する。"
+" 多目的PSO（MOPSO）には非劣解集合を管理する専用のサブクラスが必要であり、組み込みの`PSO`は単目的問題を対象にしている。"
+msgstr ""
+
+#: ../../../components/algorithm.md:76
+msgid "独自Algorithmの実装方法"
+msgstr ""
+
+#: ../../../components/algorithm.md:78
+msgid ""
+"独自の探索アルゴリズムが必要な場合は、`Algorithm`を継承して`ask()`/`tell()`を実装する。 "
+"`get_required_attrs()`（`Population`に追加で必要な属性。無ければ空リスト）と`population_class`/`archive_class`プロパティも実装する必要がある。"
+msgstr ""
+
+#: ../../../components/algorithm.md:81
+msgid "次の例は、各個体を独立にガウス摂動し、親より良ければ置き換えるだけの単純なアルゴリズムである。"
+msgstr ""
+
+#: ../../../components/algorithm.md:120
+msgid ""
+"`tell()`は`offspring`に真の目的関数値`f`が既に設定されている前提で呼ばれる（`OptimizationStrategy`が`ask()`と`tell()`の間で評価を行う）。"
+" PSOのように個体ごとの付加情報（pbestなど）が必要な場合は、`get_required_attrs()`でその属性を宣言する。"
+msgstr ""
+
+#: ../../../components/algorithm.md:123
+msgid "関連コンポーネント"
+msgstr ""
+
+#: ../../../components/algorithm.md:125
+msgid ""
+"[Crossover](crossover.md) / [Mutation](mutation.md) / "
+"[ParentSelection](parent_selection.md) / "
+"[SurvivorSelection](survivor_selection.md) — `GA`が組み合わせる4つの演算子"
+msgstr ""
+
+#: ../../../components/algorithm.md:126
+msgid "[Problem](problem.md) — `variables`による混合変数の定義"
+msgstr ""
+
+#: ../../../components/algorithm.md:127
+msgid "[ConstraintHandler](constraints.md) — `GA`が候補の修復に使う`repair()`"
+msgstr ""
+
+#: ../../../components/algorithm.md:128
+msgid ""
+"[OptimizationStrategy](strategies.md) — "
+"`ask()`/`tell()`の間で真の評価を行うかどうかを判断する"
+msgstr ""
+
+#: ../../../components/algorithm.md:129
+msgid "[Population](population.md) — `ask()`/`tell()`が読み書きする個体群"
+msgstr ""
+
+#: ../../../components/algorithm.md:131
+msgid "参照"
+msgstr ""
+
+#: ../../../components/algorithm.md:133
+#, python-brace-format
+msgid "{py:class}`saealib.Algorithm`"
+msgstr ""
+
+#: ../../../components/algorithm.md:134
+#, python-brace-format
+msgid "{py:class}`saealib.GA`"
+msgstr ""
+
+#: ../../../components/algorithm.md:135
+#, python-brace-format
+msgid "{py:class}`saealib.PSO`"
+msgstr ""
+
+#: ../../../components/algorithm.md:136
+#, python-brace-format
+msgid "{py:class}`saealib.DuplicateElimination`"
+msgstr ""
+
+#: ../../../components/algorithm.md:137
+#, python-brace-format
+msgid "{py:func}`saealib.repair_clipping`"
+msgstr ""
+

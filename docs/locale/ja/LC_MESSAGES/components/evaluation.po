@@ -1,0 +1,175 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../components/evaluation.md:1
+msgid "Evaluator"
+msgstr ""
+
+#: ../../../components/evaluation.md:3
+msgid ""
+"`OptimizationStrategy`や`Initializer`は、設計変数の候補群を目的関数値、生の制約値、制約違反へ変換する処理を、`Evaluator`という差し替え可能な実行バックエンドに委ねている。"
+" 評価を逐次実行するか並列実行するかは、パイプライン側のコードを変えずに`Evaluator`だけを差し替えれば切り替えられる。"
+msgstr ""
+
+#: ../../../components/evaluation.md:6
+msgid "Evaluatorの役割"
+msgstr ""
+
+#: ../../../components/evaluation.md:8
+msgid ""
+"`Evaluator`が実装を要求するメソッドは`evaluate_batch(x, problem) -> "
+"EvaluationResult`の1つだけである。 `x`には評価対象の設計変数群が`shape (n, "
+"dim)`で渡され、[Problem](problem.md)の目的関数と制約関数を使って`EvaluationResult`を構築して返す。"
+msgstr ""
+
+#: ../../../components/evaluation.md:11
+msgid "`EvaluationResult`は3つの配列を持つデータクラスである。"
+msgstr ""
+
+#: ../../../components/evaluation.md:13
+msgid "**`f`**：目的関数値。`shape (n, n_obj)`"
+msgstr ""
+
+#: ../../../components/evaluation.md:14
+msgid "**`g`**：生の制約値。`shape (n, n_constraints)`。問題が制約を持たない場合は`(n, 0)`"
+msgstr ""
+
+#: ../../../components/evaluation.md:15
+msgid "**`cv`**：候補ごとの集約された制約違反量。`shape (n,)`。問題が制約を持たない場合は全て`0`"
+msgstr ""
+
+#: ../../../components/evaluation.md:17
+msgid "組み込みEvaluator"
+msgstr ""
+
+#: ../../../components/evaluation.md
+msgid "クラス"
+msgstr ""
+
+#: ../../../components/evaluation.md
+msgid "パラメータ"
+msgstr ""
+
+#: ../../../components/evaluation.md
+msgid "特徴"
+msgstr ""
+
+#: ../../../components/evaluation.md
+msgid "`SerialEvaluator`"
+msgstr ""
+
+#: ../../../components/evaluation.md
+msgid "なし"
+msgstr ""
+
+#: ../../../components/evaluation.md
+msgid "候補を1件ずつ逐次評価する。既定値"
+msgstr ""
+
+#: ../../../components/evaluation.md
+msgid "`JoblibEvaluator`"
+msgstr ""
+
+#: ../../../components/evaluation.md
+msgid "`n_jobs=-1, backend=\"loky\", **joblib_kwargs`"
+msgstr ""
+
+#: ../../../components/evaluation.md
+msgid "`joblib.Parallel`経由で候補を並列評価する"
+msgstr ""
+
+#: ../../../components/evaluation.md:24
+msgid ""
+"`JoblibEvaluator`を使うには`parallel` extra（`pip install "
+"saealib[parallel]`）が必要で、未インストールの場合は構築時に`ImportError`になる。 "
+"`backend`は`\"loky\"`（既定、cloudpickleでシリアライズするプロセスプール）のほか、`\"dask\"`/`\"ray\"`のようなサードパーティバックエンドにも1パラメータの変更で切り替えられる（対応するパッケージとクラスタが別途必要）。"
+" Islandモデルのように複数の`JoblibEvaluator`を同時に使う構成では、CPUコアの多重予約が起こりうる。 "
+"各island側の`n_jobs`を`1`に絞り、island間の並列度で全体の同時実行数を制御するか、`joblib.parallel_backend`をコンテキストマネージャとして使って内側のワーカー数を制限する。"
+" 非同期な評価（候補ごとに独立したタイミングで結果を受け取る方式）は、現状`Evaluator`のスコープ外である。"
+msgstr ""
+
+#: ../../../components/evaluation.md:30
+msgid "`Optimizer.set_evaluator(evaluator)`で差し替える。"
+msgstr ""
+
+#: ../../../components/evaluation.md:32
+msgid "独自Evaluatorの実装方法"
+msgstr ""
+
+#: ../../../components/evaluation.md:34
+msgid ""
+"独自の実行バックエンドが必要な場合は、`Evaluator`を継承して`evaluate_batch()`だけを実装すればよい。 "
+"`SerialEvaluator`の実装がそのままテンプレートになる。"
+msgstr ""
+
+#: ../../../components/evaluation.md:59
+msgid ""
+"`problem.evaluate_constraints(xi)`を呼んでから`problem.evaluate(xi, "
+"g_i)`を呼ぶ、という順序を保つ必要がある。 "
+"[ConstraintHandler](constraints.md)の`augment_objective`が制約値を使って目的関数値を補正するため、この順序を逆にすると補正が正しく反映されない。"
+msgstr ""
+
+#: ../../../components/evaluation.md:62
+msgid "関連コンポーネント"
+msgstr ""
+
+#: ../../../components/evaluation.md:64
+msgid "[Problem](problem.md) — `evaluate_batch`が評価する目的関数と制約関数の定義元"
+msgstr ""
+
+#: ../../../components/evaluation.md:65
+msgid ""
+"[ConstraintHandler](constraints.md) — "
+"`problem.evaluate`の内部で制約違反の集約と目的関数の補正を行う"
+msgstr ""
+
+#: ../../../components/evaluation.md:66
+msgid "[Initializer](initialization.md) — 初期集団の評価に`Evaluator`を使う"
+msgstr ""
+
+#: ../../../components/evaluation.md:67
+msgid "[strategies](strategies.md) — 各世代の候補評価に`Evaluator`を使う"
+msgstr ""
+
+#: ../../../components/evaluation.md:69
+msgid "参照"
+msgstr ""
+
+#: ../../../components/evaluation.md:71
+#, python-brace-format
+msgid "{py:class}`saealib.Evaluator`"
+msgstr ""
+
+#: ../../../components/evaluation.md:72
+#, python-brace-format
+msgid "{py:class}`saealib.SerialEvaluator`"
+msgstr ""
+
+#: ../../../components/evaluation.md:73
+#, python-brace-format
+msgid "{py:class}`saealib.JoblibEvaluator`"
+msgstr ""
+
+#: ../../../components/evaluation.md:74
+#, python-brace-format
+msgid "{py:class}`saealib.EvaluationResult`"
+msgstr ""
+

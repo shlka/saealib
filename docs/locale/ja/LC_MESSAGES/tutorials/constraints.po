@@ -1,0 +1,158 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../tutorials/constraints.md:1
+msgid "制約付き最適化"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:3
+msgid "設計変数に制約がある問題を、`saealib`で解きます。"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:5
+msgid "アルゴリズム、サロゲート、評価戦略の切り替え方は[単目的最適化](single_objective.md)の「コンポーネントの切り替え」と共通です。"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:7
+msgid "問題設定"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:9
+msgid "目的関数に加えて、解が満たすべき不等式制約`g(x) <= 0`を持つ問題を想定します。"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:29
+msgid "`g1(x) <= 0`を満たす解だけが実行可能解です。"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:31
+msgid "制約の定義"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:33
+msgid ""
+"制約は`InequalityConstraint(func, "
+"threshold=0.0)`で定義し、`Problem`の`constraints`引数に渡します。"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:55
+msgid "`g(x) >= threshold`の形で制約を課したい場合は、`func`の符号を反転させて渡します。"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:57
+msgid ""
+"等式制約`h(x) = "
+"0`は、`InequalityConstraint`を符号反転で組み合わせる代わりに`EqualityConstraint(func, "
+"tolerance=1e-6)`を使います。"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:71
+msgid "`EqualityConstraint`は、`|h(x)| <= tolerance`を満たす解を実行可能解として扱います。"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:73
+msgid "実行可能性の確認"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:75
+msgid "`Problem`の`eps_cv`（既定値`1e-6`）以下の制約違反量`cv`を持つ解が実行可能解です。"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:83
+msgid "ConstraintHandlerによるカスタマイズ"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:85
+msgid "複数の制約から`cv`を集約する方法と、その値をもとに実行可能性を判定する方法は、`ConstraintHandler`が決めます。"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:87
+msgid ""
+"`Problem`の`handler`引数を省略すると、`StaticToleranceHandler(eps_cv=problem.eps_cv)`が使われ、`cv"
+" <= eps_cv`かどうかで実行可能性を判定します。"
+msgstr ""
+
+#: ../../../tutorials/constraints.md
+msgid "クラス"
+msgstr ""
+
+#: ../../../tutorials/constraints.md
+msgid "動作"
+msgstr ""
+
+#: ../../../tutorials/constraints.md
+msgid "`StaticToleranceHandler`"
+msgstr ""
+
+#: ../../../tutorials/constraints.md
+msgid "固定の許容誤差`eps_cv`で実行可能性を判定する（デフォルト）"
+msgstr ""
+
+#: ../../../tutorials/constraints.md
+msgid "`EpsilonConstraintHandler`"
+msgstr ""
+
+#: ../../../tutorials/constraints.md
+msgid "許容誤差を世代とともに0へ近づけ、徐々に実行可能領域へ解を追い込む"
+msgstr ""
+
+#: ../../../tutorials/constraints.md
+msgid "`GradientRepairHandler`"
+msgstr ""
+
+#: ../../../tutorials/constraints.md
+msgid "制約の勾配を使って実行不可能解を修復する"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:95
+msgid "`EpsilonConstraintHandler`には、世代番号を受け取り許容誤差を返す関数を渡します。"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:118
+msgid "参照"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:120
+#, python-brace-format
+msgid ""
+"{py:class}`saealib.InequalityConstraint` / "
+"{py:class}`saealib.EqualityConstraint`"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:121
+#, python-brace-format
+msgid "{py:class}`saealib.Problem`"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:122
+#, python-brace-format
+msgid ""
+"{py:class}`saealib.ConstraintHandler` / "
+"{py:class}`saealib.StaticToleranceHandler` / "
+"{py:class}`saealib.EpsilonConstraintHandler` / "
+"{py:class}`saealib.GradientRepairHandler`"
+msgstr ""
+
+#: ../../../tutorials/constraints.md:123
+#, python-brace-format
+msgid "{py:func}`saealib.minimize`"
+msgstr ""
+

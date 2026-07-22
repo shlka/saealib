@@ -1,0 +1,145 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../tutorials/checkpoint.md:1
+msgid "再現性とチェックポイント"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:3
+msgid "長時間実行する最適化を再現可能にし、途中から再開できるようにします。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:5
+msgid "チェックポイント機能は低レベルAPIの`Optimizer`でのみ使えます。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:7
+msgid "`Optimizer`の組み立て方は[単目的最適化](single_objective.md)の低レベルAPI節を参照してください。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:9
+msgid "乱数シードによる再現性"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:11
+msgid ""
+"`Optimizer(problem, "
+"seed=...)`に同じ`seed`を渡すと、乱数を使う処理が同じ手順で初期化され、同一の結果が得られます。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:79
+msgid "`build_optimizer`は、以降の節でも同じコンポーネント構成のまま`Optimizer`を作り直すために使います。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:81
+msgid "チェックポイントの保存と再開"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:83
+msgid "`run()`が返す`ctx`は、`ctx.save(path)`でnpz形式の単一ファイルに保存できます。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:90
+msgid ""
+"保存したチェックポイントは`OptimizationState.load(path, "
+"problem)`で読み込み、`Optimizer.run_from(ctx)`に渡すと続きから再開できます。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:102
+msgid "`ctx.data[\"resumed\"]`は、`run_from()`で再開したコンテキストにだけ`True`が設定されるフラグです。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:104
+msgid "`RunStartEvent`などのコールバックからは、`event.ctx.data[\"resumed\"]`として参照できます。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:106
+msgid "自動チェックポイント"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:108
+msgid "`run()`/`iterate()`に`checkpoint_path`を渡すと、`checkpoint_interval`世代ごとに自動保存されます。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:110
+#, python-brace-format
+msgid "`checkpoint_path`は単一ファイルではなくディレクトリとして扱われ、`checkpoint_{gen:06d}.npz`という名前で世代ごとのスナップショットが作られます。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:116
+msgid "再開するときは、ディレクトリ内の最新のスナップショットを読み込みます。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:125
+msgid "正常終了後にスナップショットを残したくない場合は、`checkpoint_delete_on_success=True`を指定します（ディレクトリ自体は残り、中のファイルだけが削除されます）。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:135
+msgid "pickle形式での保存"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:137
+msgid "npzは`ctx`のみを保存しますが、pickle形式では学習済みのサロゲートパラメータを含めて`Optimizer`ごと保存できます。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:147
+msgid "実行時にPythonやライブラリのバージョンに関する`UserWarning`が出ることがあります。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:149
+msgid "`Termination`にlambdaを使うなど、標準の`pickle`で直列化できないオブジェクトを含む`Optimizer`はpickle保存できません。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:151
+msgid "CheckpointCallbackを直接使う"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:153
+msgid "`run()`の`checkpoint_path`は、内部で`CheckpointCallback`を登録しているだけです。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:155
+msgid "同じ処理を明示的に組み込むには、`CheckpointCallback`を`cbmanager`に登録します。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:167
+msgid "`format=\"pickle\"`または`format=\"both\"`を指定する場合は、`optimizer`引数が必須です。"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:169
+msgid "参照"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:171
+#, python-brace-format
+msgid "{py:class}`saealib.Optimizer`"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:172
+#, python-brace-format
+msgid "{py:class}`saealib.CheckpointCallback`"
+msgstr ""
+
+#: ../../../tutorials/checkpoint.md:173
+#, python-brace-format
+msgid "{py:func}`saealib.minimize`"
+msgstr ""
+

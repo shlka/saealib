@@ -1,0 +1,254 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../algorithms/maxunc.md:1
+msgid "MaxUnc（不確実性サンプリング）"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:3
+msgid "MaxUncは、代理モデルの予測不確実性(標準偏差)を評価基準とし、モデルがもっとも自信を持てない候補点を次の真の評価対象に選ぶ、探索(exploration)に特化した獲得関数である。"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:5
+msgid "概要"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:7
+msgid ""
+"EGOの期待改善量やGP-UCBの信頼上限は、予測平均 $\\mu(x)$ と予測標準偏差 $\\sigma(x)$ "
+"の両方を使い、探索と活用のバランスを取る設計だった。 MaxUncはこの構成から予測平均の項を完全に取り除き、$\\sigma(x)$ "
+"だけを評価基準にする。"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:10
+msgid ""
+"手順はEGO/GP-UCBと同型である。 アーカイブ全体にGPを当てはめ、予測標準偏差 $\\sigma(x)$ "
+"を最大化する点を求め、真の関数で評価してアーカイブに追加する。 "
+"予測平均を一切参照しないため、評価対象は常に「モデルがもっとも学習データから離れている」領域に偏り、良さそうな値を積極的に探しにいく挙動にはならない。"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:14
+msgid ""
+"この構成の背景として、Büche, Schraudolph & Koumoutsakos (2005) "
+"はGPを用いた代理モデルの調査論文の中で、予測平均と予測標準偏差の線形結合であるメリット関数 $f_{\\mathrm{M}}(x) = "
+"\\hat{t}(x) - \\alpha \\sigma_t(x)$ を提案し、$\\alpha$ "
+"を大きくするほど探索寄りになると述べている{cite}`buche2005gpes`。 MaxUncが計算する $\\sigma(x)$ "
+"単独の基準は、このメリット関数で $\\alpha \\to \\infty$ とした極限、つまり予測平均の寄与を消し去った場合に相当する。"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:17
+msgid ""
+"MaxUncは目的関数の改善を直接狙う基準ではない。 "
+"EIやUCBのような活用寄りの基準と対になる探索専用の構成要素として、代理モデル自体の精度を全域にわたって底上げする用途や、他の基準と組み合わせて使う用途に向く（獲得関数一覧における`MeanPrediction`との対比も参照）。"
+" "
+"評価予算が小さいうちは、最良解への収束よりもモデルの未知領域を埋めることを優先するため、単独で使うと最終的な目的関数値がEIやLCBほど改善しないことがある。"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:21
+msgid "擬似コード"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:23
+msgid "(MaxUnc)"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:26
+msgid ""
+"**Inputs** 目的関数 $f$、探索範囲、初期サンプル数 $n_0$、評価予算 $N$ **Output** "
+"評価済みアーカイブ（真に評価した点とその関数値の集合）"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:29
+msgid "初期集団を $n_0$ 点サンプリングし、真の関数 $f$ で評価してアーカイブに追加する"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:30
+msgid ""
+"アーカイブ全体にGPを当てはめ、任意の点における予測標準偏差 $\\sigma(x)$ を得る（予測平均 $\\mu(x)$ "
+"は基準の計算に用いない）"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:31
+msgid "予測標準偏差を最大化する点 $x^* = \\arg\\max_x \\sigma(x)$ を求める"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:32
+msgid "$x^*$ を真の関数で評価し、アーカイブに追加する"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:33
+msgid "評価予算 $N$ に達するまで2へ戻る"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:83
+msgid "フローチャート"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:100
+msgid "saealibでの構成"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "役割"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "saealibでの実装"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "対応する擬似コードのステップ"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "探索アルゴリズム本体"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "`GA`（交叉・突然変異・選択の組み合わせ自体はMaxUncの定義に含まれない）"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "候補解の生成（argmax σの探索）"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "代理モデル"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "`SklearnGPRSurrogate`（GP回帰。`sklearn` extraが必要）"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "2"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "獲得関数"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "`MaxUncertainty`（予測標準偏差のみでスコアリングし、予測平均は参照しない）"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "3"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "サロゲート管理"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "`GlobalSurrogateManager`（アーカイブ全体でGPをフィットする）"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "2-3"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "評価戦略"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "`IndividualBasedStrategy`（σ上位の個体だけを真に評価する）"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:85
+msgid "3-4"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:152
+msgid "交叉・突然変異・選択の具体的な演算子はMaxUnc自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられる。"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:154
+msgid ""
+"この例のように評価予算をEGO/GP-UCBの例と同じ200 "
+"FEに揃えて実行すると、探索専用であるがゆえに最良値がEI/LCBほど改善しない場合がある。 "
+"これはMaxUncが目的関数の改善ではなくモデルの不確実性削減を目的とする基準であることの自然な帰結であり、想定どおりの挙動である。"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:157
+msgid "パラメータと変種"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:159
+msgid ""
+"**weights（多目的での不確実性の集約方法）**: `MaxUncertainty(weights=...)`で調整する。 "
+"多目的問題では各目的ごとに予測標準偏差 $\\sigma_1(x), \\ldots, \\sigma_m(x)$ "
+"が得られるため、それらを1つのスコアに集約する必要がある。 "
+"`weights`が`None`の既定値では目的間の単純平均（`std.mean(axis=1)`）を、`np.ndarray`を渡した場合はその重みによる加重和を使う。"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:163
+msgid ""
+"EIの$\\xi$やLCBの$\\kappa$に相当する、探索と活用のトレードオフを調整するパラメータはMaxUncertainty自体には存在しない。"
+" $\\sigma(x)$のみを基準とする設計上、活用側の重みを持たないためである。 探索と活用の重みを連続的に調整したい場合は、[GP-"
+"UCB](gp_ucb.md)の`LowerConfidenceBound(kappa=...)`を使い、`kappa`を大きくする方向で近づけることになる。"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:167
+msgid "関連"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:169
+msgid "[文献リファレンス](../references.md) — 出典の完全な書誌情報"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:170
+msgid ""
+"[SurrogateManager](../components/surrogate_manager.md) — "
+"`GlobalSurrogateManager`の詳しい使い方"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:171
+msgid ""
+"[AcquisitionFunction](../components/acquisition_functions.md) — "
+"`MaxUncertainty`を含む獲得関数一覧"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:172
+msgid ""
+"[Surrogate](../components/surrogate.md) — "
+"`SklearnGPRSurrogate`を含む代理モデル一覧と`sklearn` extraの説明"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:173
+msgid ""
+"[OptimizationStrategy](../components/strategies.md) — "
+"`IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:174
+msgid ""
+"[EGO](ego.md) — "
+"同じGP代理モデル＋`IndividualBasedStrategy`の構成を、活用寄りの期待改善量(EI)獲得関数で置き換えた手法"
+msgstr ""
+
+#: ../../../algorithms/maxunc.md:175
+msgid ""
+"[GP-UCB](gp_ucb.md) — Büche et al.のメリット関数と同じ$\\mu - "
+"\\kappa\\sigma$の構造を持つ`LowerConfidenceBound`獲得関数を使う手法"
+msgstr ""
+
