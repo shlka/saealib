@@ -39,7 +39,7 @@ pipeline.replace("count_generation", DoubleCountStage())
 ## CallbackManager
 
 [CallbackManager](callbacks.md)は、イベント発火時にハンドラを呼ぶ観察用の仕組みです。
-`cbmanager.register/unregister/replace`でデフォルトパイプラインのハンドラを実行時に変更します。
+`cbmanager.register/unregister/replace`で既定パイプラインのハンドラを実行時に変更します。
 
 `PostCrossoverEvent`/`PostMutationEvent`/`PostAskEvent`が持つ`candidates`フィールドは観測目的であり、ハンドラ内で再代入しても実際の候補配列には反映されません。
 候補配列そのものを差し替えたいなら`with_post`、観測やログ、条件付きの分岐判断だけならCallbackManager、という使い分けになります。

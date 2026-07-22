@@ -39,7 +39,7 @@
 将来組み込まれる可能性のある拡張点として捉え、現時点では自分のパイプラインで明示的に発火させない限り観察できません。
 ```
 
-## デフォルトのログ出力
+## 既定のログ出力
 
 `Optimizer`は構築時に`logging_generation`を`GenerationStartEvent`へ自動登録します。
 標準ライブラリの`logging`モジュールを設定すれば、世代ごとの進捗（評価回数、最良目的値、または多目的の場合は第一フロントのサイズと範囲）がログに出力されます。
@@ -78,7 +78,7 @@ optimizer.cbmanager.register(
 )
 ```
 
-## デフォルトハンドラの差し替え
+## 既定ハンドラの差し替え
 
 `unregister(event_type, func)`で自動登録された`logging_generation`を外したり、`replace(event_type, old, new)`で別のハンドラに差し替えたりできます。
 

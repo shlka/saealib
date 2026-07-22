@@ -29,7 +29,7 @@
 | `rng` | 乱数生成器 |
 | `fe` | 評価回数 |
 | `gen` | 世代数 |
-| `data` | ユーザー拡張用のフリーフォームな辞書 |
+| `data` | ユーザー拡張用の自由形式の辞書 |
 
 このほかに、パイプラインの各[Stage](stage.md)が読み書きする型付きフィールドがある。
 
@@ -45,7 +45,7 @@
 ## 便利プロパティ
 
 `dim`/`n_obj`/`lb`/`ub`/`direction`/`comparator`は、いずれも`state.problem.xxx`への委譲プロパティです。
-`ctx.problem.dim`と書く代わりに`ctx.dim`と書けるショートハンドとして用意されています。
+`ctx.problem.dim`と書く代わりに`ctx.dim`と書ける簡略表記として用意されています。
 
 ## replaceによる更新
 
@@ -59,7 +59,7 @@
 ## チェックポイント
 
 `save(path)`/`load(path, problem)`（後者はクラスメソッド）は、`OptimizationState`をnpz形式で保存し復元します。
-保存対象は`archive`/`population`/`pareto_archive`の配列と`rng`の完全なbit-generator状態のみで、再現性はベストエフォートです（同一NumPyバージョン、同一環境内でのビット完全な再開を意図しているが、バージョンをまたぐ再現は保証しない）。
+保存対象は`archive`/`population`/`pareto_archive`の配列と`rng`の完全なbit-generator状態のみで、再現性は可能な限りの保証にとどまります（同一NumPyバージョン、同一環境内でのビット完全な再開を意図しているが、バージョンをまたぐ再現は保証しない）。
 
 [NSGA3Comparator](comparators.md)が持つような、コンポーネント固有の内部rng（`state.rng`からspawnされたもの）は保存対象に含まれません。
 再開時はそのような内部rngを`state.rng`から新しくspawnし直します。

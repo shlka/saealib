@@ -56,11 +56,11 @@ result = minimize(problem, max_fe=500, seed=0)
 print(result.x, result.f)
 ```
 
-`GA`は、変数の型ごとに専用の交叉と突然変異の演算子（整数用の`CrossoverIntegerSBX`/`MutationIntegerUniform`、カテゴリカル用の`CrossoverCategorical`/`MutationCategorical`）をデフォルトで備えており、`variables`を渡すだけで型に応じた探索が行われます。
+`GA`は、変数の型ごとに専用の交叉と突然変異の演算子（整数用の`CrossoverIntegerSBX`/`MutationIntegerUniform`、カテゴリカル用の`CrossoverCategorical`/`MutationCategorical`）を既定で備えており、`variables`を渡すだけで型に応じた探索が行われます。
 
 `PSO`は速度に基づく更新方式のため、整数変数とカテゴリカル変数を正しく扱えません。
 
-混合変数問題では`algorithm='GA'`（デフォルト）のまま使ってください。
+混合変数問題では`algorithm='GA'`（既定）のまま使ってください。
 
 ## オペレータのカスタマイズ
 

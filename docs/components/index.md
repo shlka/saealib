@@ -7,18 +7,18 @@
 
 `Optimizer`は以下のコンポーネントを束ね、`Termination`が終了と判定するまで世代ループを駆動します。
 1世代分の処理は`OptimizationStrategy`が統括します。
-`Algorithm`が候補解を生成し（ask）、`SurrogateManager`がそれを安価にスコアリングし、戦略がどの候補解に高コストな真の評価を割り当てるかを決め、結果は`Algorithm`側の母集団（tell）と`Archive`の両方に反映されます。
+`Algorithm`が候補解を生成し（ask）、`SurrogateManager`がそれを安価にスコアリングし、戦略がどの候補解に高コストな真の評価を割り当てるかを決め、結果は`Algorithm`側の個体群（tell）と`Archive`の両方に反映されます。
 `Archive`はサロゲートの学習データも兼ねています。
 
 ```{mermaid}
 flowchart TD
-    INIT["Initializer<br/>(初期集団の生成)"] --> STEP
+    INIT["Initializer<br/>(初期個体群の生成)"] --> STEP
     subgraph STEP["OptimizationStrategy.step() — 1世代分"]
         direction TB
         ASK["Algorithm.ask()<br/>候補解を生成"] --> SCORE["SurrogateManager<br/>score_candidates()"]
         SCORE --> SEL["真の評価を行う<br/>候補解を選択"]
         SEL --> EVAL["Evaluator →<br/>Problem(高コスト)"]
-        EVAL --> TELL["Algorithm.tell()<br/>母集団を更新"]
+        EVAL --> TELL["Algorithm.tell()<br/>個体群を更新"]
     end
     STEP --> TERM{"Termination?"}
     TERM -- "継続" --> STEP
@@ -39,8 +39,8 @@ flowchart TD
 | コンポーネント | 役割 |
 |---|---|
 | [Problem](problem.md) | 目的関数・設計変数・探索範囲・制約・最適化の方向(direction)を定義する |
-| [Initializer](initialization.md) | ループ開始前に初期集団とアーカイブを生成する |
-| [Algorithm](algorithm.md) | 進化的探索本体（GA/PSO）。`ask()`が候補解を生成し、`tell()`が母集団を更新する |
+| [Initializer](initialization.md) | ループ開始前に初期個体群とアーカイブを生成する |
+| [Algorithm](algorithm.md) | 進化的探索本体（GA/PSO）。`ask()`が候補解を生成し、`tell()`が個体群を更新する |
 | [OptimizationStrategy](strategies.md) | 1世代分のパイプラインを統括し、どの候補解が真の評価を受けるかを決める |
 | [SurrogateManager](surrogate_manager.md) | サロゲートのフィットとスコアリングを橋渡しし、`score_candidates()`を公開する |
 | [Surrogate](surrogate.md) | アーカイブのデータでフィットし予測する。スコアリングの方法は関知しない |
@@ -244,7 +244,7 @@ BLX-α/SBX/一様交叉など。混合変数問題での使い分け。
 :link: initialization
 :link-type: doc
 
-初期集団とアーカイブの生成方法（LHS/Random/Sobol）と独自実装。
+初期個体群とアーカイブの生成方法（LHS/Random/Sobol）と独自実装。
 :::
 
 :::{grid-item-card} Evaluator

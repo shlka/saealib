@@ -89,7 +89,7 @@ idx, dist = arc.get_knn(np.array([0.1, 0.2]), k=1)
 ## 限定的な拡張点
 
 `ArchiveMixin`/`ParetoMixin`は、`Population`のサブクラスに多重継承でミックスインするという前提で設計されています。
-独自の集団管理ロジックが必要な場合、これらのMixinを組み合わせた新しいクラス（`class MyArchive(ArchiveMixin, Population): ...`）を定義できます。
+独自の個体群管理ロジックが必要な場合、これらのMixinを組み合わせた新しいクラス（`class MyArchive(ArchiveMixin, Population): ...`）を定義できます。
 また[Algorithm](algorithm.md)の`population_class`/`archive_class`をオーバーライドすれば、`Initializer`が生成するPopulation/Archiveを独自サブクラスに差し替えられます。
 
 ## 関連コンポーネント

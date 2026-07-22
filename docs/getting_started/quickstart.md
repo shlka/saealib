@@ -42,6 +42,6 @@ print(f"solution: {result.x}")
 ここで紹介した機能は`saealib`の一部分です。
 詳細なガイドは次のページを参照してください。
 
-- [チュートリアル](../tutorials/index.md): 具体的なシチュエーション別の使い方ガイド
+- [チュートリアル](../tutorials/index.md): 具体的な状況別の使い方ガイド
 - [コンポーネント](../components/index.md): コンポーネントごとの詳しい使い方
 - [API Reference](../api/index.md): 全パラメータのリファレンス

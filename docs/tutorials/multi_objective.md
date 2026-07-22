@@ -45,7 +45,7 @@ print(result.f.shape)  # (n_pareto, n_obj)
 
 | クラス | 動作 |
 |--------|------|
-| `NSGA2Comparator` | 非優越ソートと混雑度による多様性維持（デフォルト） |
+| `NSGA2Comparator` | 非優越ソートと混雑度による多様性維持（既定） |
 | `SPEA2Comparator` | 優越関係の強さと近傍密度によるフィットネス |
 | `HypervolumeComparator` | ハイパーボリューム貢献度による優劣判定 |
 | `EpsilonDominanceComparator` | εドミナンスによる優越判定 |
