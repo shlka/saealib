@@ -34,7 +34,7 @@ flowchart TD
 
 世代ごとに集団全体を評価するため、評価コストが大きくなります。
 
-### SAEA (個体ベースGA)
+### SAEA （個体ベースGA）
 
 <details>
 <summary><b>SAEAの処理フロー（クリックで展開）</b></summary>

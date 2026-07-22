@@ -1,14 +1,14 @@
 # Evaluator
 
-`OptimizationStrategy`や`Initializer`は、設計変数の候補群を目的関数値、生の制約値、制約違反へ変換する処理を、`Evaluator`という差し替え可能な実行バックエンドに委ねている。
-評価を逐次実行するか並列実行するかは、パイプライン側のコードを変えずに`Evaluator`だけを差し替えれば切り替えられる。
+`OptimizationStrategy`や`Initializer`は、設計変数の候補群を目的関数値、生の制約値、制約違反へ変換する処理を、`Evaluator`という差し替え可能な実行バックエンドに委ねています。
+評価を逐次実行するか並列実行するかは、パイプライン側のコードを変えずに`Evaluator`だけを差し替えれば切り替えられます。
 
 ## Evaluatorの役割
 
-`Evaluator`が実装を要求するメソッドは`evaluate_batch(x, problem) -> EvaluationResult`の1つだけである。
-`x`には評価対象の設計変数群が`shape (n, dim)`で渡され、[Problem](problem.md)の目的関数と制約関数を使って`EvaluationResult`を構築して返す。
+`Evaluator`が実装を要求するメソッドは`evaluate_batch(x, problem) -> EvaluationResult`の1つだけです。
+`x`には評価対象の設計変数群が`shape (n, dim)`で渡され、[Problem](problem.md)の目的関数と制約関数を使って`EvaluationResult`を構築して返します。
 
-`EvaluationResult`は3つの配列を持つデータクラスである。
+`EvaluationResult`は3つの配列を持つデータクラスです。
 
 - **`f`**：目的関数値。`shape (n, n_obj)`
 - **`g`**：生の制約値。`shape (n, n_constraints)`。問題が制約を持たない場合は`(n, 0)`
@@ -21,18 +21,18 @@
 | `SerialEvaluator` | なし | 候補を1件ずつ逐次評価する。既定値 |
 | `JoblibEvaluator` | `n_jobs=-1, backend="loky", **joblib_kwargs` | `joblib.Parallel`経由で候補を並列評価する |
 
-`JoblibEvaluator`を使うには`parallel` extra（`pip install saealib[parallel]`）が必要で、未インストールの場合は構築時に`ImportError`になる。
-`backend`は`"loky"`（既定、cloudpickleでシリアライズするプロセスプール）のほか、`"dask"`/`"ray"`のようなサードパーティバックエンドにも1パラメータの変更で切り替えられる（対応するパッケージとクラスタが別途必要）。
-Islandモデルのように複数の`JoblibEvaluator`を同時に使う構成では、CPUコアの多重予約が起こりうる。
-各island側の`n_jobs`を`1`に絞り、island間の並列度で全体の同時実行数を制御するか、`joblib.parallel_backend`をコンテキストマネージャとして使って内側のワーカー数を制限する。
-非同期な評価（候補ごとに独立したタイミングで結果を受け取る方式）は、現状`Evaluator`のスコープ外である。
+`JoblibEvaluator`を使うには`parallel` extra（`pip install saealib[parallel]`）が必要で、未インストールの場合は構築時に`ImportError`になります。
+`backend`は`"loky"`（既定、cloudpickleでシリアライズするプロセスプール）のほか、`"dask"`/`"ray"`のようなサードパーティバックエンドにも1パラメータの変更で切り替えられます（対応するパッケージとクラスタが別途必要）。
+Islandモデルのように複数の`JoblibEvaluator`を同時に使う構成では、CPUコアの多重予約が起こりえます。
+各island側の`n_jobs`を`1`に絞り、island間の並列度で全体の同時実行数を制御するか、`joblib.parallel_backend`をコンテキストマネージャとして使って内側のワーカー数を制限します。
+非同期な評価（候補ごとに独立したタイミングで結果を受け取る方式）は、現状`Evaluator`のスコープ外です。
 
-`Optimizer.set_evaluator(evaluator)`で差し替える。
+`Optimizer.set_evaluator(evaluator)`で差し替えます。
 
 ## 独自Evaluatorの実装方法
 
-独自の実行バックエンドが必要な場合は、`Evaluator`を継承して`evaluate_batch()`だけを実装すればよい。
-`SerialEvaluator`の実装がそのままテンプレートになる。
+独自の実行バックエンドが必要な場合は、`Evaluator`を継承して`evaluate_batch()`だけを実装すればよいです。
+`SerialEvaluator`の実装がそのままテンプレートになります。
 
 ```python
 import numpy as np
@@ -56,8 +56,8 @@ class ReversedOrderEvaluator(Evaluator):
         return EvaluationResult(f=f, g=g, cv=cv)
 ```
 
-`problem.evaluate_constraints(xi)`を呼んでから`problem.evaluate(xi, g_i)`を呼ぶ、という順序を保つ必要がある。
-[ConstraintHandler](constraints.md)の`augment_objective`が制約値を使って目的関数値を補正するため、この順序を逆にすると補正が正しく反映されない。
+`problem.evaluate_constraints(xi)`を呼んでから`problem.evaluate(xi, g_i)`を呼ぶ、という順序を保つ必要があります。
+[ConstraintHandler](constraints.md)の`augment_objective`が制約値を使って目的関数値を補正するため、この順序を逆にすると補正が正しく反映されません。
 
 ## 関連コンポーネント
 

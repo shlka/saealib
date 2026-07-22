@@ -115,9 +115,9 @@ print(ctx.fe)
 
 | クラス | 切り替える対象 |
 |--------|--------|
-| `StrategySwitcher` | 2つの`OptimizationStrategy`(精度がしきい値以上か否か) |
-| `ManagerSwitcher` | 2つの`SurrogateManager`(精度がしきい値以上か否か) |
-| `GenCtrlSwitcher` | `GenerationBasedStrategy`の`gen_ctrl`(精度を指数移動平均で平滑化して連続値へ写像) |
+| `StrategySwitcher` | 2つの`OptimizationStrategy`（精度がしきい値以上か否か） |
+| `ManagerSwitcher` | 2つの`SurrogateManager`（精度がしきい値以上か否か） |
+| `GenCtrlSwitcher` | `GenerationBasedStrategy`の`gen_ctrl`（精度を指数移動平均で平滑化して連続値へ写像） |
 
 `GenCtrlSwitcher`は数値を返すので、`GenerationBasedStrategy`のインスタンスの`gen_ctrl`属性へ直接代入します。
 

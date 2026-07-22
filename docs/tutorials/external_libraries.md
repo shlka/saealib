@@ -58,12 +58,12 @@ result = minimize(
 
 `Surrogate`インスタンスを`surrogate`引数に渡す挙動は、[単目的最適化](single_objective.md)の「コンポーネントの切り替え」で示した`RBFSurrogate`の例と同じで、内部で`LocalSurrogateManager`にラップされます。
 
-分類問題向けのアダプタ(実行可能性分類など)や、各アダプタの詳細な引数は[Surrogate](../components/surrogate.md)を参照してください。
+分類問題向けのアダプタ（実行可能性分類など）や、各アダプタの詳細な引数は[Surrogate](../components/surrogate.md)を参照してください。
 
 <!--
 ## 今後の拡張
 
-現時点でアダプタが存在するのはサロゲートモデルだけで、`Algorithm`や`Crossover`/`Mutation`など他のコンポーネントに対する外部ライブラリアダプタ(pymooのアルゴリズムを利用するものなど)は未実装です。
+現時点でアダプタが存在するのはサロゲートモデルだけで、`Algorithm`や`Crossover`/`Mutation`など他のコンポーネントに対する外部ライブラリアダプタ（pymooのアルゴリズムを利用するものなど）は未実装です。
 
 今後、サロゲート以外のアダプタが追加されたときは、本ページに節を追加していきます。
 -->

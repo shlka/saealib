@@ -139,7 +139,7 @@ Pareto支配やε支配などの支配関係を独自実装する方法。
 :link: nondominated_sorting
 :link-type: doc
 
-非劣ソートアルゴリズムの差し替え。crowding distanceやSPEA2 fitnessの計算も。
+非優越ソートアルゴリズムの差し替え。crowding distanceやSPEA2 fitnessの計算も。
 :::
 
 :::{grid-item-card} Decomposition

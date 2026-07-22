@@ -2,12 +2,12 @@
 
 ## 概要
 
-EGOは、評価コストの高い目的関数を対象に、Gaussian Process回帰(GP)による代理モデルと**期待改善量**(Expected Improvement, EI)という獲得関数を組み合わせた逐次最適化の手法である。
+EGOは、評価コストの高い目的関数を対象に、Gaussian Process回帰(GP)によるサロゲートモデルと**期待改善量**(Expected Improvement, EI)という獲得関数を組み合わせた逐次最適化の手法です。
 
-GPの予測分散は学習データから離れた領域ほど大きくなる。
-EIはこの予測平均と予測分散の両方から計算されるスカラー値であるため、「予測値が良さそうな領域」と「予測の不確実性が高い領域」を自然に両方カバーし、探索(exploration)と活用(exploitation)のバランスを取る。
+GPの予測分散は学習データから離れた領域ほど大きくなります。
+EIはこの予測平均と予測分散の両方から計算されるスカラー値であるため、「予測値が良さそうな領域」と「予測の不確実性が高い領域」を自然に両方カバーし、探索(exploration)と活用(exploitation)のバランスを取ります。
 
-出典は{cite}`jones1998ego`。具体的な手順は次の擬似コードに示す。
+出典は{cite}`jones1998ego`。具体的な手順は次の擬似コードに示します。
 
 <!--
 参照情報（レビュー用）:
@@ -61,7 +61,7 @@ flowchart TD
     subgraph GEN["1世代分 (IndividualBasedStrategy.step)"]
         direction TB
         ASK["GA.ask()<br/>候補解を生成"] --> SCORE["SurrogateManager<br/>GPをフィット (L2)<br/>→ EIでスコアリング (L3)"]
-        SCORE --> SORT["EI上位<br/>evaluation_ratio割を選択<br/>(argmax EIの近似)"]
+        SCORE --> SORT["EI上位<br/>evaluation_ratio割を選択<br/>（argmax EIの近似）"]
         SORT --> EVAL["真の評価 →<br/>アーカイブに追加<br/>(L4)"]
         EVAL --> TELL["GA.tell()<br/>母集団を更新"]
     end
@@ -75,7 +75,7 @@ flowchart TD
 | 役割 | saealibでの実装 | 対応ステップ |
 |---|---|---|
 | 探索アルゴリズム本体 | `GA`（交叉・突然変異・選択の組み合わせ自体はEGOの定義に含まれない） | 候補解の生成（argmax EIの探索） |
-| 代理モデル | `SklearnGPRSurrogate`（GP回帰。`sklearn` extraが必要） | L2 |
+| サロゲートモデル | `SklearnGPRSurrogate`（GP回帰。`sklearn` extraが必要） | L2 |
 | 獲得関数 | `ExpectedImprovement` | L3 |
 | サロゲート管理 | `GlobalSurrogateManager`（アーカイブ全体でGPをフィットする） | L2-3 |
 | 評価戦略 | `IndividualBasedStrategy`（EI上位の個体だけを真に評価する） | L3-4 |
@@ -122,22 +122,22 @@ opt = (
 ctx = opt.run()
 ```
 
-交叉・突然変異・選択の具体的な演算子はEGO自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられる。
+交叉・突然変異・選択の具体的な演算子はEGO自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられます。
 
 ## パラメータと変種
 
-**ξ（探索と活用のトレードオフ）**: `ExpectedImprovement(xi=...)`で調整する。
-既定値は`0.01`で、Brochu et al. (2010)が推奨する値に基づく{cite}`brochu2010tutorial`。
-$\xi=0$では活用(exploitation)寄りになり、大きくすると探索(exploration)寄りになる。
+**ξ（探索と活用のトレードオフ）**: `ExpectedImprovement(xi=...)`で調整します。
+既定値は`0.01`で、Brochu et al. (2010)が推奨する値に基づきます{cite}`brochu2010tutorial`。
+$\xi=0$では活用(exploitation)寄りになり、大きくすると探索(exploration)寄りになります。
 
-**evaluation_ratio（逐次評価とバッチ評価の切り替え）**: 文献のEGOは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムである。
-saealibの`IndividualBasedStrategy`は、GAが生成した子個体群のうちEIスコア上位`evaluation_ratio`割をまとめて真評価するバッチ拡張になっている。
-`evaluation_ratio`を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づく。
+**evaluation_ratio（逐次評価とバッチ評価の切り替え）**: 文献のEGOは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムです。
+saealibの`IndividualBasedStrategy`は、GAが生成した子個体群のうちEIスコア上位`evaluation_ratio`割をまとめて真評価するバッチ拡張になっています。
+`evaluation_ratio`を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づきます。
 
 ## 関連
 
 - [文献リファレンス](../references.md) — 出典の完全な書誌情報と、EI以外の獲得関数の出典一覧
 - [SurrogateManager](../components/surrogate_manager.md) — `GlobalSurrogateManager`の詳しい使い方
 - [AcquisitionFunction](../components/acquisition_functions.md) — `ExpectedImprovement`を含む獲得関数一覧
-- [Surrogate](../components/surrogate.md) — `SklearnGPRSurrogate`を含む代理モデル一覧と`sklearn` extraの説明
+- [Surrogate](../components/surrogate.md) — `SklearnGPRSurrogate`を含むサロゲートモデル一覧と`sklearn` extraの説明
 - [OptimizationStrategy](../components/strategies.md) — `IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧

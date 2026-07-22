@@ -1,22 +1,22 @@
 # MaxUnc（不確実性サンプリング）
 
-MaxUncは、代理モデルの予測不確実性(標準偏差)を評価基準とし、モデルがもっとも自信を持てない候補点を次の真の評価対象に選ぶ、探索(exploration)に特化した獲得関数である。
+MaxUncは、サロゲートモデルの予測不確実性（標準偏差）を評価基準とし、モデルがもっとも自信を持てない候補点を次の真の評価対象に選ぶ、探索(exploration)に特化した獲得関数です。
 
 ## 概要
 
-EGOの期待改善量やGP-UCBの信頼上限は、予測平均 $\mu(x)$ と予測標準偏差 $\sigma(x)$ の両方を使い、探索と活用のバランスを取る設計だった。
-MaxUncはこの構成から予測平均の項を完全に取り除き、$\sigma(x)$ だけを評価基準にする。
+EGOの期待改善量やGP-UCBの信頼上限は、予測平均 $\mu(x)$ と予測標準偏差 $\sigma(x)$ の両方を使い、探索と活用のバランスを取る設計でした。
+MaxUncはこの構成から予測平均の項を完全に取り除き、$\sigma(x)$ だけを評価基準にします。
 
-手順はEGO/GP-UCBと同型である。
-アーカイブ全体にGPを当てはめ、予測標準偏差 $\sigma(x)$ を最大化する点を求め、真の関数で評価してアーカイブに追加する。
-予測平均を一切参照しないため、評価対象は常に「モデルがもっとも学習データから離れている」領域に偏り、良さそうな値を積極的に探しにいく挙動にはならない。
+手順はEGO/GP-UCBと同型です。
+アーカイブ全体にGPを当てはめ、予測標準偏差 $\sigma(x)$ を最大化する点を求め、真の関数で評価してアーカイブに追加します。
+予測平均を一切参照しないため、評価対象は常に「モデルがもっとも学習データから離れている」領域に偏り、良さそうな値を積極的に探しにいく挙動にはなりません。
 
-この構成の背景として、Büche, Schraudolph & Koumoutsakos (2005) はGPを用いた代理モデルの調査論文の中で、予測平均と予測標準偏差の線形結合であるメリット関数 $f_{\mathrm{M}}(x) = \hat{t}(x) - \alpha \sigma_t(x)$ を提案し、$\alpha$ を大きくするほど探索寄りになると述べている{cite}`buche2005gpes`。
-MaxUncが計算する $\sigma(x)$ 単独の基準は、このメリット関数で $\alpha \to \infty$ とした極限、つまり予測平均の寄与を消し去った場合に相当する。
+この構成の背景として、Büche, Schraudolph & Koumoutsakos (2005) はGPを用いたサロゲートモデルの調査論文の中で、予測平均と予測標準偏差の線形結合であるメリット関数 $f_{\mathrm{M}}(x) = \hat{t}(x) - \alpha \sigma_t(x)$ を提案し、$\alpha$ を大きくするほど探索寄りになると述べています{cite}`buche2005gpes`。
+MaxUncが計算する $\sigma(x)$ 単独の基準は、このメリット関数で $\alpha \to \infty$ とした極限、つまり予測平均の寄与を消し去った場合に相当します。
 
-MaxUncは目的関数の改善を直接狙う基準ではない。
-EIやUCBのような活用寄りの基準と対になる探索専用の構成要素として、代理モデル自体の精度を全域にわたって底上げする用途や、他の基準と組み合わせて使う用途に向く（獲得関数一覧における`MeanPrediction`との対比も参照）。
-評価予算が小さいうちは、最良解への収束よりもモデルの未知領域を埋めることを優先するため、単独で使うと最終的な目的関数値がEIやLCBほど改善しないことがある。
+MaxUncは目的関数の改善を直接狙う基準ではありません。
+EIやUCBのような活用寄りの基準と対になる探索専用の構成要素として、サロゲートモデル自体の精度を全域にわたって底上げする用途や、他の基準と組み合わせて使う用途に向きます（獲得関数一覧における`MeanPrediction`との対比も参照）。
+評価予算が小さいうちは、最良解への収束よりもモデルの未知領域を埋めることを優先するため、単独で使うと最終的な目的関数値がEIやLCBほど改善しないことがあります。
 
 ## 擬似コード
 
@@ -88,7 +88,7 @@ flowchart TD
     subgraph GEN["1世代分 (IndividualBasedStrategy.step)"]
         direction TB
         ASK["GA.ask()<br/>候補解を生成"] --> SCORE["SurrogateManager<br/>GPをフィット (L2)<br/>→ σでスコアリング (L3)"]
-        SCORE --> SORT["σ上位<br/>evaluation_ratio割を選択<br/>(argmax σの近似)"]
+        SCORE --> SORT["σ上位<br/>evaluation_ratio割を選択<br/>（argmax σの近似）"]
         SORT --> EVAL["真の評価 →<br/>アーカイブに追加<br/>(L4)"]
         EVAL --> TELL["GA.tell()<br/>母集団を更新"]
     end
@@ -102,7 +102,7 @@ flowchart TD
 | 役割 | saealibでの実装 | 対応ステップ |
 |---|---|---|
 | 探索アルゴリズム本体 | `GA`（交叉・突然変異・選択の組み合わせ自体はMaxUncの定義に含まれない） | 候補解の生成（argmax σの探索） |
-| 代理モデル | `SklearnGPRSurrogate`（GP回帰。`sklearn` extraが必要） | L2 |
+| サロゲートモデル | `SklearnGPRSurrogate`（GP回帰。`sklearn` extraが必要） | L2 |
 | 獲得関数 | `MaxUncertainty`（予測標準偏差のみでスコアリングし、予測平均は参照しない） | L3 |
 | サロゲート管理 | `GlobalSurrogateManager`（アーカイブ全体でGPをフィットする） | L2-3 |
 | 評価戦略 | `IndividualBasedStrategy`（σ上位の個体だけを真に評価する） | L3-4 |
@@ -149,27 +149,27 @@ opt = (
 ctx = opt.run()
 ```
 
-交叉・突然変異・選択の具体的な演算子はMaxUnc自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられる。
+交叉・突然変異・選択の具体的な演算子はMaxUnc自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられます。
 
-この例のように評価予算をEGO/GP-UCBの例と同じ200 FEに揃えて実行すると、探索専用であるがゆえに最良値がEI/LCBほど改善しない場合がある。
-これはMaxUncが目的関数の改善ではなくモデルの不確実性削減を目的とする基準であることの自然な帰結であり、想定どおりの挙動である。
+この例のように評価予算をEGO/GP-UCBの例と同じ200 FEに揃えて実行すると、探索専用であるがゆえに最良値がEI/LCBほど改善しない場合があります。
+これはMaxUncが目的関数の改善ではなくモデルの不確実性削減を目的とする基準であることの自然な帰結であり、想定どおりの挙動です。
 
 ## パラメータと変種
 
-**weights（多目的での不確実性の集約方法）**: `MaxUncertainty(weights=...)`で調整する。
-多目的問題では各目的ごとに予測標準偏差 $\sigma_1(x), \ldots, \sigma_m(x)$ が得られるため、それらを1つのスコアに集約する必要がある。
-`weights`が`None`の既定値では目的間の単純平均（`std.mean(axis=1)`）を、`np.ndarray`を渡した場合はその重みによる加重和を使う。
+**weights（多目的での不確実性の集約方法）**: `MaxUncertainty(weights=...)`で調整します。
+多目的問題では各目的ごとに予測標準偏差 $\sigma_1(x), \ldots, \sigma_m(x)$ が得られるため、それらを1つのスコアに集約する必要があります。
+`weights`が`None`の既定値では目的間の単純平均（`std.mean(axis=1)`）を、`np.ndarray`を渡した場合はその重みによる加重和を使います。
 
-EIの$\xi$やLCBの$\kappa$に相当する、探索と活用のトレードオフを調整するパラメータはMaxUncertainty自体には存在しない。
-$\sigma(x)$のみを基準とする設計上、活用側の重みを持たないためである。
-探索と活用の重みを連続的に調整したい場合は、[GP-UCB](gp_ucb.md)の`LowerConfidenceBound(kappa=...)`を使い、`kappa`を大きくする方向で近づけることになる。
+EIの$\xi$やLCBの$\kappa$に相当する、探索と活用のトレードオフを調整するパラメータはMaxUncertainty自体には存在しません。
+$\sigma(x)$のみを基準とする設計上、活用側の重みを持たないためです。
+探索と活用の重みを連続的に調整したい場合は、[GP-UCB](gp_ucb.md)の`LowerConfidenceBound(kappa=...)`を使い、`kappa`を大きくする方向で近づけることになります。
 
 ## 関連
 
 - [文献リファレンス](../references.md) — 出典の完全な書誌情報
 - [SurrogateManager](../components/surrogate_manager.md) — `GlobalSurrogateManager`の詳しい使い方
 - [AcquisitionFunction](../components/acquisition_functions.md) — `MaxUncertainty`を含む獲得関数一覧
-- [Surrogate](../components/surrogate.md) — `SklearnGPRSurrogate`を含む代理モデル一覧と`sklearn` extraの説明
+- [Surrogate](../components/surrogate.md) — `SklearnGPRSurrogate`を含むサロゲートモデル一覧と`sklearn` extraの説明
 - [OptimizationStrategy](../components/strategies.md) — `IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧
-- [EGO](ego.md) — 同じGP代理モデル＋`IndividualBasedStrategy`の構成を、活用寄りの期待改善量(EI)獲得関数で置き換えた手法
+- [EGO](ego.md) — 同じGPサロゲートモデル＋`IndividualBasedStrategy`の構成を、活用寄りの期待改善量(EI)獲得関数で置き換えた手法
 - [GP-UCB](gp_ucb.md) — Büche et al.のメリット関数と同じ$\mu - \kappa\sigma$の構造を持つ`LowerConfidenceBound`獲得関数を使う手法

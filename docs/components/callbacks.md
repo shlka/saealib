@@ -1,11 +1,11 @@
 # CallbackManager
 
-`Optimizer`は、最適化の進捗をイベントとして外部へ通知する仕組みを`CallbackManager`という差し替え可能なコンポーネントに委ねている。
-ログ記録、収束履歴の蓄積、条件付きのコンポーネント差し替えなど、パイプライン本体を書き換えずに観察したり介入したりする際に使う。
+`Optimizer`は、最適化の進捗をイベントとして外部へ通知する仕組みを`CallbackManager`という差し替え可能なコンポーネントに委ねています。
+ログ記録、収束履歴の蓄積、条件付きのコンポーネント差し替えなど、パイプライン本体を書き換えずに観察したり介入したりする際に使います。
 
 ## CallbackManagerの役割
 
-`CallbackManager`は、イベント型ごとにハンドラのリストを保持する。
+`CallbackManager`は、イベント型ごとにハンドラのリストを保持します。
 
 | メソッド | 内容 |
 |---|---|
@@ -14,8 +14,8 @@
 | `unregister(event_type, func)` | 登録済みハンドラを削除する |
 | `replace(event_type, old, new)` | 登録済みハンドラを別のハンドラに差し替える |
 
-`Event`基底クラスは`ctx`（`OptimizationState`）だけを持つ。
-慣例として`ctx`は読み取り専用として扱い、値の変更はコンポーネントのライフサイクルフック（`with_post`など）で行う。
+`Event`基底クラスは`ctx`（`OptimizationState`）だけを持ちます。
+慣例として`ctx`は読み取り専用として扱い、値の変更はコンポーネントのライフサイクルフック（`with_post`など）で行います。
 
 ## 利用可能なイベント一覧
 
@@ -35,19 +35,19 @@
 | `InitialEvaluationEndEvent` | 初期評価後、アーカイブのソート前 | `archive` |
 
 ```{note}
-`PostSurrogateFitEvent`は型として定義され公開されているが、現行の組み込みパイプライン（`Stage`群）からは発火されない。
-将来組み込まれる可能性のある拡張点として捉え、現時点では自分のパイプラインで明示的に発火させない限り観察できない。
+`PostSurrogateFitEvent`は型として定義され公開されていますが、現行の組み込みパイプライン（`Stage`群）からは発火されません。
+将来組み込まれる可能性のある拡張点として捉え、現時点では自分のパイプラインで明示的に発火させない限り観察できません。
 ```
 
 ## デフォルトのログ出力
 
-`Optimizer`は構築時に`logging_generation`を`GenerationStartEvent`へ自動登録する。
-標準ライブラリの`logging`モジュールを設定すれば、世代ごとの進捗（評価回数、最良目的値、または多目的の場合は第一フロントのサイズと範囲）がログに出力される。
+`Optimizer`は構築時に`logging_generation`を`GenerationStartEvent`へ自動登録します。
+標準ライブラリの`logging`モジュールを設定すれば、世代ごとの進捗（評価回数、最良目的値、または多目的の場合は第一フロントのサイズと範囲）がログに出力されます。
 
 ## カスタムハンドラの登録と収束履歴の記録
 
-`cbmanager.register(EventType, handler)`で任意のハンドラを登録できる。
-収束履歴を記録したい場合は、クロージャで蓄積するリストを持つハンドラを登録する。
+`cbmanager.register(EventType, handler)`で任意のハンドラを登録できます。
+収束履歴を記録したい場合は、クロージャで蓄積するリストを持つハンドラを登録します。
 
 ```python
 from saealib import GenerationEndEvent
@@ -67,7 +67,7 @@ print(history)
 
 ## ハイパーボリューム追跡
 
-`logging_generation_hv(reference_point)`は、指定した参照点に対する第一フロントのハイパーボリュームを世代ごとにログ出力するハンドラを返す。
+`logging_generation_hv(reference_point)`は、指定した参照点に対する第一フロントのハイパーボリュームを世代ごとにログ出力するハンドラを返します。
 
 ```python
 from saealib import GenerationStartEvent, logging_generation_hv
@@ -80,7 +80,7 @@ optimizer.cbmanager.register(
 
 ## デフォルトハンドラの差し替え
 
-`unregister(event_type, func)`で自動登録された`logging_generation`を外したり、`replace(event_type, old, new)`で別のハンドラに差し替えたりできる。
+`unregister(event_type, func)`で自動登録された`logging_generation`を外したり、`replace(event_type, old, new)`で別のハンドラに差し替えたりできます。
 
 ```python
 from saealib import GenerationStartEvent, logging_generation
@@ -90,17 +90,17 @@ optimizer.cbmanager.unregister(GenerationStartEvent, logging_generation)
 
 ## candidatesフィールドは観測目的
 
-`PostCrossoverEvent`/`PostMutationEvent`/`PostAskEvent`の`candidates`フィールドは観測用であり、ハンドラ内で再代入（`event.candidates = new_array`）してもパイプラインの出力には反映されない。
-`GA`はイベント発火後も自分が持つローカルな配列参照をそのまま使い続けるため、in-place変更（`event.candidates[:] = ...`）であれば`GA`には反映される。
-一方`PSO`は、`Population.extend()`で候補群のコピーが完了した後にこのイベントを発火するため、in-place変更すら手遅れで一切反映されない。
+`PostCrossoverEvent`/`PostMutationEvent`/`PostAskEvent`の`candidates`フィールドは観測用であり、ハンドラ内で再代入（`event.candidates = new_array`）してもパイプラインの出力には反映されません。
+`GA`はイベント発火後も自分が持つローカルな配列参照をそのまま使い続けるため、in-place変更（`event.candidates[:] = ...`）であれば`GA`には反映されます。
+一方`PSO`は、`Population.extend()`で候補群のコピーが完了した後にこのイベントを発火するため、in-place変更すら手遅れで一切反映されません。
 
-候補配列そのものを差し替えたい場合は、`CallbackManager`ではなく[Crossover](crossover.md)/[Mutation](mutation.md)の`with_post(fn)`を使う。
-`CallbackManager`は観測（ログ、記録、条件付きの分岐判断）のための仕組みであり、パイプラインのデータを書き換える手段ではない、という設計方針として理解する。
+候補配列そのものを差し替えたい場合は、`CallbackManager`ではなく[Crossover](crossover.md)/[Mutation](mutation.md)の`with_post(fn)`を使ってください。
+`CallbackManager`は観測（ログ、記録、条件付きの分岐判断）のための仕組みであり、パイプラインのデータを書き換える手段ではない、という設計方針として理解してください。
 
 ## コンポーネントの実行時差し替え
 
-`Event`はハンドラに`ctx`だけを渡し、`Optimizer`インスタンス自体は渡さない。
-実行時にコンポーネントを差し替えたい場合は、ハンドラのクロージャで`Optimizer`インスタンスを直接捕捉し、`optimizer.algorithm`/`strategy`/`surrogate_manager`/`termination`を再代入するか、既存コンポーネントのパラメータを直接変更する。
+`Event`はハンドラに`ctx`だけを渡し、`Optimizer`インスタンス自体は渡しません。
+実行時にコンポーネントを差し替えたい場合は、ハンドラのクロージャで`Optimizer`インスタンスを直接捕捉し、`optimizer.algorithm`/`strategy`/`surrogate_manager`/`termination`を再代入するか、既存コンポーネントのパラメータを直接変更します。
 
 ```python
 from saealib import GenerationStartEvent
@@ -114,7 +114,7 @@ def widen_mutation_at_gen5(event):
 optimizer.cbmanager.register(GenerationStartEvent, widen_mutation_at_gen5)
 ```
 
-[strategies](strategies.md)で説明したとおり、各Strategyは`step()`のたびにパイプラインを再構築するため、この差し替えは次世代から確実に反映される。
+[strategies](strategies.md)で説明したとおり、各Strategyは`step()`のたびにパイプラインを再構築するため、この差し替えは次世代から確実に反映されます。
 
 ## iterate()との使い分け
 
@@ -124,14 +124,14 @@ optimizer.cbmanager.register(GenerationStartEvent, widen_mutation_at_gen5)
 | 主な用途 | ログ記録、観察、条件付きの副作用 | サロゲート精度に応じたコンポーネント切り替えなど、ループ構造そのものへの介入 |
 | `run()`との関係 | `run()`/`iterate()`どちらでも動作する | `run()`の代わりにこちらを使う |
 
-[サロゲート精度評価と動的切り替え](surrogate_switching.md)のSwitcher系は、`iterate()`ループの中で使うことを前提にしている。
+[サロゲート精度評価と動的切り替え](surrogate_switching.md)のSwitcher系は、`iterate()`ループの中で使うことを前提にしています。
 
 ## CheckpointCallback
 
-`CheckpointCallback`は、あらかじめ用意されたCallbackの実例である。
-一定世代ごとに[OptimizationState](optimization_state.md)の`save()`を呼び、npz/pickle形式でチェックポイントを保存する。
-詳しい使い方は[チェックポイント](../tutorials/checkpoint.md)を参照する。
-独自のCallbackを自作する際のお手本の1つとしても参照できる。
+`CheckpointCallback`は、あらかじめ用意されたCallbackの実例です。
+一定世代ごとに[OptimizationState](optimization_state.md)の`save()`を呼び、npz/pickle形式でチェックポイントを保存します。
+詳しい使い方は[チェックポイント](../tutorials/checkpoint.md)を参照してください。
+独自のCallbackを自作する際のお手本の1つとしても参照できます。
 
 ## 関連コンポーネント
 

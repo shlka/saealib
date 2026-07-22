@@ -1,12 +1,12 @@
 # Termination
 
-`Optimizer`は、最適化をいつ止めるかという判断を、`Termination`という差し替え可能なトップレベルコンポーネントに委ねている。
-`Optimizer.set_termination(termination)`で渡し、実行時は世代末に`is_terminated(ctx) -> bool`が呼ばれる。
+`Optimizer`は、最適化をいつ止めるかという判断を、`Termination`という差し替え可能なトップレベルコンポーネントに委ねています。
+`Optimizer.set_termination(termination)`で渡し、実行時は世代末に`is_terminated(ctx) -> bool`が呼ばれます。
 
 ## Terminationの役割
 
-`Termination(*conditions)`は1つ以上の条件を受け取り、そのいずれか1つでも真になった時点で終了する（OR結合）。
-コンストラクタに複数条件を渡す書き方は、後述する`any_of`と同じ意味になる。
+`Termination(*conditions)`は1つ以上の条件を受け取り、そのいずれか1つでも真になった時点で終了します（OR結合）。
+コンストラクタに複数条件を渡す書き方は、後述する`any_of`と同じ意味になります。
 
 ```python
 from saealib import Termination, max_fe, max_gen
@@ -14,7 +14,7 @@ from saealib import Termination, max_fe, max_gen
 termination = Termination(max_fe(2000), max_gen(100))
 ```
 
-クラスメソッドも用意されている。
+クラスメソッドも用意されています。
 
 | クラスメソッド | 意味 |
 |---|---|
@@ -24,8 +24,8 @@ termination = Termination(max_fe(2000), max_gen(100))
 
 ## 組み込み終了条件
 
-`Termination`に渡す各条件は、`TerminationCondition`という薄いラッパーである。
-組み込みのファクトリ関数はいずれも`TerminationCondition`を返す。
+`Termination`に渡す各条件は、`TerminationCondition`という薄いラッパーです。
+組み込みのファクトリ関数はいずれも`TerminationCondition`を返します。
 
 | 関数 | 終了条件 |
 |---|---|
@@ -34,13 +34,13 @@ termination = Termination(max_fe(2000), max_gen(100))
 | `f_target(value)` | アーカイブの最良目的値が`value`に到達。単目的向けで、`ctx.direction`から最小化/最大化を自動判定する。アーカイブが空の間は終了しない |
 | `stalled(window, tol=1e-8)` | `window`世代連続で改善が`tol`を超えなければ終了 |
 
-`stalled`が返す`TerminationCondition`は、内部に「これまでの最良スコア」をクロージャで保持する状態付きの条件である。
-1回の`run`につき1つのインスタンスを使う想定であり、複数の`run`で使い回すと前回の状態が残ってしまう。
+`stalled`が返す`TerminationCondition`は、内部に「これまでの最良スコア」をクロージャで保持する状態付きの条件です。
+1回の`run`につき1つのインスタンスを使う想定であり、複数の`run`で使い回すと前回の状態が残ってしまいます。
 
 ## Terminationの拡張方法
 
-`TerminationCondition`は抽象基底クラスではなく、任意のcallableを受け取って`|`(OR)/`&`(AND)/`~`(NOT)という演算子オーバーロードを提供する合成用のラッパーである。
-`OptimizationState -> bool`を返すプレーンな関数はどこでも自動的に`TerminationCondition`へ変換されるため、独自の終了条件を追加するのに基底クラスを継承する必要はない。
+`TerminationCondition`は抽象基底クラスではなく、任意のcallableを受け取って`|`(OR)/`&`(AND)/`~`(NOT)という演算子オーバーロードを提供する合成用のラッパーです。
+`OptimizationState -> bool`を返すプレーンな関数はどこでも自動的に`TerminationCondition`へ変換されるため、独自の終了条件を追加するのに基底クラスを継承する必要はありません。
 
 ```python
 from saealib import Termination, max_fe
@@ -54,9 +54,9 @@ def my_condition(ctx):
 termination = Termination(max_fe(2000), my_condition)
 ```
 
-名前や説明文を明示的に持たせたい場合だけ、`TerminationCondition(func, name=..., doc=...)`で明示的にラップする。
+名前や説明文を明示的に持たせたい場合だけ、`TerminationCondition(func, name=..., doc=...)`で明示的にラップします。
 
-複数の条件は演算子で宣言的に組み合わせられる。
+複数の条件は演算子で宣言的に組み合わせられます。
 
 ```python
 from saealib import max_fe, max_gen, stalled

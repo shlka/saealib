@@ -1,22 +1,22 @@
 # NSGA-II（Nondominated Sorting Genetic Algorithm II）
 
-NSGA-IIは、多目的最適化における選択機構として最も広く使われる遺伝アルゴリズムである。
-非優越ソートと混雑度距離を組み合わせ、パレートフロントへの収束と解集合の多様性維持を同時に達成する。
+NSGA-IIは、多目的最適化における選択機構として最も広く使われる遺伝アルゴリズムです。
+非優越ソートと混雑度距離を組み合わせ、パレートフロントへの収束と解集合の多様性維持を同時に達成します。
 
 ## 概要
 
-多目的最適化には、パレートフロントへの収束と、解集合内の多様性維持という、独立した二つの目標がある。
+多目的最適化には、パレートフロントへの収束と、解集合内の多様性維持という、独立した二つの目標があります。
 
-従来のNSGA(非優越ソート遺伝アルゴリズム)は、この二つを非優越ソートと共有関数(sharing function)で達成していたが、共有関数は分散パラメータ $\sigma_{\mathrm{share}}$ の手動調整を要し、計算量も $O(N^2)$ だった。
+従来のNSGA（非優越ソート遺伝アルゴリズム）は、この二つを非優越ソートと共有関数(sharing function)で達成していましたが、共有関数は分散パラメータ $\sigma_{\mathrm{share}}$ の手動調整を要し、計算量も $O(N^2)$ でした。
 
-NSGA-IIは、この共有関数を**混雑度距離**(crowding distance)に基づく**混雑比較演算子**($\prec_n$)に置き換え、パラメータ不要な多様性維持を実現する。
+NSGA-IIは、この共有関数を**混雑度距離**(crowding distance)に基づく**混雑比較演算子**($\prec_n$)に置き換え、パラメータ不要な多様性維持を実現します。
 
-各個体は非優越ランク $i_{\mathrm{rank}}$ と混雑度距離 $i_{\mathrm{distance}}$ の二つの属性を持つ。
-$\prec_n$ はランクが低い(良い)個体を優先し、同ランク内では混雑度距離が大きい(周囲が疎な)個体を優先する。
+各個体は非優越ランク $i_{\mathrm{rank}}$ と混雑度距離 $i_{\mathrm{distance}}$ の二つの属性を持ちます。
+$\prec_n$ はランクが低い（良い）個体を優先し、同ランク内では混雑度距離が大きい（周囲が疎な）個体を優先します。
 
-さらにNSGA-IIは、親個体群 $P_t$ と子個体群 $Q_t$ を結合した $2N$ 個体からエリート選択を行い、優れた解が世代を跨いで失われないようにする(elitism)。
+さらにNSGA-IIは、親個体群 $P_t$ と子個体群 $Q_t$ を結合した $2N$ 個体からエリート選択を行い、優れた解が世代を跨いで失われないようにします(elitism)。
 
-出典は{cite}`deb2002nsga2`。具体的な手順は次の擬似コードに示す。
+出典は{cite}`deb2002nsga2`。具体的な手順は次の擬似コードに示します。
 
 ## 擬似コード
 
@@ -70,7 +70,7 @@ flowchart TD
     INIT["Initializer<br/>初期集団P0を生成<br/>(L1)"] --> GEN
     subgraph GEN["1世代分 (DirectStrategy.step)"]
         direction TB
-        ASK["GA.ask()<br/>二項トーナメント選択→<br/>SBX交叉→<br/>多項式突然変異でQtを生成<br/>(L1, 7)"] --> EVAL["真の評価<br/>(サロゲートを介さない)"]
+        ASK["GA.ask()<br/>二項トーナメント選択→<br/>SBX交叉→<br/>多項式突然変異でQtを生成<br/>(L1, 7)"] --> EVAL["真の評価<br/>（サロゲートを介さない）"]
         EVAL --> COMB["GA.tell()<br/>Rt = Pt ∪ Qt を結合<br/>(L2)"]
         COMB --> SORT["NSGA2Comparator.sort_population()<br/>非優越ソート→<br/>混雑度距離<br/>(L3-6)"]
         SORT --> TRUNC["TruncationSelection<br/>上位N個体をPt+1として採用<br/>(L4-6)"]
@@ -82,9 +82,9 @@ flowchart TD
 
 ## 計算量
 
-非優越ソートは $O(MN^2)$（$M$は目的数、$N$は個体数）、混雑度距離の計算は $O(MN\log N)$、$\prec_n$によるソートは $O(N\log N)$ である。
+非優越ソートは $O(MN^2)$（$M$は目的数、$N$は個体数）、混雑度距離の計算は $O(MN\log N)$、$\prec_n$によるソートは $O(N\log N)$ です。
 
-1世代あたりの支配的なコストは非優越ソートであり、全体の計算量は $O(MN^2)$ になる{cite}`deb2002nsga2`。
+1世代あたりの支配的なコストは非優越ソートであり、全体の計算量は $O(MN^2)$ になります{cite}`deb2002nsga2`。
 
 ## saealibでの構成
 
@@ -128,22 +128,22 @@ ctx = opt.run()
 pareto_f = ctx.pareto_archive.get_array("f")
 ```
 
-`problem.comparator = NSGA2Comparator()`の行は、`n_obj > 1`のときの既定値と同じであるため省略できる。
-サロゲートを一切使わないため、`Optimizer`に`set_surrogate_manager()`を呼ぶ必要がない。
+`problem.comparator = NSGA2Comparator()`の行は、`n_obj > 1`のときの既定値と同じであるため省略できます。
+サロゲートを一切使わないため、`Optimizer`に`set_surrogate_manager()`を呼ぶ必要がありません。
 
 ## パラメータと変種
 
-**$\eta_c$・$\eta_m$（分布指数）**: `CrossoverSBX(eta=...)`と`MutationPolynomial(eta=...)`で調整する。
-値が大きいほど親に近い子個体を生成する（探索が保守的になる）。
-論文の実数値実験では両方とも$20$が使われており、これがsaealib側のコード例の既定値でもある{cite}`deb2002nsga2`。
+**$\eta_c$・$\eta_m$（分布指数）**: `CrossoverSBX(eta=...)`と`MutationPolynomial(eta=...)`で調整します。
+値が大きいほど親に近い子個体を生成します（探索が保守的になる）。
+論文の実数値実験では両方とも$20$が使われており、これがsaealib側のコード例の既定値でもあります{cite}`deb2002nsga2`。
 
-**$p_m$（変数単位の突然変異確率）**: 論文は $p_m = 1/n$（$n$は決定変数の数）を使う。
-これは個体レベルの`prob`ではなく、変数ごとの適用確率`prob_var`に対応する。
-`MutationPolynomial(prob_var=None)`（既定値）では$\min(0.5,\, 1/\mathrm{dim})$が自動設定され、次元数が大きいほど論文の設定に近づく。
+**$p_m$（変数単位の突然変異確率）**: 論文は $p_m = 1/n$（$n$は決定変数の数）を使います。
+これは個体レベルの`prob`ではなく、変数ごとの適用確率`prob_var`に対応します。
+`MutationPolynomial(prob_var=None)`（既定値）では$\min(0.5,\, 1/\mathrm{dim})$が自動設定され、次元数が大きいほど論文の設定に近づきます。
 
-**タイブレークの扱い**: 論文の擬似コードは、$\mathcal{F}_l$を$\prec_n$で降順ソートするとしか述べておらず、混雑度距離が同値な個体同士の順序は規定していない。
-`TruncationSelection(randomize_ties=False)`（既定値）は`sort_population`が返す決定的な順序をそのまま使い、この記述に対応する。
-`randomize_ties=True`にすると、打ち切り境界で同値な個体をシャッフルしてから切り詰める。
+**タイブレークの扱い**: 論文の擬似コードは、$\mathcal{F}_l$を$\prec_n$で降順ソートするとしか述べておらず、混雑度距離が同値な個体同士の順序は規定していません。
+`TruncationSelection(randomize_ties=False)`（既定値）は`sort_population`が返す決定的な順序をそのまま使い、この記述に対応します。
+`randomize_ties=True`にすると、打ち切り境界で同値な個体をシャッフルしてから切り詰めます。
 
 ## 関連
 

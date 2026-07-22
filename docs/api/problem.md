@@ -12,5 +12,5 @@
 ```
 
 ```{note}
-`saealib.Constraint` は `saealib.InequalityConstraint` の非推奨エイリアスです．新しいコードでは `InequalityConstraint` を使用してください．
+`saealib.Constraint` は `saealib.InequalityConstraint` の非推奨エイリアスです。新しいコードでは `InequalityConstraint` を使用してください。
 ```
