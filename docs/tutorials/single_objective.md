@@ -45,7 +45,7 @@ print(result.fe)  # true function evaluations
 print(result.gen) # completed generations
 ```
 
-最大評価回数`max_fe`を省略すると、`200 * dim`がデフォルト値として使われます。
+最大評価回数`max_fe`を省略すると、`200 * dim`が既定値として使われます。
 
 評価回数を明示的に制限するには、次のように指定します。
 
@@ -67,7 +67,7 @@ result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, max_fe=500, seed=0)
 
 | 文字列 | クラス | 特徴 |
 |--------|--------|------|
-| `'GA'` | `GA` | 交叉・突然変異による探索（デフォルト） |
+| `'GA'` | `GA` | 交叉・突然変異による探索（既定） |
 | `'PSO'` | `PSO` | 粒子の速度更新による探索 |
 
 ```python
@@ -80,7 +80,7 @@ result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, algorithm="PSO", seed=0
 
 | 文字列 | 解決される構成 | 説明 |
 |--------|--------|------|
-| `'rbf'` | `RBFSurrogate` + `LocalSurrogateManager`（デフォルト） | ガウスRBFカーネルによる近傍点の局所フィット |
+| `'rbf'` | `RBFSurrogate` + `LocalSurrogateManager`（既定） | ガウスRBFカーネルによる近傍点の局所フィット |
 
 ```python
 result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, surrogate="rbf", seed=0)
@@ -92,7 +92,7 @@ result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, surrogate="rbf", seed=0
 
 | 文字列 | クラス | 動作 |
 |--------|--------|------|
-| `'ib'` | `IndividualBasedStrategy` | 候補を個別にサロゲートで評価し、上位`evaluation_ratio`割だけを真に評価する（デフォルト） |
+| `'ib'` | `IndividualBasedStrategy` | 候補を個別にサロゲートで評価し、上位`evaluation_ratio`割だけを真に評価する（既定） |
 | `'gb'` | `GenerationBasedStrategy` | `gen_ctrl`世代分をサロゲートのみで進め、1世代だけ真に評価する |
 | `'ps'` | `PreSelectionStrategy` | 大量の候補をサロゲートで絞り込み、上位`n_select`個だけを真に評価する |
 
@@ -180,9 +180,9 @@ print("評価回数:", ctx.fe)
 
 乱数シードは、`Optimizer(problem, seed=SEED)`と`LHSInitializer(..., seed=SEED)`の両方に同じ値を渡してください。
 
-`Optimizer`の`seed`は、`set_initializer()`を呼ばずに済ませたとき（`minimize`/`maximize`など）だけ、デフォルトの`LHSInitializer`へ自動的に伝播します。
+`Optimizer`の`seed`は、`set_initializer()`を呼ばずに済ませたとき（`minimize`/`maximize`など）だけ、既定の`LHSInitializer`へ自動的に伝播します。
 
-初期化子を自分で組み立てる場合は、明示的に渡す必要があります。
+`Initializer`を自分で組み立てる場合は、明示的に渡す必要があります。
 
 `Termination`には複数の条件を渡せます。
 

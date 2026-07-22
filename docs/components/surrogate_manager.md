@@ -73,7 +73,7 @@ from saealib import ArchiveBasedManager
 
 
 class ConstantScoreManager(ArchiveBasedManager):
-    """常に一定スコアを返す、archiveを一切参照しない最小限のサロゲートマネージャ。"""
+    """常に一定スコアを返す、archiveを一切参照しない最小限のサロゲートマネージャー。"""
 
     def compute_scores(self, candidates_x, archive, ctx=None):
         return np.ones(len(candidates_x))

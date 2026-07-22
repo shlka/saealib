@@ -2,9 +2,9 @@
 
 最適化の進捗を、標準の`logging`モジュールで記録します。
 
-## デフォルトの挙動
+## 既定の挙動
 
-`Optimizer`は、世代開始のたびに進捗を記録するハンドラ(`logging_generation`)を、`minimize`/`maximize`の`verbose=True`（デフォルト）のときだけ登録します。
+`Optimizer`は、世代開始のたびに進捗を記録するハンドラ(`logging_generation`)を、`minimize`/`maximize`の`verbose=True`（既定）のときだけ登録します。
 
 ただし、このハンドラは`logging.getLogger(__name__).info(...)`を呼ぶだけなので、Pythonの`logging`モジュール側でINFOレベルの出力を有効にしないかぎり、何も表示されません。
 

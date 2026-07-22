@@ -88,7 +88,7 @@ print(f"feasible: {feasible.sum()} / {len(archive_cv)}")
 
 | クラス | 動作 |
 |--------|------|
-| `StaticToleranceHandler` | 固定の許容誤差`eps_cv`で実行可能性を判定する（デフォルト） |
+| `StaticToleranceHandler` | 固定の許容誤差`eps_cv`で実行可能性を判定する（既定） |
 | `EpsilonConstraintHandler` | 許容誤差を世代とともに0へ近づけ、徐々に実行可能領域へ解を追い込む |
 | `GradientRepairHandler` | 制約の勾配を使って実行不可能解を修復する |
 

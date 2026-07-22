@@ -46,7 +46,7 @@ OCR: exp_ref/pdfs/brochu_2010_bo_tutorial/auto/brochu_2010_bo_tutorial.md
 **Inputs** 目的関数 $f$、探索範囲、初期サンプル数 $n_0$、評価予算 $N$
 **Output** 最良解 $x^*$
 
-1. 初期集団を $n_0$ 点サンプリングし、真の関数 $f$ で評価してアーカイブに追加する
+1. 初期個体群を $n_0$ 点サンプリングし、真の関数 $f$ で評価してアーカイブに追加する
 2. アーカイブ全体にGPを当てはめ、任意の点における予測平均 $\mu(x)$ と予測標準偏差 $\sigma(x)$ を得る
 3. 期待改善量 $\mathrm{EI}(x) = (f_{\min} - \mu(x) - \xi)\,\Phi(z) + \sigma(x)\,\phi(z)$（$z = (f_{\min} - \mu(x) - \xi) / \sigma(x)$）を最大化する点 $x^*$ を求める
 4. $x^*$ を真の関数で評価し、アーカイブに追加する
@@ -57,13 +57,13 @@ OCR: exp_ref/pdfs/brochu_2010_bo_tutorial/auto/brochu_2010_bo_tutorial.md
 
 ```{mermaid}
 flowchart TD
-    INIT["Initializer<br/>LHS等で初期集団を<br/>サンプリング→真の評価<br/>(L1)"] --> ASK
+    INIT["Initializer<br/>LHS等で初期個体群を<br/>サンプリング→真の評価<br/>(L1)"] --> ASK
     subgraph GEN["1世代分 (IndividualBasedStrategy.step)"]
         direction TB
         ASK["GA.ask()<br/>候補解を生成"] --> SCORE["SurrogateManager<br/>GPをフィット (L2)<br/>→ EIでスコアリング (L3)"]
         SCORE --> SORT["EI上位<br/>evaluation_ratio割を選択<br/>（argmax EIの近似）"]
         SORT --> EVAL["真の評価 →<br/>アーカイブに追加<br/>(L4)"]
-        EVAL --> TELL["GA.tell()<br/>母集団を更新"]
+        EVAL --> TELL["GA.tell()<br/>個体群を更新"]
     end
     GEN --> TERM{"評価予算Nに<br/>到達?"}
     TERM -- "未到達 (L5)" --> ASK

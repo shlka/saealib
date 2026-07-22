@@ -23,7 +23,7 @@
 | `WeightedSumComparator` | 重み付き線形結合によるスカラー化。単目的でも多目的でも使える |
 | `ParetoComparator` | 支配関係のみでランク付け（混雑度などの副次的な指標を持たない） |
 | `NSGA2Comparator` | Paretoランク＋混雑度距離{cite}`deb2002nsga2` |
-| `SPEA2Comparator` | 母集団全体に依存するSPEA2 fitness{cite}`zitzler2001spea2` |
+| `SPEA2Comparator` | 個体群全体に依存するSPEA2 fitness{cite}`zitzler2001spea2` |
 | `HypervolumeComparator` | フロントランク＋排他的HV寄与度（SMS-EMOA風）{cite}`beume2007smsemoa` |
 | `EpsilonDominanceComparator` | ε-支配によるランク付け{cite}`laumanns2002epsilon` |
 | `NSGA3Comparator` | 参照点によるニッチ保存{cite}`deb2014nsga3` |
@@ -42,10 +42,10 @@
 `NSGA2Comparator`は、`ParetoComparator`に混雑度距離による副次的な順位付けを加えます。
 ソート結果は`Population`のキャッシュ（`get_cache`/`set_cache`）に保存され、個体群が変更されるまで世代内で使い回されます。
 
-### 母集団相対的なComparator
+### 個体群相対的なComparator
 
 `SPEA2Comparator`と`HypervolumeComparator`は、いずれも`compare()`を呼ぶと`NotImplementedError`を送出します。
-SPEA2のfitnessも排他的HV寄与度も、母集団全体に依存する指標であり、2点だけからは計算できないためです。
+SPEA2のfitnessも排他的HV寄与度も、個体群全体に依存する指標であり、2点だけからは計算できないためです。
 これはバグではなく意図した設計であり、`is_population_relative=True`というクラス属性がその旨を示すマーカーになっています。
 
 PSOのpbest更新や`PairwiseComparisonSet`のように、2点だけの比較（`compare()`）が必要な場面でこれらのComparatorは使えません。
@@ -108,7 +108,7 @@ class RandomComparator(Comparator):
         return 0
 ```
 
-`SPEA2Comparator`/`HypervolumeComparator`のように、母集団全体に依存する指標を実装する場合は、`is_population_relative = True`というクラス属性を立て、`compare()`で理由を説明する`NotImplementedError`を送出する設計パターンが使えます。
+`SPEA2Comparator`/`HypervolumeComparator`のように、個体群全体に依存する指標を実装する場合は、`is_population_relative = True`というクラス属性を立て、`compare()`で理由を説明する`NotImplementedError`を送出する設計パターンが使えます。
 
 ## 関連コンポーネント
 

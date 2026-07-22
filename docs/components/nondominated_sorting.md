@@ -20,7 +20,7 @@
 | `dda_non_dominated_sort` | Dominance-Degree Approach（Zhou et al., 2017がdominance degree matrixを、Mishra & Senwar, 2020がDDA-ENSのフロント割り当てを提案） |
 
 `non_dominated_sort`の計算量はO(MN²)だが、支配行列をNumPyでベクトル化して構築するため実測では高速に動作します。
-`dda_non_dominated_sort`は、`non_dominated_sort`と完全に同一の`(ranks, fronts)`を返すことが保証されているドロップイン代替であり、個体数`N`や目的数`M`が大きい場合（`M > 100`）のスケーラビリティ向けに用意されています。
+`dda_non_dominated_sort`は、`non_dominated_sort`と完全に同一の`(ranks, fronts)`を返すことが保証されているそのまま置き換え可能な代替関数であり、個体数`N`や目的数`M`が大きい場合（`M > 100`）のスケーラビリティ向けに用意されています。
 
 両者とも、NaNを含む行の扱いは共通しています。
 NaNを含む行は、通常のフロント分割から除外され、最終フロントの後にセンチネルフロントとして1個体ずつ追加されます。

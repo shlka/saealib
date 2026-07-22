@@ -86,13 +86,13 @@ NSGA-III/SPEA2の既知の課題と同様に実装上の不足として扱う。
 
 ```{mermaid}
 flowchart TD
-    INIT["Initializer<br/>初期集団をサンプリング<br/>→真の評価<br/>(L1)"] --> ASK
+    INIT["Initializer<br/>初期個体群をサンプリング<br/>→真の評価<br/>(L1)"] --> ASK
     subgraph GEN["1世代分 (IndividualBasedStrategy.step)"]
         direction TB
         ASK["GA.ask()<br/>候補点を生成"] --> SCORE["SurrogateManager<br/>RBFをフィット (L2)<br/>→ 予測平均でスコアリング<br/>(L3)"]
         SCORE --> SORT["予測平均上位<br/>evaluation_ratio割を選択"]
         SORT --> EVAL["真の評価 →<br/>アーカイブに追加<br/>(L4)"]
-        EVAL --> TELL["GA.tell()<br/>母集団を更新"]
+        EVAL --> TELL["GA.tell()<br/>個体群を更新"]
     end
     GEN --> TERM{"評価予算Nに<br/>到達?"}
     TERM -- "未到達 (L5)" --> ASK

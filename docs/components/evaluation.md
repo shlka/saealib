@@ -63,7 +63,7 @@ class ReversedOrderEvaluator(Evaluator):
 
 - [Problem](problem.md) — `evaluate_batch`が評価する目的関数と制約関数の定義元
 - [ConstraintHandler](constraints.md) — `problem.evaluate`の内部で制約違反の集約と目的関数の補正を行う
-- [Initializer](initialization.md) — 初期集団の評価に`Evaluator`を使う
+- [Initializer](initialization.md) — 初期個体群の評価に`Evaluator`を使う
 - [strategies](strategies.md) — 各世代の候補評価に`Evaluator`を使う
 
 ## 参照
