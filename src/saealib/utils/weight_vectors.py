@@ -41,13 +41,11 @@ def uniform_weight_vectors(n_obj: int, n_divisions: int) -> np.ndarray:
 
     References
     ----------
-    .. [1] Das, I., & Dennis, J. E. (1998). Normal-boundary intersection: A new
-       method for generating the Pareto surface in nonlinear multicriteria
-       optimization problems. *SIAM Journal on Optimization*, 8(3), 631-657.
-       https://doi.org/10.1137/S1052623496307510
-    .. [2] Zhang, Q., & Li, H. (2007). MOEA/D: A multiobjective evolutionary
-       algorithm based on decomposition. *IEEE Transactions on Evolutionary
-       Computation*, 11(6), 712-731.
+    :cite:`zhang2007moead`: Zhang, Q., & Li, H. (2007). MOEA/D: A
+    multiobjective evolutionary algorithm based on decomposition. *IEEE
+    Transactions on Evolutionary Computation*, 11(6), 712-731. (Appendix A
+    describes the simplex lattice design originally due to Das & Dennis,
+    1998.)
 
     Examples
     --------

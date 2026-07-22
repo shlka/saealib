@@ -188,6 +188,15 @@ class MutationPolynomial(Mutation):
     prob_var : float or None
         Per-variable mutation probability. Defaults to ``min(0.5, 1/dim)``
         when ``None``.
+
+    Notes
+    -----
+    Originates from Deb & Goyal (1996); the primary paper has not been
+    obtained (it is credited here by name only). The asymmetric
+    delta1/delta2 perturbation formula implemented in :meth:`mutate` has
+    been verified against Deb's own official NSGA-II reference
+    implementation (``nsga2-gnuplot-v1.1.6/mutation.c``, function
+    ``real_mutate_ind``).
     """
 
     def __init__(self, prob: float = 1.0, *, eta: float, prob_var: float | None = None):
@@ -268,6 +277,20 @@ class MutationGaussian(Mutation):
     prob_var : float or None
         Per-variable mutation probability. Defaults to ``min(0.5, 1/dim)``
         when ``None``.
+
+    Notes
+    -----
+    Originates from Rechenberg (1973); the original (German-language)
+    monograph has not been obtained and is credited here by name only.
+    Section 2 of the survey below summarizes Rechenberg's (1+1)-ES with
+    Gaussian mutation and its mutation-strength (standard deviation)
+    parameterization, consistent with this operator.
+
+    References
+    ----------
+    :cite:`beyer2002essurvey`: Beyer, H.-G., & Schwefel, H.-P. (2002).
+    Evolution strategies -- A comprehensive introduction. *Natural
+    Computing*, 1, 3-52.
     """
 
     def __init__(

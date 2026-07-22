@@ -11,6 +11,10 @@ def hypervolume(f: np.ndarray, reference_point: np.ndarray) -> float:
     """
     Compute hypervolume indicator (minimization convention).
 
+    The hypervolume (S-metric) indicator was introduced by Zitzler &
+    Thiele (1998) as a way to measure the quality of a Pareto front
+    approximation without a priori knowledge of the true front.
+
     Uses a recursive slicing algorithm. Complexity: O(n^(m-1) * n log n),
     where n is the number of points and m is the number of objectives.
 
@@ -70,8 +74,11 @@ def hypervolume_contributions(
         Computing hypervolume is exponential in the number of objectives, and
         the leave-one-out loop adds a factor of N.  For many objectives or
         large N this becomes prohibitively expensive.  A future improvement
-        may incorporate the WFG algorithm (While et al., 2006) for faster
-        batch computation.
+        may incorporate a faster batch hypervolume algorithm (e.g. the
+        slicing-based approach of While, Hingston, Barone & Huband, 2006;
+        paper not yet obtained -- name only, not to be confused with the
+        WFG benchmark-problem paper by Huband et al., 2006, which is a
+        different work despite the overlapping author list).
 
     Parameters
     ----------

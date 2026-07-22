@@ -111,9 +111,9 @@ class WeightedSumDecomposition(Decomposition):
 
     References
     ----------
-    .. [1] Zhang, Q., & Li, H. (2007). MOEA/D: A multiobjective evolutionary
-       algorithm based on decomposition. *IEEE Transactions on Evolutionary
-       Computation*, 11(6), 712-731.
+    :cite:`zhang2007moead`: Zhang, Q., & Li, H. (2007). MOEA/D: A
+    multiobjective evolutionary algorithm based on decomposition. *IEEE
+    Transactions on Evolutionary Computation*, 11(6), 712-731.
     """
 
     def aggregate(
@@ -157,9 +157,9 @@ class TchebycheffDecomposition(Decomposition):
 
     References
     ----------
-    .. [1] Zhang, Q., & Li, H. (2007). MOEA/D: A multiobjective evolutionary
-       algorithm based on decomposition. *IEEE Transactions on Evolutionary
-       Computation*, 11(6), 712-731.
+    :cite:`zhang2007moead`: Zhang, Q., & Li, H. (2007). MOEA/D: A
+    multiobjective evolutionary algorithm based on decomposition. *IEEE
+    Transactions on Evolutionary Computation*, 11(6), 712-731.
     """
 
     _EPS_WEIGHT: float = 1e-6
@@ -218,9 +218,9 @@ class PBIDecomposition(Decomposition):
 
     References
     ----------
-    .. [1] Zhang, Q., & Li, H. (2007). MOEA/D: A multiobjective evolutionary
-       algorithm based on decomposition. *IEEE Transactions on Evolutionary
-       Computation*, 11(6), 712-731.
+    :cite:`zhang2007moead`: Zhang, Q., & Li, H. (2007). MOEA/D: A
+    multiobjective evolutionary algorithm based on decomposition. *IEEE
+    Transactions on Evolutionary Computation*, 11(6), 712-731.
     """
 
     def __init__(self, theta: float = 5.0) -> None:
@@ -322,12 +322,13 @@ class DecompositionComparator(Comparator):
 
     References
     ----------
-    .. [1] Zhang, Q., & Li, H. (2007). MOEA/D: A multiobjective evolutionary
-       algorithm based on decomposition. *IEEE Transactions on Evolutionary
-       Computation*, 11(6), 712-731.
-    .. [2] Deb, K. (2000). An efficient constraint handling method for genetic
-       algorithms. *Computer Methods in Applied Mechanics and Engineering*,
-       186(2-4), 311-338.
+    :cite:`zhang2007moead`: Zhang, Q., & Li, H. (2007). MOEA/D: A
+    multiobjective evolutionary algorithm based on decomposition. *IEEE
+    Transactions on Evolutionary Computation*, 11(6), 712-731.
+
+    :cite:`deb2000feasibility`: Deb, K. (2000). An efficient constraint
+    handling method for genetic algorithms. *Computer Methods in Applied
+    Mechanics and Engineering*, 186(2-4), 311-338.
     """
 
     def __init__(

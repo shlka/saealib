@@ -19,6 +19,8 @@ class MaxUncertainty(AcquisitionFunction):
 
     Selects candidates where the surrogate model is least confident.
     Requires a surrogate that provides uncertainty estimates (std).
+    This is the "uncertainty sampling" strategy from the active-learning
+    literature, applied here as a pure-exploration acquisition function.
 
     For multi-objective problems, aggregates uncertainty across objectives
     using a weighted sum.
@@ -28,6 +30,16 @@ class MaxUncertainty(AcquisitionFunction):
     weights : np.ndarray or None
         Weights for aggregating uncertainty across objectives.
         shape: (n_obj,). If None, uses the mean across objectives.
+
+    References
+    ----------
+    :cite:`lewis1994uncertaintysampling`: Lewis, D. D., & Gale, W. A.
+    (1994). A sequential algorithm for training text classifiers. In
+    *SIGIR '94*, 3-12.
+
+    :cite:`settles2009activelearning`: Settles, B. (2009). Active
+    learning literature survey. *Computer Sciences Technical Report
+    1648*, University of Wisconsin-Madison.
     """
 
     requires_uncertainty: bool = True

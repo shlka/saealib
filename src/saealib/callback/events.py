@@ -76,7 +76,10 @@ class PostCrossoverEvent(Event):
     """
     Fired after crossover and repair.
 
-    Handlers may replace ``candidates`` with a modified array.
+    ``candidates`` is exposed for observation only; reassigning it does not
+    change the pipeline's output (algorithms keep using their own local
+    array reference after dispatch). To actually alter crossover output, use
+    ``with_post(fn)`` on the ``Crossover`` instance instead.
     """
 
     candidates: np.ndarray | None = None
@@ -87,7 +90,10 @@ class PostMutationEvent(Event):
     """
     Fired after mutation and repair.
 
-    Handlers may replace ``candidates`` with a modified array.
+    ``candidates`` is exposed for observation only; reassigning it does not
+    change the pipeline's output (algorithms keep using their own local
+    array reference after dispatch). To actually alter mutation output, use
+    ``with_post(fn)`` on the ``Mutation`` instance instead.
     """
 
     candidates: np.ndarray | None = None
@@ -98,7 +104,13 @@ class PostAskEvent(Event):
     """
     Fired after the full ask step (post crossover and mutation).
 
-    Handlers may replace ``candidates`` with a modified array.
+    ``candidates`` is exposed for observation only; reassigning it does not
+    change the pipeline's output. Whether an in-place edit is picked up
+    depends on the algorithm: some (e.g. ``PSO``) dispatch this event after
+    the candidates have already been copied into the offspring population,
+    so even in-place changes have no effect. Do not rely on either form of
+    mutation here; to actually alter ask output, use ``with_post(fn)`` on
+    the relevant ``Crossover``/``Mutation`` instance instead.
     """
 
     candidates: np.ndarray | None = None
