@@ -1,8 +1,8 @@
 # saealib
 
-**サロゲート支援進化的アルゴリズム (SAEA) の Python ライブラリ**
+Pythonで実装された、**サロゲート型進化的アルゴリズム(SAEA)** のための総合的なライブラリです。
 
-高コストな目的関数評価を軽量なサロゲートモデルで代替し，評価回数を大幅に削減します．
+目的関数の評価コストが高い最適化問題を想定して設計されており、`saealib`は進化的アルゴリズム・サロゲートモデル・モデル管理戦略を組み合わせるモジュール式のフレームワークを提供します。
 
 ```{button-ref} getting_started/quickstart
 :ref-type: doc
@@ -17,7 +17,7 @@
 :color: secondary
 :outline:
 
-saealib とは？
+saealibとは？
 ```
 
 ---
@@ -26,7 +26,7 @@ saealib とは？
 :gutter: 3
 :margin: 4 4 0 0
 
-:::{grid-item-card} シンプルな高レベル API
+:::{grid-item-card} 高レベルAPI
 :link: getting_started/quickstart
 :link-type: doc
 
@@ -37,21 +37,22 @@ result = minimize(func, dim=5,
                   lb=-5, ub=5)
 ```
 
-`minimize()` / `maximize()` を呼ぶだけで動作．
+`minimize()` / `maximize()`によるゼロボイラープレートのエントリーポイント。
 :::
 
-:::{grid-item-card} 柔軟な低レベル API
-:link: user_guide/architecture
+:::{grid-item-card} 低レベルAPI
+:link: components/index
 :link-type: doc
 
-アルゴリズム・サロゲート・モデル管理戦略はすべてモジュール式で，自由に組み合わせられます．
+`Optimizer`ビルダーと`iterate()`ジェネレータにより、研究用途向けに世代ごとの検査やカスタムループ制御が可能です。
 :::
 
-:::{grid-item-card} 拡張しやすい設計
-:link: tutorials/custom_components
+:::{grid-item-card} 拡張性
+:link: components/index
 :link-type: doc
 
-独自コンポーネントを実装してパイプラインに組み込めます．研究・実験用途に最適です．
+すべての概念は抽象基底クラスを持ち、構築時に差し替え可能です。
+そのため、フォークすることなくあらゆるSAEAバリアントを表現できます。
 :::
 
 ::::
@@ -60,46 +61,61 @@ result = minimize(func, dim=5,
 
 ## ドキュメント
 
-::::{grid} 1 2 2 2
-:gutter: 2
+::::{grid} 1 2 2 3
+:gutter: 3
 
-:::{grid-item-card} Getting Started
+:::{grid-item-card} はじめに
 :link: getting_started/index
 :link-type: doc
 
-インストール・基本的な使い方・saealib の概念説明
+saealibを初めて使う方へ。インストール方法、基本的な使い方、コアとなる概念を説明します。
 :::
 
-:::{grid-item-card} User Guide
-:link: user_guide/index
-:link-type: doc
-
-アーキテクチャ詳細・コンポーネント解説・カスタマイズ方法
-:::
-
-:::{grid-item-card} Tutorials
+:::{grid-item-card} チュートリアル
 :link: tutorials/index
 :link-type: doc
 
-単目的・多目的最適化の実践チュートリアル
+シチュエーション別のセットアップガイド: 単目的/多目的最適化、制約、チェックポイント。
+:::
+
+:::{grid-item-card} コンポーネント
+:link: components/index
+:link-type: doc
+
+各コンポーネントの詳しい使い方と拡張ガイドライン。
+:::
+
+:::{grid-item-card} アルゴリズム
+:link: algorithms/index
+:link-type: doc
+
+文献上の名前がついたアルゴリズムを、saealibのコンポーネントの組み合わせとしてどう再現するか。
+:::
+
+:::{grid-item-card} 文献リファレンス
+:link: references
+:link-type: doc
+
+実装済みのアルゴリズム・演算子・比較方法の理論的出典をまとめた文献リスト。
 :::
 
 :::{grid-item-card} API Reference
 :link: api/index
 :link-type: doc
 
-全クラス・関数のリファレンス
+すべてのクラス・関数の完全な仕様。
 :::
 
 ::::
-
 
 ```{toctree}
 :hidden:
 :maxdepth: 1
 
 getting_started/index
-user_guide/index
 tutorials/index
+components/index
+algorithms/index
+references
 api/index
 ```
