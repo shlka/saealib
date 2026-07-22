@@ -1,217 +1,88 @@
 # 多目的最適化
 
-このチュートリアルでは，複数の目的関数を同時に最適化する多目的最適化問題の扱い方を説明します．
+目的間にトレードオフのある多目的最適化問題を、`saealib`で解きます。
+
+アルゴリズム、サロゲート、評価戦略の切り替え方は、目的数によらず[単目的最適化](single_objective.md)の「コンポーネントの切り替え」と共通です。
+
+このページでは、目的数が2以上のときに固有の設定である、比較演算子の選択とパレートフロントの抽出を扱います。
 
 ## 問題設定
 
-多目的最適化では，複数の目的間にトレードオフが存在するため，単一の「最適解」は存在しません．代わりに，どれも他に劣らない**パレートフロント**上の解集合が得られます．
+複数の目的関数がトレードオフの関係にあるとき、一方を改善するともう一方が悪化する解が存在します。
 
-ここでは ZDT1 問題（最小化，2 目的）を例として使います．
+この関係の下で、他のどの解にも全目的で優越されない解の集合を**パレートフロント**と呼びます。
+
+ここでは例として、`saealib`に組み込まれたZDT1関数を最小化します。
 
 ```python
-import numpy as np
+from saealib.benchmarks import zdt1
 
-def zdt1(x):
-    f1 = x[0]
-    g = 1.0 + 9.0 * np.sum(x[1:]) / (len(x) - 1)
-    f2 = g * (1.0 - np.sqrt(f1 / g))
-    return np.array([f1, f2])
-
-DIM = 10
-LB = [0.0] * DIM
-UB = [1.0] * DIM
+problem = zdt1(n_var=10)
 ```
 
----
+`zdt1`は、凸形のパレートフロントを持つ2目的のベンチマーク問題を返す`Problem`インスタンスです。
 
-## 高レベルAPI: `minimize`
+## 高レベルAPI: minimize
 
-`n_obj` に目的数を指定します．それ以外の呼び出し方は単目的と同じです．
+`Problem`インスタンスを直接渡すと、目的数はそこから引き継がれます。
 
 ```python
 from saealib import minimize
 
-result = minimize(zdt1, dim=DIM, lb=LB, ub=UB, n_obj=2, max_fe=500, seed=0)
+result = minimize(problem, max_fe=2000, seed=0)
+
+print(result.x.shape)  # (n_pareto, dim)
+print(result.f.shape)  # (n_pareto, n_obj)
 ```
 
-### 結果の読み方
+単目的では1点だった`result.x`/`result.f`は、多目的ではパレートフロントを構成する複数の解になります。
 
-多目的の場合，`result.X` と `result.F` はパレートフロント上の解集合になります．
+## 比較演算子の選択
+
+多目的では、候補解同士の優劣を`Comparator`が決めます。
+
+`Problem`の`comparator`引数を省略すると、目的数に応じて自動選択されます（`n_obj == 1`なら`SingleObjectiveComparator`、`n_obj > 1`なら`NSGA2Comparator`）。
+
+| クラス | 動作 |
+|--------|------|
+| `NSGA2Comparator` | 非優越ソートと混雑度による多様性維持（デフォルト） |
+| `SPEA2Comparator` | 優越関係の強さと近傍密度によるフィットネス |
+| `HypervolumeComparator` | ハイパーボリューム貢献度による優劣判定 |
+| `EpsilonDominanceComparator` | εドミナンスによる優越判定 |
+| `NSGA3Comparator` | 参照点による多様性維持。`reference_points`が必須 |
+| `RNSGA2Comparator` | 指定した参照点の近傍へ解を集中させる。`reference_points`が必須 |
+
+`comparator`は`Problem`インスタンスの属性として差し替えられます。
 
 ```python
-print(result.X.shape)  # (n_pareto, dim)
-print(result.F.shape)  # (n_pareto, n_obj)
-print(result.fe)       # 真の関数評価回数
+from saealib.comparators import HypervolumeComparator
+
+problem.comparator = HypervolumeComparator()
+result = minimize(problem, max_fe=2000, seed=0)
 ```
 
-パレートフロント上の解を目的空間で確認します．
+## パレートフロントの抽出
+
+実行後、`result.ctx.pareto_archive`には最終的なパレートフロントが保持されています。
 
 ```python
-f1_vals = result.F[:, 0]
-f2_vals = result.F[:, 1]
-
-for f1, f2 in zip(f1_vals, f2_vals):
-    print(f"f1={f1:.4f}  f2={f2:.4f}")
+pareto_x = result.ctx.pareto_archive.get_array("x")
+pareto_f = result.ctx.pareto_archive.get_array("f")
 ```
 
----
-
-## アルゴリズムと戦略の選択
-
-単目的と同様に `algorithm` と `strategy` を切り替えられます．
+任意の目的値配列からパレートフロントを求めたい場合は、`non_dominated_sort`を直接使えます。
 
 ```python
-# PSO + Pre-selection 戦略
-result = minimize(
-    zdt1,
-    algorithm='PSO',
-    dim=DIM,
-    lb=LB,
-    ub=UB,
-    n_obj=2,
-    strategy='ps',
-    max_fe=500,
-    seed=0,
-)
-```
-
----
-
-## 低レベルAPI: `Optimizer`
-
-`Problem` の `weight` に各目的の符号を指定します．最小化なら `-1.0`，最大化なら `1.0` です．
-
-```python
-import numpy as np
-from saealib.problem import Problem
-from saealib.optimizer import Optimizer
-from saealib.algorithms.ga import GA
-from saealib.operators.crossover import CrossoverBLXAlpha
-from saealib.operators.mutation import MutationUniform
-from saealib.operators.selection import SequentialSelection, TruncationSelection
-from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
-from saealib.surrogate.manager import LocalSurrogateManager
-from saealib.acquisition.mean import MeanPrediction
-from saealib.strategies.ib import IndividualBasedStrategy
-from saealib.execution.initializer import LHSInitializer
-from saealib.termination import Termination, max_fe
 from saealib.comparators import non_dominated_sort
 
-N_OBJ = 2
-problem = Problem(
-    func=zdt1,
-    dim=DIM,
-    n_obj=N_OBJ,
-    weight=np.array([-1.0, -1.0]),  # 両目的を最小化
-    lb=LB,
-    ub=UB,
-)
-
-algorithm = GA(
-    crossover=CrossoverBLXAlpha(crossover_rate=0.7, alpha=0.4),
-    mutation=MutationUniform(mutation_rate=0.3),
-    parent_selection=SequentialSelection(),
-    survivor_selection=TruncationSelection(),
-)
-
-surrogate = RBFSurrogate(gaussian_kernel, dim=DIM)
-surrogate_manager = LocalSurrogateManager(
-    surrogate,
-    MeanPrediction(weights=np.array([-1.0, -1.0])),
-    n_neighbors=30,
-)
-
-strategy = IndividualBasedStrategy(evaluation_ratio=0.1)
-
-initializer = LHSInitializer(
-    n_init_archive=5 * DIM,
-    n_init_population=4 * DIM,
-    seed=0,
-)
-
-termination = Termination(max_fe(500))
-
-ctx = (
-    Optimizer(problem)
-    .set_initializer(initializer)
-    .set_algorithm(algorithm)
-    .set_surrogate_manager(surrogate_manager)
-    .set_strategy(strategy)
-    .set_termination(termination)
-    .run()
-)
+archive_f = result.ctx.archive.get_array("f")
+ranks, fronts = non_dominated_sort(archive_f, direction=problem.direction)
+front0_f = archive_f[fronts[0]]  # first non-dominated front
 ```
-
-### パレートフロントの抽出
-
-`non_dominated_sort` でアーカイブからパレートフロントを取り出します．
-
-```python
-archive_x = ctx.archive.get_array("x")
-archive_f = ctx.archive.get_array("f")
-
-_, fronts = non_dominated_sort(archive_f)
-pareto_idx = fronts[0]
-
-pareto_x = archive_x[pareto_idx]
-pareto_f = archive_f[pareto_idx]
-
-print(f"パレートフロント上の解数: {len(pareto_idx)}")
-print(f"pareto_x.shape: {pareto_x.shape}")  # (n_pareto, dim)
-print(f"pareto_f.shape: {pareto_f.shape}")  # (n_pareto, n_obj)
-```
-
----
-
-## `EnsembleSurrogateManager` を使う
-
-多目的問題では，目的ごとに異なるサロゲートを用意して `EnsembleSurrogateManager` で組み合わせることができます．各サブマネージャーのスコアはランク正規化されたうえで加重平均されます．
-
-```python
-from saealib.surrogate.manager import LocalSurrogateManager, EnsembleSurrogateManager
-from saealib.acquisition.mean import MeanPrediction
-from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
-
-manager_f1 = LocalSurrogateManager(
-    RBFSurrogate(gaussian_kernel, dim=DIM),
-    MeanPrediction(weights=np.array([-1.0, 0.0])),  # f1 のみを対象
-    n_neighbors=30,
-)
-manager_f2 = LocalSurrogateManager(
-    RBFSurrogate(gaussian_kernel, dim=DIM),
-    MeanPrediction(weights=np.array([0.0, -1.0])),  # f2 のみを対象
-    n_neighbors=30,
-)
-
-ensemble_manager = EnsembleSurrogateManager(
-    managers=[manager_f1, manager_f2],
-    weights=np.array([1.0, 1.0]),  # 均等に重み付け
-)
-```
-
-```python
-ctx = (
-    Optimizer(problem)
-    .set_initializer(initializer)
-    .set_algorithm(algorithm)
-    .set_surrogate_manager(ensemble_manager)
-    .set_strategy(strategy)
-    .set_termination(termination)
-    .run()
-)
-```
-
----
 
 ## 参照
 
 - {py:func}`saealib.minimize`
-- {py:class}`saealib.Optimizer`
-- {py:class}`saealib.GA` / {py:class}`saealib.PSO`
-- {py:class}`saealib.IndividualBasedStrategy` / {py:class}`saealib.GenerationBasedStrategy` / {py:class}`saealib.PreSelectionStrategy`
-- {py:class}`saealib.LocalSurrogateManager` / {py:class}`saealib.EnsembleSurrogateManager`
-- {py:class}`saealib.RBFSurrogate`
-- {py:class}`saealib.MeanPrediction`
+- {py:class}`saealib.Problem`
+- {py:class}`saealib.NSGA2Comparator` / {py:class}`saealib.SPEA2Comparator` / {py:class}`saealib.HypervolumeComparator` / {py:class}`saealib.EpsilonDominanceComparator` / {py:class}`saealib.NSGA3Comparator` / {py:class}`saealib.RNSGA2Comparator`
 - {py:func}`saealib.non_dominated_sort`
-- {py:class}`saealib.LHSInitializer`
-- {py:class}`saealib.Termination` / {py:func}`saealib.max_fe`

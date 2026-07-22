@@ -1,171 +1,173 @@
 # 再現性とチェックポイント
 
-このチュートリアルでは，乱数シードによる再現性の確保と，長時間最適化の中断・再開（チェックポイント）の方法を説明します．
+長時間実行する最適化を再現可能にし、途中から再開できるようにします。
 
-## シードによる再現性
+チェックポイント機能は低レベルAPIの`Optimizer`でのみ使えます。
 
-`Optimizer` にシードを渡すと，初期個体生成から各世代のランダム操作まで，すべての乱数を一元管理します．
+`Optimizer`の組み立て方は[単目的最適化](single_objective.md)の低レベルAPI節を参照してください。
+
+## 乱数シードによる再現性
+
+`Optimizer(problem, seed=...)`に同じ`seed`を渡すと、乱数を使う処理が同じ手順で初期化され、同一の結果が得られます。
 
 ```python
 import numpy as np
 from saealib import (
-    GA, CrossoverBLXAlpha, IndividualBasedStrategy, LHSInitializer,
-    MutationUniform, Optimizer, RBFSurrogate, SequentialSelection,
-    Termination, TruncationSelection, gaussian_kernel, max_fe,
+    Problem,
+    Optimizer,
+    GA,
+    CrossoverBLXAlpha,
+    MutationUniform,
+    SequentialSelection,
+    TruncationSelection,
+    RBFSurrogate,
+    gaussian_kernel,
+    LocalSurrogateManager,
+    MeanPrediction,
+    IndividualBasedStrategy,
+    LHSInitializer,
+    Termination,
+    max_fe,
 )
-from saealib.comparators import SingleObjectiveComparator
-from saealib.problem import Problem
 
-def sphere(x):
-    return np.array([np.sum(x ** 2)])
+
+def expensive_func(x):
+    return np.sum(x**2)
+
+
+DIM = 10
+SEED = 0
 
 problem = Problem(
-    func=sphere,
-    dim=5,
+    func=expensive_func,
+    dim=DIM,
     n_obj=1,
     direction=np.array([-1.0]),
-    lb=[-5.0] * 5,
-    ub=[5.0] * 5,
-    comparator=SingleObjectiveComparator(),
+    lb=[-5.0] * DIM,
+    ub=[5.0] * DIM,
 )
 
-def make_optimizer(seed=None):
+
+def build_optimizer(max_fe_value):
     return (
-        Optimizer(problem, seed=seed)         # seed を Optimizer に渡す
-        .set_initializer(LHSInitializer(20, 10))
-        .set_algorithm(GA(
-            crossover=CrossoverBLXAlpha(crossover_rate=0.9, alpha=0.5),
-            mutation=MutationUniform(mutation_rate=0.1),
-            parent_selection=SequentialSelection(),
-            survivor_selection=TruncationSelection(),
-        ))
-        .set_surrogate(RBFSurrogate(gaussian_kernel, 5), n_neighbors=10)
-        .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.5))
-        .set_termination(Termination(max_fe(200)))
+        Optimizer(problem, seed=SEED)
+        .set_initializer(
+            LHSInitializer(n_init_archive=5 * DIM, n_init_population=4 * DIM, seed=SEED)
+        )
+        .set_algorithm(
+            GA(
+                crossover=CrossoverBLXAlpha(0.7, 0.4),
+                mutation=MutationUniform(0.3),
+                parent_selection=SequentialSelection(),
+                survivor_selection=TruncationSelection(),
+            )
+        )
+        .set_surrogate_manager(
+            LocalSurrogateManager(RBFSurrogate(gaussian_kernel, dim=DIM), MeanPrediction())
+        )
+        .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.1))
+        .set_termination(Termination(max_fe(max_fe_value)))
     )
 
-# 同じシードで2回実行 → 結果は完全一致
-ctx1 = make_optimizer(seed=42).run()
-ctx2 = make_optimizer(seed=42).run()
 
-assert np.array_equal(ctx1.archive.x, ctx2.archive.x)  # 一致
+ctx1 = build_optimizer(300).run()
+ctx2 = build_optimizer(300).run()
+
+print(np.allclose(ctx1.archive.get_array("f"), ctx2.archive.get_array("f")))  # True
 ```
 
-`seed=None`（デフォルト）では非決定的に動作します．
-
----
+`build_optimizer`は、以降の節でも同じコンポーネント構成のまま`Optimizer`を作り直すために使います。
 
 ## チェックポイントの保存と再開
 
-### npz 形式（ポータブル）
-
-`ctx.save(path)` でアーカイブ・個体群・乱数状態を npz ファイルに保存します．再開は `OptimizationContext.load` でコンテキストを復元し，`optimizer.run_from` に渡します．
+`run()`が返す`ctx`は、`ctx.save(path)`でnpz形式の単一ファイルに保存できます。
 
 ```python
-from saealib.context import OptimizationContext
-
-# 前半を実行
-opt_first = make_optimizer(seed=42)
-opt_first.set_termination(Termination(max_fe(100)))  # 100 FE まで
-ctx_mid = opt_first.run()
-
-# チェックポイントを保存
-ctx_mid.save("checkpoint.npz")
-print(f"saved: gen={ctx_mid.gen}, fe={ctx_mid.fe}")
-
-# ─────── ここで中断・再起動 ───────
-
-# コンテキストを復元
-ctx_loaded = OptimizationContext.load("checkpoint.npz", problem)
-print(f"resumed={ctx_loaded.resumed}")  # True
-
-# 最終目標まで再開
-opt_resume = make_optimizer(seed=42)   # 同じ構成で再作成
-opt_resume.set_termination(Termination(max_fe(200)))  # 最終目標を設定
-ctx_final = opt_resume.run_from(ctx_loaded)
-
-print(f"final: gen={ctx_final.gen}, fe={ctx_final.fe}")
+ctx = build_optimizer(200).run()
+ctx.save("checkpoint.npz")
 ```
 
-> **再現性について**  
-> `ctx.rng` の内部状態ごと保存するため，同一バージョン・同一環境では中断なし実行と完全一致します．バージョンをまたぐ場合の一致は保証されません．
-
----
-
-### pickle 形式（より完全な復元）
-
-pickle を使うと，サロゲートの学習済みパラメータなど，Optimizer の全コンポーネントをそのまま保存・復元できます．
+保存したチェックポイントは`OptimizationState.load(path, problem)`で読み込み、`Optimizer.run_from(ctx)`に渡すと続きから再開できます。
 
 ```python
-import warnings
+from saealib.context import OptimizationState
 
-# Optimizer ごと保存
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")          # バージョン依存の警告を抑制
-    opt_mid.save_pickle(ctx_mid, "checkpoint.pkl")
+loaded_ctx = OptimizationState.load("checkpoint.npz", problem)
 
-# Optimizer ごと復元
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    opt_resume, ctx_loaded = Optimizer.load_pickle("checkpoint.pkl")
-
-opt_resume.set_termination(Termination(max_fe(200)))
-ctx_final = opt_resume.run_from(ctx_loaded)
+resumed_ctx = build_optimizer(600).run_from(loaded_ctx)
+print(resumed_ctx.fe)             # includes the evaluations from before saving
+print(resumed_ctx.data["resumed"])  # True
 ```
 
-> **制約**  
-> pickle ファイルは Python・ライブラリのバージョンに依存します．lambda 関数を `Problem.func` に使用している場合は pickle できません（モジュールレベルの関数を使用してください）．
+`ctx.data["resumed"]`は、`run_from()`で再開したコンテキストにだけ`True`が設定されるフラグです。
 
----
+`RunStartEvent`などのコールバックからは、`event.ctx.data["resumed"]`として参照できます。
 
 ## 自動チェックポイント
 
-`run()` / `iterate()` の `checkpoint_path` パラメータで，N 世代ごとに自動保存できます．
+`run()`/`iterate()`に`checkpoint_path`を渡すと、`checkpoint_interval`世代ごとに自動保存されます。
+
+`checkpoint_path`は単一ファイルではなくディレクトリとして扱われ、`checkpoint_{gen:06d}.npz`という名前で世代ごとのスナップショットが作られます。
 
 ```python
-ctx = opt.run(
-    checkpoint_path="checkpoints/",   # 保存先ディレクトリ
-    checkpoint_interval=5,             # 5 世代ごとに保存
-    checkpoint_format="npz",           # "npz" | "pickle" | "both"
-    checkpoint_delete_on_success=True, # 正常終了後に削除
+ctx = build_optimizer(300).run(checkpoint_path="checkpoints", checkpoint_interval=5)
+```
+
+再開するときは、ディレクトリ内の最新のスナップショットを読み込みます。
+
+```python
+from pathlib import Path
+
+latest = sorted(Path("checkpoints").glob("checkpoint_*.npz"))[-1]
+loaded_ctx = OptimizationState.load(latest, problem)
+```
+
+正常終了後にスナップショットを残したくない場合は、`checkpoint_delete_on_success=True`を指定します（ディレクトリ自体は残り、中のファイルだけが削除されます）。
+
+```python
+ctx = build_optimizer(300).run(
+    checkpoint_path="checkpoints",
+    checkpoint_interval=5,
+    checkpoint_delete_on_success=True,
 )
 ```
 
-ファイルは `checkpoints/checkpoint_000005.npz`, `checkpoints/checkpoint_000010.npz`, … のように命名されます．
+## pickle形式での保存
 
-### CheckpointCallback を直接使う
+npzは`ctx`のみを保存しますが、pickle形式では学習済みのサロゲートパラメータを含めて`Optimizer`ごと保存できます。
 
-より細かい制御が必要な場合は `CheckpointCallback` を直接登録します．
+```python
+optimizer = build_optimizer(200)
+ctx = optimizer.run()
+optimizer.save_pickle(ctx, "checkpoint.pkl")
+
+loaded_optimizer, loaded_ctx = Optimizer.load_pickle("checkpoint.pkl")
+```
+
+実行時にPythonやライブラリのバージョンに関する`UserWarning`が出ることがあります。
+
+`Termination`にlambdaを使うなど、標準の`pickle`で直列化できないオブジェクトを含む`Optimizer`はpickle保存できません。
+
+## CheckpointCallbackを直接使う
+
+`run()`の`checkpoint_path`は、内部で`CheckpointCallback`を登録しているだけです。
+
+同じ処理を明示的に組み込むには、`CheckpointCallback`を`cbmanager`に登録します。
 
 ```python
 from saealib import CheckpointCallback
 
-cb = CheckpointCallback(
-    path="checkpoints/",
-    interval=5,
-    format="both",             # npz と pkl を両方保存
-    delete_on_success=False,
-    optimizer=opt,             # pickle 形式に必要
-)
-cb.register(opt.cbmanager)
+optimizer = build_optimizer(300)
+callback = CheckpointCallback("checkpoints", interval=5, optimizer=optimizer)
+callback.register(optimizer.cbmanager)
 
-ctx = opt.run()
+ctx = optimizer.run()
 ```
 
----
+`format="pickle"`または`format="both"`を指定する場合は、`optimizer`引数が必須です。
 
-## resumed フラグ
+## 参照
 
-チェックポイントから復元したコンテキストには `resumed=True` がセットされます．コールバックや戦略でこのフラグを参照できます．
-
-```python
-from saealib.callback import RunStartEvent
-
-def on_start(event):
-    if event.ctx.resumed:
-        print("チェックポイントから再開しました")
-    else:
-        print("新規実行を開始します")
-
-opt.cbmanager.register(RunStartEvent, on_start)
-```
+- {py:class}`saealib.Optimizer`
+- {py:class}`saealib.CheckpointCallback`
+- {py:func}`saealib.minimize`

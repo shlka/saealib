@@ -1,51 +1,69 @@
 # 単目的最適化
 
-このチュートリアルでは，高コストな目的関数を持つ単目的最適化問題を例に，`saealib` の使い方を段階的に説明します．
+評価コストの高い目的関数を持つ単目的最適化問題を、`saealib`で解きます。
+
+まず問題を定義し、高レベルAPIの`minimize`で解いたあと、`Optimizer`による低レベルAPIへ進みます。
+
+各コンポーネントの詳しい仕様やカスタマイズ方法は、この後の節からリンクする[コンポーネント](../components/index.md)配下の各ページを参照してください。
 
 ## 問題設定
 
-シミュレーションなど評価コストが高い関数を想定します．ここでは Sphere 関数を例として使います．
+シミュレーションのように、1回の呼び出しに時間がかかる目的関数を想定します。
+
+ここでは例として、評価コストの高さを模したSphere関数を最小化します。
 
 ```python
 import numpy as np
 
+
 def expensive_func(x):
-    # 実際には呼び出しに時間がかかる関数を想定
-    return np.sum(x ** 2)
+    # assume a function that is expensive to call in practice
+    return np.sum(x**2)
+
 
 DIM = 10
 LB = [-5.0] * DIM
-UB = [ 5.0] * DIM
+UB = [5.0] * DIM
 ```
 
----
+`DIM`は設計変数の次元数、`LB`と`UB`はその下界と上界を与える`DIM`次元のリストです。
 
-## 高レベルAPI: `minimize`
+目的関数は、`DIM`次元の設計変数を受け取り、目的関数値を返す`Callable`として定義します。
 
-最もシンプルな呼び出し方です．`dim`, `lb`, `ub` を指定するだけで実行できます．
+## 高レベルAPI: minimize / maximize
+
+`minimize`は、`dim`、`lb`、`ub`を指定するだけで最適化を実行できる高レベルAPIです。
 
 ```python
 from saealib import minimize
 
 result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, seed=0)
 
-print(result.X)   # 最適解の設計変数  shape: (dim,)
-print(result.F)   # 最適解の目的関数値  shape: (1,)
-print(result.fe)  # 真の関数評価回数
-print(result.gen) # 完了した世代数
+print(result.x)   # optimal design variables  shape: (dim,)
+print(result.f)   # optimal objective value  shape: (n_obj,)
+print(result.fe)  # true function evaluations
+print(result.gen) # completed generations
 ```
 
-`max_fe` を省略すると `200 * dim` が上限として使われます．評価回数を明示的に制限するには：
+最大評価回数`max_fe`を省略すると、`200 * dim`がデフォルト値として使われます。
+
+評価回数を明示的に制限するには、次のように指定します。
 
 ```python
 result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, max_fe=500, seed=0)
 ```
 
----
+## コンポーネントの切り替え
 
-## アルゴリズムの選択
+`minimize`は、進化的アルゴリズム、サロゲートモデル、評価戦略という3つのコンポーネントを、それぞれ`algorithm`、`surrogate`、`strategy`引数の文字列で切り替えられます。
 
-`algorithm` 引数で進化的アルゴリズムを切り替えられます．
+3つとも、文字列の代わりにインスタンスを直接渡すこともできます。
+
+各コンポーネントの内部動作やカスタマイズ方法は、[Algorithm](../components/algorithm.md)、[Surrogate](../components/surrogate.md)、[OptimizationStrategy](../components/strategies.md)のページで扱います。
+
+### アルゴリズム
+
+`algorithm`引数は、候補解を生成する進化的アルゴリズムを選びます。
 
 | 文字列 | クラス | 特徴 |
 |--------|--------|------|
@@ -53,99 +71,83 @@ result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, max_fe=500, seed=0)
 | `'PSO'` | `PSO` | 粒子の速度更新による探索 |
 
 ```python
-# GA (デフォルト)
-result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, algorithm='GA', seed=0)
-
-# PSO
-result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, algorithm='PSO', seed=0)
+result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, algorithm="PSO", seed=0)
 ```
 
-GA のパラメータ（交叉率など）を細かく調整したい場合は，インスタンスを直接渡します．
+### サロゲート
+
+`surrogate`引数は、目的関数を近似するサロゲートモデルを選びます。
+
+| 文字列 | 解決される構成 | 説明 |
+|--------|--------|------|
+| `'rbf'` | `RBFSurrogate` + `LocalSurrogateManager`（デフォルト） | ガウスRBFカーネルによる近傍点の局所フィット |
 
 ```python
-from saealib.algorithms.ga import GA
-from saealib.operators.crossover import CrossoverBLXAlpha
-from saealib.operators.mutation import MutationUniform
-from saealib.operators.selection import SequentialSelection, TruncationSelection
-
-ga = GA(
-    crossover=CrossoverBLXAlpha(crossover_rate=0.9, alpha=0.5),
-    mutation=MutationUniform(mutation_rate=0.1),
-    parent_selection=SequentialSelection(),
-    survivor_selection=TruncationSelection(),
-)
-
-result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, algorithm=ga, seed=0)
+result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, surrogate="rbf", seed=0)
 ```
 
----
+### 評価戦略
 
-## サロゲート支援戦略の選択
-
-`strategy` 引数で，サロゲートモデルをどのように使うか（どの候補を真に評価するか）を制御します．
+`strategy`引数は、生成した候補解のうちどれに真の（高コストな）評価を行うかを決める評価戦略を選びます。
 
 | 文字列 | クラス | 動作 |
 |--------|--------|------|
-| `'ib'` | `IndividualBasedStrategy` | 各世代の候補を個別にサロゲートで評価し，上位 `evaluation_ratio` 割のみを真に評価（デフォルト） |
-| `'gb'` | `GenerationBasedStrategy` | `gen_ctrl` 世代分をサロゲートのみで回し，1世代だけ真に評価 |
-| `'ps'` | `PreSelectionStrategy` | 大量の候補を生成してサロゲートで絞り込み，上位 `n_select` 個だけを真に評価 |
+| `'ib'` | `IndividualBasedStrategy` | 候補を個別にサロゲートで評価し、上位`evaluation_ratio`割だけを真に評価する（デフォルト） |
+| `'gb'` | `GenerationBasedStrategy` | `gen_ctrl`世代分をサロゲートのみで進め、1世代だけ真に評価する |
+| `'ps'` | `PreSelectionStrategy` | 大量の候補をサロゲートで絞り込み、上位`n_select`個だけを真に評価する |
 
 ```python
-# Individual-based (デフォルト): 評価コストが非常に高い場合に向く
-result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, strategy='ib', seed=0)
-
-# Generation-based: サロゲートの信頼性が高いときに向く
-result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, strategy='gb', seed=0)
-
-# Pre-selection: 候補数を大きく増やして探索したいときに向く
-result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, strategy='ps', seed=0)
+result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, strategy="ib", seed=0)
 ```
 
----
+## 低レベルAPI: Optimizer
 
-## 低レベルAPI: `Optimizer`
+`minimize`は各コンポーネントを既定の組み合わせで結び付けますが、個々のパラメータまでは調整できません。
 
-コンポーネントを個別にインスタンス化して `Optimizer` に組み込む方法です．`minimize` では調整できない細かい設定が可能です．
-
-### 基本的な組み立て
+コンポーネントを個別にインスタンス化し、`Optimizer`に組み込めば、この制約を外せます。
 
 ```python
 import numpy as np
-from saealib.problem import Problem
-from saealib.optimizer import Optimizer
-from saealib.algorithms.ga import GA
-from saealib.operators.crossover import CrossoverBLXAlpha
-from saealib.operators.mutation import MutationUniform
-from saealib.operators.selection import SequentialSelection, TruncationSelection
-from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
-from saealib.surrogate.manager import LocalSurrogateManager
-from saealib.acquisition.mean import MeanPrediction
-from saealib.strategies.ib import IndividualBasedStrategy
-from saealib.execution.initializer import LHSInitializer
-from saealib.termination import Termination, max_fe
+from saealib import (
+    Problem,
+    Optimizer,
+    GA,
+    CrossoverBLXAlpha,
+    MutationUniform,
+    SequentialSelection,
+    TruncationSelection,
+    RBFSurrogate,
+    gaussian_kernel,
+    LocalSurrogateManager,
+    MeanPrediction,
+    IndividualBasedStrategy,
+    LHSInitializer,
+    Termination,
+    max_fe,
+)
 
 DIM = 10
+SEED = 0
+
 problem = Problem(
     func=expensive_func,
     dim=DIM,
     n_obj=1,
-    weight=np.array([-1.0]),  # -1: 最小化
+    direction=np.array([-1.0]),  # -1: minimize
     lb=[-5.0] * DIM,
-    ub=[ 5.0] * DIM,
+    ub=[5.0] * DIM,
 )
 
 algorithm = GA(
-    crossover=CrossoverBLXAlpha(crossover_rate=0.7, alpha=0.4),
-    mutation=MutationUniform(mutation_rate=0.3),
+    crossover=CrossoverBLXAlpha(0.7, 0.4),
+    mutation=MutationUniform(0.3),
     parent_selection=SequentialSelection(),
     survivor_selection=TruncationSelection(),
 )
 
-surrogate = RBFSurrogate(gaussian_kernel, dim=DIM)
 surrogate_manager = LocalSurrogateManager(
-    surrogate,
-    MeanPrediction(weights=np.array([-1.0])),
-    n_neighbors=30,
+    RBFSurrogate(gaussian_kernel, dim=DIM),
+    MeanPrediction(),  # direction is auto-injected from problem.direction
 )
 
 strategy = IndividualBasedStrategy(evaluation_ratio=0.1)
@@ -153,13 +155,13 @@ strategy = IndividualBasedStrategy(evaluation_ratio=0.1)
 initializer = LHSInitializer(
     n_init_archive=5 * DIM,
     n_init_population=4 * DIM,
-    seed=0,
+    seed=SEED,
 )
 
 termination = Termination(max_fe(500))
 
 ctx = (
-    Optimizer(problem)
+    Optimizer(problem, seed=SEED)
     .set_initializer(initializer)
     .set_algorithm(algorithm)
     .set_surrogate_manager(surrogate_manager)
@@ -169,68 +171,45 @@ ctx = (
 )
 
 archive_x = ctx.archive.get_array("x")
-archive_f = ctx.archive.get_array("f")
+archive_f = ctx.archive.get_array("f")[:, 0]
 best_idx = int(np.argmin(archive_f))
 print("最適解:", archive_x[best_idx])
 print("目的値:", archive_f[best_idx])
 print("評価回数:", ctx.fe)
 ```
 
-### 複数の終了条件
+乱数シードは、`Optimizer(problem, seed=SEED)`と`LHSInitializer(..., seed=SEED)`の両方に同じ値を渡してください。
 
-`Termination` には複数の条件を渡せます．いずれかが満たされた時点で終了します．
+`Optimizer`の`seed`は、`set_initializer()`を呼ばずに済ませたとき（`minimize`/`maximize`など）だけ、デフォルトの`LHSInitializer`へ自動的に伝播します。
+
+初期化子を自分で組み立てる場合は、明示的に渡す必要があります。
+
+`Termination`には複数の条件を渡せます。
+
+列挙した条件は、いずれか一つが満たされた時点で終了します（OR結合）。
 
 ```python
-from saealib.termination import Termination, max_fe, max_gen
+from saealib import Termination, max_fe, max_gen
 
 termination = Termination(max_fe(500), max_gen(200))
 ```
 
-カスタム条件を Lambda で追加することもできます．
+カスタム条件をlambdaで追加することもできます。
 
 ```python
 termination = Termination(
     max_fe(500),
-    lambda ctx: ctx.archive.get_array("f").min() < 1e-4,
+    lambda ctx: ctx.archive.get_array("f")[:, 0].min() < 1e-4,
 )
 ```
 
-### `GlobalSurrogateManager` を使う
+`run()`の代わりに`iterate()`を使うと、世代単位でコンテキストを取得できます。
 
-`LocalSurrogateManager` はデフォルトで近傍 k 点だけを使ってサロゲートを局所フィットします．アーカイブ全体を使ってグローバルなフィットを行うには `GlobalSurrogateManager` を使います．
-
-```python
-from saealib.surrogate.manager import GlobalSurrogateManager
-from saealib.acquisition.mean import MeanPrediction
-
-surrogate_manager = GlobalSurrogateManager(
-    surrogate=RBFSurrogate(gaussian_kernel, dim=DIM),
-    acquisition=MeanPrediction(weights=np.array([-1.0])),
-)
-```
-
-### `PreSelectionStrategy` を使う
-
-大量の候補をサロゲートで絞り込む戦略です．
-
-```python
-from saealib.strategies.ps import PreSelectionStrategy
-
-strategy = PreSelectionStrategy(
-    n_candidates=100,  # サロゲートで評価する候補数
-    n_select=5,        # 真に評価する候補数
-)
-```
-
----
-
-## 世代ごとのアクセス: `Optimizer.iterate()`
-
-`run()` の代わりに `iterate()` を使うと，世代単位でコンテキストを取得できます．進捗の記録やカスタムな早期終了に使えます．
+進捗の記録や、カスタムな早期終了の実装に使えます。
 
 ```python
 optimizer = (
-    Optimizer(problem)
+    Optimizer(problem, seed=SEED)
     .set_initializer(initializer)
     .set_algorithm(algorithm)
     .set_surrogate_manager(surrogate_manager)
@@ -240,14 +219,12 @@ optimizer = (
 
 history = []
 for ctx in optimizer.iterate():
-    best_f = ctx.archive.get_array("f").min()
+    best_f = ctx.archive.get_array("f")[:, 0].min()
     history.append((ctx.fe, best_f))
     print(f"gen={ctx.gen:4d}  fe={ctx.fe:4d}  best_f={best_f:.6f}")
 
-print("終了 — 評価回数:", ctx.fe)
+print("評価回数:", ctx.fe)
 ```
-
----
 
 ## 参照
 
@@ -255,9 +232,8 @@ print("終了 — 評価回数:", ctx.fe)
 - {py:class}`saealib.Optimizer`
 - {py:class}`saealib.GA` / {py:class}`saealib.PSO`
 - {py:class}`saealib.IndividualBasedStrategy` / {py:class}`saealib.GenerationBasedStrategy` / {py:class}`saealib.PreSelectionStrategy`
-- {py:class}`saealib.LocalSurrogateManager` / {py:class}`saealib.GlobalSurrogateManager`
+- {py:class}`saealib.LocalSurrogateManager`
 - {py:class}`saealib.RBFSurrogate`
 - {py:class}`saealib.MeanPrediction`
 - {py:class}`saealib.LHSInitializer`
 - {py:class}`saealib.Termination` / {py:func}`saealib.max_fe` / {py:func}`saealib.max_gen`
-
