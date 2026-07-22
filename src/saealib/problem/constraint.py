@@ -343,13 +343,18 @@ class EpsilonConstraintHandler(ConstraintHandler):
     in Eq. (7) of Mezura-Montes & Coello Coello (2011) — inequality
     violations are not squared and values are not normalised.
 
+    The ε-constrained method itself originates from Takahama & Sakai
+    (2006); that paper has not been obtained, so it is credited here by
+    name only. Eq. (7)-(9) above are cited via the Mezura-Montes & Coello
+    Coello (2011) survey, which was read directly and attributes the
+    method to Takahama & Sakai in its own text.
+
     References
     ----------
-    Mezura-Montes, E., & Coello Coello, C. A. (2011).
-    *Constraint-handling in nature-inspired numerical optimization: Past,
-    present and future.*
-    Swarm and Evolutionary Computation, 1(4), 173-194.
-    https://doi.org/10.1016/j.swevo.2011.10.001
+    :cite:`mezuramontes2011epsilon`: Mezura-Montes, E., & Coello Coello,
+    C. A. (2011). Constraint-handling in nature-inspired numerical
+    optimization: Past, present and future. *Swarm and Evolutionary
+    Computation*, 1(4), 173-194.
     """
 
     def __init__(self, schedule: Callable[[int], float]):
@@ -398,6 +403,12 @@ class GradientRepairHandler(ConstraintHandler):
     whose ``gradient()`` returns ``None`` are skipped during repair; they still
     contribute to ``cv`` via :meth:`compute_cv`.
 
+    Simplified relative to Eq. (8)-(9) of Chootinan & Chen (2006): the
+    original method solves all constraints jointly via the Moore-Penrose
+    pseudoinverse of the stacked Jacobian; this handler instead applies a
+    per-constraint (equality-only) regularised Newton step, and the
+    ``ridge`` regularisation term is not present in the original paper.
+
     Parameters
     ----------
     max_iter : int, optional
@@ -408,11 +419,9 @@ class GradientRepairHandler(ConstraintHandler):
 
     References
     ----------
-    Chootinan, P., & Chen, A. (2006).
-    *Constraint handling in genetic algorithms using a gradient-based repair
-    method.*
-    Computers & Operations Research, 33(8), 2263-2281.
-    https://doi.org/10.1016/j.cor.2005.02.002
+    :cite:`chootinan2006gradientrepair`: Chootinan, P., & Chen, A. (2006).
+    Constraint handling in genetic algorithms using a gradient-based repair
+    method. *Computers & Operations Research*, 33(8), 2263-2281.
     """
 
     def __init__(self, max_iter: int = 1, ridge: float = 1e-12):

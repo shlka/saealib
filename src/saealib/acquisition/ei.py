@@ -44,6 +44,12 @@ class ExpectedImprovement(AcquisitionFunction):
         ``direction_to_minimize_sign`` before the (minimize-only) EI formula
         above runs. ``None`` (default) means already-minimize; when unset,
         it is auto-injected from ``problem.direction`` at run start.
+
+    References
+    ----------
+    :cite:`jones1998ego`: Jones, D. R., Schonlau, M., & Welch, W. J. (1998).
+    Efficient global optimization of expensive black-box functions. *Journal
+    of Global Optimization*, 13(4), 455-492.
     """
 
     requires_uncertainty: bool = True

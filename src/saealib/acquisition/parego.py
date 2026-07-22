@@ -53,6 +53,18 @@ class ParEGOAcquisition(AcquisitionFunction):
         (minimize-only) scalarisation above runs. ``None`` (default) means
         already-minimize; when unset, it is auto-injected from
         ``problem.direction`` at run start.
+
+    References
+    ----------
+    :cite:`knowles2006parego`: Knowles, J. (2006). ParEGO: A hybrid
+    algorithm with on-line landscape approximation for expensive
+    multiobjective optimization problems. *IEEE Transactions on
+    Evolutionary Computation*, 10(1), 50-66. (Conceptual origin.)
+
+    :cite:`chugh2020scalarizing`: Chugh, T. (2020). Scalarizing functions in
+    Bayesian multiobjective optimization. *2020 IEEE Congress on
+    Evolutionary Computation (CEC)*, 1-8. (Eq. 8; scalarization formula
+    used here.)
     """
 
     requires_uncertainty: bool = True

@@ -165,6 +165,15 @@ class SklearnGPRSurrogate(SklearnSurrogate):
         Keyword arguments forwarded to
         ``sklearn.gaussian_process.GaussianProcessRegressor``
         (e.g. ``kernel``, ``alpha``, ``n_restarts_optimizer``).
+
+    References
+    ----------
+    :cite:`sacks1989dace`: Sacks, J., Welch, W. J., Mitchell, T. J., & Wynn,
+    H. P. (1989). Design and analysis of computer experiments. *Statistical
+    Science*, 4(4), 409-423.
+
+    :cite:`rasmussen2006gpml`: Rasmussen, C. E., & Williams, C. K. I.
+    (2006). *Gaussian Processes for Machine Learning*. MIT Press.
     """
 
     provides_uncertainty: bool = True

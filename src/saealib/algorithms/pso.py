@@ -39,6 +39,17 @@ class PSO(Algorithm):
         Social coefficient (global best attraction).
     v_max : float or None
         Maximum velocity magnitude per dimension. ``None`` disables clamping.
+
+    References
+    ----------
+    :cite:`kennedy1995pso`: Kennedy, J., & Eberhart, R. (1995). Particle
+    swarm optimization. *Proceedings of the IEEE International Conference
+    on Neural Networks (ICNN)*, 4, 1942-1948.
+
+    :cite:`shi1998inertia`: Shi, Y., & Eberhart, R. (1998). A modified
+    particle swarm optimizer. *Proceedings of the IEEE International
+    Conference on Evolutionary Computation (ICEC)*, 69-73. (Introduces
+    the inertia weight ``w`` used here.)
     """
 
     def __init__(

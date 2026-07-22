@@ -104,10 +104,11 @@ class ManagerSwitcher(AccuracyBasedSurrogateSwitcher["SurrogateManager"]):
 class StrategySwitcher(AccuracyBasedSurrogateSwitcher["OptimizationStrategy"]):
     """Switch between two optimization strategies based on an accuracy threshold.
 
-    Implements the threshold-based PS/IB-GB switching from Hanawa et al.
-    (2025): use a surrogate-heavy strategy (e.g. PS) when Spearman rho
-    surpasses the threshold, fall back to a more robust strategy (IB or GB)
-    otherwise.
+    Generalizes a threshold-based switch between two strategies to an
+    arbitrary accuracy metric and pair of strategies: use ``primary``
+    (e.g. a surrogate-heavy strategy such as PS) once the metric surpasses
+    the threshold, otherwise fall back to ``fallback`` (e.g. a more robust
+    strategy such as IB or GB).
 
     Parameters
     ----------
@@ -118,8 +119,27 @@ class StrategySwitcher(AccuracyBasedSurrogateSwitcher["OptimizationStrategy"]):
     metric : str
         Metric key. Default: ``"spearman"``.
     threshold : float
-        Minimum acceptable metric value. Default: ``0.56``
-        (Hanawa et al. 2025).
+        Minimum acceptable metric value. Default: ``0.56``.
+
+    Notes
+    -----
+    The default threshold of 0.56 is taken from Hanawa et al. (2025,
+    Fig. 8a), which reports that an individual-based (IB) strategy was
+    recommended when Spearman rho was 0.56 or below. That paper's
+    empirical finding is a *three*-way split (low accuracy -> IB, medium
+    -> GB, high [~0.9-1.0] -> PS), not a two-way split at 0.56; a PS-heavy
+    strategy only becomes favorable at a separate, higher threshold. This
+    two-strategy ``StrategySwitcher`` is a simplified approximation of
+    that finding, so 0.56 is best used as an IB/GB boundary rather than as
+    a PS-switching threshold — callers pairing ``primary=PS`` with this
+    default should be aware of the mismatch.
+
+    References
+    ----------
+    :cite:`hanawa2025switching`: Hanawa, Y., Harada, T., & Miura, Y.
+    (2025). Impact of surrogate model accuracy on performance and model
+    management strategy in surrogate-assisted evolutionary algorithms.
+    *Array*, 27, 100461.
     """
 
     def __init__(

@@ -39,9 +39,18 @@ def sphere(n_var: int = 10) -> Problem:
     n_var : int
         Number of variables. Default: 10.
 
+    Notes
+    -----
+    The objective formula follows Jamil & Yang (2013) f137, but the
+    search bounds here are the conventional De Jong-style ``[-5.12,
+    5.12]`` rather than the ``[0, 10]`` given in that paper.
+
     References
     ----------
-    Jamil & Yang (2013) IJMMNO 4(2), f137.
+    :cite:`jamil2013benchmark`: Jamil, M., & Yang, X.-S. (2013). A
+    literature survey of benchmark functions for global optimisation
+    problems. *International Journal of Mathematical Modelling and
+    Numerical Optimisation*, 4(2), 150-194. (f137.)
     """
 
     def func(x: np.ndarray) -> np.ndarray:
@@ -70,7 +79,10 @@ def rosenbrock(n_var: int = 10) -> Problem:
 
     References
     ----------
-    Jamil & Yang (2013) IJMMNO 4(2), f105.
+    :cite:`jamil2013benchmark`: Jamil, M., & Yang, X.-S. (2013). A
+    literature survey of benchmark functions for global optimisation
+    problems. *International Journal of Mathematical Modelling and
+    Numerical Optimisation*, 4(2), 150-194. (f105.)
     """
 
     def func(x: np.ndarray) -> np.ndarray:
@@ -100,7 +112,11 @@ def ackley(n_var: int = 10) -> Problem:
 
     References
     ----------
-    Jamil & Yang (2013) IJMMNO 4(2), f1; standard a=20, b=0.2, c=2*pi.
+    :cite:`jamil2013benchmark`: Jamil, M., & Yang, X.-S. (2013). A
+    literature survey of benchmark functions for global optimisation
+    problems. *International Journal of Mathematical Modelling and
+    Numerical Optimisation*, 4(2), 150-194. (f1; standard a=20, b=0.2,
+    c=2*pi.)
     """
 
     def func(x: np.ndarray) -> np.ndarray:

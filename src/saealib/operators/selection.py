@@ -49,7 +49,20 @@ class ParentSelection(ABC):
 
 # TODO: check required
 class TournamentSelection(ParentSelection):
-    """Tournament selection operator."""
+    """
+    Tournament selection operator.
+
+    References
+    ----------
+    :cite:`miller1995tournament`: Miller, B. L., & Goldberg, D. E. (1995).
+    Genetic algorithms, tournament selection, and the effects of noise.
+    *Complex Systems*, 9(3), 193-212.
+
+    :cite:`blickle1996selection`: Blickle, T., & Thiele, L. (1996). A
+    comparison of selection schemes used in evolutionary algorithms.
+    *Evolutionary Computation*, 4(4), 361-394. (Basis for the
+    ``tournament_size`` design.)
+    """
 
     def __init__(self, tournament_size: int):
         super().__init__()

@@ -17,7 +17,7 @@ Literature patterns covered by this module:
 +----+----------------------------------------+----------------------------------+
 | P2 | CPS-MOEA (Zhang et al., 2018)          | ``TopKBipartitionSet``           |
 +----+----------------------------------------+----------------------------------+
-| P3 | Pairwise SAEA (Hao et al., 2024)       | ``PairwiseComparisonSet``        |
+| P3 | Relation-model SAEA (Hao et al., 2024) | ``PairwiseComparisonSet``        |
 +----+----------------------------------------+----------------------------------+
 | P4 | SAPSO pbest (Tian et al., 2019)        | ``ReferencePointComparisonSet``  |
 +----+----------------------------------------+----------------------------------+

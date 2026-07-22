@@ -129,6 +129,19 @@ class RBFSurrogate(RegressionSurrogate):
         Dimensionality of the input data.
     n_obj : int or None
         Number of objectives. Set on first fit call.
+
+    References
+    ----------
+    Origin of RBF interpolation: Hardy (1971).
+
+    :cite:`gutmann2001rbf`: Gutmann, H.-M. (2001). A radial basis function
+    method for global optimization. *Journal of Global Optimization*,
+    19(3), 201-227.
+
+    :cite:`regis2005cors`: Regis, R. G., & Shoemaker, C. A. (2005).
+    Constrained global optimization of expensive black box functions using
+    radial basis functions. *Journal of Global Optimization*, 31(1),
+    153-171.
     """
 
     def __init__(self, kernel: Callable[..., Any], dim: int):

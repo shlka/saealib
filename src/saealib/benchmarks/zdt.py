@@ -34,7 +34,10 @@ def zdt1(n_var: int = 30) -> Problem:
 
     References
     ----------
-    Zitzler, Deb & Thiele (2000) EC 8(2), Section 4 Def. 4, Eq. (7).
+    :cite:`zitzler2000zdt`: Zitzler, E., Deb, K., & Thiele, L. (2000).
+    Comparison of multiobjective evolutionary algorithms: Empirical
+    results. *Evolutionary Computation*, 8(2), 173-195. (Section 4,
+    Definition 4, Eq. (7).)
     """
 
     def func(x: np.ndarray) -> np.ndarray:
@@ -65,7 +68,10 @@ def zdt2(n_var: int = 30) -> Problem:
 
     References
     ----------
-    Zitzler, Deb & Thiele (2000) EC 8(2), Section 4 Def. 4, Eq. (8).
+    :cite:`zitzler2000zdt`: Zitzler, E., Deb, K., & Thiele, L. (2000).
+    Comparison of multiobjective evolutionary algorithms: Empirical
+    results. *Evolutionary Computation*, 8(2), 173-195. (Section 4,
+    Definition 4, Eq. (8).)
     """
 
     def func(x: np.ndarray) -> np.ndarray:
@@ -97,7 +103,10 @@ def zdt3(n_var: int = 30) -> Problem:
 
     References
     ----------
-    Zitzler, Deb & Thiele (2000) EC 8(2), Section 4 Def. 4, Eq. (9).
+    :cite:`zitzler2000zdt`: Zitzler, E., Deb, K., & Thiele, L. (2000).
+    Comparison of multiobjective evolutionary algorithms: Empirical
+    results. *Evolutionary Computation*, 8(2), 173-195. (Section 4,
+    Definition 4, Eq. (9).)
     """
 
     def func(x: np.ndarray) -> np.ndarray:
@@ -130,7 +139,10 @@ def zdt4(n_var: int = 10) -> Problem:
 
     References
     ----------
-    Zitzler, Deb & Thiele (2000) EC 8(2), Section 4 Def. 4, Eq. (10).
+    :cite:`zitzler2000zdt`: Zitzler, E., Deb, K., & Thiele, L. (2000).
+    Comparison of multiobjective evolutionary algorithms: Empirical
+    results. *Evolutionary Computation*, 8(2), 173-195. (Section 4,
+    Definition 4, Eq. (10).)
     """
 
     def func(x: np.ndarray) -> np.ndarray:
@@ -178,7 +190,10 @@ def zdt5(
 
     References
     ----------
-    Zitzler, Deb & Thiele (2000) EC 8(2), Section 4 Def. 4, Eq. (11).
+    :cite:`zitzler2000zdt`: Zitzler, E., Deb, K., & Thiele, L. (2000).
+    Comparison of multiobjective evolutionary algorithms: Empirical
+    results. *Evolutionary Computation*, 8(2), 173-195. (Section 4,
+    Definition 4, Eq. (11).)
     """
     n_var = n_bits_b1 + n_rest * n_bits_rest
     variables: list[Variable] = [IntegerVariable(lb=0, ub=1) for _ in range(n_var)]
@@ -215,7 +230,10 @@ def zdt6(n_var: int = 10) -> Problem:
 
     References
     ----------
-    Zitzler, Deb & Thiele (2000) EC 8(2), Section 4 Def. 4, Eq. (12).
+    :cite:`zitzler2000zdt`: Zitzler, E., Deb, K., & Thiele, L. (2000).
+    Comparison of multiobjective evolutionary algorithms: Empirical
+    results. *Evolutionary Computation*, 8(2), 173-195. (Section 4,
+    Definition 4, Eq. (12).)
     """
 
     def func(x: np.ndarray) -> np.ndarray:

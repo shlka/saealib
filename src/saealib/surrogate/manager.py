@@ -354,7 +354,7 @@ class LocalSurrogateManager(SurrogateManager):
     For each candidate, retrieves the k nearest neighbors from the archive,
     fits the surrogate on that local neighborhood, and predicts the
     candidate's objective value. This corresponds to the individual-based
-    local modeling strategy (Guo et al., 2018).
+    local modeling strategy common in SAEA literature.
 
     NOTE: The same surrogate instance is reused across candidates (re-fit
     each iteration). This is not thread-safe. For parallel use, provide a
@@ -422,10 +422,10 @@ class LocalSurrogateManager(SurrogateManager):
         """Fit a local model per candidate and score each individually.
 
         When ``refit=True`` and an ``accuracy_evaluator`` is configured,
-        accuracy is estimated inline using the nearest-neighbor holdout method
-        (Hanawa et al., 2025): for each candidate, the closest archive neighbor
-        is reserved as a validation point and excluded from training.  Metrics
-        are averaged over all candidates and stored in :attr:`last_accuracy`.
+        accuracy is estimated inline using a nearest-neighbor holdout method:
+        for each candidate, the closest archive neighbor is reserved as a
+        validation point and excluded from training.  Metrics are averaged
+        over all candidates and stored in :attr:`last_accuracy`.
 
         Because the holdout point is excluded from training, the effective
         training-set size is ``n_neighbors - 1`` when an accuracy evaluator is

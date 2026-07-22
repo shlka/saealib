@@ -32,6 +32,17 @@ class ProbabilityOfFeasibility(AcquisitionFunction):
     ----------
     obj_idx : int
         Index of the predicted constraint to evaluate. Default: 0.
+
+    References
+    ----------
+    :cite:`schonlau1997pof`: Schonlau, M. (1997). Computer Experiments
+    and Global Optimization (PhD thesis, University of Waterloo).
+    (Earliest formulation.)
+
+    :cite:`gelbart2014pof`: Gelbart, M. A., Snoek, J., & Adams, R. P.
+    (2014). Bayesian optimization with unknown constraints. *Proceedings of
+    the 30th Conference on Uncertainty in Artificial Intelligence (UAI)*.
+    (Constraint-handling with independent surrogates.)
     """
 
     requires_uncertainty: bool = True
@@ -102,8 +113,9 @@ class ProductOfFeasibility(AcquisitionFunction):
     mean and standard deviation for the *i*-th constraint column.
 
     This is the standard acquisition function for constrained Bayesian
-    optimisation with independent constraint surrogates (Letham et al., 2019;
-    Eriksson & Poloczek, 2021). Use it with a surrogate trained on
+    optimisation with independent constraint surrogates
+    (:cite:`letham2019constraintbo`; Eriksson & Poloczek, 2021). Use it with
+    a surrogate trained on
     ``ConstraintObjectiveSet`` (which returns ``archive.g`` as ``train_y``),
     typically via ``PerObjectiveSurrogate([GP(), ...] * n_constraints)``.
 
@@ -127,6 +139,14 @@ class ProductOfFeasibility(AcquisitionFunction):
     Assumes constraints are independent. When constraints are strongly
     correlated, a multi-output GP with joint predictions is more accurate
     but is not required by this acquisition function.
+
+    References
+    ----------
+    :cite:`letham2019constraintbo`: Letham, B., Karrer, B., Ottoni, G., &
+    Bakshy, E. (2019). Constrained Bayesian optimization with noisy
+    experiments. *Bayesian Analysis*, 14(2), 495-519.
+
+    Conceptual origin also draws on Eriksson & Poloczek (2021), SCBO.
     """
 
     requires_uncertainty: bool = True

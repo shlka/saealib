@@ -475,7 +475,20 @@ class NSGA2Comparator(ParetoComparator):
         return result
 
     def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
-        """Compare via NSGA-II crowded comparison operator (Deb et al. 2002)."""
+        """Compare via the NSGA-II crowded comparison operator.
+
+        Implements the partial order defined by Deb et al. (2002) (Section
+        III-B.2, "Crowded-Comparison Operator", operator prec_n): prefer
+        the lower (better) nondomination rank; if ranks are equal, prefer
+        the individual with the larger crowding distance.
+
+        References
+        ----------
+        :cite:`deb2002nsga2`: Deb, K., Pratap, A., Agarwal, S., &
+        Meyarivan, T. (2002). A fast and elitist multiobjective genetic
+        algorithm: NSGA-II. *IEEE Transactions on Evolutionary
+        Computation*, 6(2), 182-197.
+        """
         cv = population.get_array("cv")
         cv_a = float(cv[idx_a])
         cv_b = float(cv[idx_b])
@@ -550,11 +563,13 @@ class SPEA2Comparator(Comparator):
 
     References
     ----------
-    .. [1] Zitzler, E., Laumanns, M., & Thiele, L. (2001). SPEA2: Improving the
-       Strength Pareto Evolutionary Algorithm.  TIK-Report 103, ETH Zurich.
-    .. [2] Deb, K. (2000). An efficient constraint handling method for genetic
-       algorithms.  Computer Methods in Applied Mechanics and Engineering,
-       186(2-4), 311-338.
+    :cite:`zitzler2001spea2`: Zitzler, E., Laumanns, M., & Thiele, L. (2001).
+    SPEA2: Improving the Strength Pareto Evolutionary Algorithm. TIK-Report
+    103, ETH Zurich.
+
+    :cite:`deb2000feasibility`: Deb, K. (2000). An efficient constraint
+    handling method for genetic algorithms. Computer Methods in Applied
+    Mechanics and Engineering, 186(2-4), 311-338.
     """
 
     is_population_relative: bool = True
@@ -774,13 +789,13 @@ class HypervolumeComparator(ParetoComparator):
 
     References
     ----------
-    .. [1] Beume, N., Naujoks, B., & Emmerich, M. (2007).
-       SMS-EMOA: Multiobjective selection based on dominated hypervolume.
-       *European Journal of Operational Research*, 181(3), 1653-1669.
-       https://doi.org/10.1016/j.ejor.2006.08.008
-    .. [2] Deb, K. (2000). An efficient constraint handling method for genetic
-       algorithms.  *Computer Methods in Applied Mechanics and Engineering*,
-       186(2-4), 311-338.
+    :cite:`beume2007smsemoa`: Beume, N., Naujoks, B., & Emmerich, M. (2007).
+    SMS-EMOA: Multiobjective selection based on dominated hypervolume.
+    *European Journal of Operational Research*, 181(3), 1653-1669.
+
+    :cite:`deb2000feasibility`: Deb, K. (2000). An efficient constraint
+    handling method for genetic algorithms. *Computer Methods in Applied
+    Mechanics and Engineering*, 186(2-4), 311-338.
     """
 
     is_population_relative: bool = True
@@ -1251,10 +1266,10 @@ class NSGA3Comparator(ParetoComparator):
 
     References
     ----------
-    .. [1] Deb, K., & Jain, H. (2014). An Evolutionary Many-Objective
-       Optimization Algorithm Using Reference-Point-Based Nondominated
-       Sorting Approach, Part I. IEEE Transactions on Evolutionary
-       Computation, 18(4), 577-601. https://doi.org/10.1109/TEVC.2013.2281535
+    :cite:`deb2014nsga3`: Deb, K., & Jain, H. (2014). An Evolutionary
+    Many-Objective Optimization Algorithm Using Reference-Point-Based
+    Nondominated Sorting Approach, Part I. IEEE Transactions on Evolutionary
+    Computation, 18(4), 577-601.
     """
 
     def __init__(
@@ -1394,9 +1409,9 @@ class RNSGA2Comparator(ParetoComparator):
 
     References
     ----------
-    .. [1] Deb, K., & Sundar, J. (2006). Reference Point Based Multi-Objective
-       Optimization Using Evolutionary Algorithms. Proceedings of GECCO 2006,
-       635-642. https://doi.org/10.1145/1143997.1144112
+    :cite:`deb2006rnsga2`: Deb, K., & Sundar, J. (2006). Reference Point
+    Based Multi-Objective Optimization Using Evolutionary Algorithms.
+    Proceedings of GECCO 2006, 635-642.
     """
 
     def __init__(
