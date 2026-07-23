@@ -93,7 +93,7 @@ ctx = opt.run()
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} 拡張のガイドライン
+:::{grid-item-card} {fa}`wand-magic-sparkles;sd-mr-1` 拡張のガイドライン
 :link: extension_guidelines
 :link-type: doc
 
@@ -107,42 +107,42 @@ ctx = opt.run()
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} Problem
+:::{grid-item-card} {fa}`compass;sd-mr-1` Problem
 :link: problem
 :link-type: doc
 
 目的関数、変数、方向(direction)、制約を定義します。
 :::
 
-:::{grid-item-card} ConstraintHandler
+:::{grid-item-card} {fa}`filter;sd-mr-1` ConstraintHandler
 :link: constraints
 :link-type: doc
 
 制約違反の集約、実行可能性判定、修復戦略を独自実装する方法。
 :::
 
-:::{grid-item-card} Comparator
+:::{grid-item-card} {fa}`arrow-down-up-across-line;sd-mr-1` Comparator
 :link: comparators
 :link-type: doc
 
 解の順位付け。NSGA2/SPEA2/HVなどの使い分け。
 :::
 
-:::{grid-item-card} Dominator
+:::{grid-item-card} {fa}`crown;sd-mr-1` Dominator
 :link: dominance
 :link-type: doc
 
 Pareto支配やε支配などの支配関係を独自実装する方法。
 :::
 
-:::{grid-item-card} NonDominatedSorter
+:::{grid-item-card} {fa}`arrow-down-wide-short;sd-mr-1` NonDominatedSorter
 :link: nondominated_sorting
 :link-type: doc
 
 非優越ソートアルゴリズムの差し替え。crowding distanceやSPEA2 fitnessの計算も。
 :::
 
-:::{grid-item-card} Decomposition
+:::{grid-item-card} {fa}`scissors;sd-mr-1` Decomposition
 :link: decomposition
 :link-type: doc
 
@@ -156,35 +156,35 @@ MOEA/D風のスカラー化（分解）関数と`DecompositionComparator`。
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} Algorithm
+:::{grid-item-card} {fa}`dna;sd-mr-1` Algorithm
 :link: algorithm
 :link-type: doc
 
 GAとPSO、カスタム`Algorithm`の実装方法。
 :::
 
-:::{grid-item-card} Crossover
+:::{grid-item-card} {fa}`code-fork;sd-mr-1` Crossover
 :link: crossover
 :link-type: doc
 
 BLX-α/SBX/一様交叉など。混合変数問題での使い分け。
 :::
 
-:::{grid-item-card} Mutation
+:::{grid-item-card} {fa}`bolt-lightning;sd-mr-1` Mutation
 :link: mutation
 :link-type: doc
 
 一様/ガウス/多項式突然変異など。混合変数問題での使い分け。
 :::
 
-:::{grid-item-card} ParentSelection
+:::{grid-item-card} {fa}`hand-pointer;sd-mr-1` ParentSelection
 :link: parent_selection
 :link-type: doc
 
 トーナメント選択やルーレット選択などの親選択方式。
 :::
 
-:::{grid-item-card} SurvivorSelection
+:::{grid-item-card} {fa}`user-check;sd-mr-1` SurvivorSelection
 :link: survivor_selection
 :link-type: doc
 
@@ -198,35 +198,35 @@ BLX-α/SBX/一様交叉など。混合変数問題での使い分け。
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} Surrogate
+:::{grid-item-card} {fa}`brain;sd-mr-1` Surrogate
 :link: surrogate
 :link-type: doc
 
 組み込みサロゲート、外部ライブラリアダプタ、独自Surrogateの実装方法。
 :::
 
-:::{grid-item-card} SurrogateManager
+:::{grid-item-card} {fa}`sitemap;sd-mr-1` SurrogateManager
 :link: surrogate_manager
 :link-type: doc
 
 サロゲートの予測と獲得関数のスコアリングを橋渡しします。
 :::
 
-:::{grid-item-card} TrainingSet
+:::{grid-item-card} {fa}`database;sd-mr-1` TrainingSet
 :link: training_set
 :link-type: doc
 
 サロゲートの学習データをどこから、どのラベルで抽出するか。
 :::
 
-:::{grid-item-card} AcquisitionFunction
+:::{grid-item-card} {fa}`calculator;sd-mr-1` AcquisitionFunction
 :link: acquisition_functions
 :link-type: doc
 
 サロゲートの予測値から候補解をスコアリングします。
 :::
 
-:::{grid-item-card} AccuracyBasedSurrogateSwitcher
+:::{grid-item-card} {fa}`toggle-on;sd-mr-1` AccuracyBasedSurrogateSwitcher
 :link: surrogate_switching
 :link-type: doc
 
@@ -240,28 +240,28 @@ BLX-α/SBX/一様交叉など。混合変数問題での使い分け。
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} Initializer
+:::{grid-item-card} {fa}`play;sd-mr-1` Initializer
 :link: initialization
 :link-type: doc
 
 初期個体群とアーカイブの生成方法（LHS/Random/Sobol）と独自実装。
 :::
 
-:::{grid-item-card} Evaluator
+:::{grid-item-card} {fa}`microchip;sd-mr-1` Evaluator
 :link: evaluation
 :link-type: doc
 
 目的関数評価の逐次実行と並列実行のバックエンド。
 :::
 
-:::{grid-item-card} OptimizationStrategy
+:::{grid-item-card} {fa}`chess-knight;sd-mr-1` OptimizationStrategy
 :link: strategies
 :link-type: doc
 
 どの候補解に真の評価を行うかを決定します。
 :::
 
-:::{grid-item-card} Termination
+:::{grid-item-card} {fa}`stop;sd-mr-1` Termination
 :link: termination
 :link-type: doc
 
@@ -275,28 +275,28 @@ BLX-α/SBX/一様交叉など。混合変数問題での使い分け。
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} CallbackManager
+:::{grid-item-card} {fa}`eye;sd-mr-1` CallbackManager
 :link: callbacks
 :link-type: doc
 
 最適化パイプラインを観察し、ログ記録や内部へのアクセスを行います。
 :::
 
-:::{grid-item-card} Stage
+:::{grid-item-card} {fa}`bars-staggered;sd-mr-1` Stage
 :link: stage
 :link-type: doc
 
 OptimizationStrategy内部の世代ループを構成するステージ。独自Stageの実装方法。
 :::
 
-:::{grid-item-card} OptimizationState
+:::{grid-item-card} {fa}`hard-drive;sd-mr-1` OptimizationState
 :link: optimization_state
 :link-type: doc
 
 パイプラインを貫通する状態(ctx)。主要フィールドとチェックポイント。
 :::
 
-:::{grid-item-card} Population
+:::{grid-item-card} {fa}`users;sd-mr-1` Population
 :link: population
 :link-type: doc
 

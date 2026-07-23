@@ -5,21 +5,21 @@ saealibを初めて使う方へ。このセクションでは、saealibとは何
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} saealibとは
+:::{grid-item-card} {fa}`circle-info;sd-mr-1` saealibとは
 :link: what_is_saealib
 :link-type: doc
 
 サロゲート型進化的アルゴリズムとは何か、そしてなぜsaealibが存在するのかを理解します。
 :::
 
-:::{grid-item-card} インストール
+:::{grid-item-card} {fa}`download;sd-mr-1` インストール
 :link: installation
 :link-type: doc
 
 saealib本体とオプションの追加パッケージ（scikit-learn、XGBoost、LightGBM、PyTorchなど）をインストールします。
 :::
 
-:::{grid-item-card} クイックスタート
+:::{grid-item-card} {fa}`rocket;sd-mr-1` クイックスタート
 :link: quickstart
 :link-type: doc
 
