@@ -25,7 +25,7 @@ Beume, N., Naujoks, B., & Emmerich, M. (2007).
 SMS-EMOA: Multiobjective selection based on dominated hypervolume.
 European Journal of Operational Research, 181(3), 1653-1669.
 DOI: 10.1016/j.ejor.2006.08.008
-OCR: .claude/exp_ref/pdfs_ea_saea/user_provided/refs_EA_SAEA/beume2007_sms_emoa/beume2007_sms_emoa/auto/beume2007_sms_emoa.md
+OCR: .claude/exp_ref/literature/pdfs/beume2007_sms_emoa/auto/beume2007_sms_emoa.md
 
 ページオフセットの確認方法: OCR中のdiscarded_blocks（フッタ）を確認すると、
 beume2007_sms_emoa_middle.jsonのpdf_info[1].discarded_blocksに"1654"が現れ、
@@ -97,7 +97,7 @@ saealibの実装（HypervolumeComparator、src/saealib/comparators/comparators.p
   saealibに実装されていない。HypervolumeComparatorはΔ_Sベースの基本版（"SMS-EMOA"）のみ
   提供する。
 
-`.claude/exp_ref/named_algorithms_component_map.md`の「SMS-EMOA (selection)」行
+`.claude/exp_ref/literature/topic_notes/named_algorithms_component_map.md`の「SMS-EMOA (selection)」行
 （✅表記、実装キー`HV`、注記「Worst individual = smallest exclusive HV contribution」）は、
 Reduceの核となる選択則については妥当だが、以下の点への言及がない:
 1. HypervolumeComparator自体が「全フロントへの一般化」であること（docstringには明記済み）。

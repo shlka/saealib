@@ -22,7 +22,7 @@ Gaussian Process Optimization in the Bandit Setting: No Regret and Experimental 
 arXiv:0912.3995v4 [cs.LG], 9 Jun 2010（本文冒頭の脚注1に
 "This is the longer version of our paper in ICML 2010; see Srinivas et al. (2010)"
 とあり、ICML 2010短縮版の拡張版と自認するプレプリントである）。
-OCR: .claude/exp_ref/pdfs/srinivas_2010_gp_ucb/auto/srinivas_2010_gp_ucb.md
+OCR: .claude/exp_ref/literature/pdfs/srinivas_2010_gp_ucb/auto/srinivas_2010_gp_ucb.md
 
 引用する書誌情報（citation-workflow.md Case 1に従い出版版を引用。
 bibキーはsrinivas2012gpucbとして既にdocs/references.bibに登録済み、

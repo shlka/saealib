@@ -15,12 +15,12 @@ Jones, D. R., Schonlau, M., & Welch, W. J. (1998).
 Efficient global optimization of expensive black-box functions.
 Journal of Global Optimization, 13(4), 455-492.
 DOI: 10.1023/A:1008306431147
-OCR: exp_ref/pdfs_ea_saea/user_provided/refs_EA_SAEA/jones1998_ego/jones1998_ego/auto/jones1998_ego.md
+OCR: exp_ref/literature/pdfs/jones1998_ego/auto/jones1998_ego.md
 
 Brochu, E., Cora, V. M., & de Freitas, N. (2010).
 A tutorial on Bayesian optimization of expensive cost functions...
 arXiv:1012.2599
-OCR: exp_ref/pdfs/brochu_2010_bo_tutorial/auto/brochu_2010_bo_tutorial.md
+OCR: exp_ref/literature/pdfs/brochu_2010_bo_tutorial/auto/brochu_2010_bo_tutorial.md
 
 - ステップ1: Jones et al. Section 4.2 "THE EGO ALGORITHM"、p.473
   （space-filling designで約10k点をサンプリング）。OCR 303-305行目。

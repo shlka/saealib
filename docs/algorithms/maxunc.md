@@ -40,7 +40,7 @@ Büche, D., Schraudolph, N. N., & Koumoutsakos, P. (2005).
 Accelerating evolutionary algorithms with Gaussian process fitness function models.
 IEEE Transactions on Systems, Man, and Cybernetics—Part C, 35(2), 183-194.
 DOI: 10.1109/TSMCC.2004.841917
-OCR: .claude/exp_ref/pdfs_ea_saea/user_provided/refs_EA_SAEA/buche2005_gp_es/buche2005_gp_es/auto/buche2005_gp_es.md
+OCR: .claude/exp_ref/literature/pdfs/buche2005_gp_es/auto/buche2005_gp_es.md
 
 ページ番号の求め方: 同ディレクトリの `buche2005_gp_es_content_list.json` の `page_idx`
 （0始まり）の最大値は11で、これは掲載誌の12ページ分（pp.183-194）に一致する。
@@ -69,7 +69,7 @@ OCR: .claude/exp_ref/pdfs_ea_saea/user_provided/refs_EA_SAEA/buche2005_gp_es/buc
   "while termination criterion not reached:" ループ、Section IV.C、p.188。OCR 265行目。
 
 既知の課題（レビュー用・非表示、本文には出さない）:
-`.claude/exp_ref/named_algorithms_component_map.md`はMaxUnc samplingを✅Directと分類しているが、
+`.claude/exp_ref/literature/topic_notes/named_algorithms_component_map.md`はMaxUnc samplingを✅Directと分類しているが、
 不正確。論文が実際に提案するのは予測平均$\hat{t}(x)$と予測標準偏差$\sigma_t(x)$を組み合わせた
 メリット関数$f_{\mathrm{M}}(x) = \hat{t}(x) - \alpha\sigma_t(x)$（式(19)、$\alpha=0,1,2,4$の
 4通り並列評価）であり、`saealib`の`MaxUncertainty`が計算する$\sigma(x)$単独の基準は、この式で
