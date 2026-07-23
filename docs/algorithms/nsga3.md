@@ -27,7 +27,7 @@ An Evolutionary Many-Objective Optimization Algorithm Using Reference-Point-Base
 Nondominated Sorting Approach, Part I: Solving Problems With Box Constraints.
 IEEE Transactions on Evolutionary Computation, 18(4), 577-601.
 DOI: 10.1109/TEVC.2013.2281535
-OCR: .claude/exp_ref/pdfs_ea_saea/user_provided/refs_EA_SAEA/k2012009/k2012009/auto/k2012009.md
+OCR: .claude/exp_ref/literature/pdfs/k2012009/auto/k2012009.md
 
 Das, I., & Dennis, J. E. (1998).
 Normal-boundary intersection: A new method for generating the Pareto surface
@@ -117,7 +117,7 @@ saealibの実装（NSGA3Comparator、src/saealib/comparators/comparators.py 1208
   逐語的な手続きではなくsaealib側の書き換えだが、境界フロント到達時点での
   ニッチカウントの値は論文の定義と一致する。
 
-`.claude/exp_ref/named_algorithms_component_map.md`のNSGA-III行（✅Direct表記、
+`.claude/exp_ref/literature/topic_notes/named_algorithms_component_map.md`のNSGA-III行（✅Direct表記、
 「Reference-point association; niche count drives preference within fronts」）は、
 正規化・対応付け・ニッチ保存の核となる計算については概ね妥当な評価だが、上記の
 「論文内部の地の文と疑似コードの不一致」への言及がなく、またSection IV-Fの

@@ -29,7 +29,7 @@ algorithms/配下は「文献名からの逆引き」に徹する。両者の内
 
 ## 掲載範囲の判断
 
-`.claude/exp_ref/named_algorithms_component_map.md` に、既存アルゴリズムのsaealib上の
+`.claude/exp_ref/literature/topic_notes/named_algorithms_component_map.md` に、既存アルゴリズムのsaealib上の
 再現度が ✅Direct（厳密に一致）/ ⚠️Approx（近似）/ ❌Bug（既知バグで再現不可）で
 分類されている。❌Bugのアルゴリズムはバグ修正まで掲載しない。⚠️Approxは掲載してよいが、
 「近似の場合の注記」節を必ず設ける。
