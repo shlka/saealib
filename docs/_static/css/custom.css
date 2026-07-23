@@ -248,5 +248,27 @@ details[open] summary {
     border-bottom: 1px solid var(--pst-color-border);
 }
 
+/* -- Card Title Layout & Icon Alignment ------------------------------- */
+.sd-card-title {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 0.5rem;
+    line-height: 1.35;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    min-width: 0;
+}
+
+.sd-card-title i,
+.sd-card-title span,
+.sd-card-title svg {
+    grid-column: 1;
+    flex-shrink: 0;
+}
+
+
+
+
 
 

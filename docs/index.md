@@ -26,7 +26,7 @@ saealibとは？
 :gutter: 3
 :margin: 4 4 0 0
 
-:::{grid-item-card} 高レベルAPI
+:::{grid-item-card} {fa}`bolt;sd-mr-1` 高レベルAPI
 :link: getting_started/quickstart
 :link-type: doc
 
@@ -40,14 +40,14 @@ result = minimize(func, dim=5,
 `minimize()` / `maximize()`による、定型コード不要の高レベルAPI。
 :::
 
-:::{grid-item-card} 低レベルAPI
+:::{grid-item-card} {fa}`sliders;sd-mr-1` 低レベルAPI
 :link: components/index
 :link-type: doc
 
 `Optimizer`ビルダーと`iterate()`ジェネレータにより、研究用途向けに世代ごとの検査やカスタムループ制御が可能です。
 :::
 
-:::{grid-item-card} 拡張性
+:::{grid-item-card} {fa}`puzzle-piece;sd-mr-1` 拡張性
 :link: components/index
 :link-type: doc
 
@@ -64,42 +64,42 @@ result = minimize(func, dim=5,
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} はじめに
+:::{grid-item-card} {fa}`flag;sd-mr-1` はじめに
 :link: getting_started/index
 :link-type: doc
 
 saealibを初めて使う方へ。インストール方法、基本的な使い方、コアとなる概念を説明します。
 :::
 
-:::{grid-item-card} チュートリアル
+:::{grid-item-card} {fa}`book-open;sd-mr-1` チュートリアル
 :link: tutorials/index
 :link-type: doc
 
 状況別のセットアップガイド: 単目的/多目的最適化、制約、チェックポイント。
 :::
 
-:::{grid-item-card} コンポーネント
+:::{grid-item-card} {fa}`cubes;sd-mr-1` コンポーネント
 :link: components/index
 :link-type: doc
 
 各コンポーネントの詳しい使い方と拡張ガイドライン。
 :::
 
-:::{grid-item-card} アルゴリズム
+:::{grid-item-card} {fa}`diagram-project;sd-mr-1` アルゴリズム
 :link: algorithms/index
 :link-type: doc
 
 文献上の名前がついたアルゴリズムを、saealibのコンポーネントの組み合わせとしてどう再現するか。
 :::
 
-:::{grid-item-card} 文献リファレンス
+:::{grid-item-card} {fa}`bookmark;sd-mr-1` 文献リファレンス
 :link: references
 :link-type: doc
 
 実装済みのアルゴリズム・演算子・比較方法の理論的出典をまとめた文献リスト。
 :::
 
-:::{grid-item-card} API Reference
+:::{grid-item-card} {fa}`code;sd-mr-1` API Reference
 :link: api/index
 :link-type: doc
 
