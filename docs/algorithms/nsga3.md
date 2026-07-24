@@ -46,7 +46,7 @@ k2012009_middle.jsonのdiscarded_blocks（フッタ）を確認すると、page_
 （own page = page_idx + 1）になっている。この独自ページ番号（1-23）は、
 最終組版版の巻号ページ（577-601、25ページ）とは版が異なり単純な線形対応には
 ならないため、以下の"own p.N"はこのOCRファイル内の独自ページ番号であり、
-最終出版ページ番号ではないことに注意（Deb_NSGAII/jones1998_egoのOCRは最終
+最終出版ページ番号ではないことに注意（deb2002_nsga2/jones1998_egoのOCRは最終
 組版版のためown page=出版ページが一致するが、本ファイルは異なる）。
 
 以下の擬似コードは、論文 Section IV「PROPOSED ALGORITHM: NSGA-III」の
