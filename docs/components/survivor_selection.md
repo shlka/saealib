@@ -48,8 +48,8 @@ class ElitistSurvivorSelection(SurvivorSelection):
 
 ## 関連コンポーネント
 
-- [Algorithm](algorithm.md) — `GA.tell()`が`pool`をどう構築し`SurvivorSelection`をどう呼ぶか
-- [Comparator](comparators.md) — `sort_population`/`compare_population`による個体の順位付け
+- [Algorithm](algorithm.md)：`GA.tell()`が`pool`をどう構築し`SurvivorSelection`をどう呼ぶか
+- [Comparator](comparators.md)：`sort_population`/`compare_population`による個体の順位付け
 
 ## 参照
 

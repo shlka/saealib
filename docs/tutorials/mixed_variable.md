@@ -47,7 +47,7 @@ problem = Problem(
 
 `variables`を渡すと、各要素の`lb`/`ub`から`Problem.lb`/`Problem.ub`が自動的に導出されるため、`lb`/`ub`引数は指定しません。
 
-## 高レベルAPI: minimize
+## 高レベルAPI：minimize
 
 ```python
 from saealib import minimize

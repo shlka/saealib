@@ -13,7 +13,7 @@ NSGA-IIと同じ**非優越ソート**で個体群をフロント$\mathcal{R}_1,
 この減少量を**排他的超体積寄与度**(exclusive hypervolume contribution) $\Delta_{\mathcal{S}}(s, \mathcal{R}_v) := \mathcal{S}(\mathcal{R}_v) - \mathcal{S}(\mathcal{R}_v \setminus \{s\})$と呼びます。
 
 超体積の計算コストが高いため、SMS-EMOAは**定常状態**(steady-state)の世代交代を採ります。
-1世代につき交叉・突然変異で新個体を1体だけ生成し、個体群サイズ$\mu$を保つために既存個体を1体だけ淘汰します。
+1世代につき交叉と突然変異で新個体を1体だけ生成し、個体群サイズ$\mu$を保つために既存個体を1体だけ淘汰します。
 $(\mu+\lambda)$世代交代のように$\binom{\mu+\lambda}{\mu}$通りの組み合わせを比較する必要がなく、最下位フロント内で高々$\mu+1$回の$\mathcal{S}$メトリック評価に抑えられます。
 
 出典は{cite}`beume2007smsemoa`。具体的な手順は次の擬似コードに示します。
@@ -118,7 +118,7 @@ Reduceの核となる選択則については妥当だが、以下の点への�
 **Output** 最終世代の個体群 $P_{t+1}$
 
 1. $t=0$ とし、$\mu$ 個体からなる初期個体群 $P_0$ を生成する
-2. 交叉・突然変異により、$P_t$ から新個体 $q_{t+1}$ を1体だけ生成する
+2. 交叉と突然変異により、$P_t$ から新個体 $q_{t+1}$ を1体だけ生成する
 3. $Q = P_t \cup \{q_{t+1}\}$（サイズ $\mu+1$）を非優越ソートし、フロント列 $\mathcal{R}_1, \ldots, \mathcal{R}_v$ を得る
 4. 最下位フロント $\mathcal{R}_v$ を特定する（$|\mathcal{R}_v|=1$ ならその1個体がそのまま淘汰対象になる）
 5. $|\mathcal{R}_v| > 1$ のとき、$\mathcal{R}_v$ 内の各個体 $s$ について排他的超体積寄与度 $\Delta_{\mathcal{S}}(s, \mathcal{R}_v) = \mathcal{S}(\mathcal{R}_v) - \mathcal{S}(\mathcal{R}_v \setminus \{s\})$ を計算し、最小の個体 $r$ を選ぶ
@@ -225,36 +225,36 @@ pareto_f = ctx.pareto_archive.get_array("f")
 ```
 
 `problem.comparator = HypervolumeComparator()`の行は省略できません。
-NSGA-IIでは`NSGA2Comparator`が`n_obj > 1`のときの既定値なので同じ行を省略できましたが、SPEA2・NSGA-IIIと同様、SMS-EMOAでも明示的な代入が必要になります。
+NSGA-IIでは`NSGA2Comparator`が`n_obj > 1`のときの既定値なので同じ行を省略できましたが、SPEA2やNSGA-IIIと同様、SMS-EMOAでも明示的な代入が必要になります。
 
 ## パラメータと変種
 
-**定常状態か$(\mu+\lambda)$世代交代か**: 論文のAlgorithm 1は1世代1個体の定常状態(steady-state)を前提としており、これは計算コストの高い超体積評価を最下位フロントの高々$\mu+1$回に抑えるための設計選択です{cite}`beume2007smsemoa`。
+**定常状態か$(\mu+\lambda)$世代交代か**：論文のAlgorithm 1は1世代1個体の定常状態(steady-state)を前提としており、これは計算コストの高い超体積評価を最下位フロントの高々$\mu+1$回に抑えるための設計選択です{cite}`beume2007smsemoa`。
 上記のコード例はこれに忠実な構成です。
 一方、`DirectStrategy`をそのまま使い`AskStage`の`n_offspring`を指定しない構成（NSGA-II/SPEA2/NSGA-IIIと同じ$(\mu+\lambda)$パターン）も動作はしますが、その場合`HypervolumeComparator`の「全フロントへの一般化」が実際に効いてくる点に注意してください。
 1世代で$\mu$個体を新規生成すると、非優越ソート後に複数のフロントにまたがって多数の個体が淘汰されうるため、最下位フロントだけを見る論文の定義から外れ、全フロントにHV寄与度ランキングを及ぼす一般化された生存選択に切り替わります。
 
-**参照点の扱い**: `HypervolumeComparator(reference_point=...)`で固定値を指定できるほか、既定の`None`では世代ごと・フロントごとに自動計算されます。
+**参照点の扱い**：`HypervolumeComparator(reference_point=...)`で固定値を指定できるほか、既定の`None`では世代ごと、フロントごとに自動計算されます。
 自動計算は「最悪目的関数値 + `margin` * （最悪値-最良値）」という相対マージン（既定`margin=0.1`）であり、論文が使う「最悪目的関数値 + 1.0」という絶対オフセットとは式が異なります（Section 2.1.3）。
 また、論文は2目的の場合に両端の極値解を基準点計算なしで無条件に残しますが、saealibにこの特別扱いはなく、常に基準点越しの寄与度で一律に評価します。
 
-**親選択の方式**: 論文のAlgorithm 1は「変異演算子によって新個体を生成する」とのみ述べ、親をどう選ぶかを明記していません（NSGA-IIやSPEA2のような優越関係ベースのトーナメント選択の記述はない）。
+**親選択の方式**：論文のAlgorithm 1は「変異演算子によって新個体を生成する」とのみ述べ、親をどう選ぶかを明記していません（NSGA-IIやSPEA2のような優越関係ベースのトーナメント選択の記述はない）。
 `TournamentSelection(tournament_size=1)`は、トーナメントサイズが1のとき比較処理自体が実行されないため、個体群からの一様ランダム選択を表現する構成として採用しました。
 
-**代替のReduce手続き（"SMS-EMOA dp"）**: 論文Section 2.2は、超体積寄与度の代わりに支配点数$d(s, P(t))$を使う高速な変種を提案しています。
+**代替のReduce手続き（"SMS-EMOA dp"）**：論文Section 2.2は、超体積寄与度の代わりに支配点数$d(s, P(t))$を使う高速な変種を提案しています。
 `HypervolumeComparator`はこの変種を実装しておらず、$\Delta_{\mathcal{S}}$による基本版のみを提供します。
 
-**dominator（支配述語）の差し替え**: `HypervolumeComparator(reference_point=..., dominator=...)`で、既定の`ParetoDominator`以外の[Dominator](../components/dominance.md)を注入できます。
-非優越ソートの結果が変わるため、フロント分割・寄与度計算の対象個体群もこの支配述語に依存します。
+**dominator（支配述語）の差し替え**：`HypervolumeComparator(reference_point=..., dominator=...)`で、既定の`ParetoDominator`以外の[Dominator](../components/dominance.md)を注入できます。
+非優越ソートの結果が変わるため、フロント分割と寄与度計算の対象個体群もこの支配述語に依存します。
 
 ## 関連
 
-- [文献リファレンス](../references.md) — 出典の完全な書誌情報
-- [Comparator](../components/comparators.md) — `HypervolumeComparator`の詳しい仕様、個体群相対的なComparatorの扱い
-- [Crossover](../components/crossover.md) — `CrossoverSBX`を含む交叉演算子一覧
-- [Mutation](../components/mutation.md) — `MutationPolynomial`を含む突然変異演算子一覧
-- [ParentSelection](../components/parent_selection.md) — `TournamentSelection`の詳しい使い方
-- [SurvivorSelection](../components/survivor_selection.md) — `TruncationSelection`の詳しい使い方
-- [OptimizationStrategy](../components/strategies.md) — 独自Strategyの実装方法、`AskStage`の`n_offspring`
-- [NonDominatedSorting](../components/nondominated_sorting.md) — 非優越ソートの実装詳細
-- [Dominator](../components/dominance.md) — `dominator`引数として差し替え可能な支配述語一覧
+- [文献リファレンス](../references.md)：出典の完全な書誌情報
+- [Comparator](../components/comparators.md)：`HypervolumeComparator`の詳しい仕様、個体群相対的なComparatorの扱い
+- [Crossover](../components/crossover.md)：`CrossoverSBX`を含む交叉演算子一覧
+- [Mutation](../components/mutation.md)：`MutationPolynomial`を含む突然変異演算子一覧
+- [ParentSelection](../components/parent_selection.md)：`TournamentSelection`の詳しい使い方
+- [SurvivorSelection](../components/survivor_selection.md)：`TruncationSelection`の詳しい使い方
+- [OptimizationStrategy](../components/strategies.md)：独自Strategyの実装方法、`AskStage`の`n_offspring`
+- [NonDominatedSorting](../components/nondominated_sorting.md)：非優越ソートの実装詳細
+- [Dominator](../components/dominance.md)：`dominator`引数として差し替え可能な支配述語一覧

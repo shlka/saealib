@@ -86,9 +86,9 @@ class PenaltyHandler(ConstraintHandler):
 
 ## 関連コンポーネント
 
-- [制約付き最適化](../tutorials/constraints.md) — 制約の定義と組み込みハンドラの基本的な使い方
-- [Problem](problem.md) — `handler`引数の渡し方
-- [Comparator](comparators.md) — `feasibility_threshold`が`eps_cv`として同期される先
+- [制約付き最適化](../tutorials/constraints.md)：制約の定義と組み込みハンドラの基本的な使い方
+- [Problem](problem.md)：`handler`引数の渡し方
+- [Comparator](comparators.md)：`feasibility_threshold`が`eps_cv`として同期される先
 
 ## 参照
 

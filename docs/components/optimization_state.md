@@ -69,10 +69,10 @@
 
 ## 関連コンポーネント
 
-- [Population](population.md) — `population`/`archive`/`pareto_archive`フィールドの実体
-- [Initializer](initialization.md) — 最初の`OptimizationState`を構築する
-- [Stage](stage.md) — `state.replace(...)`で状態を更新しながらパイプラインを進める
-- [チェックポイント](../tutorials/checkpoint.md) — `CheckpointCallback`経由の自動保存の使い方
+- [Population](population.md)：`population`/`archive`/`pareto_archive`フィールドの実体
+- [Initializer](initialization.md)：最初の`OptimizationState`を構築する
+- [Stage](stage.md)：`state.replace(...)`で状態を更新しながらパイプラインを進める
+- [チェックポイント](../tutorials/checkpoint.md)：`CheckpointCallback`経由の自動保存の使い方
 
 ## 参照
 

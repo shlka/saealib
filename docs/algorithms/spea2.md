@@ -20,7 +20,7 @@ SPEA2は個体群とは別に、サイズを固定した外部アーカイブを
 各世代で、個体群とアーカイブを合わせた集合から非優越個体($F(i)<1$)を新しいアーカイブへコピーします。
 コピー後のアーカイブがちょうど規定サイズに収まればそのまま採用し、不足する場合は$F(i)$が小さい劣解から順に補充します。
 規定サイズを超える場合は、**打ち切り演算子**(truncation operator)を適用し、最近傍距離が最小の個体を1体ずつ、距離を再計算しながら取り除きます。
-この手続きは、同じ距離を持つ個体が並ぶタイを2番目・3番目に近い個体との距離で順に解消するため、境界解が誤って除去されにくいです。
+この手続きは、同じ距離を持つ個体が並ぶタイを2番目と3番目に近い個体との距離で順に解消するため、境界解が誤って除去されにくいです。
 
 出典は{cite}`zitzler2001spea2`。具体的な手順は次の擬似コードに示します。
 
@@ -79,7 +79,7 @@ $F(i)$の一括ソートで代替している。密度推定の$k$も、論文�
 3. 環境選択：$P_t \cup \bar P_t$ の非優越個体を $\bar P_{t+1}$ にコピーする。$|\bar P_{t+1}| > \bar N$ なら打ち切り演算子で削減し、$|\bar P_{t+1}| < \bar N$ なら $F(i)$ が小さい劣解から順に補充する
 4. 終了判定：$t \geq T$ または他の終了条件を満たせば、$\bar P_{t+1}$ 中の非優越個体を $A$ として出力し停止する
 5. 交配選択：$\bar P_{t+1}$ に対して二項トーナメント選択（復元抽出）を行い、交配プールを満たす
-6. 変異：交配プールに交叉・突然変異を適用して $P_{t+1}$ を生成し、$t=t+1$ として2へ戻る
+6. 変異：交配プールに交叉と突然変異を適用して $P_{t+1}$ を生成し、$t=t+1$ として2へ戻る
 ```
 
 ## フローチャート
@@ -109,7 +109,7 @@ flowchart TD
 
 | 役割 | saealibでの実装 | 対応ステップ |
 |---|---|---|
-| 探索アルゴリズム本体 | `GA`（`ask()`で交叉・突然変異、`tell()`で個体群と子個体群を単一プールに結合し生存選択を実行） | L1, 6 |
+| 探索アルゴリズム本体 | `GA`（`ask()`で交叉と突然変異、`tell()`で個体群と子個体群を単一プールに結合し生存選択を実行） | L1, 6 |
 | 親選択 | `TournamentSelection(tournament_size=2)`（二項トーナメント。`compare_population`経由で勝者を決定） | L5 |
 | 交叉 | `CrossoverSBX(prob=0.9, eta=20.0)` | L6 |
 | 突然変異 | `MutationPolynomial(eta=20.0)` | L6 |
@@ -152,19 +152,19 @@ NSGA-IIでは`NSGA2Comparator`が`n_obj > 1`のときの既定値なので同じ
 
 ## パラメータと変種
 
-**アーカイブサイズ$\bar N$と個体群サイズ$N$**: 論文はこの二つを独立に設定できる一般形として定義しています{cite}`zitzler2001spea2`。
+**アーカイブサイズ$\bar N$と個体群サイズ$N$**：論文はこの二つを独立に設定できる一般形として定義しています{cite}`zitzler2001spea2`。
 saealibの`GA.tell()`は個体群と子個体群を単一プールとして結合するため、$\bar N$は$N$と同じ値を使います。
 
-**dominator（支配述語）の差し替え**: `SPEA2Comparator(dominator=...)`で、既定の`ParetoDominator`以外の[Dominator](../components/dominance.md)を注入できます。
+**dominator（支配述語）の差し替え**：`SPEA2Comparator(dominator=...)`で、既定の`ParetoDominator`以外の[Dominator](../components/dominance.md)を注入できます。
 $S(i)$/$R(i)$の計算はこの支配述語に依存するため、差し替えるとSPEA2の適応度そのものが変わります。
 
 ## 関連
 
-- [文献リファレンス](../references.md) — 出典の完全な書誌情報
-- [Comparator](../components/comparators.md) — `SPEA2Comparator`の詳しい仕様
-- [Crossover](../components/crossover.md) — `CrossoverSBX`を含む交叉演算子一覧
-- [Mutation](../components/mutation.md) — `MutationPolynomial`を含む突然変異演算子一覧
-- [ParentSelection](../components/parent_selection.md) — `TournamentSelection`の詳しい使い方
-- [SurvivorSelection](../components/survivor_selection.md) — `TruncationSelection`の詳しい使い方
-- [OptimizationStrategy](../components/strategies.md) — `DirectStrategy`を含む戦略一覧
-- [Dominator](../components/dominance.md) — `dominator`引数として差し替え可能な支配述語一覧
+- [文献リファレンス](../references.md)：出典の完全な書誌情報
+- [Comparator](../components/comparators.md)：`SPEA2Comparator`の詳しい仕様
+- [Crossover](../components/crossover.md)：`CrossoverSBX`を含む交叉演算子一覧
+- [Mutation](../components/mutation.md)：`MutationPolynomial`を含む突然変異演算子一覧
+- [ParentSelection](../components/parent_selection.md)：`TournamentSelection`の詳しい使い方
+- [SurvivorSelection](../components/survivor_selection.md)：`TruncationSelection`の詳しい使い方
+- [OptimizationStrategy](../components/strategies.md)：`DirectStrategy`を含む戦略一覧
+- [Dominator](../components/dominance.md)：`dominator`引数として差し替え可能な支配述語一覧

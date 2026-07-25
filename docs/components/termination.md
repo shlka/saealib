@@ -72,8 +72,8 @@ not_stalled = ~stalled(20)  # stallしていない間
 
 ## 関連コンポーネント
 
-- [OptimizationState](optimization_state.md) — 各終了条件が受け取る`ctx`
-- [拡張のガイドライン](extension_guidelines.md) — `Registry`による設定駆動構築
+- [OptimizationState](optimization_state.md)：各終了条件が受け取る`ctx`
+- [拡張のガイドライン](extension_guidelines.md)：`Registry`による設定駆動構築
 
 ## 参照
 

@@ -10,7 +10,7 @@
 この一連の仕組みは`iterate()`ループでの利用を前提としています。
 高レベルAPI（`minimize`/`maximize`）は実行中のコンポーネント差し替え手段を提供しないため、これらのSwitcherは使えません。
 
-## 精度指標: SurrogateAccuracyMetric
+## 精度指標：SurrogateAccuracyMetric
 
 `SurrogateAccuracyMetric`が実装を要求するのは`name`（プロパティ）と`compute(y_true, y_pred) -> float`の2つです。
 
@@ -22,7 +22,7 @@
 
 `AccuracyEvaluator`のコンストラクタで`metrics`を省略すると、この3指標全てが既定として使われます。
 
-## 精度評価方法: AccuracyEvaluator
+## 精度評価方法：AccuracyEvaluator
 
 `AccuracyEvaluator`が実装を要求するのは`evaluate(surrogate, train_x, train_y) -> SurrogateAccuracy`の1つだけです。
 
@@ -36,7 +36,7 @@
 
 `SurrogateAccuracy`（`metrics: dict[str, float]`, `n_samples: int`）は、評価結果を保持する単純なコンテナで、`get(name, default=nan)`でメトリクス名から値を取り出します。
 
-## 切り替え判断: AccuracyBasedSurrogateSwitcher
+## 切り替え判断：AccuracyBasedSurrogateSwitcher
 
 `AccuracyBasedSurrogateSwitcher`が実装を要求するのは`switch(accuracy: SurrogateAccuracy | None) -> T`の1つだけです。
 `iterate()`ループの中で`optimizer.set_*()`と組み合わせて呼びます。
@@ -81,8 +81,8 @@ class ThresholdIntSwitcher(AccuracyBasedSurrogateSwitcher):
 
 ## 関連コンポーネント
 
-- [SurrogateManager](surrogate_manager.md) — `accuracy_evaluator`引数と`last_accuracy`プロパティ
-- [strategies](strategies.md) — `StrategySwitcher`/`GenCtrlSwitcher`が切り替える対象
+- [SurrogateManager](surrogate_manager.md)：`accuracy_evaluator`引数と`last_accuracy`プロパティ
+- [strategies](strategies.md)：`StrategySwitcher`/`GenCtrlSwitcher`が切り替える対象
 
 ## 参照
 

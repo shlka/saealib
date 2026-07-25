@@ -83,10 +83,10 @@ class SimpleDirectStrategy(OptimizationStrategy):
 
 ## 関連コンポーネント
 
-- [Stage](stage.md) — 各Strategyが組み合わせるパイプラインステージ単体の契約
-- [SurrogateManager](surrogate_manager.md) — `requires_surrogate=True`の戦略が使うスコアリング機構
-- [拡張のガイドライン](extension_guidelines.md) — `Pipeline.replace`/`find`によるステージの並べ替え
-- [コンポーネント概要](index.md) — パイプライン全体の構成図
+- [Stage](stage.md)：各Strategyが組み合わせるパイプラインステージ単体の契約
+- [SurrogateManager](surrogate_manager.md)：`requires_surrogate=True`の戦略が使うスコアリング機構
+- [拡張のガイドライン](extension_guidelines.md)：`Pipeline.replace`/`find`によるステージの並べ替え
+- [コンポーネント概要](index.md)：パイプライン全体の構成図
 
 ## 参照
 

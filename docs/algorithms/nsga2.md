@@ -53,13 +53,13 @@ crowding-distance-assignment, Main Loop）を1つの手順に統合したもの�
 **Inputs** 目的関数群、個体数 $N$、初期個体群 $P_0$
 **Output** 最終世代のパレートフロント
 
-1. $t=0$ とし、$P_0$ をランダム生成した上で、二項トーナメント選択・交叉・突然変異により子個体群 $Q_0$ を生成する
+1. $t=0$ とし、$P_0$ をランダム生成した上で、二項トーナメント選択、交叉、突然変異により子個体群 $Q_0$ を生成する
 2. 親子を結合した個体群 $R_t = P_t \cup Q_t$（サイズ $2N$）を作る
 3. $R_t$ を非優越ソートし、フロント列 $\mathcal{F} = (\mathcal{F}_1, \mathcal{F}_2, \ldots)$ を得る
 4. $P_{t+1} = \emptyset$ とし、$\mathcal{F}_i$ が丸ごと収まる限り、フロントを順に $P_{t+1}$ へ追加する
 5. 途中で収まらなくなった最後のフロント $\mathcal{F}_l$ について、各個体の混雑度距離を計算する
 6. $\mathcal{F}_l$ を $\prec_n$ で降順ソートし、$P_{t+1}$ が $N$ 個体になるまで先頭から採用する
-7. $P_{t+1}$ に対し、$\prec_n$ を選択基準とする二項トーナメント選択・交叉・突然変異を適用し、$Q_{t+1}$ を生成する
+7. $P_{t+1}$ に対し、$\prec_n$ を選択基準とする二項トーナメント選択、交叉、突然変異を適用し、$Q_{t+1}$ を生成する
 8. $t = t+1$ として2へ戻り、終了条件に達するまで繰り返す
 ```
 
@@ -90,7 +90,7 @@ flowchart TD
 
 | 役割 | saealibでの実装 | 対応ステップ |
 |---|---|---|
-| 探索アルゴリズム本体 | `GA`（`ask()`で交叉・突然変異、`tell()`で $R_t=P_t\cup Q_t$ の結合と生存選択を実行） | L1-2, 7 |
+| 探索アルゴリズム本体 | `GA`（`ask()`で交叉と突然変異、`tell()`で $R_t=P_t\cup Q_t$ の結合と生存選択を実行） | L1-2, 7 |
 | 親選択 | `TournamentSelection(tournament_size=2)`（`ctx.comparator.compare_population`で勝者を決定） | L1, 7 |
 | 交叉 | `CrossoverSBX(prob=0.9, eta=20.0)` | L1, 7 |
 | 突然変異 | `MutationPolynomial(eta=20.0)` | L1, 7 |
@@ -133,25 +133,25 @@ pareto_f = ctx.pareto_archive.get_array("f")
 
 ## パラメータと変種
 
-**$\eta_c$・$\eta_m$（分布指数）**: `CrossoverSBX(eta=...)`と`MutationPolynomial(eta=...)`で調整します。
+**$\eta_c$と$\eta_m$（分布指数）**：`CrossoverSBX(eta=...)`と`MutationPolynomial(eta=...)`で調整します。
 値が大きいほど親に近い子個体を生成します（探索が保守的になる）。
 論文の実数値実験では両方とも$20$が使われており、これがsaealib側のコード例の既定値でもあります{cite}`deb2002nsga2`。
 
-**$p_m$（変数単位の突然変異確率）**: 論文は $p_m = 1/n$（$n$は決定変数の数）を使います。
+**$p_m$（変数単位の突然変異確率）**：論文は $p_m = 1/n$（$n$は決定変数の数）を使います。
 これは個体レベルの`prob`ではなく、変数ごとの適用確率`prob_var`に対応します。
 `MutationPolynomial(prob_var=None)`（既定値）では$\min(0.5,\, 1/\mathrm{dim})$が自動設定され、次元数が大きいほど論文の設定に近づきます。
 
-**タイブレークの扱い**: 論文の擬似コードは、$\mathcal{F}_l$を$\prec_n$で降順ソートするとしか述べておらず、混雑度距離が同値な個体同士の順序は規定していません。
+**タイブレークの扱い**：論文の擬似コードは、$\mathcal{F}_l$を$\prec_n$で降順ソートするとしか述べておらず、混雑度距離が同値な個体同士の順序は規定していません。
 `TruncationSelection(randomize_ties=False)`（既定値）は`sort_population`が返す決定的な順序をそのまま使い、この記述に対応します。
 `randomize_ties=True`にすると、打ち切り境界で同値な個体をシャッフルしてから切り詰めます。
 
 ## 関連
 
-- [文献リファレンス](../references.md) — 出典の完全な書誌情報
-- [Comparator](../components/comparators.md) — `NSGA2Comparator`の詳しい仕様
-- [Crossover](../components/crossover.md) — `CrossoverSBX`を含む交叉演算子一覧
-- [Mutation](../components/mutation.md) — `MutationPolynomial`を含む突然変異演算子一覧
-- [ParentSelection](../components/parent_selection.md) — `TournamentSelection`の詳しい使い方
-- [SurvivorSelection](../components/survivor_selection.md) — `TruncationSelection`の詳しい使い方
-- [OptimizationStrategy](../components/strategies.md) — `DirectStrategy`を含む戦略一覧
-- [NonDominatedSorting](../components/nondominated_sorting.md) — 非優越ソートの実装詳細
+- [文献リファレンス](../references.md)：出典の完全な書誌情報
+- [Comparator](../components/comparators.md)：`NSGA2Comparator`の詳しい仕様
+- [Crossover](../components/crossover.md)：`CrossoverSBX`を含む交叉演算子一覧
+- [Mutation](../components/mutation.md)：`MutationPolynomial`を含む突然変異演算子一覧
+- [ParentSelection](../components/parent_selection.md)：`TournamentSelection`の詳しい使い方
+- [SurvivorSelection](../components/survivor_selection.md)：`TruncationSelection`の詳しい使い方
+- [OptimizationStrategy](../components/strategies.md)：`DirectStrategy`を含む戦略一覧
+- [NonDominatedSorting](../components/nondominated_sorting.md)：非優越ソートの実装詳細

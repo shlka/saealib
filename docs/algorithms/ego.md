@@ -74,7 +74,7 @@ flowchart TD
 
 | 役割 | saealibでの実装 | 対応ステップ |
 |---|---|---|
-| 探索アルゴリズム本体 | `GA`（交叉・突然変異・選択の組み合わせ自体はEGOの定義に含まれない） | 候補解の生成（argmax EIの探索） |
+| 探索アルゴリズム本体 | `GA`（交叉、突然変異、選択の組み合わせ自体はEGOの定義に含まれない） | 候補解の生成（argmax EIの探索） |
 | サロゲートモデル | `SklearnGPRSurrogate`（GP回帰。`sklearn` extraが必要） | L2 |
 | 獲得関数 | `ExpectedImprovement` | L3 |
 | サロゲート管理 | `GlobalSurrogateManager`（アーカイブ全体でGPをフィットする） | L2-3 |
@@ -122,22 +122,22 @@ opt = (
 ctx = opt.run()
 ```
 
-交叉・突然変異・選択の具体的な演算子はEGO自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられます。
+交叉、突然変異、選択の具体的な演算子はEGO自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられます。
 
 ## パラメータと変種
 
-**ξ（探索と活用のトレードオフ）**: `ExpectedImprovement(xi=...)`で調整します。
+**ξ（探索と活用のトレードオフ）**：`ExpectedImprovement(xi=...)`で調整します。
 既定値は`0.01`で、Brochu et al. (2010)が推奨する値に基づきます{cite}`brochu2010tutorial`。
 $\xi=0$では活用(exploitation)寄りになり、大きくすると探索(exploration)寄りになります。
 
-**evaluation_ratio（逐次評価とバッチ評価の切り替え）**: 文献のEGOは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムです。
+**evaluation_ratio（逐次評価とバッチ評価の切り替え）**：文献のEGOは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムです。
 saealibの`IndividualBasedStrategy`は、GAが生成した子個体群のうちEIスコア上位`evaluation_ratio`の割合をまとめて真評価するバッチ拡張になっています。
 `evaluation_ratio`を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づきます。
 
 ## 関連
 
-- [文献リファレンス](../references.md) — 出典の完全な書誌情報と、EI以外の獲得関数の出典一覧
-- [SurrogateManager](../components/surrogate_manager.md) — `GlobalSurrogateManager`の詳しい使い方
-- [AcquisitionFunction](../components/acquisition_functions.md) — `ExpectedImprovement`を含む獲得関数一覧
-- [Surrogate](../components/surrogate.md) — `SklearnGPRSurrogate`を含むサロゲートモデル一覧と`sklearn` extraの説明
-- [OptimizationStrategy](../components/strategies.md) — `IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧
+- [文献リファレンス](../references.md)：出典の完全な書誌情報と、EI以外の獲得関数の出典一覧
+- [SurrogateManager](../components/surrogate_manager.md)：`GlobalSurrogateManager`の詳しい使い方
+- [AcquisitionFunction](../components/acquisition_functions.md)：`ExpectedImprovement`を含む獲得関数一覧
+- [Surrogate](../components/surrogate.md)：`SklearnGPRSurrogate`を含むサロゲートモデル一覧と`sklearn` extraの説明
+- [OptimizationStrategy](../components/strategies.md)：`IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧

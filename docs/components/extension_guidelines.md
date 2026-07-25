@@ -104,10 +104,10 @@ to_spec(obj)  # -> {"type": "MyCustomSurrogate", "params": {"alpha": 2.0}}
 
 ## 関連コンポーネント
 
-- [Crossover](crossover.md) / [Mutation](mutation.md) / [Surrogate](surrogate.md) — `with_post`系フックを持つコンポーネント
-- [Stage](stage.md) — `Pipeline`が組み合わせる各ステージの契約
-- [CallbackManager](callbacks.md) — イベント一覧と観測の仕組み
-- [strategies](strategies.md) — パイプラインの再構築タイミング
+- [Crossover](crossover.md) / [Mutation](mutation.md) / [Surrogate](surrogate.md)：`with_post`系フックを持つコンポーネント
+- [Stage](stage.md)：`Pipeline`が組み合わせる各ステージの契約
+- [CallbackManager](callbacks.md)：イベント一覧と観測の仕組み
+- [strategies](strategies.md)：パイプラインの再構築タイミング
 
 ## 参照
 

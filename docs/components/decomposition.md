@@ -64,8 +64,8 @@ class WeightedProductDecomposition(Decomposition):
 
 ## 関連コンポーネント
 
-- [Comparator](comparators.md) — `DecompositionComparator`が継承する基底クラス
-- [Problem](problem.md) — `direction`/`weights`の役割分担
+- [Comparator](comparators.md)：`DecompositionComparator`が継承する基底クラス
+- [Problem](problem.md)：`direction`/`weights`の役割分担
 
 ## 参照
 

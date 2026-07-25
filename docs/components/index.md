@@ -13,7 +13,7 @@
 ```{mermaid}
 flowchart TD
     INIT["Initializer<br/>(初期個体群の生成)"] --> STEP
-    subgraph STEP["OptimizationStrategy.step() — 1世代分"]
+    subgraph STEP["OptimizationStrategy.step()（1世代分）"]
         direction TB
         ASK["Algorithm.ask()<br/>候補解を生成"] --> SCORE["SurrogateManager<br/>score_candidates()"]
         SCORE --> SEL["真の評価を行う<br/>候補解を選択"]
@@ -38,7 +38,7 @@ flowchart TD
 
 | コンポーネント | 役割 |
 |---|---|
-| [Problem](problem.md) | 目的関数・設計変数・探索範囲・制約・最適化の方向(direction)を定義する |
+| [Problem](problem.md) | 目的関数、設計変数、探索範囲、制約、最適化の方向(direction)を定義する |
 | [Initializer](initialization.md) | ループ開始前に初期個体群とアーカイブを生成する |
 | [Algorithm](algorithm.md) | 進化的探索本体（GA/PSO）。`ask()`が候補解を生成し、`tell()`が個体群を更新する |
 | [OptimizationStrategy](strategies.md) | 1世代分のパイプラインを統括し、どの候補解が真の評価を受けるかを決める |
@@ -48,7 +48,7 @@ flowchart TD
 | [Evaluator](evaluation.md) | 真の評価を実行する（逐次、または`parallel`エクストラによる並列） |
 | [Archive](population.md) | 真に評価済みの点をすべて蓄積する。サロゲートの学習データセットも兼ねる |
 | [Termination](termination.md) | ループの終了条件を判定する（既定は最大評価回数） |
-| [CallbackManager](callbacks.md) | パイプライン各所のイベントを観察・記録し、実行時のコンポーネント差し替えにも使う |
+| [CallbackManager](callbacks.md) | パイプライン各所のイベントを観察して記録し、実行時のコンポーネント差し替えにも使う |
 
 ## 低レベルAPIでの組み立て
 
@@ -97,7 +97,7 @@ ctx = opt.run()
 :link: extension_guidelines
 :link-type: doc
 
-サブクラス化では重すぎる場合に: `with_post`/`with_post_fit`、`Pipeline`/`Stage`、`CallbackManager`、`Registry`。
+サブクラス化では重すぎる場合に：`with_post`/`with_post_fit`、`Pipeline`/`Stage`、`CallbackManager`、`Registry`。
 :::
 
 ::::

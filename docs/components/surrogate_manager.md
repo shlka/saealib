@@ -50,7 +50,7 @@
 
 各マネージャーの`training_set`/`accuracy_evaluator`引数の詳細は、それぞれ[TrainingSet](training_set.md)と[サロゲート精度評価と動的切り替え](surrogate_switching.md)を参照してください。
 
-### ArchiveBasedManager: サロゲートを学習しない系列
+### ArchiveBasedManager：サロゲートを学習しない系列
 
 `ArchiveBasedManager`は`SurrogateManager`の抽象サブクラスで、サロゲートモデルを一切学習せず、アーカイブから直接候補をスコアリングします。
 抽象メソッドは`compute_scores(candidates_x, archive, ctx=None) -> np.ndarray`だけで、`score_candidates()`は`compute_scores()`の結果を`tell_f=NaN`の`SurrogatePrediction`でラップします。
@@ -81,11 +81,11 @@ class ConstantScoreManager(ArchiveBasedManager):
 
 ## 関連コンポーネント
 
-- [Surrogate](surrogate.md) — `SurrogateManager`が協調させるfit/predictの実体
-- [TrainingSet](training_set.md) — 各`SurrogateManager`が学習データの抽出に使う
-- [AcquisitionFunction](acquisition_functions.md) — `GlobalSurrogateManager`/`LocalSurrogateManager`の`acquisition`引数
-- [サロゲート精度評価と動的切り替え](surrogate_switching.md) — `accuracy_evaluator`/`last_accuracy`の詳細
-- [strategies](strategies.md) — `score_candidates()`を呼ぶ側
+- [Surrogate](surrogate.md)：`SurrogateManager`が協調させるfit/predictの実体
+- [TrainingSet](training_set.md)：各`SurrogateManager`が学習データの抽出に使う
+- [AcquisitionFunction](acquisition_functions.md)：`GlobalSurrogateManager`/`LocalSurrogateManager`の`acquisition`引数
+- [サロゲート精度評価と動的切り替え](surrogate_switching.md)：`accuracy_evaluator`/`last_accuracy`の詳細
+- [strategies](strategies.md)：`score_candidates()`を呼ぶ側
 
 ## 参照
 

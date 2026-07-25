@@ -103,7 +103,7 @@ flowchart TD
 
 | 役割 | saealibでの実装 | 対応ステップ |
 |---|---|---|
-| 探索アルゴリズム本体 | `GA`（交叉・突然変異・選択の組み合わせ自体はCORSの定義に含まれない） | 候補点の生成 |
+| 探索アルゴリズム本体 | `GA`（交叉、突然変異、選択の組み合わせ自体はCORSの定義に含まれない） | 候補点の生成 |
 | サロゲートモデル | `RBFSurrogate`（RBF補間。既定は`gaussian_kernel`だが、任意のカーネル関数を注入できる） | L2 |
 | 獲得関数 | `MeanPrediction`（予測平均をそのままスコア化する） | L3 |
 | サロゲート管理 | `GlobalSurrogateManager`（アーカイブ全体でRBFをフィットする） | L2-3 |
@@ -154,22 +154,22 @@ opt = (
 ctx = opt.run()
 ```
 
-交叉・突然変異・選択の具体的な演算子はCORS自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられます。
+交叉、突然変異、選択の具体的な演算子はCORS自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられます。
 
 ## パラメータと変種
 
-**kernel（RBFカーネルの選択）**: `RBFSurrogate(kernel=...)`で任意のカーネル関数を注入できます。
+**kernel（RBFカーネルの選択）**：`RBFSurrogate(kernel=...)`で任意のカーネル関数を注入できます。
 既定値は`gaussian_kernel`だが、文献の数値実験ではthin plate spline（$\phi(r) = r^2 \log r$）と1次多項式の付加項$p(x)$を組み合わせたモデルが使われています。
 saealibの`RBFSurrogate`は多項式項$p(x)$を持たない純粋なRBF補間（学習データの平均を差し引いた残差にフィットする）であるため、文献の設定を厳密に再現するにはカーネルの差し替えだけでは不十分です。
 
-**evaluation_ratio（逐次評価とバッチ評価の切り替え）**: 文献のCORSは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムです。
+**evaluation_ratio（逐次評価とバッチ評価の切り替え）**：文献のCORSは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムです。
 saealibの`IndividualBasedStrategy`は、GAが生成した子個体群のうち予測平均上位`evaluation_ratio`の割合をまとめて真評価するバッチ拡張になっています。
 `evaluation_ratio`を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づきます。
 
 ## 関連
 
-- [文献リファレンス](../references.md) — 出典の完全な書誌情報
-- [Surrogate](../components/surrogate.md) — `RBFSurrogate`/`gaussian_kernel`を含むサロゲートモデル一覧
-- [AcquisitionFunction](../components/acquisition_functions.md) — `MeanPrediction`を含む獲得関数一覧
-- [SurrogateManager](../components/surrogate_manager.md) — `GlobalSurrogateManager`の詳しい使い方
-- [OptimizationStrategy](../components/strategies.md) — `IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧
+- [文献リファレンス](../references.md)：出典の完全な書誌情報
+- [Surrogate](../components/surrogate.md)：`RBFSurrogate`/`gaussian_kernel`を含むサロゲートモデル一覧
+- [AcquisitionFunction](../components/acquisition_functions.md)：`MeanPrediction`を含む獲得関数一覧
+- [SurrogateManager](../components/surrogate_manager.md)：`GlobalSurrogateManager`の詳しい使い方
+- [OptimizationStrategy](../components/strategies.md)：`IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧

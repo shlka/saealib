@@ -94,12 +94,12 @@ idx, dist = arc.get_knn(np.array([0.1, 0.2]), k=1)
 
 ## 関連コンポーネント
 
-- [Initializer](initialization.md) — `Population`/`Archive`/`ParetoArchive`を実行開始時に構築する
-- [OptimizationState](optimization_state.md) — 構築後の`Population`/`Archive`/`ParetoArchive`を保持する状態オブジェクト
-- [Algorithm](algorithm.md) — `population_class`/`archive_class`で具象クラスを差し替える
-- [Comparator](comparators.md) — `set_cache`/`get_cache`によるソート結果の使い回し
-- [Dominance](dominance.md) — `ParetoArchive`が非優越解判定に使う`Dominator`
-- [SurrogateManager](surrogate_manager.md) — `Archive.get_knn`を使う局所学習データの収集
+- [Initializer](initialization.md)：`Population`/`Archive`/`ParetoArchive`を実行開始時に構築する
+- [OptimizationState](optimization_state.md)：構築後の`Population`/`Archive`/`ParetoArchive`を保持する状態オブジェクト
+- [Algorithm](algorithm.md)：`population_class`/`archive_class`で具象クラスを差し替える
+- [Comparator](comparators.md)：`set_cache`/`get_cache`によるソート結果の使い回し
+- [Dominance](dominance.md)：`ParetoArchive`が非優越解判定に使う`Dominator`
+- [SurrogateManager](surrogate_manager.md)：`Archive.get_knn`を使う局所学習データの収集
 
 ## 参照
 

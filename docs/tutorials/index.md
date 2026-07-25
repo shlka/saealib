@@ -44,7 +44,7 @@
 :link: checkpoint
 :link-type: doc
 
-長時間実行する最適化を再現可能・再開可能にします。
+長時間実行する最適化を再現可能かつ再開可能にします。
 :::
 
 :::{grid-item-card} {fa}`file-lines;sd-mr-1` 進捗のログ記録

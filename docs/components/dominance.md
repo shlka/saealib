@@ -60,9 +60,9 @@ class WeightedDominator(Dominator):
 
 ## 関連コンポーネント
 
-- [Comparator](comparators.md) — `ParetoComparator`系の`dominator`引数から`Dominator`を注入する
-- [NonDominatedSorter](nondominated_sorting.md) — `Dominator`と対になる、フロントへの振り分け方の差し替え点
-- [Population](population.md) — `ParetoArchive`が非優越解判定に`Dominator`を使う
+- [Comparator](comparators.md)：`ParetoComparator`系の`dominator`引数から`Dominator`を注入する
+- [NonDominatedSorter](nondominated_sorting.md)：`Dominator`と対になる、フロントへの振り分け方の差し替え点
+- [Population](population.md)：`ParetoArchive`が非優越解判定に`Dominator`を使う
 
 ## 参照
 

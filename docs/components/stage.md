@@ -98,10 +98,10 @@ class LogGenerationStage(Stage):
 
 ## 関連コンポーネント
 
-- [拡張のガイドライン](extension_guidelines.md) — `pipeline.replace`/`find`によるステージの並べ替え方
-- [strategies](strategies.md) — 組み込みStrategyがStageをどう組み合わせるか
-- [OptimizationState](optimization_state.md) — `execute()`が読み書きする状態オブジェクト
-- [コンポーネント概要](index.md) — パイプライン全体の構成図
+- [拡張のガイドライン](extension_guidelines.md)：`pipeline.replace`/`find`によるステージの並べ替え方
+- [strategies](strategies.md)：組み込みStrategyがStageをどう組み合わせるか
+- [OptimizationState](optimization_state.md)：`execute()`が読み書きする状態オブジェクト
+- [コンポーネント概要](index.md)：パイプライン全体の構成図
 
 ## 参照
 

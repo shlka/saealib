@@ -121,10 +121,10 @@ class HaltonInitializer(Initializer):
 
 ## 関連コンポーネント
 
-- [OptimizationState](optimization_state.md) — `initialize()`が最終的に返す状態オブジェクト
-- [Population](population.md) — 構築対象の`Population`/`Archive`/`ParetoArchive`
-- [Evaluator](evaluation.md) — 初期サンプルの評価に使う
-- [CallbackManager](callbacks.md) — `InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`の観察
+- [OptimizationState](optimization_state.md)：`initialize()`が最終的に返す状態オブジェクト
+- [Population](population.md)：構築対象の`Population`/`Archive`/`ParetoArchive`
+- [Evaluator](evaluation.md)：初期サンプルの評価に使う
+- [CallbackManager](callbacks.md)：`InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`の観察
 
 ## 参照
 

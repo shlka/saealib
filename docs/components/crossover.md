@@ -89,11 +89,11 @@ class AverageCrossover(Crossover):
 
 ## 関連コンポーネント
 
-- [Algorithm](algorithm.md) — `GA`が`Crossover`をどう組み合わせるか
-- [Mutation](mutation.md) — 交叉の次に呼ばれる、対になる演算子
-- [ParentSelection](parent_selection.md) — `Crossover`に渡す親個体を選ぶ演算子
-- [Problem](problem.md) — 整数変数とカテゴリ変数の定義と、混合変数向けCrossoverの対応関係
-- [拡張のガイドライン](extension_guidelines.md) — `with_post`系フックの一般的な設計思想
+- [Algorithm](algorithm.md)：`GA`が`Crossover`をどう組み合わせるか
+- [Mutation](mutation.md)：交叉の次に呼ばれる、対になる演算子
+- [ParentSelection](parent_selection.md)：`Crossover`に渡す親個体を選ぶ演算子
+- [Problem](problem.md)：整数変数とカテゴリ変数の定義と、混合変数向けCrossoverの対応関係
+- [拡張のガイドライン](extension_guidelines.md)：`with_post`系フックの一般的な設計思想
 
 ## 参照
 

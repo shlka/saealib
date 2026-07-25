@@ -30,7 +30,7 @@ pip install "saealib==0.1.0"
 pip install --pre saealib
 ```
 :::{warning}
-プレリリースバージョンのAPIは予告なく変更・削除される可能性があります。
+プレリリースバージョンのAPIは予告なく変更または削除される可能性があります。
 :::
 
 (install-options)=

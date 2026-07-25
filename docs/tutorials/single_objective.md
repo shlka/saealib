@@ -30,7 +30,7 @@ UB = [5.0] * DIM
 
 目的関数は、`DIM`次元の設計変数を受け取り、目的関数値を返す`Callable`として定義します。
 
-## 高レベルAPI: minimize / maximize
+## 高レベルAPI：minimize / maximize
 
 `minimize`は、`dim`、`lb`、`ub`を指定するだけで最適化を実行できる高レベルAPIです。
 
@@ -67,7 +67,7 @@ result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, max_fe=500, seed=0)
 
 | 文字列 | クラス | 特徴 |
 |--------|--------|------|
-| `'GA'` | `GA` | 交叉・突然変異による探索（既定） |
+| `'GA'` | `GA` | 交叉と突然変異による探索（既定） |
 | `'PSO'` | `PSO` | 粒子の速度更新による探索 |
 
 ```python
@@ -100,7 +100,7 @@ result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, surrogate="rbf", seed=0
 result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, strategy="ib", seed=0)
 ```
 
-## 低レベルAPI: Optimizer
+## 低レベルAPI：Optimizer
 
 `minimize`は各コンポーネントを既定の組み合わせで結び付けますが、個々のパラメータまでは調整できません。
 

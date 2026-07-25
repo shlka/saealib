@@ -66,8 +66,8 @@ def logged_non_dominated_sort(f, direction=None, *, dominator=None):
 
 ## 関連コンポーネント
 
-- [Dominator](dominance.md) — `sorter`と対になる、2点間の支配関係の定義
-- [Comparator](comparators.md) — `sorter`引数を持つ`ParetoComparator`系のComparator
+- [Dominator](dominance.md)：`sorter`と対になる、2点間の支配関係の定義
+- [Comparator](comparators.md)：`sorter`引数を持つ`ParetoComparator`系のComparator
 
 ## 参照
 

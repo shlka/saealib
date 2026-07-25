@@ -112,11 +112,11 @@ class RandomComparator(Comparator):
 
 ## 関連コンポーネント
 
-- [Dominator](dominance.md) — `ParetoComparator`系の`dominator`引数
-- [NonDominatedSorter](nondominated_sorting.md) — `ParetoComparator`系の`sorter`引数
-- [Decomposition](decomposition.md) — `DecompositionComparator`が使うスカラー化関数
-- [Problem](problem.md) — `comparator`引数の渡し方、既定選択のルール
-- [ParentSelection](parent_selection.md) / [SurvivorSelection](survivor_selection.md) — `Comparator`を使って個体を選ぶ演算子
+- [Dominator](dominance.md)：`ParetoComparator`系の`dominator`引数
+- [NonDominatedSorter](nondominated_sorting.md)：`ParetoComparator`系の`sorter`引数
+- [Decomposition](decomposition.md)：`DecompositionComparator`が使うスカラー化関数
+- [Problem](problem.md)：`comparator`引数の渡し方、既定選択のルール
+- [ParentSelection](parent_selection.md) / [SurvivorSelection](survivor_selection.md)：`Comparator`を使って個体を選ぶ演算子
 
 ## 参照
 

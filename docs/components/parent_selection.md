@@ -52,9 +52,9 @@ class RandomPairSelection(ParentSelection):
 
 ## 関連コンポーネント
 
-- [Algorithm](algorithm.md) — `GA`が`ParentSelection`をどう組み合わせるか
-- [Crossover](crossover.md) — `ParentSelection`が選んだ親個体を受け取る演算子
-- [Comparator](comparators.md) — `TournamentSelection`/`RouletteWheelSelection`が個体を比較する際に使う
+- [Algorithm](algorithm.md)：`GA`が`ParentSelection`をどう組み合わせるか
+- [Crossover](crossover.md)：`ParentSelection`が選んだ親個体を受け取る演算子
+- [Comparator](comparators.md)：`TournamentSelection`/`RouletteWheelSelection`が個体を比較する際に使う
 
 ## 参照
 

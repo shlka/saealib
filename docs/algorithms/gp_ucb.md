@@ -110,7 +110,7 @@ $\mu(x)$ を最小化空間に変換したうえで符号反転すると $-(\mu(
 
 | 役割 | saealibでの実装 | 対応ステップ |
 |---|---|---|
-| 探索アルゴリズム本体 | `GA`（交叉・突然変異・選択の組み合わせ自体はGP-UCBの定義に含まれない） | 候補解の生成（argmax UCBの探索） |
+| 探索アルゴリズム本体 | `GA`（交叉、突然変異、選択の組み合わせ自体はGP-UCBの定義に含まれない） | 候補解の生成（argmax UCBの探索） |
 | サロゲートモデル | `SklearnGPRSurrogate`（GP回帰。`sklearn` extraが必要） | L4 |
 | 獲得関数 | `LowerConfidenceBound`（`kappa`が論文の $\sqrt{\beta_t}$ に対応、詳細は次節） | L2 |
 | サロゲート管理 | `GlobalSurrogateManager`（アーカイブ全体でGPをフィットする） | L2, L4 |
@@ -158,11 +158,11 @@ opt = (
 ctx = opt.run()
 ```
 
-交叉・突然変異・選択の具体的な演算子はGP-UCB自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられます。
+交叉、突然変異、選択の具体的な演算子はGP-UCB自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられます。
 
 ## パラメータと変種
 
-**κ（探索と活用のトレードオフ）**: `LowerConfidenceBound(kappa=...)`で調整します。既定値は`2.0`。
+**κ（探索と活用のトレードオフ）**：`LowerConfidenceBound(kappa=...)`で調整します。既定値は`2.0`。
 
 論文のAlgorithm 1は、この重みを固定値ではなく反復回数 $t$ に依存する $\sqrt{\beta_t}$ として与えます。
 たとえば探索空間 $D$ が有限集合の場合、$\beta_t$ は次のように選ぶことで累積リグレットの理論的な上界が導出できます（Theorem 1）。
@@ -182,9 +182,9 @@ $t$ に応じて`kappa`を動的に変更したい場合は、`CallbackManager`�
 
 ## 関連
 
-- [文献リファレンス](../references.md) — 出典の完全な書誌情報とLCB以外の獲得関数の出典一覧
-- [SurrogateManager](../components/surrogate_manager.md) — `GlobalSurrogateManager`の詳しい使い方
-- [AcquisitionFunction](../components/acquisition_functions.md) — `LowerConfidenceBound`を含む獲得関数一覧
-- [Surrogate](../components/surrogate.md) — `SklearnGPRSurrogate`を含むサロゲートモデル一覧と`sklearn` extraの説明
-- [OptimizationStrategy](../components/strategies.md) — `IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧
-- [EGO](ego.md) — 同じGPサロゲートモデル＋`IndividualBasedStrategy`の構成を、期待改善量(EI)獲得関数で置き換えた手法
+- [文献リファレンス](../references.md)：出典の完全な書誌情報とLCB以外の獲得関数の出典一覧
+- [SurrogateManager](../components/surrogate_manager.md)：`GlobalSurrogateManager`の詳しい使い方
+- [AcquisitionFunction](../components/acquisition_functions.md)：`LowerConfidenceBound`を含む獲得関数一覧
+- [Surrogate](../components/surrogate.md)：`SklearnGPRSurrogate`を含むサロゲートモデル一覧と`sklearn` extraの説明
+- [OptimizationStrategy](../components/strategies.md)：`IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧
+- [EGO](ego.md)：同じGPサロゲートモデル＋`IndividualBasedStrategy`の構成を、期待改善量(EI)獲得関数で置き換えた手法

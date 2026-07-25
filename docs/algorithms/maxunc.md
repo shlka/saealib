@@ -101,7 +101,7 @@ flowchart TD
 
 | 役割 | saealibでの実装 | 対応ステップ |
 |---|---|---|
-| 探索アルゴリズム本体 | `GA`（交叉・突然変異・選択の組み合わせ自体はMaxUncの定義に含まれない） | 候補解の生成（argmax σの探索） |
+| 探索アルゴリズム本体 | `GA`（交叉、突然変異、選択の組み合わせ自体はMaxUncの定義に含まれない） | 候補解の生成（argmax σの探索） |
 | サロゲートモデル | `SklearnGPRSurrogate`（GP回帰。`sklearn` extraが必要） | L2 |
 | 獲得関数 | `MaxUncertainty`（予測標準偏差のみでスコアリングし、予測平均は参照しない） | L3 |
 | サロゲート管理 | `GlobalSurrogateManager`（アーカイブ全体でGPをフィットする） | L2-3 |
@@ -149,14 +149,14 @@ opt = (
 ctx = opt.run()
 ```
 
-交叉・突然変異・選択の具体的な演算子はMaxUnc自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられます。
+交叉、突然変異、選択の具体的な演算子はMaxUnc自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられます。
 
 この例のように評価予算をEGO/GP-UCBの例と同じ200 FEに揃えて実行すると、探索専用であるがゆえに最良値がEI/LCBほど改善しない場合があります。
 これはMaxUncが目的関数の改善ではなくモデルの不確実性削減を目的とする基準であることの自然な帰結であり、想定どおりの挙動です。
 
 ## パラメータと変種
 
-**weights（多目的での不確実性の集約方法）**: `MaxUncertainty(weights=...)`で調整します。
+**weights（多目的での不確実性の集約方法）**：`MaxUncertainty(weights=...)`で調整します。
 多目的問題では各目的ごとに予測標準偏差 $\sigma_1(x), \ldots, \sigma_m(x)$ が得られるため、それらを1つのスコアに集約する必要があります。
 `weights`が`None`の既定値では目的間の単純平均（`std.mean(axis=1)`）を、`np.ndarray`を渡した場合はその重みによる加重和を使います。
 
@@ -166,10 +166,10 @@ $\sigma(x)$のみを基準とする設計上、活用側の重みを持たない
 
 ## 関連
 
-- [文献リファレンス](../references.md) — 出典の完全な書誌情報
-- [SurrogateManager](../components/surrogate_manager.md) — `GlobalSurrogateManager`の詳しい使い方
-- [AcquisitionFunction](../components/acquisition_functions.md) — `MaxUncertainty`を含む獲得関数一覧
-- [Surrogate](../components/surrogate.md) — `SklearnGPRSurrogate`を含むサロゲートモデル一覧と`sklearn` extraの説明
-- [OptimizationStrategy](../components/strategies.md) — `IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧
-- [EGO](ego.md) — 同じGPサロゲートモデル＋`IndividualBasedStrategy`の構成を、活用寄りの期待改善量(EI)獲得関数で置き換えた手法
-- [GP-UCB](gp_ucb.md) — Büche et al.のメリット関数と同じ$\mu - \kappa\sigma$の構造を持つ`LowerConfidenceBound`獲得関数を使う手法
+- [文献リファレンス](../references.md)：出典の完全な書誌情報
+- [SurrogateManager](../components/surrogate_manager.md)：`GlobalSurrogateManager`の詳しい使い方
+- [AcquisitionFunction](../components/acquisition_functions.md)：`MaxUncertainty`を含む獲得関数一覧
+- [Surrogate](../components/surrogate.md)：`SklearnGPRSurrogate`を含むサロゲートモデル一覧と`sklearn` extraの説明
+- [OptimizationStrategy](../components/strategies.md)：`IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧
+- [EGO](ego.md)：同じGPサロゲートモデル＋`IndividualBasedStrategy`の構成を、活用寄りの期待改善量(EI)獲得関数で置き換えた手法
+- [GP-UCB](gp_ucb.md)：Büche et al.のメリット関数と同じ$\mu - \kappa\sigma$の構造を持つ`LowerConfidenceBound`獲得関数を使う手法

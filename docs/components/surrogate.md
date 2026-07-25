@@ -144,11 +144,11 @@ class NearestNeighborSurrogate(RegressionSurrogate):
 
 ## 関連コンポーネント
 
-- [SurrogateManager](surrogate_manager.md) — `Surrogate`のfit/predictを協調させ、スコアリングと組み合わせる
-- [TrainingSet](training_set.md) — `Surrogate`に渡す学習データの抽出方法
-- [AcquisitionFunction](acquisition_functions.md) — `predict()`の結果をスコアへ変換する
-- [サロゲート精度評価と動的切り替え](surrogate_switching.md) — サロゲートの汎化性能の評価
-- [インストール](../getting_started/installation.md) — 各extraのインストール方法
+- [SurrogateManager](surrogate_manager.md)：`Surrogate`のfit/predictを協調させ、スコアリングと組み合わせる
+- [TrainingSet](training_set.md)：`Surrogate`に渡す学習データの抽出方法
+- [AcquisitionFunction](acquisition_functions.md)：`predict()`の結果をスコアへ変換する
+- [サロゲート精度評価と動的切り替え](surrogate_switching.md)：サロゲートの汎化性能の評価
+- [インストール](../getting_started/installation.md)：各extraのインストール方法
 
 ## 参照
 

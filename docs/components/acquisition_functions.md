@@ -94,9 +94,9 @@ class ThresholdAcquisition(AcquisitionFunction):
 
 ## 関連コンポーネント
 
-- [Surrogate](surrogate.md) — `SurrogatePrediction`の提供元。不確実性対応表もこちらを参照する
-- [SurrogateManager](surrogate_manager.md) — `AcquisitionFunction`を`Surrogate`と組み合わせる
-- [TrainingSet](training_set.md) — `ProbabilityOfFeasibility`/`ProductOfFeasibility`と組み合わせる制約用データ抽出
+- [Surrogate](surrogate.md)：`SurrogatePrediction`の提供元。不確実性対応表もこちらを参照する
+- [SurrogateManager](surrogate_manager.md)：`AcquisitionFunction`を`Surrogate`と組み合わせる
+- [TrainingSet](training_set.md)：`ProbabilityOfFeasibility`/`ProductOfFeasibility`と組み合わせる制約用データ抽出
 
 ## 参照
 

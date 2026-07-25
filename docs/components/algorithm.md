@@ -21,7 +21,7 @@
 | `GA` | 交叉と突然変異による遺伝的アルゴリズム |
 | `PSO` | 速度と位置の更新による粒子群最適化 |
 
-### GA: 演算子を組み合わせるコンテナ
+### GA：演算子を組み合わせるコンテナ
 
 `GA`は、それ自体が探索ロジックを持つのではなく、`crossover`/`mutation`/`parent_selection`/`survivor_selection`という4つの演算子を注入して組み立てるコンテナです。
 
@@ -34,15 +34,15 @@ GA(crossover, mutation, parent_selection, survivor_selection, *,
 
 各演算子の挙動とパラメータの詳細は、それぞれ独立したページで扱います。
 
-- [Crossover](crossover.md) — 親個体から子個体を生成する
-- [Mutation](mutation.md) — 子個体に摂動を加える
-- [ParentSelection](parent_selection.md) — 交叉に使う親個体を選ぶ
-- [SurvivorSelection](survivor_selection.md) — 次世代に残す個体を選ぶ
+- [Crossover](crossover.md)：親個体から子個体を生成する
+- [Mutation](mutation.md)：子個体に摂動を加える
+- [ParentSelection](parent_selection.md)：交叉に使う親個体を選ぶ
+- [SurvivorSelection](survivor_selection.md)：次世代に残す個体を選ぶ
 
 `GA.tell()`は、現世代の個体群と`ask()`が生成した子個体群を1つのプールへ統合し、`survivor_selection`でそのプールから生存個体を選ぶ、という(μ+λ)方式で個体群を更新します。
 プールに何を含めるか（親を含めるかどうか）は`GA`側の責務であり、`SurvivorSelection`のインターフェース自体には現れません。
 
-### GA: 混合変数問題への対応
+### GA：混合変数問題への対応
 
 設計変数に整数変数とカテゴリ変数が混在する問題では、`GA`は連続変数用の`crossover`/`mutation`とは別に、型ごとの演算子を使い分けます。
 `integer_crossover`/`integer_mutation`/`categorical_crossover`/`categorical_mutation`を省略すると、それぞれ`CrossoverIntegerSBX`/`MutationIntegerUniform`/`CrossoverCategorical`/`MutationCategorical`が自動的に補われます。
@@ -54,7 +54,7 @@ GA(crossover, mutation, parent_selection, survivor_selection, *,
 
 変数の型は[Problem](problem.md)の`variables`引数で定義します。
 
-### GA: 補助ユーティリティ
+### GA：補助ユーティリティ
 
 **`duplicate_elimination`**引数に`DuplicateElimination(atol=1e-16, rtol=0.0, max_retries=100)`を渡すと、現在の個体群と重複する子個体を再生成で置き換えます。
 重複判定の許容誤差は`atol`/`rtol`で、再生成の試行上限は`max_retries`で指定します。
@@ -122,11 +122,11 @@ PSOのように個体ごとの付加情報（pbestなど）が必要な場合は
 
 ## 関連コンポーネント
 
-- [Crossover](crossover.md) / [Mutation](mutation.md) / [ParentSelection](parent_selection.md) / [SurvivorSelection](survivor_selection.md) — `GA`が組み合わせる4つの演算子
-- [Problem](problem.md) — `variables`による混合変数の定義
-- [ConstraintHandler](constraints.md) — `GA`が候補の修復に使う`repair()`
-- [OptimizationStrategy](strategies.md) — `ask()`/`tell()`の間で真の評価を行うかどうかを判断する
-- [Population](population.md) — `ask()`/`tell()`が読み書きする個体群
+- [Crossover](crossover.md) / [Mutation](mutation.md) / [ParentSelection](parent_selection.md) / [SurvivorSelection](survivor_selection.md)：`GA`が組み合わせる4つの演算子
+- [Problem](problem.md)：`variables`による混合変数の定義
+- [ConstraintHandler](constraints.md)：`GA`が候補の修復に使う`repair()`
+- [OptimizationStrategy](strategies.md)：`ask()`/`tell()`の間で真の評価を行うかどうかを判断する
+- [Population](population.md)：`ask()`/`tell()`が読み書きする個体群
 
 ## 参照
 

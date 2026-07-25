@@ -79,9 +79,9 @@ class RecentKSet(TrainingSet):
 
 ## 関連コンポーネント
 
-- [SurrogateManager](surrogate_manager.md) — `training_set`引数を持つマネージャー
-- [Surrogate](surrogate.md) — `TrainingData`を渡す先。`PairwiseComparisonSet`は`ComparisonSurrogate`系との組み合わせが必要
-- [Comparator](comparators.md) — `TopKBipartitionSet`/`LevelBasedSet`/`PairwiseComparisonSet`/`ReferencePointComparisonSet`が使うソートと比較
+- [SurrogateManager](surrogate_manager.md)：`training_set`引数を持つマネージャー
+- [Surrogate](surrogate.md)：`TrainingData`を渡す先。`PairwiseComparisonSet`は`ComparisonSurrogate`系との組み合わせが必要
+- [Comparator](comparators.md)：`TopKBipartitionSet`/`LevelBasedSet`/`PairwiseComparisonSet`/`ReferencePointComparisonSet`が使うソートと比較
 
 ## 参照
 

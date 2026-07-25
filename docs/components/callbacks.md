@@ -135,11 +135,11 @@ optimizer.cbmanager.register(GenerationStartEvent, widen_mutation_at_gen5)
 
 ## 関連コンポーネント
 
-- [拡張のガイドライン](extension_guidelines.md) — `with_post`系フックとの使い分け
-- [Crossover](crossover.md) / [Mutation](mutation.md) — 候補配列を実際に差し替える手段
-- [strategies](strategies.md) — 実行時のコンポーネント差し替えが反映されるタイミング
-- [サロゲート精度評価と動的切り替え](surrogate_switching.md) — `iterate()`ループでの動的切り替え
-- [チェックポイント](../tutorials/checkpoint.md) — `CheckpointCallback`の使い方
+- [拡張のガイドライン](extension_guidelines.md)：`with_post`系フックとの使い分け
+- [Crossover](crossover.md) / [Mutation](mutation.md)：候補配列を実際に差し替える手段
+- [strategies](strategies.md)：実行時のコンポーネント差し替えが反映されるタイミング
+- [サロゲート精度評価と動的切り替え](surrogate_switching.md)：`iterate()`ループでの動的切り替え
+- [チェックポイント](../tutorials/checkpoint.md)：`CheckpointCallback`の使い方
 
 ## 参照
 

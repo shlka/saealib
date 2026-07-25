@@ -94,10 +94,10 @@ class PeriodicVariable(Variable):
 
 ## 関連コンポーネント
 
-- [Comparator](comparators.md) — `comparator`引数で解の比較方法を差し替える
-- [ConstraintHandler](constraints.md) — `handler`引数で制約違反の扱い方を差し替える
-- [Crossover](crossover.md) / [Mutation](mutation.md) — `variables`で定義した変数の型ごとに使い分けられる演算子
-- [制約付き最適化](../tutorials/constraints.md) — 制約の定義方法と組み込み`ConstraintHandler`の選び方
+- [Comparator](comparators.md)：`comparator`引数で解の比較方法を差し替える
+- [ConstraintHandler](constraints.md)：`handler`引数で制約違反の扱い方を差し替える
+- [Crossover](crossover.md) / [Mutation](mutation.md)：`variables`で定義した変数の型ごとに使い分けられる演算子
+- [制約付き最適化](../tutorials/constraints.md)：制約の定義方法と組み込み`ConstraintHandler`の選び方
 
 ## 参照
 

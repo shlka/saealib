@@ -22,7 +22,7 @@ problem = zdt1(n_var=10)
 
 `zdt1`は、凸形のパレートフロントを持つ2目的のベンチマーク問題を返す`Problem`インスタンスです。
 
-## 高レベルAPI: minimize
+## 高レベルAPI：minimize
 
 `Problem`インスタンスを直接渡すと、目的数はそこから引き継がれます。
 
