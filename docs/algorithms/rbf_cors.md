@@ -90,7 +90,7 @@ flowchart TD
     subgraph GEN["1世代分 (IndividualBasedStrategy.step)"]
         direction TB
         ASK["GA.ask()<br/>候補点を生成"] --> SCORE["SurrogateManager<br/>RBFをフィット (L2)<br/>→ 予測平均でスコアリング<br/>(L3)"]
-        SCORE --> SORT["予測平均上位<br/>evaluation_ratio割を選択"]
+        SCORE --> SORT["予測平均上位<br/>evaluation_ratioの割合を選択"]
         SORT --> EVAL["真の評価 →<br/>アーカイブに追加<br/>(L4)"]
         EVAL --> TELL["GA.tell()<br/>個体群を更新"]
     end
@@ -163,7 +163,7 @@ ctx = opt.run()
 saealibの`RBFSurrogate`は多項式項$p(x)$を持たない純粋なRBF補間（学習データの平均を差し引いた残差にフィットする）であるため、文献の設定を厳密に再現するにはカーネルの差し替えだけでは不十分です。
 
 **evaluation_ratio（逐次評価とバッチ評価の切り替え）**: 文献のCORSは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムです。
-saealibの`IndividualBasedStrategy`は、GAが生成した子個体群のうち予測平均上位`evaluation_ratio`割をまとめて真評価するバッチ拡張になっています。
+saealibの`IndividualBasedStrategy`は、GAが生成した子個体群のうち予測平均上位`evaluation_ratio`の割合をまとめて真評価するバッチ拡張になっています。
 `evaluation_ratio`を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づきます。
 
 ## 関連

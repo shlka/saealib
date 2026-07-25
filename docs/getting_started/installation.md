@@ -23,7 +23,7 @@ pip install "saealib[all]"
 ```bash
 pip install "saealib==X.Y.Z"
 # example:
-pip install "saealib=0.1.0"
+pip install "saealib==0.1.0"
 ```
 最新のプレリリースバージョンは次のように指定します。
 ```bash

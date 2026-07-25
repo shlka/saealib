@@ -92,7 +92,7 @@ result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, surrogate="rbf", seed=0
 
 | 文字列 | クラス | 動作 |
 |--------|--------|------|
-| `'ib'` | `IndividualBasedStrategy` | 候補を個別にサロゲートで評価し、上位`evaluation_ratio`割だけを真に評価する（既定） |
+| `'ib'` | `IndividualBasedStrategy` | 候補を個別にサロゲートで評価し、上位`evaluation_ratio`の割合だけを真に評価する（既定） |
 | `'gb'` | `GenerationBasedStrategy` | `gen_ctrl`世代分をサロゲートのみで進め、1世代だけ真に評価する |
 | `'ps'` | `PreSelectionStrategy` | 大量の候補をサロゲートで絞り込み、上位`n_select`個だけを真に評価する |
 

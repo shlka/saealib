@@ -52,7 +52,7 @@ PSOのpbest更新や`PairwiseComparisonSet`のように、2点だけの比較（
 そのような場面では代わりに`ParetoComparator`を使います。
 `compare_population()`（個体群のインデックスを介した比較）はどちらのクラスでも定義されているため、トーナメント選択などはそのまま使えます。
 
-`HypervolumeComparator`のHV計算は、フロットごとにO(N)回のleave-one-out評価を行います。
+`HypervolumeComparator`のHV計算は、フロントごとにO(N)回のleave-one-out評価を行います。
 目的数が多い問題では、この計算コストが大きくなります。
 
 ```{note}

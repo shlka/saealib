@@ -19,7 +19,7 @@ MOEA/D{cite}`zhang2007moead`のようにサブ問題ごとの重みベクトル�
 | クラス | パラメータ | 特徴 |
 |---|---|---|
 | `WeightedSumDecomposition` | なし | `score = f @ weights`という線形重み付き和。最も単純だが非凸フロントの一部に到達できない |
-| `TchebycheffDecomposition` | なし | `score = max_j(w_j * |f_ij - z_j*|)`というChebyshev距離。非凸フロントにも到達できる |
+| `TchebycheffDecomposition` | なし | `score = max_j(w_j * \|f_ij - z_j*\|)`というChebyshev距離。非凸フロントにも到達できる |
 | `PBIDecomposition` | `theta=5.0` | `d1 + theta * d2`（重みベクトル方向への射影距離＋直交距離のペナルティ） |
 
 `TchebycheffDecomposition`は、ゼロの重みをそのまま使うと退化してしまうため、内部で`1e-6`へ置換します（{cite}`zhang2007moead` Appendix Aの慣習）。

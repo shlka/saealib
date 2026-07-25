@@ -61,7 +61,7 @@ flowchart TD
     subgraph GEN["1世代分 (IndividualBasedStrategy.step)"]
         direction TB
         ASK["GA.ask()<br/>候補解を生成"] --> SCORE["SurrogateManager<br/>GPをフィット (L2)<br/>→ EIでスコアリング (L3)"]
-        SCORE --> SORT["EI上位<br/>evaluation_ratio割を選択<br/>（argmax EIの近似）"]
+        SCORE --> SORT["EI上位<br/>evaluation_ratioの割合を選択<br/>（argmax EIの近似）"]
         SORT --> EVAL["真の評価 →<br/>アーカイブに追加<br/>(L4)"]
         EVAL --> TELL["GA.tell()<br/>個体群を更新"]
     end
@@ -131,7 +131,7 @@ ctx = opt.run()
 $\xi=0$では活用(exploitation)寄りになり、大きくすると探索(exploration)寄りになります。
 
 **evaluation_ratio（逐次評価とバッチ評価の切り替え）**: 文献のEGOは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムです。
-saealibの`IndividualBasedStrategy`は、GAが生成した子個体群のうちEIスコア上位`evaluation_ratio`割をまとめて真評価するバッチ拡張になっています。
+saealibの`IndividualBasedStrategy`は、GAが生成した子個体群のうちEIスコア上位`evaluation_ratio`の割合をまとめて真評価するバッチ拡張になっています。
 `evaluation_ratio`を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づきます。
 
 ## 関連

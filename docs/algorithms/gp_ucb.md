@@ -92,7 +92,7 @@ flowchart TD
     subgraph GEN["1世代分 (IndividualBasedStrategy.step)"]
         direction TB
         ASK["GA.ask()<br/>候補解を生成"] --> SCORE["SurrogateManager<br/>GPをフィット (L4)<br/>→ LCBでスコアリング (L2)"]
-        SCORE --> SORT["LCB上位<br/>evaluation_ratio割を選択<br/>（argmax UCBの近似）"]
+        SCORE --> SORT["LCB上位<br/>evaluation_ratioの割合を選択<br/>（argmax UCBの近似）"]
         SORT --> EVAL["真の評価 →<br/>アーカイブに追加<br/>(L3)"]
         EVAL --> TELL["GA.tell()<br/>個体群を更新"]
     end
