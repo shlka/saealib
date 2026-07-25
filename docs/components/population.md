@@ -6,7 +6,7 @@
 ## Populationが表すもの
 
 `Population`は、設計変数`x`、目的関数値`f`、制約値`g`、制約違反`cv`、アルゴリズム固有の付加属性を、列ごとの配列として保持するコンテナです。
-`Generic[T_Individual]`だが、通常は継承せずインスタンスとして使います。
+`Generic[T_Individual]`ですが、通常は継承せずインスタンスとして使います。
 
 保持する属性のスキーマは`PopulationAttribute(name, dtype, shape, default)`のリストで定義します。
 `x`/`f`/`g`/`cv`という標準属性に加えて、`Algorithm.get_required_attrs(problem)`が返すアルゴリズム固有の属性（PSOの速度やpbestなど）が[Initializer](initialization.md)によって動的に組み立てられ、このスキーマに反映されます。
@@ -83,7 +83,7 @@ idx, dist = arc.get_knn(np.array([0.1, 0.2]), k=1)
 実行可能解（`cv <= eps_cv`）は常に実行不可能解を支配し、両方が実行可能な場合にのみ[Dominator](dominance.md)の`dominates`が使われます。
 
 `dominator`引数で支配関係の定義を差し替えられます。
-`eps_cv`の既定値は`0.0`（厳密に実行可能な解のみを許容可能とみなす）だが、`Optimizer`実行中はこの値が毎世代`problem.handler.feasibility_threshold`で上書きされます。
+`eps_cv`の既定値は`0.0`（厳密に実行可能な解のみを許容可能とみなす）ですが、`Optimizer`実行中はこの値が毎世代`problem.handler.feasibility_threshold`で上書きされます。
 `0.0`という既定値は、`ParetoArchive`を`Optimizer`から切り離して単体で使う場合にのみ意味を持ちます。
 
 ## 限定的な拡張点

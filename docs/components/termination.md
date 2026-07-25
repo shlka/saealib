@@ -67,7 +67,7 @@ not_stalled = ~stalled(20)  # stallしていない間
 ```
 
 ```{note}
-`TerminationCondition`のコンストラクタが持つ`spec`引数は、[Registry](extension_guidelines.md)がプリセットへシリアライズする際に使う内部フィールドであり、通常のユーザーコードでは意識しなくてよい。
+`TerminationCondition`のコンストラクタが持つ`spec`引数は、[Registry](extension_guidelines.md)がプリセットへシリアライズする際に使う内部フィールドであり、通常のユーザーコードでは意識しなくてかまいません。
 ```
 
 ## 関連コンポーネント

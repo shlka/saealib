@@ -4,7 +4,7 @@
 
 学習データが少ない序盤は精度が低く、アーカイブが充実してくると精度が上がり、探索が収束して目的値の差が縮まると再び精度が落ちることもあります。
 
-この変化に応じて、評価戦略やサロゲートマネージャーを実行中に切り替える方法を扱います。
+この変化に応じて、評価戦略や`SurrogateManager`を実行中に切り替える方法を扱います。
 
 ## 問題設定
 
@@ -24,7 +24,7 @@ SEED = 0
 
 ## サロゲート精度の追跡
 
-サロゲートマネージャーに`accuracy_evaluator`を渡すと、フィットのたびに精度が計算され、`surrogate_manager.last_accuracy`に記録されます。
+`SurrogateManager`に`accuracy_evaluator`を渡すと、フィットのたびに精度が計算され、`surrogate_manager.last_accuracy`に記録されます。
 
 `LOOAccuracyEvaluator`は、追加の保留データを用意せず、現在の学習データに対する交差検証(leave-one-out)で精度を求めます。
 
@@ -72,7 +72,7 @@ surrogate_manager = LocalSurrogateManager(
 initializer = LHSInitializer(n_init_archive=5 * DIM, n_init_population=4 * DIM, seed=SEED)
 ```
 
-`last_accuracy`は`SurrogateAccuracy`インスタンスで、`.get("spearman")`のようにメトリック名を指定して値を取り出せます。
+`last_accuracy`は`SurrogateAccuracy`インスタンスで、`.get("spearman")`のように指標名を指定して値を取り出せます。
 
 最初の世代では`last_accuracy`が`None`である点に注意してください。
 
@@ -115,8 +115,8 @@ print(ctx.fe)
 
 | クラス | 切り替える対象 |
 |--------|--------|
-| `StrategySwitcher` | 2つの`OptimizationStrategy`（精度がしきい値以上か否か） |
-| `ManagerSwitcher` | 2つの`SurrogateManager`（精度がしきい値以上か否か） |
+| `StrategySwitcher` | 2つの`OptimizationStrategy`（精度が閾値以上か否か） |
+| `ManagerSwitcher` | 2つの`SurrogateManager`（精度が閾値以上か否か） |
 | `GenCtrlSwitcher` | `GenerationBasedStrategy`の`gen_ctrl`（精度を指数移動平均で平滑化して連続値へ写像） |
 
 `GenCtrlSwitcher`は数値を返すので、`GenerationBasedStrategy`のインスタンスの`gen_ctrl`属性へ直接代入します。

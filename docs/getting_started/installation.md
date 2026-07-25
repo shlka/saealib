@@ -47,14 +47,14 @@ pip install "saealib[sklearn,parallel]"
 pip install "saealib[all]"
 ```
 すべてのオプションは次の表に示す通りです。
-| Extra | Adds |
+| オプション | 追加される機能 |
 |---|---|
-| `sklearn` | scikit-learn-based surrogates |
-| `xgboost` | XGBoost surrogate |
-| `lightgbm` | LightGBM surrogate |
-| `torch` | PyTorch-based components |
-| `parallel` | joblib-based parallel evaluation |
-| `all` | everything above |
+| `sklearn` | scikit-learnベースのサロゲートモデル |
+| `xgboost` | XGBoostサロゲートモデル |
+| `lightgbm` | LightGBMサロゲートモデル |
+| `torch` | PyTorchベースのコンポーネント |
+| `parallel` | joblibによる並列評価 |
+| `all` | 上記すべて |
 
 ## インストールの確認
 インストールが完了したら、次のコマンドでバージョンを確認できます。

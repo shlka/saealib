@@ -34,7 +34,7 @@
 
 `HeldOutAccuracyEvaluator`は、直近の真の評価点との比較用途{cite}`hanawa2025switching`で使います。
 
-`SurrogateAccuracy`（`metrics: dict[str, float]`, `n_samples: int`）は、評価結果を保持する単純なコンテナで、`get(name, default=nan)`でメトリクス名から値を取り出します。
+`SurrogateAccuracy`（`metrics: dict[str, float]`, `n_samples: int`）は、評価結果を保持する単純なコンテナで、`get(name, default=nan)`で指標名から値を取り出します。
 
 ## 切り替え判断：AccuracyBasedSurrogateSwitcher
 
@@ -55,7 +55,7 @@ for ctx in optimizer.iterate():
 | `StrategySwitcher` | `primary, fallback, *, metric="spearman", threshold=0.56` | `OptimizationStrategy` |
 | `GenCtrlSwitcher` | `*, gm_max=5, gm_min=0, update_rate=0.5, metric="spearman", initial_error=0.5` | `gen_ctrl`（整数） |
 
-`ManagerSwitcher`/`StrategySwitcher`は、指定したメトリクスが閾値以上なら`primary`、そうでなければ`fallback`を返す単純な二値切り替えです。
+`ManagerSwitcher`/`StrategySwitcher`は、指定した指標が閾値以上なら`primary`、そうでなければ`fallback`を返す単純な二値切り替えです。
 `StrategySwitcher`の既定閾値`0.56`は、{cite}`hanawa2025switching`によるPS/IB-GB切り替えの設定値に基づきます。
 
 `GenCtrlSwitcher`は、二値切り替えではなく`gen_ctrl`を指数平滑化で連続的に調整します{cite}`repicky2017genctrl`。

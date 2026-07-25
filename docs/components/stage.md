@@ -28,7 +28,7 @@
 
 ## 組み込みStage
 
-`OptimizationState`の`offspring`/`scores`/`predictions`/`evaluated_offspring`という標準フィールドを、各Stageがどう読み書きするかを示す。
+`OptimizationState`の`offspring`/`scores`/`predictions`/`evaluated_offspring`という標準フィールドを、各Stageがどう読み書きするかを示します。
 
 | クラス | 読む | 書く |
 |---|---|---|

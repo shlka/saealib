@@ -159,7 +159,7 @@ ctx = opt.run()
 ## パラメータと変種
 
 **kernel（RBFカーネルの選択）**：`RBFSurrogate(kernel=...)`で任意のカーネル関数を注入できます。
-既定値は`gaussian_kernel`だが、文献の数値実験ではthin plate spline（$\phi(r) = r^2 \log r$）と1次多項式の付加項$p(x)$を組み合わせたモデルが使われています。
+既定値は`gaussian_kernel`ですが、文献の数値実験ではthin plate spline（$\phi(r) = r^2 \log r$）と1次多項式の付加項$p(x)$を組み合わせたモデルが使われています。
 saealibの`RBFSurrogate`は多項式項$p(x)$を持たない純粋なRBF補間（学習データの平均を差し引いた残差にフィットする）であるため、文献の設定を厳密に再現するにはカーネルの差し替えだけでは不十分です。
 
 **evaluation_ratio（逐次評価とバッチ評価の切り替え）**：文献のCORSは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムです。

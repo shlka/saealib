@@ -56,7 +56,7 @@ Generation end -> [on_generation_end(gen, population)]
 オーバーライドして解析的な勾配ベクトルを返すようにすると、`GradientRepairHandler`が使えるようになります。
 
 **`violation_from_value(g)`**：生の制約値`g(x)`から違反量への変換を定義します。
-既定は`max(0, g - threshold)`。
+既定は`max(0, g - threshold)`です。
 `EqualityConstraint`はこのメソッドだけをオーバーライドし、`max(0, |h(x)| - tolerance)`という独自の変換を定義しています。
 
 ## 独自ConstraintHandlerの実装方法

@@ -44,7 +44,7 @@ Problem(
 整数変数とカテゴリ変数を混在させたい場合にここへ`IntegerVariable`/`CategoricalVariable`を含めると、[Crossover](crossover.md)/[Mutation](mutation.md)が変数の型ごとに異なる演算子を自動的に割り当てます。
 
 ```{note}
-旧バージョンのチュートリアルには`weight=`という引数を使う例があるが、現行の`Problem`にこの引数は存在しません。
+旧バージョンのチュートリアルには`weight=`という引数を使う例がありますが、現行の`Problem`にこの引数は存在しません。
 `weight=`を渡すと`TypeError`になります。
 ```
 

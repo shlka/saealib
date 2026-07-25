@@ -1,6 +1,6 @@
 # 混合変数最適化
 
-連続変数だけでなく、整数変数やカテゴリカル変数を含む問題を、`saealib`で解きます。
+連続変数だけでなく、整数変数やカテゴリ変数を含む問題を、`saealib`で解きます。
 
 アルゴリズム、サロゲート、評価戦略の切り替え方は[単目的最適化](single_objective.md)の「コンポーネントの切り替え」と共通です。
 
@@ -56,15 +56,15 @@ result = minimize(problem, max_fe=500, seed=0)
 print(result.x, result.f)
 ```
 
-`GA`は、変数の型ごとに専用の交叉と突然変異の演算子（整数用の`CrossoverIntegerSBX`/`MutationIntegerUniform`、カテゴリカル用の`CrossoverCategorical`/`MutationCategorical`）を既定で備えており、`variables`を渡すだけで型に応じた探索が行われます。
+`GA`は、変数の型ごとに専用の交叉と突然変異の演算子（整数用の`CrossoverIntegerSBX`/`MutationIntegerUniform`、カテゴリ変数用の`CrossoverCategorical`/`MutationCategorical`）を既定で備えており、`variables`を渡すだけで型に応じた探索が行われます。
 
-`PSO`は速度に基づく更新方式のため、整数変数とカテゴリカル変数を正しく扱えません。
+`PSO`は速度に基づく更新方式のため、整数変数とカテゴリ変数を正しく扱えません。
 
 混合変数問題では`algorithm='GA'`（既定）のまま使ってください。
 
-## オペレータのカスタマイズ
+## 演算子のカスタマイズ
 
-整数用とカテゴリカル用の演算子も、`GA`のキーワード引数で個別に指定できます。
+整数変数用とカテゴリ変数用の演算子も、`GA`のキーワード引数で個別に指定できます。
 
 ```python
 from saealib import (

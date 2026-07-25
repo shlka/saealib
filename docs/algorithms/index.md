@@ -55,7 +55,7 @@ RBF補間によるサロゲートモデルと、既存評価点からの距離�
 :link: nsga3
 :link-type: doc
 
-参照点ベースのニッチ保存による多目的遺伝アルゴリズム。四つ以上の目的を持つmany-objective最適化向け。
+参照点ベースのニッチ保存による多目的遺伝アルゴリズム。4つ以上の目的を持つmany-objective最適化向け。
 :::
 
 :::{grid-item-card} SMS-EMOA

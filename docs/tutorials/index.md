@@ -30,14 +30,14 @@
 :link: mixed_variable
 :link-type: doc
 
-連続変数に加えて整数変数、カテゴリカル変数を含む問題を解きます。
+連続変数に加えて整数変数、カテゴリ変数を含む問題を解きます。
 :::
 
 :::{grid-item-card} {fa}`arrows-rotate;sd-mr-1` 動的な切り替え
 :link: dynamic_optimization
 :link-type: doc
 
-サロゲートの予測精度に応じて、評価戦略やサロゲートマネージャーを実行中に切り替えます。
+サロゲートの予測精度に応じて、評価戦略や`SurrogateManager`を実行中に切り替えます。
 :::
 
 :::{grid-item-card} {fa}`floppy-disk;sd-mr-1` 再現性とチェックポイント

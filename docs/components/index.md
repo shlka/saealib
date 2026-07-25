@@ -84,7 +84,7 @@ opt = (
 ctx = opt.run()
 ```
 
-高レベルAPI（`minimize()`/`maximize()`）は、このパイプラインをsensible defaultsで自動構成したものです。
+高レベルAPI（`minimize()`/`maximize()`）は、このパイプラインを適切な既定値で自動構成したものです。
 世代ごとの検査やカスタムループ制御が必要な研究用途では、`.run()`の代わりに`.iterate()`を使います。
 `.iterate()`を使った実例は[単目的最適化](../tutorials/single_objective.md)などのチュートリアルにあります。
 
