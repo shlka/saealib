@@ -1,12 +1,12 @@
-# 進捗のログ記録
+# Logging Progress
 
-最適化の進捗を、標準の`logging`モジュールで記録します。
+Record optimization progress with the standard `logging` module.
 
-## 既定の挙動
+## Default behavior
 
-`Optimizer`は、世代開始のたびに進捗を記録するハンドラ(`logging_generation`)を、`minimize`/`maximize`の`verbose=True`（既定）のときだけ登録します。
+`Optimizer` registers a handler (`logging_generation`) that records progress at the start of every generation, but only when `minimize`/`maximize`'s `verbose=True` (the default).
 
-ただし、このハンドラは`logging.getLogger(__name__).info(...)`を呼ぶだけなので、Pythonの`logging`モジュール側でINFOレベルの出力を有効にしないかぎり、何も表示されません。
+However, this handler only calls `logging.getLogger(__name__).info(...)`, so nothing is displayed unless INFO-level output is enabled on Python's `logging` module.
 
 ```python
 import numpy as np
@@ -23,7 +23,7 @@ DIM = 5
 result = minimize(expensive_func, dim=DIM, lb=[-5.0] * DIM, ub=[5.0] * DIM, max_fe=100, seed=0)
 ```
 
-進捗を表示するには、`logging.basicConfig`でINFOレベルを有効にします。
+To display progress, enable INFO level with `logging.basicConfig`.
 
 ```python
 import logging
@@ -36,17 +36,17 @@ result = minimize(expensive_func, dim=DIM, lb=[-5.0] * DIM, ub=[5.0] * DIM, max_
 # ...
 ```
 
-`logging_generation`は目的数を見て記録内容を切り替え、単目的では最良の目的値を、多目的では第一非優越フロントのサイズと目的ごとの値の範囲を記録します。
+`logging_generation` switches what it records based on the number of objectives: for single-objective it records the best objective value, and for multi-objective it records the size of the first non-dominated front and the range of values per objective.
 
-進捗の記録自体が不要な場合は、`verbose=False`を指定してハンドラの登録を止めます。
+If you don't want progress recorded at all, specify `verbose=False` to stop the handler from being registered.
 
 ```python
 result = minimize(expensive_func, dim=DIM, lb=[-5.0] * DIM, ub=[5.0] * DIM, max_fe=100, seed=0, verbose=False)
 ```
 
-## ファイルへの出力
+## Writing to a file
 
-`saealib.callback.handlers`ロガーに`FileHandler`を追加すると、進捗をファイルに書き出せます。
+Adding a `FileHandler` to the `saealib.callback.handlers` logger writes progress out to a file.
 
 ```python
 import logging
@@ -61,9 +61,9 @@ saealib_logger.setLevel(logging.INFO)
 result = minimize(expensive_func, dim=DIM, lb=[-5.0] * DIM, ub=[5.0] * DIM, max_fe=100, seed=0)
 ```
 
-## 多目的でのハイパーボリュームログ
+## Hypervolume logging for multi-objective problems
 
-多目的問題では、`logging_generation_hv(reference_point)`が返すハンドラを登録すると、世代ごとのハイパーボリュームを記録できます。
+For multi-objective problems, registering the handler returned by `logging_generation_hv(reference_point)` records the hypervolume for each generation.
 
 ```python
 import numpy as np
@@ -91,25 +91,25 @@ ctx = optimizer.run()
 # ...
 ```
 
-`reference_point`は最小化の慣例で、各目的の達成可能な最良値より大きい値を指定します。
+By minimization convention, `reference_point` should be a value larger than the best achievable value for each objective.
 
-## 警告レベルのログ
+## Warning-level logging
 
-一部のコンポーネントは、数値的な問題を`logger.warning(...)`で記録します。
+Some components record numerical issues via `logger.warning(...)`.
 
-例えば`RBFSurrogate`は、カーネル行列が悪条件になったときに警告を出します。
+For example, `RBFSurrogate` issues a warning when the kernel matrix becomes ill-conditioned.
 
-`logging.basicConfig`を呼んでいなくても、WARNING以上のログはPythonの「handler of last resort」によって標準エラー出力に表示されます。
+Even without calling `logging.basicConfig`, WARNING-level and above logs are shown on standard error via Python's "handler of last resort".
 
-INFOレベルの進捗ログとは異なり、この種の警告は設定なしでも見える点に注意してください。
+Note that, unlike INFO-level progress logs, this kind of warning is visible even without any configuration.
 
-## 独自のログ処理
+## Custom logging
 
-`logging_generation`/`logging_generation_hv`が記録する内容以外を記録したい場合は、`CallbackManager`に独自のハンドラを登録します。
+If you want to log something other than what `logging_generation`/`logging_generation_hv` record, register your own handler on `CallbackManager`.
 
-詳しい仕組みは[CallbackManager](../components/callbacks.md)を参照してください。
+See [CallbackManager](../components/callbacks.md) for the underlying mechanism.
 
-## 参照
+## References
 
 - {py:func}`saealib.logging_generation` / {py:func}`saealib.logging_generation_hv`
 - {py:class}`saealib.CallbackManager` / {py:class}`saealib.GenerationStartEvent`

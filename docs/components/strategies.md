@@ -1,58 +1,58 @@
 # OptimizationStrategy
 
-`saealib`は、どの候補解に高コストな真の評価を割り当てるかという判断を、`OptimizationStrategy`という差し替え可能なコンポーネントに委ねています。
-`step()`が1世代分の「生成、スコアリング、評価、更新」を実行します。
+`saealib` delegates the decision of which candidate solutions receive an expensive true evaluation to `OptimizationStrategy`, a swappable component.
+`step()` executes one generation's "generate, score, evaluate, update."
 
-## OptimizationStrategyの役割
+## OptimizationStrategy's role
 
-`OptimizationStrategy`が実装を要求するメソッドは`step(ctx, provider) -> OptimizationState | None`の1つだけです。
-`None`を返すのは、`ctx`をin-place更新するレガシースタイルの実装向けの取り決めであり、組み込みの4種は全て更新後の`OptimizationState`を返します。
+`OptimizationStrategy` requires only one method, `step(ctx, provider) -> OptimizationState | None`, to be implemented.
+Returning `None` is a convention for legacy-style implementations that update `ctx` in-place; all 4 built-in strategies return an updated `OptimizationState`.
 
-クラス属性`requires_surrogate: bool`は、この戦略が`SurrogateManager`を必要とするかを示します。
-`Optimizer.validate()`がこの属性を見て、`surrogate_manager`が未設定のまま`requires_surrogate=True`の戦略を使おうとしていないかを確認します。
+The class attribute `requires_surrogate: bool` indicates whether this strategy needs a `SurrogateManager`.
+`Optimizer.validate()` checks this attribute to confirm you aren't trying to use a strategy with `requires_surrogate=True` while `surrogate_manager` is unset.
 
-## 組み込みStrategy
+## Built-in Strategies
 
-| クラス | パラメータ | 方式 |
+| Class | Parameters | Approach |
 |---|---|---|
-| `DirectStrategy` | なし | サロゲートを使わず、生成した候補を全件真に評価する |
-| `IndividualBasedStrategy` | `evaluation_ratio: float = 0.1` | 全候補をサロゲートでスコアリングし、上位`evaluation_ratio`の割合だけ真に評価する |
-| `PreSelectionStrategy` | `n_candidates: int, n_select: int`（共に必須） | `n_candidates`件を生成してスコアリングし、上位`n_select`件だけ真に評価する |
-| `GenerationBasedStrategy` | `gen_ctrl: int`（必須） | `gen_ctrl`世代分をサロゲートのみで進め、その後1世代だけ真に評価する |
+| `DirectStrategy` | None | Uses no surrogate; truly evaluates every generated candidate |
+| `IndividualBasedStrategy` | `evaluation_ratio: float = 0.1` | Scores every candidate with the surrogate, and truly evaluates only the top `evaluation_ratio` fraction |
+| `PreSelectionStrategy` | `n_candidates: int, n_select: int` (both required) | Generates `n_candidates`, scores them, and truly evaluates only the top `n_select` |
+| `GenerationBasedStrategy` | `gen_ctrl: int` (required) | Advances `gen_ctrl` generations using only the surrogate, then truly evaluates a single generation |
 
-`IndividualBasedStrategy`は個体の割合、`PreSelectionStrategy`は個体の件数で選抜する点が異なります。
-`GenerationBasedStrategy`は個体単位ではなく世代単位でサロゲートと真の評価を切り替えます。
-`DirectStrategy`はサロゲートを一切使わない比較対象で、`requires_surrogate=False`です。
+`IndividualBasedStrategy` selects by fraction of individuals, while `PreSelectionStrategy` selects by count of individuals.
+`GenerationBasedStrategy` switches between surrogate and true evaluation by generation, not by individual.
+`DirectStrategy` is the comparison baseline that uses no surrogate at all, with `requires_surrogate=False`.
 
-### 各Strategyのパイプライン構成
+### Each Strategy's pipeline structure
 
-| クラス | パイプライン |
+| Class | Pipeline |
 |---|---|
 | `DirectStrategy` | CountGeneration → Ask → TrueEvaluation → ArchiveUpdate → Tell |
-| `IndividualBasedStrategy` | CountGeneration → Ask → SurrogateScore → SortByScore → TrueEvaluation(比率指定) → ArchiveUpdate → Tell |
-| `PreSelectionStrategy` | CountGeneration → Ask(n_candidates件) → SurrogateScore → TopKSelection(k=n_select) → TrueEvaluation → ArchiveUpdate → Tell |
-| `GenerationBasedStrategy` | SurrogateOnlyLoop(gen_ctrl回) → CountGeneration → Ask → TrueEvaluation → ArchiveUpdate → Tell |
+| `IndividualBasedStrategy` | CountGeneration → Ask → SurrogateScore → SortByScore → TrueEvaluation (ratio-based) → ArchiveUpdate → Tell |
+| `PreSelectionStrategy` | CountGeneration → Ask (n_candidates) → SurrogateScore → TopKSelection(k=n_select) → TrueEvaluation → ArchiveUpdate → Tell |
+| `GenerationBasedStrategy` | SurrogateOnlyLoop (gen_ctrl times) → CountGeneration → Ask → TrueEvaluation → ArchiveUpdate → Tell |
 
-各[Stage](stage.md)単体の契約は、そちらのページを参照してください。
-全体のパイプライン図は[コンポーネント概要](index.md)を参照してください。
+See [Stage](stage.md) for the contract each individual stage satisfies.
+See [Components overview](index.md) for the overall pipeline diagram.
 
-## どのStrategyを選ぶか
+## Which Strategy to choose
 
-評価コストが極めて高い問題では、サロゲートで大半の候補を足切りする`IndividualBasedStrategy`や`PreSelectionStrategy`が有効です。
-サロゲートの信頼度がまだ低い探索初期や、サロゲートの学習コスト自体を頻繁に払いたくない場合は、複数世代をまとめてサロゲートのみで進める`GenerationBasedStrategy`が適しています。
-サロゲートの近似誤差そのものが許容できない、あるいは評価コストが十分低い問題では、`DirectStrategy`で真の評価だけに頼るのが妥当です。
+For problems where evaluation cost is extremely high, `IndividualBasedStrategy` or `PreSelectionStrategy`, which use the surrogate to filter out most candidates, are effective.
+Early in the search, when the surrogate's reliability is still low, or when you don't want to pay the surrogate's own training cost frequently, `GenerationBasedStrategy`, which advances multiple generations at once using only the surrogate, is suited.
+For problems where the surrogate's approximation error itself is unacceptable, or evaluation cost is sufficiently low, relying solely on true evaluation via `DirectStrategy` is reasonable.
 
-## 実行時差し替えの挙動
+## Behavior of runtime swapping
 
-各Strategyの`step()`は、呼ばれるたびに無条件で`self.pipeline = self._build_pipeline(provider)`を実行してからパイプラインを実行します。
-パイプラインをキャッシュしないため、`provider.algorithm`や`provider.surrogate_manager`を実行中に差し替えても、次の世代から確実に反映されます。
+Every Strategy's `step()` unconditionally executes `self.pipeline = self._build_pipeline(provider)` before running the pipeline, every time it's called.
+Because the pipeline isn't cached, swapping `provider.algorithm` or `provider.surrogate_manager` mid-run is reliably reflected from the next generation onward.
 
-## 独自Strategyの実装方法
+## Implementing a custom Strategy
 
-独自の候補選抜方式が必要な場合、2つのアプローチがあります。
+If you need a custom candidate-selection scheme, there are two approaches.
 
-**`OptimizationStrategy`を直接継承する**：`step()`を自分で実装します。
-[Pipeline/Stage](extension_guidelines.md)を組み合わせて新しいパイプラインを構築する場合も、この形になります。
+**Subclass `OptimizationStrategy` directly**: Implement `step()` yourself.
+This is also the form you'd use when building a new pipeline by combining [Pipeline/Stage](extension_guidelines.md).
 
 ```python
 from saealib import OptimizationStrategy, Pipeline
@@ -63,7 +63,7 @@ from saealib.stages import (
 
 
 class SimpleDirectStrategy(OptimizationStrategy):
-    """DirectStrategyと同じ内容を、Pipelineを自分で組み立てて再現する例。"""
+    """An example reproducing the same content as DirectStrategy by assembling a Pipeline yourself."""
 
     requires_surrogate = False
 
@@ -79,16 +79,16 @@ class SimpleDirectStrategy(OptimizationStrategy):
         return pipeline.execute(ctx)
 ```
 
-既存戦略のパイプラインを微調整したいだけであれば、`OptimizationStrategy`を新しく書くのではなく、[Pipeline.replace/find](extension_guidelines.md)で組み込みパイプラインの一部だけを差し替えるほうが軽量です。
+If you just want to fine-tune an existing strategy's pipeline, it's lighter-weight to swap out only part of the built-in pipeline via [Pipeline.replace/find](extension_guidelines.md), rather than writing a new `OptimizationStrategy`.
 
-## 関連コンポーネント
+## Related components
 
-- [Stage](stage.md)：各Strategyが組み合わせるパイプラインステージ単体の契約
-- [SurrogateManager](surrogate_manager.md)：`requires_surrogate=True`の戦略が使うスコアリング機構
-- [拡張のガイドライン](extension_guidelines.md)：`Pipeline.replace`/`find`によるステージの並べ替え
-- [コンポーネント概要](index.md)：パイプライン全体の構成図
+- [Stage](stage.md): The contract of each individual pipeline stage a Strategy combines
+- [SurrogateManager](surrogate_manager.md): The scoring mechanism used by strategies with `requires_surrogate=True`
+- [Extension guidelines](extension_guidelines.md): Rearranging stages via `Pipeline.replace`/`find`
+- [Components overview](index.md): The diagram of the overall pipeline structure
 
-## 参照
+## References
 
 - {py:class}`saealib.OptimizationStrategy`
 - {py:class}`saealib.IndividualBasedStrategy`

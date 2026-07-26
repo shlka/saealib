@@ -1,8 +1,8 @@
 # saealib
 
-Pythonで実装された、**サロゲート型進化的アルゴリズム(SAEA)** のための総合的なライブラリです。
+A comprehensive library for **surrogate-assisted evolutionary algorithms (SAEA)**, implemented in Python.
 
-目的関数の評価コストが高い最適化問題を想定して設計されており、`saealib`は進化的アルゴリズム、サロゲートモデル、モデル管理戦略を組み合わせるモジュール式のフレームワークを提供します。
+Designed for optimization problems where the objective function is expensive to evaluate, `saealib` provides a modular framework that combines evolutionary algorithms, surrogate models, and model management strategies.
 
 ```{button-ref} getting_started/quickstart
 :ref-type: doc
@@ -10,14 +10,14 @@ Pythonで実装された、**サロゲート型進化的アルゴリズム(SAEA)
 :shadow:
 :class: sd-mr-2
 
-クイックスタート →
+Quickstart →
 ```
 ```{button-ref} getting_started/what_is_saealib
 :ref-type: doc
 :color: secondary
 :outline:
 
-saealibとは？
+What is saealib?
 ```
 
 ---
@@ -26,7 +26,7 @@ saealibとは？
 :gutter: 3
 :margin: 4 4 0 0
 
-:::{grid-item-card} {fa}`bolt;sd-mr-1` 高レベルAPI
+:::{grid-item-card} {fa}`bolt;sd-mr-1` High-level API
 :link: getting_started/quickstart
 :link-type: doc
 
@@ -37,73 +37,73 @@ result = minimize(func, dim=5,
                   lb=-5, ub=5)
 ```
 
-`minimize()` / `maximize()`による、定型コード不要の高レベルAPI。
+A boilerplate-free high-level API via `minimize()` / `maximize()`.
 :::
 
-:::{grid-item-card} {fa}`sliders;sd-mr-1` 低レベルAPI
+:::{grid-item-card} {fa}`sliders;sd-mr-1` Low-level API
 :link: components/index
 :link-type: doc
 
-`Optimizer`ビルダーと`iterate()`ジェネレータにより、研究用途向けに世代ごとの検査やカスタムループ制御が可能です。
+The `Optimizer` builder and `iterate()` generator enable per-generation inspection and custom loop control for research use.
 :::
 
-:::{grid-item-card} {fa}`puzzle-piece;sd-mr-1` 拡張性
+:::{grid-item-card} {fa}`puzzle-piece;sd-mr-1` Extensibility
 :link: components/index
 :link-type: doc
 
-すべての概念は抽象基底クラスを持ち、構築時に差し替え可能です。
-そのため、フォークすることなくあらゆるSAEAバリアントを表現できます。
+Every concept has an abstract base class and can be swapped at construction time.
+This makes it possible to express any SAEA variant without forking the library.
 :::
 
 ::::
 
 ---
 
-## ドキュメント
+## Documentation
 
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} {fa}`flag;sd-mr-1` はじめに
+:::{grid-item-card} {fa}`flag;sd-mr-1` Getting Started
 :link: getting_started/index
 :link-type: doc
 
-saealibを初めて使う方へ。インストール方法、基本的な使い方、コアとなる概念を説明します。
+For first-time saealib users. Covers installation, basic usage, and core concepts.
 :::
 
-:::{grid-item-card} {fa}`book-open;sd-mr-1` チュートリアル
+:::{grid-item-card} {fa}`book-open;sd-mr-1` Tutorials
 :link: tutorials/index
 :link-type: doc
 
-状況別のセットアップガイド：単目的/多目的最適化、制約、チェックポイント。
+Setup guides for specific scenarios: single-/multi-objective optimization, constraints, checkpointing.
 :::
 
-:::{grid-item-card} {fa}`cubes;sd-mr-1` コンポーネント
+:::{grid-item-card} {fa}`cubes;sd-mr-1` Components
 :link: components/index
 :link-type: doc
 
-各コンポーネントの詳しい使い方と拡張ガイドライン。
+Detailed usage of each component and guidelines for extending it.
 :::
 
-:::{grid-item-card} {fa}`diagram-project;sd-mr-1` アルゴリズム
+:::{grid-item-card} {fa}`diagram-project;sd-mr-1` Algorithms
 :link: algorithms/index
 :link-type: doc
 
-文献上の名前がついたアルゴリズムを、saealibのコンポーネントの組み合わせとしてどう再現するか。
+How named algorithms from the literature are reproduced as combinations of saealib components.
 :::
 
-:::{grid-item-card} {fa}`bookmark;sd-mr-1` 文献リファレンス
+:::{grid-item-card} {fa}`bookmark;sd-mr-1` References
 :link: references
 :link-type: doc
 
-実装済みのアルゴリズム、演算子、比較方法の理論的出典をまとめた文献リスト。
+A bibliography of the theoretical sources for the implemented algorithms, operators, and comparison methods.
 :::
 
 :::{grid-item-card} {fa}`code;sd-mr-1` API Reference
 :link: api/index
 :link-type: doc
 
-すべてのクラスと関数の完全な仕様。
+The complete specification of every class and function.
 :::
 
 ::::

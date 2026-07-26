@@ -1,38 +1,38 @@
 # Evaluator
 
-`OptimizationStrategy`や`Initializer`は、設計変数の候補群を目的関数値、生の制約値、制約違反へ変換する処理を、`Evaluator`という差し替え可能な実行バックエンドに委ねています。
-評価を逐次実行するか並列実行するかは、パイプライン側のコードを変えずに`Evaluator`だけを差し替えれば切り替えられます。
+`OptimizationStrategy` and `Initializer` delegate converting a batch of design-variable candidates into objective values, raw constraint values, and constraint violation to `Evaluator`, a swappable execution backend.
+Whether evaluation runs sequentially or in parallel can be switched by swapping out only `Evaluator`, without changing the pipeline-side code.
 
-## Evaluatorの役割
+## Evaluator's role
 
-`Evaluator`が実装を要求するメソッドは`evaluate_batch(x, problem) -> EvaluationResult`の1つだけです。
-`x`には評価対象の設計変数群が`shape (n, dim)`で渡され、[Problem](problem.md)の目的関数と制約関数を使って`EvaluationResult`を構築して返します。
+`Evaluator` requires only one method, `evaluate_batch(x, problem) -> EvaluationResult`, to be implemented.
+`x` receives the set of design variables to evaluate with shape `(n, dim)`, and it builds and returns an `EvaluationResult` using [Problem](problem.md)'s objective and constraint functions.
 
-`EvaluationResult`は3つの配列を持つデータクラスです。
+`EvaluationResult` is a dataclass holding three arrays.
 
-- **`f`**：目的関数値。`shape (n, n_obj)`
-- **`g`**：生の制約値。`shape (n, n_constraints)`。問題が制約を持たない場合は`(n, 0)`
-- **`cv`**：候補ごとの集約された制約違反量。`shape (n,)`。問題が制約を持たない場合は全て`0`
+- **`f`**: Objective values. Shape `(n, n_obj)`
+- **`g`**: Raw constraint values. Shape `(n, n_constraints)`. `(n, 0)` if the problem has no constraints
+- **`cv`**: Aggregated constraint violation per candidate. Shape `(n,)`. All `0` if the problem has no constraints
 
-## 組み込みEvaluator
+## Built-in Evaluators
 
-| クラス | パラメータ | 特徴 |
+| Class | Parameters | Characteristics |
 |---|---|---|
-| `SerialEvaluator` | なし | 候補を1件ずつ逐次評価する。既定値 |
-| `JoblibEvaluator` | `n_jobs=-1, backend="loky", **joblib_kwargs` | `joblib.Parallel`経由で候補を並列評価する |
+| `SerialEvaluator` | None | Evaluates candidates one at a time, sequentially. The default |
+| `JoblibEvaluator` | `n_jobs=-1, backend="loky", **joblib_kwargs` | Evaluates candidates in parallel via `joblib.Parallel` |
 
-`JoblibEvaluator`を使うには`parallel` extra（`pip install saealib[parallel]`）が必要で、未インストールの場合は構築時に`ImportError`になります。
-`backend`は`"loky"`（既定、cloudpickleでシリアライズするプロセスプール）のほか、`"dask"`/`"ray"`のようなサードパーティバックエンドにも1パラメータの変更で切り替えられます（対応するパッケージとクラスタが別途必要）。
-Islandモデルのように複数の`JoblibEvaluator`を同時に使う構成では、CPUコアの多重予約が起こりえます。
-各island側の`n_jobs`を`1`に絞り、island間の並列度で全体の同時実行数を制御するか、`joblib.parallel_backend`をコンテキストマネージャとして使って内側のワーカー数を制限します。
-非同期な評価（候補ごとに独立したタイミングで結果を受け取る方式）は、現状`Evaluator`のスコープ外です。
+Using `JoblibEvaluator` requires the `parallel` extra (`pip install saealib[parallel]`); if not installed, it raises `ImportError` at construction time.
+Besides `backend`'s default `"loky"` (a process pool serializing with cloudpickle), you can switch to third-party backends like `"dask"`/`"ray"` with a single parameter change (the corresponding package and cluster are required separately).
+In configurations using multiple `JoblibEvaluator`s at once, such as an island model, CPU cores can end up over-reserved.
+Either limit each island's `n_jobs` to `1` and control overall concurrency via the parallelism across islands, or use `joblib.parallel_backend` as a context manager to limit the number of inner workers.
+Asynchronous evaluation (a scheme where results are received at independent times per candidate) is currently outside `Evaluator`'s scope.
 
-`Optimizer.set_evaluator(evaluator)`で差し替えます。
+Swap it via `Optimizer.set_evaluator(evaluator)`.
 
-## 独自Evaluatorの実装方法
+## Implementing a custom Evaluator
 
-独自の実行バックエンドが必要な場合は、`Evaluator`を継承して`evaluate_batch()`だけを実装すればよいです。
-`SerialEvaluator`の実装がそのままテンプレートになります。
+If you need a custom execution backend, subclass `Evaluator` and implement only `evaluate_batch()`.
+`SerialEvaluator`'s implementation serves directly as a template.
 
 ```python
 import numpy as np
@@ -40,7 +40,7 @@ from saealib import EvaluationResult, Evaluator
 
 
 class ReversedOrderEvaluator(Evaluator):
-    """候補を末尾から順に評価する Evaluator。"""
+    """An Evaluator that evaluates candidates in reverse order, from the end."""
 
     def evaluate_batch(self, x, problem):
         x = np.atleast_2d(np.asarray(x, dtype=float))
@@ -56,17 +56,17 @@ class ReversedOrderEvaluator(Evaluator):
         return EvaluationResult(f=f, g=g, cv=cv)
 ```
 
-`problem.evaluate_constraints(xi)`を呼んでから`problem.evaluate(xi, g_i)`を呼ぶ、という順序を保つ必要があります。
-[ConstraintHandler](constraints.md)の`augment_objective`が制約値を使って目的関数値を補正するため、この順序を逆にすると補正が正しく反映されません。
+You need to preserve the order of calling `problem.evaluate_constraints(xi)` before `problem.evaluate(xi, g_i)`.
+Because [ConstraintHandler](constraints.md)'s `augment_objective` corrects the objective value using the constraint values, reversing this order means the correction isn't applied correctly.
 
-## 関連コンポーネント
+## Related components
 
-- [Problem](problem.md)：`evaluate_batch`が評価する目的関数と制約関数の定義元
-- [ConstraintHandler](constraints.md)：`problem.evaluate`の内部で制約違反の集約と目的関数の補正を行う
-- [Initializer](initialization.md)：初期個体群の評価に`Evaluator`を使う
-- [strategies](strategies.md)：各世代の候補評価に`Evaluator`を使う
+- [Problem](problem.md): Where the objective and constraint functions evaluated by `evaluate_batch` are defined
+- [ConstraintHandler](constraints.md): Aggregates constraint violation and corrects the objective value inside `problem.evaluate`
+- [Initializer](initialization.md): Uses `Evaluator` to evaluate the initial population
+- [strategies](strategies.md): Uses `Evaluator` to evaluate candidates each generation
 
-## 参照
+## References
 
 - {py:class}`saealib.Evaluator`
 - {py:class}`saealib.SerialEvaluator`

@@ -1,11 +1,11 @@
 # ConstraintHandler
 
-制約の基本的な定義方法（`InequalityConstraint`/`EqualityConstraint`）、`Problem`の`handler`引数の指定方法、組み込み3種のハンドラの選び方は[制約付き最適化](../tutorials/constraints.md)で扱っています。
-このページでは、それらを踏まえた上で独自の`ConstraintHandler`を書きたい場合に絞って説明します。
+The basic way to define constraints (`InequalityConstraint`/`EqualityConstraint`), how to specify `Problem`'s `handler` argument, and how to choose among the three built-in handlers are covered in [Constrained Optimization](../tutorials/constraints.md).
+This page focuses on writing a custom `ConstraintHandler`, building on that foundation.
 
-## ConstraintHandlerの役割
+## ConstraintHandler's role
 
-`ConstraintHandler`は、制約の処理方式を差し替え可能なライフサイクルフックの集合として公開しています。
+`ConstraintHandler` exposes its handling of constraints as a set of swappable lifecycle hooks.
 
 ```
 Ask            -> [repair(x, constraints, lb, ub)]
@@ -16,60 +16,60 @@ Tell           -> Comparator(f', cv) with eps_cv = feasibility_threshold
 Generation end -> [on_generation_end(gen, population)]
 ```
 
-抽象メソッドは`compute_cv`だけであり、残りのフックはいずれも既定実装を持ちます。
-独自の`ConstraintHandler`は、必要なフックだけをオーバーライドすればよいです。
+Only `compute_cv` is abstract; every other hook has a default implementation.
+A custom `ConstraintHandler` only needs to override the hooks it needs.
 
-**`repair(x, constraints, lb, ub, **kwargs)`**：交叉と突然変異の後、評価の前に呼ばれます。
-既定は`np.clip(x, lb, ub)`で、境界にクリップするだけです。
+**`repair(x, constraints, lb, ub, **kwargs)`**: Called after crossover and mutation, before evaluation.
+The default is `np.clip(x, lb, ub)` — simply clipping to the bounds.
 
-**`compute_cv(constraints, x, g)`**（抽象）：制約群を単一の`cv`値へ集約します。
+**`compute_cv(constraints, x, g)`** (abstract): Aggregates the set of constraints into a single `cv` value.
 
-**`augment_objective(f, constraints, x, g)`**：目的関数値を制約情報で変換します。
-既定は恒等関数（変換しない）で、ペナルティ関数法やaugmented Lagrangian法を実装する際にオーバーライドする場所です。
-組み込み3種のハンドラはいずれもこのフックをオーバーライドしていないため、現状は将来の拡張点として空いています。
+**`augment_objective(f, constraints, x, g)`**: Transforms the objective value using constraint information.
+The default is the identity function (no transformation) — this is where you'd override to implement a penalty-function method or the augmented Lagrangian method.
+None of the three built-in handlers override this hook, so it's currently left open as a future extension point.
 
-**`feasibility_threshold`**（プロパティ）：既定`1e-6`。
-この値が`Comparator`の`eps_cv`として使われ、`Optimizer`実行中は毎世代同期されます。
+**`feasibility_threshold`** (property): Defaults to `1e-6`.
+This value is used as `Comparator`'s `eps_cv`, and is synchronized every generation during an `Optimizer` run.
 
-**`on_generation_end(gen, population)`**：世代の終わりに呼ばれます。
-既定はno-opで、`EpsilonConstraintHandler`のようにε値を世代ごとに更新する内部状態を持つハンドラが使います。
+**`on_generation_end(gen, population)`**: Called at the end of a generation.
+The default is a no-op; used by handlers with internal state that updates an ε value per generation, such as `EpsilonConstraintHandler`.
 
-## 組み込みハンドラがオーバーライドするフック
+## Hooks overridden by the built-in handlers
 
-| クラス | オーバーライドするフック |
+| Class | Hooks overridden |
 |---|---|
 | `StaticToleranceHandler` | `compute_cv` / `feasibility_threshold` |
 | `EpsilonConstraintHandler` | `compute_cv` / `feasibility_threshold` / `on_generation_end` |
 | `GradientRepairHandler` | `repair` / `compute_cv` |
 
-`EpsilonConstraintHandler`{cite}`mezuramontes2011epsilon`は、`schedule(gen) -> float`という関数でεを世代ごとに更新します。
-`linear_epsilon_schedule(eps0, n_gen)`/`exponential_epsilon_schedule(eps0, decay)`という組み込みのスケジュール生成関数も公開されています。
+`EpsilonConstraintHandler` {cite}`mezuramontes2011epsilon` updates ε per generation via a function `schedule(gen) -> float`.
+Built-in schedule-generating functions `linear_epsilon_schedule(eps0, n_gen)`/`exponential_epsilon_schedule(eps0, decay)` are also exposed.
 
-`GradientRepairHandler`{cite}`chootinan2006gradientrepair`は、`EqualityConstraint.gradient()`を使ったNewton風の1ステップで`repair()`をオーバーライドします。
-`gradient()`が`None`を返す制約（勾配が未提供の制約）は、repair時にスキップされます。
+`GradientRepairHandler` {cite}`chootinan2006gradientrepair` overrides `repair()` with a single Newton-like step using `EqualityConstraint.gradient()`.
+Constraints whose `gradient()` returns `None` (constraints with no gradient provided) are skipped during repair.
 
-## InequalityConstraint/EqualityConstraint側の拡張点
+## Extension points on InequalityConstraint/EqualityConstraint
 
-`InequalityConstraint`自体にも2つの拡張点があります。
+`InequalityConstraint` itself also has two extension points.
 
-**`gradient(x)`**：既定は`None`を返します。
-オーバーライドして解析的な勾配ベクトルを返すようにすると、`GradientRepairHandler`が使えるようになります。
+**`gradient(x)`**: Returns `None` by default.
+Override it to return an analytical gradient vector, which makes `GradientRepairHandler` usable.
 
-**`violation_from_value(g)`**：生の制約値`g(x)`から違反量への変換を定義します。
-既定は`max(0, g - threshold)`です。
-`EqualityConstraint`はこのメソッドだけをオーバーライドし、`max(0, |h(x)| - tolerance)`という独自の変換を定義しています。
+**`violation_from_value(g)`**: Defines the conversion from the raw constraint value `g(x)` to a violation amount.
+The default is `max(0, g - threshold)`.
+`EqualityConstraint` overrides only this method, defining its own conversion, `max(0, |h(x)| - tolerance)`.
 
-## 独自ConstraintHandlerの実装方法
+## Implementing a custom ConstraintHandler
 
-独自の制約処理戦略が必要な場合は、`ConstraintHandler`を継承して`compute_cv()`だけを実装すればよいです。
-次の例は、制約違反量を目的関数値へ加算するペナルティ関数法です。
+If you need a custom constraint-handling strategy, subclass `ConstraintHandler` and implement only `compute_cv()`.
+The following example is a penalty-function method that adds the constraint violation to the objective value.
 
 ```python
 from saealib import ConstraintHandler
 
 
 class PenaltyHandler(ConstraintHandler):
-    """違反量をペナルティとして目的関数値に加算する。"""
+    """Adds the violation amount to the objective value as a penalty."""
 
     def __init__(self, penalty_coeff: float = 1e3):
         self.penalty_coeff = penalty_coeff
@@ -82,15 +82,15 @@ class PenaltyHandler(ConstraintHandler):
         return f + self.penalty_coeff * cv
 ```
 
-`augment_objective`をオーバーライドしてペナルティを目的関数値に加算する一方で、`compute_cv`は制約違反として`0`を返す実装にすれば、ペナルティ関数法だけで実行可能性を扱わない（全解を実行可能とみなす）構成にもできます。
+While overriding `augment_objective` to add the penalty to the objective value, you can also implement `compute_cv` to always return `0` as the constraint violation, giving a configuration that handles infeasibility purely through the penalty-function method (treating every solution as feasible).
 
-## 関連コンポーネント
+## Related components
 
-- [制約付き最適化](../tutorials/constraints.md)：制約の定義と組み込みハンドラの基本的な使い方
-- [Problem](problem.md)：`handler`引数の渡し方
-- [Comparator](comparators.md)：`feasibility_threshold`が`eps_cv`として同期される先
+- [Constrained Optimization](../tutorials/constraints.md): Defining constraints and basic usage of the built-in handlers
+- [Problem](problem.md): How to pass the `handler` argument
+- [Comparator](comparators.md): Where `feasibility_threshold` is synchronized to, as `eps_cv`
 
-## 参照
+## References
 
 - {py:class}`saealib.ConstraintHandler`
 - {py:class}`saealib.StaticToleranceHandler`

@@ -1,55 +1,55 @@
 # NonDominatedSorter
 
-[ParetoComparator](comparators.md)系のComparator（`NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`）は、個体群をフロントへ振り分ける処理を`sorter`という差し替え可能な引数に委ねています。
-[Dominator](dominance.md)が「2点間の支配関係の定義」を担うのに対し、`sorter`は「その支配関係を使ってどうフロントに割り振るか」というもう1つの独立した差し替え軸です。
+Comparators in the [ParetoComparator](comparators.md) family (`NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`) delegate sorting the population into fronts to `sorter`, a swappable argument.
+Where [Dominator](dominance.md) handles "the definition of the dominance relation between two points," `sorter` is a second, independent swap axis: "how to use that dominance relation to assign individuals to fronts."
 
-## NonDominatedSorterの役割
+## NonDominatedSorter's role
 
-`NonDominatedSorter`は、抽象基底クラスではなく`Protocol`（構造的部分型）として定義されています。
-`__call__(f, direction=None, *, dominator=None) -> tuple[ranks, fronts]`というシグネチャを満たす呼び出し可能オブジェクトであれば、クラスを継承しなくても`sorter`として渡せます。
+`NonDominatedSorter` is defined not as an abstract base class but as a `Protocol` (structural subtyping).
+Any callable satisfying the signature `__call__(f, direction=None, *, dominator=None) -> tuple[ranks, fronts]` can be passed as `sorter` without inheriting from any class.
 
-`ranks`は各個体のフロント番号（`0`が最良）を表す配列、`fronts`は`fronts[i]`がフロント`i`に属する個体のインデックスリストであるという契約を満たします。
+`ranks` is an array giving each individual's front number (`0` is best); `fronts` satisfies the contract that `fronts[i]` is the list of individual indices belonging to front `i`.
 
-## 組み込みNonDominatedSorter
+## Built-in NonDominatedSorters
 
-`non_dominated_sort`/`dda_non_dominated_sort`はいずれも、上記の`(ranks, fronts)`契約を満たす関数です（クラスとしての階層は持たない）。
+`non_dominated_sort`/`dda_non_dominated_sort` are both functions satisfying the `(ranks, fronts)` contract above (with no class hierarchy of their own).
 
-| 関数 | アルゴリズム |
+| Function | Algorithm |
 |---|---|
-| `non_dominated_sort` | {cite}`deb2002nsga2`の非優越ソート。フロントを1つずつ剥がしていく方式（front-peeling） |
-| `dda_non_dominated_sort` | Dominance-Degree Approach（Zhou et al., 2017がdominance degree matrixを、Mishra & Senwar, 2020がDDA-ENSのフロント割り当てを提案） |
+| `non_dominated_sort` | {cite}`deb2002nsga2`'s non-dominated sorting. A front-peeling approach that strips off one front at a time |
+| `dda_non_dominated_sort` | The Dominance-Degree Approach (Zhou et al., 2017 proposed the dominance degree matrix; Mishra & Senwar, 2020 proposed DDA-ENS's front assignment) |
 
-`non_dominated_sort`の計算量はO(MN²)ですが、支配行列をNumPyでベクトル化して構築するため実測では高速に動作します。
-`dda_non_dominated_sort`は、`non_dominated_sort`と完全に同一の`(ranks, fronts)`を返すことが保証されているそのまま置き換え可能な代替関数であり、個体数`N`や目的数`M`が大きい場合（`M > 100`）のスケーラビリティ向けに用意されています。
+`non_dominated_sort`'s complexity is O(MN²), but because the dominance matrix is built vectorized with NumPy, it runs fast in practice.
+`dda_non_dominated_sort` is guaranteed to return exactly the same `(ranks, fronts)` as `non_dominated_sort`, making it a drop-in alternative provided for scalability when the number of individuals `N` or objectives `M` is large (`M > 100`).
 
-両者とも、NaNを含む行の扱いは共通しています。
-NaNを含む行は、通常のフロント分割から除外され、最終フロントの後にセンチネルフロントとして1個体ずつ追加されます。
+Both handle rows containing NaN the same way.
+Rows containing NaN are excluded from normal front splitting, and are appended one individual at a time as a sentinel front after the final front.
 
-`sorter`と`dominator`は独立した差し替え軸です。
-`non_dominated_sort`/`dda_non_dominated_sort`はどちらも、内部で`dominator.dominance_matrix()`を呼ぶだけで、支配関係の定義自体には関与しません。
-`dominator`を省略すると`ParetoDominator`が既定として使われます。
+`sorter` and `dominator` are independent swap axes.
+Both `non_dominated_sort`/`dda_non_dominated_sort` merely call `dominator.dominance_matrix()` internally, and take no part in defining the dominance relation itself.
+If `dominator` is omitted, `ParetoDominator` is used as the default.
 
-## 補助関数
+## Auxiliary functions
 
-Pareto系Comparatorの内部実装で使われる補助関数も、公開APIとして単体で利用できます。
+Auxiliary functions used inside the internal implementation of Pareto-family Comparators are also available standalone as public API.
 
-**`crowding_distance(f_front)`**：単一フロント内の混雑度距離を計算します。`NSGA2Comparator`が使います。
-境界解（各目的の最小値と最大値を取る解）には`inf`が割り当てられます。
+**`crowding_distance(f_front)`**: Computes crowding distance within a single front. Used by `NSGA2Comparator`.
+Boundary solutions (those achieving the minimum or maximum of each objective) are assigned `inf`.
 
-**`crowding_distance_all_fronts(f, fronts)`**：`non_dominated_sort`が返す全フロントに対して`crowding_distance`を適用します。
+**`crowding_distance_all_fronts(f, fronts)`**: Applies `crowding_distance` to every front returned by `non_dominated_sort`.
 
-**`spea2_fitness(f, direction=None, dominator=None)`**：`SPEA2Comparator`が使うfitness計算{cite}`zitzler2001spea2`。
-strength（支配する個体数）、raw fitness（自分を支配する個体群のstrengthの総和）、density（k近傍距離の逆数）の3要素から算出します。
+**`spea2_fitness(f, direction=None, dominator=None)`**: The fitness computation {cite}`zitzler2001spea2` used by `SPEA2Comparator`.
+Computed from three components: strength (the number of individuals dominated), raw fitness (the sum of the strengths of the individuals that dominate it), and density (the reciprocal of the $k$-nearest-neighbor distance).
 
 ```{warning}
-`spea2_fitness`の戻り値は「低いほど良い」という慣習であり、`saealib`全体の「高いほど良い」というスコア規約とは逆になっています。
-他のComparatorへそのまま渡さないよう注意してください。
+`spea2_fitness`'s return value follows the convention that lower is better, the opposite of saealib's overall "higher is better" score convention.
+Be careful not to pass it directly to another Comparator.
 ```
 
-## NonDominatedSorterの拡張方法
+## How to extend NonDominatedSorter
 
-`NonDominatedSorter`はProtocolであるため、`(ranks, fronts)`契約を満たす関数を1つ書くだけで独自実装として使えます。
-基底クラスを継承する必要はありません。
+Because `NonDominatedSorter` is a Protocol, writing a single function that satisfies the `(ranks, fronts)` contract is enough to use as a custom implementation.
+There's no need to inherit from a base class.
 
 ```python
 import numpy as np
@@ -57,19 +57,19 @@ from saealib import non_dominated_sort
 
 
 def logged_non_dominated_sort(f, direction=None, *, dominator=None):
-    """既存の実装に前処理を挟むだけの、Protocolを満たす最小の関数。"""
+    """The minimal function satisfying the Protocol, simply adding pre-processing to the existing implementation."""
     print(f"sorting {len(f)} individuals")
     return non_dominated_sort(f, direction, dominator=dominator)
 ```
 
-`ParetoComparator(sorter=logged_non_dominated_sort, ...)`のように渡せば、既存の`Comparator`実装を変更せずにソート方式を差し替えられます。
+Passing it as `ParetoComparator(sorter=logged_non_dominated_sort, ...)` lets you swap the sorting scheme without changing an existing `Comparator` implementation.
 
-## 関連コンポーネント
+## Related components
 
-- [Dominator](dominance.md)：`sorter`と対になる、2点間の支配関係の定義
-- [Comparator](comparators.md)：`sorter`引数を持つ`ParetoComparator`系のComparator
+- [Dominator](dominance.md): The definition of the dominance relation between two points, paired with `sorter`
+- [Comparator](comparators.md): The `ParetoComparator` family of Comparators, which have a `sorter` argument
 
-## 参照
+## References
 
 - {py:class}`saealib.NonDominatedSorter`
 - {py:func}`saealib.non_dominated_sort`

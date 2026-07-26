@@ -1,93 +1,93 @@
 # Surrogate
 
-`saealib`は、目的関数を近似する予測モデルの責務を`Surrogate`という差し替え可能なコンポーネントに限定しています。
-`Surrogate`はfit/predictだけを知り、予測値をどうスコアに変換するか（[AcquisitionFunction](acquisition_functions.md)）や、学習データをどこから集めるか（[TrainingSet](training_set.md)、[SurrogateManager](surrogate_manager.md)経由）は一切知りません。
+`saealib` restricts the responsibility of the predictive model approximating the objective function to `Surrogate`, a swappable component.
+`Surrogate` knows only fit/predict — it knows nothing about how a prediction is converted into a score ([AcquisitionFunction](acquisition_functions.md)), or where training data comes from ([TrainingSet](training_set.md), via [SurrogateManager](surrogate_manager.md)).
 
-## Surrogateの役割
+## Surrogate's role
 
-`Surrogate`が実装を要求するメソッドは2つあります。
+`Surrogate` requires two methods to be implemented.
 
-**`fit(train_x, train_y) -> None`**：`shape (n_samples, n_features)`の入力と`shape (n_samples, n_obj)`（単目的なら`(n_samples,)`も可）の出力でモデルを学習します。
+**`fit(train_x, train_y) -> None`**: Trains the model on inputs of shape `(n_samples, n_features)` and outputs of shape `(n_samples, n_obj)` (or `(n_samples,)` for single-objective).
 
-**`predict(test_x) -> SurrogatePrediction`**：`shape (n_samples, n_features)`の入力に対する予測を返します。
+**`predict(test_x) -> SurrogatePrediction`**: Returns predictions for inputs of shape `(n_samples, n_features)`.
 
-クラス属性`provides_uncertainty: bool = False`は、予測が不確実性（標準偏差）を伴うかどうかを示します。
-既定は`False`で、ガウス過程の実装だけが`True`にオーバーライドします。
+The class attribute `provides_uncertainty: bool = False` indicates whether predictions carry uncertainty (standard deviation).
+The default is `False`; only Gaussian Process implementations override it to `True`.
 
-`Surrogate`と`predict()`の間には2つのマーカー基底クラスがあります。
+There are two marker base classes between `Surrogate` and `predict()`.
 
-**`RegressionSurrogate`**：`train_y`が実数値の目的関数出力である回帰サロゲート向けのマーカー。
+**`RegressionSurrogate`**: A marker for regression surrogates where `train_y` is a real-valued objective function output.
 
-**`ComparisonSurrogate`**：`train_y`が`{0, 1}`の二値比較ラベルである比較サロゲート向け。
-`predict_proba(test_x) -> SurrogatePrediction`（値は`[0, 1]`の勝率）が主インターフェースで、`predict()`は既定で`predict_proba()`に委譲します。
+**`ComparisonSurrogate`**: For comparison surrogates where `train_y` is a `{0, 1}`-valued binary comparison label.
+`predict_proba(test_x) -> SurrogatePrediction` (values are win probabilities in `[0, 1]`) is the primary interface, with `predict()` delegating to `predict_proba()` by default.
 
 ## SurrogatePrediction
 
-`predict()`の戻り値は`SurrogatePrediction`という統一データクラスです。
+`predict()`'s return value is `SurrogatePrediction`, a unified dataclass.
 
-| フィールド | 内容 |
+| Field | Content |
 |---|---|
-| `value` | 予測値。`shape (n_samples, n_obj)` |
-| `std` | 不確実性（標準偏差）。提供しないサロゲートでは`None` |
-| `label` | 分類モデルのみが持つクラスラベル |
-| `tell_f` | `algorithm.tell()`を呼ぶ前に子個体の`f`へ代入する値（プロパティ） |
-| `metadata` | SHAP値など実装固有の付加情報を格納する`dict` |
+| `value` | The predicted value. Shape `(n_samples, n_obj)` |
+| `std` | Uncertainty (standard deviation). `None` for surrogates that don't provide it |
+| `label` | Class labels, only present for classification models |
+| `tell_f` | The value assigned to offspring's `f` before calling `algorithm.tell()` (a property) |
+| `metadata` | A `dict` holding implementation-specific auxiliary information, such as SHAP values |
 
-`tell_f`は、コンストラクタ引数`_tell_f`が未設定なら`value`にフォールバックするプロパティです。
-`has_uncertainty`/`has_label`/`has_tell_f`という3つの真偽値プロパティで、それぞれの値が設定されているかを確認できます。
+`tell_f` is a property that falls back to `value` if the constructor argument `_tell_f` is unset.
+Three boolean properties — `has_uncertainty`/`has_label`/`has_tell_f` — let you check whether each corresponding value is set.
 
-`_tell_f`にNaN配列を明示的に渡すと、`value`をそのまま`tell_f`として使わせないようにできます。
-サロゲートの予測値が目的関数値ではない量（novelty scoreなど）を表す場合、この仕組みでpbestなどの汚染を防ぎます。
-[SurrogateManager](surrogate_manager.md)の`ArchiveBasedManager`系がこの手法を使います。
+Explicitly passing a NaN array to `_tell_f` lets you prevent `value` from being used directly as `tell_f`.
+When a surrogate's prediction represents a quantity that isn't the objective value (such as a novelty score), this mechanism prevents contaminating things like pbest.
+[SurrogateManager](surrogate_manager.md)'s `ArchiveBasedManager` family uses this technique.
 
-## 組み込みSurrogate
+## Built-in Surrogates
 
-**`RBFSurrogate(kernel, dim)`**：RBF補間によるサロゲート{cite}`gutmann2001rbf,regis2005cors`（RBF補間自体の起源はHardy, 1971）。
-`gaussian_kernel(x1, x2, sigma=2.0)`が既定で使われるカーネルですが、`kernel`引数はカーネル関数を公開APIとして受け取る設計であり、ユーザーが任意のカーネルを注入できます。
-`predict()`は`std=None`を明示的に返します（RBF補間は不確実性を提供しません）。
+**`RBFSurrogate(kernel, dim)`**: A surrogate using RBF interpolation {cite}`gutmann2001rbf,regis2005cors` (the origin of RBF interpolation itself is Hardy, 1971).
+`gaussian_kernel(x1, x2, sigma=2.0)` is the default kernel used, but the `kernel` argument is designed as a public API accepting a kernel function, so users can inject any kernel.
+`predict()` explicitly returns `std=None` (RBF interpolation doesn't provide uncertainty).
 
-**`PerObjectiveSurrogate(surrogates)`**：`RegressionSurrogate`のサブクラスで、目的ごとに異なるサロゲートを割り当てる合成クラス。
-`fit`時に`train_y`の列数と`len(surrogates)`が一致しないと`ValueError`になります。
-`provides_uncertainty`は、構成する全サロゲートが`True`の場合のみ`True`を返す複合判定になっています。
+**`PerObjectiveSurrogate(surrogates)`**: A `RegressionSurrogate` subclass, a composite class that assigns a different surrogate per objective.
+Raises `ValueError` at `fit` time if `train_y`'s column count doesn't match `len(surrogates)`.
+`provides_uncertainty` is a composite judgment, returning `True` only if every constituent surrogate is `True`.
 
-### 外部ライブラリアダプタ
+### External library adapters
 
-scikit-learn互換API経由の回帰サロゲートには`Sklearn`という接頭辞が付きます。
+Regression surrogates via a scikit-learn-compatible API carry a `Sklearn` prefix.
 
-| クラス | モデル |
+| Class | Model |
 |---|---|
-| `SklearnGPRSurrogate` | Gaussian Process{cite}`sacks1989dace,rasmussen2006gpml`。`provides_uncertainty=True`の唯一の実装 |
-| `SklearnRFRSurrogate` | Random Forest回帰 |
+| `SklearnGPRSurrogate` | Gaussian Process {cite}`sacks1989dace,rasmussen2006gpml`. The sole implementation with `provides_uncertainty=True` |
+| `SklearnRFRSurrogate` | Random Forest regression |
 | `SklearnSVMSurrogate` | SVM |
 | `SklearnNNSurrogate` | MLP |
-| `SklearnXGBSurrogate` | XGBoost（`xgboost` extra） |
-| `SklearnLGBMSurrogate` | LightGBM（`lightgbm` extra） |
-| `TorchSurrogate` | PyTorchベースのモデル（`torch` extra） |
+| `SklearnXGBSurrogate` | XGBoost (the `xgboost` extra) |
+| `SklearnLGBMSurrogate` | LightGBM (the `lightgbm` extra) |
+| `TorchSurrogate` | PyTorch-based models (the `torch` extra) |
 
-`SklearnGPRSurrogate`は`return_std=True`でGPカーネルから標準偏差を計算し、`provides_uncertainty=True`を返します。
+`SklearnGPRSurrogate` computes standard deviation from the GP kernel via `return_std=True`, and returns `provides_uncertainty=True`.
 
-実行可能性予測向けの分類サロゲートには次のクラスがあります。
+The following classes are classification surrogates aimed at feasibility prediction.
 
-| クラス | モデル |
+| Class | Model |
 |---|---|
-| `SklearnClassificationSurrogate` | scikit-learn互換の分類モデル全般 |
-| `SklearnRFCClassificationSurrogate` | Random Forest分類 |
-| `SklearnSVCClassificationSurrogate` | SVM分類 |
+| `SklearnClassificationSurrogate` | Classification models compatible with scikit-learn in general |
+| `SklearnRFCClassificationSurrogate` | Random Forest classification |
+| `SklearnSVCClassificationSurrogate` | SVM classification |
 
-これらの分類サロゲートの学習データ抽出方法は[TrainingSet](training_set.md)の`FeasibilityClassificationSet`を参照してください。
-ペア比較には、これらの分類サロゲートではなく`ComparisonSurrogate`系の専用実装を使い、[SurrogateManager](surrogate_manager.md)の`PairwiseSurrogateManager`および`PairwiseComparisonSet`と組み合わせます。
+See [TrainingSet](training_set.md)'s `FeasibilityClassificationSet` for how training data is extracted for these classification surrogates.
+For pairwise comparison, use the dedicated `ComparisonSurrogate`-family implementations rather than these classification surrogates, paired with [SurrogateManager](surrogate_manager.md)'s `PairwiseSurrogateManager` and `PairwiseComparisonSet`.
 
-各extraのインストール方法は[インストール](../getting_started/installation.md)を参照してください。
+See [Installation](../getting_started/installation.md) for how to install each extra.
 
 ```{note}
-scikit-learn/XGBoost/LightGBM/PyTorch以外のBoTorch/SMTアダプタ、およびpymooのアルゴリズム/演算子アダプタは、現状`saealib`に実装されていません。
-`pyproject.toml`にも対応するextraは存在しません。
+Adapters for BoTorch/SMT, and pymoo algorithm/operator adapters, beyond scikit-learn/XGBoost/LightGBM/PyTorch, are not currently implemented in `saealib`.
+`pyproject.toml` has no corresponding extra either.
 ```
 
-## 拡張フック
+## Extension hooks
 
-フィット後の後処理だけを足したい場合、サブクラスを新設せずに`with_post_fit(fn)`で既存の`Surrogate`インスタンスへ処理を追加できます。
-`with_post_fit`は元のインスタンスを変更せず、`fn`を追加したコピーを返します。
+If you just want to add post-fit processing, you can add it to an existing `Surrogate` instance with `with_post_fit(fn)` instead of creating a new subclass.
+`with_post_fit` doesn't modify the original instance — it returns a copy with `fn` added.
 
 ```python
 from saealib import RBFSurrogate, gaussian_kernel
@@ -101,14 +101,14 @@ base = RBFSurrogate(gaussian_kernel, dim=2)
 logged = base.with_post_fit(log_fit)
 ```
 
-`fn`のシグネチャは`fn(train_x, train_y, ctx) -> None`です。
+`fn`'s signature is `fn(train_x, train_y, ctx) -> None`.
 
-## 独自Surrogateの実装方法
+## Implementing a custom Surrogate
 
-独自の予測モデルが必要な場合は、`Surrogate`を継承して`fit()`/`predict()`を実装します。
-回帰なら`RegressionSurrogate`、比較なら`ComparisonSurrogate`（`predict_proba()`を実装）を継承先に選びます。
+If you need a custom predictive model, subclass `Surrogate` and implement `fit()`/`predict()`.
+Choose `RegressionSurrogate` for regression, or `ComparisonSurrogate` (implementing `predict_proba()`) for comparison, as the class to subclass.
 
-次の例は、最近傍点の目的関数値をそのまま予測値として返す単純な回帰サロゲートです。
+The following example is a simple regression surrogate that returns the nearest training point's objective value directly as the prediction.
 
 ```python
 import numpy as np
@@ -116,7 +116,7 @@ from saealib import RegressionSurrogate, SurrogatePrediction
 
 
 class NearestNeighborSurrogate(RegressionSurrogate):
-    """最近傍点の目的関数値をそのまま予測値として返す単純なサロゲート。"""
+    """A simple surrogate that returns the nearest point's objective value directly as the prediction."""
 
     def fit(self, train_x, train_y):
         self.train_x = np.asarray(train_x, dtype=float)
@@ -130,27 +130,27 @@ class NearestNeighborSurrogate(RegressionSurrogate):
         return SurrogatePrediction(value=value)
 ```
 
-## 不確実性対応表
+## Uncertainty support table
 
-不確実性ベースの[AcquisitionFunction](acquisition_functions.md)を使うには、`Surrogate`が`std`を返す必要があります。
+To use an uncertainty-based [AcquisitionFunction](acquisition_functions.md), `Surrogate` needs to return `std`.
 
-| クラス | `provides_uncertainty` |
+| Class | `provides_uncertainty` |
 |---|---|
 | `SklearnGPRSurrogate` | `True` |
 | `RBFSurrogate` / `SklearnRFRSurrogate` / `SklearnSVMSurrogate` / `SklearnNNSurrogate` / `SklearnXGBSurrogate` / `SklearnLGBMSurrogate` / `TorchSurrogate` | `False` |
-| `PerObjectiveSurrogate` | 構成する全サロゲートが`True`の場合のみ`True` |
+| `PerObjectiveSurrogate` | `True` only if every constituent surrogate is `True` |
 
-`Optimizer.validate()`は、`AcquisitionFunction`の`requires_uncertainty`と`Surrogate`の`provides_uncertainty`の不整合を検出して警告します。
+`Optimizer.validate()` detects and warns about a mismatch between `AcquisitionFunction`'s `requires_uncertainty` and `Surrogate`'s `provides_uncertainty`.
 
-## 関連コンポーネント
+## Related components
 
-- [SurrogateManager](surrogate_manager.md)：`Surrogate`のfit/predictを協調させ、スコアリングと組み合わせる
-- [TrainingSet](training_set.md)：`Surrogate`に渡す学習データの抽出方法
-- [AcquisitionFunction](acquisition_functions.md)：`predict()`の結果をスコアへ変換する
-- [サロゲート精度評価と動的切り替え](surrogate_switching.md)：サロゲートの汎化性能の評価
-- [インストール](../getting_started/installation.md)：各extraのインストール方法
+- [SurrogateManager](surrogate_manager.md): Coordinates `Surrogate`'s fit/predict and combines it with scoring
+- [TrainingSet](training_set.md): How training data passed to `Surrogate` is extracted
+- [AcquisitionFunction](acquisition_functions.md): Converts `predict()`'s result into a score
+- [Surrogate accuracy evaluation and dynamic switching](surrogate_switching.md): Evaluating a surrogate's generalization performance
+- [Installation](../getting_started/installation.md): How to install each extra
 
-## 参照
+## References
 
 - {py:class}`saealib.Surrogate`
 - {py:class}`saealib.RegressionSurrogate`

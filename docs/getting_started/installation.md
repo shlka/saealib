@@ -1,67 +1,67 @@
-# インストール
+# Installation
 
-## 動作要件
+## Requirements
 - Python >= 3.10
 
-依存パッケージの正確なバージョンは[pyproject.toml](https://github.com/shlka/saealib/blob/main/pyproject.toml)を参照してください。
+See [pyproject.toml](https://github.com/shlka/saealib/blob/main/pyproject.toml) for the exact versions of the dependencies.
 
-## インストール方法
+## Installing
 
-pipによるインストールは次のように行います。
-このインストールでは最小の依存関係のみインストールします。
+Install with pip as follows.
+This installs only the minimal dependencies.
 ```bash
 pip install saealib
 ```
-すべての依存関係をフルインストールする場合は次のように行います。
+To install with all dependencies:
 ```bash
 pip install "saealib[all]"
 ```
-オプションの指定については[こちら](#install-options)を参照してください。
+See [here](#install-options) for the available options.
 
-## バージョンの指定
-バージョンの指定は次のように行います。
+## Specifying a version
+Specify a version as follows.
 ```bash
 pip install "saealib==X.Y.Z"
 # example:
 pip install "saealib==0.1.0"
 ```
-最新のプレリリースバージョンは次のように指定します。
+Specify the latest pre-release version as follows.
 ```bash
 pip install --pre saealib
 ```
 :::{warning}
-プレリリースバージョンのAPIは予告なく変更または削除される可能性があります。
+The API of pre-release versions may change or be removed without notice.
 :::
 
 (install-options)=
-## オプションの指定
-一部のパッケージは依存関係を追加することで有効になります。
-依存関係のインストールは次のようにオプションを指定することで同時にインストールできます。
+## Specifying options
+Some packages are enabled by adding extra dependencies.
+Install these dependencies at the same time by specifying options as follows.
 ```bash
 pip install "saealib[opt1,opt2,...]"
 # example:
 pip install "saealib[sklearn,parallel]"
 ```
-すべての依存関係をインストールする場合は次のように指定します。
+To install all dependencies:
 ```bash
 pip install "saealib[all]"
 ```
-すべてのオプションは次の表に示す通りです。
-| オプション | 追加される機能 |
+All options are shown in the following table.
+| Option | Adds |
 |---|---|
-| `sklearn` | scikit-learnベースのサロゲートモデル |
-| `xgboost` | XGBoostサロゲートモデル |
-| `lightgbm` | LightGBMサロゲートモデル |
-| `torch` | PyTorchベースのコンポーネント |
-| `parallel` | joblibによる並列評価 |
-| `all` | 上記すべて |
+| `sklearn` | scikit-learn-based surrogate models |
+| `xgboost` | XGBoost surrogate model |
+| `lightgbm` | LightGBM surrogate model |
+| `torch` | PyTorch-based components |
+| `parallel` | Parallel evaluation via joblib |
+| `all` | All of the above |
 
-## インストールの確認
-インストールが完了したら、次のコマンドでバージョンを確認できます。
+## Verifying the installation
+Once installation is complete, check the version with the following command.
 ```bash
 python -c "import saealib; print(saealib.__version__)"
 ```
 
 :::{seealso}
-ソースからの開発用インストールについては[CONTRIBUTING.md](https://github.com/shlka/saealib/blob/main/CONTRIBUTING.md)を参照してください。
+See [CONTRIBUTING.md](https://github.com/shlka/saealib/blob/main/CONTRIBUTING.md) for a development install from source.
 :::

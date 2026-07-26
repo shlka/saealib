@@ -1,6 +1,6 @@
-# 文献リファレンス
+# References
 
-[コンポーネント](components/index.md)や[アルゴリズム](algorithms/index.md)配下の各ページは、実装の理論的な出典をここに番号付きで引用します。
+Each page under [Components](components/index.md) and [Algorithms](algorithms/index.md) cites its implementation's theoretical source here, by number.
 
 ```{bibliography}
 ```

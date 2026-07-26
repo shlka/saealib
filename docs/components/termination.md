@@ -1,12 +1,12 @@
 # Termination
 
-`Optimizer`は、最適化をいつ止めるかという判断を、`Termination`という差し替え可能なトップレベルコンポーネントに委ねています。
-`Optimizer.set_termination(termination)`で渡し、実行時は世代末に`is_terminated(ctx) -> bool`が呼ばれます。
+`Optimizer` delegates the decision of when to stop optimizing to `Termination`, a swappable top-level component.
+Pass it via `Optimizer.set_termination(termination)`; at runtime, `is_terminated(ctx) -> bool` is called at the end of every generation.
 
-## Terminationの役割
+## Termination's role
 
-`Termination(*conditions)`は1つ以上の条件を受け取り、そのいずれか1つでも真になった時点で終了します（OR結合）。
-コンストラクタに複数条件を渡す書き方は、後述する`any_of`と同じ意味になります。
+`Termination(*conditions)` takes one or more conditions, and stops as soon as any single one becomes true (logical OR).
+Passing multiple conditions to the constructor is equivalent to `any_of`, described below.
 
 ```python
 from saealib import Termination, max_fe, max_gen
@@ -14,33 +14,32 @@ from saealib import Termination, max_fe, max_gen
 termination = Termination(max_fe(2000), max_gen(100))
 ```
 
-クラスメソッドも用意されています。
+Class methods are also available.
 
-| クラスメソッド | 意味 |
+| Class method | Meaning |
 |---|---|
-| `Termination.any_of(*conditions)` | いずれか1つで終了（`Termination(*conditions)`と同義） |
-| `Termination.all_of(*conditions)` | 全て満たすまで終了しない |
-| `Termination.not_(condition)` | 条件を満たさない間だけ終了しない |
+| `Termination.any_of(*conditions)` | Stops when any one is met (synonymous with `Termination(*conditions)`) |
+| `Termination.all_of(*conditions)` | Doesn't stop until every condition is met |
+| `Termination.not_(condition)` | Doesn't stop as long as the condition is not met |
 
-## 組み込み終了条件
+## Built-in termination conditions
 
-`Termination`に渡す各条件は、`TerminationCondition`という薄いラッパーです。
-組み込みのファクトリ関数はいずれも`TerminationCondition`を返します。
+Each condition passed to `Termination` is a thin wrapper called `TerminationCondition`. Every built-in factory function returns a `TerminationCondition`.
 
-| 関数 | 終了条件 |
+| Function | Termination condition |
 |---|---|
-| `max_fe(value)` | 評価回数が`value`に到達（`ctx.fe >= value`） |
-| `max_gen(value)` | 世代数が`value`に到達（`ctx.gen >= value`） |
-| `f_target(value)` | アーカイブの最良目的値が`value`に到達。単目的向けで、`ctx.direction`から最小化/最大化を自動判定する。アーカイブが空の間は終了しない |
-| `stalled(window, tol=1e-8)` | `window`世代連続で改善が`tol`を超えなければ終了 |
+| `max_fe(value)` | The evaluation count reaches `value` (`ctx.fe >= value`) |
+| `max_gen(value)` | The generation count reaches `value` (`ctx.gen >= value`) |
+| `f_target(value)` | The archive's best objective value reaches `value`. For single-objective use; automatically determines minimize/maximize from `ctx.direction`. Doesn't trigger while the archive is empty |
+| `stalled(window, tol=1e-8)` | Stops if no improvement exceeding `tol` occurs for `window` consecutive generations |
 
-`stalled`が返す`TerminationCondition`は、内部に「これまでの最良スコア」をクロージャで保持する状態付きの条件です。
-1回の`run`につき1つのインスタンスを使う想定であり、複数の`run`で使い回すと前回の状態が残ってしまいます。
+The `TerminationCondition` returned by `stalled` is a stateful condition that holds "the best score so far" internally via closure.
+It's meant to be used as one instance per `run` — reusing it across multiple `run`s leaves the previous state behind.
 
-## Terminationの拡張方法
+## How to extend Termination
 
-`TerminationCondition`は抽象基底クラスではなく、任意のcallableを受け取って`|`(OR)/`&`(AND)/`~`(NOT)という演算子オーバーロードを提供する合成用のラッパーです。
-`OptimizationState -> bool`を返すプレーンな関数はどこでも自動的に`TerminationCondition`へ変換されるため、独自の終了条件を追加するのに基底クラスを継承する必要はありません。
+`TerminationCondition` isn't an abstract base class — it's a composition wrapper that accepts any callable and provides operator overloads for `|` (OR), `&` (AND), and `~` (NOT).
+A plain function returning `OptimizationState -> bool` is automatically converted into a `TerminationCondition` wherever it's used, so you don't need to subclass a base class to add a custom termination condition.
 
 ```python
 from saealib import Termination, max_fe
@@ -54,28 +53,28 @@ def my_condition(ctx):
 termination = Termination(max_fe(2000), my_condition)
 ```
 
-名前や説明文を明示的に持たせたい場合だけ、`TerminationCondition(func, name=..., doc=...)`で明示的にラップします。
+Only wrap it explicitly with `TerminationCondition(func, name=..., doc=...)` if you want to give it an explicit name or description.
 
-複数の条件は演算子で宣言的に組み合わせられます。
+Multiple conditions can be combined declaratively via operators.
 
 ```python
 from saealib import max_fe, max_gen, stalled
 
-both = max_fe(2000) & max_gen(100)  # 両方満たすまで続ける
-either = max_gen(100) | max_fe(2000)  # 早い方で終了
-not_stalled = ~stalled(20)  # stallしていない間
+both = max_fe(2000) & max_gen(100)  # continues until both are met
+either = max_gen(100) | max_fe(2000)  # stops on whichever comes first
+not_stalled = ~stalled(20)  # while not stalled
 ```
 
 ```{note}
-`TerminationCondition`のコンストラクタが持つ`spec`引数は、[Registry](extension_guidelines.md)がプリセットへシリアライズする際に使う内部フィールドであり、通常のユーザーコードでは意識しなくてかまいません。
+The `spec` argument on `TerminationCondition`'s constructor is an internal field used when the [Registry](extension_guidelines.md) serializes it to a preset, and normal user code doesn't need to be aware of it.
 ```
 
-## 関連コンポーネント
+## Related components
 
-- [OptimizationState](optimization_state.md)：各終了条件が受け取る`ctx`
-- [拡張のガイドライン](extension_guidelines.md)：`Registry`による設定駆動構築
+- [OptimizationState](optimization_state.md): The `ctx` each termination condition receives
+- [Extension guidelines](extension_guidelines.md): Config-driven construction via `Registry`
 
-## 参照
+## References
 
 - {py:class}`saealib.Termination`
 - {py:class}`saealib.TerminationCondition`

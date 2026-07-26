@@ -1,55 +1,55 @@
-# EGO（Efficient Global Optimization）
+# EGO (Efficient Global Optimization)
 
-## 概要
+## Overview
 
-EGOは、評価コストの高い目的関数を対象に、Gaussian Process回帰(GP)によるサロゲートモデルと**期待改善量**(Expected Improvement, EI)という獲得関数を組み合わせた逐次最適化の手法です。
+EGO is a sequential optimization method for expensive-to-evaluate objective functions, combining a surrogate model built from Gaussian Process (GP) regression with the **Expected Improvement** (EI) acquisition function.
 
-GPの予測分散は学習データから離れた領域ほど大きくなります。
-EIはこの予測平均と予測分散の両方から計算されるスカラー値であるため、「予測値が良さそうな領域」と「予測の不確実性が高い領域」を自然に両方カバーし、探索(exploration)と活用(exploitation)のバランスを取ります。
+A GP's predictive variance grows larger in regions farther from the training data.
+Because EI is a scalar value computed from both this predictive mean and predictive variance, it naturally covers both "regions that look promising" and "regions with high predictive uncertainty," balancing exploration and exploitation.
 
-出典は{cite}`jones1998ego`。具体的な手順は次の擬似コードに示します。
+The source is {cite}`jones1998ego`. The concrete procedure is shown in the pseudocode below.
 
-## 擬似コード
+## Pseudocode
 
 ```{prf:algorithm} EGO
 :label: alg-ego
 
-**Inputs** 目的関数 $f$、探索範囲、初期サンプル数 $n_0$、評価予算 $N$
-**Output** 最良解 $x^*$
+**Inputs** objective function $f$, search domain, initial sample count $n_0$, evaluation budget $N$
+**Output** best solution $x^*$
 
-1. 初期個体群を $n_0$ 点サンプリングし、真の関数 $f$ で評価してアーカイブに追加する
-2. アーカイブ全体にGPを当てはめ、任意の点における予測平均 $\mu(x)$ と予測標準偏差 $\sigma(x)$ を得る
-3. 期待改善量 $\mathrm{EI}(x) = (f_{\min} - \mu(x) - \xi)\,\Phi(z) + \sigma(x)\,\phi(z)$（$z = (f_{\min} - \mu(x) - \xi) / \sigma(x)$）を最大化する点 $x^*$ を求める
-4. $x^*$ を真の関数で評価し、アーカイブに追加する
-5. 評価予算 $N$ に達するまで2へ戻る
+1. Sample an initial population of $n_0$ points, evaluate them with the true function $f$, and add them to the archive
+2. Fit a GP to the entire archive, obtaining the predictive mean $\mu(x)$ and predictive standard deviation $\sigma(x)$ at any point
+3. Find the point $x^*$ that maximizes the Expected Improvement $\mathrm{EI}(x) = (f_{\min} - \mu(x) - \xi)\,\Phi(z) + \sigma(x)\,\phi(z)$ (where $z = (f_{\min} - \mu(x) - \xi) / \sigma(x)$)
+4. Evaluate $x^*$ with the true function and add it to the archive
+5. Return to step 2 until the evaluation budget $N$ is reached
 ```
 
-## フローチャート
+## Flowchart
 
 ```{mermaid}
 flowchart TD
-    INIT["Initializer<br/>LHS等で初期個体群を<br/>サンプリング→真の評価<br/>(L1)"] --> ASK
-    subgraph GEN["1世代分 (IndividualBasedStrategy.step)"]
+    INIT["Initializer<br/>Sample initial population<br/>via LHS etc. → true evaluation<br/>(L1)"] --> ASK
+    subgraph GEN["One generation (IndividualBasedStrategy.step)"]
         direction TB
-        ASK["GA.ask()<br/>候補解を生成"] --> SCORE["SurrogateManager<br/>GPをフィット (L2)<br/>→ EIでスコアリング (L3)"]
-        SCORE --> SORT["EI上位<br/>evaluation_ratioの割合を選択<br/>（argmax EIの近似）"]
-        SORT --> EVAL["真の評価 →<br/>アーカイブに追加<br/>(L4)"]
-        EVAL --> TELL["GA.tell()<br/>個体群を更新"]
+        ASK["GA.ask()<br/>Generate candidates"] --> SCORE["SurrogateManager<br/>Fit GP (L2)<br/>→ Score with EI (L3)"]
+        SCORE --> SORT["Select top<br/>evaluation_ratio fraction by EI<br/>(approximates argmax EI)"]
+        SORT --> EVAL["True evaluation →<br/>add to archive<br/>(L4)"]
+        EVAL --> TELL["GA.tell()<br/>Update population"]
     end
-    GEN --> TERM{"評価予算Nに<br/>到達?"}
-    TERM -- "未到達 (L5)" --> ASK
-    TERM -- "到達" --> RESULT(["最良解 x*"])
+    GEN --> TERM{"Evaluation budget N<br/>reached?"}
+    TERM -- "Not yet (L5)" --> ASK
+    TERM -- "Reached" --> RESULT(["Best solution x*"])
 ```
 
-## saealibでの構成
+## Configuration in saealib
 
-| 役割 | saealibでの実装 | 対応ステップ |
+| Role | saealib implementation | Corresponding step |
 |---|---|---|
-| 探索アルゴリズム本体 | `GA`（交叉、突然変異、選択の組み合わせ自体はEGOの定義に含まれない） | 候補解の生成（argmax EIの探索） |
-| サロゲートモデル | `SklearnGPRSurrogate`（GP回帰。`sklearn` extraが必要） | L2 |
-| 獲得関数 | `ExpectedImprovement` | L3 |
-| サロゲート管理 | `GlobalSurrogateManager`（アーカイブ全体でGPをフィットする） | L2-3 |
-| 評価戦略 | `IndividualBasedStrategy`（EI上位の個体だけを真に評価する） | L3-4 |
+| Search algorithm | `GA` (the specific combination of crossover, mutation, and selection is not part of EGO's definition) | Candidate generation (search for argmax EI) |
+| Surrogate model | `SklearnGPRSurrogate` (GP regression; requires the `sklearn` extra) | L2 |
+| Acquisition function | `ExpectedImprovement` | L3 |
+| Surrogate management | `GlobalSurrogateManager` (fits the GP over the entire archive) | L2-3 |
+| Evaluation strategy | `IndividualBasedStrategy` (truly evaluates only the individuals with the top EI scores) | L3-4 |
 
 ```python
 import numpy as np
@@ -93,22 +93,22 @@ opt = (
 ctx = opt.run()
 ```
 
-交叉、突然変異、選択の具体的な演算子はEGO自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられます。
+Since the specific crossover, mutation, and selection operators are not part of EGO's own definition, the above is just one example, and any `Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection` can be swapped in.
 
-## パラメータと変種
+## Parameters and variants
 
-**ξ（探索と活用のトレードオフ）**：`ExpectedImprovement(xi=...)`で調整します。
-既定値は`0.01`で、Brochu et al. (2010)が推奨する値に基づきます{cite}`brochu2010tutorial`。
-$\xi=0$では活用(exploitation)寄りになり、大きくすると探索(exploration)寄りになります。
+**ξ (exploration–exploitation trade-off)**: Adjusted via `ExpectedImprovement(xi=...)`.
+The default is `0.01`, based on the value recommended by Brochu et al. (2010) {cite}`brochu2010tutorial`.
+$\xi=0$ leans toward exploitation, and larger values lean toward exploration.
 
-**evaluation_ratio（逐次評価とバッチ評価の切り替え）**：文献のEGOは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムです。
-saealibの`IndividualBasedStrategy`は、GAが生成した子個体群のうちEIスコア上位`evaluation_ratio`の割合をまとめて真評価するバッチ拡張になっています。
-`evaluation_ratio`を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づきます。
+**evaluation_ratio (switching between sequential and batch evaluation)**: EGO as described in the literature is a sequential algorithm that executes steps 3-4 of the pseudocode for a single point per loop.
+saealib's `IndividualBasedStrategy` is a batch extension that truly evaluates the top `evaluation_ratio` fraction of the offspring population generated by the GA's EI scores at once.
+Shrinking `evaluation_ratio` down to roughly the inverse of the population size approximates one-point-at-a-time sequential evaluation.
 
-## 関連
+## Related
 
-- [文献リファレンス](../references.md)：出典の完全な書誌情報と、EI以外の獲得関数の出典一覧
-- [SurrogateManager](../components/surrogate_manager.md)：`GlobalSurrogateManager`の詳しい使い方
-- [AcquisitionFunction](../components/acquisition_functions.md)：`ExpectedImprovement`を含む獲得関数一覧
-- [Surrogate](../components/surrogate.md)：`SklearnGPRSurrogate`を含むサロゲートモデル一覧と`sklearn` extraの説明
-- [OptimizationStrategy](../components/strategies.md)：`IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧
+- [References](../references.md): Full bibliographic details for the source, and a list of sources for acquisition functions other than EI
+- [SurrogateManager](../components/surrogate_manager.md): Detailed usage of `GlobalSurrogateManager`
+- [AcquisitionFunction](../components/acquisition_functions.md): List of acquisition functions including `ExpectedImprovement`
+- [Surrogate](../components/surrogate.md): List of surrogate models including `SklearnGPRSurrogate`, and an explanation of the `sklearn` extra
+- [OptimizationStrategy](../components/strategies.md): List of strategies including `IndividualBasedStrategy`'s `evaluation_ratio`

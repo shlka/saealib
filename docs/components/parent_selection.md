@@ -1,39 +1,39 @@
 # ParentSelection
 
-`GA`(`saealib.GA`)は、交叉に使う親個体を個体群から選ぶ処理を、`ParentSelection`という差し替え可能な演算子に委ねています。
-選択圧（優れた個体をどれだけ優遇するか）を変えたいときは、`GA`本体ではなくこの`ParentSelection`だけを差し替えればよいです。
+`GA` (`saealib.GA`) delegates choosing the parent individuals used for crossover from the population to `ParentSelection`, a swappable operator.
+To change the selection pressure (how much better individuals are favored), you only need to swap out this `ParentSelection`, not `GA` itself.
 
-## ParentSelectionの役割
+## ParentSelection's role
 
-`ParentSelection`が実装を要求するメソッドは`select(ctx, population, n_pair, n_parents, rng=...)`の1つだけです。
-`n_pair`組、それぞれ`n_parents`個体からなる親のインデックスを、`shape (n_pair, n_parents)`の配列で返します。
+`ParentSelection` requires only one method, `select(ctx, population, n_pair, n_parents, rng=...)`, to be implemented.
+It returns the indices of `n_pair` groups of parents, each consisting of `n_parents` individuals, as an array of shape `(n_pair, n_parents)`.
 
-## 組み込みParentSelection
+## Built-in ParentSelections
 
-| クラス | パラメータ | 特徴 |
+| Class | Parameters | Characteristics |
 |---|---|---|
-| `TournamentSelection` | `tournament_size` | `tournament_size`個体をランダムに抽出し、最良個体を選ぶ操作を`n_pair * n_parents`回繰り返す{cite}`miller1995tournament` |
-| `SequentialSelection` | なし | 比較を行わず、個体群のインデックスを順番に割り当てるだけ |
-| `RouletteWheelSelection` | なし | 順位に基づく線形ランクベースの確率でルーレット選択する |
+| `TournamentSelection` | `tournament_size` | Randomly draws `tournament_size` individuals and picks the best, repeated `n_pair * n_parents` times {cite}`miller1995tournament` |
+| `SequentialSelection` | None | Performs no comparison; simply assigns population indices in order |
+| `RouletteWheelSelection` | None | Roulette-wheel selection with a linear rank-based probability derived from rank |
 
-`TournamentSelection`は、`ctx.comparator.compare_population`による1対1比較を繰り返してトーナメント内の最良個体を選びます{cite}`blickle1996selection`。
-`compare_population`は[SPEA2Comparator](comparators.md)や[HypervolumeComparator](comparators.md)のように2点だけの直接比較（`compare()`）が使えないComparatorでも定義されているため、どの`Comparator`と組み合わせても問題なく動作します。
+`TournamentSelection` selects the best individual within each tournament by repeating 1-vs-1 comparisons via `ctx.comparator.compare_population` {cite}`blickle1996selection`.
+Because `compare_population` is also defined on Comparators that can't use a direct two-point comparison (`compare()`), such as [SPEA2Comparator](comparators.md) or [HypervolumeComparator](comparators.md), it works correctly regardless of which `Comparator` it's paired with.
 
-`SequentialSelection`は比較を一切行わないため、選択圧という概念自体を持たない最も単純な選択方式です。
-どの`Comparator`とも組み合わせられます。
+`SequentialSelection` performs no comparison at all, making it the simplest selection scheme, with no notion of selection pressure.
+It can be paired with any `Comparator`.
 
-`RouletteWheelSelection`は、生の適応度ではなく`ctx.comparator.sort_population`が返す順位を確率に変換します。
-これにより、目的関数値が負の値を取ったりスケールが大きく異なったりする問題でも、数値的な問題を起こさずに選択確率を計算できます。
+`RouletteWheelSelection` converts the rank returned by `ctx.comparator.sort_population` into probabilities, rather than using raw fitness.
+This lets it compute selection probabilities without numerical issues, even for problems where objective values can be negative or vary wildly in scale.
 
 ```{note}
-`SequentialSelection`のみ`@register()`済みで、`TournamentSelection`/`RouletteWheelSelection`は現状Registry未登録です。
-Registry経由でクラスを文字列から解決する使い方をする場合はこの違いに注意してください。
+Only `SequentialSelection` is currently `@register()`ed; `TournamentSelection`/`RouletteWheelSelection` are not yet registered with the Registry.
+Keep this difference in mind if you resolve classes from strings via the Registry.
 ```
 
-## 独自ParentSelectionの実装方法
+## Implementing a custom ParentSelection
 
-独自の選択方式が必要な場合は、`ParentSelection`を継承して`select()`だけを実装すればよいです。
-次の例は、比較を行わず親を完全にランダムに選ぶ選択方式です。
+If you need a custom selection scheme, subclass `ParentSelection` and implement only `select()`.
+The following example is a selection scheme that chooses parents completely at random, with no comparison.
 
 ```python
 import numpy as np
@@ -41,22 +41,22 @@ from saealib import ParentSelection
 
 
 class RandomPairSelection(ParentSelection):
-    """親個体を完全ランダムに選ぶ選択方式。"""
+    """A selection scheme that chooses parent individuals completely at random."""
 
     def select(self, ctx, population, n_pair, n_parents, rng=np.random.default_rng()):
         n_pop = len(population)
         return rng.integers(0, n_pop, size=(n_pair, n_parents))
 ```
 
-`ctx.comparator`を参照する実装にすれば、`TournamentSelection`のように選択圧を持つ独自方式にもできます。
+Implementing it to reference `ctx.comparator` lets you build a custom scheme with selection pressure, like `TournamentSelection`.
 
-## 関連コンポーネント
+## Related components
 
-- [Algorithm](algorithm.md)：`GA`が`ParentSelection`をどう組み合わせるか
-- [Crossover](crossover.md)：`ParentSelection`が選んだ親個体を受け取る演算子
-- [Comparator](comparators.md)：`TournamentSelection`/`RouletteWheelSelection`が個体を比較する際に使う
+- [Algorithm](algorithm.md): How `GA` combines `ParentSelection`
+- [Crossover](crossover.md): The operator that receives the parents chosen by `ParentSelection`
+- [Comparator](comparators.md): Used by `TournamentSelection`/`RouletteWheelSelection` to compare individuals
 
-## 参照
+## References
 
 - {py:class}`saealib.ParentSelection`
 - {py:class}`saealib.TournamentSelection`

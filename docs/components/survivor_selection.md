@@ -1,32 +1,32 @@
 # SurvivorSelection
 
-`GA`(`saealib.GA`)は、次世代に残す個体を選択プールから選ぶ処理を、`SurvivorSelection`という差し替え可能な演算子に委ねています。
-世代交代の方式を変えたいときは、`GA`本体ではなくこの`SurvivorSelection`だけを差し替えればよいです。
+`GA` (`saealib.GA`) delegates choosing which individuals survive into the next generation from a selection pool to `SurvivorSelection`, a swappable operator.
+To change the generational-replacement scheme, you only need to swap out this `SurvivorSelection`, not `GA` itself.
 
-## SurvivorSelectionの役割
+## SurvivorSelection's role
 
-`SurvivorSelection`が実装を要求するメソッドは`select(ctx, pool, n_survivors) -> np.ndarray`の1つだけです。
-`pool`は、親個体群と子個体群など`Algorithm`側が構築した統合済みの`Population`で、その中から生き残る`n_survivors`件のインデックスを返します。
+`SurvivorSelection` requires only one method, `select(ctx, pool, n_survivors) -> np.ndarray`, to be implemented.
+`pool` is a combined `Population` built by `Algorithm` — for example, the parent and offspring populations together — and it returns the indices of the `n_survivors` individuals that survive from it.
 
-`(μ+λ)`方式（親と子を合わせたプールから選ぶ）か`(μ,λ)`方式（子だけのプールから選ぶ）かは、`pool`に何を含めるかという`Algorithm`側の構築方法で決まります。
-`SurvivorSelection`のインターフェース自体はどちらの方式かを区別しません。
+Whether it's a $(\mu+\lambda)$ scheme (selecting from a pool of parents and offspring combined) or a $(\mu,\lambda)$ scheme (selecting from a pool of offspring only) is determined by how `Algorithm` builds `pool` — that is, what it includes.
+`SurvivorSelection`'s interface itself doesn't distinguish between the two schemes.
 
-## 組み込みSurvivorSelection
+## Built-in SurvivorSelections
 
-| クラス | パラメータ | 特徴 |
+| Class | Parameters | Characteristics |
 |---|---|---|
-| `TruncationSelection` | `randomize_ties=False` | `ctx.comparator.sort_population(pool)`でソートし、上位`n_survivors`件を採用する打ち切り選択 |
+| `TruncationSelection` | `randomize_ties=False` | Truncation selection: sorts via `ctx.comparator.sort_population(pool)` and takes the top `n_survivors` |
 
-`randomize_ties=True`にすると、打ち切り境界で同点（`compare_population`が`0`を返す）の個体群をシャッフルしてから打ち切ります。
-既定の`False`では、`sort_population`が返す順序をそのまま使う決定的な打ち切りになります。
-このタイブレーク処理は`ctx.rng`を消費するため、`randomize_ties=True`を使う場合はチェックポイント再開時の乱数状態にも影響する点に注意してください。
+Setting `randomize_ties=True` shuffles individuals tied at the truncation boundary (where `compare_population` returns `0`) before truncating.
+With the default `False`, it's a deterministic truncation that uses the order returned by `sort_population` as-is.
+Because this tie-breaking consumes `ctx.rng`, note that using `randomize_ties=True` also affects the random state at checkpoint resumption.
 
-`TruncationSelection`は`@register()`済みです。
+`TruncationSelection` is `@register()`ed.
 
-## 独自SurvivorSelectionの実装方法
+## Implementing a custom SurvivorSelection
 
-独自の世代交代方式が必要な場合は、`SurvivorSelection`を継承して`select()`だけを実装すればよいです。
-次の例は、最良個体1件を必ず残し、残りはランダムに選ぶ生存選択です。
+If you need a custom generational-replacement scheme, subclass `SurvivorSelection` and implement only `select()`.
+The following example is a survivor selection that always keeps the single best individual, choosing the rest at random.
 
 ```python
 import numpy as np
@@ -34,7 +34,7 @@ from saealib import SurvivorSelection
 
 
 class ElitistSurvivorSelection(SurvivorSelection):
-    """最良個体1件を必ず残し、残りはランダムに選ぶ。"""
+    """Always keeps the single best individual, choosing the rest at random."""
 
     def select(self, ctx, pool, n_survivors):
         sorted_idx = ctx.comparator.sort_population(pool)
@@ -44,14 +44,14 @@ class ElitistSurvivorSelection(SurvivorSelection):
         return np.concatenate([best, rest])
 ```
 
-トーナメント式の生存選択や年齢ベースの入れ替えのように、`sort_population`によるランキングを前提としない方式も、同じ`select()`のシグネチャの範囲で実装できます。
+Schemes that don't assume a ranking from `sort_population`, such as tournament-style survivor selection or age-based replacement, can also be implemented within the same `select()` signature.
 
-## 関連コンポーネント
+## Related components
 
-- [Algorithm](algorithm.md)：`GA.tell()`が`pool`をどう構築し`SurvivorSelection`をどう呼ぶか
-- [Comparator](comparators.md)：`sort_population`/`compare_population`による個体の順位付け
+- [Algorithm](algorithm.md): How `GA.tell()` builds `pool` and calls `SurvivorSelection`
+- [Comparator](comparators.md): Ranking individuals via `sort_population`/`compare_population`
 
-## 参照
+## References
 
 - {py:class}`saealib.SurvivorSelection`
 - {py:class}`saealib.TruncationSelection`

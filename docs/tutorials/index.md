@@ -1,64 +1,64 @@
-# チュートリアル
+# Tutorials
 
-よくある最適化シナリオに対応する、状況別のセットアップガイドです。高レベルAPIから、手動で組み立てる`Optimizer`まで扱います。
+Setup guides for common optimization scenarios, from the high-level API to manually assembling an `Optimizer`.
 
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} {fa}`bullseye;sd-mr-1` 単目的最適化
+:::{grid-item-card} {fa}`bullseye;sd-mr-1` Single-Objective Optimization
 :link: single_objective
 :link-type: doc
 
-評価コストの高い単目的問題を、`minimize()`から手動で組み立てる`Optimizer`まで、段階的に解きます。
+Solve an expensive single-objective problem step by step, from `minimize()` to manually assembling an `Optimizer`.
 :::
 
-:::{grid-item-card} {fa}`layer-group;sd-mr-1` 多目的最適化
+:::{grid-item-card} {fa}`layer-group;sd-mr-1` Multi-Objective Optimization
 :link: multi_objective
 :link-type: doc
 
-目的間にトレードオフのある問題を解き、パレートフロントを抽出します。
+Solve a problem with trade-offs between objectives and extract the Pareto front.
 :::
 
-:::{grid-item-card} {fa}`shield-halved;sd-mr-1` 制約付き最適化
+:::{grid-item-card} {fa}`shield-halved;sd-mr-1` Constrained Optimization
 :link: constraints
 :link-type: doc
 
-不等式制約を定義し、実行不可能解の扱い方を制御します。
+Define inequality constraints and control how infeasible solutions are handled.
 :::
 
-:::{grid-item-card} {fa}`shapes;sd-mr-1` 混合変数最適化
+:::{grid-item-card} {fa}`shapes;sd-mr-1` Mixed-Variable Optimization
 :link: mixed_variable
 :link-type: doc
 
-連続変数に加えて整数変数、カテゴリ変数を含む問題を解きます。
+Solve problems that include integer and categorical variables alongside continuous variables.
 :::
 
-:::{grid-item-card} {fa}`arrows-rotate;sd-mr-1` 動的な切り替え
+:::{grid-item-card} {fa}`arrows-rotate;sd-mr-1` Dynamic Switching
 :link: dynamic_optimization
 :link-type: doc
 
-サロゲートの予測精度に応じて、評価戦略や`SurrogateManager`を実行中に切り替えます。
+Switch the evaluation strategy or `SurrogateManager` at runtime based on the surrogate's prediction accuracy.
 :::
 
-:::{grid-item-card} {fa}`floppy-disk;sd-mr-1` 再現性とチェックポイント
+:::{grid-item-card} {fa}`floppy-disk;sd-mr-1` Reproducibility and Checkpointing
 :link: checkpoint
 :link-type: doc
 
-長時間実行する最適化を再現可能かつ再開可能にします。
+Make long-running optimizations reproducible and resumable.
 :::
 
-:::{grid-item-card} {fa}`file-lines;sd-mr-1` 進捗のログ記録
+:::{grid-item-card} {fa}`file-lines;sd-mr-1` Logging Progress
 :link: logging
 :link-type: doc
 
-標準の`logging`モジュールで、最適化の進捗を記録します。
+Record optimization progress with the standard `logging` module.
 :::
 
-:::{grid-item-card} {fa}`plug;sd-mr-1` 外部ライブラリとの連携
+:::{grid-item-card} {fa}`plug;sd-mr-1` Integrating External Libraries
 :link: external_libraries
 :link-type: doc
 
-scikit-learnなど外部ライブラリのモデルを、サロゲートとして組み込みます。
+Incorporate models from external libraries such as scikit-learn as surrogates.
 :::
 
 ::::

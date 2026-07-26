@@ -1,46 +1,46 @@
 # AcquisitionFunction
 
-[SurrogateManager](surrogate_manager.md)は、[Surrogate](surrogate.md)の予測結果をスカラースコアへ変換する処理を、`AcquisitionFunction`という差し替え可能なコンポーネントに委ねています。
-`AcquisitionFunction`は`Surrogate`の予測結果だけを受け取り、モデルの内部（どんなアルゴリズムで予測したか）を一切知りません。
+[SurrogateManager](surrogate_manager.md) delegates the conversion of a [Surrogate](surrogate.md)'s predictions into a scalar score to `AcquisitionFunction`, a swappable component.
+`AcquisitionFunction` only receives `Surrogate`'s prediction results, and knows nothing about the model's internals (what algorithm produced the prediction).
 
-## AcquisitionFunctionの役割
+## AcquisitionFunction's role
 
-`AcquisitionFunction`が実装を要求するメソッドは2つあります。
+`AcquisitionFunction` requires two methods to be implemented.
 
-**`compute_reference(archive, rng=None) -> Any`**：スコアリングに使う参照値（現在の最良値など）をアーカイブから計算します。
-参照値を使わない獲得関数は`None`を返してよいです。
+**`compute_reference(archive, rng=None) -> Any`**: Computes a reference value used for scoring (such as the current best value) from the archive.
+An acquisition function that doesn't use a reference value may return `None`.
 
-**`score(prediction, reference, rng=None) -> np.ndarray`**：`SurrogatePrediction`と参照値からスコアを計算します。
-`saealib`全体の規約どおり、スコアは高いほど良いです。
+**`score(prediction, reference, rng=None) -> np.ndarray`**: Computes a score from `SurrogatePrediction` and the reference value.
+As with saealib's overall convention, a higher score is better.
 
-クラス属性`requires_uncertainty: bool`は、この獲得関数が`SurrogatePrediction.std`（不確実性）を必要とするかを示します。
-`direction_sensitive: bool`（既定`True`）は、`Optimizer`が実行開始時に`problem.direction`をこの獲得関数へ自動注入する対象かどうかを示します。
-実行可能性確率のように目的の方向という概念を持たない獲得関数は、`direction_sensitive = False`にしてこの自動注入を無効化します。
+The class attribute `requires_uncertainty: bool` indicates whether this acquisition function needs `SurrogatePrediction.std` (uncertainty).
+`direction_sensitive: bool` (default `True`) indicates whether `Optimizer` automatically injects `problem.direction` into this acquisition function at the start of a run.
+Acquisition functions with no notion of objective direction, such as feasibility probability, set `direction_sensitive = False` to disable this auto-injection.
 
-## 組み込みAcquisitionFunction
+## Built-in AcquisitionFunctions
 
-| クラス | 特徴 | `requires_uncertainty` |
+| Class | Characteristics | `requires_uncertainty` |
 |---|---|---|
-| `MeanPrediction` | 予測平均のみを使う、最も単純な獲得関数 | `False` |
-| `ExpectedImprovement` | 期待改善量（EI）{cite}`jones1998ego` | `True` |
-| `LowerConfidenceBound` | 信頼下限（LCB）{cite}`srinivas2012gpucb` | `True` |
-| `MaxUncertainty` | 予測の不確実性が大きいほど良い（探索寄り） | `True` |
-| `EHVIAcquisition` | 期待ハイパーボリューム改善量{cite}`emmerich2006ehvi,hupkens2015ehvi,daulton2020ehvi`。多目的向け | `True` |
-| `SMSEGOAcquisition` | SMS-EMOA風のハイパーボリューム指標（Ponweiser et al., 2008が提案するSMS-EGO）。多目的向け | `True` |
-| `ParEGOAcquisition` | ランダムスカラー化によるParEGO{cite}`knowles2006parego,chugh2020scalarizing`。多目的向け | `True` |
-| `ProbabilityOfFeasibility` | 単一制約の実行可能性確率{cite}`schonlau1997pof,gelbart2014pof` | `True` |
-| `ProductOfFeasibility` | 複数制約の実行可能性確率の積{cite}`gelbart2014pof` | `True` |
+| `MeanPrediction` | The simplest acquisition function, using only the predictive mean | `False` |
+| `ExpectedImprovement` | Expected Improvement (EI) {cite}`jones1998ego` | `True` |
+| `LowerConfidenceBound` | Lower Confidence Bound (LCB) {cite}`srinivas2012gpucb` | `True` |
+| `MaxUncertainty` | The larger the predictive uncertainty, the better (exploration-leaning) | `True` |
+| `EHVIAcquisition` | Expected Hypervolume Improvement {cite}`emmerich2006ehvi,hupkens2015ehvi,daulton2020ehvi`. For multi-objective use | `True` |
+| `SMSEGOAcquisition` | An SMS-EMOA-style hypervolume indicator (SMS-EGO, proposed by Ponweiser et al., 2008). For multi-objective use | `True` |
+| `ParEGOAcquisition` | ParEGO via random scalarization {cite}`knowles2006parego,chugh2020scalarizing`. For multi-objective use | `True` |
+| `ProbabilityOfFeasibility` | Feasibility probability for a single constraint {cite}`schonlau1997pof,gelbart2014pof` | `True` |
+| `ProductOfFeasibility` | Product of feasibility probabilities across multiple constraints {cite}`gelbart2014pof` | `True` |
 
-`MeanPrediction`以外の8クラス全てが`requires_uncertainty=True`です。
-不確実性ベースの獲得関数を使うには、組み合わせる`Surrogate`が`std`を返す（`provides_uncertainty=True`）必要があります。
-組み込みSurrogateでは`SklearnGPRSurrogate`だけがこれを満たします。
-詳細は[Surrogate](surrogate.md)の不確実性対応表を参照してください。
+All 8 classes other than `MeanPrediction` have `requires_uncertainty=True`.
+To use an uncertainty-based acquisition function, the `Surrogate` it's paired with must return `std` (`provides_uncertainty=True`).
+Among the built-in surrogates, only `SklearnGPRSurrogate` satisfies this.
+See the uncertainty-support table in [Surrogate](surrogate.md) for details.
 
-`MaxUncertainty`/`ProbabilityOfFeasibility`/`ProductOfFeasibility`は`direction_sensitive = False`です。
-不確実性の大きさや実行可能性確率は、目的の最大化と最小化という方向の概念を持たないためです。
+`MaxUncertainty`/`ProbabilityOfFeasibility`/`ProductOfFeasibility` have `direction_sensitive = False`.
+This is because the magnitude of uncertainty or a feasibility probability has no notion of maximizing vs. minimizing direction.
 
-`ProbabilityOfFeasibility`/`ProductOfFeasibility`は、制約値`g`を予測する分類サロゲートや回帰サロゲートと組み合わせて使います。
-[TrainingSet](training_set.md)の`ConstraintObjectiveSet`で学習データを抽出し、目的側の獲得関数（EIなど）と`CompositeSurrogateManager`の`product_combine`で組み合わせるのが典型的な使い方です。
+`ProbabilityOfFeasibility`/`ProductOfFeasibility` are used paired with a classification or regression surrogate that predicts a constraint value `g`.
+The typical usage is to extract training data with [TrainingSet](training_set.md)'s `ConstraintObjectiveSet`, and combine it with the objective-side acquisition function (e.g. EI) via `CompositeSurrogateManager`'s `product_combine`.
 
 ```python
 ei_manager = GlobalSurrogateManager(gp_surrogate, ExpectedImprovement(), ArchiveObjectiveSet())
@@ -54,25 +54,25 @@ optimizer.set_surrogate_manager(
 )
 ```
 
-## weights/direction引数の意味
+## The meaning of the weights/direction arguments
 
-`MeanPrediction`など一部の獲得関数は、`weights`引数で多目的予測をスカラー化できます。
-`weights=np.array([-1.0])`のように、最小化したい目的には負の重みを使います。
+Some acquisition functions, such as `MeanPrediction`, can scalarize multi-objective predictions via the `weights` argument.
+Use a negative weight for objectives you want to minimize, e.g. `weights=np.array([-1.0])`.
 
-`direction`引数を指定すると、大きさを持たない符号だけのスカラー化になり、`weights`よりも優先されます。
-`direction`を明示しない場合、実行開始時に`problem.direction`が自動的に注入されます（`direction_sensitive`が`True`の獲得関数のみ）。
+Specifying the `direction` argument produces a sign-only scalarization with no magnitude, and takes priority over `weights`.
+If `direction` isn't specified explicitly, `problem.direction` is injected automatically at the start of a run (only for acquisition functions where `direction_sensitive` is `True`).
 
-## 独自AcquisitionFunctionの実装方法
+## Implementing a custom AcquisitionFunction
 
-独自のスコアリング方式が必要な場合は、`AcquisitionFunction`を継承して`compute_reference()`/`score()`を実装します。
-次の例は、予測平均が閾値を下回る候補ほど高いスコアを与える単純な獲得関数です。
+If you need a custom scoring scheme, subclass `AcquisitionFunction` and implement `compute_reference()`/`score()`.
+The following example is a simple acquisition function that gives a higher score to candidates whose predictive mean falls further below a threshold.
 
 ```python
 from saealib import AcquisitionFunction
 
 
 class ThresholdAcquisition(AcquisitionFunction):
-    """予測平均が閾値を下回る候補ほど高スコアを与える(最小化前提)。"""
+    """Gives a higher score to candidates whose predictive mean falls further below a threshold (assumes minimization)."""
 
     def __init__(self, threshold: float = 0.0):
         self.threshold = threshold
@@ -85,20 +85,20 @@ class ThresholdAcquisition(AcquisitionFunction):
         return self.threshold - m
 ```
 
-`GlobalSurrogateManager(surrogate, acquisition, ...)`のように、`SurrogateManager`のコンストラクタへ渡して組み合わせます。
+Combine it by passing it to `SurrogateManager`'s constructor, e.g. `GlobalSurrogateManager(surrogate, acquisition, ...)`.
 
 ```{note}
-`Optimizer.validate()`は、獲得関数の`requires_uncertainty`とサロゲートの`provides_uncertainty`の不整合を検出して警告します。
-`requires_uncertainty=True`の獲得関数を`std`を返さないサロゲートと組み合わせた場合、この警告で気付けます。
+`Optimizer.validate()` detects and warns about a mismatch between the acquisition function's `requires_uncertainty` and the surrogate's `provides_uncertainty`.
+This warning will catch you if you pair an acquisition function with `requires_uncertainty=True` with a surrogate that doesn't return `std`.
 ```
 
-## 関連コンポーネント
+## Related components
 
-- [Surrogate](surrogate.md)：`SurrogatePrediction`の提供元。不確実性対応表もこちらを参照する
-- [SurrogateManager](surrogate_manager.md)：`AcquisitionFunction`を`Surrogate`と組み合わせる
-- [TrainingSet](training_set.md)：`ProbabilityOfFeasibility`/`ProductOfFeasibility`と組み合わせる制約用データ抽出
+- [Surrogate](surrogate.md): The source of `SurrogatePrediction`. See here also for the uncertainty-support table
+- [SurrogateManager](surrogate_manager.md): Combines `AcquisitionFunction` with `Surrogate`
+- [TrainingSet](training_set.md): Constraint data extraction paired with `ProbabilityOfFeasibility`/`ProductOfFeasibility`
 
-## 参照
+## References
 
 - {py:class}`saealib.AcquisitionFunction`
 - {py:class}`saealib.MeanPrediction`

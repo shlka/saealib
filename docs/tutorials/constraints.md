@@ -1,12 +1,12 @@
-# 制約付き最適化
+# Constrained Optimization
 
-設計変数に制約がある問題を、`saealib`で解きます。
+Solve a problem with constraints on the design variables using `saealib`.
 
-アルゴリズム、サロゲート、評価戦略の切り替え方は[単目的最適化](single_objective.md)の「コンポーネントの切り替え」と共通です。
+Switching algorithms, surrogates, and the evaluation strategy works the same as in "Switching components" in [Single-Objective Optimization](single_objective.md).
 
-## 問題設定
+## Problem setup
 
-目的関数に加えて、解が満たすべき不等式制約`g(x) <= 0`を持つ問題を想定します。
+Assume a problem that, in addition to the objective function, has an inequality constraint `g(x) <= 0` that the solution must satisfy.
 
 ```python
 import numpy as np
@@ -26,11 +26,11 @@ LB = [-5.0] * DIM
 UB = [5.0] * DIM
 ```
 
-`g1(x) <= 0`を満たす解だけが実行可能解です。
+Only solutions satisfying `g1(x) <= 0` are feasible.
 
-## 制約の定義
+## Defining constraints
 
-制約は`InequalityConstraint(func, threshold=0.0)`で定義し、`Problem`の`constraints`引数に渡します。
+A constraint is defined with `InequalityConstraint(func, threshold=0.0)` and passed to `Problem`'s `constraints` argument.
 
 ```python
 from saealib import InequalityConstraint, Problem, minimize
@@ -52,9 +52,9 @@ print(result.x, result.f)
 print(constraint.violation(result.x))  # 0.0 means the constraint is satisfied
 ```
 
-`g(x) >= threshold`の形で制約を課したい場合は、`func`の符号を反転させて渡します。
+To impose a constraint of the form `g(x) >= threshold`, pass `func` with its sign flipped.
 
-等式制約`h(x) = 0`は、`InequalityConstraint`を符号反転で組み合わせる代わりに`EqualityConstraint(func, tolerance=1e-6)`を使います。
+For an equality constraint `h(x) = 0`, use `EqualityConstraint(func, tolerance=1e-6)` instead of combining two sign-flipped `InequalityConstraint`s.
 
 ```python
 from saealib import EqualityConstraint
@@ -68,11 +68,11 @@ def h1(x):
 equality = EqualityConstraint(h1, tolerance=1e-6)
 ```
 
-`EqualityConstraint`は、`|h(x)| <= tolerance`を満たす解を実行可能解として扱います。
+`EqualityConstraint` treats solutions satisfying `|h(x)| <= tolerance` as feasible.
 
-## 実行可能性の確認
+## Checking feasibility
 
-`Problem`の`eps_cv`（既定値`1e-6`）以下の制約違反量`cv`を持つ解が実行可能解です。
+A solution is feasible if its constraint violation `cv` is at most `Problem`'s `eps_cv` (default `1e-6`).
 
 ```python
 archive_cv = result.ctx.archive.get_array("cv")
@@ -80,19 +80,19 @@ feasible = archive_cv <= problem.eps_cv
 print(f"feasible: {feasible.sum()} / {len(archive_cv)}")
 ```
 
-## ConstraintHandlerによるカスタマイズ
+## Customizing with ConstraintHandler
 
-複数の制約から`cv`を集約する方法と、その値をもとに実行可能性を判定する方法は、`ConstraintHandler`が決めます。
+How `cv` is aggregated from multiple constraints, and how feasibility is judged from that value, is decided by `ConstraintHandler`.
 
-`Problem`の`handler`引数を省略すると、`StaticToleranceHandler(eps_cv=problem.eps_cv)`が使われ、`cv <= eps_cv`かどうかで実行可能性を判定します。
+If `Problem`'s `handler` argument is omitted, `StaticToleranceHandler(eps_cv=problem.eps_cv)` is used, which judges feasibility by whether `cv <= eps_cv`.
 
-| クラス | 動作 |
+| Class | Behavior |
 |--------|------|
-| `StaticToleranceHandler` | 固定の許容誤差`eps_cv`で実行可能性を判定する（既定） |
-| `EpsilonConstraintHandler` | 許容誤差を世代とともに0へ近づけ、徐々に実行可能領域へ解を追い込む |
-| `GradientRepairHandler` | 制約の勾配を使って実行不可能解を修復する |
+| `StaticToleranceHandler` | Judges feasibility with a fixed tolerance `eps_cv` (default) |
+| `EpsilonConstraintHandler` | Shrinks the tolerance toward 0 over generations, gradually driving solutions into the feasible region |
+| `GradientRepairHandler` | Repairs infeasible solutions using the constraint gradient |
 
-`EpsilonConstraintHandler`には、世代番号を受け取り許容誤差を返す関数を渡します。
+`EpsilonConstraintHandler` takes a function that receives the generation number and returns the tolerance.
 
 ```python
 from saealib import EpsilonConstraintHandler
@@ -115,7 +115,7 @@ problem = Problem(
 result = minimize(problem, max_fe=1000, seed=0)
 ```
 
-## 参照
+## References
 
 - {py:class}`saealib.InequalityConstraint` / {py:class}`saealib.EqualityConstraint`
 - {py:class}`saealib.Problem`

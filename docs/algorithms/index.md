@@ -1,10 +1,10 @@
-# アルゴリズム
+# Algorithms
 
-文献上の名前がついたアルゴリズムを、saealibのコンポーネントの組み合わせとしてどう再現するかをまとめたページです。
-各ページは、そのアルゴリズムの理論的な概要（saealibに依存しない一般的な説明）と、saealibでの構成方法（コンポーネントの組み合わせとPythonコード）の2部構成です。
-出典の完全な書誌情報は[文献リファレンス](../references.md)にまとめてあり、このセクションの各ページはそこへリンクします。
+Pages summarizing how named algorithms from the literature are reproduced as combinations of saealib components.
+Each page has two parts: a theoretical overview of the algorithm (a general explanation independent of saealib), and how to configure it in saealib (the component combination and Python code).
+Full bibliographic details for the sources are collected in [References](../references.md), and each page in this section links there.
 
-構成が理論上の定義と厳密に一致しない場合（近似）は、各ページにその旨を明記します。
+Where a configuration does not exactly match the theoretical definition (an approximation), this is noted explicitly on the page.
 
 ::::{grid} 1 2 2 3
 :gutter: 3
@@ -13,56 +13,56 @@
 :link: ego
 :link-type: doc
 
-Gaussian Process回帰と期待改善量(Expected Improvement)による逐次モデルベース最適化。
+Sequential model-based optimization combining Gaussian Process regression with the Expected Improvement acquisition function.
 :::
 
 :::{grid-item-card} GP-UCB
 :link: gp_ucb
 :link-type: doc
 
-Gaussian Process回帰と上側信頼限界(Upper Confidence Bound)による逐次モデルベース最適化。
+Sequential model-based optimization combining Gaussian Process regression with the Upper Confidence Bound acquisition function.
 :::
 
 :::{grid-item-card} MaxUnc
 :link: maxunc
 :link-type: doc
 
-Gaussian Process回帰の予測不確実性のみを基準にする、探索専用の逐次モデルベース最適化。
+Exploration-only sequential model-based optimization based solely on the predictive uncertainty of Gaussian Process regression.
 :::
 
 :::{grid-item-card} CORS-RBF
 :link: rbf_cors
 :link-type: doc
 
-RBF補間によるサロゲートモデルと、既存評価点からの距離制約による逐次モデルベース最適化。
+Sequential model-based optimization combining an RBF-interpolation surrogate model with a distance constraint from existing evaluated points.
 :::
 
 :::{grid-item-card} NSGA-II
 :link: nsga2
 :link-type: doc
 
-非優越ソートと混雑度距離による多目的遺伝アルゴリズム。多目的最適化の比較演算子の基礎。
+Multi-objective genetic algorithm based on non-dominated sorting and crowding distance. The basis for saealib's multi-objective comparators.
 :::
 
 :::{grid-item-card} SPEA2
 :link: spea2
 :link-type: doc
 
-支配関係に基づく強度と密度を組み合わせた適応度、固定サイズアーカイブによる多目的遺伝アルゴリズム。
+Multi-objective genetic algorithm combining dominance-based strength and density into a fitness value, with a fixed-size archive.
 :::
 
 :::{grid-item-card} NSGA-III
 :link: nsga3
 :link-type: doc
 
-参照点ベースのニッチ保存による多目的遺伝アルゴリズム。4つ以上の目的を持つmany-objective最適化向け。
+Multi-objective genetic algorithm with reference-point-based niche preservation. Suited to many-objective optimization with four or more objectives.
 :::
 
 :::{grid-item-card} SMS-EMOA
 :link: sms_emoa
 :link-type: doc
 
-被支配超体積を選択基準に直接組み込んだ、定常状態の多目的進化アルゴリズム。
+Steady-state multi-objective evolutionary algorithm that incorporates dominated hypervolume directly into the selection criterion.
 :::
 
 ::::

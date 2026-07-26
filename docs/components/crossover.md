@@ -1,52 +1,52 @@
 # Crossover
 
-`GA`(`saealib.GA`)は、選択した親個体から子個体を生成する処理を、`Crossover`という差し替え可能な演算子に委ねています。
-交叉の方式を変えたいときは、`GA`本体ではなくこの`Crossover`だけを差し替えればよいです。
+`GA` (`saealib.GA`) delegates generating offspring from selected parents to `Crossover`, a swappable operator.
+To change the crossover scheme, you only need to swap out this `Crossover`, not `GA` itself.
 
-## Crossoverの役割
+## Crossover's role
 
-`Crossover`が実装を要求するメソッドは`crossover(parent, bounds=None, rng=...)`の1つだけです。
-`parent`には交叉に使う親個体の配列が渡されます。
-既定では`n_parents = 2`個の親をshape `(n_parents, dim)`で受け取り、`n_children = 2`個の子をshape `(n_children, dim)`で返します。
-2親2子以外の交叉方式を実装する場合は、`n_parents`/`n_children`というクラス属性をサブクラス側で上書きします。
-`bounds`には設計変数の下限と上限が`(lb, ub)`のタプルで渡され、`None`の場合は無制限として扱います。
+`Crossover` requires only one method, `crossover(parent, bounds=None, rng=...)`, to be implemented.
+`parent` is passed the array of parent individuals used for crossover.
+By default, it receives `n_parents = 2` parents with shape `(n_parents, dim)` and returns `n_children = 2` children with shape `(n_children, dim)`.
+To implement a crossover scheme other than 2-parents-2-children, override the `n_parents`/`n_children` class attributes in the subclass.
+`bounds` receives the design variables' lower and upper bounds as a `(lb, ub)` tuple, or `None` for unbounded.
 
-交叉を実行するかどうかを決める個体レベルの確率は、`crossover()`の内部ではなく呼び出し側が判定します。
-`GA.ask()`は`ctx.rng.random() < self.crossover.prob`を満たしたペアだけに対して`crossover()`を呼び、満たさないペアは親をそのまま子として複製します。
-つまり`prob`というクラス属性自体は`Crossover`が保持していますが、それを読んで交叉を実行するかどうかを決めるのは`GA`側の責務であり、`crossover()`の実装は常に交叉が起こる前提で書いてよいです。
+The individual-level probability deciding whether crossover is performed at all is judged by the caller, not inside `crossover()`.
+`GA.ask()` only calls `crossover()` for pairs satisfying `ctx.rng.random() < self.crossover.prob`; pairs that don't satisfy it simply duplicate the parents as children.
+In other words, while the `prob` class attribute itself is held by `Crossover`, deciding whether to perform crossover based on it is `GA`'s responsibility — `crossover()`'s implementation can always assume crossover is happening.
 
-## 組み込みCrossover
+## Built-in Crossovers
 
-| クラス | パラメータ | 特徴 |
+| Class | Parameters | Characteristics |
 |---|---|---|
-| `CrossoverBLXAlpha` | `prob, alpha` | BLX-α交叉（Eshelman & Schaffer, 1993が導入）。`alpha`が大きいほど、子が親の値の範囲外まで広がりうる |
-| `CrossoverSBX` | `prob, eta, *, prob_var=0.5` | Simulated Binary Crossover{cite}`deb1995sbx`。`bounds`が有限値なら境界付き版に自動で切り替わる。`eta`が大きいほど子は親に近づく |
-| `CrossoverUniform` | `prob, swap_rate=0.5` | 各次元を独立に`swap_rate`の確率で親同士を入れ替える（Syswerda, 1989が導入） |
-| `CrossoverOnePoint` | `prob` | 1点交叉 |
-| `CrossoverTwoPoint` | `prob` | 2点交叉 |
-| `CrossoverIntegerSBX` | `prob, eta, *, prob_var=0.5` | `CrossoverSBX`{cite}`deb1995sbx`と同じ計算をしたのち整数に丸める。整数変数向け |
-| `CrossoverCategorical` | `prob` | 各次元を50/50でどちらかの親の値をそのままコピーする。カテゴリ変数向け |
+| `CrossoverBLXAlpha` | `prob, alpha` | BLX-α crossover (introduced by Eshelman & Schaffer, 1993). Larger `alpha` lets children spread further outside the parents' value range |
+| `CrossoverSBX` | `prob, eta, *, prob_var=0.5` | Simulated Binary Crossover {cite}`deb1995sbx`. Automatically switches to the bounded variant when `bounds` is finite. Larger `eta` brings children closer to the parents |
+| `CrossoverUniform` | `prob, swap_rate=0.5` | Independently swaps each dimension between parents with probability `swap_rate` (introduced by Syswerda, 1989) |
+| `CrossoverOnePoint` | `prob` | One-point crossover |
+| `CrossoverTwoPoint` | `prob` | Two-point crossover |
+| `CrossoverIntegerSBX` | `prob, eta, *, prob_var=0.5` | Performs the same computation as `CrossoverSBX` {cite}`deb1995sbx` and then rounds to an integer. For integer variables |
+| `CrossoverCategorical` | `prob` | Copies each dimension's value directly from one parent or the other, 50/50. For categorical variables |
 
-連続変数だけの問題であれば、この中から1つを選んで`GA(crossover=..., ...)`に渡せばよいです。
-`CrossoverBLXAlpha`/`CrossoverUniform`は無制約な問題で素直に使え、境界を活かした交叉が必要なら`CrossoverSBX`を選ぶ、という判断が基本になります。
+For problems with only continuous variables, pick one of these and pass it to `GA(crossover=..., ...)`.
+The basic decision is: `CrossoverBLXAlpha`/`CrossoverUniform` work well for unconstrained problems, and `CrossoverSBX` when you need crossover that takes advantage of the bounds.
 
-設計変数に整数変数やカテゴリ変数が混在する問題では、`GA`は変数の型ごとに異なる`Crossover`インスタンスを使い分けます。
-`GA`コンストラクタの`integer_crossover`/`categorical_crossover`引数を省略すると、それぞれ`CrossoverIntegerSBX`/`CrossoverCategorical`が自動的に補われます（`eta`や`prob`は連続変数用の`crossover`から引き継がれます）。
-`GA.ask()`は親個体を変数の型ごとの列に分割し、各`Crossover`を該当する列だけに適用してから結果を組み立て直します。
-この仕組み上、`integer_crossover`/`categorical_crossover`に独自のクラスを渡す場合は、`n_children`/`n_parents`を連続変数用の`crossover`と一致させる必要があります。
-一致しない場合は`ConfigurationError`になります。
+For problems where design variables mix integer and categorical variables, `GA` uses a different `Crossover` instance per variable type.
+If the `GA` constructor's `integer_crossover`/`categorical_crossover` arguments are omitted, `CrossoverIntegerSBX`/`CrossoverCategorical` are supplied automatically (with `eta`/`prob` inherited from the continuous-variable `crossover`).
+`GA.ask()` splits parent individuals into columns by variable type, applies each `Crossover` only to its corresponding columns, and then reassembles the results.
+Because of this mechanism, if you pass a custom class to `integer_crossover`/`categorical_crossover`, its `n_children`/`n_parents` must match the continuous-variable `crossover`.
+A mismatch raises `ConfigurationError`.
 
-変数の型と`Crossover`の対応づけは[Problem](problem.md)の`variables`引数で決まります。
+The correspondence between variable types and `Crossover` is determined by [Problem](problem.md)'s `variables` argument.
 
 ```{note}
-`CrossoverBLXAlpha`のみ`@register()`済みで、他の6クラスは現状Registry未登録です。
-Registry経由でクラスを文字列から解決する使い方をする場合はこの違いに注意してください。
+Only `CrossoverBLXAlpha` is currently `@register()`ed; the other 6 classes are not yet registered with the Registry.
+Keep this difference in mind if you resolve classes from strings via the Registry.
 ```
 
-## 拡張フック
+## Extension hooks
 
-境界外に出た値を丸めるといった後処理だけを足したい場合、サブクラスを新設せずに`with_post(fn)`で既存の`Crossover`インスタンスへ処理を追加できます。
-`with_post`は元のインスタンスを変更せず、`fn`を追加したコピーを返します。
+If you just want to add post-processing, such as rounding values that fall outside the bounds, you can add it to an existing `Crossover` instance with `with_post(fn)` instead of creating a new subclass.
+`with_post` doesn't modify the original instance — it returns a copy with `fn` added.
 
 ```python
 import numpy as np
@@ -62,13 +62,13 @@ def clip_to_bounds(offspring, parents, rng, ctx=None):
 repaired = base.with_post(clip_to_bounds)
 ```
 
-`fn`のシグネチャは`fn(offspring, parents, rng, ctx) -> np.ndarray`で、既存のフック（既定では何もしない恒等関数）の結果を受け取って追加の変換を返します。
-複数回`with_post`を呼べば、フックは呼び出した順に連結されます。
+`fn`'s signature is `fn(offspring, parents, rng, ctx) -> np.ndarray`, receiving the result of the existing hook (by default an identity function that does nothing) and returning an additional transformation.
+Calling `with_post` multiple times chains the hooks in the order called.
 
-## 独自Crossoverの実装方法
+## Implementing a custom Crossover
 
-独自の交叉方式が必要な場合は、`Crossover`を継承して`crossover()`だけを実装すればよいです。
-次の例は、2つの親の平均を2個の子としてそのまま返す単純な交叉です。
+If you need a custom crossover scheme, subclass `Crossover` and implement only `crossover()`.
+The following example is a simple crossover that returns the average of two parents as both children, unchanged.
 
 ```python
 import numpy as np
@@ -85,17 +85,17 @@ class AverageCrossover(Crossover):
         return np.array([mean, mean])
 ```
 
-`n_parents`/`n_children`を2以外にしたい場合や、`bounds`を使う独自の丸め処理を加えたい場合は、クラス属性のオーバーライドと`crossover()`内での`bounds`の参照を追加すればよいです。
+If you want `n_parents`/`n_children` to be something other than 2, or want to add custom rounding logic that uses `bounds`, override the class attributes and add a reference to `bounds` inside `crossover()`.
 
-## 関連コンポーネント
+## Related components
 
-- [Algorithm](algorithm.md)：`GA`が`Crossover`をどう組み合わせるか
-- [Mutation](mutation.md)：交叉の次に呼ばれる、対になる演算子
-- [ParentSelection](parent_selection.md)：`Crossover`に渡す親個体を選ぶ演算子
-- [Problem](problem.md)：整数変数とカテゴリ変数の定義と、混合変数向けCrossoverの対応関係
-- [拡張のガイドライン](extension_guidelines.md)：`with_post`系フックの一般的な設計思想
+- [Algorithm](algorithm.md): How `GA` combines `Crossover`
+- [Mutation](mutation.md): The paired operator called next, after crossover
+- [ParentSelection](parent_selection.md): The operator that selects the parents passed to `Crossover`
+- [Problem](problem.md): Defining integer and categorical variables, and their correspondence with mixed-variable Crossovers
+- [Extension guidelines](extension_guidelines.md): The general design philosophy behind `with_post`-style hooks
 
-## 参照
+## References
 
 - {py:class}`saealib.Crossover`
 - {py:class}`saealib.CrossoverBLXAlpha`

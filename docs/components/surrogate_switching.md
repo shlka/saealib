@@ -1,45 +1,45 @@
 # AccuracyBasedSurrogateSwitcher
 
-サロゲートの精度に応じて`SurrogateManager`や`OptimizationStrategy`を動的に切り替える仕組みは、3つの独立した関心事の組み合わせでできています。
+The mechanism for dynamically switching `SurrogateManager` or `OptimizationStrategy` based on surrogate accuracy is made of three independent concerns, combined.
 
-- **精度指標**（`SurrogateAccuracyMetric`）：1回のfit/predictペアからスカラー値を計算する
-- **精度評価方法**（`AccuracyEvaluator`）：精度指標を使って、サロゲートの汎化性能をどう測るか（交差検証、held-outなど）を決める
-- **切り替え判断**（`AccuracyBasedSurrogateSwitcher`）：評価結果を受けて、次に使うコンポーネントやパラメータを決める
+- **Accuracy metric** (`SurrogateAccuracyMetric`): Computes a scalar value from a single fit/predict pair
+- **Accuracy evaluation method** (`AccuracyEvaluator`): Decides how to measure the surrogate's generalization performance using the accuracy metric (cross-validation, held-out, etc.)
+- **Switching decision** (`AccuracyBasedSurrogateSwitcher`): Takes the evaluation result and decides which component or parameter to use next
 
-精度評価方法は`GlobalSurrogateManager`などの`accuracy_evaluator`引数として注入され、その結果は`surrogate_manager.last_accuracy`プロパティを経由して切り替え判断へ渡されます。
-この一連の仕組みは`iterate()`ループでの利用を前提としています。
-高レベルAPI（`minimize`/`maximize`）は実行中のコンポーネント差し替え手段を提供しないため、これらのSwitcherは使えません。
+The accuracy evaluation method is injected as the `accuracy_evaluator` argument on things like `GlobalSurrogateManager`, and its result is passed to the switching decision via the `surrogate_manager.last_accuracy` property.
+This whole mechanism is meant to be used inside an `iterate()` loop.
+Because the high-level API (`minimize`/`maximize`) provides no way to swap components mid-run, these Switchers can't be used there.
 
-## 精度指標：SurrogateAccuracyMetric
+## Accuracy metric: SurrogateAccuracyMetric
 
-`SurrogateAccuracyMetric`が実装を要求するのは`name`（プロパティ）と`compute(y_true, y_pred) -> float`の2つです。
+`SurrogateAccuracyMetric` requires two things to be implemented: `name` (a property) and `compute(y_true, y_pred) -> float`.
 
-| クラス | 範囲 | 意味 |
+| Class | Range | Meaning |
 |---|---|---|
-| `SpearmanCorrelation` | `[-1, 1]`、高いほど良い | 目的ごとのSpearman順位相関の平均。EAではランクの保存性が重要という観点{cite}`yu2019spearman`に基づく |
-| `RMSE` | `[0, ∞)`、低いほど良い | 二乗平均平方根誤差 |
-| `R2Score` | `(-∞, 1]`、高いほど良い | 決定係数 |
+| `SpearmanCorrelation` | `[-1, 1]`, higher is better | The average per-objective Spearman rank correlation. Based on the view that rank preservation matters for EA {cite}`yu2019spearman` |
+| `RMSE` | `[0, ∞)`, lower is better | Root mean squared error |
+| `R2Score` | `(-∞, 1]`, higher is better | Coefficient of determination |
 
-`AccuracyEvaluator`のコンストラクタで`metrics`を省略すると、この3指標全てが既定として使われます。
+If `metrics` is omitted from `AccuracyEvaluator`'s constructor, all three metrics are used by default.
 
-## 精度評価方法：AccuracyEvaluator
+## Accuracy evaluation method: AccuracyEvaluator
 
-`AccuracyEvaluator`が実装を要求するのは`evaluate(surrogate, train_x, train_y) -> SurrogateAccuracy`の1つだけです。
+`AccuracyEvaluator` requires only one method, `evaluate(surrogate, train_x, train_y) -> SurrogateAccuracy`, to be implemented.
 
-| クラス | パラメータ | 評価方法 |
+| Class | Parameters | Evaluation method |
 |---|---|---|
-| `KFoldAccuracyEvaluator` | `metrics=None, n_splits=5` | サロゲートをfoldごとに複製して再学習するk分割交差検証 |
-| `LOOAccuracyEvaluator` | `metrics=None` | `n_splits=n_samples`の`KFoldAccuracyEvaluator`と等価（1件抜き交差検証） |
-| `HeldOutAccuracyEvaluator` | `held_x, held_y, metrics=None` | 既にfit済みのサロゲートを再学習せず、指定したheld-outデータで評価する |
+| `KFoldAccuracyEvaluator` | `metrics=None, n_splits=5` | k-fold cross-validation, retraining a copy of the surrogate per fold |
+| `LOOAccuracyEvaluator` | `metrics=None` | Equivalent to `KFoldAccuracyEvaluator` with `n_splits=n_samples` (leave-one-out cross-validation) |
+| `HeldOutAccuracyEvaluator` | `held_x, held_y, metrics=None` | Evaluates an already-fitted surrogate on the given held-out data, without retraining |
 
-`HeldOutAccuracyEvaluator`は、直近の真の評価点との比較用途{cite}`hanawa2025switching`で使います。
+`HeldOutAccuracyEvaluator` is used for comparison against recent true evaluation points {cite}`hanawa2025switching`.
 
-`SurrogateAccuracy`（`metrics: dict[str, float]`, `n_samples: int`）は、評価結果を保持する単純なコンテナで、`get(name, default=nan)`で指標名から値を取り出します。
+`SurrogateAccuracy` (`metrics: dict[str, float]`, `n_samples: int`) is a simple container holding the evaluation result, with `get(name, default=nan)` to retrieve a value by metric name.
 
-## 切り替え判断：AccuracyBasedSurrogateSwitcher
+## Switching decision: AccuracyBasedSurrogateSwitcher
 
-`AccuracyBasedSurrogateSwitcher`が実装を要求するのは`switch(accuracy: SurrogateAccuracy | None) -> T`の1つだけです。
-`iterate()`ループの中で`optimizer.set_*()`と組み合わせて呼びます。
+`AccuracyBasedSurrogateSwitcher` requires only one method, `switch(accuracy: SurrogateAccuracy | None) -> T`, to be implemented.
+Called inside an `iterate()` loop, paired with `optimizer.set_*()`.
 
 ```python
 switcher = ManagerSwitcher(primary, fallback)
@@ -49,29 +49,29 @@ for ctx in optimizer.iterate():
     )
 ```
 
-| クラス | パラメータ | 切り替え対象 |
+| Class | Parameters | What it switches |
 |---|---|---|
 | `ManagerSwitcher` | `primary, fallback, *, metric="spearman", threshold=0.5` | `SurrogateManager` |
 | `StrategySwitcher` | `primary, fallback, *, metric="spearman", threshold=0.56` | `OptimizationStrategy` |
-| `GenCtrlSwitcher` | `*, gm_max=5, gm_min=0, update_rate=0.5, metric="spearman", initial_error=0.5` | `gen_ctrl`（整数） |
+| `GenCtrlSwitcher` | `*, gm_max=5, gm_min=0, update_rate=0.5, metric="spearman", initial_error=0.5` | `gen_ctrl` (an integer) |
 
-`ManagerSwitcher`/`StrategySwitcher`は、指定した指標が閾値以上なら`primary`、そうでなければ`fallback`を返す単純な二値切り替えです。
-`StrategySwitcher`の既定閾値`0.56`は、{cite}`hanawa2025switching`によるPS/IB-GB切り替えの設定値に基づきます。
+`ManagerSwitcher`/`StrategySwitcher` are simple binary switches, returning `primary` if the specified metric is at or above the threshold, and `fallback` otherwise.
+`StrategySwitcher`'s default threshold `0.56` is based on the PS/IB-GB switching setting from {cite}`hanawa2025switching`.
 
-`GenCtrlSwitcher`は、二値切り替えではなく`gen_ctrl`を指数平滑化で連続的に調整します{cite}`repicky2017genctrl`。
-公開属性`smoothed_error`に平滑化済みの誤差推定値を保持する状態を持つため、1回の`run`につき1つのインスタンスを使います。
-`GenCtrlSwitcher.switch()`が返す`int`は、そのまま[GenerationBasedStrategy](strategies.md)の`gen_ctrl`引数に渡す想定です。
+Rather than a binary switch, `GenCtrlSwitcher` continuously adjusts `gen_ctrl` via exponential smoothing {cite}`repicky2017genctrl`.
+Because it holds state — a smoothed error estimate in the public attribute `smoothed_error` — use one instance per `run`.
+The `int` returned by `GenCtrlSwitcher.switch()` is meant to be passed directly to [GenerationBasedStrategy](strategies.md)'s `gen_ctrl` argument.
 
-## 独自Switcherの実装方法
+## Implementing a custom Switcher
 
-独自の切り替えロジックが必要な場合は、`AccuracyBasedSurrogateSwitcher`を継承して`switch()`だけを実装すればよいです。
+If you need custom switching logic, subclass `AccuracyBasedSurrogateSwitcher` and implement only `switch()`.
 
 ```python
 from saealib import AccuracyBasedSurrogateSwitcher
 
 
 class ThresholdIntSwitcher(AccuracyBasedSurrogateSwitcher):
-    """spearman相関が0.7以上ならn_neighborsを増やす、という独自の整数パラメータ切り替え。"""
+    """A custom integer-parameter switch: increase n_neighbors if the Spearman correlation is at or above 0.7."""
 
     def switch(self, accuracy):
         if accuracy is None:
@@ -79,12 +79,12 @@ class ThresholdIntSwitcher(AccuracyBasedSurrogateSwitcher):
         return 50 if accuracy.get("spearman") >= 0.7 else 20
 ```
 
-## 関連コンポーネント
+## Related components
 
-- [SurrogateManager](surrogate_manager.md)：`accuracy_evaluator`引数と`last_accuracy`プロパティ
-- [strategies](strategies.md)：`StrategySwitcher`/`GenCtrlSwitcher`が切り替える対象
+- [SurrogateManager](surrogate_manager.md): The `accuracy_evaluator` argument and `last_accuracy` property
+- [strategies](strategies.md): What `StrategySwitcher`/`GenCtrlSwitcher` switch
 
-## 参照
+## References
 
 - {py:class}`saealib.AccuracyBasedSurrogateSwitcher`
 - {py:class}`saealib.ManagerSwitcher`

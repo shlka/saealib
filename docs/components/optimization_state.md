@@ -1,79 +1,79 @@
 # OptimizationState
 
-最適化パイプラインを構成する各コンポーネントは、実行中の状態を直接保持せず、`OptimizationState`という1つの値オブジェクトを介してやり取りします。
-`Algorithm.ask(ctx, ...)`や`Stage.execute(state)`など、ほぼ全てのシグネチャに`ctx`または`state`として登場します。
+The components making up the optimization pipeline don't hold running state directly — they communicate through a single value object called `OptimizationState`.
+It appears in nearly every signature as `ctx` or `state`, e.g. `Algorithm.ask(ctx, ...)` or `Stage.execute(state)`.
 
-## OptimizationStateが表すもの
+## What OptimizationState represents
 
-`OptimizationState`は、フィールドを直接書き換えるのではなく`replace()`で更新済みコピーを作って受け渡す、不変（immutable-style）な値オブジェクトとして設計されています。
-`Initializer`が実行開始時に最初の状態を構築し、以後は各`Stage`が`replace()`で更新したコピーを次の`Stage`へ渡していきます。
+`OptimizationState` is designed as an immutable-style value object: instead of rewriting fields directly, an updated copy is made with `replace()` and passed along.
+`Initializer` constructs the first state at the start of a run, and from then on, each `Stage` passes the copy it updated via `replace()` to the next `Stage`.
 
-ただし、この不変性には2つの制御された例外があります。
+However, this immutability has two controlled exceptions.
 
-**`archive`**は追記専用（append-only）であり、in-placeの追記が許容されます。
-評価のたびに複製すると評価回数の2乗に比例するコストになるため、意図的にこの部分だけ可変にしてあります。
+**`archive`** is append-only, and in-place appending is permitted.
+Copying it on every evaluation would cost proportional to the square of the evaluation count, so this part is deliberately made mutable.
 
-**`rng`**は、呼び出すたびに内部状態が進むという副作用を持ちます。
-これはNumPyの`Generator`自体の性質であり、`OptimizationState`固有の設計ではありません。
+**`rng`** has the side effect of advancing its internal state every time it's called.
+This is a property of NumPy's `Generator` itself, not a design specific to `OptimizationState`.
 
-この2つ以外のフィールドは、`replace()`による不変的な更新が原則です。
+Aside from these two, every other field follows the principle of immutable updates via `replace()`.
 
-## 主要フィールド
+## Main fields
 
-| フィールド | 内容 |
+| Field | Content |
 |---|---|
-| `problem` | 解いている[Problem](problem.md) |
-| `population` | 現世代の[Population](population.md) |
-| `archive` | 評価済み解を蓄積する[Archive](population.md) |
-| `pareto_archive` | 非優越解集合を維持する[ParetoArchive](population.md) |
-| `rng` | 乱数生成器 |
-| `fe` | 評価回数 |
-| `gen` | 世代数 |
-| `data` | ユーザー拡張用の自由形式の辞書 |
+| `problem` | The [Problem](problem.md) being solved |
+| `population` | The current generation's [Population](population.md) |
+| `archive` | The [Archive](population.md) accumulating evaluated solutions |
+| `pareto_archive` | The [ParetoArchive](population.md) maintaining the non-dominated solution set |
+| `rng` | The random number generator |
+| `fe` | The evaluation count |
+| `gen` | The generation count |
+| `data` | A free-form dictionary for user extension |
 
-このほかに、パイプラインの各[Stage](stage.md)が読み書きする型付きフィールドがあります。
+There are also typed fields that each pipeline [Stage](stage.md) reads and writes.
 
-| フィールド | 書き込むStage | 参照するStage |
+| Field | Written by | Read by |
 |---|---|---|
-| `offspring` | `AskStage` | 後続の各Stage |
+| `offspring` | `AskStage` | Each subsequent stage |
 | `evaluated_offspring` | `TrueEvaluationStage` | `ArchiveUpdateStage` |
-| `scores` / `predictions` | `SurrogateScoreStage` | 後続の各Stage |
+| `scores` / `predictions` | `SurrogateScoreStage` | Each subsequent stage |
 
-`data`はユーザー拡張用の辞書で、独自の`Stage`や`Callback`が任意の値を追加する場所として使います。
-`state.data["key"] = value`という直接変更ではなく、`state.replace(data={**state.data, "key": value})`という形で新しい辞書を作って渡します。
+`data` is a dictionary for user extension, used as a place for a custom `Stage` or `Callback` to add arbitrary values.
+Instead of a direct mutation like `state.data["key"] = value`, pass a newly built dictionary via `state.replace(data={**state.data, "key": value})`.
 
-## 便利プロパティ
+## Convenience properties
 
-`dim`/`n_obj`/`lb`/`ub`/`direction`/`comparator`は、いずれも`state.problem.xxx`への委譲プロパティです。
-`ctx.problem.dim`と書く代わりに`ctx.dim`と書ける簡略表記として用意されています。
+`dim`/`n_obj`/`lb`/`ub`/`direction`/`comparator` are all delegating properties to `state.problem.xxx`.
+They're provided as shorthand so you can write `ctx.dim` instead of `ctx.problem.dim`.
 
-## replaceによる更新
+## Updating via replace
 
-`replace(**kwargs) -> OptimizationState`は`dataclasses.replace`のラッパーで、パイプライン中で最も頻繁に使われる更新方法です。
-たとえば世代数を進める`CountGenerationStage`は、`state.replace(gen=state.gen + 1)`という形でフィールドを更新します。
+`replace(**kwargs) -> OptimizationState` is a wrapper around `dataclasses.replace`, the most frequently used update method throughout the pipeline.
+For example, `CountGenerationStage`, which advances the generation count, updates the field as `state.replace(gen=state.gen + 1)`.
 
-`OptimizationState`には`fe`/`gen`をインクリメントする`count_fe(count=1)`/`count_generation()`という補助メソッドも用意されていますが、これらは`replace()`を経由しないその場限りのミューテーションです。
-組み込みパイプラインの中でこの2つが実際に呼ばれるのは、[Initializer](initialization.md)が初期評価件数を`fe`へ加算する箇所だけであり、世代ごとの`gen`/`fe`の更新（`CountGenerationStage`/`TrueEvaluationStage`）はいずれも`replace()`を使う経路に統一されています。
-独自の`Stage`を書く場合も、`replace()`を使う経路に揃えたほうが一貫性を保ちやすいです。
+`OptimizationState` also provides helper methods `count_fe(count=1)`/`count_generation()` that increment `fe`/`gen`, but these are one-off mutations that bypass `replace()`.
+The only place in the built-in pipeline where these two are actually called is where [Initializer](initialization.md) adds the initial evaluation count to `fe`; the per-generation updates of `gen`/`fe` (`CountGenerationStage`/`TrueEvaluationStage`) are both unified on the path that uses `replace()`.
+When writing a custom `Stage`, it's easier to preserve consistency by sticking to the `replace()` path as well.
 
-## チェックポイント
+## Checkpointing
 
-`save(path)`/`load(path, problem)`（後者はクラスメソッド）は、`OptimizationState`をnpz形式で保存し復元します。
-保存対象は`archive`/`population`/`pareto_archive`の配列と`rng`の完全なbit-generator状態のみで、再現性は可能な限りの保証にとどまります（同一NumPyバージョン、同一環境内でのビット完全な再開を意図しているが、バージョンをまたぐ再現は保証しない）。
+`save(path)`/`load(path, problem)` (the latter a classmethod) save and restore `OptimizationState` in npz format.
+Only the `archive`/`population`/`pareto_archive` arrays and `rng`'s complete bit-generator state are saved, and reproducibility is only guaranteed as far as reasonably possible (bit-exact resumption is intended within the same NumPy version and environment, but reproducibility across versions is not guaranteed).
 
-[NSGA3Comparator](comparators.md)が持つような、コンポーネント固有の内部rng（`state.rng`からspawnされたもの）は保存対象に含まれません。
-再開時はそのような内部rngを`state.rng`から新しくspawnし直します。
+Component-specific internal rngs, such as the one [NSGA3Comparator](comparators.md) holds (spawned from `state.rng`), are not included when saving.
+On resume, such internal rngs are freshly re-spawned from `state.rng`.
 
-自動的なチェックポイント保存の使い方は[チェックポイント](../tutorials/checkpoint.md)を参照してください。
-ここで説明した`save`/`load`は、その内部で使われている`OptimizationState`自体の契約です。
+See [Checkpointing](../tutorials/checkpoint.md) for how to use automatic checkpoint saving.
+The `save`/`load` described here are the contract of `OptimizationState` itself, used internally by that feature.
 
-## 関連コンポーネント
+## Related components
 
-- [Population](population.md)：`population`/`archive`/`pareto_archive`フィールドの実体
-- [Initializer](initialization.md)：最初の`OptimizationState`を構築する
-- [Stage](stage.md)：`state.replace(...)`で状態を更新しながらパイプラインを進める
-- [チェックポイント](../tutorials/checkpoint.md)：`CheckpointCallback`経由の自動保存の使い方
+- [Population](population.md): The actual data behind the `population`/`archive`/`pareto_archive` fields
+- [Initializer](initialization.md): Constructs the first `OptimizationState`
+- [Stage](stage.md): Advances the pipeline while updating state via `state.replace(...)`
+- [Checkpointing](../tutorials/checkpoint.md): How to use automatic saving via `CheckpointCallback`
 
-## 参照
+## References
 
 - {py:class}`saealib.OptimizationState`

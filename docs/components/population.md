@@ -1,35 +1,35 @@
 # Population
 
-`saealib`のアルゴリズムは、個体群を`Population`という構造化配列コンテナとして扱います。
-`Initializer`が実行開始時に構築し、以後は`OptimizationState`の`population`/`archive`/`pareto_archive`フィールドとして各コンポーネントに共有されます。
+`saealib`'s algorithms treat the population as `Population`, a structured-array container.
+`Initializer` constructs it at the start of a run, and from then on it's shared with every component as the `population`/`archive`/`pareto_archive` fields of `OptimizationState`.
 
-## Populationが表すもの
+## What Population represents
 
-`Population`は、設計変数`x`、目的関数値`f`、制約値`g`、制約違反`cv`、アルゴリズム固有の付加属性を、列ごとの配列として保持するコンテナです。
-`Generic[T_Individual]`ですが、通常は継承せずインスタンスとして使います。
+`Population` is a container holding design variables `x`, objective values `f`, constraint values `g`, constraint violation `cv`, and algorithm-specific auxiliary attributes, each as a column-wise array.
+It's `Generic[T_Individual]`, but is normally used as an instance rather than subclassed.
 
-保持する属性のスキーマは`PopulationAttribute(name, dtype, shape, default)`のリストで定義します。
-`x`/`f`/`g`/`cv`という標準属性に加えて、`Algorithm.get_required_attrs(problem)`が返すアルゴリズム固有の属性（PSOの速度やpbestなど）が[Initializer](initialization.md)によって動的に組み立てられ、このスキーマに反映されます。
+The schema of attributes it holds is defined by a list of `PopulationAttribute(name, dtype, shape, default)`.
+On top of the standard attributes `x`/`f`/`g`/`cv`, algorithm-specific attributes returned by `Algorithm.get_required_attrs(problem)` (such as PSO's velocity or pbest) are dynamically assembled by [Initializer](initialization.md) and reflected into this schema.
 
-## 主要な属性とメソッド
+## Main attributes and methods
 
-| メソッド | 役割 |
+| Method | Role |
 |---|---|
-| `get_array(key)` / `get_readonly_array(key)` | 属性の生配列を取得する。後者は書き込み禁止のviewを返す |
-| `update_array(key, value)` | 属性配列を一括更新する |
-| `get(key, default=None)` | 存在しない属性なら`default`を返す、安全な取得 |
-| `append(element=None, **kwargs)` | 個体を1件追加する |
-| `extend(other)` | 別の`Population`またはdictから個体群をまとめて追加する |
-| `extract(indices)` | インデックス配列/スライスで部分集合を新しい`Population`として取り出す |
-| `truncate(new_size)` / `delete(index)` / `clear()` | サイズ変更と削除 |
-| `reorder(order)` / `argsort(name, reverse=False)` | 並べ替え |
-| `empty_like(capacity=None)` | 同じスキーマの空`Population`を作る |
-| `set_cache(key, value)` / `get_cache(key)` | 計算結果をPopulation変更まで有効なキャッシュとして保持する |
-| `pop[i]` / `pop[a:b]` | 単一intなら`Individual`を、sliceなら部分集合の`Population`を返す |
-| `len(pop)` | 個体数 |
+| `get_array(key)` / `get_readonly_array(key)` | Gets an attribute's raw array. The latter returns a write-protected view |
+| `update_array(key, value)` | Updates an attribute array in bulk |
+| `get(key, default=None)` | A safe getter that returns `default` if the attribute doesn't exist |
+| `append(element=None, **kwargs)` | Adds a single individual |
+| `extend(other)` | Adds a batch of individuals from another `Population` or a dict |
+| `extract(indices)` | Extracts a subset as a new `Population`, via an index array or slice |
+| `truncate(new_size)` / `delete(index)` / `clear()` | Resizing and deletion |
+| `reorder(order)` / `argsort(name, reverse=False)` | Reordering |
+| `empty_like(capacity=None)` | Creates an empty `Population` with the same schema |
+| `set_cache(key, value)` / `get_cache(key)` | Holds a computed result as a cache valid until the Population changes |
+| `pop[i]` / `pop[a:b]` | Returns an `Individual` for a single int, or a `Population` subset for a slice |
+| `len(pop)` | The number of individuals |
 
-`set_cache`/`get_cache`によるキャッシュは、`append`/`delete`/`update_array`など個体群を変更する操作を呼ぶたびに自動的に無効化されます。
-[NSGA2Comparator](comparators.md)がフロント分割と混雑度距離の計算結果を世代内で使い回す際に、この仕組みを利用しています。
+The cache from `set_cache`/`get_cache` is automatically invalidated whenever an operation that changes the population — `append`/`delete`/`update_array`, etc. — is called.
+[NSGA2Comparator](comparators.md) uses this mechanism when reusing its front-splitting and crowding-distance computation results within a generation.
 
 ```python
 import numpy as np
@@ -44,64 +44,64 @@ pop = Population(attrs, init_capacity=4)
 pop.append(x=np.array([0.1, 0.2]), f=np.array([1.0]), cv=0.0)
 pop.append(x=np.array([0.3, 0.4]), f=np.array([2.0]), cv=0.0)
 
-pop.x  # shape (2, 2) の設計変数配列
-pop[0]  # 先頭個体の Individual ビュー
-pop[0:1]  # 先頭1件だけの Population
+pop.x  # design-variable array with shape (2, 2)
+pop[0]  # an Individual view of the first individual
+pop[0:1]  # a Population containing only the first individual
 ```
 
 ### Individual
 
-`Individual`は`pop[i]`で得られる、単一個体への軽量なビューです。
-実データを複製せず、参照元の`Population`と自分のインデックスだけを保持します。
+`Individual` is a lightweight view of a single individual, obtained via `pop[i]`.
+It doesn't duplicate the actual data — it holds only a reference to the source `Population` and its own index.
 
-`get_readonly_value(key)`/`update_value(key, value)`で値の読み書きができるほか、`ind.x`/`ind.f = ...`のような属性アクセスでも同じ読み書きができます。
-参照元の`Population`の構造（個体数や並び順）が変わった後に古い`Individual`を使うと、無効な参照として例外になります。
+You can read and write values via `get_readonly_value(key)`/`update_value(key, value)`, or equivalently via attribute access such as `ind.x`/`ind.f = ...`.
+Using a stale `Individual` after the source `Population`'s structure (number of individuals or ordering) has changed raises an exception, as an invalid reference.
 
 ## Archive
 
-`Archive`は、`ArchiveMixin`を`Population`にミックスインした具象クラスで、評価済み解を重複なく蓄積する目的で使います。
+`Archive` is a concrete class mixing `ArchiveMixin` into `Population`, used to accumulate evaluated solutions without duplicates.
 
-`add(element, **kwargs)`は`append`とほぼ同じ引数を取りますが、重複解を無視する点が異なります。
-重複判定に使う属性は`key_attr`引数（既定`"x"`）で指定し、`atol`/`rtol`で許容誤差を調整します。
-`get_knn(x, k)`はkd-tree（初回呼び出し時に遅延構築される）による近傍検索を提供し、[LocalSurrogateManager](surrogate_manager.md)の既定`training_set`が候補ごとの局所学習データを集める際に使います。
+`add(element, **kwargs)` takes almost the same arguments as `append`, but differs in that it ignores duplicate solutions.
+The attribute used for duplicate detection is specified via the `key_attr` argument (default `"x"`), with `atol`/`rtol` adjusting the tolerance.
+`get_knn(x, k)` provides nearest-neighbor search via a kd-tree (lazily built on first call), used by [LocalSurrogateManager](surrogate_manager.md)'s default `training_set` when gathering per-candidate local training data.
 
 ```python
 from saealib import Archive
 
 arc = Archive(attrs, init_capacity=4, key_attr="x")
 arc.add(x=np.array([0.1, 0.2]), f=np.array([1.0]), cv=0.0)
-arc.add(x=np.array([0.1, 0.2]), f=np.array([1.0]), cv=0.0)  # 重複解は無視される
+arc.add(x=np.array([0.1, 0.2]), f=np.array([1.0]), cv=0.0)  # the duplicate solution is ignored
 idx, dist = arc.get_knn(np.array([0.1, 0.2]), k=1)
 ```
 
 ## ParetoArchive
 
-`ParetoArchive`は、`ParetoMixin`を`Population`にミックスインした具象クラスで、非優越解集合を常時維持します。
+`ParetoArchive` is a concrete class mixing `ParetoMixin` into `Population`, continuously maintaining a non-dominated solution set.
 
-新規解を追加するたびに、その解に支配される既存解を削除し、新規解自体が既存解に支配されている場合はその新規解を破棄します。
-支配関係の判定はfeasibility-first方式で行われます。
-実行可能解（`cv <= eps_cv`）は常に実行不可能解を支配し、両方が実行可能な場合にのみ[Dominator](dominance.md)の`dominates`が使われます。
+Every time a new solution is added, existing solutions it dominates are removed, and if the new solution is itself dominated by an existing one, the new solution is discarded.
+Dominance is judged using a feasibility-first scheme.
+A feasible solution (`cv <= eps_cv`) always dominates an infeasible one; [Dominator](dominance.md)'s `dominates` is used only when both are feasible.
 
-`dominator`引数で支配関係の定義を差し替えられます。
-`eps_cv`の既定値は`0.0`（厳密に実行可能な解のみを許容可能とみなす）ですが、`Optimizer`実行中はこの値が毎世代`problem.handler.feasibility_threshold`で上書きされます。
-`0.0`という既定値は、`ParetoArchive`を`Optimizer`から切り離して単体で使う場合にのみ意味を持ちます。
+The `dominator` argument lets you swap out the definition of the dominance relation.
+`eps_cv`'s default is `0.0` (only strictly feasible solutions are considered acceptable), but during an `Optimizer` run, this value is overwritten every generation with `problem.handler.feasibility_threshold`.
+The `0.0` default only matters when using `ParetoArchive` standalone, detached from `Optimizer`.
 
-## 限定的な拡張点
+## A limited extension point
 
-`ArchiveMixin`/`ParetoMixin`は、`Population`のサブクラスに多重継承でミックスインするという前提で設計されています。
-独自の個体群管理ロジックが必要な場合、これらのMixinを組み合わせた新しいクラス（`class MyArchive(ArchiveMixin, Population): ...`）を定義できます。
-また[Algorithm](algorithm.md)の`population_class`/`archive_class`をオーバーライドすれば、`Initializer`が生成するPopulation/Archiveを独自サブクラスに差し替えられます。
+`ArchiveMixin`/`ParetoMixin` are designed on the assumption that they're mixed into a subclass of `Population` via multiple inheritance.
+If you need custom population-management logic, you can define a new class combining these mixins (`class MyArchive(ArchiveMixin, Population): ...`).
+You can also override [Algorithm](algorithm.md)'s `population_class`/`archive_class` to swap the Population/Archive that `Initializer` generates for your own custom subclass.
 
-## 関連コンポーネント
+## Related components
 
-- [Initializer](initialization.md)：`Population`/`Archive`/`ParetoArchive`を実行開始時に構築する
-- [OptimizationState](optimization_state.md)：構築後の`Population`/`Archive`/`ParetoArchive`を保持する状態オブジェクト
-- [Algorithm](algorithm.md)：`population_class`/`archive_class`で具象クラスを差し替える
-- [Comparator](comparators.md)：`set_cache`/`get_cache`によるソート結果の使い回し
-- [Dominance](dominance.md)：`ParetoArchive`が非優越解判定に使う`Dominator`
-- [SurrogateManager](surrogate_manager.md)：`Archive.get_knn`を使う局所学習データの収集
+- [Initializer](initialization.md): Constructs `Population`/`Archive`/`ParetoArchive` at the start of a run
+- [OptimizationState](optimization_state.md): The state object holding the constructed `Population`/`Archive`/`ParetoArchive`
+- [Algorithm](algorithm.md): Swaps the concrete classes via `population_class`/`archive_class`
+- [Comparator](comparators.md): Reuses sort results via `set_cache`/`get_cache`
+- [Dominance](dominance.md): The `Dominator` `ParetoArchive` uses to judge non-dominated solutions
+- [SurrogateManager](surrogate_manager.md): Gathering local training data via `Archive.get_knn`
 
-## 参照
+## References
 
 - {py:class}`saealib.Population`
 - {py:class}`saealib.Individual`

@@ -1,9 +1,9 @@
-# クイックスタート
-インストールは完了していますか？
-インストール方法は[こちら](./installation.md)を参照してください。
+# Quickstart
+Have you finished installing saealib?
+See [here](./installation.md) for installation instructions.
 
-## 初めての実行
-まずは最小の記述で最適化問題を解いてみましょう。
+## Your first run
+Let's solve an optimization problem with the least amount of code.
 ```python
 from saealib import minimize
 from saealib.benchmarks import rastrigin
@@ -15,12 +15,12 @@ print(f"solution: {result.x}")
 print(f"evaluated: {result.fe}")
 print(f"generation: {result.gen}")
 ```
-ここでは`saealib`が提供するベンチマークパッケージから、設計変数空間が10次元のRastrigin関数(`saealib.benchmarks.rastrigin`)の最小化問題を解いています。
-`minimize()` / `maximize()`は、パラメータを指定するだけで最適化を実行できる高レベルAPIです。
+Here we solve a minimization problem for the 10-dimensional Rastrigin function (`saealib.benchmarks.rastrigin`) from the benchmark package provided by `saealib`.
+`minimize()` / `maximize()` is a high-level API that runs an optimization just by specifying parameters.
 
-## 任意の関数を最適化
-前節ではベンチマーク問題を使用しましたが、ここでは任意の関数を最適化する例を見てみましょう。
-`saealib`のベンチマークパッケージを利用する場合は必要なパラメータが自動的にAPIへ渡されますが、任意の関数(`callable`)を渡す場合はいくつかのパラメータを自分で指定する必要があります。
+## Optimizing an arbitrary function
+The previous section used a benchmark problem; here, let's look at an example of optimizing an arbitrary function.
+When using `saealib`'s benchmark package, the required parameters are passed to the API automatically, but when passing an arbitrary function (`callable`), you need to specify a few parameters yourself.
 ```python
 import numpy as np
 from saealib import minimize
@@ -34,14 +34,14 @@ result = minimize(func=rastrigin, dim=10, lb=[-5.12] * 10, ub=[5.12] * 10)
 print(f"objective: {result.f}")
 print(f"solution: {result.x}")
 ```
-ここでは10次元のRastrigin関数を定義して最小化問題を解いています。
-`func`パラメータはnumpy配列を受け取り評価値を返すような任意の`callable`オブジェクトを指定できます。
-シミュレーション(CAE)や機械学習モデルの学習など、評価コストの高い目的関数をここに指定することで、効率的なパラメータ探索に応用できます。
+Here we define the 10-dimensional Rastrigin function and solve it as a minimization problem.
+The `func` parameter can be any `callable` object that takes a numpy array and returns an evaluation value.
+By specifying an expensive-to-evaluate objective function here — such as a simulation (CAE) or the training of a machine learning model — this can be applied to efficient parameter search.
 
-## 次のステップ
-ここで紹介した機能は`saealib`の一部分です。
-詳細なガイドは次のページを参照してください。
+## Next steps
+What's shown here is only a part of `saealib`.
+See the following pages for detailed guides.
 
-- [チュートリアル](../tutorials/index.md)：具体的な状況別の使い方ガイド
-- [コンポーネント](../components/index.md)：コンポーネントごとの詳しい使い方
-- [API Reference](../api/index.md)：全パラメータのリファレンス
+- [Tutorials](../tutorials/index.md): Guides for specific usage scenarios
+- [Components](../components/index.md): Detailed usage of each component
+- [API Reference](../api/index.md): Reference for all parameters

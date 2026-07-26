@@ -1,84 +1,84 @@
 # Stage
 
-組み込みの`OptimizationStrategy`（IB/GB/PS/Direct）は、1世代分の処理を`Stage`という単位に分割し、`Pipeline`で順に実行する形で構成されています。
-[拡張のガイドライン](extension_guidelines.md)の「Pipeline/Stage」節では`pipeline.replace`/`find`によるステージの並べ替え方を扱いました。
-このページでは、各`Stage`が満たす契約、組み込み11種の詳細、独自`Stage`の実装方法を扱います。
+The built-in `OptimizationStrategy`s (IB/GB/PS/Direct) split a single generation's processing into units called `Stage`, executed in order via `Pipeline`.
+The "Pipeline/Stage" section of [Extension guidelines](extension_guidelines.md) covered how to rearrange stages via `pipeline.replace`/`find`.
+This page covers the contract each `Stage` satisfies, the details of the 11 built-in ones, and how to implement a custom `Stage`.
 
-## Stageの役割
+## Stage's role
 
-`Stage`が実装を要求するメソッドは`execute(state: OptimizationState) -> OptimizationState`の1つだけです。
-`OptimizationState`を受け取り、1つの整った処理を行い、更新した（あるいは同じ）状態を返します。
+`Stage` requires only one method, `execute(state: OptimizationState) -> OptimizationState`, to be implemented.
+It receives an `OptimizationState`, performs one well-defined operation, and returns the updated (or same) state.
 
-クラス属性は3つあります。
+There are three class attributes.
 
-- **`name`**：`pipeline["name"]`によるルックアップに使うマシン可読な識別子
-- **`label`**：人間可読な説明
-- **`notation`**：`to_pseudocode()`が使うLaTeX記法
+- **`name`**: A machine-readable identifier used for lookup via `pipeline["name"]`
+- **`label`**: A human-readable description
+- **`notation`**: The LaTeX notation used by `to_pseudocode()`
 
 ## Pipeline
 
-`Pipeline(Stage)`は、`Stage`のリストを`functools.reduce`で順次実行する合成クラスです。
-`Pipeline`自体も`Stage`のサブクラスなので、他の`Pipeline`にネストできます。
+`Pipeline(Stage)` is a composite class that runs a list of `Stage`s in sequence via `functools.reduce`.
+Because `Pipeline` itself is a `Stage` subclass, it can be nested inside another `Pipeline`.
 
-| 操作 | 内容 |
+| Operation | Description |
 |---|---|
-| `pipeline["name"]` | `name`でステージを検索する |
-| `pipeline.replace(name, stage)` | `name`のステージを別の`Stage`に差し替える |
-| `pipeline.find(name, *, recursive=False)` | `recursive=True`で`SurrogateOnlyLoopStage`のような入れ子ステージの内部も探索する |
+| `pipeline["name"]` | Looks up a stage by `name` |
+| `pipeline.replace(name, stage)` | Replaces the stage named `name` with a different `Stage` |
+| `pipeline.find(name, *, recursive=False)` | With `recursive=True`, also searches inside nested stages like `SurrogateOnlyLoopStage` |
 
-## 組み込みStage
+## Built-in Stages
 
-`OptimizationState`の`offspring`/`scores`/`predictions`/`evaluated_offspring`という標準フィールドを、各Stageがどう読み書きするかを示します。
+The table shows how each Stage reads and writes `OptimizationState`'s standard fields: `offspring`/`scores`/`predictions`/`evaluated_offspring`.
 
-| クラス | 読む | 書く |
+| Class | Reads | Writes |
 |---|---|---|
 | `CountGenerationStage()` | — | `gen` |
 | `AskStage(algorithm, n_offspring=None, cbmanager=None)` | — | `offspring` |
 | `SurrogateScoreStage(surrogate_manager, cbmanager=None, *, refit=True)` | `offspring` | `scores`, `predictions` |
 | `SurrogateFitStage(surrogate_manager)` | `archive` | — |
-| `TopKSelectionStage(k)` | `offspring`, `scores` | `offspring`（上位k件のみ） |
-| `SortByScoreStage()` | `offspring`, `scores` | `offspring`, `scores`（全件を降順に並べ替え） |
+| `TopKSelectionStage(k)` | `offspring`, `scores` | `offspring` (only the top k) |
+| `SortByScoreStage()` | `offspring`, `scores` | `offspring`, `scores` (all entries, reordered descending) |
 | `TrueEvaluationStage(evaluator, cbmanager=None, n_eval=None)` | `offspring` | `evaluated_offspring`, `fe` |
 | `ArchiveUpdateStage()` | `evaluated_offspring` | `archive`, `pareto_archive` |
 | `TellStage(algorithm)` | `offspring` | `population` |
-| `SurrogateOnlyLoopStage(algorithm, surrogate_manager, gen_ctrl, cbmanager=None)` | — | 内部ループ全体 |
-| `InitializationStage(initializer, provider, problem)` | — | 状態全体を再構築 |
+| `SurrogateOnlyLoopStage(algorithm, surrogate_manager, gen_ctrl, cbmanager=None)` | — | The entire inner loop |
+| `InitializationStage(initializer, provider, problem)` | — | Rebuilds the entire state |
 
-`AskStage`は`algorithm.ask()`を呼んで`state.offspring`に書き込み、`cbmanager`経由でPostCrossover/PostMutation/PostAskEventを発火します。
+`AskStage` calls `algorithm.ask()`, writes to `state.offspring`, and fires PostCrossover/PostMutation/PostAskEvent via `cbmanager`.
 
-`SurrogateScoreStage`は`surrogate_manager.score_candidates()`でスコアリングし、`state.scores`/`state.predictions`に書き込むと同時に、各候補の`tell_f`も設定します。
+`SurrogateScoreStage` scores via `surrogate_manager.score_candidates()`, writing to `state.scores`/`state.predictions` while also setting each candidate's `tell_f`.
 
-`SurrogateFitStage`は、アーカイブが変化しない内部ループの前に1回だけサロゲートを事前フィットするために使います。
-下流の`SurrogateScoreStage`に`refit=False`を渡すのとセットで使います。
+`SurrogateFitStage` is used to pre-fit the surrogate once, ahead of an inner loop where the archive doesn't change.
+It's used together with passing `refit=False` to the downstream `SurrogateScoreStage`.
 
-`TopKSelectionStage`は`state.scores`の降順で上位k件だけを`state.offspring`に残し、残りは破棄します。
-`SortByScoreStage`は`TopKSelectionStage`と異なり全候補を保持したまま降順に並べ替えるだけで、IB系戦略が使います。
+`TopKSelectionStage` keeps only the top k entries of `state.offspring` by descending `state.scores`, discarding the rest.
+Unlike `TopKSelectionStage`, `SortByScoreStage` keeps every candidate and just reorders them descending; it's used by IB-family strategies.
 
-`TrueEvaluationStage`は`state.offspring`の先頭`n_eval`件（`None`なら全件、`int`または`Callable[[OptimizationState], int]`を指定できる）を真の目的関数で評価します。
+`TrueEvaluationStage` evaluates the first `n_eval` entries of `state.offspring` (all of them if `None`; you can specify an `int` or a `Callable[[OptimizationState], int]`) with the true objective function.
 
-`SurrogateOnlyLoopStage`は、`GenerationBasedStrategy`が使う複合ステージです。
-`CountGeneration → Ask → SurrogateScore(refit=False) → Tell`という内部ループを`gen_ctrl`回繰り返します。
-`gen_ctrl=0`のときはno-opになります。
+`SurrogateOnlyLoopStage` is a composite stage used by `GenerationBasedStrategy`.
+It repeats an inner loop of `CountGeneration → Ask → SurrogateScore(refit=False) → Tell` `gen_ctrl` times.
+It's a no-op when `gen_ctrl=0`.
 
 ```{note}
-`InitializationStage`の`execute()`に渡された`state`引数は無視され、常に初期化から新しい状態を作ります。
-ユーザー定義パイプラインの先頭で、初期化自体をパイプラインの一部として扱いたい場合に使います。
+The `state` argument passed to `InitializationStage`'s `execute()` is ignored — it always builds a fresh state from initialization.
+Used at the head of a user-defined pipeline when you want initialization itself to be treated as part of the pipeline.
 ```
 
-組み込み4種のStrategy（IB/GB/PS/Direct）がこれらのStageをどう組み合わせてパイプラインを構成するかは、[strategies](strategies.md)と[コンポーネント概要](index.md)のパイプライン図を参照してください。
-このページでは各Stage単体の契約を扱います。
+See [strategies](strategies.md) and the pipeline diagram in [Components overview](index.md) for how the 4 built-in Strategies (IB/GB/PS/Direct) combine these Stages into a pipeline.
+This page covers the contract of each Stage in isolation.
 
-## 独自Stageの実装方法
+## Implementing a custom Stage
 
-独自のパイプラインステージが必要な場合は、`Stage`を継承して`execute()`だけを実装すればよいです。
-`state.replace(...)`で不変的に新しい状態を作る、`OptimizationState`の更新パターンに従います。
+If you need a custom pipeline stage, subclass `Stage` and implement only `execute()`.
+Follow `OptimizationState`'s update pattern, building a new state immutably via `state.replace(...)`.
 
 ```python
 from saealib import Stage
 
 
 class LogGenerationStage(Stage):
-    """世代番号を標準出力に記録するだけのカスタムステージ。"""
+    """A custom stage that just prints the generation number to stdout."""
 
     name = "log_generation"
     label = "Log generation number"
@@ -88,22 +88,22 @@ class LogGenerationStage(Stage):
         return state
 ```
 
-独自のフィールドを持ち回したい場合は、`OptimizationState`の`data`という拡張用の辞書を使います。
-`state.replace(data={**state.data, "key": value})`という形で値を追加します。
+If you need to carry a custom field, use `OptimizationState`'s `data` dictionary, meant for extension.
+Add a value via `state.replace(data={**state.data, "key": value})`.
 
 ## `to_pseudocode`
 
-`to_pseudocode(expand=False, indent=0)`は、各Stageの`notation`を論文用の擬似コード（LaTeX algorithmic記法）として出力する機構です。
-`AskStage`/`TellStage`/`SurrogateOnlyLoopStage`は、`expand=True`のとき`Algorithm.ask_notation`/`tell_notation`を展開する独自実装を持ちます。
+`to_pseudocode(expand=False, indent=0)` is a mechanism that outputs each Stage's `notation` as pseudocode for a paper (LaTeX algorithmic notation).
+`AskStage`/`TellStage`/`SurrogateOnlyLoopStage` have custom implementations that expand `Algorithm.ask_notation`/`tell_notation` when `expand=True`.
 
-## 関連コンポーネント
+## Related components
 
-- [拡張のガイドライン](extension_guidelines.md)：`pipeline.replace`/`find`によるステージの並べ替え方
-- [strategies](strategies.md)：組み込みStrategyがStageをどう組み合わせるか
-- [OptimizationState](optimization_state.md)：`execute()`が読み書きする状態オブジェクト
-- [コンポーネント概要](index.md)：パイプライン全体の構成図
+- [Extension guidelines](extension_guidelines.md): How to rearrange stages via `pipeline.replace`/`find`
+- [strategies](strategies.md): How the built-in Strategies combine Stages
+- [OptimizationState](optimization_state.md): The state object `execute()` reads and writes
+- [Components overview](index.md): The diagram of the overall pipeline structure
 
-## 参照
+## References
 
 - {py:class}`saealib.Stage`
 - {py:class}`saealib.Pipeline`

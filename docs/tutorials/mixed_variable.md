@@ -1,12 +1,12 @@
-# 混合変数最適化
+# Mixed-Variable Optimization
 
-連続変数だけでなく、整数変数やカテゴリ変数を含む問題を、`saealib`で解きます。
+Solve problems that include not only continuous variables but also integer and categorical variables, using `saealib`.
 
-アルゴリズム、サロゲート、評価戦略の切り替え方は[単目的最適化](single_objective.md)の「コンポーネントの切り替え」と共通です。
+Switching algorithms, surrogates, and the evaluation strategy works the same as in "Switching components" in [Single-Objective Optimization](single_objective.md).
 
-## 問題設定
+## Problem setup
 
-設計変数ごとに、連続値、整数値、カテゴリの3種類が混在する目的関数を想定します。
+Assume an objective function where each design variable is one of three types: continuous, integer, or categorical.
 
 ```python
 def func(x):
@@ -14,17 +14,17 @@ def func(x):
     return x[0] ** 2 + (x[1] - 3) ** 2 + (0.0 if x[2] == 1 else 5.0)
 ```
 
-`x[2]`は3つのカテゴリ(`0`, `1`, `2`)のいずれかを表す値で、`1`を選んだときだけペナルティが付きません。
+`x[2]` represents one of three categories (`0`, `1`, `2`), and no penalty is applied only when `1` is chosen.
 
-## 変数の定義
+## Defining variables
 
-各次元の型は`Variable`のサブクラスで指定し、`Problem`の`variables`引数に渡します。
+Each dimension's type is specified with a subclass of `Variable`, passed to `Problem`'s `variables` argument.
 
-| クラス | 意味 |
+| Class | Meaning |
 |--------|------|
-| `ContinuousVariable(lb, ub)` | 連続値。`lb`/`ub`を省略した通常の`Problem`はこの型として扱われる |
-| `IntegerVariable(lb, ub)` | 整数値 |
-| `CategoricalVariable(categories)` | カテゴリのリストから1つを選ぶ |
+| `ContinuousVariable(lb, ub)` | Continuous value. A regular `Problem` with `lb`/`ub` omitted is treated as this type |
+| `IntegerVariable(lb, ub)` | Integer value |
+| `CategoricalVariable(categories)` | Selects one from a list of categories |
 
 ```python
 import numpy as np
@@ -45,9 +45,9 @@ problem = Problem(
 )
 ```
 
-`variables`を渡すと、各要素の`lb`/`ub`から`Problem.lb`/`Problem.ub`が自動的に導出されるため、`lb`/`ub`引数は指定しません。
+Passing `variables` automatically derives `Problem.lb`/`Problem.ub` from each element's `lb`/`ub`, so you don't specify the `lb`/`ub` arguments.
 
-## 高レベルAPI：minimize
+## High-level API: minimize
 
 ```python
 from saealib import minimize
@@ -56,15 +56,15 @@ result = minimize(problem, max_fe=500, seed=0)
 print(result.x, result.f)
 ```
 
-`GA`は、変数の型ごとに専用の交叉と突然変異の演算子（整数用の`CrossoverIntegerSBX`/`MutationIntegerUniform`、カテゴリ変数用の`CrossoverCategorical`/`MutationCategorical`）を既定で備えており、`variables`を渡すだけで型に応じた探索が行われます。
+`GA` comes with dedicated crossover and mutation operators for each variable type by default (`CrossoverIntegerSBX`/`MutationIntegerUniform` for integers, `CrossoverCategorical`/`MutationCategorical` for categorical variables), so passing `variables` alone gives you type-aware search.
 
-`PSO`は速度に基づく更新方式のため、整数変数とカテゴリ変数を正しく扱えません。
+`PSO` is a velocity-based update scheme and cannot correctly handle integer and categorical variables.
 
-混合変数問題では`algorithm='GA'`（既定）のまま使ってください。
+For mixed-variable problems, stick with `algorithm='GA'` (the default).
 
-## 演算子のカスタマイズ
+## Customizing operators
 
-整数変数用とカテゴリ変数用の演算子も、`GA`のキーワード引数で個別に指定できます。
+The operators for integer and categorical variables can also be specified individually via `GA`'s keyword arguments.
 
 ```python
 from saealib import (
@@ -93,9 +93,9 @@ ga = GA(
 result = minimize(problem, algorithm=ga, max_fe=500, seed=0)
 ```
 
-各演算子の詳細は[Algorithm](../components/algorithm.md)を参照してください。
+See [Algorithm](../components/algorithm.md) for details on each operator.
 
-## 参照
+## References
 
 - {py:class}`saealib.Problem`
 - {py:class}`saealib.ContinuousVariable` / {py:class}`saealib.IntegerVariable` / {py:class}`saealib.CategoricalVariable`

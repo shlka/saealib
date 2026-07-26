@@ -1,63 +1,63 @@
-# CORS-RBF（Constrained Optimization using Response Surfaces）
+# CORS-RBF (Constrained Optimization using Response Surfaces)
 
-CORS-RBFは、評価コストの高い目的関数を対象に、RBF(Radial Basis Function)補間によるサロゲートモデルを使って次の評価点を1点ずつ選ぶ逐次最適化の手法です。
-Regis & Shoemaker (2005)が提案した枠組みCORS(Constrained Optimization using Response Surfaces)を、RBFサロゲートモデルで具体化した実装がCORS-RBFです。
+CORS-RBF is a sequential optimization method for expensive-to-evaluate objective functions that selects the next evaluation point one at a time using a surrogate model built from RBF (Radial Basis Function) interpolation.
+CORS-RBF is the implementation of CORS (Constrained Optimization using Response Surfaces), the framework proposed by Regis & Shoemaker (2005), realized with an RBF surrogate model.
 
-## 概要
+## Overview
 
-RBF補間は、学習点を通る滑らかな曲面を再構成するだけで、GP回帰のような予測分散を持ちません。
-そのため、サロゲートモデルの予測値をそのまま最小化して次の評価点を選ぶ素朴な方法は、既に良い値が観測された点の周辺だけを繰り返し探索してしまい、真の関数の局所最小値ですらない点に収束しかねません。
+RBF interpolation only reconstructs a smooth surface passing through the training points, and unlike GP regression, it has no predictive variance.
+Because of this, the naive approach of simply minimizing the surrogate model's prediction to choose the next evaluation point ends up repeatedly searching only around points where good values have already been observed, and can converge to a point that isn't even a local minimum of the true function.
 
-CORSはこの問題を、候補点選択そのものに**距離制約**を組み込むことで回避します。
-各反復で解く補助問題は、サロゲートモデル $\hat f_i(x)$ の最小化に加えて、次の候補点が既存の評価済み点すべてから距離 $\beta_i \Delta_i$ 以上離れていることを要求する制約付き最適化になります（$\Delta_i$は既存点集合からの最大最小距離）。
-$\beta_i$は反復ごとに、1に近い値（大域探索寄り）から0（局所探索寄り、つまりサロゲートモデルの単純な最小化）まで周期的に変化する数列(**search pattern**)として与えられ、GPの予測分散が担っていた探索(exploration)の役割をこの距離制約が肩代わりします。
+CORS avoids this problem by building a **distance constraint** directly into the candidate-point selection itself.
+The auxiliary problem solved at each iteration is a constrained optimization that, in addition to minimizing the surrogate model $\hat f_i(x)$, requires the next candidate point to be at least $\beta_i \Delta_i$ away from every existing evaluated point ($\Delta_i$ being the maximum of the minimum distances from the existing point set).
+$\beta_i$ is given, iteration by iteration, as a sequence (the **search pattern**) that cycles from values near 1 (favoring global search) down to 0 (favoring local search, i.e. simply minimizing the surrogate model); this distance constraint takes over the role of exploration that a GP's predictive variance would otherwise play.
 
-この距離制約は副産物ではなく、CORSの核心です。
-search patternに0でない値が1つでも含まれていれば、サロゲートモデルの種類や初期評価点の選び方によらず、任意の連続関数の大域最小値に収束することが証明されています。
+This distance constraint is not a side effect — it is the core of CORS.
+It has been proven that, as long as the search pattern contains at least one nonzero value, convergence to the global minimum of any continuous function is guaranteed, regardless of the type of surrogate model or how the initial evaluation points are chosen.
 
-出典は{cite}`regis2005cors`。具体的な手順は次の擬似コードに示します。
+The source is {cite}`regis2005cors`. The concrete procedure is shown in the pseudocode below.
 
-## 擬似コード
+## Pseudocode
 
 ```{prf:algorithm} CORS-RBF
 :label: alg-rbf-cors
 
-**Inputs** 目的関数 $f$、探索領域 $\mathcal{D}$、初期評価点集合 $S_1 = \{x_1, \ldots, x_k\}$、距離パラメータの周期列(search pattern) $\langle \beta_1, \ldots, \beta_{N+1}=0 \rangle$
-**Output** 最良解 $x^*$
+**Inputs** objective function $f$, search domain $\mathcal{D}$, initial evaluated point set $S_1 = \{x_1, \ldots, x_k\}$, periodic distance-parameter sequence (search pattern) $\langle \beta_1, \ldots, \beta_{N+1}=0 \rangle$
+**Output** best solution $x^*$
 
-1. $S_1$ を真の関数 $f$ で評価し、$i := 1$ とする
-2. これまでの評価済みデータ $D_i = \{(x, f(x)) \mid x \in S_i\}$ にRBFサロゲートモデル $\hat f_i$ をフィットする
-3. 制約付き最小化問題 $\min_{x \in \mathcal{D}} \hat f_i(x) \ \mathrm{s.t.} \ \|x - x_j\| \geqslant \beta_i \Delta_i \ (j=1,\ldots,|S_i|)$ を解いて候補点 $x_{k+i}$ を求める（$\Delta_i$は既存評価点集合からの最大最小距離）
-4. $x_{k+i}$ を真の関数で評価し、$S_{i+1} := S_i \cup \{x_{k+i}\}$ に追加する
-5. 終了条件に達するまで、周期列に従い $\beta_i$ を更新して $i := i+1$ とし2へ戻る
+1. Evaluate $S_1$ with the true function $f$ and set $i := 1$
+2. Fit an RBF surrogate model $\hat f_i$ to the evaluated data so far, $D_i = \{(x, f(x)) \mid x \in S_i\}$
+3. Solve the constrained minimization problem $\min_{x \in \mathcal{D}} \hat f_i(x) \ \mathrm{s.t.} \ \|x - x_j\| \geqslant \beta_i \Delta_i \ (j=1,\ldots,|S_i|)$ to find the candidate point $x_{k+i}$ ($\Delta_i$ being the maximum of the minimum distances from the existing evaluated point set)
+4. Evaluate $x_{k+i}$ with the true function and add it to $S_{i+1} := S_i \cup \{x_{k+i}\}$
+5. Update $\beta_i$ according to the periodic sequence, set $i := i+1$, and return to step 2 until the termination condition is reached
 ```
 
-## フローチャート
+## Flowchart
 
 ```{mermaid}
 flowchart TD
-    INIT["Initializer<br/>初期個体群をサンプリング<br/>→真の評価<br/>(L1)"] --> ASK
-    subgraph GEN["1世代分 (IndividualBasedStrategy.step)"]
+    INIT["Initializer<br/>Sample initial population<br/>→ true evaluation<br/>(L1)"] --> ASK
+    subgraph GEN["One generation (IndividualBasedStrategy.step)"]
         direction TB
-        ASK["GA.ask()<br/>候補点を生成"] --> SCORE["SurrogateManager<br/>RBFをフィット (L2)<br/>→ 予測平均でスコアリング<br/>(L3)"]
-        SCORE --> SORT["予測平均上位<br/>evaluation_ratioの割合を選択"]
-        SORT --> EVAL["真の評価 →<br/>アーカイブに追加<br/>(L4)"]
-        EVAL --> TELL["GA.tell()<br/>個体群を更新"]
+        ASK["GA.ask()<br/>Generate candidate points"] --> SCORE["SurrogateManager<br/>Fit RBF (L2)<br/>→ Score with predictive mean<br/>(L3)"]
+        SCORE --> SORT["Select top<br/>evaluation_ratio fraction by predictive mean"]
+        SORT --> EVAL["True evaluation →<br/>add to archive<br/>(L4)"]
+        EVAL --> TELL["GA.tell()<br/>Update population"]
     end
-    GEN --> TERM{"評価予算Nに<br/>到達?"}
-    TERM -- "未到達 (L5)" --> ASK
-    TERM -- "到達" --> RESULT(["最良解 x*"])
+    GEN --> TERM{"Evaluation budget N<br/>reached?"}
+    TERM -- "Not yet (L5)" --> ASK
+    TERM -- "Reached" --> RESULT(["Best solution x*"])
 ```
 
-## saealibでの構成
+## Configuration in saealib
 
-| 役割 | saealibでの実装 | 対応ステップ |
+| Role | saealib implementation | Corresponding step |
 |---|---|---|
-| 探索アルゴリズム本体 | `GA`（交叉、突然変異、選択の組み合わせ自体はCORSの定義に含まれない） | 候補点の生成 |
-| サロゲートモデル | `RBFSurrogate`（RBF補間。既定は`gaussian_kernel`だが、任意のカーネル関数を注入できる） | L2 |
-| 獲得関数 | `MeanPrediction`（予測平均をそのままスコア化する） | L3 |
-| サロゲート管理 | `GlobalSurrogateManager`（アーカイブ全体でRBFをフィットする） | L2-3 |
-| 評価戦略 | `IndividualBasedStrategy`（予測平均上位の個体だけを真に評価する） | L3-4 |
+| Search algorithm | `GA` (the specific combination of crossover, mutation, and selection is not part of CORS's definition) | Candidate-point generation |
+| Surrogate model | `RBFSurrogate` (RBF interpolation; defaults to `gaussian_kernel`, but any kernel function can be injected) | L2 |
+| Acquisition function | `MeanPrediction` (uses the predictive mean directly as the score) | L3 |
+| Surrogate management | `GlobalSurrogateManager` (fits the RBF over the entire archive) | L2-3 |
+| Evaluation strategy | `IndividualBasedStrategy` (truly evaluates only the individuals with the top predictive-mean scores) | L3-4 |
 
 ```python
 import numpy as np
@@ -104,22 +104,22 @@ opt = (
 ctx = opt.run()
 ```
 
-交叉、突然変異、選択の具体的な演算子はCORS自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられます。
+Since the specific crossover, mutation, and selection operators are not part of CORS's own definition, the above is just one example, and any `Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection` can be swapped in.
 
-## パラメータと変種
+## Parameters and variants
 
-**kernel（RBFカーネルの選択）**：`RBFSurrogate(kernel=...)`で任意のカーネル関数を注入できます。
-既定値は`gaussian_kernel`ですが、文献の数値実験ではthin plate spline（$\phi(r) = r^2 \log r$）と1次多項式の付加項$p(x)$を組み合わせたモデルが使われています。
-saealibの`RBFSurrogate`は多項式項$p(x)$を持たない純粋なRBF補間（学習データの平均を差し引いた残差にフィットする）であるため、文献の設定を厳密に再現するにはカーネルの差し替えだけでは不十分です。
+**kernel (choice of RBF kernel)**: Any kernel function can be injected via `RBFSurrogate(kernel=...)`.
+The default is `gaussian_kernel`, but the paper's numerical experiments use a model combining a thin-plate-spline kernel ($\phi(r) = r^2 \log r$) with an added first-degree polynomial term $p(x)$.
+Because saealib's `RBFSurrogate` is a pure RBF interpolant with no polynomial term $p(x)$ (it fits the residual after subtracting the training data's mean), swapping the kernel alone is not enough to exactly reproduce the paper's setting.
 
-**evaluation_ratio（逐次評価とバッチ評価の切り替え）**：文献のCORSは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムです。
-saealibの`IndividualBasedStrategy`は、GAが生成した子個体群のうち予測平均上位`evaluation_ratio`の割合をまとめて真評価するバッチ拡張になっています。
-`evaluation_ratio`を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づきます。
+**evaluation_ratio (switching between sequential and batch evaluation)**: CORS as described in the literature is a sequential algorithm that executes steps 3-4 of the pseudocode for a single point per loop.
+saealib's `IndividualBasedStrategy` is a batch extension that truly evaluates the top `evaluation_ratio` fraction of the offspring population generated by the GA's predictive-mean scores at once.
+Shrinking `evaluation_ratio` down to roughly the inverse of the population size approximates one-point-at-a-time sequential evaluation.
 
-## 関連
+## Related
 
-- [文献リファレンス](../references.md)：出典の完全な書誌情報
-- [Surrogate](../components/surrogate.md)：`RBFSurrogate`/`gaussian_kernel`を含むサロゲートモデル一覧
-- [AcquisitionFunction](../components/acquisition_functions.md)：`MeanPrediction`を含む獲得関数一覧
-- [SurrogateManager](../components/surrogate_manager.md)：`GlobalSurrogateManager`の詳しい使い方
-- [OptimizationStrategy](../components/strategies.md)：`IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧
+- [References](../references.md): Full bibliographic details for the source
+- [Surrogate](../components/surrogate.md): List of surrogate models including `RBFSurrogate`/`gaussian_kernel`
+- [AcquisitionFunction](../components/acquisition_functions.md): List of acquisition functions including `MeanPrediction`
+- [SurrogateManager](../components/surrogate_manager.md): Detailed usage of `GlobalSurrogateManager`
+- [OptimizationStrategy](../components/strategies.md): List of strategies including `IndividualBasedStrategy`'s `evaluation_ratio`

@@ -1,11 +1,11 @@
 # Problem
 
-`saealib`の全コンポーネントは、`Problem`を通じて解くべき最適化問題を共有します。
-目的関数そのものだけでなく、設計変数の範囲、目的の方向、制約、解の比較方法までを1つのオブジェクトにまとめる役割を持ちます。
+Every component in `saealib` shares the optimization problem to solve through `Problem`.
+It bundles not just the objective function itself but also the design-variable range, objective direction, constraints, and how solutions are compared, all into a single object.
 
-## Problemの役割
+## Problem's role
 
-`Problem`のコンストラクタは次の引数を受け取ります。
+`Problem`'s constructor takes the following arguments.
 
 ```python
 Problem(
@@ -15,55 +15,55 @@ Problem(
 )
 ```
 
-**`func`**：設計変数の配列を受け取り評価値を返す目的関数。
-**`dim`**：設計変数の次元数。
-**`n_obj`**：目的関数の数。
+**`func`**: The objective function, which takes an array of design variables and returns the evaluation value.
+**`dim`**: The number of design-variable dimensions.
+**`n_obj`**: The number of objective functions.
 
-**`direction`**：目的ごとの最適化方向を表す`shape (n_obj,)`の配列で、各要素は`+1`（最大化）または`-1`（最小化）でなければなりません。
-それ以外の値を渡すと構築時に例外になります。
+**`direction`**: An array of shape `(n_obj,)` giving the optimization direction per objective; each element must be `+1` (maximize) or `-1` (minimize).
+Passing any other value raises an exception at construction time.
 
-**`lb`**/**`ub`**：設計変数の下限と上限。
-`variables`を指定しない場合は必須で、指定した場合は`variables`側の範囲から自動的に導出されます。
+**`lb`**/**`ub`**: The design variables' lower and upper bounds.
+Required if `variables` isn't specified; if it is, they're derived automatically from `variables`'s ranges.
 
-**`comparator`**：解を比較する[Comparator](comparators.md)。
-省略した場合、`n_obj == 1`なら`SingleObjectiveComparator`、`n_obj > 1`なら`NSGA2Comparator`が自動的に選ばれます。
-渡した`Comparator`の`direction`が未設定（`None`）であれば、`Problem`の`direction`がそのまま注入されます。
+**`comparator`**: The [Comparator](comparators.md) that compares solutions.
+If omitted, `SingleObjectiveComparator` is auto-selected when `n_obj == 1`, and `NSGA2Comparator` when `n_obj > 1`.
+If the passed `Comparator`'s `direction` is unset (`None`), `Problem`'s `direction` is injected directly.
 
-**`constraints`**：不等式制約(`InequalityConstraint`)のリスト。
-定義方法は[制約付き最適化](../tutorials/constraints.md)で扱います。
+**`constraints`**: A list of inequality constraints (`InequalityConstraint`).
+How to define them is covered in [Constrained Optimization](../tutorials/constraints.md).
 
-**`eps_cv`**/**`eps_obj`**：それぞれ実行可能性判定の許容誤差、目的関数値の同値判定の許容誤差を表します。
-`eps_cv`はコンストラクタ実行時に既定の`handler`/`comparator`へ引き継がれるだけで、構築後に`problem.eps_cv`を直接書き換えても実行時の挙動には反映されません。
-実際に使われる閾値は`handler.feasibility_threshold`であり、`Optimizer`の実行中は毎世代`comparator`/`pareto_archive`へ同期されます。
+**`eps_cv`**/**`eps_obj`**: The tolerance for feasibility judgment and the tolerance for objective-value equality judgment, respectively.
+`eps_cv` is only carried over to the default `handler`/`comparator` at constructor time — directly rewriting `problem.eps_cv` after construction has no effect on runtime behavior.
+The threshold actually used is `handler.feasibility_threshold`, which is synchronized to `comparator`/`pareto_archive` every generation during an `Optimizer` run.
 
-**`handler`**：制約違反の集約や目的関数の補正を担う[ConstraintHandler](constraints.md)。
-省略時は`StaticToleranceHandler(eps_cv=eps_cv)`が使われます。
+**`handler`**: The [ConstraintHandler](constraints.md) responsible for aggregating constraint violations and correcting the objective function.
+If omitted, `StaticToleranceHandler(eps_cv=eps_cv)` is used.
 
-**`variables`**：設計変数ごとの型を`Variable`のリストで指定します。
-連続変数だけの問題では省略してよく、その場合は全次元が`ContinuousVariable`として扱われます。
-整数変数とカテゴリ変数を混在させたい場合にここへ`IntegerVariable`/`CategoricalVariable`を含めると、[Crossover](crossover.md)/[Mutation](mutation.md)が変数の型ごとに異なる演算子を自動的に割り当てます。
+**`variables`**: Specifies each design variable's type as a list of `Variable`.
+This can be omitted for problems with only continuous variables, in which case every dimension is treated as `ContinuousVariable`.
+If you want to mix integer and categorical variables, including `IntegerVariable`/`CategoricalVariable` here makes [Crossover](crossover.md)/[Mutation](mutation.md) automatically assign a different operator per variable type.
 
 ```{note}
-旧バージョンのチュートリアルには`weight=`という引数を使う例がありますが、現行の`Problem`にこの引数は存在しません。
-`weight=`を渡すと`TypeError`になります。
+Older tutorials have examples using a `weight=` argument, but the current `Problem` has no such argument.
+Passing `weight=` raises `TypeError`.
 ```
 
-## directionとweightの役割分担
+## The direction/weight role split
 
-`direction`は`saealib`全体で統一された、符号だけを表す`±1`の配列です。
-一方、`WeightedSumComparator`や`DecompositionComparator`が受け取る`weights`は、複数目的をスカラー値へ集約する際の非負の重みであり、方向とは独立した別の概念です。
+`direction` is a `±1` array, unified across all of saealib, representing sign only.
+By contrast, the `weights` received by `WeightedSumComparator` or `DecompositionComparator` are non-negative weights for aggregating multiple objectives into a scalar value — a separate concept, independent of direction.
 
-この役割分担のもとでは、目的の重要度そのもの（スケーリング）を`weights`で表現することはできません。
-目的関数値の大きさを調整したい場合は`func`の内部でスケーリングします。
-`direction`は符号だけを、`weights`は集約の重み配分だけを表す、という2軸に整理されています。
+Under this role split, `weights` cannot express the importance (scaling) of an objective itself.
+If you want to adjust the magnitude of an objective value, scale it inside `func`.
+This is organized into two axes: `direction` expresses sign only, and `weights` expresses only the aggregation weighting.
 
-## 独自Variableの実装方法
+## Implementing a custom Variable
 
-`Variable`(ABC)は、`lb`/`ub`という2つのプロパティと`repair(x)`というメソッドだけを要求します。
-組み込みの`ContinuousVariable`/`IntegerVariable`/`CategoricalVariable`は、いずれも自分の定義域へ値を射影するだけの薄い実装であり、これ以外の変数型（周期変数、対数スケール変数など）が必要な場合は`Variable`を直接継承すればよいです。
+`Variable` (an ABC) requires only two properties, `lb`/`ub`, and one method, `repair(x)`.
+The built-in `ContinuousVariable`/`IntegerVariable`/`CategoricalVariable` are all thin implementations that simply project a value onto their own domain; if you need a variable type beyond these (a periodic variable, a log-scale variable, etc.), subclass `Variable` directly.
 
-次の例は、値を切り詰めるのではなく境界で折り返す変数です。
-角度のように、上限を超えた値が下限側から連続しているとみなしたい設計変数に使えます。
+The following example is a variable that wraps around at the boundary instead of clamping the value.
+It can be used for a design variable, like an angle, where you want a value exceeding the upper bound to be treated as continuing from the lower bound.
 
 ```python
 import numpy as np
@@ -88,18 +88,18 @@ class PeriodicVariable(Variable):
         return self._lb + np.mod(np.asarray(x, dtype=float) - self._lb, span)
 ```
 
-`ContinuousVariable.repair()`が`np.clip`で範囲外の値を境界に留めるのに対し、この実装は`np.mod`で範囲外の値を反対側の境界から巻き戻します。
-`Variable`が表す値は、`Population`配列上で扱われる「エンコード済みfloat空間」上の値である点に注意してください。
-`CategoricalVariable`のようにカテゴリ値と内部インデックスの対応が必要な変数型では、`repair()`はインデックス空間上で完結させ、実際のカテゴリ値への変換は別のメソッドで行います。
+Where `ContinuousVariable.repair()` keeps out-of-range values pinned to the boundary via `np.clip`, this implementation wraps out-of-range values back from the opposite boundary via `np.mod`.
+Note that the value `Variable` represents is a value in the "encoded float space" handled on the `Population` array.
+For a variable type that needs a correspondence between category values and an internal index, like `CategoricalVariable`, `repair()` should stay confined to index space, with the actual conversion to category values handled by a separate method.
 
-## 関連コンポーネント
+## Related components
 
-- [Comparator](comparators.md)：`comparator`引数で解の比較方法を差し替える
-- [ConstraintHandler](constraints.md)：`handler`引数で制約違反の扱い方を差し替える
-- [Crossover](crossover.md) / [Mutation](mutation.md)：`variables`で定義した変数の型ごとに使い分けられる演算子
-- [制約付き最適化](../tutorials/constraints.md)：制約の定義方法と組み込み`ConstraintHandler`の選び方
+- [Comparator](comparators.md): Swaps out how solutions are compared, via the `comparator` argument
+- [ConstraintHandler](constraints.md): Swaps out how constraint violations are handled, via the `handler` argument
+- [Crossover](crossover.md) / [Mutation](mutation.md): Operators applied per variable type as defined in `variables`
+- [Constrained Optimization](../tutorials/constraints.md): How to define constraints and choose a built-in `ConstraintHandler`
 
-## 参照
+## References
 
 - {py:class}`saealib.Problem`
 - {py:class}`saealib.Variable`

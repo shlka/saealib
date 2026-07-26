@@ -1,29 +1,29 @@
-# はじめに
+# Getting Started
 
-saealibを初めて使う方へ。このセクションでは、saealibとは何か、インストール方法、最初の最適化の実行方法という基本を説明します。
+For first-time saealib users. This section covers the basics: what saealib is, how to install it, and how to run your first optimization.
 
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} {fa}`circle-info;sd-mr-1` saealibとは
+:::{grid-item-card} {fa}`circle-info;sd-mr-1` What is saealib
 :link: what_is_saealib
 :link-type: doc
 
-サロゲート型進化的アルゴリズムとは何か、そしてsaealibが必要な理由を理解します。
+Understand what surrogate-assisted evolutionary algorithms are, and why saealib exists.
 :::
 
-:::{grid-item-card} {fa}`download;sd-mr-1` インストール
+:::{grid-item-card} {fa}`download;sd-mr-1` Installation
 :link: installation
 :link-type: doc
 
-saealib本体とオプションの追加パッケージ（scikit-learn、XGBoost、LightGBM、PyTorchなど）をインストールします。
+Install saealib and its optional extras (scikit-learn, XGBoost, LightGBM, PyTorch, etc.).
 :::
 
-:::{grid-item-card} {fa}`rocket;sd-mr-1` クイックスタート
+:::{grid-item-card} {fa}`rocket;sd-mr-1` Quickstart
 :link: quickstart
 :link-type: doc
 
-`minimize()` / `maximize()`で最初の最適化を実行します。
+Run your first optimization with `minimize()` / `maximize()`.
 :::
 
 ::::

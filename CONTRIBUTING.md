@@ -158,7 +158,7 @@ Only **final** releases (tags matching `vX.Y.Z` with no pre-release suffix) get 
 
 English is the source language for `docs/` (lowers the barrier for outside contributors); Japanese is maintained as a translation via Sphinx's `gettext`/`sphinx-intl` mechanism, not as separate Japanese `.md` files. Every version snapshot above (`vX.Y.Z/`, `dev/`) is built twice — once as-is (English) and once with `-D language=ja` — producing a parallel `ja/` tree (`ja/vX.Y.Z/`, `ja/dev/`). A script injected on every page (`docs/_static/js/lang-switch.js`) links to the equivalent page in the other language, and the site root auto-redirects based on the browser's `navigator.language`, falling back to English for crawlers/no-JS clients.
 
-Only the narrative sections (`getting_started/`, `tutorials/`, `components/`, `architecture/`, and the root `index.md`) are translated. `api/` is autodoc/autosummary-generated from docstrings and is intentionally left English-only — translating ~150 generated stub pages isn't worth the upkeep, and this matches common practice elsewhere (e.g. NumPy/SciPy translate their guides, not their full API reference).
+Only the narrative sections (`getting_started/`, `tutorials/`, `components/`, `algorithms/`, and the root `index.md`/`references.md`) are translated. `api/` is autodoc/autosummary-generated from docstrings and is intentionally left English-only — translating ~150 generated stub pages isn't worth the upkeep, and this matches common practice elsewhere (e.g. NumPy/SciPy translate their guides, not their full API reference).
 
 Missing or not-yet-translated strings fall back to the English source automatically (standard `gettext` behavior) — an incomplete `.po` file never breaks the build or leaves a page blank.
 

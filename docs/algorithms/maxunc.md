@@ -1,64 +1,64 @@
-# MaxUnc（不確実性サンプリング）
+# MaxUnc (Uncertainty Sampling)
 
-MaxUncは、サロゲートモデルの予測不確実性（標準偏差）を評価基準とし、モデルがもっとも自信を持てない候補点を次の真の評価対象に選ぶ、探索(exploration)に特化した獲得関数です。
+MaxUnc is an exploration-only acquisition function that uses a surrogate model's predictive uncertainty (standard deviation) as its criterion, selecting for the next true evaluation the candidate point the model is least confident about.
 
-## 概要
+## Overview
 
-EGOの期待改善量やGP-UCBの信頼上限は、予測平均 $\mu(x)$ と予測標準偏差 $\sigma(x)$ の両方を使い、探索と活用のバランスを取る設計でした。
-MaxUncはこの構成から予測平均の項を完全に取り除き、$\sigma(x)$ だけを評価基準にします。
+EGO's Expected Improvement and GP-UCB's upper confidence bound were both designed to balance exploration and exploitation using both the predictive mean $\mu(x)$ and predictive standard deviation $\sigma(x)$.
+MaxUnc removes the predictive-mean term entirely from this construction, using only $\sigma(x)$ as its criterion.
 
-手順はEGO/GP-UCBと同型です。
-アーカイブ全体にGPを当てはめ、予測標準偏差 $\sigma(x)$ を最大化する点を求め、真の関数で評価してアーカイブに追加します。
-予測平均を一切参照しないため、評価対象は常に「モデルがもっとも学習データから離れている」領域に偏り、良さそうな値を積極的に探しにいく挙動にはなりません。
+The procedure is structurally identical to EGO/GP-UCB.
+A GP is fit to the entire archive, the point maximizing the predictive standard deviation $\sigma(x)$ is found, evaluated with the true function, and added to the archive.
+Because the predictive mean is never referenced, evaluation is always biased toward the region "where the model is furthest from the training data," rather than actively seeking out promising values.
 
-この構成の背景として、Büche, Schraudolph & Koumoutsakos (2005) はGPを用いたサロゲートモデルの調査論文の中で、予測平均と予測標準偏差の線形結合であるメリット関数 $f_{\mathrm{M}}(x) = \hat{t}(x) - \alpha \sigma_t(x)$ を提案し、$\alpha$ を大きくするほど探索寄りになると述べています{cite}`buche2005gpes`。
-MaxUncが計算する $\sigma(x)$ 単独の基準は、このメリット関数で $\alpha \to \infty$ とした極限、つまり予測平均の寄与を消し去った場合に相当します。
+As background for this construction, Büche, Schraudolph & Koumoutsakos (2005), in a survey paper on GP-based surrogate models, proposed a merit function $f_{\mathrm{M}}(x) = \hat{t}(x) - \alpha \sigma_t(x)$ — a linear combination of the predictive mean and predictive standard deviation — and stated that larger $\alpha$ leans more toward exploration {cite}`buche2005gpes`.
+The criterion MaxUnc computes, $\sigma(x)$ alone, corresponds to the limit of this merit function as $\alpha \to \infty$ — that is, the case where the predictive-mean contribution is eliminated entirely.
 
-MaxUncは目的関数の改善を直接狙う基準ではありません。
-EIやUCBのような活用寄りの基準と対になる探索専用の構成要素として、サロゲートモデル自体の精度を全域にわたって底上げする用途や、他の基準と組み合わせて使う用途に向きます（獲得関数一覧における`MeanPrediction`との対比も参照）。
-評価予算が小さいうちは、最良解への収束よりもモデルの未知領域を埋めることを優先するため、単独で使うと最終的な目的関数値がEIやLCBほど改善しないことがあります。
+MaxUnc is not a criterion that directly targets improving the objective function.
+As an exploration-only component that pairs with exploitation-leaning criteria like EI or UCB, it is suited to uses such as raising the surrogate model's accuracy uniformly across the whole domain, or being combined with other criteria (see also the comparison with `MeanPrediction` in the acquisition function list).
+While the evaluation budget is small, it prioritizes filling in the model's unknown regions over converging on the best solution, so used alone, its final objective value may improve less than with EI or LCB.
 
-## 擬似コード
+## Pseudocode
 
 ```{prf:algorithm} MaxUnc
 :label: alg-maxunc
 
-**Inputs** 目的関数 $f$、探索範囲、初期サンプル数 $n_0$、評価予算 $N$
-**Output** 評価済みアーカイブ（真に評価した点とその関数値の集合）
+**Inputs** objective function $f$, search domain, initial sample count $n_0$, evaluation budget $N$
+**Output** evaluated archive (the set of truly evaluated points and their function values)
 
-1. 初期個体群を $n_0$ 点サンプリングし、真の関数 $f$ で評価してアーカイブに追加する
-2. アーカイブ全体にGPを当てはめ、任意の点における予測標準偏差 $\sigma(x)$ を得る（予測平均 $\mu(x)$ は基準の計算に用いない）
-3. 予測標準偏差を最大化する点 $x^* = \arg\max_x \sigma(x)$ を求める
-4. $x^*$ を真の関数で評価し、アーカイブに追加する
-5. 評価予算 $N$ に達するまで2へ戻る
+1. Sample an initial population of $n_0$ points, evaluate them with the true function $f$, and add them to the archive
+2. Fit a GP to the entire archive, obtaining the predictive standard deviation $\sigma(x)$ at any point (the predictive mean $\mu(x)$ is not used in computing the criterion)
+3. Find the point $x^* = \arg\max_x \sigma(x)$ that maximizes the predictive standard deviation
+4. Evaluate $x^*$ with the true function and add it to the archive
+5. Return to step 2 until the evaluation budget $N$ is reached
 ```
 
-## フローチャート
+## Flowchart
 
 ```{mermaid}
 flowchart TD
-    INIT["Initializer<br/>LHS等で初期個体群を<br/>サンプリング→真の評価<br/>(L1)"] --> ASK
-    subgraph GEN["1世代分 (IndividualBasedStrategy.step)"]
+    INIT["Initializer<br/>Sample initial population<br/>via LHS etc. → true evaluation<br/>(L1)"] --> ASK
+    subgraph GEN["One generation (IndividualBasedStrategy.step)"]
         direction TB
-        ASK["GA.ask()<br/>候補解を生成"] --> SCORE["SurrogateManager<br/>GPをフィット (L2)<br/>→ σでスコアリング (L3)"]
-        SCORE --> SORT["σ上位<br/>evaluation_ratioの割合を選択<br/>（argmax σの近似）"]
-        SORT --> EVAL["真の評価 →<br/>アーカイブに追加<br/>(L4)"]
-        EVAL --> TELL["GA.tell()<br/>個体群を更新"]
+        ASK["GA.ask()<br/>Generate candidates"] --> SCORE["SurrogateManager<br/>Fit GP (L2)<br/>→ Score with σ (L3)"]
+        SCORE --> SORT["Select top<br/>evaluation_ratio fraction by σ<br/>(approximates argmax σ)"]
+        SORT --> EVAL["True evaluation →<br/>add to archive<br/>(L4)"]
+        EVAL --> TELL["GA.tell()<br/>Update population"]
     end
-    GEN --> TERM{"評価予算Nに<br/>到達?"}
-    TERM -- "未到達 (L5)" --> ASK
-    TERM -- "到達" --> RESULT(["評価済みアーカイブ"])
+    GEN --> TERM{"Evaluation budget N<br/>reached?"}
+    TERM -- "Not yet (L5)" --> ASK
+    TERM -- "Reached" --> RESULT(["Evaluated archive"])
 ```
 
-## saealibでの構成
+## Configuration in saealib
 
-| 役割 | saealibでの実装 | 対応ステップ |
+| Role | saealib implementation | Corresponding step |
 |---|---|---|
-| 探索アルゴリズム本体 | `GA`（交叉、突然変異、選択の組み合わせ自体はMaxUncの定義に含まれない） | 候補解の生成（argmax σの探索） |
-| サロゲートモデル | `SklearnGPRSurrogate`（GP回帰。`sklearn` extraが必要） | L2 |
-| 獲得関数 | `MaxUncertainty`（予測標準偏差のみでスコアリングし、予測平均は参照しない） | L3 |
-| サロゲート管理 | `GlobalSurrogateManager`（アーカイブ全体でGPをフィットする） | L2-3 |
-| 評価戦略 | `IndividualBasedStrategy`（σ上位の個体だけを真に評価する） | L3-4 |
+| Search algorithm | `GA` (the specific combination of crossover, mutation, and selection is not part of MaxUnc's definition) | Candidate generation (search for argmax σ) |
+| Surrogate model | `SklearnGPRSurrogate` (GP regression; requires the `sklearn` extra) | L2 |
+| Acquisition function | `MaxUncertainty` (scores using only the predictive standard deviation; does not reference the predictive mean) | L3 |
+| Surrogate management | `GlobalSurrogateManager` (fits the GP over the entire archive) | L2-3 |
+| Evaluation strategy | `IndividualBasedStrategy` (truly evaluates only the individuals with the top σ scores) | L3-4 |
 
 ```python
 import numpy as np
@@ -102,27 +102,27 @@ opt = (
 ctx = opt.run()
 ```
 
-交叉、突然変異、選択の具体的な演算子はMaxUnc自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられます。
+Since the specific crossover, mutation, and selection operators are not part of MaxUnc's own definition, the above is just one example, and any `Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection` can be swapped in.
 
-この例のように評価予算をEGO/GP-UCBの例と同じ200 FEに揃えて実行すると、探索専用であるがゆえに最良値がEI/LCBほど改善しない場合があります。
-これはMaxUncが目的関数の改善ではなくモデルの不確実性削減を目的とする基準であることの自然な帰結であり、想定どおりの挙動です。
+Running this example with the same 200-FE evaluation budget as the EGO/GP-UCB examples, the best value may improve less than with EI/LCB, precisely because MaxUnc is exploration-only.
+This is a natural consequence of MaxUnc being a criterion aimed at reducing model uncertainty rather than improving the objective function, and is the expected behavior.
 
-## パラメータと変種
+## Parameters and variants
 
-**weights（多目的での不確実性の集約方法）**：`MaxUncertainty(weights=...)`で調整します。
-多目的問題では各目的ごとに予測標準偏差 $\sigma_1(x), \ldots, \sigma_m(x)$ が得られるため、それらを1つのスコアに集約する必要があります。
-`weights`が`None`の既定値では目的間の単純平均（`std.mean(axis=1)`）を、`np.ndarray`を渡した場合はその重みによる加重和を使います。
+**weights (aggregating uncertainty across multiple objectives)**: Adjusted via `MaxUncertainty(weights=...)`.
+In multi-objective problems, a predictive standard deviation $\sigma_1(x), \ldots, \sigma_m(x)$ is obtained for each objective, and these need to be aggregated into a single score.
+The default `weights=None` uses the simple average across objectives (`std.mean(axis=1)`); passing an `np.ndarray` uses a weighted sum with those weights.
 
-EIの$\xi$やLCBの$\kappa$に相当する、探索と活用のトレードオフを調整するパラメータはMaxUncertainty自体には存在しません。
-$\sigma(x)$のみを基準とする設計上、活用側の重みを持たないためです。
-探索と活用の重みを連続的に調整したい場合は、[GP-UCB](gp_ucb.md)の`LowerConfidenceBound(kappa=...)`を使い、`kappa`を大きくする方向で近づけることになります。
+`MaxUncertainty` has no parameter analogous to EI's $\xi$ or LCB's $\kappa$ for adjusting the exploration–exploitation trade-off.
+By design, since it uses $\sigma(x)$ alone as its criterion, it has no weight on the exploitation side.
+To continuously adjust the exploration–exploitation weight, use [GP-UCB](gp_ucb.md)'s `LowerConfidenceBound(kappa=...)` and move toward larger `kappa`.
 
-## 関連
+## Related
 
-- [文献リファレンス](../references.md)：出典の完全な書誌情報
-- [SurrogateManager](../components/surrogate_manager.md)：`GlobalSurrogateManager`の詳しい使い方
-- [AcquisitionFunction](../components/acquisition_functions.md)：`MaxUncertainty`を含む獲得関数一覧
-- [Surrogate](../components/surrogate.md)：`SklearnGPRSurrogate`を含むサロゲートモデル一覧と`sklearn` extraの説明
-- [OptimizationStrategy](../components/strategies.md)：`IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧
-- [EGO](ego.md)：同じGPサロゲートモデル＋`IndividualBasedStrategy`の構成を、活用寄りの期待改善量(EI)獲得関数で置き換えた手法
-- [GP-UCB](gp_ucb.md)：Büche et al.のメリット関数と同じ$\mu - \kappa\sigma$の構造を持つ`LowerConfidenceBound`獲得関数を使う手法
+- [References](../references.md): Full bibliographic details for the source
+- [SurrogateManager](../components/surrogate_manager.md): Detailed usage of `GlobalSurrogateManager`
+- [AcquisitionFunction](../components/acquisition_functions.md): List of acquisition functions including `MaxUncertainty`
+- [Surrogate](../components/surrogate.md): List of surrogate models including `SklearnGPRSurrogate`, and an explanation of the `sklearn` extra
+- [OptimizationStrategy](../components/strategies.md): List of strategies including `IndividualBasedStrategy`'s `evaluation_ratio`
+- [EGO](ego.md): A method using the same GP surrogate model + `IndividualBasedStrategy` configuration, replacing the acquisition function with the exploitation-leaning Expected Improvement (EI)
+- [GP-UCB](gp_ucb.md): A method using the `LowerConfidenceBound` acquisition function, which has the same $\mu - \kappa\sigma$ structure as Büche et al.'s merit function

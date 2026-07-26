@@ -1,75 +1,75 @@
-# NSGA-II（Nondominated Sorting Genetic Algorithm II）
+# NSGA-II (Nondominated Sorting Genetic Algorithm II)
 
-NSGA-IIは、多目的最適化における選択機構として最も広く使われる遺伝アルゴリズムです。
-非優越ソートと混雑度距離を組み合わせ、パレートフロントへの収束と解集合の多様性維持を同時に達成します。
+NSGA-II is the most widely used genetic algorithm for the selection mechanism in multi-objective optimization.
+It combines non-dominated sorting with crowding distance to simultaneously achieve convergence to the Pareto front and diversity maintenance in the solution set.
 
-## 概要
+## Overview
 
-多目的最適化には、パレートフロントへの収束と、解集合内の多様性維持という、独立した2つの目標があります。
+Multi-objective optimization has two independent goals: convergence to the Pareto front, and maintaining diversity within the solution set.
 
-従来のNSGA（非優越ソート遺伝アルゴリズム）は、この2つを非優越ソートと共有関数(sharing function)で達成していましたが、共有関数は分散パラメータ $\sigma_{\mathrm{share}}$ の手動調整を要し、計算量も $O(N^2)$ でした。
+The original NSGA (Nondominated Sorting Genetic Algorithm) achieved both with non-dominated sorting and a sharing function, but the sharing function required manually tuning a variance parameter $\sigma_{\mathrm{share}}$, and its computational complexity was $O(N^2)$.
 
-NSGA-IIは、この共有関数を**混雑度距離**(crowding distance)に基づく**混雑比較演算子**($\prec_n$)に置き換え、パラメータ不要な多様性維持を実現します。
+NSGA-II replaces this sharing function with a **crowded-comparison operator** ($\prec_n$) based on **crowding distance**, achieving parameter-free diversity maintenance.
 
-各個体は非優越ランク $i_{\mathrm{rank}}$ と混雑度距離 $i_{\mathrm{distance}}$ の2つの属性を持ちます。
-$\prec_n$ はランクが低い（良い）個体を優先し、同ランク内では混雑度距離が大きい（周囲が疎な）個体を優先します。
+Each individual carries two attributes: a non-domination rank $i_{\mathrm{rank}}$ and a crowding distance $i_{\mathrm{distance}}$.
+$\prec_n$ prefers individuals with a lower (better) rank, and within the same rank, prefers individuals with a larger crowding distance (i.e. in a sparser neighborhood).
 
-さらにNSGA-IIは、親個体群 $P_t$ と子個体群 $Q_t$ を結合した $2N$ 個体からエリート選択を行い、優れた解が世代を跨いで失われないようにします(elitism)。
+NSGA-II also performs elite selection from the $2N$ individuals formed by combining the parent population $P_t$ and offspring population $Q_t$, so that good solutions are not lost across generations (elitism).
 
-出典は{cite}`deb2002nsga2`。具体的な手順は次の擬似コードに示します。
+The source is {cite}`deb2002nsga2`. The concrete procedure is shown in the pseudocode below.
 
-## 擬似コード
+## Pseudocode
 
 ```{prf:algorithm} NSGA-II
 :label: alg-nsga2
 
-**Inputs** 目的関数群、個体数 $N$、初期個体群 $P_0$
-**Output** 最終世代のパレートフロント
+**Inputs** objective functions, population size $N$, initial population $P_0$
+**Output** the Pareto front of the final generation
 
-1. $t=0$ とし、$P_0$ をランダム生成した上で、二項トーナメント選択、交叉、突然変異により子個体群 $Q_0$ を生成する
-2. 親子を結合した個体群 $R_t = P_t \cup Q_t$（サイズ $2N$）を作る
-3. $R_t$ を非優越ソートし、フロント列 $\mathcal{F} = (\mathcal{F}_1, \mathcal{F}_2, \ldots)$ を得る
-4. $P_{t+1} = \emptyset$ とし、$\mathcal{F}_i$ が丸ごと収まる限り、フロントを順に $P_{t+1}$ へ追加する
-5. 途中で収まらなくなった最後のフロント $\mathcal{F}_l$ について、各個体の混雑度距離を計算する
-6. $\mathcal{F}_l$ を $\prec_n$ で降順ソートし、$P_{t+1}$ が $N$ 個体になるまで先頭から採用する
-7. $P_{t+1}$ に対し、$\prec_n$ を選択基準とする二項トーナメント選択、交叉、突然変異を適用し、$Q_{t+1}$ を生成する
-8. $t = t+1$ として2へ戻り、終了条件に達するまで繰り返す
+1. Set $t=0$; randomly generate $P_0$, then generate an offspring population $Q_0$ via binary tournament selection, crossover, and mutation
+2. Form the combined population $R_t = P_t \cup Q_t$ (size $2N$)
+3. Non-dominated-sort $R_t$ to obtain the front sequence $\mathcal{F} = (\mathcal{F}_1, \mathcal{F}_2, \ldots)$
+4. Set $P_{t+1} = \emptyset$, and add fronts to $P_{t+1}$ in order for as long as each $\mathcal{F}_i$ fits entirely
+5. For the last front $\mathcal{F}_l$ that no longer fits in full, compute each individual's crowding distance
+6. Sort $\mathcal{F}_l$ in descending order by $\prec_n$, and take individuals from the front of that order until $P_{t+1}$ reaches $N$ individuals
+7. Apply binary tournament selection (using $\prec_n$ as the selection criterion), crossover, and mutation to $P_{t+1}$ to generate $Q_{t+1}$
+8. Set $t = t+1$ and return to step 2, repeating until the termination condition is reached
 ```
 
-## フローチャート
+## Flowchart
 
 ```{mermaid}
 flowchart TD
-    INIT["Initializer<br/>初期個体群P0を生成<br/>(L1)"] --> GEN
-    subgraph GEN["1世代分 (DirectStrategy.step)"]
+    INIT["Initializer<br/>Generate initial population P0<br/>(L1)"] --> GEN
+    subgraph GEN["One generation (DirectStrategy.step)"]
         direction TB
-        ASK["GA.ask()<br/>二項トーナメント選択→<br/>SBX交叉→<br/>多項式突然変異でQtを生成<br/>(L1, 7)"] --> EVAL["真の評価<br/>（サロゲートを介さない）"]
-        EVAL --> COMB["GA.tell()<br/>Rt = Pt ∪ Qt を結合<br/>(L2)"]
-        COMB --> SORT["NSGA2Comparator.sort_population()<br/>非優越ソート→<br/>混雑度距離<br/>(L3-6)"]
-        SORT --> TRUNC["TruncationSelection<br/>上位N個体をPt+1として採用<br/>(L4-6)"]
+        ASK["GA.ask()<br/>Binary tournament selection →<br/>SBX crossover →<br/>Polynomial mutation to generate Qt<br/>(L1, 7)"] --> EVAL["True evaluation<br/>(no surrogate involved)"]
+        EVAL --> COMB["GA.tell()<br/>Combine Rt = Pt ∪ Qt<br/>(L2)"]
+        COMB --> SORT["NSGA2Comparator.sort_population()<br/>Non-dominated sorting →<br/>crowding distance<br/>(L3-6)"]
+        SORT --> TRUNC["TruncationSelection<br/>Take top N individuals as Pt+1<br/>(L4-6)"]
     end
-    GEN --> TERM{"終了条件に<br/>到達?"}
-    TERM -- "未到達 (L8)" --> GEN
-    TERM -- "到達" --> RESULT(["パレートフロント"])
+    GEN --> TERM{"Termination condition<br/>reached?"}
+    TERM -- "Not yet (L8)" --> GEN
+    TERM -- "Reached" --> RESULT(["Pareto front"])
 ```
 
-## 計算量
+## Complexity
 
-非優越ソートは $O(MN^2)$（$M$は目的数、$N$は個体数）、混雑度距離の計算は $O(MN\log N)$、$\prec_n$によるソートは $O(N\log N)$ です。
+Non-dominated sorting is $O(MN^2)$ ($M$ the number of objectives, $N$ the population size), computing crowding distance is $O(MN\log N)$, and sorting by $\prec_n$ is $O(N\log N)$.
 
-1世代あたりの支配的なコストは非優越ソートであり、全体の計算量は $O(MN^2)$ になります{cite}`deb2002nsga2`。
+The dominant cost per generation is non-dominated sorting, giving an overall complexity of $O(MN^2)$ {cite}`deb2002nsga2`.
 
-## saealibでの構成
+## Configuration in saealib
 
-| 役割 | saealibでの実装 | 対応ステップ |
+| Role | saealib implementation | Corresponding step |
 |---|---|---|
-| 探索アルゴリズム本体 | `GA`（`ask()`で交叉と突然変異、`tell()`で $R_t=P_t\cup Q_t$ の結合と生存選択を実行） | L1-2, 7 |
-| 親選択 | `TournamentSelection(tournament_size=2)`（`ctx.comparator.compare_population`で勝者を決定） | L1, 7 |
-| 交叉 | `CrossoverSBX(prob=0.9, eta=20.0)` | L1, 7 |
-| 突然変異 | `MutationPolynomial(eta=20.0)` | L1, 7 |
-| 非優越ソート＋混雑度距離 | `NSGA2Comparator`（`sort_population`が内部で`non_dominated_sort`と`crowding_distance_all_fronts`を呼ぶ） | L3-6 |
-| 生存選択 | `TruncationSelection()`（`comparator.sort_population`の順に上位 $N$ 個体を残す） | L4-6 |
-| 評価戦略 | `DirectStrategy`（サロゲートを介さず、`GA.ask()`が生成した候補を全て真の目的関数で評価する） | L2 |
+| Search algorithm | `GA` (`ask()` performs crossover and mutation; `tell()` performs combining $R_t=P_t\cup Q_t$ and survivor selection) | L1-2, 7 |
+| Parent selection | `TournamentSelection(tournament_size=2)` (the winner is decided via `ctx.comparator.compare_population`) | L1, 7 |
+| Crossover | `CrossoverSBX(prob=0.9, eta=20.0)` | L1, 7 |
+| Mutation | `MutationPolynomial(eta=20.0)` | L1, 7 |
+| Non-dominated sorting + crowding distance | `NSGA2Comparator` (`sort_population` internally calls `non_dominated_sort` and `crowding_distance_all_fronts`) | L3-6 |
+| Survivor selection | `TruncationSelection()` (keeps the top $N$ individuals in the order given by `comparator.sort_population`) | L4-6 |
+| Evaluation strategy | `DirectStrategy` (no surrogate involved; every candidate generated by `GA.ask()` is evaluated with the true objective function) | L2 |
 
 ```python
 from saealib import GA, NSGA2Comparator, Optimizer
@@ -101,30 +101,30 @@ ctx = opt.run()
 pareto_f = ctx.pareto_archive.get_array("f")
 ```
 
-`problem.comparator = NSGA2Comparator()`の行は、`n_obj > 1`のときの既定値と同じであるため省略できます。
-サロゲートを一切使わないため、`Optimizer`に`set_surrogate_manager()`を呼ぶ必要がありません。
+The `problem.comparator = NSGA2Comparator()` line can be omitted, since it's the same as the default when `n_obj > 1`.
+Because no surrogate is used at all, there's no need to call `set_surrogate_manager()` on the `Optimizer`.
 
-## パラメータと変種
+## Parameters and variants
 
-**$\eta_c$と$\eta_m$（分布指数）**：`CrossoverSBX(eta=...)`と`MutationPolynomial(eta=...)`で調整します。
-値が大きいほど親に近い子個体を生成します（探索が保守的になる）。
-論文の実数値実験では両方とも$20$が使われており、これがsaealib側のコード例の既定値でもあります{cite}`deb2002nsga2`。
+**$\eta_c$ and $\eta_m$ (distribution indices)**: Adjusted via `CrossoverSBX(eta=...)` and `MutationPolynomial(eta=...)`.
+Larger values generate offspring closer to the parents (more conservative search).
+The paper's real-valued experiments use $20$ for both, which is also the default in saealib's code example {cite}`deb2002nsga2`.
 
-**$p_m$（変数単位の突然変異確率）**：論文は $p_m = 1/n$（$n$は決定変数の数）を使います。
-これは個体レベルの`prob`ではなく、変数ごとの適用確率`prob_var`に対応します。
-`MutationPolynomial(prob_var=None)`（既定値）では$\min(0.5,\, 1/\mathrm{dim})$が自動設定され、次元数が大きいほど論文の設定に近づきます。
+**$p_m$ (per-variable mutation probability)**: The paper uses $p_m = 1/n$ ($n$ being the number of decision variables).
+This corresponds not to the individual-level `prob`, but to the per-variable application probability `prob_var`.
+With `MutationPolynomial(prob_var=None)` (the default), $\min(0.5,\, 1/\mathrm{dim})$ is set automatically, approaching the paper's setting as the number of dimensions grows.
 
-**タイブレークの扱い**：論文の擬似コードは、$\mathcal{F}_l$を$\prec_n$で降順ソートするとしか述べておらず、混雑度距離が同値な個体同士の順序は規定していません。
-`TruncationSelection(randomize_ties=False)`（既定値）は`sort_population`が返す決定的な順序をそのまま使い、この記述に対応します。
-`randomize_ties=True`にすると、打ち切り境界で同値な個体をシャッフルしてから切り詰めます。
+**Tie-breaking**: The paper's pseudocode only states that $\mathcal{F}_l$ is sorted in descending order by $\prec_n$, and does not specify the order among individuals with equal crowding distance.
+`TruncationSelection(randomize_ties=False)` (the default) uses the deterministic order returned by `sort_population` as-is, matching this description.
+Setting `randomize_ties=True` shuffles individuals tied at the truncation boundary before cutting off.
 
-## 関連
+## Related
 
-- [文献リファレンス](../references.md)：出典の完全な書誌情報
-- [Comparator](../components/comparators.md)：`NSGA2Comparator`の詳しい仕様
-- [Crossover](../components/crossover.md)：`CrossoverSBX`を含む交叉演算子一覧
-- [Mutation](../components/mutation.md)：`MutationPolynomial`を含む突然変異演算子一覧
-- [ParentSelection](../components/parent_selection.md)：`TournamentSelection`の詳しい使い方
-- [SurvivorSelection](../components/survivor_selection.md)：`TruncationSelection`の詳しい使い方
-- [OptimizationStrategy](../components/strategies.md)：`DirectStrategy`を含む戦略一覧
-- [NonDominatedSorting](../components/nondominated_sorting.md)：非優越ソートの実装詳細
+- [References](../references.md): Full bibliographic details for the source
+- [Comparator](../components/comparators.md): Detailed specification of `NSGA2Comparator`
+- [Crossover](../components/crossover.md): List of crossover operators including `CrossoverSBX`
+- [Mutation](../components/mutation.md): List of mutation operators including `MutationPolynomial`
+- [ParentSelection](../components/parent_selection.md): Detailed usage of `TournamentSelection`
+- [SurvivorSelection](../components/survivor_selection.md): Detailed usage of `TruncationSelection`
+- [OptimizationStrategy](../components/strategies.md): List of strategies including `DirectStrategy`
+- [NonDominatedSorting](../components/nondominated_sorting.md): Implementation details of non-dominated sorting

@@ -1,18 +1,18 @@
-# 多目的最適化
+# Multi-Objective Optimization
 
-目的間にトレードオフのある多目的最適化問題を、`saealib`で解きます。
+Solve multi-objective optimization problems with trade-offs between objectives, using `saealib`.
 
-アルゴリズム、サロゲート、評価戦略の切り替え方は、目的数によらず[単目的最適化](single_objective.md)の「コンポーネントの切り替え」と共通です。
+Regardless of the number of objectives, switching algorithms, surrogates, and the evaluation strategy works the same as in "Switching components" in [Single-Objective Optimization](single_objective.md).
 
-このページでは、目的数が2以上のときに固有の設定である、比較演算子の選択とパレートフロントの抽出を扱います。
+This page covers what's specific to problems with two or more objectives: choosing a comparator and extracting the Pareto front.
 
-## 問題設定
+## Problem setup
 
-複数の目的関数がトレードオフの関係にあるとき、一方を改善するともう一方が悪化する解が存在します。
+When multiple objective functions are in a trade-off relationship, there exist solutions where improving one worsens another.
 
-この関係の下で、他のどの解にも全目的で優越されない解の集合を**パレートフロント**と呼びます。
+Under this relationship, the set of solutions not dominated by any other solution in every objective is called the **Pareto front**.
 
-ここでは例として、`saealib`に組み込まれたZDT1関数を最小化します。
+Here, as an example, we minimize the ZDT1 function built into `saealib`.
 
 ```python
 from saealib.benchmarks import zdt1
@@ -20,11 +20,11 @@ from saealib.benchmarks import zdt1
 problem = zdt1(n_var=10)
 ```
 
-`zdt1`は、凸形のパレートフロントを持つ2目的のベンチマーク問題を返す`Problem`インスタンスです。
+`zdt1` is a `Problem` instance returning a two-objective benchmark problem with a convex Pareto front.
 
-## 高レベルAPI：minimize
+## High-level API: minimize
 
-`Problem`インスタンスを直接渡すと、目的数はそこから引き継がれます。
+Passing a `Problem` instance directly carries over the number of objectives from it.
 
 ```python
 from saealib import minimize
@@ -35,24 +35,24 @@ print(result.x.shape)  # (n_pareto, dim)
 print(result.f.shape)  # (n_pareto, n_obj)
 ```
 
-単目的では1点だった`result.x`/`result.f`は、多目的ではパレートフロントを構成する複数の解になります。
+Where `result.x`/`result.f` were a single point in the single-objective case, in the multi-objective case they become multiple solutions forming the Pareto front.
 
-## 比較演算子の選択
+## Choosing a comparator
 
-多目的では、候補解同士の優劣を`Comparator`が決めます。
+In multi-objective optimization, `Comparator` decides the relative superiority between candidate solutions.
 
-`Problem`の`comparator`引数を省略すると、目的数に応じて自動選択されます（`n_obj == 1`なら`SingleObjectiveComparator`、`n_obj > 1`なら`NSGA2Comparator`）。
+If `Problem`'s `comparator` argument is omitted, one is auto-selected based on the number of objectives (`SingleObjectiveComparator` when `n_obj == 1`, `NSGA2Comparator` when `n_obj > 1`).
 
-| クラス | 動作 |
+| Class | Behavior |
 |--------|------|
-| `NSGA2Comparator` | 非優越ソートと混雑度による多様性維持（既定） |
-| `SPEA2Comparator` | 優越関係の強さと近傍密度によるフィットネス |
-| `HypervolumeComparator` | ハイパーボリューム貢献度による優劣判定 |
-| `EpsilonDominanceComparator` | εドミナンスによる優越判定 |
-| `NSGA3Comparator` | 参照点による多様性維持。`reference_points`が必須 |
-| `RNSGA2Comparator` | 指定した参照点の近傍へ解を集中させる。`reference_points`が必須 |
+| `NSGA2Comparator` | Diversity maintenance via non-dominated sorting and crowding distance (default) |
+| `SPEA2Comparator` | Fitness based on strength of dominance and neighborhood density |
+| `HypervolumeComparator` | Superiority judged by hypervolume contribution |
+| `EpsilonDominanceComparator` | Superiority judged by epsilon-dominance |
+| `NSGA3Comparator` | Diversity maintenance via reference points. Requires `reference_points` |
+| `RNSGA2Comparator` | Concentrates solutions near specified reference points. Requires `reference_points` |
 
-`comparator`は`Problem`インスタンスの属性として差し替えられます。
+`comparator` can be swapped as an attribute of the `Problem` instance.
 
 ```python
 from saealib.comparators import HypervolumeComparator
@@ -61,16 +61,16 @@ problem.comparator = HypervolumeComparator()
 result = minimize(problem, max_fe=2000, seed=0)
 ```
 
-## パレートフロントの抽出
+## Extracting the Pareto front
 
-実行後、`result.ctx.pareto_archive`には最終的なパレートフロントが保持されています。
+After running, `result.ctx.pareto_archive` holds the final Pareto front.
 
 ```python
 pareto_x = result.ctx.pareto_archive.get_array("x")
 pareto_f = result.ctx.pareto_archive.get_array("f")
 ```
 
-任意の目的値配列からパレートフロントを求めたい場合は、`non_dominated_sort`を直接使えます。
+To compute the Pareto front from an arbitrary array of objective values, you can use `non_dominated_sort` directly.
 
 ```python
 from saealib.comparators import non_dominated_sort
@@ -80,7 +80,7 @@ ranks, fronts = non_dominated_sort(archive_f, direction=problem.direction)
 front0_f = archive_f[fronts[0]]  # first non-dominated front
 ```
 
-## 参照
+## References
 
 - {py:func}`saealib.minimize`
 - {py:class}`saealib.Problem`

@@ -1,14 +1,14 @@
-# サロゲート精度に応じた動的な切り替え
+# Dynamic Switching Based on Surrogate Accuracy
 
-サロゲートモデルの予測精度は、世代が進むにつれて変化します。
+The prediction accuracy of a surrogate model changes as generations progress.
 
-学習データが少ない序盤は精度が低く、アーカイブが充実してくると精度が上がり、探索が収束して目的値の差が縮まると再び精度が落ちることもあります。
+Early on, when training data is scarce, accuracy is low; as the archive fills in, accuracy rises; and once the search converges and the gap between objective values narrows, accuracy can drop again.
 
-この変化に応じて、評価戦略や`SurrogateManager`を実行中に切り替える方法を扱います。
+This page covers how to switch the evaluation strategy or the `SurrogateManager` at runtime in response to these changes.
 
-## 問題設定
+## Problem setup
 
-単目的最適化のチュートリアルと同じSphere関数を使います。
+We use the same Sphere function as in the single-objective optimization tutorial.
 
 ```python
 import numpy as np
@@ -22,11 +22,11 @@ DIM = 10
 SEED = 0
 ```
 
-## サロゲート精度の追跡
+## Tracking surrogate accuracy
 
-`SurrogateManager`に`accuracy_evaluator`を渡すと、フィットのたびに精度が計算され、`surrogate_manager.last_accuracy`に記録されます。
+Passing an `accuracy_evaluator` to `SurrogateManager` computes accuracy on every fit and records it in `surrogate_manager.last_accuracy`.
 
-`LOOAccuracyEvaluator`は、追加の保留データを用意せず、現在の学習データに対する交差検証(leave-one-out)で精度を求めます。
+`LOOAccuracyEvaluator` computes accuracy via leave-one-out cross-validation on the current training data, without preparing any additional held-out data.
 
 ```python
 from saealib import (
@@ -72,15 +72,15 @@ surrogate_manager = LocalSurrogateManager(
 initializer = LHSInitializer(n_init_archive=5 * DIM, n_init_population=4 * DIM, seed=SEED)
 ```
 
-`last_accuracy`は`SurrogateAccuracy`インスタンスで、`.get("spearman")`のように指標名を指定して値を取り出せます。
+`last_accuracy` is a `SurrogateAccuracy` instance, from which you can retrieve a value by specifying a metric name, e.g. `.get("spearman")`.
 
-最初の世代では`last_accuracy`が`None`である点に注意してください。
+Note that `last_accuracy` is `None` in the first generation.
 
-## StrategySwitcherによる評価戦略の切り替え
+## Switching the evaluation strategy with StrategySwitcher
 
-`StrategySwitcher(primary, fallback, metric="spearman", threshold=0.56)`は、精度が閾値以上なら`primary`を、そうでなければ`fallback`を返します。
+`StrategySwitcher(primary, fallback, metric="spearman", threshold=0.56)` returns `primary` if accuracy is at or above the threshold, and `fallback` otherwise.
 
-`switch()`が返す戦略は、`iterate()`ループの中で`optimizer.set_strategy(...)`に渡すことで、次の世代から反映されます。
+The strategy returned by `switch()` takes effect from the next generation onward by passing it to `optimizer.set_strategy(...)` inside the `iterate()` loop.
 
 ```python
 from saealib import PreSelectionStrategy, IndividualBasedStrategy, StrategySwitcher
@@ -105,21 +105,21 @@ for ctx in optimizer.iterate():
 print(ctx.fe)
 ```
 
-実行すると、序盤は精度が低く`IndividualBasedStrategy`のまま進み、精度が閾値を超えた世代から`PreSelectionStrategy`へ切り替わります。
+Running this, the search stays on `IndividualBasedStrategy` early on while accuracy is low, and switches to `PreSelectionStrategy` once accuracy exceeds the threshold.
 
-探索が進んで目的値の差が縮まり精度が再び落ちれば、`IndividualBasedStrategy`へ戻ります。
+If the search progresses, the gap between objective values narrows, and accuracy drops again, it switches back to `IndividualBasedStrategy`.
 
-## 他の切り替え
+## Other switchers
 
-同じ`switch()`インターフェースを持つ切り替え器が、`StrategySwitcher`以外にも用意されています。
+Switchers with the same `switch()` interface are available besides `StrategySwitcher`.
 
-| クラス | 切り替える対象 |
+| Class | What it switches |
 |--------|--------|
-| `StrategySwitcher` | 2つの`OptimizationStrategy`（精度が閾値以上か否か） |
-| `ManagerSwitcher` | 2つの`SurrogateManager`（精度が閾値以上か否か） |
-| `GenCtrlSwitcher` | `GenerationBasedStrategy`の`gen_ctrl`（精度を指数移動平均で平滑化して連続値へ写像） |
+| `StrategySwitcher` | Between two `OptimizationStrategy` instances (whether accuracy is at or above the threshold) |
+| `ManagerSwitcher` | Between two `SurrogateManager` instances (whether accuracy is at or above the threshold) |
+| `GenCtrlSwitcher` | `GenerationBasedStrategy`'s `gen_ctrl` (smooths accuracy with an exponential moving average and maps it to a continuous value) |
 
-`GenCtrlSwitcher`は数値を返すので、`GenerationBasedStrategy`のインスタンスの`gen_ctrl`属性へ直接代入します。
+`GenCtrlSwitcher` returns a number, so assign it directly to the `gen_ctrl` attribute of a `GenerationBasedStrategy` instance.
 
 ```python
 from saealib import GenerationBasedStrategy, GenCtrlSwitcher
@@ -133,7 +133,7 @@ for ctx in optimizer.iterate():
     strategy.gen_ctrl = gen_ctrl_switcher.switch(accuracy)
 ```
 
-## 参照
+## References
 
 - {py:class}`saealib.StrategySwitcher` / {py:class}`saealib.ManagerSwitcher` / {py:class}`saealib.GenCtrlSwitcher`
 - {py:class}`saealib.LOOAccuracyEvaluator` / {py:class}`saealib.HeldOutAccuracyEvaluator` / {py:class}`saealib.KFoldAccuracyEvaluator`

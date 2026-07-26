@@ -1,14 +1,14 @@
-# 再現性とチェックポイント
+# Reproducibility and Checkpointing
 
-長時間実行する最適化を再現可能にし、途中から再開できるようにします。
+Makes long-running optimizations reproducible and lets you resume them partway through.
 
-チェックポイント機能は低レベルAPIの`Optimizer`でのみ使えます。
+Checkpointing is only available with the low-level `Optimizer` API.
 
-`Optimizer`の組み立て方は[単目的最適化](single_objective.md)の低レベルAPI節を参照してください。
+See the low-level API section of [Single-Objective Optimization](single_objective.md) for how to assemble an `Optimizer`.
 
-## 乱数シードによる再現性
+## Reproducibility via random seed
 
-`Optimizer(problem, seed=...)`に同じ`seed`を渡すと、乱数を使う処理が同じ手順で初期化され、同一の結果が得られます。
+Passing the same `seed` to `Optimizer(problem, seed=...)` initializes all random-number-using processes in the same sequence, producing identical results.
 
 ```python
 import numpy as np
@@ -76,18 +76,18 @@ ctx2 = build_optimizer(300).run()
 print(np.allclose(ctx1.archive.get_array("f"), ctx2.archive.get_array("f")))  # True
 ```
 
-`build_optimizer`は、以降の節でも同じコンポーネント構成のまま`Optimizer`を作り直すために使います。
+`build_optimizer` is used in the following sections too, to rebuild an `Optimizer` with the same component configuration.
 
-## チェックポイントの保存と再開
+## Saving and resuming a checkpoint
 
-`run()`が返す`ctx`は、`ctx.save(path)`でnpz形式の単一ファイルに保存できます。
+The `ctx` returned by `run()` can be saved to a single npz file with `ctx.save(path)`.
 
 ```python
 ctx = build_optimizer(200).run()
 ctx.save("checkpoint.npz")
 ```
 
-保存したチェックポイントは`OptimizationState.load(path, problem)`で読み込み、`Optimizer.run_from(ctx)`に渡すと続きから再開できます。
+A saved checkpoint can be loaded with `OptimizationState.load(path, problem)`, and passing it to `Optimizer.run_from(ctx)` resumes from where it left off.
 
 ```python
 from saealib.context import OptimizationState
@@ -99,21 +99,21 @@ print(resumed_ctx.fe)             # includes the evaluations from before saving
 print(resumed_ctx.data["resumed"])  # True
 ```
 
-`ctx.data["resumed"]`は、`run_from()`で再開したコンテキストにだけ`True`が設定されるフラグです。
+`ctx.data["resumed"]` is a flag set to `True` only on a context resumed via `run_from()`.
 
-`RunStartEvent`などのコールバックからは、`event.ctx.data["resumed"]`として参照できます。
+From a callback such as `RunStartEvent`, it can be accessed as `event.ctx.data["resumed"]`.
 
-## 自動チェックポイント
+## Automatic checkpointing
 
-`run()`/`iterate()`に`checkpoint_path`を渡すと、`checkpoint_interval`世代ごとに自動保存されます。
+Passing `checkpoint_path` to `run()`/`iterate()` saves automatically every `checkpoint_interval` generations.
 
-`checkpoint_path`は単一ファイルではなくディレクトリとして扱われ、`checkpoint_{gen:06d}.npz`という名前で世代ごとのスナップショットが作られます。
+`checkpoint_path` is treated as a directory rather than a single file, and per-generation snapshots are created, named `checkpoint_{gen:06d}.npz`.
 
 ```python
 ctx = build_optimizer(300).run(checkpoint_path="checkpoints", checkpoint_interval=5)
 ```
 
-再開するときは、ディレクトリ内の最新のスナップショットを読み込みます。
+To resume, load the most recent snapshot in the directory.
 
 ```python
 from pathlib import Path
@@ -122,7 +122,7 @@ latest = sorted(Path("checkpoints").glob("checkpoint_*.npz"))[-1]
 loaded_ctx = OptimizationState.load(latest, problem)
 ```
 
-正常終了後にスナップショットを残したくない場合は、`checkpoint_delete_on_success=True`を指定します（ディレクトリ自体は残り、中のファイルだけが削除されます）。
+If you don't want to leave snapshots behind after a successful run, specify `checkpoint_delete_on_success=True` (the directory itself is kept; only the files inside it are deleted).
 
 ```python
 ctx = build_optimizer(300).run(
@@ -132,9 +132,9 @@ ctx = build_optimizer(300).run(
 )
 ```
 
-## pickle形式での保存
+## Saving in pickle format
 
-npzは`ctx`のみを保存しますが、pickle形式では学習済みのサロゲートパラメータを含めて`Optimizer`ごと保存できます。
+npz saves only `ctx`, but pickle format can save the entire `Optimizer`, including the fitted surrogate parameters.
 
 ```python
 optimizer = build_optimizer(200)
@@ -144,15 +144,15 @@ optimizer.save_pickle(ctx, "checkpoint.pkl")
 loaded_optimizer, loaded_ctx = Optimizer.load_pickle("checkpoint.pkl")
 ```
 
-実行時にPythonやライブラリのバージョンに関する`UserWarning`が出ることがあります。
+A `UserWarning` about the Python or library version may appear at runtime.
 
-`Termination`にlambdaを使うなど、標準の`pickle`で直列化できないオブジェクトを含む`Optimizer`はpickle保存できません。
+An `Optimizer` containing objects that the standard `pickle` cannot serialize — such as a lambda used in `Termination` — cannot be pickle-saved.
 
-## CheckpointCallbackを直接使う
+## Using CheckpointCallback directly
 
-`run()`の`checkpoint_path`は、内部で`CheckpointCallback`を登録しているだけです。
+The `checkpoint_path` argument of `run()` simply registers a `CheckpointCallback` internally.
 
-同じ処理を明示的に組み込むには、`CheckpointCallback`を`cbmanager`に登録します。
+To wire up the same behavior explicitly, register a `CheckpointCallback` on `cbmanager`.
 
 ```python
 from saealib import CheckpointCallback
@@ -164,9 +164,9 @@ callback.register(optimizer.cbmanager)
 ctx = optimizer.run()
 ```
 
-`format="pickle"`または`format="both"`を指定する場合は、`optimizer`引数が必須です。
+The `optimizer` argument is required when specifying `format="pickle"` or `format="both"`.
 
-## 参照
+## References
 
 - {py:class}`saealib.Optimizer`
 - {py:class}`saealib.CheckpointCallback`

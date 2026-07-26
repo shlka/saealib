@@ -1,72 +1,72 @@
 # TrainingSet
 
-`GlobalSurrogateManager`/`LocalSurrogateManager`/`PairwiseSurrogateManager`は、学習データの構築を`TrainingSet`という差し替え可能なコンポーネントに委ねています。
-`training_set`引数に渡します。
+`GlobalSurrogateManager`/`LocalSurrogateManager`/`PairwiseSurrogateManager` delegate building the training data to `TrainingSet`, a swappable component.
+Pass it via the `training_set` argument.
 
-## TrainingSetの役割
+## TrainingSet's role
 
-`TrainingSet`が実装を要求するメソッドは`build(archive, population, ctx, candidate_x=None) -> TrainingData`の1つだけです。
-`candidate_x`は`LocalSurrogateManager`が候補ごとのk-NNクエリ中心として渡す引数で、`GlobalSurrogateManager`からは`None`で呼ばれます。
+`TrainingSet` requires only one method, `build(archive, population, ctx, candidate_x=None) -> TrainingData`, to be implemented.
+`candidate_x` is an argument `LocalSurrogateManager` passes as the k-NN query center per candidate; `GlobalSurrogateManager` calls it with `None`.
 
-`TrainingData`は`train_x`（通常`shape (n_train, dim)`。`PairwiseComparisonSet`のみ`(n_train, 2*dim)`）と`train_y`（回帰なら`(n_train, n_obj)`、分類やランキングなら`(n_train,)`）を持つデータクラスです。
+`TrainingData` is a dataclass holding `train_x` (normally shape `(n_train, dim)`; only `PairwiseComparisonSet` uses `(n_train, 2*dim)`) and `train_y` (`(n_train, n_obj)` for regression, `(n_train,)` for classification or ranking).
 
-組み込みの8クラスは、次の2つの直交する軸で整理されています。
+The 8 built-in classes are organized along two orthogonal axes.
 
-- **データソース軸**：archive / population / k近傍 / ペア / 参照点のどこから学習データを取るか
-- **ラベリング軸**：生の目的関数値（回帰）/ 二値分類 / 多段階ランキング / ペア比較のどれで値を割り当てるか
+- **Data-source axis**: Where training data is drawn from — archive / population / k nearest neighbors / pairs / reference point
+- **Labeling axis**: How values are assigned — raw objective value (regression) / binary classification / multi-level ranking / pairwise comparison
 
-## 文献パターンとの対応
+## Correspondence with literature patterns
 
-| パターン | 文献 | 対応クラス |
+| Pattern | Source | Corresponding class |
 |---|---|---|
 | P1 CA-LLSO | {cite}`wei2021callso` | `LevelBasedSet` |
 | P2 CPS-MOEA | {cite}`zhang2018cpsmoea` | `TopKBipartitionSet` |
 | P3 Pairwise SAEA | {cite}`hao2024pairwise` | `PairwiseComparisonSet` |
 | P4 SAPSO pbest | {cite}`tian2019sapso` | `ReferencePointComparisonSet` |
-| P5 CSEA / pre-selection | （一般） | `KNNObjectiveSet`, `ArchiveObjectiveSet` |
+| P5 CSEA / pre-selection | (general) | `KNNObjectiveSet`, `ArchiveObjectiveSet` |
 | P6 Constraint BO | {cite}`regis2005cors,letham2019constraintbo` | `ConstraintObjectiveSet`, `KNNConstraintObjectiveSet` |
 
-## 組み込みTrainingSet
+## Built-in TrainingSets
 
-| クラス | パラメータ | 内容 |
+| Class | Parameters | Description |
 |---|---|---|
-| `ArchiveObjectiveSet` | なし | アーカイブ全体を生の目的関数値で使う。`GlobalSurrogateManager`の既定 |
-| `KNNObjectiveSet` | `n_neighbors=50` | `candidate_x`のk近傍アーカイブ点。`LocalSurrogateManager`の既定 |
-| `ConstraintObjectiveSet` | なし | アーカイブ全体を生の制約値`g`で使う |
-| `KNNConstraintObjectiveSet` | `n_neighbors=50` | `ConstraintObjectiveSet`のk-NN版 |
-| `FeasibilityClassificationSet` | `source="archive"` | `cv <= eps_cv`による二値分類ラベル |
-| `TopKBipartitionSet` | `source="archive", top_ratio=0.5` | ソート後、上位`floor(n * top_ratio)`件をlabel=1、残りをlabel=0とする二値分類ラベル |
-| `LevelBasedSet` | `source="population", n_levels=5` | ソート後、`n_levels`個の等分割グループへ多段階ラベル付けする |
-| `PairwiseComparisonSet` | `source="archive", n_pairs=None, rng=None` | 2点をペアにして比較した勝敗をラベルとする |
-| `ReferencePointComparisonSet` | `ref_source="population_best"` | アーカイブ点が参照点を支配するかどうかの二値ラベル |
+| `ArchiveObjectiveSet` | None | Uses the entire archive with raw objective values. `GlobalSurrogateManager`'s default |
+| `KNNObjectiveSet` | `n_neighbors=50` | The k nearest archive points to `candidate_x`. `LocalSurrogateManager`'s default |
+| `ConstraintObjectiveSet` | None | Uses the entire archive with raw constraint values `g` |
+| `KNNConstraintObjectiveSet` | `n_neighbors=50` | The k-NN version of `ConstraintObjectiveSet` |
+| `FeasibilityClassificationSet` | `source="archive"` | Binary classification labels via `cv <= eps_cv` |
+| `TopKBipartitionSet` | `source="archive", top_ratio=0.5` | After sorting, labels the top `floor(n * top_ratio)` as label=1 and the rest as label=0 |
+| `LevelBasedSet` | `source="population", n_levels=5` | After sorting, assigns multi-level labels across `n_levels` equally divided groups |
+| `PairwiseComparisonSet` | `source="archive", n_pairs=None, rng=None` | Pairs up two points and labels the win/loss of their comparison |
+| `ReferencePointComparisonSet` | `ref_source="population_best"` | A binary label for whether an archive point dominates a reference point |
 
-`ConstraintObjectiveSet`/`KNNConstraintObjectiveSet`は、問題が制約を持たない場合（`archive.g`が0列）は`ValueError`になります。
+`ConstraintObjectiveSet`/`KNNConstraintObjectiveSet` raise `ValueError` if the problem has no constraints (`archive.g` has 0 columns).
 
-`FeasibilityClassificationSet`の実行可能性判定に使う`eps_cv`は`ctx.problem.eps_cv`から取得され、`ctx=None`のときは`1e-6`が使われます。
+The `eps_cv` used for `FeasibilityClassificationSet`'s feasibility judgment is obtained from `ctx.problem.eps_cv`, falling back to `1e-6` when `ctx=None`.
 
-`source`引数を持つクラス（`FeasibilityClassificationSet`/`TopKBipartitionSet`/`LevelBasedSet`/`PairwiseComparisonSet`）は共通して、`source="population"`を指定したときに`population=None`だと`ValueError`になります。
+Classes with a `source` argument (`FeasibilityClassificationSet`/`TopKBipartitionSet`/`LevelBasedSet`/`PairwiseComparisonSet`) all share the behavior of raising `ValueError` if `source="population"` is specified while `population=None`.
 
-`PairwiseComparisonSet`は、2点`(a, b)`ごとに`train_x = [x_a, x_b]`を連結した`shape (n_pairs, 2*dim)`の配列を作り、`comparator.compare(f_a, cv_a, f_b, cv_b) <= 0`（aがbに勝つか同等）なら`1`、そうでなければ`0`をラベルとします。
-`n_pairs=None`の場合は全ペア`n*(n-1)/2`を使います。
+`PairwiseComparisonSet` builds an array of shape `(n_pairs, 2*dim)` by concatenating `train_x = [x_a, x_b]` for each pair `(a, b)`, labeling it `1` if `comparator.compare(f_a, cv_a, f_b, cv_b) <= 0` (a beats or ties b), and `0` otherwise.
+If `n_pairs=None`, every pair, `n*(n-1)/2` of them, is used.
 
 ```{warning}
-`PairwiseComparisonSet`の`train_x`は`(n_pairs, 2*dim)`という特殊な形状であり、`RBFSurrogate`のような標準的な回帰サロゲートとは形状が非互換です。
-[ComparisonSurrogate](surrogate.md)系のペア比較専用サロゲートと組み合わせる必要があります。
+`PairwiseComparisonSet`'s `train_x` has the special shape `(n_pairs, 2*dim)`, incompatible in shape with a standard regression surrogate such as `RBFSurrogate`.
+It needs to be paired with a dedicated pairwise-comparison surrogate from the [ComparisonSurrogate](surrogate.md) family.
 ```
 
-`ReferencePointComparisonSet`は、`PairwiseComparisonSet`と異なり`train_x`が`(n_archive, dim)`のみなので、`GlobalSurrogateManager`/`LocalSurrogateManager`と互換性があります。
+Unlike `PairwiseComparisonSet`, `ReferencePointComparisonSet`'s `train_x` is only `(n_archive, dim)`, so it's compatible with `GlobalSurrogateManager`/`LocalSurrogateManager`.
 
-## 独自TrainingSetの実装方法
+## Implementing a custom TrainingSet
 
-独自の学習データ抽出方式が必要な場合は、`TrainingSet`を継承して`build()`だけを実装すればよいです。
-次の例は、直近に追加された`k`件だけを学習データとして使う実装です。
+If you need a custom training-data extraction scheme, subclass `TrainingSet` and implement only `build()`.
+The following example is an implementation that uses only the most recently added `k` entries as training data.
 
 ```python
 from saealib import TrainingSet, TrainingData
 
 
 class RecentKSet(TrainingSet):
-    """直近に追加されたk件だけを学習データとして使う。"""
+    """Uses only the most recently added k entries as training data."""
 
     def __init__(self, k: int = 20):
         self.k = k
@@ -77,13 +77,13 @@ class RecentKSet(TrainingSet):
         return TrainingData(train_x=x, train_y=y)
 ```
 
-## 関連コンポーネント
+## Related components
 
-- [SurrogateManager](surrogate_manager.md)：`training_set`引数を持つマネージャー
-- [Surrogate](surrogate.md)：`TrainingData`を渡す先。`PairwiseComparisonSet`は`ComparisonSurrogate`系との組み合わせが必要
-- [Comparator](comparators.md)：`TopKBipartitionSet`/`LevelBasedSet`/`PairwiseComparisonSet`/`ReferencePointComparisonSet`が使うソートと比較
+- [SurrogateManager](surrogate_manager.md): The managers with a `training_set` argument
+- [Surrogate](surrogate.md): Where `TrainingData` is passed. `PairwiseComparisonSet` needs to be paired with the `ComparisonSurrogate` family
+- [Comparator](comparators.md): The sorting and comparison used by `TopKBipartitionSet`/`LevelBasedSet`/`PairwiseComparisonSet`/`ReferencePointComparisonSet`
 
-## 参照
+## References
 
 - {py:class}`saealib.TrainingSet`
 - {py:class}`saealib.TrainingData`

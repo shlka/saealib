@@ -1,58 +1,58 @@
-# コンポーネント
+# Components
 
-各コンポーネントの詳しい使い方と拡張ガイドラインです。
-まず全体のパイプラインでコンポーネント同士がどう組み合わさるかを示し、そのあとページ単位の詳細に入ります。
+Detailed usage of each component and guidelines for extending it.
+First we show how the components fit together in the overall pipeline, then move into page-by-page detail.
 
-## パイプライン全体の構成
+## Overall pipeline structure
 
-`Optimizer`は以下のコンポーネントを束ね、`Termination`が終了と判定するまで世代ループを駆動します。
-1世代分の処理は`OptimizationStrategy`が統括します。
-`Algorithm`が候補解を生成し（ask）、`SurrogateManager`がそれを安価にスコアリングし、戦略がどの候補解に高コストな真の評価を割り当てるかを決め、結果は`Algorithm`側の個体群（tell）と`Archive`の両方に反映されます。
-`Archive`はサロゲートの学習データも兼ねています。
+`Optimizer` bundles the following components and drives the generation loop until `Termination` decides to stop.
+`OptimizationStrategy` orchestrates the processing for a single generation.
+`Algorithm` generates candidate solutions (ask), `SurrogateManager` scores them cheaply, the strategy decides which candidates receive an expensive true evaluation, and the result is reflected in both `Algorithm`'s population (tell) and the `Archive`.
+`Archive` also doubles as the surrogate's training data.
 
 ```{mermaid}
 flowchart TD
-    INIT["Initializer<br/>(初期個体群の生成)"] --> STEP
-    subgraph STEP["OptimizationStrategy.step()（1世代分）"]
+    INIT["Initializer<br/>(generates the initial population)"] --> STEP
+    subgraph STEP["OptimizationStrategy.step() (one generation)"]
         direction TB
-        ASK["Algorithm.ask()<br/>候補解を生成"] --> SCORE["SurrogateManager<br/>score_candidates()"]
-        SCORE --> SEL["真の評価を行う<br/>候補解を選択"]
-        SEL --> EVAL["Evaluator →<br/>Problem(高コスト)"]
-        EVAL --> TELL["Algorithm.tell()<br/>個体群を更新"]
+        ASK["Algorithm.ask()<br/>Generate candidates"] --> SCORE["SurrogateManager<br/>score_candidates()"]
+        SCORE --> SEL["Select candidates<br/>for true evaluation"]
+        SEL --> EVAL["Evaluator →<br/>Problem (expensive)"]
+        EVAL --> TELL["Algorithm.tell()<br/>Update population"]
     end
     STEP --> TERM{"Termination?"}
-    TERM -- "継続" --> STEP
-    TERM -- "終了" --> RESULT([Result])
+    TERM -- "Continue" --> STEP
+    TERM -- "Done" --> RESULT([Result])
     subgraph SM["SurrogateManager"]
         direction TB
-        SUR["Surrogate<br/>fit / predict"] --> ACQ["AcquisitionFunction<br/>予測値→スカラースコア"]
+        SUR["Surrogate<br/>fit / predict"] --> ACQ["AcquisitionFunction<br/>Prediction → scalar score"]
     end
     SCORE -.-> SM
-    EVAL -- "評価済みの点" --> ARC[("Archive")]
-    ARC -. "学習データ" .-> SUR
+    EVAL -- "Evaluated points" --> ARC[("Archive")]
+    ARC -. "Training data" .-> SUR
 ```
 
-各ステージは`CallbackManager`経由で型付きイベントを発火するため、サブクラス化せずにパイプラインの途中経過を観察したり操作したりできます（[CallbackManager](callbacks.md)を参照）。
+Each stage fires typed events via `CallbackManager`, so you can observe or intervene in the pipeline's progress without subclassing (see [CallbackManager](callbacks.md)).
 
-各コンポーネントの役割は次の通りです。
+The role of each component is as follows.
 
-| コンポーネント | 役割 |
+| Components | Role |
 |---|---|
-| [Problem](problem.md) | 目的関数、設計変数、探索範囲、制約、最適化の方向(direction)を定義する |
-| [Initializer](initialization.md) | ループ開始前に初期個体群とアーカイブを生成する |
-| [Algorithm](algorithm.md) | 進化的探索本体（GA/PSO）。`ask()`が候補解を生成し、`tell()`が個体群を更新する |
-| [OptimizationStrategy](strategies.md) | 1世代分のパイプラインを統括し、どの候補解が真の評価を受けるかを決める |
-| [SurrogateManager](surrogate_manager.md) | サロゲートのフィットとスコアリングを橋渡しし、`score_candidates()`を公開する |
-| [Surrogate](surrogate.md) | アーカイブのデータでフィットし予測する。スコアリングの方法は関知しない |
-| [AcquisitionFunction](acquisition_functions.md) | 予測値を（高いほど良い）スカラースコアへ変換する。モデルの詳細は関知しない |
-| [Evaluator](evaluation.md) | 真の評価を実行する（逐次、または`parallel`エクストラによる並列） |
-| [Archive](population.md) | 真に評価済みの点をすべて蓄積する。サロゲートの学習データセットも兼ねる |
-| [Termination](termination.md) | ループの終了条件を判定する（既定は最大評価回数） |
-| [CallbackManager](callbacks.md) | パイプライン各所のイベントを観察して記録し、実行時のコンポーネント差し替えにも使う |
+| [Problem](problem.md) | Defines the objective function, design variables, search range, constraints, and optimization direction |
+| [Initializer](initialization.md) | Generates the initial population and archive before the loop starts |
+| [Algorithm](algorithm.md) | The evolutionary search itself (GA/PSO). `ask()` generates candidates, `tell()` updates the population |
+| [OptimizationStrategy](strategies.md) | Orchestrates one generation's pipeline and decides which candidates receive a true evaluation |
+| [SurrogateManager](surrogate_manager.md) | Bridges surrogate fitting and scoring, exposing `score_candidates()` |
+| [Surrogate](surrogate.md) | Fits and predicts using the archive's data. Knows nothing about how scoring works |
+| [AcquisitionFunction](acquisition_functions.md) | Converts predictions into a scalar score (higher is better). Knows nothing about the model's details |
+| [Evaluator](evaluation.md) | Runs true evaluation (sequentially, or in parallel via the `parallel` extra) |
+| [Archive](population.md) | Accumulates every truly evaluated point. Also doubles as the surrogate's training dataset |
+| [Termination](termination.md) | Judges the loop's termination condition (default: maximum evaluations) |
+| [CallbackManager](callbacks.md) | Observes and records events throughout the pipeline, and also enables swapping components at runtime |
 
-## 低レベルAPIでの組み立て
+## Assembling with the low-level API
 
-`Optimizer`を直接使うと、各コンポーネントをメソッドチェーンで個別に差し替えられます。
+Using `Optimizer` directly lets you swap out each component individually via method chaining.
 
 ```python
 from saealib import GA, Optimizer, Problem, IndividualBasedStrategy
@@ -84,25 +84,25 @@ opt = (
 ctx = opt.run()
 ```
 
-高レベルAPI（`minimize()`/`maximize()`）は、このパイプラインを適切な既定値で自動構成したものです。
-世代ごとの検査やカスタムループ制御が必要な研究用途では、`.run()`の代わりに`.iterate()`を使います。
-`.iterate()`を使った実例は[単目的最適化](../tutorials/single_objective.md)などのチュートリアルにあります。
+The high-level API (`minimize()`/`maximize()`) is this same pipeline auto-configured with sensible defaults.
+For research use cases that need per-generation inspection or custom loop control, use `.iterate()` instead of `.run()`.
+Worked examples using `.iterate()` can be found in tutorials such as [Single-Objective Optimization](../tutorials/single_objective.md).
 
-各Strategyが内部でこのパイプラインをどう構成するかは[OptimizationStrategy](strategies.md)を、パイプラインを構成するステージ単体の契約は[Stage](stage.md)を参照してください。
+See [OptimizationStrategy](strategies.md) for how each strategy configures this pipeline internally, and [Stage](stage.md) for the contract of the individual stages that make up the pipeline.
 
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} {fa}`wand-magic-sparkles;sd-mr-1` 拡張のガイドライン
+:::{grid-item-card} {fa}`wand-magic-sparkles;sd-mr-1` Extension guidelines
 :link: extension_guidelines
 :link-type: doc
 
-サブクラス化では重すぎる場合に：`with_post`/`with_post_fit`、`Pipeline`/`Stage`、`CallbackManager`、`Registry`。
+For when subclassing is too heavy: `with_post`/`with_post_fit`, `Pipeline`/`Stage`, `CallbackManager`, `Registry`.
 :::
 
 ::::
 
-## 問題定義とランキング
+## Problem definition and ranking
 
 ::::{grid} 1 2 2 3
 :gutter: 3
@@ -111,47 +111,47 @@ ctx = opt.run()
 :link: problem
 :link-type: doc
 
-目的関数、変数、方向(direction)、制約を定義します。
+Defines the objective function, variables, direction, and constraints.
 :::
 
 :::{grid-item-card} {fa}`filter;sd-mr-1` ConstraintHandler
 :link: constraints
 :link-type: doc
 
-制約違反の集約、実行可能性判定、修復戦略を独自実装する方法。
+How to implement your own constraint-violation aggregation, feasibility judgment, and repair strategy.
 :::
 
 :::{grid-item-card} {fa}`arrow-down-up-across-line;sd-mr-1` Comparator
 :link: comparators
 :link-type: doc
 
-解の順位付け。NSGA2/SPEA2/HVなどの使い分け。
+Ranking solutions. When to use NSGA2/SPEA2/HV and the like.
 :::
 
 :::{grid-item-card} {fa}`crown;sd-mr-1` Dominator
 :link: dominance
 :link-type: doc
 
-Pareto支配やε支配などの支配関係を独自実装する方法。
+How to implement your own dominance relations, such as Pareto dominance or ε-dominance.
 :::
 
 :::{grid-item-card} {fa}`arrow-down-wide-short;sd-mr-1` NonDominatedSorter
 :link: nondominated_sorting
 :link-type: doc
 
-非優越ソートアルゴリズムの差し替え。crowding distanceやSPEA2 fitnessの計算も。
+Swapping the non-dominated sorting algorithm. Also covers computing crowding distance and SPEA2 fitness.
 :::
 
 :::{grid-item-card} {fa}`scissors;sd-mr-1` Decomposition
 :link: decomposition
 :link-type: doc
 
-MOEA/D風のスカラー化（分解）関数と`DecompositionComparator`。
+MOEA/D-style scalarizing (decomposition) functions and `DecompositionComparator`.
 :::
 
 ::::
 
-## 探索アルゴリズム
+## Search algorithms
 
 ::::{grid} 1 2 2 3
 :gutter: 3
@@ -160,40 +160,40 @@ MOEA/D風のスカラー化（分解）関数と`DecompositionComparator`。
 :link: algorithm
 :link-type: doc
 
-GAとPSO、カスタム`Algorithm`の実装方法。
+GA and PSO, and how to implement a custom `Algorithm`.
 :::
 
 :::{grid-item-card} {fa}`code-fork;sd-mr-1` Crossover
 :link: crossover
 :link-type: doc
 
-BLX-α/SBX/一様交叉など。混合変数問題での使い分け。
+BLX-α, SBX, uniform crossover, and more. When to use each for mixed-variable problems.
 :::
 
 :::{grid-item-card} {fa}`bolt-lightning;sd-mr-1` Mutation
 :link: mutation
 :link-type: doc
 
-一様/ガウス/多項式突然変異など。混合変数問題での使い分け。
+Uniform, Gaussian, polynomial mutation, and more. When to use each for mixed-variable problems.
 :::
 
 :::{grid-item-card} {fa}`hand-pointer;sd-mr-1` ParentSelection
 :link: parent_selection
 :link-type: doc
 
-トーナメント選択やルーレット選択などの親選択方式。
+Parent-selection schemes such as tournament and roulette-wheel selection.
 :::
 
 :::{grid-item-card} {fa}`user-check;sd-mr-1` SurvivorSelection
 :link: survivor_selection
 :link-type: doc
 
-打ち切り選択などの生存選択（世代交代）方式。
+Survivor-selection (generational replacement) schemes such as truncation selection.
 :::
 
 ::::
 
-## サロゲートモデリング
+## Surrogate modeling
 
 ::::{grid} 1 2 2 3
 :gutter: 3
@@ -202,40 +202,40 @@ BLX-α/SBX/一様交叉など。混合変数問題での使い分け。
 :link: surrogate
 :link-type: doc
 
-組み込みサロゲート、外部ライブラリアダプタ、独自Surrogateの実装方法。
+Built-in surrogates, external-library adapters, and how to implement a custom `Surrogate`.
 :::
 
 :::{grid-item-card} {fa}`sitemap;sd-mr-1` SurrogateManager
 :link: surrogate_manager
 :link-type: doc
 
-サロゲートの予測と獲得関数のスコアリングを橋渡しします。
+Bridges the surrogate's predictions and the acquisition function's scoring.
 :::
 
 :::{grid-item-card} {fa}`database;sd-mr-1` TrainingSet
 :link: training_set
 :link-type: doc
 
-サロゲートの学習データをどこから、どのラベルで抽出するか。
+Where the surrogate's training data comes from, and with which labels.
 :::
 
 :::{grid-item-card} {fa}`calculator;sd-mr-1` AcquisitionFunction
 :link: acquisition_functions
 :link-type: doc
 
-サロゲートの予測値から候補解をスコアリングします。
+Scores candidates from the surrogate's predictions.
 :::
 
 :::{grid-item-card} {fa}`toggle-on;sd-mr-1` AccuracyBasedSurrogateSwitcher
 :link: surrogate_switching
 :link-type: doc
 
-精度指標、評価方法、`iterate()`ループでの動的なコンポーネント切り替え。
+Accuracy metrics, evaluation methods, and dynamic component switching inside an `iterate()` loop.
 :::
 
 ::::
 
-## 実行基盤と評価戦略
+## Execution and evaluation strategy
 
 ::::{grid} 1 2 2 3
 :gutter: 3
@@ -244,33 +244,33 @@ BLX-α/SBX/一様交叉など。混合変数問題での使い分け。
 :link: initialization
 :link-type: doc
 
-初期個体群とアーカイブの生成方法（LHS/Random/Sobol）と独自実装。
+How the initial population and archive are generated (LHS/Random/Sobol), and custom implementations.
 :::
 
 :::{grid-item-card} {fa}`microchip;sd-mr-1` Evaluator
 :link: evaluation
 :link-type: doc
 
-目的関数評価の逐次実行と並列実行のバックエンド。
+Sequential and parallel backends for objective function evaluation.
 :::
 
 :::{grid-item-card} {fa}`chess-knight;sd-mr-1` OptimizationStrategy
 :link: strategies
 :link-type: doc
 
-どの候補解に真の評価を行うかを決定します。
+Decides which candidates receive a true evaluation.
 :::
 
 :::{grid-item-card} {fa}`stop;sd-mr-1` Termination
 :link: termination
 :link-type: doc
 
-終了条件の組み合わせ方（`|`/`&`/`~`）と独自条件の書き方。
+How to combine termination conditions (`|`/`&`/`~`) and write your own.
 :::
 
 ::::
 
-## 観察とコアデータ構造
+## Observation and core data structures
 
 ::::{grid} 1 2 2 3
 :gutter: 3
@@ -279,28 +279,28 @@ BLX-α/SBX/一様交叉など。混合変数問題での使い分け。
 :link: callbacks
 :link-type: doc
 
-最適化パイプラインを観察し、ログ記録や内部へのアクセスを行います。
+Observe the optimization pipeline, for logging and reaching into its internals.
 :::
 
 :::{grid-item-card} {fa}`bars-staggered;sd-mr-1` Stage
 :link: stage
 :link-type: doc
 
-OptimizationStrategy内部の世代ループを構成するステージ。独自Stageの実装方法。
+The stages that make up the generation loop inside `OptimizationStrategy`. How to implement a custom `Stage`.
 :::
 
 :::{grid-item-card} {fa}`hard-drive;sd-mr-1` OptimizationState
 :link: optimization_state
 :link-type: doc
 
-パイプラインを貫通する状態(ctx)。主要フィールドとチェックポイント。
+The state (ctx) that flows through the pipeline. Its main fields and checkpointing.
 :::
 
 :::{grid-item-card} {fa}`users;sd-mr-1` Population
 :link: population
 :link-type: doc
 
-個体群とアーカイブのデータ構造とAPI。Archive/ParetoArchiveの仕組み。
+The data structure and API for the population and archive. How Archive/ParetoArchive work.
 :::
 
 ::::

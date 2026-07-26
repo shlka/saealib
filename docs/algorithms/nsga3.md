@@ -1,76 +1,76 @@
 # NSGA-III
 
-NSGA-IIIは、NSGA-IIの選択機構を4つ以上の目的を持つ多目的最適化(many-objective optimization)向けに拡張した遺伝アルゴリズムです。
-混雑度距離による多様性維持を、あらかじめ配置した参照点(reference point)へのニッチ保存操作に置き換え、目的数が増えても解集合の分布を維持します。
+NSGA-III is a genetic algorithm that extends NSGA-II's selection mechanism to many-objective optimization with four or more objectives.
+It replaces crowding-distance diversity maintenance with a niche-preservation operation against pre-placed reference points, maintaining the distribution of the solution set even as the number of objectives grows.
 
-## 概要
+## Overview
 
-目的数が4つ以上に増えると、NSGA-IIの混雑度距離は多様性維持の役割を十分に果たせなくなります。
-ランダムに生成した個体群のうち非優越な個体の割合は目的数の増加とともに指数的に増えるため、優越関係による絞り込みだけでは次世代個体群を埋められなくなり、混雑度距離が担う多様性維持の比重が相対的に大きくなるためです。
+Once the number of objectives grows to four or more, NSGA-II's crowding distance can no longer adequately maintain diversity.
+Because the fraction of non-dominated individuals in a randomly generated population grows exponentially with the number of objectives, narrowing down by dominance relations alone is no longer enough to fill the next-generation population, and the relative weight of the role crowding distance plays in diversity maintenance grows accordingly.
 
-NSGA-IIIは、この混雑度距離を、目的空間上にあらかじめ配置した**参照点**(reference point)へのニッチ保存操作に置き換えます。
-各世代で、個体群全体の**理想点**(ideal point)と**極端点**(extreme point)から超平面の切片を求めて目的関数を正規化し、各個体を最も近い参照点への垂直距離で対応付けます。
-まだ完全には受理できていない最後のフロントでは、割り当て済みの個体数（ニッチカウント）が少ない参照点を優先し、そこに対応付けられた個体のうち垂直距離が最小の個体から順に選ぶことで、参照点ごとにほぼ均等な数の解を残します。
+NSGA-III replaces this crowding distance with a niche-preservation operation against **reference points** pre-placed in objective space.
+In each generation, the hyperplane intercepts are computed from the population's **ideal point** and **extreme points** to normalize the objectives, and each individual is associated with the reference point to which it has the smallest perpendicular distance.
+For the last front that cannot be fully accepted, reference points with fewer already-assigned individuals (niche count) are prioritized, and individuals associated with each are chosen in order of smallest perpendicular distance, leaving a roughly equal number of solutions per reference point.
 
-NSGA-IIIは、このニッチ保存操作によってすでに多様性を確保しているため、NSGA-IIのような優越関係に基づく親選択を用いません。
-次世代個体群から親をランダムに選び、交叉と突然変異を適用して子個体群を生成します。
+Because NSGA-III already secures diversity through this niche-preservation operation, it does not use dominance-based parent selection like NSGA-II.
+Parents are chosen randomly from the current population, and crossover and mutation are applied to generate the offspring population.
 
-参照点の一様配置には、Das and Dennisが提案した単体格子法(simplex-lattice design)を用います(Das & Dennis, 1998)。
+Uniform placement of reference points uses the simplex-lattice design proposed by Das and Dennis (Das & Dennis, 1998).
 
-出典は{cite}`deb2014nsga3`。具体的な手順は次の擬似コードに示します。
+The source is {cite}`deb2014nsga3`. The concrete procedure is shown in the pseudocode below.
 
-## 擬似コード
+## Pseudocode
 
 ```{prf:algorithm} NSGA-III
 :label: alg-nsga3
 
-**Inputs** 目的関数群、参照点集合 $Z^r$（構造化点 $Z^s$ またはユーザー指定点 $Z^a$）、個体数 $N$、初期個体群 $P_0$
-**Output** 最終世代の個体群 $P_{t+1}$
+**Inputs** objective functions, reference point set $Z^r$ (structured points $Z^s$ or user-specified points $Z^a$), population size $N$, initial population $P_0$
+**Output** the population $P_{t+1}$ of the final generation
 
-1. $t=0$ とし、ランダム生成した $P_0$ から交叉と突然変異により子個体群 $Q_0$ を生成する
-2. 親子を結合した個体群 $R_t = P_t \cup Q_t$（サイズ $2N$）を作る
-3. $R_t$ を非優越ソートし、フロント列 $\mathcal{F} = (\mathcal{F}_1, \mathcal{F}_2, \ldots)$ を得る
-4. $S_t = \emptyset$ とし、$|S_t| \geq N$ となるまでフロントを $\mathcal{F}_1$ から順に $S_t$ へ加える。最後に加えたフロントを $\mathcal{F}_l$、$P_{t+1} = \bigcup_{i=1}^{l-1}\mathcal{F}_i$、$K = N - |P_{t+1}|$ とする（$|S_t|=N$ ならそのまま $P_{t+1}=S_t$ とし8へ進む）
-5. $S_t$ の理想点と極端点から超平面の切片を求めて目的関数を正規化し、$Z^r$ を正規化後の目的空間に配置する
-6. $S_t$ の各個体を、原点から $Z^r$ の各点を通る参照線への垂直距離が最小の点に対応付ける
-7. $\mathcal{F}_1, \ldots, \mathcal{F}_{l-1}$ 上の対応付けから各参照点のニッチカウント $\rho_j$ を求め、ニッチカウントが最小の参照点を優先しながら $\mathcal{F}_l$ から $K$ 個体を選んで $P_{t+1}$ に加える
-8. $P_{t+1}$ からランダムに親を選び、交叉と突然変異を適用して $Q_{t+1}$ を生成する。$t=t+1$ として2へ戻り、終了条件に達するまで繰り返す
+1. Set $t=0$; generate an offspring population $Q_0$ via crossover and mutation from a randomly generated $P_0$
+2. Form the combined population $R_t = P_t \cup Q_t$ (size $2N$)
+3. Non-dominated-sort $R_t$ to obtain the front sequence $\mathcal{F} = (\mathcal{F}_1, \mathcal{F}_2, \ldots)$
+4. Set $S_t = \emptyset$, adding fronts to $S_t$ in order starting from $\mathcal{F}_1$ until $|S_t| \geq N$. Let $\mathcal{F}_l$ be the last front added, $P_{t+1} = \bigcup_{i=1}^{l-1}\mathcal{F}_i$, and $K = N - |P_{t+1}|$ (if $|S_t|=N$, set $P_{t+1}=S_t$ directly and proceed to step 8)
+5. Compute the hyperplane intercepts from $S_t$'s ideal point and extreme points to normalize the objectives, and place $Z^r$ in the normalized objective space
+6. Associate each individual in $S_t$ with the point having the smallest perpendicular distance to a reference line through the origin and each point of $Z^r$
+7. Compute each reference point's niche count $\rho_j$ from the associations on $\mathcal{F}_1, \ldots, \mathcal{F}_{l-1}$, then select $K$ individuals from $\mathcal{F}_l$, prioritizing reference points with the smallest niche count, and add them to $P_{t+1}$
+8. Choose parents randomly from $P_{t+1}$, apply crossover and mutation to generate $Q_{t+1}$. Set $t=t+1$ and return to step 2, repeating until the termination condition is reached
 ```
 
-## フローチャート
+## Flowchart
 
 ```{mermaid}
 flowchart TD
-    INIT["Initializer<br/>初期個体群P0を生成<br/>(L1)"] --> GEN
-    subgraph GEN["1世代分 (DirectStrategy.step)"]
+    INIT["Initializer<br/>Generate initial population P0<br/>(L1)"] --> GEN
+    subgraph GEN["One generation (DirectStrategy.step)"]
         direction TB
-        ASK["GA.ask()<br/>ランダムに親を選択→<br/>SBX交叉→<br/>多項式突然変異でQtを生成<br/>(L1, 8)"] --> EVAL["真の評価<br/>（サロゲートを介さない）"]
-        EVAL --> COMB["GA.tell()<br/>Rt = Pt ∪ Qt を結合<br/>(L2)"]
-        COMB --> SORT["NSGA3Comparator.sort_population()<br/>非優越ソート→適応的正規化→<br/>参照点への対応付け→<br/>ニッチ保存選択<br/>(L3-7)"]
-        SORT --> TRUNC["TruncationSelection<br/>上位N個体をPt+1として採用<br/>(L4-7)"]
+        ASK["GA.ask()<br/>Randomly select parents →<br/>SBX crossover →<br/>Polynomial mutation to generate Qt<br/>(L1, 8)"] --> EVAL["True evaluation<br/>(no surrogate involved)"]
+        EVAL --> COMB["GA.tell()<br/>Combine Rt = Pt ∪ Qt<br/>(L2)"]
+        COMB --> SORT["NSGA3Comparator.sort_population()<br/>Non-dominated sorting → adaptive normalization →<br/>association to reference points →<br/>niche-preservation selection<br/>(L3-7)"]
+        SORT --> TRUNC["TruncationSelection<br/>Take top N individuals as Pt+1<br/>(L4-7)"]
     end
-    GEN --> TERM{"終了条件に<br/>到達?"}
-    TERM -- "未到達 (L8)" --> GEN
-    TERM -- "到達" --> RESULT(["最終世代の個体群"])
+    GEN --> TERM{"Termination condition<br/>reached?"}
+    TERM -- "Not yet (L8)" --> GEN
+    TERM -- "Reached" --> RESULT(["Population of the final generation"])
 ```
 
-## 計算量
+## Complexity
 
-非優越ソートは $O(N\log^{M-2}N)$（$M$は目的数、$N$は個体数）であり、これはNSGA-IIの $O(MN^2)$ とは異なる漸近的な計算量になります。
-正規化、対応付け、ニッチ保存を合わせた1世代あたりの最悪計算量は、$O(N^2\log^{M-2}N)$ または $O(N^2 M)$ のうち大きい方になります{cite}`deb2014nsga3`。
+Non-dominated sorting is $O(N\log^{M-2}N)$ ($M$ the number of objectives, $N$ the population size), which is an asymptotically different complexity from NSGA-II's $O(MN^2)$.
+The worst-case per-generation complexity combining normalization, association, and niche preservation is the larger of $O(N^2\log^{M-2}N)$ and $O(N^2 M)$ {cite}`deb2014nsga3`.
 
-## saealibでの構成
+## Configuration in saealib
 
-| 役割 | saealibでの実装 | 対応ステップ |
+| Role | saealib implementation | Corresponding step |
 |---|---|---|
-| 探索アルゴリズム本体 | `GA`（`ask()`で交叉と突然変異、`tell()`で $R_t=P_t\cup Q_t$ の結合と生存選択を実行） | L1-2, 8 |
-| 親選択 | `TournamentSelection(tournament_size=1)`（トーナメントサイズ1では比較処理自体が実行されないため、論文がSection IV-Fで述べる「$P_{t+1}$からランダムに親を選ぶ」動作に対応する） | L1, 8 |
-| 交叉 | `CrossoverSBX(prob=1.0, eta=30.0)` | L1, 8 |
-| 突然変異 | `MutationPolynomial(eta=20.0)` | L1, 8 |
-| 参照点生成 | `uniform_weight_vectors(n_obj, n_divisions)`（Das-Dennis法の単体格子で $Z^r$ の初期値 $Z^s$ を生成） | L5 |
-| 非優越ソート＋正規化＋対応付け＋ニッチ保存 | `NSGA3Comparator`（`sort_population`が内部で`_normalize_objectives`/`_associate_to_reference_points`/`_niche_count_select`を順に呼ぶ） | L3-7 |
-| 生存選択 | `TruncationSelection()`（`comparator.sort_population`の順に上位 $N$ 個体を残す） | L4-7 |
-| 評価戦略 | `DirectStrategy`（サロゲートを介さず、`GA.ask()`が生成した候補を全て真の目的関数で評価する） | L2 |
+| Search algorithm | `GA` (`ask()` performs crossover and mutation; `tell()` performs combining $R_t=P_t\cup Q_t$ and survivor selection) | L1-2, 8 |
+| Parent selection | `TournamentSelection(tournament_size=1)` (with tournament size 1, no comparison is actually performed, corresponding to the paper's Section IV-F description of "choose parents randomly from $P_{t+1}$") | L1, 8 |
+| Crossover | `CrossoverSBX(prob=1.0, eta=30.0)` | L1, 8 |
+| Mutation | `MutationPolynomial(eta=20.0)` | L1, 8 |
+| Reference point generation | `uniform_weight_vectors(n_obj, n_divisions)` (generates the initial value $Z^s$ of $Z^r$ via the Das-Dennis simplex lattice) | L5 |
+| Non-dominated sorting + normalization + association + niche preservation | `NSGA3Comparator` (`sort_population` internally calls `_normalize_objectives`/`_associate_to_reference_points`/`_niche_count_select` in order) | L3-7 |
+| Survivor selection | `TruncationSelection()` (keeps the top $N$ individuals in the order given by `comparator.sort_population`) | L4-7 |
+| Evaluation strategy | `DirectStrategy` (no surrogate involved; every candidate generated by `GA.ask()` is evaluated with the true objective function) | L2 |
 
 ```python
 from saealib import GA, NSGA3Comparator, Optimizer, uniform_weight_vectors
@@ -103,35 +103,35 @@ ctx = opt.run()
 pareto_f = ctx.pareto_archive.get_array("f")
 ```
 
-`problem.comparator = NSGA3Comparator(reference_points)`の行は省略できません。
-NSGA-IIでは`NSGA2Comparator`が`n_obj > 1`のときの既定値なので同じ行を省略できましたが、NSGA-IIIではSPEA2と同様に明示的な代入が必要になります。
+The `problem.comparator = NSGA3Comparator(reference_points)` line cannot be omitted.
+In NSGA-II, `NSGA2Comparator` is the default for `n_obj > 1`, so the same line could be omitted, but in NSGA-III, as with SPEA2, an explicit assignment is required.
 
-2目的のZDTベンチマークではなく3目的のDTLZ2を使ったのは、NSGA-IIIが4つ以上の目的を持つ多目的最適化を主眼にした手法であり、3目的以上の問題で初めて参照点ベースのニッチ保存の効果が現れるためです。
+DTLZ2 with 3 objectives is used instead of a 2-objective ZDT benchmark because NSGA-III is aimed at many-objective optimization with four or more objectives, and the effect of reference-point-based niche preservation only shows up starting with three or more objectives.
 
-## パラメータと変種
+## Parameters and variants
 
-**$\eta_c$（SBX分布指数）と交叉確率$p_c$**：論文のTable IIは、NSGA-IIIで$p_c=1$（`CrossoverSBX(prob=1.0)`）、$\eta_c=30$（`CrossoverSBX(eta=30.0)`）を使ったと報告しています。
-NSGA-IIの既定値（$p_c=0.9$、$\eta_c=20$）より交叉確率と分布指数のいずれも大きく、親に近い子個体をより高い確率で生成する設定になっています{cite}`deb2014nsga3`。
+**$\eta_c$ (SBX distribution index) and crossover probability $p_c$**: The paper's Table II reports using $p_c=1$ (`CrossoverSBX(prob=1.0)`) and $\eta_c=30$ (`CrossoverSBX(eta=30.0)`) for NSGA-III.
+Both the crossover probability and distribution index are larger than NSGA-II's defaults ($p_c=0.9$, $\eta_c=20$), a setting that generates offspring closer to the parents with higher probability {cite}`deb2014nsga3`.
 
-**個体数$N$と参照点数$H$の対応**：論文は、参照点数$H$に対して個体数$N$を$H$以上で最小の4の倍数に選ぶことを推奨しています。
-`Optimizer`は`set_initializer()`を呼ばない場合`LHSInitializer(n_init_population=4*dim)`を既定値として使うため、この個体数は決定変数の次元`dim`にのみ依存し、`H`とは連動しません。
-`H`に対して個体数を意図的に揃えたい場合は、`uniform_weight_vectors`が返す配列の行数を確認したうえで、`set_initializer()`で`n_init_population`を明示的に指定します。
+**Correspondence between population size $N$ and reference-point count $H$**: The paper recommends choosing the population size $N$ as the smallest multiple of 4 at or above the reference-point count $H$.
+Unless `set_initializer()` is called, `Optimizer` uses `LHSInitializer(n_init_population=4*dim)` as the default, so this population size depends only on the decision-variable dimension `dim`, and is not tied to `H`.
+If you want the population size deliberately matched to `H`, check the number of rows returned by `uniform_weight_vectors` and explicitly specify `n_init_population` via `set_initializer()`.
 
-**親選択がトーナメントでない理由**：論文Section IV-Fは、NSGA-IIIがニッチ保存操作によってすでに多様性を確保しているため、明示的な選択演算子を用いず親をランダムに選ぶと述べています{cite}`deb2014nsga3`。
-`TournamentSelection(tournament_size=1)`は、トーナメントサイズが1のとき比較処理自体が実行されないため、この「ランダムな親選択」を表現します。
-`tournament_size`を2以上に変更すると、NSGA-II/SPEA2と同じ優越関係ベースの選択圧が加わり、論文が意図的に排除した選択機構を導入することになります。
+**Why parent selection isn't tournament-based**: Section IV-F of the paper states that, since NSGA-III already secures diversity through its niche-preservation operation, it chooses parents randomly rather than using an explicit selection operator {cite}`deb2014nsga3`.
+`TournamentSelection(tournament_size=1)` expresses this "random parent selection," since no comparison is actually performed when the tournament size is 1.
+Changing `tournament_size` to 2 or more adds the same dominance-based selection pressure as NSGA-II/SPEA2, introducing a selection mechanism the paper deliberately excludes.
 
-**dominator（支配述語）の差し替え**：`NSGA3Comparator(reference_points, dominator=...)`で、既定の`ParetoDominator`以外の[Dominator](../components/dominance.md)を注入できます。
-非優越ソート自体の結果が変わるため、フロント分割とニッチ保存の対象個体群もこの支配述語に依存します。
+**Swapping the dominator (dominance predicate)**: `NSGA3Comparator(reference_points, dominator=...)` lets you inject a [Dominator](../components/dominance.md) other than the default `ParetoDominator`.
+Since this changes the result of non-dominated sorting itself, the population subjected to front splitting and niche preservation also depends on this dominance predicate.
 
-## 関連
+## Related
 
-- [文献リファレンス](../references.md)：出典の完全な書誌情報
-- [Comparator](../components/comparators.md)：`NSGA3Comparator`の詳しい仕様、`reference_points`引数、`rng`の遅延生成
-- [Crossover](../components/crossover.md)：`CrossoverSBX`を含む交叉演算子一覧
-- [Mutation](../components/mutation.md)：`MutationPolynomial`を含む突然変異演算子一覧
-- [ParentSelection](../components/parent_selection.md)：`TournamentSelection`の詳しい使い方
-- [SurvivorSelection](../components/survivor_selection.md)：`TruncationSelection`の詳しい使い方
-- [OptimizationStrategy](../components/strategies.md)：`DirectStrategy`を含む戦略一覧
-- [NonDominatedSorting](../components/nondominated_sorting.md)：非優越ソートの実装詳細
-- [Dominator](../components/dominance.md)：`dominator`引数として差し替え可能な支配述語一覧
+- [References](../references.md): Full bibliographic details for the source
+- [Comparator](../components/comparators.md): Detailed specification of `NSGA3Comparator`, the `reference_points` argument, and lazy `rng` generation
+- [Crossover](../components/crossover.md): List of crossover operators including `CrossoverSBX`
+- [Mutation](../components/mutation.md): List of mutation operators including `MutationPolynomial`
+- [ParentSelection](../components/parent_selection.md): Detailed usage of `TournamentSelection`
+- [SurvivorSelection](../components/survivor_selection.md): Detailed usage of `TruncationSelection`
+- [OptimizationStrategy](../components/strategies.md): List of strategies including `DirectStrategy`
+- [NonDominatedSorting](../components/nondominated_sorting.md): Implementation details of non-dominated sorting
+- [Dominator](../components/dominance.md): List of dominance predicates that can be swapped in via the `dominator` argument

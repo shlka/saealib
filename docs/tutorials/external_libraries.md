@@ -1,38 +1,38 @@
-# 外部ライブラリとの連携
+# Integrating External Libraries
 
-`saealib`は、外部の機械学習ライブラリを、独自の抽象基底クラスの背後に薄くラップしたアダプタを提供します。
+`saealib` provides adapters that thinly wrap external machine learning libraries behind its own abstract base classes.
 
-アダプタが翻訳するのは`Problem`/`Population`/`ctx`といった`saealib`側のデータ表現だけで、学習アルゴリズムそのものは外部ライブラリの実装をそのまま使います。
+The adapter only translates `saealib`-side data representations such as `Problem`/`Population`/`ctx`; the learning algorithm itself uses the external library's implementation as-is.
 
-現時点では、サロゲートモデルのアダプタ(scikit-learn、XGBoost、LightGBM、PyTorch)が実装されています。
+Currently, surrogate model adapters (scikit-learn, XGBoost, LightGBM, PyTorch) are implemented.
 
-## インストール
+## Installation
 
-各アダプタは、対応する`extra`を指定してインストールしたときだけ使えます。
+Each adapter can only be used once the corresponding `extra` is installed.
 
 ```bash
 pip install "saealib[sklearn]"
 ```
 
-インストール方法とextra一覧の詳細は[インストール](../getting_started/installation.md)を参照してください。
+See [Installation](../getting_started/installation.md) for how to install and the full list of extras.
 
-対応する`extra`をインストールしていない状態でアダプタをインポートすると、`ImportError`になります。
+Importing an adapter without the corresponding `extra` installed raises `ImportError`.
 
-## サロゲートアダプタ
+## Surrogate adapters
 
-各アダプタは`saealib`の`Surrogate`基底クラスを実装しており、組み込みの`RBFSurrogate`と同じように`surrogate`引数へ渡せます。
+Each adapter implements `saealib`'s `Surrogate` base class, and can be passed to the `surrogate` argument just like the built-in `RBFSurrogate`.
 
-| クラス | 対応する`extra` | ラップするモデル |
+| Class | Required `extra` | Wrapped model |
 |--------|--------|--------|
 | `SklearnGPRSurrogate` | `sklearn` | Gaussian Process Regressor |
 | `SklearnRFRSurrogate` | `sklearn` | Random Forest Regressor |
 | `SklearnSVMSurrogate` | `sklearn` | Support Vector Regression |
 | `SklearnNNSurrogate` | `sklearn` | Multi-layer Perceptron |
-| `SklearnXGBSurrogate` | `xgboost` | XGBoost回帰 |
-| `SklearnLGBMSurrogate` | `lightgbm` | LightGBM回帰 |
-| `TorchSurrogate` | `torch` | 任意のPyTorch `nn.Module` |
+| `SklearnXGBSurrogate` | `xgboost` | XGBoost regression |
+| `SklearnLGBMSurrogate` | `lightgbm` | LightGBM regression |
+| `TorchSurrogate` | `torch` | Any PyTorch `nn.Module` |
 
-コンストラクタへのキーワード引数は、そのまま対応するライブラリのモデルへ渡されます。
+Keyword arguments to the constructor are passed straight through to the corresponding library's model.
 
 ```python
 import numpy as np
@@ -56,11 +56,11 @@ result = minimize(
 )
 ```
 
-`Surrogate`インスタンスを`surrogate`引数に渡す挙動は、[単目的最適化](single_objective.md)の「コンポーネントの切り替え」で示した`RBFSurrogate`の例と同じで、内部で`LocalSurrogateManager`にラップされます。
+Passing a `Surrogate` instance to the `surrogate` argument works the same as the `RBFSurrogate` example in "Switching components" in [Single-Objective Optimization](single_objective.md) — internally it is wrapped in a `LocalSurrogateManager`.
 
-分類問題向けのアダプタ（実行可能性分類など）や、各アダプタの詳細な引数は[Surrogate](../components/surrogate.md)を参照してください。
+See [Surrogate](../components/surrogate.md) for adapters aimed at classification problems (e.g. feasibility classification) and the detailed arguments of each adapter.
 
-## 参照
+## References
 
 - {py:class}`saealib.Surrogate`
 - {py:class}`saealib.SklearnGPRSurrogate` / {py:class}`saealib.SklearnRFRSurrogate` / {py:class}`saealib.SklearnSVMSurrogate` / {py:class}`saealib.SklearnNNSurrogate`

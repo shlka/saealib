@@ -1,16 +1,16 @@
-# 単目的最適化
+# Single-Objective Optimization
 
-評価コストの高い目的関数を持つ単目的最適化問題を、`saealib`で解きます。
+Solve a single-objective optimization problem with an expensive-to-evaluate objective function, using `saealib`.
 
-まず問題を定義し、高レベルAPIの`minimize`で解いたあと、`Optimizer`による低レベルAPIへ進みます。
+First we define the problem and solve it with the high-level API `minimize`, then move on to the low-level API with `Optimizer`.
 
-各コンポーネントの詳しい仕様やカスタマイズ方法は、この後の節からリンクする[コンポーネント](../components/index.md)配下の各ページを参照してください。
+For the detailed specification and customization of each component, see the [Components](../components/index.md) pages linked from the following sections.
 
-## 問題設定
+## Problem setup
 
-シミュレーションのように、1回の呼び出しに時間がかかる目的関数を想定します。
+Assume an objective function whose single call takes a long time, like a simulation.
 
-ここでは例として、評価コストの高さを模したSphere関数を最小化します。
+Here, as an example, we minimize the Sphere function as a stand-in for an expensive-to-evaluate function.
 
 ```python
 import numpy as np
@@ -26,13 +26,13 @@ LB = [-5.0] * DIM
 UB = [5.0] * DIM
 ```
 
-`DIM`は設計変数の次元数、`LB`と`UB`はその下限と上限を与える`DIM`次元のリストです。
+`DIM` is the number of design-variable dimensions, and `LB`/`UB` are `DIM`-dimensional lists giving its lower and upper bounds.
 
-目的関数は、`DIM`次元の設計変数を受け取り、目的関数値を返す`Callable`として定義します。
+The objective function is defined as a `Callable` that takes a `DIM`-dimensional design variable and returns the objective value.
 
-## 高レベルAPI：minimize / maximize
+## High-level API: minimize / maximize
 
-`minimize`は、`dim`、`lb`、`ub`を指定するだけで最適化を実行できる高レベルAPIです。
+`minimize` is a high-level API that runs an optimization just by specifying `dim`, `lb`, and `ub`.
 
 ```python
 from saealib import minimize
@@ -45,66 +45,66 @@ print(result.fe)  # true function evaluations
 print(result.gen) # completed generations
 ```
 
-最大評価回数`max_fe`を省略すると、`200 * dim`が既定値として使われます。
+If the maximum number of evaluations `max_fe` is omitted, `200 * dim` is used as the default.
 
-評価回数を明示的に制限するには、次のように指定します。
+To explicitly limit the number of evaluations, specify it as follows.
 
 ```python
 result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, max_fe=500, seed=0)
 ```
 
-## コンポーネントの切り替え
+## Switching components
 
-`minimize`は、進化的アルゴリズム、サロゲートモデル、評価戦略という3つのコンポーネントを、それぞれ`algorithm`、`surrogate`、`strategy`引数の文字列で切り替えられます。
+`minimize` lets you switch three components — the evolutionary algorithm, the surrogate model, and the evaluation strategy — via the string-valued `algorithm`, `surrogate`, and `strategy` arguments, respectively.
 
-3つとも、文字列の代わりにインスタンスを直接渡すこともできます。
+For all three, you can also pass an instance directly instead of a string.
 
-各コンポーネントの内部動作やカスタマイズ方法は、[Algorithm](../components/algorithm.md)、[Surrogate](../components/surrogate.md)、[OptimizationStrategy](../components/strategies.md)のページで扱います。
+The internal behavior and customization of each component are covered on the [Algorithm](../components/algorithm.md), [Surrogate](../components/surrogate.md), and [OptimizationStrategy](../components/strategies.md) pages.
 
-### アルゴリズム
+### Algorithm
 
-`algorithm`引数は、候補解を生成する進化的アルゴリズムを選びます。
+The `algorithm` argument selects the evolutionary algorithm that generates candidate solutions.
 
-| 文字列 | クラス | 特徴 |
+| String | Class | Characteristics |
 |--------|--------|------|
-| `'GA'` | `GA` | 交叉と突然変異による探索（既定） |
-| `'PSO'` | `PSO` | 粒子の速度更新による探索 |
+| `'GA'` | `GA` | Search via crossover and mutation (default) |
+| `'PSO'` | `PSO` | Search via particle velocity updates |
 
 ```python
 result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, algorithm="PSO", seed=0)
 ```
 
-### サロゲート
+### Surrogate
 
-`surrogate`引数は、目的関数を近似するサロゲートモデルを選びます。
+The `surrogate` argument selects the surrogate model that approximates the objective function.
 
-| 文字列 | 解決される構成 | 説明 |
+| String | Resolved configuration | Description |
 |--------|--------|------|
-| `'rbf'` | `RBFSurrogate` + `LocalSurrogateManager`（既定） | ガウスRBFカーネルによる近傍点の局所フィット |
+| `'rbf'` | `RBFSurrogate` + `LocalSurrogateManager` (default) | Local fit over nearby points using a Gaussian RBF kernel |
 
 ```python
 result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, surrogate="rbf", seed=0)
 ```
 
-### 評価戦略
+### Evaluation strategy
 
-`strategy`引数は、生成した候補解のうちどれに真の（高コストな）評価を行うかを決める評価戦略を選びます。
+The `strategy` argument selects the evaluation strategy that decides which of the generated candidates receive a true (expensive) evaluation.
 
-| 文字列 | クラス | 動作 |
+| String | Class | Behavior |
 |--------|--------|------|
-| `'ib'` | `IndividualBasedStrategy` | 候補を個別にサロゲートで評価し、上位`evaluation_ratio`の割合だけを真に評価する（既定） |
-| `'gb'` | `GenerationBasedStrategy` | `gen_ctrl`世代分をサロゲートのみで進め、1世代だけ真に評価する |
-| `'ps'` | `PreSelectionStrategy` | 大量の候補をサロゲートで絞り込み、上位`n_select`個だけを真に評価する |
+| `'ib'` | `IndividualBasedStrategy` | Evaluates each candidate individually with the surrogate and truly evaluates only the top `evaluation_ratio` fraction (default) |
+| `'gb'` | `GenerationBasedStrategy` | Advances `gen_ctrl` generations using only the surrogate, then truly evaluates a single generation |
+| `'ps'` | `PreSelectionStrategy` | Narrows down a large pool of candidates with the surrogate and truly evaluates only the top `n_select` |
 
 ```python
 result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, strategy="ib", seed=0)
 ```
 
-## 低レベルAPI：Optimizer
+## Low-level API: Optimizer
 
-`minimize`は各コンポーネントを既定の組み合わせで結び付けますが、個々のパラメータまでは調整できません。
+`minimize` wires up each component with a default combination, but doesn't let you tune individual parameters.
 
-コンポーネントを個別にインスタンス化し、`Optimizer`に組み込めば、この制約を外せます。
+Instantiating components individually and assembling them into `Optimizer` removes this limitation.
 
 ```python
 import numpy as np
@@ -173,20 +173,20 @@ ctx = (
 archive_x = ctx.archive.get_array("x")
 archive_f = ctx.archive.get_array("f")[:, 0]
 best_idx = int(np.argmin(archive_f))
-print("最適解:", archive_x[best_idx])
-print("目的値:", archive_f[best_idx])
-print("評価回数:", ctx.fe)
+print("Best solution:", archive_x[best_idx])
+print("Objective value:", archive_f[best_idx])
+print("Evaluations:", ctx.fe)
 ```
 
-乱数シードは、`Optimizer(problem, seed=SEED)`と`LHSInitializer(..., seed=SEED)`の両方に同じ値を渡してください。
+Pass the same value to both `Optimizer(problem, seed=SEED)` and `LHSInitializer(..., seed=SEED)` for the random seed.
 
-`Optimizer`の`seed`は、`set_initializer()`を呼ばずに済ませたとき（`minimize`/`maximize`など）だけ、既定の`LHSInitializer`へ自動的に伝播します。
+`Optimizer`'s `seed` is only auto-propagated to the default `LHSInitializer` when you skip calling `set_initializer()` yourself (e.g. via `minimize`/`maximize`).
 
-`Initializer`を自分で組み立てる場合は、明示的に渡す必要があります。
+If you assemble the `Initializer` yourself, you need to pass it explicitly.
 
-`Termination`には複数の条件を渡せます。
+`Termination` accepts multiple conditions.
 
-列挙した条件は、いずれか1つが満たされた時点で終了します（OR結合）。
+The run ends as soon as any one of the listed conditions is met (logical OR).
 
 ```python
 from saealib import Termination, max_fe, max_gen
@@ -194,7 +194,7 @@ from saealib import Termination, max_fe, max_gen
 termination = Termination(max_fe(500), max_gen(200))
 ```
 
-カスタム条件をlambdaで追加することもできます。
+You can also add a custom condition with a lambda.
 
 ```python
 termination = Termination(
@@ -203,9 +203,9 @@ termination = Termination(
 )
 ```
 
-`run()`の代わりに`iterate()`を使うと、世代単位でコンテキストを取得できます。
+Using `iterate()` instead of `run()` lets you obtain the context generation by generation.
 
-進捗の記録や、カスタムな早期終了の実装に使えます。
+This is useful for recording progress or implementing custom early stopping.
 
 ```python
 optimizer = (
@@ -223,10 +223,10 @@ for ctx in optimizer.iterate():
     history.append((ctx.fe, best_f))
     print(f"gen={ctx.gen:4d}  fe={ctx.fe:4d}  best_f={best_f:.6f}")
 
-print("評価回数:", ctx.fe)
+print("Evaluations:", ctx.fe)
 ```
 
-## 参照
+## References
 
 - {py:func}`saealib.minimize` / {py:func}`saealib.maximize`
 - {py:class}`saealib.Optimizer`
