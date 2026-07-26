@@ -43,7 +43,9 @@ This is because the magnitude of uncertainty or a feasibility probability has no
 The typical usage is to extract training data with [TrainingSet](training_set.md)'s `ConstraintObjectiveSet`, and combine it with the objective-side acquisition function (e.g. EI) via `CompositeSurrogateManager`'s `product_combine`.
 
 ```python
-ei_manager = GlobalSurrogateManager(gp_surrogate, ExpectedImprovement(), ArchiveObjectiveSet())
+ei_manager = GlobalSurrogateManager(
+    gp_surrogate, ExpectedImprovement(), ArchiveObjectiveSet()
+)
 pof_manager = GlobalSurrogateManager(
     PerObjectiveSurrogate([gp_g1, gp_g2]),
     ProductOfFeasibility(),

@@ -20,7 +20,9 @@ def expensive_func(x):
 DIM = 5
 
 # nothing is printed here since logging.basicConfig has not been called yet
-result = minimize(expensive_func, dim=DIM, lb=[-5.0] * DIM, ub=[5.0] * DIM, max_fe=100, seed=0)
+result = minimize(
+    expensive_func, dim=DIM, lb=[-5.0] * DIM, ub=[5.0] * DIM, max_fe=100, seed=0
+)
 ```
 
 To display progress, enable INFO level with `logging.basicConfig`.
@@ -30,7 +32,9 @@ import logging
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-result = minimize(expensive_func, dim=DIM, lb=[-5.0] * DIM, ub=[5.0] * DIM, max_fe=100, seed=0)
+result = minimize(
+    expensive_func, dim=DIM, lb=[-5.0] * DIM, ub=[5.0] * DIM, max_fe=100, seed=0
+)
 # Generation 0 started. fe: 25. Best f: [14.04274116]
 # Generation 1 started. fe: 27. Best f: [14.04274116]
 # ...
@@ -41,7 +45,15 @@ result = minimize(expensive_func, dim=DIM, lb=[-5.0] * DIM, ub=[5.0] * DIM, max_
 If you don't want progress recorded at all, specify `verbose=False` to stop the handler from being registered.
 
 ```python
-result = minimize(expensive_func, dim=DIM, lb=[-5.0] * DIM, ub=[5.0] * DIM, max_fe=100, seed=0, verbose=False)
+result = minimize(
+    expensive_func,
+    dim=DIM,
+    lb=[-5.0] * DIM,
+    ub=[5.0] * DIM,
+    max_fe=100,
+    seed=0,
+    verbose=False,
+)
 ```
 
 ## Writing to a file
@@ -58,7 +70,9 @@ saealib_logger = logging.getLogger("saealib.callback.handlers")
 saealib_logger.addHandler(file_handler)
 saealib_logger.setLevel(logging.INFO)
 
-result = minimize(expensive_func, dim=DIM, lb=[-5.0] * DIM, ub=[5.0] * DIM, max_fe=100, seed=0)
+result = minimize(
+    expensive_func, dim=DIM, lb=[-5.0] * DIM, ub=[5.0] * DIM, max_fe=100, seed=0
+)
 ```
 
 ## Hypervolume logging for multi-objective problems

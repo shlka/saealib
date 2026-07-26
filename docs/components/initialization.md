@@ -97,7 +97,9 @@ class HaltonInitializer(Initializer):
 
         for i in range(self.n_init_archive):
             data = {
-                "x": archive_x[i], "f": result.f[i], "g": result.g[i],
+                "x": archive_x[i],
+                "f": result.f[i],
+                "g": result.g[i],
                 "cv": float(result.cv[i]),
             }
             archive.add(data)

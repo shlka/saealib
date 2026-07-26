@@ -39,10 +39,10 @@ from saealib import minimize
 
 result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, seed=0)
 
-print(result.x)   # optimal design variables  shape: (dim,)
-print(result.f)   # optimal objective value  shape: (n_obj,)
+print(result.x)  # optimal design variables  shape: (dim,)
+print(result.f)  # optimal objective value  shape: (n_obj,)
 print(result.fe)  # true function evaluations
-print(result.gen) # completed generations
+print(result.gen)  # completed generations
 ```
 
 If the maximum number of evaluations `max_fe` is omitted, `200 * dim` is used as the default.

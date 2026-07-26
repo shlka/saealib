@@ -63,7 +63,9 @@ def build_optimizer(max_fe_value):
             )
         )
         .set_surrogate_manager(
-            LocalSurrogateManager(RBFSurrogate(gaussian_kernel, dim=DIM), MeanPrediction())
+            LocalSurrogateManager(
+                RBFSurrogate(gaussian_kernel, dim=DIM), MeanPrediction()
+            )
         )
         .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.1))
         .set_termination(Termination(max_fe(max_fe_value)))
@@ -95,7 +97,7 @@ from saealib.context import OptimizationState
 loaded_ctx = OptimizationState.load("checkpoint.npz", problem)
 
 resumed_ctx = build_optimizer(600).run_from(loaded_ctx)
-print(resumed_ctx.fe)             # includes the evaluations from before saving
+print(resumed_ctx.fe)  # includes the evaluations from before saving
 print(resumed_ctx.data["resumed"])  # True
 ```
 

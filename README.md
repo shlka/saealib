@@ -131,8 +131,10 @@ For contributing or a development setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
 import numpy as np
 from saealib import minimize
 
+
 def sphere(x):
     return np.sum(x**2)
+
 
 result = minimize(
     sphere,

@@ -70,7 +70,9 @@ from saealib import Archive
 
 arc = Archive(attrs, init_capacity=4, key_attr="x")
 arc.add(x=np.array([0.1, 0.2]), f=np.array([1.0]), cv=0.0)
-arc.add(x=np.array([0.1, 0.2]), f=np.array([1.0]), cv=0.0)  # the duplicate solution is ignored
+arc.add(
+    x=np.array([0.1, 0.2]), f=np.array([1.0]), cv=0.0
+)  # the duplicate solution is ignored
 idx, dist = arc.get_knn(np.array([0.1, 0.2]), k=1)
 ```
 

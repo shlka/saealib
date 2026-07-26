@@ -33,8 +33,7 @@ What is saealib?
 ```python
 from saealib import minimize
 
-result = minimize(func, dim=5,
-                  lb=-5, ub=5)
+result = minimize(func, dim=5, lb=-5, ub=5)
 ```
 
 A boilerplate-free high-level API via `minimize()` / `maximize()`.

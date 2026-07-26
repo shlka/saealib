@@ -69,7 +69,9 @@ surrogate_manager = LocalSurrogateManager(
     accuracy_evaluator=LOOAccuracyEvaluator(),
 )
 
-initializer = LHSInitializer(n_init_archive=5 * DIM, n_init_population=4 * DIM, seed=SEED)
+initializer = LHSInitializer(
+    n_init_archive=5 * DIM, n_init_population=4 * DIM, seed=SEED
+)
 ```
 
 `last_accuracy` is a `SurrogateAccuracy` instance, from which you can retrieve a value by specifying a metric name, e.g. `.get("spearman")`.

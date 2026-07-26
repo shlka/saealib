@@ -57,8 +57,11 @@ This is also the form you'd use when building a new pipeline by combining [Pipel
 ```python
 from saealib import OptimizationStrategy, Pipeline
 from saealib.stages import (
-    CountGenerationStage, AskStage, TrueEvaluationStage,
-    ArchiveUpdateStage, TellStage,
+    CountGenerationStage,
+    AskStage,
+    TrueEvaluationStage,
+    ArchiveUpdateStage,
+    TellStage,
 )
 
 
@@ -69,13 +72,15 @@ class SimpleDirectStrategy(OptimizationStrategy):
 
     def step(self, ctx, provider):
         cbmanager = getattr(provider, "cbmanager", None)
-        pipeline = Pipeline([
-            CountGenerationStage(),
-            AskStage(provider.algorithm, cbmanager=cbmanager),
-            TrueEvaluationStage(provider.evaluator, cbmanager=cbmanager),
-            ArchiveUpdateStage(),
-            TellStage(provider.algorithm),
-        ])
+        pipeline = Pipeline(
+            [
+                CountGenerationStage(),
+                AskStage(provider.algorithm, cbmanager=cbmanager),
+                TrueEvaluationStage(provider.evaluator, cbmanager=cbmanager),
+                ArchiveUpdateStage(),
+                TellStage(provider.algorithm),
+            ]
+        )
         return pipeline.execute(ctx)
 ```
 

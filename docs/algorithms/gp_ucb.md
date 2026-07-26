@@ -89,7 +89,9 @@ algorithm = GA(
     SequentialSelection(),
     TruncationSelection(),
 )
-surrogate_manager = GlobalSurrogateManager(SklearnGPRSurrogate(), LowerConfidenceBound(kappa=2.0))
+surrogate_manager = GlobalSurrogateManager(
+    SklearnGPRSurrogate(), LowerConfidenceBound(kappa=2.0)
+)
 strategy = IndividualBasedStrategy(evaluation_ratio=0.2)
 
 opt = (

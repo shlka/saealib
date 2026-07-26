@@ -72,8 +72,8 @@ class RecentKSet(TrainingSet):
         self.k = k
 
     def build(self, archive, population, ctx, candidate_x=None):
-        x = archive.get_array("x")[-self.k:]
-        y = archive.get_array("f")[-self.k:]
+        x = archive.get_array("x")[-self.k :]
+        y = archive.get_array("f")[-self.k :]
         return TrainingData(train_x=x, train_y=y)
 ```
 

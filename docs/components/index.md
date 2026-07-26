@@ -68,12 +68,14 @@ problem = Problem(func, dim=5, lb=[-5] * 5, ub=[5] * 5, n_obj=1, direction=[-1])
 
 opt = (
     Optimizer(problem)
-    .set_algorithm(GA(
-        CrossoverBLXAlpha(prob=0.7, alpha=0.4),
-        MutationUniform(prob_var=0.3),
-        SequentialSelection(),
-        TruncationSelection(),
-    ))
+    .set_algorithm(
+        GA(
+            CrossoverBLXAlpha(prob=0.7, alpha=0.4),
+            MutationUniform(prob_var=0.3),
+            SequentialSelection(),
+            TruncationSelection(),
+        )
+    )
     .set_surrogate_manager(
         GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, dim=5), MeanPrediction())
     )

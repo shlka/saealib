@@ -67,6 +67,7 @@ from saealib.surrogate.base import Surrogate
 class MyCustomSurrogate(Surrogate):
     def __init__(self, alpha: float = 1.0):
         self.alpha = alpha
+
     ...
 ```
 

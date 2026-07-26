@@ -112,7 +112,9 @@ class RandomWalkAlgorithm(Algorithm):
     def tell(self, ctx, provider, offspring):
         parent_f = ctx.population.get_array("f")
         child_f = offspring.get_array("f")
-        better = (child_f[:, 0] * ctx.direction[0]) > (parent_f[:, 0] * ctx.direction[0])
+        better = (child_f[:, 0] * ctx.direction[0]) > (
+            parent_f[:, 0] * ctx.direction[0]
+        )
         ctx.population.get_array("x")[better] = offspring.get_array("x")[better]
         ctx.population.get_array("f")[better] = offspring.get_array("f")[better]
 ```

@@ -75,9 +75,11 @@ def __init__(self, ..., eps=None, *, eps_cv=1e-6, eps_obj=1e-6):
 ```python
 from saealib._deprecated import deprecated_class
 
+
 @deprecated_class("NewClassName")
 class OldClassName(NewClassName):
     """Deprecated alias of :class:`NewClassName`."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 ```
@@ -96,8 +98,7 @@ If a test class exercises a deprecated API without testing the warning itself, s
 
 ```python
 @pytest.mark.filterwarnings("ignore::FutureWarning")
-class TestLegacyBehavior:
-    ...
+class TestLegacyBehavior: ...
 ```
 
 ### 4. Testing Policy
