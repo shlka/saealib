@@ -112,7 +112,12 @@ html_theme_options = {
     # (same reason as navbar_persistent above) — otherwise setting
     # navbar_end at all drops the theme's own defaults for them, which is
     # why the light/dark toggle and the GitHub icon (icon_links) disappeared.
-    "navbar_end": ["version-switcher", "lang-switcher", "theme-switcher", "navbar-icon-links"],
+    "navbar_end": [
+        "version-switcher",
+        "lang-switcher",
+        "theme-switcher",
+        "navbar-icon-links",
+    ],
     "switcher": {
         "json_url": html_baseurl.rstrip("/") + "/versions.json",
         # Placeholder; overwritten per-build by _set_version_switcher_match()
