@@ -1,0 +1,43 @@
+﻿saealib.DecompositionComparator
+===============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: DecompositionComparator
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~DecompositionComparator.__init__
+   ~DecompositionComparator.compare
+   ~DecompositionComparator.compare_population
+   ~DecompositionComparator.sort_population
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.DecompositionComparator.__init__
+
+
+.. automethod:: saealib.DecompositionComparator.compare
+
+
+.. automethod:: saealib.DecompositionComparator.compare_population
+
+
+.. automethod:: saealib.DecompositionComparator.sort_population
+
+
+

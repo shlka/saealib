@@ -1,0 +1,35 @@
+﻿saealib.Decomposition
+=====================
+
+.. currentmodule:: saealib
+
+.. autoclass:: Decomposition
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~Decomposition.__init__
+   ~Decomposition.aggregate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.Decomposition.__init__
+
+
+.. automethod:: saealib.Decomposition.aggregate
+
+
+

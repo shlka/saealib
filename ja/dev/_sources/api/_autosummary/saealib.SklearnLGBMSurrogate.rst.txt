@@ -1,0 +1,47 @@
+﻿saealib.SklearnLGBMSurrogate
+============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SklearnLGBMSurrogate
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SklearnLGBMSurrogate.__init__
+   ~SklearnLGBMSurrogate.fit
+   ~SklearnLGBMSurrogate.post_fit
+   ~SklearnLGBMSurrogate.predict
+   ~SklearnLGBMSurrogate.with_post_fit
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SklearnLGBMSurrogate.__init__
+
+
+.. automethod:: saealib.SklearnLGBMSurrogate.fit
+
+
+.. automethod:: saealib.SklearnLGBMSurrogate.post_fit
+
+
+.. automethod:: saealib.SklearnLGBMSurrogate.predict
+
+
+.. automethod:: saealib.SklearnLGBMSurrogate.with_post_fit
+
+
+

@@ -1,0 +1,103 @@
+﻿saealib.ParetoArchive
+=====================
+
+.. currentmodule:: saealib
+
+.. autoclass:: ParetoArchive
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ParetoArchive.__init__
+   ~ParetoArchive.add
+   ~ParetoArchive.append
+   ~ParetoArchive.argsort
+   ~ParetoArchive.clear
+   ~ParetoArchive.delete
+   ~ParetoArchive.empty_like
+   ~ParetoArchive.extend
+   ~ParetoArchive.extract
+   ~ParetoArchive.get
+   ~ParetoArchive.get_array
+   ~ParetoArchive.get_cache
+   ~ParetoArchive.get_readonly_array
+   ~ParetoArchive.mod_structure
+   ~ParetoArchive.mod_value
+   ~ParetoArchive.reorder
+   ~ParetoArchive.set_cache
+   ~ParetoArchive.truncate
+   ~ParetoArchive.update_array
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.ParetoArchive.__init__
+
+
+.. automethod:: saealib.ParetoArchive.add
+
+
+.. automethod:: saealib.ParetoArchive.append
+
+
+.. automethod:: saealib.ParetoArchive.argsort
+
+
+.. automethod:: saealib.ParetoArchive.clear
+
+
+.. automethod:: saealib.ParetoArchive.delete
+
+
+.. automethod:: saealib.ParetoArchive.empty_like
+
+
+.. automethod:: saealib.ParetoArchive.extend
+
+
+.. automethod:: saealib.ParetoArchive.extract
+
+
+.. automethod:: saealib.ParetoArchive.get
+
+
+.. automethod:: saealib.ParetoArchive.get_array
+
+
+.. automethod:: saealib.ParetoArchive.get_cache
+
+
+.. automethod:: saealib.ParetoArchive.get_readonly_array
+
+
+.. automethod:: saealib.ParetoArchive.mod_structure
+
+
+.. automethod:: saealib.ParetoArchive.mod_value
+
+
+.. automethod:: saealib.ParetoArchive.reorder
+
+
+.. automethod:: saealib.ParetoArchive.set_cache
+
+
+.. automethod:: saealib.ParetoArchive.truncate
+
+
+.. automethod:: saealib.ParetoArchive.update_array
+
+
+

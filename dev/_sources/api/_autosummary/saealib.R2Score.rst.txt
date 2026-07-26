@@ -1,0 +1,35 @@
+﻿saealib.R2Score
+===============
+
+.. currentmodule:: saealib
+
+.. autoclass:: R2Score
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~R2Score.__init__
+   ~R2Score.compute
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.R2Score.__init__
+
+
+.. automethod:: saealib.R2Score.compute
+
+
+

@@ -1,0 +1,35 @@
+﻿saealib.KFoldAccuracyEvaluator
+==============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: KFoldAccuracyEvaluator
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~KFoldAccuracyEvaluator.__init__
+   ~KFoldAccuracyEvaluator.evaluate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.KFoldAccuracyEvaluator.__init__
+
+
+.. automethod:: saealib.KFoldAccuracyEvaluator.evaluate
+
+
+

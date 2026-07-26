@@ -1,0 +1,1941 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>saealib.surrogate.manager &#8212; saealib 0.1.0b5.dev55+ga7b051a6a documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=88dfc25e" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/documentation_options.js?v=5f588dce"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}`;
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/saealib/surrogate/manager';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://shlka.github.io/saealib/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'dev';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <script src="../../../_static/js/lang-switch.js?v=6860dbcf"></script>
+    <script src="../../../_static/js/sidebar-dialog-fix.js?v=decd8175"></script>
+    <script src="../../../_static/js/mermaid-scale.js?v=e063b89f"></script>
+    <link rel="canonical" href="https://shlka.github.io/saealib/_modules/saealib/surrogate/manager.html" />
+    <link rel="icon" href="../../../_static/icon.svg"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo-light.svg" class="logo__image only-light" alt="saealib"/>
+    <img src="../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="saealib"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../components/index.html">
+    Components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../algorithms/index.html">
+    Algorithms
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../references.html">
+    References
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item"><div class="lang-switcher__container dropdown pst-js-only">
+  <button id="pst-lang-switcher-button-2"
+    type="button"
+    class="lang-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-lang-switcher-list-2"
+    aria-label="Language switcher list"
+  >
+    Language  <!-- this text is replaced by lang-switch.js on page load -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-lang-switcher-list-2"
+    class="lang-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-lang-switcher-button-2">
+    <!-- dropdown will be populated by lang-switch.js on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/shlka/saealib" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../components/index.html">
+    Components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../algorithms/index.html">
+    Algorithms
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../references.html">
+    References
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-3"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-3"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-3"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-3">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item"><div class="lang-switcher__container dropdown pst-js-only">
+  <button id="pst-lang-switcher-button-3"
+    type="button"
+    class="lang-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-lang-switcher-list-3"
+    aria-label="Language switcher list"
+  >
+    Language  <!-- this text is replaced by lang-switch.js on page load -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-lang-switcher-list-3"
+    class="lang-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-lang-switcher-button-3">
+    <!-- dropdown will be populated by lang-switch.js on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/shlka/saealib" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">saealib.surrogate.manager</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for saealib.surrogate.manager</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Surrogate manager: coordinates the fit/predict/score pipeline.</span>
+
+<span class="sd">Responsibility split:</span>
+<span class="sd">  Surrogate           -- fits a model and predicts SurrogatePrediction</span>
+<span class="sd">  AcquisitionFunction -- converts SurrogatePrediction to scalar scores</span>
+<span class="sd">  SurrogateManager    -- coordinates the two above; exposes score_candidates()</span>
+
+<span class="sd">Classes</span>
+<span class="sd">-------</span>
+<span class="sd">GlobalSurrogateManager</span>
+<span class="sd">    Fits once on the full archive; batch predict and score.</span>
+<span class="sd">LocalSurrogateManager</span>
+<span class="sd">    Fits a local KNN model per candidate.</span>
+<span class="sd">CompositeSurrogateManager</span>
+<span class="sd">    Combines scores from multiple sub-managers via an injectable combine_fn.</span>
+<span class="sd">PairwiseSurrogateManager</span>
+<span class="sd">    Fits a pairwise classifier; scores by win rate against archive references.</span>
+
+<span class="sd">Combine functions</span>
+<span class="sd">-----------------</span>
+<span class="sd">product_combine</span>
+<span class="sd">    Element-wise product of score arrays (e.g. EI x PoF).</span>
+<span class="sd">rank_weighted_combine</span>
+<span class="sd">    Returns a combine function that rank-normalises then takes a weighted average.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.accuracy</span><span class="w"> </span><span class="kn">import</span> <span class="n">AccuracyEvaluator</span><span class="p">,</span> <span class="n">SurrogateAccuracy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComparisonSurrogate</span><span class="p">,</span> <span class="n">Surrogate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurrogatePrediction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.training_set</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ArchiveObjectiveSet</span><span class="p">,</span>
+    <span class="n">KNNObjectiveSet</span><span class="p">,</span>
+    <span class="n">PairwiseComparisonSet</span><span class="p">,</span>
+    <span class="n">TrainingSet</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span>
+
+
+<div class="viewcode-block" id="SurrogateManager">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SurrogateManager</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract base class for surrogate managers.</span>
+
+<span class="sd">    A SurrogateManager coordinates the fit/predict/score pipeline and</span>
+<span class="sd">    returns both scalar acquisition scores and the underlying predictions</span>
+<span class="sd">    so that callers (e.g. IndividualBasedStrategy) can assign predicted</span>
+<span class="sd">    objective values to offspring.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    last_accuracy : SurrogateAccuracy or None</span>
+<span class="sd">        Accuracy metrics computed after the most recent :meth:`fit` call.</span>
+<span class="sd">        ``None`` until the first fit or when no evaluator is configured.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">last_accuracy</span><span class="p">:</span> <span class="n">SurrogateAccuracy</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sanitize_nan</span><span class="p">(</span>
+        <span class="n">scores</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">predictions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Replace NaN scores with -inf and mark failed predictions explicitly.</span>
+
+<span class="sd">        Any candidate whose acquisition score is NaN (surrogate fit failed,</span>
+<span class="sd">        external library returned NaN, etc.) is given score=-inf so it is</span>
+<span class="sd">        never selected by the strategy&#39;s pre-selection step.  The</span>
+<span class="sd">        corresponding prediction&#39;s _tell_f is set to an explicit NaN array,</span>
+<span class="sd">        following the same convention as ArchiveBasedManager, so strategies</span>
+<span class="sd">        can detect and handle invalid predictions without comparing NaN</span>
+<span class="sd">        objective values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nan_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">nan_mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">scores</span><span class="p">[</span><span class="n">nan_mask</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">nan_mask</span><span class="p">)[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">nan_f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            <span class="n">predictions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">SurrogatePrediction</span><span class="p">(</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">std</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">std</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+                <span class="n">_tell_f</span><span class="o">=</span><span class="n">nan_f</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span>
+
+<div class="viewcode-block" id="SurrogateManager.fit">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Pre-fit the surrogate on the archive.</span>
+
+<span class="sd">        Call once before a sequence of ``score_candidates(..., refit=False)``</span>
+<span class="sd">        calls when the archive does not change between calls (e.g. the</span>
+<span class="sd">        surrogate-only inner loop of ``GenerationBasedStrategy``).</span>
+<span class="sd">        The default implementation is a no-op; override in managers that</span>
+<span class="sd">        maintain a fitted surrogate model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        archive : Archive</span>
+<span class="sd">            Archive of evaluated solutions used for surrogate training.</span>
+<span class="sd">        ctx : OptimizationState or None, optional</span>
+<span class="sd">            Current optimization context.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="SurrogateManager.score_candidates">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.score_candidates">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">score_candidates</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">refit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Score candidate solutions using the surrogate model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        candidates_x : np.ndarray</span>
+<span class="sd">            Candidate design variable matrix. shape: (n_candidates, dim)</span>
+<span class="sd">        archive : Archive</span>
+<span class="sd">            Archive of evaluated solutions used for surrogate training.</span>
+<span class="sd">        ctx : OptimizationState or None, optional</span>
+<span class="sd">            Current optimization context. Passed to ``TrainingSet.build``</span>
+<span class="sd">            for strategies that require comparator or population access.</span>
+<span class="sd">        refit : bool, optional</span>
+<span class="sd">            If ``True`` (default), fit the surrogate before scoring.</span>
+<span class="sd">            Pass ``False`` after an explicit :meth:`fit` call to skip</span>
+<span class="sd">            redundant re-fitting when the archive has not changed.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        scores : np.ndarray</span>
+<span class="sd">            Acquisition scores. shape: (n_candidates,). Higher is better.</span>
+<span class="sd">        predictions : list[SurrogatePrediction]</span>
+<span class="sd">            Surrogate predictions for each candidate.</span>
+<span class="sd">            predictions[i].value shape: (1, n_obj)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="SurrogateManager.iter_acquisitions">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.iter_acquisitions">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">iter_acquisitions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">AcquisitionFunction</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield every ``AcquisitionFunction`` owned by this manager.</span>
+
+<span class="sd">        Used by ``Optimizer._inject_acquisition_directions()`` to auto-inject</span>
+<span class="sd">        ``problem.direction`` into direction-sensitive acquisition functions</span>
+<span class="sd">        at run start. The default implementation yields ``self.acquisition``</span>
+<span class="sd">        if present (covers ``GlobalSurrogateManager``/``LocalSurrogateManager``)</span>
+<span class="sd">        and nothing otherwise (e.g. ``PairwiseSurrogateManager``, which has no</span>
+<span class="sd">        acquisition function). ``CompositeSurrogateManager`` overrides this to</span>
+<span class="sd">        delegate to its sub-managers.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Iterator[AcquisitionFunction]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">acq</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;acquisition&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">acq</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">acq</span></div>
+
+
+<div class="viewcode-block" id="SurrogateManager.post_score">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.post_score">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post_score</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">scores</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">predictions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">],</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Post-score lifecycle hook; override to inject custom processing.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scores : np.ndarray</span>
+<span class="sd">            Acquisition scores. shape: (n_candidates,)</span>
+<span class="sd">        predictions : list[SurrogatePrediction]</span>
+<span class="sd">            Surrogate predictions for each candidate.</span>
+<span class="sd">        ctx : OptimizationState or None, optional</span>
+<span class="sd">            Current optimization context.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple[np.ndarray, list[SurrogatePrediction]]</span>
+<span class="sd">            Processed scores and predictions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span></div>
+
+
+<div class="viewcode-block" id="SurrogateManager.with_post_score">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.with_post_score">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_post_score</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span>
+            <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">],</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span>
+            <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]],</span>
+        <span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurrogateManager</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a copy of this manager with ``fn`` appended to the hook.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fn : callable</span>
+<span class="sd">            ``fn(scores, predictions, ctx) -&gt; (scores, predictions)``</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        SurrogateManager</span>
+<span class="sd">            Shallow copy with the hook registered.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">prev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_score</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">post_score</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">:</span> <span class="n">fn</span><span class="p">(</span>  <span class="c1"># type: ignore  # lambda hook; slot type stricter than inferred lambda signature</span>
+            <span class="o">*</span><span class="n">prev</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">ctx</span><span class="p">),</span> <span class="n">ctx</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">new</span></div>
+
+
+<div class="viewcode-block" id="SurrogateManager.on_generation_end">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.on_generation_end">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_generation_end</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">gen</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;End-of-generation hook; override to update internal state.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="SurrogateManager.with_on_generation_end">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.with_on_generation_end">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_on_generation_end</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurrogateManager</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a copy of this manager with ``fn`` appended to the hook.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fn : callable</span>
+<span class="sd">            ``fn(gen, archive, ctx) -&gt; None``</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        SurrogateManager</span>
+<span class="sd">            Shallow copy with the hook registered.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">prev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_generation_end</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_chained</span><span class="p">(</span>
+            <span class="n">gen</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+            <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span>
+            <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">prev</span><span class="p">(</span><span class="n">gen</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+            <span class="n">fn</span><span class="p">(</span><span class="n">gen</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+
+        <span class="n">new</span><span class="o">.</span><span class="n">on_generation_end</span> <span class="o">=</span> <span class="n">_chained</span>  <span class="c1"># type: ignore  # chained callable; hook slot type narrower than Callable</span>
+        <span class="k">return</span> <span class="n">new</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="GlobalSurrogateManager">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GlobalSurrogateManager</span><span class="p">(</span><span class="n">SurrogateManager</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Surrogate manager that fits once on the full archive.</span>
+
+<span class="sd">    Fits the surrogate on all archived solutions, then predicts and scores</span>
+<span class="sd">    all candidates in a single batch. Suitable when global approximation</span>
+<span class="sd">    quality is sufficient.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    surrogate : Surrogate</span>
+<span class="sd">        Surrogate model instance.</span>
+<span class="sd">    acquisition : AcquisitionFunction</span>
+<span class="sd">        Acquisition function used to score predictions.</span>
+<span class="sd">    training_set : TrainingSet or None</span>
+<span class="sd">        Strategy object for building training data. Defaults to</span>
+<span class="sd">        ``ArchiveObjectiveSet()``, which preserves the previous behaviour.</span>
+<span class="sd">    accuracy_evaluator : AccuracyEvaluator or None</span>
+<span class="sd">        If provided, :meth:`fit` computes accuracy metrics after each fit</span>
+<span class="sd">        and stores them in :attr:`last_accuracy`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GlobalSurrogateManager.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">surrogate</span><span class="p">:</span> <span class="n">Surrogate</span><span class="p">,</span>
+        <span class="n">acquisition</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
+        <span class="n">training_set</span><span class="p">:</span> <span class="n">TrainingSet</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">accuracy_evaluator</span><span class="p">:</span> <span class="n">AccuracyEvaluator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span> <span class="o">=</span> <span class="n">surrogate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="o">=</span> <span class="n">acquisition</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_set</span><span class="p">:</span> <span class="n">TrainingSet</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">training_set</span> <span class="k">if</span> <span class="n">training_set</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">ArchiveObjectiveSet</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accuracy_evaluator</span> <span class="o">=</span> <span class="n">accuracy_evaluator</span></div>
+
+
+<div class="viewcode-block" id="GlobalSurrogateManager.fit">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the surrogate on the full archive.</span>
+
+<span class="sd">        If an ``accuracy_evaluator`` was supplied at construction, accuracy</span>
+<span class="sd">        metrics are computed immediately after fitting and stored in</span>
+<span class="sd">        :attr:`last_accuracy`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">population</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span> <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_set</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">candidate_x</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">train_x</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">train_y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">post_fit</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">train_x</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">train_y</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">accuracy_evaluator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_accuracy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">accuracy_evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">train_x</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">train_y</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GlobalSurrogateManager.score_candidates">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager.score_candidates">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">score_candidates</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">refit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit on full archive, predict and score all candidates at once.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">refit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span> <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span><span class="o">.</span><span class="n">compute_reference</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
+        <span class="n">prediction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">candidates_x</span><span class="p">)</span>  <span class="c1"># mean: (n_candidates, n_obj)</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
+
+        <span class="c1"># Split batch prediction into per-candidate SurrogatePrediction objects</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">_split_prediction</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span>
+        <span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sanitize_nan</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_score</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LocalSurrogateManager">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.LocalSurrogateManager.html#saealib.LocalSurrogateManager">[docs]</a>
+<span class="nd">@register</span><span class="p">()</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LocalSurrogateManager</span><span class="p">(</span><span class="n">SurrogateManager</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Surrogate manager that fits a local model per candidate (pre-selection).</span>
+
+<span class="sd">    For each candidate, retrieves the k nearest neighbors from the archive,</span>
+<span class="sd">    fits the surrogate on that local neighborhood, and predicts the</span>
+<span class="sd">    candidate&#39;s objective value. This corresponds to the individual-based</span>
+<span class="sd">    local modeling strategy common in SAEA literature.</span>
+
+<span class="sd">    NOTE: The same surrogate instance is reused across candidates (re-fit</span>
+<span class="sd">    each iteration). This is not thread-safe. For parallel use, provide a</span>
+<span class="sd">    surrogate factory instead (future work).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    surrogate : Surrogate</span>
+<span class="sd">        Surrogate model instance (re-fit per candidate).</span>
+<span class="sd">    acquisition : AcquisitionFunction</span>
+<span class="sd">        Acquisition function used to score predictions.</span>
+<span class="sd">    training_set : TrainingSet or None</span>
+<span class="sd">        Strategy object for building training data per candidate. Defaults to</span>
+<span class="sd">        ``KNNObjectiveSet(n_neighbors=50)``, which preserves the previous</span>
+<span class="sd">        behaviour.</span>
+<span class="sd">    accuracy_evaluator : AccuracyEvaluator or None</span>
+<span class="sd">        If provided, :meth:`score_candidates` computes accuracy metrics when</span>
+<span class="sd">        ``refit=True`` and stores them in :attr:`last_accuracy`.  Accuracy is</span>
+<span class="sd">        estimated by fitting a local model for each archive point via the same</span>
+<span class="sd">        ``training_set`` and comparing the prediction against the true value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="LocalSurrogateManager.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.LocalSurrogateManager.html#saealib.LocalSurrogateManager.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">surrogate</span><span class="p">:</span> <span class="n">Surrogate</span><span class="p">,</span>
+        <span class="n">acquisition</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
+        <span class="n">training_set</span><span class="p">:</span> <span class="n">TrainingSet</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">accuracy_evaluator</span><span class="p">:</span> <span class="n">AccuracyEvaluator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span> <span class="o">=</span> <span class="n">surrogate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="o">=</span> <span class="n">acquisition</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_set</span><span class="p">:</span> <span class="n">TrainingSet</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">training_set</span>
+            <span class="k">if</span> <span class="n">training_set</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">KNNObjectiveSet</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accuracy_evaluator</span> <span class="o">=</span> <span class="n">accuracy_evaluator</span></div>
+
+
+<div class="viewcode-block" id="LocalSurrogateManager.fit">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.LocalSurrogateManager.html#saealib.LocalSurrogateManager.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute accuracy metrics from the archive (no global model is fitted).</span>
+
+<span class="sd">        For ``LocalSurrogateManager``, there is no persistent global surrogate</span>
+<span class="sd">        to pre-fit; local models are always built per candidate inside</span>
+<span class="sd">        :meth:`score_candidates`.  However, calling :meth:`fit` explicitly</span>
+<span class="sd">        (as ``GenerationBasedStrategy`` does before its inner loop) still</span>
+<span class="sd">        triggers accuracy evaluation so that :attr:`last_accuracy` is available</span>
+<span class="sd">        regardless of which strategy is used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">accuracy_evaluator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">population</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span> <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_accuracy</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LocalSurrogateManager.score_candidates">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.LocalSurrogateManager.html#saealib.LocalSurrogateManager.score_candidates">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">score_candidates</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">refit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit a local model per candidate and score each individually.</span>
+
+<span class="sd">        When ``refit=True`` and an ``accuracy_evaluator`` is configured,</span>
+<span class="sd">        accuracy is estimated inline using a nearest-neighbor holdout method:</span>
+<span class="sd">        for each candidate, the closest archive neighbor is reserved as a</span>
+<span class="sd">        validation point and excluded from training.  Metrics are averaged</span>
+<span class="sd">        over all candidates and stored in :attr:`last_accuracy`.</span>
+
+<span class="sd">        Because the holdout point is excluded from training, the effective</span>
+<span class="sd">        training-set size is ``n_neighbors - 1`` when an accuracy evaluator is</span>
+<span class="sd">        active.  Without an accuracy evaluator the full ``n_neighbors`` points</span>
+<span class="sd">        are always used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">predictions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span> <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span><span class="o">.</span><span class="n">compute_reference</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
+        <span class="n">population</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span> <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">compute_accuracy</span> <span class="o">=</span> <span class="n">refit</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">accuracy_evaluator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">y_true_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">y_pred_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">candidates_x</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_set</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">candidate_x</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">compute_accuracy</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">train_x</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="c1"># Hold out the nearest neighbor (index 0 when KNN-sorted) as</span>
+                <span class="c1"># validation to get an unbiased estimate of local model accuracy.</span>
+                <span class="n">val_x</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">train_x</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">val_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">train_y</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+                <span class="n">train_x</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">train_x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                <span class="n">train_y</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">train_y</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">val_x</span> <span class="o">=</span> <span class="n">val_y</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">train_x</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">train_x</span>
+                <span class="n">train_y</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">train_y</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">post_fit</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># mean: (1, n_obj)</span>
+            <span class="n">predictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">val_x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">val_y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">val_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">val_x</span><span class="p">)</span>
+                    <span class="n">y_true_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val_y</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="n">y_pred_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val_pred</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="k">pass</span>
+
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">predictions</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sanitize_nan</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">compute_accuracy</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">y_true_list</span><span class="p">:</span>
+                <span class="n">y_true</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">y_true_list</span><span class="p">)</span>
+                <span class="n">y_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">y_pred_list</span><span class="p">)</span>
+                <span class="n">metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">accuracy_evaluator</span><span class="o">.</span><span class="n">_compute_metrics</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">last_accuracy</span> <span class="o">=</span> <span class="n">SurrogateAccuracy</span><span class="p">(</span>
+                    <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">y_true_list</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">last_accuracy</span> <span class="o">=</span> <span class="n">SurrogateAccuracy</span><span class="p">(</span><span class="n">n_samples</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_score</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_accuracy</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span>
+        <span class="n">population</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute accuracy via LOO with self-exclusion on archive points.</span>
+
+<span class="sd">        Called by :meth:`fit` for the ``GenerationBasedStrategy`` pattern.</span>
+<span class="sd">        For each archive point ``x_i``, the local model is built from the</span>
+<span class="sd">        ``n_neighbors`` nearest neighbors of ``x_i`` **excluding ``x_i``</span>
+<span class="sd">        itself**, and then predicts ``x_i``.  This avoids the self-inclusion</span>
+<span class="sd">        bias that occurs when an interpolating surrogate (e.g. RBF) is fitted</span>
+<span class="sd">        on data that includes the query point.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">archive_x</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">x</span>
+        <span class="n">archive_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">archive</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">archive_x</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_accuracy</span> <span class="o">=</span> <span class="n">SurrogateAccuracy</span><span class="p">(</span><span class="n">n_samples</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">n_neighbors</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">training_set</span><span class="p">,</span> <span class="s2">&quot;n_neighbors&quot;</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">y_true_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">y_pred_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="c1"># Exclude x_i from its own neighborhood (LOO self-exclusion)</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+            <span class="n">mask</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">loo_x</span> <span class="o">=</span> <span class="n">archive_x</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+            <span class="n">loo_y</span> <span class="o">=</span> <span class="n">archive_y</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+            <span class="n">dists</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">loo_x</span> <span class="o">-</span> <span class="n">archive_x</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">n_neighbors</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">loo_x</span><span class="p">))</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">dists</span><span class="p">)[:</span><span class="n">k</span><span class="p">]</span>
+            <span class="n">train_x</span> <span class="o">=</span> <span class="n">loo_x</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">train_y</span> <span class="o">=</span> <span class="n">loo_y</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+            <span class="n">surrogate_copy</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">surrogate_copy</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span><span class="p">)</span>
+                <span class="n">pred</span> <span class="o">=</span> <span class="n">surrogate_copy</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">archive_x</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="n">y_true_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">archive_y</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">y_pred_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pred</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">y_true_list</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_accuracy</span> <span class="o">=</span> <span class="n">SurrogateAccuracy</span><span class="p">(</span><span class="n">n_samples</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">y_true</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">y_true_list</span><span class="p">)</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">y_pred_list</span><span class="p">)</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">accuracy_evaluator</span><span class="o">.</span><span class="n">_compute_metrics</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>  <span class="c1"># type: ignore  # caller guarantees non-None; ty doesn&#39;t narrow across method boundary</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_accuracy</span> <span class="o">=</span> <span class="n">SurrogateAccuracy</span><span class="p">(</span><span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="n">n</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="product_combine">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.product_combine.html#saealib.product_combine">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">product_combine</span><span class="p">(</span><span class="n">scores</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combine scores by element-wise product.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    scores : list[np.ndarray]</span>
+<span class="sd">        Score arrays, each shape ``(n_candidates,)``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Element-wise product. shape: ``(n_candidates,)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="rank_weighted_combine">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.rank_weighted_combine.html#saealib.rank_weighted_combine">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rank_weighted_combine</span><span class="p">(</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a combine function that rank-normalises then takes a weighted average.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    weights : np.ndarray or None</span>
+<span class="sd">        Weights for each manager. If None, uniform weights are used.</span>
+<span class="sd">        Need not sum to 1; they are normalised internally.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    callable</span>
+<span class="sd">        A function ``(list[np.ndarray]) -&gt; np.ndarray`` suitable for</span>
+<span class="sd">        ``CompositeSurrogateManager``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">w</span> <span class="o">/</span> <span class="n">w</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># resolved lazily to uniform at call time</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_combine</span><span class="p">(</span><span class="n">score_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">normalized</span> <span class="o">=</span> <span class="p">[</span><span class="n">_rank_normalize</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">score_list</span><span class="p">]</span>
+        <span class="n">_w</span> <span class="o">=</span> <span class="n">w</span> <span class="k">if</span> <span class="n">w</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">normalized</span><span class="p">),</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">normalized</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">normalized</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">_w</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_combine</span></div>
+
+
+
+<div class="viewcode-block" id="CompositeSurrogateManager">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CompositeSurrogateManager</span><span class="p">(</span><span class="n">SurrogateManager</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Surrogate manager that combines scores from multiple sub-managers.</span>
+
+<span class="sd">    Each sub-manager&#39;s ``score_candidates`` is called independently.</span>
+<span class="sd">    The resulting score arrays are combined by ``combine_fn``.</span>
+<span class="sd">    Predictions (for ``tell_f`` assignment) are taken from ``managers[0]``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    managers : list[SurrogateManager]</span>
+<span class="sd">        Sub-managers to combine. Must be non-empty.</span>
+<span class="sd">        ``managers[0]`` provides the ``SurrogatePrediction`` objects returned</span>
+<span class="sd">        by ``score_candidates``; its predicted objective values flow into</span>
+<span class="sd">        ``assign_tell_f`` in the strategies.</span>
+<span class="sd">    combine_fn : callable(list[np.ndarray]) -&gt; np.ndarray</span>
+<span class="sd">        Accepts a list of score arrays (each shape ``(n_candidates,)``) and</span>
+<span class="sd">        returns a single combined score array of the same shape.</span>
+<span class="sd">        Use :func:`product_combine` for element-wise product (e.g. EI x PoF)</span>
+<span class="sd">        or :func:`rank_weighted_combine` for rank-normalised weighted average.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    EI x PoF (objective x feasibility product):</span>
+
+<span class="sd">    &gt;&gt;&gt; manager = CompositeSurrogateManager(</span>
+<span class="sd">    ...     [ei_manager, pof_manager],</span>
+<span class="sd">    ...     combine_fn=product_combine,</span>
+<span class="sd">    ... )</span>
+
+<span class="sd">    Rank-normalised ensemble (equivalent to former EnsembleSurrogateManager):</span>
+
+<span class="sd">    &gt;&gt;&gt; manager = CompositeSurrogateManager(</span>
+<span class="sd">    ...     [m1, m2],</span>
+<span class="sd">    ...     combine_fn=rank_weighted_combine(weights=[0.3, 0.7]),</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CompositeSurrogateManager.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">managers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogateManager</span><span class="p">],</span>
+        <span class="n">combine_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">managers</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;CompositeSurrogateManager requires at least one manager.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">managers</span> <span class="o">=</span> <span class="n">managers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">combine_fn</span> <span class="o">=</span> <span class="n">combine_fn</span></div>
+
+
+<div class="viewcode-block" id="CompositeSurrogateManager.fit">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Pre-fit all sub-managers.</span>
+
+<span class="sd">        :attr:`last_accuracy` is propagated from ``managers[0]`` so callers</span>
+<span class="sd">        can read a representative accuracy value from this composite manager.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">manager</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">managers</span><span class="p">:</span>
+            <span class="n">manager</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_accuracy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">managers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">last_accuracy</span></div>
+
+
+<div class="viewcode-block" id="CompositeSurrogateManager.iter_acquisitions">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager.iter_acquisitions">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">iter_acquisitions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">AcquisitionFunction</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield the acquisition functions of every sub-manager.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">manager</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">managers</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="n">manager</span><span class="o">.</span><span class="n">iter_acquisitions</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="CompositeSurrogateManager.score_candidates">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager.score_candidates">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">score_candidates</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">refit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Combine scores from all sub-managers using ``combine_fn``.</span>
+
+<span class="sd">        Returns the predictions from ``managers[0]`` as representative.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">all_scores</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">first_predictions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">manager</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">managers</span><span class="p">):</span>
+            <span class="n">scores</span><span class="p">,</span> <span class="n">preds</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">score_candidates</span><span class="p">(</span>
+                <span class="n">candidates_x</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">refit</span><span class="o">=</span><span class="n">refit</span>
+            <span class="p">)</span>
+            <span class="n">all_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">first_predictions</span> <span class="o">=</span> <span class="n">preds</span>
+
+        <span class="n">combined</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">combine_fn</span><span class="p">(</span><span class="n">all_scores</span><span class="p">)</span>
+        <span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sanitize_nan</span><span class="p">(</span><span class="n">combined</span><span class="p">,</span> <span class="n">first_predictions</span><span class="p">)</span>  <span class="c1"># type: ignore  # _sanitize_nan return typed as Any; tuple unpacking safe at runtime</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_score</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PairwiseSurrogateManager">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PairwiseSurrogateManager</span><span class="p">(</span><span class="n">SurrogateManager</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Surrogate manager for pairwise comparison surrogates.</span>
+
+<span class="sd">    Scores candidates by pairing each with reference points sampled from</span>
+<span class="sd">    the archive and averaging the predicted win probability over all pairs.</span>
+
+<span class="sd">    The surrogate must be a :class:`~saealib.surrogate.base.ComparisonSurrogate`</span>
+<span class="sd">    that implements ``predict_proba()``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    surrogate : ComparisonSurrogate</span>
+<span class="sd">        Pairwise comparison surrogate (e.g. ``SklearnRFCClassificationSurrogate``).</span>
+<span class="sd">    training_set : TrainingSet or None</span>
+<span class="sd">        Training data builder.  Defaults to ``PairwiseComparisonSet()``.</span>
+<span class="sd">        ``ctx`` is required when using ``PairwiseComparisonSet``.</span>
+<span class="sd">    n_ref : int</span>
+<span class="sd">        Number of archive points sampled as reference per candidate.</span>
+<span class="sd">        When the archive has fewer than ``n_ref`` points all are used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PairwiseSurrogateManager.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">surrogate</span><span class="p">:</span> <span class="n">ComparisonSurrogate</span><span class="p">,</span>
+        <span class="n">training_set</span><span class="p">:</span> <span class="n">TrainingSet</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_ref</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span> <span class="o">=</span> <span class="n">surrogate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_set</span><span class="p">:</span> <span class="n">TrainingSet</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">training_set</span> <span class="k">if</span> <span class="n">training_set</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">PairwiseComparisonSet</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_ref</span> <span class="o">=</span> <span class="n">n_ref</span></div>
+
+
+<div class="viewcode-block" id="PairwiseSurrogateManager.fit">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the surrogate on pairwise comparison training data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        archive : Archive</span>
+<span class="sd">            Archive of evaluated solutions.</span>
+<span class="sd">        ctx : OptimizationState or None</span>
+<span class="sd">            Required when the training set is ``PairwiseComparisonSet``</span>
+<span class="sd">            (provides the comparator and rng).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">population</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span> <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_set</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">candidate_x</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">train_x</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">train_y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">post_fit</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">train_x</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">train_y</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PairwiseSurrogateManager.score_candidates">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager.score_candidates">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">score_candidates</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">refit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Score candidates by mean win rate against archive reference points.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        candidates_x : np.ndarray</span>
+<span class="sd">            Candidate design variable matrix. shape: (n_candidates, dim)</span>
+<span class="sd">        archive : Archive</span>
+<span class="sd">            Archive of evaluated solutions.</span>
+<span class="sd">        ctx : OptimizationState or None</span>
+<span class="sd">            Optimization context.  Required when ``refit=True`` and the</span>
+<span class="sd">            training set is ``PairwiseComparisonSet``.</span>
+<span class="sd">        refit : bool</span>
+<span class="sd">            If ``True`` (default), fit the surrogate before scoring.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        scores : np.ndarray</span>
+<span class="sd">            Win rate scores. shape: (n_candidates,). Higher is better.</span>
+<span class="sd">        predictions : list[SurrogatePrediction]</span>
+<span class="sd">            One ``SurrogatePrediction`` per candidate.  ``value`` holds the</span>
+<span class="sd">            scalar win rate (shape ``(1,)``); ``_tell_f`` is NaN so that</span>
+<span class="sd">            strategies skip pbest assignment.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">refit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span> <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span>
+
+        <span class="n">archive_x</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">x</span>
+        <span class="n">n_archive</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">archive_x</span><span class="p">)</span>
+        <span class="n">n_ref</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_ref</span><span class="p">,</span> <span class="n">n_archive</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n_ref</span> <span class="o">&lt;</span> <span class="n">n_archive</span><span class="p">:</span>
+            <span class="n">ref_idx</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">n_archive</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_ref</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">ref_x</span> <span class="o">=</span> <span class="n">archive_x</span><span class="p">[</span><span class="n">ref_idx</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ref_x</span> <span class="o">=</span> <span class="n">archive_x</span>
+
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">candidates_x</span><span class="p">))</span>
+        <span class="n">predictions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x_c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">candidates_x</span><span class="p">):</span>
+            <span class="n">pairs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">x_c</span><span class="p">,</span> <span class="n">x_r</span><span class="p">])</span> <span class="k">for</span> <span class="n">x_r</span> <span class="ow">in</span> <span class="n">ref_x</span><span class="p">])</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">surrogate</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span>
+            <span class="n">win_rate</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">pred</span><span class="o">.</span><span class="n">value</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]))</span>
+            <span class="n">scores</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">win_rate</span>
+            <span class="n">predictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SurrogatePrediction</span><span class="p">(</span>
+                    <span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="mi">1</span><span class="p">,),</span> <span class="n">win_rate</span><span class="p">),</span>
+                    <span class="n">_tell_f</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="mi">1</span><span class="p">,),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_score</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_split_prediction</span><span class="p">(</span><span class="n">prediction</span><span class="p">:</span> <span class="n">SurrogatePrediction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurrogatePrediction</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split a batch SurrogatePrediction into per-sample SurrogatePrediction objects.&quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">std_i</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">std</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">prediction</span><span class="o">.</span><span class="n">std</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">label_i</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">label</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">prediction</span><span class="o">.</span><span class="n">label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">tell_f_i</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">prediction</span><span class="o">.</span><span class="n">_tell_f</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">prediction</span><span class="o">.</span><span class="n">_tell_f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">SurrogatePrediction</span><span class="p">(</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">prediction</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="n">std</span><span class="o">=</span><span class="n">std_i</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="n">label_i</span><span class="p">,</span>
+                <span class="n">_tell_f</span><span class="o">=</span><span class="n">tell_f_i</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="n">prediction</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_rank_normalize</span><span class="p">(</span><span class="n">scores</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Normalize scores to [0, 1] via rank transform.</span>
+
+<span class="sd">    Rank 0 (lowest score) -&gt; 0.0, rank n-1 (highest score) -&gt; 1.0.</span>
+<span class="sd">    NaN scores are treated as the lowest rank (0.0) so that candidates</span>
+<span class="sd">    with failed surrogate predictions are never selected.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">safe</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">scores</span><span class="p">),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">scores</span><span class="p">)</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">safe</span><span class="p">)</span>
+    <span class="n">ranks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">ranks</span><span class="p">[</span><span class="n">order</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ranks</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, shlka.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

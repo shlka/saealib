@@ -1,0 +1,39 @@
+﻿saealib.SMSEGOAcquisition
+=========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SMSEGOAcquisition
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SMSEGOAcquisition.__init__
+   ~SMSEGOAcquisition.compute_reference
+   ~SMSEGOAcquisition.score
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SMSEGOAcquisition.__init__
+
+
+.. automethod:: saealib.SMSEGOAcquisition.compute_reference
+
+
+.. automethod:: saealib.SMSEGOAcquisition.score
+
+
+

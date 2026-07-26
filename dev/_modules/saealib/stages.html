@@ -1,0 +1,1657 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>saealib.stages &#8212; saealib 0.1.0b5.dev55+ga7b051a6a documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css?v=88dfc25e" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../_static/documentation_options.js?v=5f588dce"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}`;
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/saealib/stages';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://shlka.github.io/saealib/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'dev';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <script src="../../_static/js/lang-switch.js?v=6860dbcf"></script>
+    <script src="../../_static/js/sidebar-dialog-fix.js?v=decd8175"></script>
+    <script src="../../_static/js/mermaid-scale.js?v=e063b89f"></script>
+    <link rel="canonical" href="https://shlka.github.io/saealib/_modules/saealib/stages.html" />
+    <link rel="icon" href="../../_static/icon.svg"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../_static/searchtools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo-light.svg" class="logo__image only-light" alt="saealib"/>
+    <img src="../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="saealib"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../components/index.html">
+    Components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../algorithms/index.html">
+    Algorithms
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../references.html">
+    References
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item"><div class="lang-switcher__container dropdown pst-js-only">
+  <button id="pst-lang-switcher-button-2"
+    type="button"
+    class="lang-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-lang-switcher-list-2"
+    aria-label="Language switcher list"
+  >
+    Language  <!-- this text is replaced by lang-switch.js on page load -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-lang-switcher-list-2"
+    class="lang-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-lang-switcher-button-2">
+    <!-- dropdown will be populated by lang-switch.js on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/shlka/saealib" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../components/index.html">
+    Components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../algorithms/index.html">
+    Algorithms
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../references.html">
+    References
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-3"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-3"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-3"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-3">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item"><div class="lang-switcher__container dropdown pst-js-only">
+  <button id="pst-lang-switcher-button-3"
+    type="button"
+    class="lang-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-lang-switcher-list-3"
+    aria-label="Language switcher list"
+  >
+    Language  <!-- this text is replaced by lang-switch.js on page load -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-lang-switcher-list-3"
+    class="lang-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-lang-switcher-button-3">
+    <!-- dropdown will be populated by lang-switch.js on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/shlka/saealib" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">saealib.stages</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for saealib.stages</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Concrete Stage implementations for the optimization pipeline.</span>
+
+<span class="sd">Each stage receives an OptimizationState, performs one well-defined operation,</span>
+<span class="sd">and returns an updated state via ``state.replace()``.</span>
+
+<span class="sd">Standard pipeline fields on OptimizationState</span>
+<span class="sd">----------------------------------------------</span>
+<span class="sd">``offspring``</span>
+<span class="sd">    Current candidate population (Population), set by AskStage.</span>
+<span class="sd">``scores``</span>
+<span class="sd">    1-D acquisition score array (np.ndarray), set by SurrogateScoreStage.</span>
+<span class="sd">``predictions``</span>
+<span class="sd">    Per-candidate SurrogatePrediction list, set by SurrogateScoreStage.</span>
+<span class="sd">``evaluated_offspring``</span>
+<span class="sd">    Sub-population with true objective values, set by TrueEvaluationStage.</span>
+
+<span class="sd">Custom stages may store additional values in ``state.data`` (user-extensible</span>
+<span class="sd">dict) via ``state.replace(data={**state.data, &quot;key&quot;: value})``.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PostEvaluationEvent</span><span class="p">,</span>
+    <span class="n">SurrogateEndEvent</span><span class="p">,</span>
+    <span class="n">SurrogateStartEvent</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span><span class="p">,</span> <span class="n">Stage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">assign_tell_f</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.algorithms.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Algorithm</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">CallbackManager</span><span class="p">,</span> <span class="n">Event</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.evaluator</span><span class="w"> </span><span class="kn">import</span> <span class="n">Evaluator</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.initializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Initializer</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComponentProvider</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurrogateManager</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_DispatchProxy</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Minimal ComponentProvider used to thread callbacks through Algorithm.ask/tell.</span>
+
+<span class="sd">    This shim preserves compatibility with the current Algorithm interface while</span>
+<span class="sd">    the full provider is being phased out.  It will be removed once Algorithm.ask</span>
+<span class="sd">    and Algorithm.tell no longer accept a provider argument.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cbmanager</span><span class="p">:</span> <span class="n">CallbackManager</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cbmanager</span> <span class="o">=</span> <span class="n">cbmanager</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cbmanager</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cbmanager</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">algorithm</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">surrogate_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">termination</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cbmanager</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CallbackManager</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cbmanager</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">seed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Concrete stages</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="CountGenerationStage">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.CountGenerationStage.html#saealib.CountGenerationStage">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CountGenerationStage</span><span class="p">(</span><span class="n">Stage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Increment the generation counter by one.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;count_generation&quot;</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Count generation&quot;</span>
+    <span class="n">notation</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;$gen \leftarrow gen + 1$&quot;</span>
+
+<div class="viewcode-block" id="CountGenerationStage.execute">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.CountGenerationStage.html#saealib.CountGenerationStage.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">gen</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">gen</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="AskStage">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.AskStage.html#saealib.AskStage">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AskStage</span><span class="p">(</span><span class="n">Stage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate offspring candidates via the algorithm&#39;s ask() method.</span>
+
+<span class="sd">    Writes the offspring population to ``state.offspring``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    algorithm : Algorithm</span>
+<span class="sd">        The evolutionary algorithm that generates candidates.</span>
+<span class="sd">    n_offspring : int or None</span>
+<span class="sd">        Number of offspring to request.  Passed directly to</span>
+<span class="sd">        ``algorithm.ask()``.  ``None`` lets the algorithm decide.</span>
+<span class="sd">    cbmanager : CallbackManager or None</span>
+<span class="sd">        If provided, PostCrossoverEvent / PostMutationEvent / PostAskEvent</span>
+<span class="sd">        are dispatched through this manager.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;ask&quot;</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Generate offspring&quot;</span>
+    <span class="n">notation</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;$\mathcal</span><span class="si">{Q}</span><span class="s2"> \leftarrow \text</span><span class="si">{ask}</span><span class="s2">(P, n)$&quot;</span>
+
+<div class="viewcode-block" id="AskStage.__init__">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.AskStage.html#saealib.AskStage.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">algorithm</span><span class="p">:</span> <span class="n">Algorithm</span><span class="p">,</span>
+        <span class="n">n_offspring</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cbmanager</span><span class="p">:</span> <span class="n">CallbackManager</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_algorithm</span> <span class="o">=</span> <span class="n">algorithm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_offspring</span> <span class="o">=</span> <span class="n">n_offspring</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_proxy</span> <span class="o">=</span> <span class="n">_DispatchProxy</span><span class="p">(</span><span class="n">cbmanager</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AskStage.to_pseudocode">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.AskStage.html#saealib.AskStage.to_pseudocode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_pseudocode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">expand</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Expand into per-operator lines via ``Algorithm.ask_notation``.&quot;&quot;&quot;</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;  &quot;</span> <span class="o">*</span> <span class="n">indent</span>
+        <span class="n">ask_notation</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_algorithm</span><span class="p">,</span> <span class="s2">&quot;ask_notation&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">expand</span> <span class="ow">and</span> <span class="n">ask_notation</span><span class="p">:</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">  </span><span class="se">\\</span><span class="s2">State </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">ask_notation</span><span class="p">)</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="se">\\</span><span class="s2">Comment</span><span class="se">{{</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="se">}}\n</span><span class="si">{</span><span class="n">lines</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="se">\\</span><span class="s2">State </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">notation</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="AskStage.execute">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.AskStage.html#saealib.AskStage.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_algorithm</span><span class="o">.</span><span class="n">ask</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_proxy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_offspring</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">offspring</span><span class="o">=</span><span class="n">candidates</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SurrogateScoreStage">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.SurrogateScoreStage.html#saealib.SurrogateScoreStage">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SurrogateScoreStage</span><span class="p">(</span><span class="n">Stage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Score offspring with the surrogate model.</span>
+
+<span class="sd">    Reads ``state.offspring``, writes scores and predictions to</span>
+<span class="sd">    ``state.scores`` and ``state.predictions``.  Also assigns predicted</span>
+<span class="sd">    objective values (``tell_f``) to each candidate so that ``TellStage``</span>
+<span class="sd">    can use them for surrogate-only generations.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    surrogate_manager : SurrogateManager</span>
+<span class="sd">        Manager that coordinates fit / predict / score.</span>
+<span class="sd">    cbmanager : CallbackManager or None</span>
+<span class="sd">        If provided, SurrogateStartEvent and SurrogateEndEvent are dispatched.</span>
+<span class="sd">    refit : bool</span>
+<span class="sd">        Passed directly to ``surrogate_manager.score_candidates()``.</span>
+<span class="sd">        Set to ``False`` inside inner loops where the surrogate was already</span>
+<span class="sd">        fitted by an explicit ``SurrogateFitStage``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;surrogate_score&quot;</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Surrogate scoring&quot;</span>
+    <span class="n">notation</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;$\mathbf</span><span class="si">{s}</span><span class="s2"> \leftarrow \text</span><span class="si">{score}</span><span class="s2">(\mathcal</span><span class="si">{Q}</span><span class="s2">, \mathcal</span><span class="si">{A}</span><span class="s2">)$&quot;</span>
+
+<div class="viewcode-block" id="SurrogateScoreStage.__init__">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.SurrogateScoreStage.html#saealib.SurrogateScoreStage.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">surrogate_manager</span><span class="p">:</span> <span class="n">SurrogateManager</span><span class="p">,</span>
+        <span class="n">cbmanager</span><span class="p">:</span> <span class="n">CallbackManager</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">refit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sm</span> <span class="o">=</span> <span class="n">surrogate_manager</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cbmanager</span> <span class="o">=</span> <span class="n">cbmanager</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_refit</span> <span class="o">=</span> <span class="n">refit</span></div>
+
+
+<div class="viewcode-block" id="SurrogateScoreStage.execute">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.SurrogateScoreStage.html#saealib.SurrogateScoreStage.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">offspring</span>
+        <span class="k">assert</span> <span class="n">candidates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cbmanager</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cbmanager</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span>
+                <span class="n">SurrogateStartEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">offspring</span><span class="o">=</span><span class="n">candidates</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sm</span><span class="o">.</span><span class="n">score_candidates</span><span class="p">(</span>
+            <span class="n">candidates</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">archive</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">refit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_refit</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">predictions</span><span class="p">):</span>
+            <span class="n">assign_tell_f</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">pred</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cbmanager</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cbmanager</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">SurrogateEndEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">offspring</span><span class="o">=</span><span class="n">candidates</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+            <span class="n">offspring</span><span class="o">=</span><span class="n">candidates</span><span class="p">,</span> <span class="n">scores</span><span class="o">=</span><span class="n">scores</span><span class="p">,</span> <span class="n">predictions</span><span class="o">=</span><span class="n">predictions</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SurrogateFitStage">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.SurrogateFitStage.html#saealib.SurrogateFitStage">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SurrogateFitStage</span><span class="p">(</span><span class="n">Stage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pre-fit the surrogate on the current archive.</span>
+
+<span class="sd">    Use this before a surrogate-only inner loop where the archive does not</span>
+<span class="sd">    change between iterations.  Pass ``refit=False`` to the downstream</span>
+<span class="sd">    :class:`SurrogateScoreStage` to skip redundant refitting.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    surrogate_manager : SurrogateManager</span>
+<span class="sd">        Manager to pre-fit.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;surrogate_fit&quot;</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Fit surrogate&quot;</span>
+    <span class="n">notation</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;$\hat</span><span class="si">{f}</span><span class="s2"> \leftarrow \text</span><span class="si">{fit}</span><span class="s2">(\mathcal</span><span class="si">{A}</span><span class="s2">)$&quot;</span>
+
+<div class="viewcode-block" id="SurrogateFitStage.__init__">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.SurrogateFitStage.html#saealib.SurrogateFitStage.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">surrogate_manager</span><span class="p">:</span> <span class="n">SurrogateManager</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sm</span> <span class="o">=</span> <span class="n">surrogate_manager</span></div>
+
+
+<div class="viewcode-block" id="SurrogateFitStage.execute">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.SurrogateFitStage.html#saealib.SurrogateFitStage.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sm</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">archive</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TopKSelectionStage">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.TopKSelectionStage.html#saealib.TopKSelectionStage">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TopKSelectionStage</span><span class="p">(</span><span class="n">Stage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Select the top-k offspring by surrogate score.</span>
+
+<span class="sd">    Reads ``state.scores`` and ``state.offspring``, replaces</span>
+<span class="sd">    ``state.offspring`` with the top-k candidates sorted highest-score first.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    k : int</span>
+<span class="sd">        Number of candidates to keep.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;top_k_selection&quot;</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Top-k pre-selection&quot;</span>
+    <span class="n">notation</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;$\mathcal</span><span class="si">{Q}</span><span class="s2"> \leftarrow \text{top-}k(\mathcal</span><span class="si">{Q}</span><span class="s2">, \mathbf</span><span class="si">{s}</span><span class="s2">)$&quot;</span>
+
+<div class="viewcode-block" id="TopKSelectionStage.__init__">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.TopKSelectionStage.html#saealib.TopKSelectionStage.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_k</span> <span class="o">=</span> <span class="n">k</span></div>
+
+
+<div class="viewcode-block" id="TopKSelectionStage.execute">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.TopKSelectionStage.html#saealib.TopKSelectionStage.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">state</span><span class="o">.</span><span class="n">offspring</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">assert</span> <span class="n">state</span><span class="o">.</span><span class="n">scores</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="n">state</span><span class="o">.</span><span class="n">scores</span><span class="p">)</span>
+        <span class="n">selected</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">offspring</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">idx</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_k</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">offspring</span><span class="o">=</span><span class="n">selected</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SortByScoreStage">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.SortByScoreStage.html#saealib.SortByScoreStage">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SortByScoreStage</span><span class="p">(</span><span class="n">Stage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sort all offspring by surrogate score descending, keeping every candidate.</span>
+
+<span class="sd">    Unlike :class:`TopKSelectionStage`, no candidates are discarded.  Used in</span>
+<span class="sd">    IB-style strategies where :class:`TellStage` receives *all* offspring sorted</span>
+<span class="sd">    by score while only a top fraction receives true evaluation.</span>
+
+<span class="sd">    Reads ``state.scores`` and ``state.offspring``, returns state with both</span>
+<span class="sd">    arrays reordered by descending score.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;sort_by_score&quot;</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Sort offspring by score&quot;</span>
+    <span class="n">notation</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;$\mathcal</span><span class="si">{Q}</span><span class="s2"> \leftarrow \text{sort\_desc}(\mathcal</span><span class="si">{Q}</span><span class="s2">,\,\mathbf</span><span class="si">{s}</span><span class="s2">)$&quot;</span>
+
+<div class="viewcode-block" id="SortByScoreStage.execute">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.SortByScoreStage.html#saealib.SortByScoreStage.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">state</span><span class="o">.</span><span class="n">offspring</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">assert</span> <span class="n">state</span><span class="o">.</span><span class="n">scores</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="n">state</span><span class="o">.</span><span class="n">scores</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+            <span class="n">offspring</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">offspring</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">idx</span><span class="p">),</span>
+            <span class="n">scores</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">scores</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TrueEvaluationStage">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.TrueEvaluationStage.html#saealib.TrueEvaluationStage">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TrueEvaluationStage</span><span class="p">(</span><span class="n">Stage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate offspring with the true objective function.</span>
+
+<span class="sd">    Reads ``state.offspring``, evaluates all candidates, updates their</span>
+<span class="sd">    ``f / g / cv`` attributes in-place, increments ``state.fe``, and writes</span>
+<span class="sd">    the evaluated sub-population to ``state.evaluated_offspring``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    evaluator : Evaluator</span>
+<span class="sd">        Evaluator that calls the true objective function.</span>
+<span class="sd">    cbmanager : CallbackManager or None</span>
+<span class="sd">        If provided, PostEvaluationEvent is dispatched after evaluation.</span>
+<span class="sd">    n_eval : int, callable, or None</span>
+<span class="sd">        Number of candidates to evaluate from the head of the offspring</span>
+<span class="sd">        population.  If callable, it receives the current</span>
+<span class="sd">        :class:`~saealib.context.OptimizationState` and must return an int</span>
+<span class="sd">        (e.g. ``lambda s: max(1, int(ratio * len(s.offspring)))``).</span>
+<span class="sd">        ``None`` means evaluate all.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;true_evaluation&quot;</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;True objective evaluation&quot;</span>
+    <span class="n">notation</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;$\mathcal</span><span class="si">{Q}</span><span class="s2">_</span><span class="si">{eval}</span><span class="s2"> \leftarrow \text</span><span class="si">{eval}</span><span class="s2">(\mathcal</span><span class="si">{Q}</span><span class="s2">)$&quot;</span>
+
+<div class="viewcode-block" id="TrueEvaluationStage.__init__">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.TrueEvaluationStage.html#saealib.TrueEvaluationStage.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">evaluator</span><span class="p">:</span> <span class="n">Evaluator</span><span class="p">,</span>
+        <span class="n">cbmanager</span><span class="p">:</span> <span class="n">CallbackManager</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_eval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">OptimizationState</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_evaluator</span> <span class="o">=</span> <span class="n">evaluator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cbmanager</span> <span class="o">=</span> <span class="n">cbmanager</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_eval</span> <span class="o">=</span> <span class="n">n_eval</span></div>
+
+
+<div class="viewcode-block" id="TrueEvaluationStage.execute">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.TrueEvaluationStage.html#saealib.TrueEvaluationStage.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">offspring</span>
+        <span class="k">assert</span> <span class="n">candidates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_eval</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_eval</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_eval</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_eval</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">))</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluator</span><span class="o">.</span><span class="n">evaluate_batch</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">x</span><span class="p">[:</span><span class="n">n</span><span class="p">],</span> <span class="n">state</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="n">candidates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">f</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">candidates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">g</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">candidates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">cv</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">cv</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="n">evaluated</span> <span class="o">=</span> <span class="n">candidates</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cbmanager</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cbmanager</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span>
+                <span class="n">PostEvaluationEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">offspring</span><span class="o">=</span><span class="n">evaluated</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+            <span class="n">fe</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">fe</span> <span class="o">+</span> <span class="n">n</span><span class="p">,</span>
+            <span class="n">offspring</span><span class="o">=</span><span class="n">candidates</span><span class="p">,</span>
+            <span class="n">evaluated_offspring</span><span class="o">=</span><span class="n">evaluated</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ArchiveUpdateStage">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.ArchiveUpdateStage.html#saealib.ArchiveUpdateStage">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ArchiveUpdateStage</span><span class="p">(</span><span class="n">Stage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Append evaluated offspring to archive and Pareto archive.</span>
+
+<span class="sd">    Reads ``state.evaluated_offspring`` and appends each individual to</span>
+<span class="sd">    ``state.archive`` and ``state.pareto_archive`` (both are controlled</span>
+<span class="sd">    mutable exceptions — append-only in-place updates).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;archive_update&quot;</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Archive update&quot;</span>
+    <span class="n">notation</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;$\mathcal</span><span class="si">{A}</span><span class="s2"> \leftarrow \mathcal</span><span class="si">{A}</span><span class="s2"> \cup \mathcal</span><span class="si">{Q}</span><span class="s2">_</span><span class="si">{eval}</span><span class="s2">$&quot;</span>
+
+<div class="viewcode-block" id="ArchiveUpdateStage.execute">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.ArchiveUpdateStage.html#saealib.ArchiveUpdateStage.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
+        <span class="n">evaluated</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">evaluated_offspring</span>
+        <span class="k">assert</span> <span class="n">evaluated</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">evaluated</span><span class="p">)):</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">evaluated</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">ind</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;f&quot;</span><span class="p">:</span> <span class="n">ind</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="n">ind</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="s2">&quot;cv&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">ind</span><span class="o">.</span><span class="n">cv</span><span class="p">)}</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">pareto_archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TellStage">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.TellStage.html#saealib.TellStage">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TellStage</span><span class="p">(</span><span class="n">Stage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Update the population via the algorithm&#39;s tell() method.</span>
+
+<span class="sd">    Reads ``state.offspring`` (the full candidate population, including</span>
+<span class="sd">    both surrogate-scored and true-evaluated individuals, as the algorithm</span>
+<span class="sd">    expects) and calls ``algorithm.tell()``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    algorithm : Algorithm</span>
+<span class="sd">        The evolutionary algorithm that updates the population.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;tell&quot;</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Update population&quot;</span>
+    <span class="n">notation</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;$P \leftarrow \text</span><span class="si">{tell}</span><span class="s2">(P, \mathcal</span><span class="si">{Q}</span><span class="s2">)$&quot;</span>
+
+<div class="viewcode-block" id="TellStage.__init__">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.TellStage.html#saealib.TellStage.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">:</span> <span class="n">Algorithm</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_algorithm</span> <span class="o">=</span> <span class="n">algorithm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_proxy</span> <span class="o">=</span> <span class="n">_DispatchProxy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="TellStage.to_pseudocode">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.TellStage.html#saealib.TellStage.to_pseudocode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_pseudocode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">expand</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Expand into per-step lines via ``Algorithm.tell_notation``.&quot;&quot;&quot;</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;  &quot;</span> <span class="o">*</span> <span class="n">indent</span>
+        <span class="n">tell_notation</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_algorithm</span><span class="p">,</span> <span class="s2">&quot;tell_notation&quot;</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">expand</span> <span class="ow">and</span> <span class="n">tell_notation</span><span class="p">:</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">  </span><span class="se">\\</span><span class="s2">State </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">tell_notation</span><span class="p">)</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="se">\\</span><span class="s2">Comment</span><span class="se">{{</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="se">}}\n</span><span class="si">{</span><span class="n">lines</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="se">\\</span><span class="s2">State </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">notation</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="TellStage.execute">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.TellStage.html#saealib.TellStage.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">state</span><span class="o">.</span><span class="n">offspring</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_algorithm</span><span class="o">.</span><span class="n">tell</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_proxy</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">offspring</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SurrogateOnlyLoopStage">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.SurrogateOnlyLoopStage.html#saealib.SurrogateOnlyLoopStage">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SurrogateOnlyLoopStage</span><span class="p">(</span><span class="n">Stage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run *gen_ctrl* surrogate-only generations before real evaluation.</span>
+
+<span class="sd">    Fits the surrogate model once on the current archive, then repeats</span>
+<span class="sd">    ``gen_ctrl`` times: CountGeneration → Ask → SurrogateScore(refit=False)</span>
+<span class="sd">    → Tell.  If *gen_ctrl* is 0 this stage is a no-op.</span>
+
+<span class="sd">    Used by :class:`~saealib.strategies.gb.GenerationBasedStrategy` to</span>
+<span class="sd">    execute inner surrogate-driven generations before a single true-evaluation</span>
+<span class="sd">    generation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    algorithm : Algorithm</span>
+<span class="sd">        Evolutionary algorithm for ask/tell.</span>
+<span class="sd">    surrogate_manager : SurrogateManager</span>
+<span class="sd">        Manager used for fitting and scoring.</span>
+<span class="sd">    gen_ctrl : int</span>
+<span class="sd">        Number of surrogate-only generations.</span>
+<span class="sd">    cbmanager : CallbackManager or None</span>
+<span class="sd">        Forwarded to inner stages for event dispatching.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;surrogate_only_loop&quot;</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Surrogate-only generations&quot;</span>
+    <span class="n">notation</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">r</span><span class="s2">&quot;$\text</span><span class="si">{for}</span><span class="s2">\;i=1\dots gen\_ctrl$: &quot;</span>
+        <span class="sa">r</span><span class="s2">&quot;$P \leftarrow \mathrm</span><span class="si">{tell}</span><span class="s2">(P,\,\mathrm</span><span class="si">{score}</span><span class="s2">(\mathrm</span><span class="si">{ask}</span><span class="s2">(P)))$&quot;</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="SurrogateOnlyLoopStage.__init__">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.SurrogateOnlyLoopStage.html#saealib.SurrogateOnlyLoopStage.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">algorithm</span><span class="p">:</span> <span class="n">Algorithm</span><span class="p">,</span>
+        <span class="n">surrogate_manager</span><span class="p">:</span> <span class="n">SurrogateManager</span><span class="p">,</span>
+        <span class="n">gen_ctrl</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">cbmanager</span><span class="p">:</span> <span class="n">CallbackManager</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gen_ctrl</span> <span class="o">=</span> <span class="n">gen_ctrl</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sm</span> <span class="o">=</span> <span class="n">surrogate_manager</span>
+        <span class="k">if</span> <span class="n">gen_ctrl</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">CountGenerationStage</span><span class="p">(),</span>
+                    <span class="n">AskStage</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">),</span>
+                    <span class="n">SurrogateScoreStage</span><span class="p">(</span>
+                        <span class="n">surrogate_manager</span><span class="p">,</span> <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">,</span> <span class="n">refit</span><span class="o">=</span><span class="kc">False</span>
+                    <span class="p">),</span>
+                    <span class="n">TellStage</span><span class="p">(</span><span class="n">algorithm</span><span class="p">),</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="o">.</span><span class="n">stages</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">([])</span></div>
+
+
+<div class="viewcode-block" id="SurrogateOnlyLoopStage.to_pseudocode">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.SurrogateOnlyLoopStage.html#saealib.SurrogateOnlyLoopStage.to_pseudocode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_pseudocode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">expand</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Render as a ``\For`` loop block when *expand* is True.&quot;&quot;&quot;</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;  &quot;</span> <span class="o">*</span> <span class="n">indent</span>
+        <span class="k">if</span> <span class="n">expand</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">stages</span><span class="p">:</span>
+            <span class="n">inner_lines</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">to_pseudocode</span><span class="p">(</span><span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="n">indent</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stages</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="se">\\</span><span class="s2">For</span><span class="se">{{</span><span class="s2">$i = 1, </span><span class="se">\\</span><span class="s2">ldots, gen</span><span class="se">\\</span><span class="s2">_ctrl$</span><span class="se">}}\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">inner_lines</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="se">\\</span><span class="s2">EndFor&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="se">\\</span><span class="s2">State </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">notation</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="SurrogateOnlyLoopStage.execute">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.SurrogateOnlyLoopStage.html#saealib.SurrogateOnlyLoopStage.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gen_ctrl</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sm</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">archive</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gen_ctrl</span><span class="p">):</span>
+                <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inner</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="InitializationStage">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.InitializationStage.html#saealib.InitializationStage">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InitializationStage</span><span class="p">(</span><span class="n">Stage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap an :class:`~saealib.execution.initializer.Initializer` as a Stage.</span>
+
+<span class="sd">    Delegates to ``initializer.initialize(provider, problem)`` and returns the</span>
+<span class="sd">    resulting :class:`~saealib.context.OptimizationState`.  The *state*</span>
+<span class="sd">    argument passed to :meth:`execute` is **ignored** — initialization always</span>
+<span class="sd">    produces a fresh state from scratch.</span>
+
+<span class="sd">    This stage is intended for use at the head of a user-defined Pipeline when</span>
+<span class="sd">    the initializer itself should participate in the pipeline abstraction (e.g.</span>
+<span class="sd">    to build custom init-then-optimize flows or to inspect / swap the</span>
+<span class="sd">    initialization step via ``Pipeline[&quot;initialization&quot;]``).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    initializer : Initializer</span>
+<span class="sd">        The concrete initializer (e.g.</span>
+<span class="sd">        :class:`~saealib.execution.initializer.LHSInitializer`).</span>
+<span class="sd">    provider : ComponentProvider</span>
+<span class="sd">        Component provider forwarded to ``Initializer.initialize()``.</span>
+<span class="sd">    problem : Problem</span>
+<span class="sd">        The optimization problem.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;initialization&quot;</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Initialize population&quot;</span>
+    <span class="n">notation</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;$\mathcal</span><span class="si">{A}</span><span class="s2">_0,\,P_0 \leftarrow \mathrm</span><span class="si">{init}</span><span class="s2">(n_{\mathrm</span><span class="si">{init}</span><span class="s2">})$&quot;</span>
+
+<div class="viewcode-block" id="InitializationStage.__init__">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.InitializationStage.html#saealib.InitializationStage.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">initializer</span><span class="p">:</span> <span class="n">Initializer</span><span class="p">,</span>
+        <span class="n">provider</span><span class="p">:</span> <span class="n">ComponentProvider</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initializer</span> <span class="o">=</span> <span class="n">initializer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_provider</span> <span class="o">=</span> <span class="n">provider</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span> <span class="o">=</span> <span class="n">problem</span></div>
+
+
+<div class="viewcode-block" id="InitializationStage.execute">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.InitializationStage.html#saealib.InitializationStage.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initializer</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_provider</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, shlka.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

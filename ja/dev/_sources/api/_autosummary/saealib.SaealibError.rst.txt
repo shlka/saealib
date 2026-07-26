@@ -1,0 +1,6 @@
+﻿saealib.SaealibError
+====================
+
+.. currentmodule:: saealib
+
+.. autoexception:: SaealibError

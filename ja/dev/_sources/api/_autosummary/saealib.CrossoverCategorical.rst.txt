@@ -1,0 +1,43 @@
+﻿saealib.CrossoverCategorical
+============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: CrossoverCategorical
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~CrossoverCategorical.__init__
+   ~CrossoverCategorical.crossover
+   ~CrossoverCategorical.post_crossover
+   ~CrossoverCategorical.with_post
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.CrossoverCategorical.__init__
+
+
+.. automethod:: saealib.CrossoverCategorical.crossover
+
+
+.. automethod:: saealib.CrossoverCategorical.post_crossover
+
+
+.. automethod:: saealib.CrossoverCategorical.with_post
+
+
+

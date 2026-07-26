@@ -1,0 +1,35 @@
+﻿saealib.ReferencePointComparisonSet
+===================================
+
+.. currentmodule:: saealib
+
+.. autoclass:: ReferencePointComparisonSet
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ReferencePointComparisonSet.__init__
+   ~ReferencePointComparisonSet.build
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.ReferencePointComparisonSet.__init__
+
+
+.. automethod:: saealib.ReferencePointComparisonSet.build
+
+
+

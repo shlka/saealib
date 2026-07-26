@@ -1,0 +1,35 @@
+﻿saealib.PBIDecomposition
+========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: PBIDecomposition
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~PBIDecomposition.__init__
+   ~PBIDecomposition.aggregate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.PBIDecomposition.__init__
+
+
+.. automethod:: saealib.PBIDecomposition.aggregate
+
+
+

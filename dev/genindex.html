@@ -1,0 +1,3278 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Index &#8212; saealib 0.1.0b5.dev55+ga7b051a6a documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=88dfc25e" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="_static/documentation_options.js?v=5f588dce"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}`;
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'genindex';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://shlka.github.io/saealib/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'dev';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <script src="_static/js/lang-switch.js?v=6860dbcf"></script>
+    <script src="_static/js/sidebar-dialog-fix.js?v=decd8175"></script>
+    <script src="_static/js/mermaid-scale.js?v=e063b89f"></script>
+    <link rel="canonical" href="https://shlka.github.io/saealib/genindex.html" />
+    <link rel="icon" href="_static/icon.svg"/>
+    <link rel="index" title="Index" href="#" />
+    <link rel="search" title="Search" href="search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/logo-light.svg" class="logo__image only-light" alt="saealib"/>
+    <img src="_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="saealib"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="components/index.html">
+    Components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="algorithms/index.html">
+    Algorithms
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="references.html">
+    References
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api/index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item"><div class="lang-switcher__container dropdown pst-js-only">
+  <button id="pst-lang-switcher-button-2"
+    type="button"
+    class="lang-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-lang-switcher-list-2"
+    aria-label="Language switcher list"
+  >
+    Language  <!-- this text is replaced by lang-switch.js on page load -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-lang-switcher-list-2"
+    class="lang-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-lang-switcher-button-2">
+    <!-- dropdown will be populated by lang-switch.js on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/shlka/saealib" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="components/index.html">
+    Components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="algorithms/index.html">
+    Algorithms
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="references.html">
+    References
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api/index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-3"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-3"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-3"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-3">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item"><div class="lang-switcher__container dropdown pst-js-only">
+  <button id="pst-lang-switcher-button-3"
+    type="button"
+    class="lang-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-lang-switcher-list-3"
+    aria-label="Language switcher list"
+  >
+    Language  <!-- this text is replaced by lang-switch.js on page load -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-lang-switcher-list-3"
+    class="lang-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-lang-switcher-button-3">
+    <!-- dropdown will be populated by lang-switch.js on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/shlka/saealib" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none"></div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+
+<h1 id="index">Index</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#_"><strong>_</strong></a>
+ | <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
+ | <a href="#H"><strong>H</strong></a>
+ | <a href="#I"><strong>I</strong></a>
+ | <a href="#J"><strong>J</strong></a>
+ | <a href="#K"><strong>K</strong></a>
+ | <a href="#L"><strong>L</strong></a>
+ | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
+ | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
+ | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
+ | <a href="#V"><strong>V</strong></a>
+ | <a href="#W"><strong>W</strong></a>
+ | <a href="#X"><strong>X</strong></a>
+ 
+</div>
+<h2 id="_">_</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.AccuracyBasedSurrogateSwitcher.html#saealib.AccuracyBasedSurrogateSwitcher.__init__">__init__() (saealib.AccuracyBasedSurrogateSwitcher method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.AccuracyEvaluator.html#saealib.AccuracyEvaluator.__init__">(saealib.AccuracyEvaluator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.AcquisitionFunction.html#saealib.AcquisitionFunction.__init__">(saealib.AcquisitionFunction method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Algorithm.html#saealib.Algorithm.__init__">(saealib.Algorithm method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.__init__">(saealib.Archive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ArchiveBasedManager.html#saealib.ArchiveBasedManager.__init__">(saealib.ArchiveBasedManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.__init__">(saealib.ArchiveMixin method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ArchiveObjectiveSet.html#saealib.ArchiveObjectiveSet.__init__">(saealib.ArchiveObjectiveSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ArchiveUpdateStage.html#saealib.ArchiveUpdateStage.__init__">(saealib.ArchiveUpdateStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.AskStage.html#saealib.AskStage.__init__">(saealib.AskStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CallbackManager.html#saealib.CallbackManager.__init__">(saealib.CallbackManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CategoricalVariable.html#saealib.CategoricalVariable.__init__">(saealib.CategoricalVariable method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CheckpointCallback.html#saealib.CheckpointCallback.__init__">(saealib.CheckpointCallback method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Comparator.html#saealib.Comparator.__init__">(saealib.Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ComparisonSurrogate.html#saealib.ComparisonSurrogate.__init__">(saealib.ComparisonSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager.__init__">(saealib.CompositeSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ConstraintHandler.html#saealib.ConstraintHandler.__init__">(saealib.ConstraintHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ConstraintObjectiveSet.html#saealib.ConstraintObjectiveSet.__init__">(saealib.ConstraintObjectiveSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ContinuousVariable.html#saealib.ContinuousVariable.__init__">(saealib.ContinuousVariable method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CountGenerationStage.html#saealib.CountGenerationStage.__init__">(saealib.CountGenerationStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Crossover.html#saealib.Crossover.__init__">(saealib.Crossover method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverBLXAlpha.html#saealib.CrossoverBLXAlpha.__init__">(saealib.CrossoverBLXAlpha method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverCategorical.html#saealib.CrossoverCategorical.__init__">(saealib.CrossoverCategorical method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverIntegerSBX.html#saealib.CrossoverIntegerSBX.__init__">(saealib.CrossoverIntegerSBX method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverOnePoint.html#saealib.CrossoverOnePoint.__init__">(saealib.CrossoverOnePoint method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverSBX.html#saealib.CrossoverSBX.__init__">(saealib.CrossoverSBX method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverTwoPoint.html#saealib.CrossoverTwoPoint.__init__">(saealib.CrossoverTwoPoint method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverUniform.html#saealib.CrossoverUniform.__init__">(saealib.CrossoverUniform method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Decomposition.html#saealib.Decomposition.__init__">(saealib.Decomposition method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.DecompositionComparator.html#saealib.DecompositionComparator.__init__">(saealib.DecompositionComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.DensityManager.html#saealib.DensityManager.__init__">(saealib.DensityManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.DirectStrategy.html#saealib.DirectStrategy.__init__">(saealib.DirectStrategy method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Dominator.html#saealib.Dominator.__init__">(saealib.Dominator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.DuplicateElimination.html#saealib.DuplicateElimination.__init__">(saealib.DuplicateElimination method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.EHVIAcquisition.html#saealib.EHVIAcquisition.__init__">(saealib.EHVIAcquisition method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.EpsilonConstraintHandler.html#saealib.EpsilonConstraintHandler.__init__">(saealib.EpsilonConstraintHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.EpsilonDominanceComparator.html#saealib.EpsilonDominanceComparator.__init__">(saealib.EpsilonDominanceComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.EpsilonDominator.html#saealib.EpsilonDominator.__init__">(saealib.EpsilonDominator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.EqualityConstraint.html#saealib.EqualityConstraint.__init__">(saealib.EqualityConstraint method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.EvaluationResult.html#saealib.EvaluationResult.__init__">(saealib.EvaluationResult method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Evaluator.html#saealib.Evaluator.__init__">(saealib.Evaluator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Event.html#saealib.Event.__init__">(saealib.Event method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ExpectedImprovement.html#saealib.ExpectedImprovement.__init__">(saealib.ExpectedImprovement method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.FeasibilityClassificationSet.html#saealib.FeasibilityClassificationSet.__init__">(saealib.FeasibilityClassificationSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GA.html#saealib.GA.__init__">(saealib.GA method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GenCtrlSwitcher.html#saealib.GenCtrlSwitcher.__init__">(saealib.GenCtrlSwitcher method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GenerationBasedStrategy.html#saealib.GenerationBasedStrategy.__init__">(saealib.GenerationBasedStrategy method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GenerationEndEvent.html#saealib.GenerationEndEvent.__init__">(saealib.GenerationEndEvent method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GenerationStartEvent.html#saealib.GenerationStartEvent.__init__">(saealib.GenerationStartEvent method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager.__init__">(saealib.GlobalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GradientRepairHandler.html#saealib.GradientRepairHandler.__init__">(saealib.GradientRepairHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.HeldOutAccuracyEvaluator.html#saealib.HeldOutAccuracyEvaluator.__init__">(saealib.HeldOutAccuracyEvaluator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.HypervolumeComparator.html#saealib.HypervolumeComparator.__init__">(saealib.HypervolumeComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Individual.html#saealib.Individual.__init__">(saealib.Individual method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.IndividualBasedStrategy.html#saealib.IndividualBasedStrategy.__init__">(saealib.IndividualBasedStrategy method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint.__init__">(saealib.InequalityConstraint method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.InitialEvaluationEndEvent.html#saealib.InitialEvaluationEndEvent.__init__">(saealib.InitialEvaluationEndEvent method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.InitialEvaluationStartEvent.html#saealib.InitialEvaluationStartEvent.__init__">(saealib.InitialEvaluationStartEvent method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.InitializationStage.html#saealib.InitializationStage.__init__">(saealib.InitializationStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Initializer.html#saealib.Initializer.__init__">(saealib.Initializer method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.IntegerVariable.html#saealib.IntegerVariable.__init__">(saealib.IntegerVariable method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.JoblibEvaluator.html#saealib.JoblibEvaluator.__init__">(saealib.JoblibEvaluator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.KFoldAccuracyEvaluator.html#saealib.KFoldAccuracyEvaluator.__init__">(saealib.KFoldAccuracyEvaluator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.KNNConstraintObjectiveSet.html#saealib.KNNConstraintObjectiveSet.__init__">(saealib.KNNConstraintObjectiveSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.KNNObjectiveSet.html#saealib.KNNObjectiveSet.__init__">(saealib.KNNObjectiveSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LevelBasedSet.html#saealib.LevelBasedSet.__init__">(saealib.LevelBasedSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LHSInitializer.html#saealib.LHSInitializer.__init__">(saealib.LHSInitializer method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LocalSurrogateManager.html#saealib.LocalSurrogateManager.__init__">(saealib.LocalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LOOAccuracyEvaluator.html#saealib.LOOAccuracyEvaluator.__init__">(saealib.LOOAccuracyEvaluator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LowerConfidenceBound.html#saealib.LowerConfidenceBound.__init__">(saealib.LowerConfidenceBound method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ManagerSwitcher.html#saealib.ManagerSwitcher.__init__">(saealib.ManagerSwitcher method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MaxUncertainty.html#saealib.MaxUncertainty.__init__">(saealib.MaxUncertainty method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MeanPrediction.html#saealib.MeanPrediction.__init__">(saealib.MeanPrediction method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Mutation.html#saealib.Mutation.__init__">(saealib.Mutation method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationCategorical.html#saealib.MutationCategorical.__init__">(saealib.MutationCategorical method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationGaussian.html#saealib.MutationGaussian.__init__">(saealib.MutationGaussian method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationIntegerUniform.html#saealib.MutationIntegerUniform.__init__">(saealib.MutationIntegerUniform method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial.__init__">(saealib.MutationPolynomial method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationUniform.html#saealib.MutationUniform.__init__">(saealib.MutationUniform method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NichingManager.html#saealib.NichingManager.__init__">(saealib.NichingManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NonDominatedSorter.html#saealib.NonDominatedSorter.__init__">(saealib.NonDominatedSorter method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NoveltyManager.html#saealib.NoveltyManager.__init__">(saealib.NoveltyManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NSGA2Comparator.html#saealib.NSGA2Comparator.__init__">(saealib.NSGA2Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NSGA3Comparator.html#saealib.NSGA3Comparator.__init__">(saealib.NSGA3Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.OptimizationStrategy.html#saealib.OptimizationStrategy.__init__">(saealib.OptimizationStrategy method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.__init__">(saealib.Optimizer method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PairwiseComparisonSet.html#saealib.PairwiseComparisonSet.__init__">(saealib.PairwiseComparisonSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager.__init__">(saealib.PairwiseSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParEGOAcquisition.html#saealib.ParEGOAcquisition.__init__">(saealib.ParEGOAcquisition method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParentSelection.html#saealib.ParentSelection.__init__">(saealib.ParentSelection method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.__init__">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParetoComparator.html#saealib.ParetoComparator.__init__">(saealib.ParetoComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParetoDominator.html#saealib.ParetoDominator.__init__">(saealib.ParetoDominator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParetoMixin.html#saealib.ParetoMixin.__init__">(saealib.ParetoMixin method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PBIDecomposition.html#saealib.PBIDecomposition.__init__">(saealib.PBIDecomposition method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PerObjectiveSurrogate.html#saealib.PerObjectiveSurrogate.__init__">(saealib.PerObjectiveSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Pipeline.html#saealib.Pipeline.__init__">(saealib.Pipeline method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.__init__">(saealib.Population method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PopulationAttribute.html#saealib.PopulationAttribute.__init__">(saealib.PopulationAttribute method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PostAskEvent.html#saealib.PostAskEvent.__init__">(saealib.PostAskEvent method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PostCrossoverEvent.html#saealib.PostCrossoverEvent.__init__">(saealib.PostCrossoverEvent method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PostEvaluationEvent.html#saealib.PostEvaluationEvent.__init__">(saealib.PostEvaluationEvent method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PostMutationEvent.html#saealib.PostMutationEvent.__init__">(saealib.PostMutationEvent method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PostSurrogateFitEvent.html#saealib.PostSurrogateFitEvent.__init__">(saealib.PostSurrogateFitEvent method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PreSelectionStrategy.html#saealib.PreSelectionStrategy.__init__">(saealib.PreSelectionStrategy method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ProbabilityOfFeasibility.html#saealib.ProbabilityOfFeasibility.__init__">(saealib.ProbabilityOfFeasibility method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.__init__">(saealib.Problem method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ProductOfFeasibility.html#saealib.ProductOfFeasibility.__init__">(saealib.ProductOfFeasibility method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PSO.html#saealib.PSO.__init__">(saealib.PSO method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.R2Score.html#saealib.R2Score.__init__">(saealib.R2Score method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RandomInitializer.html#saealib.RandomInitializer.__init__">(saealib.RandomInitializer method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RBFSurrogate.html#saealib.RBFSurrogate.__init__">(saealib.RBFSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ReferencePointComparisonSet.html#saealib.ReferencePointComparisonSet.__init__">(saealib.ReferencePointComparisonSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RegressionSurrogate.html#saealib.RegressionSurrogate.__init__">(saealib.RegressionSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Result.html#saealib.Result.__init__">(saealib.Result method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RMSE.html#saealib.RMSE.__init__">(saealib.RMSE method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RNSGA2Comparator.html#saealib.RNSGA2Comparator.__init__">(saealib.RNSGA2Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RouletteWheelSelection.html#saealib.RouletteWheelSelection.__init__">(saealib.RouletteWheelSelection method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RunEndEvent.html#saealib.RunEndEvent.__init__">(saealib.RunEndEvent method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RunStartEvent.html#saealib.RunStartEvent.__init__">(saealib.RunStartEvent method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SequentialSelection.html#saealib.SequentialSelection.__init__">(saealib.SequentialSelection method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SerialEvaluator.html#saealib.SerialEvaluator.__init__">(saealib.SerialEvaluator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SingleObjectiveComparator.html#saealib.SingleObjectiveComparator.__init__">(saealib.SingleObjectiveComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnClassificationSurrogate.html#saealib.SklearnClassificationSurrogate.__init__">(saealib.SklearnClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnGPRSurrogate.html#saealib.SklearnGPRSurrogate.__init__">(saealib.SklearnGPRSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnLGBMSurrogate.html#saealib.SklearnLGBMSurrogate.__init__">(saealib.SklearnLGBMSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnNNSurrogate.html#saealib.SklearnNNSurrogate.__init__">(saealib.SklearnNNSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnRFCClassificationSurrogate.html#saealib.SklearnRFCClassificationSurrogate.__init__">(saealib.SklearnRFCClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnRFRSurrogate.html#saealib.SklearnRFRSurrogate.__init__">(saealib.SklearnRFRSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSurrogate.html#saealib.SklearnSurrogate.__init__">(saealib.SklearnSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSVCClassificationSurrogate.html#saealib.SklearnSVCClassificationSurrogate.__init__">(saealib.SklearnSVCClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSVMSurrogate.html#saealib.SklearnSVMSurrogate.__init__">(saealib.SklearnSVMSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnXGBSurrogate.html#saealib.SklearnXGBSurrogate.__init__">(saealib.SklearnXGBSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SMSEGOAcquisition.html#saealib.SMSEGOAcquisition.__init__">(saealib.SMSEGOAcquisition method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SobolInitializer.html#saealib.SobolInitializer.__init__">(saealib.SobolInitializer method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SortByScoreStage.html#saealib.SortByScoreStage.__init__">(saealib.SortByScoreStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SPEA2Comparator.html#saealib.SPEA2Comparator.__init__">(saealib.SPEA2Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SpearmanCorrelation.html#saealib.SpearmanCorrelation.__init__">(saealib.SpearmanCorrelation method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Stage.html#saealib.Stage.__init__">(saealib.Stage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.StaticToleranceHandler.html#saealib.StaticToleranceHandler.__init__">(saealib.StaticToleranceHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.StrategySwitcher.html#saealib.StrategySwitcher.__init__">(saealib.StrategySwitcher method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Surrogate.html#saealib.Surrogate.__init__">(saealib.Surrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateAccuracy.html#saealib.SurrogateAccuracy.__init__">(saealib.SurrogateAccuracy method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateAccuracyMetric.html#saealib.SurrogateAccuracyMetric.__init__">(saealib.SurrogateAccuracyMetric method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateEndEvent.html#saealib.SurrogateEndEvent.__init__">(saealib.SurrogateEndEvent method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateFitStage.html#saealib.SurrogateFitStage.__init__">(saealib.SurrogateFitStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.__init__">(saealib.SurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateOnlyLoopStage.html#saealib.SurrogateOnlyLoopStage.__init__">(saealib.SurrogateOnlyLoopStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogatePrediction.html#saealib.SurrogatePrediction.__init__">(saealib.SurrogatePrediction method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateScoreStage.html#saealib.SurrogateScoreStage.__init__">(saealib.SurrogateScoreStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateStartEvent.html#saealib.SurrogateStartEvent.__init__">(saealib.SurrogateStartEvent method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurvivorSelection.html#saealib.SurvivorSelection.__init__">(saealib.SurvivorSelection method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TchebycheffDecomposition.html#saealib.TchebycheffDecomposition.__init__">(saealib.TchebycheffDecomposition method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TellStage.html#saealib.TellStage.__init__">(saealib.TellStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Termination.html#saealib.Termination.__init__">(saealib.Termination method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TerminationCondition.html#saealib.TerminationCondition.__init__">(saealib.TerminationCondition method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TopKBipartitionSet.html#saealib.TopKBipartitionSet.__init__">(saealib.TopKBipartitionSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TopKSelectionStage.html#saealib.TopKSelectionStage.__init__">(saealib.TopKSelectionStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TorchSurrogate.html#saealib.TorchSurrogate.__init__">(saealib.TorchSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TournamentSelection.html#saealib.TournamentSelection.__init__">(saealib.TournamentSelection method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TrainingData.html#saealib.TrainingData.__init__">(saealib.TrainingData method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TrainingSet.html#saealib.TrainingSet.__init__">(saealib.TrainingSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TrueEvaluationStage.html#saealib.TrueEvaluationStage.__init__">(saealib.TrueEvaluationStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TruncationSelection.html#saealib.TruncationSelection.__init__">(saealib.TruncationSelection method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Variable.html#saealib.Variable.__init__">(saealib.Variable method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.WeightedSumComparator.html#saealib.WeightedSumComparator.__init__">(saealib.WeightedSumComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.WeightedSumDecomposition.html#saealib.WeightedSumDecomposition.__init__">(saealib.WeightedSumDecomposition method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.Population.html#saealib.Population._cache">_cache (saealib.Population attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Population.html#saealib.Population._capacity">_capacity (saealib.Population attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Population.html#saealib.Population._data">_data (saealib.Population attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Individual.html#saealib.Individual._index">_index (saealib.Individual attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Individual.html#saealib.Individual._popref">_popref (saealib.Individual attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Population.html#saealib.Population._size">_size (saealib.Population attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Individual.html#saealib.Individual._structure_version">_structure_version (saealib.Individual attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population._structure_version">(saealib.Population attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Population.html#saealib.Population._value_version">_value_version (saealib.Population attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.AccuracyBasedSurrogateSwitcher.html#saealib.AccuracyBasedSurrogateSwitcher">AccuracyBasedSurrogateSwitcher (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.AccuracyEvaluator.html#saealib.AccuracyEvaluator">AccuracyEvaluator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.AcquisitionFunction.html#saealib.AcquisitionFunction">AcquisitionFunction (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.add">add() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.add">(saealib.ArchiveMixin method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.add">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParetoMixin.html#saealib.ParetoMixin.add">(saealib.ParetoMixin method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Decomposition.html#saealib.Decomposition.aggregate">aggregate() (saealib.Decomposition method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.PBIDecomposition.html#saealib.PBIDecomposition.aggregate">(saealib.PBIDecomposition method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TchebycheffDecomposition.html#saealib.TchebycheffDecomposition.aggregate">(saealib.TchebycheffDecomposition method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.WeightedSumDecomposition.html#saealib.WeightedSumDecomposition.aggregate">(saealib.WeightedSumDecomposition method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Algorithm.html#saealib.Algorithm">Algorithm (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.algorithm">algorithm (saealib.Optimizer attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Termination.html#saealib.Termination.all_of">all_of() (saealib.Termination class method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CrossoverBLXAlpha.html#saealib.CrossoverBLXAlpha.alpha">alpha (saealib.CrossoverBLXAlpha attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Termination.html#saealib.Termination.any_of">any_of() (saealib.Termination class method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.append">append() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.append">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.append">(saealib.Population method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive">Archive (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.InitialEvaluationEndEvent.html#saealib.InitialEvaluationEndEvent.archive">archive (saealib.InitialEvaluationEndEvent attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.archive">(saealib.Optimizer attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.ArchiveBasedManager.html#saealib.ArchiveBasedManager">ArchiveBasedManager (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin">ArchiveMixin (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ArchiveObjectiveSet.html#saealib.ArchiveObjectiveSet">ArchiveObjectiveSet (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ArchiveUpdateStage.html#saealib.ArchiveUpdateStage">ArchiveUpdateStage (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.argsort">argsort() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.argsort">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.argsort">(saealib.Population method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Algorithm.html#saealib.Algorithm.ask">ask() (saealib.Algorithm method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.GA.html#saealib.GA.ask">(saealib.GA method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PSO.html#saealib.PSO.ask">(saealib.PSO method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.AskStage.html#saealib.AskStage">AskStage (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.atol">atol (saealib.ArchiveMixin attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ConstraintHandler.html#saealib.ConstraintHandler.augment_objective">augment_objective() (saealib.ConstraintHandler method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.EpsilonConstraintHandler.html#saealib.EpsilonConstraintHandler.augment_objective">(saealib.EpsilonConstraintHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GradientRepairHandler.html#saealib.GradientRepairHandler.augment_objective">(saealib.GradientRepairHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.StaticToleranceHandler.html#saealib.StaticToleranceHandler.augment_objective">(saealib.StaticToleranceHandler method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.registry.build.html#saealib.registry.build">build() (in module saealib.registry)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ArchiveObjectiveSet.html#saealib.ArchiveObjectiveSet.build">(saealib.ArchiveObjectiveSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ConstraintObjectiveSet.html#saealib.ConstraintObjectiveSet.build">(saealib.ConstraintObjectiveSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.FeasibilityClassificationSet.html#saealib.FeasibilityClassificationSet.build">(saealib.FeasibilityClassificationSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.KNNConstraintObjectiveSet.html#saealib.KNNConstraintObjectiveSet.build">(saealib.KNNConstraintObjectiveSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.KNNObjectiveSet.html#saealib.KNNObjectiveSet.build">(saealib.KNNObjectiveSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LevelBasedSet.html#saealib.LevelBasedSet.build">(saealib.LevelBasedSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PairwiseComparisonSet.html#saealib.PairwiseComparisonSet.build">(saealib.PairwiseComparisonSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ReferencePointComparisonSet.html#saealib.ReferencePointComparisonSet.build">(saealib.ReferencePointComparisonSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TopKBipartitionSet.html#saealib.TopKBipartitionSet.build">(saealib.TopKBipartitionSet method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TrainingSet.html#saealib.TrainingSet.build">(saealib.TrainingSet method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.PSO.html#saealib.PSO.c1">c1 (saealib.PSO attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PSO.html#saealib.PSO.c2">c2 (saealib.PSO attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CallbackManager.html#saealib.CallbackManager">CallbackManager (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.InitialEvaluationStartEvent.html#saealib.InitialEvaluationStartEvent.candidates_x">candidates_x (saealib.InitialEvaluationStartEvent attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.GA.html#saealib.GA.categorical_crossover">categorical_crossover (saealib.GA attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.GA.html#saealib.GA.categorical_mutation">categorical_mutation (saealib.GA attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CategoricalVariable.html#saealib.CategoricalVariable">CategoricalVariable (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.cbmanager">cbmanager (saealib.Optimizer attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CheckpointCallback.html#saealib.CheckpointCallback">CheckpointCallback (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.clear">clear() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.clear">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.clear">(saealib.Population method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Comparator.html#saealib.Comparator">Comparator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.comparator">comparator (saealib.Problem attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Comparator.html#saealib.Comparator.compare">compare() (saealib.Comparator method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.DecompositionComparator.html#saealib.DecompositionComparator.compare">(saealib.DecompositionComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.EpsilonDominanceComparator.html#saealib.EpsilonDominanceComparator.compare">(saealib.EpsilonDominanceComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.HypervolumeComparator.html#saealib.HypervolumeComparator.compare">(saealib.HypervolumeComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NSGA2Comparator.html#saealib.NSGA2Comparator.compare">(saealib.NSGA2Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NSGA3Comparator.html#saealib.NSGA3Comparator.compare">(saealib.NSGA3Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParetoComparator.html#saealib.ParetoComparator.compare">(saealib.ParetoComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RNSGA2Comparator.html#saealib.RNSGA2Comparator.compare">(saealib.RNSGA2Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SingleObjectiveComparator.html#saealib.SingleObjectiveComparator.compare">(saealib.SingleObjectiveComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SPEA2Comparator.html#saealib.SPEA2Comparator.compare">(saealib.SPEA2Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.WeightedSumComparator.html#saealib.WeightedSumComparator.compare">(saealib.WeightedSumComparator method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Comparator.html#saealib.Comparator.compare_population">compare_population() (saealib.Comparator method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.DecompositionComparator.html#saealib.DecompositionComparator.compare_population">(saealib.DecompositionComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.EpsilonDominanceComparator.html#saealib.EpsilonDominanceComparator.compare_population">(saealib.EpsilonDominanceComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.HypervolumeComparator.html#saealib.HypervolumeComparator.compare_population">(saealib.HypervolumeComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NSGA2Comparator.html#saealib.NSGA2Comparator.compare_population">(saealib.NSGA2Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NSGA3Comparator.html#saealib.NSGA3Comparator.compare_population">(saealib.NSGA3Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParetoComparator.html#saealib.ParetoComparator.compare_population">(saealib.ParetoComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RNSGA2Comparator.html#saealib.RNSGA2Comparator.compare_population">(saealib.RNSGA2Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SingleObjectiveComparator.html#saealib.SingleObjectiveComparator.compare_population">(saealib.SingleObjectiveComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SPEA2Comparator.html#saealib.SPEA2Comparator.compare_population">(saealib.SPEA2Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.WeightedSumComparator.html#saealib.WeightedSumComparator.compare_population">(saealib.WeightedSumComparator method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.ComparisonSurrogate.html#saealib.ComparisonSurrogate">ComparisonSurrogate (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager">CompositeSurrogateManager (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.R2Score.html#saealib.R2Score.compute">compute() (saealib.R2Score method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.RMSE.html#saealib.RMSE.compute">(saealib.RMSE method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SpearmanCorrelation.html#saealib.SpearmanCorrelation.compute">(saealib.SpearmanCorrelation method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateAccuracyMetric.html#saealib.SurrogateAccuracyMetric.compute">(saealib.SurrogateAccuracyMetric method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.ConstraintHandler.html#saealib.ConstraintHandler.compute_cv">compute_cv() (saealib.ConstraintHandler method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.EpsilonConstraintHandler.html#saealib.EpsilonConstraintHandler.compute_cv">(saealib.EpsilonConstraintHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GradientRepairHandler.html#saealib.GradientRepairHandler.compute_cv">(saealib.GradientRepairHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.StaticToleranceHandler.html#saealib.StaticToleranceHandler.compute_cv">(saealib.StaticToleranceHandler method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.AcquisitionFunction.html#saealib.AcquisitionFunction.compute_reference">compute_reference() (saealib.AcquisitionFunction method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.EHVIAcquisition.html#saealib.EHVIAcquisition.compute_reference">(saealib.EHVIAcquisition method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ExpectedImprovement.html#saealib.ExpectedImprovement.compute_reference">(saealib.ExpectedImprovement method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LowerConfidenceBound.html#saealib.LowerConfidenceBound.compute_reference">(saealib.LowerConfidenceBound method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MaxUncertainty.html#saealib.MaxUncertainty.compute_reference">(saealib.MaxUncertainty method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MeanPrediction.html#saealib.MeanPrediction.compute_reference">(saealib.MeanPrediction method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParEGOAcquisition.html#saealib.ParEGOAcquisition.compute_reference">(saealib.ParEGOAcquisition method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ProbabilityOfFeasibility.html#saealib.ProbabilityOfFeasibility.compute_reference">(saealib.ProbabilityOfFeasibility method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ProductOfFeasibility.html#saealib.ProductOfFeasibility.compute_reference">(saealib.ProductOfFeasibility method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SMSEGOAcquisition.html#saealib.SMSEGOAcquisition.compute_reference">(saealib.SMSEGOAcquisition method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.ArchiveBasedManager.html#saealib.ArchiveBasedManager.compute_scores">compute_scores() (saealib.ArchiveBasedManager method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.DensityManager.html#saealib.DensityManager.compute_scores">(saealib.DensityManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NichingManager.html#saealib.NichingManager.compute_scores">(saealib.NichingManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NoveltyManager.html#saealib.NoveltyManager.compute_scores">(saealib.NoveltyManager method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.ConfigurationError.html#saealib.ConfigurationError">ConfigurationError</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ConstraintHandler.html#saealib.ConstraintHandler">ConstraintHandler (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ConstraintObjectiveSet.html#saealib.ConstraintObjectiveSet">ConstraintObjectiveSet (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.constraints">constraints (saealib.Problem attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ContinuousVariable.html#saealib.ContinuousVariable">ContinuousVariable (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CountGenerationStage.html#saealib.CountGenerationStage">CountGenerationStage (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Algorithm.html#saealib.Algorithm.create_pareto_archive">create_pareto_archive() (saealib.Algorithm method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.GA.html#saealib.GA.create_pareto_archive">(saealib.GA method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PSO.html#saealib.PSO.create_pareto_archive">(saealib.PSO method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Crossover.html#saealib.Crossover">Crossover (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.GA.html#saealib.GA.crossover">crossover (saealib.GA attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Crossover.html#saealib.Crossover.crossover">crossover() (saealib.Crossover method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.CrossoverBLXAlpha.html#saealib.CrossoverBLXAlpha.crossover">(saealib.CrossoverBLXAlpha method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverCategorical.html#saealib.CrossoverCategorical.crossover">(saealib.CrossoverCategorical method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverIntegerSBX.html#saealib.CrossoverIntegerSBX.crossover">(saealib.CrossoverIntegerSBX method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverOnePoint.html#saealib.CrossoverOnePoint.crossover">(saealib.CrossoverOnePoint method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverSBX.html#saealib.CrossoverSBX.crossover">(saealib.CrossoverSBX method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverTwoPoint.html#saealib.CrossoverTwoPoint.crossover">(saealib.CrossoverTwoPoint method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverUniform.html#saealib.CrossoverUniform.crossover">(saealib.CrossoverUniform method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.CrossoverBLXAlpha.html#saealib.CrossoverBLXAlpha">CrossoverBLXAlpha (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CrossoverCategorical.html#saealib.CrossoverCategorical">CrossoverCategorical (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CrossoverIntegerSBX.html#saealib.CrossoverIntegerSBX">CrossoverIntegerSBX (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CrossoverOnePoint.html#saealib.CrossoverOnePoint">CrossoverOnePoint (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CrossoverSBX.html#saealib.CrossoverSBX">CrossoverSBX (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CrossoverTwoPoint.html#saealib.CrossoverTwoPoint">CrossoverTwoPoint (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CrossoverUniform.html#saealib.CrossoverUniform">CrossoverUniform (class in saealib)</a>
+</li>
+      <li><a href="api/comparators.html#saealib.crowding_distance">crowding_distance() (in module saealib)</a>
+</li>
+      <li><a href="api/comparators.html#saealib.crowding_distance_all_fronts">crowding_distance_all_fronts() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Event.html#saealib.Event.ctx">ctx (saealib.Event attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.Result.html#saealib.Result.ctx">(saealib.Result attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.EvaluationResult.html#saealib.EvaluationResult.cv">cv (saealib.EvaluationResult attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.data">data (saealib.ArchiveMixin attribute)</a>
+</li>
+      <li><a href="api/comparators.html#saealib.dda_non_dominated_sort">dda_non_dominated_sort() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CategoricalVariable.html#saealib.CategoricalVariable.decode">decode() (saealib.CategoricalVariable method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Decomposition.html#saealib.Decomposition">Decomposition (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.DecompositionComparator.html#saealib.DecompositionComparator">DecompositionComparator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PopulationAttribute.html#saealib.PopulationAttribute.default">default (saealib.PopulationAttribute attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.delete">delete() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.delete">(saealib.ArchiveMixin method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.delete">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.delete">(saealib.Population method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.DensityManager.html#saealib.DensityManager">DensityManager (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.dim">dim (saealib.Problem attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.RBFSurrogate.html#saealib.RBFSurrogate.dim">(saealib.RBFSurrogate attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Comparator.html#saealib.Comparator.direction">direction (saealib.Comparator attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.direction">(saealib.Problem attribute)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.DirectStrategy.html#saealib.DirectStrategy">DirectStrategy (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CallbackManager.html#saealib.CallbackManager.dispatch">dispatch() (saealib.CallbackManager method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.dispatch">(saealib.Optimizer method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Dominator.html#saealib.Dominator.dominance_matrix">dominance_matrix() (saealib.Dominator method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.EpsilonDominator.html#saealib.EpsilonDominator.dominance_matrix">(saealib.EpsilonDominator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParetoDominator.html#saealib.ParetoDominator.dominance_matrix">(saealib.ParetoDominator method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Dominator.html#saealib.Dominator.dominates">dominates() (saealib.Dominator method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.EpsilonDominator.html#saealib.EpsilonDominator.dominates">(saealib.EpsilonDominator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParetoDominator.html#saealib.ParetoDominator.dominates">(saealib.ParetoDominator method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Dominator.html#saealib.Dominator">Dominator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PopulationAttribute.html#saealib.PopulationAttribute.dtype">dtype (saealib.PopulationAttribute attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.GA.html#saealib.GA.duplicate_elimination">duplicate_elimination (saealib.GA attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.duplicate_log">duplicate_log (saealib.ArchiveMixin attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.DuplicateElimination.html#saealib.DuplicateElimination">DuplicateElimination (class in saealib)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.EHVIAcquisition.html#saealib.EHVIAcquisition">EHVIAcquisition (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.empty_like">empty_like() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.empty_like">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.empty_like">(saealib.Population method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.CategoricalVariable.html#saealib.CategoricalVariable.encode">encode() (saealib.CategoricalVariable method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Comparator.html#saealib.Comparator.eps_cv">eps_cv (saealib.Comparator attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.eps_cv">(saealib.Problem attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Comparator.html#saealib.Comparator.eps_obj">eps_obj (saealib.Comparator attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.eps_obj">(saealib.Problem attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.EpsilonConstraintHandler.html#saealib.EpsilonConstraintHandler">EpsilonConstraintHandler (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.EpsilonDominanceComparator.html#saealib.EpsilonDominanceComparator">EpsilonDominanceComparator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.EpsilonDominator.html#saealib.EpsilonDominator">EpsilonDominator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.EqualityConstraint.html#saealib.EqualityConstraint">EqualityConstraint (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CrossoverIntegerSBX.html#saealib.CrossoverIntegerSBX.eta">eta (saealib.CrossoverIntegerSBX attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.CrossoverSBX.html#saealib.CrossoverSBX.eta">(saealib.CrossoverSBX attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial.eta">(saealib.MutationPolynomial attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.AccuracyEvaluator.html#saealib.AccuracyEvaluator.evaluate">evaluate() (saealib.AccuracyEvaluator method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.EqualityConstraint.html#saealib.EqualityConstraint.evaluate">(saealib.EqualityConstraint method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.HeldOutAccuracyEvaluator.html#saealib.HeldOutAccuracyEvaluator.evaluate">(saealib.HeldOutAccuracyEvaluator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint.evaluate">(saealib.InequalityConstraint method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.KFoldAccuracyEvaluator.html#saealib.KFoldAccuracyEvaluator.evaluate">(saealib.KFoldAccuracyEvaluator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LOOAccuracyEvaluator.html#saealib.LOOAccuracyEvaluator.evaluate">(saealib.LOOAccuracyEvaluator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.evaluate">(saealib.Problem method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Evaluator.html#saealib.Evaluator.evaluate_batch">evaluate_batch() (saealib.Evaluator method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.JoblibEvaluator.html#saealib.JoblibEvaluator.evaluate_batch">(saealib.JoblibEvaluator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SerialEvaluator.html#saealib.SerialEvaluator.evaluate_batch">(saealib.SerialEvaluator method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.evaluate_constraints">evaluate_constraints() (saealib.Problem method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.EqualityConstraint.html#saealib.EqualityConstraint.evaluate_with_violation">evaluate_with_violation() (saealib.EqualityConstraint method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint.evaluate_with_violation">(saealib.InequalityConstraint method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.EvaluationResult.html#saealib.EvaluationResult">EvaluationResult (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Evaluator.html#saealib.Evaluator">Evaluator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Event.html#saealib.Event">Event (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ArchiveUpdateStage.html#saealib.ArchiveUpdateStage.execute">execute() (saealib.ArchiveUpdateStage method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.AskStage.html#saealib.AskStage.execute">(saealib.AskStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CountGenerationStage.html#saealib.CountGenerationStage.execute">(saealib.CountGenerationStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.InitializationStage.html#saealib.InitializationStage.execute">(saealib.InitializationStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Pipeline.html#saealib.Pipeline.execute">(saealib.Pipeline method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SortByScoreStage.html#saealib.SortByScoreStage.execute">(saealib.SortByScoreStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Stage.html#saealib.Stage.execute">(saealib.Stage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateFitStage.html#saealib.SurrogateFitStage.execute">(saealib.SurrogateFitStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateOnlyLoopStage.html#saealib.SurrogateOnlyLoopStage.execute">(saealib.SurrogateOnlyLoopStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateScoreStage.html#saealib.SurrogateScoreStage.execute">(saealib.SurrogateScoreStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TellStage.html#saealib.TellStage.execute">(saealib.TellStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TopKSelectionStage.html#saealib.TopKSelectionStage.execute">(saealib.TopKSelectionStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TrueEvaluationStage.html#saealib.TrueEvaluationStage.execute">(saealib.TrueEvaluationStage method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.ExpectedImprovement.html#saealib.ExpectedImprovement">ExpectedImprovement (class in saealib)</a>
+</li>
+      <li><a href="api/problem.html#saealib.exponential_epsilon_schedule">exponential_epsilon_schedule() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.extend">extend() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.extend">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.extend">(saealib.Population method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.extract">extract() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.extract">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.extract">(saealib.Population method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.EvaluationResult.html#saealib.EvaluationResult.f">f (saealib.EvaluationResult attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.Result.html#saealib.Result.f">(saealib.Result attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/termination.html#saealib.f_target">f_target() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.fe">fe (saealib.Optimizer attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.Result.html#saealib.Result.fe">(saealib.Result attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.FeasibilityClassificationSet.html#saealib.FeasibilityClassificationSet">FeasibilityClassificationSet (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Pipeline.html#saealib.Pipeline.find">find() (saealib.Pipeline method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.DuplicateElimination.html#saealib.DuplicateElimination.find_duplicates">find_duplicates() (saealib.DuplicateElimination method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ArchiveBasedManager.html#saealib.ArchiveBasedManager.fit">fit() (saealib.ArchiveBasedManager method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ComparisonSurrogate.html#saealib.ComparisonSurrogate.fit">(saealib.ComparisonSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager.fit">(saealib.CompositeSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.DensityManager.html#saealib.DensityManager.fit">(saealib.DensityManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager.fit">(saealib.GlobalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LocalSurrogateManager.html#saealib.LocalSurrogateManager.fit">(saealib.LocalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NichingManager.html#saealib.NichingManager.fit">(saealib.NichingManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NoveltyManager.html#saealib.NoveltyManager.fit">(saealib.NoveltyManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager.fit">(saealib.PairwiseSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PerObjectiveSurrogate.html#saealib.PerObjectiveSurrogate.fit">(saealib.PerObjectiveSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RBFSurrogate.html#saealib.RBFSurrogate.fit">(saealib.RBFSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RegressionSurrogate.html#saealib.RegressionSurrogate.fit">(saealib.RegressionSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnClassificationSurrogate.html#saealib.SklearnClassificationSurrogate.fit">(saealib.SklearnClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnGPRSurrogate.html#saealib.SklearnGPRSurrogate.fit">(saealib.SklearnGPRSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnLGBMSurrogate.html#saealib.SklearnLGBMSurrogate.fit">(saealib.SklearnLGBMSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnNNSurrogate.html#saealib.SklearnNNSurrogate.fit">(saealib.SklearnNNSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnRFCClassificationSurrogate.html#saealib.SklearnRFCClassificationSurrogate.fit">(saealib.SklearnRFCClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnRFRSurrogate.html#saealib.SklearnRFRSurrogate.fit">(saealib.SklearnRFRSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSurrogate.html#saealib.SklearnSurrogate.fit">(saealib.SklearnSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSVCClassificationSurrogate.html#saealib.SklearnSVCClassificationSurrogate.fit">(saealib.SklearnSVCClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSVMSurrogate.html#saealib.SklearnSVMSurrogate.fit">(saealib.SklearnSVMSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnXGBSurrogate.html#saealib.SklearnXGBSurrogate.fit">(saealib.SklearnXGBSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Surrogate.html#saealib.Surrogate.fit">(saealib.Surrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.fit">(saealib.SurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TorchSurrogate.html#saealib.TorchSurrogate.fit">(saealib.TorchSurrogate method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.from_problem_file">from_problem_file() (saealib.Optimizer class method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.func">func (saealib.Problem attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.EvaluationResult.html#saealib.EvaluationResult.g">g (saealib.EvaluationResult attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.GA.html#saealib.GA">GA (class in saealib)</a>
+</li>
+      <li><a href="api/surrogate.html#saealib.gaussian_kernel">gaussian_kernel() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.gen">gen (saealib.Optimizer attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.Result.html#saealib.Result.gen">(saealib.Result attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.GenCtrlSwitcher.html#saealib.GenCtrlSwitcher">GenCtrlSwitcher (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.GenerationBasedStrategy.html#saealib.GenerationBasedStrategy">GenerationBasedStrategy (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.GenerationEndEvent.html#saealib.GenerationEndEvent">GenerationEndEvent (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.GenerationStartEvent.html#saealib.GenerationStartEvent">GenerationStartEvent (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.registry.get.html#saealib.registry.get">get() (in module saealib.registry)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.get">(saealib.Archive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.get">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.get">(saealib.Population method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateAccuracy.html#saealib.SurrogateAccuracy.get">(saealib.SurrogateAccuracy method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.get_array">get_array() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.get_array">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.get_array">(saealib.Population method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.get_cache">get_cache() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.get_cache">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.get_cache">(saealib.Population method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.get_duplicated_population">get_duplicated_population() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.get_duplicated_population">(saealib.ArchiveMixin method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.get_knn">get_knn() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.get_knn">(saealib.ArchiveMixin method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.get_readonly_array">get_readonly_array() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.get_readonly_array">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.get_readonly_array">(saealib.Population method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Individual.html#saealib.Individual.get_readonly_value">get_readonly_value() (saealib.Individual method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Algorithm.html#saealib.Algorithm.get_required_attrs">get_required_attrs() (saealib.Algorithm method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.GA.html#saealib.GA.get_required_attrs">(saealib.GA method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PSO.html#saealib.PSO.get_required_attrs">(saealib.PSO method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager">GlobalSurrogateManager (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.EqualityConstraint.html#saealib.EqualityConstraint.gradient">gradient() (saealib.EqualityConstraint method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint.gradient">(saealib.InequalityConstraint method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.GradientRepairHandler.html#saealib.GradientRepairHandler">GradientRepairHandler (class in saealib)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="H">H</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.handler">handler (saealib.Problem attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CallbackManager.html#saealib.CallbackManager.handlers">handlers (saealib.CallbackManager attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.HeldOutAccuracyEvaluator.html#saealib.HeldOutAccuracyEvaluator">HeldOutAccuracyEvaluator (class in saealib)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/utils.html#saealib.hypervolume">hypervolume() (in module saealib)</a>
+</li>
+      <li><a href="api/utils.html#saealib.hypervolume_contributions">hypervolume_contributions() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.HypervolumeComparator.html#saealib.HypervolumeComparator">HypervolumeComparator (class in saealib)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.Individual.html#saealib.Individual">Individual (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.IndividualBasedStrategy.html#saealib.IndividualBasedStrategy">IndividualBasedStrategy (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint">InequalityConstraint (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.InitialEvaluationEndEvent.html#saealib.InitialEvaluationEndEvent">InitialEvaluationEndEvent (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.InitialEvaluationStartEvent.html#saealib.InitialEvaluationStartEvent">InitialEvaluationStartEvent (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.InitializationStage.html#saealib.InitializationStage">InitializationStage (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Initializer.html#saealib.Initializer.initialize">initialize() (saealib.Initializer method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.LHSInitializer.html#saealib.LHSInitializer.initialize">(saealib.LHSInitializer method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RandomInitializer.html#saealib.RandomInitializer.initialize">(saealib.RandomInitializer method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SobolInitializer.html#saealib.SobolInitializer.initialize">(saealib.SobolInitializer method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Initializer.html#saealib.Initializer">Initializer (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.instance_name">instance_name (saealib.Optimizer attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.GA.html#saealib.GA.integer_crossover">integer_crossover (saealib.GA attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.GA.html#saealib.GA.integer_mutation">integer_mutation (saealib.GA attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.IntegerVariable.html#saealib.IntegerVariable">IntegerVariable (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Termination.html#saealib.Termination.is_terminated">is_terminated() (saealib.Termination method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ArchiveBasedManager.html#saealib.ArchiveBasedManager.iter_acquisitions">iter_acquisitions() (saealib.ArchiveBasedManager method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager.iter_acquisitions">(saealib.CompositeSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.DensityManager.html#saealib.DensityManager.iter_acquisitions">(saealib.DensityManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager.iter_acquisitions">(saealib.GlobalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LocalSurrogateManager.html#saealib.LocalSurrogateManager.iter_acquisitions">(saealib.LocalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NichingManager.html#saealib.NichingManager.iter_acquisitions">(saealib.NichingManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NoveltyManager.html#saealib.NoveltyManager.iter_acquisitions">(saealib.NoveltyManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager.iter_acquisitions">(saealib.PairwiseSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.iter_acquisitions">(saealib.SurrogateManager method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.iterate">iterate() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.iterate_from">iterate_from() (saealib.Optimizer method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="J">J</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.JoblibEvaluator.html#saealib.JoblibEvaluator">JoblibEvaluator (class in saealib)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="K">K</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.RBFSurrogate.html#saealib.RBFSurrogate.kernel">kernel (saealib.RBFSurrogate attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.key_attr">key_attr (saealib.ArchiveMixin attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.KFoldAccuracyEvaluator.html#saealib.KFoldAccuracyEvaluator">KFoldAccuracyEvaluator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.KNNConstraintObjectiveSet.html#saealib.KNNConstraintObjectiveSet">KNNConstraintObjectiveSet (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.KNNObjectiveSet.html#saealib.KNNObjectiveSet">KNNObjectiveSet (class in saealib)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.Stage.html#saealib.Stage.label">label (saealib.Stage attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.SurrogatePrediction.html#saealib.SurrogatePrediction.label">(saealib.SurrogatePrediction attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.last_accuracy">last_accuracy (saealib.SurrogateManager attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.lb">lb (saealib.Problem attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.LevelBasedSet.html#saealib.LevelBasedSet">LevelBasedSet (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.LHSInitializer.html#saealib.LHSInitializer">LHSInitializer (class in saealib)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/problem.html#saealib.linear_epsilon_schedule">linear_epsilon_schedule() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.load_pickle">load_pickle() (saealib.Optimizer class method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.LocalSurrogateManager.html#saealib.LocalSurrogateManager">LocalSurrogateManager (class in saealib)</a>
+</li>
+      <li><a href="api/callbacks.html#saealib.logging_generation">logging_generation() (in module saealib)</a>
+</li>
+      <li><a href="api/callbacks.html#saealib.logging_generation_hv">logging_generation_hv() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.LOOAccuracyEvaluator.html#saealib.LOOAccuracyEvaluator">LOOAccuracyEvaluator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.LowerConfidenceBound.html#saealib.LowerConfidenceBound">LowerConfidenceBound (class in saealib)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.ManagerSwitcher.html#saealib.ManagerSwitcher">ManagerSwitcher (class in saealib)</a>
+</li>
+      <li><a href="api/termination.html#saealib.max_fe">max_fe() (in module saealib)</a>
+</li>
+      <li><a href="api/termination.html#saealib.max_gen">max_gen() (in module saealib)</a>
+</li>
+      <li><a href="api/highlevel.html#saealib.maximize">maximize() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.MaxUncertainty.html#saealib.MaxUncertainty">MaxUncertainty (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.MeanPrediction.html#saealib.MeanPrediction">MeanPrediction (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SurrogatePrediction.html#saealib.SurrogatePrediction.metadata">metadata (saealib.SurrogatePrediction attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SurrogateAccuracy.html#saealib.SurrogateAccuracy.metrics">metrics (saealib.SurrogateAccuracy attribute)</a>
+</li>
+      <li><a href="api/highlevel.html#saealib.minimize">minimize() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.mod_structure">mod_structure() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.mod_structure">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.mod_structure">(saealib.Population method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.mod_value">mod_value() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.mod_value">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.mod_value">(saealib.Population method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.Mutation.html#saealib.Mutation.mutate">mutate() (saealib.Mutation method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.MutationCategorical.html#saealib.MutationCategorical.mutate">(saealib.MutationCategorical method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationGaussian.html#saealib.MutationGaussian.mutate">(saealib.MutationGaussian method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationIntegerUniform.html#saealib.MutationIntegerUniform.mutate">(saealib.MutationIntegerUniform method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial.mutate">(saealib.MutationPolynomial method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationUniform.html#saealib.MutationUniform.mutate">(saealib.MutationUniform method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Mutation.html#saealib.Mutation">Mutation (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.GA.html#saealib.GA.mutation">mutation (saealib.GA attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.MutationCategorical.html#saealib.MutationCategorical">MutationCategorical (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.MutationGaussian.html#saealib.MutationGaussian">MutationGaussian (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.MutationIntegerUniform.html#saealib.MutationIntegerUniform">MutationIntegerUniform (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial">MutationPolynomial (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.MutationUniform.html#saealib.MutationUniform">MutationUniform (class in saealib)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.Crossover.html#saealib.Crossover.n_children">n_children (saealib.Crossover attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.LHSInitializer.html#saealib.LHSInitializer.n_init_archive">n_init_archive (saealib.LHSInitializer attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.RandomInitializer.html#saealib.RandomInitializer.n_init_archive">(saealib.RandomInitializer attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SobolInitializer.html#saealib.SobolInitializer.n_init_archive">(saealib.SobolInitializer attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.LHSInitializer.html#saealib.LHSInitializer.n_init_population">n_init_population (saealib.LHSInitializer attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.RandomInitializer.html#saealib.RandomInitializer.n_init_population">(saealib.RandomInitializer attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SobolInitializer.html#saealib.SobolInitializer.n_init_population">(saealib.SobolInitializer attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.n_obj">n_obj (saealib.Problem attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.RBFSurrogate.html#saealib.RBFSurrogate.n_obj">(saealib.RBFSurrogate attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Crossover.html#saealib.Crossover.n_parents">n_parents (saealib.Crossover attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.SurrogateAccuracy.html#saealib.SurrogateAccuracy.n_samples">n_samples (saealib.SurrogateAccuracy attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PopulationAttribute.html#saealib.PopulationAttribute.name">name (saealib.PopulationAttribute attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.Stage.html#saealib.Stage.name">(saealib.Stage attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.NichingManager.html#saealib.NichingManager">NichingManager (class in saealib)</a>
+</li>
+      <li><a href="api/comparators.html#saealib.non_dominated_sort">non_dominated_sort() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.NonDominatedSorter.html#saealib.NonDominatedSorter">NonDominatedSorter (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Termination.html#saealib.Termination.not_">not_() (saealib.Termination class method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Stage.html#saealib.Stage.notation">notation (saealib.Stage attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.NoveltyManager.html#saealib.NoveltyManager">NoveltyManager (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.NSGA2Comparator.html#saealib.NSGA2Comparator">NSGA2Comparator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.NSGA3Comparator.html#saealib.NSGA3Comparator">NSGA3Comparator (class in saealib)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.PostEvaluationEvent.html#saealib.PostEvaluationEvent.offspring">offspring (saealib.PostEvaluationEvent attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ArchiveBasedManager.html#saealib.ArchiveBasedManager.on_generation_end">on_generation_end() (saealib.ArchiveBasedManager method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager.on_generation_end">(saealib.CompositeSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ConstraintHandler.html#saealib.ConstraintHandler.on_generation_end">(saealib.ConstraintHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.DensityManager.html#saealib.DensityManager.on_generation_end">(saealib.DensityManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.EpsilonConstraintHandler.html#saealib.EpsilonConstraintHandler.on_generation_end">(saealib.EpsilonConstraintHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager.on_generation_end">(saealib.GlobalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GradientRepairHandler.html#saealib.GradientRepairHandler.on_generation_end">(saealib.GradientRepairHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LocalSurrogateManager.html#saealib.LocalSurrogateManager.on_generation_end">(saealib.LocalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NichingManager.html#saealib.NichingManager.on_generation_end">(saealib.NichingManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NoveltyManager.html#saealib.NoveltyManager.on_generation_end">(saealib.NoveltyManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager.on_generation_end">(saealib.PairwiseSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.StaticToleranceHandler.html#saealib.StaticToleranceHandler.on_generation_end">(saealib.StaticToleranceHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.on_generation_end">(saealib.SurrogateManager method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.OptimizationStrategy.html#saealib.OptimizationStrategy">OptimizationStrategy (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer">Optimizer (class in saealib)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.PairwiseComparisonSet.html#saealib.PairwiseComparisonSet">PairwiseComparisonSet (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager">PairwiseSurrogateManager (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ParEGOAcquisition.html#saealib.ParEGOAcquisition">ParEGOAcquisition (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.GA.html#saealib.GA.parent_selection">parent_selection (saealib.GA attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ParentSelection.html#saealib.ParentSelection">ParentSelection (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive">ParetoArchive (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ParetoComparator.html#saealib.ParetoComparator">ParetoComparator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ParetoDominator.html#saealib.ParetoDominator">ParetoDominator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ParetoMixin.html#saealib.ParetoMixin">ParetoMixin (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PBIDecomposition.html#saealib.PBIDecomposition">PBIDecomposition (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PerObjectiveSurrogate.html#saealib.PerObjectiveSurrogate">PerObjectiveSurrogate (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Pipeline.html#saealib.Pipeline">Pipeline (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.popsize">popsize (saealib.Optimizer attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Population.html#saealib.Population">Population (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PopulationAttribute.html#saealib.PopulationAttribute">PopulationAttribute (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Crossover.html#saealib.Crossover.post_crossover">post_crossover() (saealib.Crossover method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.CrossoverBLXAlpha.html#saealib.CrossoverBLXAlpha.post_crossover">(saealib.CrossoverBLXAlpha method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverCategorical.html#saealib.CrossoverCategorical.post_crossover">(saealib.CrossoverCategorical method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverIntegerSBX.html#saealib.CrossoverIntegerSBX.post_crossover">(saealib.CrossoverIntegerSBX method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverOnePoint.html#saealib.CrossoverOnePoint.post_crossover">(saealib.CrossoverOnePoint method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverSBX.html#saealib.CrossoverSBX.post_crossover">(saealib.CrossoverSBX method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverTwoPoint.html#saealib.CrossoverTwoPoint.post_crossover">(saealib.CrossoverTwoPoint method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverUniform.html#saealib.CrossoverUniform.post_crossover">(saealib.CrossoverUniform method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.ComparisonSurrogate.html#saealib.ComparisonSurrogate.post_fit">post_fit() (saealib.ComparisonSurrogate method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.PerObjectiveSurrogate.html#saealib.PerObjectiveSurrogate.post_fit">(saealib.PerObjectiveSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RBFSurrogate.html#saealib.RBFSurrogate.post_fit">(saealib.RBFSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RegressionSurrogate.html#saealib.RegressionSurrogate.post_fit">(saealib.RegressionSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnClassificationSurrogate.html#saealib.SklearnClassificationSurrogate.post_fit">(saealib.SklearnClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnGPRSurrogate.html#saealib.SklearnGPRSurrogate.post_fit">(saealib.SklearnGPRSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnLGBMSurrogate.html#saealib.SklearnLGBMSurrogate.post_fit">(saealib.SklearnLGBMSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnNNSurrogate.html#saealib.SklearnNNSurrogate.post_fit">(saealib.SklearnNNSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnRFCClassificationSurrogate.html#saealib.SklearnRFCClassificationSurrogate.post_fit">(saealib.SklearnRFCClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnRFRSurrogate.html#saealib.SklearnRFRSurrogate.post_fit">(saealib.SklearnRFRSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSurrogate.html#saealib.SklearnSurrogate.post_fit">(saealib.SklearnSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSVCClassificationSurrogate.html#saealib.SklearnSVCClassificationSurrogate.post_fit">(saealib.SklearnSVCClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSVMSurrogate.html#saealib.SklearnSVMSurrogate.post_fit">(saealib.SklearnSVMSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnXGBSurrogate.html#saealib.SklearnXGBSurrogate.post_fit">(saealib.SklearnXGBSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Surrogate.html#saealib.Surrogate.post_fit">(saealib.Surrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TorchSurrogate.html#saealib.TorchSurrogate.post_fit">(saealib.TorchSurrogate method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Mutation.html#saealib.Mutation.post_mutation">post_mutation() (saealib.Mutation method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.MutationCategorical.html#saealib.MutationCategorical.post_mutation">(saealib.MutationCategorical method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationGaussian.html#saealib.MutationGaussian.post_mutation">(saealib.MutationGaussian method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationIntegerUniform.html#saealib.MutationIntegerUniform.post_mutation">(saealib.MutationIntegerUniform method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial.post_mutation">(saealib.MutationPolynomial method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationUniform.html#saealib.MutationUniform.post_mutation">(saealib.MutationUniform method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.ArchiveBasedManager.html#saealib.ArchiveBasedManager.post_score">post_score() (saealib.ArchiveBasedManager method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager.post_score">(saealib.CompositeSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.DensityManager.html#saealib.DensityManager.post_score">(saealib.DensityManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager.post_score">(saealib.GlobalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LocalSurrogateManager.html#saealib.LocalSurrogateManager.post_score">(saealib.LocalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NichingManager.html#saealib.NichingManager.post_score">(saealib.NichingManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NoveltyManager.html#saealib.NoveltyManager.post_score">(saealib.NoveltyManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager.post_score">(saealib.PairwiseSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.post_score">(saealib.SurrogateManager method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.PostAskEvent.html#saealib.PostAskEvent">PostAskEvent (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PostCrossoverEvent.html#saealib.PostCrossoverEvent">PostCrossoverEvent (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PostEvaluationEvent.html#saealib.PostEvaluationEvent">PostEvaluationEvent (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PostMutationEvent.html#saealib.PostMutationEvent">PostMutationEvent (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PostSurrogateFitEvent.html#saealib.PostSurrogateFitEvent">PostSurrogateFitEvent (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ComparisonSurrogate.html#saealib.ComparisonSurrogate.predict">predict() (saealib.ComparisonSurrogate method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.PerObjectiveSurrogate.html#saealib.PerObjectiveSurrogate.predict">(saealib.PerObjectiveSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RBFSurrogate.html#saealib.RBFSurrogate.predict">(saealib.RBFSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RegressionSurrogate.html#saealib.RegressionSurrogate.predict">(saealib.RegressionSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnClassificationSurrogate.html#saealib.SklearnClassificationSurrogate.predict">(saealib.SklearnClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnGPRSurrogate.html#saealib.SklearnGPRSurrogate.predict">(saealib.SklearnGPRSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnLGBMSurrogate.html#saealib.SklearnLGBMSurrogate.predict">(saealib.SklearnLGBMSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnNNSurrogate.html#saealib.SklearnNNSurrogate.predict">(saealib.SklearnNNSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnRFCClassificationSurrogate.html#saealib.SklearnRFCClassificationSurrogate.predict">(saealib.SklearnRFCClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnRFRSurrogate.html#saealib.SklearnRFRSurrogate.predict">(saealib.SklearnRFRSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSurrogate.html#saealib.SklearnSurrogate.predict">(saealib.SklearnSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSVCClassificationSurrogate.html#saealib.SklearnSVCClassificationSurrogate.predict">(saealib.SklearnSVCClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSVMSurrogate.html#saealib.SklearnSVMSurrogate.predict">(saealib.SklearnSVMSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnXGBSurrogate.html#saealib.SklearnXGBSurrogate.predict">(saealib.SklearnXGBSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Surrogate.html#saealib.Surrogate.predict">(saealib.Surrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TorchSurrogate.html#saealib.TorchSurrogate.predict">(saealib.TorchSurrogate method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.ComparisonSurrogate.html#saealib.ComparisonSurrogate.predict_proba">predict_proba() (saealib.ComparisonSurrogate method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.SklearnClassificationSurrogate.html#saealib.SklearnClassificationSurrogate.predict_proba">(saealib.SklearnClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnRFCClassificationSurrogate.html#saealib.SklearnRFCClassificationSurrogate.predict_proba">(saealib.SklearnRFCClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSVCClassificationSurrogate.html#saealib.SklearnSVCClassificationSurrogate.predict_proba">(saealib.SklearnSVCClassificationSurrogate method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.PreSelectionStrategy.html#saealib.PreSelectionStrategy">PreSelectionStrategy (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Crossover.html#saealib.Crossover.prob">prob (saealib.Crossover attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.CrossoverBLXAlpha.html#saealib.CrossoverBLXAlpha.prob">(saealib.CrossoverBLXAlpha attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverCategorical.html#saealib.CrossoverCategorical.prob">(saealib.CrossoverCategorical attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverIntegerSBX.html#saealib.CrossoverIntegerSBX.prob">(saealib.CrossoverIntegerSBX attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverOnePoint.html#saealib.CrossoverOnePoint.prob">(saealib.CrossoverOnePoint attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverSBX.html#saealib.CrossoverSBX.prob">(saealib.CrossoverSBX attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverTwoPoint.html#saealib.CrossoverTwoPoint.prob">(saealib.CrossoverTwoPoint attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverUniform.html#saealib.CrossoverUniform.prob">(saealib.CrossoverUniform attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Mutation.html#saealib.Mutation.prob">(saealib.Mutation attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationCategorical.html#saealib.MutationCategorical.prob">(saealib.MutationCategorical attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationGaussian.html#saealib.MutationGaussian.prob">(saealib.MutationGaussian attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationIntegerUniform.html#saealib.MutationIntegerUniform.prob">(saealib.MutationIntegerUniform attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial.prob">(saealib.MutationPolynomial attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationUniform.html#saealib.MutationUniform.prob">(saealib.MutationUniform attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.CrossoverIntegerSBX.html#saealib.CrossoverIntegerSBX.prob_var">prob_var (saealib.CrossoverIntegerSBX attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.CrossoverSBX.html#saealib.CrossoverSBX.prob_var">(saealib.CrossoverSBX attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Mutation.html#saealib.Mutation.prob_var">(saealib.Mutation attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationCategorical.html#saealib.MutationCategorical.prob_var">(saealib.MutationCategorical attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationGaussian.html#saealib.MutationGaussian.prob_var">(saealib.MutationGaussian attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationIntegerUniform.html#saealib.MutationIntegerUniform.prob_var">(saealib.MutationIntegerUniform attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial.prob_var">(saealib.MutationPolynomial attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationUniform.html#saealib.MutationUniform.prob_var">(saealib.MutationUniform attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.ProbabilityOfFeasibility.html#saealib.ProbabilityOfFeasibility">ProbabilityOfFeasibility (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem">Problem (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.problem">problem (saealib.Optimizer attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.product_combine.html#saealib.product_combine">product_combine() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ProductOfFeasibility.html#saealib.ProductOfFeasibility">ProductOfFeasibility (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PSO.html#saealib.PSO">PSO (class in saealib)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.R2Score.html#saealib.R2Score">R2Score (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.RandomInitializer.html#saealib.RandomInitializer">RandomInitializer (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.TruncationSelection.html#saealib.TruncationSelection.randomize_ties">randomize_ties (saealib.TruncationSelection attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.rank_weighted_combine.html#saealib.rank_weighted_combine">rank_weighted_combine() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.RBFSurrogate.html#saealib.RBFSurrogate">RBFSurrogate (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ReferencePointComparisonSet.html#saealib.ReferencePointComparisonSet">ReferencePointComparisonSet (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.register.html#saealib.register">register() (in module saealib)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.CallbackManager.html#saealib.CallbackManager.register">(saealib.CallbackManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CheckpointCallback.html#saealib.CheckpointCallback.register">(saealib.CheckpointCallback method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.RegressionSurrogate.html#saealib.RegressionSurrogate">RegressionSurrogate (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.reorder">reorder() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.reorder">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.reorder">(saealib.Population method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.CategoricalVariable.html#saealib.CategoricalVariable.repair">repair() (saealib.CategoricalVariable method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ConstraintHandler.html#saealib.ConstraintHandler.repair">(saealib.ConstraintHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ContinuousVariable.html#saealib.ContinuousVariable.repair">(saealib.ContinuousVariable method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.EpsilonConstraintHandler.html#saealib.EpsilonConstraintHandler.repair">(saealib.EpsilonConstraintHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GradientRepairHandler.html#saealib.GradientRepairHandler.repair">(saealib.GradientRepairHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.IntegerVariable.html#saealib.IntegerVariable.repair">(saealib.IntegerVariable method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.repair">(saealib.Problem method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.StaticToleranceHandler.html#saealib.StaticToleranceHandler.repair">(saealib.StaticToleranceHandler method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Variable.html#saealib.Variable.repair">(saealib.Variable method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/operators.html#saealib.repair_clipping">repair_clipping() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CallbackManager.html#saealib.CallbackManager.replace">replace() (saealib.CallbackManager method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.Pipeline.html#saealib.Pipeline.replace">(saealib.Pipeline method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Result.html#saealib.Result">Result (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.RMSE.html#saealib.RMSE">RMSE (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.RNSGA2Comparator.html#saealib.RNSGA2Comparator">RNSGA2Comparator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.RouletteWheelSelection.html#saealib.RouletteWheelSelection">RouletteWheelSelection (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.rtol">rtol (saealib.ArchiveMixin attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.run">run() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.run_from">run_from() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.RunEndEvent.html#saealib.RunEndEvent">RunEndEvent (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.RunStartEvent.html#saealib.RunStartEvent">RunStartEvent (class in saealib)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="S">S</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.SaealibError.html#saealib.SaealibError">SaealibError</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.save_pickle">save_pickle() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.save_preset">save_preset() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.schema">schema (saealib.Population attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.AcquisitionFunction.html#saealib.AcquisitionFunction.score">score() (saealib.AcquisitionFunction method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.EHVIAcquisition.html#saealib.EHVIAcquisition.score">(saealib.EHVIAcquisition method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ExpectedImprovement.html#saealib.ExpectedImprovement.score">(saealib.ExpectedImprovement method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LowerConfidenceBound.html#saealib.LowerConfidenceBound.score">(saealib.LowerConfidenceBound method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MaxUncertainty.html#saealib.MaxUncertainty.score">(saealib.MaxUncertainty method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MeanPrediction.html#saealib.MeanPrediction.score">(saealib.MeanPrediction method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParEGOAcquisition.html#saealib.ParEGOAcquisition.score">(saealib.ParEGOAcquisition method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ProbabilityOfFeasibility.html#saealib.ProbabilityOfFeasibility.score">(saealib.ProbabilityOfFeasibility method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ProductOfFeasibility.html#saealib.ProductOfFeasibility.score">(saealib.ProductOfFeasibility method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SMSEGOAcquisition.html#saealib.SMSEGOAcquisition.score">(saealib.SMSEGOAcquisition method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.ArchiveBasedManager.html#saealib.ArchiveBasedManager.score_candidates">score_candidates() (saealib.ArchiveBasedManager method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager.score_candidates">(saealib.CompositeSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.DensityManager.html#saealib.DensityManager.score_candidates">(saealib.DensityManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager.score_candidates">(saealib.GlobalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LocalSurrogateManager.html#saealib.LocalSurrogateManager.score_candidates">(saealib.LocalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NichingManager.html#saealib.NichingManager.score_candidates">(saealib.NichingManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NoveltyManager.html#saealib.NoveltyManager.score_candidates">(saealib.NoveltyManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager.score_candidates">(saealib.PairwiseSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.score_candidates">(saealib.SurrogateManager method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.LHSInitializer.html#saealib.LHSInitializer.seed">seed (saealib.LHSInitializer attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.seed">(saealib.Optimizer attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RandomInitializer.html#saealib.RandomInitializer.seed">(saealib.RandomInitializer attribute)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SobolInitializer.html#saealib.SobolInitializer.seed">(saealib.SobolInitializer attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.ParentSelection.html#saealib.ParentSelection.select">select() (saealib.ParentSelection method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.RouletteWheelSelection.html#saealib.RouletteWheelSelection.select">(saealib.RouletteWheelSelection method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SequentialSelection.html#saealib.SequentialSelection.select">(saealib.SequentialSelection method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurvivorSelection.html#saealib.SurvivorSelection.select">(saealib.SurvivorSelection method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TournamentSelection.html#saealib.TournamentSelection.select">(saealib.TournamentSelection method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TruncationSelection.html#saealib.TruncationSelection.select">(saealib.TruncationSelection method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.SequentialSelection.html#saealib.SequentialSelection">SequentialSelection (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SerialEvaluator.html#saealib.SerialEvaluator">SerialEvaluator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_algorithm">set_algorithm() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.set_cache">set_cache() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.set_cache">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.set_cache">(saealib.Population method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_evaluator">set_evaluator() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_initializer">set_initializer() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_instance_name">set_instance_name() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_preset">set_preset() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_seed">set_seed() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_strategy">set_strategy() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_surrogate">set_surrogate() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_surrogate_manager">set_surrogate_manager() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_termination">set_termination() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PopulationAttribute.html#saealib.PopulationAttribute.shape">shape (saealib.PopulationAttribute attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.MutationGaussian.html#saealib.MutationGaussian.sigma">sigma (saealib.MutationGaussian attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SingleObjectiveComparator.html#saealib.SingleObjectiveComparator">SingleObjectiveComparator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SklearnClassificationSurrogate.html#saealib.SklearnClassificationSurrogate">SklearnClassificationSurrogate (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SklearnGPRSurrogate.html#saealib.SklearnGPRSurrogate">SklearnGPRSurrogate (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SklearnLGBMSurrogate.html#saealib.SklearnLGBMSurrogate">SklearnLGBMSurrogate (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SklearnNNSurrogate.html#saealib.SklearnNNSurrogate">SklearnNNSurrogate (class in saealib)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.SklearnRFCClassificationSurrogate.html#saealib.SklearnRFCClassificationSurrogate">SklearnRFCClassificationSurrogate (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SklearnRFRSurrogate.html#saealib.SklearnRFRSurrogate">SklearnRFRSurrogate (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SklearnSurrogate.html#saealib.SklearnSurrogate">SklearnSurrogate (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SklearnSVCClassificationSurrogate.html#saealib.SklearnSVCClassificationSurrogate">SklearnSVCClassificationSurrogate (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SklearnSVMSurrogate.html#saealib.SklearnSVMSurrogate">SklearnSVMSurrogate (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SklearnXGBSurrogate.html#saealib.SklearnXGBSurrogate">SklearnXGBSurrogate (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.GenCtrlSwitcher.html#saealib.GenCtrlSwitcher.smoothed_error">smoothed_error (saealib.GenCtrlSwitcher attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SMSEGOAcquisition.html#saealib.SMSEGOAcquisition">SMSEGOAcquisition (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SobolInitializer.html#saealib.SobolInitializer">SobolInitializer (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Comparator.html#saealib.Comparator.sort_population">sort_population() (saealib.Comparator method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.DecompositionComparator.html#saealib.DecompositionComparator.sort_population">(saealib.DecompositionComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.EpsilonDominanceComparator.html#saealib.EpsilonDominanceComparator.sort_population">(saealib.EpsilonDominanceComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.HypervolumeComparator.html#saealib.HypervolumeComparator.sort_population">(saealib.HypervolumeComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NSGA2Comparator.html#saealib.NSGA2Comparator.sort_population">(saealib.NSGA2Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NSGA3Comparator.html#saealib.NSGA3Comparator.sort_population">(saealib.NSGA3Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ParetoComparator.html#saealib.ParetoComparator.sort_population">(saealib.ParetoComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RNSGA2Comparator.html#saealib.RNSGA2Comparator.sort_population">(saealib.RNSGA2Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SingleObjectiveComparator.html#saealib.SingleObjectiveComparator.sort_population">(saealib.SingleObjectiveComparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SPEA2Comparator.html#saealib.SPEA2Comparator.sort_population">(saealib.SPEA2Comparator method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.WeightedSumComparator.html#saealib.WeightedSumComparator.sort_population">(saealib.WeightedSumComparator method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.SortByScoreStage.html#saealib.SortByScoreStage">SortByScoreStage (class in saealib)</a>
+</li>
+      <li><a href="api/comparators.html#saealib.spea2_fitness">spea2_fitness() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SPEA2Comparator.html#saealib.SPEA2Comparator">SPEA2Comparator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SpearmanCorrelation.html#saealib.SpearmanCorrelation">SpearmanCorrelation (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Stage.html#saealib.Stage">Stage (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Stage.html#saealib.Stage.stages">stages (saealib.Stage attribute)</a>
+</li>
+      <li><a href="api/termination.html#saealib.stalled">stalled() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.StaticToleranceHandler.html#saealib.StaticToleranceHandler">StaticToleranceHandler (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SurrogatePrediction.html#saealib.SurrogatePrediction.std">std (saealib.SurrogatePrediction attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.DirectStrategy.html#saealib.DirectStrategy.step">step() (saealib.DirectStrategy method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.GenerationBasedStrategy.html#saealib.GenerationBasedStrategy.step">(saealib.GenerationBasedStrategy method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.IndividualBasedStrategy.html#saealib.IndividualBasedStrategy.step">(saealib.IndividualBasedStrategy method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.OptimizationStrategy.html#saealib.OptimizationStrategy.step">(saealib.OptimizationStrategy method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PreSelectionStrategy.html#saealib.PreSelectionStrategy.step">(saealib.PreSelectionStrategy method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.strategy">strategy (saealib.Optimizer attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.StrategySwitcher.html#saealib.StrategySwitcher">StrategySwitcher (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Surrogate.html#saealib.Surrogate">Surrogate (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.surrogate">surrogate (saealib.Optimizer attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.PostSurrogateFitEvent.html#saealib.PostSurrogateFitEvent.surrogate">(saealib.PostSurrogateFitEvent attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.SurrogateAccuracy.html#saealib.SurrogateAccuracy">SurrogateAccuracy (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SurrogateAccuracyMetric.html#saealib.SurrogateAccuracyMetric">SurrogateAccuracyMetric (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SurrogateEndEvent.html#saealib.SurrogateEndEvent">SurrogateEndEvent (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SurrogateFitStage.html#saealib.SurrogateFitStage">SurrogateFitStage (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager">SurrogateManager (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SurrogateOnlyLoopStage.html#saealib.SurrogateOnlyLoopStage">SurrogateOnlyLoopStage (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SurrogatePrediction.html#saealib.SurrogatePrediction">SurrogatePrediction (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SurrogateScoreStage.html#saealib.SurrogateScoreStage">SurrogateScoreStage (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SurrogateStartEvent.html#saealib.SurrogateStartEvent">SurrogateStartEvent (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.GA.html#saealib.GA.survivor_selection">survivor_selection (saealib.GA attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SurvivorSelection.html#saealib.SurvivorSelection">SurvivorSelection (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CrossoverUniform.html#saealib.CrossoverUniform.swap_rate">swap_rate (saealib.CrossoverUniform attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.AccuracyBasedSurrogateSwitcher.html#saealib.AccuracyBasedSurrogateSwitcher.switch">switch() (saealib.AccuracyBasedSurrogateSwitcher method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.GenCtrlSwitcher.html#saealib.GenCtrlSwitcher.switch">(saealib.GenCtrlSwitcher method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.ManagerSwitcher.html#saealib.ManagerSwitcher.switch">(saealib.ManagerSwitcher method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.StrategySwitcher.html#saealib.StrategySwitcher.switch">(saealib.StrategySwitcher method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.TchebycheffDecomposition.html#saealib.TchebycheffDecomposition">TchebycheffDecomposition (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Algorithm.html#saealib.Algorithm.tell">tell() (saealib.Algorithm method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.GA.html#saealib.GA.tell">(saealib.GA method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PSO.html#saealib.PSO.tell">(saealib.PSO method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.SurrogatePrediction.html#saealib.SurrogatePrediction.tell_f">tell_f (saealib.SurrogatePrediction attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.TellStage.html#saealib.TellStage">TellStage (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Termination.html#saealib.Termination">Termination (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.termination">termination (saealib.Optimizer attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.TerminationCondition.html#saealib.TerminationCondition">TerminationCondition (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ArchiveUpdateStage.html#saealib.ArchiveUpdateStage.to_pseudocode">to_pseudocode() (saealib.ArchiveUpdateStage method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.AskStage.html#saealib.AskStage.to_pseudocode">(saealib.AskStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CountGenerationStage.html#saealib.CountGenerationStage.to_pseudocode">(saealib.CountGenerationStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.InitializationStage.html#saealib.InitializationStage.to_pseudocode">(saealib.InitializationStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Pipeline.html#saealib.Pipeline.to_pseudocode">(saealib.Pipeline method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SortByScoreStage.html#saealib.SortByScoreStage.to_pseudocode">(saealib.SortByScoreStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Stage.html#saealib.Stage.to_pseudocode">(saealib.Stage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateFitStage.html#saealib.SurrogateFitStage.to_pseudocode">(saealib.SurrogateFitStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateOnlyLoopStage.html#saealib.SurrogateOnlyLoopStage.to_pseudocode">(saealib.SurrogateOnlyLoopStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateScoreStage.html#saealib.SurrogateScoreStage.to_pseudocode">(saealib.SurrogateScoreStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TellStage.html#saealib.TellStage.to_pseudocode">(saealib.TellStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TopKSelectionStage.html#saealib.TopKSelectionStage.to_pseudocode">(saealib.TopKSelectionStage method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TrueEvaluationStage.html#saealib.TrueEvaluationStage.to_pseudocode">(saealib.TrueEvaluationStage method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.registry.to_spec.html#saealib.registry.to_spec">to_spec() (in module saealib.registry)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.TopKBipartitionSet.html#saealib.TopKBipartitionSet">TopKBipartitionSet (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.TopKSelectionStage.html#saealib.TopKSelectionStage">TopKSelectionStage (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.TorchSurrogate.html#saealib.TorchSurrogate">TorchSurrogate (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.TournamentSelection.html#saealib.TournamentSelection">TournamentSelection (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PostSurrogateFitEvent.html#saealib.PostSurrogateFitEvent.train_f">train_f (saealib.PostSurrogateFitEvent attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.PostSurrogateFitEvent.html#saealib.PostSurrogateFitEvent.train_x">train_x (saealib.PostSurrogateFitEvent attribute)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.TrainingData.html#saealib.TrainingData.train_x">(saealib.TrainingData attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.TrainingData.html#saealib.TrainingData.train_y">train_y (saealib.TrainingData attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.TrainingData.html#saealib.TrainingData">TrainingData (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.TrainingSet.html#saealib.TrainingSet">TrainingSet (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.TrueEvaluationStage.html#saealib.TrueEvaluationStage">TrueEvaluationStage (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.truncate">truncate() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.truncate">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.truncate">(saealib.Population method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.TruncationSelection.html#saealib.TruncationSelection">TruncationSelection (class in saealib)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.ub">ub (saealib.Problem attribute)</a>
+</li>
+      <li><a href="api/utils.html#saealib.uniform_weight_vectors">uniform_weight_vectors() (in module saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.CallbackManager.html#saealib.CallbackManager.unregister">unregister() (saealib.CallbackManager method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.Archive.html#saealib.Archive.update_array">update_array() (saealib.Archive method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.ParetoArchive.html#saealib.ParetoArchive.update_array">(saealib.ParetoArchive method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Population.html#saealib.Population.update_array">(saealib.Population method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Individual.html#saealib.Individual.update_value">update_value() (saealib.Individual method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.PSO.html#saealib.PSO.v_max">v_max (saealib.PSO attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.validate">validate() (saealib.Optimizer method)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ValidationError.html#saealib.ValidationError">ValidationError</a>
+</li>
+      <li><a href="api/_autosummary/saealib.SurrogatePrediction.html#saealib.SurrogatePrediction.value">value (saealib.SurrogatePrediction attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Variable.html#saealib.Variable">Variable (class in saealib)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.Problem.html#saealib.Problem.variables">variables (saealib.Problem attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.EqualityConstraint.html#saealib.EqualityConstraint.violation">violation() (saealib.EqualityConstraint method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint.violation">(saealib.InequalityConstraint method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.EqualityConstraint.html#saealib.EqualityConstraint.violation_from_value">violation_from_value() (saealib.EqualityConstraint method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint.violation_from_value">(saealib.InequalityConstraint method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.PSO.html#saealib.PSO.w">w (saealib.PSO attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.WeightedSumComparator.html#saealib.WeightedSumComparator">WeightedSumComparator (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.WeightedSumDecomposition.html#saealib.WeightedSumDecomposition">WeightedSumDecomposition (class in saealib)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.Comparator.html#saealib.Comparator.weights">weights (saealib.Comparator attribute)</a>
+</li>
+      <li><a href="api/_autosummary/saealib.ArchiveBasedManager.html#saealib.ArchiveBasedManager.with_on_generation_end">with_on_generation_end() (saealib.ArchiveBasedManager method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager.with_on_generation_end">(saealib.CompositeSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.DensityManager.html#saealib.DensityManager.with_on_generation_end">(saealib.DensityManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager.with_on_generation_end">(saealib.GlobalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LocalSurrogateManager.html#saealib.LocalSurrogateManager.with_on_generation_end">(saealib.LocalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NichingManager.html#saealib.NichingManager.with_on_generation_end">(saealib.NichingManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NoveltyManager.html#saealib.NoveltyManager.with_on_generation_end">(saealib.NoveltyManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager.with_on_generation_end">(saealib.PairwiseSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.with_on_generation_end">(saealib.SurrogateManager method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.Crossover.html#saealib.Crossover.with_post">with_post() (saealib.Crossover method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.CrossoverBLXAlpha.html#saealib.CrossoverBLXAlpha.with_post">(saealib.CrossoverBLXAlpha method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverCategorical.html#saealib.CrossoverCategorical.with_post">(saealib.CrossoverCategorical method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverIntegerSBX.html#saealib.CrossoverIntegerSBX.with_post">(saealib.CrossoverIntegerSBX method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverOnePoint.html#saealib.CrossoverOnePoint.with_post">(saealib.CrossoverOnePoint method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverSBX.html#saealib.CrossoverSBX.with_post">(saealib.CrossoverSBX method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverTwoPoint.html#saealib.CrossoverTwoPoint.with_post">(saealib.CrossoverTwoPoint method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.CrossoverUniform.html#saealib.CrossoverUniform.with_post">(saealib.CrossoverUniform method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Mutation.html#saealib.Mutation.with_post">(saealib.Mutation method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationCategorical.html#saealib.MutationCategorical.with_post">(saealib.MutationCategorical method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationGaussian.html#saealib.MutationGaussian.with_post">(saealib.MutationGaussian method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationIntegerUniform.html#saealib.MutationIntegerUniform.with_post">(saealib.MutationIntegerUniform method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial.with_post">(saealib.MutationPolynomial method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.MutationUniform.html#saealib.MutationUniform.with_post">(saealib.MutationUniform method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.ComparisonSurrogate.html#saealib.ComparisonSurrogate.with_post_fit">with_post_fit() (saealib.ComparisonSurrogate method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.PerObjectiveSurrogate.html#saealib.PerObjectiveSurrogate.with_post_fit">(saealib.PerObjectiveSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RBFSurrogate.html#saealib.RBFSurrogate.with_post_fit">(saealib.RBFSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.RegressionSurrogate.html#saealib.RegressionSurrogate.with_post_fit">(saealib.RegressionSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnClassificationSurrogate.html#saealib.SklearnClassificationSurrogate.with_post_fit">(saealib.SklearnClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnGPRSurrogate.html#saealib.SklearnGPRSurrogate.with_post_fit">(saealib.SklearnGPRSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnLGBMSurrogate.html#saealib.SklearnLGBMSurrogate.with_post_fit">(saealib.SklearnLGBMSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnNNSurrogate.html#saealib.SklearnNNSurrogate.with_post_fit">(saealib.SklearnNNSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnRFCClassificationSurrogate.html#saealib.SklearnRFCClassificationSurrogate.with_post_fit">(saealib.SklearnRFCClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnRFRSurrogate.html#saealib.SklearnRFRSurrogate.with_post_fit">(saealib.SklearnRFRSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSurrogate.html#saealib.SklearnSurrogate.with_post_fit">(saealib.SklearnSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSVCClassificationSurrogate.html#saealib.SklearnSVCClassificationSurrogate.with_post_fit">(saealib.SklearnSVCClassificationSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnSVMSurrogate.html#saealib.SklearnSVMSurrogate.with_post_fit">(saealib.SklearnSVMSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SklearnXGBSurrogate.html#saealib.SklearnXGBSurrogate.with_post_fit">(saealib.SklearnXGBSurrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.Surrogate.html#saealib.Surrogate.with_post_fit">(saealib.Surrogate method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.TorchSurrogate.html#saealib.TorchSurrogate.with_post_fit">(saealib.TorchSurrogate method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/_autosummary/saealib.ArchiveBasedManager.html#saealib.ArchiveBasedManager.with_post_score">with_post_score() (saealib.ArchiveBasedManager method)</a>
+
+      <ul>
+        <li><a href="api/_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager.with_post_score">(saealib.CompositeSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.DensityManager.html#saealib.DensityManager.with_post_score">(saealib.DensityManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager.with_post_score">(saealib.GlobalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.LocalSurrogateManager.html#saealib.LocalSurrogateManager.with_post_score">(saealib.LocalSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NichingManager.html#saealib.NichingManager.with_post_score">(saealib.NichingManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.NoveltyManager.html#saealib.NoveltyManager.with_post_score">(saealib.NoveltyManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager.with_post_score">(saealib.PairwiseSurrogateManager method)</a>
+</li>
+        <li><a href="api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager.with_post_score">(saealib.SurrogateManager method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="X">X</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/_autosummary/saealib.Result.html#saealib.Result.x">x (saealib.Result attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, shlka.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

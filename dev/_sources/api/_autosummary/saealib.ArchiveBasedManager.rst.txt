@@ -1,0 +1,63 @@
+﻿saealib.ArchiveBasedManager
+===========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: ArchiveBasedManager
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ArchiveBasedManager.__init__
+   ~ArchiveBasedManager.compute_scores
+   ~ArchiveBasedManager.fit
+   ~ArchiveBasedManager.iter_acquisitions
+   ~ArchiveBasedManager.on_generation_end
+   ~ArchiveBasedManager.post_score
+   ~ArchiveBasedManager.score_candidates
+   ~ArchiveBasedManager.with_on_generation_end
+   ~ArchiveBasedManager.with_post_score
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.ArchiveBasedManager.__init__
+
+
+.. automethod:: saealib.ArchiveBasedManager.compute_scores
+
+
+.. automethod:: saealib.ArchiveBasedManager.fit
+
+
+.. automethod:: saealib.ArchiveBasedManager.iter_acquisitions
+
+
+.. automethod:: saealib.ArchiveBasedManager.on_generation_end
+
+
+.. automethod:: saealib.ArchiveBasedManager.post_score
+
+
+.. automethod:: saealib.ArchiveBasedManager.score_candidates
+
+
+.. automethod:: saealib.ArchiveBasedManager.with_on_generation_end
+
+
+.. automethod:: saealib.ArchiveBasedManager.with_post_score
+
+
+

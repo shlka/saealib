@@ -1,0 +1,47 @@
+﻿saealib.SklearnGPRSurrogate
+===========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SklearnGPRSurrogate
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SklearnGPRSurrogate.__init__
+   ~SklearnGPRSurrogate.fit
+   ~SklearnGPRSurrogate.post_fit
+   ~SklearnGPRSurrogate.predict
+   ~SklearnGPRSurrogate.with_post_fit
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SklearnGPRSurrogate.__init__
+
+
+.. automethod:: saealib.SklearnGPRSurrogate.fit
+
+
+.. automethod:: saealib.SklearnGPRSurrogate.post_fit
+
+
+.. automethod:: saealib.SklearnGPRSurrogate.predict
+
+
+.. automethod:: saealib.SklearnGPRSurrogate.with_post_fit
+
+
+

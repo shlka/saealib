@@ -1,0 +1,43 @@
+﻿saealib.Comparator
+==================
+
+.. currentmodule:: saealib
+
+.. autoclass:: Comparator
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~Comparator.__init__
+   ~Comparator.compare
+   ~Comparator.compare_population
+   ~Comparator.sort_population
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.Comparator.__init__
+
+
+.. automethod:: saealib.Comparator.compare
+
+
+.. automethod:: saealib.Comparator.compare_population
+
+
+.. automethod:: saealib.Comparator.sort_population
+
+
+

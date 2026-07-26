@@ -1,0 +1,63 @@
+﻿saealib.DensityManager
+======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: DensityManager
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~DensityManager.__init__
+   ~DensityManager.compute_scores
+   ~DensityManager.fit
+   ~DensityManager.iter_acquisitions
+   ~DensityManager.on_generation_end
+   ~DensityManager.post_score
+   ~DensityManager.score_candidates
+   ~DensityManager.with_on_generation_end
+   ~DensityManager.with_post_score
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.DensityManager.__init__
+
+
+.. automethod:: saealib.DensityManager.compute_scores
+
+
+.. automethod:: saealib.DensityManager.fit
+
+
+.. automethod:: saealib.DensityManager.iter_acquisitions
+
+
+.. automethod:: saealib.DensityManager.on_generation_end
+
+
+.. automethod:: saealib.DensityManager.post_score
+
+
+.. automethod:: saealib.DensityManager.score_candidates
+
+
+.. automethod:: saealib.DensityManager.with_on_generation_end
+
+
+.. automethod:: saealib.DensityManager.with_post_score
+
+
+

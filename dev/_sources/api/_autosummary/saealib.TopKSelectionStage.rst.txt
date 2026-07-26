@@ -1,0 +1,39 @@
+﻿saealib.TopKSelectionStage
+==========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: TopKSelectionStage
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~TopKSelectionStage.__init__
+   ~TopKSelectionStage.execute
+   ~TopKSelectionStage.to_pseudocode
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.TopKSelectionStage.__init__
+
+
+.. automethod:: saealib.TopKSelectionStage.execute
+
+
+.. automethod:: saealib.TopKSelectionStage.to_pseudocode
+
+
+
