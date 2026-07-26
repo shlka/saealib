@@ -176,4 +176,5 @@ def _set_version_switcher_match(app, config):
 
 
 def setup(app):
+    """Register the version-switcher match hook (Sphinx extension entry point)."""
     app.connect("config-inited", _set_version_switcher_match)
