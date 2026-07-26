@@ -1,6 +1,0 @@
-﻿saealib.product\_combine
-========================
-
-.. currentmodule:: saealib
-
-.. autofunction:: product_combine

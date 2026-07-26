@@ -1,6 +1,0 @@
-﻿saealib.registry.build
-======================
-
-.. currentmodule:: saealib.registry
-
-.. autofunction:: build

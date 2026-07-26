@@ -1,6 +1,0 @@
-﻿saealib.registry.to\_spec
-=========================
-
-.. currentmodule:: saealib.registry
-
-.. autofunction:: to_spec

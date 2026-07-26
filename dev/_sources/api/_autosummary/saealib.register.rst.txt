@@ -1,6 +1,0 @@
-﻿saealib.register
-================
-
-.. currentmodule:: saealib
-
-.. autofunction:: register

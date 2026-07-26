@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html><head>
   <meta charset="utf-8">
-  <title>Redirecting to v0.1.0b4...</title>
-  <meta http-equiv="refresh" content="0; url=v0.1.0b4/">
-  <link rel="canonical" href="v0.1.0b4/" />
+  <title>Redirecting to dev...</title>
+  <link rel="canonical" href="dev/" />
+  <noscript><meta http-equiv="refresh" content="0; url=dev/"></noscript>
+  <script>
+    var lang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+    var dest = lang.indexOf('ja') === 0 ? 'ja/dev/' : 'dev/';
+    location.replace(dest);
+  </script>
 </head><body>
-  <p>Redirecting to <a href="v0.1.0b4/">v0.1.0b4</a></p>
+  <p>Redirecting to <a href="dev/">dev</a> (or <a href="ja/dev/">日本語</a>)</p>
 </body></html>
