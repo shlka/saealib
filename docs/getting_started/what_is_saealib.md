@@ -61,10 +61,10 @@ flowchart TD
 
 真の評価を行う個体数を絞ることで、全体の評価コストを大幅に削減します。
 
-## なぜsaealibが存在するのか
+## saealibが必要な理由
 
 PythonでEAを使う場合、多目的探索の標準的な選択肢は**pymoo**です。
-高コストな評価に特化したサロゲート併用最適化は、pymooの姉妹プロジェクトである**pysamoo**が担ってきましたが、開発は止まっています。
+高コストな評価に特化したサロゲート併用最適化は、pymooの姉妹プロジェクトである**pysamoo**が担ってきました。
 どちらのライブラリも、「どの候補解に高コストな真の評価を割り当てるか」という判断を、差し替え可能な部品としては扱っていません。
 pymooは生成した候補解を常に真の関数で評価し、pysamooはこの判断をアルゴリズムクラスごとに直接書き込んでいます。
 
@@ -78,22 +78,17 @@ individual-based/generation-based/pre-selection/directという4種の組み込�
 | モデル管理戦略を差し替え可能な部品にしている | Yes | No（常に全候補を評価） | アルゴリズムクラスごとにハードコード |
 | 型付きイベントによる実行中のコンポーネント差し替え | Yes | 「アルゴリズムをカスタマイズする用途ではない」（[公式ドキュメント](https://pymoo.org/interface/callback.html)） | No |
 | サロゲートと獲得関数の分離 | Yes | No（pysamooに委譲） | 部分的 |
-| ライセンス | Apache-2.0 | Apache-2.0 | AGPL-3.0 |
 
-この差し替えを支えているのは、`Algorithm`/`OptimizationStrategy`/`Surrogate`/`AcquisitionFunction`/`SurrogateManager`がいずれも抽象基底を持ち、`Optimizer.set_*()`で構築時に差し替えられるという設計です。
-サブクラス化するほどではない、軽い変更をしたい場面のためには、`with_post`/`with_post_fit`によるフックの追加、`Pipeline`/`Stage`によるステージの並べ替え、`CallbackManager`によるパイプラインの観察と実行時の差し替えという3つの軽量な機構も用意されています（詳細は[拡張のガイドライン](../components/extension_guidelines.md)を参照してください）。
+この差し替え可能性を支えているのは、`Algorithm`/`OptimizationStrategy`/`Surrogate`/`AcquisitionFunction`/`SurrogateManager`がいずれも抽象基底を持ち、`Optimizer.set_*()`で構築時に差し替えられるという設計です（詳細は[コンポーネント概要](../components/index.md)を参照してください）。
+サブクラス化するほどではない軽い変更のためには、`with_post`/`with_post_fit`によるフック追加、`Pipeline`/`Stage`によるステージの並べ替え、`CallbackManager`による観察と実行時の差し替えという3つの軽量な機構も用意されています（詳細は[拡張のガイドライン](../components/extension_guidelines.md)を参照してください）。
 
-候補解を生成してから個体群を更新するまでの流れは、**Ask-Tell**という形に分けられています。
-`Algorithm.ask()`が候補解を生成し、`Algorithm.tell()`が個体群を更新するという2つのメソッドに分け、そのあいだのどの候補解が真の評価を受けるかという判断を`OptimizationStrategy.step()`に持たせています。
+候補解の生成と個体群の更新は**Ask-Tell**という2つの手続きに分けられており、そのあいだのどの候補解が真の評価を受けるかという判断を`OptimizationStrategy.step()`に持たせています（詳細は[Algorithm](../components/algorithm.md)を参照してください）。
 この分離によって、探索アルゴリズム本体を変えずに評価戦略だけを差し替える、という組み合わせが成立します。
 
-こうして組み立てたパイプラインには、2つの入口が用意されています。
-`minimize()`/`maximize()`は、このパイプラインを適切な既定値で自動構成した、定型コード不要の高レベルAPIです。
-`Optimizer`ビルダーと`.iterate()`ジェネレータによる低レベルAPIは、世代ごとの検査やカスタムループ制御が必要な研究用途に向きます。
+こうして組み立てたパイプラインには2つの入口が用意されており、`minimize()`/`maximize()`は定型コード不要の高レベルAPI、`Optimizer`ビルダーと`.iterate()`ジェネレータは世代ごとの検査やカスタムループ制御が必要な研究用途向けの低レベルAPIです。
 両者は同じパイプラインの上に成り立っており、低レベルAPIだけが持つ独自機能はありません（組み立て方は[コンポーネント概要](../components/index.md)を参照してください）。
 
-パイプライン全体でのスコアは、常に「高いほど良い」という規約に統一されています。
-問題の最適化方向は`Problem`の`direction`（最小化なら-1、最大化なら+1）で表し、`Comparator`や結果抽出はこの符号を`weight`として使います。
+パイプライン全体でのスコアは、常に「高いほど良い」という規約に統一されています（詳細は[Problem](../components/problem.md)を参照してください）。
 
 現時点でのトレードオフも述べておきます。
 saealibが提供する組み込みアルゴリズムはGAとPSOのみで、pymooやPlatEMOほどアルゴリズムの網羅性はありません。

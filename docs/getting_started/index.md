@@ -9,7 +9,7 @@ saealibを初めて使う方へ。このセクションでは、saealibとは何
 :link: what_is_saealib
 :link-type: doc
 
-サロゲート型進化的アルゴリズムとは何か、そしてなぜsaealibが存在するのかを理解します。
+サロゲート型進化的アルゴリズムとは何か、そしてsaealibが必要な理由を理解します。
 :::
 
 :::{grid-item-card} {fa}`download;sd-mr-1` インストール
