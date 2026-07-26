@@ -193,10 +193,9 @@ class EpsilonDominator(Dominator):
 
     References
     ----------
-    .. [1] Laumanns, M., Thiele, L., Deb, K., & Zitzler, E. (2002).
-       Combining Convergence and Diversity in Evolutionary Multiobjective
-       Optimization. *Evolutionary Computation*, 10(3), 263-282.
-       https://doi.org/10.1162/106365602760234108
+    :cite:`laumanns2002epsilon`: Laumanns, M., Thiele, L., Deb, K., &
+    Zitzler, E. (2002). Combining Convergence and Diversity in Evolutionary
+    Multiobjective Optimization. *Evolutionary Computation*, 10(3), 263-282.
     """
 
     def __init__(

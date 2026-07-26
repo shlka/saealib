@@ -1,0 +1,604 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../algorithms/gp_ucb.md:1
+msgid "GP-UCB (Gaussian Process Upper Confidence Bound)"
+msgstr "GP-UCB（Gaussian Process Upper Confidence Bound）"
+
+#: ../../../algorithms/gp_ucb.md:3
+msgid ""
+"GP-UCB is a sequential optimization method for expensive-to-evaluate "
+"objective functions, combining a surrogate model built from Gaussian "
+"Process (GP) regression with the **Upper Confidence Bound** (UCB) "
+"acquisition function, a linear combination of the predictive mean and "
+"predictive standard deviation."
+msgstr "GP-UCBは、評価コストの高い目的関数を対象に、Gaussian Process回帰(GP)によるサロゲートモデルと、予測平均と予測標準偏差の線形結合である**上側信頼限界**(Upper Confidence Bound, UCB)という獲得関数を組み合わせた逐次最適化の手法です。"
+
+#: ../../../algorithms/gp_ucb.md:5
+msgid "Overview"
+msgstr "概要"
+
+#: ../../../algorithms/gp_ucb.md:7
+msgid ""
+"GP-UCB extends the **UCB policy** from the multi-armed bandit problem to "
+"GP optimization. In the bandit problem, it is known that continually "
+"choosing the arm with the highest upper confidence bound on its reward "
+"automatically balances exploration and exploitation."
+msgstr "GP-UCBは、多腕バンディット問題における**UCB方策**をGP最適化に拡張したものです。 バンディット問題では、各腕の報酬の信頼区間上限が最も高い腕を選び続けることで、探索と活用のバランスを自動的に取ることが知られています。"
+
+#: ../../../algorithms/gp_ucb.md:10
+#, python-brace-format
+msgid ""
+"GP-UCB applies this idea to GP regression over a continuous space, "
+"evaluating next the point that maximizes the **upper confidence bound** "
+"$\\mu(x) + \\sqrt{\\beta_t}\\,\\sigma(x)$ of a candidate point $x$. A "
+"point with a high predictive mean $\\mu(x)$ corresponds to exploitation, "
+"while a point with a large predictive standard deviation $\\sigma(x)$ "
+"corresponds to exploration, and $\\beta_t$ controls the relative weight "
+"between these two terms."
+msgstr "GP-UCBはこの発想を連続空間上のGP回帰に適用し、候補点 $x$ の**信頼上限** $\\mu(x) + \\sqrt{\\beta_t}\\,\\sigma(x)$ を最大化する点を次に評価します。 予測平均 $\\mu(x)$ が高い点は活用(exploitation)、予測標準偏差 $\\sigma(x)$ が大きい点は探索(exploration)に対応し、$\\beta_t$ がこの二項の相対的な重みを制御します。"
+
+#: ../../../algorithms/gp_ucb.md:13
+#, python-brace-format
+msgid ""
+"The theoretical core of this method lies in choosing $\\beta_t$ not as a "
+"fixed value but as a function of the iteration count $t$. Increasing "
+"$\\beta_t$ according to a specific logarithmic schedule derived from an "
+"upper bound on the information gain yields a sublinear upper bound on the"
+" cumulative regret {cite}`srinivas2012gpucb`. The concrete procedure is "
+"shown in the pseudocode below."
+msgstr "この手法の理論的な核心は、$\\beta_t$ を固定値ではなく反復回数 $t$ に依存する形で選ぶことにあります。 $\\beta_t$ を情報利得(information gain)の上界から導かれる特定の対数的なスケジュールに従って増加させると、累積リグレットに劣線形の上界が導出できます{cite}`srinivas2012gpucb`。 具体的な手順は次の擬似コードに示します。"
+
+#: ../../../algorithms/gp_ucb.md:16
+msgid "Pseudocode"
+msgstr "擬似コード"
+
+#: ../../../algorithms/gp_ucb.md:18
+msgid "(GP-UCB)"
+msgstr "(GP-UCB)"
+
+#: ../../../algorithms/gp_ucb.md:21
+msgid ""
+"**Inputs** objective function $f$ (maximized as a reward), search domain "
+"$D$, GP prior $\\mu_0=0,\\sigma_0,k$, confidence parameter sequence "
+"$\\beta_t$ **Output** best solution $x^*$"
+msgstr "**Inputs** 目的関数 $f$（報酬として最大化）、探索範囲 $D$、GP事前分布 $\\mu_0=0,\\sigma_0,k$、信頼度パラメータ列 $\\beta_t$ **Output** 最良解 $x^*$"
+
+#: ../../../algorithms/gp_ucb.md:24
+msgid "Set $t=1$"
+msgstr "$t=1$ とする"
+
+#: ../../../algorithms/gp_ucb.md:25
+#, python-brace-format
+msgid ""
+"Choose the point $x_t = \\arg\\max_{x \\in D} \\mu_{t-1}(x) + "
+"\\sqrt{\\beta_t}\\,\\sigma_{t-1}(x)$ that maximizes the upper confidence "
+"bound"
+msgstr "信頼上限 $x_t = \\arg\\max_{x \\in D} \\mu_{t-1}(x) + \\sqrt{\\beta_t}\\,\\sigma_{t-1}(x)$ を最大化する点を選ぶ"
+
+#: ../../../algorithms/gp_ucb.md:26
+msgid "Observe $y_t = f(x_t) + \\epsilon_t$"
+msgstr "$y_t = f(x_t) + \\epsilon_t$ を観測する"
+
+#: ../../../algorithms/gp_ucb.md:27
+msgid ""
+"Perform a Bayesian update with the observation $y_t$, obtaining the "
+"posterior mean $\\mu_t(x)$ and posterior standard deviation "
+"$\\sigma_t(x)$"
+msgstr "観測 $y_t$ でベイズ更新を行い、事後平均 $\\mu_t(x)$ と事後標準偏差 $\\sigma_t(x)$ を得る"
+
+#: ../../../algorithms/gp_ucb.md:28
+msgid ""
+"Increment $t$ by 1 and return to step 2 until the evaluation budget is "
+"reached"
+msgstr "$t$ を1増やし、評価予算に達するまで2へ戻る"
+
+#: ../../../algorithms/gp_ucb.md:31
+msgid "Flowchart"
+msgstr "フローチャート"
+
+#: ../../../algorithms/gp_ucb.md:48
+msgid "Configuration in saealib"
+msgstr "saealibでの構成"
+
+#: ../../../algorithms/gp_ucb.md:50
+#, python-brace-format
+msgid ""
+"Algorithm 1 in the paper is formulated as **maximizing** a reward, "
+"whereas `LowerConfidenceBound` assumes minimization and computes "
+"$\\mathrm{LCB}(x) = \\mu(x) - \\kappa\\sigma(x)$, returning it with its "
+"sign flipped so that score comparisons line up with saealib's other "
+"acquisition functions (to match saealib's overall convention that "
+"\"higher score is better\")."
+msgstr "論文のAlgorithm 1は報酬の**最大化**として定式化されているのに対し、`LowerConfidenceBound`は最小化を前提に $\\mathrm{LCB}(x) = \\mu(x) - \\kappa\\sigma(x)$ を計算し、スコアの大小比較を他の獲得関数と揃えるために符号を反転して返します（`saealib`全体の規約「スコアは高いほど良い」に合わせるため）。"
+
+#: ../../../algorithms/gp_ucb.md:52
+#, python-brace-format
+msgid ""
+"Converting $\\mu(x)$ into a minimization space and then flipping the sign"
+" gives $-(\\mu(x) - \\kappa\\sigma(x)) = -\\mu(x) + \\kappa\\sigma(x)$, "
+"which matches the direction of the upper confidence bound $\\mu(x) + "
+"\\kappa\\sigma(x)$ in the maximization space. Therefore, "
+"`LowerConfidenceBound`'s `kappa` corresponds to the paper's "
+"$\\sqrt{\\beta_t}$."
+msgstr "$\\mu(x)$ を最小化空間に変換したうえで符号反転すると $-(\\mu(x) - \\kappa\\sigma(x)) = -\\mu(x) + \\kappa\\sigma(x)$ となり、これは最大化空間での信頼上限 $\\mu(x) + \\kappa\\sigma(x)$ と符号の向きが揃います。 したがって`LowerConfidenceBound`の`kappa`は、論文の $\\sqrt{\\beta_t}$ に対応します。"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid "Role"
+msgstr "役割"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid "saealib implementation"
+msgstr "saealibでの実装"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid "Corresponding step"
+msgstr "対応ステップ"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid "Search algorithm"
+msgstr "探索アルゴリズム本体"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid ""
+"`GA` (the specific combination of crossover, mutation, and selection is "
+"not part of GP-UCB's definition)"
+msgstr "`GA`（交叉、突然変異、選択の組み合わせ自体はGP-UCBの定義に含まれない）"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid "Candidate generation (search for argmax UCB)"
+msgstr "候補解の生成（argmax UCBの探索）"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid "Surrogate model"
+msgstr "サロゲートモデル"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid "`SklearnGPRSurrogate` (GP regression; requires the `sklearn` extra)"
+msgstr "`SklearnGPRSurrogate`（GP回帰。`sklearn` extraが必要）"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid "L4"
+msgstr "L4"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid "Acquisition function"
+msgstr "獲得関数"
+
+#: ../../../algorithms/gp_ucb.md:33
+#, python-brace-format
+msgid ""
+"`LowerConfidenceBound` (`kappa` corresponds to the paper's "
+"$\\sqrt{\\beta_t}$; see the next section for details)"
+msgstr "`LowerConfidenceBound`（`kappa`が論文の $\\sqrt{\\beta_t}$ に対応、詳細は次節）"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid "L2"
+msgstr "L2"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid "Surrogate management"
+msgstr "サロゲート管理"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid "`GlobalSurrogateManager` (fits the GP over the entire archive)"
+msgstr "`GlobalSurrogateManager`（アーカイブ全体でGPをフィットする）"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid "L2, L4"
+msgstr "L2, L4"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid "Evaluation strategy"
+msgstr "評価戦略"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid ""
+"`IndividualBasedStrategy` (truly evaluates only the individuals with the "
+"top UCB scores)"
+msgstr "`IndividualBasedStrategy`（UCB上位の個体だけを真に評価する）"
+
+#: ../../../algorithms/gp_ucb.md:33
+msgid "L2-3"
+msgstr "L2-3"
+
+#: ../../../algorithms/gp_ucb.md:105
+msgid ""
+"Since the specific crossover, mutation, and selection operators are not "
+"part of GP-UCB's own definition, the above is just one example, and any "
+"`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection` can be "
+"swapped in."
+msgstr "交叉、突然変異、選択の具体的な演算子はGP-UCB自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられます。"
+
+#: ../../../algorithms/gp_ucb.md:107
+msgid "Parameters and variants"
+msgstr "パラメータと変種"
+
+#: ../../../algorithms/gp_ucb.md:109
+msgid ""
+"**κ (exploration–exploitation trade-off)**: Adjusted via "
+"`LowerConfidenceBound(kappa=...)`. The default is `2.0`."
+msgstr "**κ（探索と活用のトレードオフ）**：`LowerConfidenceBound(kappa=...)`で調整します。既定値は`2.0`。"
+
+#: ../../../algorithms/gp_ucb.md:111
+#, python-brace-format
+msgid ""
+"Algorithm 1 in the paper gives this weight not as a fixed value but as "
+"$\\sqrt{\\beta_t}$, dependent on the iteration count $t$. For example, "
+"when the search domain $D$ is a finite set, choosing $\\beta_t$ as "
+"follows yields a theoretical upper bound on the cumulative regret "
+"(Theorem 1)."
+msgstr "論文のAlgorithm 1は、この重みを固定値ではなく反復回数 $t$ に依存する $\\sqrt{\\beta_t}$ として与えます。 たとえば探索空間 $D$ が有限集合の場合、$\\beta_t$ は次のように選ぶことで累積リグレットの理論的な上界が導出できます（Theorem 1）。"
+
+#: ../../../algorithms/gp_ucb.md:114
+#, python-brace-format
+msgid "\\beta_t = 2 \\log\\left(\\frac{|D|\\, t^2 \\pi^2}{6\\delta}\\right)"
+msgstr "\\beta_t = 2 \\log\\left(\\frac{|D|\\, t^2 \\pi^2}{6\\delta}\\right)"
+
+#: ../../../algorithms/gp_ucb.md:116
+msgid ""
+"Because this expression grows logarithmically in $t$, the exploration "
+"weight increases only gradually as iterations proceed. For a compact $D$ "
+"(Theorem 2), or for functions with bounded RKHS norm without assuming a "
+"GP prior (Theorem 3), schedules of $\\beta_t$ increasing in $t$ are given"
+" as well, each with a different form. The theoretical contribution the "
+"name GP-UCB refers to is precisely this correspondence between the "
+"$\\beta_t$ schedule and the upper bound on cumulative regret."
+msgstr "この式は $t$ について対数的に増加するため、探索の重みは反復が進むほど緩やかに大きくなります。 コンパクトな $D$ の場合（Theorem 2）や、GP事前分布を仮定せずRKHSノルムが有界な関数を扱う場合（Theorem 3）にも、それぞれ形は異なるものの、$t$ に関して増加する $\\beta_t$ のスケジュールが与えられます。 GP-UCBという名前が指す理論的な貢献は、まさにこの $\\beta_t$ のスケジュールと累積リグレットの上界の対応関係にあります。"
+
+#: ../../../algorithms/gp_ucb.md:120
+#, python-brace-format
+msgid ""
+"`LowerConfidenceBound`'s `kappa` is a constant fixed across iterations, "
+"and does not implement this $\\sqrt{\\beta_t}$ schedule. Therefore, GP-"
+"UCB with a fixed `kappa` is a naive fixed-weight UCB heuristic that does "
+"not carry the regret guarantee derived theoretically in the paper. The "
+"paper itself reports, in its experiments section, that using the "
+"$\\beta_t$ given by Theorem 1 as-is is overly exploratory, and that "
+"scaling the coefficient down by 1/5 via cross-validation performed better"
+" — so using a fixed or empirically tuned weight in practice does not "
+"contradict the paper. However, there is no theoretical basis for how this"
+" fixed weight is chosen, and the default `kappa=2.0` is merely fixing a "
+"value equivalent to $\\beta_t=4.0$."
+msgstr "`LowerConfidenceBound`の`kappa`は反復を通じて固定された定数であり、この $\\sqrt{\\beta_t}$ のスケジュールを実装していません。 したがって`kappa`を固定したままのGP-UCBは、論文が理論的に導出した意味でのリグレット保証を持たない、素朴な固定重みUCBヒューリスティックです。 論文自身も実験節で、Theorem 1が与える $\\beta_t$ をそのまま使うと過剰に探索的になり、交差検証で係数を1/5にスケールした方が性能が良かったと報告しており、実務上は固定または経験的に調整した重みを使うこと自体は論文とも矛盾しません。 ただし、この固定重みの選び方に理論的根拠はなく、`kappa=2.0`という既定値も$\\beta_t=4.0$相当の値を固定しているに過ぎません。"
+
+#: ../../../algorithms/gp_ucb.md:125
+msgid ""
+"If you want to change `kappa` dynamically with $t$, rewriting "
+"`surrogate_manager.acquisition.kappa` every generation via "
+"`CallbackManager` can bring it closer to a schedule equivalent to Theorem"
+" 1."
+msgstr "$t$ に応じて`kappa`を動的に変更したい場合は、`CallbackManager`で世代ごとに`surrogate_manager.acquisition.kappa`を書き換えることで、Theorem 1相当のスケジュールに近づけられます。"
+
+#: ../../../algorithms/gp_ucb.md:127
+msgid "Related"
+msgstr "関連"
+
+#: ../../../algorithms/gp_ucb.md:129
+msgid ""
+"[References](../references.md): Full bibliographic details for the "
+"source, and a list of sources for acquisition functions other than LCB"
+msgstr "[文献リファレンス](../references.md)：出典の完全な書誌情報とLCB以外の獲得関数の出典一覧"
+
+#: ../../../algorithms/gp_ucb.md:130
+msgid ""
+"[SurrogateManager](../components/surrogate_manager.md): Detailed usage of"
+" `GlobalSurrogateManager`"
+msgstr "[SurrogateManager](../components/surrogate_manager.md)：`GlobalSurrogateManager`の詳しい使い方"
+
+#: ../../../algorithms/gp_ucb.md:131
+msgid ""
+"[AcquisitionFunction](../components/acquisition_functions.md): List of "
+"acquisition functions including `LowerConfidenceBound`"
+msgstr "[AcquisitionFunction](../components/acquisition_functions.md)：`LowerConfidenceBound`を含む獲得関数一覧"
+
+#: ../../../algorithms/gp_ucb.md:132
+msgid ""
+"[Surrogate](../components/surrogate.md): List of surrogate models "
+"including `SklearnGPRSurrogate`, and an explanation of the `sklearn` "
+"extra"
+msgstr "[Surrogate](../components/surrogate.md)：`SklearnGPRSurrogate`を含むサロゲートモデル一覧と`sklearn` extraの説明"
+
+#: ../../../algorithms/gp_ucb.md:133
+msgid ""
+"[OptimizationStrategy](../components/strategies.md): List of strategies "
+"including `IndividualBasedStrategy`'s `evaluation_ratio`"
+msgstr "[OptimizationStrategy](../components/strategies.md)：`IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧"
+
+#: ../../../algorithms/gp_ucb.md:134
+msgid ""
+"[EGO](ego.md): A method with the same GP surrogate model + "
+"`IndividualBasedStrategy` configuration, replacing the acquisition "
+"function with Expected Improvement (EI)"
+msgstr "[EGO](ego.md)：同じGPサロゲートモデル＋`IndividualBasedStrategy`の構成を、期待改善量(EI)獲得関数で置き換えた手法"
+
+#~ msgid "GP-UCB（Gaussian Process Upper Confidence Bound）"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "GP-UCBは、評価コストの高い目的関数を対象に、Gaussian "
+#~ "Process回帰(GP)による代理モデルと、予測平均と予測標準偏差の線形結合である**上側信頼限界**(Upper "
+#~ "Confidence Bound, UCB)という獲得関数を組み合わせた逐次最適化の手法である。"
+#~ msgstr ""
+
+#~ msgid "概要"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "GP-UCBは、多腕バンディット問題における**UCB方策**をGP最適化に拡張したものである。 "
+#~ "バンディット問題では、各腕の報酬の信頼区間上限が最も高い腕を選び続けることで、探索と活用のバランスを自動的に取ることが知られている。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "GP-UCBはこの発想を連続空間上のGP回帰に適用し、候補点 $x$ の**信頼上限** "
+#~ "$\\mu(x) + \\sqrt{\\beta_t}\\,\\sigma(x)$ "
+#~ "を最大化する点を次に評価する。 予測平均 $\\mu(x)$ "
+#~ "が高い点は活用(exploitation)、予測標準偏差 $\\sigma(x)$ "
+#~ "が大きい点は探索(exploration)に対応し、$\\beta_t$ がこの二項の相対的な重みを制御する。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "この手法の理論的な核心は、$\\beta_t$ を固定値ではなく反復回数 $t$ "
+#~ "に依存する形で選ぶことにある。 $\\beta_t$ を情報利得(information "
+#~ "gain)の上界から導かれる特定の対数的なスケジュールに従って増加させると、累積リグレットに劣線形の上界が導出できる{cite}`srinivas2012gpucb`。"
+#~ " 具体的な手順は次の擬似コードに示す。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "自身のページ番号、1始まり）を指す。このマーカーがarXiv版のページ割りに "
+#~ "対応することはOCRファイル中のマーカー間隔（1ページ目=1-95行目、2ページ目= "
+#~ "96-212行目、...）から確認済みだが、2012年出版版（IEEE Transactions on "
+#~ "Information Theory誌、pp.3250-3265）とは版が異なるため、ページ番号の対応関係は 未確認"
+#~ "（NSGA-IIIページのown page注記と同種の注意）。したがって以下は 「(OCR) "
+#~ "p.N」と表記し、出版版のページ番号でないことを明示する。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "ステップ1: Algorithm 1 \"The GP-UCB "
+#~ "algorithm\" のInput行 （\"Input space D; GP"
+#~ " Prior μ0 = 0, σ0, k\"）。Section "
+#~ "3、(OCR) p.4。OCR 382-383行目。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "ステップ2: Algorithm 1のfor loop本体、UCBインデックスの選択則。 "
+#~ "本文中の定義式(6)（xt = argmax μt-1(x) + "
+#~ "βt^{1/2} σt-1(x)）と同一。 Section 3、(OCR) p.4。OCR"
+#~ " 344-348, 385-389行目。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "ステップ3: Algorithm 1 \"Sample yt = "
+#~ "f(xt) + εt\"。Section 3、(OCR) p.4。OCR "
+#~ "390行目。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "ステップ4: Algorithm 1 \"Perform Bayesian "
+#~ "update to obtain μt and σt\"。 "
+#~ "更新式そのものはSection 2.1の式(1)(2)（μT(x), σT^2(x)の閉形式）を参照。 "
+#~ "Section 2.1、(OCR) p.3。OCR "
+#~ "245-249行目（式(1)(2)）、391行目（Algorithm 1本体）。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "ステップ5: for loop終端（\"end for\"、反復回数の上限は文脈依存でAlgorithm"
+#~ " 1 自体には明記がない。Theorem 1等の評価予算Tに合わせた言い換え）。 Section"
+#~ " 3、(OCR) p.4。OCR 392行目。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "βtのスケジュール（Theorem 1、有限|D|の場合）: βt = 2 "
+#~ "log(|D| t^2 π^2 / 6δ)。Section 4、(OCR)"
+#~ " p.5。OCR 491-492行目。 （コンパクトなDの場合のTheorem "
+#~ "2、RKHSノルム有界の場合のTheorem 3にも "
+#~ "それぞれ別のβtスケジュールがあるが、いずれもtに関して増加する対数的な形を 取る点は共通。ここではTheorem "
+#~ "1のみを代表として引用する。） 実験節では、Theorem 1のβtをそのまま使うと過剰に探索的になるため、 "
+#~ "交差検証で係数を1/5にスケールした方が性能が良いという経験則も述べられている。 Section 6、(OCR)"
+#~ " p.7-8。OCR 789-793行目。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "擬似コードは論文Algorithm 1をほぼ逐語的に踏襲している（言い換えは日本語化のみ）。 "
+#~ "論文はバンディット設定の報酬**最大化**として定式化されており、UCB選択則 μ + "
+#~ "sqrt(βt)σ も最大化のための式である。saealib側の対応付け（LCBによる "
+#~ "最小化への符号反転）は「saealibでの構成」節で扱う。 -->"
+#~ msgstr ""
+
+#~ msgid "擬似コード"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**Inputs** 目的関数 $f$（報酬として最大化）、探索範囲 $D$、GP事前分布 "
+#~ "$\\mu_0=0,\\sigma_0,k$、信頼度パラメータ列 $\\beta_t$ **Output** "
+#~ "最良解 $x^*$"
+#~ msgstr ""
+
+#~ msgid "$t=1$ とする"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "信頼上限 $x_t = \\arg\\max_{x \\in D} "
+#~ "\\mu_{t-1}(x) + \\sqrt{\\beta_t}\\,\\sigma_{t-1}(x)$ "
+#~ "を最大化する点を選ぶ"
+#~ msgstr ""
+
+#~ msgid "$y_t = f(x_t) + \\epsilon_t$ を観測する"
+#~ msgstr ""
+
+#~ msgid "観測 $y_t$ でベイズ更新を行い、事後平均 $\\mu_t(x)$ と事後標準偏差 $\\sigma_t(x)$ を得る"
+#~ msgstr ""
+
+#~ msgid "$t$ を1増やし、評価予算に達するまで2へ戻る"
+#~ msgstr ""
+
+#~ msgid "フローチャート"
+#~ msgstr ""
+
+#~ msgid "saealibでの構成"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "論文のAlgorithm "
+#~ "1は報酬の**最大化**として定式化されているのに対し、`LowerConfidenceBound`は最小化を前提に "
+#~ "$\\mathrm{LCB}(x) = \\mu(x) - "
+#~ "\\kappa\\sigma(x)$ "
+#~ "を計算し、スコアの大小比較を他の獲得関数と揃えるために符号を反転して返す（`saealib`全体の規約「スコアは高いほど良い」に合わせるため）。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "$\\mu(x)$ を最小化空間に変換したうえで符号反転すると $-(\\mu(x) - "
+#~ "\\kappa\\sigma(x)) = -\\mu(x) + "
+#~ "\\kappa\\sigma(x)$ となり、これは最大化空間での信頼上限 $\\mu(x) + "
+#~ "\\kappa\\sigma(x)$ と符号の向きが揃う。 "
+#~ "したがって`LowerConfidenceBound`の`kappa`は、論文の $\\sqrt{\\beta_t}$ "
+#~ "に対応する。"
+#~ msgstr ""
+
+#~ msgid "役割"
+#~ msgstr ""
+
+#~ msgid "saealibでの実装"
+#~ msgstr ""
+
+#~ msgid "対応する擬似コードのステップ"
+#~ msgstr ""
+
+#~ msgid "探索アルゴリズム本体"
+#~ msgstr ""
+
+#~ msgid "`GA`（交叉・突然変異・選択の組み合わせ自体はGP-UCBの定義に含まれない）"
+#~ msgstr ""
+
+#~ msgid "候補解の生成（argmax UCBの探索）"
+#~ msgstr ""
+
+#~ msgid "代理モデル"
+#~ msgstr ""
+
+#~ msgid "`SklearnGPRSurrogate`（GP回帰。`sklearn` extraが必要）"
+#~ msgstr ""
+
+#~ msgid "4"
+#~ msgstr ""
+
+#~ msgid "獲得関数"
+#~ msgstr ""
+
+#~ msgid "`LowerConfidenceBound`（`kappa`が論文の $\\sqrt{\\beta_t}$ に対応、詳細は次節）"
+#~ msgstr ""
+
+#~ msgid "2"
+#~ msgstr ""
+
+#~ msgid "サロゲート管理"
+#~ msgstr ""
+
+#~ msgid "`GlobalSurrogateManager`（アーカイブ全体でGPをフィットする）"
+#~ msgstr ""
+
+#~ msgid "2, 4"
+#~ msgstr ""
+
+#~ msgid "評価戦略"
+#~ msgstr ""
+
+#~ msgid "`IndividualBasedStrategy`（UCB上位の個体だけを真に評価する）"
+#~ msgstr ""
+
+#~ msgid "2-3"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "交叉・突然変異・選択の具体的な演算子はGP-"
+#~ "UCB自体の定義に含まれないため、上記は一例であり任意の`Crossover`/`Mutation`/`ParentSelection`/`SurvivorSelection`に差し替えられる。"
+#~ msgstr ""
+
+#~ msgid "パラメータと変種"
+#~ msgstr ""
+
+#~ msgid "**κ（探索と活用のトレードオフ）**: `LowerConfidenceBound(kappa=...)`で調整する。既定値は`2.0`。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "論文のAlgorithm 1は、この重みを固定値ではなく反復回数 $t$ に依存する "
+#~ "$\\sqrt{\\beta_t}$ として与える。 たとえば探索空間 $D$ "
+#~ "が有限集合の場合、$\\beta_t$ は次のように選ぶことで累積リグレットの理論的な上界が導出できる（Theorem "
+#~ "1）。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "この式は $t$ について対数的に増加するため、探索の重みは反復が進むほど緩やかに大きくなる。 "
+#~ "コンパクトな $D$ の場合（Theorem "
+#~ "2）や、GP事前分布を仮定せずRKHSノルムが有界な関数を扱う場合（Theorem "
+#~ "3）にも、それぞれ形は異なるがtに関して増加する $\\beta_t$ のスケジュールが与えられる。 "
+#~ "GP-UCBという名前が指す理論的な貢献は、まさにこの $\\beta_t$ "
+#~ "のスケジュールと累積リグレットの上界の対応関係にある。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`LowerConfidenceBound`の`kappa`は反復を通じて固定された定数であり、この "
+#~ "$\\sqrt{\\beta_t}$ のスケジュールを実装していない。 したがって`kappa"
+#~ "`を固定したままのGP-"
+#~ "UCBは、論文が理論的に導出した意味でのリグレット保証を持たない、素朴な固定重みUCBヒューリスティックである。 "
+#~ "論文自身も実験節で、Theorem 1が与える $\\beta_t$ "
+#~ "をそのまま使うと過剰に探索的になり、交差検証で係数を1/5にスケールした方が性能が良かったと報告しており、実務上は固定または経験的に調整した重みを使うこと自体は論文とも矛盾しない。"
+#~ " "
+#~ "ただし、この固定重みの選び方に理論的根拠はなく、`kappa=2.0`という既定値も$\\beta_t=4.0$相当の値を固定しているに過ぎない。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "$t$ "
+#~ "に応じて`kappa`を動的に変更したい場合は、`CallbackManager`で世代ごとに`surrogate_manager.acquisition.kappa`を書き換えることで、Theorem"
+#~ " 1相当のスケジュールに近づけられる。"
+#~ msgstr ""
+
+#~ msgid "関連"
+#~ msgstr ""
+
+#~ msgid "[文献リファレンス](../references.md) — 出典の完全な書誌情報とLCB以外の獲得関数の出典一覧"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[SurrogateManager](../components/surrogate_manager.md) — "
+#~ "`GlobalSurrogateManager`の詳しい使い方"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[AcquisitionFunction](../components/acquisition_functions.md) —"
+#~ " `LowerConfidenceBound`を含む獲得関数一覧"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[Surrogate](../components/surrogate.md) — "
+#~ "`SklearnGPRSurrogate`を含む代理モデル一覧と`sklearn` extraの説明"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[OptimizationStrategy](../components/strategies.md) — "
+#~ "`IndividualBasedStrategy`の`evaluation_ratio`を含む戦略一覧"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[EGO](ego.md) — "
+#~ "同じGP代理モデル＋`IndividualBasedStrategy`の構成を、期待改善量(EI)獲得関数で置き換えた手法"
+#~ msgstr ""
+

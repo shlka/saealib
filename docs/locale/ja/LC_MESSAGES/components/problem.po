@@ -1,0 +1,347 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../components/problem.md:1
+msgid "Problem"
+msgstr "Problem"
+
+#: ../../../components/problem.md:3
+msgid ""
+"Every component in `saealib` shares the optimization problem to solve "
+"through `Problem`. It bundles not just the objective function itself but "
+"also the design-variable range, objective direction, constraints, and how"
+" solutions are compared, all into a single object."
+msgstr "`saealib`の全コンポーネントは、`Problem`を通じて解くべき最適化問題を共有します。 目的関数そのものだけでなく、設計変数の範囲、目的の方向、制約、解の比較方法までを1つのオブジェクトにまとめる役割を持ちます。"
+
+#: ../../../components/problem.md:6
+msgid "Problem's role"
+msgstr "Problemの役割"
+
+#: ../../../components/problem.md:8
+msgid "`Problem`'s constructor takes the following arguments."
+msgstr "`Problem`のコンストラクタは次の引数を受け取ります。"
+
+#: ../../../components/problem.md:18
+msgid ""
+"**`func`**: The objective function, which takes an array of design "
+"variables and returns the evaluation value. **`dim`**: The number of "
+"design-variable dimensions. **`n_obj`**: The number of objective "
+"functions."
+msgstr "**`func`**：設計変数の配列を受け取り評価値を返す目的関数。 **`dim`**：設計変数の次元数。 **`n_obj`**：目的関数の数。"
+
+#: ../../../components/problem.md:22
+msgid ""
+"**`direction`**: An array of shape `(n_obj,)` giving the optimization "
+"direction per objective; each element must be `+1` (maximize) or `-1` "
+"(minimize). Passing any other value raises an exception at construction "
+"time."
+msgstr "**`direction`**：目的ごとの最適化方向を表す`shape (n_obj,)`の配列で、各要素は`+1`（最大化）または`-1`（最小化）でなければなりません。 それ以外の値を渡すと構築時に例外になります。"
+
+#: ../../../components/problem.md:25
+msgid ""
+"**`lb`**/**`ub`**: The design variables' lower and upper bounds. Required"
+" if `variables` isn't specified; if it is, they're derived automatically "
+"from `variables`'s ranges."
+msgstr "**`lb`**/**`ub`**：設計変数の下限と上限。 `variables`を指定しない場合は必須で、指定した場合は`variables`側の範囲から自動的に導出されます。"
+
+#: ../../../components/problem.md:28
+msgid ""
+"**`comparator`**: The [Comparator](comparators.md) that compares "
+"solutions. If omitted, `SingleObjectiveComparator` is auto-selected when "
+"`n_obj == 1`, and `NSGA2Comparator` when `n_obj > 1`. If the passed "
+"`Comparator`'s `direction` is unset (`None`), `Problem`'s `direction` is "
+"injected directly."
+msgstr "**`comparator`**：解を比較する[Comparator](comparators.md)。 省略した場合、`n_obj == 1`なら`SingleObjectiveComparator`、`n_obj > 1`なら`NSGA2Comparator`が自動的に選ばれます。 渡した`Comparator`の`direction`が未設定（`None`）であれば、`Problem`の`direction`がそのまま注入されます。"
+
+#: ../../../components/problem.md:32
+msgid ""
+"**`constraints`**: A list of inequality constraints "
+"(`InequalityConstraint`). How to define them is covered in [Constrained "
+"Optimization](../tutorials/constraints.md)."
+msgstr "**`constraints`**：不等式制約(`InequalityConstraint`)のリスト。 定義方法は[制約付き最適化](../tutorials/constraints.md)で扱います。"
+
+#: ../../../components/problem.md:35
+msgid ""
+"**`eps_cv`**/**`eps_obj`**: The tolerance for feasibility judgment and "
+"the tolerance for objective-value equality judgment, respectively. "
+"`eps_cv` is only carried over to the default `handler`/`comparator` at "
+"constructor time — directly rewriting `problem.eps_cv` after construction"
+" has no effect on runtime behavior. The threshold actually used is "
+"`handler.feasibility_threshold`, which is synchronized to "
+"`comparator`/`pareto_archive` every generation during an `Optimizer` run."
+msgstr "**`eps_cv`**/**`eps_obj`**：それぞれ実行可能性判定の許容誤差、目的関数値の同値判定の許容誤差を表します。 `eps_cv`はコンストラクタ実行時に既定の`handler`/`comparator`へ引き継がれるだけで、構築後に`problem.eps_cv`を直接書き換えても実行時の挙動には反映されません。 実際に使われる閾値は`handler.feasibility_threshold`であり、`Optimizer`の実行中は毎世代`comparator`/`pareto_archive`へ同期されます。"
+
+#: ../../../components/problem.md:39
+msgid ""
+"**`handler`**: The [ConstraintHandler](constraints.md) responsible for "
+"aggregating constraint violations and correcting the objective function. "
+"If omitted, `StaticToleranceHandler(eps_cv=eps_cv)` is used."
+msgstr "**`handler`**：制約違反の集約や目的関数の補正を担う[ConstraintHandler](constraints.md)。 省略時は`StaticToleranceHandler(eps_cv=eps_cv)`が使われます。"
+
+#: ../../../components/problem.md:42
+msgid ""
+"**`variables`**: Specifies each design variable's type as a list of "
+"`Variable`. This can be omitted for problems with only continuous "
+"variables, in which case every dimension is treated as "
+"`ContinuousVariable`. If you want to mix integer and categorical "
+"variables, including `IntegerVariable`/`CategoricalVariable` here makes "
+"[Crossover](crossover.md)/[Mutation](mutation.md) automatically assign a "
+"different operator per variable type."
+msgstr "**`variables`**：設計変数ごとの型を`Variable`のリストで指定します。 連続変数だけの問題では省略してよく、その場合は全次元が`ContinuousVariable`として扱われます。 整数変数とカテゴリ変数を混在させたい場合にここへ`IntegerVariable`/`CategoricalVariable`を含めると、[Crossover](crossover.md)/[Mutation](mutation.md)が変数の型ごとに異なる演算子を自動的に割り当てます。"
+
+#: ../../../components/problem.md:47
+msgid ""
+"Older tutorials have examples using a `weight=` argument, but the current"
+" `Problem` has no such argument. Passing `weight=` raises `TypeError`."
+msgstr "旧バージョンのチュートリアルには`weight=`という引数を使う例がありますが、現行の`Problem`にこの引数は存在しません。 `weight=`を渡すと`TypeError`になります。"
+
+#: ../../../components/problem.md:51
+msgid "The direction/weight role split"
+msgstr "directionとweightの役割分担"
+
+#: ../../../components/problem.md:53
+msgid ""
+"`direction` is a `±1` array, unified across all of saealib, representing "
+"sign only. By contrast, the `weights` received by `WeightedSumComparator`"
+" or `DecompositionComparator` are non-negative weights for aggregating "
+"multiple objectives into a scalar value — a separate concept, independent"
+" of direction."
+msgstr "`direction`は`saealib`全体で統一された、符号だけを表す`±1`の配列です。 一方、`WeightedSumComparator`や`DecompositionComparator`が受け取る`weights`は、複数目的をスカラー値へ集約する際の非負の重みであり、方向とは独立した別の概念です。"
+
+#: ../../../components/problem.md:56
+msgid ""
+"Under this role split, `weights` cannot express the importance (scaling) "
+"of an objective itself. If you want to adjust the magnitude of an "
+"objective value, scale it inside `func`. This is organized into two axes:"
+" `direction` expresses sign only, and `weights` expresses only the "
+"aggregation weighting."
+msgstr "この役割分担のもとでは、目的の重要度そのもの（スケーリング）を`weights`で表現することはできません。 目的関数値の大きさを調整したい場合は`func`の内部でスケーリングします。 `direction`は符号だけを、`weights`は集約の重み配分だけを表す、という2軸に整理されています。"
+
+#: ../../../components/problem.md:60
+msgid "Implementing a custom Variable"
+msgstr "独自Variableの実装方法"
+
+#: ../../../components/problem.md:62
+msgid ""
+"`Variable` (an ABC) requires only two properties, `lb`/`ub`, and one "
+"method, `repair(x)`. The built-in "
+"`ContinuousVariable`/`IntegerVariable`/`CategoricalVariable` are all thin"
+" implementations that simply project a value onto their own domain; if "
+"you need a variable type beyond these (a periodic variable, a log-scale "
+"variable, etc.), subclass `Variable` directly."
+msgstr "`Variable`(ABC)は、`lb`/`ub`という2つのプロパティと`repair(x)`というメソッドだけを要求します。 組み込みの`ContinuousVariable`/`IntegerVariable`/`CategoricalVariable`は、いずれも自分の定義域へ値を射影するだけの薄い実装であり、これ以外の変数型（周期変数、対数スケール変数など）が必要な場合は`Variable`を直接継承すればよいです。"
+
+#: ../../../components/problem.md:65
+msgid ""
+"The following example is a variable that wraps around at the boundary "
+"instead of clamping the value. It can be used for a design variable, like"
+" an angle, where you want a value exceeding the upper bound to be treated"
+" as continuing from the lower bound."
+msgstr "次の例は、値を切り詰めるのではなく境界で折り返す変数です。 角度のように、上限を超えた値が下限側から連続しているとみなしたい設計変数に使えます。"
+
+#: ../../../components/problem.md:91
+msgid ""
+"Where `ContinuousVariable.repair()` keeps out-of-range values pinned to "
+"the boundary via `np.clip`, this implementation wraps out-of-range values"
+" back from the opposite boundary via `np.mod`. Note that the value "
+"`Variable` represents is a value in the \"encoded float space\" handled "
+"on the `Population` array. For a variable type that needs a "
+"correspondence between category values and an internal index, like "
+"`CategoricalVariable`, `repair()` should stay confined to index space, "
+"with the actual conversion to category values handled by a separate "
+"method."
+msgstr "`ContinuousVariable.repair()`が`np.clip`で範囲外の値を境界に留めるのに対し、この実装は`np.mod`で範囲外の値を反対側の境界から巻き戻します。 `Variable`が表す値は、`Population`配列上で扱われる「エンコード済みfloat空間」上の値である点に注意してください。 `CategoricalVariable`のようにカテゴリ値と内部インデックスの対応が必要な変数型では、`repair()`はインデックス空間上で完結させ、実際のカテゴリ値への変換は別のメソッドで行います。"
+
+#: ../../../components/problem.md:95
+msgid "Related components"
+msgstr "関連コンポーネント"
+
+#: ../../../components/problem.md:97
+msgid ""
+"[Comparator](comparators.md): Swaps out how solutions are compared, via "
+"the `comparator` argument"
+msgstr "[Comparator](comparators.md)：`comparator`引数で解の比較方法を差し替える"
+
+#: ../../../components/problem.md:98
+msgid ""
+"[ConstraintHandler](constraints.md): Swaps out how constraint violations "
+"are handled, via the `handler` argument"
+msgstr "[ConstraintHandler](constraints.md)：`handler`引数で制約違反の扱い方を差し替える"
+
+#: ../../../components/problem.md:99
+msgid ""
+"[Crossover](crossover.md) / [Mutation](mutation.md): Operators applied "
+"per variable type as defined in `variables`"
+msgstr "[Crossover](crossover.md) / [Mutation](mutation.md)：`variables`で定義した変数の型ごとに使い分けられる演算子"
+
+#: ../../../components/problem.md:100
+msgid ""
+"[Constrained Optimization](../tutorials/constraints.md): How to define "
+"constraints and choose a built-in `ConstraintHandler`"
+msgstr "[制約付き最適化](../tutorials/constraints.md)：制約の定義方法と組み込み`ConstraintHandler`の選び方"
+
+#: ../../../components/problem.md:102
+msgid "References"
+msgstr "参照"
+
+#: ../../../components/problem.md:104
+#, python-brace-format
+msgid "{py:class}`saealib.Problem`"
+msgstr "{py:class}`saealib.Problem`"
+
+#: ../../../components/problem.md:105
+#, python-brace-format
+msgid "{py:class}`saealib.Variable`"
+msgstr "{py:class}`saealib.Variable`"
+
+#: ../../../components/problem.md:106
+#, python-brace-format
+msgid "{py:class}`saealib.ContinuousVariable`"
+msgstr "{py:class}`saealib.ContinuousVariable`"
+
+#: ../../../components/problem.md:107
+#, python-brace-format
+msgid "{py:class}`saealib.IntegerVariable`"
+msgstr "{py:class}`saealib.IntegerVariable`"
+
+#: ../../../components/problem.md:108
+#, python-brace-format
+msgid "{py:class}`saealib.CategoricalVariable`"
+msgstr "{py:class}`saealib.CategoricalVariable`"
+
+#~ msgid ""
+#~ "`saealib`の全コンポーネントは、`Problem`を通じて解くべき最適化問題を共有する。 "
+#~ "目的関数そのものだけでなく、設計変数の範囲、目的の方向、制約、解の比較方法までを1つのオブジェクトにまとめる役割を持つ。"
+#~ msgstr ""
+
+#~ msgid "Problemの役割"
+#~ msgstr ""
+
+#~ msgid "`Problem`のコンストラクタは次の引数を受け取る。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`func`**：設計変数の配列を受け取り評価値を返す目的関数。 **`dim`**：設計変数の次元数。 "
+#~ "**`n_obj`**：目的関数の数。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`direction`**：目的ごとの最適化方向を表す`shape "
+#~ "(n_obj,)`の配列で、各要素は`+1`（最大化）または`-1`（最小化）でなければならない。 "
+#~ "それ以外の値を渡すと構築時に例外になる。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`lb`**/**`ub`**：設計変数の下限と上限。 "
+#~ "`variables`を指定しない場合は必須で、指定した場合は`variables`側の範囲から自動的に導出される。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`comparator`**：解を比較する[Comparator](comparators.md)。 "
+#~ "省略した場合、`n_obj == 1`なら`SingleObjectiveComparator`、`n_obj"
+#~ " > 1`なら`NSGA2Comparator`が自動的に選ばれる。 "
+#~ "渡した`Comparator`の`direction`が未設定（`None`）であれば、`Problem`の`direction`がそのまま注入される。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`constraints`**：不等式制約(`InequalityConstraint`)のリスト。 "
+#~ "定義方法は[制約付き最適化](../tutorials/constraints.md)で扱う。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`eps_cv`**/**`eps_obj`**：それぞれ実行可能性判定の許容誤差、目的関数値の同値判定の許容誤差を表す。 "
+#~ "`eps_cv`はコンストラクタ実行時に既定の`handler`/`comparator`へ引き継がれるだけで、構築後に`problem.eps_cv`を直接書き換えても実行時の挙動には反映されない。"
+#~ " "
+#~ "実際に使われる閾値は`handler.feasibility_threshold`であり、`Optimizer`の実行中は毎世代`comparator`/`pareto_archive`へ同期される。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`handler`**：制約違反の集約や目的関数の補正を担う[ConstraintHandler](constraints.md)。"
+#~ " 省略時は`StaticToleranceHandler(eps_cv=eps_cv)`が使われる。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`variables`**：設計変数ごとの型を`Variable`のリストで指定する。 "
+#~ "連続変数だけの問題では省略してよく、その場合は全次元が`ContinuousVariable`として扱われる。 "
+#~ "整数変数とカテゴリ変数を混在させたい場合にここへ`IntegerVariable`/`CategoricalVariable`を含めると、[Crossover](crossover.md)/[Mutation](mutation.md)が変数の型ごとに異なる演算子を自動的に割り当てる。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "旧バージョンのチュートリアルには`weight=`という引数を使う例があるが、現行の`Problem`にこの引数は存在しない。 "
+#~ "`weight=`を渡すと`TypeError`になる。"
+#~ msgstr ""
+
+#~ msgid "directionとweightの役割分担"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`direction`は`saealib`全体で統一された、符号だけを表す`±1`の配列である。 "
+#~ "一方、`WeightedSumComparator`や`DecompositionComparator`が受け取る`weights`は、複数目的をスカラー値へ集約する際の非負の重みであり、方向とは独立した別の概念である。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "この役割分担のもとでは、目的の重要度そのもの（スケーリング）を`weights`で表現することはできない。 "
+#~ "目的関数値の大きさを調整したい場合は`func`の内部でスケーリングする。 "
+#~ "`direction`は符号だけを、`weights`は集約の重み配分だけを表す、という2軸に整理されている。"
+#~ msgstr ""
+
+#~ msgid "独自Variableの実装方法"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`Variable`(ABC)は、`lb`/`ub`という2つのプロパティと`repair(x)`というメソッドだけを要求する。 "
+#~ "組み込みの`ContinuousVariable`/`IntegerVariable`/`CategoricalVariable`は、いずれも自分の定義域へ値を射影するだけの薄い実装であり、これ以外の変数型（周期変数、対数スケール変数など）が必要な場合は`Variable`を直接継承すればよい。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "次の例は、値を切り詰めるのではなく境界で折り返す変数である。 "
+#~ "角度のように、上限を超えた値が下限側から連続しているとみなしたい設計変数に使える。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`ContinuousVariable.repair()`が`np.clip`で範囲外の値を境界に留めるのに対し、この実装は`np.mod`で範囲外の値を反対側の境界から巻き戻す。"
+#~ " `Variable`が表す値は、`Population`配列上で扱われる「エンコード済みfloat空間」上の値である点に注意する。"
+#~ " "
+#~ "`CategoricalVariable`のようにカテゴリ値と内部インデックスの対応が必要な変数型では、`repair()`はインデックス空間上で完結させ、実際のカテゴリ値への変換は別のメソッドで行う。"
+#~ msgstr ""
+
+#~ msgid "関連コンポーネント"
+#~ msgstr ""
+
+#~ msgid "[Comparator](comparators.md) — `comparator`引数で解の比較方法を差し替える"
+#~ msgstr ""
+
+#~ msgid "[ConstraintHandler](constraints.md) — `handler`引数で制約違反の扱い方を差し替える"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[Crossover](crossover.md) / [Mutation](mutation.md) "
+#~ "— `variables`で定義した変数の型ごとに使い分けられる演算子"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[制約付き最適化](../tutorials/constraints.md) — "
+#~ "制約の定義方法と組み込み`ConstraintHandler`の選び方"
+#~ msgstr ""
+
+#~ msgid "参照"
+#~ msgstr ""
+

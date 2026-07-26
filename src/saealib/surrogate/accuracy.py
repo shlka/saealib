@@ -75,7 +75,7 @@ class SpearmanCorrelation(SurrogateAccuracyMetric):
     """Spearman rank correlation averaged over objectives.
 
     Measures whether the surrogate preserves the ranking of candidates,
-    which is the primary criterion in EA contexts (Sun et al., 2019).
+    which is the primary criterion in EA contexts (Yu et al., 2019).
     Range: [-1, 1]. Higher is better.
     """
 
@@ -284,7 +284,7 @@ class HeldOutAccuracyEvaluator(AccuracyEvaluator):
 
     The surrogate is assumed to be already fitted; it is *not* re-fitted
     inside :meth:`evaluate`. Useful for comparing surrogate predictions
-    against the most recent true evaluations (Hanawa et al., 2025).
+    against the most recent true evaluations.
 
     Parameters
     ----------

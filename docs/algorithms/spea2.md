@@ -1,0 +1,128 @@
+# SPEA2 (Strength Pareto Evolutionary Algorithm 2)
+
+SPEA2 is a multi-objective evolutionary algorithm that improves the fitness assignment and archive management of the original SPEA (Strength Pareto Evolutionary Algorithm).
+It ranks individuals by combining a dominance-based fitness with $k$-th-nearest-neighbor density, and maintains a fixed-size external archive using a truncation procedure that avoids losing boundary solutions.
+
+## Overview
+
+SPEA showed strong performance as an early multi-objective evolutionary algorithm, but had two weaknesses.
+
+One was that individuals dominated by the same archive individuals ended up with identical fitness, making it impossible to distinguish between them.
+The other was that the clustering technique used when the archive exceeded its capacity could lose boundary solutions on the outer edge of the non-dominated solution set.
+
+SPEA2 resolves each of these two weaknesses with an independent mechanism.
+Each individual $i$ is assigned a **strength** $S(i)$, the number of individuals it dominates, and the sum of the strengths of the individuals that dominate $i$ becomes its **raw fitness** $R(i)$.
+$R(i)=0$ means $i$ is non-dominated, and a larger value indicates it is dominated by more (and stronger) individuals.
+To distinguish between individuals sharing the same $R(i)$, the reciprocal of the distance $\sigma_i^k$ to the $k$-th nearest individual in objective space is added as a **density** term, $D(i)=1/(\sigma_i^k+2)$.
+The final **fitness** $F(i)=R(i)+D(i)$ is better when smaller, and non-dominated individuals always have $F(i)<1$.
+
+SPEA2 maintains a fixed-size external archive separate from the population.
+In each generation, non-dominated individuals ($F(i)<1$) are copied from the combined set of the population and archive into a new archive.
+If the copied archive fits exactly within the specified size, it is used as-is; if it falls short, inferior solutions are added in order of increasing $F(i)$ to fill it.
+If it exceeds the specified size, a **truncation operator** is applied, removing individuals one at a time — always the one with the smallest nearest-neighbor distance — recomputing distances as it goes.
+Because this procedure breaks ties between individuals with equal distance using the distance to their second- and third-nearest neighbors in turn, boundary solutions are unlikely to be removed by mistake.
+
+The source is {cite}`zitzler2001spea2`. The concrete procedure is shown in the pseudocode below.
+
+## Pseudocode
+
+```{prf:algorithm} SPEA2
+:label: alg-spea2
+
+**Inputs** population size $N$, archive size $\bar N$, maximum generations $T$
+**Output** the non-dominated solution set $A$
+
+1. Initialization: generate an initial population $P_0$, prepare an empty archive $\bar P_0 = \emptyset$, and set $t=0$
+2. Fitness assignment: compute the fitness $F(i) = R(i) + D(i)$ of every individual in $P_t$ and $\bar P_t$
+3. Environmental selection: copy the non-dominated individuals of $P_t \cup \bar P_t$ into $\bar P_{t+1}$. If $|\bar P_{t+1}| > \bar N$, reduce it with the truncation operator; if $|\bar P_{t+1}| < \bar N$, fill it with inferior solutions in order of increasing $F(i)$
+4. Termination check: if $t \geq T$ or another termination condition is met, output the non-dominated individuals in $\bar P_{t+1}$ as $A$ and stop
+5. Mating selection: perform binary tournament selection (with replacement) on $\bar P_{t+1}$ to fill the mating pool
+6. Variation: apply crossover and mutation to the mating pool to generate $P_{t+1}$, set $t=t+1$, and return to step 2
+```
+
+## Flowchart
+
+```{mermaid}
+flowchart TD
+    INIT["Initializer<br/>Generate initial population P0<br/>(L1)"] --> GEN
+    subgraph GEN["One generation (DirectStrategy.step)"]
+        direction TB
+        ASK["GA.ask()<br/>Binary tournament selection →<br/>SBX crossover →<br/>Polynomial mutation to generate offspring<br/>(L5, 6)"] --> EVAL["True evaluation<br/>(no surrogate involved)"]
+        EVAL --> COMB["GA.tell()<br/>Combine population and offspring<br/>into a single pool<br/>(L3)"]
+        COMB --> FIT["SPEA2Comparator._fitness()<br/>spea2_fitness computes<br/>S(i) → R(i) → D(i) → F(i)<br/>(L2)"]
+        FIT --> SORT["SPEA2Comparator.sort_population()<br/>Sort ascending by F(i) (environmental selection)<br/>(L3)"]
+        SORT --> TRUNC["TruncationSelection<br/>Take top N individuals as Pt+1"]
+    end
+    GEN --> TERM{"Termination condition<br/>reached?"}
+    TERM -- "Not yet (L4)" --> GEN
+    TERM -- "Reached" --> RESULT(["Non-dominated solution set A"])
+```
+
+## Complexity
+
+Fitness computation ($S(i)$/$R(i)$/$D(i)$) is $O(M^2)$ ($M=N+\bar N$), or $O(M^2\log M)$ including the distance sort needed for density estimation.
+The truncation operator is $O(M^3)$ in the worst case and $O(M^2\log M)$ on average {cite}`zitzler2001spea2`.
+
+## Configuration in saealib
+
+| Role | saealib implementation | Corresponding step |
+|---|---|---|
+| Search algorithm | `GA` (`ask()` performs crossover and mutation; `tell()` combines the population and offspring into a single pool and performs survivor selection) | L1, 6 |
+| Parent selection | `TournamentSelection(tournament_size=2)` (binary tournament; the winner is decided via `compare_population`) | L5 |
+| Crossover | `CrossoverSBX(prob=0.9, eta=20.0)` | L6 |
+| Mutation | `MutationPolynomial(eta=20.0)` | L6 |
+| Fitness computation | `SPEA2Comparator` (`sort_population` internally computes $S(i)$/$R(i)$/$D(i)$/$F(i)$ via `spea2_fitness`) | L2 |
+| Environmental selection | `SPEA2Comparator.sort_population()` + `TruncationSelection()` (takes the top $N$ individuals after sorting ascending by $F(i)$) | L3 |
+| Evaluation strategy | `DirectStrategy` (no surrogate involved; every candidate generated by `GA.ask()` is evaluated with the true objective function) | L2 (in-generation evaluation) |
+
+```python
+from saealib import GA, SPEA2Comparator, Optimizer
+from saealib.benchmarks import zdt1
+from saealib.operators.crossover import CrossoverSBX
+from saealib.operators.mutation import MutationPolynomial
+from saealib.operators.selection import TournamentSelection, TruncationSelection
+from saealib.strategies import DirectStrategy
+from saealib.termination import Termination, max_fe
+
+
+problem = zdt1(n_var=10)
+problem.comparator = SPEA2Comparator()
+
+algorithm = GA(
+    CrossoverSBX(prob=0.9, eta=20.0),
+    MutationPolynomial(eta=20.0),
+    TournamentSelection(tournament_size=2),
+    TruncationSelection(),
+)
+
+opt = (
+    Optimizer(problem)
+    .set_algorithm(algorithm)
+    .set_strategy(DirectStrategy())
+    .set_termination(Termination(max_fe(2000)))
+)
+ctx = opt.run()
+pareto_f = ctx.pareto_archive.get_array("f")
+```
+
+The `problem.comparator = SPEA2Comparator()` line cannot be omitted.
+In NSGA-II, `NSGA2Comparator` is the default for `n_obj > 1`, so the same line could be omitted, but this is not the case for SPEA2.
+
+## Parameters and variants
+
+**Archive size $\bar N$ and population size $N$**: The paper defines these two as independently configurable, in general form {cite}`zitzler2001spea2`.
+Because saealib's `GA.tell()` combines the population and offspring into a single pool, $\bar N$ uses the same value as $N$.
+
+**Swapping the dominator (dominance predicate)**: `SPEA2Comparator(dominator=...)` lets you inject a [Dominator](../components/dominance.md) other than the default `ParetoDominator`.
+Since the computation of $S(i)$/$R(i)$ depends on this dominance predicate, swapping it changes SPEA2's fitness itself.
+
+## Related
+
+- [References](../references.md): Full bibliographic details for the source
+- [Comparator](../components/comparators.md): Detailed specification of `SPEA2Comparator`
+- [Crossover](../components/crossover.md): List of crossover operators including `CrossoverSBX`
+- [Mutation](../components/mutation.md): List of mutation operators including `MutationPolynomial`
+- [ParentSelection](../components/parent_selection.md): Detailed usage of `TournamentSelection`
+- [SurvivorSelection](../components/survivor_selection.md): Detailed usage of `TruncationSelection`
+- [OptimizationStrategy](../components/strategies.md): List of strategies including `DirectStrategy`
+- [Dominator](../components/dominance.md): List of dominance predicates that can be swapped in via the `dominator` argument

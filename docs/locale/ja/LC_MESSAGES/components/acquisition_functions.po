@@ -1,0 +1,472 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../components/acquisition_functions.md:1
+msgid "AcquisitionFunction"
+msgstr "AcquisitionFunction"
+
+#: ../../../components/acquisition_functions.md:3
+msgid ""
+"[SurrogateManager](surrogate_manager.md) delegates the conversion of a "
+"[Surrogate](surrogate.md)'s predictions into a scalar score to "
+"`AcquisitionFunction`, a swappable component. `AcquisitionFunction` only "
+"receives `Surrogate`'s prediction results, and knows nothing about the "
+"model's internals (what algorithm produced the prediction)."
+msgstr "[SurrogateManager](surrogate_manager.md)は、[Surrogate](surrogate.md)の予測結果をスカラースコアへ変換する処理を、`AcquisitionFunction`という差し替え可能なコンポーネントに委ねています。 `AcquisitionFunction`は`Surrogate`の予測結果だけを受け取り、モデルの内部（どんなアルゴリズムで予測したか）を一切知りません。"
+
+#: ../../../components/acquisition_functions.md:6
+msgid "AcquisitionFunction's role"
+msgstr "AcquisitionFunctionの役割"
+
+#: ../../../components/acquisition_functions.md:8
+msgid "`AcquisitionFunction` requires two methods to be implemented."
+msgstr "`AcquisitionFunction`が実装を要求するメソッドは2つあります。"
+
+#: ../../../components/acquisition_functions.md:10
+msgid ""
+"**`compute_reference(archive, rng=None) -> Any`**: Computes a reference "
+"value used for scoring (such as the current best value) from the archive."
+" An acquisition function that doesn't use a reference value may return "
+"`None`."
+msgstr "**`compute_reference(archive, rng=None) -> Any`**：スコアリングに使う参照値（現在の最良値など）をアーカイブから計算します。 参照値を使わない獲得関数は`None`を返してよいです。"
+
+#: ../../../components/acquisition_functions.md:13
+msgid ""
+"**`score(prediction, reference, rng=None) -> np.ndarray`**: Computes a "
+"score from `SurrogatePrediction` and the reference value. As with "
+"saealib's overall convention, a higher score is better."
+msgstr "**`score(prediction, reference, rng=None) -> np.ndarray`**：`SurrogatePrediction`と参照値からスコアを計算します。 `saealib`全体の規約どおり、スコアは高いほど良いです。"
+
+#: ../../../components/acquisition_functions.md:16
+msgid ""
+"The class attribute `requires_uncertainty: bool` indicates whether this "
+"acquisition function needs `SurrogatePrediction.std` (uncertainty). "
+"`direction_sensitive: bool` (default `True`) indicates whether "
+"`Optimizer` automatically injects `problem.direction` into this "
+"acquisition function at the start of a run. Acquisition functions with no"
+" notion of objective direction, such as feasibility probability, set "
+"`direction_sensitive = False` to disable this auto-injection."
+msgstr "クラス属性`requires_uncertainty: bool`は、この獲得関数が`SurrogatePrediction.std`（不確実性）を必要とするかを示します。 `direction_sensitive: bool`（既定`True`）は、`Optimizer`が実行開始時に`problem.direction`をこの獲得関数へ自動注入する対象かどうかを示します。 実行可能性確率のように目的の方向という概念を持たない獲得関数は、`direction_sensitive = False`にしてこの自動注入を無効化します。"
+
+#: ../../../components/acquisition_functions.md:20
+msgid "Built-in AcquisitionFunctions"
+msgstr "組み込みAcquisitionFunction"
+
+#: ../../../components/acquisition_functions.md
+msgid "Class"
+msgstr "クラス"
+
+#: ../../../components/acquisition_functions.md
+msgid "Characteristics"
+msgstr "特徴"
+
+#: ../../../components/acquisition_functions.md
+msgid "`requires_uncertainty`"
+msgstr "`requires_uncertainty`"
+
+#: ../../../components/acquisition_functions.md
+msgid "`MeanPrediction`"
+msgstr "`MeanPrediction`"
+
+#: ../../../components/acquisition_functions.md
+msgid "The simplest acquisition function, using only the predictive mean"
+msgstr "予測平均のみを使う、最も単純な獲得関数"
+
+#: ../../../components/acquisition_functions.md
+msgid "`False`"
+msgstr "`False`"
+
+#: ../../../components/acquisition_functions.md
+msgid "`ExpectedImprovement`"
+msgstr "`ExpectedImprovement`"
+
+#: ../../../components/acquisition_functions.md
+#, python-brace-format
+msgid "Expected Improvement (EI) {cite}`jones1998ego`"
+msgstr "期待改善量（EI）{cite}`jones1998ego`"
+
+#: ../../../components/acquisition_functions.md
+msgid "`True`"
+msgstr "`True`"
+
+#: ../../../components/acquisition_functions.md
+msgid "`LowerConfidenceBound`"
+msgstr "`LowerConfidenceBound`"
+
+#: ../../../components/acquisition_functions.md
+#, python-brace-format
+msgid "Lower Confidence Bound (LCB) {cite}`srinivas2012gpucb`"
+msgstr "信頼下限（LCB）{cite}`srinivas2012gpucb`"
+
+#: ../../../components/acquisition_functions.md
+msgid "`MaxUncertainty`"
+msgstr "`MaxUncertainty`"
+
+#: ../../../components/acquisition_functions.md
+msgid "The larger the predictive uncertainty, the better (exploration-leaning)"
+msgstr "予測の不確実性が大きいほど良い（探索寄り）"
+
+#: ../../../components/acquisition_functions.md
+msgid "`EHVIAcquisition`"
+msgstr "`EHVIAcquisition`"
+
+#: ../../../components/acquisition_functions.md
+#, python-brace-format
+msgid ""
+"Expected Hypervolume Improvement "
+"{cite}`emmerich2006ehvi,hupkens2015ehvi,daulton2020ehvi`. For multi-"
+"objective use"
+msgstr "期待ハイパーボリューム改善量{cite}`emmerich2006ehvi,hupkens2015ehvi,daulton2020ehvi`。多目的向け"
+
+#: ../../../components/acquisition_functions.md
+msgid "`SMSEGOAcquisition`"
+msgstr "`SMSEGOAcquisition`"
+
+#: ../../../components/acquisition_functions.md
+msgid ""
+"An SMS-EMOA-style hypervolume indicator (SMS-EGO, proposed by Ponweiser "
+"et al., 2008). For multi-objective use"
+msgstr "SMS-EMOA風のハイパーボリューム指標（Ponweiser et al., 2008が提案するSMS-EGO）。多目的向け"
+
+#: ../../../components/acquisition_functions.md
+msgid "`ParEGOAcquisition`"
+msgstr "`ParEGOAcquisition`"
+
+#: ../../../components/acquisition_functions.md
+#, python-brace-format
+msgid ""
+"ParEGO via random scalarization "
+"{cite}`knowles2006parego,chugh2020scalarizing`. For multi-objective use"
+msgstr "ランダムスカラー化によるParEGO{cite}`knowles2006parego,chugh2020scalarizing`。多目的向け"
+
+#: ../../../components/acquisition_functions.md
+msgid "`ProbabilityOfFeasibility`"
+msgstr "`ProbabilityOfFeasibility`"
+
+#: ../../../components/acquisition_functions.md
+#, python-brace-format
+msgid ""
+"Feasibility probability for a single constraint "
+"{cite}`schonlau1997pof,gelbart2014pof`"
+msgstr "単一制約の実行可能性確率{cite}`schonlau1997pof,gelbart2014pof`"
+
+#: ../../../components/acquisition_functions.md
+msgid "`ProductOfFeasibility`"
+msgstr "`ProductOfFeasibility`"
+
+#: ../../../components/acquisition_functions.md
+#, python-brace-format
+msgid ""
+"Product of feasibility probabilities across multiple constraints "
+"{cite}`gelbart2014pof`"
+msgstr "複数制約の実行可能性確率の積{cite}`gelbart2014pof`"
+
+#: ../../../components/acquisition_functions.md:34
+msgid ""
+"All 8 classes other than `MeanPrediction` have "
+"`requires_uncertainty=True`. To use an uncertainty-based acquisition "
+"function, the `Surrogate` it's paired with must return `std` "
+"(`provides_uncertainty=True`). Among the built-in surrogates, only "
+"`SklearnGPRSurrogate` satisfies this. See the uncertainty-support table "
+"in [Surrogate](surrogate.md) for details."
+msgstr "`MeanPrediction`以外の8クラス全てが`requires_uncertainty=True`です。 不確実性ベースの獲得関数を使うには、組み合わせる`Surrogate`が`std`を返す（`provides_uncertainty=True`）必要があります。 組み込みSurrogateでは`SklearnGPRSurrogate`だけがこれを満たします。 詳細は[Surrogate](surrogate.md)の不確実性対応表を参照してください。"
+
+#: ../../../components/acquisition_functions.md:39
+msgid ""
+"`MaxUncertainty`/`ProbabilityOfFeasibility`/`ProductOfFeasibility` have "
+"`direction_sensitive = False`. This is because the magnitude of "
+"uncertainty or a feasibility probability has no notion of maximizing vs. "
+"minimizing direction."
+msgstr "`MaxUncertainty`/`ProbabilityOfFeasibility`/`ProductOfFeasibility`は`direction_sensitive = False`です。 不確実性の大きさや実行可能性確率は、目的の最大化と最小化という方向の概念を持たないためです。"
+
+#: ../../../components/acquisition_functions.md:42
+msgid ""
+"`ProbabilityOfFeasibility`/`ProductOfFeasibility` are used paired with a "
+"classification or regression surrogate that predicts a constraint value "
+"`g`. The typical usage is to extract training data with "
+"[TrainingSet](training_set.md)'s `ConstraintObjectiveSet`, and combine it"
+" with the objective-side acquisition function (e.g. EI) via "
+"`CompositeSurrogateManager`'s `product_combine`."
+msgstr "`ProbabilityOfFeasibility`/`ProductOfFeasibility`は、制約値`g`を予測する分類サロゲートや回帰サロゲートと組み合わせて使います。 [TrainingSet](training_set.md)の`ConstraintObjectiveSet`で学習データを抽出し、目的側の獲得関数（EIなど）と`CompositeSurrogateManager`の`product_combine`で組み合わせるのが典型的な使い方です。"
+
+#: ../../../components/acquisition_functions.md:57
+msgid "The meaning of the weights/direction arguments"
+msgstr "weights/direction引数の意味"
+
+#: ../../../components/acquisition_functions.md:59
+msgid ""
+"Some acquisition functions, such as `MeanPrediction`, can scalarize "
+"multi-objective predictions via the `weights` argument. Use a negative "
+"weight for objectives you want to minimize, e.g. "
+"`weights=np.array([-1.0])`."
+msgstr "`MeanPrediction`など一部の獲得関数は、`weights`引数で多目的予測をスカラー化できます。 `weights=np.array([-1.0])`のように、最小化したい目的には負の重みを使います。"
+
+#: ../../../components/acquisition_functions.md:62
+msgid ""
+"Specifying the `direction` argument produces a sign-only scalarization "
+"with no magnitude, and takes priority over `weights`. If `direction` "
+"isn't specified explicitly, `problem.direction` is injected automatically"
+" at the start of a run (only for acquisition functions where "
+"`direction_sensitive` is `True`)."
+msgstr "`direction`引数を指定すると、大きさを持たない符号だけのスカラー化になり、`weights`よりも優先されます。 `direction`を明示しない場合、実行開始時に`problem.direction`が自動的に注入されます（`direction_sensitive`が`True`の獲得関数のみ）。"
+
+#: ../../../components/acquisition_functions.md:65
+msgid "Implementing a custom AcquisitionFunction"
+msgstr "独自AcquisitionFunctionの実装方法"
+
+#: ../../../components/acquisition_functions.md:67
+msgid ""
+"If you need a custom scoring scheme, subclass `AcquisitionFunction` and "
+"implement `compute_reference()`/`score()`. The following example is a "
+"simple acquisition function that gives a higher score to candidates whose"
+" predictive mean falls further below a threshold."
+msgstr "独自のスコアリング方式が必要な場合は、`AcquisitionFunction`を継承して`compute_reference()`/`score()`を実装します。 次の例は、予測平均が閾値を下回る候補ほど高いスコアを与える単純な獲得関数です。"
+
+#: ../../../components/acquisition_functions.md:88
+msgid ""
+"Combine it by passing it to `SurrogateManager`'s constructor, e.g. "
+"`GlobalSurrogateManager(surrogate, acquisition, ...)`."
+msgstr "`GlobalSurrogateManager(surrogate, acquisition, ...)`のように、`SurrogateManager`のコンストラクタへ渡して組み合わせます。"
+
+#: ../../../components/acquisition_functions.md:91
+msgid ""
+"`Optimizer.validate()` detects and warns about a mismatch between the "
+"acquisition function's `requires_uncertainty` and the surrogate's "
+"`provides_uncertainty`. This warning will catch you if you pair an "
+"acquisition function with `requires_uncertainty=True` with a surrogate "
+"that doesn't return `std`."
+msgstr "`Optimizer.validate()`は、獲得関数の`requires_uncertainty`とサロゲートの`provides_uncertainty`の不整合を検出して警告します。 `requires_uncertainty=True`の獲得関数を`std`を返さないサロゲートと組み合わせた場合、この警告で気付けます。"
+
+#: ../../../components/acquisition_functions.md:95
+msgid "Related components"
+msgstr "関連コンポーネント"
+
+#: ../../../components/acquisition_functions.md:97
+msgid ""
+"[Surrogate](surrogate.md): The source of `SurrogatePrediction`. See here "
+"also for the uncertainty-support table"
+msgstr "[Surrogate](surrogate.md)：`SurrogatePrediction`の提供元。不確実性対応表もこちらを参照する"
+
+#: ../../../components/acquisition_functions.md:98
+msgid ""
+"[SurrogateManager](surrogate_manager.md): Combines `AcquisitionFunction` "
+"with `Surrogate`"
+msgstr "[SurrogateManager](surrogate_manager.md)：`AcquisitionFunction`を`Surrogate`と組み合わせる"
+
+#: ../../../components/acquisition_functions.md:99
+msgid ""
+"[TrainingSet](training_set.md): Constraint data extraction paired with "
+"`ProbabilityOfFeasibility`/`ProductOfFeasibility`"
+msgstr "[TrainingSet](training_set.md)：`ProbabilityOfFeasibility`/`ProductOfFeasibility`と組み合わせる制約用データ抽出"
+
+#: ../../../components/acquisition_functions.md:101
+msgid "References"
+msgstr "参照"
+
+#: ../../../components/acquisition_functions.md:103
+#, python-brace-format
+msgid "{py:class}`saealib.AcquisitionFunction`"
+msgstr "{py:class}`saealib.AcquisitionFunction`"
+
+#: ../../../components/acquisition_functions.md:104
+#, python-brace-format
+msgid "{py:class}`saealib.MeanPrediction`"
+msgstr "{py:class}`saealib.MeanPrediction`"
+
+#: ../../../components/acquisition_functions.md:105
+#, python-brace-format
+msgid "{py:class}`saealib.ExpectedImprovement`"
+msgstr "{py:class}`saealib.ExpectedImprovement`"
+
+#: ../../../components/acquisition_functions.md:106
+#, python-brace-format
+msgid "{py:class}`saealib.LowerConfidenceBound`"
+msgstr "{py:class}`saealib.LowerConfidenceBound`"
+
+#: ../../../components/acquisition_functions.md:107
+#, python-brace-format
+msgid "{py:class}`saealib.MaxUncertainty`"
+msgstr "{py:class}`saealib.MaxUncertainty`"
+
+#: ../../../components/acquisition_functions.md:108
+#, python-brace-format
+msgid "{py:class}`saealib.EHVIAcquisition`"
+msgstr "{py:class}`saealib.EHVIAcquisition`"
+
+#: ../../../components/acquisition_functions.md:109
+#, python-brace-format
+msgid "{py:class}`saealib.SMSEGOAcquisition`"
+msgstr "{py:class}`saealib.SMSEGOAcquisition`"
+
+#: ../../../components/acquisition_functions.md:110
+#, python-brace-format
+msgid "{py:class}`saealib.ParEGOAcquisition`"
+msgstr "{py:class}`saealib.ParEGOAcquisition`"
+
+#: ../../../components/acquisition_functions.md:111
+#, python-brace-format
+msgid "{py:class}`saealib.ProbabilityOfFeasibility`"
+msgstr "{py:class}`saealib.ProbabilityOfFeasibility`"
+
+#: ../../../components/acquisition_functions.md:112
+#, python-brace-format
+msgid "{py:class}`saealib.ProductOfFeasibility`"
+msgstr "{py:class}`saealib.ProductOfFeasibility`"
+
+#~ msgid ""
+#~ "[SurrogateManager](surrogate_manager.md)は、[Surrogate](surrogate.md)の予測結果をスカラースコアへ変換する処理を、`AcquisitionFunction`という差し替え可能なコンポーネントに委ねている。"
+#~ " "
+#~ "`AcquisitionFunction`は`Surrogate`の予測結果だけを受け取り、モデルの内部（どんなアルゴリズムで予測したか）を一切知らない。"
+#~ msgstr ""
+
+#~ msgid "AcquisitionFunctionの役割"
+#~ msgstr ""
+
+#~ msgid "`AcquisitionFunction`が実装を要求するメソッドは2つある。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`compute_reference(archive, rng=None) -> "
+#~ "Any`**：スコアリングに使う参照値（現在の最良値など）をアーカイブから計算する。 "
+#~ "参照値を使わない獲得関数は`None`を返してよい。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`score(prediction, reference, rng=None) -> "
+#~ "np.ndarray`**：`SurrogatePrediction`と参照値からスコアを計算する。 "
+#~ "`saealib`全体の規約どおり、スコアは高いほど良い。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "クラス属性`requires_uncertainty: "
+#~ "bool`は、この獲得関数が`SurrogatePrediction.std`（不確実性）を必要とするかを示す。 "
+#~ "`direction_sensitive: "
+#~ "bool`（既定`True`）は、`Optimizer`が実行開始時に`problem.direction`をこの獲得関数へ自動注入する対象かどうかを示す。"
+#~ " 実行可能性確率のように目的の方向という概念を持たない獲得関数は、`direction_sensitive = "
+#~ "False`にしてこの自動注入を無効化する。"
+#~ msgstr ""
+
+#~ msgid "組み込みAcquisitionFunction"
+#~ msgstr ""
+
+#~ msgid "クラス"
+#~ msgstr ""
+
+#~ msgid "特徴"
+#~ msgstr ""
+
+#~ msgid "予測平均のみを使う、最も単純な獲得関数"
+#~ msgstr ""
+
+#~ msgid "期待改善量（EI）{cite}`jones1998ego`"
+#~ msgstr ""
+
+#~ msgid "信頼下限（LCB）{cite}`srinivas2012gpucb`"
+#~ msgstr ""
+
+#~ msgid "予測の不確実性が大きいほど良い（探索寄り）"
+#~ msgstr ""
+
+#~ msgid "期待ハイパーボリューム改善量{cite}`emmerich2006ehvi,hupkens2015ehvi,daulton2020ehvi`。多目的向け"
+#~ msgstr ""
+
+#~ msgid "SMS-EMOA風のハイパーボリューム指標{cite}`ponweiser2008smsego`。多目的向け"
+#~ msgstr ""
+
+#~ msgid "ランダムスカラー化によるParEGO{cite}`knowles2006parego,chugh2020scalarizing`。多目的向け"
+#~ msgstr ""
+
+#~ msgid "単一制約の実行可能性確率{cite}`schonlau1997pof,gelbart2014pof`"
+#~ msgstr ""
+
+#~ msgid "複数制約の実行可能性確率の積{cite}`gelbart2014pof`"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`MeanPrediction`以外の8クラス全てが`requires_uncertainty=True`である。 "
+#~ "不確実性ベースの獲得関数を使うには、組み合わせる`Surrogate`が`std`を返す（`provides_uncertainty=True`）必要がある。"
+#~ " 組み込みSurrogateでは`SklearnGPRSurrogate`だけがこれを満たす。 "
+#~ "詳細は[Surrogate](surrogate.md)の不確実性対応表を参照する。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`MaxUncertainty`/`ProbabilityOfFeasibility`/`ProductOfFeasibility`は`direction_sensitive"
+#~ " = False`である。 "
+#~ "不確実性の大きさや実行可能性確率は、目的の最大化と最小化という方向の概念を持たないためである。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`ProbabilityOfFeasibility`/`ProductOfFeasibility`は、制約値`g`を予測する分類サロゲートや回帰サロゲートと組み合わせて使う。"
+#~ " "
+#~ "[TrainingSet](training_set.md)の`ConstraintObjectiveSet`で学習データを抽出し、目的側の獲得関数（EIなど）と`CompositeSurrogateManager`の`product_combine`で組み合わせるのが典型的な使い方である。"
+#~ msgstr ""
+
+#~ msgid "weights/direction引数の意味"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`MeanPrediction`など一部の獲得関数は、`weights`引数で多目的予測をスカラー化できる。 "
+#~ "`weights=np.array([-1.0])`のように、最小化したい目的には負の重みを使う。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`direction`引数を指定すると、大きさを持たない符号だけのスカラー化になり、`weights`よりも優先される。 "
+#~ "`direction`を明示しない場合、実行開始時に`problem.direction`が自動的に注入される（`direction_sensitive`が`True`の獲得関数のみ）。"
+#~ msgstr ""
+
+#~ msgid "独自AcquisitionFunctionの実装方法"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "独自のスコアリング方式が必要な場合は、`AcquisitionFunction`を継承して`compute_reference()`/`score()`を実装する。"
+#~ " 次の例は、予測平均が閾値を下回る候補ほど高いスコアを与える単純な獲得関数である。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`GlobalSurrogateManager(surrogate, acquisition, "
+#~ "...)`のように、`SurrogateManager`のコンストラクタへ渡して組み合わせる。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`Optimizer.validate()`は、獲得関数の`requires_uncertainty`とサロゲートの`provides_uncertainty`の不整合を検出して警告する。"
+#~ " "
+#~ "`requires_uncertainty=True`の獲得関数を`std`を返さないサロゲートと組み合わせた場合、この警告で気付ける。"
+#~ msgstr ""
+
+#~ msgid "関連コンポーネント"
+#~ msgstr ""
+
+#~ msgid "[Surrogate](surrogate.md) — `SurrogatePrediction`の提供元。不確実性対応表もこちらを参照する"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[SurrogateManager](surrogate_manager.md) — "
+#~ "`AcquisitionFunction`を`Surrogate`と組み合わせる"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[TrainingSet](training_set.md) — "
+#~ "`ProbabilityOfFeasibility`/`ProductOfFeasibility`と組み合わせる制約用データ抽出"
+#~ msgstr ""
+
+#~ msgid "参照"
+#~ msgstr ""
+

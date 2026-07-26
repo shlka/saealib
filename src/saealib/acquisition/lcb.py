@@ -42,6 +42,13 @@ class LowerConfidenceBound(AcquisitionFunction):
         via ``direction_to_minimize_sign`` before the (minimize-only) LCB
         formula above runs. ``None`` (default) means already-minimize; when
         unset, it is auto-injected from ``problem.direction`` at run start.
+
+    References
+    ----------
+    :cite:`srinivas2012gpucb`: Srinivas, N., Krause, A., Kakade, S. M., &
+    Seeger, M. W. (2012). Information-theoretic regret bounds for Gaussian
+    process optimization in the bandit setting. *IEEE Transactions on
+    Information Theory*, 58(5), 3250-3265.
     """
 
     requires_uncertainty: bool = True

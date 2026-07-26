@@ -1,52 +1,47 @@
 # Quickstart
+Have you finished installing saealib?
+See [here](./installation.md) for installation instructions.
 
-## 最初の最適化を実行する
+## Your first run
+Let's solve an optimization problem with the least amount of code.
+```python
+from saealib import minimize
+from saealib.benchmarks import rastrigin
 
-`saealib` では，目的関数・変数の次元・探索範囲を指定するだけで最適化を実行できます．
+problem = rastrigin(n_var=10)
+result = minimize(func=problem)
+print(f"objective: {result.f}")
+print(f"solution: {result.x}")
+print(f"evaluated: {result.fe}")
+print(f"generation: {result.gen}")
+```
+Here we solve a minimization problem for the 10-dimensional Rastrigin function (`saealib.benchmarks.rastrigin`) from the benchmark package provided by `saealib`.
+`minimize()` / `maximize()` is a high-level API that runs an optimization just by specifying parameters.
 
-::::{tab-set}
-:::{tab-item} minimize
+## Optimizing an arbitrary function
+The previous section used a benchmark problem; here, let's look at an example of optimizing an arbitrary function.
+When using `saealib`'s benchmark package, the required parameters are passed to the API automatically, but when passing an arbitrary function (`callable`), you need to specify a few parameters yourself.
 ```python
 import numpy as np
 from saealib import minimize
 
-def sphere(x):
-    return np.sum(x ** 2)
 
-result = minimize(sphere, dim=5, lb=[-5] * 5, ub=[5] * 5, seed=0, verbose=False)
+def rastrigin(x: np.ndarray) -> float:
+    return 10 * len(x) + np.sum(x**2 - 10 * np.cos(2 * np.pi * x))
 
-print(result.X)   # 最適解の設計変数
-print(result.F)   # 最適解の目的関数値
-print(result.fe)  # 真の関数評価回数
+
+result = minimize(func=rastrigin, dim=10, lb=[-5.12] * 10, ub=[5.12] * 10)
+print(f"objective: {result.f}")
+print(f"solution: {result.x}")
 ```
-:::
-:::{tab-item} maximize
-```python
-import numpy as np
-from saealib import maximize
+Here we define the 10-dimensional Rastrigin function and solve it as a minimization problem.
+The `func` parameter can be any `callable` object that takes a numpy array and returns an evaluation value.
+By specifying an expensive-to-evaluate objective function here — such as a simulation (CAE) or the training of a machine learning model — this can be applied to efficient parameter search.
 
-def neg_sphere(x):
-    return -np.sum(x ** 2) + 10
+## Next steps
+What's shown here is only a part of `saealib`.
+See the following pages for detailed guides.
 
-result = maximize(neg_sphere, dim=5, lb=[-5] * 5, ub=[5] * 5, seed=0, verbose=False)
-
-print(result.X)   # 最適解の設計変数
-print(result.F)   # 最適解の目的関数値
-print(result.fe)  # 真の関数評価回数
-```
-:::
-::::
-
-## 結果の読み方
-
-| 属性 | 説明 |
-|------|------|
-| `result.X` | 最適解の設計変数．形状 `(dim,)` |
-| `result.F` | 最適解の目的関数値．形状 `(n_obj,)` |
-| `result.fe` | 最適化に使用した真の関数評価回数 |
-| `result.gen` | 完了した世代数 |
-
-## 次のステップ
-
-- **チュートリアル** — アルゴリズムやサロゲートモデルのカスタマイズ方法を学ぶ
-- **API リファレンス** — `minimize` / `maximize` の全パラメータを確認する
+- [Tutorials](../tutorials/index.md): Guides for specific usage scenarios
+- [Components](../components/index.md): Detailed usage of each component
+- [API Reference](../api/index.md): Reference for all parameters

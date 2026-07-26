@@ -37,7 +37,10 @@ def dtlz1(n_obj: int = 3, k: int = 5) -> Problem:
 
     References
     ----------
-    Deb, Thiele, Laumanns & Zitzler (2005) Springer Ch. 6, Eq. (6.18)-(6.19).
+    :cite:`deb2005dtlz`: Deb, K., Thiele, L., Laumanns, M., & Zitzler,
+    E. (2005). Scalable test problems for evolutionary multiobjective
+    optimization. In *Evolutionary Multiobjective Optimization*
+    (pp. 105-145). Springer. (Section 6.7, Eq. (6.18)-(6.19).)
     """
     n_var = n_obj - 1 + k
 
@@ -78,7 +81,10 @@ def dtlz2(n_obj: int = 3, k: int = 10) -> Problem:
 
     References
     ----------
-    Deb, Thiele, Laumanns & Zitzler (2005) Springer Ch. 6, Eq. (6.20).
+    :cite:`deb2005dtlz`: Deb, K., Thiele, L., Laumanns, M., & Zitzler,
+    E. (2005). Scalable test problems for evolutionary multiobjective
+    optimization. In *Evolutionary Multiobjective Optimization*
+    (pp. 105-145). Springer. (Section 6.7, Eq. (6.20).)
     """
     n_var = n_obj - 1 + k
 
@@ -112,7 +118,10 @@ def dtlz3(n_obj: int = 3, k: int = 10) -> Problem:
 
     References
     ----------
-    Deb, Thiele, Laumanns & Zitzler (2005) Springer Ch. 6, Eq. (6.21).
+    :cite:`deb2005dtlz`: Deb, K., Thiele, L., Laumanns, M., & Zitzler,
+    E. (2005). Scalable test problems for evolutionary multiobjective
+    optimization. In *Evolutionary Multiobjective Optimization*
+    (pp. 105-145). Springer. (Section 6.7, Eq. (6.21).)
     """
     n_var = n_obj - 1 + k
 
@@ -149,7 +158,10 @@ def dtlz4(n_obj: int = 3, k: int = 10, alpha: float = 100.0) -> Problem:
 
     References
     ----------
-    Deb, Thiele, Laumanns & Zitzler (2005) Springer Ch. 6, Eq. (6.22).
+    :cite:`deb2005dtlz`: Deb, K., Thiele, L., Laumanns, M., & Zitzler,
+    E. (2005). Scalable test problems for evolutionary multiobjective
+    optimization. In *Evolutionary Multiobjective Optimization*
+    (pp. 105-145). Springer. (Section 6.7, Eq. (6.22).)
     """
     n_var = n_obj - 1 + k
 
@@ -196,7 +208,10 @@ def dtlz5(n_obj: int = 3, k: int = 10) -> Problem:
 
     References
     ----------
-    Deb, Thiele, Laumanns & Zitzler (2005) Springer Ch. 6, Eq. (6.23).
+    :cite:`deb2005dtlz`: Deb, K., Thiele, L., Laumanns, M., & Zitzler,
+    E. (2005). Scalable test problems for evolutionary multiobjective
+    optimization. In *Evolutionary Multiobjective Optimization*
+    (pp. 105-145). Springer. (Section 6.7, Eq. (6.23).)
     """
     n_var = n_obj - 1 + k
 
@@ -234,7 +249,10 @@ def dtlz6(n_obj: int = 3, k: int = 10) -> Problem:
 
     References
     ----------
-    Deb, Thiele, Laumanns & Zitzler (2005) Springer Ch. 6, Eq. (6.24).
+    :cite:`deb2005dtlz`: Deb, K., Thiele, L., Laumanns, M., & Zitzler,
+    E. (2005). Scalable test problems for evolutionary multiobjective
+    optimization. In *Evolutionary Multiobjective Optimization*
+    (pp. 105-145). Springer. (Section 6.7, Eq. (6.24).)
     """
     n_var = n_obj - 1 + k
 
@@ -271,7 +289,10 @@ def dtlz7(n_obj: int = 3, k: int = 20) -> Problem:
 
     References
     ----------
-    Deb, Thiele, Laumanns & Zitzler (2005) Springer Ch. 6, Eq. (6.25).
+    :cite:`deb2005dtlz`: Deb, K., Thiele, L., Laumanns, M., & Zitzler,
+    E. (2005). Scalable test problems for evolutionary multiobjective
+    optimization. In *Evolutionary Multiobjective Optimization*
+    (pp. 105-145). Springer. (Section 6.7, Eq. (6.25).)
     """
     n_var = n_obj - 1 + k
 

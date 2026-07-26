@@ -14,7 +14,13 @@ def non_dominated_sort(
     dominator: Dominator | None = None,
 ) -> tuple[np.ndarray, list[list[int]]]:
     """
-    Non-dominated sorting (Deb et al., 2002) via a vectorized dominance matrix.
+    Non-dominated sorting via a vectorized dominance matrix.
+
+    Implements the fast-nondominated-sort front-peeling scheme of Deb et
+    al. (2002), Section III-A: each individual's domination count is
+    decremented as its dominators are peeled off, front by front. This
+    implementation replaces the original Python double loop with a NumPy
+    dominance matrix accumulated one objective at a time.
 
     Time is O(MN^2), but the pairwise dominance relations are computed with a
     NumPy dominance matrix accumulated one objective at a time (peak memory
@@ -39,6 +45,13 @@ def non_dominated_sort(
         Pareto front index for each individual (0 = first/best front).
     fronts : list[list[int]]
         fronts[i] contains the local indices of individuals in front i.
+
+    References
+    ----------
+    :cite:`deb2002nsga2`: Deb, K., Pratap, A., Agarwal, S., & Meyarivan,
+    T. (2002). A fast and elitist multiobjective genetic algorithm:
+    NSGA-II. *IEEE Transactions on Evolutionary Computation*, 6(2),
+    182-197. (Section III-A, "Fast Nondominated Sorting Approach".)
     """
     _dom = dominator if dominator is not None else _PARETO_DOMINATOR
 
@@ -91,6 +104,9 @@ def dda_non_dominated_sort(
     """
     Non-dominated sorting via the Dominance-Degree Approach (DDA-ENS).
 
+    Zhou et al. (2017) introduced the dominance degree matrix; Mishra &
+    Senwar (2020) proposed the DDA-ENS front-assignment scheme used here.
+
     Produces **identical** ``(ranks, fronts)`` to :func:`non_dominated_sort`
     and satisfies the :class:`NonDominatedSorter` Protocol.  It is intended
     as a scalable drop-in for large *N* and/or large *M* (M > 100).
@@ -127,15 +143,6 @@ def dda_non_dominated_sort(
         shape: (n,), dtype int.
     fronts : list[list[int]]
         ``fronts[i]`` contains the global indices of individuals in front i.
-
-    References
-    ----------
-    .. [1] Zhou, Y., Chen, Z., & Zhang, J. (2017). Ranking Vectors by Means of
-       the Dominance Degree Matrix. IEEE Transactions on Evolutionary
-       Computation, 21(1), 34-51. https://ieeexplore.ieee.org/document/7469397
-    .. [2] DDA-ENS: Dominance Degree Approach based Efficient Non-dominated
-       Sort. IEEE Conference Publication (2020).
-       https://ieeexplore.ieee.org/document/9282978
     """
     _dom = dominator if dominator is not None else _PARETO_DOMINATOR
 
@@ -246,7 +253,9 @@ def crowding_distance(f_front: np.ndarray) -> np.ndarray:
     Compute crowding distance for a single Pareto front (NSGA-II).
 
     Boundary solutions (minimum and maximum per objective) are assigned
-    infinite crowding distance.
+    infinite crowding distance; other solutions are assigned the sum,
+    over each objective, of the normalized distance between their two
+    neighbors once sorted by that objective.
 
     Parameters
     ----------
@@ -257,6 +266,13 @@ def crowding_distance(f_front: np.ndarray) -> np.ndarray:
     -------
     np.ndarray
         Crowding distances. shape: (n,)
+
+    References
+    ----------
+    :cite:`deb2002nsga2`: Deb, K., Pratap, A., Agarwal, S., & Meyarivan,
+    T. (2002). A fast and elitist multiobjective genetic algorithm:
+    NSGA-II. *IEEE Transactions on Evolutionary Computation*, 6(2),
+    182-197. (Section III-B.1, "Density Estimation".)
     """
     n, m = f_front.shape
     cd = np.zeros(n)
@@ -355,9 +371,9 @@ def spea2_fitness(
 
     References
     ----------
-    .. [1] Zitzler, E., Laumanns, M., & Thiele, L. (2001). SPEA2: Improving
-       the Strength Pareto Evolutionary Algorithm.  TIK-Report 103, ETH
-       Zurich, Switzerland.
+    :cite:`zitzler2001spea2`: Zitzler, E., Laumanns, M., & Thiele, L. (2001).
+    SPEA2: Improving the Strength Pareto Evolutionary Algorithm. TIK-Report
+    103, ETH Zurich, Switzerland.
     """
     f = np.asarray(f, dtype=float)
     n_pts = len(f)

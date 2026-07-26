@@ -1,0 +1,508 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../tutorials/single_objective.md:1
+msgid "Single-Objective Optimization"
+msgstr "単目的最適化"
+
+#: ../../../tutorials/single_objective.md:3
+msgid ""
+"Solve a single-objective optimization problem with an expensive-to-"
+"evaluate objective function, using `saealib`."
+msgstr "評価コストの高い目的関数を持つ単目的最適化問題を、`saealib`で解きます。"
+
+#: ../../../tutorials/single_objective.md:5
+msgid ""
+"First we define the problem and solve it with the high-level API "
+"`minimize`, then move on to the low-level API with `Optimizer`."
+msgstr "まず問題を定義し、高レベルAPIの`minimize`で解いたあと、`Optimizer`による低レベルAPIへ進みます。"
+
+#: ../../../tutorials/single_objective.md:7
+msgid ""
+"For the detailed specification and customization of each component, see "
+"the [Components](../components/index.md) pages linked from the following "
+"sections."
+msgstr "各コンポーネントの詳しい仕様やカスタマイズ方法は、この後の節からリンクする[コンポーネント](../components/index.md)配下の各ページを参照してください。"
+
+#: ../../../tutorials/single_objective.md:9
+msgid "Problem setup"
+msgstr "問題設定"
+
+#: ../../../tutorials/single_objective.md:11
+msgid ""
+"Assume an objective function whose single call takes a long time, like a "
+"simulation."
+msgstr "シミュレーションのように、1回の呼び出しに時間がかかる目的関数を想定します。"
+
+#: ../../../tutorials/single_objective.md:13
+msgid ""
+"Here, as an example, we minimize the Sphere function as a stand-in for an"
+" expensive-to-evaluate function."
+msgstr "ここでは例として、評価コストの高さを模したSphere関数を最小化します。"
+
+#: ../../../tutorials/single_objective.md:29
+msgid ""
+"`DIM` is the number of design-variable dimensions, and `LB`/`UB` are "
+"`DIM`-dimensional lists giving its lower and upper bounds."
+msgstr "`DIM`は設計変数の次元数、`LB`と`UB`はその下限と上限を与える`DIM`次元のリストです。"
+
+#: ../../../tutorials/single_objective.md:31
+msgid ""
+"The objective function is defined as a `Callable` that takes a "
+"`DIM`-dimensional design variable and returns the objective value."
+msgstr "目的関数は、`DIM`次元の設計変数を受け取り、目的関数値を返す`Callable`として定義します。"
+
+#: ../../../tutorials/single_objective.md:33
+msgid "High-level API: minimize / maximize"
+msgstr "高レベルAPI：minimize / maximize"
+
+#: ../../../tutorials/single_objective.md:35
+msgid ""
+"`minimize` is a high-level API that runs an optimization just by "
+"specifying `dim`, `lb`, and `ub`."
+msgstr "`minimize`は、`dim`、`lb`、`ub`を指定するだけで最適化を実行できる高レベルAPIです。"
+
+#: ../../../tutorials/single_objective.md:48
+msgid ""
+"If the maximum number of evaluations `max_fe` is omitted, `200 * dim` is "
+"used as the default."
+msgstr "最大評価回数`max_fe`を省略すると、`200 * dim`が既定値として使われます。"
+
+#: ../../../tutorials/single_objective.md:50
+msgid "To explicitly limit the number of evaluations, specify it as follows."
+msgstr "評価回数を明示的に制限するには、次のように指定します。"
+
+#: ../../../tutorials/single_objective.md:56
+msgid "Switching components"
+msgstr "コンポーネントの切り替え"
+
+#: ../../../tutorials/single_objective.md:58
+msgid ""
+"`minimize` lets you switch three components — the evolutionary algorithm,"
+" the surrogate model, and the evaluation strategy — via the string-valued"
+" `algorithm`, `surrogate`, and `strategy` arguments, respectively."
+msgstr "`minimize`は、進化的アルゴリズム、サロゲートモデル、評価戦略という3つのコンポーネントを、それぞれ`algorithm`、`surrogate`、`strategy`引数の文字列で切り替えられます。"
+
+#: ../../../tutorials/single_objective.md:60
+msgid "For all three, you can also pass an instance directly instead of a string."
+msgstr "3つとも、文字列の代わりにインスタンスを直接渡すこともできます。"
+
+#: ../../../tutorials/single_objective.md:62
+msgid ""
+"The internal behavior and customization of each component are covered on "
+"the [Algorithm](../components/algorithm.md), "
+"[Surrogate](../components/surrogate.md), and "
+"[OptimizationStrategy](../components/strategies.md) pages."
+msgstr "各コンポーネントの内部動作やカスタマイズ方法は、[Algorithm](../components/algorithm.md)、[Surrogate](../components/surrogate.md)、[OptimizationStrategy](../components/strategies.md)のページで扱います。"
+
+#: ../../../tutorials/single_objective.md:64
+msgid "Algorithm"
+msgstr "アルゴリズム"
+
+#: ../../../tutorials/single_objective.md:66
+msgid ""
+"The `algorithm` argument selects the evolutionary algorithm that "
+"generates candidate solutions."
+msgstr "`algorithm`引数は、候補解を生成する進化的アルゴリズムを選びます。"
+
+#: ../../../tutorials/single_objective.md
+msgid "String"
+msgstr "文字列"
+
+#: ../../../tutorials/single_objective.md
+msgid "Class"
+msgstr "クラス"
+
+#: ../../../tutorials/single_objective.md
+msgid "Characteristics"
+msgstr "特徴"
+
+#: ../../../tutorials/single_objective.md
+msgid "`'GA'`"
+msgstr "`'GA'`"
+
+#: ../../../tutorials/single_objective.md
+msgid "`GA`"
+msgstr "`GA`"
+
+#: ../../../tutorials/single_objective.md
+msgid "Search via crossover and mutation (default)"
+msgstr "交叉と突然変異による探索（既定）"
+
+#: ../../../tutorials/single_objective.md
+msgid "`'PSO'`"
+msgstr "`'PSO'`"
+
+#: ../../../tutorials/single_objective.md
+msgid "`PSO`"
+msgstr "`PSO`"
+
+#: ../../../tutorials/single_objective.md
+msgid "Search via particle velocity updates"
+msgstr "粒子の速度更新による探索"
+
+#: ../../../tutorials/single_objective.md:77
+msgid "Surrogate"
+msgstr "サロゲート"
+
+#: ../../../tutorials/single_objective.md:79
+msgid ""
+"The `surrogate` argument selects the surrogate model that approximates "
+"the objective function."
+msgstr "`surrogate`引数は、目的関数を近似するサロゲートモデルを選びます。"
+
+#: ../../../tutorials/single_objective.md
+msgid "Resolved configuration"
+msgstr "解決される構成"
+
+#: ../../../tutorials/single_objective.md
+msgid "Description"
+msgstr "説明"
+
+#: ../../../tutorials/single_objective.md
+msgid "`'rbf'`"
+msgstr "`'rbf'`"
+
+#: ../../../tutorials/single_objective.md
+msgid "`RBFSurrogate` + `LocalSurrogateManager` (default)"
+msgstr "`RBFSurrogate` + `LocalSurrogateManager`（既定）"
+
+#: ../../../tutorials/single_objective.md
+msgid "Local fit over nearby points using a Gaussian RBF kernel"
+msgstr "ガウスRBFカーネルによる近傍点の局所フィット"
+
+#: ../../../tutorials/single_objective.md:89
+msgid "Evaluation strategy"
+msgstr "評価戦略"
+
+#: ../../../tutorials/single_objective.md:91
+msgid ""
+"The `strategy` argument selects the evaluation strategy that decides "
+"which of the generated candidates receive a true (expensive) evaluation."
+msgstr "`strategy`引数は、生成した候補解のうちどれに真の（高コストな）評価を行うかを決める評価戦略を選びます。"
+
+#: ../../../tutorials/single_objective.md
+msgid "Behavior"
+msgstr "動作"
+
+#: ../../../tutorials/single_objective.md
+msgid "`'ib'`"
+msgstr "`'ib'`"
+
+#: ../../../tutorials/single_objective.md
+msgid "`IndividualBasedStrategy`"
+msgstr "`IndividualBasedStrategy`"
+
+#: ../../../tutorials/single_objective.md
+msgid ""
+"Evaluates each candidate individually with the surrogate and truly "
+"evaluates only the top `evaluation_ratio` fraction (default)"
+msgstr "候補を個別にサロゲートで評価し、上位`evaluation_ratio`の割合だけを真に評価する（既定）"
+
+#: ../../../tutorials/single_objective.md
+msgid "`'gb'`"
+msgstr "`'gb'`"
+
+#: ../../../tutorials/single_objective.md
+msgid "`GenerationBasedStrategy`"
+msgstr "`GenerationBasedStrategy`"
+
+#: ../../../tutorials/single_objective.md
+msgid ""
+"Advances `gen_ctrl` generations using only the surrogate, then truly "
+"evaluates a single generation"
+msgstr "`gen_ctrl`世代分をサロゲートのみで進め、1世代だけ真に評価する"
+
+#: ../../../tutorials/single_objective.md
+msgid "`'ps'`"
+msgstr "`'ps'`"
+
+#: ../../../tutorials/single_objective.md
+msgid "`PreSelectionStrategy`"
+msgstr "`PreSelectionStrategy`"
+
+#: ../../../tutorials/single_objective.md
+msgid ""
+"Narrows down a large pool of candidates with the surrogate and truly "
+"evaluates only the top `n_select`"
+msgstr "大量の候補をサロゲートで絞り込み、上位`n_select`個だけを真に評価する"
+
+#: ../../../tutorials/single_objective.md:103
+msgid "Low-level API: Optimizer"
+msgstr "低レベルAPI：Optimizer"
+
+#: ../../../tutorials/single_objective.md:105
+msgid ""
+"`minimize` wires up each component with a default combination, but "
+"doesn't let you tune individual parameters."
+msgstr "`minimize`は各コンポーネントを既定の組み合わせで結び付けますが、個々のパラメータまでは調整できません。"
+
+#: ../../../tutorials/single_objective.md:107
+msgid ""
+"Instantiating components individually and assembling them into "
+"`Optimizer` removes this limitation."
+msgstr "コンポーネントを個別にインスタンス化し、`Optimizer`に組み込めば、この制約を外せます。"
+
+#: ../../../tutorials/single_objective.md:181
+msgid ""
+"Pass the same value to both `Optimizer(problem, seed=SEED)` and "
+"`LHSInitializer(..., seed=SEED)` for the random seed."
+msgstr "乱数シードは、`Optimizer(problem, seed=SEED)`と`LHSInitializer(..., seed=SEED)`の両方に同じ値を渡してください。"
+
+#: ../../../tutorials/single_objective.md:183
+msgid ""
+"`Optimizer`'s `seed` is only auto-propagated to the default "
+"`LHSInitializer` when you skip calling `set_initializer()` yourself (e.g."
+" via `minimize`/`maximize`)."
+msgstr "`Optimizer`の`seed`は、`set_initializer()`を呼ばずに済ませたとき（`minimize`/`maximize`など）だけ、既定の`LHSInitializer`へ自動的に伝播します。"
+
+#: ../../../tutorials/single_objective.md:185
+msgid ""
+"If you assemble the `Initializer` yourself, you need to pass it "
+"explicitly."
+msgstr "`Initializer`を自分で組み立てる場合は、明示的に渡す必要があります。"
+
+#: ../../../tutorials/single_objective.md:187
+msgid "`Termination` accepts multiple conditions."
+msgstr "`Termination`には複数の条件を渡せます。"
+
+#: ../../../tutorials/single_objective.md:189
+msgid ""
+"The run ends as soon as any one of the listed conditions is met (logical "
+"OR)."
+msgstr "列挙した条件は、いずれか1つが満たされた時点で終了します（OR結合）。"
+
+#: ../../../tutorials/single_objective.md:197
+msgid "You can also add a custom condition with a lambda."
+msgstr "カスタム条件をlambdaで追加することもできます。"
+
+#: ../../../tutorials/single_objective.md:206
+msgid ""
+"Using `iterate()` instead of `run()` lets you obtain the context "
+"generation by generation."
+msgstr "`run()`の代わりに`iterate()`を使うと、世代単位でコンテキストを取得できます。"
+
+#: ../../../tutorials/single_objective.md:208
+msgid ""
+"This is useful for recording progress or implementing custom early "
+"stopping."
+msgstr "進捗の記録や、カスタムな早期終了の実装に使えます。"
+
+#: ../../../tutorials/single_objective.md:229
+msgid "References"
+msgstr "参照"
+
+#: ../../../tutorials/single_objective.md:231
+#, python-brace-format
+msgid "{py:func}`saealib.minimize` / {py:func}`saealib.maximize`"
+msgstr "{py:func}`saealib.minimize` / {py:func}`saealib.maximize`"
+
+#: ../../../tutorials/single_objective.md:232
+#, python-brace-format
+msgid "{py:class}`saealib.Optimizer`"
+msgstr "{py:class}`saealib.Optimizer`"
+
+#: ../../../tutorials/single_objective.md:233
+#, python-brace-format
+msgid "{py:class}`saealib.GA` / {py:class}`saealib.PSO`"
+msgstr "{py:class}`saealib.GA` / {py:class}`saealib.PSO`"
+
+#: ../../../tutorials/single_objective.md:234
+#, python-brace-format
+msgid ""
+"{py:class}`saealib.IndividualBasedStrategy` / "
+"{py:class}`saealib.GenerationBasedStrategy` / "
+"{py:class}`saealib.PreSelectionStrategy`"
+msgstr "{py:class}`saealib.IndividualBasedStrategy` / {py:class}`saealib.GenerationBasedStrategy` / {py:class}`saealib.PreSelectionStrategy`"
+
+#: ../../../tutorials/single_objective.md:235
+#, python-brace-format
+msgid "{py:class}`saealib.LocalSurrogateManager`"
+msgstr "{py:class}`saealib.LocalSurrogateManager`"
+
+#: ../../../tutorials/single_objective.md:236
+#, python-brace-format
+msgid "{py:class}`saealib.RBFSurrogate`"
+msgstr "{py:class}`saealib.RBFSurrogate`"
+
+#: ../../../tutorials/single_objective.md:237
+#, python-brace-format
+msgid "{py:class}`saealib.MeanPrediction`"
+msgstr "{py:class}`saealib.MeanPrediction`"
+
+#: ../../../tutorials/single_objective.md:238
+#, python-brace-format
+msgid "{py:class}`saealib.LHSInitializer`"
+msgstr "{py:class}`saealib.LHSInitializer`"
+
+#: ../../../tutorials/single_objective.md:239
+#, python-brace-format
+msgid ""
+"{py:class}`saealib.Termination` / {py:func}`saealib.max_fe` / "
+"{py:func}`saealib.max_gen`"
+msgstr "{py:class}`saealib.Termination` / {py:func}`saealib.max_fe` / {py:func}`saealib.max_gen`"
+
+#~ msgid "単目的最適化"
+#~ msgstr ""
+
+#~ msgid "評価コストの高い目的関数を持つ単目的最適化問題を、`saealib`で解きます。"
+#~ msgstr ""
+
+#~ msgid "まず問題を定義し、高レベルAPIの`minimize`で解いたあと、`Optimizer`による低レベルAPIへ進みます。"
+#~ msgstr ""
+
+#~ msgid "各コンポーネントの詳しい仕様やカスタマイズ方法は、この後の節からリンクする[コンポーネント](../components/index.md)配下の各ページを参照してください。"
+#~ msgstr ""
+
+#~ msgid "問題設定"
+#~ msgstr ""
+
+#~ msgid "シミュレーションのように、1回の呼び出しに時間がかかる目的関数を想定します。"
+#~ msgstr ""
+
+#~ msgid "ここでは例として、評価コストの高さを模したSphere関数を最小化します。"
+#~ msgstr ""
+
+#~ msgid "`DIM`は設計変数の次元数、`LB`と`UB`はその下界と上界を与える`DIM`次元のリストです。"
+#~ msgstr ""
+
+#~ msgid "目的関数は、`DIM`次元の設計変数を受け取り、目的関数値を返す`Callable`として定義します。"
+#~ msgstr ""
+
+#~ msgid "高レベルAPI: minimize / maximize"
+#~ msgstr ""
+
+#~ msgid "`minimize`は、`dim`、`lb`、`ub`を指定するだけで最適化を実行できる高レベルAPIです。"
+#~ msgstr ""
+
+#~ msgid "最大評価回数`max_fe`を省略すると、`200 * dim`がデフォルト値として使われます。"
+#~ msgstr ""
+
+#~ msgid "評価回数を明示的に制限するには、次のように指定します。"
+#~ msgstr ""
+
+#~ msgid "コンポーネントの切り替え"
+#~ msgstr ""
+
+#~ msgid "`minimize`は、進化的アルゴリズム、サロゲートモデル、評価戦略という3つのコンポーネントを、それぞれ`algorithm`、`surrogate`、`strategy`引数の文字列で切り替えられます。"
+#~ msgstr ""
+
+#~ msgid "3つとも、文字列の代わりにインスタンスを直接渡すこともできます。"
+#~ msgstr ""
+
+#~ msgid "各コンポーネントの内部動作やカスタマイズ方法は、[Algorithm](../components/algorithm.md)、[Surrogate](../components/surrogate.md)、[OptimizationStrategy](../components/strategies.md)のページで扱います。"
+#~ msgstr ""
+
+#~ msgid "アルゴリズム"
+#~ msgstr ""
+
+#~ msgid "`algorithm`引数は、候補解を生成する進化的アルゴリズムを選びます。"
+#~ msgstr ""
+
+#~ msgid "文字列"
+#~ msgstr ""
+
+#~ msgid "クラス"
+#~ msgstr ""
+
+#~ msgid "特徴"
+#~ msgstr ""
+
+#~ msgid "交叉・突然変異による探索（デフォルト）"
+#~ msgstr ""
+
+#~ msgid "粒子の速度更新による探索"
+#~ msgstr ""
+
+#~ msgid "サロゲート"
+#~ msgstr ""
+
+#~ msgid "`surrogate`引数は、目的関数を近似するサロゲートモデルを選びます。"
+#~ msgstr ""
+
+#~ msgid "解決される構成"
+#~ msgstr ""
+
+#~ msgid "説明"
+#~ msgstr ""
+
+#~ msgid "`RBFSurrogate` + `LocalSurrogateManager`（デフォルト）"
+#~ msgstr ""
+
+#~ msgid "ガウスRBFカーネルによる近傍点の局所フィット"
+#~ msgstr ""
+
+#~ msgid "評価戦略"
+#~ msgstr ""
+
+#~ msgid "`strategy`引数は、生成した候補解のうちどれに真の（高コストな）評価を行うかを決める評価戦略を選びます。"
+#~ msgstr ""
+
+#~ msgid "動作"
+#~ msgstr ""
+
+#~ msgid "候補を個別にサロゲートで評価し、上位`evaluation_ratio`割だけを真に評価する（デフォルト）"
+#~ msgstr ""
+
+#~ msgid "`gen_ctrl`世代分をサロゲートのみで進め、1世代だけ真に評価する"
+#~ msgstr ""
+
+#~ msgid "大量の候補をサロゲートで絞り込み、上位`n_select`個だけを真に評価する"
+#~ msgstr ""
+
+#~ msgid "低レベルAPI: Optimizer"
+#~ msgstr ""
+
+#~ msgid "`minimize`は各コンポーネントを既定の組み合わせで結び付けますが、個々のパラメータまでは調整できません。"
+#~ msgstr ""
+
+#~ msgid "コンポーネントを個別にインスタンス化し、`Optimizer`に組み込めば、この制約を外せます。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "乱数シードは、`Optimizer(problem, seed=SEED)`と`LHSInitializer(..., "
+#~ "seed=SEED)`の両方に同じ値を渡してください。"
+#~ msgstr ""
+
+#~ msgid "`Optimizer`の`seed`は、`set_initializer()`を呼ばずに済ませたとき（`minimize`/`maximize`など）だけ、デフォルトの`LHSInitializer`へ自動的に伝播します。"
+#~ msgstr ""
+
+#~ msgid "初期化子を自分で組み立てる場合は、明示的に渡す必要があります。"
+#~ msgstr ""
+
+#~ msgid "`Termination`には複数の条件を渡せます。"
+#~ msgstr ""
+
+#~ msgid "列挙した条件は、いずれか一つが満たされた時点で終了します（OR結合）。"
+#~ msgstr ""
+
+#~ msgid "カスタム条件をlambdaで追加することもできます。"
+#~ msgstr ""
+
+#~ msgid "`run()`の代わりに`iterate()`を使うと、世代単位でコンテキストを取得できます。"
+#~ msgstr ""
+
+#~ msgid "進捗の記録や、カスタムな早期終了の実装に使えます。"
+#~ msgstr ""
+
+#~ msgid "参照"
+#~ msgstr ""
+

@@ -1,0 +1,322 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../components/termination.md:1
+msgid "Termination"
+msgstr "Termination"
+
+#: ../../../components/termination.md:3
+msgid ""
+"`Optimizer` delegates the decision of when to stop optimizing to "
+"`Termination`, a swappable top-level component. Pass it via "
+"`Optimizer.set_termination(termination)`; at runtime, `is_terminated(ctx)"
+" -> bool` is called at the end of every generation."
+msgstr "`Optimizer`は、最適化をいつ止めるかという判断を、`Termination`という差し替え可能なトップレベルコンポーネントに委ねています。 `Optimizer.set_termination(termination)`で渡し、実行時は世代末に`is_terminated(ctx) -> bool`が呼ばれます。"
+
+#: ../../../components/termination.md:6
+msgid "Termination's role"
+msgstr "Terminationの役割"
+
+#: ../../../components/termination.md:8
+msgid ""
+"`Termination(*conditions)` takes one or more conditions, and stops as "
+"soon as any single one becomes true (logical OR). Passing multiple "
+"conditions to the constructor is equivalent to `any_of`, described below."
+msgstr "`Termination(*conditions)`は1つ以上の条件を受け取り、そのいずれか1つでも真になった時点で終了します（OR結合）。 コンストラクタに複数条件を渡す書き方は、後述する`any_of`と同じ意味になります。"
+
+#: ../../../components/termination.md:17
+msgid "Class methods are also available."
+msgstr "クラスメソッドも用意されています。"
+
+#: ../../../components/termination.md
+msgid "Class method"
+msgstr "クラスメソッド"
+
+#: ../../../components/termination.md
+msgid "Meaning"
+msgstr "意味"
+
+#: ../../../components/termination.md
+msgid "`Termination.any_of(*conditions)`"
+msgstr "`Termination.any_of(*conditions)`"
+
+#: ../../../components/termination.md
+msgid "Stops when any one is met (synonymous with `Termination(*conditions)`)"
+msgstr "いずれか1つで終了（`Termination(*conditions)`と同義）"
+
+#: ../../../components/termination.md
+msgid "`Termination.all_of(*conditions)`"
+msgstr "`Termination.all_of(*conditions)`"
+
+#: ../../../components/termination.md
+msgid "Doesn't stop until every condition is met"
+msgstr "全て満たすまで終了しない"
+
+#: ../../../components/termination.md
+msgid "`Termination.not_(condition)`"
+msgstr "`Termination.not_(condition)`"
+
+#: ../../../components/termination.md
+msgid "Doesn't stop as long as the condition is not met"
+msgstr "条件を満たさない間だけ終了しない"
+
+#: ../../../components/termination.md:25
+msgid "Built-in termination conditions"
+msgstr "組み込み終了条件"
+
+#: ../../../components/termination.md:27
+msgid ""
+"Each condition passed to `Termination` is a thin wrapper called "
+"`TerminationCondition`. Every built-in factory function returns a "
+"`TerminationCondition`."
+msgstr "`Termination`に渡す各条件は、`TerminationCondition`という薄いラッパーです。 組み込みのファクトリ関数はいずれも`TerminationCondition`を返します。"
+
+#: ../../../components/termination.md
+msgid "Function"
+msgstr "関数"
+
+#: ../../../components/termination.md
+msgid "Termination condition"
+msgstr "終了条件"
+
+#: ../../../components/termination.md
+msgid "`max_fe(value)`"
+msgstr "`max_fe(value)`"
+
+#: ../../../components/termination.md
+msgid "The evaluation count reaches `value` (`ctx.fe >= value`)"
+msgstr "評価回数が`value`に到達（`ctx.fe >= value`）"
+
+#: ../../../components/termination.md
+msgid "`max_gen(value)`"
+msgstr "`max_gen(value)`"
+
+#: ../../../components/termination.md
+msgid "The generation count reaches `value` (`ctx.gen >= value`)"
+msgstr "世代数が`value`に到達（`ctx.gen >= value`）"
+
+#: ../../../components/termination.md
+msgid "`f_target(value)`"
+msgstr "`f_target(value)`"
+
+#: ../../../components/termination.md
+msgid ""
+"The archive's best objective value reaches `value`. For single-objective "
+"use; automatically determines minimize/maximize from `ctx.direction`. "
+"Doesn't trigger while the archive is empty"
+msgstr "アーカイブの最良目的値が`value`に到達。単目的向けで、`ctx.direction`から最小化/最大化を自動判定する。アーカイブが空の間は終了しない"
+
+#: ../../../components/termination.md
+msgid "`stalled(window, tol=1e-8)`"
+msgstr "`stalled(window, tol=1e-8)`"
+
+#: ../../../components/termination.md
+msgid ""
+"Stops if no improvement exceeding `tol` occurs for `window` consecutive "
+"generations"
+msgstr "`window`世代連続で改善が`tol`を超えなければ終了"
+
+#: ../../../components/termination.md:36
+msgid ""
+"The `TerminationCondition` returned by `stalled` is a stateful condition "
+"that holds \"the best score so far\" internally via closure. It's meant "
+"to be used as one instance per `run` — reusing it across multiple `run`s "
+"leaves the previous state behind."
+msgstr "`stalled`が返す`TerminationCondition`は、内部に「これまでの最良スコア」をクロージャで保持する状態付きの条件です。 1回の`run`につき1つのインスタンスを使う想定であり、複数の`run`で使い回すと前回の状態が残ってしまいます。"
+
+#: ../../../components/termination.md:39
+msgid "How to extend Termination"
+msgstr "Terminationの拡張方法"
+
+#: ../../../components/termination.md:41
+msgid ""
+"`TerminationCondition` isn't an abstract base class — it's a composition "
+"wrapper that accepts any callable and provides operator overloads for `|`"
+" (OR), `&` (AND), and `~` (NOT). A plain function returning "
+"`OptimizationState -> bool` is automatically converted into a "
+"`TerminationCondition` wherever it's used, so you don't need to subclass "
+"a base class to add a custom termination condition."
+msgstr "`TerminationCondition`は抽象基底クラスではなく、任意のcallableを受け取って`|`(OR)/`&`(AND)/`~`(NOT)という演算子オーバーロードを提供する合成用のラッパーです。 `OptimizationState -> bool`を返すプレーンな関数はどこでも自動的に`TerminationCondition`へ変換されるため、独自の終了条件を追加するのに基底クラスを継承する必要はありません。"
+
+#: ../../../components/termination.md:56
+msgid ""
+"Only wrap it explicitly with `TerminationCondition(func, name=..., "
+"doc=...)` if you want to give it an explicit name or description."
+msgstr "名前や説明文を明示的に持たせたい場合だけ、`TerminationCondition(func, name=..., doc=...)`で明示的にラップします。"
+
+#: ../../../components/termination.md:58
+msgid "Multiple conditions can be combined declaratively via operators."
+msgstr "複数の条件は演算子で宣言的に組み合わせられます。"
+
+#: ../../../components/termination.md:69
+msgid ""
+"The `spec` argument on `TerminationCondition`'s constructor is an "
+"internal field used when the [Registry](extension_guidelines.md) "
+"serializes it to a preset, and normal user code doesn't need to be aware "
+"of it."
+msgstr "`TerminationCondition`のコンストラクタが持つ`spec`引数は、[Registry](extension_guidelines.md)がプリセットへシリアライズする際に使う内部フィールドであり、通常のユーザーコードでは意識しなくてかまいません。"
+
+#: ../../../components/termination.md:72
+msgid "Related components"
+msgstr "関連コンポーネント"
+
+#: ../../../components/termination.md:74
+msgid ""
+"[OptimizationState](optimization_state.md): The `ctx` each termination "
+"condition receives"
+msgstr "[OptimizationState](optimization_state.md)：各終了条件が受け取る`ctx`"
+
+#: ../../../components/termination.md:75
+msgid ""
+"[Extension guidelines](extension_guidelines.md): Config-driven "
+"construction via `Registry`"
+msgstr "[拡張のガイドライン](extension_guidelines.md)：`Registry`による設定駆動構築"
+
+#: ../../../components/termination.md:77
+msgid "References"
+msgstr "参照"
+
+#: ../../../components/termination.md:79
+#, python-brace-format
+msgid "{py:class}`saealib.Termination`"
+msgstr "{py:class}`saealib.Termination`"
+
+#: ../../../components/termination.md:80
+#, python-brace-format
+msgid "{py:class}`saealib.TerminationCondition`"
+msgstr "{py:class}`saealib.TerminationCondition`"
+
+#: ../../../components/termination.md:81
+#, python-brace-format
+msgid "{py:func}`saealib.max_fe`"
+msgstr "{py:func}`saealib.max_fe`"
+
+#: ../../../components/termination.md:82
+#, python-brace-format
+msgid "{py:func}`saealib.max_gen`"
+msgstr "{py:func}`saealib.max_gen`"
+
+#: ../../../components/termination.md:83
+#, python-brace-format
+msgid "{py:func}`saealib.f_target`"
+msgstr "{py:func}`saealib.f_target`"
+
+#: ../../../components/termination.md:84
+#, python-brace-format
+msgid "{py:func}`saealib.stalled`"
+msgstr "{py:func}`saealib.stalled`"
+
+#~ msgid ""
+#~ "`Optimizer`は、最適化をいつ止めるかという判断を、`Termination`という差し替え可能なトップレベルコンポーネントに委ねている。"
+#~ " "
+#~ "`Optimizer.set_termination(termination)`で渡し、実行時は世代末に`is_terminated(ctx)"
+#~ " -> bool`が呼ばれる。"
+#~ msgstr ""
+
+#~ msgid "Terminationの役割"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`Termination(*conditions)`は1つ以上の条件を受け取り、そのいずれか1つでも真になった時点で終了する（OR結合）。"
+#~ " コンストラクタに複数条件を渡す書き方は、後述する`any_of`と同じ意味になる。"
+#~ msgstr ""
+
+#~ msgid "クラスメソッドも用意されている。"
+#~ msgstr ""
+
+#~ msgid "クラスメソッド"
+#~ msgstr ""
+
+#~ msgid "意味"
+#~ msgstr ""
+
+#~ msgid "いずれか1つで終了（`Termination(*conditions)`と同義）"
+#~ msgstr ""
+
+#~ msgid "全て満たすまで終了しない"
+#~ msgstr ""
+
+#~ msgid "条件を満たさない間だけ終了しない"
+#~ msgstr ""
+
+#~ msgid "組み込み終了条件"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`Termination`に渡す各条件は、`TerminationCondition`という薄いラッパーである。 "
+#~ "組み込みのファクトリ関数はいずれも`TerminationCondition`を返す。"
+#~ msgstr ""
+
+#~ msgid "関数"
+#~ msgstr ""
+
+#~ msgid "終了条件"
+#~ msgstr ""
+
+#~ msgid "評価回数が`value`に到達（`ctx.fe >= value`）"
+#~ msgstr ""
+
+#~ msgid "世代数が`value`に到達（`ctx.gen >= value`）"
+#~ msgstr ""
+
+#~ msgid "アーカイブの最良目的値が`value`に到達。単目的向けで、`ctx.direction`から最小化/最大化を自動判定する。アーカイブが空の間は終了しない"
+#~ msgstr ""
+
+#~ msgid "`window`世代連続で改善が`tol`を超えなければ終了"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`stalled`が返す`TerminationCondition`は、内部に「これまでの最良スコア」をクロージャで保持する状態付きの条件である。"
+#~ " 1回の`run`につき1つのインスタンスを使う想定であり、複数の`run`で使い回すと前回の状態が残ってしまう。"
+#~ msgstr ""
+
+#~ msgid "Terminationの拡張方法"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`TerminationCondition`は抽象基底クラスではなく、任意のcallableを受け取って`|`(OR)/`&`(AND)/`~`(NOT)という演算子オーバーロードを提供する合成用のラッパーである。"
+#~ " `OptimizationState -> "
+#~ "bool`を返すプレーンな関数はどこでも自動的に`TerminationCondition`へ変換されるため、独自の終了条件を追加するのに基底クラスを継承する必要はない。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "名前や説明文を明示的に持たせたい場合だけ、`TerminationCondition(func, name=..., "
+#~ "doc=...)`で明示的にラップする。"
+#~ msgstr ""
+
+#~ msgid "複数の条件は演算子で宣言的に組み合わせられる。"
+#~ msgstr ""
+
+#~ msgid "`TerminationCondition`のコンストラクタが持つ`spec`引数は、[Registry](extension_guidelines.md)がプリセットへシリアライズする際に使う内部フィールドであり、通常のユーザーコードでは意識しなくてよい。"
+#~ msgstr ""
+
+#~ msgid "関連コンポーネント"
+#~ msgstr ""
+
+#~ msgid "[OptimizationState](optimization_state.md) — 各終了条件が受け取る`ctx`"
+#~ msgstr ""
+
+#~ msgid "[拡張のガイドライン](extension_guidelines.md) — `Registry`による設定駆動構築"
+#~ msgstr ""
+
+#~ msgid "参照"
+#~ msgstr ""
+

@@ -128,6 +128,22 @@ class CrossoverBLXAlpha(Crossover):
     alpha : float
         Alpha parameter for BLX-alpha crossover. Controls how far outside
         the parents' range offspring can be generated.
+
+    Notes
+    -----
+    Originates from Eshelman & Schaffer (1993); the primary paper has not
+    been obtained and is credited here by name only. The interval
+    ``[c_min - alpha*I, c_max + alpha*I]`` formula implemented in
+    :meth:`crossover` has been verified against Herrera, Lozano &
+    Verdegay (1998), Section 4.3, which restates the BLX-alpha definition
+    while surveying real-coded GA operators.
+
+    References
+    ----------
+    :cite:`herrera1998realcoded`: Herrera, F., Lozano, M., & Verdegay,
+    J. L. (1998). Tackling real-coded genetic algorithms: Operators and
+    tools for behavioural analysis. *Artificial Intelligence Review*, 12,
+    265-319.
     """
 
     def __init__(self, prob: float, alpha: float):
@@ -193,6 +209,11 @@ class CrossoverSBX(Crossover):
         Distribution index. Larger values produce offspring closer to parents.
     prob_var : float
         Per-variable crossover probability. Default is 0.5.
+
+    References
+    ----------
+    :cite:`deb1995sbx`: Deb, K., & Agrawal, R. B. (1995). Simulated binary
+    crossover for continuous search space. *Complex Systems*, 9(2), 115-148.
     """
 
     def __init__(self, prob: float, eta: float, *, prob_var: float = 0.5):
@@ -308,6 +329,12 @@ class CrossoverUniform(Crossover):
         Individual-level crossover probability.
     swap_rate : float
         Per-dimension swap probability. Default is 0.5.
+
+    Notes
+    -----
+    Originates from Syswerda (1989); the paper is a scanned document whose
+    content could not be machine-verified, so it is credited here by name
+    only.
     """
 
     def __init__(self, prob: float, swap_rate: float = 0.5):
@@ -479,6 +506,11 @@ class CrossoverIntegerSBX(Crossover):
         Distribution index. Larger values produce offspring closer to parents.
     prob_var : float
         Per-variable crossover probability. Default is 0.5.
+
+    References
+    ----------
+    :cite:`deb1995sbx`: Deb, K., & Agrawal, R. B. (1995). Simulated binary
+    crossover for continuous search space. *Complex Systems*, 9(2), 115-148.
     """
 
     def __init__(self, prob: float, eta: float, *, prob_var: float = 0.5):

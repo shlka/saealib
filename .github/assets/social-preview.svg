@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640">
+  <rect x="0" y="0" width="1280" height="640" fill="#14161a"/>
+  <g transform="translate(265,185) scale(3)">
+    <polygon points="45,15 75,32 75,66 45,83 15,66 15,32" fill="#e8eaed"/>
+    <path d="M29 39 L44 39 L44 50 L59 50 L59 61" stroke="#6b7280" stroke-width="5.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="29" cy="39" r="4" fill="#23262b"/>
+    <circle cx="44" cy="50" r="4" fill="#23262b"/>
+    <circle cx="59" cy="61" r="4" fill="#2dd4bf"/>
+    <text x="95" y="60" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="34" fill="#e8eaed">saealib</text>
+  </g>
+  <text x="640" y="500" font-family="Arial, Helvetica, sans-serif" font-weight="400" font-size="30" letter-spacing="0.5" fill="#9aa1ab" text-anchor="middle">Surrogate-Assisted Evolutionary Algorithms in Python</text>
+</svg>

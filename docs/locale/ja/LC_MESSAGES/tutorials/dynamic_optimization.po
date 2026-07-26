@@ -1,0 +1,274 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../tutorials/dynamic_optimization.md:1
+msgid "Dynamic Switching Based on Surrogate Accuracy"
+msgstr "サロゲート精度に応じた動的な切り替え"
+
+#: ../../../tutorials/dynamic_optimization.md:3
+msgid ""
+"The prediction accuracy of a surrogate model changes as generations "
+"progress."
+msgstr "サロゲートモデルの予測精度は、世代が進むにつれて変化します。"
+
+#: ../../../tutorials/dynamic_optimization.md:5
+msgid ""
+"Early on, when training data is scarce, accuracy is low; as the archive "
+"fills in, accuracy rises; and once the search converges and the gap "
+"between objective values narrows, accuracy can drop again."
+msgstr "学習データが少ない序盤は精度が低く、アーカイブが充実してくると精度が上がり、探索が収束して目的値の差が縮まると再び精度が落ちることもあります。"
+
+#: ../../../tutorials/dynamic_optimization.md:7
+msgid ""
+"This page covers how to switch the evaluation strategy or the "
+"`SurrogateManager` at runtime in response to these changes."
+msgstr "この変化に応じて、評価戦略や`SurrogateManager`を実行中に切り替える方法を扱います。"
+
+#: ../../../tutorials/dynamic_optimization.md:9
+msgid "Problem setup"
+msgstr "問題設定"
+
+#: ../../../tutorials/dynamic_optimization.md:11
+msgid ""
+"We use the same Sphere function as in the single-objective optimization "
+"tutorial."
+msgstr "単目的最適化のチュートリアルと同じSphere関数を使います。"
+
+#: ../../../tutorials/dynamic_optimization.md:25
+msgid "Tracking surrogate accuracy"
+msgstr "サロゲート精度の追跡"
+
+#: ../../../tutorials/dynamic_optimization.md:27
+msgid ""
+"Passing an `accuracy_evaluator` to `SurrogateManager` computes accuracy "
+"on every fit and records it in `surrogate_manager.last_accuracy`."
+msgstr "`SurrogateManager`に`accuracy_evaluator`を渡すと、フィットのたびに精度が計算され、`surrogate_manager.last_accuracy`に記録されます。"
+
+#: ../../../tutorials/dynamic_optimization.md:29
+msgid ""
+"`LOOAccuracyEvaluator` computes accuracy via leave-one-out cross-"
+"validation on the current training data, without preparing any additional"
+" held-out data."
+msgstr "`LOOAccuracyEvaluator`は、追加の保留データを用意せず、現在の学習データに対する交差検証(leave-one-out)で精度を求めます。"
+
+#: ../../../tutorials/dynamic_optimization.md:75
+msgid ""
+"`last_accuracy` is a `SurrogateAccuracy` instance, from which you can "
+"retrieve a value by specifying a metric name, e.g. `.get(\"spearman\")`."
+msgstr "`last_accuracy`は`SurrogateAccuracy`インスタンスで、`.get(\"spearman\")`のように指標名を指定して値を取り出せます。"
+
+#: ../../../tutorials/dynamic_optimization.md:77
+msgid "Note that `last_accuracy` is `None` in the first generation."
+msgstr "最初の世代では`last_accuracy`が`None`である点に注意してください。"
+
+#: ../../../tutorials/dynamic_optimization.md:79
+msgid "Switching the evaluation strategy with StrategySwitcher"
+msgstr "StrategySwitcherによる評価戦略の切り替え"
+
+#: ../../../tutorials/dynamic_optimization.md:81
+msgid ""
+"`StrategySwitcher(primary, fallback, metric=\"spearman\", "
+"threshold=0.56)` returns `primary` if accuracy is at or above the "
+"threshold, and `fallback` otherwise."
+msgstr "`StrategySwitcher(primary, fallback, metric=\"spearman\", threshold=0.56)`は、精度が閾値以上なら`primary`を、そうでなければ`fallback`を返します。"
+
+#: ../../../tutorials/dynamic_optimization.md:83
+msgid ""
+"The strategy returned by `switch()` takes effect from the next generation"
+" onward by passing it to `optimizer.set_strategy(...)` inside the "
+"`iterate()` loop."
+msgstr "`switch()`が返す戦略は、`iterate()`ループの中で`optimizer.set_strategy(...)`に渡すことで、次の世代から反映されます。"
+
+#: ../../../tutorials/dynamic_optimization.md:108
+msgid ""
+"Running this, the search stays on `IndividualBasedStrategy` early on "
+"while accuracy is low, and switches to `PreSelectionStrategy` once "
+"accuracy exceeds the threshold."
+msgstr "実行すると、序盤は精度が低く`IndividualBasedStrategy`のまま進み、精度が閾値を超えた世代から`PreSelectionStrategy`へ切り替わります。"
+
+#: ../../../tutorials/dynamic_optimization.md:110
+msgid ""
+"If the search progresses, the gap between objective values narrows, and "
+"accuracy drops again, it switches back to `IndividualBasedStrategy`."
+msgstr "探索が進んで目的値の差が縮まり精度が再び落ちれば、`IndividualBasedStrategy`へ戻ります。"
+
+#: ../../../tutorials/dynamic_optimization.md:112
+msgid "Other switchers"
+msgstr "他の切り替え"
+
+#: ../../../tutorials/dynamic_optimization.md:114
+msgid ""
+"Switchers with the same `switch()` interface are available besides "
+"`StrategySwitcher`."
+msgstr "同じ`switch()`インターフェースを持つ切り替え器が、`StrategySwitcher`以外にも用意されています。"
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid "Class"
+msgstr "クラス"
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid "What it switches"
+msgstr "切り替える対象"
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid "`StrategySwitcher`"
+msgstr "`StrategySwitcher`"
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid ""
+"Between two `OptimizationStrategy` instances (whether accuracy is at or "
+"above the threshold)"
+msgstr "2つの`OptimizationStrategy`（精度が閾値以上か否か）"
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid "`ManagerSwitcher`"
+msgstr "`ManagerSwitcher`"
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid ""
+"Between two `SurrogateManager` instances (whether accuracy is at or above"
+" the threshold)"
+msgstr "2つの`SurrogateManager`（精度が閾値以上か否か）"
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid "`GenCtrlSwitcher`"
+msgstr "`GenCtrlSwitcher`"
+
+#: ../../../tutorials/dynamic_optimization.md
+msgid ""
+"`GenerationBasedStrategy`'s `gen_ctrl` (smooths accuracy with an "
+"exponential moving average and maps it to a continuous value)"
+msgstr "`GenerationBasedStrategy`の`gen_ctrl`（精度を指数移動平均で平滑化して連続値へ写像）"
+
+#: ../../../tutorials/dynamic_optimization.md:122
+msgid ""
+"`GenCtrlSwitcher` returns a number, so assign it directly to the "
+"`gen_ctrl` attribute of a `GenerationBasedStrategy` instance."
+msgstr "`GenCtrlSwitcher`は数値を返すので、`GenerationBasedStrategy`のインスタンスの`gen_ctrl`属性へ直接代入します。"
+
+#: ../../../tutorials/dynamic_optimization.md:136
+msgid "References"
+msgstr "参照"
+
+#: ../../../tutorials/dynamic_optimization.md:138
+#, python-brace-format
+msgid ""
+"{py:class}`saealib.StrategySwitcher` / "
+"{py:class}`saealib.ManagerSwitcher` / {py:class}`saealib.GenCtrlSwitcher`"
+msgstr "{py:class}`saealib.StrategySwitcher` / {py:class}`saealib.ManagerSwitcher` / {py:class}`saealib.GenCtrlSwitcher`"
+
+#: ../../../tutorials/dynamic_optimization.md:139
+#, python-brace-format
+msgid ""
+"{py:class}`saealib.LOOAccuracyEvaluator` / "
+"{py:class}`saealib.HeldOutAccuracyEvaluator` / "
+"{py:class}`saealib.KFoldAccuracyEvaluator`"
+msgstr "{py:class}`saealib.LOOAccuracyEvaluator` / {py:class}`saealib.HeldOutAccuracyEvaluator` / {py:class}`saealib.KFoldAccuracyEvaluator`"
+
+#: ../../../tutorials/dynamic_optimization.md:140
+#, python-brace-format
+msgid "{py:class}`saealib.SurrogateAccuracy`"
+msgstr "{py:class}`saealib.SurrogateAccuracy`"
+
+#: ../../../tutorials/dynamic_optimization.md:141
+#, python-brace-format
+msgid "{py:class}`saealib.Optimizer`"
+msgstr "{py:class}`saealib.Optimizer`"
+
+#~ msgid "サロゲート精度に応じた動的な切り替え"
+#~ msgstr ""
+
+#~ msgid "サロゲートモデルの予測精度は、世代が進むにつれて変化します。"
+#~ msgstr ""
+
+#~ msgid "学習データが少ない序盤は精度が低く、アーカイブが充実してくると精度が上がり、探索が収束して目的値の差が縮まると再び精度が落ちることもあります。"
+#~ msgstr ""
+
+#~ msgid "この変化に応じて、評価戦略やサロゲートマネージャを実行中に切り替える方法を扱います。"
+#~ msgstr ""
+
+#~ msgid "問題設定"
+#~ msgstr ""
+
+#~ msgid "単目的最適化のチュートリアルと同じSphere関数を使います。"
+#~ msgstr ""
+
+#~ msgid "サロゲート精度の追跡"
+#~ msgstr ""
+
+#~ msgid "サロゲートマネージャに`accuracy_evaluator`を渡すと、フィットのたびに精度が計算され、`surrogate_manager.last_accuracy`に記録されます。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`LOOAccuracyEvaluator`は、追加の保留データを用意せず、現在の学習データに対する交差検証(leave-"
+#~ "one-out)で精度を求めます。"
+#~ msgstr ""
+
+#~ msgid "`last_accuracy`は`SurrogateAccuracy`インスタンスで、`.get(\"spearman\")`のようにメトリック名を指定して値を取り出せます。"
+#~ msgstr ""
+
+#~ msgid "最初の世代では`last_accuracy`が`None`である点に注意してください。"
+#~ msgstr ""
+
+#~ msgid "StrategySwitcherによる評価戦略の切り替え"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`StrategySwitcher(primary, fallback, metric=\"spearman\","
+#~ " threshold=0.56)`は、精度が閾値以上なら`primary`を、そうでなければ`fallback`を返します。"
+#~ msgstr ""
+
+#~ msgid "`switch()`が返す戦略は、`iterate()`ループの中で`optimizer.set_strategy(...)`に渡すことで、次の世代から反映されます。"
+#~ msgstr ""
+
+#~ msgid "実行すると、序盤は精度が低く`IndividualBasedStrategy`のまま進み、精度が閾値を超えた世代から`PreSelectionStrategy`へ切り替わります。"
+#~ msgstr ""
+
+#~ msgid "探索が進んで目的値の差が縮まり精度が再び落ちれば、`IndividualBasedStrategy`へ戻ります。"
+#~ msgstr ""
+
+#~ msgid "他の切り替え"
+#~ msgstr ""
+
+#~ msgid "同じ`switch()`インターフェースを持つ切り替え器が、`StrategySwitcher`以外にも用意されています。"
+#~ msgstr ""
+
+#~ msgid "クラス"
+#~ msgstr ""
+
+#~ msgid "切り替える対象"
+#~ msgstr ""
+
+#~ msgid "2つの`OptimizationStrategy`(精度がしきい値以上か否か)"
+#~ msgstr ""
+
+#~ msgid "2つの`SurrogateManager`(精度がしきい値以上か否か)"
+#~ msgstr ""
+
+#~ msgid "`GenerationBasedStrategy`の`gen_ctrl`(精度を指数移動平均で平滑化して連続値へ写像)"
+#~ msgstr ""
+
+#~ msgid "`GenCtrlSwitcher`は数値を返すので、`GenerationBasedStrategy`のインスタンスの`gen_ctrl`属性へ直接代入します。"
+#~ msgstr ""
+
+#~ msgid "参照"
+#~ msgstr ""
+
