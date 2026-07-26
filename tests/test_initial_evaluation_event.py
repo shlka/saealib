@@ -243,7 +243,7 @@ class TestInitialEvaluationEventDispatch:
         problem = _make_problem()
         opt = _make_optimizer(problem)
 
-        captured: list[tuple[Archive, Archive]] = []
+        captured: list[tuple[Archive | None, Archive]] = []
         opt.cbmanager.register(
             InitialEvaluationEndEvent,
             lambda e: captured.append((e.archive, e.ctx.archive)),
