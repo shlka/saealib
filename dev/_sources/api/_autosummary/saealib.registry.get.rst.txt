@@ -1,0 +1,6 @@
+﻿saealib.registry.get
+====================
+
+.. currentmodule:: saealib.registry
+
+.. autofunction:: get

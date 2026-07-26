@@ -1,0 +1,1610 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>saealib.problem.constraint &#8212; saealib 0.1.0b5.dev54+g55fad903f documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=88dfc25e" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/documentation_options.js?v=0d4912b6"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}`;
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/saealib/problem/constraint';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://shlka.github.io/saealib/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'dev';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <script src="../../../_static/js/lang-switch.js?v=6860dbcf"></script>
+    <script src="../../../_static/js/sidebar-dialog-fix.js?v=decd8175"></script>
+    <script src="../../../_static/js/mermaid-scale.js?v=e063b89f"></script>
+    <link rel="canonical" href="https://shlka.github.io/saealib/_modules/saealib/problem/constraint.html" />
+    <link rel="icon" href="../../../_static/icon.svg"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo-light.svg" class="logo__image only-light" alt="saealib"/>
+    <img src="../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="saealib"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../components/index.html">
+    Components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../algorithms/index.html">
+    Algorithms
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../references.html">
+    References
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item"><div class="lang-switcher__container dropdown pst-js-only">
+  <button id="pst-lang-switcher-button-2"
+    type="button"
+    class="lang-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-lang-switcher-list-2"
+    aria-label="Language switcher list"
+  >
+    Language  <!-- this text is replaced by lang-switch.js on page load -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-lang-switcher-list-2"
+    class="lang-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-lang-switcher-button-2">
+    <!-- dropdown will be populated by lang-switch.js on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/shlka/saealib" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../components/index.html">
+    Components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../algorithms/index.html">
+    Algorithms
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../references.html">
+    References
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-3"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-3"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-3"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-3">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item"><div class="lang-switcher__container dropdown pst-js-only">
+  <button id="pst-lang-switcher-button-3"
+    type="button"
+    class="lang-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-lang-switcher-list-3"
+    aria-label="Language switcher list"
+  >
+    Language  <!-- this text is replaced by lang-switch.js on page load -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-lang-switcher-list-3"
+    class="lang-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-lang-switcher-button-3">
+    <!-- dropdown will be populated by lang-switch.js on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/shlka/saealib" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">saealib.problem.constraint</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for saealib.problem.constraint</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Constraint classes and handlers.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Population</span>
+
+
+<div class="viewcode-block" id="InequalityConstraint">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InequalityConstraint</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A single inequality constraint: g(x) &lt;= threshold.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    func : callable</span>
+<span class="sd">        Constraint function g(x). Should return a scalar float.</span>
+<span class="sd">    threshold : float, optional</span>
+<span class="sd">        Right-hand side of the constraint g(x) &lt;= threshold. Default: 0.0.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="InequalityConstraint.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">threshold</span></div>
+
+
+<div class="viewcode-block" id="InequalityConstraint.evaluate">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the raw constraint value g(x).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="InequalityConstraint.violation_from_value">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint.violation_from_value">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">violation_from_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the violation for an already-evaluated raw value g(x).</span>
+
+<span class="sd">        This is the single source of truth for the per-constraint violation</span>
+<span class="sd">        formula: :meth:`violation`, :meth:`evaluate_with_violation`, and</span>
+<span class="sd">        :class:`StaticToleranceHandler` all delegate to it. Subclasses (e.g.</span>
+<span class="sd">        :class:`EqualityConstraint`) override this one method to change how a</span>
+<span class="sd">        raw value maps to a violation, without re-evaluating ``func``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        g : float</span>
+<span class="sd">            Raw constraint value g(x).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Constraint violation: max(0, g - threshold).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">g</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InequalityConstraint.violation">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint.violation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">violation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return constraint violation: max(0, g(x) - threshold).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation_from_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="InequalityConstraint.evaluate_with_violation">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint.evaluate_with_violation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_with_violation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the raw value and violation with a single function evaluation.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        g : float</span>
+<span class="sd">            Raw constraint value g(x).</span>
+<span class="sd">        cv : float</span>
+<span class="sd">            Constraint violation: max(0, g(x) - threshold).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">g</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation_from_value</span><span class="p">(</span><span class="n">g</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InequalityConstraint.gradient">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint.gradient">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gradient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the gradient of g(x) with respect to x, if available.</span>
+
+<span class="sd">        Override this in a subclass to enable gradient-based constraint</span>
+<span class="sd">        handlers (e.g. gradient-based repair). The default returns ``None``,</span>
+<span class="sd">        signalling that no analytical Jacobian is provided.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : np.ndarray</span>
+<span class="sd">            The solution at which to evaluate the gradient. shape = (dim, )</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray or None</span>
+<span class="sd">            Gradient vector with shape = (dim, ), or ``None`` when no</span>
+<span class="sd">            gradient is available.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="EqualityConstraint">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.EqualityConstraint.html#saealib.EqualityConstraint">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EqualityConstraint</span><span class="p">(</span><span class="n">InequalityConstraint</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A single equality constraint: h(x) = 0, satisfied within a tolerance.</span>
+
+<span class="sd">    The violation is ``max(0, |h(x)| - tolerance)``, reusing the inequality</span>
+<span class="sd">    violation path so that mixed inequality/equality problems aggregate through</span>
+<span class="sd">    the same :class:`ConstraintHandler`. Only :meth:`violation_from_value` is</span>
+<span class="sd">    overridden; :meth:`violation` and :meth:`evaluate_with_violation` inherit</span>
+<span class="sd">    the equality behavior automatically.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    func : callable</span>
+<span class="sd">        Constraint function h(x). Should return a scalar float.</span>
+<span class="sd">    tolerance : float, optional</span>
+<span class="sd">        Feasibility tolerance for ``|h(x)| &lt;= tolerance``. Default: 1e-6.</span>
+<span class="sd">        Set ``tolerance=0.0`` to defer the feasibility threshold to a handler</span>
+<span class="sd">        such as ``EpsilonConstraintHandler``, where the threshold is managed</span>
+<span class="sd">        externally rather than baked into the constraint.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Provide an analytical Jacobian by overriding :meth:`gradient` to return</span>
+<span class="sd">    ``∇h(x)``; this enables gradient-based constraint handlers (e.g. repair).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="EqualityConstraint.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.EqualityConstraint.html#saealib.EqualityConstraint.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span> <span class="o">=</span> <span class="n">tolerance</span></div>
+
+
+<div class="viewcode-block" id="EqualityConstraint.violation_from_value">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.EqualityConstraint.html#saealib.EqualityConstraint.violation_from_value">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">violation_from_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return equality violation: max(0, abs(h(x)) - tolerance).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ConstraintHandler">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.ConstraintHandler.html#saealib.ConstraintHandler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConstraintHandler</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pluggable constraint-processing strategy.</span>
+
+<span class="sd">    A ``ConstraintHandler`` exposes the constraint-handling lifecycle as a set</span>
+<span class="sd">    of overridable hooks, decoupling the per-constraint violation formula and</span>
+<span class="sd">    the aggregation method from the core :class:`Problem`. This lets research</span>
+<span class="sd">    code swap in alternative strategies (e.g. ε-constraint, penalty functions,</span>
+<span class="sd">    gradient-based repair, augmented Lagrangian) without forking core classes.</span>
+
+<span class="sd">    Lifecycle::</span>
+
+<span class="sd">        Ask            -&gt; [repair(x, constraints, lb, ub)]</span>
+<span class="sd">                       -&gt; evaluate f, g</span>
+<span class="sd">                       -&gt; [compute_cv(constraints, x, g)]        -&gt; cv</span>
+<span class="sd">                       -&gt; [augment_objective(f, constraints, x, g)] -&gt; f&#39;</span>
+<span class="sd">        Tell           -&gt; Comparator(f&#39;, cv) with eps_cv = feasibility_threshold</span>
+<span class="sd">        Generation end -&gt; [on_generation_end(gen, population)]</span>
+
+<span class="sd">    Only :meth:`compute_cv` is abstract; the remaining hooks have sensible</span>
+<span class="sd">    defaults so that subclasses implement just what they need.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ConstraintHandler.repair">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.ConstraintHandler.html#saealib.ConstraintHandler.repair">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">repair</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InequalityConstraint</span><span class="p">],</span>
+        <span class="n">lb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">ub</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Repair a design vector before evaluation.</span>
+
+<span class="sd">        Called by the algorithm after each variation operator (crossover /</span>
+<span class="sd">        mutation) and before objective evaluation. The default clips ``x`` to</span>
+<span class="sd">        ``[lb, ub]``, reproducing the behaviour of ``repair_clipping``.</span>
+
+<span class="sd">        Subclasses override this to add domain-constraint repair (e.g. a</span>
+<span class="sd">        Newton step toward an equality-constraint manifold) on top of—or</span>
+<span class="sd">        instead of—bounds clipping.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : np.ndarray</span>
+<span class="sd">            The design vector to repair. shape = (dim, )</span>
+<span class="sd">        constraints : list[InequalityConstraint]</span>
+<span class="sd">            The problem&#39;s domain constraints.</span>
+<span class="sd">        lb : np.ndarray</span>
+<span class="sd">            Lower bounds. shape = (dim, )</span>
+<span class="sd">        ub : np.ndarray</span>
+<span class="sd">            Upper bounds. shape = (dim, )</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Reserved for future use (e.g. parent solution for reflection</span>
+<span class="sd">            repair).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            The repaired design vector. shape = (dim, )</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ConstraintHandler.compute_cv">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.ConstraintHandler.html#saealib.ConstraintHandler.compute_cv">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_cv</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InequalityConstraint</span><span class="p">],</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Aggregate raw constraint values into a scalar constraint violation.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        constraints : list[InequalityConstraint]</span>
+<span class="sd">            The problem&#39;s inequality constraints, aligned with ``g``.</span>
+<span class="sd">        x : np.ndarray</span>
+<span class="sd">            The evaluated design vector. shape = (dim, )</span>
+<span class="sd">        g : np.ndarray</span>
+<span class="sd">            Raw constraint values g(x). shape = (n_constraints, )</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Aggregate constraint violation (``cv``); ``0.0`` means feasible.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="ConstraintHandler.augment_objective">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.ConstraintHandler.html#saealib.ConstraintHandler.augment_objective">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">augment_objective</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InequalityConstraint</span><span class="p">],</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Transform objective values using constraint information.</span>
+
+<span class="sd">        Used by penalty-based or augmented-Lagrangian strategies. The default</span>
+<span class="sd">        is the identity (objectives are returned unchanged).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        f : np.ndarray</span>
+<span class="sd">            Raw objective values. shape = (n_obj, )</span>
+<span class="sd">        constraints : list[InequalityConstraint]</span>
+<span class="sd">            The problem&#39;s inequality constraints, aligned with ``g``.</span>
+<span class="sd">        x : np.ndarray</span>
+<span class="sd">            The evaluated design vector. shape = (dim, )</span>
+<span class="sd">        g : np.ndarray</span>
+<span class="sd">            Raw constraint values g(x). shape = (n_constraints, )</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            The (possibly) augmented objective values. shape = (n_obj, )</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">f</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">feasibility_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constraint-violation threshold below which a solution is feasible.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mf">1e-6</span>
+
+<div class="viewcode-block" id="ConstraintHandler.on_generation_end">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.ConstraintHandler.html#saealib.ConstraintHandler.on_generation_end">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_generation_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gen</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run end-of-generation bookkeeping.</span>
+
+<span class="sd">        Used by adaptive strategies (e.g. ε-level control) that update their</span>
+<span class="sd">        internal state between generations. The default is a no-op.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        gen : int</span>
+<span class="sd">            The generation index that just finished.</span>
+<span class="sd">        population : Population</span>
+<span class="sd">            The current population.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="StaticToleranceHandler">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.StaticToleranceHandler.html#saealib.StaticToleranceHandler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StaticToleranceHandler</span><span class="p">(</span><span class="n">ConstraintHandler</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Default constraint handler reproducing the static-tolerance behavior.</span>
+
+<span class="sd">    The constraint violation is the sum of per-constraint violations</span>
+<span class="sd">    ``sum(c_i.violation_from_value(g_i))`` and the feasibility threshold is a</span>
+<span class="sd">    fixed ``eps_cv``. Each constraint maps its own raw value to a violation,</span>
+<span class="sd">    so inequality (``max(0, g - threshold)``) and equality</span>
+<span class="sd">    (``max(0, |h| - tolerance)``) constraints can be mixed freely. Objectives</span>
+<span class="sd">    are not augmented.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    eps_cv : float, optional</span>
+<span class="sd">        Feasibility threshold returned by :attr:`feasibility_threshold`.</span>
+<span class="sd">        Default: 1e-6.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="StaticToleranceHandler.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.StaticToleranceHandler.html#saealib.StaticToleranceHandler.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eps_cv</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eps_cv</span> <span class="o">=</span> <span class="n">eps_cv</span></div>
+
+
+<div class="viewcode-block" id="StaticToleranceHandler.compute_cv">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.StaticToleranceHandler.html#saealib.StaticToleranceHandler.compute_cv">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_cv</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InequalityConstraint</span><span class="p">],</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the sum of per-constraint ``c_i.violation_from_value(g_i)``.&quot;&quot;&quot;</span>
+        <span class="n">cv</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">gi</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">constraints</span><span class="p">):</span>
+            <span class="n">cv</span> <span class="o">+=</span> <span class="n">c</span><span class="o">.</span><span class="n">violation_from_value</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">gi</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">cv</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">feasibility_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fixed feasibility threshold ``eps_cv``.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eps_cv</span></div>
+
+
+
+<div class="viewcode-block" id="EpsilonConstraintHandler">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.EpsilonConstraintHandler.html#saealib.EpsilonConstraintHandler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EpsilonConstraintHandler</span><span class="p">(</span><span class="n">ConstraintHandler</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dynamic ε-constraint handler.</span>
+
+<span class="sd">    The feasibility threshold ε starts at ``schedule(0)`` and is updated</span>
+<span class="sd">    to ``schedule(gen)`` at the end of each generation via</span>
+<span class="sd">    :meth:`on_generation_end`. As ε decreases toward 0 the population is</span>
+<span class="sd">    gradually driven into the feasible region.</span>
+
+<span class="sd">    Each call to :meth:`on_generation_end` sets</span>
+<span class="sd">    ``comparator.eps_cv = feasibility_threshold`` via the runner, so the</span>
+<span class="sd">    comparator&#39;s feasibility criterion tightens in sync with ε.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    schedule : callable</span>
+<span class="sd">        Maps generation index (int) → current ε value (float).</span>
+<span class="sd">        ``schedule(0)`` is the initial ε; it should decrease toward 0</span>
+<span class="sd">        over generations.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    :meth:`compute_cv` aggregates violations as:</span>
+
+<span class="sd">    - *Equality* constraints: ``|h(x)|``  (raw absolute value; the</span>
+<span class="sd">      ``EqualityConstraint.tolerance`` field is intentionally bypassed so</span>
+<span class="sd">      that ε controls the feasibility threshold globally).</span>
+<span class="sd">    - *Inequality* constraints: ``max(0, g(x) - threshold)``  (standard</span>
+<span class="sd">      positive part; the constraint&#39;s ``threshold`` still applies).</span>
+
+<span class="sd">    This is a simplified form of the sum-of-constraint-violation measure</span>
+<span class="sd">    in Eq. (7) of Mezura-Montes &amp; Coello Coello (2011) — inequality</span>
+<span class="sd">    violations are not squared and values are not normalised.</span>
+
+<span class="sd">    The ε-constrained method itself originates from Takahama &amp; Sakai</span>
+<span class="sd">    (2006); that paper has not been obtained, so it is credited here by</span>
+<span class="sd">    name only. Eq. (7)-(9) above are cited via the Mezura-Montes &amp; Coello</span>
+<span class="sd">    Coello (2011) survey, which was read directly and attributes the</span>
+<span class="sd">    method to Takahama &amp; Sakai in its own text.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    :cite:`mezuramontes2011epsilon`: Mezura-Montes, E., &amp; Coello Coello,</span>
+<span class="sd">    C. A. (2011). Constraint-handling in nature-inspired numerical</span>
+<span class="sd">    optimization: Past, present and future. *Swarm and Evolutionary</span>
+<span class="sd">    Computation*, 1(4), 173-194.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="EpsilonConstraintHandler.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.EpsilonConstraintHandler.html#saealib.EpsilonConstraintHandler.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schedule</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">float</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_schedule</span> <span class="o">=</span> <span class="n">schedule</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">schedule</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="EpsilonConstraintHandler.compute_cv">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.EpsilonConstraintHandler.html#saealib.EpsilonConstraintHandler.compute_cv">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_cv</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InequalityConstraint</span><span class="p">],</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``|h|`` for equality and ``max(0, g-threshold)`` for inequality.&quot;&quot;&quot;</span>
+        <span class="n">cv</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">gi</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">constraints</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">EqualityConstraint</span><span class="p">):</span>
+                <span class="n">cv</span> <span class="o">+=</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">gi</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cv</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">gi</span><span class="p">)</span> <span class="o">-</span> <span class="n">c</span><span class="o">.</span><span class="n">threshold</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cv</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">feasibility_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Current ε; the comparator treats ``cv &lt;= ε`` as feasible.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eps</span>
+
+<div class="viewcode-block" id="EpsilonConstraintHandler.on_generation_end">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.EpsilonConstraintHandler.html#saealib.EpsilonConstraintHandler.on_generation_end">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_generation_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gen</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update internal ε to ``schedule(gen)``.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eps</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_schedule</span><span class="p">(</span><span class="n">gen</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="GradientRepairHandler">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.GradientRepairHandler.html#saealib.GradientRepairHandler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GradientRepairHandler</span><span class="p">(</span><span class="n">ConstraintHandler</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gradient-based constraint repair handler.</span>
+
+<span class="sd">    For each :class:`EqualityConstraint` whose :meth:`~InequalityConstraint.gradient`</span>
+<span class="sd">    returns a non-``None`` vector, applies one Newton-like step that projects</span>
+<span class="sd">    the design vector toward the constraint manifold ``h(x) = 0``::</span>
+
+<span class="sd">        x &lt;- x - h(x) * grad_h(x) / (||grad_h(x)||^2 + ridge)</span>
+
+<span class="sd">    The step is repeated ``max_iter`` times.  After all iterations the result</span>
+<span class="sd">    is clipped to ``[lb, ub]`` so bounds feasibility is always guaranteed.</span>
+
+<span class="sd">    :class:`InequalityConstraint` objects and any :class:`EqualityConstraint`</span>
+<span class="sd">    whose ``gradient()`` returns ``None`` are skipped during repair; they still</span>
+<span class="sd">    contribute to ``cv`` via :meth:`compute_cv`.</span>
+
+<span class="sd">    Simplified relative to Eq. (8)-(9) of Chootinan &amp; Chen (2006): the</span>
+<span class="sd">    original method solves all constraints jointly via the Moore-Penrose</span>
+<span class="sd">    pseudoinverse of the stacked Jacobian; this handler instead applies a</span>
+<span class="sd">    per-constraint (equality-only) regularised Newton step, and the</span>
+<span class="sd">    ``ridge`` regularisation term is not present in the original paper.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    max_iter : int, optional</span>
+<span class="sd">        Number of Newton steps per call. Default: 1.</span>
+<span class="sd">    ridge : float, optional</span>
+<span class="sd">        Regularisation term added to ``‖∇h‖²`` for numerical stability.</span>
+<span class="sd">        Default: 1e-12.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    :cite:`chootinan2006gradientrepair`: Chootinan, P., &amp; Chen, A. (2006).</span>
+<span class="sd">    Constraint handling in genetic algorithms using a gradient-based repair</span>
+<span class="sd">    method. *Computers &amp; Operations Research*, 33(8), 2263-2281.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GradientRepairHandler.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.GradientRepairHandler.html#saealib.GradientRepairHandler.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ridge</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span> <span class="o">=</span> <span class="n">max_iter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ridge</span> <span class="o">=</span> <span class="n">ridge</span></div>
+
+
+<div class="viewcode-block" id="GradientRepairHandler.repair">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.GradientRepairHandler.html#saealib.GradientRepairHandler.repair">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">repair</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InequalityConstraint</span><span class="p">],</span>
+        <span class="n">lb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">ub</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply Newton steps toward equality-constraint manifolds, then clip.&quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">EqualityConstraint</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">grad</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">grad</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">h</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">h</span> <span class="o">*</span> <span class="n">grad</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">grad</span><span class="p">,</span> <span class="n">grad</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ridge</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GradientRepairHandler.compute_cv">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.GradientRepairHandler.html#saealib.GradientRepairHandler.compute_cv">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_cv</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InequalityConstraint</span><span class="p">],</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return sum of per-constraint violations (same as StaticToleranceHandler).&quot;&quot;&quot;</span>
+        <span class="n">cv</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">gi</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">constraints</span><span class="p">):</span>
+            <span class="n">cv</span> <span class="o">+=</span> <span class="n">c</span><span class="o">.</span><span class="n">violation_from_value</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">gi</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">cv</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="linear_epsilon_schedule">
+<a class="viewcode-back" href="../../../api/problem.html#saealib.linear_epsilon_schedule">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">linear_epsilon_schedule</span><span class="p">(</span><span class="n">eps0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">n_gen</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a linear ε schedule: ``eps0`` at gen 0, ``0.0`` at gen ``n_gen``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    eps0 : float</span>
+<span class="sd">        Initial ε value (gen 0).</span>
+<span class="sd">    n_gen : int</span>
+<span class="sd">        Generation at which ε reaches 0.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    callable</span>
+<span class="sd">        ``schedule(gen) -&gt; float``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_schedule</span><span class="p">(</span><span class="n">gen</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">eps0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">gen</span> <span class="o">/</span> <span class="n">n_gen</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">_schedule</span></div>
+
+
+
+<div class="viewcode-block" id="exponential_epsilon_schedule">
+<a class="viewcode-back" href="../../../api/problem.html#saealib.exponential_epsilon_schedule">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">exponential_epsilon_schedule</span><span class="p">(</span><span class="n">eps0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">decay</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return an exponential ε schedule: ``eps0 * decay**gen``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    eps0 : float</span>
+<span class="sd">        Initial ε value (gen 0).</span>
+<span class="sd">    decay : float</span>
+<span class="sd">        Multiplicative decay factor per generation (0 &lt; decay &lt; 1).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    callable</span>
+<span class="sd">        ``schedule(gen) -&gt; float``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_schedule</span><span class="p">(</span><span class="n">gen</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">eps0</span> <span class="o">*</span> <span class="p">(</span><span class="n">decay</span><span class="o">**</span><span class="n">gen</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_schedule</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, shlka.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

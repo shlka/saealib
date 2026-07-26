@@ -1,0 +1,6 @@
+﻿saealib.rank\_weighted\_combine
+===============================
+
+.. currentmodule:: saealib
+
+.. autofunction:: rank_weighted_combine

@@ -1,0 +1,43 @@
+﻿saealib.MutationGaussian
+========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: MutationGaussian
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~MutationGaussian.__init__
+   ~MutationGaussian.mutate
+   ~MutationGaussian.post_mutation
+   ~MutationGaussian.with_post
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.MutationGaussian.__init__
+
+
+.. automethod:: saealib.MutationGaussian.mutate
+
+
+.. automethod:: saealib.MutationGaussian.post_mutation
+
+
+.. automethod:: saealib.MutationGaussian.with_post
+
+
+

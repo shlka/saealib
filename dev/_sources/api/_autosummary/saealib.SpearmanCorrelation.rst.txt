@@ -1,0 +1,35 @@
+﻿saealib.SpearmanCorrelation
+===========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SpearmanCorrelation
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SpearmanCorrelation.__init__
+   ~SpearmanCorrelation.compute
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SpearmanCorrelation.__init__
+
+
+.. automethod:: saealib.SpearmanCorrelation.compute
+
+
+

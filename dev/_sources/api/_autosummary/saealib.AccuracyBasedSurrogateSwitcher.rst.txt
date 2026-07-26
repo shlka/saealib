@@ -1,0 +1,35 @@
+﻿saealib.AccuracyBasedSurrogateSwitcher
+======================================
+
+.. currentmodule:: saealib
+
+.. autoclass:: AccuracyBasedSurrogateSwitcher
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~AccuracyBasedSurrogateSwitcher.__init__
+   ~AccuracyBasedSurrogateSwitcher.switch
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.AccuracyBasedSurrogateSwitcher.__init__
+
+
+.. automethod:: saealib.AccuracyBasedSurrogateSwitcher.switch
+
+
+

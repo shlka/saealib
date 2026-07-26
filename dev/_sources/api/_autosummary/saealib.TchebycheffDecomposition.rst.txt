@@ -1,0 +1,35 @@
+﻿saealib.TchebycheffDecomposition
+================================
+
+.. currentmodule:: saealib
+
+.. autoclass:: TchebycheffDecomposition
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~TchebycheffDecomposition.__init__
+   ~TchebycheffDecomposition.aggregate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.TchebycheffDecomposition.__init__
+
+
+.. automethod:: saealib.TchebycheffDecomposition.aggregate
+
+
+

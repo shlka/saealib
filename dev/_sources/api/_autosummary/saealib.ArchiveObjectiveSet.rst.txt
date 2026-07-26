@@ -1,0 +1,35 @@
+﻿saealib.ArchiveObjectiveSet
+===========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: ArchiveObjectiveSet
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ArchiveObjectiveSet.__init__
+   ~ArchiveObjectiveSet.build
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.ArchiveObjectiveSet.__init__
+
+
+.. automethod:: saealib.ArchiveObjectiveSet.build
+
+
+

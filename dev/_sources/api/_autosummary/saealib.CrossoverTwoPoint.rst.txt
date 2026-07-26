@@ -1,0 +1,43 @@
+﻿saealib.CrossoverTwoPoint
+=========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: CrossoverTwoPoint
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~CrossoverTwoPoint.__init__
+   ~CrossoverTwoPoint.crossover
+   ~CrossoverTwoPoint.post_crossover
+   ~CrossoverTwoPoint.with_post
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.CrossoverTwoPoint.__init__
+
+
+.. automethod:: saealib.CrossoverTwoPoint.crossover
+
+
+.. automethod:: saealib.CrossoverTwoPoint.post_crossover
+
+
+.. automethod:: saealib.CrossoverTwoPoint.with_post
+
+
+

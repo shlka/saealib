@@ -1,0 +1,47 @@
+﻿saealib.TorchSurrogate
+======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: TorchSurrogate
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~TorchSurrogate.__init__
+   ~TorchSurrogate.fit
+   ~TorchSurrogate.post_fit
+   ~TorchSurrogate.predict
+   ~TorchSurrogate.with_post_fit
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.TorchSurrogate.__init__
+
+
+.. automethod:: saealib.TorchSurrogate.fit
+
+
+.. automethod:: saealib.TorchSurrogate.post_fit
+
+
+.. automethod:: saealib.TorchSurrogate.predict
+
+
+.. automethod:: saealib.TorchSurrogate.with_post_fit
+
+
+
