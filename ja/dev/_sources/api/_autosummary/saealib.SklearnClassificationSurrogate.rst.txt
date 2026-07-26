@@ -1,0 +1,51 @@
+﻿saealib.SklearnClassificationSurrogate
+======================================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SklearnClassificationSurrogate
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SklearnClassificationSurrogate.__init__
+   ~SklearnClassificationSurrogate.fit
+   ~SklearnClassificationSurrogate.post_fit
+   ~SklearnClassificationSurrogate.predict
+   ~SklearnClassificationSurrogate.predict_proba
+   ~SklearnClassificationSurrogate.with_post_fit
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SklearnClassificationSurrogate.__init__
+
+
+.. automethod:: saealib.SklearnClassificationSurrogate.fit
+
+
+.. automethod:: saealib.SklearnClassificationSurrogate.post_fit
+
+
+.. automethod:: saealib.SklearnClassificationSurrogate.predict
+
+
+.. automethod:: saealib.SklearnClassificationSurrogate.predict_proba
+
+
+.. automethod:: saealib.SklearnClassificationSurrogate.with_post_fit
+
+
+

@@ -1,0 +1,31 @@
+﻿saealib.TerminationCondition
+============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: TerminationCondition
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~TerminationCondition.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.TerminationCondition.__init__
+
+
+

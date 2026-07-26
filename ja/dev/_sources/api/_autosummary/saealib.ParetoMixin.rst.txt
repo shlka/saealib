@@ -1,0 +1,35 @@
+﻿saealib.ParetoMixin
+===================
+
+.. currentmodule:: saealib
+
+.. autoclass:: ParetoMixin
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ParetoMixin.__init__
+   ~ParetoMixin.add
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.ParetoMixin.__init__
+
+
+.. automethod:: saealib.ParetoMixin.add
+
+
+

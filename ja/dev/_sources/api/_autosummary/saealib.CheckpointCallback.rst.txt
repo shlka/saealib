@@ -1,0 +1,35 @@
+﻿saealib.CheckpointCallback
+==========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: CheckpointCallback
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~CheckpointCallback.__init__
+   ~CheckpointCallback.register
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.CheckpointCallback.__init__
+
+
+.. automethod:: saealib.CheckpointCallback.register
+
+
+

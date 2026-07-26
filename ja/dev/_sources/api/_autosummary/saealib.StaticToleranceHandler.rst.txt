@@ -1,0 +1,47 @@
+﻿saealib.StaticToleranceHandler
+==============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: StaticToleranceHandler
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~StaticToleranceHandler.__init__
+   ~StaticToleranceHandler.augment_objective
+   ~StaticToleranceHandler.compute_cv
+   ~StaticToleranceHandler.on_generation_end
+   ~StaticToleranceHandler.repair
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.StaticToleranceHandler.__init__
+
+
+.. automethod:: saealib.StaticToleranceHandler.augment_objective
+
+
+.. automethod:: saealib.StaticToleranceHandler.compute_cv
+
+
+.. automethod:: saealib.StaticToleranceHandler.on_generation_end
+
+
+.. automethod:: saealib.StaticToleranceHandler.repair
+
+
+

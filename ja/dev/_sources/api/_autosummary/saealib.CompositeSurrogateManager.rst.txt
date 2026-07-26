@@ -1,0 +1,59 @@
+﻿saealib.CompositeSurrogateManager
+=================================
+
+.. currentmodule:: saealib
+
+.. autoclass:: CompositeSurrogateManager
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~CompositeSurrogateManager.__init__
+   ~CompositeSurrogateManager.fit
+   ~CompositeSurrogateManager.iter_acquisitions
+   ~CompositeSurrogateManager.on_generation_end
+   ~CompositeSurrogateManager.post_score
+   ~CompositeSurrogateManager.score_candidates
+   ~CompositeSurrogateManager.with_on_generation_end
+   ~CompositeSurrogateManager.with_post_score
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.CompositeSurrogateManager.__init__
+
+
+.. automethod:: saealib.CompositeSurrogateManager.fit
+
+
+.. automethod:: saealib.CompositeSurrogateManager.iter_acquisitions
+
+
+.. automethod:: saealib.CompositeSurrogateManager.on_generation_end
+
+
+.. automethod:: saealib.CompositeSurrogateManager.post_score
+
+
+.. automethod:: saealib.CompositeSurrogateManager.score_candidates
+
+
+.. automethod:: saealib.CompositeSurrogateManager.with_on_generation_end
+
+
+.. automethod:: saealib.CompositeSurrogateManager.with_post_score
+
+
+

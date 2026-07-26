@@ -1,0 +1,47 @@
+﻿saealib.RBFSurrogate
+====================
+
+.. currentmodule:: saealib
+
+.. autoclass:: RBFSurrogate
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~RBFSurrogate.__init__
+   ~RBFSurrogate.fit
+   ~RBFSurrogate.post_fit
+   ~RBFSurrogate.predict
+   ~RBFSurrogate.with_post_fit
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.RBFSurrogate.__init__
+
+
+.. automethod:: saealib.RBFSurrogate.fit
+
+
+.. automethod:: saealib.RBFSurrogate.post_fit
+
+
+.. automethod:: saealib.RBFSurrogate.predict
+
+
+.. automethod:: saealib.RBFSurrogate.with_post_fit
+
+
+

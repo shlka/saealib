@@ -1,0 +1,1242 @@
+
+<!DOCTYPE html>
+
+
+<html lang="ja" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>SPEA2（Strength Pareto Evolutionary Algorithm 2） &#8212; saealib 0.1.0b5.dev54+g55fad903f ドキュメント</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../_static/documentation_options.js?v=9453a918"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}`;
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'algorithms/spea2';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://shlka.github.io/saealib/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'dev';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <script src="../_static/js/lang-switch.js?v=6860dbcf"></script>
+    <script src="../_static/js/sidebar-dialog-fix.js?v=decd8175"></script>
+    <script src="../_static/js/mermaid-scale.js?v=e063b89f"></script>
+    <link rel="canonical" href="https://shlka.github.io/saealib/algorithms/spea2.html" />
+    <link rel="icon" href="../_static/icon.svg"/>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="NSGA-III" href="nsga3.html" />
+    <link rel="prev" title="NSGA-II（Nondominated Sorting Genetic Algorithm II）" href="nsga2.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="ja"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">本文へスキップ</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>トップに戻る</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="バージョン警告"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="サイトナビゲーション">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo-light.svg" class="logo__image only-light" alt="saealib"/>
+    <img src="../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="saealib"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started/index.html">
+    はじめに
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../tutorials/index.html">
+    チュートリアル
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../components/index.html">
+    コンポーネント
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    アルゴリズム
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../references.html">
+    文献リファレンス
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="検索" aria-label="検索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">検索</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item"><div class="lang-switcher__container dropdown pst-js-only">
+  <button id="pst-lang-switcher-button-2"
+    type="button"
+    class="lang-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-lang-switcher-list-2"
+    aria-label="Language switcher list"
+  >
+    Language  <!-- this text is replaced by lang-switch.js on page load -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-lang-switcher-list-2"
+    class="lang-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-lang-switcher-button-2">
+    <!-- dropdown will be populated by lang-switch.js on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="ライト"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="ダーク"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>ライト</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>ダーク</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/shlka/saealib" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="検索" aria-label="検索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">検索</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="このページでは">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started/index.html">
+    はじめに
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../tutorials/index.html">
+    チュートリアル
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../components/index.html">
+    コンポーネント
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    アルゴリズム
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../references.html">
+    文献リファレンス
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-3"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-3"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-3"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-3">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item"><div class="lang-switcher__container dropdown pst-js-only">
+  <button id="pst-lang-switcher-button-3"
+    type="button"
+    class="lang-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-lang-switcher-list-3"
+    aria-label="Language switcher list"
+  >
+    Language  <!-- this text is replaced by lang-switch.js on page load -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-lang-switcher-list-3"
+    class="lang-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-lang-switcher-button-3">
+    <!-- dropdown will be populated by lang-switch.js on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="ライト"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="ダーク"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>ライト</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>ダーク</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/shlka/saealib" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="セクションナビゲーション">
+  <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="ego.html">EGO（Efficient Global Optimization）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB（Gaussian Process Upper Confidence Bound）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="maxunc.html">MaxUnc（不確実性サンプリング）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rbf_cors.html">CORS-RBF（Constrained Optimization using Response Surfaces）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsga2.html">NSGA-II（Nondominated Sorting Genetic Algorithm II）</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">SPEA2（Strength Pareto Evolutionary Algorithm 2）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsga3.html">NSGA-III</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sms_emoa.html">SMS-EMOA（S metric selection EMOA）</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="パンくずリスト" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="ホーム">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">アルゴリズム</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">SPEA2（Strength Pareto Evolutionary Algorithm 2）</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="spea2-strength-pareto-evolutionary-algorithm-2">
+<h1>SPEA2（Strength Pareto Evolutionary Algorithm 2）<a class="headerlink" href="#spea2-strength-pareto-evolutionary-algorithm-2" title="Link to this heading">#</a></h1>
+<p>SPEA2は、初代SPEA(Strength Pareto Evolutionary Algorithm)の適応度割り当てとアーカイブ管理を改良した多目的進化アルゴリズムです。 支配関係に基づく適応度と<span class="math notranslate nohighlight">\(k\)</span>最近傍密度を組み合わせて個体を順位付けし、固定サイズの外部アーカイブを境界解が失われない打ち切り手続きで維持します。</p>
+<section id="overview">
+<h2>概要<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>SPEAは初期の多目的進化アルゴリズムとして高い性能を示しましたが、2つの弱点を抱えていました。</p>
+<p>1つは、同じアーカイブ個体に支配される個体同士が同一の適応度を持ってしまい、優劣を区別できない点です。 もう1つは、アーカイブが上限を超えたときに使うクラスタリング手法が、非優越解集合の外周にある境界解を失うことがある点です。</p>
+<p>SPEA2は、この2つの弱点をそれぞれ独立した仕組みで解消します。 各個体<span class="math notranslate nohighlight">\(i\)</span>には、自分が支配する個体数を表す<strong>強度</strong>(strength) <span class="math notranslate nohighlight">\(S(i)\)</span>が割り当てられ、<span class="math notranslate nohighlight">\(i\)</span>を支配する個体群の強度の総和が<strong>生の適応度</strong>(raw fitness) <span class="math notranslate nohighlight">\(R(i)\)</span>になります。 <span class="math notranslate nohighlight">\(R(i)=0\)</span>は<span class="math notranslate nohighlight">\(i\)</span>が非優越であることを意味し、値が大きいほど多くの（かつ強い）個体に支配されていることを示します。 同一の<span class="math notranslate nohighlight">\(R(i)\)</span>を持つ個体同士を区別するため、目的空間上で<span class="math notranslate nohighlight">\(k\)</span>番目に近い個体との距離<span class="math notranslate nohighlight">\(\sigma_i^k\)</span>の逆数を<strong>密度</strong>(density) <span class="math notranslate nohighlight">\(D(i)=1/(\sigma_i^k+2)\)</span>として加えます。 最終的な<strong>適応度</strong>(fitness) <span class="math notranslate nohighlight">\(F(i)=R(i)+D(i)\)</span>は値が小さいほど優れており、非優越個体は常に<span class="math notranslate nohighlight">\(F(i)&lt;1\)</span>になります。</p>
+<p>SPEA2は個体群とは別に、サイズを固定した外部アーカイブを維持します。 各世代で、個体群とアーカイブを合わせた集合から非優越個体(<span class="math notranslate nohighlight">\(F(i)&lt;1\)</span>)を新しいアーカイブへコピーします。 コピー後のアーカイブがちょうど規定サイズに収まればそのまま採用し、不足する場合は<span class="math notranslate nohighlight">\(F(i)\)</span>が小さい劣解から順に補充します。 規定サイズを超える場合は、<strong>打ち切り演算子</strong>(truncation operator)を適用し、最近傍距離が最小の個体を1体ずつ、距離を再計算しながら取り除きます。 この手続きは、同じ距離を持つ個体が並ぶタイを2番目と3番目に近い個体との距離で順に解消するため、境界解が誤って除去されにくいです。</p>
+<p>出典は<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id23" title="Eckart Zitzler, Marco Laumanns, and Lothar Thiele. Spea2: improving the strength pareto evolutionary algorithm. Technical Report 103, Computer Engineering and Networks Laboratory (TIK), ETH Zurich, 2001.">4</a>]</span>。具体的な手順は次の擬似コードに示します。</p>
+</section>
+<section id="pseudocode">
+<h2>擬似コード<a class="headerlink" href="#pseudocode" title="Link to this heading">#</a></h2>
+<div class="proof algorithm admonition" id="alg-spea2">
+<p class="admonition-title"><span class="caption-number">アルゴリズム 6 </span> (SPEA2)</p>
+<section class="algorithm-content" id="proof-content">
+<p><strong>Inputs</strong> 個体群サイズ <span class="math notranslate nohighlight">\(N\)</span>、アーカイブサイズ <span class="math notranslate nohighlight">\(\bar N\)</span>、最大世代数 <span class="math notranslate nohighlight">\(T\)</span> <strong>Output</strong> 非優越解集合 <span class="math notranslate nohighlight">\(A\)</span></p>
+<ol class="arabic simple">
+<li><p>初期化：初期個体群 <span class="math notranslate nohighlight">\(P_0\)</span> を生成し、空のアーカイブ <span class="math notranslate nohighlight">\(\bar P_0 = \emptyset\)</span> を用意して <span class="math notranslate nohighlight">\(t=0\)</span> とする</p></li>
+<li><p>適応度割り当て：<span class="math notranslate nohighlight">\(P_t\)</span> と <span class="math notranslate nohighlight">\(\bar P_t\)</span> に含まれる各個体の適応度 <span class="math notranslate nohighlight">\(F(i) = R(i) + D(i)\)</span> を計算する</p></li>
+<li><p>環境選択：<span class="math notranslate nohighlight">\(P_t \cup \bar P_t\)</span> の非優越個体を <span class="math notranslate nohighlight">\(\bar P_{t+1}\)</span> にコピーする。<span class="math notranslate nohighlight">\(|\bar P_{t+1}| &gt; \bar N\)</span> なら打ち切り演算子で削減し、<span class="math notranslate nohighlight">\(|\bar P_{t+1}| &lt; \bar N\)</span> なら <span class="math notranslate nohighlight">\(F(i)\)</span> が小さい劣解から順に補充する</p></li>
+<li><p>終了判定：<span class="math notranslate nohighlight">\(t \geq T\)</span> または他の終了条件を満たせば、<span class="math notranslate nohighlight">\(\bar P_{t+1}\)</span> 中の非優越個体を <span class="math notranslate nohighlight">\(A\)</span> として出力し停止する</p></li>
+<li><p>交配選択：<span class="math notranslate nohighlight">\(\bar P_{t+1}\)</span> に対して二項トーナメント選択（復元抽出）を行い、交配プールを満たす</p></li>
+<li><p>変異：交配プールに交叉と突然変異を適用して <span class="math notranslate nohighlight">\(P_{t+1}\)</span> を生成し、<span class="math notranslate nohighlight">\(t=t+1\)</span> として2へ戻る</p></li>
+</ol>
+</section>
+</div></section>
+<section id="flowchart">
+<h2>フローチャート<a class="headerlink" href="#flowchart" title="Link to this heading">#</a></h2>
+<pre  class="mermaid">
+        flowchart TD
+    INIT[&quot;Initializer&lt;br/&gt;Generate initial population P0&lt;br/&gt;(L1)&quot;] --&gt; GEN
+    subgraph GEN[&quot;One generation (DirectStrategy.step)&quot;]
+        direction TB
+        ASK[&quot;GA.ask()&lt;br/&gt;Binary tournament selection →&lt;br/&gt;SBX crossover →&lt;br/&gt;Polynomial mutation to generate offspring&lt;br/&gt;(L5, 6)&quot;] --&gt; EVAL[&quot;True evaluation&lt;br/&gt;(no surrogate involved)&quot;]
+        EVAL --&gt; COMB[&quot;GA.tell()&lt;br/&gt;Combine population and offspring&lt;br/&gt;into a single pool&lt;br/&gt;(L3)&quot;]
+        COMB --&gt; FIT[&quot;SPEA2Comparator._fitness()&lt;br/&gt;spea2_fitness computes&lt;br/&gt;S(i) → R(i) → D(i) → F(i)&lt;br/&gt;(L2)&quot;]
+        FIT --&gt; SORT[&quot;SPEA2Comparator.sort_population()&lt;br/&gt;Sort ascending by F(i) (environmental selection)&lt;br/&gt;(L3)&quot;]
+        SORT --&gt; TRUNC[&quot;TruncationSelection&lt;br/&gt;Take top N individuals as Pt+1&quot;]
+    end
+    GEN --&gt; TERM{&quot;Termination condition&lt;br/&gt;reached?&quot;}
+    TERM -- &quot;Not yet (L4)&quot; --&gt; GEN
+    TERM -- &quot;Reached&quot; --&gt; RESULT([&quot;Non-dominated solution set A&quot;])
+    </pre></section>
+<section id="complexity">
+<h2>計算量<a class="headerlink" href="#complexity" title="Link to this heading">#</a></h2>
+<p>適応度計算(<span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span>/<span class="math notranslate nohighlight">\(D(i)\)</span>)は<span class="math notranslate nohighlight">\(O(M^2)\)</span>（<span class="math notranslate nohighlight">\(M=N+\bar N\)</span>）で、密度推定のための距離ソートを含めると<span class="math notranslate nohighlight">\(O(M^2\log M)\)</span>になります。 打ち切り演算子は最悪<span class="math notranslate nohighlight">\(O(M^3)\)</span>、平均では<span class="math notranslate nohighlight">\(O(M^2\log M)\)</span>です<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id23" title="Eckart Zitzler, Marco Laumanns, and Lothar Thiele. Spea2: improving the strength pareto evolutionary algorithm. Technical Report 103, Computer Engineering and Networks Laboratory (TIK), ETH Zurich, 2001.">4</a>]</span>。</p>
+</section>
+<section id="configuration-in-saealib">
+<h2>saealibでの構成<a class="headerlink" href="#configuration-in-saealib" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>役割</p></th>
+<th class="head"><p>saealibでの実装</p></th>
+<th class="head"><p>対応ステップ</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>探索アルゴリズム本体</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">GA</span></code>（<code class="docutils literal notranslate"><span class="pre">ask()</span></code>で交叉と突然変異、<code class="docutils literal notranslate"><span class="pre">tell()</span></code>で個体群と子個体群を単一プールに結合し生存選択を実行）</p></td>
+<td><p>L1, 6</p></td>
+</tr>
+<tr class="row-odd"><td><p>親選択</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=2)</span></code>（二項トーナメント。<code class="docutils literal notranslate"><span class="pre">compare_population</span></code>経由で勝者を決定）</p></td>
+<td><p>L5</p></td>
+</tr>
+<tr class="row-even"><td><p>交叉</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">CrossoverSBX(prob=0.9,</span> <span class="pre">eta=20.0)</span></code></p></td>
+<td><p>L6</p></td>
+</tr>
+<tr class="row-odd"><td><p>突然変異</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">MutationPolynomial(eta=20.0)</span></code></p></td>
+<td><p>L6</p></td>
+</tr>
+<tr class="row-even"><td><p>適応度計算</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>（<code class="docutils literal notranslate"><span class="pre">sort_population</span></code>内部で<code class="docutils literal notranslate"><span class="pre">spea2_fitness</span></code>が<span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span>/<span class="math notranslate nohighlight">\(D(i)\)</span>/<span class="math notranslate nohighlight">\(F(i)\)</span>を計算）</p></td>
+<td><p>L2</p></td>
+</tr>
+<tr class="row-odd"><td><p>環境選択</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SPEA2Comparator.sort_population()</span></code> + <code class="docutils literal notranslate"><span class="pre">TruncationSelection()</span></code>（<span class="math notranslate nohighlight">\(F(i)\)</span>昇順ソート後に上位<span class="math notranslate nohighlight">\(N\)</span>個体を採用）</p></td>
+<td><p>L3</p></td>
+</tr>
+<tr class="row-even"><td><p>評価戦略</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code>（サロゲートを介さず、<code class="docutils literal notranslate"><span class="pre">GA.ask()</span></code>が生成した候補を全て真の目的関数で評価する）</p></td>
+<td><p>L2（世代内の評価）</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">GA</span><span class="p">,</span> <span class="n">SPEA2Comparator</span><span class="p">,</span> <span class="n">Optimizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.benchmarks</span><span class="w"> </span><span class="kn">import</span> <span class="n">zdt1</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.crossover</span><span class="w"> </span><span class="kn">import</span> <span class="n">CrossoverSBX</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.mutation</span><span class="w"> </span><span class="kn">import</span> <span class="n">MutationPolynomial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">TournamentSelection</span><span class="p">,</span> <span class="n">TruncationSelection</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">DirectStrategy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">Termination</span><span class="p">,</span> <span class="n">max_fe</span>
+
+
+<span class="n">problem</span> <span class="o">=</span> <span class="n">zdt1</span><span class="p">(</span><span class="n">n_var</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">problem</span><span class="o">.</span><span class="n">comparator</span> <span class="o">=</span> <span class="n">SPEA2Comparator</span><span class="p">()</span>
+
+<span class="n">algorithm</span> <span class="o">=</span> <span class="n">GA</span><span class="p">(</span>
+    <span class="n">CrossoverSBX</span><span class="p">(</span><span class="n">prob</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="mf">20.0</span><span class="p">),</span>
+    <span class="n">MutationPolynomial</span><span class="p">(</span><span class="n">eta</span><span class="o">=</span><span class="mf">20.0</span><span class="p">),</span>
+    <span class="n">TournamentSelection</span><span class="p">(</span><span class="n">tournament_size</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="n">TruncationSelection</span><span class="p">(),</span>
+<span class="p">)</span>
+
+<span class="n">opt</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">DirectStrategy</span><span class="p">())</span>
+    <span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">2000</span><span class="p">)))</span>
+<span class="p">)</span>
+<span class="n">ctx</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">pareto_f</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">pareto_archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">problem.comparator</span> <span class="pre">=</span> <span class="pre">SPEA2Comparator()</span></code>の行は省略できません。 NSGA-IIでは<code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>が<code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>のときの既定値なので同じ行を省略できましたが、SPEA2ではそうではありません。</p>
+</section>
+<section id="parameters-and-variants">
+<h2>パラメータと変種<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
+<p><strong>アーカイブサイズ<span class="math notranslate nohighlight">\(\bar N\)</span>と個体群サイズ<span class="math notranslate nohighlight">\(N\)</span></strong>：論文はこの2つを独立に設定できる一般形として定義しています<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../references.html#id23" title="Eckart Zitzler, Marco Laumanns, and Lothar Thiele. Spea2: improving the strength pareto evolutionary algorithm. Technical Report 103, Computer Engineering and Networks Laboratory (TIK), ETH Zurich, 2001.">4</a>]</span>。 saealibの<code class="docutils literal notranslate"><span class="pre">GA.tell()</span></code>は個体群と子個体群を単一プールとして結合するため、<span class="math notranslate nohighlight">\(\bar N\)</span>は<span class="math notranslate nohighlight">\(N\)</span>と同じ値を使います。</p>
+<p><strong>dominator（支配述語）の差し替え</strong>：<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator(dominator=...)</span></code>で、既定の<code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>以外の<a class="reference internal" href="../components/dominance.html"><span class="std std-doc">Dominator</span></a>を注入できます。 <span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span>の計算はこの支配述語に依存するため、差し替えるとSPEA2の適応度そのものが変わります。</p>
+</section>
+<section id="related">
+<h2>関連<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="../references.html"><span class="std std-doc">文献リファレンス</span></a>：出典の完全な書誌情報</p></li>
+<li><p><a class="reference internal" href="../components/comparators.html"><span class="std std-doc">Comparator</span></a>：<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>の詳しい仕様</p></li>
+<li><p><a class="reference internal" href="../components/crossover.html"><span class="std std-doc">Crossover</span></a>：<code class="docutils literal notranslate"><span class="pre">CrossoverSBX</span></code>を含む交叉演算子一覧</p></li>
+<li><p><a class="reference internal" href="../components/mutation.html"><span class="std std-doc">Mutation</span></a>：<code class="docutils literal notranslate"><span class="pre">MutationPolynomial</span></code>を含む突然変異演算子一覧</p></li>
+<li><p><a class="reference internal" href="../components/parent_selection.html"><span class="std std-doc">ParentSelection</span></a>：<code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>の詳しい使い方</p></li>
+<li><p><a class="reference internal" href="../components/survivor_selection.html"><span class="std std-doc">SurvivorSelection</span></a>：<code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code>の詳しい使い方</p></li>
+<li><p><a class="reference internal" href="../components/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>：<code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code>を含む戦略一覧</p></li>
+<li><p><a class="reference internal" href="../components/dominance.html"><span class="std std-doc">Dominator</span></a>：<code class="docutils literal notranslate"><span class="pre">dominator</span></code>引数として差し替え可能な支配述語一覧</p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="nsga2.html"
+       title="前のページ">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">前へ</p>
+        <p class="prev-next-title">NSGA-II（Nondominated Sorting Genetic Algorithm II）</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="nsga3.html"
+       title="次ページ">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">次へ</p>
+        <p class="prev-next-title">NSGA-III</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> このページでは
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">概要</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudocode">擬似コード</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flowchart">フローチャート</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#complexity">計算量</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-in-saealib">saealibでの構成</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">パラメータと変種</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">関連</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/algorithms/spea2.md.txt">
+      <i class="fa-solid fa-file-lines"></i> ソースコードを表示
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, shlka.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3 を使用して作成されました。
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0 で構築されています。
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
