@@ -20,33 +20,6 @@ $\prec_n$ はランクが低い（良い）個体を優先し、同ランク内�
 
 ## 擬似コード
 
-<!--
-参照情報（レビュー用）:
-Deb, K., Pratap, A., Agarwal, S., & Meyarivan, T. (2002).
-A fast and elitist multiobjective genetic algorithm: NSGA-II.
-IEEE Transactions on Evolutionary Computation, 6(2), 182-197.
-DOI: 10.1109/4235.996017
-
-以下の擬似コードは、論文中の独立した3つの断片（fast-non-dominated-sort,
-crowding-distance-assignment, Main Loop）を1つの手順に統合したもの。
-逐語訳ではなく、変数名・記法は論文のものを保持しつつ日本語の指示文に言い換えている。
-
-- ステップ1: 論文 Section III-C 冒頭の地の文（枠囲み外）。
-  「usual binary tournament selection, recombination, and mutation
-  operators are used to create Q_0」に基づく。p.185。
-- ステップ2-4, 6-8: 論文 Section III-C の Main Loop 枠囲み擬似コード。p.185。
-  OCR: exp_ref/literature/pdfs/deb2002_nsga2/
-  deb2002_nsga2/auto/deb2002_nsga2.md 129-140行目。
-- ステップ3の非優越ソート自体の詳細手続き:
-  論文 Section III-A `fast-non-dominated-sort(P)`。p.183。
-  OCR: 同上ファイル 55-77行目。
-- ステップ5の混雑度距離の詳細手続き:
-  論文 Section III-B `crowding-distance-assignment(I)`。p.184。
-  OCR: 同上ファイル 85-92行目（距離計算式は式(1)ではなく本文中の無番号の式）。
-- ≺n（crowded-comparison operator）の定義: 論文 Section III-B 式(なし、
-  無番号の定義式)。p.184。OCR: 同上ファイル 109-123行目。
--->
-
 ```{prf:algorithm} NSGA-II
 :label: alg-nsga2
 

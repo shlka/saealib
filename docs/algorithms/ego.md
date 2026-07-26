@@ -9,35 +9,6 @@ EIはこの予測平均と予測分散の両方から計算されるスカラー
 
 出典は{cite}`jones1998ego`。具体的な手順は次の擬似コードに示します。
 
-<!--
-参照情報（レビュー用）:
-Jones, D. R., Schonlau, M., & Welch, W. J. (1998).
-Efficient global optimization of expensive black-box functions.
-Journal of Global Optimization, 13(4), 455-492.
-DOI: 10.1023/A:1008306431147
-OCR: exp_ref/literature/pdfs/jones1998_ego/auto/jones1998_ego.md
-
-Brochu, E., Cora, V. M., & de Freitas, N. (2010).
-A tutorial on Bayesian optimization of expensive cost functions...
-arXiv:1012.2599
-OCR: exp_ref/literature/pdfs/brochu_2010_bo_tutorial/auto/brochu_2010_bo_tutorial.md
-
-- ステップ1: Jones et al. Section 4.2 "THE EGO ALGORITHM"、p.473
-  （space-filling designで約10k点をサンプリング）。OCR 303-305行目。
-- ステップ2: DACE予測子 ŷ(x) の式(7)、Section 2、p.461。OCR 116行目。
-  標準誤差 s(x) の式(9)、Section 2、p.462。OCR 136行目。
-  （ここでのμ(x)/σ(x)はŷ(x)/s(x)に対応する言い換え）
-- ステップ3の期待改善量の閉形式（ξを含まない）:
-  Jones et al. 式(15)、Section 4.1、p.471。OCR 271-273行目。
-  ξ（探索と活用のトレードオフ項）: Jones et al.の式(15)自体には存在しない。
-  Brochu et al. の Probability of Improvement 式(2)（OCR中の"page 12"、
-  508-513行目）が導入する trade-off parameter ξ を、EIにも適用する慣行に
-  基づく（Brochu自身のEI式(3)（"page 13"、611-616行目）にもξは現れない）。
-  この部分は逐語的な引用ではなく、書き手側の合成。
-- ステップ4-5: Jones et al. Section 4.2、p.473（反復手順の記述）。
-  OCR 309行目。
--->
-
 ## 擬似コード
 
 ```{prf:algorithm} EGO

@@ -14,61 +14,6 @@ GP-UCBはこの発想を連続空間上のGP回帰に適用し、候補点 $x$ �
 $\beta_t$ を情報利得(information gain)の上界から導かれる特定の対数的なスケジュールに従って増加させると、累積リグレットに劣線形の上界が導出できます{cite}`srinivas2012gpucb`。
 具体的な手順は次の擬似コードに示します。
 
-<!--
-参照情報（レビュー用）:
-
-読んだ文書: Srinivas, N., Krause, A., Kakade, S. M., & Seeger, M.
-Gaussian Process Optimization in the Bandit Setting: No Regret and Experimental Design.
-arXiv:0912.3995v4 [cs.LG], 9 Jun 2010（本文冒頭の脚注1に
-"This is the longer version of our paper in ICML 2010; see Srinivas et al. (2010)"
-とあり、ICML 2010短縮版の拡張版と自認するプレプリントである）。
-OCR: .claude/exp_ref/literature/pdfs/srinivas_2010_gp_ucb/auto/srinivas_2010_gp_ucb.md
-
-引用する書誌情報（citation-workflow.md Case 1に従い出版版を引用。
-bibキーはsrinivas2012gpucbとして既にdocs/references.bibに登録済み、
-下記はそのエントリの転記）:
-Srinivas, N., Krause, A., Kakade, S. M., & Seeger, M. (2012).
-Information-Theoretic Regret Bounds for Gaussian Process Optimization
-in the Bandit Setting.
-IEEE Transactions on Information Theory, 58(5), 3250-3265.
-DOI: 10.1109/TIT.2011.2182033
-
-上記2012年出版版そのものは未読。読んだのは2010年のarXivプレプリントのみであり、
-以下の「p.N」はすべてOCRファイル中のページ区切りマーカー（`page N`、このarXiv PDF
-自身のページ番号、1始まり）を指す。このマーカーがarXiv版のページ割りに
-対応することはOCRファイル中のマーカー間隔（1ページ目=1-95行目、2ページ目=
-96-212行目、...）から確認済みだが、2012年出版版（IEEE Transactions on
-Information Theory誌、pp.3250-3265）とは版が異なるため、ページ番号の対応関係は
-未確認（NSGA-IIIページのown page注記と同種の注意）。したがって以下は
-「(OCR) p.N」と表記し、出版版のページ番号でないことを明示する。
-
-- ステップ1: Algorithm 1 "The GP-UCB algorithm" のInput行
-  （"Input space D; GP Prior μ0 = 0, σ0, k"）。Section 3、(OCR) p.4。OCR 382-383行目。
-- ステップ2: Algorithm 1のfor loop本体、UCBインデックスの選択則。
-  本文中の定義式(6)（xt = argmax μt-1(x) + βt^{1/2} σt-1(x)）と同一。
-  Section 3、(OCR) p.4。OCR 344-348, 385-389行目。
-- ステップ3: Algorithm 1 "Sample yt = f(xt) + εt"。Section 3、(OCR) p.4。OCR 390行目。
-- ステップ4: Algorithm 1 "Perform Bayesian update to obtain μt and σt"。
-  更新式そのものはSection 2.1の式(1)(2)（μT(x), σT^2(x)の閉形式）を参照。
-  Section 2.1、(OCR) p.3。OCR 245-249行目（式(1)(2)）、391行目（Algorithm 1本体）。
-- ステップ5: for loop終端（"end for"、反復回数の上限は文脈依存でAlgorithm 1
-  自体には明記がない。Theorem 1等の評価予算Tに合わせた言い換え）。
-  Section 3、(OCR) p.4。OCR 392行目。
-- βtのスケジュール（Theorem 1、有限|D|の場合）:
-  βt = 2 log(|D| t^2 π^2 / 6δ)。Section 4、(OCR) p.5。OCR 491-492行目。
-  （コンパクトなDの場合のTheorem 2、RKHSノルム有界の場合のTheorem 3にも
-  それぞれ別のβtスケジュールがあるが、いずれもtに関して増加する対数的な形を
-  取る点は共通。ここではTheorem 1のみを代表として引用する。）
-  実験節では、Theorem 1のβtをそのまま使うと過剰に探索的になるため、
-  交差検証で係数を1/5にスケールした方が性能が良いという経験則も述べられている。
-  Section 6、(OCR) p.7-8。OCR 789-793行目。
-
-擬似コードは論文Algorithm 1をほぼ逐語的に踏襲している（言い換えは日本語化のみ）。
-論文はバンディット設定の報酬**最大化**として定式化されており、UCB選択則
-μ + sqrt(βt)σ も最大化のための式である。saealib側の対応付け（LCBによる
-最小化への符号反転）は「saealibでの構成」節で扱う。
--->
-
 ## 擬似コード
 
 ```{prf:algorithm} GP-UCB

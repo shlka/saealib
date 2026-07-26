@@ -24,48 +24,6 @@ SPEA2は個体群とは別に、サイズを固定した外部アーカイブを
 
 出典は{cite}`zitzler2001spea2`。具体的な手順は次の擬似コードに示します。
 
-<!--
-参照情報（レビュー用）:
-
-Zitzler, E., Laumanns, M., & Thiele, L. (2001).
-SPEA2: Improving the Strength Pareto Evolutionary Algorithm.
-TIK-Report 103, Computer Engineering and Networks Laboratory (TIK),
-Swiss Federal Institute of Technology (ETH) Zurich.
-DOI: なし（技術レポートのため、.claude/rules/citation-workflow.mdのCase 4に従いTIK-Report番号で引用）
-OCR: .claude/exp_ref/literature/pdfs/zitzler2001_spea2/auto/zitzler2001_spea2.md
-
-ページオフセットの確認方法: OCRの各ページ末尾に単独の数字（1, 2, 3, ...）が現れており、
-zitzler2001_spea2_content_list.jsonのpage_idx=0の要素がこの"1"に対応する。
-すなわち real_page = page_idx + 1（他の論文と異なり、この技術レポートは表紙を含めて
-ページ1から始まる独立した文書のため、実ページ番号との単純な+1オフセットになる）。
-
-以下の擬似コードは、論文 Section 3「The SPEA2 Algorithm」のAlgorithm 1（SPEA2 Main Loop）を
-6ステップのままほぼ逐語転記したもの（変数名は論文のものを保持し、日本語の指示文に言い換えている）。
-saealib側の合成・省略は含まない。
-
-- Inputs/Output: Algorithm 1 冒頭。page_idx=4、実ページ5。OCR 70-73行目。
-- ステップ1 (Initialization): Algorithm 1 Step 1。page_idx=4、実ページ5。OCR 74行目。
-- ステップ2 (Fitness assignment): Algorithm 1 Step 2。page_idx=4、実ページ5。OCR 76行目。
-  適応度の内訳(S/R/D/F)はSection 3.1、page_idx=6、実ページ7、OCR 99, 105, 113, 119行目
-  （$S(i)=|\{j\mid \dots\}|$、$R(i)=\sum_{j\succ i}S(j)$、$D(i)=1/(\sigma_i^k+2)$、$F(i)=R(i)+D(i)$）。
-- ステップ3 (Environmental selection): Algorithm 1 Step 3。page_idx=4、実ページ5。OCR 78行目。
-  3ケース分岐（ちょうど収まる／不足／超過）と打ち切り演算子$\le_d$の定義:
-  Section 3.2、page_idx=7、実ページ8、OCR 124-142行目。
-- ステップ4 (Termination): Algorithm 1 Step 4。page_idx=4、実ページ5。OCR 80行目。
-- ステップ5 (Mating selection): Algorithm 1 Step 5。page_idx=4、実ページ5。OCR 82行目。
-- ステップ6 (Variation): Algorithm 1 Step 6。page_idx=5、実ページ6。OCR 88行目。
-
-既知の課題（レビュー用・非表示、本文には出さない）:
-ステップ3の打ち切り演算子（アーカイブ超過時に最近傍距離最小の個体を1体ずつ反復除去し、
-タイを2番目・3番目近傍で解消する手続き）は未実装で、`SPEA2Comparator.sort_population`は
-$F(i)$の一括ソートで代替している。密度推定の$k$も、論文の$k=\lfloor\sqrt{N+\bar N}\rfloor$
-に対しsaealibは外部アーカイブを持たないため$k=\lfloor\sqrt{N}\rfloor$になる。
-修正はGitHub Projects「saealib Roadmap」#3にPriority=P1のドラフトissueとして追跡中
-（タイトル: 「bug: SPEA2Comparatorの環境選択が論文の打ち切り演算子を実装していない」）。
-`.claude/exp_ref/literature/topic_notes/named_algorithms_component_map.md`のSPEA2行（✅Direct表記）も
-この修正と合わせて要更新。
--->
-
 ## 擬似コード
 
 ```{prf:algorithm} SPEA2

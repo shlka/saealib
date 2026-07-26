@@ -17,56 +17,6 @@ search patternに0でない値が1つでも含まれていれば、サロゲー�
 
 出典は{cite}`regis2005cors`。具体的な手順は次の擬似コードに示します。
 
-<!--
-参照情報（レビュー用）:
-Regis, R. G., & Shoemaker, C. A. (2005).
-Constrained global optimization of expensive black box functions using
-radial basis functions.
-Journal of Global Optimization, 31(1), 153-171.
-DOI: 10.1007/s10898-004-0570-0
-OCR: .claude/exp_ref/literature/pdfs/regis2005_cors/auto/regis2005_cors.md
-（OCRファイル内のpage_idx（0始まり）に153を足すと実際の掲載ページ番号になることを、
-_content_list.jsonのpage_number要素と突き合わせて確認済み: page_idx1→p.154, 3→p.156,
-4→p.157, 5→p.158, 9→p.162, 10→p.163, 11→p.164）。
-
-- 概要の「素朴な最小化は局所最小値ですらない点に収束しかねない」という記述:
-  Section 1、p.155（"a naive implementation of these methods, where the global
-  minimizer of the current approximating surface is always selected for
-  function evaluation may converge to some point which may not even be a
-  local minimizer of the actual function (Gutmann, 2001b; Jones, 2001a)"）。
-  OCR 27行目。Gutmann/Jonesは孫引きで、本ページでは{cite}引用しない。
-- 擬似コードステップ1-2: Step 1, Step 2, Step 3.1（Section 2.1）、p.157。
-  OCR 45-51行目。
-- 擬似コードステップ3: Step 3.2の制約付き最小化問題、式(1)。p.157。OCR 53-65行目。
-  $\Delta_i$の定義（式(2)）はp.158。OCR 70行目。
-- 擬似コードステップ4: Step 3.3, Step 3.4。p.158。OCR 75-77行目。
-- 擬似コードステップ5: search patternの周期構造（$\beta_i=\beta_{i+N+1}$、
-  $1\geqslant\beta_1\geqslant\cdots\geqslant\beta_{N+1}=0$）。p.158。OCR 83行目。
-- 収束性（「search patternに0でない値が1つでも含まれていれば...」の要約）:
-  Theorem 2、Corollary 3、Section 3、p.159-160。OCR 109-139行目。
-- RBF補間モデル自体（$s(x)=\sum\lambda_i\phi(\|x-x_i\|)+p(x)$、式(6)）:
-  Section 4.2、p.163。OCR 158-162行目。
-- 実験で使われたカーネル・多項式項（thin plate spline + 1次多項式 $p(x)$）:
-  Section 4.3、p.164（"we used a particular radial basis function model of
-  the form (6) where φ is a thin plate spline and p(x) is a linear
-  polynomial"）。OCR 216行目。
-
-逐語訳ではなく、Step 1-3.4の枠組み記述（Section 2.1）を1つの擬似コードに要約したもの。
-変数名（$S_i$, $\hat f_i$, $\Delta_i$, $\beta_i$）は論文の記法をそのまま保持している。
-
-既知の課題（レビュー用・非表示、本文には出さない）:
-擬似コードステップ3のCORS補助問題（距離制約付き最小化）が未実装で、saealibの`MeanPrediction`は
-予測平均$\hat f_i(x)$をそのままスコアとして返すだけで、距離制約$\|x-x_j\|\geqslant\beta_i\Delta_i$も
-$\beta_i$の周期的切り替えも持たない。これは論文が「純粋な貪欲探索(search patternが$\langle 0\rangle$の
-特殊ケース)」と呼び、"is prone to prematurely converging to a point that may not even be a local
-minimizer"（Section 2.1、p.155/157）と明言して推奨しない構成そのものに相当する。距離制約こそが
-論文の大域収束性の証明（Theorem 2、Corollary 3、Section 3、p.159-160）を支えているため、
-NSGA-III/SPEA2の既知の課題と同様に実装上の不足として扱う。修正候補: `MeanPrediction`とは別に
-距離制約付き獲得関数（またはIndividualBasedStrategy側でのペナルティ）を追加する。
-`.claude/exp_ref/literature/topic_notes/named_algorithms_component_map.md`の「RBF-EGO / CORS」行（✅Direct表記）も
-この点を反映しておらず要更新。GitHub Projectsへの起票はまだ行っていない。
--->
-
 ## 擬似コード
 
 ```{prf:algorithm} CORS-RBF

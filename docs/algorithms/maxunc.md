@@ -33,53 +33,6 @@ EIやUCBのような活用寄りの基準と対になる探索専用の構成要
 5. 評価予算 $N$ に達するまで2へ戻る
 ```
 
-<!--
-参照情報（レビュー用）:
-
-Büche, D., Schraudolph, N. N., & Koumoutsakos, P. (2005).
-Accelerating evolutionary algorithms with Gaussian process fitness function models.
-IEEE Transactions on Systems, Man, and Cybernetics—Part C, 35(2), 183-194.
-DOI: 10.1109/TSMCC.2004.841917
-OCR: .claude/exp_ref/literature/pdfs/buche2005_gp_es/auto/buche2005_gp_es.md
-
-ページ番号の求め方: 同ディレクトリの `buche2005_gp_es_content_list.json` の `page_idx`
-（0始まり）の最大値は11で、これは掲載誌の12ページ分（pp.183-194）に一致する。
-したがって「掲載ページ = page_idx + 183」で対応づけた。
-
-- ステップ1: Section IV冒頭の記述（"starts from an initial set of points, obtained,
-  e.g., from previous optimization runs, by random sampling..."）、
-  および Section IV.C のGPOP要約疑似コード冒頭
-  ("while less than N_C/2 points evaluated successfully: ...")。
-  Section IV、p.187（OCR 203-209行目）、Section IV.C、p.188（OCR 257-263行目）。
-- ステップ2: 予測平均の式(10)・予測標準偏差の式(11)、Section III、p.186。
-  OCR 132行目（式10）、136行目（式11）。
-  GP自体の学習（ハイパーパラメータ最適化、式15-16）はSection III.A、p.186。
-  OCR 160行目（式15）、164行目（式16）。
-- ステップ3: **これは論文の逐語的な記述ではなく、書き手側の合成である。**
-  論文が実際に提案するのはメリット関数 $f_{\mathrm{M}}(x) = \hat{t}(x) - \alpha\sigma_t(x)$
-  （式(19)、Section IV.A、p.187、OCR 218行目）であり、GPOPはこれを
-  $\alpha = 0, 1, 2, 4$ の4通り並列に最適化して4点を同時評価する
-  （"We optimize 4 merit functions, using α = 0, 1, 2, 4"、p.187、OCR 223行目）。
-  論文中に $\alpha$ を明示的に無限大にする、あるいは $\sigma$ 単独を基準とする記述は無い。
-  ステップ3の $\arg\max \sigma(x)$ は、この式(19)で予測平均の重みを0にした
-  （$\alpha \to \infty$ の）極限として書き手が導出したものである。
-- ステップ4: GPOP要約疑似コード中 "evaluate new optima on expensive fitness function"、
-  Section IV.C、p.188。OCR 277-281行目。
-- ステップ5: GPOP要約疑似コード全体を統べる
-  "while termination criterion not reached:" ループ、Section IV.C、p.188。OCR 265行目。
-
-既知の課題（レビュー用・非表示、本文には出さない）:
-`.claude/exp_ref/literature/topic_notes/named_algorithms_component_map.md`はMaxUnc samplingを✅Directと分類しているが、
-不正確。論文が実際に提案するのは予測平均$\hat{t}(x)$と予測標準偏差$\sigma_t(x)$を組み合わせた
-メリット関数$f_{\mathrm{M}}(x) = \hat{t}(x) - \alpha\sigma_t(x)$（式(19)、$\alpha=0,1,2,4$の
-4通り並列評価）であり、`saealib`の`MaxUncertainty`が計算する$\sigma(x)$単独の基準は、この式で
-$\alpha\to\infty$とした極限に相当する。論文中に$\alpha$を無限大にする、または$\sigma$単独を
-基準とする記述はない。ただしSPEA2/NSGA-III/RBF-CORSの各ケースと異なり、これは「実装すべき
-手続きが欠けている」というより「単一の獲得関数に単一の論文を紐づける際の極限近似」という性質が強く、
-コード側に直接の修正対象があるとは限らない。GitHub Projectsへの起票は行っていない
-（要検討としてユーザーへ報告する）。
--->
-
 ## フローチャート
 
 ```{mermaid}
