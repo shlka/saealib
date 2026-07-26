@@ -7,8 +7,19 @@
 
    saealib.Problem
    saealib.InequalityConstraint
+   saealib.EqualityConstraint
    saealib.ConstraintHandler
    saealib.StaticToleranceHandler
+   saealib.EpsilonConstraintHandler
+   saealib.GradientRepairHandler
+```
+
+```{eval-rst}
+.. autofunction:: saealib.linear_epsilon_schedule
+```
+
+```{eval-rst}
+.. autofunction:: saealib.exponential_epsilon_schedule
 ```
 
 ```{note}

@@ -5,8 +5,12 @@
 
 highlevel
 optimizer
+exceptions
 registry
 problem
+variables
+comparators
+decomposition
 population
 algorithms
 operators
@@ -17,5 +21,7 @@ initialization
 evaluation
 termination
 callbacks
+pipeline
+stages
 utils
 ```

@@ -7,4 +7,6 @@
 
    saealib.Initializer
    saealib.LHSInitializer
+   saealib.RandomInitializer
+   saealib.SobolInitializer
 ```

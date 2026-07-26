@@ -13,6 +13,8 @@
    saealib.CrossoverUniform
    saealib.CrossoverOnePoint
    saealib.CrossoverTwoPoint
+   saealib.CrossoverIntegerSBX
+   saealib.CrossoverCategorical
 ```
 
 ## Mutation
@@ -26,6 +28,8 @@
    saealib.MutationUniform
    saealib.MutationPolynomial
    saealib.MutationGaussian
+   saealib.MutationIntegerUniform
+   saealib.MutationCategorical
 ```
 
 ## Selection
@@ -47,4 +51,14 @@
 
 ```{eval-rst}
 .. autofunction:: saealib.repair_clipping
+```
+
+## Duplicate Elimination
+
+```{eval-rst}
+.. autosummary::
+   :toctree: _autosummary
+   :nosignatures:
+
+   saealib.DuplicateElimination
 ```

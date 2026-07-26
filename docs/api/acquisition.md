@@ -22,4 +22,8 @@
    saealib.MaxUncertainty
    saealib.MeanPrediction
    saealib.ProbabilityOfFeasibility
+   saealib.ProductOfFeasibility
+   saealib.EHVIAcquisition
+   saealib.ParEGOAcquisition
+   saealib.SMSEGOAcquisition
 ```

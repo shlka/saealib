@@ -7,5 +7,6 @@
 
    saealib.Evaluator
    saealib.SerialEvaluator
+   saealib.JoblibEvaluator
    saealib.EvaluationResult
 ```

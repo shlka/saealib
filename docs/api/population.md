@@ -9,5 +9,7 @@
    saealib.Individual
    saealib.Archive
    saealib.ArchiveMixin
+   saealib.ParetoArchive
+   saealib.ParetoMixin
    saealib.PopulationAttribute
 ```

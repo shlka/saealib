@@ -300,6 +300,7 @@ class ParetoComparator(Comparator):
     Comparator for multi-objective optimization via non-dominated sorting only.
 
     Implements rank-only Pareto ordering:
+
     - sort_population: Pareto front rank order (no crowding distance tiebreaking).
       Infeasible individuals (cv > eps) are always ranked after feasible ones,
       ordered by ascending constraint violation.

@@ -125,7 +125,7 @@ class EqualityConstraint(InequalityConstraint):
         self.tolerance = tolerance
 
     def violation_from_value(self, g: float) -> float:
-        """Return equality violation: max(0, |h(x)| - tolerance)."""
+        """Return equality violation: max(0, abs(h(x)) - tolerance)."""
         return max(0.0, abs(g) - self.tolerance)
 
 
