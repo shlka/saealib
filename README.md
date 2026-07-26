@@ -45,18 +45,15 @@ now-dormant sister project [pysamoo](https://github.com/anyoptimization/pysamoo)
 candidates get an expensive true evaluation* as something you can swap: it's implemented once per
 algorithm, not as a reusable component.
 
-`saealib` makes that decision — the `OptimizationStrategy` (individual-based / generation-based /
-pre-selection / direct) — a first-class, swappable component, alongside a decoupled `Surrogate` /
-`AcquisitionFunction` / `SurrogateManager` split and a typed callback system (`PostCrossoverEvent`,
-`PostMutationEvent`, `PostAskEvent`, ...) for observing pipeline state and swapping components mid-run.
+`saealib` makes that decision — `OptimizationStrategy` — a first-class, swappable component, alongside
+a decoupled `Surrogate` / `AcquisitionFunction` / `SurrogateManager` split and a typed callback system
+for observing pipeline state and swapping components mid-run.
 
-| | saealib | pymoo | pysamoo |
+| Comparison | saealib | pymoo | pysamoo |
 |---|---|---|---|
 | Model-management strategy as a swappable component | Yes | No (always evaluates all candidates) | Hardcoded per algorithm class |
 | Mid-run component swap via typed pipeline events | Yes | "not to customize an algorithm" ([docs](https://pymoo.org/interface/callback.html)) | No |
 | Surrogate / acquisition-function decoupling | Yes | No (delegated to pysamoo) | Partial |
-| Maintenance | ![saealib last commit](https://img.shields.io/github/last-commit/shlka/saealib) | ![pymoo last commit](https://img.shields.io/github/last-commit/anyoptimization/pymoo) | ![pysamoo last commit](https://img.shields.io/github/last-commit/anyoptimization/pysamoo) |
-| License | Apache-2.0 | Apache-2.0 | AGPL-3.0 |
 
 To be upfront about the trade-off: `saealib` currently ships fewer named algorithms (GA, PSO) than
 general-purpose libraries like pymoo or PlatEMO, since its focus is the surrogate/strategy layer rather
