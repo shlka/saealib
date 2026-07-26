@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -20,173 +20,255 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: ../../../tutorials/external_libraries.md:1
-msgid "外部ライブラリとの連携"
-msgstr ""
+msgid "Integrating External Libraries"
+msgstr "外部ライブラリとの連携"
 
 #: ../../../tutorials/external_libraries.md:3
-msgid "`saealib`は、外部の機械学習ライブラリを、独自の抽象基底クラスの背後に薄くラップしたアダプタを提供します。"
-msgstr ""
+msgid ""
+"`saealib` provides adapters that thinly wrap external machine learning "
+"libraries behind its own abstract base classes."
+msgstr "`saealib`は、外部の機械学習ライブラリを、独自の抽象基底クラスの背後に薄くラップしたアダプタを提供します。"
 
 #: ../../../tutorials/external_libraries.md:5
-msgid "アダプタが翻訳するのは`Problem`/`Population`/`ctx`といった`saealib`側のデータ表現だけで、学習アルゴリズムそのものは外部ライブラリの実装をそのまま使います。"
-msgstr ""
+msgid ""
+"The adapter only translates `saealib`-side data representations such as "
+"`Problem`/`Population`/`ctx`; the learning algorithm itself uses the "
+"external library's implementation as-is."
+msgstr "アダプタが翻訳するのは`Problem`/`Population`/`ctx`といった`saealib`側のデータ表現だけで、学習アルゴリズムそのものは外部ライブラリの実装をそのまま使います。"
 
 #: ../../../tutorials/external_libraries.md:7
-msgid "現時点では、サロゲートモデルのアダプタ(scikit-learn、XGBoost、LightGBM、PyTorch)が実装されています。"
-msgstr ""
+msgid ""
+"Currently, surrogate model adapters (scikit-learn, XGBoost, LightGBM, "
+"PyTorch) are implemented."
+msgstr "現時点では、サロゲートモデルのアダプタ(scikit-learn、XGBoost、LightGBM、PyTorch)が実装されています。"
 
 #: ../../../tutorials/external_libraries.md:9
-msgid "インストール"
-msgstr ""
+msgid "Installation"
+msgstr "インストール"
 
 #: ../../../tutorials/external_libraries.md:11
-msgid "各アダプタは、対応する`extra`を指定してインストールしたときだけ使えます。"
-msgstr ""
+msgid "Each adapter can only be used once the corresponding `extra` is installed."
+msgstr "各アダプタは、対応する`extra`を指定してインストールしたときだけ使えます。"
 
 #: ../../../tutorials/external_libraries.md:17
-msgid "インストール方法とextra一覧の詳細は[インストール](../getting_started/installation.md)を参照してください。"
-msgstr ""
+msgid ""
+"See [Installation](../getting_started/installation.md) for how to install"
+" and the full list of extras."
+msgstr "インストール方法とextra一覧の詳細は[インストール](../getting_started/installation.md)を参照してください。"
 
 #: ../../../tutorials/external_libraries.md:19
-msgid "対応する`extra`をインストールしていない状態でアダプタをインポートすると、`ImportError`になります。"
-msgstr ""
+msgid ""
+"Importing an adapter without the corresponding `extra` installed raises "
+"`ImportError`."
+msgstr "対応する`extra`をインストールしていない状態でアダプタをインポートすると、`ImportError`になります。"
 
 #: ../../../tutorials/external_libraries.md:21
-msgid "サロゲートアダプタ"
-msgstr ""
+msgid "Surrogate adapters"
+msgstr "サロゲートアダプタ"
 
 #: ../../../tutorials/external_libraries.md:23
-msgid "各アダプタは`saealib`の`Surrogate`基底クラスを実装しており、組み込みの`RBFSurrogate`と同じように`surrogate`引数へ渡せます。"
-msgstr ""
+msgid ""
+"Each adapter implements `saealib`'s `Surrogate` base class, and can be "
+"passed to the `surrogate` argument just like the built-in `RBFSurrogate`."
+msgstr "各アダプタは`saealib`の`Surrogate`基底クラスを実装しており、組み込みの`RBFSurrogate`と同じように`surrogate`引数へ渡せます。"
 
 #: ../../../tutorials/external_libraries.md
-msgid "クラス"
-msgstr ""
+msgid "Class"
+msgstr "クラス"
 
 #: ../../../tutorials/external_libraries.md
-msgid "対応する`extra`"
-msgstr ""
+msgid "Required `extra`"
+msgstr "対応する`extra`"
 
 #: ../../../tutorials/external_libraries.md
-msgid "ラップするモデル"
-msgstr ""
+msgid "Wrapped model"
+msgstr "ラップするモデル"
 
 #: ../../../tutorials/external_libraries.md
 msgid "`SklearnGPRSurrogate`"
-msgstr ""
+msgstr "`SklearnGPRSurrogate`"
 
 #: ../../../tutorials/external_libraries.md
 msgid "`sklearn`"
-msgstr ""
+msgstr "`sklearn`"
 
 #: ../../../tutorials/external_libraries.md
 msgid "Gaussian Process Regressor"
-msgstr ""
+msgstr "Gaussian Process Regressor"
 
 #: ../../../tutorials/external_libraries.md
 msgid "`SklearnRFRSurrogate`"
-msgstr ""
+msgstr "`SklearnRFRSurrogate`"
 
 #: ../../../tutorials/external_libraries.md
 msgid "Random Forest Regressor"
-msgstr ""
+msgstr "Random Forest Regressor"
 
 #: ../../../tutorials/external_libraries.md
 msgid "`SklearnSVMSurrogate`"
-msgstr ""
+msgstr "`SklearnSVMSurrogate`"
 
 #: ../../../tutorials/external_libraries.md
 msgid "Support Vector Regression"
-msgstr ""
+msgstr "Support Vector Regression"
 
 #: ../../../tutorials/external_libraries.md
 msgid "`SklearnNNSurrogate`"
-msgstr ""
+msgstr "`SklearnNNSurrogate`"
 
 #: ../../../tutorials/external_libraries.md
 msgid "Multi-layer Perceptron"
-msgstr ""
+msgstr "Multi-layer Perceptron"
 
 #: ../../../tutorials/external_libraries.md
 msgid "`SklearnXGBSurrogate`"
-msgstr ""
+msgstr "`SklearnXGBSurrogate`"
 
 #: ../../../tutorials/external_libraries.md
 msgid "`xgboost`"
-msgstr ""
+msgstr "`xgboost`"
 
 #: ../../../tutorials/external_libraries.md
-msgid "XGBoost回帰"
-msgstr ""
+msgid "XGBoost regression"
+msgstr "XGBoost回帰"
 
 #: ../../../tutorials/external_libraries.md
 msgid "`SklearnLGBMSurrogate`"
-msgstr ""
+msgstr "`SklearnLGBMSurrogate`"
 
 #: ../../../tutorials/external_libraries.md
 msgid "`lightgbm`"
-msgstr ""
+msgstr "`lightgbm`"
 
 #: ../../../tutorials/external_libraries.md
-msgid "LightGBM回帰"
-msgstr ""
+msgid "LightGBM regression"
+msgstr "LightGBM回帰"
 
 #: ../../../tutorials/external_libraries.md
 msgid "`TorchSurrogate`"
-msgstr ""
+msgstr "`TorchSurrogate`"
 
 #: ../../../tutorials/external_libraries.md
 msgid "`torch`"
-msgstr ""
+msgstr "`torch`"
 
 #: ../../../tutorials/external_libraries.md
-msgid "任意のPyTorch `nn.Module`"
-msgstr ""
+msgid "Any PyTorch `nn.Module`"
+msgstr "任意のPyTorch `nn.Module`"
 
 #: ../../../tutorials/external_libraries.md:35
-msgid "コンストラクタへのキーワード引数は、そのまま対応するライブラリのモデルへ渡されます。"
-msgstr ""
+msgid ""
+"Keyword arguments to the constructor are passed straight through to the "
+"corresponding library's model."
+msgstr "コンストラクタへのキーワード引数は、そのまま対応するライブラリのモデルへ渡されます。"
 
 #: ../../../tutorials/external_libraries.md:59
-msgid "`Surrogate`インスタンスを`surrogate`引数に渡す挙動は、[単目的最適化](single_objective.md)の「コンポーネントの切り替え」で示した`RBFSurrogate`の例と同じで、内部で`LocalSurrogateManager`にラップされます。"
-msgstr ""
+msgid ""
+"Passing a `Surrogate` instance to the `surrogate` argument works the same"
+" as the `RBFSurrogate` example in \"Switching components\" in [Single-"
+"Objective Optimization](single_objective.md) — internally it is wrapped "
+"in a `LocalSurrogateManager`."
+msgstr "`Surrogate`インスタンスを`surrogate`引数に渡す挙動は、[単目的最適化](single_objective.md)の「コンポーネントの切り替え」で示した`RBFSurrogate`の例と同じで、内部で`LocalSurrogateManager`にラップされます。"
 
 #: ../../../tutorials/external_libraries.md:61
-msgid "分類問題向けのアダプタ(実行可能性分類など)や、各アダプタの詳細な引数は[Surrogate](../components/surrogate.md)を参照してください。"
-msgstr ""
+msgid ""
+"See [Surrogate](../components/surrogate.md) for adapters aimed at "
+"classification problems (e.g. feasibility classification) and the "
+"detailed arguments of each adapter."
+msgstr "分類問題向けのアダプタ（実行可能性分類など）や、各アダプタの詳細な引数は[Surrogate](../components/surrogate.md)を参照してください。"
 
-#: ../../../tutorials/external_libraries.md:71
-msgid "参照"
-msgstr ""
+#: ../../../tutorials/external_libraries.md:63
+msgid "References"
+msgstr "参照"
 
-#: ../../../tutorials/external_libraries.md:73
+#: ../../../tutorials/external_libraries.md:65
 #, python-brace-format
 msgid "{py:class}`saealib.Surrogate`"
-msgstr ""
+msgstr "{py:class}`saealib.Surrogate`"
 
-#: ../../../tutorials/external_libraries.md:74
+#: ../../../tutorials/external_libraries.md:66
 #, python-brace-format
 msgid ""
 "{py:class}`saealib.SklearnGPRSurrogate` / "
 "{py:class}`saealib.SklearnRFRSurrogate` / "
 "{py:class}`saealib.SklearnSVMSurrogate` / "
 "{py:class}`saealib.SklearnNNSurrogate`"
-msgstr ""
+msgstr "{py:class}`saealib.SklearnGPRSurrogate` / {py:class}`saealib.SklearnRFRSurrogate` / {py:class}`saealib.SklearnSVMSurrogate` / {py:class}`saealib.SklearnNNSurrogate`"
 
-#: ../../../tutorials/external_libraries.md:75
+#: ../../../tutorials/external_libraries.md:67
 #, python-brace-format
 msgid ""
 "{py:class}`saealib.SklearnXGBSurrogate` / "
 "{py:class}`saealib.SklearnLGBMSurrogate`"
-msgstr ""
+msgstr "{py:class}`saealib.SklearnXGBSurrogate` / {py:class}`saealib.SklearnLGBMSurrogate`"
 
-#: ../../../tutorials/external_libraries.md:76
+#: ../../../tutorials/external_libraries.md:68
 #, python-brace-format
 msgid "{py:class}`saealib.TorchSurrogate`"
-msgstr ""
+msgstr "{py:class}`saealib.TorchSurrogate`"
 
-#: ../../../tutorials/external_libraries.md:77
+#: ../../../tutorials/external_libraries.md:69
 #, python-brace-format
 msgid "{py:func}`saealib.minimize`"
-msgstr ""
+msgstr "{py:func}`saealib.minimize`"
+
+#~ msgid "外部ライブラリとの連携"
+#~ msgstr ""
+
+#~ msgid "`saealib`は、外部の機械学習ライブラリを、独自の抽象基底クラスの背後に薄くラップしたアダプタを提供します。"
+#~ msgstr ""
+
+#~ msgid "アダプタが翻訳するのは`Problem`/`Population`/`ctx`といった`saealib`側のデータ表現だけで、学習アルゴリズムそのものは外部ライブラリの実装をそのまま使います。"
+#~ msgstr ""
+
+#~ msgid "現時点では、サロゲートモデルのアダプタ(scikit-learn、XGBoost、LightGBM、PyTorch)が実装されています。"
+#~ msgstr ""
+
+#~ msgid "インストール"
+#~ msgstr ""
+
+#~ msgid "各アダプタは、対応する`extra`を指定してインストールしたときだけ使えます。"
+#~ msgstr ""
+
+#~ msgid "インストール方法とextra一覧の詳細は[インストール](../getting_started/installation.md)を参照してください。"
+#~ msgstr ""
+
+#~ msgid "対応する`extra`をインストールしていない状態でアダプタをインポートすると、`ImportError`になります。"
+#~ msgstr ""
+
+#~ msgid "サロゲートアダプタ"
+#~ msgstr ""
+
+#~ msgid "各アダプタは`saealib`の`Surrogate`基底クラスを実装しており、組み込みの`RBFSurrogate`と同じように`surrogate`引数へ渡せます。"
+#~ msgstr ""
+
+#~ msgid "クラス"
+#~ msgstr ""
+
+#~ msgid "対応する`extra`"
+#~ msgstr ""
+
+#~ msgid "ラップするモデル"
+#~ msgstr ""
+
+#~ msgid "XGBoost回帰"
+#~ msgstr ""
+
+#~ msgid "LightGBM回帰"
+#~ msgstr ""
+
+#~ msgid "任意のPyTorch `nn.Module`"
+#~ msgstr ""
+
+#~ msgid "コンストラクタへのキーワード引数は、そのまま対応するライブラリのモデルへ渡されます。"
+#~ msgstr ""
+
+#~ msgid "`Surrogate`インスタンスを`surrogate`引数に渡す挙動は、[単目的最適化](single_objective.md)の「コンポーネントの切り替え」で示した`RBFSurrogate`の例と同じで、内部で`LocalSurrogateManager`にラップされます。"
+#~ msgstr ""
+
+#~ msgid "分類問題向けのアダプタ(実行可能性分類など)や、各アダプタの詳細な引数は[Surrogate](../components/surrogate.md)を参照してください。"
+#~ msgstr ""
+
+#~ msgid "参照"
+#~ msgstr ""
 

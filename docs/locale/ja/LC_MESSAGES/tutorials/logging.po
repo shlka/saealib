@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -20,111 +20,207 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: ../../../tutorials/logging.md:1
-msgid "進捗のログ記録"
-msgstr ""
+msgid "Logging Progress"
+msgstr "進捗のログ記録"
 
 #: ../../../tutorials/logging.md:3
-msgid "最適化の進捗を、標準の`logging`モジュールで記録します。"
-msgstr ""
+msgid "Record optimization progress with the standard `logging` module."
+msgstr "最適化の進捗を、標準の`logging`モジュールで記録します。"
 
 #: ../../../tutorials/logging.md:5
-msgid "デフォルトの挙動"
-msgstr ""
+msgid "Default behavior"
+msgstr "既定の挙動"
 
 #: ../../../tutorials/logging.md:7
-msgid "`Optimizer`は、世代開始のたびに進捗を記録するハンドラ(`logging_generation`)を、`minimize`/`maximize`の`verbose=True`（デフォルト）のときだけ登録します。"
-msgstr ""
+msgid ""
+"`Optimizer` registers a handler (`logging_generation`) that records "
+"progress at the start of every generation, but only when "
+"`minimize`/`maximize`'s `verbose=True` (the default)."
+msgstr "`Optimizer`は、世代開始のたびに進捗を記録するハンドラ(`logging_generation`)を、`minimize`/`maximize`の`verbose=True`（既定）のときだけ登録します。"
 
 #: ../../../tutorials/logging.md:9
-msgid "ただし、このハンドラは`logging.getLogger(__name__).info(...)`を呼ぶだけなので、Pythonの`logging`モジュール側でINFOレベルの出力を有効にしないかぎり、何も表示されません。"
-msgstr ""
+msgid ""
+"However, this handler only calls `logging.getLogger(__name__).info(...)`,"
+" so nothing is displayed unless INFO-level output is enabled on Python's "
+"`logging` module."
+msgstr "ただし、このハンドラは`logging.getLogger(__name__).info(...)`を呼ぶだけなので、Pythonの`logging`モジュール側でINFOレベルの出力を有効にしないかぎり、何も表示されません。"
 
 #: ../../../tutorials/logging.md:26
-msgid "進捗を表示するには、`logging.basicConfig`でINFOレベルを有効にします。"
-msgstr ""
+msgid "To display progress, enable INFO level with `logging.basicConfig`."
+msgstr "進捗を表示するには、`logging.basicConfig`でINFOレベルを有効にします。"
 
 #: ../../../tutorials/logging.md:39
-msgid "`logging_generation`は目的数を見て記録内容を切り替え、単目的では最良の目的値を、多目的では第一非優越フロントのサイズと目的ごとの値の範囲を記録します。"
-msgstr ""
+msgid ""
+"`logging_generation` switches what it records based on the number of "
+"objectives: for single-objective it records the best objective value, and"
+" for multi-objective it records the size of the first non-dominated front"
+" and the range of values per objective."
+msgstr "`logging_generation`は目的数を見て記録内容を切り替え、単目的では最良の目的値を、多目的では第一非優越フロントのサイズと目的ごとの値の範囲を記録します。"
 
 #: ../../../tutorials/logging.md:41
-msgid "進捗の記録自体が不要な場合は、`verbose=False`を指定してハンドラの登録を止めます。"
-msgstr ""
+msgid ""
+"If you don't want progress recorded at all, specify `verbose=False` to "
+"stop the handler from being registered."
+msgstr "進捗の記録自体が不要な場合は、`verbose=False`を指定してハンドラの登録を止めます。"
 
 #: ../../../tutorials/logging.md:47
-msgid "ファイルへの出力"
-msgstr ""
+msgid "Writing to a file"
+msgstr "ファイルへの出力"
 
 #: ../../../tutorials/logging.md:49
-msgid "`saealib.callback.handlers`ロガーに`FileHandler`を追加すると、進捗をファイルに書き出せます。"
-msgstr ""
+msgid ""
+"Adding a `FileHandler` to the `saealib.callback.handlers` logger writes "
+"progress out to a file."
+msgstr "`saealib.callback.handlers`ロガーに`FileHandler`を追加すると、進捗をファイルに書き出せます。"
 
 #: ../../../tutorials/logging.md:64
-msgid "多目的でのハイパーボリュームログ"
-msgstr ""
+msgid "Hypervolume logging for multi-objective problems"
+msgstr "多目的でのハイパーボリュームログ"
 
 #: ../../../tutorials/logging.md:66
-msgid "多目的問題では、`logging_generation_hv(reference_point)`が返すハンドラを登録すると、世代ごとのハイパーボリュームを記録できます。"
-msgstr ""
+msgid ""
+"For multi-objective problems, registering the handler returned by "
+"`logging_generation_hv(reference_point)` records the hypervolume for each"
+" generation."
+msgstr "多目的問題では、`logging_generation_hv(reference_point)`が返すハンドラを登録すると、世代ごとのハイパーボリュームを記録できます。"
 
 #: ../../../tutorials/logging.md:94
-msgid "`reference_point`は最小化の慣例で、各目的の達成可能な最良値より大きい値を指定します。"
-msgstr ""
+msgid ""
+"By minimization convention, `reference_point` should be a value larger "
+"than the best achievable value for each objective."
+msgstr "`reference_point`は最小化の慣例で、各目的の達成可能な最良値より大きい値を指定します。"
 
 #: ../../../tutorials/logging.md:96
-msgid "警告レベルのログ"
-msgstr ""
+msgid "Warning-level logging"
+msgstr "警告レベルのログ"
 
 #: ../../../tutorials/logging.md:98
-msgid "一部のコンポーネントは、数値的な問題を`logger.warning(...)`で記録します。"
-msgstr ""
+msgid "Some components record numerical issues via `logger.warning(...)`."
+msgstr "一部のコンポーネントは、数値的な問題を`logger.warning(...)`で記録します。"
 
 #: ../../../tutorials/logging.md:100
-msgid "例えば`RBFSurrogate`は、カーネル行列が悪条件になったときに警告を出します。"
-msgstr ""
+msgid ""
+"For example, `RBFSurrogate` issues a warning when the kernel matrix "
+"becomes ill-conditioned."
+msgstr "例えば`RBFSurrogate`は、カーネル行列が悪条件になったときに警告を出します。"
 
 #: ../../../tutorials/logging.md:102
 msgid ""
-"`logging.basicConfig`を呼んでいなくても、WARNING以上のログはPythonの「handler of last "
-"resort」によって標準エラー出力に表示されます。"
-msgstr ""
+"Even without calling `logging.basicConfig`, WARNING-level and above logs "
+"are shown on standard error via Python's \"handler of last resort\"."
+msgstr "`logging.basicConfig`を呼んでいなくても、WARNING以上のログはPythonの「handler of last resort」によって標準エラー出力に表示されます。"
 
 #: ../../../tutorials/logging.md:104
-msgid "INFOレベルの進捗ログとは異なり、この種の警告は設定なしでも見える点に注意してください。"
-msgstr ""
+msgid ""
+"Note that, unlike INFO-level progress logs, this kind of warning is "
+"visible even without any configuration."
+msgstr "INFOレベルの進捗ログとは異なり、この種の警告は設定なしでも見える点に注意してください。"
 
 #: ../../../tutorials/logging.md:106
-msgid "独自のログ処理"
-msgstr ""
+msgid "Custom logging"
+msgstr "独自のログ処理"
 
 #: ../../../tutorials/logging.md:108
-msgid "`logging_generation`/`logging_generation_hv`が記録する内容以外を記録したい場合は、`CallbackManager`に独自のハンドラを登録します。"
-msgstr ""
+msgid ""
+"If you want to log something other than what "
+"`logging_generation`/`logging_generation_hv` record, register your own "
+"handler on `CallbackManager`."
+msgstr "`logging_generation`/`logging_generation_hv`が記録する内容以外を記録したい場合は、`CallbackManager`に独自のハンドラを登録します。"
 
 #: ../../../tutorials/logging.md:110
-msgid "詳しい仕組みは[CallbackManager](../components/callbacks.md)を参照してください。"
-msgstr ""
+msgid ""
+"See [CallbackManager](../components/callbacks.md) for the underlying "
+"mechanism."
+msgstr "詳しい仕組みは[CallbackManager](../components/callbacks.md)を参照してください。"
 
 #: ../../../tutorials/logging.md:112
-msgid "参照"
-msgstr ""
+msgid "References"
+msgstr "参照"
 
 #: ../../../tutorials/logging.md:114
 #, python-brace-format
 msgid ""
 "{py:func}`saealib.logging_generation` / "
 "{py:func}`saealib.logging_generation_hv`"
-msgstr ""
+msgstr "{py:func}`saealib.logging_generation` / {py:func}`saealib.logging_generation_hv`"
 
 #: ../../../tutorials/logging.md:115
 #, python-brace-format
 msgid ""
 "{py:class}`saealib.CallbackManager` / "
 "{py:class}`saealib.GenerationStartEvent`"
-msgstr ""
+msgstr "{py:class}`saealib.CallbackManager` / {py:class}`saealib.GenerationStartEvent`"
 
 #: ../../../tutorials/logging.md:116
 #, python-brace-format
 msgid "{py:func}`saealib.minimize`"
-msgstr ""
+msgstr "{py:func}`saealib.minimize`"
+
+#~ msgid "進捗のログ記録"
+#~ msgstr ""
+
+#~ msgid "最適化の進捗を、標準の`logging`モジュールで記録します。"
+#~ msgstr ""
+
+#~ msgid "デフォルトの挙動"
+#~ msgstr ""
+
+#~ msgid "`Optimizer`は、世代開始のたびに進捗を記録するハンドラ(`logging_generation`)を、`minimize`/`maximize`の`verbose=True`（デフォルト）のときだけ登録します。"
+#~ msgstr ""
+
+#~ msgid "ただし、このハンドラは`logging.getLogger(__name__).info(...)`を呼ぶだけなので、Pythonの`logging`モジュール側でINFOレベルの出力を有効にしないかぎり、何も表示されません。"
+#~ msgstr ""
+
+#~ msgid "進捗を表示するには、`logging.basicConfig`でINFOレベルを有効にします。"
+#~ msgstr ""
+
+#~ msgid "`logging_generation`は目的数を見て記録内容を切り替え、単目的では最良の目的値を、多目的では第一非優越フロントのサイズと目的ごとの値の範囲を記録します。"
+#~ msgstr ""
+
+#~ msgid "進捗の記録自体が不要な場合は、`verbose=False`を指定してハンドラの登録を止めます。"
+#~ msgstr ""
+
+#~ msgid "ファイルへの出力"
+#~ msgstr ""
+
+#~ msgid "`saealib.callback.handlers`ロガーに`FileHandler`を追加すると、進捗をファイルに書き出せます。"
+#~ msgstr ""
+
+#~ msgid "多目的でのハイパーボリュームログ"
+#~ msgstr ""
+
+#~ msgid "多目的問題では、`logging_generation_hv(reference_point)`が返すハンドラを登録すると、世代ごとのハイパーボリュームを記録できます。"
+#~ msgstr ""
+
+#~ msgid "`reference_point`は最小化の慣例で、各目的の達成可能な最良値より大きい値を指定します。"
+#~ msgstr ""
+
+#~ msgid "警告レベルのログ"
+#~ msgstr ""
+
+#~ msgid "一部のコンポーネントは、数値的な問題を`logger.warning(...)`で記録します。"
+#~ msgstr ""
+
+#~ msgid "例えば`RBFSurrogate`は、カーネル行列が悪条件になったときに警告を出します。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`logging.basicConfig`を呼んでいなくても、WARNING以上のログはPythonの「handler of"
+#~ " last resort」によって標準エラー出力に表示されます。"
+#~ msgstr ""
+
+#~ msgid "INFOレベルの進捗ログとは異なり、この種の警告は設定なしでも見える点に注意してください。"
+#~ msgstr ""
+
+#~ msgid "独自のログ処理"
+#~ msgstr ""
+
+#~ msgid "`logging_generation`/`logging_generation_hv`が記録する内容以外を記録したい場合は、`CallbackManager`に独自のハンドラを登録します。"
+#~ msgstr ""
+
+#~ msgid "詳しい仕組みは[CallbackManager](../components/callbacks.md)を参照してください。"
+#~ msgstr ""
+
+#~ msgid "参照"
+#~ msgstr ""
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -20,109 +20,133 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: ../../../tutorials/mixed_variable.md:1
-msgid "混合変数最適化"
-msgstr ""
+msgid "Mixed-Variable Optimization"
+msgstr "混合変数最適化"
 
 #: ../../../tutorials/mixed_variable.md:3
-msgid "連続変数だけでなく、整数変数やカテゴリカル変数を含む問題を、`saealib`で解きます。"
-msgstr ""
+msgid ""
+"Solve problems that include not only continuous variables but also "
+"integer and categorical variables, using `saealib`."
+msgstr "連続変数だけでなく、整数変数やカテゴリ変数を含む問題を、`saealib`で解きます。"
 
 #: ../../../tutorials/mixed_variable.md:5
-msgid "アルゴリズム、サロゲート、評価戦略の切り替え方は[単目的最適化](single_objective.md)の「コンポーネントの切り替え」と共通です。"
-msgstr ""
+msgid ""
+"Switching algorithms, surrogates, and the evaluation strategy works the "
+"same as in \"Switching components\" in [Single-Objective "
+"Optimization](single_objective.md)."
+msgstr "アルゴリズム、サロゲート、評価戦略の切り替え方は[単目的最適化](single_objective.md)の「コンポーネントの切り替え」と共通です。"
 
 #: ../../../tutorials/mixed_variable.md:7
-msgid "問題設定"
-msgstr ""
+msgid "Problem setup"
+msgstr "問題設定"
 
 #: ../../../tutorials/mixed_variable.md:9
-msgid "設計変数ごとに、連続値、整数値、カテゴリの3種類が混在する目的関数を想定します。"
-msgstr ""
+msgid ""
+"Assume an objective function where each design variable is one of three "
+"types: continuous, integer, or categorical."
+msgstr "設計変数ごとに、連続値、整数値、カテゴリの3種類が混在する目的関数を想定します。"
 
 #: ../../../tutorials/mixed_variable.md:17
-msgid "`x[2]`は3つのカテゴリ(`0`, `1`, `2`)のいずれかを表す値で、`1`を選んだときだけペナルティが付きません。"
-msgstr ""
+msgid ""
+"`x[2]` represents one of three categories (`0`, `1`, `2`), and no penalty"
+" is applied only when `1` is chosen."
+msgstr "`x[2]`は3つのカテゴリ(`0`, `1`, `2`)のいずれかを表す値で、`1`を選んだときだけペナルティが付きません。"
 
 #: ../../../tutorials/mixed_variable.md:19
-msgid "変数の定義"
-msgstr ""
+msgid "Defining variables"
+msgstr "変数の定義"
 
 #: ../../../tutorials/mixed_variable.md:21
-msgid "各次元の型は`Variable`のサブクラスで指定し、`Problem`の`variables`引数に渡します。"
-msgstr ""
+msgid ""
+"Each dimension's type is specified with a subclass of `Variable`, passed "
+"to `Problem`'s `variables` argument."
+msgstr "各次元の型は`Variable`のサブクラスで指定し、`Problem`の`variables`引数に渡します。"
 
 #: ../../../tutorials/mixed_variable.md
-msgid "クラス"
-msgstr ""
+msgid "Class"
+msgstr "クラス"
 
 #: ../../../tutorials/mixed_variable.md
-msgid "意味"
-msgstr ""
+msgid "Meaning"
+msgstr "意味"
 
 #: ../../../tutorials/mixed_variable.md
 msgid "`ContinuousVariable(lb, ub)`"
-msgstr ""
+msgstr "`ContinuousVariable(lb, ub)`"
 
 #: ../../../tutorials/mixed_variable.md
-msgid "連続値。`lb`/`ub`を省略した通常の`Problem`はこの型として扱われる"
-msgstr ""
+msgid ""
+"Continuous value. A regular `Problem` with `lb`/`ub` omitted is treated "
+"as this type"
+msgstr "連続値。`lb`/`ub`を省略した通常の`Problem`はこの型として扱われる"
 
 #: ../../../tutorials/mixed_variable.md
 msgid "`IntegerVariable(lb, ub)`"
-msgstr ""
+msgstr "`IntegerVariable(lb, ub)`"
 
 #: ../../../tutorials/mixed_variable.md
-msgid "整数値"
-msgstr ""
+msgid "Integer value"
+msgstr "整数値"
 
 #: ../../../tutorials/mixed_variable.md
 msgid "`CategoricalVariable(categories)`"
-msgstr ""
+msgstr "`CategoricalVariable(categories)`"
 
 #: ../../../tutorials/mixed_variable.md
-msgid "カテゴリのリストから1つを選ぶ"
-msgstr ""
+msgid "Selects one from a list of categories"
+msgstr "カテゴリのリストから1つを選ぶ"
 
 #: ../../../tutorials/mixed_variable.md:48
-msgid "`variables`を渡すと、各要素の`lb`/`ub`から`Problem.lb`/`Problem.ub`が自動的に導出されるため、`lb`/`ub`引数は指定しません。"
-msgstr ""
+msgid ""
+"Passing `variables` automatically derives `Problem.lb`/`Problem.ub` from "
+"each element's `lb`/`ub`, so you don't specify the `lb`/`ub` arguments."
+msgstr "`variables`を渡すと、各要素の`lb`/`ub`から`Problem.lb`/`Problem.ub`が自動的に導出されるため、`lb`/`ub`引数は指定しません。"
 
 #: ../../../tutorials/mixed_variable.md:50
-msgid "高レベルAPI: minimize"
-msgstr ""
+msgid "High-level API: minimize"
+msgstr "高レベルAPI：minimize"
 
 #: ../../../tutorials/mixed_variable.md:59
-msgid "`GA`は、変数の型ごとに専用の交叉と突然変異の演算子（整数用の`CrossoverIntegerSBX`/`MutationIntegerUniform`、カテゴリカル用の`CrossoverCategorical`/`MutationCategorical`）をデフォルトで備えており、`variables`を渡すだけで型に応じた探索が行われます。"
-msgstr ""
+msgid ""
+"`GA` comes with dedicated crossover and mutation operators for each "
+"variable type by default (`CrossoverIntegerSBX`/`MutationIntegerUniform` "
+"for integers, `CrossoverCategorical`/`MutationCategorical` for "
+"categorical variables), so passing `variables` alone gives you type-aware"
+" search."
+msgstr "`GA`は、変数の型ごとに専用の交叉と突然変異の演算子（整数用の`CrossoverIntegerSBX`/`MutationIntegerUniform`、カテゴリ変数用の`CrossoverCategorical`/`MutationCategorical`）を既定で備えており、`variables`を渡すだけで型に応じた探索が行われます。"
 
 #: ../../../tutorials/mixed_variable.md:61
-msgid "`PSO`は速度に基づく更新方式のため、整数変数とカテゴリカル変数を正しく扱えません。"
-msgstr ""
+msgid ""
+"`PSO` is a velocity-based update scheme and cannot correctly handle "
+"integer and categorical variables."
+msgstr "`PSO`は速度に基づく更新方式のため、整数変数とカテゴリ変数を正しく扱えません。"
 
 #: ../../../tutorials/mixed_variable.md:63
-msgid "混合変数問題では`algorithm='GA'`（デフォルト）のまま使ってください。"
-msgstr ""
+msgid "For mixed-variable problems, stick with `algorithm='GA'` (the default)."
+msgstr "混合変数問題では`algorithm='GA'`（既定）のまま使ってください。"
 
 #: ../../../tutorials/mixed_variable.md:65
-msgid "オペレータのカスタマイズ"
-msgstr ""
+msgid "Customizing operators"
+msgstr "演算子のカスタマイズ"
 
 #: ../../../tutorials/mixed_variable.md:67
-msgid "整数用とカテゴリカル用の演算子も、`GA`のキーワード引数で個別に指定できます。"
-msgstr ""
+msgid ""
+"The operators for integer and categorical variables can also be specified"
+" individually via `GA`'s keyword arguments."
+msgstr "整数変数用とカテゴリ変数用の演算子も、`GA`のキーワード引数で個別に指定できます。"
 
 #: ../../../tutorials/mixed_variable.md:96
-msgid "各演算子の詳細は[Algorithm](../components/algorithm.md)を参照してください。"
-msgstr ""
+msgid "See [Algorithm](../components/algorithm.md) for details on each operator."
+msgstr "各演算子の詳細は[Algorithm](../components/algorithm.md)を参照してください。"
 
 #: ../../../tutorials/mixed_variable.md:98
-msgid "参照"
-msgstr ""
+msgid "References"
+msgstr "参照"
 
 #: ../../../tutorials/mixed_variable.md:100
 #, python-brace-format
 msgid "{py:class}`saealib.Problem`"
-msgstr ""
+msgstr "{py:class}`saealib.Problem`"
 
 #: ../../../tutorials/mixed_variable.md:101
 #, python-brace-format
@@ -130,15 +154,81 @@ msgid ""
 "{py:class}`saealib.ContinuousVariable` / "
 "{py:class}`saealib.IntegerVariable` / "
 "{py:class}`saealib.CategoricalVariable`"
-msgstr ""
+msgstr "{py:class}`saealib.ContinuousVariable` / {py:class}`saealib.IntegerVariable` / {py:class}`saealib.CategoricalVariable`"
 
 #: ../../../tutorials/mixed_variable.md:102
 #, python-brace-format
 msgid "{py:class}`saealib.GA`"
-msgstr ""
+msgstr "{py:class}`saealib.GA`"
 
 #: ../../../tutorials/mixed_variable.md:103
 #, python-brace-format
 msgid "{py:func}`saealib.minimize`"
-msgstr ""
+msgstr "{py:func}`saealib.minimize`"
+
+#~ msgid "混合変数最適化"
+#~ msgstr ""
+
+#~ msgid "連続変数だけでなく、整数変数やカテゴリカル変数を含む問題を、`saealib`で解きます。"
+#~ msgstr ""
+
+#~ msgid "アルゴリズム、サロゲート、評価戦略の切り替え方は[単目的最適化](single_objective.md)の「コンポーネントの切り替え」と共通です。"
+#~ msgstr ""
+
+#~ msgid "問題設定"
+#~ msgstr ""
+
+#~ msgid "設計変数ごとに、連続値、整数値、カテゴリの3種類が混在する目的関数を想定します。"
+#~ msgstr ""
+
+#~ msgid "`x[2]`は3つのカテゴリ(`0`, `1`, `2`)のいずれかを表す値で、`1`を選んだときだけペナルティが付きません。"
+#~ msgstr ""
+
+#~ msgid "変数の定義"
+#~ msgstr ""
+
+#~ msgid "各次元の型は`Variable`のサブクラスで指定し、`Problem`の`variables`引数に渡します。"
+#~ msgstr ""
+
+#~ msgid "クラス"
+#~ msgstr ""
+
+#~ msgid "意味"
+#~ msgstr ""
+
+#~ msgid "連続値。`lb`/`ub`を省略した通常の`Problem`はこの型として扱われる"
+#~ msgstr ""
+
+#~ msgid "整数値"
+#~ msgstr ""
+
+#~ msgid "カテゴリのリストから1つを選ぶ"
+#~ msgstr ""
+
+#~ msgid "`variables`を渡すと、各要素の`lb`/`ub`から`Problem.lb`/`Problem.ub`が自動的に導出されるため、`lb`/`ub`引数は指定しません。"
+#~ msgstr ""
+
+#~ msgid "高レベルAPI: minimize"
+#~ msgstr ""
+
+#~ msgid "`GA`は、変数の型ごとに専用の交叉と突然変異の演算子（整数用の`CrossoverIntegerSBX`/`MutationIntegerUniform`、カテゴリカル用の`CrossoverCategorical`/`MutationCategorical`）をデフォルトで備えており、`variables`を渡すだけで型に応じた探索が行われます。"
+#~ msgstr ""
+
+#~ msgid "`PSO`は速度に基づく更新方式のため、整数変数とカテゴリカル変数を正しく扱えません。"
+#~ msgstr ""
+
+#~ msgid "混合変数問題では`algorithm='GA'`（デフォルト）のまま使ってください。"
+#~ msgstr ""
+
+#~ msgid "オペレータのカスタマイズ"
+#~ msgstr ""
+
+#~ msgid "整数用とカテゴリカル用の演算子も、`GA`のキーワード引数で個別に指定できます。"
+#~ msgstr ""
+
+#~ msgid "各演算子の詳細は[Algorithm](../components/algorithm.md)を参照してください。"
+#~ msgstr ""
+
+#~ msgid "参照"
+#~ msgstr ""
 

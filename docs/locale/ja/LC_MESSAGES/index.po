@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -21,97 +21,189 @@ msgstr ""
 
 #: ../../../index.md:1
 msgid "saealib"
-msgstr ""
+msgstr "saealib"
 
 #: ../../../index.md:3
-msgid "Pythonで実装された、**サロゲート型進化的アルゴリズム(SAEA)** のための総合的なライブラリです。"
-msgstr ""
+msgid ""
+"A comprehensive library for **surrogate-assisted evolutionary algorithms "
+"(SAEA)**, implemented in Python."
+msgstr "Pythonで実装された、**サロゲート型進化的アルゴリズム(SAEA)** のための総合的なライブラリです。"
 
 #: ../../../index.md:5
-msgid "目的関数の評価コストが高い最適化問題を想定して設計されており、`saealib`は進化的アルゴリズム・サロゲートモデル・モデル管理戦略を組み合わせるモジュール式のフレームワークを提供します。"
-msgstr ""
+msgid ""
+"Designed for optimization problems where the objective function is "
+"expensive to evaluate, `saealib` provides a modular framework that "
+"combines evolutionary algorithms, surrogate models, and model management "
+"strategies."
+msgstr "目的関数の評価コストが高い最適化問題を想定して設計されており、`saealib`は進化的アルゴリズム、サロゲートモデル、モデル管理戦略を組み合わせるモジュール式のフレームワークを提供します。"
 
+#. Intentionally left untranslated: this is a {button-ref} label, and
+#. translating it makes the directive degrade to a plain paragraph
+#. (verified: the sd-btn <a> element disappears) instead of rendering as a
+#. button, because the i18n text-substitution can't reconstruct the
+#. directive's internal reference node from the translated string alone.
 #: ../../../index.md:7
-msgid "クイックスタート →"
+msgid "Quickstart →"
 msgstr ""
 
+#. See the comment on the "Quickstart →" entry above; same {button-ref}
+#. rendering issue applies here.
 #: ../../../index.md:15
-msgid "saealibとは？"
+msgid "What is saealib?"
 msgstr ""
 
 #: ../../../index.md:30
-msgid "高レベルAPI"
-msgstr ""
+msgid "High-level API"
+msgstr "高レベルAPI"
 
 #: ../../../index.md:41
-msgid "`minimize()` / `maximize()`によるゼロボイラープレートのエントリーポイント。"
-msgstr ""
+msgid "A boilerplate-free high-level API via `minimize()` / `maximize()`."
+msgstr "`minimize()` / `maximize()`による、定型コード不要の高レベルAPI。"
 
 #: ../../../index.md:44
-msgid "低レベルAPI"
-msgstr ""
+msgid "Low-level API"
+msgstr "低レベルAPI"
 
 #: ../../../index.md:48
-msgid "`Optimizer`ビルダーと`iterate()`ジェネレータにより、研究用途向けに世代ごとの検査やカスタムループ制御が可能です。"
-msgstr ""
+msgid ""
+"The `Optimizer` builder and `iterate()` generator enable per-generation "
+"inspection and custom loop control for research use."
+msgstr "`Optimizer`ビルダーと`iterate()`ジェネレータにより、研究用途向けに世代ごとの検査やカスタムループ制御が可能です。"
 
 #: ../../../index.md:51
-msgid "拡張性"
-msgstr ""
+msgid "Extensibility"
+msgstr "拡張性"
 
 #: ../../../index.md:55
-msgid "すべての概念は抽象基底クラスを持ち、構築時に差し替え可能です。 そのため、フォークすることなくあらゆるSAEAバリアントを表現できます。"
-msgstr ""
+msgid ""
+"Every concept has an abstract base class and can be swapped at "
+"construction time. This makes it possible to express any SAEA variant "
+"without forking the library."
+msgstr "すべての概念は抽象基底クラスを持ち、構築時に差し替え可能です。 そのため、フォークすることなくあらゆるSAEAバリアントを表現できます。"
 
 #: ../../../index.md:62
-msgid "ドキュメント"
-msgstr ""
+msgid "Documentation"
+msgstr "ドキュメント"
 
 #: ../../../index.md:68
-msgid "はじめに"
-msgstr ""
+msgid "Getting Started"
+msgstr "はじめに"
 
 #: ../../../index.md:72
-msgid "saealibを初めて使う方へ。インストール方法、基本的な使い方、コアとなる概念を説明します。"
-msgstr ""
+msgid ""
+"For first-time saealib users. Covers installation, basic usage, and core "
+"concepts."
+msgstr "saealibを初めて使う方へ。インストール方法、基本的な使い方、コアとなる概念を説明します。"
 
 #: ../../../index.md:75
-msgid "チュートリアル"
-msgstr ""
+msgid "Tutorials"
+msgstr "チュートリアル"
 
 #: ../../../index.md:79
-msgid "シチュエーション別のセットアップガイド: 単目的/多目的最適化、制約、チェックポイント。"
-msgstr ""
+msgid ""
+"Setup guides for specific scenarios: single-/multi-objective "
+"optimization, constraints, checkpointing."
+msgstr "状況別のセットアップガイド：単目的/多目的最適化、制約、チェックポイント。"
 
 #: ../../../index.md:82
-msgid "コンポーネント"
-msgstr ""
+msgid "Components"
+msgstr "コンポーネント"
 
 #: ../../../index.md:86
-msgid "各コンポーネントの詳しい使い方と拡張ガイドライン。"
-msgstr ""
+msgid "Detailed usage of each component and guidelines for extending it."
+msgstr "各コンポーネントの詳しい使い方と拡張ガイドライン。"
 
 #: ../../../index.md:89
-msgid "アルゴリズム"
-msgstr ""
+msgid "Algorithms"
+msgstr "アルゴリズム"
 
 #: ../../../index.md:93
-msgid "文献上の名前がついたアルゴリズムを、saealibのコンポーネントの組み合わせとしてどう再現するか。"
-msgstr ""
+msgid ""
+"How named algorithms from the literature are reproduced as combinations "
+"of saealib components."
+msgstr "文献上の名前がついたアルゴリズムを、saealibのコンポーネントの組み合わせとしてどう再現するか。"
 
 #: ../../../index.md:96
-msgid "文献リファレンス"
-msgstr ""
+msgid "References"
+msgstr "文献リファレンス"
 
 #: ../../../index.md:100
-msgid "実装済みのアルゴリズム・演算子・比較方法の理論的出典をまとめた文献リスト。"
-msgstr ""
+msgid ""
+"A bibliography of the theoretical sources for the implemented algorithms,"
+" operators, and comparison methods."
+msgstr "実装済みのアルゴリズム、演算子、比較方法の理論的出典をまとめた文献リスト。"
 
 #: ../../../index.md:103
 msgid "API Reference"
-msgstr ""
+msgstr "API Reference"
 
 #: ../../../index.md:107
-msgid "すべてのクラス・関数の完全な仕様。"
-msgstr ""
+msgid "The complete specification of every class and function."
+msgstr "すべてのクラスと関数の完全な仕様。"
+
+#~ msgid "Pythonで実装された、**サロゲート型進化的アルゴリズム(SAEA)** のための総合的なライブラリです。"
+#~ msgstr ""
+
+#~ msgid "目的関数の評価コストが高い最適化問題を想定して設計されており、`saealib`は進化的アルゴリズム・サロゲートモデル・モデル管理戦略を組み合わせるモジュール式のフレームワークを提供します。"
+#~ msgstr ""
+
+#~ msgid "クイックスタート →"
+#~ msgstr ""
+
+#~ msgid "saealibとは？"
+#~ msgstr ""
+
+#~ msgid "高レベルAPI"
+#~ msgstr ""
+
+#~ msgid "`minimize()` / `maximize()`によるゼロボイラープレートのエントリーポイント。"
+#~ msgstr ""
+
+#~ msgid "低レベルAPI"
+#~ msgstr ""
+
+#~ msgid "`Optimizer`ビルダーと`iterate()`ジェネレータにより、研究用途向けに世代ごとの検査やカスタムループ制御が可能です。"
+#~ msgstr ""
+
+#~ msgid "拡張性"
+#~ msgstr ""
+
+#~ msgid "すべての概念は抽象基底クラスを持ち、構築時に差し替え可能です。 そのため、フォークすることなくあらゆるSAEAバリアントを表現できます。"
+#~ msgstr ""
+
+#~ msgid "ドキュメント"
+#~ msgstr ""
+
+#~ msgid "はじめに"
+#~ msgstr ""
+
+#~ msgid "saealibを初めて使う方へ。インストール方法、基本的な使い方、コアとなる概念を説明します。"
+#~ msgstr ""
+
+#~ msgid "チュートリアル"
+#~ msgstr ""
+
+#~ msgid "シチュエーション別のセットアップガイド: 単目的/多目的最適化、制約、チェックポイント。"
+#~ msgstr ""
+
+#~ msgid "コンポーネント"
+#~ msgstr ""
+
+#~ msgid "各コンポーネントの詳しい使い方と拡張ガイドライン。"
+#~ msgstr ""
+
+#~ msgid "アルゴリズム"
+#~ msgstr ""
+
+#~ msgid "文献上の名前がついたアルゴリズムを、saealibのコンポーネントの組み合わせとしてどう再現するか。"
+#~ msgstr ""
+
+#~ msgid "文献リファレンス"
+#~ msgstr ""
+
+#~ msgid "実装済みのアルゴリズム・演算子・比較方法の理論的出典をまとめた文献リスト。"
+#~ msgstr ""
+
+#~ msgid "すべてのクラス・関数の完全な仕様。"
+#~ msgstr ""
 

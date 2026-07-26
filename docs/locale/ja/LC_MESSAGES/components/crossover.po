@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -21,252 +21,420 @@ msgstr ""
 
 #: ../../../components/crossover.md:1
 msgid "Crossover"
-msgstr ""
+msgstr "Crossover"
 
 #: ../../../components/crossover.md:3
 msgid ""
-"`GA`(`saealib.GA`)は、選択した親個体から子個体を生成する処理を、`Crossover`という差し替え可能な演算子に委ねている。 "
-"交叉の方式を変えたいときは、`GA`本体ではなくこの`Crossover`だけを差し替えればよい。"
-msgstr ""
+"`GA` (`saealib.GA`) delegates generating offspring from selected parents "
+"to `Crossover`, a swappable operator. To change the crossover scheme, you"
+" only need to swap out this `Crossover`, not `GA` itself."
+msgstr "`GA`(`saealib.GA`)は、選択した親個体から子個体を生成する処理を、`Crossover`という差し替え可能な演算子に委ねています。 交叉の方式を変えたいときは、`GA`本体ではなくこの`Crossover`だけを差し替えればよいです。"
 
 #: ../../../components/crossover.md:6
-msgid "Crossoverの役割"
-msgstr ""
+msgid "Crossover's role"
+msgstr "Crossoverの役割"
 
 #: ../../../components/crossover.md:8
 msgid ""
-"`Crossover`が実装を要求するメソッドは`crossover(parent, bounds=None, "
-"rng=...)`の1つだけである。 `parent`には交叉に使う親個体の配列が渡される。 既定では`n_parents = "
-"2`個の親をshape `(n_parents, dim)`で受け取り、`n_children = 2`個の子をshape "
-"`(n_children, dim)`で返す。 "
-"2親2子以外の交叉方式を実装する場合は、`n_parents`/`n_children`というクラス属性をサブクラス側で上書きする。 "
-"`bounds`には設計変数の下限と上限が`(lb, ub)`のタプルで渡され、`None`の場合は無制限として扱う。"
-msgstr ""
+"`Crossover` requires only one method, `crossover(parent, bounds=None, "
+"rng=...)`, to be implemented. `parent` is passed the array of parent "
+"individuals used for crossover. By default, it receives `n_parents = 2` "
+"parents with shape `(n_parents, dim)` and returns `n_children = 2` "
+"children with shape `(n_children, dim)`. To implement a crossover scheme "
+"other than 2-parents-2-children, override the `n_parents`/`n_children` "
+"class attributes in the subclass. `bounds` receives the design variables'"
+" lower and upper bounds as a `(lb, ub)` tuple, or `None` for unbounded."
+msgstr "`Crossover`が実装を要求するメソッドは`crossover(parent, bounds=None, rng=...)`の1つだけです。 `parent`には交叉に使う親個体の配列が渡されます。 既定では`n_parents = 2`個の親をshape `(n_parents, dim)`で受け取り、`n_children = 2`個の子をshape `(n_children, dim)`で返します。 2親2子以外の交叉方式を実装する場合は、`n_parents`/`n_children`というクラス属性をサブクラス側で上書きします。 `bounds`には設計変数の下限と上限が`(lb, ub)`のタプルで渡され、`None`の場合は無制限として扱います。"
 
 #: ../../../components/crossover.md:14
 msgid ""
-"交叉を実行するかどうかを決める個体レベルの確率は、`crossover()`の内部ではなく呼び出し側が判定する。 "
-"`GA.ask()`は`ctx.rng.random() < "
-"self.crossover.prob`を満たしたペアだけに対して`crossover()`を呼び、満たさないペアは親をそのまま子として複製する。"
-" "
-"つまり`prob`というクラス属性自体は`Crossover`が保持しているが、それを読んで交叉を実行するかどうかを決めるのは`GA`側の責務であり、`crossover()`の実装は常に交叉が起こる前提で書いてよい。"
-msgstr ""
+"The individual-level probability deciding whether crossover is performed "
+"at all is judged by the caller, not inside `crossover()`. `GA.ask()` only"
+" calls `crossover()` for pairs satisfying `ctx.rng.random() < "
+"self.crossover.prob`; pairs that don't satisfy it simply duplicate the "
+"parents as children. In other words, while the `prob` class attribute "
+"itself is held by `Crossover`, deciding whether to perform crossover "
+"based on it is `GA`'s responsibility — `crossover()`'s implementation can"
+" always assume crossover is happening."
+msgstr "交叉を実行するかどうかを決める個体レベルの確率は、`crossover()`の内部ではなく呼び出し側が判定します。 `GA.ask()`は`ctx.rng.random() < self.crossover.prob`を満たしたペアだけに対して`crossover()`を呼び、満たさないペアは親をそのまま子として複製します。 つまり`prob`というクラス属性自体は`Crossover`が保持していますが、それを読んで交叉を実行するかどうかを決めるのは`GA`側の責務であり、`crossover()`の実装は常に交叉が起こる前提で書いてよいです。"
 
 #: ../../../components/crossover.md:18
-msgid "組み込みCrossover"
-msgstr ""
+msgid "Built-in Crossovers"
+msgstr "組み込みCrossover"
 
 #: ../../../components/crossover.md
-msgid "クラス"
-msgstr ""
+msgid "Class"
+msgstr "クラス"
 
 #: ../../../components/crossover.md
-msgid "パラメータ"
-msgstr ""
+msgid "Parameters"
+msgstr "パラメータ"
 
 #: ../../../components/crossover.md
-msgid "特徴"
-msgstr ""
+msgid "Characteristics"
+msgstr "特徴"
 
 #: ../../../components/crossover.md
 msgid "`CrossoverBLXAlpha`"
-msgstr ""
+msgstr "`CrossoverBLXAlpha`"
 
 #: ../../../components/crossover.md
 msgid "`prob, alpha`"
-msgstr ""
+msgstr "`prob, alpha`"
 
 #: ../../../components/crossover.md
-#, python-brace-format
-msgid "BLX-α交叉{cite}`eshelman1993blx`。`alpha`が大きいほど、子が親の値の範囲外まで広がりうる"
-msgstr ""
+msgid ""
+"BLX-α crossover (introduced by Eshelman & Schaffer, 1993). Larger `alpha`"
+" lets children spread further outside the parents' value range"
+msgstr "BLX-α交叉（Eshelman & Schaffer, 1993が導入）。`alpha`が大きいほど、子が親の値の範囲外まで広がりうる"
 
 #: ../../../components/crossover.md
 msgid "`CrossoverSBX`"
-msgstr ""
+msgstr "`CrossoverSBX`"
 
 #: ../../../components/crossover.md
 msgid "`prob, eta, *, prob_var=0.5`"
-msgstr ""
+msgstr "`prob, eta, *, prob_var=0.5`"
 
 #: ../../../components/crossover.md
 #, python-brace-format
 msgid ""
-"Simulated Binary "
-"Crossover{cite}`deb1995sbx`。`bounds`が有限値なら境界付き版に自動で切り替わる。`eta`が大きいほど子は親に近づく"
-msgstr ""
+"Simulated Binary Crossover {cite}`deb1995sbx`. Automatically switches to "
+"the bounded variant when `bounds` is finite. Larger `eta` brings children"
+" closer to the parents"
+msgstr "Simulated Binary Crossover{cite}`deb1995sbx`。`bounds`が有限値なら境界付き版に自動で切り替わる。`eta`が大きいほど子は親に近づく"
 
 #: ../../../components/crossover.md
 msgid "`CrossoverUniform`"
-msgstr ""
+msgstr "`CrossoverUniform`"
 
 #: ../../../components/crossover.md
 msgid "`prob, swap_rate=0.5`"
-msgstr ""
+msgstr "`prob, swap_rate=0.5`"
 
 #: ../../../components/crossover.md
-#, python-brace-format
-msgid "各次元を独立に`swap_rate`の確率で親同士を入れ替える{cite}`syswerda1989uniform`"
-msgstr ""
+msgid ""
+"Independently swaps each dimension between parents with probability "
+"`swap_rate` (introduced by Syswerda, 1989)"
+msgstr "各次元を独立に`swap_rate`の確率で親同士を入れ替える（Syswerda, 1989が導入）"
 
 #: ../../../components/crossover.md
 msgid "`CrossoverOnePoint`"
-msgstr ""
+msgstr "`CrossoverOnePoint`"
 
 #: ../../../components/crossover.md
 msgid "`prob`"
-msgstr ""
+msgstr "`prob`"
 
 #: ../../../components/crossover.md
-msgid "1点交叉"
-msgstr ""
+msgid "One-point crossover"
+msgstr "1点交叉"
 
 #: ../../../components/crossover.md
 msgid "`CrossoverTwoPoint`"
-msgstr ""
+msgstr "`CrossoverTwoPoint`"
 
 #: ../../../components/crossover.md
-msgid "2点交叉"
-msgstr ""
+msgid "Two-point crossover"
+msgstr "2点交叉"
 
 #: ../../../components/crossover.md
 msgid "`CrossoverIntegerSBX`"
-msgstr ""
+msgstr "`CrossoverIntegerSBX`"
 
 #: ../../../components/crossover.md
 #, python-brace-format
-msgid "`CrossoverSBX`{cite}`deb1995sbx`と同じ計算をしたのち整数に丸める。整数変数向け"
-msgstr ""
+msgid ""
+"Performs the same computation as `CrossoverSBX` {cite}`deb1995sbx` and "
+"then rounds to an integer. For integer variables"
+msgstr "`CrossoverSBX`{cite}`deb1995sbx`と同じ計算をしたのち整数に丸める。整数変数向け"
 
 #: ../../../components/crossover.md
 msgid "`CrossoverCategorical`"
-msgstr ""
+msgstr "`CrossoverCategorical`"
 
 #: ../../../components/crossover.md
-msgid "各次元を50/50でどちらかの親の値をそのままコピーする。カテゴリ変数向け"
-msgstr ""
+msgid ""
+"Copies each dimension's value directly from one parent or the other, "
+"50/50. For categorical variables"
+msgstr "各次元を50/50でどちらかの親の値をそのままコピーする。カテゴリ変数向け"
 
 #: ../../../components/crossover.md:30
 msgid ""
-"連続変数だけの問題であれば、この中から1つを選んで`GA(crossover=..., ...)`に渡せばよい。 "
-"`CrossoverBLXAlpha`/`CrossoverUniform`は無制約な問題で素直に使え、境界を活かした交叉が必要なら`CrossoverSBX`を選ぶ、という判断が基本になる。"
-msgstr ""
+"For problems with only continuous variables, pick one of these and pass "
+"it to `GA(crossover=..., ...)`. The basic decision is: "
+"`CrossoverBLXAlpha`/`CrossoverUniform` work well for unconstrained "
+"problems, and `CrossoverSBX` when you need crossover that takes advantage"
+" of the bounds."
+msgstr "連続変数だけの問題であれば、この中から1つを選んで`GA(crossover=..., ...)`に渡せばよいです。 `CrossoverBLXAlpha`/`CrossoverUniform`は無制約な問題で素直に使え、境界を活かした交叉が必要なら`CrossoverSBX`を選ぶ、という判断が基本になります。"
 
 #: ../../../components/crossover.md:33
 msgid ""
-"設計変数に整数変数やカテゴリ変数が混在する問題では、`GA`は変数の型ごとに異なる`Crossover`インスタンスを使い分ける。 "
-"`GA`コンストラクタの`integer_crossover`/`categorical_crossover`引数を省略すると、それぞれ`CrossoverIntegerSBX`/`CrossoverCategorical`が自動的に補われる(`eta`や`prob`は連続変数用の`crossover`から引き継がれる)。"
-" `GA.ask()`は親個体を変数の型ごとの列に分割し、各`Crossover`を該当する列だけに適用してから結果を組み立て直す。 "
-"この仕組み上、`integer_crossover`/`categorical_crossover`に独自のクラスを渡す場合は、`n_children`/`n_parents`を連続変数用の`crossover`と一致させる必要がある。"
-" 一致しない場合は`ConfigurationError`になる。"
-msgstr ""
+"For problems where design variables mix integer and categorical "
+"variables, `GA` uses a different `Crossover` instance per variable type. "
+"If the `GA` constructor's `integer_crossover`/`categorical_crossover` "
+"arguments are omitted, `CrossoverIntegerSBX`/`CrossoverCategorical` are "
+"supplied automatically (with `eta`/`prob` inherited from the continuous-"
+"variable `crossover`). `GA.ask()` splits parent individuals into columns "
+"by variable type, applies each `Crossover` only to its corresponding "
+"columns, and then reassembles the results. Because of this mechanism, if "
+"you pass a custom class to `integer_crossover`/`categorical_crossover`, "
+"its `n_children`/`n_parents` must match the continuous-variable "
+"`crossover`. A mismatch raises `ConfigurationError`."
+msgstr "設計変数に整数変数やカテゴリ変数が混在する問題では、`GA`は変数の型ごとに異なる`Crossover`インスタンスを使い分けます。 `GA`コンストラクタの`integer_crossover`/`categorical_crossover`引数を省略すると、それぞれ`CrossoverIntegerSBX`/`CrossoverCategorical`が自動的に補われます（`eta`や`prob`は連続変数用の`crossover`から引き継がれます）。 `GA.ask()`は親個体を変数の型ごとの列に分割し、各`Crossover`を該当する列だけに適用してから結果を組み立て直します。 この仕組み上、`integer_crossover`/`categorical_crossover`に独自のクラスを渡す場合は、`n_children`/`n_parents`を連続変数用の`crossover`と一致させる必要があります。 一致しない場合は`ConfigurationError`になります。"
 
 #: ../../../components/crossover.md:39
-msgid "変数の型と`Crossover`の対応づけは[Problem](problem.md)の`variables`引数で決まる。"
-msgstr ""
+msgid ""
+"The correspondence between variable types and `Crossover` is determined "
+"by [Problem](problem.md)'s `variables` argument."
+msgstr "変数の型と`Crossover`の対応づけは[Problem](problem.md)の`variables`引数で決まります。"
 
 #: ../../../components/crossover.md:42
 msgid ""
-"`CrossoverBLXAlpha`のみ`@register()`済みで、他の6クラスは現状Registry未登録である。 "
-"Registry経由でクラスを文字列から解決する使い方をする場合はこの違いに注意する。"
-msgstr ""
+"Only `CrossoverBLXAlpha` is currently `@register()`ed; the other 6 "
+"classes are not yet registered with the Registry. Keep this difference in"
+" mind if you resolve classes from strings via the Registry."
+msgstr "`CrossoverBLXAlpha`のみ`@register()`済みで、他の6クラスは現状Registry未登録です。 Registry経由でクラスを文字列から解決する使い方をする場合はこの違いに注意してください。"
 
 #: ../../../components/crossover.md:46
-msgid "拡張フック"
-msgstr ""
+msgid "Extension hooks"
+msgstr "拡張フック"
 
 #: ../../../components/crossover.md:48
 msgid ""
-"境界外に出た値を丸めるといった後処理だけを足したい場合、サブクラスを新設せずに`with_post(fn)`で既存の`Crossover`インスタンスへ処理を追加できる。"
-" `with_post`は元のインスタンスを変更せず、`fn`を追加したコピーを返す。"
-msgstr ""
+"If you just want to add post-processing, such as rounding values that "
+"fall outside the bounds, you can add it to an existing `Crossover` "
+"instance with `with_post(fn)` instead of creating a new subclass. "
+"`with_post` doesn't modify the original instance — it returns a copy with"
+" `fn` added."
+msgstr "境界外に出た値を丸めるといった後処理だけを足したい場合、サブクラスを新設せずに`with_post(fn)`で既存の`Crossover`インスタンスへ処理を追加できます。 `with_post`は元のインスタンスを変更せず、`fn`を追加したコピーを返します。"
 
 #: ../../../components/crossover.md:65
 msgid ""
-"`fn`のシグネチャは`fn(offspring, parents, rng, ctx) -> "
-"np.ndarray`で、既存のフック（既定では何もしない恒等関数）の結果を受け取って追加の変換を返す。 "
-"複数回`with_post`を呼べば、フックは呼び出した順に連結される。"
-msgstr ""
+"`fn`'s signature is `fn(offspring, parents, rng, ctx) -> np.ndarray`, "
+"receiving the result of the existing hook (by default an identity "
+"function that does nothing) and returning an additional transformation. "
+"Calling `with_post` multiple times chains the hooks in the order called."
+msgstr "`fn`のシグネチャは`fn(offspring, parents, rng, ctx) -> np.ndarray`で、既存のフック（既定では何もしない恒等関数）の結果を受け取って追加の変換を返します。 複数回`with_post`を呼べば、フックは呼び出した順に連結されます。"
 
 #: ../../../components/crossover.md:68
-msgid "独自Crossoverの実装方法"
-msgstr ""
+msgid "Implementing a custom Crossover"
+msgstr "独自Crossoverの実装方法"
 
 #: ../../../components/crossover.md:70
 msgid ""
-"独自の交叉方式が必要な場合は、`Crossover`を継承して`crossover()`だけを実装すればよい。 "
-"次の例は、2つの親の平均を2個の子としてそのまま返す単純な交叉である。"
-msgstr ""
+"If you need a custom crossover scheme, subclass `Crossover` and implement"
+" only `crossover()`. The following example is a simple crossover that "
+"returns the average of two parents as both children, unchanged."
+msgstr "独自の交叉方式が必要な場合は、`Crossover`を継承して`crossover()`だけを実装すればよいです。 次の例は、2つの親の平均を2個の子としてそのまま返す単純な交叉です。"
 
 #: ../../../components/crossover.md:88
-msgid "`n_parents`/`n_children`を2以外にしたい場合や、`bounds`を使う独自の丸め処理を加えたい場合は、クラス属性のオーバーライドと`crossover()`内での`bounds`の参照を追加すればよい。"
-msgstr ""
+msgid ""
+"If you want `n_parents`/`n_children` to be something other than 2, or "
+"want to add custom rounding logic that uses `bounds`, override the class "
+"attributes and add a reference to `bounds` inside `crossover()`."
+msgstr "`n_parents`/`n_children`を2以外にしたい場合や、`bounds`を使う独自の丸め処理を加えたい場合は、クラス属性のオーバーライドと`crossover()`内での`bounds`の参照を追加すればよいです。"
 
 #: ../../../components/crossover.md:90
-msgid "関連コンポーネント"
-msgstr ""
+msgid "Related components"
+msgstr "関連コンポーネント"
 
 #: ../../../components/crossover.md:92
-msgid "[Algorithm](algorithm.md) — `GA`が`Crossover`をどう組み合わせるか"
-msgstr ""
+msgid "[Algorithm](algorithm.md): How `GA` combines `Crossover`"
+msgstr "[Algorithm](algorithm.md)：`GA`が`Crossover`をどう組み合わせるか"
 
 #: ../../../components/crossover.md:93
-msgid "[Mutation](mutation.md) — 交叉の次に呼ばれる、対になる演算子"
-msgstr ""
+msgid "[Mutation](mutation.md): The paired operator called next, after crossover"
+msgstr "[Mutation](mutation.md)：交叉の次に呼ばれる、対になる演算子"
 
 #: ../../../components/crossover.md:94
-msgid "[ParentSelection](parent_selection.md) — `Crossover`に渡す親個体を選ぶ演算子"
-msgstr ""
+msgid ""
+"[ParentSelection](parent_selection.md): The operator that selects the "
+"parents passed to `Crossover`"
+msgstr "[ParentSelection](parent_selection.md)：`Crossover`に渡す親個体を選ぶ演算子"
 
 #: ../../../components/crossover.md:95
-msgid "[Problem](problem.md) — 整数変数とカテゴリ変数の定義と、混合変数向けCrossoverの対応関係"
-msgstr ""
+msgid ""
+"[Problem](problem.md): Defining integer and categorical variables, and "
+"their correspondence with mixed-variable Crossovers"
+msgstr "[Problem](problem.md)：整数変数とカテゴリ変数の定義と、混合変数向けCrossoverの対応関係"
 
 #: ../../../components/crossover.md:96
-msgid "[拡張のガイドライン](extension_guidelines.md) — `with_post`系フックの一般的な設計思想"
-msgstr ""
+msgid ""
+"[Extension guidelines](extension_guidelines.md): The general design "
+"philosophy behind `with_post`-style hooks"
+msgstr "[拡張のガイドライン](extension_guidelines.md)：`with_post`系フックの一般的な設計思想"
 
 #: ../../../components/crossover.md:98
-msgid "参照"
-msgstr ""
+msgid "References"
+msgstr "参照"
 
 #: ../../../components/crossover.md:100
 #, python-brace-format
 msgid "{py:class}`saealib.Crossover`"
-msgstr ""
+msgstr "{py:class}`saealib.Crossover`"
 
 #: ../../../components/crossover.md:101
 #, python-brace-format
 msgid "{py:class}`saealib.CrossoverBLXAlpha`"
-msgstr ""
+msgstr "{py:class}`saealib.CrossoverBLXAlpha`"
 
 #: ../../../components/crossover.md:102
 #, python-brace-format
 msgid "{py:class}`saealib.CrossoverSBX`"
-msgstr ""
+msgstr "{py:class}`saealib.CrossoverSBX`"
 
 #: ../../../components/crossover.md:103
 #, python-brace-format
 msgid "{py:class}`saealib.CrossoverUniform`"
-msgstr ""
+msgstr "{py:class}`saealib.CrossoverUniform`"
 
 #: ../../../components/crossover.md:104
 #, python-brace-format
 msgid "{py:class}`saealib.CrossoverOnePoint`"
-msgstr ""
+msgstr "{py:class}`saealib.CrossoverOnePoint`"
 
 #: ../../../components/crossover.md:105
 #, python-brace-format
 msgid "{py:class}`saealib.CrossoverTwoPoint`"
-msgstr ""
+msgstr "{py:class}`saealib.CrossoverTwoPoint`"
 
 #: ../../../components/crossover.md:106
 #, python-brace-format
 msgid "{py:class}`saealib.CrossoverIntegerSBX`"
-msgstr ""
+msgstr "{py:class}`saealib.CrossoverIntegerSBX`"
 
 #: ../../../components/crossover.md:107
 #, python-brace-format
 msgid "{py:class}`saealib.CrossoverCategorical`"
-msgstr ""
+msgstr "{py:class}`saealib.CrossoverCategorical`"
+
+#~ msgid ""
+#~ "`GA`(`saealib.GA`)は、選択した親個体から子個体を生成する処理を、`Crossover`という差し替え可能な演算子に委ねている。"
+#~ " 交叉の方式を変えたいときは、`GA`本体ではなくこの`Crossover`だけを差し替えればよい。"
+#~ msgstr ""
+
+#~ msgid "Crossoverの役割"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`Crossover`が実装を要求するメソッドは`crossover(parent, bounds=None, "
+#~ "rng=...)`の1つだけである。 `parent`には交叉に使う親個体の配列が渡される。 "
+#~ "既定では`n_parents = 2`個の親をshape `(n_parents, "
+#~ "dim)`で受け取り、`n_children = 2`個の子をshape `(n_children,"
+#~ " dim)`で返す。 "
+#~ "2親2子以外の交叉方式を実装する場合は、`n_parents`/`n_children`というクラス属性をサブクラス側で上書きする。 "
+#~ "`bounds`には設計変数の下限と上限が`(lb, ub)`のタプルで渡され、`None`の場合は無制限として扱う。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "交叉を実行するかどうかを決める個体レベルの確率は、`crossover()`の内部ではなく呼び出し側が判定する。 "
+#~ "`GA.ask()`は`ctx.rng.random() < "
+#~ "self.crossover.prob`を満たしたペアだけに対して`crossover()`を呼び、満たさないペアは親をそのまま子として複製する。"
+#~ " "
+#~ "つまり`prob`というクラス属性自体は`Crossover`が保持しているが、それを読んで交叉を実行するかどうかを決めるのは`GA`側の責務であり、`crossover()`の実装は常に交叉が起こる前提で書いてよい。"
+#~ msgstr ""
+
+#~ msgid "組み込みCrossover"
+#~ msgstr ""
+
+#~ msgid "クラス"
+#~ msgstr ""
+
+#~ msgid "パラメータ"
+#~ msgstr ""
+
+#~ msgid "特徴"
+#~ msgstr ""
+
+#~ msgid "BLX-α交叉{cite}`eshelman1993blx`。`alpha`が大きいほど、子が親の値の範囲外まで広がりうる"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Simulated Binary "
+#~ "Crossover{cite}`deb1995sbx`。`bounds`が有限値なら境界付き版に自動で切り替わる。`eta`が大きいほど子は親に近づく"
+#~ msgstr ""
+
+#~ msgid "各次元を独立に`swap_rate`の確率で親同士を入れ替える{cite}`syswerda1989uniform`"
+#~ msgstr ""
+
+#~ msgid "1点交叉"
+#~ msgstr ""
+
+#~ msgid "2点交叉"
+#~ msgstr ""
+
+#~ msgid "`CrossoverSBX`{cite}`deb1995sbx`と同じ計算をしたのち整数に丸める。整数変数向け"
+#~ msgstr ""
+
+#~ msgid "各次元を50/50でどちらかの親の値をそのままコピーする。カテゴリ変数向け"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "連続変数だけの問題であれば、この中から1つを選んで`GA(crossover=..., ...)`に渡せばよい。 "
+#~ "`CrossoverBLXAlpha`/`CrossoverUniform`は無制約な問題で素直に使え、境界を活かした交叉が必要なら`CrossoverSBX`を選ぶ、という判断が基本になる。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "設計変数に整数変数やカテゴリ変数が混在する問題では、`GA`は変数の型ごとに異なる`Crossover`インスタンスを使い分ける。 "
+#~ "`GA`コンストラクタの`integer_crossover`/`categorical_crossover`引数を省略すると、それぞれ`CrossoverIntegerSBX`/`CrossoverCategorical`が自動的に補われる(`eta`や`prob`は連続変数用の`crossover`から引き継がれる)。"
+#~ " `GA.ask()`は親個体を変数の型ごとの列に分割し、各`Crossover`を該当する列だけに適用してから結果を組み立て直す。"
+#~ " "
+#~ "この仕組み上、`integer_crossover`/`categorical_crossover`に独自のクラスを渡す場合は、`n_children`/`n_parents`を連続変数用の`crossover`と一致させる必要がある。"
+#~ " 一致しない場合は`ConfigurationError`になる。"
+#~ msgstr ""
+
+#~ msgid "変数の型と`Crossover`の対応づけは[Problem](problem.md)の`variables`引数で決まる。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`CrossoverBLXAlpha`のみ`@register()`済みで、他の6クラスは現状Registry未登録である。 "
+#~ "Registry経由でクラスを文字列から解決する使い方をする場合はこの違いに注意する。"
+#~ msgstr ""
+
+#~ msgid "拡張フック"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "境界外に出た値を丸めるといった後処理だけを足したい場合、サブクラスを新設せずに`with_post(fn)`で既存の`Crossover`インスタンスへ処理を追加できる。"
+#~ " `with_post`は元のインスタンスを変更せず、`fn`を追加したコピーを返す。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`fn`のシグネチャは`fn(offspring, parents, rng, ctx) "
+#~ "-> np.ndarray`で、既存のフック（既定では何もしない恒等関数）の結果を受け取って追加の変換を返す。 "
+#~ "複数回`with_post`を呼べば、フックは呼び出した順に連結される。"
+#~ msgstr ""
+
+#~ msgid "独自Crossoverの実装方法"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "独自の交叉方式が必要な場合は、`Crossover`を継承して`crossover()`だけを実装すればよい。 "
+#~ "次の例は、2つの親の平均を2個の子としてそのまま返す単純な交叉である。"
+#~ msgstr ""
+
+#~ msgid "`n_parents`/`n_children`を2以外にしたい場合や、`bounds`を使う独自の丸め処理を加えたい場合は、クラス属性のオーバーライドと`crossover()`内での`bounds`の参照を追加すればよい。"
+#~ msgstr ""
+
+#~ msgid "関連コンポーネント"
+#~ msgstr ""
+
+#~ msgid "[Algorithm](algorithm.md) — `GA`が`Crossover`をどう組み合わせるか"
+#~ msgstr ""
+
+#~ msgid "[Mutation](mutation.md) — 交叉の次に呼ばれる、対になる演算子"
+#~ msgstr ""
+
+#~ msgid "[ParentSelection](parent_selection.md) — `Crossover`に渡す親個体を選ぶ演算子"
+#~ msgstr ""
+
+#~ msgid "[Problem](problem.md) — 整数変数とカテゴリ変数の定義と、混合変数向けCrossoverの対応関係"
+#~ msgstr ""
+
+#~ msgid "[拡張のガイドライン](extension_guidelines.md) — `with_post`系フックの一般的な設計思想"
+#~ msgstr ""
+
+#~ msgid "参照"
+#~ msgstr ""
 

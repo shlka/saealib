@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -20,172 +20,312 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: ../../../getting_started/what_is_saealib.md:1
-msgid "saealibとは"
-msgstr ""
+msgid "What is saealib"
+msgstr "saealibとは"
 
 #: ../../../getting_started/what_is_saealib.md:3
 msgid ""
-"saealibはサロゲート型進化的アルゴリズム(SAEA)のpython向け汎用ライブラリです。 "
-"進化的アルゴリズム(EA)やサロゲートモデル、モデル管理戦略などがモジュール化されており、組み合わせることでアルゴリズムを構築、実行します。"
-msgstr ""
+"saealib is a general-purpose Python library for surrogate-assisted "
+"evolutionary algorithms (SAEA). Evolutionary algorithms (EA), surrogate "
+"models, and model management strategies are modularized, and you build "
+"and run an algorithm by combining them."
+msgstr "saealibはサロゲート型進化的アルゴリズム(SAEA)のpython向け汎用ライブラリです。 進化的アルゴリズム(EA)やサロゲートモデル、モデル管理戦略などがモジュール化されており、組み合わせることでアルゴリズムを構築、実行します。"
 
 #: ../../../getting_started/what_is_saealib.md:6
-msgid "SAEAとは"
-msgstr ""
+msgid "What is SAEA"
+msgstr "SAEAとは"
 
 #: ../../../getting_started/what_is_saealib.md:8
 msgid ""
-"進化的アルゴリズム(EA)は生物の進化を模倣した最適化アルゴリズムです。 "
-"しかし進化の過程で、個体の評価を繰り返し行う必要があるため、高コスト最適化問題に対して課題があります。"
-msgstr ""
+"An evolutionary algorithm (EA) is an optimization algorithm that mimics "
+"biological evolution. However, because the evolutionary process requires "
+"repeatedly evaluating individuals, it faces a challenge with expensive "
+"optimization problems."
+msgstr "進化的アルゴリズム(EA)は生物の進化を模倣した最適化アルゴリズムです。 しかし進化の過程で、個体の評価を繰り返し行う必要があるため、高コスト最適化問題に対して課題があります。"
 
 #: ../../../getting_started/what_is_saealib.md:11
-msgid "SAEAはこの課題のために、軽量な数理モデルによる評価の代替を行い、高コストな評価の回数を削減します。"
-msgstr ""
+msgid ""
+"SAEA addresses this challenge by substituting evaluation with a "
+"lightweight mathematical model, reducing the number of expensive "
+"evaluations."
+msgstr "SAEAはこの課題のために、軽量な数理モデルによる評価の代替を行い、高コストな評価の回数を削減します。"
 
 #: ../../../getting_started/what_is_saealib.md:13
-msgid "一般的なEA (GA)"
-msgstr ""
+msgid "A typical EA (GA)"
+msgstr "一般的なEA (GA)"
 
 #: ../../../getting_started/what_is_saealib.md:35
-msgid "世代ごとに集団全体を評価するため、評価コストが大きくなります。"
-msgstr ""
+msgid ""
+"Because the entire population is evaluated every generation, the "
+"evaluation cost grows large."
+msgstr "世代ごとに個体群全体を評価するため、評価コストが大きくなります。"
 
 #: ../../../getting_started/what_is_saealib.md:37
-msgid "SAEA (個体ベースGA)"
-msgstr ""
+msgid "SAEA (individual-based GA)"
+msgstr "SAEA （個体ベースGA）"
 
 #: ../../../getting_started/what_is_saealib.md:62
-msgid "真の評価を行う個体数を絞ることで、全体の評価コストを大幅に削減します。"
-msgstr ""
+msgid ""
+"By narrowing down the number of individuals subjected to true evaluation,"
+" the overall evaluation cost is significantly reduced."
+msgstr "真の評価を行う個体数を絞ることで、全体の評価コストを大幅に削減します。"
 
 #: ../../../getting_started/what_is_saealib.md:64
-msgid "なぜsaealibが存在するのか"
-msgstr ""
+msgid "Why saealib"
+msgstr "saealibが必要な理由"
 
 #: ../../../getting_started/what_is_saealib.md:66
 msgid ""
-"PythonでEAを使う場合、多目的探索の標準的な選択肢は**pymoo**です。 "
-"高コストな評価に特化したサロゲート併用最適化は、pymooの姉妹プロジェクトである**pysamoo**が担ってきましたが、開発は止まっています。"
-" どちらのライブラリも、「どの候補解に高コストな真の評価を割り当てるか」という判断を、差し替え可能な部品としては扱っていません。 "
-"pymooは生成した候補解を常に真の関数で評価し、pysamooはこの判断をアルゴリズムクラスごとに直接書き込んでいます。"
-msgstr ""
+"When using EAs in Python, the standard choice for multi-objective search "
+"is **pymoo**. Surrogate-assisted optimization specialized for expensive "
+"evaluations has been handled by **pysamoo**, a sister project of pymoo. "
+"Neither library treats the decision of \"which candidate solutions "
+"receive an expensive true evaluation\" as a swappable component. pymoo "
+"always evaluates generated candidates with the true function, and pysamoo"
+" writes this decision directly into each algorithm class."
+msgstr "PythonでEAを使う場合、多目的探索の標準的な選択肢は**pymoo**です。 高コストな評価に特化したサロゲート併用最適化は、pymooの姉妹プロジェクトである**pysamoo**が担ってきました。 どちらのライブラリも、「どの候補解に高コストな真の評価を割り当てるか」という判断を、差し替え可能な部品としては扱っていません。 pymooは生成した候補解を常に真の関数で評価し、pysamooはこの判断をアルゴリズムクラスごとに直接書き込んでいます。"
 
 #: ../../../getting_started/what_is_saealib.md:71
 msgid ""
-"saealibは、この判断を**OptimizationStrategy**という第一級の差し替え可能なコンポーネントに切り出します。 "
-"individual-based/generation-based/pre-"
-"selection/directという4種の組み込み戦略はいずれもこの抽象を実装したものであり、独自の判断基準が必要であれば`OptimizationStrategy`を継承するだけで差し替えられます。"
-" "
-"これに加えて、フィットと予測だけを行う**Surrogate**と、予測値をスコアへ変換する**AcquisitionFunction**を分離し、両者を**SurrogateManager**が仲介する構成を取っています。"
-" サロゲートの実装を変えても獲得関数側のコードには影響せず、その逆も同様です。"
-msgstr ""
+"saealib factors this decision out into **OptimizationStrategy**, a first-"
+"class swappable component. The four built-in strategies — individual-"
+"based, generation-based, pre-selection, and direct — are all "
+"implementations of this abstraction, and if you need your own decision "
+"criteria, you can swap it out simply by subclassing "
+"`OptimizationStrategy`. On top of this, saealib separates **Surrogate**, "
+"which does only fitting and prediction, from **AcquisitionFunction**, "
+"which converts predictions into a score, with **SurrogateManager** "
+"mediating between the two. Changing the surrogate implementation does not"
+" affect the acquisition function code, and vice versa."
+msgstr "saealibは、この判断を**OptimizationStrategy**という第一級の差し替え可能なコンポーネントに切り出します。 individual-based/generation-based/pre-selection/directという4種の組み込み戦略はいずれもこの抽象を実装したものであり、独自の判断基準が必要であれば`OptimizationStrategy`を継承するだけで差し替えられます。 これに加えて、フィットと予測だけを行う**Surrogate**と、予測値をスコアへ変換する**AcquisitionFunction**を分離し、両者を**SurrogateManager**が仲介する構成を取っています。 サロゲートの実装を変えても獲得関数側のコードには影響せず、その逆も同様です。"
 
 #: ../../../getting_started/what_is_saealib.md:42
-msgid "比較項目"
-msgstr ""
+msgid "Comparison"
+msgstr "比較項目"
 
 #: ../../../getting_started/what_is_saealib.md:42
 msgid "saealib"
-msgstr ""
+msgstr "saealib"
 
 #: ../../../getting_started/what_is_saealib.md:42
 msgid "pymoo"
-msgstr ""
+msgstr "pymoo"
 
 #: ../../../getting_started/what_is_saealib.md:42
 msgid "pysamoo"
-msgstr ""
+msgstr "pysamoo"
 
 #: ../../../getting_started/what_is_saealib.md:42
-msgid "モデル管理戦略を差し替え可能な部品にしている"
-msgstr ""
+msgid "Model management strategy is a swappable component"
+msgstr "モデル管理戦略を差し替え可能な部品にしている"
 
 #: ../../../getting_started/what_is_saealib.md:42
 msgid "Yes"
-msgstr ""
+msgstr "Yes"
 
 #: ../../../getting_started/what_is_saealib.md:42
-msgid "No（常に全候補を評価）"
-msgstr ""
+msgid "No (always evaluates all candidates)"
+msgstr "No（常に全候補を評価）"
 
 #: ../../../getting_started/what_is_saealib.md:42
-msgid "アルゴリズムクラスごとにハードコード"
-msgstr ""
+msgid "Hardcoded per algorithm class"
+msgstr "アルゴリズムクラスごとにハードコード"
 
 #: ../../../getting_started/what_is_saealib.md:42
-msgid "型付きイベントによる実行中のコンポーネント差し替え"
-msgstr ""
+msgid "Swapping components at runtime via typed events"
+msgstr "型付きイベントによる実行中のコンポーネント差し替え"
 
 #: ../../../getting_started/what_is_saealib.md:42
-msgid "「アルゴリズムをカスタマイズする用途ではない」（[公式ドキュメント](https://pymoo.org/interface/callback.html)）"
-msgstr ""
+msgid ""
+"\"Not intended for customizing algorithms\" ([official "
+"docs](https://pymoo.org/interface/callback.html))"
+msgstr "「アルゴリズムをカスタマイズする用途ではない」（[公式ドキュメント](https://pymoo.org/interface/callback.html)）"
 
 #: ../../../getting_started/what_is_saealib.md:42
 msgid "No"
-msgstr ""
+msgstr "No"
 
 #: ../../../getting_started/what_is_saealib.md:42
-msgid "サロゲートと獲得関数の分離"
-msgstr ""
+msgid "Separation of surrogate and acquisition function"
+msgstr "サロゲートと獲得関数の分離"
 
 #: ../../../getting_started/what_is_saealib.md:42
-msgid "No（pysamooに委譲）"
-msgstr ""
+msgid "No (delegated to pysamoo)"
+msgstr "No（pysamooに委譲）"
 
 #: ../../../getting_started/what_is_saealib.md:42
-msgid "部分的"
-msgstr ""
+msgid "Partial"
+msgstr "部分的"
 
-#: ../../../getting_started/what_is_saealib.md:42
-msgid "ライセンス"
-msgstr ""
-
-#: ../../../getting_started/what_is_saealib.md:42
-msgid "Apache-2.0"
-msgstr ""
-
-#: ../../../getting_started/what_is_saealib.md:42
-msgid "AGPL-3.0"
-msgstr ""
-
-#: ../../../getting_started/what_is_saealib.md:83
+#: ../../../getting_started/what_is_saealib.md:82
 msgid ""
-"この差し替えを支えているのは、`Algorithm`/`OptimizationStrategy`/`Surrogate`/`AcquisitionFunction`/`SurrogateManager`がいずれも抽象基底を持ち、`Optimizer.set_*()`で構築時に差し替えられるという設計です。"
-" "
-"サブクラス化するほどではない、軽い変更をしたい場面のためには、`with_post`/`with_post_fit`によるフックの追加、`Pipeline`/`Stage`によるステージの並べ替え、`CallbackManager`によるパイプラインの観察と実行時の差し替えという3つの軽量な機構も用意されています（詳細は[拡張のガイドライン](../components/extension_guidelines.md)を参照してください）。"
-msgstr ""
+"This swappability is underpinned by a design in which "
+"`Algorithm`/`OptimizationStrategy`/`Surrogate`/`AcquisitionFunction`/`SurrogateManager`"
+" all have abstract bases, and can be swapped at construction time via "
+"`Optimizer.set_*()` (see the [component overview](../components/index.md)"
+" for details). For lighter changes that don't warrant subclassing, three "
+"lightweight mechanisms are also available: adding hooks via "
+"`with_post`/`with_post_fit`, rearranging stages via `Pipeline`/`Stage`, "
+"and observing and swapping components at runtime via `CallbackManager` "
+"(see the [extension guidelines](../components/extension_guidelines.md) "
+"for details)."
+msgstr "この差し替え可能性を支えているのは、`Algorithm`/`OptimizationStrategy`/`Surrogate`/`AcquisitionFunction`/`SurrogateManager`がいずれも抽象基底を持ち、`Optimizer.set_*()`で構築時に差し替えられるという設計です（詳細は[コンポーネント概要](../components/index.md)を参照してください）。 サブクラス化するほどではない軽い変更のためには、`with_post`/`with_post_fit`によるフック追加、`Pipeline`/`Stage`によるステージの並べ替え、`CallbackManager`による観察と実行時の差し替えという3つの軽量な機構も用意されています（詳細は[拡張のガイドライン](../components/extension_guidelines.md)を参照してください）。"
 
-#: ../../../getting_started/what_is_saealib.md:86
+#: ../../../getting_started/what_is_saealib.md:85
 msgid ""
-"候補解を生成してから母集団を更新するまでの流れは、**Ask-Tell**という形に分けられています。 "
-"`Algorithm.ask()`が候補解を生成し、`Algorithm.tell()`が母集団を更新するという2つのメソッドに分け、そのあいだのどの候補解が真の評価を受けるかという判断を`OptimizationStrategy.step()`に持たせています。"
-" この分離によって、探索アルゴリズム本体を変えずに評価戦略だけを差し替える、という組み合わせが成立します。"
-msgstr ""
+"Candidate generation and population updates are split into two "
+"procedures, **Ask-Tell**, and the decision of which of the candidates in "
+"between receive true evaluation is delegated to "
+"`OptimizationStrategy.step()` (see "
+"[Algorithm](../components/algorithm.md) for details). This separation "
+"makes it possible to swap out only the evaluation strategy while leaving "
+"the search algorithm itself unchanged."
+msgstr "候補解の生成と個体群の更新は**Ask-Tell**という2つの手続きに分けられており、そのあいだのどの候補解が真の評価を受けるかという判断を`OptimizationStrategy.step()`に持たせています（詳細は[Algorithm](../components/algorithm.md)を参照してください）。 この分離によって、探索アルゴリズム本体を変えずに評価戦略だけを差し替える、という組み合わせが成立します。"
 
-#: ../../../getting_started/what_is_saealib.md:90
+#: ../../../getting_started/what_is_saealib.md:88
 msgid ""
-"こうして組み立てたパイプラインには、2つの入口が用意されています。 "
-"`minimize()`/`maximize()`は、このパイプラインをsensible "
-"defaultsで自動構成した、ゼロボイラープレートの高レベルAPIです。 "
-"`Optimizer`ビルダーと`.iterate()`ジェネレータによる低レベルAPIは、世代ごとの検査やカスタムループ制御が必要な研究用途に向きます。"
-" "
-"両者は同じパイプラインの上に成り立っており、低レベルAPIだけが持つ独自機能はありません（組み立て方は[コンポーネント概要](../components/index.md)を参照してください）。"
-msgstr ""
+"The pipeline assembled this way has two entry points: "
+"`minimize()`/`maximize()` is a boilerplate-free high-level API, while the"
+" `Optimizer` builder and `.iterate()` generator are a low-level API for "
+"research use cases that need per-generation inspection or custom loop "
+"control. Both are built on the same pipeline, and the low-level API has "
+"no functionality of its own that the high-level API lacks (see the "
+"[component overview](../components/index.md) for how it's assembled)."
+msgstr "こうして組み立てたパイプラインには2つの入口が用意されており、`minimize()`/`maximize()`は定型コード不要の高レベルAPI、`Optimizer`ビルダーと`.iterate()`ジェネレータは世代ごとの検査やカスタムループ制御が必要な研究用途向けの低レベルAPIです。 両者は同じパイプラインの上に成り立っており、低レベルAPIだけが持つ独自機能はありません（組み立て方は[コンポーネント概要](../components/index.md)を参照してください）。"
 
-#: ../../../getting_started/what_is_saealib.md:95
+#: ../../../getting_started/what_is_saealib.md:91
 msgid ""
-"パイプライン全体でのスコアは、常に「高いほど良い」という規約に統一されています。 "
-"問題の最適化方向は`Problem`の`direction`（最小化なら-1、最大化なら+1）で表し、`Comparator`や結果抽出はこの符号を`weight`として使います。"
-msgstr ""
+"Across the entire pipeline, scores are consistently unified under the "
+"convention that \"higher is better\" (see "
+"[Problem](../components/problem.md) for details)."
+msgstr "パイプライン全体でのスコアは、常に「高いほど良い」という規約に統一されています（詳細は[Problem](../components/problem.md)を参照してください）。"
 
-#: ../../../getting_started/what_is_saealib.md:98
+#: ../../../getting_started/what_is_saealib.md:93
 msgid ""
-"現時点でのトレードオフも述べておきます。 "
-"saealibが提供する組み込みアルゴリズムはGAとPSOのみで、pymooやPlatEMOほどアルゴリズムの網羅性はありません。 "
-"これは設計の焦点をサロゲートと戦略層に絞ったことによるトレードオフです。"
-msgstr ""
+"The current trade-offs are also worth noting. The built-in algorithms "
+"saealib provides are only GA and PSO, and it doesn't cover as many "
+"algorithms as pymoo or PlatEMO. This is a trade-off from focusing the "
+"design on the surrogate and strategy layers."
+msgstr "現時点でのトレードオフも述べておきます。 saealibが提供する組み込みアルゴリズムはGAとPSOのみで、pymooやPlatEMOほどアルゴリズムの網羅性はありません。 これは設計の焦点をサロゲートと戦略層に絞ったことによるトレードオフです。"
 
 #~ msgid "What is saealib"
+#~ msgstr ""
+
+#~ msgid "saealibとは"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "saealibはサロゲート型進化的アルゴリズム(SAEA)のpython向け汎用ライブラリです。 "
+#~ "進化的アルゴリズム(EA)やサロゲートモデル、モデル管理戦略などがモジュール化されており、組み合わせることでアルゴリズムを構築、実行します。"
+#~ msgstr ""
+
+#~ msgid "SAEAとは"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "進化的アルゴリズム(EA)は生物の進化を模倣した最適化アルゴリズムです。 "
+#~ "しかし進化の過程で、個体の評価を繰り返し行う必要があるため、高コスト最適化問題に対して課題があります。"
+#~ msgstr ""
+
+#~ msgid "SAEAはこの課題のために、軽量な数理モデルによる評価の代替を行い、高コストな評価の回数を削減します。"
+#~ msgstr ""
+
+#~ msgid "一般的なEA (GA)"
+#~ msgstr ""
+
+#~ msgid "世代ごとに集団全体を評価するため、評価コストが大きくなります。"
+#~ msgstr ""
+
+#~ msgid "SAEA (個体ベースGA)"
+#~ msgstr ""
+
+#~ msgid "真の評価を行う個体数を絞ることで、全体の評価コストを大幅に削減します。"
+#~ msgstr ""
+
+#~ msgid "なぜsaealibが存在するのか"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "PythonでEAを使う場合、多目的探索の標準的な選択肢は**pymoo**です。 "
+#~ "高コストな評価に特化したサロゲート併用最適化は、pymooの姉妹プロジェクトである**pysamoo**が担ってきましたが、開発は止まっています。"
+#~ " どちらのライブラリも、「どの候補解に高コストな真の評価を割り当てるか」という判断を、差し替え可能な部品としては扱っていません。"
+#~ " pymooは生成した候補解を常に真の関数で評価し、pysamooはこの判断をアルゴリズムクラスごとに直接書き込んでいます。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "saealibは、この判断を**OptimizationStrategy**という第一級の差し替え可能なコンポーネントに切り出します。"
+#~ " individual-based/generation-based/pre-"
+#~ "selection/directという4種の組み込み戦略はいずれもこの抽象を実装したものであり、独自の判断基準が必要であれば`OptimizationStrategy`を継承するだけで差し替えられます。"
+#~ " "
+#~ "これに加えて、フィットと予測だけを行う**Surrogate**と、予測値をスコアへ変換する**AcquisitionFunction**を分離し、両者を**SurrogateManager**が仲介する構成を取っています。"
+#~ " サロゲートの実装を変えても獲得関数側のコードには影響せず、その逆も同様です。"
+#~ msgstr ""
+
+#~ msgid "比較項目"
+#~ msgstr ""
+
+#~ msgid "モデル管理戦略を差し替え可能な部品にしている"
+#~ msgstr ""
+
+#~ msgid "No（常に全候補を評価）"
+#~ msgstr ""
+
+#~ msgid "アルゴリズムクラスごとにハードコード"
+#~ msgstr ""
+
+#~ msgid "型付きイベントによる実行中のコンポーネント差し替え"
+#~ msgstr ""
+
+#~ msgid "「アルゴリズムをカスタマイズする用途ではない」（[公式ドキュメント](https://pymoo.org/interface/callback.html)）"
+#~ msgstr ""
+
+#~ msgid "サロゲートと獲得関数の分離"
+#~ msgstr ""
+
+#~ msgid "No（pysamooに委譲）"
+#~ msgstr ""
+
+#~ msgid "部分的"
+#~ msgstr ""
+
+#~ msgid "ライセンス"
+#~ msgstr ""
+
+#~ msgid "Apache-2.0"
+#~ msgstr ""
+
+#~ msgid "AGPL-3.0"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "この差し替えを支えているのは、`Algorithm`/`OptimizationStrategy`/`Surrogate`/`AcquisitionFunction`/`SurrogateManager`がいずれも抽象基底を持ち、`Optimizer.set_*()`で構築時に差し替えられるという設計です。"
+#~ " "
+#~ "サブクラス化するほどではない、軽い変更をしたい場面のためには、`with_post`/`with_post_fit`によるフックの追加、`Pipeline`/`Stage`によるステージの並べ替え、`CallbackManager`によるパイプラインの観察と実行時の差し替えという3つの軽量な機構も用意されています（詳細は[拡張のガイドライン](../components/extension_guidelines.md)を参照してください）。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "候補解を生成してから母集団を更新するまでの流れは、**Ask-Tell**という形に分けられています。 "
+#~ "`Algorithm.ask()`が候補解を生成し、`Algorithm.tell()`が母集団を更新するという2つのメソッドに分け、そのあいだのどの候補解が真の評価を受けるかという判断を`OptimizationStrategy.step()`に持たせています。"
+#~ " この分離によって、探索アルゴリズム本体を変えずに評価戦略だけを差し替える、という組み合わせが成立します。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "こうして組み立てたパイプラインには、2つの入口が用意されています。 "
+#~ "`minimize()`/`maximize()`は、このパイプラインをsensible "
+#~ "defaultsで自動構成した、ゼロボイラープレートの高レベルAPIです。 "
+#~ "`Optimizer`ビルダーと`.iterate()`ジェネレータによる低レベルAPIは、世代ごとの検査やカスタムループ制御が必要な研究用途に向きます。"
+#~ " "
+#~ "両者は同じパイプラインの上に成り立っており、低レベルAPIだけが持つ独自機能はありません（組み立て方は[コンポーネント概要](../components/index.md)を参照してください）。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "パイプライン全体でのスコアは、常に「高いほど良い」という規約に統一されています。 "
+#~ "問題の最適化方向は`Problem`の`direction`（最小化なら-1、最大化なら+1）で表し、`Comparator`や結果抽出はこの符号を`weight`として使います。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "現時点でのトレードオフも述べておきます。 "
+#~ "saealibが提供する組み込みアルゴリズムはGAとPSOのみで、pymooやPlatEMOほどアルゴリズムの網羅性はありません。 "
+#~ "これは設計の焦点をサロゲートと戦略層に絞ったことによるトレードオフです。"
 #~ msgstr ""
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -20,77 +20,145 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: ../../../tutorials/index.md:1
-msgid "チュートリアル"
-msgstr ""
+msgid "Tutorials"
+msgstr "チュートリアル"
 
 #: ../../../tutorials/index.md:3
-msgid "よくある最適化シナリオに対応する、シチュエーション別のセットアップガイドです。高レベルAPIから、手動で組み立てる`Optimizer`まで扱います。"
-msgstr ""
+msgid ""
+"Setup guides for common optimization scenarios, from the high-level API "
+"to manually assembling an `Optimizer`."
+msgstr "よくある最適化シナリオに対応する、状況別のセットアップガイドです。高レベルAPIから、手動で組み立てる`Optimizer`まで扱います。"
 
 #: ../../../tutorials/index.md:9
-msgid "単目的最適化"
-msgstr ""
+msgid "Single-Objective Optimization"
+msgstr "単目的最適化"
 
 #: ../../../tutorials/index.md:13
-msgid "評価コストの高い単目的問題を、`minimize()`から手動で組み立てる`Optimizer`まで、段階的に解きます。"
-msgstr ""
+msgid ""
+"Solve an expensive single-objective problem step by step, from "
+"`minimize()` to manually assembling an `Optimizer`."
+msgstr "評価コストの高い単目的問題を、`minimize()`から手動で組み立てる`Optimizer`まで、段階的に解きます。"
 
 #: ../../../tutorials/index.md:16
-msgid "多目的最適化"
-msgstr ""
+msgid "Multi-Objective Optimization"
+msgstr "多目的最適化"
 
 #: ../../../tutorials/index.md:20
-msgid "目的間にトレードオフのある問題を解き、パレートフロントを抽出します。"
-msgstr ""
+msgid ""
+"Solve a problem with trade-offs between objectives and extract the Pareto"
+" front."
+msgstr "目的間にトレードオフのある問題を解き、パレートフロントを抽出します。"
 
 #: ../../../tutorials/index.md:23
-msgid "制約付き最適化"
-msgstr ""
+msgid "Constrained Optimization"
+msgstr "制約付き最適化"
 
 #: ../../../tutorials/index.md:27
-msgid "不等式制約を定義し、実行不可能解の扱い方を制御します。"
-msgstr ""
+msgid ""
+"Define inequality constraints and control how infeasible solutions are "
+"handled."
+msgstr "不等式制約を定義し、実行不可能解の扱い方を制御します。"
 
 #: ../../../tutorials/index.md:30
-msgid "混合変数最適化"
-msgstr ""
+msgid "Mixed-Variable Optimization"
+msgstr "混合変数最適化"
 
 #: ../../../tutorials/index.md:34
-msgid "連続変数に加えて整数変数、カテゴリカル変数を含む問題を解きます。"
-msgstr ""
+msgid ""
+"Solve problems that include integer and categorical variables alongside "
+"continuous variables."
+msgstr "連続変数に加えて整数変数、カテゴリ変数を含む問題を解きます。"
 
 #: ../../../tutorials/index.md:37
-msgid "動的な切り替え"
-msgstr ""
+msgid "Dynamic Switching"
+msgstr "動的な切り替え"
 
 #: ../../../tutorials/index.md:41
-msgid "サロゲートの予測精度に応じて、評価戦略やサロゲートマネージャを実行中に切り替えます。"
-msgstr ""
+msgid ""
+"Switch the evaluation strategy or `SurrogateManager` at runtime based on "
+"the surrogate's prediction accuracy."
+msgstr "サロゲートの予測精度に応じて、評価戦略や`SurrogateManager`を実行中に切り替えます。"
 
 #: ../../../tutorials/index.md:44
-msgid "再現性とチェックポイント"
-msgstr ""
+msgid "Reproducibility and Checkpointing"
+msgstr "再現性とチェックポイント"
 
 #: ../../../tutorials/index.md:48
-msgid "長時間実行する最適化を再現可能・再開可能にします。"
-msgstr ""
+msgid "Make long-running optimizations reproducible and resumable."
+msgstr "長時間実行する最適化を再現可能かつ再開可能にします。"
 
 #: ../../../tutorials/index.md:51
-msgid "進捗のログ記録"
-msgstr ""
+msgid "Logging Progress"
+msgstr "進捗のログ記録"
 
 #: ../../../tutorials/index.md:55
-msgid "標準の`logging`モジュールで、最適化の進捗を記録します。"
-msgstr ""
+msgid "Record optimization progress with the standard `logging` module."
+msgstr "標準の`logging`モジュールで、最適化の進捗を記録します。"
 
 #: ../../../tutorials/index.md:58
-msgid "外部ライブラリとの連携"
-msgstr ""
+msgid "Integrating External Libraries"
+msgstr "外部ライブラリとの連携"
 
 #: ../../../tutorials/index.md:62
-msgid "scikit-learnなど外部ライブラリのモデルを、サロゲートとして組み込みます。"
-msgstr ""
+msgid ""
+"Incorporate models from external libraries such as scikit-learn as "
+"surrogates."
+msgstr "scikit-learnなど外部ライブラリのモデルを、サロゲートとして組み込みます。"
 
 #~ msgid "Tutorials"
+#~ msgstr ""
+
+#~ msgid "チュートリアル"
+#~ msgstr ""
+
+#~ msgid "よくある最適化シナリオに対応する、シチュエーション別のセットアップガイドです。高レベルAPIから、手動で組み立てる`Optimizer`まで扱います。"
+#~ msgstr ""
+
+#~ msgid "単目的最適化"
+#~ msgstr ""
+
+#~ msgid "評価コストの高い単目的問題を、`minimize()`から手動で組み立てる`Optimizer`まで、段階的に解きます。"
+#~ msgstr ""
+
+#~ msgid "多目的最適化"
+#~ msgstr ""
+
+#~ msgid "目的間にトレードオフのある問題を解き、パレートフロントを抽出します。"
+#~ msgstr ""
+
+#~ msgid "制約付き最適化"
+#~ msgstr ""
+
+#~ msgid "不等式制約を定義し、実行不可能解の扱い方を制御します。"
+#~ msgstr ""
+
+#~ msgid "混合変数最適化"
+#~ msgstr ""
+
+#~ msgid "連続変数に加えて整数変数、カテゴリカル変数を含む問題を解きます。"
+#~ msgstr ""
+
+#~ msgid "動的な切り替え"
+#~ msgstr ""
+
+#~ msgid "サロゲートの予測精度に応じて、評価戦略やサロゲートマネージャを実行中に切り替えます。"
+#~ msgstr ""
+
+#~ msgid "再現性とチェックポイント"
+#~ msgstr ""
+
+#~ msgid "長時間実行する最適化を再現可能・再開可能にします。"
+#~ msgstr ""
+
+#~ msgid "進捗のログ記録"
+#~ msgstr ""
+
+#~ msgid "標準の`logging`モジュールで、最適化の進捗を記録します。"
+#~ msgstr ""
+
+#~ msgid "外部ライブラリとの連携"
+#~ msgstr ""
+
+#~ msgid "scikit-learnなど外部ライブラリのモデルを、サロゲートとして組み込みます。"
 #~ msgstr ""
 

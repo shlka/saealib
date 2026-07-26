@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -21,337 +21,583 @@ msgstr ""
 
 #: ../../../components/comparators.md:1
 msgid "Comparator"
-msgstr ""
+msgstr "Comparator"
 
 #: ../../../components/comparators.md:3
 msgid ""
-"`Problem`は、解の優劣を判断する処理を`Comparator`という差し替え可能なトップレベルコンポーネントに委ねている。 "
-"`Problem`の`comparator`引数で渡す。"
-msgstr ""
+"`Problem` delegates deciding the relative superiority of solutions to "
+"`Comparator`, a swappable top-level component. Pass it via `Problem`'s "
+"`comparator` argument."
+msgstr "`Problem`は、解の優劣を判断する処理を`Comparator`という差し替え可能なトップレベルコンポーネントに委ねています。 `Problem`の`comparator`引数で渡します。"
 
 #: ../../../components/comparators.md:6
-msgid "Comparatorの役割"
-msgstr ""
+msgid "Comparator's role"
+msgstr "Comparatorの役割"
 
 #: ../../../components/comparators.md:8
-msgid "`Comparator`は、`__init__`自体を含めて4つのメソッド全てが抽象メソッドである。"
-msgstr ""
+msgid ""
+"`Comparator` has four methods that are all abstract, including `__init__`"
+" itself."
+msgstr "`Comparator`は、`__init__`自体を含めて4つのメソッド全てが抽象メソッドです。"
 
 #: ../../../components/comparators.md:10
 msgid ""
-"**`__init__(weights, eps_cv, eps_obj, "
-"direction=None)`**：`weights`/`eps_cv`/`eps_obj`/`direction`を保持する"
-msgstr ""
+"**`__init__(weights, eps_cv, eps_obj, direction=None)`**: Holds "
+"`weights`/`eps_cv`/`eps_obj`/`direction`"
+msgstr "**`__init__(weights, eps_cv, eps_obj, direction=None)`**：`weights`/`eps_cv`/`eps_obj`/`direction`を保持します"
 
 #: ../../../components/comparators.md:11
-msgid "**`sort_population(population) -> np.ndarray`**：個体群全体を優劣順に並べたインデックス配列を返す"
-msgstr ""
+msgid ""
+"**`sort_population(population) -> np.ndarray`**: Returns an index array "
+"ordering the entire population from best to worst"
+msgstr "**`sort_population(population) -> np.ndarray`**：個体群全体を優劣順に並べたインデックス配列を返します"
 
 #: ../../../components/comparators.md:12
 msgid ""
-"**`compare_population(population, idx_a, idx_b) -> "
-"int`**：個体群中の2個体を比較する（`-1`：aが優れる、`1`：bが優れる、`0`：同等）"
-msgstr ""
+"**`compare_population(population, idx_a, idx_b) -> int`**: Compares two "
+"individuals within a population (`-1`: a is better, `1`: b is better, "
+"`0`: equal)"
+msgstr "**`compare_population(population, idx_a, idx_b) -> int`**：個体群中の2個体を比較します（`-1`：aが優れる、`1`：bが優れる、`0`：同等）"
 
 #: ../../../components/comparators.md:13
 msgid ""
-"**`compare(fa, cv_a, fb, cv_b) -> "
-"int`**：`Population`を介さず、目的関数値と制約違反から直接2点を比較する軽量版"
-msgstr ""
+"**`compare(fa, cv_a, fb, cv_b) -> int`**: A lightweight version that "
+"compares two points directly from their objective values and constraint "
+"violation, without going through `Population`"
+msgstr "**`compare(fa, cv_a, fb, cv_b) -> int`**：`Population`を介さず、目的関数値と制約違反から直接2点を比較する軽量版"
 
 #: ../../../components/comparators.md:15
 msgid ""
-"`__init__`が抽象メソッドである点は他のコンポーネントと異なる。 "
-"独自の`Comparator`を実装するサブクラスは、必ず`super().__init__(weights, eps_cv, eps_obj, "
-"direction=...)`を呼ばなければならない。"
-msgstr ""
+"Having `__init__` be an abstract method is different from other "
+"components. Subclasses implementing a custom `Comparator` must always "
+"call `super().__init__(weights, eps_cv, eps_obj, direction=...)`."
+msgstr "`__init__`が抽象メソッドである点は他のコンポーネントと異なります。 独自の`Comparator`を実装するサブクラスは、必ず`super().__init__(weights, eps_cv, eps_obj, direction=...)`を呼ばなければなりません。"
 
 #: ../../../components/comparators.md:18
-msgid "組み込みComparator"
-msgstr ""
+msgid "Built-in Comparators"
+msgstr "組み込みComparator"
 
 #: ../../../components/comparators.md
-msgid "クラス"
-msgstr ""
+msgid "Class"
+msgstr "クラス"
 
 #: ../../../components/comparators.md
-msgid "使いどころ"
-msgstr ""
+msgid "When to use"
+msgstr "使いどころ"
 
 #: ../../../components/comparators.md
 msgid "`SingleObjectiveComparator`"
-msgstr ""
+msgstr "`SingleObjectiveComparator`"
 
 #: ../../../components/comparators.md
-msgid "単目的問題"
-msgstr ""
+msgid "Single-objective problems"
+msgstr "単目的問題"
 
 #: ../../../components/comparators.md
 msgid "`WeightedSumComparator`"
-msgstr ""
+msgstr "`WeightedSumComparator`"
 
 #: ../../../components/comparators.md
-msgid "重み付き線形結合によるスカラー化。単目的でも多目的でも使える"
-msgstr ""
+msgid ""
+"Scalarization via weighted linear combination. Works for both single- and"
+" multi-objective"
+msgstr "重み付き線形結合によるスカラー化。単目的でも多目的でも使える"
 
 #: ../../../components/comparators.md
 msgid "`ParetoComparator`"
-msgstr ""
+msgstr "`ParetoComparator`"
 
 #: ../../../components/comparators.md
-msgid "支配関係のみでランク付け（混雑度などの副次的な指標を持たない）"
-msgstr ""
+msgid "Ranks by dominance relation only (no secondary metric such as crowding)"
+msgstr "支配関係のみでランク付け（混雑度などの副次的な指標を持たない）"
 
 #: ../../../components/comparators.md
 msgid "`NSGA2Comparator`"
-msgstr ""
+msgstr "`NSGA2Comparator`"
 
 #: ../../../components/comparators.md
 #, python-brace-format
-msgid "Paretoランク＋混雑度距離{cite}`deb2002nsga2`"
-msgstr ""
+msgid "Pareto rank + crowding distance {cite}`deb2002nsga2`"
+msgstr "Paretoランク＋混雑度距離{cite}`deb2002nsga2`"
 
 #: ../../../components/comparators.md
 msgid "`SPEA2Comparator`"
-msgstr ""
+msgstr "`SPEA2Comparator`"
 
 #: ../../../components/comparators.md
 #, python-brace-format
-msgid "母集団全体に依存するSPEA2 fitness{cite}`zitzler2001spea2`"
-msgstr ""
+msgid ""
+"SPEA2 fitness, which depends on the entire population "
+"{cite}`zitzler2001spea2`"
+msgstr "個体群全体に依存するSPEA2 fitness{cite}`zitzler2001spea2`"
 
 #: ../../../components/comparators.md
 msgid "`HypervolumeComparator`"
-msgstr ""
+msgstr "`HypervolumeComparator`"
 
 #: ../../../components/comparators.md
 #, python-brace-format
-msgid "フロントランク＋排他的HV寄与度（SMS-EMOA風）{cite}`beume2007smsemoa`"
-msgstr ""
+msgid ""
+"Front rank + exclusive HV contribution (SMS-EMOA style) "
+"{cite}`beume2007smsemoa`"
+msgstr "フロントランク＋排他的HV寄与度（SMS-EMOA風）{cite}`beume2007smsemoa`"
 
 #: ../../../components/comparators.md
 msgid "`EpsilonDominanceComparator`"
-msgstr ""
+msgstr "`EpsilonDominanceComparator`"
 
 #: ../../../components/comparators.md
 #, python-brace-format
-msgid "ε-支配によるランク付け{cite}`laumanns2002epsilon`"
-msgstr ""
+msgid "Ranking via ε-dominance {cite}`laumanns2002epsilon`"
+msgstr "ε-支配によるランク付け{cite}`laumanns2002epsilon`"
 
 #: ../../../components/comparators.md
 msgid "`NSGA3Comparator`"
-msgstr ""
+msgstr "`NSGA3Comparator`"
 
 #: ../../../components/comparators.md
 #, python-brace-format
-msgid "参照点によるニッチ保存{cite}`deb2014nsga3`"
-msgstr ""
+msgid "Niche preservation via reference points {cite}`deb2014nsga3`"
+msgstr "参照点によるニッチ保存{cite}`deb2014nsga3`"
 
 #: ../../../components/comparators.md
 msgid "`RNSGA2Comparator`"
-msgstr ""
+msgstr "`RNSGA2Comparator`"
 
 #: ../../../components/comparators.md
 #, python-brace-format
-msgid "ユーザー指定の参照点による選好誘導{cite}`deb2006rnsga2`"
-msgstr ""
+msgid ""
+"Preference guidance via user-specified reference points "
+"{cite}`deb2006rnsga2`"
+msgstr "ユーザー指定の参照点による選好誘導{cite}`deb2006rnsga2`"
 
 #: ../../../components/comparators.md:32
 msgid ""
-"`SingleObjectiveComparator(direction=None, *, eps_cv=1e-6, "
-"eps_obj=1e-6)`は`direction`を省略でき、その場合は最小化として扱う。"
-msgstr ""
+"`SingleObjectiveComparator(direction=None, *, eps_cv=1e-6, eps_obj=1e-6)`"
+" allows `direction` to be omitted, in which case it's treated as "
+"minimization."
+msgstr "`SingleObjectiveComparator(direction=None, *, eps_cv=1e-6, eps_obj=1e-6)`は`direction`を省略でき、その場合は最小化として扱います。"
 
 #: ../../../components/comparators.md:34
 msgid ""
-"`WeightedSumComparator(direction, *, eps_cv=1e-6, "
-"eps_obj=1e-6)`は`direction`が必須で、省略すると`TypeError`になる。 "
-"このクラスに限り、渡した`direction`がそのままスカラー化の重みとして使われる（`score = f @ direction`）。 "
-"符号だけでなく大きさも重みとして機能するため、[Problem](problem.md)で述べた「`direction`は符号のみ、重みの大きさは別の概念」という一般的な役割分担とは異なる、このクラス固有の扱いである。"
-msgstr ""
+"`WeightedSumComparator(direction, *, eps_cv=1e-6, eps_obj=1e-6)` requires"
+" `direction`; omitting it raises `TypeError`. This class is the sole "
+"exception where the passed `direction` is used directly as the "
+"scalarization weights (`score = f @ direction`). Not just the sign but "
+"also the magnitude functions as a weight, which is a treatment specific "
+"to this class, different from the general role split described in "
+"[Problem](problem.md) where \"`direction` is sign only, and weight "
+"magnitude is a separate concept.\""
+msgstr "`WeightedSumComparator(direction, *, eps_cv=1e-6, eps_obj=1e-6)`は`direction`が必須で、省略すると`TypeError`になります。 このクラスに限り、渡した`direction`がそのままスカラー化の重みとして使われます（`score = f @ direction`）。 符号だけでなく大きさも重みとして機能するため、[Problem](problem.md)で述べた「`direction`は符号のみ、重みの大きさは別の概念」という一般的な役割分担とは異なる、このクラス固有の扱いです。"
 
 #: ../../../components/comparators.md:38
 msgid ""
 "`ParetoComparator(direction=None, *, eps_cv=1e-6, eps_obj=1e-6, "
-"sorter=non_dominated_sort, dominator=None)`は、支配関係のみで個体群をランク付けする。 "
-"`NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`の共通基底であり、具象クラスとして単独でも使える。"
-" "
-"`dominator`引数は[Dominator](dominance.md)、`sorter`引数は[NonDominatedSorter](nondominated_sorting.md)を注入する差し替え点で、互いに独立した軸である。"
-msgstr ""
+"sorter=non_dominated_sort, dominator=None)` ranks the population by "
+"dominance relation alone. It's the common base of "
+"`NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`,"
+" and can also be used standalone as a concrete class. The `dominator` "
+"argument injects a [Dominator](dominance.md) and the `sorter` argument "
+"injects a [NonDominatedSorter](nondominated_sorting.md) — independent "
+"swap points from each other."
+msgstr "`ParetoComparator(direction=None, *, eps_cv=1e-6, eps_obj=1e-6, sorter=non_dominated_sort, dominator=None)`は、支配関係のみで個体群をランク付けします。 `NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`の共通基底であり、具象クラスとして単独でも使えます。 `dominator`引数は[Dominator](dominance.md)、`sorter`引数は[NonDominatedSorter](nondominated_sorting.md)を注入する差し替え点で、互いに独立した軸です。"
 
 #: ../../../components/comparators.md:42
 msgid ""
-"`NSGA2Comparator`は、`ParetoComparator`に混雑度距離による副次的な順位付けを加える。 "
-"ソート結果は`Population`のキャッシュ（`get_cache`/`set_cache`）に保存され、個体群が変更されるまで世代内で使い回される。"
-msgstr ""
+"`NSGA2Comparator` adds secondary ranking by crowding distance on top of "
+"`ParetoComparator`. The sort result is stored in `Population`'s cache "
+"(`get_cache`/`set_cache`) and reused within the generation until the "
+"population changes."
+msgstr "`NSGA2Comparator`は、`ParetoComparator`に混雑度距離による副次的な順位付けを加えます。 ソート結果は`Population`のキャッシュ（`get_cache`/`set_cache`）に保存され、個体群が変更されるまで世代内で使い回されます。"
 
 #: ../../../components/comparators.md:45
-msgid "母集団相対的なComparator"
-msgstr ""
+msgid "Population-relative Comparators"
+msgstr "個体群相対的なComparator"
 
 #: ../../../components/comparators.md:47
 msgid ""
-"`SPEA2Comparator`と`HypervolumeComparator`は、いずれも`compare()`を呼ぶと`NotImplementedError`を送出する。"
-" SPEA2のfitnessも排他的HV寄与度も、母集団全体に依存する指標であり、2点だけからは計算できないためである。 "
-"これはバグではなく意図した設計であり、`is_population_relative=True`というクラス属性がその旨を示すマーカーになっている。"
-msgstr ""
+"`SPEA2Comparator` and `HypervolumeComparator` both raise "
+"`NotImplementedError` when `compare()` is called. This is because both "
+"SPEA2's fitness and exclusive HV contribution are metrics that depend on "
+"the entire population, and cannot be computed from just two points. This "
+"is not a bug but an intentional design, marked by the class attribute "
+"`is_population_relative=True`."
+msgstr "`SPEA2Comparator`と`HypervolumeComparator`は、いずれも`compare()`を呼ぶと`NotImplementedError`を送出します。 SPEA2のfitnessも排他的HV寄与度も、個体群全体に依存する指標であり、2点だけからは計算できないためです。 これはバグではなく意図した設計であり、`is_population_relative=True`というクラス属性がその旨を示すマーカーになっています。"
 
 #: ../../../components/comparators.md:51
 msgid ""
-"PSOのpbest更新や`PairwiseComparisonSet`のように、2点だけの比較（`compare()`）が必要な場面でこれらのComparatorは使えない。"
-" そのような場面では代わりに`ParetoComparator`を使う。 "
-"`compare_population()`（個体群のインデックスを介した比較）はどちらのクラスでも定義されているため、トーナメント選択などはそのまま使える。"
-msgstr ""
+"These Comparators can't be used in situations that need a two-point "
+"comparison (`compare()`) alone, such as PSO's pbest update or "
+"`PairwiseComparisonSet`. Use `ParetoComparator` instead in such "
+"situations. `compare_population()` (comparison via population indices) is"
+" defined on both classes, so things like tournament selection work as-is."
+msgstr "PSOのpbest更新や`PairwiseComparisonSet`のように、2点だけの比較（`compare()`）が必要な場面でこれらのComparatorは使えません。 そのような場面では代わりに`ParetoComparator`を使います。 `compare_population()`（個体群のインデックスを介した比較）はどちらのクラスでも定義されているため、トーナメント選択などはそのまま使えます。"
 
 #: ../../../components/comparators.md:55
 msgid ""
-"`HypervolumeComparator`のHV計算は、フロットごとにO(N)回のleave-one-out評価を行う。 "
-"目的数が多い問題では、この計算コストが大きくなる。"
-msgstr ""
+"`HypervolumeComparator`'s HV computation performs O(N) leave-one-out "
+"evaluations per front. For problems with many objectives, this "
+"computational cost grows large."
+msgstr "`HypervolumeComparator`のHV計算は、フロントごとにO(N)回のleave-one-out評価を行います。 目的数が多い問題では、この計算コストが大きくなります。"
 
 #: ../../../components/comparators.md:59
 msgid ""
-"`HypervolumeComparator`の内部実装とは別に、`saealib.hypervolume(f, "
-"reference_point)`という公開関数がある。 "
-"これは最適化後の結果を評価する性能指標として単体で使えるもので、`HypervolumeComparator`とは無関係である。 "
-"詳細は[Utils](../api/utils.md)を参照する。"
-msgstr ""
+"Separate from `HypervolumeComparator`'s internal implementation, there is"
+" a public function `saealib.hypervolume(f, reference_point)`. This can be"
+" used standalone as a performance metric for evaluating results after "
+"optimization, and is unrelated to `HypervolumeComparator`. See "
+"[Utils](../api/utils.md) for details."
+msgstr "`HypervolumeComparator`の内部実装とは別に、`saealib.hypervolume(f, reference_point)`という公開関数があります。 これは最適化後の結果を評価する性能指標として単体で使えるもので、`HypervolumeComparator`とは無関係です。 詳細は[Utils](../api/utils.md)を参照してください。"
 
 #: ../../../components/comparators.md:64
-msgid "参照点を使うComparator"
-msgstr ""
+msgid "Comparators using reference points"
+msgstr "参照点を使うComparator"
 
 #: ../../../components/comparators.md:66
 msgid ""
-"`NSGA3Comparator(reference_points, direction=None, *, "
-"...)`は、`reference_points`（`shape (n_ref, n_obj)`、単体シンプレックス上の点）が必須引数である。 "
-"通常は`saealib.utils.weight_vectors.uniform_weight_vectors(n_obj, "
-"n_divisions)`で一様に生成したものを渡す。 "
-"`rng`プロパティは遅延生成され、`Optimizer`実行時は`Runner`が`ctx.rng`からspawnした乱数生成器を注入する。 "
-"この内部rngはチェックポイントの保存対象に含まれず、再開時は新しくspawnし直される。"
-msgstr ""
+"`NSGA3Comparator(reference_points, direction=None, *, ...)` requires "
+"`reference_points` (`shape (n_ref, n_obj)`, points on the unit simplex). "
+"Normally, you pass points generated uniformly via "
+"`saealib.utils.weight_vectors.uniform_weight_vectors(n_obj, "
+"n_divisions)`. The `rng` property is lazily generated; during an "
+"`Optimizer` run, `Runner` injects a random number generator spawned from "
+"`ctx.rng`. This internal rng is not included when a checkpoint is saved, "
+"and is re-spawned on resume."
+msgstr "`NSGA3Comparator(reference_points, direction=None, *, ...)`は、`reference_points`（`shape (n_ref, n_obj)`、単体シンプレックス上の点）が必須引数です。 通常は`saealib.utils.weight_vectors.uniform_weight_vectors(n_obj, n_divisions)`で一様に生成したものを渡します。 `rng`プロパティは遅延生成され、`Optimizer`実行時は`Runner`が`ctx.rng`からspawnした乱数生成器を注入します。 この内部rngはチェックポイントの保存対象に含まれず、再開時は新しくspawnし直されます。"
 
 #: ../../../components/comparators.md:71
 msgid ""
-"`RNSGA2Comparator(reference_points, epsilon=0.001, direction=None, *, "
-"...)`は、`NSGA3Comparator`とは異なり参照点が単体シンプレックス上にある必要はなく、ユーザーが望む目的関数値（aspiration"
-" point）をそのまま指定できる。 `epsilon`は、同じ参照点に近い解同士を間引くε-clearingの半径である。"
-msgstr ""
+"Unlike `NSGA3Comparator`, `RNSGA2Comparator(reference_points, "
+"epsilon=0.001, direction=None, *, ...)` doesn't require the reference "
+"points to lie on the unit simplex — you can specify the objective values "
+"you actually want (an aspiration point) directly. `epsilon` is the radius"
+" of the ε-clearing that thins out solutions close to the same reference "
+"point."
+msgstr "`RNSGA2Comparator(reference_points, epsilon=0.001, direction=None, *, ...)`は、`NSGA3Comparator`とは異なり参照点が単体シンプレックス上にある必要はなく、ユーザーが望む目的関数値（aspiration point）をそのまま指定できます。 `epsilon`は、同じ参照点に近い解同士を間引くε-clearingの半径です。"
 
 #: ../../../components/comparators.md:74
 msgid ""
 "`EpsilonDominanceComparator(eps, mode=\"additive\", direction=None, *, "
-"...)`は、`ParetoComparator`の`dominator`を[EpsilonDominator](dominance.md)に差し替えるだけの薄いラッパーである。"
-msgstr ""
+"...)` is a thin wrapper that simply swaps `ParetoComparator`'s "
+"`dominator` for an [EpsilonDominator](dominance.md)."
+msgstr "`EpsilonDominanceComparator(eps, mode=\"additive\", direction=None, *, ...)`は、`ParetoComparator`の`dominator`を[EpsilonDominator](dominance.md)に差し替えるだけの薄いラッパーです。"
 
 #: ../../../components/comparators.md:76
 msgid ""
-"[DecompositionComparator](decomposition.md)は、MOEA/D風のスカラー化によるランク付けを行うComparatorである。"
-" 詳細はそちらのページで扱う。"
-msgstr ""
+"[DecompositionComparator](decomposition.md) is a Comparator that ranks "
+"using MOEA/D-style scalarization. See that page for details."
+msgstr "[DecompositionComparator](decomposition.md)は、MOEA/D風のスカラー化によるランク付けを行うComparatorです。 詳細はそちらのページで扱います。"
 
 #: ../../../components/comparators.md:79
-msgid "独自Comparatorの実装方法"
-msgstr ""
+msgid "Implementing a custom Comparator"
+msgstr "独自Comparatorの実装方法"
 
 #: ../../../components/comparators.md:81
 msgid ""
-"独自の順位付け方式が必要な場合は、`Comparator`を継承して4つのメソッド全てを実装する。 "
-"`__init__`は必ず`super().__init__(weights, eps_cv, eps_obj, "
-"direction=...)`を呼ぶ。"
-msgstr ""
+"If you need a custom ranking scheme, subclass `Comparator` and implement "
+"all four methods. `__init__` must always call `super().__init__(weights, "
+"eps_cv, eps_obj, direction=...)`."
+msgstr "独自の順位付け方式が必要な場合は、`Comparator`を継承して4つのメソッド全てを実装します。 `__init__`は必ず`super().__init__(weights, eps_cv, eps_obj, direction=...)`を呼びます。"
 
 #: ../../../components/comparators.md:111
 msgid ""
-"`SPEA2Comparator`/`HypervolumeComparator`のように、母集団全体に依存する指標を実装する場合は、`is_population_relative"
-" = "
-"True`というクラス属性を立て、`compare()`で理由を説明する`NotImplementedError`を送出する設計パターンが使える。"
-msgstr ""
+"When implementing a metric that depends on the entire population, as "
+"`SPEA2Comparator`/`HypervolumeComparator` do, you can use the design "
+"pattern of setting the class attribute `is_population_relative = True` "
+"and having `compare()` raise a `NotImplementedError` explaining why."
+msgstr "`SPEA2Comparator`/`HypervolumeComparator`のように、個体群全体に依存する指標を実装する場合は、`is_population_relative = True`というクラス属性を立て、`compare()`で理由を説明する`NotImplementedError`を送出する設計パターンが使えます。"
 
 #: ../../../components/comparators.md:113
-msgid "関連コンポーネント"
-msgstr ""
+msgid "Related components"
+msgstr "関連コンポーネント"
 
 #: ../../../components/comparators.md:115
-msgid "[Dominator](dominance.md) — `ParetoComparator`系の`dominator`引数"
-msgstr ""
+msgid ""
+"[Dominator](dominance.md): The `dominator` argument of the "
+"`ParetoComparator` family"
+msgstr "[Dominator](dominance.md)：`ParetoComparator`系の`dominator`引数"
 
 #: ../../../components/comparators.md:116
 msgid ""
-"[NonDominatedSorter](nondominated_sorting.md) — "
-"`ParetoComparator`系の`sorter`引数"
-msgstr ""
+"[NonDominatedSorter](nondominated_sorting.md): The `sorter` argument of "
+"the `ParetoComparator` family"
+msgstr "[NonDominatedSorter](nondominated_sorting.md)：`ParetoComparator`系の`sorter`引数"
 
 #: ../../../components/comparators.md:117
-msgid "[Decomposition](decomposition.md) — `DecompositionComparator`が使うスカラー化関数"
-msgstr ""
+msgid ""
+"[Decomposition](decomposition.md): The scalarization functions used by "
+"`DecompositionComparator`"
+msgstr "[Decomposition](decomposition.md)：`DecompositionComparator`が使うスカラー化関数"
 
 #: ../../../components/comparators.md:118
-msgid "[Problem](problem.md) — `comparator`引数の渡し方、既定選択のルール"
-msgstr ""
+msgid ""
+"[Problem](problem.md): How to pass the `comparator` argument, and the "
+"default-selection rules"
+msgstr "[Problem](problem.md)：`comparator`引数の渡し方、既定選択のルール"
 
 #: ../../../components/comparators.md:119
 msgid ""
 "[ParentSelection](parent_selection.md) / "
-"[SurvivorSelection](survivor_selection.md) — `Comparator`を使って個体を選ぶ演算子"
-msgstr ""
+"[SurvivorSelection](survivor_selection.md): Operators that use "
+"`Comparator` to select individuals"
+msgstr "[ParentSelection](parent_selection.md) / [SurvivorSelection](survivor_selection.md)：`Comparator`を使って個体を選ぶ演算子"
 
 #: ../../../components/comparators.md:121
-msgid "参照"
-msgstr ""
+msgid "References"
+msgstr "参照"
 
 #: ../../../components/comparators.md:123
 #, python-brace-format
 msgid "{py:class}`saealib.Comparator`"
-msgstr ""
+msgstr "{py:class}`saealib.Comparator`"
 
 #: ../../../components/comparators.md:124
 #, python-brace-format
 msgid "{py:class}`saealib.SingleObjectiveComparator`"
-msgstr ""
+msgstr "{py:class}`saealib.SingleObjectiveComparator`"
 
 #: ../../../components/comparators.md:125
 #, python-brace-format
 msgid "{py:class}`saealib.WeightedSumComparator`"
-msgstr ""
+msgstr "{py:class}`saealib.WeightedSumComparator`"
 
 #: ../../../components/comparators.md:126
 #, python-brace-format
 msgid "{py:class}`saealib.ParetoComparator`"
-msgstr ""
+msgstr "{py:class}`saealib.ParetoComparator`"
 
 #: ../../../components/comparators.md:127
 #, python-brace-format
 msgid "{py:class}`saealib.NSGA2Comparator`"
-msgstr ""
+msgstr "{py:class}`saealib.NSGA2Comparator`"
 
 #: ../../../components/comparators.md:128
 #, python-brace-format
 msgid "{py:class}`saealib.SPEA2Comparator`"
-msgstr ""
+msgstr "{py:class}`saealib.SPEA2Comparator`"
 
 #: ../../../components/comparators.md:129
 #, python-brace-format
 msgid "{py:class}`saealib.HypervolumeComparator`"
-msgstr ""
+msgstr "{py:class}`saealib.HypervolumeComparator`"
 
 #: ../../../components/comparators.md:130
 #, python-brace-format
 msgid "{py:class}`saealib.EpsilonDominanceComparator`"
-msgstr ""
+msgstr "{py:class}`saealib.EpsilonDominanceComparator`"
 
 #: ../../../components/comparators.md:131
 #, python-brace-format
 msgid "{py:class}`saealib.NSGA3Comparator`"
-msgstr ""
+msgstr "{py:class}`saealib.NSGA3Comparator`"
 
 #: ../../../components/comparators.md:132
 #, python-brace-format
 msgid "{py:class}`saealib.RNSGA2Comparator`"
-msgstr ""
+msgstr "{py:class}`saealib.RNSGA2Comparator`"
 
 #: ../../../components/comparators.md:133
 #, python-brace-format
 msgid "{py:func}`saealib.hypervolume`"
-msgstr ""
+msgstr "{py:func}`saealib.hypervolume`"
+
+#~ msgid ""
+#~ "`Problem`は、解の優劣を判断する処理を`Comparator`という差し替え可能なトップレベルコンポーネントに委ねている。 "
+#~ "`Problem`の`comparator`引数で渡す。"
+#~ msgstr ""
+
+#~ msgid "Comparatorの役割"
+#~ msgstr ""
+
+#~ msgid "`Comparator`は、`__init__`自体を含めて4つのメソッド全てが抽象メソッドである。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`__init__(weights, eps_cv, eps_obj, "
+#~ "direction=None)`**：`weights`/`eps_cv`/`eps_obj`/`direction`を保持する"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`sort_population(population) -> "
+#~ "np.ndarray`**：個体群全体を優劣順に並べたインデックス配列を返す"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`compare_population(population, idx_a, idx_b) ->"
+#~ " int`**：個体群中の2個体を比較する（`-1`：aが優れる、`1`：bが優れる、`0`：同等）"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`compare(fa, cv_a, fb, cv_b) -> "
+#~ "int`**：`Population`を介さず、目的関数値と制約違反から直接2点を比較する軽量版"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`__init__`が抽象メソッドである点は他のコンポーネントと異なる。 "
+#~ "独自の`Comparator`を実装するサブクラスは、必ず`super().__init__(weights, eps_cv,"
+#~ " eps_obj, direction=...)`を呼ばなければならない。"
+#~ msgstr ""
+
+#~ msgid "組み込みComparator"
+#~ msgstr ""
+
+#~ msgid "クラス"
+#~ msgstr ""
+
+#~ msgid "使いどころ"
+#~ msgstr ""
+
+#~ msgid "単目的問題"
+#~ msgstr ""
+
+#~ msgid "重み付き線形結合によるスカラー化。単目的でも多目的でも使える"
+#~ msgstr ""
+
+#~ msgid "支配関係のみでランク付け（混雑度などの副次的な指標を持たない）"
+#~ msgstr ""
+
+#~ msgid "Paretoランク＋混雑度距離{cite}`deb2002nsga2`"
+#~ msgstr ""
+
+#~ msgid "母集団全体に依存するSPEA2 fitness{cite}`zitzler2001spea2`"
+#~ msgstr ""
+
+#~ msgid "フロントランク＋排他的HV寄与度（SMS-EMOA風）{cite}`beume2007smsemoa`"
+#~ msgstr ""
+
+#~ msgid "ε-支配によるランク付け{cite}`laumanns2002epsilon`"
+#~ msgstr ""
+
+#~ msgid "参照点によるニッチ保存{cite}`deb2014nsga3`"
+#~ msgstr ""
+
+#~ msgid "ユーザー指定の参照点による選好誘導{cite}`deb2006rnsga2`"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`SingleObjectiveComparator(direction=None, *, eps_cv=1e-6,"
+#~ " eps_obj=1e-6)`は`direction`を省略でき、その場合は最小化として扱う。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`WeightedSumComparator(direction, *, eps_cv=1e-6, "
+#~ "eps_obj=1e-6)`は`direction`が必須で、省略すると`TypeError`になる。 "
+#~ "このクラスに限り、渡した`direction`がそのままスカラー化の重みとして使われる（`score = f "
+#~ "@ direction`）。 "
+#~ "符号だけでなく大きさも重みとして機能するため、[Problem](problem.md)で述べた「`direction`は符号のみ、重みの大きさは別の概念」という一般的な役割分担とは異なる、このクラス固有の扱いである。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`ParetoComparator(direction=None, *, eps_cv=1e-6, "
+#~ "eps_obj=1e-6, sorter=non_dominated_sort, "
+#~ "dominator=None)`は、支配関係のみで個体群をランク付けする。 "
+#~ "`NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`の共通基底であり、具象クラスとして単独でも使える。"
+#~ " "
+#~ "`dominator`引数は[Dominator](dominance.md)、`sorter`引数は[NonDominatedSorter](nondominated_sorting.md)を注入する差し替え点で、互いに独立した軸である。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`NSGA2Comparator`は、`ParetoComparator`に混雑度距離による副次的な順位付けを加える。 "
+#~ "ソート結果は`Population`のキャッシュ（`get_cache`/`set_cache`）に保存され、個体群が変更されるまで世代内で使い回される。"
+#~ msgstr ""
+
+#~ msgid "母集団相対的なComparator"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`SPEA2Comparator`と`HypervolumeComparator`は、いずれも`compare()`を呼ぶと`NotImplementedError`を送出する。"
+#~ " SPEA2のfitnessも排他的HV寄与度も、母集団全体に依存する指標であり、2点だけからは計算できないためである。 "
+#~ "これはバグではなく意図した設計であり、`is_population_relative=True`というクラス属性がその旨を示すマーカーになっている。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "PSOのpbest更新や`PairwiseComparisonSet`のように、2点だけの比較（`compare()`）が必要な場面でこれらのComparatorは使えない。"
+#~ " そのような場面では代わりに`ParetoComparator`を使う。 "
+#~ "`compare_population()`（個体群のインデックスを介した比較）はどちらのクラスでも定義されているため、トーナメント選択などはそのまま使える。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`HypervolumeComparator`のHV計算は、フロットごとにO(N)回のleave-one-"
+#~ "out評価を行う。 目的数が多い問題では、この計算コストが大きくなる。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`HypervolumeComparator`の内部実装とは別に、`saealib.hypervolume(f, "
+#~ "reference_point)`という公開関数がある。 "
+#~ "これは最適化後の結果を評価する性能指標として単体で使えるもので、`HypervolumeComparator`とは無関係である。 "
+#~ "詳細は[Utils](../api/utils.md)を参照する。"
+#~ msgstr ""
+
+#~ msgid "参照点を使うComparator"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`NSGA3Comparator(reference_points, direction=None, *, "
+#~ "...)`は、`reference_points`（`shape (n_ref, "
+#~ "n_obj)`、単体シンプレックス上の点）が必須引数である。 "
+#~ "通常は`saealib.utils.weight_vectors.uniform_weight_vectors(n_obj, "
+#~ "n_divisions)`で一様に生成したものを渡す。 "
+#~ "`rng`プロパティは遅延生成され、`Optimizer`実行時は`Runner`が`ctx.rng`からspawnした乱数生成器を注入する。"
+#~ " この内部rngはチェックポイントの保存対象に含まれず、再開時は新しくspawnし直される。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`RNSGA2Comparator(reference_points, epsilon=0.001, "
+#~ "direction=None, *, "
+#~ "...)`は、`NSGA3Comparator`とは異なり参照点が単体シンプレックス上にある必要はなく、ユーザーが望む目的関数値（aspiration"
+#~ " point）をそのまま指定できる。 "
+#~ "`epsilon`は、同じ参照点に近い解同士を間引くε-clearingの半径である。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`EpsilonDominanceComparator(eps, mode=\"additive\", "
+#~ "direction=None, *, "
+#~ "...)`は、`ParetoComparator`の`dominator`を[EpsilonDominator](dominance.md)に差し替えるだけの薄いラッパーである。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[DecompositionComparator](decomposition.md)は、MOEA/D風のスカラー化によるランク付けを行うComparatorである。"
+#~ " 詳細はそちらのページで扱う。"
+#~ msgstr ""
+
+#~ msgid "独自Comparatorの実装方法"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "独自の順位付け方式が必要な場合は、`Comparator`を継承して4つのメソッド全てを実装する。 "
+#~ "`__init__`は必ず`super().__init__(weights, eps_cv, eps_obj,"
+#~ " direction=...)`を呼ぶ。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`SPEA2Comparator`/`HypervolumeComparator`のように、母集団全体に依存する指標を実装する場合は、`is_population_relative"
+#~ " = "
+#~ "True`というクラス属性を立て、`compare()`で理由を説明する`NotImplementedError`を送出する設計パターンが使える。"
+#~ msgstr ""
+
+#~ msgid "関連コンポーネント"
+#~ msgstr ""
+
+#~ msgid "[Dominator](dominance.md) — `ParetoComparator`系の`dominator`引数"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[NonDominatedSorter](nondominated_sorting.md) — "
+#~ "`ParetoComparator`系の`sorter`引数"
+#~ msgstr ""
+
+#~ msgid "[Decomposition](decomposition.md) — `DecompositionComparator`が使うスカラー化関数"
+#~ msgstr ""
+
+#~ msgid "[Problem](problem.md) — `comparator`引数の渡し方、既定選択のルール"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[ParentSelection](parent_selection.md) / "
+#~ "[SurvivorSelection](survivor_selection.md) — "
+#~ "`Comparator`を使って個体を選ぶ演算子"
+#~ msgstr ""
+
+#~ msgid "参照"
+#~ msgstr ""
 

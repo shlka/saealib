@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -20,39 +20,69 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: ../../../getting_started/index.md:1
-msgid "はじめに"
-msgstr ""
+msgid "Getting Started"
+msgstr "はじめに"
 
 #: ../../../getting_started/index.md:3
-msgid "saealibを初めて使う方へ。このセクションでは、saealibとは何か、インストール方法、最初の最適化の実行方法という基本を説明します。"
-msgstr ""
+msgid ""
+"For first-time saealib users. This section covers the basics: what "
+"saealib is, how to install it, and how to run your first optimization."
+msgstr "saealibを初めて使う方へ。このセクションでは、saealibとは何か、インストール方法、最初の最適化の実行方法という基本を説明します。"
 
 #: ../../../getting_started/index.md:9
-msgid "saealibとは"
-msgstr ""
+msgid "What is saealib"
+msgstr "saealibとは"
 
 #: ../../../getting_started/index.md:13
-msgid "サロゲート型進化的アルゴリズムとは何か、そしてなぜsaealibが存在するのかを理解します。"
-msgstr ""
+msgid ""
+"Understand what surrogate-assisted evolutionary algorithms are, and why "
+"saealib exists."
+msgstr "サロゲート型進化的アルゴリズムとは何か、そしてsaealibが必要な理由を理解します。"
 
 #: ../../../getting_started/index.md:16
-msgid "インストール"
-msgstr ""
+msgid "Installation"
+msgstr "インストール"
 
 #: ../../../getting_started/index.md:20
 msgid ""
-"saealib本体とオプションの追加パッケージ(scikit-"
-"learn、XGBoost、LightGBM、PyTorchなど)をインストールします。"
-msgstr ""
+"Install saealib and its optional extras (scikit-learn, XGBoost, LightGBM,"
+" PyTorch, etc.)."
+msgstr "saealib本体とオプションの追加パッケージ（scikit-learn、XGBoost、LightGBM、PyTorchなど）をインストールします。"
 
 #: ../../../getting_started/index.md:23
-msgid "クイックスタート"
-msgstr ""
+msgid "Quickstart"
+msgstr "クイックスタート"
 
 #: ../../../getting_started/index.md:27
-msgid "`minimize()` / `maximize()`で最初の最適化を実行します。"
-msgstr ""
+msgid "Run your first optimization with `minimize()` / `maximize()`."
+msgstr "`minimize()` / `maximize()`で最初の最適化を実行します。"
 
 #~ msgid "Getting Started"
+#~ msgstr ""
+
+#~ msgid "はじめに"
+#~ msgstr ""
+
+#~ msgid "saealibを初めて使う方へ。このセクションでは、saealibとは何か、インストール方法、最初の最適化の実行方法という基本を説明します。"
+#~ msgstr ""
+
+#~ msgid "saealibとは"
+#~ msgstr ""
+
+#~ msgid "サロゲート型進化的アルゴリズムとは何か、そしてなぜsaealibが存在するのかを理解します。"
+#~ msgstr ""
+
+#~ msgid "インストール"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "saealib本体とオプションの追加パッケージ(scikit-"
+#~ "learn、XGBoost、LightGBM、PyTorchなど)をインストールします。"
+#~ msgstr ""
+
+#~ msgid "クイックスタート"
+#~ msgstr ""
+
+#~ msgid "`minimize()` / `maximize()`で最初の最適化を実行します。"
 #~ msgstr ""
 

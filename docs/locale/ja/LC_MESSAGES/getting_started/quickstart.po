@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -20,64 +20,123 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: ../../../getting_started/quickstart.md:1
-msgid "クイックスタート"
-msgstr ""
+msgid "Quickstart"
+msgstr "クイックスタート"
 
 #: ../../../getting_started/quickstart.md:2
-msgid "インストールは完了していますか？ インストール方法は[こちら](./installation.md)を参照してください。"
-msgstr ""
+msgid ""
+"Have you finished installing saealib? See [here](./installation.md) for "
+"installation instructions."
+msgstr "インストールは完了していますか？ インストール方法は[こちら](./installation.md)を参照してください。"
 
 #: ../../../getting_started/quickstart.md:5
-msgid "初めての実行"
-msgstr ""
+msgid "Your first run"
+msgstr "初めての実行"
 
 #: ../../../getting_started/quickstart.md:6
-msgid "まずは最小の記述で最適化問題を解いてみましょう。"
-msgstr ""
+msgid "Let's solve an optimization problem with the least amount of code."
+msgstr "まずは最小の記述で最適化問題を解いてみましょう。"
 
 #: ../../../getting_started/quickstart.md:18
 msgid ""
-"ここでは`saealib`が提供するベンチマークパッケージから、設計変数空間が10次元のRastrigin関数(`saealib.benchmarks.rastrigin`)の最小化問題を解いています。"
-" `minimize()` / `maximize()`は、パラメータを指定するだけで最適化を実行できる高レベルAPIです。"
-msgstr ""
+"Here we solve a minimization problem for the 10-dimensional Rastrigin "
+"function (`saealib.benchmarks.rastrigin`) from the benchmark package "
+"provided by `saealib`. `minimize()` / `maximize()` is a high-level API "
+"that runs an optimization just by specifying parameters."
+msgstr "ここでは`saealib`が提供するベンチマークパッケージから、設計変数空間が10次元のRastrigin関数(`saealib.benchmarks.rastrigin`)の最小化問題を解いています。 `minimize()` / `maximize()`は、パラメータを指定するだけで最適化を実行できる高レベルAPIです。"
 
 #: ../../../getting_started/quickstart.md:21
-msgid "任意の関数を最適化"
-msgstr ""
+msgid "Optimizing an arbitrary function"
+msgstr "任意の関数を最適化"
 
 #: ../../../getting_started/quickstart.md:22
 msgid ""
-"前節ではベンチマーク問題を使用しましたが、ここでは任意の関数を最適化する例を見てみましょう。 "
-"`saealib`のベンチマークパッケージを利用する場合は必要なパラメータが自動的にAPIへ渡されますが、任意の関数(`callable`)を渡す場合はいくつかのパラメータを自分で指定する必要があります。"
-msgstr ""
+"The previous section used a benchmark problem; here, let's look at an "
+"example of optimizing an arbitrary function. When using `saealib`'s "
+"benchmark package, the required parameters are passed to the API "
+"automatically, but when passing an arbitrary function (`callable`), you "
+"need to specify a few parameters yourself."
+msgstr "前節ではベンチマーク問題を使用しましたが、ここでは任意の関数を最適化する例を見てみましょう。 `saealib`のベンチマークパッケージを利用する場合は必要なパラメータが自動的にAPIへ渡されますが、任意の関数(`callable`)を渡す場合はいくつかのパラメータを自分で指定する必要があります。"
 
 #: ../../../getting_started/quickstart.md:37
 msgid ""
-"ここでは10次元のRastrigin関数を定義して最小化問題を解いています。 "
-"`func`パラメータはnumpy配列を受け取り評価値を返すような任意の`callable`オブジェクトを指定できます。 "
-"シミュレーション(CAE)や機械学習モデルの学習など、評価コストの高い目的関数をここに指定することで、効率的なパラメータ探索に応用できます。"
-msgstr ""
+"Here we define the 10-dimensional Rastrigin function and solve it as a "
+"minimization problem. The `func` parameter can be any `callable` object "
+"that takes a numpy array and returns an evaluation value. By specifying "
+"an expensive-to-evaluate objective function here — such as a simulation "
+"(CAE) or the training of a machine learning model — this can be applied "
+"to efficient parameter search."
+msgstr "ここでは10次元のRastrigin関数を定義して最小化問題を解いています。 `func`パラメータはnumpy配列を受け取り評価値を返すような任意の`callable`オブジェクトを指定できます。 シミュレーション(CAE)や機械学習モデルの学習など、評価コストの高い目的関数をここに指定することで、効率的なパラメータ探索に応用できます。"
 
 #: ../../../getting_started/quickstart.md:41
-msgid "次のステップ"
-msgstr ""
+msgid "Next steps"
+msgstr "次のステップ"
 
 #: ../../../getting_started/quickstart.md:42
-msgid "ここで紹介した機能は`saealib`の一部分です。 詳細なガイドは次のページを参照してください。"
-msgstr ""
+msgid ""
+"What's shown here is only a part of `saealib`. See the following pages "
+"for detailed guides."
+msgstr "ここで紹介した機能は`saealib`の一部分です。 詳細なガイドは次のページを参照してください。"
 
 #: ../../../getting_started/quickstart.md:45
-msgid "[チュートリアル](../tutorials/index.md): 具体的なシチュエーション別の使い方ガイド"
-msgstr ""
+msgid "[Tutorials](../tutorials/index.md): Guides for specific usage scenarios"
+msgstr "[チュートリアル](../tutorials/index.md)：具体的な状況別の使い方ガイド"
 
 #: ../../../getting_started/quickstart.md:46
-msgid "[コンポーネント](../components/index.md): コンポーネントごとの詳しい使い方"
-msgstr ""
+msgid "[Components](../components/index.md): Detailed usage of each component"
+msgstr "[コンポーネント](../components/index.md)：コンポーネントごとの詳しい使い方"
 
 #: ../../../getting_started/quickstart.md:47
-msgid "[API Reference](../api/index.md): 全パラメータのリファレンス"
-msgstr ""
+msgid "[API Reference](../api/index.md): Reference for all parameters"
+msgstr "[API Reference](../api/index.md)：全パラメータのリファレンス"
 
 #~ msgid "Quickstart"
+#~ msgstr ""
+
+#~ msgid "クイックスタート"
+#~ msgstr ""
+
+#~ msgid "インストールは完了していますか？ インストール方法は[こちら](./installation.md)を参照してください。"
+#~ msgstr ""
+
+#~ msgid "初めての実行"
+#~ msgstr ""
+
+#~ msgid "まずは最小の記述で最適化問題を解いてみましょう。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "ここでは`saealib`が提供するベンチマークパッケージから、設計変数空間が10次元のRastrigin関数(`saealib.benchmarks.rastrigin`)の最小化問題を解いています。"
+#~ " `minimize()` / "
+#~ "`maximize()`は、パラメータを指定するだけで最適化を実行できる高レベルAPIです。"
+#~ msgstr ""
+
+#~ msgid "任意の関数を最適化"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "前節ではベンチマーク問題を使用しましたが、ここでは任意の関数を最適化する例を見てみましょう。 "
+#~ "`saealib`のベンチマークパッケージを利用する場合は必要なパラメータが自動的にAPIへ渡されますが、任意の関数(`callable`)を渡す場合はいくつかのパラメータを自分で指定する必要があります。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "ここでは10次元のRastrigin関数を定義して最小化問題を解いています。 "
+#~ "`func`パラメータはnumpy配列を受け取り評価値を返すような任意の`callable`オブジェクトを指定できます。 "
+#~ "シミュレーション(CAE)や機械学習モデルの学習など、評価コストの高い目的関数をここに指定することで、効率的なパラメータ探索に応用できます。"
+#~ msgstr ""
+
+#~ msgid "次のステップ"
+#~ msgstr ""
+
+#~ msgid "ここで紹介した機能は`saealib`の一部分です。 詳細なガイドは次のページを参照してください。"
+#~ msgstr ""
+
+#~ msgid "[チュートリアル](../tutorials/index.md): 具体的なシチュエーション別の使い方ガイド"
+#~ msgstr ""
+
+#~ msgid "[コンポーネント](../components/index.md): コンポーネントごとの詳しい使い方"
+#~ msgstr ""
+
+#~ msgid "[API Reference](../api/index.md): 全パラメータのリファレンス"
 #~ msgstr ""
 

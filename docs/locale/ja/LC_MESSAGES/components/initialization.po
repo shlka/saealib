@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-21 17:07+0900\n"
+"POT-Creation-Date: 2026-07-27 02:51+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -21,196 +21,346 @@ msgstr ""
 
 #: ../../../components/initialization.md:1
 msgid "Initializer"
-msgstr ""
+msgstr "Initializer"
 
 #: ../../../components/initialization.md:3
 msgid ""
-"`Optimizer`は実行を始める前に、初期`Population`/`Archive`/`ParetoArchive`と最初の`OptimizationState`を一括で構築する処理を、`Initializer`という差し替え可能なコンポーネントに委ねている。"
-" サンプリング方法を変えたいときは、`Optimizer`本体ではなくこの`Initializer`だけを差し替えればよい。"
-msgstr ""
+"Before starting a run, `Optimizer` delegates constructing the initial "
+"`Population`/`Archive`/`ParetoArchive` and the first `OptimizationState` "
+"all at once to `Initializer`, a swappable component. To change the "
+"sampling method, you only need to swap out this `Initializer`, not "
+"`Optimizer` itself."
+msgstr "`Optimizer`は実行を始める前に、初期`Population`/`Archive`/`ParetoArchive`と最初の`OptimizationState`を一括で構築する処理を、`Initializer`という差し替え可能なコンポーネントに委ねています。 サンプリング方法を変えたいときは、`Optimizer`本体ではなくこの`Initializer`だけを差し替えればよいです。"
 
 #: ../../../components/initialization.md:6
-msgid "Initializerの役割"
-msgstr ""
+msgid "Initializer's role"
+msgstr "Initializerの役割"
 
 #: ../../../components/initialization.md:8
 msgid ""
-"`Initializer`が実装を要求するメソッドは`initialize(provider, problem) -> "
-"OptimizationState`の1つだけである。 "
-"`provider`は`Algorithm`/`Evaluator`など構築済みの他コンポーネントへアクセスするための`ComponentProvider`、`problem`は解くべき[Problem](problem.md)である。"
-msgstr ""
+"`Initializer` requires only one method, `initialize(provider, problem) ->"
+" OptimizationState`, to be implemented. `provider` is a "
+"`ComponentProvider` for accessing other already-constructed components "
+"such as `Algorithm`/`Evaluator`, and `problem` is the "
+"[Problem](problem.md) to solve."
+msgstr "`Initializer`が実装を要求するメソッドは`initialize(provider, problem) -> OptimizationState`の1つだけです。 `provider`は`Algorithm`/`Evaluator`など構築済みの他コンポーネントへアクセスするための`ComponentProvider`、`problem`は解くべき[Problem](problem.md)です。"
 
 #: ../../../components/initialization.md:11
-msgid "組み込みInitializer"
-msgstr ""
+msgid "Built-in Initializers"
+msgstr "組み込みInitializer"
 
 #: ../../../components/initialization.md
-msgid "クラス"
-msgstr ""
+msgid "Class"
+msgstr "クラス"
 
 #: ../../../components/initialization.md
-msgid "サンプリング方法"
-msgstr ""
+msgid "Sampling method"
+msgstr "サンプリング方法"
 
 #: ../../../components/initialization.md
 msgid "`LHSInitializer`"
-msgstr ""
+msgstr "`LHSInitializer`"
 
 #: ../../../components/initialization.md
 msgid "`scipy.stats.qmc.LatinHypercube`"
-msgstr ""
+msgstr "`scipy.stats.qmc.LatinHypercube`"
 
 #: ../../../components/initialization.md
 msgid "`RandomInitializer`"
-msgstr ""
+msgstr "`RandomInitializer`"
 
 #: ../../../components/initialization.md
 msgid "`rng.uniform`"
-msgstr ""
+msgstr "`rng.uniform`"
 
 #: ../../../components/initialization.md
 msgid "`SobolInitializer`"
-msgstr ""
+msgstr "`SobolInitializer`"
 
 #: ../../../components/initialization.md
 msgid "`scipy.stats.qmc.Sobol(scramble=True)`"
-msgstr ""
+msgstr "`scipy.stats.qmc.Sobol(scramble=True)`"
 
 #: ../../../components/initialization.md:19
 msgid ""
-"3クラスとも、コンストラクタは`(n_init_archive, n_init_population, seed=None)`で共通している。 "
-"`n_init_archive`件をサンプリングして評価し、その中から`comparator`でソートした上位`n_init_population`件を初期`Population`へ投入する、という流れも共通である。"
-msgstr ""
+"All three classes share the same constructor, `(n_init_archive, "
+"n_init_population, seed=None)`. They also share the same flow: sample "
+"`n_init_archive` points and evaluate them, then feed the top "
+"`n_init_population` (sorted by `comparator`) into the initial "
+"`Population`."
+msgstr "3クラスとも、コンストラクタは`(n_init_archive, n_init_population, seed=None)`で共通しています。 `n_init_archive`件をサンプリングして評価し、その中から`comparator`でソートした上位`n_init_population`件を初期`Population`へ投入する、という流れも共通です。"
 
 #: ../../../components/initialization.md:30
-msgid "3クラスの実装はサンプリング方法の1行以外ほぼ重複しているが、これは意図的な単純さの選択であり、共通処理を過度に抽象化しない設計になっている。"
-msgstr ""
+msgid ""
+"The three classes' implementations are nearly identical except for the "
+"one line doing the sampling — this is a deliberate choice for simplicity,"
+" a design that doesn't over-abstract the shared processing."
+msgstr "3クラスの実装はサンプリング方法の1行以外ほぼ重複していますが、これは意図的な単純さの選択であり、共通処理を過度に抽象化しない設計になっています。"
 
 #: ../../../components/initialization.md:32
-msgid "基底クラスのヘルパーメソッド"
-msgstr ""
+msgid "Base-class helper methods"
+msgstr "基底クラスのヘルパーメソッド"
 
 #: ../../../components/initialization.md:34
-msgid "`Initializer`基底には、独自実装で再利用できる2つのヘルパーメソッドが用意されている。"
-msgstr ""
+msgid ""
+"The `Initializer` base provides two helper methods reusable in custom "
+"implementations."
+msgstr "`Initializer`基底には、独自実装で再利用できる2つのヘルパーメソッドが用意されています。"
 
 #: ../../../components/initialization.md:36
 msgid ""
-"**`_create_attrs(problem, "
-"provider)`**：`Population`/`Archive`用の`PopulationAttribute`一覧を組み立てる。 "
-"`x`/`f`/`g`/`cv`という標準属性に、`provider.algorithm.get_required_attrs(problem)`が返すアルゴリズム固有の属性（PSOの速度など）を追加する。"
-msgstr ""
+"**`_create_attrs(problem, provider)`**: Assembles the list of "
+"`PopulationAttribute`s for `Population`/`Archive`. Adds algorithm-"
+"specific attributes (such as PSO's velocity) returned by "
+"`provider.algorithm.get_required_attrs(problem)` on top of the standard "
+"attributes `x`/`f`/`g`/`cv`."
+msgstr "**`_create_attrs(problem, provider)`**：`Population`/`Archive`用の`PopulationAttribute`一覧を組み立てます。 `x`/`f`/`g`/`cv`という標準属性に、`provider.algorithm.get_required_attrs(problem)`が返すアルゴリズム固有の属性（PSOの速度など）を追加します。"
 
 #: ../../../components/initialization.md:39
 msgid ""
-"**`_create_context(problem, archive, pareto_archive, population, "
-"rng)`**：`OptimizationState`を構築する。 "
-"`comparator`が`NSGA3Comparator`で、まだ内部rngを持たない場合はここで`rng.spawn(1)[0]`を注入する。"
-msgstr ""
+"**`_create_context(problem, archive, pareto_archive, population, rng)`**:"
+" Constructs `OptimizationState`. If `comparator` is an `NSGA3Comparator` "
+"and doesn't yet have an internal rng, this is where `rng.spawn(1)[0]` is "
+"injected."
+msgstr "**`_create_context(problem, archive, pareto_archive, population, rng)`**：`OptimizationState`を構築します。 `comparator`が`NSGA3Comparator`で、まだ内部rngを持たない場合はここで`rng.spawn(1)[0]`を注入します。"
 
 #: ../../../components/initialization.md:42
-msgid "独自Initializerの実装方法"
-msgstr ""
+msgid "Implementing a custom Initializer"
+msgstr "独自Initializerの実装方法"
 
 #: ../../../components/initialization.md:44
 msgid ""
-"独自のサンプリング方法が必要な場合は、`Initializer`を継承して`initialize()`を実装する。 "
-"組み込み3クラスの実装がそのままテンプレートになり、内部で担う責務は次の9ステップに整理できる。"
-msgstr ""
+"If you need a custom sampling method, subclass `Initializer` and "
+"implement `initialize()`. The three built-in classes' implementations "
+"serve directly as a template; the responsibility they carry internally "
+"can be organized into the following 9 steps."
+msgstr "独自のサンプリング方法が必要な場合は、`Initializer`を継承して`initialize()`を実装します。 組み込み3クラスの実装がそのままテンプレートになり、内部で担う責務は次の9ステップに整理できます。"
 
 #: ../../../components/initialization.md:47
-msgid "`provider.algorithm.population_class`/`archive_class`/`create_pareto_archive`で`Population`/`Archive`/`ParetoArchive`を構築する"
-msgstr ""
+msgid ""
+"Construct `Population`/`Archive`/`ParetoArchive` via "
+"`provider.algorithm.population_class`/`archive_class`/`create_pareto_archive`"
+msgstr "`provider.algorithm.population_class`/`archive_class`/`create_pareto_archive`で`Population`/`Archive`/`ParetoArchive`を構築します"
 
 #: ../../../components/initialization.md:48
-msgid "`_create_context`で`OptimizationState`を構築する"
-msgstr ""
+msgid "Construct `OptimizationState` via `_create_context`"
+msgstr "`_create_context`で`OptimizationState`を構築します"
 
 #: ../../../components/initialization.md:49
-msgid "設計変数空間からサンプリングする"
-msgstr ""
+msgid "Sample from the design-variable space"
+msgstr "設計変数空間からサンプリングします"
 
 #: ../../../components/initialization.md:50
-msgid "`provider.dispatch(InitialEvaluationStartEvent(...))`を発火する"
-msgstr ""
+msgid "Fire `provider.dispatch(InitialEvaluationStartEvent(...))`"
+msgstr "`provider.dispatch(InitialEvaluationStartEvent(...))`を発火します"
 
 #: ../../../components/initialization.md:51
-msgid "`provider.evaluator.evaluate_batch(x, problem)`で評価する"
-msgstr ""
+msgid "Evaluate via `provider.evaluator.evaluate_batch(x, problem)`"
+msgstr "`provider.evaluator.evaluate_batch(x, problem)`で評価します"
 
 #: ../../../components/initialization.md:52
-msgid "結果を`archive`/`pareto_archive`へ`add`する"
-msgstr ""
+msgid "`add` the results to `archive`/`pareto_archive`"
+msgstr "結果を`archive`/`pareto_archive`へ`add`します"
 
 #: ../../../components/initialization.md:53
-msgid "`ctx.count_fe(...)`で評価回数を加算する"
-msgstr ""
+msgid "Add to the evaluation count via `ctx.count_fe(...)`"
+msgstr "`ctx.count_fe(...)`で評価回数を加算します"
 
 #: ../../../components/initialization.md:54
-msgid "`provider.dispatch(InitialEvaluationEndEvent(...))`を発火する"
-msgstr ""
+msgid "Fire `provider.dispatch(InitialEvaluationEndEvent(...))`"
+msgstr "`provider.dispatch(InitialEvaluationEndEvent(...))`を発火します"
 
 #: ../../../components/initialization.md:55
-msgid "`problem.comparator.sort_population`でソートし、上位件数を`population`へ投入する"
-msgstr ""
+msgid ""
+"Sort via `problem.comparator.sort_population` and feed the top entries "
+"into `population`"
+msgstr "`problem.comparator.sort_population`でソートし、上位件数を`population`へ投入します"
 
 #: ../../../components/initialization.md:57
-msgid "次の例は、`scipy.stats.qmc.Halton`で初期サンプルを生成する`Initializer`である。"
-msgstr ""
+msgid ""
+"The following example is an `Initializer` that generates initial samples "
+"with `scipy.stats.qmc.Halton`."
+msgstr "次の例は、`scipy.stats.qmc.Halton`で初期サンプルを生成する`Initializer`です。"
 
 #: ../../../components/initialization.md:117
 msgid ""
-"`InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`は[CallbackManager](callbacks.md)経由で観察できるイベントである。"
-" 評価そのものの詳細は[Evaluator](evaluation.md)を参照する。"
-msgstr ""
+"`InitialEvaluationStartEvent`/`InitialEvaluationEndEvent` are events "
+"observable via [CallbackManager](callbacks.md). See "
+"[Evaluator](evaluation.md) for the details of evaluation itself."
+msgstr "`InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`は[CallbackManager](callbacks.md)経由で観察できるイベントです。 評価そのものの詳細は[Evaluator](evaluation.md)を参照してください。"
 
 #: ../../../components/initialization.md:120
-msgid "`Optimizer.set_initializer(initializer)`で差し替える。"
-msgstr ""
+msgid "Swap it via `Optimizer.set_initializer(initializer)`."
+msgstr "`Optimizer.set_initializer(initializer)`で差し替えます。"
 
 #: ../../../components/initialization.md:122
-msgid "関連コンポーネント"
-msgstr ""
+msgid "Related components"
+msgstr "関連コンポーネント"
 
 #: ../../../components/initialization.md:124
-msgid "[OptimizationState](optimization_state.md) — `initialize()`が最終的に返す状態オブジェクト"
-msgstr ""
+msgid ""
+"[OptimizationState](optimization_state.md): The state object "
+"`initialize()` ultimately returns"
+msgstr "[OptimizationState](optimization_state.md)：`initialize()`が最終的に返す状態オブジェクト"
 
 #: ../../../components/initialization.md:125
-msgid "[Population](population.md) — 構築対象の`Population`/`Archive`/`ParetoArchive`"
-msgstr ""
+msgid ""
+"[Population](population.md): The `Population`/`Archive`/`ParetoArchive` "
+"being constructed"
+msgstr "[Population](population.md)：構築対象の`Population`/`Archive`/`ParetoArchive`"
 
 #: ../../../components/initialization.md:126
-msgid "[Evaluator](evaluation.md) — 初期サンプルの評価に使う"
-msgstr ""
+msgid "[Evaluator](evaluation.md): Used to evaluate the initial samples"
+msgstr "[Evaluator](evaluation.md)：初期サンプルの評価に使う"
 
 #: ../../../components/initialization.md:127
 msgid ""
-"[CallbackManager](callbacks.md) — "
-"`InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`の観察"
-msgstr ""
+"[CallbackManager](callbacks.md): Observing "
+"`InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`"
+msgstr "[CallbackManager](callbacks.md)：`InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`の観察"
 
 #: ../../../components/initialization.md:129
-msgid "参照"
-msgstr ""
+msgid "References"
+msgstr "参照"
 
 #: ../../../components/initialization.md:131
 #, python-brace-format
 msgid "{py:class}`saealib.Initializer`"
-msgstr ""
+msgstr "{py:class}`saealib.Initializer`"
 
 #: ../../../components/initialization.md:132
 #, python-brace-format
 msgid "{py:class}`saealib.LHSInitializer`"
-msgstr ""
+msgstr "{py:class}`saealib.LHSInitializer`"
 
 #: ../../../components/initialization.md:133
 #, python-brace-format
 msgid "{py:class}`saealib.RandomInitializer`"
-msgstr ""
+msgstr "{py:class}`saealib.RandomInitializer`"
 
 #: ../../../components/initialization.md:134
 #, python-brace-format
 msgid "{py:class}`saealib.SobolInitializer`"
-msgstr ""
+msgstr "{py:class}`saealib.SobolInitializer`"
+
+#~ msgid ""
+#~ "`Optimizer`は実行を始める前に、初期`Population`/`Archive`/`ParetoArchive`と最初の`OptimizationState`を一括で構築する処理を、`Initializer`という差し替え可能なコンポーネントに委ねている。"
+#~ " サンプリング方法を変えたいときは、`Optimizer`本体ではなくこの`Initializer`だけを差し替えればよい。"
+#~ msgstr ""
+
+#~ msgid "Initializerの役割"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`Initializer`が実装を要求するメソッドは`initialize(provider, problem) "
+#~ "-> OptimizationState`の1つだけである。 "
+#~ "`provider`は`Algorithm`/`Evaluator`など構築済みの他コンポーネントへアクセスするための`ComponentProvider`、`problem`は解くべき[Problem](problem.md)である。"
+#~ msgstr ""
+
+#~ msgid "組み込みInitializer"
+#~ msgstr ""
+
+#~ msgid "クラス"
+#~ msgstr ""
+
+#~ msgid "サンプリング方法"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "3クラスとも、コンストラクタは`(n_init_archive, n_init_population, "
+#~ "seed=None)`で共通している。 "
+#~ "`n_init_archive`件をサンプリングして評価し、その中から`comparator`でソートした上位`n_init_population`件を初期`Population`へ投入する、という流れも共通である。"
+#~ msgstr ""
+
+#~ msgid "3クラスの実装はサンプリング方法の1行以外ほぼ重複しているが、これは意図的な単純さの選択であり、共通処理を過度に抽象化しない設計になっている。"
+#~ msgstr ""
+
+#~ msgid "基底クラスのヘルパーメソッド"
+#~ msgstr ""
+
+#~ msgid "`Initializer`基底には、独自実装で再利用できる2つのヘルパーメソッドが用意されている。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`_create_attrs(problem, "
+#~ "provider)`**：`Population`/`Archive`用の`PopulationAttribute`一覧を組み立てる。"
+#~ " "
+#~ "`x`/`f`/`g`/`cv`という標準属性に、`provider.algorithm.get_required_attrs(problem)`が返すアルゴリズム固有の属性（PSOの速度など）を追加する。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**`_create_context(problem, archive, pareto_archive, "
+#~ "population, rng)`**：`OptimizationState`を構築する。 "
+#~ "`comparator`が`NSGA3Comparator`で、まだ内部rngを持たない場合はここで`rng.spawn(1)[0]`を注入する。"
+#~ msgstr ""
+
+#~ msgid "独自Initializerの実装方法"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "独自のサンプリング方法が必要な場合は、`Initializer`を継承して`initialize()`を実装する。 "
+#~ "組み込み3クラスの実装がそのままテンプレートになり、内部で担う責務は次の9ステップに整理できる。"
+#~ msgstr ""
+
+#~ msgid "`provider.algorithm.population_class`/`archive_class`/`create_pareto_archive`で`Population`/`Archive`/`ParetoArchive`を構築する"
+#~ msgstr ""
+
+#~ msgid "`_create_context`で`OptimizationState`を構築する"
+#~ msgstr ""
+
+#~ msgid "設計変数空間からサンプリングする"
+#~ msgstr ""
+
+#~ msgid "`provider.dispatch(InitialEvaluationStartEvent(...))`を発火する"
+#~ msgstr ""
+
+#~ msgid "`provider.evaluator.evaluate_batch(x, problem)`で評価する"
+#~ msgstr ""
+
+#~ msgid "結果を`archive`/`pareto_archive`へ`add`する"
+#~ msgstr ""
+
+#~ msgid "`ctx.count_fe(...)`で評価回数を加算する"
+#~ msgstr ""
+
+#~ msgid "`provider.dispatch(InitialEvaluationEndEvent(...))`を発火する"
+#~ msgstr ""
+
+#~ msgid "`problem.comparator.sort_population`でソートし、上位件数を`population`へ投入する"
+#~ msgstr ""
+
+#~ msgid "次の例は、`scipy.stats.qmc.Halton`で初期サンプルを生成する`Initializer`である。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "`InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`は[CallbackManager](callbacks.md)経由で観察できるイベントである。"
+#~ " 評価そのものの詳細は[Evaluator](evaluation.md)を参照する。"
+#~ msgstr ""
+
+#~ msgid "`Optimizer.set_initializer(initializer)`で差し替える。"
+#~ msgstr ""
+
+#~ msgid "関連コンポーネント"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[OptimizationState](optimization_state.md) — "
+#~ "`initialize()`が最終的に返す状態オブジェクト"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[Population](population.md) — "
+#~ "構築対象の`Population`/`Archive`/`ParetoArchive`"
+#~ msgstr ""
+
+#~ msgid "[Evaluator](evaluation.md) — 初期サンプルの評価に使う"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "[CallbackManager](callbacks.md) — "
+#~ "`InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`の観察"
+#~ msgstr ""
+
+#~ msgid "参照"
+#~ msgstr ""
 
