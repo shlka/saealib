@@ -224,7 +224,12 @@ pre.mermaid > svg,
 
 
 /* -- Details / Summary styling for collapsible content --------------- */
-details {
+/* Scoped to .bd-article: a bare `details` selector also matches the
+   theme's own sidebar-nav toggle <details> (used for has-children entries
+   in Section Navigation, e.g. every API Reference sub-page). Applying
+   border/padding/background there left a visible empty box under each
+   collapsed entry, even though its <ul> content was hidden natively. */
+.bd-article details {
     border: 1px solid var(--pst-color-border);
     border-radius: 6px;
     padding: 0.5rem 1rem;
@@ -232,18 +237,18 @@ details {
     background-color: var(--pst-color-surface);
 }
 
-details summary {
+.bd-article details summary {
     cursor: pointer;
     font-weight: 600;
     padding: 0.25rem 0;
     color: var(--pst-color-text-base);
 }
 
-details summary:hover {
+.bd-article details summary:hover {
     color: var(--pst-color-primary);
 }
 
-details[open] summary {
+.bd-article details[open] summary {
     margin-bottom: 0.5rem;
     border-bottom: 1px solid var(--pst-color-border);
 }
@@ -267,6 +272,23 @@ details[open] summary {
     flex-shrink: 0;
 }
 
+/* -- Sidebar Nav: tighter expand-toggle gutter -------------------------
+   Theme default reserves 30px + .1875rem for the per-entry expand toggle
+   on every "has-children" nav item. Only API Reference sub-pages have
+   further children (each autosummary :toctree: stub becomes its own nav
+   entry), so this is the only place the reserved gutter shows — it reads
+   as extra blank space next to short labels. Shrunk to 1.5rem (24px),
+   the WCAG 2.5.8 AA minimum pointer-target size, so it's still comfortably
+   clickable. */
+.bd-sidebar-primary li.has-children .caption,
+.bd-sidebar-primary li.has-children > .reference {
+    margin-right: 1.5rem;
+}
+
+.bd-sidebar-primary li.has-children > details > summary .toctree-toggle {
+    width: 1.5rem;
+    height: 1.5rem;
+}
 
 
 
