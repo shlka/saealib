@@ -31,7 +31,7 @@ msgstr "よくある最適化シナリオに対応する、状況別のセット
 
 #: ../../../tutorials/index.md:9
 msgid "Single-Objective Optimization"
-msgstr "単目的最適化"
+msgstr "{fa}`bullseye;sd-mr-1` 単目的最適化"
 
 #: ../../../tutorials/index.md:13
 msgid ""
@@ -41,7 +41,7 @@ msgstr "評価コストの高い単目的問題を、`minimize()`から手動で
 
 #: ../../../tutorials/index.md:16
 msgid "Multi-Objective Optimization"
-msgstr "多目的最適化"
+msgstr "{fa}`layer-group;sd-mr-1` 多目的最適化"
 
 #: ../../../tutorials/index.md:20
 msgid ""
@@ -51,7 +51,7 @@ msgstr "目的間にトレードオフのある問題を解き、パレートフ
 
 #: ../../../tutorials/index.md:23
 msgid "Constrained Optimization"
-msgstr "制約付き最適化"
+msgstr "{fa}`shield-halved;sd-mr-1` 制約付き最適化"
 
 #: ../../../tutorials/index.md:27
 msgid ""
@@ -61,7 +61,7 @@ msgstr "不等式制約を定義し、実行不可能解の扱い方を制御し
 
 #: ../../../tutorials/index.md:30
 msgid "Mixed-Variable Optimization"
-msgstr "混合変数最適化"
+msgstr "{fa}`shapes;sd-mr-1` 混合変数最適化"
 
 #: ../../../tutorials/index.md:34
 msgid ""
@@ -71,7 +71,7 @@ msgstr "連続変数に加えて整数変数、カテゴリ変数を含む問題
 
 #: ../../../tutorials/index.md:37
 msgid "Dynamic Switching"
-msgstr "動的な切り替え"
+msgstr "{fa}`arrows-rotate;sd-mr-1` 動的な切り替え"
 
 #: ../../../tutorials/index.md:41
 msgid ""
@@ -81,7 +81,7 @@ msgstr "サロゲートの予測精度に応じて、評価戦略や`SurrogateMa
 
 #: ../../../tutorials/index.md:44
 msgid "Reproducibility and Checkpointing"
-msgstr "再現性とチェックポイント"
+msgstr "{fa}`floppy-disk;sd-mr-1` 再現性とチェックポイント"
 
 #: ../../../tutorials/index.md:48
 msgid "Make long-running optimizations reproducible and resumable."
@@ -89,7 +89,7 @@ msgstr "長時間実行する最適化を再現可能かつ再開可能にしま
 
 #: ../../../tutorials/index.md:51
 msgid "Logging Progress"
-msgstr "進捗のログ記録"
+msgstr "{fa}`file-lines;sd-mr-1` 進捗のログ記録"
 
 #: ../../../tutorials/index.md:55
 msgid "Record optimization progress with the standard `logging` module."
@@ -97,7 +97,7 @@ msgstr "標準の`logging`モジュールで、最適化の進捗を記録しま
 
 #: ../../../tutorials/index.md:58
 msgid "Integrating External Libraries"
-msgstr "外部ライブラリとの連携"
+msgstr "{fa}`plug;sd-mr-1` 外部ライブラリとの連携"
 
 #: ../../../tutorials/index.md:62
 msgid ""

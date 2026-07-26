@@ -31,7 +31,7 @@ msgstr "saealibを初めて使う方へ。このセクションでは、saealib�
 
 #: ../../../getting_started/index.md:9
 msgid "What is saealib"
-msgstr "saealibとは"
+msgstr "{fa}`circle-info;sd-mr-1` saealibとは"
 
 #: ../../../getting_started/index.md:13
 msgid ""
@@ -41,17 +41,19 @@ msgstr "サロゲート型進化的アルゴリズムとは何か、そしてsae
 
 #: ../../../getting_started/index.md:16
 msgid "Installation"
-msgstr "インストール"
+msgstr "{fa}`download;sd-mr-1` インストール"
 
 #: ../../../getting_started/index.md:20
 msgid ""
 "Install saealib and its optional extras (scikit-learn, XGBoost, LightGBM,"
 " PyTorch, etc.)."
-msgstr "saealib本体とオプションの追加パッケージ（scikit-learn、XGBoost、LightGBM、PyTorchなど）をインストールします。"
+msgstr ""
+"saealib本体とオプションの追加パッケージ（scikit-"
+"learn、XGBoost、LightGBM、PyTorchなど）をインストールします。"
 
 #: ../../../getting_started/index.md:23
 msgid "Quickstart"
-msgstr "クイックスタート"
+msgstr "{fa}`rocket;sd-mr-1` クイックスタート"
 
 #: ../../../getting_started/index.md:27
 msgid "Run your first optimization with `minimize()` / `maximize()`."

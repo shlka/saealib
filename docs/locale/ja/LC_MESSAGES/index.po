@@ -54,7 +54,7 @@ msgstr ""
 
 #: ../../../index.md:30
 msgid "High-level API"
-msgstr "高レベルAPI"
+msgstr "{fa}`bolt;sd-mr-1` 高レベルAPI"
 
 #: ../../../index.md:41
 msgid "A boilerplate-free high-level API via `minimize()` / `maximize()`."
@@ -62,7 +62,7 @@ msgstr "`minimize()` / `maximize()`による、定型コード不要の高レベ
 
 #: ../../../index.md:44
 msgid "Low-level API"
-msgstr "低レベルAPI"
+msgstr "{fa}`sliders;sd-mr-1` 低レベルAPI"
 
 #: ../../../index.md:48
 msgid ""
@@ -72,7 +72,7 @@ msgstr "`Optimizer`ビルダーと`iterate()`ジェネレータにより、研�
 
 #: ../../../index.md:51
 msgid "Extensibility"
-msgstr "拡張性"
+msgstr "{fa}`puzzle-piece;sd-mr-1` 拡張性"
 
 #: ../../../index.md:55
 msgid ""
@@ -87,7 +87,7 @@ msgstr "ドキュメント"
 
 #: ../../../index.md:68
 msgid "Getting Started"
-msgstr "はじめに"
+msgstr "{fa}`flag;sd-mr-1` はじめに"
 
 #: ../../../index.md:72
 msgid ""
@@ -97,7 +97,7 @@ msgstr "saealibを初めて使う方へ。インストール方法、基本的�
 
 #: ../../../index.md:75
 msgid "Tutorials"
-msgstr "チュートリアル"
+msgstr "{fa}`book-open;sd-mr-1` チュートリアル"
 
 #: ../../../index.md:79
 msgid ""
@@ -107,7 +107,7 @@ msgstr "状況別のセットアップガイド：単目的/多目的最適化�
 
 #: ../../../index.md:82
 msgid "Components"
-msgstr "コンポーネント"
+msgstr "{fa}`cubes;sd-mr-1` コンポーネント"
 
 #: ../../../index.md:86
 msgid "Detailed usage of each component and guidelines for extending it."
@@ -115,7 +115,7 @@ msgstr "各コンポーネントの詳しい使い方と拡張ガイドライン
 
 #: ../../../index.md:89
 msgid "Algorithms"
-msgstr "アルゴリズム"
+msgstr "{fa}`diagram-project;sd-mr-1` アルゴリズム"
 
 #: ../../../index.md:93
 msgid ""
@@ -125,7 +125,7 @@ msgstr "文献上の名前がついたアルゴリズムを、saealibのコン�
 
 #: ../../../index.md:96
 msgid "References"
-msgstr "文献リファレンス"
+msgstr "{fa}`bookmark;sd-mr-1` 文献リファレンス"
 
 #: ../../../index.md:100
 msgid ""
@@ -135,7 +135,7 @@ msgstr "実装済みのアルゴリズム、演算子、比較方法の理論的
 
 #: ../../../index.md:103
 msgid "API Reference"
-msgstr "API Reference"
+msgstr "{fa}`code;sd-mr-1` API Reference"
 
 #: ../../../index.md:107
 msgid "The complete specification of every class and function."
