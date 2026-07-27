@@ -115,6 +115,88 @@ class TestStrategySwitcher:
         sw = StrategySwitcher(MagicMock(), MagicMock())
         assert sw.metric == "spearman"
 
+    def test_default_mid_is_none(self) -> None:
+        sw = StrategySwitcher(MagicMock(), MagicMock())
+        assert sw.mid is None
+        assert sw.mid_threshold is None
+
+    def test_two_way_mode_unchanged_at_threshold(self) -> None:
+        primary, _, sw = self._make()
+        assert sw.switch(_acc(0.56)) is primary
+
+    def test_two_way_mode_unchanged_below_threshold(self) -> None:
+        _, fallback, sw = self._make()
+        assert sw.switch(_acc(0.55)) is fallback
+
+    def test_two_way_mode_unchanged_when_metric_non_finite(self) -> None:
+        _, fallback, sw = self._make()
+        acc = SurrogateAccuracy(metrics={"spearman": float("nan")}, n_samples=5)
+        assert sw.switch(acc) is fallback
+
+    def test_two_way_mode_sequence_pinned(self) -> None:
+        # Pins the pre-existing 2-way switch() behavior unchanged by the
+        # addition of the optional mid/mid_threshold parameters.
+        primary, fallback, sw = self._make(threshold=0.56)
+        snapshots = [None, _acc(0.3), _acc(0.56), _acc(0.99), _acc(1.0)]
+        expected = [fallback, fallback, primary, primary, primary]
+        for acc, exp in zip(snapshots, expected):
+            assert sw.switch(acc) is exp
+
+
+class TestStrategySwitcherThreeWay:
+    def _make(self, threshold=0.57, mid_threshold=1.0):
+        primary = MagicMock(name="ps")
+        fallback = MagicMock(name="ib")
+        mid = MagicMock(name="gb")
+        sw = StrategySwitcher(
+            primary,
+            fallback,
+            threshold=threshold,
+            mid=mid,
+            mid_threshold=mid_threshold,
+        )
+        return primary, fallback, mid, sw
+
+    def test_mid_without_mid_threshold_raises(self) -> None:
+        with pytest.raises(ValueError):
+            StrategySwitcher(MagicMock(), MagicMock(), mid=MagicMock())
+
+    def test_mid_threshold_without_mid_raises(self) -> None:
+        with pytest.raises(ValueError):
+            StrategySwitcher(MagicMock(), MagicMock(), mid_threshold=1.0)
+
+    def test_routes_to_fallback_below_threshold(self) -> None:
+        _, fallback, _, sw = self._make()
+        assert sw.switch(_acc(0.5)) is fallback
+
+    def test_routes_to_mid_at_threshold(self) -> None:
+        _, _, mid, sw = self._make()
+        assert sw.switch(_acc(0.57)) is mid
+
+    def test_routes_to_mid_just_below_mid_threshold(self) -> None:
+        _, _, mid, sw = self._make()
+        assert sw.switch(_acc(0.99)) is mid
+
+    def test_routes_to_primary_at_mid_threshold(self) -> None:
+        primary, _, _, sw = self._make()
+        assert sw.switch(_acc(1.0)) is primary
+
+    def test_routes_to_fallback_when_none(self) -> None:
+        _, fallback, _, sw = self._make()
+        assert sw.switch(None) is fallback
+
+    def test_routes_to_fallback_when_metric_non_finite(self) -> None:
+        _, fallback, _, sw = self._make()
+        acc = SurrogateAccuracy(metrics={"spearman": float("nan")}, n_samples=5)
+        assert sw.switch(acc) is fallback
+
+    def test_sequence(self) -> None:
+        primary, fallback, mid, sw = self._make()
+        snapshots = [None, _acc(0.3), _acc(0.57), _acc(0.8), _acc(1.0)]
+        expected = [fallback, fallback, mid, mid, primary]
+        for acc, exp in zip(snapshots, expected):
+            assert sw.switch(acc) is exp
+
 
 # ---------------------------------------------------------------------------
 # GenCtrlSwitcher

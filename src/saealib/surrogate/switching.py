@@ -102,13 +102,19 @@ class ManagerSwitcher(AccuracyBasedSurrogateSwitcher["SurrogateManager"]):
 
 
 class StrategySwitcher(AccuracyBasedSurrogateSwitcher["OptimizationStrategy"]):
-    """Switch between two optimization strategies based on an accuracy threshold.
+    """Switch between optimization strategies based on an accuracy threshold.
 
     Generalizes a threshold-based switch between two strategies to an
     arbitrary accuracy metric and pair of strategies: use ``primary``
     (e.g. a surrogate-heavy strategy such as PS) once the metric surpasses
     the threshold, otherwise fall back to ``fallback`` (e.g. a more robust
     strategy such as IB or GB).
+
+    Passing ``mid`` and ``mid_threshold`` opts into a three-way split
+    that mirrors Hanawa et al. (2025)'s IB/GB/PS recommendation instead of
+    a two-way one: ``fallback`` below ``threshold``, ``mid`` between
+    ``threshold`` and ``mid_threshold``, ``primary`` at or above
+    ``mid_threshold``. Both must be supplied together — see Parameters.
 
     Parameters
     ----------
@@ -119,20 +125,50 @@ class StrategySwitcher(AccuracyBasedSurrogateSwitcher["OptimizationStrategy"]):
     metric : str
         Metric key. Default: ``"spearman"``.
     threshold : float
-        Minimum acceptable metric value. Default: ``0.56``.
+        Minimum acceptable metric value to leave ``fallback``.
+        Default: ``0.56``.
+    mid : OptimizationStrategy or None
+        Optional third strategy (e.g. GB) used when accuracy is between
+        ``threshold`` and ``mid_threshold``. Enables three-way mode when
+        provided together with ``mid_threshold``. Default: ``None``
+        (two-way mode, ``switch()`` behaves exactly as without this
+        parameter).
+    mid_threshold : float or None
+        Minimum metric value to move from ``mid`` to ``primary`` in
+        three-way mode. Must be supplied together with ``mid`` — there is
+        no default, since the paper's PS-viable band is narrow and
+        accuracy-metric-dependent. Default: ``None``.
+
+    Raises
+    ------
+    ValueError
+        If exactly one of ``mid`` / ``mid_threshold`` is provided.
 
     Notes
     -----
-    The default threshold of 0.56 is taken from Hanawa et al. (2025,
-    Fig. 8a), which reports that an individual-based (IB) strategy was
-    recommended when Spearman rho was 0.56 or below. That paper's
-    empirical finding is a *three*-way split (low accuracy -> IB, medium
-    -> GB, high [~0.9-1.0] -> PS), not a two-way split at 0.56; a PS-heavy
-    strategy only becomes favorable at a separate, higher threshold. This
-    two-strategy ``StrategySwitcher`` is a simplified approximation of
-    that finding, so 0.56 is best used as an IB/GB boundary rather than as
-    a PS-switching threshold — callers pairing ``primary=PS`` with this
-    default should be aware of the mismatch.
+    The default threshold of 0.56 is taken from Hanawa et al. (2025),
+    which recommends IB when Spearman rho is 0.56 or below, GB when rho
+    is between 0.57 and 0.99, and PS only at an exact rho of 1.0 — a
+    *three*-way split, not a two-way split at 0.56. By default (``mid``
+    unset), this ``StrategySwitcher`` collapses that finding to a
+    two-strategy approximation, so 0.56 is best used as an IB/GB boundary
+    rather than as a PS-switching threshold — callers pairing
+    ``primary=PS`` with the default two-way mode should be aware of the
+    mismatch. To reproduce the paper's three-way recommendation exactly,
+    pass ``mid`` (GB) and ``mid_threshold=1.0`` alongside
+    ``primary`` (PS), ``fallback`` (IB), and ``threshold=0.57``::
+
+        switcher = StrategySwitcher(
+            primary=ps_strategy,
+            fallback=ib_strategy,
+            mid=gb_strategy,
+            threshold=0.57,
+            mid_threshold=1.0,
+        )
+        for ctx in optimizer.iterate():
+            optimizer.set_strategy(
+                switcher.switch(optimizer.surrogate_manager.last_accuracy)
+            )
 
     References
     ----------
@@ -149,20 +185,32 @@ class StrategySwitcher(AccuracyBasedSurrogateSwitcher["OptimizationStrategy"]):
         *,
         metric: str = "spearman",
         threshold: float = 0.56,
+        mid: OptimizationStrategy | None = None,
+        mid_threshold: float | None = None,
     ) -> None:
+        if (mid is None) != (mid_threshold is None):
+            raise ValueError("mid and mid_threshold must be provided together")
         self.primary = primary
         self.fallback = fallback
         self.metric = metric
         self.threshold = threshold
+        self.mid = mid
+        self.mid_threshold = mid_threshold
 
     def switch(self, accuracy: SurrogateAccuracy | None) -> OptimizationStrategy:
-        """Return primary or fallback based on the metric threshold."""
+        """Return primary, mid (if configured), or fallback based on the metric."""
         if accuracy is None:
             return self.fallback
         v = accuracy.get(self.metric)
-        if math.isfinite(v) and v >= self.threshold:
-            return self.primary
-        return self.fallback
+        if not math.isfinite(v):
+            return self.fallback
+        if self.mid is None:
+            return self.primary if v >= self.threshold else self.fallback
+        if v < self.threshold:
+            return self.fallback
+        if v < self.mid_threshold:
+            return self.mid
+        return self.primary
 
 
 class GenCtrlSwitcher(AccuracyBasedSurrogateSwitcher[int]):
