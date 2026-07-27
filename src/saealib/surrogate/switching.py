@@ -206,6 +206,7 @@ class StrategySwitcher(AccuracyBasedSurrogateSwitcher["OptimizationStrategy"]):
             return self.fallback
         if self.mid is None:
             return self.primary if v >= self.threshold else self.fallback
+        assert self.mid_threshold is not None  # enforced together in __init__
         if v < self.threshold:
             return self.fallback
         if v < self.mid_threshold:
