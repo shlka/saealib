@@ -2178,8 +2178,10 @@ class TestHypervolumeComparator:
         # Three non-dominated points (minimize).
         # [0,4] and [4,0] are extreme; [3.9, 0.1] is very close to [4,0]
         # and therefore has a small exclusive HV contribution.
-        # Verified: hypervolume_contributions gives approx [1.56, 0.39, 0.04]
-        # → idx 2 ([4,0]) has the smallest contribution and must sort last.
+        # Verified: with the default reference point (worst + 1.0 = [5,5],
+        # Beume et al. 2007), hypervolume_contributions gives approx
+        # [3.9, 0.39, 0.1] → idx 2 ([4,0]) has the smallest contribution and
+        # must sort last.
         f = np.array([[0.0, 4.0], [3.9, 0.1], [4.0, 0.0]])
         pop = _make_pop(f)
         comp = HypervolumeComparator()
@@ -2232,8 +2234,9 @@ class TestHypervolumeComparator:
         from saealib.comparators import HypervolumeComparator
 
         # Three non-dominated points; idx 0 [0,4] has the highest HV contribution
-        # (~1.56); idx 2 [4,0] has the smallest (~0.04) because [3.9,0.1] is nearby.
-        # Verified: hypervolume_contributions ≈ [1.56, 0.39, 0.04]
+        # (~3.9); idx 2 [4,0] has the smallest (~0.1) because [3.9,0.1] is nearby.
+        # Verified: with the default reference point (worst + 1.0 = [5,5]),
+        # hypervolume_contributions ≈ [3.9, 0.39, 0.1]
         f = np.array([[0.0, 4.0], [3.9, 0.1], [4.0, 0.0]])
         pop = _make_pop(f)
         comp = HypervolumeComparator()
@@ -2323,6 +2326,41 @@ class TestHypervolumeComparator:
         from saealib import HypervolumeComparator
 
         assert HypervolumeComparator is not None
+
+    # -----------------------------------------------------------------------
+    # 9. Default reference point follows Beume et al. (2007): worst + 1.0 (#214)
+    # -----------------------------------------------------------------------
+    def test_default_reference_point_is_worst_plus_one(self) -> None:
+        """With reference_point=None, contributions match an explicit worst+1.0 ref.
+
+        Beume et al. (2007) Section 2.1.3 defines the default reference
+        point as the vector of the currently worst objective values
+        increased by 1.0, not the old margin-scaled relative padding.
+        """
+        from saealib.comparators import HypervolumeComparator
+        from saealib.utils.indicators import hypervolume_contributions
+
+        f = np.array([[0.0, 4.0], [3.9, 0.1], [4.0, 0.0]])
+        pop = _make_pop(f)
+        comp = HypervolumeComparator()
+        _rank_all, contrib_all = comp._keys(pop)
+
+        expected = hypervolume_contributions(f, reference_point=np.array([5.0, 5.0]))
+        np.testing.assert_allclose(contrib_all, expected)
+
+    def test_margin_is_inert_for_default_reference_point(self) -> None:
+        """margin= no longer affects the default (reference_point=None) ranking."""
+        from saealib.comparators import HypervolumeComparator
+
+        f = np.array([[0.0, 4.0], [3.9, 0.1], [4.0, 0.0]])
+        pop_a = _make_pop(f)
+        pop_b = _make_pop(f)
+        comp_default = HypervolumeComparator()
+        comp_custom_margin = HypervolumeComparator(margin=0.9)
+        np.testing.assert_array_equal(
+            comp_default.sort_population(pop_a),
+            comp_custom_margin.sort_population(pop_b),
+        )
 
 
 # ===========================================================================
