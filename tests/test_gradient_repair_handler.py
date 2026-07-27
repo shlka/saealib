@@ -37,12 +37,12 @@ class TestGradientRepairHandlerType:
     def test_default_params(self):
         h = GradientRepairHandler()
         assert h.max_iter == 1
-        assert h.ridge == pytest.approx(1e-12)
+        assert h.epsilon == pytest.approx(1e-6)
 
     def test_custom_params(self):
-        h = GradientRepairHandler(max_iter=5, ridge=1e-6)
+        h = GradientRepairHandler(max_iter=5, epsilon=1e-3)
         assert h.max_iter == 5
-        assert h.ridge == pytest.approx(1e-6)
+        assert h.epsilon == pytest.approx(1e-3)
 
 
 # ---------------------------------------------------------------------------
@@ -99,43 +99,85 @@ class TestGradientRepairHandlerRepair:
 
 
 # ---------------------------------------------------------------------------
-# repair: skipping rules
+# repair: violated constraints are now repaired regardless of type/gradient
 # ---------------------------------------------------------------------------
 
 
-class TestGradientRepairHandlerSkipping:
-    def test_inequality_constraint_skipped(self):
-        # InequalityConstraint should not be touched by repair.
+def _total_violation(constraints, x):
+    return sum(c.violation_from_value(c.evaluate(x)) for c in constraints)
+
+
+class TestGradientRepairHandlerRepairsAllViolatedConstraints:
+    def test_violated_inequality_constraint_is_repaired(self):
+        # g(x) = x[0] - 0.5, threshold=0.0; x[0]=0.8 violates it.
+        # gradient() is None -> falls back to the numerical approximation.
+        c = InequalityConstraint(lambda x: float(x[0]) - 0.5)
+        h = GradientRepairHandler()
+        x = np.array([0.8, 0.3])
+        x_rep = h.repair(x, [c], LB, UB)
+        assert c.evaluate(x_rep) <= c.threshold + 1e-6
+        assert x_rep[1] == pytest.approx(0.3)
+
+    def test_satisfied_inequality_constraint_is_left_untouched(self):
+        # g(x) = x[0] - 0.5, threshold=0.0; x[0]=0.3 already satisfies it.
         c = InequalityConstraint(lambda x: float(x[0]) - 0.5)
         h = GradientRepairHandler()
         x = np.array([0.3, 0.3])
         x_rep = h.repair(x, [c], LB, UB)
-        # Only clip is applied; x is already in bounds so it is unchanged.
         np.testing.assert_array_equal(x_rep, x)
 
-    def test_equality_without_gradient_skipped(self):
-        # EqualityConstraint with gradient()=None is not repaired.
+    def test_equality_without_gradient_uses_numerical_fallback(self):
+        # EqualityConstraint with gradient()=None is now repaired via the
+        # forward-difference approximation instead of being skipped.
         c = EqualityConstraint(func=lambda x: float(x[0]) - 0.5, tolerance=0.0)
         h = GradientRepairHandler()
         x = np.array([0.3, 0.3])
         x_rep = h.repair(x, [c], LB, UB)
-        np.testing.assert_array_equal(x_rep, x)
+        assert abs(c.evaluate(x_rep)) < abs(c.evaluate(x))
 
-    def test_mixed_constraints_only_eq_with_gradient_repaired(self):
-        # Mix: inequality (skip) + equality without gradient (skip)
-        #      + equality with gradient (repair).
+    def test_mixed_violated_constraints_reduce_total_violation(self):
+        # Mix: inequality + equality without gradient + equality with
+        # gradient, all violated -> jointly repaired via the stacked
+        # pseudoinverse update (an overdetermined system, so exact
+        # per-constraint satisfaction is not guaranteed, only a net
+        # reduction in total violation).
         c_ineq = InequalityConstraint(lambda x: float(x[0]) - 0.5)
         c_eq_no_grad = EqualityConstraint(
             func=lambda x: float(x[1]) - 0.2, tolerance=0.0
         )
         c_eq_grad = _linear_eq(np.array([1.0, 0.0]))  # h = x[0] - 1
 
+        constraints = [c_ineq, c_eq_no_grad, c_eq_grad]
         h = GradientRepairHandler()
         x = np.array([0.8, 0.5])
-        x_rep = h.repair(x, [c_ineq, c_eq_no_grad, c_eq_grad], LB, UB)
-        # c_eq_grad: x[0] -> 1.0 (then clipped to 1.0); x[1] unchanged
-        assert x_rep[0] == pytest.approx(1.0)
-        assert x_rep[1] == pytest.approx(0.5)
+        x_rep = h.repair(x, constraints, LB, UB)
+        assert _total_violation(constraints, x_rep) < _total_violation(constraints, x)
+
+    def test_stops_once_all_constraints_satisfied(self):
+        c = _linear_eq(np.array([1.0, 1.0]))
+        h = GradientRepairHandler(max_iter=100)
+        x_rep = h.repair(np.array([0.8, 0.8]), [c], LB, UB)
+        # One step is exact for a linear constraint, so the second
+        # iteration sees no violated constraints and breaks immediately.
+        assert abs(c.evaluate(x_rep)) == pytest.approx(0.0, abs=1e-10)
+
+    def test_epsilon_stops_before_convergence(self):
+        # h(x) = x[0]**2 + x[1]**2 - 1, a nonlinear constraint so one step
+        # does not reach the manifold: a large epsilon should stop the
+        # iteration early, leaving more residual violation than a tiny
+        # epsilon that keeps iterating toward the manifold.
+        def _circle():
+            return EqualityConstraint(
+                func=lambda x: float(x[0] ** 2 + x[1] ** 2) - 1.0, tolerance=0.0
+            )
+
+        c_slow, c_full = _circle(), _circle()
+        x = np.array([0.9, 0.9])
+        h_slow = GradientRepairHandler(max_iter=10, epsilon=0.5)
+        h_full = GradientRepairHandler(max_iter=10, epsilon=1e-12)
+        slow = h_slow.repair(x, [c_slow], LB, UB)
+        full = h_full.repair(x, [c_full], LB, UB)
+        assert abs(c_full.evaluate(full)) < abs(c_slow.evaluate(slow))
 
 
 # ---------------------------------------------------------------------------
