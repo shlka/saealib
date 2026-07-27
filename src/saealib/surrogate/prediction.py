@@ -23,6 +23,11 @@ class SurrogatePrediction:
     label : np.ndarray or None
         Predicted class labels. shape: (n_samples,).
         None unless the surrogate is a classification model.
+    x : np.ndarray or None
+        The query points passed to ``predict()``. shape: (n_samples,
+        n_features). None unless the surrogate populates it. Needed by
+        acquisition functions that have no other channel to the points
+        being scored (e.g. :class:`~saealib.acquisition.mean.CORSDistance`).
     tell_f : np.ndarray
         Values to assign to offspring.f before calling algorithm.tell().
         Falls back to ``mean`` when no override is set (``_tell_f is None``).
@@ -37,6 +42,7 @@ class SurrogatePrediction:
     value: np.ndarray
     std: np.ndarray | None = None
     label: np.ndarray | None = None
+    x: np.ndarray | None = None
     _tell_f: np.ndarray | None = field(default=None)
     metadata: dict = field(default_factory=dict)
     # Values that are conventionally used should be implemented

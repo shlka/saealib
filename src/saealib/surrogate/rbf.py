@@ -189,8 +189,8 @@ class RBFSurrogate(RegressionSurrogate):
         SurrogatePrediction
             prediction.value shape: (n_samples, n_obj)
             prediction.std  is None (RBF interpolation provides no uncertainty)
-            prediction.metadata["x"] holds the (n_samples, n_features)
-            query points passed to this call (candidates when called from
+            prediction.x holds the (n_samples, n_features) query points
+            passed to this call (candidates when called from
             score_candidates, holdout/archive points when called for
             accuracy evaluation), needed by acquisition functions that have
             no other channel to the points being scored (e.g. CORSDistance).
@@ -199,4 +199,4 @@ class RBFSurrogate(RegressionSurrogate):
         test = np.atleast_2d(np.asarray(test_x, dtype=float))
         preds = [m.predict(test) for m in self._models]
         value = np.column_stack(preds)  # (n_samples, n_obj)
-        return SurrogatePrediction(value=value, metadata={"x": test})
+        return SurrogatePrediction(value=value, x=test)

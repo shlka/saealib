@@ -53,9 +53,9 @@ def _archive(rows):
 
 
 def _pred_x(value, x):
-    """Build a SurrogatePrediction with candidate coordinates in metadata["x"]."""
+    """Build a SurrogatePrediction with candidate coordinates in the x field."""
     m = np.asarray(value, dtype=float)
-    return SurrogatePrediction(value=m, metadata={"x": np.asarray(x, dtype=float)})
+    return SurrogatePrediction(value=m, x=np.asarray(x, dtype=float))
 
 
 def _archive_x(xs):
@@ -367,13 +367,13 @@ class TestCORSDistance:
         scores = CORSDistance(delta=10.0).score(pred, reference=reference)
         assert scores[0] == pytest.approx(5.0)
 
-    def test_missing_metadata_x_raises(self) -> None:
+    def test_missing_x_raises(self) -> None:
         reference = _archive_x([0.0]).x
         pred = _pred(value=[[5.0]])
-        with pytest.raises(ValueError, match="metadata"):
+        with pytest.raises(ValueError, match="requires prediction"):
             CORSDistance(delta=10.0).score(pred, reference=reference)
 
-    def test_metadata_x_row_mismatch_raises(self) -> None:
+    def test_x_row_mismatch_raises(self) -> None:
         reference = _archive_x([0.0]).x
         pred = _pred_x(value=[[5.0], [6.0]], x=[[0.0], [1.0], [2.0]])
         with pytest.raises(ValueError, match="one row per candidate"):

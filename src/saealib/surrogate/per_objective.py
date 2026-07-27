@@ -78,10 +78,15 @@ class PerObjectiveSurrogate(RegressionSurrogate):
             prediction.value shape: (n_samples, n_obj)
             prediction.std shape: (n_samples, n_obj) if all surrogates provide
             uncertainty, otherwise None.
+            prediction.x holds the (n_samples, n_features) query points
+            passed to this call, set directly from ``test_x`` regardless of
+            whether the wrapped surrogates populate their own ``x`` (needed
+            by acquisition functions such as CORSDistance).
         """
         preds = [s.predict(test_x) for s in self.surrogates]
         value = np.column_stack([p.value for p in preds])
         std = None
         if self.provides_uncertainty:
             std = np.column_stack([p.std for p in preds])  # type: ignore  # provides_uncertainty guarantees non-None; ty can't narrow in list comp
-        return SurrogatePrediction(value=value, std=std)
+        x = np.atleast_2d(np.asarray(test_x, dtype=float))
+        return SurrogatePrediction(value=value, std=std, x=x)

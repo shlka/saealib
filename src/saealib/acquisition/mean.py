@@ -126,8 +126,8 @@ class CORSDistance(AcquisitionFunction):
 
     Because neither ``prediction.value`` nor the archive-derived
     ``reference`` carries candidate coordinates, this class reads the
-    candidate design vectors from ``prediction.metadata["x"]``; the
-    surrogate's ``predict()`` must populate that key.
+    candidate design vectors from ``prediction.x``; the surrogate's
+    ``predict()`` must populate that field.
 
     Parameters
     ----------
@@ -189,7 +189,7 @@ class CORSDistance(AcquisitionFunction):
         ----------
         prediction : SurrogatePrediction
             Surrogate predictions. prediction.value shape: (n_samples, n_obj).
-            prediction.metadata["x"] must hold the candidate design vectors,
+            prediction.x must hold the candidate design vectors,
             shape: (n_samples, n_features), aligned row-for-row with
             prediction.value.
         reference : Any
@@ -206,8 +206,8 @@ class CORSDistance(AcquisitionFunction):
         Raises
         ------
         ValueError
-            If ``prediction.metadata["x"]`` is missing or its row count
-            does not match ``prediction.value``.
+            If ``prediction.x`` is missing or its row count does not
+            match ``prediction.value``.
         """
         m = prediction.value  # (n_samples, n_obj)
         if self.direction is not None:
@@ -239,18 +239,18 @@ class CORSDistance(AcquisitionFunction):
 
     @staticmethod
     def _candidate_x(prediction: SurrogatePrediction) -> np.ndarray:
-        """Extract candidate design vectors from prediction.metadata["x"]."""
-        x = prediction.metadata.get("x")
+        """Extract candidate design vectors from prediction.x."""
+        x = prediction.x
         if x is None:
             raise ValueError(
-                "CORSDistance requires prediction.metadata['x'] (the candidate "
-                "design vectors) to evaluate the Eq. (1) distance constraint; "
-                "the surrogate's predict() must populate it."
+                "CORSDistance requires prediction.x (the candidate design "
+                "vectors) to evaluate the Eq. (1) distance constraint; the "
+                "surrogate's predict() must populate it."
             )
         x = np.atleast_2d(np.asarray(x, dtype=float))
         if x.shape[0] != prediction.value.shape[0]:
             raise ValueError(
-                "prediction.metadata['x'] must have one row per candidate in "
+                "prediction.x must have one row per candidate in "
                 f"prediction.value (got {x.shape[0]} rows vs "
                 f"{prediction.value.shape[0]})."
             )
