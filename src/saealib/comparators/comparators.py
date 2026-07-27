@@ -27,6 +27,7 @@ from saealib.comparators.nds import (
     dda_non_dominated_sort,  # noqa: F401
     non_dominated_sort,
     spea2_fitness,
+    spea2_truncation_order,
 )
 
 if TYPE_CHECKING:
@@ -538,8 +539,15 @@ class SPEA2Comparator(Comparator):
 
     Ordering rules:
 
-    - **Feasible block**: sorted by ascending SPEA2 fitness (lower = better).
-      See :func:`spea2_fitness` for the ``k = √N`` density reduction note.
+    - **Feasible block**: the non-dominated subset (``F(i) < 1``) is ordered
+      by the iterative nearest-neighbour truncation operator of Section 3.2
+      ("Environmental Selection") -- see :func:`spea2_truncation_order` --
+      instead of a one-shot sort, so that boundary/extreme solutions are
+      preferentially retained under truncation.  The dominated subset
+      (``F(i) >= 1``) follows, sorted by ascending SPEA2 fitness (lower =
+      better), matching the paper's "fill with the best dominated
+      individuals" branch.  See :func:`spea2_fitness` for the ``k = √N``
+      density reduction note.
     - **Infeasible block**: always placed after feasible individuals, ordered by
       ascending constraint violation (Deb 2000 feasibility rule).
 
@@ -631,7 +639,13 @@ class SPEA2Comparator(Comparator):
 
     def sort_population(self, population: Population) -> np.ndarray:
         """
-        Sort by SPEA2 fitness (ascending); infeasible individuals come last.
+        Sort feasible individuals via SPEA2 environmental selection.
+
+        Within the feasible block, the non-dominated subset (``F(i) < 1``)
+        is ordered by :func:`spea2_truncation_order` (Zitzler et al. 2001,
+        Section 3.2), and the dominated subset (``F(i) >= 1``) follows,
+        ordered by ascending SPEA2 fitness. Infeasible individuals come
+        last, ordered by ascending constraint violation.
 
         Parameters
         ----------
@@ -643,6 +657,7 @@ class SPEA2Comparator(Comparator):
         np.ndarray
             Sorted population indices (int).
         """
+        f_arr = population.get_array("f")
         cv_arr = population.get_array("cv")
         fitness_all = self._fitness(population)
 
@@ -651,7 +666,21 @@ class SPEA2Comparator(Comparator):
 
         sorted_feasible: np.ndarray = np.empty(0, int)
         if len(feasible):
-            order = np.argsort(fitness_all[feasible], kind="stable")
+            fitness_feasible = fitness_all[feasible]
+            nondominated_local = np.where(fitness_feasible < 1.0)[0]
+            dominated_local = np.where(fitness_feasible >= 1.0)[0]
+
+            truncation_order = np.empty(0, int)
+            if len(nondominated_local):
+                truncation_order = nondominated_local[
+                    spea2_truncation_order(f_arr[feasible][nondominated_local])
+                ]
+
+            dominated_order = dominated_local[
+                np.argsort(fitness_feasible[dominated_local], kind="stable")
+            ]
+
+            order = np.concatenate([truncation_order, dominated_order]).astype(int)
             sorted_feasible = feasible[order]
 
         sorted_infeasible: np.ndarray = np.empty(0, int)
