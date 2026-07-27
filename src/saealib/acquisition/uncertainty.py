@@ -25,6 +25,13 @@ class MaxUncertainty(AcquisitionFunction):
     For multi-objective problems, aggregates uncertainty across objectives
     using a weighted sum.
 
+    Using sigma(x) alone as the criterion corresponds to the alpha -> infinity
+    limit of the merit function f_M(x) = t_hat(x) - alpha * sigma(x) in
+    Büche, Schraudolph & Koumoutsakos (2005), Eq. (19). That paper's GPOP
+    procedure never actually takes this limit: it optimizes f_M in parallel
+    for the four fixed values alpha = 0, 1, 2, 4 (Section IV-A), evaluating
+    all four resulting points rather than using sigma alone.
+
     Parameters
     ----------
     weights : np.ndarray or None
@@ -40,6 +47,11 @@ class MaxUncertainty(AcquisitionFunction):
     :cite:`settles2009activelearning`: Settles, B. (2009). Active
     learning literature survey. *Computer Sciences Technical Report
     1648*, University of Wisconsin-Madison.
+
+    :cite:`buche2005gpes`: Büche, D., Schraudolph, N. N., & Koumoutsakos,
+    P. (2005). Accelerating evolutionary algorithms with Gaussian process
+    fitness function models. *IEEE Transactions on Systems, Man, and
+    Cybernetics-Part C*, 35(2), 183-194. Eq. (19), Section IV-A.
     """
 
     requires_uncertainty: bool = True
