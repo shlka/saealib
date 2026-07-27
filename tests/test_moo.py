@@ -1906,6 +1906,39 @@ class TestSPEA2Comparator:
         assert issubclass(SPEA2Comparator, Comparator)
         assert not issubclass(SPEA2Comparator, ParetoComparator)
 
+    # -----------------------------------------------------------------------
+    # 9. Truncation retains boundary/extreme solutions (Issue #209)
+    # -----------------------------------------------------------------------
+    def test_truncation_retains_boundary_solutions(self) -> None:
+        """Iterative nearest-neighbour truncation keeps both extreme points.
+
+        This 6-point non-dominated front (all ``F(i) < 1``) is constructed
+        so that a one-shot sort on the single-``k`` density ``D(i)`` (the
+        pre-#209 behaviour) discards the true extreme point at idx 5
+        (smallest obj-1) in favour of an interior point at idx 1, when
+        truncated to the top 4. Zitzler et al. (2001) Section 3.2's
+        iterative removal -- which recomputes neighbour distances after
+        every step and, per the tie-break rule, prefers to remove crowded
+        interior points before boundary ones -- keeps both extremes instead.
+        """
+        from saealib.comparators import SPEA2Comparator
+
+        f = np.array(
+            [
+                [0.98, 6.85],  # idx 0: extreme (smallest obj 0)
+                [2.64, 4.29],
+                [2.88, 3.86],
+                [6.07, 1.56],
+                [6.51, 0.34],
+                [7.41, 0.20],  # idx 5: extreme (smallest obj 1)
+            ]
+        )
+        pop = _make_pop(f)
+        comp = SPEA2Comparator()
+        order = comp.sort_population(pop)
+        kept = set(order[:4].tolist())
+        assert {0, 5} <= kept
+
 
 # ===========================================================================
 # hypervolume_contributions Tests (#74, Beume et al. 2007)

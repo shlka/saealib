@@ -410,3 +410,67 @@ def spea2_fitness(
     density = 1.0 / (sigma_k + 2.0)
 
     return raw_fitness + density
+
+
+def spea2_truncation_order(f: np.ndarray) -> np.ndarray:
+    """
+    Order a non-dominated set via the SPEA2 archive truncation operator.
+
+    Implements Section 3.2 ("Environmental Selection") of Zitzler et al.
+    (2001): while the set is larger than 1, remove the individual ``i`` for
+    which ``i <=_d j`` holds for every remaining ``j``, where ``i <=_d j``
+    compares the two individuals' sorted distance-to-neighbour vectors
+    (``sigma^1, sigma^2, ...``) lexicographically (smallest first-neighbour
+    distance wins; ties broken by the next-nearest neighbour, and so on).
+    Distances are recomputed among the currently remaining set after every
+    removal, which is what makes the procedure iterative rather than a
+    one-shot sort.
+
+    Because the removal criterion only ever depends on the currently
+    remaining set, running it down to a single survivor and reversing the
+    removal order yields a full ranking whose every length-``k`` prefix
+    equals the result of stopping the paper's procedure at ``N = k``. This
+    lets a single call serve any downstream truncation size.
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Objective matrix of the (already non-dominated) set to order.
+        shape: (n, n_obj).
+
+    Returns
+    -------
+    np.ndarray
+        Local indices into ``f``, ordered best (last survivor) first.
+        shape: (n,).
+
+    References
+    ----------
+    :cite:`zitzler2001spea2`: Zitzler, E., Laumanns, M., & Thiele, L. (2001).
+    SPEA2: Improving the Strength Pareto Evolutionary Algorithm. TIK-Report
+    103, ETH Zurich, Switzerland. (Section 3.2, "Environmental Selection".)
+    """
+    f = np.asarray(f, dtype=float)
+    n = len(f)
+    if n <= 1:
+        return np.arange(n, dtype=int)
+
+    remaining = list(range(n))
+    removed: list[int] = []
+    while len(remaining) > 1:
+        sub = f[remaining]
+        diff = sub[:, None, :] - sub[None, :, :]
+        dist = np.sqrt((diff**2).sum(axis=2))
+        np.fill_diagonal(dist, np.inf)
+        sorted_dist = np.sort(dist, axis=1)[:, :-1]  # drop the trailing self +inf
+
+        # Lexicographic minimum row = most crowded individual (smallest
+        # nearest-neighbour distance, ties broken by the next neighbour).
+        order = np.lexsort(
+            [sorted_dist[:, k] for k in range(sorted_dist.shape[1] - 1, -1, -1)]
+        )
+        worst_local = int(order[0])
+        removed.append(remaining.pop(worst_local))
+
+    removed.append(remaining[0])
+    return np.array(removed[::-1], dtype=int)
