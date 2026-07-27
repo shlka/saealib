@@ -1404,16 +1404,18 @@ class RNSGA2Comparator(ParetoComparator):
     - sort_population: non-dominated sorting + reference-point proximity ordering
     - compare_population: inherited from ParetoComparator (Pareto dominance)
 
-    The R-NSGA-II selection mechanism (Deb & Sundar 2006):
+    The R-NSGA-II selection mechanism (Deb & Sundar 2006), Steps 1-3:
 
     1. Non-dominated sorting (same fronts as NSGA-II).
-    2. Normalize objectives by range (min-max per objective).
-    3. Associate each individual with the nearest reference point (Euclidean
-       distance in normalized objective space).
-    4. Within each front, sort by ``(niche_count[assoc], dist_to_nearest_ref)``
-       ascending. Apply ε-clearing: solutions within ``epsilon`` of a
-       higher-ranked solution with the same associated reference point are moved
-       to the back of their reference-point group.
+    2. Normalize objectives by range (min-max per objective, Eq. 3).
+    3. Step 1: for each reference point, compute the normalized Euclidean
+       distance of every individual in the front to that point and rank them
+       ascending (closest = rank 1).
+    4. Step 2: each individual's crowding-distance-equivalent is the minimum
+       of its per-reference-point ranks from Step 1 (smaller = preferred).
+    5. Step 3 (ε-clearing): solutions within ``epsilon`` of a higher-ranked
+       solution sharing the same nearest reference point are moved to the
+       back of their reference-point group.
 
     Parameters
     ----------
@@ -1513,15 +1515,11 @@ class RNSGA2Comparator(ParetoComparator):
             rank_full[feasible] = _ranks
             dist_min_full[feasible] = dist_min
 
-            niche_count = np.zeros(len(self._reference_points), dtype=int)
-
             for front_list in fronts:
                 front_local = np.array(front_list, dtype=int)
                 ordered = self._order_front(
-                    front_local, assoc_idx, dist_min, niche_count
+                    front_local, dist_matrix, assoc_idx, dist_min
                 )
-                for idx in ordered:
-                    niche_count[assoc_idx[idx]] += 1
                 sorted_feasible.extend(feasible[ordered].tolist())
 
         sorted_infeasible: np.ndarray = np.empty(0, int)
@@ -1584,15 +1582,36 @@ class RNSGA2Comparator(ParetoComparator):
     def _order_front(
         self,
         front_local: np.ndarray,
+        dist_matrix: np.ndarray,
         assoc_idx: np.ndarray,
         dist_min: np.ndarray,
-        niche_count: np.ndarray,
     ) -> np.ndarray:
-        """Order a single front by (niche_count, dist) with ε-clearing."""
-        # Primary sort: (niche_count of associated ref, distance)
-        nc = niche_count[assoc_idx[front_local]]
-        d = dist_min[front_local]
-        base_order = np.lexsort((d, nc))  # ascending both
+        """Order a single front via R-NSGA-II Steps 1-3 (Deb & Sundar 2006).
+
+        Step 1: for each reference point, rank the front's individuals in
+        ascending order of normalized Euclidean distance to that point
+        (closest = rank 1). Step 2: each individual's crowding-distance-
+        equivalent is the minimum of its per-reference-point ranks from
+        Step 1 (smaller = preferred); ties are broken by the individual's
+        raw distance to its nearest reference point for determinism, since
+        the paper does not specify a tie-break. Step 3 (ε-clearing,
+        unchanged from the pre-#210 implementation): solutions within
+        ``epsilon`` of a higher-ranked solution sharing the same nearest
+        reference point are moved to the back of their reference-point
+        group.
+        """
+        front_dist = dist_matrix[front_local]  # (n_front, n_ref)
+        # Step 1: per-reference-point rank (1 = closest), vectorized via a
+        # double argsort; Step 2: minimum rank across reference points.
+        ranks_per_ref = (
+            np.argsort(
+                np.argsort(front_dist, axis=0, kind="stable"), axis=0, kind="stable"
+            )
+            + 1
+        )
+        min_rank = ranks_per_ref.min(axis=1)
+
+        base_order = np.lexsort((dist_min[front_local], min_rank))  # ascending both
         ordered = front_local[base_order]
 
         # ε-clearing: within each reference-point group, move solutions

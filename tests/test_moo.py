@@ -2688,3 +2688,34 @@ class TestRNSGA2Comparator:
         assert comp.compare_population(pop, 0, 1) == -1
         assert comp.compare_population(pop, 1, 2) == -1
         assert comp.compare_population(pop, 0, 2) == -1
+
+    # -----------------------------------------------------------------------
+    # Steps 1-2 match the paper's per-reference-point rank minimum (Issue #210)
+    # -----------------------------------------------------------------------
+    def test_step1_2_min_rank_not_niche_count(self) -> None:
+        """Ordering follows Deb & Sundar (2006) Steps 1-2, not niche_count.
+
+        All 4 points form a single non-dominated front, so the pre-#210
+        niche_count-based mechanism (niche_count is 0 for everyone in the
+        first front processed) degenerates to a plain sort by each
+        individual's distance to its single nearest reference point, giving
+        idx order ``[2, 3, 1, 0]``. The paper's actual procedure -- rank each
+        individual against *every* reference point independently (Step 1)
+        and take the minimum rank across reference points (Step 2) -- gives
+        idx 1 a better (lower) min-rank than idx 3, producing ``[2, 1, 3,
+        0]`` instead. Values verified by direct computation of both
+        mechanisms.
+        """
+        ref = np.array([[0.73, 0.11], [0.39, 0.52]])
+        f = np.array(
+            [
+                [0.09, 0.48],
+                [0.24, 0.43],
+                [0.58, 0.16],
+                [0.80, 0.09],
+            ]
+        )
+        pop = _make_pop(f)
+        comp = RNSGA2Comparator(ref)
+        order = comp.sort_population(pop)
+        np.testing.assert_array_equal(order, [2, 1, 3, 0])
