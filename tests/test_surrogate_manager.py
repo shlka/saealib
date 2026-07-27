@@ -147,6 +147,21 @@ class TestSplitPrediction:
             assert p.label is not None
             assert p.label[0] == pytest.approx(float(i))
 
+    def test_x_split_correctly(self) -> None:
+        x = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+        pred = SurrogatePrediction(value=np.zeros((3, 1)), x=x)
+        parts = _split_prediction(pred)
+        for i, p in enumerate(parts):
+            assert p.x is not None
+            assert p.x.shape == (1, 2)
+            np.testing.assert_array_equal(p.x[0], x[i])
+
+    def test_x_none_propagates(self) -> None:
+        pred = SurrogatePrediction(value=np.zeros((3, 1)))
+        parts = _split_prediction(pred)
+        for p in parts:
+            assert p.x is None
+
     def test_metadata_shared(self) -> None:
         """metadata dict is shared (not deep-copied) across splits."""
         meta = {"key": "val"}
@@ -236,6 +251,16 @@ class TestSanitizeNan:
         assert p[0].has_tell_f
         assert np.all(np.isnan(p[0].tell_f))
         assert not p[1].has_tell_f
+
+    def test_x_preserved_on_nan_prediction(self) -> None:
+        scores = np.array([np.nan, 1.0])
+        preds = [
+            SurrogatePrediction(value=np.array([[np.nan]]), x=np.array([[9.0]])),
+            SurrogatePrediction(value=np.array([[1.0]]), x=np.array([[8.0]])),
+        ]
+        _, p = SurrogateManager._sanitize_nan(scores, preds)
+        assert p[0].x is not None
+        np.testing.assert_array_equal(p[0].x, [[9.0]])
 
     def test_original_scores_not_mutated(self) -> None:
         scores = np.array([np.nan, 1.0])

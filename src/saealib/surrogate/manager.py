@@ -96,6 +96,7 @@ class SurrogateManager(ABC):
                 value=p.value,
                 std=p.std,
                 label=p.label,
+                x=p.x,
                 _tell_f=nan_f,
                 metadata=p.metadata,
             )
@@ -809,6 +810,7 @@ def _split_prediction(prediction: SurrogatePrediction) -> list[SurrogatePredicti
     for i in range(n):
         std_i = prediction.std[i : i + 1] if prediction.std is not None else None
         label_i = prediction.label[i : i + 1] if prediction.label is not None else None
+        x_i = prediction.x[i : i + 1] if prediction.x is not None else None
         tell_f_i = (
             prediction._tell_f[i : i + 1] if prediction._tell_f is not None else None
         )
@@ -817,6 +819,7 @@ def _split_prediction(prediction: SurrogatePrediction) -> list[SurrogatePredicti
                 value=prediction.value[i : i + 1],
                 std=std_i,
                 label=label_i,
+                x=x_i,
                 _tell_f=tell_f_i,
                 metadata=prediction.metadata,
             )

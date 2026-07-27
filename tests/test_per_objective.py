@@ -181,6 +181,31 @@ class TestPerObjectiveSurrogate:
         s.fit(X, y)
         assert s.predict(test_x).value.shape == (5, 1)
 
+    def test_x_populated_from_test_x_directly(self, train_data_2obj, test_x) -> None:
+        """prediction.x must be set from test_x regardless of the wrapped
+        surrogates, so acquisition functions like CORSDistance still work
+        when an RBFSurrogate is wrapped in PerObjectiveSurrogate."""
+        X, y = train_data_2obj
+        s = PerObjectiveSurrogate(
+            [RBFSurrogate(gaussian_kernel, DIM), RBFSurrogate(gaussian_kernel, DIM)]
+        )
+        s.fit(X, y)
+        pred = s.predict(test_x)
+        assert pred.x is not None
+        np.testing.assert_array_equal(pred.x, test_x)
+
+    def test_x_populated_even_when_wrapped_surrogates_lack_it(self, test_x) -> None:
+        """SklearnSVMSurrogate doesn't populate prediction.x itself; the wrapper
+        must still set it from its own test_x argument."""
+        rng = np.random.default_rng(0)
+        X = rng.uniform(-1.0, 1.0, size=(10, DIM))
+        y = np.ones(10)
+        s = PerObjectiveSurrogate([SklearnSVMSurrogate()])
+        s.fit(X, y)
+        pred = s.predict(test_x)
+        assert pred.x is not None
+        np.testing.assert_array_equal(pred.x, test_x)
+
 
 # ===========================================================================
 # Integration: GlobalSurrogateManager
