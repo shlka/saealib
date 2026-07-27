@@ -120,7 +120,7 @@ def test_compute_cv_inequality_violated():
     h = _make_handler()
     c = InequalityConstraint(lambda x: 0.8, threshold=0.5)
     cv = h.compute_cv([c], _x, np.array([0.8]))
-    assert cv == pytest.approx(0.3)
+    assert cv == pytest.approx(0.3**2)
 
 
 def test_compute_cv_equality_raw_absolute_ignores_tolerance():
@@ -145,7 +145,7 @@ def test_compute_cv_mixed_constraints():
     ineq = InequalityConstraint(lambda x: 0.3, threshold=0.0)
     eq = EqualityConstraint(lambda x: -0.2, tolerance=0.0)
     cv = h.compute_cv([ineq, eq], _x, np.array([0.3, -0.2]))
-    assert cv == pytest.approx(0.3 + 0.2)
+    assert cv == pytest.approx(0.3**2 + 0.2)
 
 
 def test_compute_cv_no_constraints():
