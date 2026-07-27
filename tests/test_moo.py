@@ -2426,6 +2426,76 @@ class TestNSGA3Comparator:
         np.testing.assert_array_equal(order_max, order_min)
 
     # -----------------------------------------------------------------------
+    # Normalization must use S_t, not R_t (Issue #211)
+    # -----------------------------------------------------------------------
+    def test_normalize_objectives_front_vs_combined_population_differ(self) -> None:
+        """_normalize_objectives(S_t) and _normalize_objectives(R_t) can diverge.
+
+        Deb & Jain (2014) Algorithm 2 normalizes over ``S_t`` (the fronts
+        accumulated so far), not the full combined population ``R_t``. For
+        a non-degenerate front, a dominated point can never win the ASF
+        argmin used to pick extreme points nor lower any per-axis ideal
+        value (any point outside ``S_t`` is transitively dominated by a
+        member of ``S_t``, and ASF is monotone in every objective) -- so in
+        general, restricting normalization to ``S_t`` has no observable
+        effect on ``ideal``/``intercepts``. The one path where it does
+        differ is the singular-matrix fallback (``intercepts =
+        f_trans.max(axis=0)``): this front is small enough (3 points, 3
+        objectives) to trigger that fallback on its own, while the larger
+        combined array does not, so the two intercepts differ sharply.
+        """
+        front0 = np.array(
+            [
+                [0.81, 0.52, 0.29],
+                [0.05, 0.38, 0.41],
+                [0.05, 0.05, 1.00],
+            ]
+        )
+        r_t = np.vstack(
+            [
+                front0,
+                [
+                    [0.81, 49.23, 0.29],  # front 1: dominated by row 0
+                    [42.28, 20.06, 0.41],  # front 1: dominated by row 1
+                    [33.91, 3.18, 1.00],  # front 1: dominated by row 2
+                ],
+            ]
+        )
+
+        _, ideal_s_t, intercepts_s_t = _normalize_objectives(front0, None)
+        _, ideal_r_t, intercepts_r_t = _normalize_objectives(r_t, None)
+
+        np.testing.assert_array_equal(ideal_s_t, ideal_r_t)
+        assert not np.allclose(intercepts_s_t, intercepts_r_t)
+
+    def test_normalization_uses_s_t_not_r_t(self) -> None:
+        """sort_population still produces a valid, front-respecting ranking
+        when normalization is recomputed per front over S_t (see the
+        _normalize_objectives-level property test above for the mechanism)."""
+        ref = np.array(
+            [
+                [0.71, 0.00, 0.50],
+                [0.44, 0.20, 0.32],
+                [0.81, 0.32, 0.15],
+            ]
+        )
+        f = np.array(
+            [
+                [0.81, 0.52, 0.29],
+                [0.05, 0.38, 0.41],
+                [0.05, 0.05, 1.00],
+                [0.81, 49.23, 0.29],  # front 1: dominated by row 0
+                [42.28, 20.06, 0.41],  # front 1: dominated by row 1
+                [33.91, 3.18, 1.00],  # front 1: dominated by row 2
+            ]
+        )
+        pop = _make_pop(f)
+        comp = NSGA3Comparator(ref, seed=0)
+        order = comp.sort_population(pop)
+        assert set(order[:3].tolist()) == {0, 1, 2}
+        assert set(order[3:].tolist()) == {3, 4, 5}
+
+    # -----------------------------------------------------------------------
     # seed=None reproducibility under a master Optimizer seed (Issue #199)
     # -----------------------------------------------------------------------
     def test_seed_none_does_not_eagerly_create_rng(self) -> None:

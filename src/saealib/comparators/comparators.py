@@ -1260,8 +1260,10 @@ class NSGA3Comparator(ParetoComparator):
     The NSGA-III selection mechanism (Deb & Jain 2014, Algorithm 1):
 
     1. Non-dominated sorting (same fronts as NSGA-II).
-    2. Normalize objectives: translate by ideal point then scale by hyperplane
-       intercepts computed from extreme points (ASF minimizers).
+    2. Normalize objectives over ``S_t`` (the fronts accumulated so far, not
+       the full combined population ``R_t``): translate by the ideal point of
+       ``S_t`` then scale by hyperplane intercepts computed from extreme
+       points (ASF minimizers) of ``S_t``.
     3. Associate each individual with the nearest reference line (perpendicular
        distance from the individual to the ray from origin through each
        reference point).
@@ -1272,7 +1274,11 @@ class NSGA3Comparator(ParetoComparator):
     The total ordering returned by sort_population processes all fronts in order,
     accumulating niche counts across fronts so that earlier fronts' niche counts
     propagate to later ones—matching the selection pressure NSGA-III would apply
-    when truncating to a target population size.
+    when truncating to a target population size. Because sort_population ranks
+    every front (not only the one boundary front ``F_l`` selected in the
+    paper), each front is in turn treated as if it were that boundary front:
+    normalization (step 2) is recomputed over ``S_t`` = the union of fronts
+    processed up to and including the current one.
 
     Parameters
     ----------
@@ -1370,17 +1376,43 @@ class NSGA3Comparator(ParetoComparator):
 
         sorted_feasible: list[int] = []
         if len(feasible):
+            f_feasible = f[feasible]
+            n_feasible = len(feasible)
             _ranks, fronts = self._sorter(
-                f[feasible], direction=self.direction, dominator=self._dominator
+                f_feasible, direction=self.direction, dominator=self._dominator
             )
-            f_norm, _, _ = _normalize_objectives(f[feasible], self.direction)
-            assoc, dist = _associate_to_reference_points(f_norm, self._reference_points)
+            assoc_full = np.full(n_feasible, -1, dtype=int)
+            dist_full = np.full(n_feasible, np.inf)
             niche_count = np.zeros(len(self._reference_points), dtype=int)
 
+            # Deb & Jain (2014) Algorithm 1 normalizes over S_t = F_1 union
+            # ... union F_l, the fronts accumulated up to and including the
+            # last one needed to reach the target population size, not over
+            # the full combined population R_t. This class already
+            # generalizes NSGA-III's single-boundary-front selection to
+            # every front (see class docstring), so each front is, in turn,
+            # treated as if it were that boundary front l: S_t is the union
+            # of fronts processed so far, recomputed fresh at every step.
+            s_t_local: list[int] = []
             for front_list in fronts:
                 front_local = np.array(front_list, dtype=int)
+                s_t_local.extend(front_local.tolist())
+                s_idx = np.array(s_t_local, dtype=int)
+
+                f_norm, _, _ = _normalize_objectives(f_feasible[s_idx], self.direction)
+                assoc_s, dist_s = _associate_to_reference_points(
+                    f_norm, self._reference_points
+                )
+                assoc_full[s_idx] = assoc_s
+                dist_full[s_idx] = dist_s
+
                 ordered = _niche_count_select(
-                    front_local, assoc, dist, niche_count, len(front_local), self.rng
+                    front_local,
+                    assoc_full,
+                    dist_full,
+                    niche_count,
+                    len(front_local),
+                    self.rng,
                 )
                 sorted_feasible.extend(feasible[ordered].tolist())
 
