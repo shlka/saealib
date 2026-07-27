@@ -336,12 +336,16 @@ class EpsilonConstraintHandler(ConstraintHandler):
     - *Equality* constraints: ``|h(x)|``  (raw absolute value; the
       ``EqualityConstraint.tolerance`` field is intentionally bypassed so
       that ε controls the feasibility threshold globally).
-    - *Inequality* constraints: ``max(0, g(x) - threshold)``  (standard
+    - *Inequality* constraints: ``max(0, g(x) - threshold) ** 2``  (squared
       positive part; the constraint's ``threshold`` still applies).
 
-    This is a simplified form of the sum-of-constraint-violation measure
-    in Eq. (7) of Mezura-Montes & Coello Coello (2011) — inequality
-    violations are not squared and values are not normalised.
+    This matches the sum-of-constraint-violation measure in Eq. (7) of
+    Mezura-Montes & Coello Coello (2011): inequality violations are squared,
+    equality violations are the unsquared absolute value. Eq. (7) is stated
+    for constraint values that have been normalised beforehand (see the
+    sentence following Eq. (7) in Section 2.4); this handler aggregates the
+    raw ``g``/``h`` values without that normalisation, so constraints on
+    very different scales will not contribute evenly to ``cv``.
 
     The ε-constrained method itself originates from Takahama & Sakai
     (2006); that paper has not been obtained, so it is credited here by
@@ -367,13 +371,13 @@ class EpsilonConstraintHandler(ConstraintHandler):
         x: np.ndarray,
         g: np.ndarray,
     ) -> float:
-        """Return ``|h|`` for equality and ``max(0, g-threshold)`` for inequality."""
+        """Return ``|h|`` for equality and ``max(0, g-threshold)**2`` for inequality."""
         cv = 0.0
         for gi, c in zip(g, constraints):
             if isinstance(c, EqualityConstraint):
                 cv += abs(float(gi))
             else:
-                cv += max(0.0, float(gi) - c.threshold)
+                cv += max(0.0, float(gi) - c.threshold) ** 2
         return cv
 
     @property
