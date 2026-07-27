@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>EGO（Efficient Global Optimization） &#8212; saealib 0.1.0b5.dev55+ga7b051a6a ドキュメント</title>
+    <title>EGO（Efficient Global Optimization） &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=c6423660"></script>
+    <script src="../_static/documentation_options.js?v=ac9ed168"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -982,7 +982,7 @@ window.runMermaid = runMermaid;</script>
 <h2>概要<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>EGOは、評価コストの高い目的関数を対象に、Gaussian Process回帰(GP)によるサロゲートモデルと<strong>期待改善量</strong>(Expected Improvement, EI)という獲得関数を組み合わせた逐次最適化の手法です。</p>
 <p>GPの予測分散は学習データから離れた領域ほど大きくなります。 EIはこの予測平均と予測分散の両方から計算されるスカラー値であるため、「予測値が良さそうな領域」と「予測の不確実性が高い領域」を自然に両方カバーし、探索(exploration)と活用(exploitation)のバランスを取ります。</p>
-<p>出典は<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id8" title="Donald R. Jones, Matthias Schonlau, and William J. Welch. Efficient global optimization of expensive black-box functions. Journal of Global Optimization, 13(4):455–492, 1998. doi:10.1023/A:1008306431147.">25</a>]</span>。具体的な手順は次の擬似コードに示します。</p>
+<p>出典は<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id8" title="Donald R. Jones, Matthias Schonlau, and William J. Welch. Efficient global optimization of expensive black-box functions. Journal of Global Optimization, 13(4):455–492, 1998. doi:10.1023/A:1008306431147.">24</a>]</span>。具体的な手順は次の擬似コードに示します。</p>
 </section>
 <section id="pseudocode">
 <h2>擬似コード<a class="headerlink" href="#pseudocode" title="Link to this heading">#</a></h2>
@@ -1093,7 +1093,7 @@ window.runMermaid = runMermaid;</script>
 </section>
 <section id="parameters-and-variants">
 <h2>パラメータと変種<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
-<p><strong>ξ（探索と活用のトレードオフ）</strong>：<code class="docutils literal notranslate"><span class="pre">ExpectedImprovement(xi=...)</span></code>で調整します。 既定値は<code class="docutils literal notranslate"><span class="pre">0.01</span></code>で、Brochu et al. (2010)が推奨する値に基づきます<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id9" title="Eric Brochu, Vlad M. Cora, and Nando de Freitas. A tutorial on Bayesian optimization of expensive cost functions, with application to active user modeling and hierarchical reinforcement learning. 2010. arXiv:1012.2599.">37</a>]</span>。 <span class="math notranslate nohighlight">\(\xi=0\)</span>では活用(exploitation)寄りになり、大きくすると探索(exploration)寄りになります。</p>
+<p><strong>ξ（探索と活用のトレードオフ）</strong>：<code class="docutils literal notranslate"><span class="pre">ExpectedImprovement(xi=...)</span></code>で調整します。 既定値は<code class="docutils literal notranslate"><span class="pre">0.01</span></code>で、Brochu et al. (2010)が推奨する値に基づきます<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id9" title="Eric Brochu, Vlad M. Cora, and Nando de Freitas. A tutorial on Bayesian optimization of expensive cost functions, with application to active user modeling and hierarchical reinforcement learning. 2010. arXiv:1012.2599.">36</a>]</span>。 <span class="math notranslate nohighlight">\(\xi=0\)</span>では活用(exploitation)寄りになり、大きくすると探索(exploration)寄りになります。</p>
 <p><strong>evaluation_ratio（逐次評価とバッチ評価の切り替え）</strong>：文献のEGOは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムです。 saealibの<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>は、GAが生成した子個体群のうちEIスコア上位<code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>の割合をまとめて真評価するバッチ拡張になっています。 <code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づきます。</p>
 </section>
 <section id="related">

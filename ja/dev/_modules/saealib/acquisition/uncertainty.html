@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.acquisition.uncertainty &#8212; saealib 0.1.0b5.dev55+ga7b051a6a ドキュメント</title>
+    <title>saealib.acquisition.uncertainty &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=c6423660"></script>
+    <script src="../../../_static/documentation_options.js?v=ac9ed168"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -972,6 +972,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    For multi-objective problems, aggregates uncertainty across objectives</span>
 <span class="sd">    using a weighted sum.</span>
 
+<span class="sd">    Using sigma(x) alone as the criterion corresponds to the alpha -&gt; infinity</span>
+<span class="sd">    limit of the merit function f_M(x) = t_hat(x) - alpha * sigma(x) in</span>
+<span class="sd">    Büche, Schraudolph &amp; Koumoutsakos (2005), Eq. (19). That paper&#39;s GPOP</span>
+<span class="sd">    procedure never actually takes this limit: it optimizes f_M in parallel</span>
+<span class="sd">    for the four fixed values alpha = 0, 1, 2, 4 (Section IV-A), evaluating</span>
+<span class="sd">    all four resulting points rather than using sigma alone.</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    weights : np.ndarray or None</span>
@@ -987,6 +994,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    :cite:`settles2009activelearning`: Settles, B. (2009). Active</span>
 <span class="sd">    learning literature survey. *Computer Sciences Technical Report</span>
 <span class="sd">    1648*, University of Wisconsin-Madison.</span>
+
+<span class="sd">    :cite:`buche2005gpes`: Büche, D., Schraudolph, N. N., &amp; Koumoutsakos,</span>
+<span class="sd">    P. (2005). Accelerating evolutionary algorithms with Gaussian process</span>
+<span class="sd">    fitness function models. *IEEE Transactions on Systems, Man, and</span>
+<span class="sd">    Cybernetics-Part C*, 35(2), 183-194. Eq. (19), Section IV-A.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">requires_uncertainty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>

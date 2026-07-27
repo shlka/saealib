@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.comparators.comparators &#8212; saealib 0.1.0b5.dev55+ga7b051a6a ドキュメント</title>
+    <title>saealib.comparators.comparators &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=c6423660"></script>
+    <script src="../../../_static/documentation_options.js?v=ac9ed168"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -972,6 +972,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">dda_non_dominated_sort</span><span class="p">,</span>  <span class="c1"># noqa: F401</span>
     <span class="n">non_dominated_sort</span><span class="p">,</span>
     <span class="n">spea2_fitness</span><span class="p">,</span>
+    <span class="n">spea2_truncation_order</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -1410,8 +1411,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Comparator for multi-objective optimization via NSGA-II style ranking.</span>
 
 <span class="sd">    Extends ParetoComparator with crowding-distance-based secondary ordering:</span>
+
 <span class="sd">    - sort_population: non-dominated sorting + crowding distance</span>
-<span class="sd">    - compare_population: inherited from ParetoComparator (Pareto dominance)</span>
+<span class="sd">    - compare_population: overrides ParetoComparator with Deb et al. (2002)&#39;s</span>
+<span class="sd">      crowded-comparison operator (prec_n): lower rank wins, ties broken by</span>
+<span class="sd">      higher crowding distance -- see :meth:`compare_population`</span>
 
 <span class="sd">    Infeasible individuals (cv &gt; eps) are always ranked after feasible</span>
 <span class="sd">    ones, ordered by ascending constraint violation.</span>
@@ -1557,8 +1561,15 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Ordering rules:</span>
 
-<span class="sd">    - **Feasible block**: sorted by ascending SPEA2 fitness (lower = better).</span>
-<span class="sd">      See :func:`spea2_fitness` for the ``k = √N`` density reduction note.</span>
+<span class="sd">    - **Feasible block**: the non-dominated subset (``F(i) &lt; 1``) is ordered</span>
+<span class="sd">      by the iterative nearest-neighbour truncation operator of Section 3.2</span>
+<span class="sd">      (&quot;Environmental Selection&quot;) -- see :func:`spea2_truncation_order` --</span>
+<span class="sd">      instead of a one-shot sort, so that boundary/extreme solutions are</span>
+<span class="sd">      preferentially retained under truncation.  The dominated subset</span>
+<span class="sd">      (``F(i) &gt;= 1``) follows, sorted by ascending SPEA2 fitness (lower =</span>
+<span class="sd">      better), matching the paper&#39;s &quot;fill with the best dominated</span>
+<span class="sd">      individuals&quot; branch.  See :func:`spea2_fitness` for the ``k = √N``</span>
+<span class="sd">      density reduction note.</span>
 <span class="sd">    - **Infeasible block**: always placed after feasible individuals, ordered by</span>
 <span class="sd">      ascending constraint violation (Deb 2000 feasibility rule).</span>
 
@@ -1655,7 +1666,13 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.SPEA2Comparator.html#saealib.SPEA2Comparator.sort_population">[ドキュメント]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">sort_population</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Sort by SPEA2 fitness (ascending); infeasible individuals come last.</span>
+<span class="sd">        Sort feasible individuals via SPEA2 environmental selection.</span>
+
+<span class="sd">        Within the feasible block, the non-dominated subset (``F(i) &lt; 1``)</span>
+<span class="sd">        is ordered by :func:`spea2_truncation_order` (Zitzler et al. 2001,</span>
+<span class="sd">        Section 3.2), and the dominated subset (``F(i) &gt;= 1``) follows,</span>
+<span class="sd">        ordered by ascending SPEA2 fitness. Infeasible individuals come</span>
+<span class="sd">        last, ordered by ascending constraint violation.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1667,6 +1684,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        np.ndarray</span>
 <span class="sd">            Sorted population indices (int).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">f_arr</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
         <span class="n">cv_arr</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;cv&quot;</span><span class="p">)</span>
         <span class="n">fitness_all</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fitness</span><span class="p">(</span><span class="n">population</span><span class="p">)</span>
 
@@ -1675,7 +1693,21 @@ window.runMermaid = runMermaid;</script>
 
         <span class="n">sorted_feasible</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">feasible</span><span class="p">):</span>
-            <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">fitness_all</span><span class="p">[</span><span class="n">feasible</span><span class="p">],</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;stable&quot;</span><span class="p">)</span>
+            <span class="n">fitness_feasible</span> <span class="o">=</span> <span class="n">fitness_all</span><span class="p">[</span><span class="n">feasible</span><span class="p">]</span>
+            <span class="n">nondominated_local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">fitness_feasible</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">dominated_local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">fitness_feasible</span> <span class="o">&gt;=</span> <span class="mf">1.0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="n">truncation_order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">nondominated_local</span><span class="p">):</span>
+                <span class="n">truncation_order</span> <span class="o">=</span> <span class="n">nondominated_local</span><span class="p">[</span>
+                    <span class="n">spea2_truncation_order</span><span class="p">(</span><span class="n">f_arr</span><span class="p">[</span><span class="n">feasible</span><span class="p">][</span><span class="n">nondominated_local</span><span class="p">])</span>
+                <span class="p">]</span>
+
+            <span class="n">dominated_order</span> <span class="o">=</span> <span class="n">dominated_local</span><span class="p">[</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">fitness_feasible</span><span class="p">[</span><span class="n">dominated_local</span><span class="p">],</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;stable&quot;</span><span class="p">)</span>
+            <span class="p">]</span>
+
+            <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">truncation_order</span><span class="p">,</span> <span class="n">dominated_order</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
             <span class="n">sorted_feasible</span> <span class="o">=</span> <span class="n">feasible</span><span class="p">[</span><span class="n">order</span><span class="p">]</span>
 
         <span class="n">sorted_infeasible</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
@@ -1762,6 +1794,37 @@ window.runMermaid = runMermaid;</script>
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_hv_default_reference_point</span><span class="p">(</span>
+    <span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Beume et al. (2007) default hypervolume reference point.</span>
+
+<span class="sd">    Section 2.1.3, &quot;Handling of boundary solutions&quot;: the reference point is</span>
+<span class="sd">    the vector of the currently worst objective values increased by 1.0,</span>
+<span class="sd">    recomputed every generation. For a maximized objective, &quot;worst&quot;</span>
+<span class="sd">    (the direction to move *away* from) is the minimum observed value, and</span>
+<span class="sd">    the offset is subtracted instead of added.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f : np.ndarray</span>
+<span class="sd">        Objective matrix to derive the worst values from. shape: (n, n_obj).</span>
+<span class="sd">    direction : np.ndarray or None</span>
+<span class="sd">        Per-objective optimization direction: ``+1`` maximize, ``-1``</span>
+<span class="sd">        minimize. ``None`` defaults to minimization for all objectives.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Reference point in the original objective space. shape: (n_obj,).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n_obj</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">dir_arr</span> <span class="o">=</span> <span class="n">direction</span> <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_obj</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">worst</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">dir_arr</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">f</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">dir_arr</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">worst</span> <span class="o">+</span> <span class="n">offset</span>
+
+
 <div class="viewcode-block" id="HypervolumeComparator">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.HypervolumeComparator.html#saealib.HypervolumeComparator">[ドキュメント]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">HypervolumeComparator</span><span class="p">(</span><span class="n">ParetoComparator</span><span class="p">):</span>
@@ -1800,6 +1863,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        instead.  Tournament selection should call ``compare_population()``,</span>
 <span class="sd">        which IS defined and safe to use.</span>
 
+<span class="sd">    .. note::</span>
+<span class="sd">        **Deferred gap.** Beume et al. (2007) Section 2.1.3 special-cases</span>
+<span class="sd">        two-objective problems: the reference point is skipped entirely and</span>
+<span class="sd">        the two extremal (best-per-objective) solutions are unconditionally</span>
+<span class="sd">        kept.  This comparator always computes a reference point and HV</span>
+<span class="sd">        contributions for every point, including the two-objective case; the</span>
+<span class="sd">        paper&#39;s special case is not implemented here.</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    direction : np.ndarray or None</span>
@@ -1812,11 +1883,17 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        compatibility).</span>
 <span class="sd">    reference_point : np.ndarray or None</span>
 <span class="sd">        Reference point in the *original* objective space, shape</span>
-<span class="sd">        ``(n_obj,)``.  If ``None``, it is auto-computed from the data</span>
-<span class="sd">        with fractional padding controlled by ``margin``.</span>
+<span class="sd">        ``(n_obj,)``.  If ``None`` (default), it is recomputed fresh on</span>
+<span class="sd">        every call as the front&#39;s worst objective values plus ``1.0``</span>
+<span class="sd">        (Beume et al. 2007, Section 2.1.3) -- see</span>
+<span class="sd">        :func:`_hv_default_reference_point`.</span>
 <span class="sd">    margin : float</span>
-<span class="sd">        Fractional padding used when auto-computing the reference point.</span>
-<span class="sd">        Ignored when ``reference_point`` is provided.</span>
+<span class="sd">        Unused by the default (``reference_point=None``) computation, which</span>
+<span class="sd">        now follows the paper&#39;s fixed ``+1.0`` offset instead of a</span>
+<span class="sd">        fractional one.  Retained only so existing constructor calls do not</span>
+<span class="sd">        break; kept as a stored, inert attribute (see :attr:`margin`).</span>
+<span class="sd">        Pass an explicit ``reference_point`` if a margin-scaled reference</span>
+<span class="sd">        point is needed.</span>
 <span class="sd">    sorter : NonDominatedSorter</span>
 <span class="sd">        Non-dominated sorting callable.</span>
 <span class="sd">    dominator : Dominator or None</span>
@@ -1871,7 +1948,7 @@ window.runMermaid = runMermaid;</script>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">margin</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fractional padding applied when auto-computing the reference point.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Unused by the default reference-point computation; see class docstring.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_margin</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
@@ -1907,11 +1984,16 @@ window.runMermaid = runMermaid;</script>
             <span class="k">for</span> <span class="n">front</span> <span class="ow">in</span> <span class="n">fronts</span><span class="p">:</span>  <span class="c1"># front = local indices into feasible subset</span>
                 <span class="n">local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">front</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
                 <span class="n">gidx</span> <span class="o">=</span> <span class="n">feasible</span><span class="p">[</span><span class="n">local</span><span class="p">]</span>
+                <span class="n">front_f</span> <span class="o">=</span> <span class="n">f_arr</span><span class="p">[</span><span class="n">gidx</span><span class="p">]</span>
+                <span class="n">ref_point</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_reference_point</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="n">_hv_default_reference_point</span><span class="p">(</span><span class="n">front_f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
+                <span class="p">)</span>
                 <span class="n">contribs</span> <span class="o">=</span> <span class="n">hypervolume_contributions</span><span class="p">(</span>
-                    <span class="n">f_arr</span><span class="p">[</span><span class="n">gidx</span><span class="p">],</span>
-                    <span class="n">reference_point</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference_point</span><span class="p">,</span>
+                    <span class="n">front_f</span><span class="p">,</span>
+                    <span class="n">reference_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
                     <span class="n">direction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">,</span>
-                    <span class="n">margin</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_margin</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">contrib_all</span><span class="p">[</span><span class="n">gidx</span><span class="p">]</span> <span class="o">=</span> <span class="n">contribs</span>
 
@@ -2286,8 +2368,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    The NSGA-III selection mechanism (Deb &amp; Jain 2014, Algorithm 1):</span>
 
 <span class="sd">    1. Non-dominated sorting (same fronts as NSGA-II).</span>
-<span class="sd">    2. Normalize objectives: translate by ideal point then scale by hyperplane</span>
-<span class="sd">       intercepts computed from extreme points (ASF minimizers).</span>
+<span class="sd">    2. Normalize objectives over ``S_t`` (the fronts accumulated so far, not</span>
+<span class="sd">       the full combined population ``R_t``): translate by the ideal point of</span>
+<span class="sd">       ``S_t`` then scale by hyperplane intercepts computed from extreme</span>
+<span class="sd">       points (ASF minimizers) of ``S_t``.</span>
 <span class="sd">    3. Associate each individual with the nearest reference line (perpendicular</span>
 <span class="sd">       distance from the individual to the ray from origin through each</span>
 <span class="sd">       reference point).</span>
@@ -2298,7 +2382,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    The total ordering returned by sort_population processes all fronts in order,</span>
 <span class="sd">    accumulating niche counts across fronts so that earlier fronts&#39; niche counts</span>
 <span class="sd">    propagate to later ones—matching the selection pressure NSGA-III would apply</span>
-<span class="sd">    when truncating to a target population size.</span>
+<span class="sd">    when truncating to a target population size. Because sort_population ranks</span>
+<span class="sd">    every front (not only the one boundary front ``F_l`` selected in the</span>
+<span class="sd">    paper), each front is in turn treated as if it were that boundary front:</span>
+<span class="sd">    normalization (step 2) is recomputed over ``S_t`` = the union of fronts</span>
+<span class="sd">    processed up to and including the current one.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -2401,17 +2489,43 @@ window.runMermaid = runMermaid;</script>
 
         <span class="n">sorted_feasible</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">feasible</span><span class="p">):</span>
+            <span class="n">f_feasible</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">feasible</span><span class="p">]</span>
+            <span class="n">n_feasible</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">feasible</span><span class="p">)</span>
             <span class="n">_ranks</span><span class="p">,</span> <span class="n">fronts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sorter</span><span class="p">(</span>
-                <span class="n">f</span><span class="p">[</span><span class="n">feasible</span><span class="p">],</span> <span class="n">direction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">,</span> <span class="n">dominator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dominator</span>
+                <span class="n">f_feasible</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">,</span> <span class="n">dominator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dominator</span>
             <span class="p">)</span>
-            <span class="n">f_norm</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_normalize_objectives</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="n">feasible</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
-            <span class="n">assoc</span><span class="p">,</span> <span class="n">dist</span> <span class="o">=</span> <span class="n">_associate_to_reference_points</span><span class="p">(</span><span class="n">f_norm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference_points</span><span class="p">)</span>
+            <span class="n">assoc_full</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_feasible</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+            <span class="n">dist_full</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_feasible</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
             <span class="n">niche_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference_points</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
 
+            <span class="c1"># Deb &amp; Jain (2014) Algorithm 1 normalizes over S_t = F_1 union</span>
+            <span class="c1"># ... union F_l, the fronts accumulated up to and including the</span>
+            <span class="c1"># last one needed to reach the target population size, not over</span>
+            <span class="c1"># the full combined population R_t. This class already</span>
+            <span class="c1"># generalizes NSGA-III&#39;s single-boundary-front selection to</span>
+            <span class="c1"># every front (see class docstring), so each front is, in turn,</span>
+            <span class="c1"># treated as if it were that boundary front l: S_t is the union</span>
+            <span class="c1"># of fronts processed so far, recomputed fresh at every step.</span>
+            <span class="n">s_t_local</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">front_list</span> <span class="ow">in</span> <span class="n">fronts</span><span class="p">:</span>
                 <span class="n">front_local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">front_list</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+                <span class="n">s_t_local</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">front_local</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+                <span class="n">s_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">s_t_local</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+                <span class="n">f_norm</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_normalize_objectives</span><span class="p">(</span><span class="n">f_feasible</span><span class="p">[</span><span class="n">s_idx</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
+                <span class="n">assoc_s</span><span class="p">,</span> <span class="n">dist_s</span> <span class="o">=</span> <span class="n">_associate_to_reference_points</span><span class="p">(</span>
+                    <span class="n">f_norm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference_points</span>
+                <span class="p">)</span>
+                <span class="n">assoc_full</span><span class="p">[</span><span class="n">s_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">assoc_s</span>
+                <span class="n">dist_full</span><span class="p">[</span><span class="n">s_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist_s</span>
+
                 <span class="n">ordered</span> <span class="o">=</span> <span class="n">_niche_count_select</span><span class="p">(</span>
-                    <span class="n">front_local</span><span class="p">,</span> <span class="n">assoc</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">niche_count</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">front_local</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span>
+                    <span class="n">front_local</span><span class="p">,</span>
+                    <span class="n">assoc_full</span><span class="p">,</span>
+                    <span class="n">dist_full</span><span class="p">,</span>
+                    <span class="n">niche_count</span><span class="p">,</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">front_local</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">sorted_feasible</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">feasible</span><span class="p">[</span><span class="n">ordered</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
 
@@ -2437,18 +2551,22 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Extends ParetoComparator with reference-point-based secondary ordering:</span>
 
 <span class="sd">    - sort_population: non-dominated sorting + reference-point proximity ordering</span>
-<span class="sd">    - compare_population: inherited from ParetoComparator (Pareto dominance)</span>
+<span class="sd">    - compare_population: overrides ParetoComparator with rank + reference-point</span>
+<span class="sd">      distance: lower rank wins, ties broken by smaller distance to the</span>
+<span class="sd">      nearest reference point -- see :meth:`compare_population`</span>
 
-<span class="sd">    The R-NSGA-II selection mechanism (Deb &amp; Sundar 2006):</span>
+<span class="sd">    The R-NSGA-II selection mechanism (Deb &amp; Sundar 2006), Steps 1-3:</span>
 
 <span class="sd">    1. Non-dominated sorting (same fronts as NSGA-II).</span>
-<span class="sd">    2. Normalize objectives by range (min-max per objective).</span>
-<span class="sd">    3. Associate each individual with the nearest reference point (Euclidean</span>
-<span class="sd">       distance in normalized objective space).</span>
-<span class="sd">    4. Within each front, sort by ``(niche_count[assoc], dist_to_nearest_ref)``</span>
-<span class="sd">       ascending. Apply ε-clearing: solutions within ``epsilon`` of a</span>
-<span class="sd">       higher-ranked solution with the same associated reference point are moved</span>
-<span class="sd">       to the back of their reference-point group.</span>
+<span class="sd">    2. Normalize objectives by range (min-max per objective, Eq. 3).</span>
+<span class="sd">    3. Step 1: for each reference point, compute the normalized Euclidean</span>
+<span class="sd">       distance of every individual in the front to that point and rank them</span>
+<span class="sd">       ascending (closest = rank 1).</span>
+<span class="sd">    4. Step 2: each individual&#39;s crowding-distance-equivalent is the minimum</span>
+<span class="sd">       of its per-reference-point ranks from Step 1 (smaller = preferred).</span>
+<span class="sd">    5. Step 3 (ε-clearing): solutions within ``epsilon`` of a higher-ranked</span>
+<span class="sd">       solution sharing the same nearest reference point are moved to the</span>
+<span class="sd">       back of their reference-point group.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -2553,15 +2671,11 @@ window.runMermaid = runMermaid;</script>
             <span class="n">rank_full</span><span class="p">[</span><span class="n">feasible</span><span class="p">]</span> <span class="o">=</span> <span class="n">_ranks</span>
             <span class="n">dist_min_full</span><span class="p">[</span><span class="n">feasible</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist_min</span>
 
-            <span class="n">niche_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference_points</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-
             <span class="k">for</span> <span class="n">front_list</span> <span class="ow">in</span> <span class="n">fronts</span><span class="p">:</span>
                 <span class="n">front_local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">front_list</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
                 <span class="n">ordered</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_order_front</span><span class="p">(</span>
-                    <span class="n">front_local</span><span class="p">,</span> <span class="n">assoc_idx</span><span class="p">,</span> <span class="n">dist_min</span><span class="p">,</span> <span class="n">niche_count</span>
+                    <span class="n">front_local</span><span class="p">,</span> <span class="n">dist_matrix</span><span class="p">,</span> <span class="n">assoc_idx</span><span class="p">,</span> <span class="n">dist_min</span>
                 <span class="p">)</span>
-                <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">ordered</span><span class="p">:</span>
-                    <span class="n">niche_count</span><span class="p">[</span><span class="n">assoc_idx</span><span class="p">[</span><span class="n">idx</span><span class="p">]]</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">sorted_feasible</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">feasible</span><span class="p">[</span><span class="n">ordered</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
 
         <span class="n">sorted_infeasible</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
@@ -2628,15 +2742,36 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">_order_front</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">front_local</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">dist_matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">assoc_idx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">dist_min</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">niche_count</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Order a single front by (niche_count, dist) with ε-clearing.&quot;&quot;&quot;</span>
-        <span class="c1"># Primary sort: (niche_count of associated ref, distance)</span>
-        <span class="n">nc</span> <span class="o">=</span> <span class="n">niche_count</span><span class="p">[</span><span class="n">assoc_idx</span><span class="p">[</span><span class="n">front_local</span><span class="p">]]</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="n">dist_min</span><span class="p">[</span><span class="n">front_local</span><span class="p">]</span>
-        <span class="n">base_order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lexsort</span><span class="p">((</span><span class="n">d</span><span class="p">,</span> <span class="n">nc</span><span class="p">))</span>  <span class="c1"># ascending both</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Order a single front via R-NSGA-II Steps 1-3 (Deb &amp; Sundar 2006).</span>
+
+<span class="sd">        Step 1: for each reference point, rank the front&#39;s individuals in</span>
+<span class="sd">        ascending order of normalized Euclidean distance to that point</span>
+<span class="sd">        (closest = rank 1). Step 2: each individual&#39;s crowding-distance-</span>
+<span class="sd">        equivalent is the minimum of its per-reference-point ranks from</span>
+<span class="sd">        Step 1 (smaller = preferred); ties are broken by the individual&#39;s</span>
+<span class="sd">        raw distance to its nearest reference point for determinism, since</span>
+<span class="sd">        the paper does not specify a tie-break. Step 3 (ε-clearing,</span>
+<span class="sd">        unchanged from the pre-#210 implementation): solutions within</span>
+<span class="sd">        ``epsilon`` of a higher-ranked solution sharing the same nearest</span>
+<span class="sd">        reference point are moved to the back of their reference-point</span>
+<span class="sd">        group.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">front_dist</span> <span class="o">=</span> <span class="n">dist_matrix</span><span class="p">[</span><span class="n">front_local</span><span class="p">]</span>  <span class="c1"># (n_front, n_ref)</span>
+        <span class="c1"># Step 1: per-reference-point rank (1 = closest), vectorized via a</span>
+        <span class="c1"># double argsort; Step 2: minimum rank across reference points.</span>
+        <span class="n">ranks_per_ref</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">front_dist</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;stable&quot;</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;stable&quot;</span>
+            <span class="p">)</span>
+            <span class="o">+</span> <span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="n">min_rank</span> <span class="o">=</span> <span class="n">ranks_per_ref</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">base_order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lexsort</span><span class="p">((</span><span class="n">dist_min</span><span class="p">[</span><span class="n">front_local</span><span class="p">],</span> <span class="n">min_rank</span><span class="p">))</span>  <span class="c1"># ascending both</span>
         <span class="n">ordered</span> <span class="o">=</span> <span class="n">front_local</span><span class="p">[</span><span class="n">base_order</span><span class="p">]</span>
 
         <span class="c1"># ε-clearing: within each reference-point group, move solutions</span>

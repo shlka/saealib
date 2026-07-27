@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.EpsilonConstraintHandler &#8212; saealib 0.1.0b5.dev55+ga7b051a6a ドキュメント</title>
+    <title>saealib.EpsilonConstraintHandler &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=c6423660"></script>
+    <script src="../../_static/documentation_options.js?v=ac9ed168"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -797,12 +797,16 @@ over generations.</p>
 <li><p><em>Equality</em> constraints: <code class="docutils literal notranslate"><span class="pre">|h(x)|</span></code>  (raw absolute value; the
 <code class="docutils literal notranslate"><span class="pre">EqualityConstraint.tolerance</span></code> field is intentionally bypassed so
 that ε controls the feasibility threshold globally).</p></li>
-<li><p><em>Inequality</em> constraints: <code class="docutils literal notranslate"><span class="pre">max(0,</span> <span class="pre">g(x)</span> <span class="pre">-</span> <span class="pre">threshold)</span></code>  (standard
+<li><p><em>Inequality</em> constraints: <code class="docutils literal notranslate"><span class="pre">max(0,</span> <span class="pre">g(x)</span> <span class="pre">-</span> <span class="pre">threshold)</span> <span class="pre">**</span> <span class="pre">2</span></code>  (squared
 positive part; the constraint's <code class="docutils literal notranslate"><span class="pre">threshold</span></code> still applies).</p></li>
 </ul>
-<p>This is a simplified form of the sum-of-constraint-violation measure
-in Eq. (7) of Mezura-Montes &amp; Coello Coello (2011) — inequality
-violations are not squared and values are not normalised.</p>
+<p>This matches the sum-of-constraint-violation measure in Eq. (7) of
+Mezura-Montes &amp; Coello Coello (2011): inequality violations are squared,
+equality violations are the unsquared absolute value. Eq. (7) is stated
+for constraint values that have been normalised beforehand (see the
+sentence following Eq. (7) in Section 2.4); this handler aggregates the
+raw <code class="docutils literal notranslate"><span class="pre">g</span></code>/<code class="docutils literal notranslate"><span class="pre">h</span></code> values without that normalisation, so constraints on
+very different scales will not contribute evenly to <code class="docutils literal notranslate"><span class="pre">cv</span></code>.</p>
 <p>The ε-constrained method itself originates from Takahama &amp; Sakai
 (2006); that paper has not been obtained, so it is credited here by
 name only. Eq. (7)-(9) above are cited via the Mezura-Montes &amp; Coello
@@ -825,7 +829,7 @@ Computation</em>, 1(4), 173-194.</p>
 <td><p>Transform objective values using constraint information.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.EpsilonConstraintHandler.compute_cv" title="saealib.EpsilonConstraintHandler.compute_cv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_cv</span></code></a></p></td>
-<td><p>Return <code class="docutils literal notranslate"><span class="pre">|h|</span></code> for equality and <code class="docutils literal notranslate"><span class="pre">max(0,</span> <span class="pre">g-threshold)</span></code> for inequality.</p></td>
+<td><p>Return <code class="docutils literal notranslate"><span class="pre">|h|</span></code> for equality and <code class="docutils literal notranslate"><span class="pre">max(0,</span> <span class="pre">g-threshold)**2</span></code> for inequality.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.EpsilonConstraintHandler.on_generation_end" title="saealib.EpsilonConstraintHandler.on_generation_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_generation_end</span></code></a></p></td>
 <td><p>Update internal ε to <code class="docutils literal notranslate"><span class="pre">schedule(gen)</span></code>.</p></td>
@@ -874,7 +878,7 @@ is the identity (objectives are returned unchanged).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.EpsilonConstraintHandler.compute_cv">
 <span class="sig-prename descclassname"><span class="pre">EpsilonConstraintHandler.</span></span><span class="sig-name descname"><span class="pre">compute_cv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/problem/constraint.html#EpsilonConstraintHandler.compute_cv"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.EpsilonConstraintHandler.compute_cv" title="Link to this definition">#</a></dt>
-<dd><p>Return <code class="docutils literal notranslate"><span class="pre">|h|</span></code> for equality and <code class="docutils literal notranslate"><span class="pre">max(0,</span> <span class="pre">g-threshold)</span></code> for inequality.</p>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">|h|</span></code> for equality and <code class="docutils literal notranslate"><span class="pre">max(0,</span> <span class="pre">g-threshold)**2</span></code> for inequality.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

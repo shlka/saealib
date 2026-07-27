@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.surrogate.switching &#8212; saealib 0.1.0b5.dev55+ga7b051a6a ドキュメント</title>
+    <title>saealib.surrogate.switching &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=c6423660"></script>
+    <script src="../../../_static/documentation_options.js?v=ac9ed168"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1064,13 +1064,19 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="StrategySwitcher">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.StrategySwitcher.html#saealib.StrategySwitcher">[ドキュメント]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StrategySwitcher</span><span class="p">(</span><span class="n">AccuracyBasedSurrogateSwitcher</span><span class="p">[</span><span class="s2">&quot;OptimizationStrategy&quot;</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Switch between two optimization strategies based on an accuracy threshold.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Switch between optimization strategies based on an accuracy threshold.</span>
 
 <span class="sd">    Generalizes a threshold-based switch between two strategies to an</span>
 <span class="sd">    arbitrary accuracy metric and pair of strategies: use ``primary``</span>
 <span class="sd">    (e.g. a surrogate-heavy strategy such as PS) once the metric surpasses</span>
 <span class="sd">    the threshold, otherwise fall back to ``fallback`` (e.g. a more robust</span>
 <span class="sd">    strategy such as IB or GB).</span>
+
+<span class="sd">    Passing ``mid`` and ``mid_threshold`` opts into a three-way split</span>
+<span class="sd">    that mirrors Hanawa et al. (2025)&#39;s IB/GB/PS recommendation instead of</span>
+<span class="sd">    a two-way one: ``fallback`` below ``threshold``, ``mid`` between</span>
+<span class="sd">    ``threshold`` and ``mid_threshold``, ``primary`` at or above</span>
+<span class="sd">    ``mid_threshold``. Both must be supplied together — see Parameters.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1081,20 +1087,50 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    metric : str</span>
 <span class="sd">        Metric key. Default: ``&quot;spearman&quot;``.</span>
 <span class="sd">    threshold : float</span>
-<span class="sd">        Minimum acceptable metric value. Default: ``0.56``.</span>
+<span class="sd">        Minimum acceptable metric value to leave ``fallback``.</span>
+<span class="sd">        Default: ``0.56``.</span>
+<span class="sd">    mid : OptimizationStrategy or None</span>
+<span class="sd">        Optional third strategy (e.g. GB) used when accuracy is between</span>
+<span class="sd">        ``threshold`` and ``mid_threshold``. Enables three-way mode when</span>
+<span class="sd">        provided together with ``mid_threshold``. Default: ``None``</span>
+<span class="sd">        (two-way mode, ``switch()`` behaves exactly as without this</span>
+<span class="sd">        parameter).</span>
+<span class="sd">    mid_threshold : float or None</span>
+<span class="sd">        Minimum metric value to move from ``mid`` to ``primary`` in</span>
+<span class="sd">        three-way mode. Must be supplied together with ``mid`` — there is</span>
+<span class="sd">        no default, since the paper&#39;s PS-viable band is narrow and</span>
+<span class="sd">        accuracy-metric-dependent. Default: ``None``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If exactly one of ``mid`` / ``mid_threshold`` is provided.</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
-<span class="sd">    The default threshold of 0.56 is taken from Hanawa et al. (2025,</span>
-<span class="sd">    Fig. 8a), which reports that an individual-based (IB) strategy was</span>
-<span class="sd">    recommended when Spearman rho was 0.56 or below. That paper&#39;s</span>
-<span class="sd">    empirical finding is a *three*-way split (low accuracy -&gt; IB, medium</span>
-<span class="sd">    -&gt; GB, high [~0.9-1.0] -&gt; PS), not a two-way split at 0.56; a PS-heavy</span>
-<span class="sd">    strategy only becomes favorable at a separate, higher threshold. This</span>
-<span class="sd">    two-strategy ``StrategySwitcher`` is a simplified approximation of</span>
-<span class="sd">    that finding, so 0.56 is best used as an IB/GB boundary rather than as</span>
-<span class="sd">    a PS-switching threshold — callers pairing ``primary=PS`` with this</span>
-<span class="sd">    default should be aware of the mismatch.</span>
+<span class="sd">    The default threshold of 0.56 is taken from Hanawa et al. (2025),</span>
+<span class="sd">    which recommends IB when Spearman rho is 0.56 or below, GB when rho</span>
+<span class="sd">    is between 0.57 and 0.99, and PS only at an exact rho of 1.0 — a</span>
+<span class="sd">    *three*-way split, not a two-way split at 0.56. By default (``mid``</span>
+<span class="sd">    unset), this ``StrategySwitcher`` collapses that finding to a</span>
+<span class="sd">    two-strategy approximation, so 0.56 is best used as an IB/GB boundary</span>
+<span class="sd">    rather than as a PS-switching threshold — callers pairing</span>
+<span class="sd">    ``primary=PS`` with the default two-way mode should be aware of the</span>
+<span class="sd">    mismatch. To reproduce the paper&#39;s three-way recommendation exactly,</span>
+<span class="sd">    pass ``mid`` (GB) and ``mid_threshold=1.0`` alongside</span>
+<span class="sd">    ``primary`` (PS), ``fallback`` (IB), and ``threshold=0.57``::</span>
+
+<span class="sd">        switcher = StrategySwitcher(</span>
+<span class="sd">            primary=ps_strategy,</span>
+<span class="sd">            fallback=ib_strategy,</span>
+<span class="sd">            mid=gb_strategy,</span>
+<span class="sd">            threshold=0.57,</span>
+<span class="sd">            mid_threshold=1.0,</span>
+<span class="sd">        )</span>
+<span class="sd">        for ctx in optimizer.iterate():</span>
+<span class="sd">            optimizer.set_strategy(</span>
+<span class="sd">                switcher.switch(optimizer.surrogate_manager.last_accuracy)</span>
+<span class="sd">            )</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -1113,23 +1149,36 @@ window.runMermaid = runMermaid;</script>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;spearman&quot;</span><span class="p">,</span>
         <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.56</span><span class="p">,</span>
+        <span class="n">mid</span><span class="p">:</span> <span class="n">OptimizationStrategy</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mid_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">mid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">mid_threshold</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;mid and mid_threshold must be provided together&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">primary</span> <span class="o">=</span> <span class="n">primary</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fallback</span> <span class="o">=</span> <span class="n">fallback</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">metric</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">threshold</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">threshold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mid</span> <span class="o">=</span> <span class="n">mid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mid_threshold</span> <span class="o">=</span> <span class="n">mid_threshold</span></div>
 
 
 <div class="viewcode-block" id="StrategySwitcher.switch">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.StrategySwitcher.html#saealib.StrategySwitcher.switch">[ドキュメント]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">switch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">accuracy</span><span class="p">:</span> <span class="n">SurrogateAccuracy</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationStrategy</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return primary or fallback based on the metric threshold.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return primary, mid (if configured), or fallback based on the metric.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">accuracy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fallback</span>
         <span class="n">v</span> <span class="o">=</span> <span class="n">accuracy</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">primary</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fallback</span></div>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fallback</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">primary</span> <span class="k">if</span> <span class="n">v</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">fallback</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">mid_threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># enforced together in __init__</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fallback</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">mid_threshold</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mid</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">primary</span></div>
 </div>
 
 

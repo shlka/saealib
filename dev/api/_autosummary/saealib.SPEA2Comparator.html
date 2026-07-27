@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.SPEA2Comparator &#8212; saealib 0.1.0b5.dev55+ga7b051a6a documentation</title>
+    <title>saealib.SPEA2Comparator &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=5f588dce"></script>
+    <script src="../../_static/documentation_options.js?v=35846ac6"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -782,8 +782,15 @@ fitness depends on the whole population, pairwise comparison of two isolated
 points is undefined.</p>
 <p>Ordering rules:</p>
 <ul class="simple">
-<li><p><strong>Feasible block</strong>: sorted by ascending SPEA2 fitness (lower = better).
-See <a class="reference internal" href="../comparators.html#saealib.spea2_fitness" title="saealib.spea2_fitness"><code class="xref py py-func docutils literal notranslate"><span class="pre">spea2_fitness()</span></code></a> for the <code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">=</span> <span class="pre">√N</span></code> density reduction note.</p></li>
+<li><p><strong>Feasible block</strong>: the non-dominated subset (<code class="docutils literal notranslate"><span class="pre">F(i)</span> <span class="pre">&lt;</span> <span class="pre">1</span></code>) is ordered
+by the iterative nearest-neighbour truncation operator of Section 3.2
+(“Environmental Selection”) – see <code class="xref py py-func docutils literal notranslate"><span class="pre">spea2_truncation_order()</span></code> –
+instead of a one-shot sort, so that boundary/extreme solutions are
+preferentially retained under truncation.  The dominated subset
+(<code class="docutils literal notranslate"><span class="pre">F(i)</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code>) follows, sorted by ascending SPEA2 fitness (lower =
+better), matching the paper’s “fill with the best dominated
+individuals” branch.  See <a class="reference internal" href="../comparators.html#saealib.spea2_fitness" title="saealib.spea2_fitness"><code class="xref py py-func docutils literal notranslate"><span class="pre">spea2_fitness()</span></code></a> for the <code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">=</span> <span class="pre">√N</span></code>
+density reduction note.</p></li>
 <li><p><strong>Infeasible block</strong>: always placed after feasible individuals, ordered by
 ascending constraint violation (Deb 2000 feasibility rule).</p></li>
 </ul>
@@ -828,7 +835,7 @@ Mechanics and Engineering, 186(2-4), 311-338.</p>
 <td><p>Compare two individuals using constraint-domination then SPEA2 fitness.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.SPEA2Comparator.sort_population" title="saealib.SPEA2Comparator.sort_population"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sort_population</span></code></a></p></td>
-<td><p>Sort by SPEA2 fitness (ascending); infeasible individuals come last.</p></td>
+<td><p>Sort feasible individuals via SPEA2 environmental selection.</p></td>
 </tr>
 </tbody>
 </table>
@@ -897,7 +904,12 @@ fitness wins.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.SPEA2Comparator.sort_population">
 <span class="sig-prename descclassname"><span class="pre">SPEA2Comparator.</span></span><span class="sig-name descname"><span class="pre">sort_population</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">population</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/comparators/comparators.html#SPEA2Comparator.sort_population"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.SPEA2Comparator.sort_population" title="Link to this definition">#</a></dt>
-<dd><p>Sort by SPEA2 fitness (ascending); infeasible individuals come last.</p>
+<dd><p>Sort feasible individuals via SPEA2 environmental selection.</p>
+<p>Within the feasible block, the non-dominated subset (<code class="docutils literal notranslate"><span class="pre">F(i)</span> <span class="pre">&lt;</span> <span class="pre">1</span></code>)
+is ordered by <code class="xref py py-func docutils literal notranslate"><span class="pre">spea2_truncation_order()</span></code> (Zitzler et al. 2001,
+Section 3.2), and the dominated subset (<code class="docutils literal notranslate"><span class="pre">F(i)</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code>) follows,
+ordered by ascending SPEA2 fitness. Infeasible individuals come
+last, ordered by ascending constraint violation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>population</strong> (<a class="reference internal" href="saealib.Population.html#saealib.Population" title="saealib.Population"><em>Population</em></a>) – The population to sort.</p>

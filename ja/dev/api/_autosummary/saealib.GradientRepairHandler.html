@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.GradientRepairHandler &#8212; saealib 0.1.0b5.dev55+ga7b051a6a ドキュメント</title>
+    <title>saealib.GradientRepairHandler &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=c6423660"></script>
+    <script src="../../_static/documentation_options.js?v=ac9ed168"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -774,31 +774,45 @@
 <h1>saealib.GradientRepairHandler<a class="headerlink" href="#saealib-gradientrepairhandler" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.GradientRepairHandler">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">GradientRepairHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ridge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-12</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/problem/constraint.html#GradientRepairHandler"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.GradientRepairHandler" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">GradientRepairHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/problem/constraint.html#GradientRepairHandler"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.GradientRepairHandler" title="Link to this definition">#</a></dt>
 <dd><p>ベースクラス: <a class="reference internal" href="saealib.ConstraintHandler.html#saealib.ConstraintHandler" title="saealib.problem.constraint.ConstraintHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstraintHandler</span></code></a></p>
 <p>Gradient-based constraint repair handler.</p>
-<p>For each <a class="reference internal" href="saealib.EqualityConstraint.html#saealib.EqualityConstraint" title="saealib.EqualityConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">EqualityConstraint</span></code></a> whose <a class="reference internal" href="saealib.InequalityConstraint.html#saealib.InequalityConstraint.gradient" title="saealib.InequalityConstraint.gradient"><code class="xref py py-meth docutils literal notranslate"><span class="pre">gradient()</span></code></a>
-returns a non-<code class="docutils literal notranslate"><span class="pre">None</span></code> vector, applies one Newton-like step that projects
-the design vector toward the constraint manifold <code class="docutils literal notranslate"><span class="pre">h(x)</span> <span class="pre">=</span> <span class="pre">0</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">&lt;-</span> <span class="n">x</span> <span class="o">-</span> <span class="n">h</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">grad_h</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="o">||</span><span class="n">grad_h</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">||^</span><span class="mi">2</span> <span class="o">+</span> <span class="n">ridge</span><span class="p">)</span>
+<p>Implements the repair procedure of Chootinan &amp; Chen (2006): each call
+to <a class="reference internal" href="#saealib.GradientRepairHandler.repair" title="saealib.GradientRepairHandler.repair"><code class="xref py py-meth docutils literal notranslate"><span class="pre">repair()</span></code></a> runs up to <code class="docutils literal notranslate"><span class="pre">max_iter</span></code> outer iterations. In each
+iteration, the set of currently-violated constraints is determined
+(equality: <code class="docutils literal notranslate"><span class="pre">|h(x)|</span> <span class="pre">&gt;</span> <span class="pre">tolerance</span></code>; inequality: <code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">&gt;</span> <span class="pre">threshold</span></code>),
+their raw values and gradients are stacked into <code class="docutils literal notranslate"><span class="pre">ΔV</span></code> and the Jacobian
+<code class="docutils literal notranslate"><span class="pre">J</span></code> (Eq. 6), and a single simultaneous update is applied:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Δx</span> <span class="o">=</span> <span class="n">pinv</span><span class="p">(</span><span class="n">J</span><span class="p">)</span> <span class="o">@</span> <span class="n">ΔV</span>
+<span class="n">x</span> <span class="o">&lt;-</span> <span class="n">x</span> <span class="o">+</span> <span class="n">Δx</span>
 </pre></div>
 </div>
-<p>The step is repeated <code class="docutils literal notranslate"><span class="pre">max_iter</span></code> times.  After all iterations the result
-is clipped to <code class="docutils literal notranslate"><span class="pre">[lb,</span> <span class="pre">ub]</span></code> so bounds feasibility is always guaranteed.</p>
-<p><a class="reference internal" href="saealib.InequalityConstraint.html#saealib.InequalityConstraint" title="saealib.InequalityConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">InequalityConstraint</span></code></a> objects and any <a class="reference internal" href="saealib.EqualityConstraint.html#saealib.EqualityConstraint" title="saealib.EqualityConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">EqualityConstraint</span></code></a>
-whose <code class="docutils literal notranslate"><span class="pre">gradient()</span></code> returns <code class="docutils literal notranslate"><span class="pre">None</span></code> are skipped during repair; they still
-contribute to <code class="docutils literal notranslate"><span class="pre">cv</span></code> via <a class="reference internal" href="#saealib.GradientRepairHandler.compute_cv" title="saealib.GradientRepairHandler.compute_cv"><code class="xref py py-meth docutils literal notranslate"><span class="pre">compute_cv()</span></code></a>.</p>
-<p>Simplified relative to Eq. (8)-(9) of Chootinan &amp; Chen (2006): the
-original method solves all constraints jointly via the Moore-Penrose
-pseudoinverse of the stacked Jacobian; this handler instead applies a
-per-constraint (equality-only) regularised Newton step, and the
-<code class="docutils literal notranslate"><span class="pre">ridge</span></code> regularisation term is not present in the original paper.</p>
+<p>using the Moore-Penrose pseudoinverse (Eq. 8), since <code class="docutils literal notranslate"><span class="pre">J</span></code> is generally
+not square. Satisfied constraints contribute no row to <code class="docutils literal notranslate"><span class="pre">J</span></code>/<code class="docutils literal notranslate"><span class="pre">ΔV</span></code> for
+that iteration, per the paper's Section 3.1 remark that &quot;there is no
+need to adjust ... non-violated constraints.&quot; Iteration stops early once
+no constraint is violated, or once <code class="docutils literal notranslate"><span class="pre">max(|Δx|)</span> <span class="pre">&lt;</span> <span class="pre">epsilon</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ΔV</span></code> follows Eq. (9): for an inequality constraint (single upper bound
+<code class="docutils literal notranslate"><span class="pre">threshold</span></code> only, per <a class="reference internal" href="saealib.InequalityConstraint.html#saealib.InequalityConstraint" title="saealib.InequalityConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">InequalityConstraint</span></code></a>), <code class="docutils literal notranslate"><span class="pre">ΔV_i</span> <span class="pre">=</span>
+<span class="pre">threshold</span> <span class="pre">-</span> <span class="pre">g(x)</span></code>. For an <a class="reference internal" href="saealib.EqualityConstraint.html#saealib.EqualityConstraint" title="saealib.EqualityConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">EqualityConstraint</span></code></a> (<code class="docutils literal notranslate"><span class="pre">h(x)</span> <span class="pre">=</span> <span class="pre">0</span></code> by
+construction, i.e. the target value is already embedded as 0), <code class="docutils literal notranslate"><span class="pre">ΔV_i</span> <span class="pre">=</span>
+<span class="pre">-h(x)</span></code>; both are the paper's &quot;target minus current value&quot; (see the
+worked example in Section 3.2, point A, where <code class="docutils literal notranslate"><span class="pre">ΔV</span> <span class="pre">=</span> <span class="pre">c</span> <span class="pre">-</span> <span class="pre">h(x)</span> <span class="pre">=</span> <span class="pre">1</span></code>,
+which is the sign that the printed Eq. (9) equality row does not
+literally show but the numeric example requires).</p>
+<p>When <a class="reference internal" href="saealib.InequalityConstraint.html#saealib.InequalityConstraint.gradient" title="saealib.InequalityConstraint.gradient"><code class="xref py py-meth docutils literal notranslate"><span class="pre">gradient()</span></code></a> returns <code class="docutils literal notranslate"><span class="pre">None</span></code> for a
+violated constraint, <code class="xref py py-func docutils literal notranslate"><span class="pre">_numerical_gradient()</span></code> supplies a
+forward-difference approximation (Eq. 7) instead of skipping it — this
+is what lets the handler now repair both equality and inequality
+constraints regardless of whether an analytical Jacobian is available.</p>
+<p>After all iterations the result is clipped to <code class="docutils literal notranslate"><span class="pre">[lb,</span> <span class="pre">ub]</span></code> so bounds
+feasibility is always guaranteed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) -- Number of Newton steps per call. Default: 1.</p></li>
-<li><p><strong>ridge</strong> (<em>float</em><em>, </em><em>optional</em>) -- Regularisation term added to <code class="docutils literal notranslate"><span class="pre">‖∇h‖²</span></code> for numerical stability.
-Default: 1e-12.</p></li>
+<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) -- Maximum number of outer iterations per call. Default: 1.</p></li>
+<li><p><strong>epsilon</strong> (<em>float</em><em>, </em><em>optional</em>) -- Convergence threshold: iteration stops early once
+<code class="docutils literal notranslate"><span class="pre">max(abs(Δx))</span> <span class="pre">&lt;</span> <span class="pre">epsilon</span></code>. Default: 1e-6.</p></li>
 </ul>
 </dd>
 </dl>
@@ -824,7 +838,7 @@ method. <em>Computers &amp; Operations Research</em>, 33(8), 2263-2281.</p>
 <td><p>Run end-of-generation bookkeeping.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.GradientRepairHandler.repair" title="saealib.GradientRepairHandler.repair"><code class="xref py py-obj docutils literal notranslate"><span class="pre">repair</span></code></a></p></td>
-<td><p>Apply Newton steps toward equality-constraint manifolds, then clip.</p></td>
+<td><p>Apply simultaneous pseudoinverse updates toward feasibility, then clip.</p></td>
 </tr>
 </tbody>
 </table>
@@ -832,12 +846,12 @@ method. <em>Computers &amp; Operations Research</em>, 33(8), 2263-2281.</p>
 <p class="rubric">Method Details</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.GradientRepairHandler.__init__">
-<span class="sig-prename descclassname"><span class="pre">GradientRepairHandler.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ridge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-12</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/problem/constraint.html#GradientRepairHandler.__init__"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.GradientRepairHandler.__init__" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">GradientRepairHandler.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/problem/constraint.html#GradientRepairHandler.__init__"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.GradientRepairHandler.__init__" title="Link to this definition">#</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>max_iter</strong> (<em>int</em>)</p></li>
-<li><p><strong>ridge</strong> (<em>float</em>)</p></li>
+<li><p><strong>epsilon</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -907,7 +921,7 @@ internal state between generations. The default is a no-op.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.GradientRepairHandler.repair">
 <span class="sig-prename descclassname"><span class="pre">GradientRepairHandler.</span></span><span class="sig-name descname"><span class="pre">repair</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ub</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/problem/constraint.html#GradientRepairHandler.repair"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.GradientRepairHandler.repair" title="Link to this definition">#</a></dt>
-<dd><p>Apply Newton steps toward equality-constraint manifolds, then clip.</p>
+<dd><p>Apply simultaneous pseudoinverse updates toward feasibility, then clip.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>MaxUnc（不確実性サンプリング） &#8212; saealib 0.1.0b5.dev55+ga7b051a6a ドキュメント</title>
+    <title>MaxUnc（不確実性サンプリング） &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=c6423660"></script>
+    <script src="../_static/documentation_options.js?v=ac9ed168"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -983,7 +983,7 @@ window.runMermaid = runMermaid;</script>
 <h2>概要<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>EGOの期待改善量やGP-UCBの信頼上限は、予測平均 <span class="math notranslate nohighlight">\(\mu(x)\)</span> と予測標準偏差 <span class="math notranslate nohighlight">\(\sigma(x)\)</span> の両方を使い、探索と活用のバランスを取る設計でした。 MaxUncはこの構成から予測平均の項を完全に取り除き、<span class="math notranslate nohighlight">\(\sigma(x)\)</span> だけを評価基準にします。</p>
 <p>手順はEGO/GP-UCBと同型です。 アーカイブ全体にGPを当てはめ、予測標準偏差 <span class="math notranslate nohighlight">\(\sigma(x)\)</span> を最大化する点を求め、真の関数で評価してアーカイブに追加します。 予測平均を一切参照しないため、評価対象は常に「モデルがもっとも学習データから離れている」領域に偏り、良さそうな値を積極的に探しにいく挙動にはなりません。</p>
-<p>この構成の背景として、Büche, Schraudolph &amp; Koumoutsakos (2005) はGPを用いたサロゲートモデルの調査論文の中で、予測平均と予測標準偏差の線形結合であるメリット関数 <span class="math notranslate nohighlight">\(f_{\mathrm{M}}(x) = \hat{t}(x) - \alpha \sigma_t(x)\)</span> を提案し、<span class="math notranslate nohighlight">\(\alpha\)</span> を大きくするほど探索寄りになると述べています<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id21" title="Dirk Büche, Nicol N. Schraudolph, and Petros Koumoutsakos. Accelerating evolutionary algorithms with gaussian process fitness function models. IEEE Transactions on Systems, Man, and Cybernetics—Part C, 35(2):183–194, 2005. doi:10.1109/TSMCC.2004.841917.">38</a>]</span>。 MaxUncが計算する <span class="math notranslate nohighlight">\(\sigma(x)\)</span> 単独の基準は、このメリット関数で <span class="math notranslate nohighlight">\(\alpha \to \infty\)</span> とした極限、つまり予測平均の寄与を消し去った場合に相当します。</p>
+<p>この構成の背景として、Büche, Schraudolph &amp; Koumoutsakos (2005) はGPを用いたサロゲートモデルの調査論文の中で、予測平均と予測標準偏差の線形結合であるメリット関数 <span class="math notranslate nohighlight">\(f_{\mathrm{M}}(x) = \hat{t}(x) - \alpha \sigma_t(x)\)</span> を提案し、<span class="math notranslate nohighlight">\(\alpha\)</span> を大きくするほど探索寄りになると述べています<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id21" title="Dirk Büche, Nicol N. Schraudolph, and Petros Koumoutsakos. Accelerating evolutionary algorithms with gaussian process fitness function models. IEEE Transactions on Systems, Man, and Cybernetics—Part C, 35(2):183–194, 2005. doi:10.1109/TSMCC.2004.841917.">37</a>]</span>。 MaxUncが計算する <span class="math notranslate nohighlight">\(\sigma(x)\)</span> 単独の基準は、このメリット関数で <span class="math notranslate nohighlight">\(\alpha \to \infty\)</span> とした極限、つまり予測平均の寄与を消し去った場合に相当します。</p>
 <p>MaxUncは目的関数の改善を直接狙う基準ではありません。 EIやUCBのような活用寄りの基準と対になる探索専用の構成要素として、サロゲートモデル自体の精度を全域にわたって底上げする用途や、他の基準と組み合わせて使う用途に向きます（獲得関数一覧における<code class="docutils literal notranslate"><span class="pre">MeanPrediction</span></code>との対比も参照）。 評価予算が小さいうちは、最良解への収束よりもモデルの未知領域を埋めることを優先するため、単独で使うと最終的な目的関数値がEIやLCBほど改善しないことがあります。</p>
 </section>
 <section id="pseudocode">

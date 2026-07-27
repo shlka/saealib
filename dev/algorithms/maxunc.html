@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>MaxUnc (Uncertainty Sampling) &#8212; saealib 0.1.0b5.dev55+ga7b051a6a documentation</title>
+    <title>MaxUnc (Uncertainty Sampling) &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=5f588dce"></script>
+    <script src="../_static/documentation_options.js?v=35846ac6"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -985,7 +985,7 @@ MaxUnc removes the predictive-mean term entirely from this construction, using o
 <p>The procedure is structurally identical to EGO/GP-UCB.
 A GP is fit to the entire archive, the point maximizing the predictive standard deviation <span class="math notranslate nohighlight">\(\sigma(x)\)</span> is found, evaluated with the true function, and added to the archive.
 Because the predictive mean is never referenced, evaluation is always biased toward the region “where the model is furthest from the training data,” rather than actively seeking out promising values.</p>
-<p>As background for this construction, Büche, Schraudolph &amp; Koumoutsakos (2005), in a survey paper on GP-based surrogate models, proposed a merit function <span class="math notranslate nohighlight">\(f_{\mathrm{M}}(x) = \hat{t}(x) - \alpha \sigma_t(x)\)</span> — a linear combination of the predictive mean and predictive standard deviation — and stated that larger <span class="math notranslate nohighlight">\(\alpha\)</span> leans more toward exploration <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id21" title="Dirk Büche, Nicol N. Schraudolph, and Petros Koumoutsakos. Accelerating evolutionary algorithms with gaussian process fitness function models. IEEE Transactions on Systems, Man, and Cybernetics—Part C, 35(2):183–194, 2005. doi:10.1109/TSMCC.2004.841917.">38</a>]</span>.
+<p>As background for this construction, Büche, Schraudolph &amp; Koumoutsakos (2005), in a survey paper on GP-based surrogate models, proposed a merit function <span class="math notranslate nohighlight">\(f_{\mathrm{M}}(x) = \hat{t}(x) - \alpha \sigma_t(x)\)</span> — a linear combination of the predictive mean and predictive standard deviation — and stated that larger <span class="math notranslate nohighlight">\(\alpha\)</span> leans more toward exploration <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id21" title="Dirk Büche, Nicol N. Schraudolph, and Petros Koumoutsakos. Accelerating evolutionary algorithms with gaussian process fitness function models. IEEE Transactions on Systems, Man, and Cybernetics—Part C, 35(2):183–194, 2005. doi:10.1109/TSMCC.2004.841917.">37</a>]</span>.
 The criterion MaxUnc computes, <span class="math notranslate nohighlight">\(\sigma(x)\)</span> alone, corresponds to the limit of this merit function as <span class="math notranslate nohighlight">\(\alpha \to \infty\)</span> — that is, the case where the predictive-mean contribution is eliminated entirely.</p>
 <p>MaxUnc is not a criterion that directly targets improving the objective function.
 As an exploration-only component that pairs with exploitation-leaning criteria like EI or UCB, it is suited to uses such as raising the surrogate model’s accuracy uniformly across the whole domain, or being combined with other criteria (see also the comparison with <code class="docutils literal notranslate"><span class="pre">MeanPrediction</span></code> in the acquisition function list).

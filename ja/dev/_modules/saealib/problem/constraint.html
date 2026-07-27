@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.problem.constraint &#8212; saealib 0.1.0b5.dev55+ga7b051a6a ドキュメント</title>
+    <title>saealib.problem.constraint &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=c6423660"></script>
+    <script src="../../../_static/documentation_options.js?v=ac9ed168"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1337,12 +1337,16 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    - *Equality* constraints: ``|h(x)|``  (raw absolute value; the</span>
 <span class="sd">      ``EqualityConstraint.tolerance`` field is intentionally bypassed so</span>
 <span class="sd">      that ε controls the feasibility threshold globally).</span>
-<span class="sd">    - *Inequality* constraints: ``max(0, g(x) - threshold)``  (standard</span>
+<span class="sd">    - *Inequality* constraints: ``max(0, g(x) - threshold) ** 2``  (squared</span>
 <span class="sd">      positive part; the constraint&#39;s ``threshold`` still applies).</span>
 
-<span class="sd">    This is a simplified form of the sum-of-constraint-violation measure</span>
-<span class="sd">    in Eq. (7) of Mezura-Montes &amp; Coello Coello (2011) — inequality</span>
-<span class="sd">    violations are not squared and values are not normalised.</span>
+<span class="sd">    This matches the sum-of-constraint-violation measure in Eq. (7) of</span>
+<span class="sd">    Mezura-Montes &amp; Coello Coello (2011): inequality violations are squared,</span>
+<span class="sd">    equality violations are the unsquared absolute value. Eq. (7) is stated</span>
+<span class="sd">    for constraint values that have been normalised beforehand (see the</span>
+<span class="sd">    sentence following Eq. (7) in Section 2.4); this handler aggregates the</span>
+<span class="sd">    raw ``g``/``h`` values without that normalisation, so constraints on</span>
+<span class="sd">    very different scales will not contribute evenly to ``cv``.</span>
 
 <span class="sd">    The ε-constrained method itself originates from Takahama &amp; Sakai</span>
 <span class="sd">    (2006); that paper has not been obtained, so it is credited here by</span>
@@ -1373,13 +1377,13 @@ window.runMermaid = runMermaid;</script>
         <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``|h|`` for equality and ``max(0, g-threshold)`` for inequality.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``|h|`` for equality and ``max(0, g-threshold)**2`` for inequality.&quot;&quot;&quot;</span>
         <span class="n">cv</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="k">for</span> <span class="n">gi</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">constraints</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">EqualityConstraint</span><span class="p">):</span>
                 <span class="n">cv</span> <span class="o">+=</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">gi</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">cv</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">gi</span><span class="p">)</span> <span class="o">-</span> <span class="n">c</span><span class="o">.</span><span class="n">threshold</span><span class="p">)</span>
+                <span class="n">cv</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">gi</span><span class="p">)</span> <span class="o">-</span> <span class="n">c</span><span class="o">.</span><span class="n">threshold</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
         <span class="k">return</span> <span class="n">cv</span></div>
 
 
@@ -1397,38 +1401,74 @@ window.runMermaid = runMermaid;</script>
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_numerical_gradient</span><span class="p">(</span>
+    <span class="n">c</span><span class="p">:</span> <span class="n">InequalityConstraint</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">g0</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Forward-difference approximation of ``c``&#39;s gradient at ``x`` (Eq. 7).</span>
+
+<span class="sd">    Step size ``sqrt(eps_machine) * max(1, |x_i|)`` follows the standard</span>
+<span class="sd">    forward-difference rule of thumb (balances truncation vs. rounding</span>
+<span class="sd">    error) scaled to the magnitude of each coordinate, since the paper only</span>
+<span class="sd">    specifies &quot;a small positive scalar&quot; without a concrete value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">step_scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
+    <span class="n">grad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="n">step_scale</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+        <span class="n">x_perturbed</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">x_perturbed</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">step</span>
+        <span class="n">grad</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">x_perturbed</span><span class="p">)</span> <span class="o">-</span> <span class="n">g0</span><span class="p">)</span> <span class="o">/</span> <span class="n">step</span>
+    <span class="k">return</span> <span class="n">grad</span>
+
+
 <div class="viewcode-block" id="GradientRepairHandler">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.GradientRepairHandler.html#saealib.GradientRepairHandler">[ドキュメント]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">GradientRepairHandler</span><span class="p">(</span><span class="n">ConstraintHandler</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Gradient-based constraint repair handler.</span>
 
-<span class="sd">    For each :class:`EqualityConstraint` whose :meth:`~InequalityConstraint.gradient`</span>
-<span class="sd">    returns a non-``None`` vector, applies one Newton-like step that projects</span>
-<span class="sd">    the design vector toward the constraint manifold ``h(x) = 0``::</span>
+<span class="sd">    Implements the repair procedure of Chootinan &amp; Chen (2006): each call</span>
+<span class="sd">    to :meth:`repair` runs up to ``max_iter`` outer iterations. In each</span>
+<span class="sd">    iteration, the set of currently-violated constraints is determined</span>
+<span class="sd">    (equality: ``|h(x)| &gt; tolerance``; inequality: ``g(x) &gt; threshold``),</span>
+<span class="sd">    their raw values and gradients are stacked into ``ΔV`` and the Jacobian</span>
+<span class="sd">    ``J`` (Eq. 6), and a single simultaneous update is applied::</span>
 
-<span class="sd">        x &lt;- x - h(x) * grad_h(x) / (||grad_h(x)||^2 + ridge)</span>
+<span class="sd">        Δx = pinv(J) @ ΔV</span>
+<span class="sd">        x &lt;- x + Δx</span>
 
-<span class="sd">    The step is repeated ``max_iter`` times.  After all iterations the result</span>
-<span class="sd">    is clipped to ``[lb, ub]`` so bounds feasibility is always guaranteed.</span>
+<span class="sd">    using the Moore-Penrose pseudoinverse (Eq. 8), since ``J`` is generally</span>
+<span class="sd">    not square. Satisfied constraints contribute no row to ``J``/``ΔV`` for</span>
+<span class="sd">    that iteration, per the paper&#39;s Section 3.1 remark that &quot;there is no</span>
+<span class="sd">    need to adjust ... non-violated constraints.&quot; Iteration stops early once</span>
+<span class="sd">    no constraint is violated, or once ``max(|Δx|) &lt; epsilon``.</span>
 
-<span class="sd">    :class:`InequalityConstraint` objects and any :class:`EqualityConstraint`</span>
-<span class="sd">    whose ``gradient()`` returns ``None`` are skipped during repair; they still</span>
-<span class="sd">    contribute to ``cv`` via :meth:`compute_cv`.</span>
+<span class="sd">    ``ΔV`` follows Eq. (9): for an inequality constraint (single upper bound</span>
+<span class="sd">    ``threshold`` only, per :class:`InequalityConstraint`), ``ΔV_i =</span>
+<span class="sd">    threshold - g(x)``. For an :class:`EqualityConstraint` (``h(x) = 0`` by</span>
+<span class="sd">    construction, i.e. the target value is already embedded as 0), ``ΔV_i =</span>
+<span class="sd">    -h(x)``; both are the paper&#39;s &quot;target minus current value&quot; (see the</span>
+<span class="sd">    worked example in Section 3.2, point A, where ``ΔV = c - h(x) = 1``,</span>
+<span class="sd">    which is the sign that the printed Eq. (9) equality row does not</span>
+<span class="sd">    literally show but the numeric example requires).</span>
 
-<span class="sd">    Simplified relative to Eq. (8)-(9) of Chootinan &amp; Chen (2006): the</span>
-<span class="sd">    original method solves all constraints jointly via the Moore-Penrose</span>
-<span class="sd">    pseudoinverse of the stacked Jacobian; this handler instead applies a</span>
-<span class="sd">    per-constraint (equality-only) regularised Newton step, and the</span>
-<span class="sd">    ``ridge`` regularisation term is not present in the original paper.</span>
+<span class="sd">    When :meth:`~InequalityConstraint.gradient` returns ``None`` for a</span>
+<span class="sd">    violated constraint, :func:`_numerical_gradient` supplies a</span>
+<span class="sd">    forward-difference approximation (Eq. 7) instead of skipping it — this</span>
+<span class="sd">    is what lets the handler now repair both equality and inequality</span>
+<span class="sd">    constraints regardless of whether an analytical Jacobian is available.</span>
+
+<span class="sd">    After all iterations the result is clipped to ``[lb, ub]`` so bounds</span>
+<span class="sd">    feasibility is always guaranteed.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    max_iter : int, optional</span>
-<span class="sd">        Number of Newton steps per call. Default: 1.</span>
-<span class="sd">    ridge : float, optional</span>
-<span class="sd">        Regularisation term added to ``‖∇h‖²`` for numerical stability.</span>
-<span class="sd">        Default: 1e-12.</span>
+<span class="sd">        Maximum number of outer iterations per call. Default: 1.</span>
+<span class="sd">    epsilon : float, optional</span>
+<span class="sd">        Convergence threshold: iteration stops early once</span>
+<span class="sd">        ``max(abs(Δx)) &lt; epsilon``. Default: 1e-6.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -1439,9 +1479,9 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="GradientRepairHandler.__init__">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.GradientRepairHandler.html#saealib.GradientRepairHandler.__init__">[ドキュメント]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ridge</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span> <span class="o">=</span> <span class="n">max_iter</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ridge</span> <span class="o">=</span> <span class="n">ridge</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">epsilon</span></div>
 
 
 <div class="viewcode-block" id="GradientRepairHandler.repair">
@@ -1454,17 +1494,35 @@ window.runMermaid = runMermaid;</script>
         <span class="n">ub</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply Newton steps toward equality-constraint manifolds, then clip.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply simultaneous pseudoinverse updates toward feasibility, then clip.&quot;&quot;&quot;</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span><span class="p">):</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">delta_v</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">EqualityConstraint</span><span class="p">):</span>
-                    <span class="k">continue</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">EqualityConstraint</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">c</span><span class="o">.</span><span class="n">tolerance</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">dv</span> <span class="o">=</span> <span class="o">-</span><span class="n">value</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="n">c</span><span class="o">.</span><span class="n">threshold</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">dv</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">threshold</span> <span class="o">-</span> <span class="n">value</span>
                 <span class="n">grad</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">grad</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">continue</span>
-                <span class="n">h</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-                <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">h</span> <span class="o">*</span> <span class="n">grad</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">grad</span><span class="p">,</span> <span class="n">grad</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ridge</span><span class="p">)</span>
+                    <span class="n">grad</span> <span class="o">=</span> <span class="n">_numerical_gradient</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grad</span><span class="p">)</span>
+                <span class="n">delta_v</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dv</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
+                <span class="k">break</span>
+
+            <span class="n">jacobian</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+            <span class="n">dx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">jacobian</span><span class="p">)</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">delta_v</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">dx</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dx</span><span class="p">))</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span><span class="p">:</span>
+                <span class="k">break</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span></div>
 
 

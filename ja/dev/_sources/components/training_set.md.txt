@@ -22,7 +22,7 @@ The 8 built-in classes are organized along two orthogonal axes.
 | P1 CA-LLSO | {cite}`wei2021callso` | `LevelBasedSet` |
 | P2 CPS-MOEA | {cite}`zhang2018cpsmoea` | `TopKBipartitionSet` |
 | P3 Pairwise SAEA | {cite}`hao2024pairwise` | `PairwiseComparisonSet` |
-| P4 SAPSO pbest | {cite}`tian2019sapso` | `ReferencePointComparisonSet` |
+| P4 SAPSO pbest | (general) | `ReferencePointComparisonSet` |
 | P5 CSEA / pre-selection | (general) | `KNNObjectiveSet`, `ArchiveObjectiveSet` |
 | P6 Constraint BO | {cite}`regis2005cors,letham2019constraintbo` | `ConstraintObjectiveSet`, `KNNConstraintObjectiveSet` |
 

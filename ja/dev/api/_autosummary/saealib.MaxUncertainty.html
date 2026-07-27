@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.MaxUncertainty &#8212; saealib 0.1.0b5.dev55+ga7b051a6a ドキュメント</title>
+    <title>saealib.MaxUncertainty &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=c6423660"></script>
+    <script src="../../_static/documentation_options.js?v=ac9ed168"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -783,6 +783,12 @@ This is the &quot;uncertainty sampling&quot; strategy from the active-learning
 literature, applied here as a pure-exploration acquisition function.</p>
 <p>For multi-objective problems, aggregates uncertainty across objectives
 using a weighted sum.</p>
+<p>Using sigma(x) alone as the criterion corresponds to the alpha -&gt; infinity
+limit of the merit function f_M(x) = t_hat(x) - alpha * sigma(x) in
+Büche, Schraudolph &amp; Koumoutsakos (2005), Eq. (19). That paper's GPOP
+procedure never actually takes this limit: it optimizes f_M in parallel
+for the four fixed values alpha = 0, 1, 2, 4 (Section IV-A), evaluating
+all four resulting points rather than using sigma alone.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -793,12 +799,16 @@ shape: (n_obj,). If None, uses the mean across objectives.</p></li>
 </dd>
 </dl>
 <p class="rubric">参照</p>
-<p><span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id2" title="David D. Lewis and William A. Gale. A sequential algorithm for training text classifiers. In SIGIR '94: Proceedings of the 17th Annual International ACM-SIGIR Conference on Research and Development in Information Retrieval, 3–12. Springer, 1994. doi:10.1007/978-1-4471-2099-5_1.">43</a>]</span>: Lewis, D. D., &amp; Gale, W. A.
+<p><span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id2" title="David D. Lewis and William A. Gale. A sequential algorithm for training text classifiers. In SIGIR '94: Proceedings of the 17th Annual International ACM-SIGIR Conference on Research and Development in Information Retrieval, 3–12. Springer, 1994. doi:10.1007/978-1-4471-2099-5_1.">42</a>]</span>: Lewis, D. D., &amp; Gale, W. A.
 (1994). A sequential algorithm for training text classifiers. In
 <em>SIGIR '94</em>, 3-12.</p>
-<p><span class="bibtex-citation" id="id2">[<a class="reference internal" href="../../references.html#id3" title="Burr Settles. Active learning literature survey. Technical Report 1648, University of Wisconsin-Madison, 2009.">44</a>]</span>: Settles, B. (2009). Active
+<p><span class="bibtex-citation" id="id2">[<a class="reference internal" href="../../references.html#id3" title="Burr Settles. Active learning literature survey. Technical Report 1648, University of Wisconsin-Madison, 2009.">43</a>]</span>: Settles, B. (2009). Active
 learning literature survey. <em>Computer Sciences Technical Report
 1648</em>, University of Wisconsin-Madison.</p>
+<p><span class="bibtex-citation" id="id3">[<a class="reference internal" href="../../references.html#id21" title="Dirk Büche, Nicol N. Schraudolph, and Petros Koumoutsakos. Accelerating evolutionary algorithms with gaussian process fitness function models. IEEE Transactions on Systems, Man, and Cybernetics—Part C, 35(2):183–194, 2005. doi:10.1109/TSMCC.2004.841917.">37</a>]</span>: Büche, D., Schraudolph, N. N., &amp; Koumoutsakos,
+P. (2005). Accelerating evolutionary algorithms with Gaussian process
+fitness function models. <em>IEEE Transactions on Systems, Man, and
+Cybernetics-Part C</em>, 35(2), 183-194. Eq. (19), Section IV-A.</p>
 </dd></dl>
 
 <p class="rubric">Methods</p>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.RBFSurrogate &#8212; saealib 0.1.0b5.dev55+ga7b051a6a documentation</title>
+    <title>saealib.RBFSurrogate &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=5f588dce"></script>
+    <script src="../../_static/documentation_options.js?v=35846ac6"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -912,7 +912,12 @@ radial basis functions. <em>Journal of Global Optimization</em>, 31(1),
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>prediction.value shape: (n_samples, n_obj)
-prediction.std  is None (RBF interpolation provides no uncertainty)</p>
+prediction.std  is None (RBF interpolation provides no uncertainty)
+prediction.x holds the (n_samples, n_features) query points
+passed to this call (candidates when called from
+score_candidates, holdout/archive points when called for
+accuracy evaluation), needed by acquisition functions that have
+no other channel to the points being scored (e.g. CORSDistance).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction">SurrogatePrediction</a></p>

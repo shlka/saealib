@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.StrategySwitcher &#8212; saealib 0.1.0b5.dev55+ga7b051a6a ドキュメント</title>
+    <title>saealib.StrategySwitcher &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=c6423660"></script>
+    <script src="../../_static/documentation_options.js?v=ac9ed168"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -774,37 +774,69 @@
 <h1>saealib.StrategySwitcher<a class="headerlink" href="#saealib-strategyswitcher" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.StrategySwitcher">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">StrategySwitcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">primary</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fallback</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spearman'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.56</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/switching.html#StrategySwitcher"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.StrategySwitcher" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">StrategySwitcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">primary</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fallback</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spearman'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.56</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mid_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/switching.html#StrategySwitcher"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.StrategySwitcher" title="Link to this definition">#</a></dt>
 <dd><p>ベースクラス: <a class="reference internal" href="saealib.AccuracyBasedSurrogateSwitcher.html#saealib.AccuracyBasedSurrogateSwitcher" title="saealib.surrogate.switching.AccuracyBasedSurrogateSwitcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">AccuracyBasedSurrogateSwitcher</span></code></a>[<a class="reference internal" href="saealib.OptimizationStrategy.html#saealib.OptimizationStrategy" title="saealib.OptimizationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code></a>]</p>
-<p>Switch between two optimization strategies based on an accuracy threshold.</p>
+<p>Switch between optimization strategies based on an accuracy threshold.</p>
 <p>Generalizes a threshold-based switch between two strategies to an
 arbitrary accuracy metric and pair of strategies: use <code class="docutils literal notranslate"><span class="pre">primary</span></code>
 (e.g. a surrogate-heavy strategy such as PS) once the metric surpasses
 the threshold, otherwise fall back to <code class="docutils literal notranslate"><span class="pre">fallback</span></code> (e.g. a more robust
 strategy such as IB or GB).</p>
+<p>Passing <code class="docutils literal notranslate"><span class="pre">mid</span></code> and <code class="docutils literal notranslate"><span class="pre">mid_threshold</span></code> opts into a three-way split
+that mirrors Hanawa et al. (2025)'s IB/GB/PS recommendation instead of
+a two-way one: <code class="docutils literal notranslate"><span class="pre">fallback</span></code> below <code class="docutils literal notranslate"><span class="pre">threshold</span></code>, <code class="docutils literal notranslate"><span class="pre">mid</span></code> between
+<code class="docutils literal notranslate"><span class="pre">threshold</span></code> and <code class="docutils literal notranslate"><span class="pre">mid_threshold</span></code>, <code class="docutils literal notranslate"><span class="pre">primary</span></code> at or above
+<code class="docutils literal notranslate"><span class="pre">mid_threshold</span></code>. Both must be supplied together — see Parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>primary</strong> (<a class="reference internal" href="saealib.OptimizationStrategy.html#saealib.OptimizationStrategy" title="saealib.OptimizationStrategy"><em>OptimizationStrategy</em></a>) -- Strategy used when accuracy is satisfactory (e.g. PS).</p></li>
 <li><p><strong>fallback</strong> (<a class="reference internal" href="saealib.OptimizationStrategy.html#saealib.OptimizationStrategy" title="saealib.OptimizationStrategy"><em>OptimizationStrategy</em></a>) -- Strategy used when accuracy is poor (e.g. IB or GB).</p></li>
 <li><p><strong>metric</strong> (<em>str</em>) -- Metric key. Default: <code class="docutils literal notranslate"><span class="pre">&quot;spearman&quot;</span></code>.</p></li>
-<li><p><strong>threshold</strong> (<em>float</em>) -- Minimum acceptable metric value. Default: <code class="docutils literal notranslate"><span class="pre">0.56</span></code>.</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>) -- Minimum acceptable metric value to leave <code class="docutils literal notranslate"><span class="pre">fallback</span></code>.
+Default: <code class="docutils literal notranslate"><span class="pre">0.56</span></code>.</p></li>
+<li><p><strong>mid</strong> (<a class="reference internal" href="saealib.OptimizationStrategy.html#saealib.OptimizationStrategy" title="saealib.OptimizationStrategy"><em>OptimizationStrategy</em></a><em> or </em><em>None</em>) -- Optional third strategy (e.g. GB) used when accuracy is between
+<code class="docutils literal notranslate"><span class="pre">threshold</span></code> and <code class="docutils literal notranslate"><span class="pre">mid_threshold</span></code>. Enables three-way mode when
+provided together with <code class="docutils literal notranslate"><span class="pre">mid_threshold</span></code>. Default: <code class="docutils literal notranslate"><span class="pre">None</span></code>
+(two-way mode, <code class="docutils literal notranslate"><span class="pre">switch()</span></code> behaves exactly as without this
+parameter).</p></li>
+<li><p><strong>mid_threshold</strong> (<em>float</em><em> or </em><em>None</em>) -- Minimum metric value to move from <code class="docutils literal notranslate"><span class="pre">mid</span></code> to <code class="docutils literal notranslate"><span class="pre">primary</span></code> in
+three-way mode. Must be supplied together with <code class="docutils literal notranslate"><span class="pre">mid</span></code> — there is
+no default, since the paper's PS-viable band is narrow and
+accuracy-metric-dependent. Default: <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 </ul>
+</dd>
+<dt class="field-even">例外<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> -- If exactly one of <code class="docutils literal notranslate"><span class="pre">mid</span></code> / <code class="docutils literal notranslate"><span class="pre">mid_threshold</span></code> is provided.</p>
 </dd>
 </dl>
 <p class="rubric">メモ</p>
-<p>The default threshold of 0.56 is taken from Hanawa et al. (2025,
-Fig. 8a), which reports that an individual-based (IB) strategy was
-recommended when Spearman rho was 0.56 or below. That paper's
-empirical finding is a <em>three</em>-way split (low accuracy -&gt; IB, medium
--&gt; GB, high [~0.9-1.0] -&gt; PS), not a two-way split at 0.56; a PS-heavy
-strategy only becomes favorable at a separate, higher threshold. This
-two-strategy <code class="docutils literal notranslate"><span class="pre">StrategySwitcher</span></code> is a simplified approximation of
-that finding, so 0.56 is best used as an IB/GB boundary rather than as
-a PS-switching threshold — callers pairing <code class="docutils literal notranslate"><span class="pre">primary=PS</span></code> with this
-default should be aware of the mismatch.</p>
+<p>The default threshold of 0.56 is taken from Hanawa et al. (2025),
+which recommends IB when Spearman rho is 0.56 or below, GB when rho
+is between 0.57 and 0.99, and PS only at an exact rho of 1.0 — a
+<em>three</em>-way split, not a two-way split at 0.56. By default (<code class="docutils literal notranslate"><span class="pre">mid</span></code>
+unset), this <code class="docutils literal notranslate"><span class="pre">StrategySwitcher</span></code> collapses that finding to a
+two-strategy approximation, so 0.56 is best used as an IB/GB boundary
+rather than as a PS-switching threshold — callers pairing
+<code class="docutils literal notranslate"><span class="pre">primary=PS</span></code> with the default two-way mode should be aware of the
+mismatch. To reproduce the paper's three-way recommendation exactly,
+pass <code class="docutils literal notranslate"><span class="pre">mid</span></code> (GB) and <code class="docutils literal notranslate"><span class="pre">mid_threshold=1.0</span></code> alongside
+<code class="docutils literal notranslate"><span class="pre">primary</span></code> (PS), <code class="docutils literal notranslate"><span class="pre">fallback</span></code> (IB), and <code class="docutils literal notranslate"><span class="pre">threshold=0.57</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">switcher</span> <span class="o">=</span> <span class="n">StrategySwitcher</span><span class="p">(</span>
+    <span class="n">primary</span><span class="o">=</span><span class="n">ps_strategy</span><span class="p">,</span>
+    <span class="n">fallback</span><span class="o">=</span><span class="n">ib_strategy</span><span class="p">,</span>
+    <span class="n">mid</span><span class="o">=</span><span class="n">gb_strategy</span><span class="p">,</span>
+    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.57</span><span class="p">,</span>
+    <span class="n">mid_threshold</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">for</span> <span class="n">ctx</span> <span class="ow">in</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">iterate</span><span class="p">():</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span>
+        <span class="n">switcher</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">optimizer</span><span class="o">.</span><span class="n">surrogate_manager</span><span class="o">.</span><span class="n">last_accuracy</span><span class="p">)</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
 <p class="rubric">参照</p>
-<p><span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id54" title="Yuki Hanawa, Tomohiro Harada, and Yukiya Miura. Impact of surrogate model accuracy on performance and model management strategy in surrogate-assisted evolutionary algorithms. Array, 27:100461, 2025. doi:10.1016/j.array.2025.100461.">35</a>]</span>: Hanawa, Y., Harada, T., &amp; Miura, Y.
+<p><span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id54" title="Yuki Hanawa, Tomohiro Harada, and Yukiya Miura. Impact of surrogate model accuracy on performance and model management strategy in surrogate-assisted evolutionary algorithms. Array, 27:100461, 2025. doi:10.1016/j.array.2025.100461.">34</a>]</span>: Hanawa, Y., Harada, T., &amp; Miura, Y.
 (2025). Impact of surrogate model accuracy on performance and model
 management strategy in surrogate-assisted evolutionary algorithms.
 <em>Array</em>, 27, 100461.</p>
@@ -817,7 +849,7 @@ management strategy in surrogate-assisted evolutionary algorithms.
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.StrategySwitcher.switch" title="saealib.StrategySwitcher.switch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">switch</span></code></a></p></td>
-<td><p>Return primary or fallback based on the metric threshold.</p></td>
+<td><p>Return primary, mid (if configured), or fallback based on the metric.</p></td>
 </tr>
 </tbody>
 </table>
@@ -825,7 +857,7 @@ management strategy in surrogate-assisted evolutionary algorithms.
 <p class="rubric">Method Details</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.StrategySwitcher.__init__">
-<span class="sig-prename descclassname"><span class="pre">StrategySwitcher.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">primary</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fallback</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spearman'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.56</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/switching.html#StrategySwitcher.__init__"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.StrategySwitcher.__init__" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">StrategySwitcher.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">primary</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fallback</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spearman'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.56</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mid_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/switching.html#StrategySwitcher.__init__"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.StrategySwitcher.__init__" title="Link to this definition">#</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -833,6 +865,8 @@ management strategy in surrogate-assisted evolutionary algorithms.
 <li><p><strong>fallback</strong> (<a class="reference internal" href="saealib.OptimizationStrategy.html#saealib.OptimizationStrategy" title="saealib.OptimizationStrategy"><em>OptimizationStrategy</em></a>)</p></li>
 <li><p><strong>metric</strong> (<em>str</em>)</p></li>
 <li><p><strong>threshold</strong> (<em>float</em>)</p></li>
+<li><p><strong>mid</strong> (<a class="reference internal" href="saealib.OptimizationStrategy.html#saealib.OptimizationStrategy" title="saealib.OptimizationStrategy"><em>OptimizationStrategy</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>mid_threshold</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">戻り値の型<span class="colon">:</span></dt>
@@ -844,7 +878,7 @@ management strategy in surrogate-assisted evolutionary algorithms.
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.StrategySwitcher.switch">
 <span class="sig-prename descclassname"><span class="pre">StrategySwitcher.</span></span><span class="sig-name descname"><span class="pre">switch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/switching.html#StrategySwitcher.switch"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.StrategySwitcher.switch" title="Link to this definition">#</a></dt>
-<dd><p>Return primary or fallback based on the metric threshold.</p>
+<dd><p>Return primary, mid (if configured), or fallback based on the metric.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>accuracy</strong> (<a class="reference internal" href="saealib.SurrogateAccuracy.html#saealib.SurrogateAccuracy" title="saealib.SurrogateAccuracy"><em>SurrogateAccuracy</em></a><em> | </em><em>None</em>)</p>

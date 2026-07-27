@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.RNSGA2Comparator &#8212; saealib 0.1.0b5.dev55+ga7b051a6a documentation</title>
+    <title>saealib.RNSGA2Comparator &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=5f588dce"></script>
+    <script src="../../_static/documentation_options.js?v=35846ac6"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -779,18 +779,22 @@
 <p>Extends ParetoComparator with reference-point-based secondary ordering:</p>
 <ul class="simple">
 <li><p>sort_population: non-dominated sorting + reference-point proximity ordering</p></li>
-<li><p>compare_population: inherited from ParetoComparator (Pareto dominance)</p></li>
+<li><p>compare_population: overrides ParetoComparator with rank + reference-point
+distance: lower rank wins, ties broken by smaller distance to the
+nearest reference point – see <a class="reference internal" href="#saealib.RNSGA2Comparator.compare_population" title="saealib.RNSGA2Comparator.compare_population"><code class="xref py py-meth docutils literal notranslate"><span class="pre">compare_population()</span></code></a></p></li>
 </ul>
-<p>The R-NSGA-II selection mechanism (Deb &amp; Sundar 2006):</p>
+<p>The R-NSGA-II selection mechanism (Deb &amp; Sundar 2006), Steps 1-3:</p>
 <ol class="arabic simple">
 <li><p>Non-dominated sorting (same fronts as NSGA-II).</p></li>
-<li><p>Normalize objectives by range (min-max per objective).</p></li>
-<li><p>Associate each individual with the nearest reference point (Euclidean
-distance in normalized objective space).</p></li>
-<li><p>Within each front, sort by <code class="docutils literal notranslate"><span class="pre">(niche_count[assoc],</span> <span class="pre">dist_to_nearest_ref)</span></code>
-ascending. Apply ε-clearing: solutions within <code class="docutils literal notranslate"><span class="pre">epsilon</span></code> of a
-higher-ranked solution with the same associated reference point are moved
-to the back of their reference-point group.</p></li>
+<li><p>Normalize objectives by range (min-max per objective, Eq. 3).</p></li>
+<li><p>Step 1: for each reference point, compute the normalized Euclidean
+distance of every individual in the front to that point and rank them
+ascending (closest = rank 1).</p></li>
+<li><p>Step 2: each individual’s crowding-distance-equivalent is the minimum
+of its per-reference-point ranks from Step 1 (smaller = preferred).</p></li>
+<li><p>Step 3 (ε-clearing): solutions within <code class="docutils literal notranslate"><span class="pre">epsilon</span></code> of a higher-ranked
+solution sharing the same nearest reference point are moved to the
+back of their reference-point group.</p></li>
 </ol>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

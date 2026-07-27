@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.PerObjectiveSurrogate &#8212; saealib 0.1.0b5.dev55+ga7b051a6a ドキュメント</title>
+    <title>saealib.PerObjectiveSurrogate &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=c6423660"></script>
+    <script src="../../_static/documentation_options.js?v=ac9ed168"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -874,7 +874,11 @@ of <code class="docutils literal notranslate"><span class="pre">train_y</span></
 <dt class="field-even">戻り値<span class="colon">:</span></dt>
 <dd class="field-even"><p>prediction.value shape: (n_samples, n_obj)
 prediction.std shape: (n_samples, n_obj) if all surrogates provide
-uncertainty, otherwise None.</p>
+uncertainty, otherwise None.
+prediction.x holds the (n_samples, n_features) query points
+passed to this call, set directly from <code class="docutils literal notranslate"><span class="pre">test_x</span></code> regardless of
+whether the wrapped surrogates populate their own <code class="docutils literal notranslate"><span class="pre">x</span></code> (needed
+by acquisition functions such as CORSDistance).</p>
 </dd>
 <dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction">SurrogatePrediction</a></p>

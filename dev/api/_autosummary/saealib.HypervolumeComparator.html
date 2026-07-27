@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.HypervolumeComparator &#8212; saealib 0.1.0b5.dev55+ga7b051a6a documentation</title>
+    <title>saealib.HypervolumeComparator &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=5f588dce"></script>
+    <script src="../../_static/documentation_options.js?v=35846ac6"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -812,6 +812,15 @@ pairwise comparison (e.g. PSO pbest update,
 instead.  Tournament selection should call <code class="docutils literal notranslate"><span class="pre">compare_population()</span></code>,
 which IS defined and safe to use.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Deferred gap.</strong> Beume et al. (2007) Section 2.1.3 special-cases
+two-objective problems: the reference point is skipped entirely and
+the two extremal (best-per-objective) solutions are unconditionally
+kept.  This comparator always computes a reference point and HV
+contributions for every point, including the two-objective case; the
+paper’s special case is not implemented here.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -821,10 +830,16 @@ None defaults to minimization for all objectives.</p></li>
 <li><p><strong>eps_obj</strong> (<em>float</em>) – Epsilon for objective-value equality (stored for interface
 compatibility).</p></li>
 <li><p><strong>reference_point</strong> (<em>np.ndarray</em><em> or </em><em>None</em>) – Reference point in the <em>original</em> objective space, shape
-<code class="docutils literal notranslate"><span class="pre">(n_obj,)</span></code>.  If <code class="docutils literal notranslate"><span class="pre">None</span></code>, it is auto-computed from the data
-with fractional padding controlled by <code class="docutils literal notranslate"><span class="pre">margin</span></code>.</p></li>
-<li><p><strong>margin</strong> (<em>float</em>) – Fractional padding used when auto-computing the reference point.
-Ignored when <code class="docutils literal notranslate"><span class="pre">reference_point</span></code> is provided.</p></li>
+<code class="docutils literal notranslate"><span class="pre">(n_obj,)</span></code>.  If <code class="docutils literal notranslate"><span class="pre">None</span></code> (default), it is recomputed fresh on
+every call as the front’s worst objective values plus <code class="docutils literal notranslate"><span class="pre">1.0</span></code>
+(Beume et al. 2007, Section 2.1.3) – see
+<code class="xref py py-func docutils literal notranslate"><span class="pre">_hv_default_reference_point()</span></code>.</p></li>
+<li><p><strong>margin</strong> (<em>float</em>) – Unused by the default (<code class="docutils literal notranslate"><span class="pre">reference_point=None</span></code>) computation, which
+now follows the paper’s fixed <code class="docutils literal notranslate"><span class="pre">+1.0</span></code> offset instead of a
+fractional one.  Retained only so existing constructor calls do not
+break; kept as a stored, inert attribute (see <code class="xref py py-attr docutils literal notranslate"><span class="pre">margin</span></code>).
+Pass an explicit <code class="docutils literal notranslate"><span class="pre">reference_point</span></code> if a margin-scaled reference
+point is needed.</p></li>
 <li><p><strong>sorter</strong> (<a class="reference internal" href="saealib.NonDominatedSorter.html#saealib.NonDominatedSorter" title="saealib.NonDominatedSorter"><em>NonDominatedSorter</em></a>) – Non-dominated sorting callable.</p></li>
 <li><p><strong>dominator</strong> (<a class="reference internal" href="saealib.Dominator.html#saealib.Dominator" title="saealib.Dominator"><em>Dominator</em></a><em> or </em><em>None</em>) – Dominance predicate.  <code class="docutils literal notranslate"><span class="pre">None</span></code> defaults to <a class="reference internal" href="saealib.ParetoDominator.html#saealib.ParetoDominator" title="saealib.ParetoDominator"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParetoDominator</span></code></a>.</p></li>
 </ul>

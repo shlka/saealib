@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>AccuracyBasedSurrogateSwitcher &#8212; saealib 0.1.0b5.dev55+ga7b051a6a ドキュメント</title>
+    <title>AccuracyBasedSurrogateSwitcher &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=c6423660"></script>
+    <script src="../_static/documentation_options.js?v=ac9ed168"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -577,7 +577,7 @@
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SpearmanCorrelation</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">[-1,</span> <span class="pre">1]</span></code>、高いほど良い</p></td>
-<td><p>目的ごとのSpearman順位相関の平均。EAではランクの保存性が重要という観点<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id53" title="Haibo Yu, Ying Tan, Chaoli Sun, and Jianchao Zeng. A comparison of quality measures for model selection in surrogate-assisted evolutionary algorithm. Soft Computing, 23(23):12417–12436, 2019. doi:10.1007/s00500-019-03783-0.">34</a>]</span>に基づく</p></td>
+<td><p>目的ごとのSpearman順位相関の平均。EAではランクの保存性が重要という観点<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id53" title="Haibo Yu, Ying Tan, Chaoli Sun, and Jianchao Zeng. A comparison of quality measures for model selection in surrogate-assisted evolutionary algorithm. Soft Computing, 23(23):12417–12436, 2019. doi:10.1007/s00500-019-03783-0.">33</a>]</span>に基づく</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">RMSE</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">∞)</span></code>、低いほど良い</p></td>
@@ -618,7 +618,7 @@
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">HeldOutAccuracyEvaluator</span></code>は、直近の真の評価点との比較用途<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id54" title="Yuki Hanawa, Tomohiro Harada, and Yukiya Miura. Impact of surrogate model accuracy on performance and model management strategy in surrogate-assisted evolutionary algorithms. Array, 27:100461, 2025. doi:10.1016/j.array.2025.100461.">35</a>]</span>で使います。</p>
+<p><code class="docutils literal notranslate"><span class="pre">HeldOutAccuracyEvaluator</span></code>は、直近の真の評価点との比較用途<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id54" title="Yuki Hanawa, Tomohiro Harada, and Yukiya Miura. Impact of surrogate model accuracy on performance and model management strategy in surrogate-assisted evolutionary algorithms. Array, 27:100461, 2025. doi:10.1016/j.array.2025.100461.">34</a>]</span>で使います。</p>
 <p><code class="docutils literal notranslate"><span class="pre">SurrogateAccuracy</span></code>（<code class="docutils literal notranslate"><span class="pre">metrics:</span> <span class="pre">dict[str,</span> <span class="pre">float]</span></code>, <code class="docutils literal notranslate"><span class="pre">n_samples:</span> <span class="pre">int</span></code>）は、評価結果を保持する単純なコンテナで、<code class="docutils literal notranslate"><span class="pre">get(name,</span> <span class="pre">default=nan)</span></code>で指標名から値を取り出します。</p>
 </section>
 <section id="switching-decision-accuracybasedsurrogateswitcher">
@@ -654,8 +654,8 @@
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">ManagerSwitcher</span></code>/<code class="docutils literal notranslate"><span class="pre">StrategySwitcher</span></code>は、指定した指標が閾値以上なら<code class="docutils literal notranslate"><span class="pre">primary</span></code>、そうでなければ<code class="docutils literal notranslate"><span class="pre">fallback</span></code>を返す単純な二値切り替えです。 <code class="docutils literal notranslate"><span class="pre">StrategySwitcher</span></code>の既定閾値<code class="docutils literal notranslate"><span class="pre">0.56</span></code>は、<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../references.html#id54" title="Yuki Hanawa, Tomohiro Harada, and Yukiya Miura. Impact of surrogate model accuracy on performance and model management strategy in surrogate-assisted evolutionary algorithms. Array, 27:100461, 2025. doi:10.1016/j.array.2025.100461.">35</a>]</span>によるPS/IB-GB切り替えの設定値に基づきます。</p>
-<p><code class="docutils literal notranslate"><span class="pre">GenCtrlSwitcher</span></code>は、二値切り替えではなく<code class="docutils literal notranslate"><span class="pre">gen_ctrl</span></code>を指数平滑化で連続的に調整します<span class="bibtex-citation" id="id4">[<a class="reference internal" href="../references.html#id55" title="Jiří Repický, Lukas Bajer, Zbyněk Pitra, and Martin Holeňa. Adaptive generation-based evolution control for gaussian process surrogate models. In Proceedings of the 17th Conference on Information Technologies – Applications and Theory (ITAT 2017), volume 1885 of CEUR Workshop Proceedings, 136–143. 2017.">36</a>]</span>。 公開属性<code class="docutils literal notranslate"><span class="pre">smoothed_error</span></code>に平滑化済みの誤差推定値を保持する状態を持つため、1回の<code class="docutils literal notranslate"><span class="pre">run</span></code>につき1つのインスタンスを使います。 <code class="docutils literal notranslate"><span class="pre">GenCtrlSwitcher.switch()</span></code>が返す<code class="docutils literal notranslate"><span class="pre">int</span></code>は、そのまま<a class="reference internal" href="strategies.html"><span class="std std-doc">GenerationBasedStrategy</span></a>の<code class="docutils literal notranslate"><span class="pre">gen_ctrl</span></code>引数に渡す想定です。</p>
+<p><code class="docutils literal notranslate"><span class="pre">ManagerSwitcher</span></code>/<code class="docutils literal notranslate"><span class="pre">StrategySwitcher</span></code>は、指定した指標が閾値以上なら<code class="docutils literal notranslate"><span class="pre">primary</span></code>、そうでなければ<code class="docutils literal notranslate"><span class="pre">fallback</span></code>を返す単純な二値切り替えです。 <code class="docutils literal notranslate"><span class="pre">StrategySwitcher</span></code>の既定閾値<code class="docutils literal notranslate"><span class="pre">0.56</span></code>は、<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../references.html#id54" title="Yuki Hanawa, Tomohiro Harada, and Yukiya Miura. Impact of surrogate model accuracy on performance and model management strategy in surrogate-assisted evolutionary algorithms. Array, 27:100461, 2025. doi:10.1016/j.array.2025.100461.">34</a>]</span>によるPS/IB-GB切り替えの設定値に基づきます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">GenCtrlSwitcher</span></code>は、二値切り替えではなく<code class="docutils literal notranslate"><span class="pre">gen_ctrl</span></code>を指数平滑化で連続的に調整します<span class="bibtex-citation" id="id4">[<a class="reference internal" href="../references.html#id55" title="Jiří Repický, Lukas Bajer, Zbyněk Pitra, and Martin Holeňa. Adaptive generation-based evolution control for gaussian process surrogate models. In Proceedings of the 17th Conference on Information Technologies – Applications and Theory (ITAT 2017), volume 1885 of CEUR Workshop Proceedings, 136–143. 2017.">35</a>]</span>。 公開属性<code class="docutils literal notranslate"><span class="pre">smoothed_error</span></code>に平滑化済みの誤差推定値を保持する状態を持つため、1回の<code class="docutils literal notranslate"><span class="pre">run</span></code>につき1つのインスタンスを使います。 <code class="docutils literal notranslate"><span class="pre">GenCtrlSwitcher.switch()</span></code>が返す<code class="docutils literal notranslate"><span class="pre">int</span></code>は、そのまま<a class="reference internal" href="strategies.html"><span class="std std-doc">GenerationBasedStrategy</span></a>の<code class="docutils literal notranslate"><span class="pre">gen_ctrl</span></code>引数に渡す想定です。</p>
 </section>
 <section id="implementing-a-custom-switcher">
 <h2>独自Switcherの実装方法<a class="headerlink" href="#implementing-a-custom-switcher" title="Link to this heading">#</a></h2>

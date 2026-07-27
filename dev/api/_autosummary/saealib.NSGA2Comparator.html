@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.NSGA2Comparator &#8212; saealib 0.1.0b5.dev55+ga7b051a6a documentation</title>
+    <title>saealib.NSGA2Comparator &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=5f588dce"></script>
+    <script src="../../_static/documentation_options.js?v=35846ac6"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -776,9 +776,13 @@
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">NSGA2Comparator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">direction=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_cv=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_obj=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sorter=&lt;function</span> <span class="pre">non_dominated_sort&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dominator=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/comparators/comparators.html#NSGA2Comparator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.NSGA2Comparator" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="saealib.ParetoComparator.html#saealib.ParetoComparator" title="saealib.comparators.comparators.ParetoComparator"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParetoComparator</span></code></a></p>
 <p>Comparator for multi-objective optimization via NSGA-II style ranking.</p>
-<p>Extends ParetoComparator with crowding-distance-based secondary ordering:
-- sort_population: non-dominated sorting + crowding distance
-- compare_population: inherited from ParetoComparator (Pareto dominance)</p>
+<p>Extends ParetoComparator with crowding-distance-based secondary ordering:</p>
+<ul class="simple">
+<li><p>sort_population: non-dominated sorting + crowding distance</p></li>
+<li><p>compare_population: overrides ParetoComparator with Deb et al. (2002)’s
+crowded-comparison operator (prec_n): lower rank wins, ties broken by
+higher crowding distance – see <a class="reference internal" href="#saealib.NSGA2Comparator.compare_population" title="saealib.NSGA2Comparator.compare_population"><code class="xref py py-meth docutils literal notranslate"><span class="pre">compare_population()</span></code></a></p></li>
+</ul>
 <p>Infeasible individuals (cv &gt; eps) are always ranked after feasible
 ones, ordered by ascending constraint violation.</p>
 <p>The sort result is cached in the Population cache and automatically

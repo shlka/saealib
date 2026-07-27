@@ -45,15 +45,15 @@ The default is a no-op; used by handlers with internal state that updates an ε 
 `EpsilonConstraintHandler` {cite}`mezuramontes2011epsilon` updates ε per generation via a function `schedule(gen) -> float`.
 Built-in schedule-generating functions `linear_epsilon_schedule(eps0, n_gen)`/`exponential_epsilon_schedule(eps0, decay)` are also exposed.
 
-`GradientRepairHandler` {cite}`chootinan2006gradientrepair` overrides `repair()` with a single Newton-like step using `EqualityConstraint.gradient()`.
-Constraints whose `gradient()` returns `None` (constraints with no gradient provided) are skipped during repair.
+`GradientRepairHandler` {cite}`chootinan2006gradientrepair` overrides `repair()` with a simultaneous Moore-Penrose pseudoinverse update over the currently-violated constraints (equality and inequality alike).
+Constraints whose `gradient()` returns `None` fall back to a forward-difference numerical approximation rather than being skipped.
 
 ## Extension points on InequalityConstraint/EqualityConstraint
 
 `InequalityConstraint` itself also has two extension points.
 
 **`gradient(x)`**: Returns `None` by default.
-Override it to return an analytical gradient vector, which makes `GradientRepairHandler` usable.
+Override it to return an analytical gradient vector; otherwise `GradientRepairHandler` falls back to a numerical approximation.
 
 **`violation_from_value(g)`**: Defines the conversion from the raw constraint value `g(x)` to a violation amount.
 The default is `max(0, g - threshold)`.

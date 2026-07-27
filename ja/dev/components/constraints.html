@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>ConstraintHandler &#8212; saealib 0.1.0b5.dev55+ga7b051a6a ドキュメント</title>
+    <title>ConstraintHandler &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=c6423660"></script>
+    <script src="../_static/documentation_options.js?v=ac9ed168"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -598,12 +598,14 @@
 </table>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">EpsilonConstraintHandler</span></code><span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id61" title="Efrén Mezura-Montes and Carlos A. Coello Coello. Constraint-handling in nature-inspired numerical optimization: past, present and future. Swarm and Evolutionary Computation, 1(4):173–194, 2011. doi:10.1016/j.swevo.2011.10.001.">1</a>]</span>は、<code class="docutils literal notranslate"><span class="pre">schedule(gen)</span> <span class="pre">-&gt;</span> <span class="pre">float</span></code>という関数でεを世代ごとに更新します。 <code class="docutils literal notranslate"><span class="pre">linear_epsilon_schedule(eps0,</span> <span class="pre">n_gen)</span></code>/<code class="docutils literal notranslate"><span class="pre">exponential_epsilon_schedule(eps0,</span> <span class="pre">decay)</span></code>という組み込みのスケジュール生成関数も公開されています。</p>
-<p><code class="docutils literal notranslate"><span class="pre">GradientRepairHandler</span></code><span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id62" title="Piya Chootinan and Anthony Chen. Constraint handling in genetic algorithms using a gradient-based repair method. Computers &amp; Operations Research, 33(8):2263–2281, 2006. doi:10.1016/j.cor.2005.02.002.">2</a>]</span>は、<code class="docutils literal notranslate"><span class="pre">EqualityConstraint.gradient()</span></code>を使ったNewton風の1ステップで<code class="docutils literal notranslate"><span class="pre">repair()</span></code>をオーバーライドします。 <code class="docutils literal notranslate"><span class="pre">gradient()</span></code>が<code class="docutils literal notranslate"><span class="pre">None</span></code>を返す制約（勾配が未提供の制約）は、repair時にスキップされます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">GradientRepairHandler</span></code> <span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id62" title="Piya Chootinan and Anthony Chen. Constraint handling in genetic algorithms using a gradient-based repair method. Computers &amp; Operations Research, 33(8):2263–2281, 2006. doi:10.1016/j.cor.2005.02.002.">2</a>]</span> overrides <code class="docutils literal notranslate"><span class="pre">repair()</span></code> with a simultaneous Moore-Penrose pseudoinverse update over the currently-violated constraints (equality and inequality alike).
+Constraints whose <code class="docutils literal notranslate"><span class="pre">gradient()</span></code> returns <code class="docutils literal notranslate"><span class="pre">None</span></code> fall back to a forward-difference numerical approximation rather than being skipped.</p>
 </section>
 <section id="extension-points-on-inequalityconstraint-equalityconstraint">
 <h2>InequalityConstraint/EqualityConstraint側の拡張点<a class="headerlink" href="#extension-points-on-inequalityconstraint-equalityconstraint" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">InequalityConstraint</span></code>自体にも2つの拡張点があります。</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">gradient(x)</span></code></strong>：既定は<code class="docutils literal notranslate"><span class="pre">None</span></code>を返します。 オーバーライドして解析的な勾配ベクトルを返すようにすると、<code class="docutils literal notranslate"><span class="pre">GradientRepairHandler</span></code>が使えるようになります。</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">gradient(x)</span></code></strong>: Returns <code class="docutils literal notranslate"><span class="pre">None</span></code> by default.
+Override it to return an analytical gradient vector; otherwise <code class="docutils literal notranslate"><span class="pre">GradientRepairHandler</span></code> falls back to a numerical approximation.</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">violation_from_value(g)</span></code></strong>：生の制約値<code class="docutils literal notranslate"><span class="pre">g(x)</span></code>から違反量への変換を定義します。 既定は<code class="docutils literal notranslate"><span class="pre">max(0,</span> <span class="pre">g</span> <span class="pre">-</span> <span class="pre">threshold)</span></code>です。 <code class="docutils literal notranslate"><span class="pre">EqualityConstraint</span></code>はこのメソッドだけをオーバーライドし、<code class="docutils literal notranslate"><span class="pre">max(0,</span> <span class="pre">|h(x)|</span> <span class="pre">-</span> <span class="pre">tolerance)</span></code>という独自の変換を定義しています。</p>
 </section>
 <section id="implementing-a-custom-constrainthandler">
