@@ -759,6 +759,37 @@ class SPEA2Comparator(Comparator):
         )
 
 
+def _hv_default_reference_point(
+    f: np.ndarray, direction: np.ndarray | None
+) -> np.ndarray:
+    """Beume et al. (2007) default hypervolume reference point.
+
+    Section 2.1.3, "Handling of boundary solutions": the reference point is
+    the vector of the currently worst objective values increased by 1.0,
+    recomputed every generation. For a maximized objective, "worst"
+    (the direction to move *away* from) is the minimum observed value, and
+    the offset is subtracted instead of added.
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Objective matrix to derive the worst values from. shape: (n, n_obj).
+    direction : np.ndarray or None
+        Per-objective optimization direction: ``+1`` maximize, ``-1``
+        minimize. ``None`` defaults to minimization for all objectives.
+
+    Returns
+    -------
+    np.ndarray
+        Reference point in the original objective space. shape: (n_obj,).
+    """
+    n_obj = f.shape[1]
+    dir_arr = direction if direction is not None else np.full(n_obj, -1.0)
+    worst = np.where(dir_arr == 1, f.min(axis=0), f.max(axis=0))
+    offset = np.where(dir_arr == 1, -1.0, 1.0)
+    return worst + offset
+
+
 class HypervolumeComparator(ParetoComparator):
     """Comparator using front rank and exclusive HV contribution (SMS-EMOA style).
 
@@ -795,6 +826,14 @@ class HypervolumeComparator(ParetoComparator):
         instead.  Tournament selection should call ``compare_population()``,
         which IS defined and safe to use.
 
+    .. note::
+        **Deferred gap.** Beume et al. (2007) Section 2.1.3 special-cases
+        two-objective problems: the reference point is skipped entirely and
+        the two extremal (best-per-objective) solutions are unconditionally
+        kept.  This comparator always computes a reference point and HV
+        contributions for every point, including the two-objective case; the
+        paper's special case is not implemented here.
+
     Parameters
     ----------
     direction : np.ndarray or None
@@ -807,11 +846,17 @@ class HypervolumeComparator(ParetoComparator):
         compatibility).
     reference_point : np.ndarray or None
         Reference point in the *original* objective space, shape
-        ``(n_obj,)``.  If ``None``, it is auto-computed from the data
-        with fractional padding controlled by ``margin``.
+        ``(n_obj,)``.  If ``None`` (default), it is recomputed fresh on
+        every call as the front's worst objective values plus ``1.0``
+        (Beume et al. 2007, Section 2.1.3) -- see
+        :func:`_hv_default_reference_point`.
     margin : float
-        Fractional padding used when auto-computing the reference point.
-        Ignored when ``reference_point`` is provided.
+        Unused by the default (``reference_point=None``) computation, which
+        now follows the paper's fixed ``+1.0`` offset instead of a
+        fractional one.  Retained only so existing constructor calls do not
+        break; kept as a stored, inert attribute (see :attr:`margin`).
+        Pass an explicit ``reference_point`` if a margin-scaled reference
+        point is needed.
     sorter : NonDominatedSorter
         Non-dominated sorting callable.
     dominator : Dominator or None
@@ -863,7 +908,7 @@ class HypervolumeComparator(ParetoComparator):
 
     @property
     def margin(self) -> float:
-        """Fractional padding applied when auto-computing the reference point."""
+        """Unused by the default reference-point computation; see class docstring."""
         return self._margin
 
     def _keys(self, population: Population) -> tuple[np.ndarray, np.ndarray]:
@@ -899,11 +944,16 @@ class HypervolumeComparator(ParetoComparator):
             for front in fronts:  # front = local indices into feasible subset
                 local = np.asarray(front, dtype=int)
                 gidx = feasible[local]
+                front_f = f_arr[gidx]
+                ref_point = (
+                    self._reference_point
+                    if self._reference_point is not None
+                    else _hv_default_reference_point(front_f, self.direction)
+                )
                 contribs = hypervolume_contributions(
-                    f_arr[gidx],
-                    reference_point=self._reference_point,
+                    front_f,
+                    reference_point=ref_point,
                     direction=self.direction,
-                    margin=self._margin,
                 )
                 contrib_all[gidx] = contribs
 
