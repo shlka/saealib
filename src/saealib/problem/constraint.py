@@ -390,36 +390,72 @@ class EpsilonConstraintHandler(ConstraintHandler):
         self._eps = float(self._schedule(gen))
 
 
+def _numerical_gradient(
+    c: InequalityConstraint, x: np.ndarray, g0: float
+) -> np.ndarray:
+    """
+    Forward-difference approximation of ``c``'s gradient at ``x`` (Eq. 7).
+
+    Step size ``sqrt(eps_machine) * max(1, |x_i|)`` follows the standard
+    forward-difference rule of thumb (balances truncation vs. rounding
+    error) scaled to the magnitude of each coordinate, since the paper only
+    specifies "a small positive scalar" without a concrete value.
+    """
+    step_scale = np.sqrt(np.finfo(float).eps)
+    grad = np.empty_like(x)
+    for i in range(x.shape[0]):
+        step = step_scale * max(1.0, abs(x[i]))
+        x_perturbed = x.copy()
+        x_perturbed[i] += step
+        grad[i] = (c.evaluate(x_perturbed) - g0) / step
+    return grad
+
+
 class GradientRepairHandler(ConstraintHandler):
     """
     Gradient-based constraint repair handler.
 
-    For each :class:`EqualityConstraint` whose :meth:`~InequalityConstraint.gradient`
-    returns a non-``None`` vector, applies one Newton-like step that projects
-    the design vector toward the constraint manifold ``h(x) = 0``::
+    Implements the repair procedure of Chootinan & Chen (2006): each call
+    to :meth:`repair` runs up to ``max_iter`` outer iterations. In each
+    iteration, the set of currently-violated constraints is determined
+    (equality: ``|h(x)| > tolerance``; inequality: ``g(x) > threshold``),
+    their raw values and gradients are stacked into ``ΔV`` and the Jacobian
+    ``J`` (Eq. 6), and a single simultaneous update is applied::
 
-        x <- x - h(x) * grad_h(x) / (||grad_h(x)||^2 + ridge)
+        Δx = pinv(J) @ ΔV
+        x <- x + Δx
 
-    The step is repeated ``max_iter`` times.  After all iterations the result
-    is clipped to ``[lb, ub]`` so bounds feasibility is always guaranteed.
+    using the Moore-Penrose pseudoinverse (Eq. 8), since ``J`` is generally
+    not square. Satisfied constraints contribute no row to ``J``/``ΔV`` for
+    that iteration, per the paper's Section 3.1 remark that "there is no
+    need to adjust ... non-violated constraints." Iteration stops early once
+    no constraint is violated, or once ``max(|Δx|) < epsilon``.
 
-    :class:`InequalityConstraint` objects and any :class:`EqualityConstraint`
-    whose ``gradient()`` returns ``None`` are skipped during repair; they still
-    contribute to ``cv`` via :meth:`compute_cv`.
+    ``ΔV`` follows Eq. (9): for an inequality constraint (single upper bound
+    ``threshold`` only, per :class:`InequalityConstraint`), ``ΔV_i =
+    threshold - g(x)``. For an :class:`EqualityConstraint` (``h(x) = 0`` by
+    construction, i.e. the target value is already embedded as 0), ``ΔV_i =
+    -h(x)``; both are the paper's "target minus current value" (see the
+    worked example in Section 3.2, point A, where ``ΔV = c - h(x) = 1``,
+    which is the sign that the printed Eq. (9) equality row does not
+    literally show but the numeric example requires).
 
-    Simplified relative to Eq. (8)-(9) of Chootinan & Chen (2006): the
-    original method solves all constraints jointly via the Moore-Penrose
-    pseudoinverse of the stacked Jacobian; this handler instead applies a
-    per-constraint (equality-only) regularised Newton step, and the
-    ``ridge`` regularisation term is not present in the original paper.
+    When :meth:`~InequalityConstraint.gradient` returns ``None`` for a
+    violated constraint, :func:`_numerical_gradient` supplies a
+    forward-difference approximation (Eq. 7) instead of skipping it — this
+    is what lets the handler now repair both equality and inequality
+    constraints regardless of whether an analytical Jacobian is available.
+
+    After all iterations the result is clipped to ``[lb, ub]`` so bounds
+    feasibility is always guaranteed.
 
     Parameters
     ----------
     max_iter : int, optional
-        Number of Newton steps per call. Default: 1.
-    ridge : float, optional
-        Regularisation term added to ``‖∇h‖²`` for numerical stability.
-        Default: 1e-12.
+        Maximum number of outer iterations per call. Default: 1.
+    epsilon : float, optional
+        Convergence threshold: iteration stops early once
+        ``max(abs(Δx)) < epsilon``. Default: 1e-6.
 
     References
     ----------
@@ -428,9 +464,9 @@ class GradientRepairHandler(ConstraintHandler):
     method. *Computers & Operations Research*, 33(8), 2263-2281.
     """
 
-    def __init__(self, max_iter: int = 1, ridge: float = 1e-12):
+    def __init__(self, max_iter: int = 1, epsilon: float = 1e-6):
         self.max_iter = max_iter
-        self.ridge = ridge
+        self.epsilon = epsilon
 
     def repair(
         self,
@@ -440,17 +476,35 @@ class GradientRepairHandler(ConstraintHandler):
         ub: np.ndarray,
         **kwargs,
     ) -> np.ndarray:
-        """Apply Newton steps toward equality-constraint manifolds, then clip."""
+        """Apply simultaneous pseudoinverse updates toward feasibility, then clip."""
         x = x.copy()
         for _ in range(self.max_iter):
+            rows = []
+            delta_v = []
             for c in constraints:
-                if not isinstance(c, EqualityConstraint):
-                    continue
+                value = c.evaluate(x)
+                if isinstance(c, EqualityConstraint):
+                    if abs(value) <= c.tolerance:
+                        continue
+                    dv = -value
+                else:
+                    if value <= c.threshold:
+                        continue
+                    dv = c.threshold - value
                 grad = c.gradient(x)
                 if grad is None:
-                    continue
-                h = c.evaluate(x)
-                x = x - h * grad / (np.dot(grad, grad) + self.ridge)
+                    grad = _numerical_gradient(c, x, value)
+                rows.append(grad)
+                delta_v.append(dv)
+
+            if not rows:
+                break
+
+            jacobian = np.stack(rows)
+            dx = np.linalg.pinv(jacobian) @ np.array(delta_v)
+            x = x + dx
+            if np.max(np.abs(dx)) < self.epsilon:
+                break
         return np.clip(x, lb, ub)
 
     def compute_cv(
