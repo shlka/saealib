@@ -7,6 +7,7 @@ Tests cover:
 - ExpectedImprovement: basic EI formula, xi parameter, requires uncertainty
 - LowerConfidenceBound: negated LCB, kappa parameter, requires uncertainty
 - ProbabilityOfFeasibility: P(g<=0), requires uncertainty
+- CORSDistance: distance-constrained mean prediction, beta_i cycling (Issue #212)
 - AcquisitionFunction: abstract base class cannot be instantiated
 - direction-aware minimize-space conversion for EI/LCB (Issue #198)
 """
@@ -24,6 +25,7 @@ from saealib.acquisition import (
     ProbabilityOfFeasibility,
     ProductOfFeasibility,
 )
+from saealib.acquisition.mean import CORSDistance
 from saealib.population import Archive, PopulationAttribute
 from saealib.surrogate.prediction import SurrogatePrediction
 
@@ -47,6 +49,24 @@ def _archive(rows):
     arc = Archive(attrs, init_capacity=len(rows) + 5)
     for i, f_row in enumerate(rows):
         arc.add(x=np.array([float(i)]), f=np.asarray(f_row, dtype=float))
+    return arc
+
+
+def _pred_x(value, x):
+    """Build a SurrogatePrediction with candidate coordinates in metadata["x"]."""
+    m = np.asarray(value, dtype=float)
+    return SurrogatePrediction(value=m, metadata={"x": np.asarray(x, dtype=float)})
+
+
+def _archive_x(xs):
+    """Build a 1-feature Archive containing exactly the given x coordinates."""
+    attrs = [
+        PopulationAttribute(name="x", dtype=np.float64, shape=(1,)),
+        PopulationAttribute(name="f", dtype=np.float64, shape=(1,)),
+    ]
+    arc = Archive(attrs, init_capacity=len(xs) + 5)
+    for x_val in xs:
+        arc.add(x=np.array([float(x_val)]), f=np.array([0.0]))
     return arc
 
 
@@ -290,6 +310,83 @@ class TestLowerConfidenceBound:
         s1 = LowerConfidenceBound(kappa=0.0, obj_idx=1).score(pred, reference=None)
         assert s0[0] == pytest.approx(-1.0)
         assert s1[0] == pytest.approx(-5.0)
+
+
+# ===========================================================================
+# CORSDistance Tests (Issue #212)
+# ===========================================================================
+class TestCORSDistance:
+    """Tests for the CORS distance-constrained acquisition function."""
+
+    def test_compute_reference_returns_archive_x(self) -> None:
+        arc = _archive_x([0.0, 5.0, 10.0])
+        af = CORSDistance(delta=10.0)
+        ref = af.compute_reference(arc)
+        np.testing.assert_array_equal(np.sort(ref.ravel()), [0.0, 5.0, 10.0])
+
+    def test_far_candidate_scores_by_predicted_mean(self) -> None:
+        """A candidate far from every evaluated point is unaffected by the constraint."""  # noqa: E501
+        reference = _archive_x([0.0, 1.0, 2.0]).x
+        pred = _pred_x(value=[[5.0]], x=[[100.0]])
+        scores = CORSDistance(delta=1.0).score(pred, reference=reference)
+        assert scores[0] == pytest.approx(5.0)
+
+    def test_close_candidate_gets_worst_score(self) -> None:
+        """A candidate violating beta_1 * delta gets -inf, never the predicted mean."""
+        reference = _archive_x([0.0, 5.0, 10.0]).x
+        # First score() call uses beta_1 = 0.95 (default SP1); threshold = 9.5.
+        pred = _pred_x(value=[[5.0]], x=[[0.05]])
+        scores = CORSDistance(delta=10.0).score(pred, reference=reference)
+        assert scores[0] == -np.inf
+
+    def test_beta_cycles_across_calls(self) -> None:
+        """beta_i cycles through search_pattern, advancing once per score() call."""
+        reference = _archive_x([0.0]).x
+        pred = _pred_x(value=[[5.0]], x=[[0.05]])
+        af = CORSDistance(delta=10.0, search_pattern=(1.0, 0.0))
+
+        # Call 1: beta_1 = 1.0 -> threshold = 10.0 -> dist 0.05 violates.
+        assert af.score(pred, reference=reference)[0] == -np.inf
+        # Call 2: beta_2 = 0.0 -> threshold = 0.0 -> Eq. (1) trivially satisfied.
+        assert af.score(pred, reference=reference)[0] == pytest.approx(5.0)
+        # Call 3: wraps back to beta_1 = 1.0 -> violates again.
+        assert af.score(pred, reference=reference)[0] == -np.inf
+
+    def test_beta_zero_never_excludes(self) -> None:
+        """A search_pattern of all zeros never enforces the distance constraint."""
+        reference = _archive_x([0.0]).x
+        pred = _pred_x(value=[[5.0]], x=[[0.0]])
+        af = CORSDistance(delta=10.0, search_pattern=(0.0,))
+        for _ in range(3):
+            assert af.score(pred, reference=reference)[0] == pytest.approx(5.0)
+
+    def test_empty_archive_no_constraint(self) -> None:
+        """With no previously evaluated points, the constraint is vacuously satisfied."""  # noqa: E501
+        reference = _archive_x([]).x
+        pred = _pred_x(value=[[5.0]], x=[[0.0]])
+        scores = CORSDistance(delta=10.0).score(pred, reference=reference)
+        assert scores[0] == pytest.approx(5.0)
+
+    def test_missing_metadata_x_raises(self) -> None:
+        reference = _archive_x([0.0]).x
+        pred = _pred(value=[[5.0]])
+        with pytest.raises(ValueError, match="metadata"):
+            CORSDistance(delta=10.0).score(pred, reference=reference)
+
+    def test_metadata_x_row_mismatch_raises(self) -> None:
+        reference = _archive_x([0.0]).x
+        pred = _pred_x(value=[[5.0], [6.0]], x=[[0.0], [1.0], [2.0]])
+        with pytest.raises(ValueError, match="one row per candidate"):
+            CORSDistance(delta=10.0).score(pred, reference=reference)
+
+    def test_direction_scalarizes_base_score(self) -> None:
+        """The unconstrained base score respects direction, like MeanPrediction."""
+        reference = _archive_x([0.0, 1.0]).x
+        pred = _pred_x(value=[[3.0]], x=[[100.0]])
+        scores = CORSDistance(delta=1.0, direction=np.array([-1.0])).score(
+            pred, reference=reference
+        )
+        assert scores[0] == pytest.approx(-3.0)
 
 
 # ===========================================================================
