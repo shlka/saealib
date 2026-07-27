@@ -404,8 +404,11 @@ class NSGA2Comparator(ParetoComparator):
     Comparator for multi-objective optimization via NSGA-II style ranking.
 
     Extends ParetoComparator with crowding-distance-based secondary ordering:
+
     - sort_population: non-dominated sorting + crowding distance
-    - compare_population: inherited from ParetoComparator (Pareto dominance)
+    - compare_population: overrides ParetoComparator with Deb et al. (2002)'s
+      crowded-comparison operator (prec_n): lower rank wins, ties broken by
+      higher crowding distance -- see :meth:`compare_population`
 
     Infeasible individuals (cv > eps) are always ranked after feasible
     ones, ordered by ascending constraint violation.
@@ -1484,7 +1487,9 @@ class RNSGA2Comparator(ParetoComparator):
     Extends ParetoComparator with reference-point-based secondary ordering:
 
     - sort_population: non-dominated sorting + reference-point proximity ordering
-    - compare_population: inherited from ParetoComparator (Pareto dominance)
+    - compare_population: overrides ParetoComparator with rank + reference-point
+      distance: lower rank wins, ties broken by smaller distance to the
+      nearest reference point -- see :meth:`compare_population`
 
     The R-NSGA-II selection mechanism (Deb & Sundar 2006), Steps 1-3:
 
