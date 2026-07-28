@@ -82,11 +82,12 @@ class PymooProblem(Problem):
     -----
     Unlike opfunu (scalar, single-objective), pymoo problems are
     batch-evaluated (``_evaluate(X, out)``) and may declare inequality
-    (``G``) and equality (``H``) constraints. This adapter still evaluates
-    one individual at a time — matching ``SerialEvaluator``'s per-row
-    contract — so a vectorized pymoo problem's batching advantage is not
-    exploited here; a batched saealib ``Problem`` protocol is out of scope
-    for this adapter.
+    (``G``) and equality (``H``) constraints. :meth:`evaluate_batch` exploits
+    this by calling the wrapped pymoo problem's own vectorized ``evaluate``
+    once for the whole batch; callers going through :meth:`evaluate` /
+    :meth:`evaluate_constraints` one row at a time instead fall back to the
+    one-slot ``_EvalCache``, which still collapses the per-row
+    ``evaluate_constraints()`` + ``evaluate()`` pair into a single pymoo call.
 
     ``direction`` is always all ``-1``: pymoo problems are unconditionally
     minimization. Wrap in :func:`~saealib.maximize` only if the pymoo
@@ -149,3 +150,31 @@ class PymooProblem(Problem):
             **problem_kwargs,
         )
         self.pymoo_problem = pymoo_problem
+
+    def evaluate_batch(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray] | None:
+        """
+        Evaluate a batch via the wrapped pymoo problem's own vectorized ``evaluate``.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Batch of candidates, shape ``(n, dim)``.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            ``(f_batch, g_batch)`` with shapes ``(n, n_obj)`` and
+            ``(n, n_constraints)``; column order matches ``self.constraints``
+            (inequality columns from ``G`` first, then equality columns from
+            ``H``).
+        """
+        out: dict[str, Any] = self.pymoo_problem.evaluate(x, return_as_dictionary=True)
+        f_batch = np.asarray(out["F"], dtype=float)
+        n = x.shape[0]
+        g_parts = []
+        if self.pymoo_problem.n_ieq_constr > 0:
+            g_parts.append(np.asarray(out["G"], dtype=float))
+        if self.pymoo_problem.n_eq_constr > 0:
+            g_parts.append(np.asarray(out["H"], dtype=float))
+        g_batch = np.hstack(g_parts) if g_parts else np.empty((n, 0), dtype=float)
+        return f_batch, g_batch
