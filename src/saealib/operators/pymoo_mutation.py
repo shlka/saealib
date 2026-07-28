@@ -109,3 +109,57 @@ class PymooMutation(Mutation):
         x_batch = np.asarray(p, dtype=float)[np.newaxis, :]
         xp_batch = self.operator._do(problem, x_batch, random_state=rng)
         return np.asarray(xp_batch, dtype=float)[0]
+
+    def mutate_batch(
+        self,
+        candidates_batch: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator = np.random.default_rng(),
+    ) -> np.ndarray | None:
+        """
+        Execute mutation on a batch of candidates via a single pymoo call.
+
+        Unlike ``Crossover.crossover_batch``, this method owns its own
+        ``prob`` gate: it draws one gate value per row (``rng.random(n) <
+        self.prob``, mirroring ``mutate()``'s per-call ``rng.random() >=
+        self.prob`` check) and only mutates the gated rows; ungated rows are
+        returned unchanged. The wrapped operator's ``_do()`` is called at
+        most once, on only the gated subset. If no row is gated
+        (``gate.sum() == 0``), ``_do()`` is not called at all, avoiding a
+        zero-length-batch call into the wrapped pymoo operator.
+
+        Parameters
+        ----------
+        candidates_batch : np.ndarray
+            Batch of candidate individuals. shape = (n, dim)
+        mutate_range : tuple
+            Tuple of (lower_bound, upper_bound) for mutation.
+        rng : np.random.Generator, optional
+            Forwarded to the wrapped operator as ``random_state``.
+
+        Returns
+        -------
+        np.ndarray
+            Mutated individuals. shape = (n, dim)
+
+        Notes
+        -----
+        For batches with more than one gated row, per-row results are
+        **not** bit-identical to calling :meth:`mutate` once per candidate
+        in a loop with the same seeded ``rng`` (both consume the same total
+        number of random draws, but pymoo operators such as PM draw each
+        random phase across the whole gated batch in one call, whereas the
+        looped single-candidate calls interleave phases per row). Only a
+        batch with exactly one gated row is guaranteed to match a single
+        :meth:`mutate` call with an identically-seeded ``rng``.
+        """
+        candidates_batch = np.asarray(candidates_batch, dtype=float)
+        n = candidates_batch.shape[0]
+        gate = rng.random(n) < self.prob
+        result = candidates_batch.copy()
+        if not np.any(gate):
+            return result
+        problem = self._pymoo_problem(candidates_batch.shape[-1], mutate_range)
+        mutated = self.operator._do(problem, candidates_batch[gate], random_state=rng)
+        result[gate] = np.asarray(mutated, dtype=float)
+        return result

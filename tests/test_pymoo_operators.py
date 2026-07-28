@@ -17,6 +17,30 @@ def _make_parents(rng: np.random.Generator) -> np.ndarray:
     return rng.uniform(-1.0, 1.0, size=(2, DIM))
 
 
+class _CountedSBX(SBX):
+    """SBX subclass counting real ``_do()`` invocations."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.n_do_calls = 0
+
+    def _do(self, *args, **kwargs):
+        self.n_do_calls += 1
+        return super()._do(*args, **kwargs)
+
+
+class _CountedPM(PM):
+    """PM subclass counting real ``_do()`` invocations."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.n_do_calls = 0
+
+    def _do(self, *args, **kwargs):
+        self.n_do_calls += 1
+        return super()._do(*args, **kwargs)
+
+
 # ---------------------------------------------------------------------------
 # PymooCrossover
 # ---------------------------------------------------------------------------
@@ -86,6 +110,54 @@ class TestPymooCrossover:
         with pytest.raises(TypeError):
             op.crossover(p, rng=rng)
 
+    def test_crossover_batch_calls_do_once(self):
+        n_pair = 5
+        counted = _CountedSBX(eta=15)
+        op = PymooCrossover(counted)
+        rng = np.random.default_rng(5)
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+
+        result = op.crossover_batch(parents_batch, bounds=(lb, ub), rng=rng)
+        assert result is not None
+        assert counted.n_do_calls == 1
+        assert result.shape == (n_pair, 2, DIM)
+
+        counted.n_do_calls = 0
+        for k in range(n_pair):
+            op.crossover(parents_batch[k], bounds=(lb, ub), rng=rng)
+        assert counted.n_do_calls == n_pair
+
+    def test_crossover_batch_matches_single_crossover_at_n_pair_one(self):
+        op = PymooCrossover(SBX(eta=15))
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+        p = np.random.default_rng(6).uniform(-1.0, 1.0, size=(2, DIM))
+
+        rng_batch = np.random.default_rng(7)
+        batch_result = op.crossover_batch(
+            p[np.newaxis, :, :], bounds=(lb, ub), rng=rng_batch
+        )
+        assert batch_result is not None
+        batch_result = batch_result[0]
+
+        rng_single = np.random.default_rng(7)
+        single_result = op.crossover(p, bounds=(lb, ub), rng=rng_single)
+
+        np.testing.assert_allclose(batch_result, single_result)
+
+    def test_crossover_batch_output_shape(self):
+        op = PymooCrossover(SBX(eta=15))
+        rng = np.random.default_rng(8)
+        n_pair = 3
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+        c = op.crossover_batch(parents_batch, bounds=(lb, ub), rng=rng)
+        assert c is not None
+        assert c.shape == (n_pair, 2, DIM)
+
     def test_subdimensional_call_rebuilds_shim_problem(self):
         """A smaller dim slice (e.g. GA's per-type variable routing) works and
         does not reuse the wrong cached pymoo Problem shim."""
@@ -153,6 +225,104 @@ class TestPymooMutation:
             p = rng.uniform(-1.0, 1.0, size=DIM)
             m = op.mutate(p, (lb, ub), rng=rng)
             assert np.all(m >= lb) and np.all(m <= ub)
+
+    def test_mutate_batch_calls_do_once(self):
+        n = 6
+        counted = _CountedPM(eta=20, prob_var=1.0)
+        op = PymooMutation(counted, prob=1.0)
+        rng = np.random.default_rng(9)
+        candidates_batch = rng.uniform(-1.0, 1.0, size=(n, DIM))
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        assert counted.n_do_calls == 1
+        assert result.shape == (n, DIM)
+
+        counted.n_do_calls = 0
+        for k in range(n):
+            op.mutate(candidates_batch[k], (lb, ub), rng=rng)
+        assert counted.n_do_calls == n
+
+    def test_mutate_batch_matches_single_mutate_at_n_one(self):
+        op = PymooMutation(PM(eta=20, prob_var=1.0), prob=1.0)
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+        p = np.random.default_rng(10).uniform(-1.0, 1.0, size=DIM)
+
+        rng_batch = np.random.default_rng(11)
+        batch_result = op.mutate_batch(p[np.newaxis, :], (lb, ub), rng=rng_batch)
+        assert batch_result is not None
+        batch_result = batch_result[0]
+
+        rng_single = np.random.default_rng(11)
+        single_result = op.mutate(p, (lb, ub), rng=rng_single)
+
+        np.testing.assert_allclose(batch_result, single_result)
+
+    def test_mutate_batch_prob_zero_returns_unchanged_without_do_call(self):
+        counted = _CountedPM(eta=20)
+        op = PymooMutation(counted, prob=0.0)
+        rng = np.random.default_rng(12)
+        n = 5
+        candidates_batch = rng.uniform(-1.0, 1.0, size=(n, DIM))
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        np.testing.assert_array_equal(result, candidates_batch)
+        assert counted.n_do_calls == 0
+
+    def test_mutate_batch_prob_one_mutates_all_rows_with_single_do_call(self):
+        counted = _CountedPM(eta=20, prob_var=1.0)
+        op = PymooMutation(counted, prob=1.0)
+        rng = np.random.default_rng(13)
+        n = 5
+        candidates_batch = rng.uniform(-1.0, 1.0, size=(n, DIM))
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        assert counted.n_do_calls == 1
+        assert not np.array_equal(result, candidates_batch)
+
+    def test_mutate_batch_fractional_prob_gates_rows_exactly(self):
+        seed = 14
+        counted = _CountedPM(eta=20, prob_var=1.0)
+        op = PymooMutation(counted, prob=0.5)
+        n = 8
+        candidates_batch = np.random.default_rng(seed + 1).uniform(
+            -1.0, 1.0, size=(n, DIM)
+        )
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+
+        # mutate_batch's gate draw is the first thing to touch the rng
+        # stream, so a parallel, identically-seeded generator predicts it.
+        expected_gate = np.random.default_rng(seed).random(n) < op.prob
+
+        result = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(seed)
+        )
+        assert result is not None
+
+        np.testing.assert_array_equal(
+            result[~expected_gate], candidates_batch[~expected_gate]
+        )
+        assert counted.n_do_calls == 1
+
+    def test_mutate_batch_output_shape(self):
+        op = PymooMutation(PM(eta=20), prob=1.0)
+        rng = np.random.default_rng(15)
+        n = 4
+        candidates_batch = rng.uniform(-1.0, 1.0, size=(n, DIM))
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+        m = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert m is not None
+        assert m.shape == (n, DIM)
 
 
 # ---------------------------------------------------------------------------

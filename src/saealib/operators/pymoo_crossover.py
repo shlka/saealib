@@ -147,3 +147,50 @@ class PymooCrossover(Crossover):
         x_batch = np.asarray(parent, dtype=float)[:, np.newaxis, :]
         q_batch = self.operator._do(problem, x_batch, random_state=rng)
         return np.asarray(q_batch, dtype=float)[:, 0, :]
+
+    def crossover_batch(
+        self,
+        parents_batch: np.ndarray,
+        bounds: tuple[np.ndarray, np.ndarray] | None = None,
+        rng: np.random.Generator = np.random.default_rng(),
+    ) -> np.ndarray | None:
+        """
+        Execute crossover on a batch of parent pairs via a single pymoo call.
+
+        Unlike :meth:`crossover`, which pays per-call overhead for a single
+        pair, this calls the wrapped operator's ``_do()`` exactly once for
+        the whole batch.
+
+        Parameters
+        ----------
+        parents_batch : np.ndarray
+            Batch of parent groups. shape = (n_pair, n_parents, dim)
+        bounds : tuple of (np.ndarray, np.ndarray) or None
+            Lower and upper bounds for each variable.
+        rng : np.random.Generator, optional
+            Forwarded to the wrapped operator as ``random_state``.
+
+        Returns
+        -------
+        np.ndarray
+            Offspring individuals. shape = (n_pair, n_children, dim)
+
+        Notes
+        -----
+        For ``n_pair > 1``, per-row results are **not** bit-identical to
+        calling :meth:`crossover` once per pair in a loop with the same
+        seeded ``rng``, even though both consume the same total number of
+        random draws. Operators such as pymoo's SBX draw each random phase
+        (e.g. the crossover mask, then the beta values) across the *whole*
+        batch in one call, whereas the looped single-pair calls interleave
+        phases per row; the two draw orders diverge as soon as more than one
+        pair is involved. Only ``n_pair == 1`` is guaranteed to match a
+        single :meth:`crossover` call with an identically-seeded ``rng``.
+        """
+        problem = self._pymoo_problem(parents_batch.shape[-1], bounds)
+        # saealib's (n_pair, n_parents, dim) vs. pymoo's own
+        # (n_parents, n_matings, dim) convention: swap the first two axes
+        # (a view, no copy) rather than reshaping.
+        x_pymoo_layout = np.swapaxes(np.asarray(parents_batch, dtype=float), 0, 1)
+        q_pymoo_layout = self.operator._do(problem, x_pymoo_layout, random_state=rng)
+        return np.asarray(np.swapaxes(q_pymoo_layout, 0, 1), dtype=float)
