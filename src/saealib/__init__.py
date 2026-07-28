@@ -246,6 +246,8 @@ _TIER2_MAP: dict[str, str] = {
     "MutationGaussian": "saealib.operators",
     "MutationIntegerUniform": "saealib.operators",
     "MutationUniform": "saealib.operators",
+    "PymooCrossover": "saealib.operators",
+    "PymooMutation": "saealib.operators",
     "RouletteWheelSelection": "saealib.operators",
     "SequentialSelection": "saealib.operators",
     "repair_clipping": "saealib.operators",

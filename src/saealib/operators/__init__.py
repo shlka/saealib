@@ -17,6 +17,8 @@ from saealib.operators.mutation import (
     MutationPolynomial,
     MutationUniform,
 )
+from saealib.operators.pymoo_crossover import PymooCrossover
+from saealib.operators.pymoo_mutation import PymooMutation
 from saealib.operators.repair import repair_clipping
 from saealib.operators.selection import (
     ParentSelection,
@@ -44,6 +46,8 @@ __all__ = [
     "MutationPolynomial",
     "MutationUniform",
     "ParentSelection",
+    "PymooCrossover",
+    "PymooMutation",
     "RouletteWheelSelection",
     "SequentialSelection",
     "SurvivorSelection",

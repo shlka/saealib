@@ -109,6 +109,8 @@ from saealib.operators import MutationIntegerUniform as MutationIntegerUniform
 from saealib.operators import MutationPolynomial as MutationPolynomial
 from saealib.operators import MutationUniform as MutationUniform
 from saealib.operators import ParentSelection as ParentSelection
+from saealib.operators import PymooCrossover as PymooCrossover
+from saealib.operators import PymooMutation as PymooMutation
 from saealib.operators import RouletteWheelSelection as RouletteWheelSelection
 from saealib.operators import SequentialSelection as SequentialSelection
 from saealib.operators import SurvivorSelection as SurvivorSelection
