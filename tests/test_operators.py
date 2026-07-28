@@ -257,6 +257,29 @@ class TestCrossoverNChildren:
 
 
 # ---------------------------------------------------------------------------
+# Crossover base: crossover_batch default
+# ---------------------------------------------------------------------------
+
+
+class TestCrossoverBatchDefault:
+    def test_default_returns_none_sbx(self):
+        op = CrossoverSBX(prob=0.9, eta=2.0)
+        rng = np.random.default_rng(0)
+        n_pair = 3
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        result = op.crossover_batch(parents_batch, rng=rng)
+        assert result is None
+
+    def test_default_returns_none_uniform(self):
+        op = CrossoverUniform(prob=0.8)
+        rng = np.random.default_rng(0)
+        n_pair = 3
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        result = op.crossover_batch(parents_batch, rng=rng)
+        assert result is None
+
+
+# ---------------------------------------------------------------------------
 # MutationPolynomial
 # ---------------------------------------------------------------------------
 
@@ -339,6 +362,32 @@ class TestMutationGaussian:
         p = rng.uniform(-2.0, 2.0, size=DIM)
         c = op.mutate(p, self._range(), rng=rng)
         np.testing.assert_array_equal(c, p)
+
+
+# ---------------------------------------------------------------------------
+# Mutation base: mutate_batch default
+# ---------------------------------------------------------------------------
+
+
+class TestMutationBatchDefault:
+    def _range(self):
+        lb = np.full(DIM, -5.0)
+        ub = np.full(DIM, 5.0)
+        return lb, ub
+
+    def test_default_returns_none_polynomial(self):
+        op = MutationPolynomial(prob_var=0.5, eta=20.0)
+        rng = np.random.default_rng(0)
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(5, DIM))
+        result = op.mutate_batch(candidates_batch, self._range(), rng=rng)
+        assert result is None
+
+    def test_default_returns_none_uniform(self):
+        op = MutationUniform(prob_var=0.5)
+        rng = np.random.default_rng(0)
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(5, DIM))
+        result = op.mutate_batch(candidates_batch, self._range(), rng=rng)
+        assert result is None
 
 
 # ---------------------------------------------------------------------------

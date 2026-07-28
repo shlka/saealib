@@ -62,6 +62,48 @@ class Crossover(ABC):
         """
         pass
 
+    def crossover_batch(
+        self,
+        parents_batch: np.ndarray,
+        bounds: tuple[np.ndarray, np.ndarray] | None = None,
+        rng: np.random.Generator = np.random.default_rng(),
+    ) -> np.ndarray | None:
+        """
+        Execute crossover on a batch of parent pairs at once.
+
+        Default implementation returns ``None``, meaning this operator does
+        not support batched crossover; the caller should fall back to
+        invoking :meth:`crossover` once per pair.
+
+        Parameters
+        ----------
+        parents_batch : np.ndarray
+            Batch of parent groups. shape = (n_pair, n_parents, dim), i.e. a
+            batch of what :meth:`crossover` normally receives one instance of
+            at a time (``parents_batch[k]`` is what a single
+            ``crossover(parent=parents_batch[k], ...)`` call would take as
+            ``parent``).
+        bounds : tuple of (np.ndarray, np.ndarray) or None
+            Lower and upper bounds for each variable. ``None`` means unbounded.
+        rng : np.random.Generator, optional
+            Random number generator, by default np.random.default_rng()
+
+        Returns
+        -------
+        np.ndarray or None
+            Offspring individuals. shape = (n_pair, n_children, dim), or
+            ``None`` if batched crossover is unsupported for this particular
+            call/shape.
+
+        Notes
+        -----
+        No ``prob`` gating is performed inside ``crossover_batch``, mirroring
+        :meth:`crossover`: the caller is responsible for having already
+        filtered ``parents_batch`` down to only the pairs that should undergo
+        crossover.
+        """
+        return None
+
     def post_crossover(
         self,
         offspring: np.ndarray,

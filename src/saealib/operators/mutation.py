@@ -57,6 +57,47 @@ class Mutation(ABC):
         """
         pass
 
+    def mutate_batch(
+        self,
+        candidates_batch: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator = np.random.default_rng(),
+    ) -> np.ndarray | None:
+        """
+        Execute mutation on a batch of candidates at once.
+
+        Default implementation returns ``None``, meaning this operator does
+        not support batched mutation; the caller should fall back to
+        invoking :meth:`mutate` once per candidate.
+
+        Parameters
+        ----------
+        candidates_batch : np.ndarray
+            Batch of candidate individuals. shape = (n, dim)
+        mutate_range : tuple
+            Tuple of (lower_bound, upper_bound) for mutation.
+        rng : np.random.Generator, optional
+            Random number generator, by default np.random.default_rng()
+
+        Returns
+        -------
+        np.ndarray or None
+            Mutated individuals. shape = (n, dim), or ``None`` if batched
+            mutation is unsupported for this particular call/shape.
+
+        Notes
+        -----
+        Unlike ``Crossover.crossover_batch``, ``prob`` gating is NOT the
+        caller's responsibility here — it must be applied by the overriding
+        implementation itself, per row, mirroring how every concrete
+        :meth:`mutate` self-gates today (``if rng.random() >= self.prob:
+        return p.copy()``). Overriding implementations must draw one gate
+        value per row and leave ungated rows unchanged, rather than expecting
+        the caller to pre-filter ``candidates_batch``. This is a deliberate
+        asymmetry with ``Crossover.crossover_batch``.
+        """
+        return None
+
     def post_mutation(
         self,
         offspring: np.ndarray,
