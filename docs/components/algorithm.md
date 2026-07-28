@@ -73,6 +73,19 @@ Unlike `GA`, it isn't assembled by injecting operators — `ask()`/`tell()` dire
 The swarm best (leader) is chosen from all particles' pbests using `ctx.comparator`, so any single-objective `Comparator` is automatically supported.
 Multi-objective PSO (MOPSO) requires a dedicated subclass that manages a non-dominated solution set; the built-in `PSO` targets single-objective problems.
 
+### External library adapters
+
+`PymooAlgorithm(pymoo_algorithm, *, allow_partial_tell=False)` wraps an already-constructed [pymoo](https://pymoo.org/) algorithm (e.g. `NSGA2()`, `DE()`) so an existing pymoo algorithm can drive saealib's ask-tell loop and surrogate-assisted strategies unchanged.
+
+Unlike `GA`/`PSO`, which treat `ctx.population` as the source of truth, `PymooAlgorithm` runs in "engine mode": the wrapped pymoo algorithm owns its own population and internal survival state, and `ctx.population` is refreshed from it at the end of every `tell()` — a mirror, not the source of truth.
+This is the only way to reuse a pymoo algorithm's own tested survival logic unchanged, but it comes with real limits worth knowing before reaching for it:
+
+- No checkpoint/resume — `OptimizationState.save()` only serializes saealib's own arrays, not the wrapped algorithm's internal state.
+- `n_offspring` passed to `ask()` is ignored; the offspring count is fixed by the wrapped algorithm's own configuration (e.g. its `pop_size`).
+- `PreSelectionStrategy`'s top-k truncation hands `tell()` only a subset of what `ask()` produced. By default this raises `ConfigurationError`, since index-coupled algorithms (e.g. differential evolution) would silently misalign parents and offspring under a partial `tell()`; pass `allow_partial_tell=True` to opt in anyway.
+
+See [Installation](../getting_started/installation.md) for the `pymoo` extra.
+
 ## Implementing a custom Algorithm
 
 If you need a custom search algorithm, subclass `Algorithm` and implement `ask()`/`tell()`.
@@ -135,5 +148,6 @@ If per-individual auxiliary information is needed, as with PSO's pbest, declare 
 - {py:class}`saealib.Algorithm`
 - {py:class}`saealib.GA`
 - {py:class}`saealib.PSO`
+- {py:class}`saealib.PymooAlgorithm`
 - {py:class}`saealib.DuplicateElimination`
 - {py:func}`saealib.repair_clipping`

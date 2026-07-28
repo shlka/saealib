@@ -53,6 +53,7 @@ All options are shown in the following table.
 | `xgboost` | XGBoost surrogate model |
 | `lightgbm` | LightGBM surrogate model |
 | `torch` | PyTorch-based components |
+| `pymoo` | `PymooCrossover`/`PymooMutation`/`PymooAlgorithm`/`PymooProblem` adapters |
 | `parallel` | Parallel evaluation via joblib |
 | `all` | All of the above |
 
