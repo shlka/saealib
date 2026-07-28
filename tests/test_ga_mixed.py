@@ -25,6 +25,7 @@ from saealib.operators import (
     TruncationSelection,
 )
 from saealib.operators.crossover import Crossover
+from saealib.operators.mutation import Mutation
 
 
 def _make_ga(**kwargs):
@@ -449,3 +450,72 @@ class TestGAMixedAsk:
         ctx = _make_ctx_for(problem)
         with pytest.raises(ConfigurationError, match=r"integer_crossover\.n_children"):
             ga.ask(ctx, _NoopProvider())
+
+
+# ---------------------------------------------------------------------------
+# _mutate_candidates fallback-loop interleaving order (Issue #224, commit 6
+# review fix)
+# ---------------------------------------------------------------------------
+
+
+class TestMutateCandidatesInterleaveOrder:
+    """``_mutate_candidates``'s per-individual fallback loop (taken by every
+    built-in ``Mutation``, since none override ``mutate_batch``) must call
+    ``_route_mutation`` and ``post_mutation`` interleaved per individual —
+    i.e. ``mutate(0), post(0), mutate(1), post(1), ...`` — matching the
+    pre-batching behaviour byte-for-byte. A prior version of this method
+    ran the full ``_route_mutation`` loop first and only then a separate
+    ``post_mutation`` loop, which is invisible for the default (identity,
+    RNG-free) ``post_mutation`` hook but silently reorders RNG consumption
+    for a ``with_post`` hook that draws from ``rng``. This test uses such a
+    hook and cross-checks the library's output against an independently
+    hand-written interleaved reference loop fed an identically-seeded RNG.
+    """
+
+    def test_fallback_loop_matches_hand_written_interleaved_reference(self):
+        def rng_consuming_hook(offspring, mutate_range, rng, ctx):
+            # Visibly perturbs the output using a value drawn from rng, so
+            # that a reordering of RNG draws changes the returned array.
+            return offspring + rng.random() * 1e-3
+
+        mutation = MutationPolynomial(eta=20.0, prob_var=0.5).with_post(
+            rng_consuming_hook
+        )
+        # Sanity check: mirrors the production predicate in
+        # _mutate_candidates that decides the fallback path is taken.
+        # (Checking `type(mutation).mutate_batch is MutationPolynomial
+        # .mutate_batch` would be vacuous here, since with_post always
+        # returns a shallow copy of the same type regardless of whether
+        # that type overrides mutate_batch.)
+        assert type(mutation).mutate_batch is Mutation.mutate_batch
+
+        ga = GA(
+            crossover=CrossoverSBX(1.0, eta=20.0),
+            mutation=mutation,
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        problem = _make_problem_continuous()
+        lb, ub = problem.lb, problem.ub
+        cand = np.random.default_rng(1).uniform(lb, ub, size=(6, problem.dim))
+
+        ctx = _make_ctx_for(problem)
+        ctx.rng = np.random.default_rng(2024)
+        actual = ga._mutate_candidates(ctx, cand.copy(), lb, ub, mixed=False)
+
+        ref_rng = np.random.default_rng(2024)
+        expected = cand.copy()
+        for i in range(len(expected)):
+            expected[i] = _route_mutation(
+                expected[i],
+                lb,
+                ub,
+                ref_rng,
+                problem,
+                mutation,
+                ga.integer_mutation,
+                ga.categorical_mutation,
+            )
+            expected[i] = mutation.post_mutation(expected[i], (lb, ub), ref_rng, ctx)
+
+        np.testing.assert_allclose(actual, expected)

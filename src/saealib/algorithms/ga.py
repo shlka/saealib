@@ -11,16 +11,22 @@ from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent, PostCrossoverEvent, PostMutationEvent
 from saealib.context import OptimizationState
 from saealib.exceptions import ConfigurationError
-from saealib.operators.crossover import CrossoverCategorical, CrossoverIntegerSBX
+from saealib.operators.crossover import (
+    Crossover,
+    CrossoverCategorical,
+    CrossoverIntegerSBX,
+)
 from saealib.operators.dedup import DuplicateElimination
-from saealib.operators.mutation import MutationCategorical, MutationIntegerUniform
+from saealib.operators.mutation import (
+    Mutation,
+    MutationCategorical,
+    MutationIntegerUniform,
+)
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.registry import register
 
 if TYPE_CHECKING:
-    from saealib.operators.crossover import Crossover
-    from saealib.operators.mutation import Mutation
     from saealib.operators.selection import ParentSelection, SurvivorSelection
     from saealib.optimizer import Dispatchable
 
@@ -285,6 +291,10 @@ class GA(Algorithm):
                         "for mixed-variable routing"
                     )
 
+        mixed = bool(
+            ctx.problem.integer_mask.any() or ctx.problem.categorical_mask.any()
+        )
+
         pop = ctx.population.get_array("x")
         popsize = len(pop)
         target = n_offspring if n_offspring is not None else popsize
@@ -305,44 +315,13 @@ class GA(Algorithm):
         handler = ctx.problem.handler
         constraints = ctx.problem.constraints
 
-        cand = np.empty((n_pair * n_children, ctx.dim))
-        for i in range(n_pair):
-            parent = pop[parent_idx_m[i]]
-            if ctx.rng.random() < self.crossover.prob:
-                c = _route_crossover(
-                    parent,
-                    lb,
-                    ub,
-                    ctx.rng,
-                    ctx.problem,
-                    self.crossover,
-                    self.integer_crossover,
-                    self.categorical_crossover,
-                )
-            else:
-                c = parent[:n_children].copy()
-            c = self.crossover.post_crossover(c, parent, ctx.rng, ctx)
-            cand[i * n_children : (i + 1) * n_children] = c
-        for i in range(len(cand)):
-            cand[i] = handler.repair(cand[i], constraints, lb, ub)
-            cand[i] = ctx.problem.repair(cand[i])
+        parents_batch = pop[parent_idx_m]
+        cand = self._crossover_pairs(ctx, parents_batch, lb, ub, mixed)
+        cand = self._repair_batch(ctx, cand, handler, constraints, lb, ub)
         provider.dispatch(PostCrossoverEvent(ctx=ctx, candidates=cand))
 
-        cand_len = len(cand)
-        for i in range(cand_len):
-            cand[i] = _route_mutation(
-                cand[i],
-                lb,
-                ub,
-                ctx.rng,
-                ctx.problem,
-                self.mutation,
-                self.integer_mutation,
-                self.categorical_mutation,
-            )
-            cand[i] = self.mutation.post_mutation(cand[i], (lb, ub), ctx.rng, ctx)
-            cand[i] = handler.repair(cand[i], constraints, lb, ub)
-            cand[i] = ctx.problem.repair(cand[i])
+        cand = self._mutate_candidates(ctx, cand, lb, ub, mixed)
+        cand = self._repair_batch(ctx, cand, handler, constraints, lb, ub)
         provider.dispatch(PostMutationEvent(ctx=ctx, candidates=cand))
 
         if self.duplicate_elimination is not None:
@@ -364,6 +343,192 @@ class GA(Algorithm):
         cand_pop.extend({"x": cand[:target]})
         return cand_pop
 
+    def _crossover_pairs(
+        self,
+        ctx: OptimizationState,
+        parents_batch: np.ndarray,
+        lb: np.ndarray,
+        ub: np.ndarray,
+        mixed: bool,
+    ) -> np.ndarray:
+        """Generate post-crossover offspring for a batch of parent groups.
+
+        Takes the batched path only when ``self.crossover`` overrides
+        :meth:`Crossover.crossover_batch` (checked via a class-attribute
+        identity comparison, *before* any RNG draw) and the problem is
+        all-continuous (``not mixed``); otherwise runs the existing per-pair
+        loop unchanged. If the batch call declines (returns ``None``) for
+        this particular invocation, falls back to the per-pair loop as well.
+        ``post_crossover`` fires exactly once per pair regardless of which
+        path is taken.
+
+        Parameters
+        ----------
+        ctx : OptimizationState
+            Current optimization context.
+        parents_batch : np.ndarray
+            Batch of parent groups. shape = (n_pair, n_parents, dim)
+        lb : np.ndarray
+            Lower bounds.
+        ub : np.ndarray
+            Upper bounds.
+        mixed : bool
+            Whether the problem has any integer or categorical dimensions.
+
+        Returns
+        -------
+        np.ndarray
+            Offspring. shape = (n_pair * n_children, dim)
+        """
+        n_pair = parents_batch.shape[0]
+        n_children = self.crossover.n_children
+        dim = ctx.dim
+        crossover_batch_supported = (
+            type(self.crossover).crossover_batch is not Crossover.crossover_batch
+        )
+        crossover_batch_ok = (not mixed) and crossover_batch_supported
+
+        if crossover_batch_ok:
+            gate = ctx.rng.random(n_pair) < self.crossover.prob
+            if gate.any():
+                batch_offspring = self.crossover.crossover_batch(
+                    parents_batch[gate], (lb, ub), rng=ctx.rng
+                )
+            else:
+                batch_offspring = np.empty((0, n_children, dim))
+            if batch_offspring is not None:
+                cand = np.empty((n_pair * n_children, dim))
+                gi = 0
+                for i in range(n_pair):
+                    parent = parents_batch[i]
+                    if gate[i]:
+                        c = batch_offspring[gi]
+                        gi += 1
+                    else:
+                        c = parent[:n_children].copy()
+                    c = self.crossover.post_crossover(c, parent, ctx.rng, ctx)
+                    cand[i * n_children : (i + 1) * n_children] = c
+                return cand
+            # Batch call declined for this specific invocation: redo this
+            # call's crossover section via the per-pair loop below.
+
+        cand = np.empty((n_pair * n_children, dim))
+        for i in range(n_pair):
+            parent = parents_batch[i]
+            if ctx.rng.random() < self.crossover.prob:
+                c = _route_crossover(
+                    parent,
+                    lb,
+                    ub,
+                    ctx.rng,
+                    ctx.problem,
+                    self.crossover,
+                    self.integer_crossover,
+                    self.categorical_crossover,
+                )
+            else:
+                c = parent[:n_children].copy()
+            c = self.crossover.post_crossover(c, parent, ctx.rng, ctx)
+            cand[i * n_children : (i + 1) * n_children] = c
+        return cand
+
+    def _mutate_candidates(
+        self,
+        ctx: OptimizationState,
+        cand: np.ndarray,
+        lb: np.ndarray,
+        ub: np.ndarray,
+        mixed: bool,
+    ) -> np.ndarray:
+        """Generate post-mutation offspring for a batch of candidates.
+
+        Takes the batched path only when ``self.mutation`` overrides
+        :meth:`Mutation.mutate_batch` (checked via a class-attribute
+        identity comparison, *before* any RNG draw) and the problem is
+        all-continuous (``not mixed``); ``prob`` gating happens inside
+        ``mutate_batch`` itself, so no gate array is drawn here. Otherwise
+        runs the existing per-individual loop unchanged. If the batch call
+        declines (returns ``None``) for this particular invocation, falls
+        back to the per-individual loop as well. ``post_mutation`` fires
+        exactly once per individual regardless of which path is taken, but
+        the *ordering* relative to ``_route_mutation``/``mutate_batch``
+        differs between paths: the fallback (per-individual) loop calls
+        ``post_mutation`` immediately after ``_route_mutation`` for each
+        individual in turn, preserving the original pre-batching
+        interleaved order byte-for-byte; the batch path necessarily calls
+        ``mutate_batch`` once for the whole array before any
+        ``post_mutation`` call, since there is no per-row hook point during
+        a single batched call.
+
+        Parameters
+        ----------
+        ctx : OptimizationState
+            Current optimization context.
+        cand : np.ndarray
+            Candidates to mutate. shape = (n, dim)
+        lb : np.ndarray
+            Lower bounds.
+        ub : np.ndarray
+            Upper bounds.
+        mixed : bool
+            Whether the problem has any integer or categorical dimensions.
+
+        Returns
+        -------
+        np.ndarray
+            Mutated candidates. shape = (n, dim)
+        """
+        mutation_batch_supported = (
+            type(self.mutation).mutate_batch is not Mutation.mutate_batch
+        )
+        mutation_batch_ok = (not mixed) and mutation_batch_supported
+
+        if mutation_batch_ok:
+            mutated = self.mutation.mutate_batch(cand, (lb, ub), rng=ctx.rng)
+            if mutated is not None:
+                cand = mutated
+                for i in range(len(cand)):
+                    cand[i] = self.mutation.post_mutation(
+                        cand[i], (lb, ub), ctx.rng, ctx
+                    )
+                return cand
+            # Batch call declined for this specific invocation: redo this
+            # call's mutation section via the per-individual loop below.
+
+        for i in range(len(cand)):
+            cand[i] = _route_mutation(
+                cand[i],
+                lb,
+                ub,
+                ctx.rng,
+                ctx.problem,
+                self.mutation,
+                self.integer_mutation,
+                self.categorical_mutation,
+            )
+            cand[i] = self.mutation.post_mutation(cand[i], (lb, ub), ctx.rng, ctx)
+
+        return cand
+
+    def _repair_batch(
+        self,
+        ctx: OptimizationState,
+        cand: np.ndarray,
+        handler,
+        constraints,
+        lb: np.ndarray,
+        ub: np.ndarray,
+    ) -> np.ndarray:
+        """Repair *cand* via the constraint handler (row-wise), then the problem.
+
+        ``handler.repair`` stays row-by-row (mirrors how ``PSO`` already
+        leaves it), while ``ctx.problem.repair`` is called once for the
+        whole batch since it already accepts ``(n, dim)`` arrays.
+        """
+        for i in range(len(cand)):
+            cand[i] = handler.repair(cand[i], constraints, lb, ub)
+        return ctx.problem.repair(cand)
+
     def _make_offspring(
         self,
         ctx: OptimizationState,
@@ -380,6 +545,9 @@ class GA(Algorithm):
         Used exclusively by the duplicate-elimination retry loop in
         :meth:`ask` to silently replace duplicate candidates.
         """
+        mixed = bool(
+            ctx.problem.integer_mask.any() or ctx.problem.categorical_mask.any()
+        )
         n_children = self.crossover.n_children
         n_pair = math.ceil(n_target / n_children)
         parent_idx = (
@@ -392,41 +560,11 @@ class GA(Algorithm):
             )
             % popsize
         )
-        batch = np.empty((n_pair * n_children, ctx.dim))
-        for i in range(n_pair):
-            parent = pop[parent_idx[i]]
-            if ctx.rng.random() < self.crossover.prob:
-                c = _route_crossover(
-                    parent,
-                    lb,
-                    ub,
-                    ctx.rng,
-                    ctx.problem,
-                    self.crossover,
-                    self.integer_crossover,
-                    self.categorical_crossover,
-                )
-            else:
-                c = parent[:n_children].copy()
-            c = self.crossover.post_crossover(c, parent, ctx.rng, ctx)
-            batch[i * n_children : (i + 1) * n_children] = c
-        for i in range(len(batch)):
-            batch[i] = handler.repair(batch[i], constraints, lb, ub)
-            batch[i] = ctx.problem.repair(batch[i])
-        for i in range(len(batch)):
-            batch[i] = _route_mutation(
-                batch[i],
-                lb,
-                ub,
-                ctx.rng,
-                ctx.problem,
-                self.mutation,
-                self.integer_mutation,
-                self.categorical_mutation,
-            )
-            batch[i] = self.mutation.post_mutation(batch[i], (lb, ub), ctx.rng, ctx)
-            batch[i] = handler.repair(batch[i], constraints, lb, ub)
-            batch[i] = ctx.problem.repair(batch[i])
+        parents_batch = pop[parent_idx]
+        batch = self._crossover_pairs(ctx, parents_batch, lb, ub, mixed)
+        batch = self._repair_batch(ctx, batch, handler, constraints, lb, ub)
+        batch = self._mutate_candidates(ctx, batch, lb, ub, mixed)
+        batch = self._repair_batch(ctx, batch, handler, constraints, lb, ub)
         return batch
 
     def tell(
