@@ -1586,26 +1586,35 @@ class TestMutationUniformBatch:
 
 
 class _ScriptedRNG:
-    """Fake rng exposing ``.random(size)`` and ``.normal(loc, scale, size)``,
-    each returning a fixed queue of pre-set arrays in call order.
+    """Fake rng exposing ``.random(size)``, ``.normal(loc, scale, size)``, and
+    ``.integers(low, high, size)``, each returning a fixed queue of pre-set
+    arrays in call order.
 
     Used to fully control the sequence of random draws mutate_batch makes
-    internally (gate, var_gate, u / noise) so a chosen set of values can be
-    fed through the real formula deterministically. ``normal_values`` is
-    optional and only needed by callers whose ``mutate_batch`` calls
-    ``rng.normal`` (e.g. ``MutationGaussian``); ``MutationPolynomial``'s
-    formula only ever calls ``.random``, so it never touches that queue.
+    internally (gate, var_gate, u / noise / integer replacement) so a chosen
+    set of values can be fed through the real formula deterministically.
+    ``normal_values``/``integers_values`` are optional and only needed by
+    callers whose ``mutate_batch`` calls ``rng.normal``/``rng.integers``
+    (e.g. ``MutationGaussian``/``_MutationDiscreteUniform``);
+    ``MutationPolynomial``'s formula only ever calls ``.random``, so it never
+    touches either queue.
     """
 
-    def __init__(self, values, normal_values=None):
+    def __init__(self, values, normal_values=None, integers_values=None):
         self._values = list(values)
         self._normal_values = list(normal_values) if normal_values is not None else []
+        self._integers_values = (
+            list(integers_values) if integers_values is not None else []
+        )
 
     def random(self, size=None):
         return self._values.pop(0)
 
     def normal(self, loc=0.0, scale=1.0, size=None):
         return self._normal_values.pop(0)
+
+    def integers(self, low, high, size=None):
+        return self._integers_values.pop(0)
 
 
 def _reference_delta_q(
@@ -1959,6 +1968,164 @@ class TestMutationGaussianBatch:
         assert (
             type(MutationGaussian(sigma=1.0)).mutate_batch is not Mutation.mutate_batch
         )
+
+
+# ---------------------------------------------------------------------------
+# _MutationDiscreteUniform.mutate_batch (shared base for MutationIntegerUniform
+# and MutationCategorical)
+#
+# NOTE: same caveat as the batch test classes above -- mutate_batch's output
+# is NOT expected to be bit-identical to a loop calling mutate() once per
+# candidate, for any batch size (see the "Notes" section of
+# _MutationDiscreteUniform.mutate_batch's docstring). None of the tests below
+# assert or rely on any such equivalence.
+#
+# mutate_batch is implemented exactly once, on _MutationDiscreteUniform
+# itself, and inherited unchanged by both MutationIntegerUniform and
+# MutationCategorical (neither subclass overrides it). Every test here is
+# therefore parametrized over both concrete classes, to confirm the
+# inheritance actually works end to end rather than merely that the shared
+# base class's own logic is correct in isolation.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("cls", [MutationIntegerUniform, MutationCategorical])
+class TestMutationDiscreteUniformBatch:
+    def _range(self, dim):
+        # ub - lb == 9 (10 possible integer values per dimension) -- wide
+        # enough that a coincidental "new == old" draw on a gated dimension
+        # is rare and won't meaningfully bias the shape/bounds/pass-through
+        # checks below.
+        lb = np.zeros(dim)
+        ub = np.full(dim, 9.0)
+        return lb, ub
+
+    def test_output_shape(self, cls):
+        op = cls(prob=1.0, prob_var=0.5)
+        rng = np.random.default_rng(0)
+        n, dim = 7, DIM
+        lb, ub = self._range(dim)
+        candidates_batch = rng.integers(0, 10, size=(n, dim)).astype(float)
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        assert result.shape == (n, dim)
+
+    def test_prob_zero_returns_input_unchanged(self, cls):
+        op = cls(prob=0.0, prob_var=1.0)
+        rng = np.random.default_rng(0)
+        n, dim = 6, DIM
+        lb, ub = self._range(dim)
+        candidates_batch = rng.integers(0, 10, size=(n, dim)).astype(float)
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        np.testing.assert_array_equal(result, candidates_batch)
+
+    def test_replaced_values_are_integers_within_bounds(self, cls):
+        # lb/ub are distinct, non-overlapping per-dimension bands (rather
+        # than a shared range for every column) so the bounds check pins
+        # each column to its own band -- this would fail loudly under a
+        # transposed/mis-broadcast `rng.integers(lb, ub + 1, size=(k, dim))`
+        # call, which a same-band-per-column check could not detect (same
+        # guard rationale as
+        # TestMutationUniformBatch.test_prob_one_prob_var_one_replaces_every
+        # _value). The non-integer input value (2.5, outside every band)
+        # also makes "result is an integer" itself proof that every value
+        # was actually replaced, rather than merely consistent with the
+        # (already-integer) input being left untouched.
+        op = cls(prob=1.0, prob_var=1.0)
+        rng = np.random.default_rng(1)
+        n, dim = 20, DIM
+        lb = np.arange(dim) * 10.0
+        ub = lb + 4.0
+        candidates_batch = np.full((n, dim), 2.5)
+        for _ in range(20):
+            result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+            assert result is not None
+            assert np.all(result == np.round(result))
+            assert np.all(result >= lb) and np.all(result <= ub)
+
+    def test_var_gate_pass_through_and_replacement_exact(self, cls):
+        # Fully scripted rng: gate/var_gate/integer-replacement draws are all
+        # fixed, so dimensions failing var_gate must come back exactly as
+        # `sub` (no replacement applied), and dimensions passing var_gate
+        # must come back as exactly the scripted integer replacement (cast
+        # to float).
+        n, dim = 5, 4
+        lb = np.zeros(dim)
+        ub = np.full(dim, 9.0)
+        rng_data = np.random.default_rng(7)
+        sub = rng_data.integers(0, 10, size=(n, dim)).astype(float)
+        replacement = rng_data.integers(0, 10, size=(n, dim)).astype(float)
+        # Checkerboard var_gate pattern with prob_var=0.5: threshold draw of
+        # 0.0 passes (0.0 < 0.5), 0.9 fails (0.9 >= 0.5).
+        var_draw = np.where((np.arange(n)[:, None] + np.arange(dim)) % 2 == 0, 0.0, 0.9)
+        passed = var_draw < 0.5
+        assert passed.any() and (~passed).any()
+
+        op = cls(prob=1.0, prob_var=0.5)
+        scripted = _ScriptedRNG(
+            [
+                np.zeros(n),  # gate draw: all rows pass
+                var_draw,  # var_gate draw: checkerboard
+            ],
+            integers_values=[replacement.astype(int)],  # replacement draw
+        )
+        result = op.mutate_batch(sub, (lb, ub), rng=cast(np.random.Generator, scripted))
+        assert result is not None
+
+        np.testing.assert_array_equal(result[~passed], sub[~passed])
+        np.testing.assert_array_equal(result[passed], replacement[passed])
+
+    def test_prob_var_fractional_matches_expected_rate(self, cls):
+        # Use a wide integer range (100 possible values per dimension) so a
+        # gated dimension coincidentally redrawing its own value has only a
+        # 1% chance, keeping that bias well below the atol used to compare
+        # the observed "changed" rate against prob_var.
+        dim = 6
+        n = 20
+        n_trials = 300
+        prob_var = 0.4
+        op = cls(prob=1.0, prob_var=prob_var)
+        lb = np.zeros(dim)
+        ub = np.full(dim, 99.0)
+        candidates_batch = np.zeros((n, dim))
+        rng = np.random.default_rng(2)
+        changed = np.zeros((n, dim))
+        for _ in range(n_trials):
+            result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+            changed += result != candidates_batch
+        observed_rate = changed.sum() / (n * dim * n_trials)
+        np.testing.assert_allclose(observed_rate, prob_var, atol=0.05)
+
+    def test_fractional_prob_gates_some_rows_not_others(self, cls):
+        op = cls(prob=0.5, prob_var=1.0)
+        rng = np.random.default_rng(3)
+        n, dim = 20, DIM
+        lb, ub = self._range(dim)
+        candidates_batch = np.zeros((n, dim))
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        row_unchanged = (result == candidates_batch).all(axis=1)
+        row_changed = (result != candidates_batch).any(axis=1)
+        assert row_unchanged.any()
+        assert row_changed.any()
+
+    def test_determinism_same_seed_same_output(self, cls):
+        op = cls(prob=0.7, prob_var=0.4)
+        dim = DIM
+        lb, ub = self._range(dim)
+        candidates_batch = (
+            np.random.default_rng(0).integers(0, 10, size=(15, dim)).astype(float)
+        )
+        result_a = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        result_b = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        np.testing.assert_array_equal(result_a, result_b)
+
+    def test_overrides_mutate_batch(self, cls):
+        assert type(cls()).mutate_batch is not Mutation.mutate_batch
 
 
 # ---------------------------------------------------------------------------

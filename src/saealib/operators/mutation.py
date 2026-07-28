@@ -709,6 +709,96 @@ class _MutationDiscreteUniform(Mutation):
                 c[i] = float(rng.integers(int(lb[i]), int(ub[i]) + 1))
         return c
 
+    def mutate_batch(
+        self,
+        candidates_batch: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator = np.random.default_rng(),
+    ) -> np.ndarray | None:
+        """
+        Execute discrete uniform mutation on a batch of candidates at once.
+
+        Applies the same two-level gating as :meth:`mutate`, but vectorized:
+        an individual-level ``prob`` gate (one Bernoulli draw per row,
+        ``rng.random(n) < self.prob``, mirroring ``mutate()``'s
+        ``rng.random() >= self.prob`` early return) selects which rows are
+        touched at all; a per-dimension ``prob_var`` gate is then drawn only
+        for the selected rows, and only dimensions passing that gate are
+        replaced with a value drawn as a uniform random integer from
+        ``[lb[i], ub[i]]`` (both inclusive) via
+        ``rng.integers(lb, ub + 1, size=(k, dim))`` -- ``rng.integers``'s
+        ``high`` argument is exclusive by default, so ``ub + 1`` reproduces
+        the scalar :meth:`mutate`'s inclusive upper bound (``int(ub[i]) +
+        1``). The integer draw is cast to ``float`` via ``.astype(float)``,
+        consistent with :meth:`mutate`'s own ``float(rng.integers(...))``
+        cast -- the whole codebase represents integer/categorical dimensions
+        as floats internally. Rows that fail the individual-level gate are
+        returned byte-identical to the input; dimensions failing the
+        per-dimension gate on a selected row keep their original value
+        exactly (``np.where`` copies rather than recomputes them). If no row
+        passes the individual-level gate (``gate.sum() == 0``), no further
+        random draws happen at all and the input is returned unchanged,
+        mirroring ``MutationUniform.mutate_batch``'s empty-gate skip.
+
+        Parameters
+        ----------
+        candidates_batch : np.ndarray
+            Batch of candidate individuals. shape = (n, dim)
+        mutate_range : tuple
+            Tuple of (lower_bound, upper_bound) arrays.
+        rng : np.random.Generator, optional
+            Random number generator, by default np.random.default_rng()
+
+        Returns
+        -------
+        np.ndarray
+            Mutated individuals. shape = (n, dim)
+
+        Notes
+        -----
+        Unlike every ``Crossover.crossover_batch`` override (which draws a
+        fixed, shape-determined number of random values per row regardless
+        of outcome), :meth:`mutate` draws one gate value per dimension and,
+        only when that gate passes, a second value for the integer
+        replacement -- an interleaved, data-dependent draw count (``dim +
+        k`` draws, where ``k`` is however many dimensions happen to pass the
+        gate). A vectorized implementation cannot reproduce that sequence:
+        it must draw a full ``(k, dim)`` gate array and a full ``(k, dim)``
+        replacement array in separate calls, since NumPy vectorized calls
+        cannot conditionally skip drawing per element. That is a different
+        total draw count and a different interleaving than ``mutate()``'s,
+        for any ``dim > 1`` and generally even for ``dim == 1``.
+        Consequently, this method's output is **not** bit-identical to
+        calling :meth:`mutate` once per candidate in a loop with the same
+        seeded ``rng``, for any batch size -- not even ``n == 1``. No test
+        should assert such equivalence; only the statistical/distributional
+        semantics (independent per-dimension replacement at rate
+        ``prob_var``, exact pass-through of ungated rows/dimensions) are
+        guaranteed to match.
+
+        The output is always ``float64`` (via the internal ``dtype=float``
+        cast), regardless of the input array's dtype -- consistent with the
+        other ``mutate_batch`` overrides, but unlike :meth:`mutate`, which
+        preserves whatever dtype ``p`` already has.
+        """
+        candidates_batch = np.asarray(candidates_batch, dtype=float)
+        n, dim = candidates_batch.shape
+        p_var = self.prob_var if self.prob_var is not None else min(0.5, 1.0 / dim)
+        lb, ub = mutate_range
+        gate = rng.random(n) < self.prob
+        result = candidates_batch.copy()
+        if not np.any(gate):
+            return result
+        sub = candidates_batch[gate]
+        k = sub.shape[0]
+        var_gate = rng.random((k, dim)) < p_var
+        lb_int = np.asarray(lb, dtype=int)
+        ub_int = np.asarray(ub, dtype=int)
+        replacement = rng.integers(lb_int, ub_int + 1, size=(k, dim)).astype(float)
+        mutated = np.where(var_gate, replacement, sub)
+        result[gate] = mutated
+        return result
+
 
 class MutationIntegerUniform(_MutationDiscreteUniform):
     """
