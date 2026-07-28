@@ -13,6 +13,8 @@ Tests cover:
 - RouletteWheelSelection: output shape, probability bias
 """
 
+from typing import cast
+
 import numpy as np
 import pytest
 
@@ -653,11 +655,11 @@ class TestMutationGaussian:
 class _MutationUnbatched(Mutation):
     """Minimal dummy Mutation that does not override mutate_batch.
 
-    MutationUniform now overrides mutate_batch (Issue #224, commit 9), so it
-    is no longer a suitable subject for the "still returns None" default-
-    implementation check below; this fresh subclass fills that role
-    instead, mirroring how commit 8's _CrossoverUnbatched fills the same
-    role for Crossover.
+    MutationUniform (Issue #224, commit 9) and MutationPolynomial (commit
+    10) now override mutate_batch, so neither is a suitable subject for the
+    "still returns None" default-implementation check below; this fresh
+    subclass fills that role instead, mirroring how commit 8's
+    _CrossoverUnbatched fills the same role for Crossover.
     """
 
     def __init__(self, prob: float = 1.0):
@@ -678,13 +680,6 @@ class TestMutationBatchDefault:
         lb = np.full(DIM, -5.0)
         ub = np.full(DIM, 5.0)
         return lb, ub
-
-    def test_default_returns_none_polynomial(self):
-        op = MutationPolynomial(prob_var=0.5, eta=20.0)
-        rng = np.random.default_rng(0)
-        candidates_batch = rng.uniform(-2.0, 2.0, size=(5, DIM))
-        result = op.mutate_batch(candidates_batch, self._range(), rng=rng)
-        assert result is None
 
     def test_default_returns_none_unbatched(self):
         op = _MutationUnbatched(prob=0.9)
@@ -1556,6 +1551,244 @@ class TestMutationUniformBatch:
 
     def test_overrides_mutate_batch(self):
         assert type(MutationUniform()).mutate_batch is not Mutation.mutate_batch
+
+
+# ---------------------------------------------------------------------------
+# MutationPolynomial.mutate_batch
+#
+# NOTE: same caveat as TestMutationUniformBatch above -- mutate_batch's
+# output is NOT expected to be bit-identical to a loop calling mutate() once
+# per candidate, for any batch size (see the "Notes" section of
+# MutationPolynomial.mutate_batch's docstring). None of the tests below
+# assert or rely on any such equivalence. The formula-correctness test
+# instead pins down mutate_batch's random draws with a scripted fake rng, so
+# delta1/u are fully controlled and the resulting delta_q can be checked
+# against an independently re-derived reference computation, without
+# depending on mutate()'s and mutate_batch()'s RNG streams aligning.
+# ---------------------------------------------------------------------------
+
+
+class _ScriptedRNG:
+    """Fake rng exposing only ``.random(size)``, returning a fixed queue of
+    pre-set arrays in call order.
+
+    Used to fully control the sequence of random draws mutate_batch makes
+    internally (gate, var_gate, u) so a chosen set of delta1/u values can be
+    fed through the real formula deterministically.
+    """
+
+    def __init__(self, values):
+        self._values = list(values)
+
+    def random(self, size=None):
+        return self._values.pop(0)
+
+
+def _reference_delta_q(
+    delta1: np.ndarray, delta2: np.ndarray, u: np.ndarray, eta: float
+):
+    """Independent scalar-loop reimplementation of the polynomial mutation
+    delta_q formula.
+
+    Transcribed directly from ``MutationPolynomial.mutate()``'s inner loop
+    (not from ``mutate_batch``'s vectorized derivation) to catch any
+    transcription mistake in the vectorized version. Deliberately a plain
+    Python loop over flattened arrays -- correctness over speed, since this
+    is test-only reference code.
+    """
+    d1_flat = delta1.ravel()
+    d2_flat = delta2.ravel()
+    u_flat = u.ravel()
+    out = np.empty_like(d1_flat, dtype=float)
+    for i in range(d1_flat.shape[0]):
+        d1 = d1_flat[i]
+        d2 = d2_flat[i]
+        uu = u_flat[i]
+        if uu <= 0.5:
+            dq = (2.0 * uu + (1.0 - 2.0 * uu) * (1.0 - d1) ** (eta + 1.0)) ** (
+                1.0 / (eta + 1.0)
+            ) - 1.0
+        else:
+            dq = 1.0 - (
+                2.0 * (1.0 - uu) + 2.0 * (uu - 0.5) * (1.0 - d2) ** (eta + 1.0)
+            ) ** (1.0 / (eta + 1.0))
+        out[i] = dq
+    return out.reshape(delta1.shape)
+
+
+class TestMutationPolynomialBatch:
+    def _range(self, dim):
+        lb = np.full(dim, -5.0)
+        ub = np.full(dim, 5.0)
+        return lb, ub
+
+    def test_formula_matches_independent_reference(self):
+        # delta1 + delta2 == 1 always (both are derived from one point's
+        # position between lb/ub), so gridding delta1 (via `sub`) and u
+        # covers every reachable (delta1, delta2, u) combination without
+        # asserting an invalid geometry.
+        #
+        # lb/ub deliberately use two columns with distinct, non-unit-width,
+        # non-zero-origin bands (rather than a shared [-5, 5] or a [0, 1]
+        # band) for two reasons: (a) [0, 1] would make delta1 == sub and
+        # (ub - lb) == 1 numerically, silently passing even if the
+        # implementation dropped the "* (ub - lb)" scale factor or swapped
+        # `sub` for `delta1` in the final expression; (b) a shared band
+        # across columns cannot catch a transposed/mis-broadcast
+        # `(dim,)`-against-`(k, dim)` computation (same guard rationale as
+        # MutationUniform.mutate_batch's test_prob_one_prob_var_one_replaces
+        # _every_value).
+        delta1_vals = np.linspace(0.01, 0.99, 20)
+        u_vals = np.linspace(0.01, 0.99, 20)
+        d1_grid, u_grid = np.meshgrid(delta1_vals, u_vals, indexing="ij")
+        d1_flat = d1_grid.ravel()
+        u_flat = u_grid.ravel()
+        n = d1_flat.shape[0]
+        dim = 2
+        lb = np.array([-3.0, 2.0])
+        ub = np.array([7.0, 2.5])
+        sub = lb + d1_flat[:, None] * (ub - lb)
+        u_arr = np.repeat(u_flat[:, None], dim, axis=1)
+
+        for eta in (2.0, 20.0):
+            op = MutationPolynomial(prob=1.0, eta=eta, prob_var=1.0)
+            scripted = _ScriptedRNG(
+                [
+                    np.zeros(n),  # gate draw: 0 < prob=1.0 -> all rows pass
+                    np.zeros((n, dim)),  # var_gate draw: all dims pass
+                    u_arr,  # u draw: fully controlled, same per column
+                ]
+            )
+            # _ScriptedRNG only duck-types Generator's `.random(size)`; cast
+            # so `ty`/static type checkers don't flag the substitution.
+            result = op.mutate_batch(
+                sub, (lb, ub), rng=cast(np.random.Generator, scripted)
+            )
+            assert result is not None
+
+            expected_delta_q = _reference_delta_q(
+                np.repeat(d1_flat[:, None], dim, axis=1),
+                np.repeat((1.0 - d1_flat)[:, None], dim, axis=1),
+                u_arr,
+                eta,
+            )
+            expected = np.clip(sub + expected_delta_q * (ub - lb), lb, ub)
+            np.testing.assert_allclose(result, expected, rtol=1e-9, atol=1e-9)
+
+    def test_var_gate_pass_through_exact(self):
+        # Confirms np.where(var_gate, mutated, sub) leaves dimensions that
+        # fail the per-dimension gate exactly as `sub` (no recomputation),
+        # while gated dimensions match the expected formula output --
+        # pinned via the same scripted-rng control as the formula test
+        # above, rather than inferred from the statistical rate test.
+        n, dim = 5, 4
+        lb = np.array([-3.0, 2.0, 0.0, -10.0])
+        ub = np.array([7.0, 2.5, 1.0, 10.0])
+        rng_data = np.random.default_rng(7)
+        delta1 = rng_data.uniform(0.05, 0.95, size=(n, dim))
+        sub = lb + delta1 * (ub - lb)
+        u_arr = rng_data.uniform(0.05, 0.95, size=(n, dim))
+        # Checkerboard var_gate pattern with prob_var=0.5: threshold draw of
+        # 0.0 passes (0.0 < 0.5), 0.9 fails (0.9 >= 0.5).
+        var_draw = np.where((np.arange(n)[:, None] + np.arange(dim)) % 2 == 0, 0.0, 0.9)
+        passed = var_draw < 0.5
+        assert passed.any() and (~passed).any()
+
+        op = MutationPolynomial(prob=1.0, eta=15.0, prob_var=0.5)
+        scripted = _ScriptedRNG(
+            [
+                np.zeros(n),  # gate draw: all rows pass
+                var_draw,  # var_gate draw: checkerboard
+                u_arr,  # u draw: fully controlled
+            ]
+        )
+        result = op.mutate_batch(sub, (lb, ub), rng=cast(np.random.Generator, scripted))
+        assert result is not None
+
+        expected_delta_q = _reference_delta_q(delta1, 1.0 - delta1, u_arr, 15.0)
+        expected_mutated = np.clip(sub + expected_delta_q * (ub - lb), lb, ub)
+
+        np.testing.assert_array_equal(result[~passed], sub[~passed])
+        np.testing.assert_allclose(
+            result[passed], expected_mutated[passed], rtol=1e-9, atol=1e-9
+        )
+
+    def test_output_shape(self):
+        op = MutationPolynomial(prob=1.0, eta=20.0, prob_var=0.5)
+        rng = np.random.default_rng(0)
+        n, dim = 7, DIM
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, self._range(dim), rng=rng)
+        assert result is not None
+        assert result.shape == (n, dim)
+
+    def test_prob_zero_returns_input_unchanged(self):
+        op = MutationPolynomial(prob=0.0, eta=20.0, prob_var=1.0)
+        rng = np.random.default_rng(0)
+        n, dim = 6, DIM
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, self._range(dim), rng=rng)
+        np.testing.assert_array_equal(result, candidates_batch)
+
+    def test_respects_bounds(self):
+        op = MutationPolynomial(prob=1.0, eta=20.0, prob_var=1.0)
+        lb, ub = self._range(DIM)
+        rng = np.random.default_rng(0)
+        for _ in range(20):
+            candidates_batch = rng.uniform(-4.0, 4.0, size=(10, DIM))
+            result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+            assert result is not None
+            assert np.all(result >= lb) and np.all(result <= ub)
+
+    def test_prob_var_fractional_matches_expected_rate(self):
+        # var_gate=True dimensions change value with overwhelming
+        # probability under a continuous delta_q, so "value changed from
+        # input" is a reasonable proxy for "was gated" here.
+        dim = 6
+        n = 20
+        n_trials = 300
+        prob_var = 0.4
+        op = MutationPolynomial(prob=1.0, eta=20.0, prob_var=prob_var)
+        lb, ub = self._range(dim)
+        rng = np.random.default_rng(2)
+        changed = np.zeros((n, dim))
+        for _ in range(n_trials):
+            candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+            result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+            changed += result != candidates_batch
+        observed_rate = changed.sum() / (n * dim * n_trials)
+        np.testing.assert_allclose(observed_rate, prob_var, atol=0.05)
+
+    def test_fractional_prob_gates_some_rows_not_others(self):
+        op = MutationPolynomial(prob=0.5, eta=20.0, prob_var=1.0)
+        rng = np.random.default_rng(3)
+        n, dim = 20, DIM
+        lb, ub = self._range(dim)
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        row_unchanged = (result == candidates_batch).all(axis=1)
+        row_changed = (result != candidates_batch).any(axis=1)
+        assert row_unchanged.any()
+        assert row_changed.any()
+
+    def test_determinism_same_seed_same_output(self):
+        op = MutationPolynomial(prob=0.7, eta=20.0, prob_var=0.4)
+        dim = DIM
+        lb, ub = self._range(dim)
+        candidates_batch = np.random.default_rng(0).uniform(-2.0, 2.0, size=(15, dim))
+        result_a = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        result_b = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        np.testing.assert_array_equal(result_a, result_b)
+
+    def test_overrides_mutate_batch(self):
+        assert (
+            type(MutationPolynomial(eta=20.0)).mutate_batch is not Mutation.mutate_batch
+        )
 
 
 # ---------------------------------------------------------------------------

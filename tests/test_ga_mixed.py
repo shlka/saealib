@@ -19,6 +19,7 @@ from saealib.operators import (
     CrossoverIntegerSBX,
     CrossoverSBX,
     MutationCategorical,
+    MutationGaussian,
     MutationIntegerUniform,
     MutationPolynomial,
     TournamentSelection,
@@ -459,8 +460,8 @@ class TestGAMixedAsk:
 
 
 class TestMutateCandidatesInterleaveOrder:
-    """``_mutate_candidates``'s per-individual fallback loop (taken by every
-    built-in ``Mutation``, since none override ``mutate_batch``) must call
+    """``_mutate_candidates``'s per-individual fallback loop (taken whenever
+    ``self.mutation`` does not override ``mutate_batch``) must call
     ``_route_mutation`` and ``post_mutation`` interleaved per individual —
     i.e. ``mutate(0), post(0), mutate(1), post(1), ...`` — matching the
     pre-batching behaviour byte-for-byte. A prior version of this method
@@ -470,6 +471,14 @@ class TestMutateCandidatesInterleaveOrder:
     for a ``with_post`` hook that draws from ``rng``. This test uses such a
     hook and cross-checks the library's output against an independently
     hand-written interleaved reference loop fed an identically-seeded RNG.
+
+    Uses ``MutationGaussian`` rather than ``MutationPolynomial`` as the test
+    vehicle: since Issue #224 commit 10, ``MutationPolynomial`` overrides
+    ``mutate_batch``, which would take the *batched* path instead of the
+    fallback loop this test targets. ``MutationGaussian`` still relies on
+    the base class's ``None``-returning default, making it a valid stand-in
+    -- this test exercises ``_mutate_candidates``'s dispatch/interleaving
+    logic, not any particular mutation formula.
     """
 
     def test_fallback_loop_matches_hand_written_interleaved_reference(self):
@@ -478,12 +487,12 @@ class TestMutateCandidatesInterleaveOrder:
             # that a reordering of RNG draws changes the returned array.
             return offspring + rng.random() * 1e-3
 
-        mutation = MutationPolynomial(eta=20.0, prob_var=0.5).with_post(
+        mutation = MutationGaussian(sigma=0.5, prob_var=0.5).with_post(
             rng_consuming_hook
         )
         # Sanity check: mirrors the production predicate in
         # _mutate_candidates that decides the fallback path is taken.
-        # (Checking `type(mutation).mutate_batch is MutationPolynomial
+        # (Checking `type(mutation).mutate_batch is MutationGaussian
         # .mutate_batch` would be vacuous here, since with_post always
         # returns a shallow copy of the same type regardless of whether
         # that type overrides mutate_batch.)
