@@ -253,6 +253,16 @@ class TestPreSelectionStrategy:
 
     def test_archive_grows_by_n_select(self):
         ctx, provider, strategy = self._setup(n_candidates=20, n_select=5)
+        # prob_var=1.0: with the shared _make_ga()'s prob_var=0.1 (Issue
+        # #224, commit 9 -- MutationUniform now dispatches through
+        # mutate_batch, which changed the RNG draw order enough for this
+        # seed to leave one candidate's x exactly matching an archived
+        # point), the archive's exact-duplicate check (atol=rtol=0)
+        # sometimes reuses an existing index instead of growing, making
+        # growth < n_select. Mutating every dimension via a continuous
+        # Uniform(lb, ub) draw makes a coincidental exact match effectively
+        # impossible, keeping this count deterministic.
+        provider.algorithm.mutation = MutationUniform(prob=1.0, prob_var=1.0)
         before = len(ctx.archive)
         ctx = strategy.step(ctx, provider)
         assert len(ctx.archive) == before + 5
@@ -330,6 +340,10 @@ class TestIndividualBasedStrategyWithNoveltyManager:
     def test_archive_grows_by_n_eval(self):
         evaluation_ratio = 0.5
         ctx, provider, strategy = self._setup(evaluation_ratio=evaluation_ratio)
+        # prob_var=1.0: see test_archive_grows_by_n_select's comment above
+        # -- same fix, same reasoning (this class also uses the shared
+        # _make_ga() via _setup()).
+        provider.algorithm.mutation = MutationUniform(prob=1.0, prob_var=1.0)
         before = len(ctx.archive)
         ctx = strategy.step(ctx, provider)
         n_eval = max(1, int(evaluation_ratio * len(ctx.population)))

@@ -30,6 +30,7 @@ from saealib.operators.crossover import (
     CrossoverUniform,
 )
 from saealib.operators.mutation import (
+    Mutation,
     MutationCategorical,
     MutationGaussian,
     MutationIntegerUniform,
@@ -649,6 +650,29 @@ class TestMutationGaussian:
 # ---------------------------------------------------------------------------
 
 
+class _MutationUnbatched(Mutation):
+    """Minimal dummy Mutation that does not override mutate_batch.
+
+    MutationUniform now overrides mutate_batch (Issue #224, commit 9), so it
+    is no longer a suitable subject for the "still returns None" default-
+    implementation check below; this fresh subclass fills that role
+    instead, mirroring how commit 8's _CrossoverUnbatched fills the same
+    role for Crossover.
+    """
+
+    def __init__(self, prob: float = 1.0):
+        super().__init__()
+        self.prob = prob
+
+    def mutate(
+        self,
+        p: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator = np.random.default_rng(),
+    ) -> np.ndarray:
+        return p.copy()
+
+
 class TestMutationBatchDefault:
     def _range(self):
         lb = np.full(DIM, -5.0)
@@ -662,8 +686,8 @@ class TestMutationBatchDefault:
         result = op.mutate_batch(candidates_batch, self._range(), rng=rng)
         assert result is None
 
-    def test_default_returns_none_uniform(self):
-        op = MutationUniform(prob_var=0.5)
+    def test_default_returns_none_unbatched(self):
+        op = _MutationUnbatched(prob=0.9)
         rng = np.random.default_rng(0)
         candidates_batch = rng.uniform(-2.0, 2.0, size=(5, DIM))
         result = op.mutate_batch(candidates_batch, self._range(), rng=rng)
@@ -1422,6 +1446,116 @@ class TestMutationProbGate:
         expected_rate = min(0.5, 1.0 / dim)
         observed_rate = changed / n_trials
         np.testing.assert_allclose(observed_rate, expected_rate, atol=0.05)
+
+
+# ---------------------------------------------------------------------------
+# MutationUniform.mutate_batch
+#
+# NOTE: unlike every Crossover.crossover_batch override, mutate_batch's
+# output is NOT expected -- and cannot be expected, by construction -- to be
+# bit-identical to a loop calling mutate() once per candidate, for any batch
+# size (see the "Notes" section of MutationUniform.mutate_batch's
+# docstring: the scalar loop interleaves a data-dependent number of draws
+# per dimension, the vectorized version always draws a full (k, dim) gate
+# array and a full (k, dim) replacement array). None of the tests below
+# assert or rely on any such equivalence; they only check the
+# statistical/distributional semantics and the exact pass-through of
+# ungated rows/dimensions.
+# ---------------------------------------------------------------------------
+
+
+class TestMutationUniformBatch:
+    def _range(self, dim):
+        lb = np.full(dim, -5.0)
+        ub = np.full(dim, 5.0)
+        return lb, ub
+
+    def test_output_shape(self):
+        op = MutationUniform(prob=1.0, prob_var=0.5)
+        rng = np.random.default_rng(0)
+        n, dim = 7, DIM
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, self._range(dim), rng=rng)
+        assert result is not None
+        assert result.shape == (n, dim)
+
+    def test_prob_zero_returns_input_unchanged(self):
+        op = MutationUniform(prob=0.0, prob_var=1.0)
+        rng = np.random.default_rng(0)
+        n, dim = 6, DIM
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, self._range(dim), rng=rng)
+        np.testing.assert_array_equal(result, candidates_batch)
+
+    def test_prob_one_prob_var_one_replaces_every_value(self):
+        # Input values sit far outside [lb, ub], so a continuous Uniform(lb,
+        # ub) replacement draw can never coincidentally equal the original
+        # input -- "every value differs" is guaranteed by construction, not
+        # by seed luck. lb/ub are distinct, non-overlapping per-dimension
+        # bands (rather than the same [-5, 5] for every column, as
+        # self._range() would give) so that the bounds check pins each
+        # column to its own band -- this would fail loudly under a
+        # transposed/mis-broadcast rng.uniform(lb, ub, size=(k, dim)) call,
+        # which a same-band-per-column check could not detect.
+        op = MutationUniform(prob=1.0, prob_var=1.0)
+        rng = np.random.default_rng(0)
+        n, dim = 6, DIM
+        lb = np.arange(dim) * 10.0
+        ub = lb + 1.0
+        candidates_batch = np.full((n, dim), 100.0)
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        assert np.all(result != candidates_batch)
+        assert np.all(result >= lb) and np.all(result <= ub)
+
+    def test_prob_var_fractional_matches_expected_rate(self):
+        dim = 6
+        n = 20
+        n_trials = 300
+        prob_var = 0.4
+        op = MutationUniform(prob=1.0, prob_var=prob_var)
+        lb, ub = self._range(dim)
+        candidates_batch = np.full((n, dim), 100.0)
+        rng = np.random.default_rng(2)
+        changed = np.zeros((n, dim))
+        for _ in range(n_trials):
+            result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+            changed += result != candidates_batch
+        observed_rate = changed.sum() / (n * dim * n_trials)
+        np.testing.assert_allclose(observed_rate, prob_var, atol=0.05)
+
+    def test_fractional_prob_gates_some_rows_not_others(self):
+        # prob_var=1.0 makes "changed" exactly track the row-level gate (no
+        # coincidental per-dimension pass-through to muddy the signal), and
+        # the out-of-bounds input value again rules out coincidental
+        # equality for gated rows.
+        op = MutationUniform(prob=0.5, prob_var=1.0)
+        rng = np.random.default_rng(3)
+        n, dim = 20, DIM
+        lb, ub = self._range(dim)
+        candidates_batch = np.full((n, dim), 100.0)
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        row_unchanged = (result == candidates_batch).all(axis=1)
+        row_changed = (result != candidates_batch).any(axis=1)
+        assert row_unchanged.any()
+        assert row_changed.any()
+
+    def test_determinism_same_seed_same_output(self):
+        op = MutationUniform(prob=0.7, prob_var=0.4)
+        dim = DIM
+        lb, ub = self._range(dim)
+        candidates_batch = np.random.default_rng(0).uniform(-2.0, 2.0, size=(15, dim))
+        result_a = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        result_b = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        np.testing.assert_array_equal(result_a, result_b)
+
+    def test_overrides_mutate_batch(self):
+        assert type(MutationUniform()).mutate_batch is not Mutation.mutate_batch
 
 
 # ---------------------------------------------------------------------------
