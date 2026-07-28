@@ -70,10 +70,19 @@ class SerialEvaluator(Evaluator):
 
     def evaluate_batch(self, x: np.ndarray, problem: Problem) -> EvaluationResult:
         """
-        Evaluate each row of ``x`` one at a time.
+        Evaluate ``x``, preferring ``problem.evaluate_batch`` when available.
 
-        Produces results equivalent to the per-candidate evaluation loops that
-        previously lived in each Strategy and Initializer.
+        First tries ``problem.evaluate_batch(x)``: if the ``Problem`` overrides
+        it to return raw ``(f_batch, g_batch)`` for the whole batch in one
+        call, this skips ``problem.evaluate``/``problem.evaluate_constraints``
+        entirely and only runs the (cheap) per-row constraint-handler calls
+        (``handler.compute_cv`` / ``handler.augment_objective``) needed to turn
+        the raw batch into final ``f`` / ``cv`` values. Otherwise it falls back
+        to evaluating each row one at a time via
+        :meth:`~saealib.problem.Problem.evaluate` /
+        :meth:`~saealib.problem.Problem.evaluate_constraints`, reproducing the
+        per-candidate evaluation loops that previously lived in each Strategy
+        and Initializer.
 
         Parameters
         ----------
@@ -94,6 +103,19 @@ class SerialEvaluator(Evaluator):
         f = np.empty((n, problem.n_obj), dtype=float)
         g = np.empty((n, n_constraints), dtype=float)
         cv = np.zeros(n, dtype=float)
+
+        raw = problem.evaluate_batch(x)
+        if raw is not None:
+            f_raw, g_raw = raw
+            for i in range(n):
+                cv[i] = float(
+                    problem.handler.compute_cv(problem.constraints, x[i], g_raw[i])
+                )
+                f[i] = problem.handler.augment_objective(
+                    f_raw[i], problem.constraints, x[i], g_raw[i]
+                )
+                g[i] = g_raw[i]
+            return EvaluationResult(f=f, g=g, cv=cv)
 
         for i, xi in enumerate(x):
             g_i, cv_i = problem.evaluate_constraints(xi)
@@ -151,6 +173,10 @@ class JoblibEvaluator(Evaluator):
     Async evaluation is out of scope for this class.  Asynchronous
     candidate dispatch would require changes to the ``Algorithm.ask`` /
     ``Algorithm.tell`` interface and is tracked separately.
+
+    This evaluator does not use ``Problem.evaluate_batch`` even when a
+    ``Problem`` overrides it; combining per-row parallel dispatch (this
+    class) with a single vectorized batch call is tracked separately.
     """
 
     def __init__(
