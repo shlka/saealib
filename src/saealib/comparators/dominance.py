@@ -17,7 +17,11 @@ class Dominator(ABC):
     - ``dominates`` — scalar pairwise predicate, derived from the matrix to
       guarantee consistency.
 
-    Parameters are the same for both methods:
+    A third, optional acceleration hook, ``dominates_many`` (one-vs-many,
+    default ``None``), MUST also agree with ``dominates`` for every row if a
+    subclass overrides it.
+
+    Parameters are the same for both required methods:
 
     Parameters
     ----------
@@ -88,6 +92,44 @@ class Dominator(ABC):
         stacked = np.stack([fa, fb_safe])
         return bool(self.dominance_matrix(stacked, direction)[0, 1])
 
+    def dominates_many(
+        self,
+        fa: np.ndarray,
+        f_matrix: np.ndarray,
+        direction: np.ndarray | None = None,
+    ) -> tuple[np.ndarray, np.ndarray] | None:
+        """
+        One-vs-many dominance check, batched over ``f_matrix``'s rows.
+
+        Optional acceleration hook: default implementation returns ``None``,
+        meaning this ``Dominator`` doesn't support the batched one-vs-many
+        check and callers should fall back to calling :meth:`dominates` once
+        per row. Subclasses that override this MUST agree with
+        :meth:`dominates` for every row (the same consistency requirement
+        already documented for :meth:`dominance_matrix`).
+
+        Parameters
+        ----------
+        fa : np.ndarray
+            A single objective vector. shape: (n_obj,)
+        f_matrix : np.ndarray
+            Objective matrix to compare `fa` against, one row at a time.
+            shape: (n, n_obj). Must contain no NaN values (callers are
+            responsible for pre-filtering, same convention as
+            ``dominance_matrix``).
+        direction : np.ndarray or None
+            Per-objective direction. ``None`` -> minimize all.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray] or None
+            ``(fa_dominates, dominates_fa)``, each shape ``(n,)``:
+            ``fa_dominates[i]`` is True iff ``fa`` dominates ``f_matrix[i]``;
+            ``dominates_fa[i]`` is True iff ``f_matrix[i]`` dominates ``fa``.
+            ``None`` if unsupported.
+        """
+        return None
+
 
 class ParetoDominator(Dominator):
     """
@@ -136,6 +178,41 @@ class ParetoDominator(Dominator):
             leq_all &= col[:, None] <= col[None, :]
             less_any |= col[:, None] < col[None, :]
         return leq_all & less_any
+
+    def dominates_many(
+        self,
+        fa: np.ndarray,
+        f_matrix: np.ndarray,
+        direction: np.ndarray | None = None,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Compute one-vs-many Pareto dominance via a single O(n) broadcast.
+
+        Parameters
+        ----------
+        fa : np.ndarray
+            shape: (n_obj,)
+        f_matrix : np.ndarray
+            shape: (n, n_obj). Must contain no NaN values.
+        direction : np.ndarray or None
+            Per-objective direction. ``None`` -> minimize all.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            ``(fa_dominates, dominates_fa)``, each shape ``(n,)``.
+        """
+        fa = np.asarray(fa, dtype=float)
+        f_matrix = np.asarray(f_matrix, dtype=float)
+        if direction is not None:
+            fa_t = fa * (-direction)
+            f_t = f_matrix * (-direction)
+        else:
+            fa_t = fa
+            f_t = f_matrix
+        fa_dominates = np.all(fa_t <= f_t, axis=1) & np.any(fa_t < f_t, axis=1)
+        dominates_fa = np.all(f_t <= fa_t, axis=1) & np.any(f_t < fa_t, axis=1)
+        return fa_dominates, dominates_fa
 
 
 class EpsilonDominator(Dominator):
@@ -292,6 +369,17 @@ class EpsilonDominator(Dominator):
         """
         b = self._quantize(np.asarray(f, dtype=float))
         return self._pareto.dominance_matrix(b, direction)
+
+    def dominates_many(
+        self,
+        fa: np.ndarray,
+        f_matrix: np.ndarray,
+        direction: np.ndarray | None = None,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Quantize both sides into eps-box coordinates, delegate to ParetoDominator."""
+        fa_q = self._quantize(np.asarray(fa, dtype=float))
+        f_q = self._quantize(np.asarray(f_matrix, dtype=float))
+        return self._pareto.dominates_many(fa_q, f_q, direction)
 
 
 # Module-level singleton used by legacy wrappers (_pareto_dominates,
