@@ -261,6 +261,43 @@ class Problem:
         cv = self.handler.compute_cv(self.constraints, x, g)
         return g, float(cv)
 
+    def evaluate_batch(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray] | None:
+        """
+        Evaluate the objective and constraint functions for a batch of solutions.
+
+        The default implementation returns ``None``, meaning batch evaluation is
+        not supported by this ``Problem`` -- callers should fall back to the
+        row-by-row path (:meth:`evaluate` / :meth:`evaluate_constraints` applied
+        one row at a time). Subclasses (or ``Problem`` instances constructed
+        around a batch-capable ``func``, e.g. a vectorized function, a GPU
+        kernel, or an external library such as pymoo that can score many
+        designs in one call) may override this method to evaluate all rows of
+        *x* in a single call.
+
+        The returned values are **raw**: unlike :meth:`evaluate`, the objective
+        batch is *not* passed through ``handler.augment_objective``, and unlike
+        :meth:`evaluate_constraints`, the constraint batch is *not* reduced via
+        ``handler.compute_cv``. Callers are expected to apply those
+        transformations themselves afterward, per row.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Batch of solutions to evaluate. shape = (n, dim)
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray] or None
+            ``(f_batch, g_batch)`` if batch evaluation is supported, else
+            ``None``.
+            ``f_batch`` : raw objective values. shape = (n, n_obj)
+            ``g_batch`` : raw constraint values, in the same column order as
+            ``self.constraints``. shape = (n, n_constraints); (n, 0) when the
+            problem has no constraints.
+            Row order matches the order of rows in *x*.
+        """
+        return None
+
     def evaluate(self, x: np.ndarray, g: np.ndarray | None = None) -> np.ndarray:
         """
         Evaluate the objective function at given solution x.
