@@ -1,0 +1,47 @@
+﻿saealib.PymooAlgorithm
+======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: PymooAlgorithm
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~PymooAlgorithm.__init__
+   ~PymooAlgorithm.ask
+   ~PymooAlgorithm.create_pareto_archive
+   ~PymooAlgorithm.get_required_attrs
+   ~PymooAlgorithm.tell
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.PymooAlgorithm.__init__
+
+
+.. automethod:: saealib.PymooAlgorithm.ask
+
+
+.. automethod:: saealib.PymooAlgorithm.create_pareto_archive
+
+
+.. automethod:: saealib.PymooAlgorithm.get_required_attrs
+
+
+.. automethod:: saealib.PymooAlgorithm.tell
+
+
+

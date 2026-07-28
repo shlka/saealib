@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Crossover &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc documentation</title>
+    <title>Crossover &#8212; saealib 0.1.0b5.dev73+gee34ca587 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=35846ac6"></script>
+    <script src="../_static/documentation_options.js?v=925885d2"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -623,6 +623,14 @@ A mismatch raises <code class="docutils literal notranslate"><span class="pre">C
 <p>Only <code class="docutils literal notranslate"><span class="pre">CrossoverBLXAlpha</span></code> is currently <code class="docutils literal notranslate"><span class="pre">&#64;register()</span></code>ed; the other 6 classes are not yet registered with the Registry.
 Keep this difference in mind if you resolve classes from strings via the Registry.</p>
 </div>
+<section id="external-library-adapters">
+<h3>External library adapters<a class="headerlink" href="#external-library-adapters" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">PymooCrossover(operator,</span> <span class="pre">*,</span> <span class="pre">prob=None,</span> <span class="pre">n_parents=None,</span> <span class="pre">n_children=None)</span></code> wraps an already-constructed <a class="reference external" href="https://pymoo.org/">pymoo</a> crossover operator (e.g. <code class="docutils literal notranslate"><span class="pre">SBX()</span></code>) so existing pymoo-based research code can be reused unchanged inside <code class="docutils literal notranslate"><span class="pre">GA</span></code>.
+<code class="docutils literal notranslate"><span class="pre">prob</span></code>/<code class="docutils literal notranslate"><span class="pre">n_parents</span></code>/<code class="docutils literal notranslate"><span class="pre">n_children</span></code> default to the wrapped operator’s own values.</p>
+<p>Because <code class="docutils literal notranslate"><span class="pre">crossover()</span></code> is called once per parent group while pymoo operators are written to vectorize over a whole population in one call, <code class="docutils literal notranslate"><span class="pre">PymooCrossover</span></code> calls the wrapped operator’s <code class="docutils literal notranslate"><span class="pre">_do()</span></code> once per group — correct, but with per-call overhead a native saealib operator wouldn’t pay.
+<code class="docutils literal notranslate"><span class="pre">rng</span></code> is forwarded to the wrapped operator via pymoo’s own <code class="docutils literal notranslate"><span class="pre">random_state</span></code> parameter, so results stay reproducible under saealib’s seeding.</p>
+<p>See <a class="reference internal" href="../getting_started/installation.html"><span class="std std-doc">Installation</span></a> for the <code class="docutils literal notranslate"><span class="pre">pymoo</span></code> extra.</p>
+</section>
 </section>
 <section id="extension-hooks">
 <h2>Extension hooks<a class="headerlink" href="#extension-hooks" title="Link to this heading">#</a></h2>
@@ -685,6 +693,7 @@ The following example is a simple crossover that returns the average of two pare
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.CrossoverTwoPoint.html#saealib.CrossoverTwoPoint" title="saealib.CrossoverTwoPoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.CrossoverTwoPoint</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.CrossoverIntegerSBX.html#saealib.CrossoverIntegerSBX" title="saealib.CrossoverIntegerSBX"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.CrossoverIntegerSBX</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.CrossoverCategorical.html#saealib.CrossoverCategorical" title="saealib.CrossoverCategorical"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.CrossoverCategorical</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/_autosummary/saealib.PymooCrossover.html#saealib.PymooCrossover" title="saealib.PymooCrossover"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PymooCrossover</span></code></a></p></li>
 </ul>
 </section>
 </section>
@@ -737,7 +746,10 @@ The following example is a simple crossover that returns the average of two pare
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crossover-s-role">Crossover’s role</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-crossovers">Built-in Crossovers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-crossovers">Built-in Crossovers</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#external-library-adapters">External library adapters</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extension-hooks">Extension hooks</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-crossover">Implementing a custom Crossover</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">Related components</a></li>

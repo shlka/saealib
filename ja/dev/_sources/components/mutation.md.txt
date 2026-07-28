@@ -43,6 +43,16 @@ Only `MutationUniform` is currently `@register()`ed; the other 4 classes are not
 Keep this difference in mind if you resolve classes from strings via the Registry.
 ```
 
+### External library adapters
+
+`PymooMutation(operator, *, prob=1.0)` wraps an already-constructed [pymoo](https://pymoo.org/) mutation operator (e.g. `PM()`) so existing pymoo-based research code can be reused unchanged inside `GA`.
+
+Unlike `PymooCrossover`, `prob` is applied by `PymooMutation` itself, matching every built-in `Mutation`'s convention that the individual-level probability check lives inside `mutate()`.
+`prob_var` is deliberately not mirrored from the wrapped pymoo operator — it stays `None` here, so mixed-variable routing in `GA` falls back to its own default rather than reading a foreign, non-`float` value.
+As with `PymooCrossover`, `mutate()` is called once per individual, and `rng` is forwarded via pymoo's `random_state` parameter.
+
+See [Installation](../getting_started/installation.md) for the `pymoo` extra.
+
 ## Extension hooks
 
 If you just want to add post-processing, such as rounding values that fall outside the bounds, you can add it to an existing `Mutation` instance with `with_post(fn)` instead of creating a new subclass.
@@ -112,3 +122,4 @@ Omitting these checks results in an implementation where every dimension always 
 - {py:class}`saealib.MutationPolynomial`
 - {py:class}`saealib.MutationIntegerUniform`
 - {py:class}`saealib.MutationCategorical`
+- {py:class}`saealib.PymooMutation`

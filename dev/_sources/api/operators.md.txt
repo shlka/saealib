@@ -62,3 +62,14 @@
 
    saealib.DuplicateElimination
 ```
+
+## pymoo / External Library Adapters
+
+```{eval-rst}
+.. autosummary::
+   :toctree: _autosummary
+   :nosignatures:
+
+   saealib.PymooCrossover
+   saealib.PymooMutation
+```

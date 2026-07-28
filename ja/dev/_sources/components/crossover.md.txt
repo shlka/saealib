@@ -43,6 +43,16 @@ Only `CrossoverBLXAlpha` is currently `@register()`ed; the other 6 classes are n
 Keep this difference in mind if you resolve classes from strings via the Registry.
 ```
 
+### External library adapters
+
+`PymooCrossover(operator, *, prob=None, n_parents=None, n_children=None)` wraps an already-constructed [pymoo](https://pymoo.org/) crossover operator (e.g. `SBX()`) so existing pymoo-based research code can be reused unchanged inside `GA`.
+`prob`/`n_parents`/`n_children` default to the wrapped operator's own values.
+
+Because `crossover()` is called once per parent group while pymoo operators are written to vectorize over a whole population in one call, `PymooCrossover` calls the wrapped operator's `_do()` once per group — correct, but with per-call overhead a native saealib operator wouldn't pay.
+`rng` is forwarded to the wrapped operator via pymoo's own `random_state` parameter, so results stay reproducible under saealib's seeding.
+
+See [Installation](../getting_started/installation.md) for the `pymoo` extra.
+
 ## Extension hooks
 
 If you just want to add post-processing, such as rounding values that fall outside the bounds, you can add it to an existing `Crossover` instance with `with_post(fn)` instead of creating a new subclass.
@@ -105,3 +115,4 @@ If you want `n_parents`/`n_children` to be something other than 2, or want to ad
 - {py:class}`saealib.CrossoverTwoPoint`
 - {py:class}`saealib.CrossoverIntegerSBX`
 - {py:class}`saealib.CrossoverCategorical`
+- {py:class}`saealib.PymooCrossover`

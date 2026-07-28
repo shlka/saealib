@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Algorithm &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
+    <title>Algorithm &#8212; saealib 0.1.0b5.dev73+gee34ca587 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=ac9ed168"></script>
+    <script src="../_static/documentation_options.js?v=0b423e7c"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -617,6 +617,17 @@
 <p><code class="docutils literal notranslate"><span class="pre">PSO(w=0.7,</span> <span class="pre">c1=1.5,</span> <span class="pre">c2=1.5,</span> <span class="pre">v_max=None)</span></code>は、慣性項<code class="docutils literal notranslate"><span class="pre">w</span></code>、個体最良解への追従<code class="docutils literal notranslate"><span class="pre">c1</span></code>、群最良解への追従<code class="docutils literal notranslate"><span class="pre">c2</span></code>という重みで速度を更新し、その速度で位置を進めます。 <code class="docutils literal notranslate"><span class="pre">v_max</span></code>を指定すると、各次元の速度の大きさをその値でクランプします。</p>
 <p><code class="docutils literal notranslate"><span class="pre">GA</span></code>とは異なり演算子を注入する構成ではなく、<code class="docutils literal notranslate"><span class="pre">ask()</span></code>/<code class="docutils literal notranslate"><span class="pre">tell()</span></code>の中で速度と位置の更新とpbest（個体ごとの最良解）の追跡を直接行います。 群最良解（リーダー）は、全粒子のpbestから<code class="docutils literal notranslate"><span class="pre">ctx.comparator</span></code>を使って選ばれるため、単目的の<code class="docutils literal notranslate"><span class="pre">Comparator</span></code>であればどれを使っても自動的に対応します。 多目的PSO（MOPSO）には非優越解集合を管理する専用のサブクラスが必要であり、組み込みの<code class="docutils literal notranslate"><span class="pre">PSO</span></code>は単目的問題を対象にしています。</p>
 </section>
+<section id="external-library-adapters">
+<h3>外部ライブラリアダプタ<a class="headerlink" href="#external-library-adapters" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">PymooAlgorithm(pymoo_algorithm,</span> <span class="pre">*,</span> <span class="pre">allow_partial_tell=False)</span></code>は、構築済みの<a class="reference external" href="https://pymoo.org/">pymoo</a>アルゴリズム（例：<code class="docutils literal notranslate"><span class="pre">NSGA2()</span></code>、<code class="docutils literal notranslate"><span class="pre">DE()</span></code>）をラップし、既存のpymooアルゴリズムをそのままsaealibのask-tellループやサロゲート支援戦略上で動かせるようにします。</p>
+<p><code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>を正のデータとして扱う<code class="docutils literal notranslate"><span class="pre">GA</span></code>/<code class="docutils literal notranslate"><span class="pre">PSO</span></code>とは異なり、<code class="docutils literal notranslate"><span class="pre">PymooAlgorithm</span></code>は「エンジンモード」で動作します。 ラップしたpymooアルゴリズムが自身の集団と内部の生存選択状態を保持し、<code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>は<code class="docutils literal notranslate"><span class="pre">tell()</span></code>のたびに末尾でそこから再構築される鏡にすぎません。 これがpymooアルゴリズム自身の検証済み生存選択ロジックをそのまま再利用する唯一の方法ですが、利用する前に知っておくべき実際上の制約が伴います。</p>
+<ul class="simple">
+<li><p>チェックポイント/再開は非対応です。 <code class="docutils literal notranslate"><span class="pre">OptimizationState.save()</span></code>はsaealib自身の配列だけをシリアライズし、ラップしたアルゴリズムの内部状態は保存されません。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ask()</span></code>に渡す<code class="docutils literal notranslate"><span class="pre">n_offspring</span></code>は無視されます。 子個体数はラップしたアルゴリズム自身の設定（例：<code class="docutils literal notranslate"><span class="pre">pop_size</span></code>）で固定されます。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy</span></code>のtop-k切り詰めにより、<code class="docutils literal notranslate"><span class="pre">tell()</span></code>は<code class="docutils literal notranslate"><span class="pre">ask()</span></code>が生成した候補の一部だけを受け取ることがあります。 既定ではこれを<code class="docutils literal notranslate"><span class="pre">ConfigurationError</span></code>として拒否します。差分進化のようなインデックス結合型のアルゴリズムは、部分的な<code class="docutils literal notranslate"><span class="pre">tell()</span></code>のもとで親と子が気づかれないまま食い違ってしまうためです。 それでも構わない場合は<code class="docutils literal notranslate"><span class="pre">allow_partial_tell=True</span></code>を指定してオプトインしてください。</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">pymoo</span></code> extraについては<a class="reference internal" href="../getting_started/installation.html"><span class="std std-doc">インストール</span></a>を参照してください。</p>
+</section>
 </section>
 <section id="implementing-a-custom-algorithm">
 <h2>独自Algorithmの実装方法<a class="headerlink" href="#implementing-a-custom-algorithm" title="Link to this heading">#</a></h2>
@@ -678,6 +689,7 @@
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Algorithm.html#saealib.Algorithm" title="saealib.Algorithm"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Algorithm</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.GA.html#saealib.GA" title="saealib.GA"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.GA</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.PSO.html#saealib.PSO" title="saealib.PSO"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PSO</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/_autosummary/saealib.PymooAlgorithm.html#saealib.PymooAlgorithm" title="saealib.PymooAlgorithm"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PymooAlgorithm</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.DuplicateElimination.html#saealib.DuplicateElimination" title="saealib.DuplicateElimination"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.DuplicateElimination</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/operators.html#saealib.repair_clipping" title="saealib.repair_clipping"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.repair_clipping()</span></code></a></p></li>
 </ul>
@@ -737,6 +749,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ga-handling-mixed-variable-problems">GA：混合変数問題への対応</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ga-auxiliary-utilities">GA：補助ユーティリティ</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pso">PSO</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#external-library-adapters">外部ライブラリアダプタ</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-algorithm">独自Algorithmの実装方法</a></li>

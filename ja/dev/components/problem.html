@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Problem &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
+    <title>Problem &#8212; saealib 0.1.0b5.dev73+gee34ca587 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=ac9ed168"></script>
+    <script src="../_static/documentation_options.js?v=0b423e7c"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -614,6 +614,12 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">ContinuousVariable.repair()</span></code>が<code class="docutils literal notranslate"><span class="pre">np.clip</span></code>で範囲外の値を境界に留めるのに対し、この実装は<code class="docutils literal notranslate"><span class="pre">np.mod</span></code>で範囲外の値を反対側の境界から巻き戻します。 <code class="docutils literal notranslate"><span class="pre">Variable</span></code>が表す値は、<code class="docutils literal notranslate"><span class="pre">Population</span></code>配列上で扱われる「エンコード済みfloat空間」上の値である点に注意してください。 <code class="docutils literal notranslate"><span class="pre">CategoricalVariable</span></code>のようにカテゴリ値と内部インデックスの対応が必要な変数型では、<code class="docutils literal notranslate"><span class="pre">repair()</span></code>はインデックス空間上で完結させ、実際のカテゴリ値への変換は別のメソッドで行います。</p>
 </section>
+<section id="external-library-adapters">
+<h2>外部ライブラリアダプタ<a class="headerlink" href="#external-library-adapters" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">PymooProblem(pymoo_problem,</span> <span class="pre">*,</span> <span class="pre">eq_tolerance=1e-6,</span> <span class="pre">**problem_kwargs)</span></code>は、構築済みの<a class="reference external" href="https://pymoo.org/">pymoo</a>問題インスタンス（組み込みベンチマークや既存の研究コード）を<code class="docutils literal notranslate"><span class="pre">Problem</span></code>としてラップし、<code class="docutils literal notranslate"><span class="pre">problem_kwargs</span></code>（<code class="docutils literal notranslate"><span class="pre">comparator</span></code>、<code class="docutils literal notranslate"><span class="pre">handler</span></code>、<code class="docutils literal notranslate"><span class="pre">eps_cv</span></code>、<code class="docutils literal notranslate"><span class="pre">eps_obj</span></code>）は<code class="docutils literal notranslate"><span class="pre">Problem.__init__</span></code>へそのまま渡されます。 pymooの問題は常に最小化なので<code class="docutils literal notranslate"><span class="pre">direction</span></code>は常に全て<code class="docutils literal notranslate"><span class="pre">-1</span></code>になり、pymooの不等式制約（<code class="docutils literal notranslate"><span class="pre">G</span></code>）は<code class="docutils literal notranslate"><span class="pre">InequalityConstraint</span></code>へ、等式制約（<code class="docutils literal notranslate"><span class="pre">H</span></code>）は<code class="docutils literal notranslate"><span class="pre">EqualityConstraint</span></code>へ、いずれも符号を変えずにそのままマッピングされます。</p>
+<p>pymooの問題はバッチ評価（<code class="docutils literal notranslate"><span class="pre">_evaluate(X,</span> <span class="pre">out)</span></code>）を前提としていますが、saealibの<code class="docutils literal notranslate"><span class="pre">Evaluator</span></code>は<code class="docutils literal notranslate"><span class="pre">Problem.evaluate</span></code>を個体単位で1つずつ呼ぶため、<code class="docutils literal notranslate"><span class="pre">PymooProblem</span></code>はラップした問題自身のベクトル化を活かせません。 それでも<code class="docutils literal notranslate"><span class="pre">x</span></code>をキーとする1スロットのキャッシュにより、候補ごとにpymoo呼び出しは正確に1回で済みます。<code class="docutils literal notranslate"><span class="pre">evaluate_constraints()</span></code>と<code class="docutils literal notranslate"><span class="pre">evaluate()</span></code>は同じ<code class="docutils literal notranslate"><span class="pre">x</span></code>に対して<code class="docutils literal notranslate"><span class="pre">SerialEvaluator</span></code>から連続して呼ばれるため、キャッシュがなければ制約の数だけpymoo呼び出しが発生し、さらに目的関数の分も加わってしまいます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">pymoo</span></code> extraについては<a class="reference internal" href="../getting_started/installation.html"><span class="std std-doc">インストール</span></a>を参照してください。</p>
+</section>
 <section id="related-components">
 <h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
 <ul class="simple">
@@ -627,6 +633,7 @@
 <h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Problem</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/_autosummary/saealib.PymooProblem.html#saealib.PymooProblem" title="saealib.PymooProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PymooProblem</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Variable.html#saealib.Variable" title="saealib.Variable"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Variable</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.ContinuousVariable.html#saealib.ContinuousVariable" title="saealib.ContinuousVariable"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ContinuousVariable</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.IntegerVariable.html#saealib.IntegerVariable" title="saealib.IntegerVariable"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.IntegerVariable</span></code></a></p></li>
@@ -685,6 +692,7 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-s-role">Problemの役割</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-direction-weight-role-split">directionとweightの役割分担</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-variable">独自Variableの実装方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-library-adapters">外部ライブラリアダプタ</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
 </ul>

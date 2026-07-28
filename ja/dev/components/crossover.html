@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Crossover &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
+    <title>Crossover &#8212; saealib 0.1.0b5.dev73+gee34ca587 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=ac9ed168"></script>
+    <script src="../_static/documentation_options.js?v=0b423e7c"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -611,6 +611,12 @@
 <p class="admonition-title">注釈</p>
 <p><code class="docutils literal notranslate"><span class="pre">CrossoverBLXAlpha</span></code>のみ<code class="docutils literal notranslate"><span class="pre">&#64;register()</span></code>済みで、他の6クラスは現状Registry未登録です。 Registry経由でクラスを文字列から解決する使い方をする場合はこの違いに注意してください。</p>
 </div>
+<section id="external-library-adapters">
+<h3>外部ライブラリアダプタ<a class="headerlink" href="#external-library-adapters" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">PymooCrossover(operator,</span> <span class="pre">*,</span> <span class="pre">prob=None,</span> <span class="pre">n_parents=None,</span> <span class="pre">n_children=None)</span></code>は、構築済みの<a class="reference external" href="https://pymoo.org/">pymoo</a>交叉演算子（例：<code class="docutils literal notranslate"><span class="pre">SBX()</span></code>）をラップし、既存のpymooベースの研究コードを<code class="docutils literal notranslate"><span class="pre">GA</span></code>内でそのまま再利用できるようにします。 <code class="docutils literal notranslate"><span class="pre">prob</span></code>/<code class="docutils literal notranslate"><span class="pre">n_parents</span></code>/<code class="docutils literal notranslate"><span class="pre">n_children</span></code>は、ラップした演算子自身の値が既定になります。</p>
+<p><code class="docutils literal notranslate"><span class="pre">crossover()</span></code>は親ペアごとに1回呼ばれるのに対し、pymooの演算子は集団全体を1回のベクトル化された呼び出しで処理するように書かれているため、<code class="docutils literal notranslate"><span class="pre">PymooCrossover</span></code>はラップした演算子の<code class="docutils literal notranslate"><span class="pre">_do()</span></code>をペアごとに1回呼び出します。正しく動作しますが、saealibネイティブな演算子にはない呼び出しごとのオーバーヘッドが生じます。 <code class="docutils literal notranslate"><span class="pre">rng</span></code>はpymoo自身の<code class="docutils literal notranslate"><span class="pre">random_state</span></code>引数を介してラップした演算子に渡されるため、saealibのシード管理のもとで結果の再現性が保たれます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">pymoo</span></code> extraについては<a class="reference internal" href="../getting_started/installation.html"><span class="std std-doc">インストール</span></a>を参照してください。</p>
+</section>
 </section>
 <section id="extension-hooks">
 <h2>拡張フック<a class="headerlink" href="#extension-hooks" title="Link to this heading">#</a></h2>
@@ -670,6 +676,7 @@
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.CrossoverTwoPoint.html#saealib.CrossoverTwoPoint" title="saealib.CrossoverTwoPoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.CrossoverTwoPoint</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.CrossoverIntegerSBX.html#saealib.CrossoverIntegerSBX" title="saealib.CrossoverIntegerSBX"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.CrossoverIntegerSBX</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.CrossoverCategorical.html#saealib.CrossoverCategorical" title="saealib.CrossoverCategorical"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.CrossoverCategorical</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/_autosummary/saealib.PymooCrossover.html#saealib.PymooCrossover" title="saealib.PymooCrossover"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PymooCrossover</span></code></a></p></li>
 </ul>
 </section>
 </section>
@@ -722,7 +729,10 @@
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crossover-s-role">Crossoverの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-crossovers">組み込みCrossover</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-crossovers">組み込みCrossover</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#external-library-adapters">外部ライブラリアダプタ</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extension-hooks">拡張フック</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-crossover">独自Crossoverの実装方法</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>

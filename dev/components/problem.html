@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Problem &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc documentation</title>
+    <title>Problem &#8212; saealib 0.1.0b5.dev73+gee34ca587 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=35846ac6"></script>
+    <script src="../_static/documentation_options.js?v=925885d2"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -634,6 +634,14 @@ It can be used for a design variable, like an angle, where you want a value exce
 Note that the value <code class="docutils literal notranslate"><span class="pre">Variable</span></code> represents is a value in the “encoded float space” handled on the <code class="docutils literal notranslate"><span class="pre">Population</span></code> array.
 For a variable type that needs a correspondence between category values and an internal index, like <code class="docutils literal notranslate"><span class="pre">CategoricalVariable</span></code>, <code class="docutils literal notranslate"><span class="pre">repair()</span></code> should stay confined to index space, with the actual conversion to category values handled by a separate method.</p>
 </section>
+<section id="external-library-adapters">
+<h2>External library adapters<a class="headerlink" href="#external-library-adapters" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">PymooProblem(pymoo_problem,</span> <span class="pre">*,</span> <span class="pre">eq_tolerance=1e-6,</span> <span class="pre">**problem_kwargs)</span></code> wraps an already-constructed <a class="reference external" href="https://pymoo.org/">pymoo</a> problem instance (a built-in benchmark, or existing research code) as a <code class="docutils literal notranslate"><span class="pre">Problem</span></code>, forwarding <code class="docutils literal notranslate"><span class="pre">problem_kwargs</span></code> (<code class="docutils literal notranslate"><span class="pre">comparator</span></code>, <code class="docutils literal notranslate"><span class="pre">handler</span></code>, <code class="docutils literal notranslate"><span class="pre">eps_cv</span></code>, <code class="docutils literal notranslate"><span class="pre">eps_obj</span></code>) to <code class="docutils literal notranslate"><span class="pre">Problem.__init__</span></code>.
+<code class="docutils literal notranslate"><span class="pre">direction</span></code> is always all <code class="docutils literal notranslate"><span class="pre">-1</span></code>, since pymoo problems are unconditionally minimization; pymoo’s inequality constraints (<code class="docutils literal notranslate"><span class="pre">G</span></code>) map to <code class="docutils literal notranslate"><span class="pre">InequalityConstraint</span></code> and equality constraints (<code class="docutils literal notranslate"><span class="pre">H</span></code>) to <code class="docutils literal notranslate"><span class="pre">EqualityConstraint</span></code>, both verbatim (no sign flip).</p>
+<p>pymoo problems batch-evaluate (<code class="docutils literal notranslate"><span class="pre">_evaluate(X,</span> <span class="pre">out)</span></code>), but saealib’s <code class="docutils literal notranslate"><span class="pre">Evaluator</span></code> calls <code class="docutils literal notranslate"><span class="pre">Problem.evaluate</span></code> one individual at a time, so <code class="docutils literal notranslate"><span class="pre">PymooProblem</span></code> doesn’t exploit a wrapped problem’s own vectorization.
+A one-slot cache keyed on <code class="docutils literal notranslate"><span class="pre">x</span></code> still keeps this to exactly one pymoo call per candidate — <code class="docutils literal notranslate"><span class="pre">evaluate_constraints()</span></code> and <code class="docutils literal notranslate"><span class="pre">evaluate()</span></code> are called back-to-back for the same <code class="docutils literal notranslate"><span class="pre">x</span></code> by <code class="docutils literal notranslate"><span class="pre">SerialEvaluator</span></code>, and would otherwise cost one pymoo call per constraint plus one for the objective.</p>
+<p>See <a class="reference internal" href="../getting_started/installation.html"><span class="std std-doc">Installation</span></a> for the <code class="docutils literal notranslate"><span class="pre">pymoo</span></code> extra.</p>
+</section>
 <section id="related-components">
 <h2>Related components<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
 <ul class="simple">
@@ -647,6 +655,7 @@ For a variable type that needs a correspondence between category values and an i
 <h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Problem</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/_autosummary/saealib.PymooProblem.html#saealib.PymooProblem" title="saealib.PymooProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PymooProblem</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Variable.html#saealib.Variable" title="saealib.Variable"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Variable</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.ContinuousVariable.html#saealib.ContinuousVariable" title="saealib.ContinuousVariable"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ContinuousVariable</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.IntegerVariable.html#saealib.IntegerVariable" title="saealib.IntegerVariable"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.IntegerVariable</span></code></a></p></li>
@@ -705,6 +714,7 @@ For a variable type that needs a correspondence between category values and an i
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-s-role">Problem’s role</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-direction-weight-role-split">The direction/weight role split</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-variable">Implementing a custom Variable</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-library-adapters">External library adapters</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">Related components</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 </ul>

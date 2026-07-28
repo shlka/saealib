@@ -92,6 +92,16 @@ Where `ContinuousVariable.repair()` keeps out-of-range values pinned to the boun
 Note that the value `Variable` represents is a value in the "encoded float space" handled on the `Population` array.
 For a variable type that needs a correspondence between category values and an internal index, like `CategoricalVariable`, `repair()` should stay confined to index space, with the actual conversion to category values handled by a separate method.
 
+## External library adapters
+
+`PymooProblem(pymoo_problem, *, eq_tolerance=1e-6, **problem_kwargs)` wraps an already-constructed [pymoo](https://pymoo.org/) problem instance (a built-in benchmark, or existing research code) as a `Problem`, forwarding `problem_kwargs` (`comparator`, `handler`, `eps_cv`, `eps_obj`) to `Problem.__init__`.
+`direction` is always all `-1`, since pymoo problems are unconditionally minimization; pymoo's inequality constraints (`G`) map to `InequalityConstraint` and equality constraints (`H`) to `EqualityConstraint`, both verbatim (no sign flip).
+
+pymoo problems batch-evaluate (`_evaluate(X, out)`), but saealib's `Evaluator` calls `Problem.evaluate` one individual at a time, so `PymooProblem` doesn't exploit a wrapped problem's own vectorization.
+A one-slot cache keyed on `x` still keeps this to exactly one pymoo call per candidate — `evaluate_constraints()` and `evaluate()` are called back-to-back for the same `x` by `SerialEvaluator`, and would otherwise cost one pymoo call per constraint plus one for the objective.
+
+See [Installation](../getting_started/installation.md) for the `pymoo` extra.
+
 ## Related components
 
 - [Comparator](comparators.md): Swaps out how solutions are compared, via the `comparator` argument
@@ -102,6 +112,7 @@ For a variable type that needs a correspondence between category values and an i
 ## References
 
 - {py:class}`saealib.Problem`
+- {py:class}`saealib.PymooProblem`
 - {py:class}`saealib.Variable`
 - {py:class}`saealib.ContinuousVariable`
 - {py:class}`saealib.IntegerVariable`

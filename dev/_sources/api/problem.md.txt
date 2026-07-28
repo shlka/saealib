@@ -6,6 +6,7 @@
    :nosignatures:
 
    saealib.Problem
+   saealib.PymooProblem
    saealib.InequalityConstraint
    saealib.EqualityConstraint
    saealib.ConstraintHandler

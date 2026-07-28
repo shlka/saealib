@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Mutation &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc documentation</title>
+    <title>Mutation &#8212; saealib 0.1.0b5.dev73+gee34ca587 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=35846ac6"></script>
+    <script src="../_static/documentation_options.js?v=925885d2"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -617,6 +617,14 @@ The correspondence between variable types and <code class="docutils literal notr
 <p>Only <code class="docutils literal notranslate"><span class="pre">MutationUniform</span></code> is currently <code class="docutils literal notranslate"><span class="pre">&#64;register()</span></code>ed; the other 4 classes are not yet registered with the Registry.
 Keep this difference in mind if you resolve classes from strings via the Registry.</p>
 </div>
+<section id="external-library-adapters">
+<h3>External library adapters<a class="headerlink" href="#external-library-adapters" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">PymooMutation(operator,</span> <span class="pre">*,</span> <span class="pre">prob=1.0)</span></code> wraps an already-constructed <a class="reference external" href="https://pymoo.org/">pymoo</a> mutation operator (e.g. <code class="docutils literal notranslate"><span class="pre">PM()</span></code>) so existing pymoo-based research code can be reused unchanged inside <code class="docutils literal notranslate"><span class="pre">GA</span></code>.</p>
+<p>Unlike <code class="docutils literal notranslate"><span class="pre">PymooCrossover</span></code>, <code class="docutils literal notranslate"><span class="pre">prob</span></code> is applied by <code class="docutils literal notranslate"><span class="pre">PymooMutation</span></code> itself, matching every built-in <code class="docutils literal notranslate"><span class="pre">Mutation</span></code>’s convention that the individual-level probability check lives inside <code class="docutils literal notranslate"><span class="pre">mutate()</span></code>.
+<code class="docutils literal notranslate"><span class="pre">prob_var</span></code> is deliberately not mirrored from the wrapped pymoo operator — it stays <code class="docutils literal notranslate"><span class="pre">None</span></code> here, so mixed-variable routing in <code class="docutils literal notranslate"><span class="pre">GA</span></code> falls back to its own default rather than reading a foreign, non-<code class="docutils literal notranslate"><span class="pre">float</span></code> value.
+As with <code class="docutils literal notranslate"><span class="pre">PymooCrossover</span></code>, <code class="docutils literal notranslate"><span class="pre">mutate()</span></code> is called once per individual, and <code class="docutils literal notranslate"><span class="pre">rng</span></code> is forwarded via pymoo’s <code class="docutils literal notranslate"><span class="pre">random_state</span></code> parameter.</p>
+<p>See <a class="reference internal" href="../getting_started/installation.html"><span class="std std-doc">Installation</span></a> for the <code class="docutils literal notranslate"><span class="pre">pymoo</span></code> extra.</p>
+</section>
 </section>
 <section id="extension-hooks">
 <h2>Extension hooks<a class="headerlink" href="#extension-hooks" title="Link to this heading">#</a></h2>
@@ -686,6 +694,7 @@ Omitting these checks results in an implementation where every dimension always 
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial" title="saealib.MutationPolynomial"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MutationPolynomial</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.MutationIntegerUniform.html#saealib.MutationIntegerUniform" title="saealib.MutationIntegerUniform"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MutationIntegerUniform</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.MutationCategorical.html#saealib.MutationCategorical" title="saealib.MutationCategorical"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MutationCategorical</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/_autosummary/saealib.PymooMutation.html#saealib.PymooMutation" title="saealib.PymooMutation"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PymooMutation</span></code></a></p></li>
 </ul>
 </section>
 </section>
@@ -738,7 +747,10 @@ Omitting these checks results in an implementation where every dimension always 
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mutation-s-role">Mutation’s role</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-mutations">Built-in Mutations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-mutations">Built-in Mutations</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#external-library-adapters">External library adapters</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extension-hooks">Extension hooks</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-mutation">Implementing a custom Mutation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">Related components</a></li>

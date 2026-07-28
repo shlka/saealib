@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Surrogate &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc documentation</title>
+    <title>Surrogate &#8212; saealib 0.1.0b5.dev73+gee34ca587 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=35846ac6"></script>
+    <script src="../_static/documentation_options.js?v=925885d2"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -672,8 +672,9 @@ For pairwise comparison, use the dedicated <code class="docutils literal notrans
 <p>See <a class="reference internal" href="../getting_started/installation.html"><span class="std std-doc">Installation</span></a> for how to install each extra.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Adapters for BoTorch/SMT, and pymoo algorithm/operator adapters, beyond scikit-learn/XGBoost/LightGBM/PyTorch, are not currently implemented in <code class="docutils literal notranslate"><span class="pre">saealib</span></code>.
-<code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> has no corresponding extra either.</p>
+<p>Adapters for BoTorch/SMT surrogates, beyond scikit-learn/XGBoost/LightGBM/PyTorch, are not currently implemented in <code class="docutils literal notranslate"><span class="pre">saealib</span></code>.
+<code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> has no corresponding extra either.
+pymoo has adapters, but at the <a class="reference internal" href="problem.html"><span class="std std-doc">Problem</span></a>/<a class="reference internal" href="crossover.html"><span class="std std-doc">Crossover</span></a>/<a class="reference internal" href="mutation.html"><span class="std std-doc">Mutation</span></a>/<a class="reference internal" href="algorithm.html"><span class="std std-doc">Algorithm</span></a> level, not as a <code class="docutils literal notranslate"><span class="pre">Surrogate</span></code> — pymoo doesn’t provide surrogate models.</p>
 </div>
 </section>
 </section>

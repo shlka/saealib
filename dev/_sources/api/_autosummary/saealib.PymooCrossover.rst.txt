@@ -1,0 +1,43 @@
+﻿saealib.PymooCrossover
+======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: PymooCrossover
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~PymooCrossover.__init__
+   ~PymooCrossover.crossover
+   ~PymooCrossover.post_crossover
+   ~PymooCrossover.with_post
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.PymooCrossover.__init__
+
+
+.. automethod:: saealib.PymooCrossover.crossover
+
+
+.. automethod:: saealib.PymooCrossover.post_crossover
+
+
+.. automethod:: saealib.PymooCrossover.with_post
+
+
+

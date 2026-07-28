@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Mutation &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc ドキュメント</title>
+    <title>Mutation &#8212; saealib 0.1.0b5.dev73+gee34ca587 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=ac9ed168"></script>
+    <script src="../_static/documentation_options.js?v=0b423e7c"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -603,6 +603,12 @@
 <p class="admonition-title">注釈</p>
 <p><code class="docutils literal notranslate"><span class="pre">MutationUniform</span></code>のみ<code class="docutils literal notranslate"><span class="pre">&#64;register()</span></code>済みで、他の4クラスは現状Registry未登録です。 Registry経由でクラスを文字列から解決する使い方をする場合はこの違いに注意してください。</p>
 </div>
+<section id="external-library-adapters">
+<h3>外部ライブラリアダプタ<a class="headerlink" href="#external-library-adapters" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">PymooMutation(operator,</span> <span class="pre">*,</span> <span class="pre">prob=1.0)</span></code>は、構築済みの<a class="reference external" href="https://pymoo.org/">pymoo</a>突然変異演算子（例：<code class="docutils literal notranslate"><span class="pre">PM()</span></code>）をラップし、既存のpymooベースの研究コードを<code class="docutils literal notranslate"><span class="pre">GA</span></code>内でそのまま再利用できるようにします。</p>
+<p><code class="docutils literal notranslate"><span class="pre">PymooCrossover</span></code>と異なり、<code class="docutils literal notranslate"><span class="pre">prob</span></code>の判定は<code class="docutils literal notranslate"><span class="pre">PymooMutation</span></code>自身が行います。 これは、個体レベルの確率判定が<code class="docutils literal notranslate"><span class="pre">mutate()</span></code>の内部にあるという組み込み<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>全ての規約に合わせたものです。 <code class="docutils literal notranslate"><span class="pre">prob_var</span></code>はラップしたpymoo演算子からあえてミラーせず<code class="docutils literal notranslate"><span class="pre">None</span></code>のままにしており、<code class="docutils literal notranslate"><span class="pre">GA</span></code>の混合変数ルーティングは外部の（<code class="docutils literal notranslate"><span class="pre">float</span></code>とは限らない）値を読むのではなく自身の既定値にフォールバックします。 <code class="docutils literal notranslate"><span class="pre">PymooCrossover</span></code>と同様、<code class="docutils literal notranslate"><span class="pre">mutate()</span></code>は個体ごとに1回呼ばれ、<code class="docutils literal notranslate"><span class="pre">rng</span></code>はpymooの<code class="docutils literal notranslate"><span class="pre">random_state</span></code>引数経由で渡されます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">pymoo</span></code> extraについては<a class="reference internal" href="../getting_started/installation.html"><span class="std std-doc">インストール</span></a>を参照してください。</p>
+</section>
 </section>
 <section id="extension-hooks">
 <h2>拡張フック<a class="headerlink" href="#extension-hooks" title="Link to this heading">#</a></h2>
@@ -668,6 +674,7 @@
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial" title="saealib.MutationPolynomial"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MutationPolynomial</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.MutationIntegerUniform.html#saealib.MutationIntegerUniform" title="saealib.MutationIntegerUniform"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MutationIntegerUniform</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.MutationCategorical.html#saealib.MutationCategorical" title="saealib.MutationCategorical"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MutationCategorical</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/_autosummary/saealib.PymooMutation.html#saealib.PymooMutation" title="saealib.PymooMutation"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PymooMutation</span></code></a></p></li>
 </ul>
 </section>
 </section>
@@ -720,7 +727,10 @@
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mutation-s-role">Mutationの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-mutations">組み込みMutation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-mutations">組み込みMutation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#external-library-adapters">外部ライブラリアダプタ</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extension-hooks">拡張フック</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-mutation">独自Mutationの実装方法</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>

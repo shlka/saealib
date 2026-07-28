@@ -1,0 +1,43 @@
+﻿saealib.PymooMutation
+=====================
+
+.. currentmodule:: saealib
+
+.. autoclass:: PymooMutation
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~PymooMutation.__init__
+   ~PymooMutation.mutate
+   ~PymooMutation.post_mutation
+   ~PymooMutation.with_post
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.PymooMutation.__init__
+
+
+.. automethod:: saealib.PymooMutation.mutate
+
+
+.. automethod:: saealib.PymooMutation.post_mutation
+
+
+.. automethod:: saealib.PymooMutation.with_post
+
+
+

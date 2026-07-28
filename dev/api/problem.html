@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Problem &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc documentation</title>
+    <title>Problem &#8212; saealib 0.1.0b5.dev73+gee34ca587 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=35846ac6"></script>
+    <script src="../_static/documentation_options.js?v=925885d2"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -492,6 +492,7 @@
 </details></li>
 <li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">Problem</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Problem.html">saealib.Problem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PymooProblem.html">saealib.PymooProblem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.InequalityConstraint.html">saealib.InequalityConstraint</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EqualityConstraint.html">saealib.EqualityConstraint</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ConstraintHandler.html">saealib.ConstraintHandler</a></li>
@@ -546,6 +547,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Algorithm.html">saealib.Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GA.html">saealib.GA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PSO.html">saealib.PSO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PymooAlgorithm.html">saealib.PymooAlgorithm</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="operators.html">Operators</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -570,6 +572,8 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurvivorSelection.html">saealib.SurvivorSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TruncationSelection.html">saealib.TruncationSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.DuplicateElimination.html">saealib.DuplicateElimination</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PymooCrossover.html">saealib.PymooCrossover</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PymooMutation.html">saealib.PymooMutation</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="surrogate.html">Surrogate Models</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -773,22 +777,25 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.Problem</span></code></a></p></td>
 <td><p>Definition of optimization problem.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint" title="saealib.InequalityConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.InequalityConstraint</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.PymooProblem.html#saealib.PymooProblem" title="saealib.PymooProblem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.PymooProblem</span></code></a></p></td>
+<td><p>Adapter wrapping a pymoo Problem instance as a saealib <code class="docutils literal notranslate"><span class="pre">Problem</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint" title="saealib.InequalityConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.InequalityConstraint</span></code></a></p></td>
 <td><p>A single inequality constraint: g(x) &lt;= threshold.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.EqualityConstraint.html#saealib.EqualityConstraint" title="saealib.EqualityConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.EqualityConstraint</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.EqualityConstraint.html#saealib.EqualityConstraint" title="saealib.EqualityConstraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.EqualityConstraint</span></code></a></p></td>
 <td><p>A single equality constraint: h(x) = 0, satisfied within a tolerance.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.ConstraintHandler.html#saealib.ConstraintHandler" title="saealib.ConstraintHandler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ConstraintHandler</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.ConstraintHandler.html#saealib.ConstraintHandler" title="saealib.ConstraintHandler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ConstraintHandler</span></code></a></p></td>
 <td><p>Pluggable constraint-processing strategy.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.StaticToleranceHandler.html#saealib.StaticToleranceHandler" title="saealib.StaticToleranceHandler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.StaticToleranceHandler</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.StaticToleranceHandler.html#saealib.StaticToleranceHandler" title="saealib.StaticToleranceHandler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.StaticToleranceHandler</span></code></a></p></td>
 <td><p>Default constraint handler reproducing the static-tolerance behavior.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.EpsilonConstraintHandler.html#saealib.EpsilonConstraintHandler" title="saealib.EpsilonConstraintHandler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.EpsilonConstraintHandler</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.EpsilonConstraintHandler.html#saealib.EpsilonConstraintHandler" title="saealib.EpsilonConstraintHandler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.EpsilonConstraintHandler</span></code></a></p></td>
 <td><p>Dynamic ε-constraint handler.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.GradientRepairHandler.html#saealib.GradientRepairHandler" title="saealib.GradientRepairHandler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.GradientRepairHandler</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.GradientRepairHandler.html#saealib.GradientRepairHandler" title="saealib.GradientRepairHandler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.GradientRepairHandler</span></code></a></p></td>
 <td><p>Gradient-based constraint repair handler.</p></td>
 </tr>
 </tbody>

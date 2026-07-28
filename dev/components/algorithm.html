@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Algorithm &#8212; saealib 0.1.0b5.dev68+gfd49cd0fc documentation</title>
+    <title>Algorithm &#8212; saealib 0.1.0b5.dev73+gee34ca587 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=35846ac6"></script>
+    <script src="../_static/documentation_options.js?v=925885d2"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -632,6 +632,18 @@ Specifying <code class="docutils literal notranslate"><span class="pre">v_max</s
 The swarm best (leader) is chosen from all particles’ pbests using <code class="docutils literal notranslate"><span class="pre">ctx.comparator</span></code>, so any single-objective <code class="docutils literal notranslate"><span class="pre">Comparator</span></code> is automatically supported.
 Multi-objective PSO (MOPSO) requires a dedicated subclass that manages a non-dominated solution set; the built-in <code class="docutils literal notranslate"><span class="pre">PSO</span></code> targets single-objective problems.</p>
 </section>
+<section id="external-library-adapters">
+<h3>External library adapters<a class="headerlink" href="#external-library-adapters" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">PymooAlgorithm(pymoo_algorithm,</span> <span class="pre">*,</span> <span class="pre">allow_partial_tell=False)</span></code> wraps an already-constructed <a class="reference external" href="https://pymoo.org/">pymoo</a> algorithm (e.g. <code class="docutils literal notranslate"><span class="pre">NSGA2()</span></code>, <code class="docutils literal notranslate"><span class="pre">DE()</span></code>) so an existing pymoo algorithm can drive saealib’s ask-tell loop and surrogate-assisted strategies unchanged.</p>
+<p>Unlike <code class="docutils literal notranslate"><span class="pre">GA</span></code>/<code class="docutils literal notranslate"><span class="pre">PSO</span></code>, which treat <code class="docutils literal notranslate"><span class="pre">ctx.population</span></code> as the source of truth, <code class="docutils literal notranslate"><span class="pre">PymooAlgorithm</span></code> runs in “engine mode”: the wrapped pymoo algorithm owns its own population and internal survival state, and <code class="docutils literal notranslate"><span class="pre">ctx.population</span></code> is refreshed from it at the end of every <code class="docutils literal notranslate"><span class="pre">tell()</span></code> — a mirror, not the source of truth.
+This is the only way to reuse a pymoo algorithm’s own tested survival logic unchanged, but it comes with real limits worth knowing before reaching for it:</p>
+<ul class="simple">
+<li><p>No checkpoint/resume — <code class="docutils literal notranslate"><span class="pre">OptimizationState.save()</span></code> only serializes saealib’s own arrays, not the wrapped algorithm’s internal state.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n_offspring</span></code> passed to <code class="docutils literal notranslate"><span class="pre">ask()</span></code> is ignored; the offspring count is fixed by the wrapped algorithm’s own configuration (e.g. its <code class="docutils literal notranslate"><span class="pre">pop_size</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy</span></code>’s top-k truncation hands <code class="docutils literal notranslate"><span class="pre">tell()</span></code> only a subset of what <code class="docutils literal notranslate"><span class="pre">ask()</span></code> produced. By default this raises <code class="docutils literal notranslate"><span class="pre">ConfigurationError</span></code>, since index-coupled algorithms (e.g. differential evolution) would silently misalign parents and offspring under a partial <code class="docutils literal notranslate"><span class="pre">tell()</span></code>; pass <code class="docutils literal notranslate"><span class="pre">allow_partial_tell=True</span></code> to opt in anyway.</p></li>
+</ul>
+<p>See <a class="reference internal" href="../getting_started/installation.html"><span class="std std-doc">Installation</span></a> for the <code class="docutils literal notranslate"><span class="pre">pymoo</span></code> extra.</p>
+</section>
 </section>
 <section id="implementing-a-custom-algorithm">
 <h2>Implementing a custom Algorithm<a class="headerlink" href="#implementing-a-custom-algorithm" title="Link to this heading">#</a></h2>
@@ -695,6 +707,7 @@ If per-individual auxiliary information is needed, as with PSO’s pbest, declar
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Algorithm.html#saealib.Algorithm" title="saealib.Algorithm"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Algorithm</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.GA.html#saealib.GA" title="saealib.GA"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.GA</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.PSO.html#saealib.PSO" title="saealib.PSO"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PSO</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/_autosummary/saealib.PymooAlgorithm.html#saealib.PymooAlgorithm" title="saealib.PymooAlgorithm"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PymooAlgorithm</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.DuplicateElimination.html#saealib.DuplicateElimination" title="saealib.DuplicateElimination"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.DuplicateElimination</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/operators.html#saealib.repair_clipping" title="saealib.repair_clipping"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.repair_clipping()</span></code></a></p></li>
 </ul>
@@ -754,6 +767,7 @@ If per-individual auxiliary information is needed, as with PSO’s pbest, declar
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ga-handling-mixed-variable-problems">GA: handling mixed-variable problems</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ga-auxiliary-utilities">GA: auxiliary utilities</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pso">PSO</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#external-library-adapters">External library adapters</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-algorithm">Implementing a custom Algorithm</a></li>
