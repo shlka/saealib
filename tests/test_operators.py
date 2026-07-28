@@ -16,10 +16,11 @@ Tests cover:
 import numpy as np
 import pytest
 
-from saealib import GA, SequentialSelection, TruncationSelection
+from saealib import GA, SequentialSelection, TruncationSelection, minimize
 from saealib.comparators import NSGA2Comparator, SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.operators.crossover import (
+    Crossover,
     CrossoverBLXAlpha,
     CrossoverCategorical,
     CrossoverIntegerSBX,
@@ -35,7 +36,7 @@ from saealib.operators.mutation import (
     MutationPolynomial,
     MutationUniform,
 )
-from saealib.operators.selection import RouletteWheelSelection
+from saealib.operators.selection import RouletteWheelSelection, TournamentSelection
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -142,6 +143,82 @@ class TestCrossoverSBX:
         c2 = op.crossover(p, rng=np.random.default_rng(42))
         np.testing.assert_array_equal(c1, c2)
 
+    def test_crossover_batch_output_shape(self):
+        op = CrossoverSBX(prob=0.9, eta=2.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c = op.crossover_batch(parents_batch, rng=rng)
+        assert c is not None
+        assert c.shape == (n_pair, 2, DIM)
+
+    def test_crossover_batch_matches_single_at_n_pair_one(self):
+        """Unbounded branch: draws are u, then do_cross (2 phases)."""
+        op = CrossoverSBX(prob=0.9, eta=2.0)
+        p = _make_parents(np.random.default_rng(1))
+        parents_batch = p[np.newaxis, :, :]
+        c_batch = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        assert c_batch is not None
+        c_single = op.crossover(p, rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c_batch[0], c_single)
+
+    def test_crossover_batch_matches_single_at_n_pair_one_bounded(self):
+        """Bounded branch: draws are u, then swap, then do_cross (3 phases)
+        -- the branch GA actually exercises, since GA always supplies bounds."""
+        op = CrossoverSBX(prob=1.0, eta=20.0, prob_var=1.0)
+        lb = np.zeros(DIM)
+        ub = np.ones(DIM)
+        p = np.random.default_rng(1).uniform(0.0, 1.0, size=(2, DIM))
+        parents_batch = p[np.newaxis, :, :]
+        c_batch = op.crossover_batch(
+            parents_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        assert c_batch is not None
+        c_single = op.crossover(p, (lb, ub), rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c_batch[0], c_single)
+
+    def test_crossover_batch_deterministic_with_seed(self):
+        op = CrossoverSBX(prob=0.9, eta=2.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c1 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        c2 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c1, c2)
+
+    def test_crossover_batch_respects_bounds(self):
+        op = CrossoverSBX(prob=1.0, eta=20.0, prob_var=1.0)
+        lb = np.zeros(DIM)
+        ub = np.ones(DIM)
+        rng = np.random.default_rng(0)
+        n_pair = 8
+        for _ in range(20):
+            parents_batch = rng.uniform(0.0, 1.0, size=(n_pair, 2, DIM))
+            c = op.crossover_batch(parents_batch, (lb, ub), rng=rng)
+            assert c is not None
+            assert np.all(c >= lb) and np.all(c <= ub)
+
+    def test_crossover_batch_mixed_identical_and_separated_rows(self):
+        """A batch with one row of identical parents and one row of
+        separated parents: only the identical row must come back unchanged
+        (batch mirror of TestCrossoverSBXBounded.test_identical_parents_unchanged
+        -- confirms `separated` masks per row, not collapsed across the batch)."""
+        op = CrossoverSBX(prob=1.0, eta=20.0, prob_var=1.0)
+        lb = np.zeros(3)
+        ub = np.ones(3)
+        identical = np.array([[0.5, 0.5, 0.5], [0.5, 0.5, 0.5]])
+        separated = np.array([[0.1, 0.2, 0.3], [0.8, 0.7, 0.9]])
+        parents_batch = np.stack([identical, separated], axis=0)
+        c = op.crossover_batch(parents_batch, (lb, ub), rng=np.random.default_rng(0))
+        assert c is not None
+        np.testing.assert_array_equal(c[0, 0], identical[0])
+        np.testing.assert_array_equal(c[0, 1], identical[1])
+        assert np.all(c[1] >= lb) and np.all(c[1] <= ub)
+        # discriminates per-row masking from a collapsed `separated` mask:
+        # if row 1's separated-ness were incorrectly suppressed by row 0's
+        # identical-ness, c[1] would also come back as unmodified parents
+        assert not np.array_equal(c[1, 0], separated[0])
+
 
 # ---------------------------------------------------------------------------
 # CrossoverUniform
@@ -173,6 +250,55 @@ class TestCrossoverUniform:
         c = op.crossover(p, rng=rng)
         np.testing.assert_array_equal(c[0], p[1])
         np.testing.assert_array_equal(c[1], p[0])
+
+    def test_crossover_batch_output_shape(self):
+        op = CrossoverUniform(prob=0.8)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c = op.crossover_batch(parents_batch, rng=rng)
+        assert c is not None
+        assert c.shape == (n_pair, 2, DIM)
+
+    def test_crossover_batch_matches_single_at_n_pair_one(self):
+        op = CrossoverUniform(prob=0.8)
+        p = _make_parents(np.random.default_rng(1))
+        parents_batch = p[np.newaxis, :, :]
+        c_batch = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        assert c_batch is not None
+        c_single = op.crossover(p, rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c_batch[0], c_single)
+
+    def test_crossover_batch_deterministic_with_seed(self):
+        op = CrossoverUniform(prob=0.8)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c1 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        c2 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c1, c2)
+
+    def test_crossover_batch_swap_rate_zero(self):
+        """swap_rate=0: c1==p1 and c2==p2 across every row."""
+        op = CrossoverUniform(prob=0.8, swap_rate=0.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c = op.crossover_batch(parents_batch, rng=rng)
+        assert c is not None
+        np.testing.assert_array_equal(c[:, 0, :], parents_batch[:, 0, :])
+        np.testing.assert_array_equal(c[:, 1, :], parents_batch[:, 1, :])
+
+    def test_crossover_batch_swap_rate_one(self):
+        """swap_rate=1: c1==p2 and c2==p1 across every row."""
+        op = CrossoverUniform(prob=0.8, swap_rate=1.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c = op.crossover_batch(parents_batch, rng=rng)
+        assert c is not None
+        np.testing.assert_array_equal(c[:, 0, :], parents_batch[:, 1, :])
+        np.testing.assert_array_equal(c[:, 1, :], parents_batch[:, 0, :])
 
 
 # ---------------------------------------------------------------------------
@@ -262,21 +388,49 @@ class TestCrossoverNChildren:
 
 
 class TestCrossoverBatchDefault:
-    def test_default_returns_none_sbx(self):
-        op = CrossoverSBX(prob=0.9, eta=2.0)
+    """CrossoverBLXAlpha/CrossoverOnePoint remain unbatched (commit 8, out of
+    scope): CrossoverSBX/CrossoverUniform/CrossoverCategorical/
+    CrossoverIntegerSBX now override crossover_batch (see TestCrossoverSBX
+    etc.), so they are no longer suitable subjects for this "still returns
+    None" check.
+    """
+
+    def test_default_returns_none_blx_alpha(self):
+        op = CrossoverBLXAlpha(prob=0.9, alpha=0.4)
         rng = np.random.default_rng(0)
         n_pair = 3
         parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
         result = op.crossover_batch(parents_batch, rng=rng)
         assert result is None
 
-    def test_default_returns_none_uniform(self):
-        op = CrossoverUniform(prob=0.8)
+    def test_default_returns_none_one_point(self):
+        op = CrossoverOnePoint(prob=0.8)
         rng = np.random.default_rng(0)
         n_pair = 3
         parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
         result = op.crossover_batch(parents_batch, rng=rng)
         assert result is None
+
+
+class TestCrossoverBatchOverridden:
+    """Positive mirror of TestCrossoverBatchDefault: confirms the four
+    classes actually satisfy GA._crossover_pairs's dispatch criterion
+    (``type(op).crossover_batch is not Crossover.crossover_batch``), i.e.
+    that this commit's new methods are picked up by GA's existing batch-vs-
+    loop routing rather than silently shadowed by some other override.
+    """
+
+    @pytest.mark.parametrize(
+        "op",
+        [
+            CrossoverSBX(prob=0.9, eta=2.0),
+            CrossoverUniform(prob=0.8),
+            CrossoverCategorical(prob=1.0),
+            CrossoverIntegerSBX(prob=1.0, eta=2.0),
+        ],
+    )
+    def test_overrides_crossover_batch(self, op):
+        assert type(op).crossover_batch is not Crossover.crossover_batch
 
 
 # ---------------------------------------------------------------------------
@@ -770,6 +924,69 @@ class TestCrossoverIntegerSBX:
         c2 = op.crossover(self._parents, rng=np.random.default_rng(7))
         np.testing.assert_array_equal(c1, c2)
 
+    def test_crossover_batch_output_shape(self):
+        op = CrossoverIntegerSBX(prob=1.0, eta=2.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.integers(0, 10, size=(n_pair, 2, 3)).astype(float)
+        c = op.crossover_batch(parents_batch, rng=rng)
+        assert c is not None
+        assert c.shape == (n_pair, 2, 3)
+
+    def test_crossover_batch_matches_single_at_n_pair_one(self):
+        """Unbounded branch: draws are u, then do_cross (2 phases)."""
+        op = CrossoverIntegerSBX(prob=1.0, eta=2.0)
+        parents_batch = self._parents[np.newaxis, :, :]
+        c_batch = op.crossover_batch(parents_batch, rng=np.random.default_rng(7))
+        assert c_batch is not None
+        c_single = op.crossover(self._parents, rng=np.random.default_rng(7))
+        np.testing.assert_array_equal(c_batch[0], c_single)
+
+    def test_crossover_batch_matches_single_at_n_pair_one_bounded(self):
+        """Bounded branch: draws are u, then swap, then do_cross (3 phases)
+        -- the branch GA actually exercises, since GA always supplies bounds."""
+        op = CrossoverIntegerSBX(prob=1.0, eta=20.0, prob_var=1.0)
+        lb = np.zeros(3)
+        ub = np.full(3, 9.0)
+        parents_batch = self._parents[np.newaxis, :, :]
+        c_batch = op.crossover_batch(
+            parents_batch, (lb, ub), rng=np.random.default_rng(7)
+        )
+        assert c_batch is not None
+        c_single = op.crossover(self._parents, (lb, ub), rng=np.random.default_rng(7))
+        np.testing.assert_array_equal(c_batch[0], c_single)
+
+    def test_crossover_batch_deterministic_with_seed(self):
+        op = CrossoverIntegerSBX(prob=1.0, eta=2.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.integers(0, 10, size=(n_pair, 2, 3)).astype(float)
+        c1 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        c2 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c1, c2)
+
+    def test_crossover_batch_offspring_are_integers(self):
+        op = CrossoverIntegerSBX(prob=1.0, eta=2.0)
+        rng = np.random.default_rng(42)
+        n_pair = 8
+        for _ in range(20):
+            parents_batch = rng.integers(0, 10, size=(n_pair, 2, 3)).astype(float)
+            c = op.crossover_batch(parents_batch, rng=rng)
+            assert c is not None
+            assert np.all(c == np.round(c)), "offspring must be integers"
+
+    def test_crossover_batch_respects_bounds(self):
+        op = CrossoverIntegerSBX(prob=1.0, eta=20.0, prob_var=1.0)
+        lb = np.zeros(3)
+        ub = np.full(3, 9.0)
+        rng = np.random.default_rng(0)
+        n_pair = 8
+        for _ in range(20):
+            parents_batch = rng.integers(0, 10, size=(n_pair, 2, 3)).astype(float)
+            c = op.crossover_batch(parents_batch, (lb, ub), rng=rng)
+            assert c is not None
+            assert np.all(c >= lb) and np.all(c <= ub)
+
 
 # ---------------------------------------------------------------------------
 # CrossoverCategorical
@@ -815,6 +1032,43 @@ class TestCrossoverCategorical:
         c1 = op.crossover(self._parents, rng=np.random.default_rng(3))
         c2 = op.crossover(self._parents, rng=np.random.default_rng(3))
         np.testing.assert_array_equal(c1, c2)
+
+    def test_crossover_batch_output_shape(self):
+        op = CrossoverCategorical(prob=1.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = np.tile(self._parents, (n_pair, 1, 1))
+        c = op.crossover_batch(parents_batch, rng=rng)
+        assert c is not None
+        assert c.shape == (n_pair, 2, 3)
+
+    def test_crossover_batch_matches_single_at_n_pair_one(self):
+        op = CrossoverCategorical(prob=1.0)
+        parents_batch = self._parents[np.newaxis, :, :]
+        c_batch = op.crossover_batch(parents_batch, rng=np.random.default_rng(3))
+        assert c_batch is not None
+        c_single = op.crossover(self._parents, rng=np.random.default_rng(3))
+        np.testing.assert_array_equal(c_batch[0], c_single)
+
+    def test_crossover_batch_deterministic_with_seed(self):
+        op = CrossoverCategorical(prob=1.0)
+        n_pair = 5
+        parents_batch = np.tile(self._parents, (n_pair, 1, 1))
+        c1 = op.crossover_batch(parents_batch, rng=np.random.default_rng(3))
+        c2 = op.crossover_batch(parents_batch, rng=np.random.default_rng(3))
+        np.testing.assert_array_equal(c1, c2)
+
+    def test_crossover_batch_complementary_swap(self):
+        op = CrossoverCategorical(prob=1.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = np.tile(self._parents, (n_pair, 1, 1))
+        for _ in range(50):
+            c = op.crossover_batch(parents_batch, rng=rng)
+            assert c is not None
+            # if c1 took p2's value, c2 must have taken p1's, for every row
+            p_sum = parents_batch[:, 0, :] + parents_batch[:, 1, :]
+            np.testing.assert_array_equal(c[:, 0, :] + c[:, 1, :], p_sum)
 
 
 # ---------------------------------------------------------------------------
@@ -1160,3 +1414,41 @@ class TestDuplicateElimination:
         ctx = _make_ctx(n_pop=10)
         candidates = ga.ask(ctx, provider)
         assert len(candidates) == 10
+
+
+# ---------------------------------------------------------------------------
+# GA + batched default crossover operators: end-to-end smoke test
+# (Issue #224, commit 7 — CrossoverSBX now dispatches through
+# crossover_batch by default on continuous-only problems.)
+# ---------------------------------------------------------------------------
+
+
+class TestGABatchedCrossoverSmoke:
+    def test_ga_with_sbx_runs_several_generations_on_sphere(self):
+        """Coarse sanity net for the new default crossover_batch dispatch
+        path: GA with CrossoverSBX (now batch-capable) on a continuous-only
+        problem must run several generations without error and produce
+        finite, in-bounds candidates. Not a strict numeric-equality check."""
+        dim = 5
+        lb = [-5.0] * dim
+        ub = [5.0] * dim
+        result = minimize(
+            lambda x: np.sum(x**2),
+            dim=dim,
+            lb=lb,
+            ub=ub,
+            algorithm=GA(
+                crossover=CrossoverSBX(prob=0.9, eta=15.0),
+                mutation=MutationPolynomial(prob=1.0, eta=20.0, prob_var=0.2),
+                parent_selection=TournamentSelection(2),
+                survivor_selection=TruncationSelection(),
+            ),
+            surrogate="rbf",
+            max_fe=150,
+            pop_size=10,
+            seed=0,
+            verbose=False,
+        )
+        assert result.fe > 0
+        assert np.isfinite(result.f).all()
+        assert np.all(result.x >= lb) and np.all(result.x <= ub)
