@@ -5,6 +5,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+# tests/ has no __init__.py, so pytest's default (prepend) import mode puts
+# tests/ itself on sys.path -- this makes test_operators.py importable as a
+# top-level module from any other file under tests/, the same way it is
+# from within test_operators.py.
+from test_operators import _MutationUnbatched
+
 from saealib import (
     GA,
     CategoricalVariable,
@@ -19,7 +25,6 @@ from saealib.operators import (
     CrossoverIntegerSBX,
     CrossoverSBX,
     MutationCategorical,
-    MutationGaussian,
     MutationIntegerUniform,
     MutationPolynomial,
     TournamentSelection,
@@ -472,13 +477,19 @@ class TestMutateCandidatesInterleaveOrder:
     hook and cross-checks the library's output against an independently
     hand-written interleaved reference loop fed an identically-seeded RNG.
 
-    Uses ``MutationGaussian`` rather than ``MutationPolynomial`` as the test
-    vehicle: since Issue #224 commit 10, ``MutationPolynomial`` overrides
-    ``mutate_batch``, which would take the *batched* path instead of the
-    fallback loop this test targets. ``MutationGaussian`` still relies on
-    the base class's ``None``-returning default, making it a valid stand-in
-    -- this test exercises ``_mutate_candidates``'s dispatch/interleaving
-    logic, not any particular mutation formula.
+    Uses ``_MutationUnbatched`` (imported from ``tests/test_operators.py``)
+    as the test vehicle rather than any real, evolving built-in
+    ``Mutation`` class: MutationUniform (commit 9), MutationPolynomial
+    (commit 10), and MutationGaussian (commit 11) all now override
+    ``mutate_batch``, and each one gaining that override in turn broke this
+    test's premise the moment it did. A dedicated test-local dummy that will
+    never grow a ``mutate_batch`` override closes that hole permanently.
+    ``_MutationUnbatched.mutate()`` still draws exactly one ``rng.random()``
+    value per call (see its docstring) -- without that draw, this test would
+    pass regardless of whether ``_mutate_candidates`` actually interleaves
+    correctly, since a zero-draw ``mutate()`` produces byte-identical RNG
+    consumption under both the correct interleaved order and the buggy
+    two-pass order this test guards against.
     """
 
     def test_fallback_loop_matches_hand_written_interleaved_reference(self):
@@ -487,12 +498,10 @@ class TestMutateCandidatesInterleaveOrder:
             # that a reordering of RNG draws changes the returned array.
             return offspring + rng.random() * 1e-3
 
-        mutation = MutationGaussian(sigma=0.5, prob_var=0.5).with_post(
-            rng_consuming_hook
-        )
+        mutation = _MutationUnbatched(prob=0.5).with_post(rng_consuming_hook)
         # Sanity check: mirrors the production predicate in
         # _mutate_candidates that decides the fallback path is taken.
-        # (Checking `type(mutation).mutate_batch is MutationGaussian
+        # (Checking `type(mutation).mutate_batch is _MutationUnbatched
         # .mutate_batch` would be vacuous here, since with_post always
         # returns a shallow copy of the same type regardless of whether
         # that type overrides mutate_batch.)
@@ -528,3 +537,30 @@ class TestMutateCandidatesInterleaveOrder:
             expected[i] = mutation.post_mutation(expected[i], (lb, ub), ref_rng, ctx)
 
         np.testing.assert_allclose(actual, expected)
+
+        # Diagnostic-and-guard: recompute the *buggy* two-pass order (all
+        # _route_mutation calls first, then all post_mutation calls) from
+        # the same seed. If _mutate_candidates ever regressed to that
+        # ordering, `actual` would match `wrong_order` instead of
+        # `expected` -- this assertion is what would catch it, and is also
+        # the empirical proof that _MutationUnbatched's one-draw mutate()
+        # keeps this test capable of discriminating between the two orders
+        # (a zero-draw mutate() would make wrong_order == expected too).
+        wrong_rng = np.random.default_rng(2024)
+        wrong_order = cand.copy()
+        for i in range(len(wrong_order)):
+            wrong_order[i] = _route_mutation(
+                wrong_order[i],
+                lb,
+                ub,
+                wrong_rng,
+                problem,
+                mutation,
+                ga.integer_mutation,
+                ga.categorical_mutation,
+            )
+        for i in range(len(wrong_order)):
+            wrong_order[i] = mutation.post_mutation(
+                wrong_order[i], (lb, ub), wrong_rng, ctx
+            )
+        assert not np.allclose(actual, wrong_order)

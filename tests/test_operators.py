@@ -655,11 +655,23 @@ class TestMutationGaussian:
 class _MutationUnbatched(Mutation):
     """Minimal dummy Mutation that does not override mutate_batch.
 
-    MutationUniform (Issue #224, commit 9) and MutationPolynomial (commit
-    10) now override mutate_batch, so neither is a suitable subject for the
-    "still returns None" default-implementation check below; this fresh
-    subclass fills that role instead, mirroring how commit 8's
-    _CrossoverUnbatched fills the same role for Crossover.
+    MutationUniform (Issue #224, commit 9), MutationPolynomial (commit 10),
+    and MutationGaussian (commit 11) now all override mutate_batch, so none
+    of them is a suitable subject for the "still returns None"
+    default-implementation check below, or for any test that needs to
+    exercise the per-individual fallback loop in
+    ``GA._mutate_candidates``. This fresh subclass fills that role instead
+    (and is reused across test files for that purpose -- see
+    ``tests/test_ga_mixed.py::TestMutateCandidatesInterleaveOrder``),
+    mirroring how commit 8's _CrossoverUnbatched fills the same role for
+    Crossover.
+
+    ``mutate()`` draws exactly one ``rng.random()`` value per call (gated on
+    ``prob`` like every real Mutation, though the outcome is always
+    ``p.copy()`` either way) so that RNG-consumption ordering is
+    observable to callers -- a version that drew zero values from ``rng``
+    would make any test relying on interleaving/reordering of RNG draws
+    vacuously pass regardless of correctness.
     """
 
     def __init__(self, prob: float = 1.0):
@@ -672,6 +684,11 @@ class _MutationUnbatched(Mutation):
         mutate_range: tuple,
         rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
+        # Both branches return p.copy(): the gate draw exists solely so this
+        # dummy consumes exactly one rng value per call, making RNG-ordering
+        # bugs observable to callers (see class docstring).
+        if rng.random() >= self.prob:
+            return p.copy()
         return p.copy()
 
 
@@ -1569,19 +1586,26 @@ class TestMutationUniformBatch:
 
 
 class _ScriptedRNG:
-    """Fake rng exposing only ``.random(size)``, returning a fixed queue of
-    pre-set arrays in call order.
+    """Fake rng exposing ``.random(size)`` and ``.normal(loc, scale, size)``,
+    each returning a fixed queue of pre-set arrays in call order.
 
     Used to fully control the sequence of random draws mutate_batch makes
-    internally (gate, var_gate, u) so a chosen set of delta1/u values can be
-    fed through the real formula deterministically.
+    internally (gate, var_gate, u / noise) so a chosen set of values can be
+    fed through the real formula deterministically. ``normal_values`` is
+    optional and only needed by callers whose ``mutate_batch`` calls
+    ``rng.normal`` (e.g. ``MutationGaussian``); ``MutationPolynomial``'s
+    formula only ever calls ``.random``, so it never touches that queue.
     """
 
-    def __init__(self, values):
+    def __init__(self, values, normal_values=None):
         self._values = list(values)
+        self._normal_values = list(normal_values) if normal_values is not None else []
 
     def random(self, size=None):
         return self._values.pop(0)
+
+    def normal(self, loc=0.0, scale=1.0, size=None):
+        return self._normal_values.pop(0)
 
 
 def _reference_delta_q(
@@ -1788,6 +1812,152 @@ class TestMutationPolynomialBatch:
     def test_overrides_mutate_batch(self):
         assert (
             type(MutationPolynomial(eta=20.0)).mutate_batch is not Mutation.mutate_batch
+        )
+
+
+# ---------------------------------------------------------------------------
+# MutationGaussian.mutate_batch
+#
+# NOTE: same caveat as TestMutationUniformBatch/TestMutationPolynomialBatch
+# above -- mutate_batch's output is NOT expected to be bit-identical to a
+# loop calling mutate() once per candidate, for any batch size (see the
+# "Notes" section of MutationGaussian.mutate_batch's docstring). None of the
+# tests below assert or rely on any such equivalence.
+# ---------------------------------------------------------------------------
+
+
+class TestMutationGaussianBatch:
+    def _range(self, dim):
+        lb = np.full(dim, -5.0)
+        ub = np.full(dim, 5.0)
+        return lb, ub
+
+    def test_output_shape(self):
+        op = MutationGaussian(prob=1.0, sigma=0.1, prob_var=0.5)
+        rng = np.random.default_rng(0)
+        n, dim = 7, DIM
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, self._range(dim), rng=rng)
+        assert result is not None
+        assert result.shape == (n, dim)
+
+    def test_prob_zero_returns_input_unchanged(self):
+        op = MutationGaussian(prob=0.0, sigma=1.0, prob_var=1.0)
+        rng = np.random.default_rng(0)
+        n, dim = 6, DIM
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, self._range(dim), rng=rng)
+        np.testing.assert_array_equal(result, candidates_batch)
+
+    def test_var_gate_pass_through_and_noise_exact(self):
+        # Fully scripted rng: gate/var_gate/noise draws are all fixed, so
+        # dimensions failing var_gate must come back exactly as `sub` (no
+        # noise applied), and dimensions passing var_gate must come back as
+        # exactly `sub + noise` for the scripted noise array. No branching
+        # formula to verify here (unlike MutationPolynomial), so this is a
+        # plain addition/gating check.
+        n, dim = 5, 4
+        lb = np.array([-3.0, 2.0, 0.0, -10.0])
+        ub = np.array([7.0, 2.5, 1.0, 10.0])
+        rng_data = np.random.default_rng(7)
+        sub = rng_data.uniform(-2.0, 2.0, size=(n, dim))
+        noise = rng_data.normal(0.0, 1.0, size=(n, dim))
+        # Checkerboard var_gate pattern with prob_var=0.5: threshold draw of
+        # 0.0 passes (0.0 < 0.5), 0.9 fails (0.9 >= 0.5).
+        var_draw = np.where((np.arange(n)[:, None] + np.arange(dim)) % 2 == 0, 0.0, 0.9)
+        passed = var_draw < 0.5
+        assert passed.any() and (~passed).any()
+
+        op = MutationGaussian(prob=1.0, sigma=1.0, prob_var=0.5)
+        scripted = _ScriptedRNG(
+            [
+                np.zeros(n),  # gate draw: all rows pass
+                var_draw,  # var_gate draw: checkerboard
+            ],
+            normal_values=[noise],  # noise draw: fully controlled
+        )
+        result = op.mutate_batch(sub, (lb, ub), rng=cast(np.random.Generator, scripted))
+        assert result is not None
+
+        expected_mutated = sub + noise
+        np.testing.assert_array_equal(result[~passed], sub[~passed])
+        np.testing.assert_array_equal(result[passed], expected_mutated[passed])
+
+    def test_zero_sigma_no_change(self):
+        # prob=1.0/prob_var=1.0 forces every element through the noise path,
+        # so sigma=0.0 returning the input byte-identically is what pins
+        # self.sigma as the scale actually passed to rng.normal (rather
+        # than, say, a hardcoded scale=1.0).
+        op = MutationGaussian(prob=1.0, sigma=0.0, prob_var=1.0)
+        rng = np.random.default_rng(0)
+        n, dim = 6, DIM
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, self._range(dim), rng=rng)
+        np.testing.assert_array_equal(result, candidates_batch)
+
+    def test_no_bounds_clipping(self):
+        # Deliberately large sigma and candidates near lb/ub: mutated values
+        # must be able to legitimately land outside [lb, ub], pinning the
+        # absence of clipping as a regression guard (mutate() itself never
+        # clips Gaussian mutation output; mutate_batch must not "fix" this
+        # by adding an np.clip that would be a silent behavior change).
+        op = MutationGaussian(prob=1.0, sigma=100.0, prob_var=1.0)
+        lb, ub = self._range(DIM)
+        candidates_batch = np.tile(ub, (20, 1))
+        rng = np.random.default_rng(0)
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        assert np.any(result > ub) or np.any(result < lb)
+
+    def test_prob_var_fractional_matches_expected_rate(self):
+        # var_gate=True dimensions change value with overwhelming
+        # probability under continuous Gaussian noise (exactly 0.0 noise has
+        # probability zero), so "value changed from input" is a reasonable
+        # proxy for "was gated" here.
+        dim = 6
+        n = 20
+        n_trials = 300
+        prob_var = 0.4
+        op = MutationGaussian(prob=1.0, sigma=1.0, prob_var=prob_var)
+        lb, ub = self._range(dim)
+        rng = np.random.default_rng(2)
+        changed = np.zeros((n, dim))
+        for _ in range(n_trials):
+            candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+            result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+            changed += result != candidates_batch
+        observed_rate = changed.sum() / (n * dim * n_trials)
+        np.testing.assert_allclose(observed_rate, prob_var, atol=0.05)
+
+    def test_fractional_prob_gates_some_rows_not_others(self):
+        op = MutationGaussian(prob=0.5, sigma=1.0, prob_var=1.0)
+        rng = np.random.default_rng(3)
+        n, dim = 20, DIM
+        lb, ub = self._range(dim)
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        row_unchanged = (result == candidates_batch).all(axis=1)
+        row_changed = (result != candidates_batch).any(axis=1)
+        assert row_unchanged.any()
+        assert row_changed.any()
+
+    def test_determinism_same_seed_same_output(self):
+        op = MutationGaussian(prob=0.7, sigma=0.5, prob_var=0.4)
+        dim = DIM
+        lb, ub = self._range(dim)
+        candidates_batch = np.random.default_rng(0).uniform(-2.0, 2.0, size=(15, dim))
+        result_a = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        result_b = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        np.testing.assert_array_equal(result_a, result_b)
+
+    def test_overrides_mutate_batch(self):
+        assert (
+            type(MutationGaussian(sigma=1.0)).mutate_batch is not Mutation.mutate_batch
         )
 
 
