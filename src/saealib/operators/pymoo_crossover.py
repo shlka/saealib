@@ -10,7 +10,7 @@ from saealib.operators.crossover import Crossover
 
 
 class _PymooVariableLike(Protocol):
-    """Structural interface of a ``pymoo.core.variable.Variable`` (e.g. ``Real``) instance."""
+    """Structural interface of a ``pymoo.core.variable.Variable`` (e.g. ``Real``)."""
 
     # pymoo's own stub types Variable.value as `object` (Variable.__init__'s
     # `value: Optional[object]` parameter), even though it always holds a

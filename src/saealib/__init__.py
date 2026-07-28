@@ -210,6 +210,8 @@ __all__ = [
 # ---------------------------------------------------------------------------
 
 _TIER2_MAP: dict[str, str] = {
+    # algorithms (less common)
+    "PymooAlgorithm": "saealib.algorithms",
     # comparators (less common)
     "Dominator": "saealib.comparators",
     "EpsilonDominanceComparator": "saealib.comparators",

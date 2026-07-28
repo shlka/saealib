@@ -24,6 +24,9 @@ from saealib.acquisition import SMSEGOAcquisition as SMSEGOAcquisition
 from saealib.algorithms import GA as GA
 from saealib.algorithms import PSO as PSO
 from saealib.algorithms import Algorithm as Algorithm
+
+# algorithms (less common)
+from saealib.algorithms import PymooAlgorithm as PymooAlgorithm
 from saealib.api import Result as Result
 from saealib.api import maximize as maximize
 from saealib.api import minimize as minimize
