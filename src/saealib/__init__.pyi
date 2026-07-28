@@ -140,6 +140,7 @@ from saealib.problem import EqualityConstraint as EqualityConstraint
 from saealib.problem import GradientRepairHandler as GradientRepairHandler
 from saealib.problem import InequalityConstraint as InequalityConstraint
 from saealib.problem import Problem as Problem
+from saealib.problem import PymooProblem as PymooProblem
 from saealib.problem import StaticToleranceHandler as StaticToleranceHandler
 from saealib.problem import exponential_epsilon_schedule as exponential_epsilon_schedule
 from saealib.problem import linear_epsilon_schedule as linear_epsilon_schedule

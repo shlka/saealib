@@ -9,6 +9,7 @@ from saealib.problem.constraint import (
     linear_epsilon_schedule,
 )
 from saealib.problem.problem import Problem
+from saealib.problem.pymoo_problem import PymooProblem
 
 __all__ = [
     "ConstraintHandler",
@@ -17,6 +18,7 @@ __all__ = [
     "GradientRepairHandler",
     "InequalityConstraint",
     "Problem",
+    "PymooProblem",
     "StaticToleranceHandler",
     "exponential_epsilon_schedule",
     "linear_epsilon_schedule",

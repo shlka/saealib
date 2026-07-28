@@ -1,0 +1,114 @@
+"""Tests for PymooProblem against the real pymoo library."""
+
+from __future__ import annotations
+
+import numpy as np
+import pytest
+from pymoo.core.problem import Problem as PmProb
+from pymoo.problems import get_problem
+
+from saealib import minimize
+from saealib.exceptions import ValidationError
+from saealib.execution.evaluator import SerialEvaluator
+from saealib.problem.constraint import EqualityConstraint, InequalityConstraint
+from saealib.problem.pymoo_problem import PymooProblem
+from saealib.variables import ContinuousVariable
+
+
+class _CountedTinyEq(PmProb):
+    """Custom pymoo problem with both G and H, counting real _evaluate calls."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            n_var=2,
+            n_obj=1,
+            n_ieq_constr=1,
+            n_eq_constr=1,
+            xl=np.array([-1.0, -1.0]),
+            xu=np.array([1.0, 1.0]),
+        )
+        self.n_evaluate_calls = 0
+
+    def _evaluate(self, x, out, *args, **kwargs):
+        self.n_evaluate_calls += 1
+        out["F"] = np.sum(x**2, axis=1, keepdims=True)
+        out["G"] = (x[:, 0] - 0.5).reshape(-1, 1)
+        out["H"] = (x[:, 1] - 0.2).reshape(-1, 1)
+
+
+class TestPymooProblem:
+    def test_dim_bounds_and_objectives_from_zdt1(self):
+        zdt1 = get_problem("zdt1")
+        problem = PymooProblem(zdt1)
+        assert problem.dim == 30
+        assert problem.n_obj == 2
+        np.testing.assert_array_equal(problem.direction, np.array([-1.0, -1.0]))
+        np.testing.assert_allclose(problem.lb, zdt1.xl)
+        np.testing.assert_allclose(problem.ub, zdt1.xu)
+        assert all(isinstance(v, ContinuousVariable) for v in problem.variables)
+
+    def test_evaluate_matches_pymoo_numerically(self):
+        zdt1 = get_problem("zdt1")
+        problem = PymooProblem(zdt1)
+        rng = np.random.default_rng(0)
+        for _ in range(5):
+            x = rng.uniform(zdt1.xl, zdt1.xu)
+            out = zdt1.evaluate(x[np.newaxis, :], return_as_dictionary=True)
+            np.testing.assert_allclose(problem.evaluate(x), out["F"][0])
+
+    def test_constrained_g_matches_verbatim(self):
+        bnh = get_problem("bnh")
+        problem = PymooProblem(bnh)
+        assert problem.n_constraints == bnh.n_ieq_constr
+        assert all(isinstance(c, InequalityConstraint) for c in problem.constraints)
+        rng = np.random.default_rng(1)
+        x = rng.uniform(bnh.xl, bnh.xu)
+        g_expected = bnh.evaluate(x[np.newaxis, :], return_as_dictionary=True)["G"][0]
+        g_actual, _ = problem.evaluate_constraints(x)
+        np.testing.assert_allclose(g_actual, g_expected)
+
+    def test_equality_constraint_is_mapped(self):
+        pymoo_problem = _CountedTinyEq()
+        problem = PymooProblem(pymoo_problem)
+        assert problem.n_constraints == 2
+        assert isinstance(problem.constraints[0], InequalityConstraint)
+        assert isinstance(problem.constraints[1], EqualityConstraint)
+
+        x = np.array([0.3, 0.1])
+        g, _ = problem.evaluate_constraints(x)
+        np.testing.assert_allclose(g, [x[0] - 0.5, x[1] - 0.2])
+
+    def test_eval_cache_avoids_redundant_pymoo_calls(self):
+        pymoo_problem = _CountedTinyEq()
+        problem = PymooProblem(pymoo_problem)
+        evaluator = SerialEvaluator()
+        x = np.random.default_rng(2).uniform(-1.0, 1.0, size=(5, 2))
+        evaluator.evaluate_batch(x, problem)
+        # one evaluate_constraints() (2 constraints) + one evaluate() per row;
+        # the cache must collapse this to exactly one real pymoo call per row.
+        assert pymoo_problem.n_evaluate_calls == 5
+
+    def test_missing_bounds_raises_validation_error(self):
+        class Unbounded(PmProb):
+            def __init__(self):
+                super().__init__(n_var=2, n_obj=1)
+
+            def _evaluate(self, x, out, *args, **kwargs):
+                out["F"] = np.sum(x**2, axis=1, keepdims=True)
+
+        with pytest.raises(ValidationError):
+            PymooProblem(Unbounded())
+
+    def test_end_to_end_minimize(self):
+        sphere = get_problem("sphere")
+        problem = PymooProblem(sphere)
+        result = minimize(
+            problem,
+            surrogate="rbf",
+            max_fe=100,
+            pop_size=10,
+            seed=0,
+            verbose=False,
+        )
+        assert result.fe > 0
+        assert np.isfinite(result.f).all()
