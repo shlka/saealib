@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from saealib._dispatch import batch_override_is_consistent
 from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent, PostCrossoverEvent, PostMutationEvent
 from saealib.context import OptimizationState
@@ -354,13 +355,16 @@ class GA(Algorithm):
         """Generate post-crossover offspring for a batch of parent groups.
 
         Takes the batched path only when ``self.crossover`` overrides
-        :meth:`Crossover.crossover_batch` (checked via a class-attribute
-        identity comparison, *before* any RNG draw) and the problem is
-        all-continuous (``not mixed``); otherwise runs the existing per-pair
-        loop unchanged. If the batch call declines (returns ``None``) for
-        this particular invocation, falls back to the per-pair loop as well.
-        ``post_crossover`` fires exactly once per pair regardless of which
-        path is taken.
+        :meth:`Crossover.crossover_batch` at least as derived in the MRO as
+        it overrides :meth:`Crossover.crossover` (checked via
+        :func:`saealib._dispatch.batch_override_is_consistent`, *before* any
+        RNG draw -- see that function's docstring for why a plain
+        class-attribute identity check is insufficient once a user subclass
+        overrides only the scalar method) and the problem is all-continuous
+        (``not mixed``); otherwise runs the existing per-pair loop unchanged.
+        If the batch call declines (returns ``None``) for this particular
+        invocation, falls back to the per-pair loop as well. ``post_crossover``
+        fires exactly once per pair regardless of which path is taken.
 
         Parameters
         ----------
@@ -383,8 +387,8 @@ class GA(Algorithm):
         n_pair = parents_batch.shape[0]
         n_children = self.crossover.n_children
         dim = ctx.dim
-        crossover_batch_supported = (
-            type(self.crossover).crossover_batch is not Crossover.crossover_batch
+        crossover_batch_supported = batch_override_is_consistent(
+            self.crossover, "crossover_batch", "crossover"
         )
         crossover_batch_ok = (not mixed) and crossover_batch_supported
 
@@ -443,9 +447,13 @@ class GA(Algorithm):
         """Generate post-mutation offspring for a batch of candidates.
 
         Takes the batched path only when ``self.mutation`` overrides
-        :meth:`Mutation.mutate_batch` (checked via a class-attribute
-        identity comparison, *before* any RNG draw) and the problem is
-        all-continuous (``not mixed``); ``prob`` gating happens inside
+        :meth:`Mutation.mutate_batch` at least as derived in the MRO as it
+        overrides :meth:`Mutation.mutate` (checked via
+        :func:`saealib._dispatch.batch_override_is_consistent`, *before* any
+        RNG draw -- see that function's docstring for why a plain
+        class-attribute identity check is insufficient once a user subclass
+        overrides only the scalar method) and the problem is all-continuous
+        (``not mixed``); ``prob`` gating happens inside
         ``mutate_batch`` itself, so no gate array is drawn here. Otherwise
         runs the existing per-individual loop unchanged. If the batch call
         declines (returns ``None``) for this particular invocation, falls
@@ -478,8 +486,8 @@ class GA(Algorithm):
         np.ndarray
             Mutated candidates. shape = (n, dim)
         """
-        mutation_batch_supported = (
-            type(self.mutation).mutate_batch is not Mutation.mutate_batch
+        mutation_batch_supported = batch_override_is_consistent(
+            self.mutation, "mutate_batch", "mutate"
         )
         mutation_batch_ok = (not mixed) and mutation_batch_supported
 

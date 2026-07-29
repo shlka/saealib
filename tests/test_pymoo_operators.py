@@ -18,6 +18,7 @@ from saealib import (
     TruncationSelection,
     minimize,
 )
+from saealib._dispatch import batch_override_is_consistent
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.operators import PymooCrossover, PymooMutation
@@ -459,6 +460,25 @@ def _make_mixed_ctx(n_pop=8, seed=42):
         pareto_archive=pareto_arc,
         rng=np.random.default_rng(seed + 1),
     )
+
+
+class TestPymooOperatorsDispatchConsistency:
+    """PymooCrossover/PymooMutation define crossover/crossover_batch (resp.
+    mutate/mutate_batch) together in the same adapter class, so a plain,
+    unsubclassed instance must remain "consistent" under
+    batch_override_is_consistent (Issue #224 follow-up fix) exactly like
+    every built-in operator — this is what lets GA still engage the batch
+    path for pymoo-wrapped operators (see
+    TestGABatchDispatch.test_continuous_problem_calls_do_once_each below,
+    which is the end-to-end proof)."""
+
+    def test_pymoo_crossover_consistent(self):
+        op = PymooCrossover(SBX(eta=15))
+        assert batch_override_is_consistent(op, "crossover_batch", "crossover") is True
+
+    def test_pymoo_mutation_consistent(self):
+        op = PymooMutation(PM(eta=20))
+        assert batch_override_is_consistent(op, "mutate_batch", "mutate") is True
 
 
 class TestGABatchDispatch:

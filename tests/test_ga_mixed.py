@@ -564,3 +564,99 @@ class TestMutateCandidatesInterleaveOrder:
                 wrong_order[i], (lb, ub), wrong_rng, ctx
             )
         assert not np.allclose(actual, wrong_order)
+
+
+# ---------------------------------------------------------------------------
+# GA batch-dispatch consistency regression (Issue #224 follow-up fix):
+# subclassing a batch-capable built-in operator and overriding only the
+# scalar method must not fall through to the inherited (stale) batch method.
+# ---------------------------------------------------------------------------
+
+
+class _CustomSBX(CrossoverSBX):
+    """Overrides only scalar crossover() with a no-op (returns the first
+    n_children parents unchanged); crossover_batch is inherited from
+    CrossoverSBX and would silently produce real SBX offspring instead if
+    GA dispatched to it directly."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.calls = 0
+
+    def crossover(self, parent, bounds=None, rng=np.random.default_rng()):
+        self.calls += 1
+        return parent[: self.n_children].copy()
+
+
+class _CustomMutation(MutationPolynomial):
+    """Overrides only scalar mutate() with a no-op; mutate_batch is
+    inherited from MutationPolynomial and would silently apply real
+    polynomial mutation instead if GA dispatched to it directly."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.calls = 0
+
+    def mutate(self, p, mutate_range, rng=np.random.default_rng()):
+        self.calls += 1
+        return p.copy()
+
+
+class TestGABatchDispatchConsistency:
+    def test_custom_crossover_scalar_override_is_actually_invoked(self):
+        custom_crossover = _CustomSBX(1.0, eta=20.0)
+        ga = GA(
+            crossover=custom_crossover,
+            mutation=MutationPolynomial(prob=0.0, eta=20.0, prob_var=0.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        problem = _make_problem_continuous()
+        ctx = _make_ctx_for(problem, n_pop=6)
+        n_offspring = 8
+        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=n_offspring)
+
+        # The scalar override must actually have been invoked -- if GA
+        # instead dispatched to the inherited (stale) crossover_batch, this
+        # counter would stay at 0.
+        assert custom_crossover.calls > 0
+
+        # crossover() is a no-op copy of the parents, so with mutation
+        # disabled (prob=0.0) every offspring row must exactly equal some
+        # row drawn from the initial population -- real SBX offspring
+        # (produced by the inherited crossover_batch) would essentially
+        # never coincide exactly with a parent, for continuous-valued data.
+        x = offspring.get_array("x")
+        pop_x = ctx.population.get_array("x")
+        for row in x:
+            assert np.any(np.all(np.isclose(pop_x, row), axis=1))
+
+    def test_custom_mutation_scalar_override_is_actually_invoked(self):
+        custom_mutation = _CustomMutation(prob=1.0, eta=20.0, prob_var=1.0)
+        ga = GA(
+            # crossover disabled (prob=0.0) so offspring going into mutation
+            # are exact copies of parents, isolating the mutation dispatch.
+            crossover=CrossoverSBX(0.0, eta=20.0),
+            mutation=custom_mutation,
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        problem = _make_problem_continuous()
+        ctx = _make_ctx_for(problem, n_pop=6)
+        n_offspring = 8
+        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=n_offspring)
+
+        # The scalar override must actually have been invoked -- if GA
+        # instead dispatched to the inherited (stale) mutate_batch, this
+        # counter would stay at 0.
+        assert custom_mutation.calls > 0
+
+        # mutate() is a no-op copy, and crossover is disabled, so every
+        # offspring row must exactly equal some row from the initial
+        # population -- real polynomial mutation (produced by the inherited
+        # mutate_batch, with prob_var=1.0 perturbing every dimension) would
+        # essentially never coincide exactly with a parent.
+        x = offspring.get_array("x")
+        pop_x = ctx.population.get_array("x")
+        for row in x:
+            assert np.any(np.all(np.isclose(pop_x, row), axis=1))

@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 from scipy.spatial import cKDTree  # type: ignore  # cKDTree has no bundled type stubs
 
+from saealib._dispatch import batch_override_is_consistent
 from saealib.comparators import Dominator
 from saealib.population.population import Individual, Population, PopulationAttribute
 
@@ -367,8 +368,14 @@ class ParetoMixin:
             # Opt-in acceleration hook (see Dominator.dominates_many): only
             # engage the O(n) broadcast path when the dominator supports it,
             # there is no NaN to special-case, and both f_new/f_arr exist.
-            dominates_many_supported = (
-                type(self.dominator).dominates_many is not Dominator.dominates_many
+            # "Supports it" is checked via batch_override_is_consistent
+            # rather than a plain class-attribute identity check, so that a
+            # subclass overriding only dominance_matrix()/dominates() (and
+            # thereby inheriting a now-stale dominates_many()) correctly
+            # falls back to the scalar loop below instead of silently using
+            # the ancestor's inconsistent batch implementation.
+            dominates_many_supported = batch_override_is_consistent(
+                self.dominator, "dominates_many", "dominance_matrix", "dominates"
             )
             use_fast_path = (
                 dominates_many_supported
@@ -396,7 +403,13 @@ class ParetoMixin:
 
                 both_feasible = new_feasible & ex_feasible
                 if np.any(both_feasible):
-                    new_dom, ex_dom = self.dominator.dominates_many(
+                    # This branch only runs when dominates_many_supported is
+                    # True (see use_fast_path above), i.e. dominates_many is
+                    # guaranteed non-None here; ty can't see that invariant
+                    # across batch_override_is_consistent's function
+                    # boundary, hence the ignore (same convention as
+                    # tests/test_population.py's _fast_masks helper).
+                    new_dom, ex_dom = self.dominator.dominates_many(  # ty: ignore[not-iterable]
                         f_new, f_arr, self.direction
                     )
                     new_dominates_existing |= both_feasible & new_dom

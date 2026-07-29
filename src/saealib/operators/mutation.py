@@ -230,14 +230,20 @@ class MutationUniform(Mutation):
         ``rng.random() >= self.prob`` early return) selects which rows are
         touched at all; a per-dimension ``prob_var`` gate is then drawn only
         for the selected rows, and only dimensions passing that gate are
-        replaced with a value drawn ``Uniform(lb[i], ub[i])``. Rows that
-        fail the individual-level gate are returned byte-identical to the
-        input; dimensions failing the per-dimension gate on a selected row
-        keep their original value exactly (``np.where`` copies rather than
-        recomputes them). If no row passes the individual-level gate
-        (``gate.sum() == 0``), no further random draws happen at all and the
-        input is returned unchanged, mirroring
-        ``PymooMutation.mutate_batch``'s empty-gate skip.
+        replaced with a value drawn ``Uniform(lb[i], ub[i])``. The
+        replacement is drawn only for the positions ``var_gate`` actually
+        selects (via boolean fancy-indexing into the broadcast ``lb``/``ub``
+        arrays, then ``Generator.uniform``'s array-valued ``low``/``high``
+        form with no explicit ``size``), rather than for every ``(row, dim)``
+        position unconditionally -- this avoids drawing (and validating the
+        range of) a replacement for a dimension that ``var_gate`` will
+        discard anyway, which matters when that dimension is unbounded (see
+        Notes). Rows that fail the individual-level gate are returned
+        byte-identical to the input; dimensions failing the per-dimension
+        gate on a selected row keep their original value exactly. If no row
+        passes the individual-level gate (``gate.sum() == 0``), no further
+        random draws happen at all and the input is returned unchanged,
+        mirroring ``PymooMutation.mutate_batch``'s empty-gate skip.
 
         Parameters
         ----------
@@ -261,11 +267,13 @@ class MutationUniform(Mutation):
         only when that gate passes, a second value for the replacement --
         an interleaved, data-dependent draw count (``dim + k`` draws, where
         ``k`` is however many dimensions happen to pass the gate). A
-        vectorized implementation cannot reproduce that sequence: it must
-        draw a full ``(dim,)`` (or, batched, ``(k, dim)``) gate array in one
-        call and a full replacement-value array in another, since NumPy
-        vectorized calls cannot conditionally skip drawing per element. That
-        is a different total draw count and a different interleaving than
+        vectorized implementation cannot reproduce that exact sequence: it
+        must draw a full ``(dim,)`` (or, batched, ``(k, dim)``) gate array in
+        one call, then a single replacement-value draw sized to however many
+        positions ``var_gate`` selected (``var_gate.sum()`` values, not a
+        full ``(k, dim)`` array), since NumPy vectorized calls cannot
+        conditionally skip drawing per element within a single call. That is
+        a different total draw count and a different interleaving than
         ``mutate()``'s, for any ``dim > 1`` and generally even for
         ``dim == 1``. Consequently, this method's output is **not**
         bit-identical to calling :meth:`mutate` once per candidate in a
@@ -293,8 +301,19 @@ class MutationUniform(Mutation):
         sub = candidates_batch[gate]
         k = sub.shape[0]
         var_gate = rng.random((k, dim)) < p_var
-        replacement = rng.uniform(lb, ub, size=(k, dim))
-        mutated = np.where(var_gate, replacement, sub)
+        mutated = sub.copy()
+        if np.any(var_gate):
+            # Draw a replacement only for the positions var_gate actually
+            # selects, rather than for every (row, dim) position
+            # unconditionally: rng.uniform validates the range of every
+            # position it draws for, even ones that would be discarded by
+            # np.where afterwards, so an unfiltered draw raises OverflowError
+            # as soon as any unbounded (lb=-inf/ub=inf) dimension is present
+            # anywhere in the batch -- regardless of whether that dimension
+            # is ever actually gated in.
+            lb_b = np.broadcast_to(lb, (k, dim))
+            ub_b = np.broadcast_to(ub, (k, dim))
+            mutated[var_gate] = rng.uniform(lb_b[var_gate], ub_b[var_gate])
         result[gate] = mutated
         return result
 

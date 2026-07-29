@@ -1570,6 +1570,63 @@ class TestMutationUniformBatch:
         assert type(MutationUniform()).mutate_batch is not Mutation.mutate_batch
 
 
+class TestMutationUniformBatchUnboundedDimensions:
+    """Regression for Issue #224's Fix 4: mutate_batch used to draw a
+    replacement for every (row, dim) position unconditionally, via
+    ``rng.uniform(lb, ub, size=(k, dim))``, even for positions var_gate
+    would discard -- raising OverflowError as soon as ANY dimension in the
+    batch was unbounded, regardless of whether that dimension was ever
+    actually gated in. The fix draws a replacement only for the positions
+    var_gate selects, mirroring how the scalar mutate() only ever calls
+    rng.uniform for a dimension that actually passed its per-dimension
+    gate."""
+
+    def test_prob_var_zero_with_infinite_bounds_does_not_raise(self):
+        op = MutationUniform(prob=1.0, prob_var=0.0)
+        lb = np.array([-np.inf, -np.inf])
+        ub = np.array([np.inf, np.inf])
+        batch = np.array([[1.0, 2.0], [3.0, 4.0]])
+        rng = np.random.default_rng(0)
+        result = op.mutate_batch(batch, (lb, ub), rng=rng)
+        np.testing.assert_array_equal(result, batch)
+
+    def test_mixed_bounded_unbounded_dims_no_raise_bounded_dim_in_bounds(self):
+        # seed=0 with this exact (n=5, dim=2, prob=1.0, prob_var=0.3)
+        # configuration draws a var_gate that never selects the unbounded
+        # column (1) but does select the bounded column (0) for rows 3-4 --
+        # verified via a standalone reconstruction of the gate/var_gate draw
+        # sequence, asserted below as the test's precondition so the test
+        # cannot silently go vacuous if the draw order ever changes.
+        lb = np.array([-5.0, -np.inf])
+        ub = np.array([5.0, np.inf])
+        n, dim = 5, 2
+        prob, prob_var = 1.0, 0.3
+
+        check_rng = np.random.default_rng(0)
+        gate = check_rng.random(n) < prob
+        var_gate = check_rng.random((int(gate.sum()), dim)) < prob_var
+        assert not var_gate[:, 1].any(), "precondition: unbounded col never gated"
+        assert var_gate[:, 0].any(), "precondition: bounded col gated at least once"
+
+        op = MutationUniform(prob=prob, prob_var=prob_var)
+        batch = np.full((n, dim), 100.0)
+        rng = np.random.default_rng(0)
+        result = op.mutate_batch(batch, (lb, ub), rng=rng)
+        assert result is not None
+
+        # Unbounded column is untouched (never gated in, and no crash).
+        np.testing.assert_array_equal(result[:, 1], batch[:, 1])
+        # Bounded column: gated positions land within [lb, ub]; ungated
+        # positions are byte-identical to the input.
+        changed = result[gate][var_gate[:, 0], 0]
+        assert changed.size > 0
+        assert np.all(changed >= lb[0]) and np.all(changed <= ub[0])
+        unchanged_mask = ~var_gate[:, 0]
+        np.testing.assert_array_equal(
+            result[gate][unchanged_mask, 0], batch[gate][unchanged_mask, 0]
+        )
+
+
 # ---------------------------------------------------------------------------
 # MutationPolynomial.mutate_batch
 #

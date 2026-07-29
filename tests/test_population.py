@@ -1470,3 +1470,64 @@ class _CountingDominator(Dominator):
     def dominates_many(self, fa, f_matrix, direction=None):
         self.calls += 1
         return self._inner.dominates_many(fa, f_matrix, direction)
+
+
+# ===========================================================================
+# ParetoMixin dispatch-consistency regression (Issue #224 follow-up fix)
+# ===========================================================================
+#
+# A Dominator subclass that overrides only `dominance_matrix()` (and thereby
+# `dominates()`, which is derived from it in the base class) while leaving
+# `dominates_many()` inherited unchanged must NOT have its stale
+# `dominates_many()` used by ParetoArchive.add() -- doing so would silently
+# ignore the subclass's overridden dominance semantics. See
+# batch_override_is_consistent (saealib._dispatch).
+
+
+class _ReverseDominanceMatrixDominator(ParetoDominator):
+    """Overrides only ``dominance_matrix`` (reversing the relation via
+    transpose, mirroring test_moo.py's ``ReverseParetoDominator``);
+    ``dominates_many`` is inherited unchanged from ``ParetoDominator`` and
+    is therefore stale/inconsistent with the overridden dominance_matrix."""
+
+    def dominance_matrix(self, f, direction=None):
+        return super().dominance_matrix(f, direction).T
+
+
+class TestParetoMixinDispatchConsistency:
+    def test_add_uses_scalar_dominates_not_stale_dominates_many(self):
+        dominator = _ReverseDominanceMatrixDominator()
+        # Sanity: this dominator's dominates_many is indeed inherited
+        # unchanged (the scenario this fix targets).
+        assert type(dominator).dominates_many is ParetoDominator.dominates_many
+        # ... yet dominance_matrix (and therefore dominates(), derived from
+        # it) IS overridden, so the two disagree for this pair.
+        f_arr = np.array([[1.0, 1.0]])
+        f_new = np.array([[2.0, 2.0]])
+        # Normal Pareto semantics: f_new=[2,2] is dominated by f_arr=[1,1].
+        # dominates_many (stale, forward semantics) would say f_arr
+        # dominates f_new.
+        fa_dom, dom_fa = ParetoDominator().dominates_many(f_new[0], f_arr)
+        assert not fa_dom.any() and dom_fa.any()
+        # But this dominator's overridden (reversed) dominance_matrix flips
+        # that: dominates() now says f_new dominates f_arr.
+        assert dominator.dominates(f_new[0], f_arr[0]) is True
+        assert dominator.dominates(f_arr[0], f_new[0]) is False
+
+        archive = _build_raw_archive(1, f_arr, None, None, dominator, 0.0)
+        real_idx = archive.add(x=np.array([999.0]), f=f_new[0])
+
+        # Scalar (dominates()-based) reference: f_new dominates the sole
+        # existing row, so it survives and the existing row is evicted.
+        ref_existing_dom, ref_new_dom = _loop_masks(
+            f_new[0], 0.0, f_arr, None, dominator, None, 0.0
+        )
+        assert not ref_existing_dom.any()
+        assert ref_new_dom.all()
+        assert real_idx == 0  # existing row evicted, f_new takes index 0
+        assert len(archive) == 1
+        np.testing.assert_array_equal(archive.get_array("f")[0], f_new[0])
+
+        # Had ParetoArchive.add() dispatched to the stale dominates_many
+        # instead (the pre-fix bug), it would have rejected f_new (real_idx
+        # == -1) and kept the original row -- the opposite outcome.
