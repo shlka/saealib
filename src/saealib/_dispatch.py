@@ -1,8 +1,7 @@
 """Internal helper for batch-API dispatch consistency (Issue #224 fix).
 
-Used by GA (crossover_batch/mutate_batch dispatch) and ParetoMixin
-(dominates_many dispatch) to decide whether an object's batch method
-reflects its scalar method(s), accounting for subclassing.
+Used by GA to decide whether an operator's crossover_batch/mutate_batch method
+reflects its scalar method, accounting for subclassing.
 """
 
 from __future__ import annotations
@@ -31,7 +30,7 @@ def batch_override_is_consistent(
         Name of the (optional, opt-in) batch method, e.g. "crossover_batch".
     *scalar_methods : str
         Name(s) of the scalar method(s) the batch method must stay
-        consistent with, e.g. "crossover", or ("dominance_matrix", "dominates").
+        consistent with, e.g. "crossover".
 
     Returns
     -------

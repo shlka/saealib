@@ -2,7 +2,7 @@
 
 Covers Issue #224's follow-up fix: ``type(obj).batch_method is not
 Base.batch_method`` has a blind spot when a user subclasses a batch-capable
-built-in operator/dominator and overrides only the scalar method(s) --
+built-in operator and overrides only the scalar method(s) --
 ``batch_override_is_consistent`` closes that gap.
 """
 
@@ -14,7 +14,6 @@ import numpy as np
 import pytest
 
 from saealib._dispatch import batch_override_is_consistent
-from saealib.comparators import EpsilonDominator, ParetoDominator
 from saealib.operators.crossover import (
     CrossoverBLXAlpha,
     CrossoverCategorical,
@@ -40,7 +39,7 @@ from saealib.operators.mutation import (
 
 
 class _Base(ABC):
-    """Mirrors the real ``Crossover``/``Mutation``/``Dominator`` shape:
+    """Mirrors the real ``Crossover``/``Mutation`` shape:
     ``scalar`` is abstract (every concrete subclass MUST override it), while
     ``batch`` has a concrete default and is optional to override."""
 
@@ -140,7 +139,7 @@ class TestBatchOverrideIsConsistent:
 
 
 # ---------------------------------------------------------------------------
-# Built-in Crossover/Mutation/Dominator regression: none of commits 7-12's
+# Built-in Crossover/Mutation regression: none of commits 7-12's
 # batch overrides should regress -- every built-in operator's plain,
 # unsubclassed instance must still be found "consistent".
 # ---------------------------------------------------------------------------
@@ -175,18 +174,9 @@ class TestBuiltinOperatorsRemainConsistent:
     def test_builtin_mutation_consistent(self, op):
         assert batch_override_is_consistent(op, "mutate_batch", "mutate") is True
 
-    @pytest.mark.parametrize("dominator", [ParetoDominator(), EpsilonDominator(0.1)])
-    def test_builtin_dominator_consistent(self, dominator):
-        assert (
-            batch_override_is_consistent(
-                dominator, "dominates_many", "dominance_matrix", "dominates"
-            )
-            is True
-        )
-
 
 # ---------------------------------------------------------------------------
-# The concrete CustomSBX / custom-Dominator scenarios from the bug report.
+# The concrete CustomSBX / custom-Mutation scenarios from the bug report.
 # ---------------------------------------------------------------------------
 
 
@@ -208,18 +198,6 @@ class _CustomMutation(MutationUniform):
         return p.copy()
 
 
-class _CustomDominator(ParetoDominator):
-    """Overrides only dominance_matrix(); dominates_many is inherited from
-    ParetoDominator and would go stale/inconsistent if dispatched to
-    directly."""
-
-    def dominance_matrix(self, f, direction=None):
-        # Reversed dominance: row i dominates row j iff the base says the
-        # opposite -- deliberately different from ParetoDominator's real
-        # semantics, so a stale dominates_many() is empirically detectable.
-        return ~super().dominance_matrix(f, direction)
-
-
 class TestCustomSubclassScenarios:
     def test_custom_sbx_scalar_only_override_is_inconsistent(self):
         op = _CustomSBX(prob=1.0, eta=15.0)
@@ -228,12 +206,3 @@ class TestCustomSubclassScenarios:
     def test_custom_mutation_scalar_only_override_is_inconsistent(self):
         op = _CustomMutation(prob=1.0, prob_var=0.5)
         assert batch_override_is_consistent(op, "mutate_batch", "mutate") is False
-
-    def test_custom_dominator_dominance_matrix_only_override_is_inconsistent(self):
-        dom = _CustomDominator()
-        assert (
-            batch_override_is_consistent(
-                dom, "dominates_many", "dominance_matrix", "dominates"
-            )
-            is False
-        )

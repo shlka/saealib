@@ -7,7 +7,6 @@ from typing import Any
 import numpy as np
 from scipy.spatial import cKDTree  # type: ignore  # cKDTree has no bundled type stubs
 
-from saealib._dispatch import batch_override_is_consistent
 from saealib.comparators import Dominator
 from saealib.population.population import Individual, Population, PopulationAttribute
 
@@ -365,30 +364,9 @@ class ParetoMixin:
                 f_arr is not None and np.any(np.isnan(f_arr))
             )
 
-            # Opt-in acceleration hook (see Dominator.dominates_many): only
-            # engage the O(n) broadcast path when the dominator supports it,
-            # there is no NaN to special-case, and both f_new/f_arr exist.
-            # "Supports it" is checked via batch_override_is_consistent
-            # rather than a plain class-attribute identity check, so that a
-            # subclass overriding only dominance_matrix()/dominates() (and
-            # thereby inheriting a now-stale dominates_many()) correctly
-            # falls back to the scalar loop below instead of silently using
-            # the ancestor's inconsistent batch implementation.
-            dominates_many_supported = batch_override_is_consistent(
-                self.dominator, "dominates_many", "dominance_matrix", "dominates"
-            )
-            use_fast_path = (
-                dominates_many_supported
-                and not has_nan
-                and f_new is not None
-                and f_arr is not None
-            )
+            # dominates_many requires NaN-free objective values.
+            use_fast_path = not has_nan and f_new is not None and f_arr is not None
 
-            # Hoisted above the `if use_fast_path:` block below (rather than
-            # declared inside it) so that both names stay bound regardless
-            # of whether use_fast_path flips to False partway through that
-            # block (dominates_many declining a specific call) -- the
-            # second `if use_fast_path:` further down reads them.
             existing_dominates_new = np.zeros(n, dtype=bool)
             new_dominates_existing = np.zeros(n, dtype=bool)
 
@@ -414,23 +392,13 @@ class ParetoMixin:
                     # meaningful (e.g. non-positive under multiplicative
                     # epsilon-dominance's f > 0 requirement), so including
                     # them in the call -- even though their result would
-                    # later be discarded by the mask -- can crash. Also,
-                    # dominates_many is an opt-in hook (see Dominator
-                    # docstring) that may decline any individual call by
-                    # returning None even when dominates_many_supported is
-                    # True; when it does, fall back to the scalar per-row
-                    # loop for the whole comparison instead of assuming the
-                    # tuple unpack below is safe.
+                    # later be discarded by the mask -- can crash.
                     feasible_idx = np.where(both_feasible)[0]
-                    dominates_many_result = self.dominator.dominates_many(
+                    new_dom, ex_dom = self.dominator.dominates_many(
                         f_new, f_arr[feasible_idx], self.direction
                     )
-                    if dominates_many_result is None:
-                        use_fast_path = False
-                    else:
-                        new_dom, ex_dom = dominates_many_result
-                        new_dominates_existing[feasible_idx] |= new_dom
-                        existing_dominates_new[feasible_idx] |= ex_dom
+                    new_dominates_existing[feasible_idx] |= new_dom
+                    existing_dominates_new[feasible_idx] |= ex_dom
 
             if use_fast_path:
                 if existing_dominates_new.any():

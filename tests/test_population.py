@@ -1058,13 +1058,7 @@ def _fast_masks(
         # including them in the call could crash even though their result
         # would be discarded by the mask anyway.
         feasible_idx = np.where(both_feasible)[0]
-        # Caller (_check_scenario) only invokes this helper when the
-        # dominator overrides dominates_many at the type level; it doesn't
-        # (unlike ParetoMixin.add()) additionally guard against a per-call
-        # None decline, so the tuple unpack here is not provably safe to a
-        # type checker -- hence the ignore (unlike archive.py's now-guarded
-        # unpack, see that file's comment for the contrast).
-        new_dom, ex_dom = dominator.dominates_many(  # ty: ignore[not-iterable]
+        new_dom, ex_dom = dominator.dominates_many(
             f_new, f_arr[feasible_idx], direction
         )
         new_dominates_existing[feasible_idx] |= new_dom
@@ -1141,15 +1135,7 @@ def _check_scenario(
     has_nan = (f_new is not None and np.any(np.isnan(f_new))) or (
         f_arr is not None and np.any(np.isnan(f_arr))
     )
-    dominates_many_supported = (
-        type(dominator).dominates_many is not Dominator.dominates_many
-    )
-    can_use_fast = (
-        dominates_many_supported
-        and f_arr is not None
-        and f_new is not None
-        and not has_nan
-    )
+    can_use_fast = f_arr is not None and f_new is not None and not has_nan
     if can_use_fast:
         fast_existing_dom, fast_new_dom = _fast_masks(
             f_new, cv_new, f_arr, cv_arr, dominator, direction, eps_cv
@@ -1279,7 +1265,7 @@ class TestParetoMixinFastPathEquivalence:
         _check_scenario(1, f_arr, cv_arr, np.array([0.5, 0.5]), 0.0, ParetoDominator())
 
     # -----------------------------------------------------------------------
-    # 3. Schema without "f" and/or "cv" — fast path must decline
+    # 3. Schema without "f" and/or "cv" — fast path preconditions
     # -----------------------------------------------------------------------
     def test_no_f_attribute_wipes_archive(self) -> None:
         """
@@ -1378,7 +1364,7 @@ class TestParetoMixinFastPathEquivalence:
 
         archive = _build_raw_archive(n, f_arr, cv_arr, dominator=counting)
         idx = archive.add(x=np.array([999.0]), f=f_new, cv=0.0)
-        assert counting.calls == 0  # fast path declined due to NaN
+        assert counting.calls == 0  # NaN requires the scalar fallback
 
         ref_existing_dom, ref_new_dom = _loop_masks(
             f_new, 0.0, f_arr, cv_arr, dominator, None, 0.0
@@ -1404,7 +1390,7 @@ class TestParetoMixinFastPathEquivalence:
 
         archive = _build_raw_archive(n, f_arr, cv_arr, dominator=counting)
         idx = archive.add(x=np.array([999.0]), f=f_new, cv=0.0)
-        assert counting.calls == 0  # fast path declined due to NaN
+        assert counting.calls == 0  # NaN requires the scalar fallback
 
         ref_existing_dom, ref_new_dom = _loop_masks(
             f_new, 0.0, f_arr, cv_arr, dominator, None, 0.0
@@ -1417,14 +1403,38 @@ class TestParetoMixinFastPathEquivalence:
             assert len(archive) == n_survivors + 1
 
     # -----------------------------------------------------------------------
-    # 6. Custom Dominator subclass without dominates_many -> loop fallback
+    # 6. Custom Dominator implements the required batch primitive
     # -----------------------------------------------------------------------
-    def test_custom_dominator_without_dominates_many_falls_back(self) -> None:
-        """A Dominator that only implements dominance_matrix forces the loop."""
+    def test_custom_dominator_with_naive_dominates_many(self) -> None:
+        """A minimal custom Dominator works end-to-end through add()."""
 
         class MinimalDominator(Dominator):
             def dominance_matrix(self, f, direction=None):
                 return ParetoDominator().dominance_matrix(f, direction)
+
+            @staticmethod
+            def _dominates_pair(fa, fb, direction):
+                if direction is not None:
+                    fa = fa * (-direction)
+                    fb = fb * (-direction)
+                return bool(np.all(fa <= fb) and np.any(fa < fb))
+
+            def dominates_many(self, fa, f_matrix, direction=None):
+                fa_dominates = np.array(
+                    [
+                        self._dominates_pair(fa, f_existing, direction)
+                        for f_existing in f_matrix
+                    ],
+                    dtype=bool,
+                )
+                dominates_fa = np.array(
+                    [
+                        self._dominates_pair(f_existing, fa, direction)
+                        for f_existing in f_matrix
+                    ],
+                    dtype=bool,
+                )
+                return fa_dominates, dominates_fa
 
         n = 4
         f_arr = np.array([[3.0, 3.0], [4.0, 2.0], [2.0, 4.0], [1.0, 1.0]])
@@ -1568,70 +1578,6 @@ class TestParetoMixinFastPathEquivalence:
         # infeasible row with non-positive f) after a future refactor.
         assert triggered > 0
 
-    # -----------------------------------------------------------------------
-    # 9. dominates_many declining (returning None) for a specific call must
-    #    fall back to the scalar loop, not crash on the tuple unpack.
-    # -----------------------------------------------------------------------
-    def test_dominates_many_returning_none_falls_back_to_loop(self) -> None:
-        """
-        A ``Dominator`` whose ``dominates_many`` declines (returns ``None``)
-        for a given call -- permitted by its documented "may decline
-        per-call" contract, same convention as
-        ``Crossover.crossover_batch``/``Mutation.mutate_batch`` -- must not
-        crash ``ParetoArchive.add()`` with a ``TypeError`` on the tuple
-        unpack. ``add()`` must instead fall back to the scalar per-row loop
-        for the whole comparison, mirroring the "declined mid-way -> redo
-        via the scalar path" idiom already used by GA's
-        ``crossover_batch``/``mutate_batch`` dispatch
-        (``ga.py``'s ``_crossover_pairs``/``_mutate_candidates``).
-
-        Bypasses ``_check_scenario``/``_fast_masks`` here: those only gate
-        on whether ``dominates_many`` is overridden at the *type* level, not
-        whether a specific call declines, so routing a per-call-declining
-        dominator through them would hit the very same unpack bug in the
-        test helper. Uses ``_loop_masks`` directly instead (same pattern as
-        ``test_partial_nan_in_f_new_falls_back``).
-        """
-
-        class DecliningDominator(Dominator):
-            """Implements the required dominance_matrix, but its
-            dominates_many always declines (returns None) -- a test double
-            for "declines this call", not a NaN/type-level opt-out."""
-
-            def __init__(self) -> None:
-                self._pareto = ParetoDominator()
-                self.calls = 0
-
-            def dominance_matrix(self, f, direction=None):
-                return self._pareto.dominance_matrix(f, direction)
-
-            def dominates_many(self, fa, f_matrix, direction=None):
-                self.calls += 1
-                return None
-
-        n = 4
-        f_arr = np.array([[3.0, 3.0], [4.0, 2.0], [2.0, 4.0], [1.0, 1.0]])
-        cv_arr = np.zeros(n)  # all feasible -> both_feasible mask non-empty
-        f_new = np.array([0.5, 0.5])
-        dominator = DecliningDominator()
-
-        ref_existing_dom, ref_new_dom = _loop_masks(
-            f_new, 0.0, f_arr, cv_arr, dominator, None, 0.0
-        )
-
-        archive = _build_raw_archive(n, f_arr, cv_arr, dominator=dominator)
-        idx = archive.add(x=np.array([999.0]), f=f_new, cv=0.0)
-        assert dominator.calls > 0  # dominates_many WAS reached (and declined)
-
-        if np.any(ref_existing_dom):
-            assert idx == -1
-            assert len(archive) == n
-        else:
-            n_survivors = n - int(np.sum(ref_new_dom))
-            assert idx == n_survivors
-            assert len(archive) == n_survivors + 1
-            np.testing.assert_array_equal(archive.get_array("f")[n_survivors], f_new)
-
 
 class _CountingDominator(Dominator):
     """Wraps a Dominator, counting dominates_many calls (for fallback proofs)."""
@@ -1649,64 +1595,3 @@ class _CountingDominator(Dominator):
     def dominates_many(self, fa, f_matrix, direction=None):
         self.calls += 1
         return self._inner.dominates_many(fa, f_matrix, direction)
-
-
-# ===========================================================================
-# ParetoMixin dispatch-consistency regression (Issue #224 follow-up fix)
-# ===========================================================================
-#
-# A Dominator subclass that overrides only `dominance_matrix()` (and thereby
-# `dominates()`, which is derived from it in the base class) while leaving
-# `dominates_many()` inherited unchanged must NOT have its stale
-# `dominates_many()` used by ParetoArchive.add() -- doing so would silently
-# ignore the subclass's overridden dominance semantics. See
-# batch_override_is_consistent (saealib._dispatch).
-
-
-class _ReverseDominanceMatrixDominator(ParetoDominator):
-    """Overrides only ``dominance_matrix`` (reversing the relation via
-    transpose, mirroring test_moo.py's ``ReverseParetoDominator``);
-    ``dominates_many`` is inherited unchanged from ``ParetoDominator`` and
-    is therefore stale/inconsistent with the overridden dominance_matrix."""
-
-    def dominance_matrix(self, f, direction=None):
-        return super().dominance_matrix(f, direction).T
-
-
-class TestParetoMixinDispatchConsistency:
-    def test_add_uses_scalar_dominates_not_stale_dominates_many(self):
-        dominator = _ReverseDominanceMatrixDominator()
-        # Sanity: this dominator's dominates_many is indeed inherited
-        # unchanged (the scenario this fix targets).
-        assert type(dominator).dominates_many is ParetoDominator.dominates_many
-        # ... yet dominance_matrix (and therefore dominates(), derived from
-        # it) IS overridden, so the two disagree for this pair.
-        f_arr = np.array([[1.0, 1.0]])
-        f_new = np.array([[2.0, 2.0]])
-        # Normal Pareto semantics: f_new=[2,2] is dominated by f_arr=[1,1].
-        # dominates_many (stale, forward semantics) would say f_arr
-        # dominates f_new.
-        fa_dom, dom_fa = ParetoDominator().dominates_many(f_new[0], f_arr)
-        assert not fa_dom.any() and dom_fa.any()
-        # But this dominator's overridden (reversed) dominance_matrix flips
-        # that: dominates() now says f_new dominates f_arr.
-        assert dominator.dominates(f_new[0], f_arr[0]) is True
-        assert dominator.dominates(f_arr[0], f_new[0]) is False
-
-        archive = _build_raw_archive(1, f_arr, None, None, dominator, 0.0)
-        real_idx = archive.add(x=np.array([999.0]), f=f_new[0])
-
-        # Scalar (dominates()-based) reference: f_new dominates the sole
-        # existing row, so it survives and the existing row is evicted.
-        ref_existing_dom, ref_new_dom = _loop_masks(
-            f_new[0], 0.0, f_arr, None, dominator, None, 0.0
-        )
-        assert not ref_existing_dom.any()
-        assert ref_new_dom.all()
-        assert real_idx == 0  # existing row evicted, f_new takes index 0
-        assert len(archive) == 1
-        np.testing.assert_array_equal(archive.get_array("f")[0], f_new[0])
-
-        # Had ParetoArchive.add() dispatched to the stale dominates_many
-        # instead (the pre-fix bug), it would have rejected f_new (real_idx
-        # == -1) and kept the original row -- the opposite outcome.

@@ -1159,6 +1159,13 @@ class TestParetoDominator:
         assert not dom.dominates(fa, fb)
         assert not _pareto_dominates(fa, fb)
 
+    def test_dominates_nan_in_fb_is_infinitely_bad(self) -> None:
+        """NaN in fb is replaced with +inf before the batch comparison."""
+        dom = ParetoDominator()
+        fa = np.array([0.0, 0.0])
+        fb = np.array([np.nan, 1.0])
+        assert dom.dominates(fa, fb)
+
     def test_dominates_direction_maximize(self) -> None:
         """With direction=+1, larger values are better."""
         dom = ParetoDominator()
@@ -1222,6 +1229,10 @@ class TestParetoDominator:
                 # All off-diagonal True → every pair mutually dominated.
                 return np.ones((n, n), dtype=bool) & ~np.eye(n, dtype=bool)
 
+            def dominates_many(self, fa, f_matrix, direction=None):
+                dominates = np.ones(len(f_matrix), dtype=bool)
+                return dominates, dominates.copy()
+
         comp = ParetoComparator(dominator=AllDominatesDominator())
         # Under AllDominatesDominator, fa dominates fb → compare returns -1.
         fa = np.array([5.0, 5.0])
@@ -1245,6 +1256,12 @@ class TestParetoDominator:
                 _dom = ParetoDominator()
                 return _dom.dominance_matrix(f, direction).T
 
+            def dominates_many(self, fa, f_matrix, direction=None):
+                fa_dominates, dominates_fa = ParetoDominator().dominates_many(
+                    fa, f_matrix, direction
+                )
+                return dominates_fa, fa_dominates
+
         f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
         pop = _make_pop(f)
         comp = ParetoComparator(dominator=ReverseParetoDominator())
@@ -1262,6 +1279,12 @@ class TestParetoDominator:
                 direction: np.ndarray | None = None,
             ) -> np.ndarray:
                 return ParetoDominator().dominance_matrix(f, direction).T
+
+            def dominates_many(self, fa, f_matrix, direction=None):
+                fa_dominates, dominates_fa = ParetoDominator().dominates_many(
+                    fa, f_matrix, direction
+                )
+                return dominates_fa, fa_dominates
 
         f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
         pop = _make_pop(f)
@@ -1324,6 +1347,10 @@ class TestParetoDominator:
         class MyDominator(Dominator):
             def dominance_matrix(self, f, direction=None):
                 return np.zeros((len(f), len(f)), dtype=bool)
+
+            def dominates_many(self, fa, f_matrix, direction=None):
+                dominates = np.zeros(len(f_matrix), dtype=bool)
+                return dominates, dominates.copy()
 
         d = MyDominator()
         comp = ParetoComparator(dominator=d)
@@ -1490,22 +1517,20 @@ _DIRECTION_KIND_OFFSET = {
 
 
 class TestDominatesMany:
-    """Tests for the opt-in one-vs-many ``Dominator.dominates_many`` hook."""
+    """Tests for the required one-vs-many ``Dominator.dominates_many`` primitive."""
 
     # -----------------------------------------------------------------------
-    # 1. Base Dominator.dominates_many defaults to None
+    # 1. Dominator.dominates_many is required
     # -----------------------------------------------------------------------
-    def test_base_dominates_many_returns_none(self) -> None:
-        """A Dominator subclass that only implements dominance_matrix gets None."""
+    def test_dominates_many_is_required(self) -> None:
+        """A subclass implementing only dominance_matrix remains abstract."""
 
         class MinimalDominator(Dominator):
             def dominance_matrix(self, f, direction=None):
                 return ParetoDominator().dominance_matrix(f, direction)
 
-        dom = MinimalDominator()
-        fa = np.array([0.0, 0.0])
-        f_matrix = np.array([[1.0, 1.0], [2.0, 2.0]])
-        assert dom.dominates_many(fa, f_matrix) is None
+        with pytest.raises(TypeError, match="dominates_many"):
+            MinimalDominator()
 
     # -----------------------------------------------------------------------
     # 2. ParetoDominator.dominates_many agrees exactly with dominates()

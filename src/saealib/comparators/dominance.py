@@ -10,18 +10,20 @@ class Dominator(ABC):
     Abstract base for dominance predicates.
 
     A ``Dominator`` encapsulates the definition of dominance between
-    objective vectors independently of the sorting algorithm.  Two concrete
-    operations are required and MUST agree with each other:
+    objective vectors independently of the sorting algorithm. Two primitive
+    operations are required:
 
-    - ``dominance_matrix`` — batched NxN boolean matrix (primary operation).
-    - ``dominates`` — scalar pairwise predicate, derived from the matrix to
-      guarantee consistency.
+    - ``dominance_matrix`` — an NxN boolean matrix used by non-dominated
+      sorting.
+    - ``dominates_many`` — a one-vs-many comparison used by incremental
+      archive updates.
 
-    A third, optional acceleration hook, ``dominates_many`` (one-vs-many,
-    default ``None``), MUST also agree with ``dominates`` for every row if a
-    subclass overrides it.
+    These primitives are independent and MUST agree on overlapping cases.
+    The scalar ``dominates`` predicate is derived from ``dominates_many`` and
+    therefore has no independent implementation for subclasses to keep in
+    sync.
 
-    Parameters are the same for both required methods:
+    Parameters are shared across these operations:
 
     Parameters
     ----------
@@ -29,6 +31,8 @@ class Dominator(ABC):
         Objective matrix. shape: (n, n_obj)  [``dominance_matrix``]
     fa, fb : np.ndarray
         Objective vectors. shape: (n_obj,)  [``dominates``]
+    f_matrix : np.ndarray
+        Objective matrix. shape: (n, n_obj)  [``dominates_many``]
     direction : np.ndarray or None
         Per-objective optimization direction: +1 = maximize, -1 = minimize.
         ``None`` defaults to minimization for all objectives.
@@ -68,9 +72,9 @@ class Dominator(ABC):
         """
         Return True if fa dominates fb.
 
-        Derived from ``dominance_matrix`` on a 2-row stack to guarantee
-        agreement with the batched path.  NaN values in fa always return
-        False (consistent with ``dominance_matrix`` assuming finite input).
+        Derived from ``dominates_many`` with a single-row objective matrix.
+        NaN values in fa always return False. NaN values in fb are treated as
+        infinitely bad.
 
         Parameters
         ----------
@@ -89,24 +93,20 @@ class Dominator(ABC):
             return False
         # Replace NaN in fb with +inf so it appears infinitely bad (dominated).
         fb_safe = np.where(np.isnan(fb), np.inf, fb)
-        stacked = np.stack([fa, fb_safe])
-        return bool(self.dominance_matrix(stacked, direction)[0, 1])
+        fa_dominates, _ = self.dominates_many(fa, fb_safe[None, :], direction)
+        return bool(fa_dominates[0])
 
+    @abstractmethod
     def dominates_many(
         self,
         fa: np.ndarray,
         f_matrix: np.ndarray,
         direction: np.ndarray | None = None,
-    ) -> tuple[np.ndarray, np.ndarray] | None:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         One-vs-many dominance check, batched over ``f_matrix``'s rows.
 
-        Optional acceleration hook: default implementation returns ``None``,
-        meaning this ``Dominator`` doesn't support the batched one-vs-many
-        check and callers should fall back to calling :meth:`dominates` once
-        per row. Subclasses that override this MUST agree with
-        :meth:`dominates` for every row (the same consistency requirement
-        already documented for :meth:`dominance_matrix`).
+        Required primitive from which :meth:`dominates` is derived.
 
         Parameters
         ----------
@@ -122,13 +122,11 @@ class Dominator(ABC):
 
         Returns
         -------
-        tuple[np.ndarray, np.ndarray] or None
+        tuple[np.ndarray, np.ndarray]
             ``(fa_dominates, dominates_fa)``, each shape ``(n,)``:
             ``fa_dominates[i]`` is True iff ``fa`` dominates ``f_matrix[i]``;
             ``dominates_fa[i]`` is True iff ``f_matrix[i]`` dominates ``fa``.
-            ``None`` if unsupported.
         """
-        return None
 
 
 class ParetoDominator(Dominator):
@@ -263,10 +261,9 @@ class EpsilonDominator(Dominator):
     Because ``log(1 + eps_i) = log1p(eps_i)`` is used internally, the
     multiplicative rule is numerically stable for small ``eps``.
 
-    The dominance-matrix computation delegates entirely to an internal
-    :class:`ParetoDominator` instance operating on the quantized box
-    coordinates.  This guarantees that :meth:`dominates` (inherited from
-    :class:`Dominator`) and :meth:`dominance_matrix` always agree.
+    The dominance-matrix and one-vs-many computations delegate entirely to an
+    internal :class:`ParetoDominator` instance operating on the quantized box
+    coordinates. This keeps the two required primitives consistent.
 
     References
     ----------
