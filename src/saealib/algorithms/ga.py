@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 
-from saealib._dispatch import batch_override_is_consistent
 from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent, PostCrossoverEvent, PostMutationEvent
 from saealib.context import OptimizationState
@@ -30,6 +29,42 @@ from saealib.registry import register
 if TYPE_CHECKING:
     from saealib.operators.selection import ParentSelection, SurvivorSelection
     from saealib.optimizer import Dispatchable
+
+
+def _resolve_variation_execution(
+    variation_execution: (
+        Literal["batch", "sequential"] | dict[str, Literal["batch", "sequential"]]
+    ),
+    kind: Literal["crossover", "mutation"],
+) -> Literal["batch", "sequential"]:
+    """Validate and resolve variation execution mode for one operator."""
+    valid_modes = ("batch", "sequential")
+    if isinstance(variation_execution, str):
+        if variation_execution not in valid_modes:
+            raise ConfigurationError(
+                "variation_execution must be 'batch', 'sequential', or a dict "
+                "mapping 'crossover' and/or 'mutation' to one of those modes"
+            )
+        return variation_execution
+
+    if not isinstance(variation_execution, dict):
+        raise ConfigurationError(
+            "variation_execution must be 'batch', 'sequential', or a dict "
+            "mapping 'crossover' and/or 'mutation' to one of those modes"
+        )
+
+    unknown_keys = set(variation_execution) - {"crossover", "mutation"}
+    invalid_values = [
+        value
+        for value in variation_execution.values()
+        if not isinstance(value, str) or value not in valid_modes
+    ]
+    if unknown_keys or invalid_values:
+        raise ConfigurationError(
+            "variation_execution must be 'batch', 'sequential', or a dict "
+            "mapping 'crossover' and/or 'mutation' to one of those modes"
+        )
+    return variation_execution.get(kind, "batch")
 
 
 def _route_crossover(
@@ -127,6 +162,15 @@ class GA(Algorithm):
         When set, offspring that duplicate any member of the current population
         are replaced by re-generated candidates (up to ``max_retries`` attempts).
         ``None`` disables duplicate elimination (default behaviour).
+    variation_execution : {"batch", "sequential"} or dict
+        Execution mode for crossover and mutation. A string applies to both;
+        a dict may set ``"crossover"`` and ``"mutation"`` independently, with
+        omitted keys defaulting to ``"batch"``. In batch mode, all gate
+        decisions and operations complete before any post-operation hook runs,
+        so a stateful hook cannot influence a later individual's operation.
+        Sequential mode completes each individual's operation and hook before
+        starting the next, preserving the pre-batching behavior byte-for-byte.
+        This is a semantic choice, not only a performance setting.
     """
 
     def __init__(
@@ -137,6 +181,9 @@ class GA(Algorithm):
         survivor_selection: SurvivorSelection,
         *,
         duplicate_elimination: DuplicateElimination | None = None,
+        variation_execution: (
+            Literal["batch", "sequential"] | dict[str, Literal["batch", "sequential"]]
+        ) = "batch",
         integer_crossover: Crossover | None = None,
         integer_mutation: Mutation | None = None,
         categorical_crossover: Crossover | None = None,
@@ -159,6 +206,19 @@ class GA(Algorithm):
             When provided, offspring that duplicate any member of the current
             population are replaced by re-generated candidates.  ``None``
             (default) disables duplicate elimination.
+        variation_execution : {"batch", "sequential"} or dict, optional
+            Execution mode for crossover and mutation. A string applies to
+            both operators. A dict may contain ``"crossover"`` and
+            ``"mutation"`` independently; an omitted key defaults to
+            ``"batch"``. In batch mode, every individual's gate decision and
+            operation is computed before any ``post_crossover`` or
+            ``post_mutation`` hook runs for any individual in that call. A
+            stateful hook may observe earlier hooks in the subsequent
+            post-processing pass, but cannot influence a later individual's
+            operation. In sequential mode, each individual's complete
+            operation-then-hook cycle finishes before the next begins,
+            matching the library's pre-batching behavior byte-for-byte. This
+            is a semantic choice, not only a performance setting.
         integer_crossover : Crossover, optional
             Crossover operator for integer dimensions.
             Defaults to ``CrossoverIntegerSBX`` with the same rate as *crossover*.
@@ -178,6 +238,8 @@ class GA(Algorithm):
         self.parent_selection = parent_selection
         self.survivor_selection = survivor_selection
         self.duplicate_elimination = duplicate_elimination
+        self.variation_execution = variation_execution
+        _resolve_variation_execution(self.variation_execution, "crossover")
 
         _cr = getattr(crossover, "prob", 1.0)
         _pv = getattr(mutation, "prob_var", None)
@@ -354,16 +416,8 @@ class GA(Algorithm):
     ) -> np.ndarray:
         """Generate post-crossover offspring for a batch of parent groups.
 
-        Takes the batched path only when ``self.crossover`` overrides
-        :meth:`Crossover.crossover_batch` at least as derived in the MRO as
-        it overrides :meth:`Crossover.crossover` (checked via
-        :func:`saealib._dispatch.batch_override_is_consistent`, *before* any
-        RNG draw -- see that function's docstring for why a plain
-        class-attribute identity check is insufficient once a user subclass
-        overrides only the scalar method) and the problem is all-continuous
-        (``not mixed``); otherwise runs the existing per-pair loop unchanged.
-        ``post_crossover`` fires exactly once per pair regardless of which path
-        is taken.
+        Uses the configured batch mode for all-continuous problems. Mixed
+        problems and explicit sequential mode run the per-pair loop.
 
         Parameters
         ----------
@@ -386,12 +440,10 @@ class GA(Algorithm):
         n_pair = parents_batch.shape[0]
         n_children = self.crossover.n_children
         dim = ctx.dim
-        crossover_batch_supported = batch_override_is_consistent(
-            self.crossover, "crossover_batch", "crossover"
-        )
-        crossover_batch_ok = (not mixed) and crossover_batch_supported
+        mode = _resolve_variation_execution(self.variation_execution, "crossover")
+        use_batch = (not mixed) and (mode == "batch")
 
-        if crossover_batch_ok:
+        if use_batch:
             gate = ctx.rng.random(n_pair) < self.crossover.prob
             if gate.any():
                 batch_offspring = self.crossover.crossover_batch(
@@ -399,18 +451,12 @@ class GA(Algorithm):
                 )
             else:
                 batch_offspring = np.empty((0, n_children, dim))
-            cand = np.empty((n_pair * n_children, dim))
-            gi = 0
-            for i in range(n_pair):
-                parent = parents_batch[i]
-                if gate[i]:
-                    c = batch_offspring[gi]
-                    gi += 1
-                else:
-                    c = parent[:n_children].copy()
-                c = self.crossover.post_crossover(c, parent, ctx.rng, ctx)
-                cand[i * n_children : (i + 1) * n_children] = c
-            return cand
+            cand = parents_batch[:, :n_children].copy()
+            cand[gate] = batch_offspring
+            cand = self.crossover.post_crossover_batch(
+                cand, parents_batch, ctx.rng, ctx
+            )
+            return cand.reshape(n_pair * n_children, dim)
 
         cand = np.empty((n_pair * n_children, dim))
         for i in range(n_pair):
@@ -442,25 +488,8 @@ class GA(Algorithm):
     ) -> np.ndarray:
         """Generate post-mutation offspring for a batch of candidates.
 
-        Takes the batched path only when ``self.mutation`` overrides
-        :meth:`Mutation.mutate_batch` at least as derived in the MRO as it
-        overrides :meth:`Mutation.mutate` (checked via
-        :func:`saealib._dispatch.batch_override_is_consistent`, *before* any
-        RNG draw -- see that function's docstring for why a plain
-        class-attribute identity check is insufficient once a user subclass
-        overrides only the scalar method) and the problem is all-continuous
-        (``not mixed``); ``prob`` gating happens inside
-        ``mutate_batch`` itself, so no gate array is drawn here. Otherwise
-        runs the existing per-individual loop unchanged. ``post_mutation``
-        fires exactly once per individual regardless of which path is taken,
-        but the *ordering* relative to
-        ``_route_mutation``/``mutate_batch`` differs between paths: the
-        fallback (per-individual) loop calls ``post_mutation`` immediately
-        after ``_route_mutation`` for each individual in turn, preserving
-        the original pre-batching interleaved order byte-for-byte; the batch
-        path necessarily calls ``mutate_batch`` once for the whole array
-        before any ``post_mutation`` call, since there is no per-row hook
-        point during a single batched call.
+        Uses the configured batch mode for all-continuous problems. Mixed
+        problems and explicit sequential mode run the per-individual loop.
 
         Parameters
         ----------
@@ -480,16 +509,12 @@ class GA(Algorithm):
         np.ndarray
             Mutated candidates. shape = (n, dim)
         """
-        mutation_batch_supported = batch_override_is_consistent(
-            self.mutation, "mutate_batch", "mutate"
-        )
-        mutation_batch_ok = (not mixed) and mutation_batch_supported
+        mode = _resolve_variation_execution(self.variation_execution, "mutation")
+        use_batch = (not mixed) and (mode == "batch")
 
-        if mutation_batch_ok:
+        if use_batch:
             cand = self.mutation.mutate_batch(cand, (lb, ub), rng=ctx.rng)
-            for i in range(len(cand)):
-                cand[i] = self.mutation.post_mutation(cand[i], (lb, ub), ctx.rng, ctx)
-            return cand
+            return self.mutation.post_mutation_batch(cand, (lb, ub), ctx.rng, ctx)
 
         for i in range(len(cand)):
             cand[i] = _route_mutation(

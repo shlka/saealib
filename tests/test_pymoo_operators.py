@@ -12,13 +12,13 @@ from pymoo.operators.mutation.pm import PM
 from saealib import (
     GA,
     CategoricalVariable,
+    ConfigurationError,
     ContinuousVariable,
     IntegerVariable,
     TournamentSelection,
     TruncationSelection,
     minimize,
 )
-from saealib._dispatch import batch_override_is_consistent
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.operators import PymooCrossover, PymooMutation
@@ -55,6 +55,26 @@ class _CountedPM(PM):
     def _do(self, *args, **kwargs):
         self.n_do_calls += 1
         return super()._do(*args, **kwargs)
+
+
+class _BatchHookCrossover(PymooCrossover):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.post_batch_calls = 0
+
+    def post_crossover_batch(self, offspring_batch, parents_batch, rng, ctx=None):
+        self.post_batch_calls += 1
+        return offspring_batch
+
+
+class _BatchHookMutation(PymooMutation):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.post_batch_calls = 0
+
+    def post_mutation_batch(self, offspring_batch, mutate_range, rng, ctx=None):
+        self.post_batch_calls += 1
+        return offspring_batch
 
 
 # ---------------------------------------------------------------------------
@@ -456,26 +476,6 @@ def _make_mixed_ctx(n_pop=8, seed=42):
     )
 
 
-class TestPymooOperatorsDispatchConsistency:
-    """Pymoo adapters inherit scalar operations from their batch primitives.
-
-    A plain, unsubclassed instance must remain "consistent" under
-    batch_override_is_consistent (Issue #224 follow-up fix) exactly like every
-    built-in operator. This is what lets GA still engage the batch path for
-    pymoo-wrapped operators (see
-    TestGABatchDispatch.test_continuous_problem_calls_do_once_each below,
-    which is the end-to-end proof).
-    """
-
-    def test_pymoo_crossover_consistent(self):
-        op = PymooCrossover(SBX(eta=15))
-        assert batch_override_is_consistent(op, "crossover_batch", "crossover") is True
-
-    def test_pymoo_mutation_consistent(self):
-        op = PymooMutation(PM(eta=20))
-        assert batch_override_is_consistent(op, "mutate_batch", "mutate") is True
-
-
 class TestGABatchDispatch:
     """Verify GA.ask() engages crossover_batch/mutate_batch for continuous-only
     problems with batch-capable operators, and correctly falls back to the
@@ -499,6 +499,124 @@ class TestGABatchDispatch:
         assert len(offspring) == 13
         assert counted_cx.n_do_calls == 1
         assert counted_mut.n_do_calls == 1
+
+    def test_sequential_mode_calls_do_once_per_unit(self):
+        counted_cx = _CountedSBX(eta=15)
+        counted_mut = _CountedPM(eta=20)
+        ga = GA(
+            crossover=PymooCrossover(counted_cx, prob=1.0),
+            mutation=PymooMutation(counted_mut, prob=1.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+            variation_execution="sequential",
+        )
+        n_offspring = 13
+        ga.ask(
+            _make_continuous_ctx(n_pop=10),
+            _NoopProvider(),
+            n_offspring=n_offspring,
+        )
+        n_pair = math.ceil(n_offspring / ga.crossover.n_children)
+        assert counted_cx.n_do_calls == n_pair
+        assert counted_mut.n_do_calls == n_pair * ga.crossover.n_children
+
+    def test_runtime_reassignment_takes_effect_on_next_ask(self):
+        counted_cx = _CountedSBX(eta=15)
+        counted_mut = _CountedPM(eta=20)
+        ga = GA(
+            crossover=PymooCrossover(counted_cx, prob=1.0),
+            mutation=PymooMutation(counted_mut, prob=1.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        ga.variation_execution = "sequential"
+        n_offspring = 13
+        ga.ask(
+            _make_continuous_ctx(n_pop=10),
+            _NoopProvider(),
+            n_offspring=n_offspring,
+        )
+        n_pair = math.ceil(n_offspring / ga.crossover.n_children)
+        assert counted_cx.n_do_calls == n_pair
+        assert counted_mut.n_do_calls == n_pair * ga.crossover.n_children
+
+    def test_operator_modes_are_controlled_independently(self):
+        counted_cx = _CountedSBX(eta=15)
+        counted_mut = _CountedPM(eta=20)
+        ga = GA(
+            crossover=PymooCrossover(counted_cx, prob=1.0),
+            mutation=PymooMutation(counted_mut, prob=1.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+            variation_execution={"crossover": "sequential"},
+        )
+        n_offspring = 13
+        ga.ask(
+            _make_continuous_ctx(n_pop=10),
+            _NoopProvider(),
+            n_offspring=n_offspring,
+        )
+        n_pair = math.ceil(n_offspring / ga.crossover.n_children)
+        assert counted_cx.n_do_calls == n_pair
+        assert counted_mut.n_do_calls == 1
+
+    @pytest.mark.parametrize(
+        "variation_execution",
+        [
+            "invalid",
+            {"mutation": "invalid"},
+            {"unknown": "batch"},
+            None,
+        ],
+    )
+    def test_invalid_variation_execution_fails_at_construction(
+        self, variation_execution
+    ):
+        with pytest.raises(ConfigurationError, match="variation_execution"):
+            GA(
+                crossover=PymooCrossover(SBX(eta=15), prob=1.0),
+                mutation=PymooMutation(PM(eta=20), prob=1.0),
+                parent_selection=TournamentSelection(2),
+                survivor_selection=TruncationSelection(),
+                variation_execution=variation_execution,
+            )
+
+    @pytest.mark.parametrize(
+        "variation_execution",
+        [
+            "invalid",
+            {"mutation": "invalid"},
+            {"unknown": "batch"},
+            None,
+        ],
+    )
+    def test_invalid_runtime_reassignment_fails_on_ask(self, variation_execution):
+        ga = GA(
+            crossover=PymooCrossover(SBX(eta=15), prob=1.0),
+            mutation=PymooMutation(PM(eta=20), prob=1.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        ga.variation_execution = variation_execution
+        with pytest.raises(ConfigurationError, match="variation_execution"):
+            ga.ask(_make_continuous_ctx(n_pop=10), _NoopProvider())
+
+    def test_batch_mode_invokes_overridden_batch_hooks_once(self):
+        crossover = _BatchHookCrossover(SBX(eta=15), prob=1.0)
+        mutation = _BatchHookMutation(PM(eta=20), prob=1.0)
+        ga = GA(
+            crossover=crossover,
+            mutation=mutation,
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        ga.ask(
+            _make_continuous_ctx(n_pop=10),
+            _NoopProvider(),
+            n_offspring=13,
+        )
+        assert crossover.post_batch_calls == 1
+        assert mutation.post_batch_calls == 1
 
     def test_mixed_problem_calls_do_once_per_pair_and_individual(self):
         """Safety-net for the `mixed` short-circuit: on a mixed-variable

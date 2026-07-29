@@ -43,6 +43,15 @@ class Mutation(ABC):
         This method is derived from :meth:`mutate_batch` by passing a
         single-row batch.
 
+        Notes
+        -----
+        Overriding only this method (not :meth:`mutate_batch`) has no effect
+        under GA's default ``variation_execution="batch"``: the batch path
+        calls :meth:`mutate_batch` directly and never calls ``mutate()``.
+        Such an override only takes effect under
+        ``variation_execution="sequential"``. To customize behavior under
+        both modes, override :meth:`mutate_batch`.
+
         Parameters
         ----------
         p : np.ndarray
@@ -128,6 +137,49 @@ class Mutation(ABC):
             Processed individual. shape = (dim,)
         """
         return offspring
+
+    def post_mutation_batch(
+        self,
+        offspring_batch: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator,
+        ctx: OptimizationState | None = None,
+    ) -> np.ndarray:
+        """Run the post-mutation lifecycle hook for a batch.
+
+        The default implementation calls :meth:`post_mutation` once per
+        individual, in order. Override this method to provide genuinely
+        vectorized post-processing.
+
+        Parameters
+        ----------
+        offspring_batch : np.ndarray
+            Offspring produced by mutation. shape = (n, dim)
+        mutate_range : tuple
+            Tuple of (lower_bound, upper_bound) used for mutation.
+        rng : np.random.Generator
+            Random number generator.
+        ctx : OptimizationState or None, optional
+            Current optimization context.
+
+        Returns
+        -------
+        np.ndarray
+            Processed offspring. shape = (n, dim)
+
+        Notes
+        -----
+        :meth:`with_post` reassigns only the instance's
+        :meth:`post_mutation` hook. A subclass override of this method is
+        responsible for composing that hook itself. If the override does not
+        call ``self.post_mutation``, a hook installed with :meth:`with_post`
+        will not run in GA batch mode. It still runs in GA sequential mode,
+        which calls :meth:`post_mutation` directly.
+        """
+        result = np.empty_like(offspring_batch)
+        for i in range(len(offspring_batch)):
+            result[i] = self.post_mutation(offspring_batch[i], mutate_range, rng, ctx)
+        return result
 
     def with_post(
         self,
