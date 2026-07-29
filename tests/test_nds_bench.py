@@ -196,6 +196,12 @@ def test_dda_custom_dominator_honored():
         def dominance_matrix(self, f, direction=None):
             return ParetoDominator().dominance_matrix(f, direction).T
 
+        def dominates_many(self, fa, f_matrix, direction=None):
+            fa_dominates, dominates_fa = ParetoDominator().dominates_many(
+                fa, f_matrix, direction
+            )
+            return dominates_fa, fa_dominates
+
     f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
 
     # With reversed dominance, dda result must equal non_dominated_sort with the
@@ -217,6 +223,10 @@ def test_dda_custom_dominator_all_in_one_front():
     class NeverDominates(Dominator):
         def dominance_matrix(self, f, direction=None):
             return np.zeros((len(f), len(f)), dtype=bool)
+
+        def dominates_many(self, fa, f_matrix, direction=None):
+            dominates = np.zeros(len(f_matrix), dtype=bool)
+            return dominates, dominates.copy()
 
     f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
     ranks, fronts = dda_non_dominated_sort(f, dominator=NeverDominates())

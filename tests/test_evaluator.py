@@ -1,5 +1,5 @@
 """
-Tests for the Evaluator abstraction (Issue #85, Commit 1).
+Tests for the Evaluator abstraction (Issue #85, Commit 1; Issue #224, Commit 2).
 
 Tests cover:
 - SerialEvaluator: batch shapes for f / g / cv
@@ -7,6 +7,9 @@ Tests cover:
 - No-constraint problems (g shape (n, 0), cv all zeros)
 - Single-row input handling
 - Optimizer wiring: default evaluator and set_evaluator chaining
+- SerialEvaluator's Problem.evaluate_batch fast path (Issue #224): call
+  counting, numerical equivalence with the row-loop fallback, and the
+  empty-batch edge case
 """
 
 import numpy as np
@@ -27,6 +30,50 @@ def _sphere_problem(constraints=None):
         ub=[5.0, 5.0],
         constraints=constraints,
     )
+
+
+class _CountedBatchSphereProblem(Problem):
+    """
+    Sphere ``Problem`` overriding ``evaluate_batch`` to score the whole batch
+    in one call, counting calls to ``evaluate_batch``, ``evaluate``, and
+    ``evaluate_constraints`` so tests can assert the fast path avoids the
+    row-by-row ones.
+    """
+
+    def __init__(self, constraints=None):
+        super().__init__(
+            func=lambda x: np.sum(x**2),
+            dim=2,
+            n_obj=1,
+            direction=np.array([-1.0]),
+            lb=[-5.0, -5.0],
+            ub=[5.0, 5.0],
+            constraints=constraints,
+        )
+        self.n_evaluate_batch_calls = 0
+        self.n_evaluate_calls = 0
+        self.n_evaluate_constraints_calls = 0
+
+    def evaluate_batch(self, x):
+        self.n_evaluate_batch_calls += 1
+        n = len(x)
+        n_c = len(self.constraints)
+        f_raw = np.sum(x**2, axis=1, keepdims=True)
+        if n_c and n:
+            g_raw = np.array(
+                [[c.func(xi) for c in self.constraints] for xi in x], dtype=float
+            )
+        else:
+            g_raw = np.empty((n, n_c), dtype=float)
+        return f_raw, g_raw
+
+    def evaluate(self, x, g=None):
+        self.n_evaluate_calls += 1
+        return super().evaluate(x, g)
+
+    def evaluate_constraints(self, x):
+        self.n_evaluate_constraints_calls += 1
+        return super().evaluate_constraints(x)
 
 
 class TestSerialEvaluator:
@@ -70,6 +117,59 @@ class TestSerialEvaluator:
         result = SerialEvaluator().evaluate_batch(np.array([[3.0, 4.0]]), p)
         assert result.f.shape == (1, 1)
         assert result.f[0, 0] == pytest.approx(25.0)
+
+
+class TestSerialEvaluatorBatchHook:
+    """SerialEvaluator's fast path via Problem.evaluate_batch (Issue #224)."""
+
+    def test_evaluate_batch_called_once_no_row_calls(self):
+        p = _CountedBatchSphereProblem(
+            constraints=[InequalityConstraint(lambda x: x[0] - 1.0)]
+        )
+        x = np.array([[0.0, 0.0], [2.0, 0.0], [-3.0, 1.0]])
+        SerialEvaluator().evaluate_batch(x, p)
+        assert p.n_evaluate_batch_calls == 1
+        assert p.n_evaluate_calls == 0
+        assert p.n_evaluate_constraints_calls == 0
+
+    def test_values_match_row_loop_fallback_no_constraints(self):
+        x = np.array([[0.0, 0.0], [2.0, 0.0], [-3.0, 1.0]])
+        hooked = SerialEvaluator().evaluate_batch(x, _CountedBatchSphereProblem())
+        fallback = SerialEvaluator().evaluate_batch(x, _sphere_problem())
+        np.testing.assert_allclose(hooked.f, fallback.f)
+        np.testing.assert_allclose(hooked.g, fallback.g)
+        np.testing.assert_allclose(hooked.cv, fallback.cv)
+
+    def test_values_match_row_loop_fallback_with_constraints(self):
+        x = np.array([[0.0, 0.0], [2.0, 0.0], [-3.0, 1.0]])
+        hooked = SerialEvaluator().evaluate_batch(
+            x,
+            _CountedBatchSphereProblem(
+                constraints=[InequalityConstraint(lambda x: x[0] - 1.0)]
+            ),
+        )
+        fallback = SerialEvaluator().evaluate_batch(
+            x, _sphere_problem(constraints=[InequalityConstraint(lambda x: x[0] - 1.0)])
+        )
+        np.testing.assert_allclose(hooked.f, fallback.f)
+        np.testing.assert_allclose(hooked.g, fallback.g)
+        np.testing.assert_allclose(hooked.cv, fallback.cv)
+
+    def test_empty_batch_no_constraints(self):
+        p = _CountedBatchSphereProblem()
+        result = SerialEvaluator().evaluate_batch(np.empty((0, 2)), p)
+        assert result.f.shape == (0, 1)
+        assert result.g.shape == (0, 0)
+        assert result.cv.shape == (0,)
+
+    def test_empty_batch_with_constraints(self):
+        p = _CountedBatchSphereProblem(
+            constraints=[InequalityConstraint(lambda x: x[0] - 1.0)]
+        )
+        result = SerialEvaluator().evaluate_batch(np.empty((0, 2)), p)
+        assert result.f.shape == (0, 1)
+        assert result.g.shape == (0, 1)
+        assert result.cv.shape == (0,)
 
 
 joblib = pytest.importorskip("joblib", reason="joblib not installed")

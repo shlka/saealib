@@ -152,6 +152,16 @@ class TestDirectStrategy:
         strategy = DirectStrategy()
         ctx = _make_ctx()
         provider = _MockProvider()
+        # prob=1.0: with prob<1 the crossover gate in ga.py's
+        # _crossover_pairs passes some parent pairs through unchanged (Issue
+        # #224, commit 8 -- CrossoverBLXAlpha now dispatches through
+        # crossover_batch, which changed the RNG draw order enough for this
+        # seed to gate off pairs it previously didn't), and those unchanged
+        # copies dedup against the archive (which _make_ctx seeds from the
+        # same xs as the population), making growth < N_POP. BLX-alpha
+        # offspring are continuous blends, so with prob=1.0 coinciding with
+        # a parent has probability zero, keeping this count deterministic.
+        provider.algorithm.crossover = CrossoverBLXAlpha(prob=1.0, alpha=0.4)
         before = len(ctx.archive)
         ctx = strategy.step(ctx, provider)
         assert len(ctx.archive) == before + N_POP

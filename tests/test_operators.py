@@ -13,13 +13,16 @@ Tests cover:
 - RouletteWheelSelection: output shape, probability bias
 """
 
+from typing import cast
+
 import numpy as np
 import pytest
 
-from saealib import GA, SequentialSelection, TruncationSelection
+from saealib import GA, SequentialSelection, TruncationSelection, minimize
 from saealib.comparators import NSGA2Comparator, SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.operators.crossover import (
+    Crossover,
     CrossoverBLXAlpha,
     CrossoverCategorical,
     CrossoverIntegerSBX,
@@ -29,13 +32,14 @@ from saealib.operators.crossover import (
     CrossoverUniform,
 )
 from saealib.operators.mutation import (
+    Mutation,
     MutationCategorical,
     MutationGaussian,
     MutationIntegerUniform,
     MutationPolynomial,
     MutationUniform,
 )
-from saealib.operators.selection import RouletteWheelSelection
+from saealib.operators.selection import RouletteWheelSelection, TournamentSelection
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -113,6 +117,33 @@ class TestCrossoverBLXAlpha:
         c2 = op.crossover(p, rng=np.random.default_rng(42))
         np.testing.assert_array_equal(c1, c2)
 
+    def test_crossover_batch_output_shape(self):
+        op = CrossoverBLXAlpha(prob=0.7, alpha=0.4)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c = op.crossover_batch(parents_batch, rng=rng)
+        assert c is not None
+        assert c.shape == (n_pair, 2, DIM)
+
+    def test_crossover_batch_matches_single_at_n_pair_one(self):
+        op = CrossoverBLXAlpha(prob=0.7, alpha=0.4)
+        p = _make_parents(np.random.default_rng(1))
+        parents_batch = p[np.newaxis, :, :]
+        c_batch = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        assert c_batch is not None
+        c_single = op.crossover(p, rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c_batch[0], c_single)
+
+    def test_crossover_batch_deterministic_with_seed(self):
+        op = CrossoverBLXAlpha(prob=0.7, alpha=0.4)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c1 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        c2 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c1, c2)
+
 
 # ---------------------------------------------------------------------------
 # CrossoverSBX
@@ -141,6 +172,82 @@ class TestCrossoverSBX:
         c1 = op.crossover(p, rng=np.random.default_rng(42))
         c2 = op.crossover(p, rng=np.random.default_rng(42))
         np.testing.assert_array_equal(c1, c2)
+
+    def test_crossover_batch_output_shape(self):
+        op = CrossoverSBX(prob=0.9, eta=2.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c = op.crossover_batch(parents_batch, rng=rng)
+        assert c is not None
+        assert c.shape == (n_pair, 2, DIM)
+
+    def test_crossover_batch_matches_single_at_n_pair_one(self):
+        """Unbounded branch: draws are u, then do_cross (2 phases)."""
+        op = CrossoverSBX(prob=0.9, eta=2.0)
+        p = _make_parents(np.random.default_rng(1))
+        parents_batch = p[np.newaxis, :, :]
+        c_batch = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        assert c_batch is not None
+        c_single = op.crossover(p, rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c_batch[0], c_single)
+
+    def test_crossover_batch_matches_single_at_n_pair_one_bounded(self):
+        """Bounded branch: draws are u, then swap, then do_cross (3 phases)
+        -- the branch GA actually exercises, since GA always supplies bounds."""
+        op = CrossoverSBX(prob=1.0, eta=20.0, prob_var=1.0)
+        lb = np.zeros(DIM)
+        ub = np.ones(DIM)
+        p = np.random.default_rng(1).uniform(0.0, 1.0, size=(2, DIM))
+        parents_batch = p[np.newaxis, :, :]
+        c_batch = op.crossover_batch(
+            parents_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        assert c_batch is not None
+        c_single = op.crossover(p, (lb, ub), rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c_batch[0], c_single)
+
+    def test_crossover_batch_deterministic_with_seed(self):
+        op = CrossoverSBX(prob=0.9, eta=2.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c1 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        c2 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c1, c2)
+
+    def test_crossover_batch_respects_bounds(self):
+        op = CrossoverSBX(prob=1.0, eta=20.0, prob_var=1.0)
+        lb = np.zeros(DIM)
+        ub = np.ones(DIM)
+        rng = np.random.default_rng(0)
+        n_pair = 8
+        for _ in range(20):
+            parents_batch = rng.uniform(0.0, 1.0, size=(n_pair, 2, DIM))
+            c = op.crossover_batch(parents_batch, (lb, ub), rng=rng)
+            assert c is not None
+            assert np.all(c >= lb) and np.all(c <= ub)
+
+    def test_crossover_batch_mixed_identical_and_separated_rows(self):
+        """A batch with one row of identical parents and one row of
+        separated parents: only the identical row must come back unchanged
+        (batch mirror of TestCrossoverSBXBounded.test_identical_parents_unchanged
+        -- confirms `separated` masks per row, not collapsed across the batch)."""
+        op = CrossoverSBX(prob=1.0, eta=20.0, prob_var=1.0)
+        lb = np.zeros(3)
+        ub = np.ones(3)
+        identical = np.array([[0.5, 0.5, 0.5], [0.5, 0.5, 0.5]])
+        separated = np.array([[0.1, 0.2, 0.3], [0.8, 0.7, 0.9]])
+        parents_batch = np.stack([identical, separated], axis=0)
+        c = op.crossover_batch(parents_batch, (lb, ub), rng=np.random.default_rng(0))
+        assert c is not None
+        np.testing.assert_array_equal(c[0, 0], identical[0])
+        np.testing.assert_array_equal(c[0, 1], identical[1])
+        assert np.all(c[1] >= lb) and np.all(c[1] <= ub)
+        # discriminates per-row masking from a collapsed `separated` mask:
+        # if row 1's separated-ness were incorrectly suppressed by row 0's
+        # identical-ness, c[1] would also come back as unmodified parents
+        assert not np.array_equal(c[1, 0], separated[0])
 
 
 # ---------------------------------------------------------------------------
@@ -174,6 +281,55 @@ class TestCrossoverUniform:
         np.testing.assert_array_equal(c[0], p[1])
         np.testing.assert_array_equal(c[1], p[0])
 
+    def test_crossover_batch_output_shape(self):
+        op = CrossoverUniform(prob=0.8)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c = op.crossover_batch(parents_batch, rng=rng)
+        assert c is not None
+        assert c.shape == (n_pair, 2, DIM)
+
+    def test_crossover_batch_matches_single_at_n_pair_one(self):
+        op = CrossoverUniform(prob=0.8)
+        p = _make_parents(np.random.default_rng(1))
+        parents_batch = p[np.newaxis, :, :]
+        c_batch = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        assert c_batch is not None
+        c_single = op.crossover(p, rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c_batch[0], c_single)
+
+    def test_crossover_batch_deterministic_with_seed(self):
+        op = CrossoverUniform(prob=0.8)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c1 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        c2 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c1, c2)
+
+    def test_crossover_batch_swap_rate_zero(self):
+        """swap_rate=0: c1==p1 and c2==p2 across every row."""
+        op = CrossoverUniform(prob=0.8, swap_rate=0.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c = op.crossover_batch(parents_batch, rng=rng)
+        assert c is not None
+        np.testing.assert_array_equal(c[:, 0, :], parents_batch[:, 0, :])
+        np.testing.assert_array_equal(c[:, 1, :], parents_batch[:, 1, :])
+
+    def test_crossover_batch_swap_rate_one(self):
+        """swap_rate=1: c1==p2 and c2==p1 across every row."""
+        op = CrossoverUniform(prob=0.8, swap_rate=1.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c = op.crossover_batch(parents_batch, rng=rng)
+        assert c is not None
+        np.testing.assert_array_equal(c[:, 0, :], parents_batch[:, 1, :])
+        np.testing.assert_array_equal(c[:, 1, :], parents_batch[:, 0, :])
+
 
 # ---------------------------------------------------------------------------
 # CrossoverOnePoint
@@ -203,6 +359,42 @@ class TestCrossoverOnePoint:
         np.testing.assert_array_equal(c[1, :point], p[1, :point])
         np.testing.assert_array_equal(c[1, point:], p[0, point:])
 
+    def test_crossover_batch_output_shape(self):
+        op = CrossoverOnePoint(prob=0.8)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c = op.crossover_batch(parents_batch, rng=rng)
+        assert c is not None
+        assert c.shape == (n_pair, 2, DIM)
+
+    def test_crossover_batch_deterministic_with_seed(self):
+        op = CrossoverOnePoint(prob=0.8)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c1 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        c2 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c1, c2)
+
+    def test_crossover_batch_matches_loop_over_many_rows(self):
+        """crossover_batch's single rng.integers(1, dim, size=n_pair) call
+        consumes the rng stream identically to n_pair sequential
+        rng.integers(1, dim) calls, so every row (not just n_pair == 1)
+        must match a loop of crossover() calls sharing one rng."""
+        op = CrossoverOnePoint(prob=0.8)
+        n_pair = 20
+        parents_batch = np.random.default_rng(3).uniform(
+            -1.0, 1.0, size=(n_pair, 2, DIM)
+        )
+        c_batch = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        assert c_batch is not None
+
+        shared_rng = np.random.default_rng(42)
+        for i in range(n_pair):
+            c_single = op.crossover(parents_batch[i], rng=shared_rng)
+            np.testing.assert_array_equal(c_batch[i], c_single)
+
 
 # ---------------------------------------------------------------------------
 # CrossoverTwoPoint
@@ -230,6 +422,58 @@ class TestCrossoverTwoPoint:
         np.testing.assert_array_equal(c[0, pt1:pt2], p[1, pt1:pt2])
         np.testing.assert_array_equal(c[0, pt2:], p[0, pt2:])
 
+    def test_crossover_batch_output_shape(self):
+        op = CrossoverTwoPoint(prob=0.8)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c = op.crossover_batch(parents_batch, rng=rng)
+        assert c is not None
+        assert c.shape == (n_pair, 2, DIM)
+
+    def test_crossover_batch_deterministic_with_seed(self):
+        op = CrossoverTwoPoint(prob=0.8)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        c1 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        c2 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c1, c2)
+
+    def test_crossover_batch_matches_loop_over_many_rows(self):
+        """crossover_batch draws its two cut points per row via the same
+        rng.choice(dim + 1, size=2, replace=False) call and in the same
+        order as a loop of crossover() calls sharing one rng, so every row
+        (not just n_pair == 1) must match exactly."""
+        op = CrossoverTwoPoint(prob=0.8)
+        n_pair = 20
+        parents_batch = np.random.default_rng(3).uniform(
+            -1.0, 1.0, size=(n_pair, 2, DIM)
+        )
+        c_batch = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        assert c_batch is not None
+
+        shared_rng = np.random.default_rng(42)
+        for i in range(n_pair):
+            c_single = op.crossover(parents_batch[i], rng=shared_rng)
+            np.testing.assert_array_equal(c_batch[i], c_single)
+
+    def test_crossover_batch_dim_two_boundary(self):
+        """dim == 2: only possible sorted cut points from choice(3, 2,
+        replace=False) are {0,1}, {0,2}, {1,2} -- exercises the mask logic
+        at the smallest useful boundary."""
+        op = CrossoverTwoPoint(prob=0.8)
+        n_pair = 10
+        parents_batch = np.random.default_rng(5).uniform(-1.0, 1.0, size=(n_pair, 2, 2))
+        c_batch = op.crossover_batch(parents_batch, rng=np.random.default_rng(7))
+        assert c_batch is not None
+        assert c_batch.shape == (n_pair, 2, 2)
+
+        shared_rng = np.random.default_rng(7)
+        for i in range(n_pair):
+            c_single = op.crossover(parents_batch[i], rng=shared_rng)
+            np.testing.assert_array_equal(c_batch[i], c_single)
+
 
 # ---------------------------------------------------------------------------
 # Crossover base: n_children
@@ -254,6 +498,53 @@ class TestCrossoverNChildren:
         rng = np.random.default_rng(0)
         c = op.crossover(_make_parents(rng), rng=rng)
         assert c.shape[0] == op.n_children
+
+
+# ---------------------------------------------------------------------------
+# Crossover base: crossover_batch requirement
+# ---------------------------------------------------------------------------
+
+
+class _CrossoverUnbatched(Crossover):
+    """Minimal dummy Crossover that does not implement crossover_batch."""
+
+    def __init__(self, prob: float = 0.9):
+        super().__init__()
+        self.prob = prob
+
+    def crossover(
+        self,
+        parent: np.ndarray,
+        bounds: tuple[np.ndarray, np.ndarray] | None = None,
+        rng: np.random.Generator = np.random.default_rng(),
+    ) -> np.ndarray:
+        return np.array([parent[0], parent[1]])
+
+
+class TestCrossoverBatchRequired:
+    def test_crossover_batch_is_required(self):
+        with pytest.raises(TypeError, match="crossover_batch"):
+            _CrossoverUnbatched(prob=0.9)
+
+
+class TestCrossoverDerived:
+    """Confirm built-ins inherit the scalar operation from the batch primitive."""
+
+    @pytest.mark.parametrize(
+        "op",
+        [
+            CrossoverSBX(prob=0.9, eta=2.0),
+            CrossoverUniform(prob=0.8),
+            CrossoverCategorical(prob=1.0),
+            CrossoverIntegerSBX(prob=1.0, eta=2.0),
+            CrossoverBLXAlpha(prob=0.9, alpha=0.4),
+            CrossoverOnePoint(prob=0.9),
+            CrossoverTwoPoint(prob=0.9),
+        ],
+    )
+    def test_inherits_crossover(self, op):
+        assert "crossover" not in vars(type(op))
+        assert op.crossover.__func__ is Crossover.crossover
 
 
 # ---------------------------------------------------------------------------
@@ -339,6 +630,86 @@ class TestMutationGaussian:
         p = rng.uniform(-2.0, 2.0, size=DIM)
         c = op.mutate(p, self._range(), rng=rng)
         np.testing.assert_array_equal(c, p)
+
+
+# ---------------------------------------------------------------------------
+# Mutation base: mutate_batch requirement
+# ---------------------------------------------------------------------------
+
+
+class _MutationUnbatched(Mutation):
+    """Mutation dummy used by the GA fallback-loop interleaving test.
+
+    ``mutate()`` draws exactly one ``rng.random()`` value per call (gated on
+    ``prob`` like every real Mutation, though the outcome is always
+    ``p.copy()`` either way) so that RNG-consumption ordering is
+    observable to callers -- a version that drew zero values from ``rng``
+    would make any test relying on interleaving/reordering of RNG draws
+    vacuously pass regardless of correctness.
+    """
+
+    def __init__(self, prob: float = 1.0):
+        super().__init__()
+        self.prob = prob
+        self.batch_calls = 0
+
+    def mutate(
+        self,
+        p: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator = np.random.default_rng(),
+    ) -> np.ndarray:
+        # Both branches return p.copy(): the gate draw exists solely so this
+        # dummy consumes exactly one rng value per call, making RNG-ordering
+        # bugs observable to callers (see class docstring).
+        if rng.random() >= self.prob:
+            return p.copy()
+        return p.copy()
+
+    def mutate_batch(
+        self,
+        candidates_batch: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator = np.random.default_rng(),
+    ) -> np.ndarray:
+        self.batch_calls += 1
+        return candidates_batch.copy()
+
+
+class _MutationWithoutBatch(Mutation):
+    """Minimal dummy Mutation that does not implement mutate_batch."""
+
+    def mutate(
+        self,
+        p: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator = np.random.default_rng(),
+    ) -> np.ndarray:
+        return p.copy()
+
+
+class TestMutationBatchRequired:
+    def test_mutate_batch_is_required(self):
+        with pytest.raises(TypeError, match="mutate_batch"):
+            _MutationWithoutBatch()
+
+
+class TestMutationDerived:
+    """Confirm built-ins inherit the scalar operation from the batch primitive."""
+
+    @pytest.mark.parametrize(
+        "op",
+        [
+            MutationUniform(),
+            MutationPolynomial(eta=20.0),
+            MutationGaussian(sigma=1.0),
+            MutationIntegerUniform(),
+            MutationCategorical(),
+        ],
+    )
+    def test_inherits_mutate(self, op):
+        assert "mutate" not in vars(type(op))
+        assert op.mutate.__func__ is Mutation.mutate
 
 
 # ---------------------------------------------------------------------------
@@ -721,6 +1092,69 @@ class TestCrossoverIntegerSBX:
         c2 = op.crossover(self._parents, rng=np.random.default_rng(7))
         np.testing.assert_array_equal(c1, c2)
 
+    def test_crossover_batch_output_shape(self):
+        op = CrossoverIntegerSBX(prob=1.0, eta=2.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.integers(0, 10, size=(n_pair, 2, 3)).astype(float)
+        c = op.crossover_batch(parents_batch, rng=rng)
+        assert c is not None
+        assert c.shape == (n_pair, 2, 3)
+
+    def test_crossover_batch_matches_single_at_n_pair_one(self):
+        """Unbounded branch: draws are u, then do_cross (2 phases)."""
+        op = CrossoverIntegerSBX(prob=1.0, eta=2.0)
+        parents_batch = self._parents[np.newaxis, :, :]
+        c_batch = op.crossover_batch(parents_batch, rng=np.random.default_rng(7))
+        assert c_batch is not None
+        c_single = op.crossover(self._parents, rng=np.random.default_rng(7))
+        np.testing.assert_array_equal(c_batch[0], c_single)
+
+    def test_crossover_batch_matches_single_at_n_pair_one_bounded(self):
+        """Bounded branch: draws are u, then swap, then do_cross (3 phases)
+        -- the branch GA actually exercises, since GA always supplies bounds."""
+        op = CrossoverIntegerSBX(prob=1.0, eta=20.0, prob_var=1.0)
+        lb = np.zeros(3)
+        ub = np.full(3, 9.0)
+        parents_batch = self._parents[np.newaxis, :, :]
+        c_batch = op.crossover_batch(
+            parents_batch, (lb, ub), rng=np.random.default_rng(7)
+        )
+        assert c_batch is not None
+        c_single = op.crossover(self._parents, (lb, ub), rng=np.random.default_rng(7))
+        np.testing.assert_array_equal(c_batch[0], c_single)
+
+    def test_crossover_batch_deterministic_with_seed(self):
+        op = CrossoverIntegerSBX(prob=1.0, eta=2.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = rng.integers(0, 10, size=(n_pair, 2, 3)).astype(float)
+        c1 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        c2 = op.crossover_batch(parents_batch, rng=np.random.default_rng(42))
+        np.testing.assert_array_equal(c1, c2)
+
+    def test_crossover_batch_offspring_are_integers(self):
+        op = CrossoverIntegerSBX(prob=1.0, eta=2.0)
+        rng = np.random.default_rng(42)
+        n_pair = 8
+        for _ in range(20):
+            parents_batch = rng.integers(0, 10, size=(n_pair, 2, 3)).astype(float)
+            c = op.crossover_batch(parents_batch, rng=rng)
+            assert c is not None
+            assert np.all(c == np.round(c)), "offspring must be integers"
+
+    def test_crossover_batch_respects_bounds(self):
+        op = CrossoverIntegerSBX(prob=1.0, eta=20.0, prob_var=1.0)
+        lb = np.zeros(3)
+        ub = np.full(3, 9.0)
+        rng = np.random.default_rng(0)
+        n_pair = 8
+        for _ in range(20):
+            parents_batch = rng.integers(0, 10, size=(n_pair, 2, 3)).astype(float)
+            c = op.crossover_batch(parents_batch, (lb, ub), rng=rng)
+            assert c is not None
+            assert np.all(c >= lb) and np.all(c <= ub)
+
 
 # ---------------------------------------------------------------------------
 # CrossoverCategorical
@@ -766,6 +1200,43 @@ class TestCrossoverCategorical:
         c1 = op.crossover(self._parents, rng=np.random.default_rng(3))
         c2 = op.crossover(self._parents, rng=np.random.default_rng(3))
         np.testing.assert_array_equal(c1, c2)
+
+    def test_crossover_batch_output_shape(self):
+        op = CrossoverCategorical(prob=1.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = np.tile(self._parents, (n_pair, 1, 1))
+        c = op.crossover_batch(parents_batch, rng=rng)
+        assert c is not None
+        assert c.shape == (n_pair, 2, 3)
+
+    def test_crossover_batch_matches_single_at_n_pair_one(self):
+        op = CrossoverCategorical(prob=1.0)
+        parents_batch = self._parents[np.newaxis, :, :]
+        c_batch = op.crossover_batch(parents_batch, rng=np.random.default_rng(3))
+        assert c_batch is not None
+        c_single = op.crossover(self._parents, rng=np.random.default_rng(3))
+        np.testing.assert_array_equal(c_batch[0], c_single)
+
+    def test_crossover_batch_deterministic_with_seed(self):
+        op = CrossoverCategorical(prob=1.0)
+        n_pair = 5
+        parents_batch = np.tile(self._parents, (n_pair, 1, 1))
+        c1 = op.crossover_batch(parents_batch, rng=np.random.default_rng(3))
+        c2 = op.crossover_batch(parents_batch, rng=np.random.default_rng(3))
+        np.testing.assert_array_equal(c1, c2)
+
+    def test_crossover_batch_complementary_swap(self):
+        op = CrossoverCategorical(prob=1.0)
+        rng = np.random.default_rng(0)
+        n_pair = 5
+        parents_batch = np.tile(self._parents, (n_pair, 1, 1))
+        for _ in range(50):
+            c = op.crossover_batch(parents_batch, rng=rng)
+            assert c is not None
+            # if c1 took p2's value, c2 must have taken p1's, for every row
+            p_sum = parents_batch[:, 0, :] + parents_batch[:, 1, :]
+            np.testing.assert_array_equal(c[:, 0, :] + c[:, 1, :], p_sum)
 
 
 # ---------------------------------------------------------------------------
@@ -996,6 +1467,731 @@ class TestMutationProbGate:
 
 
 # ---------------------------------------------------------------------------
+# MutationUniform.mutate_batch
+#
+# NOTE: unlike every Crossover.crossover_batch override, mutate_batch's
+# output is NOT expected -- and cannot be expected, by construction -- to be
+# bit-identical to a loop calling mutate() once per candidate, for any batch
+# size (see the "Notes" section of MutationUniform.mutate_batch's
+# docstring: the scalar loop interleaves a data-dependent number of draws
+# per dimension, the vectorized version always draws a full (k, dim) gate
+# array and a full (k, dim) replacement array). None of the tests below
+# assert or rely on any such equivalence; they only check the
+# statistical/distributional semantics and the exact pass-through of
+# ungated rows/dimensions.
+# ---------------------------------------------------------------------------
+
+
+class TestMutationUniformBatch:
+    def _range(self, dim):
+        lb = np.full(dim, -5.0)
+        ub = np.full(dim, 5.0)
+        return lb, ub
+
+    def test_output_shape(self):
+        op = MutationUniform(prob=1.0, prob_var=0.5)
+        rng = np.random.default_rng(0)
+        n, dim = 7, DIM
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, self._range(dim), rng=rng)
+        assert result is not None
+        assert result.shape == (n, dim)
+
+    def test_prob_zero_returns_input_unchanged(self):
+        op = MutationUniform(prob=0.0, prob_var=1.0)
+        rng = np.random.default_rng(0)
+        n, dim = 6, DIM
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, self._range(dim), rng=rng)
+        np.testing.assert_array_equal(result, candidates_batch)
+
+    def test_prob_one_prob_var_one_replaces_every_value(self):
+        # Input values sit far outside [lb, ub], so a continuous Uniform(lb,
+        # ub) replacement draw can never coincidentally equal the original
+        # input -- "every value differs" is guaranteed by construction, not
+        # by seed luck. lb/ub are distinct, non-overlapping per-dimension
+        # bands (rather than the same [-5, 5] for every column, as
+        # self._range() would give) so that the bounds check pins each
+        # column to its own band -- this would fail loudly under a
+        # transposed/mis-broadcast rng.uniform(lb, ub, size=(k, dim)) call,
+        # which a same-band-per-column check could not detect.
+        op = MutationUniform(prob=1.0, prob_var=1.0)
+        rng = np.random.default_rng(0)
+        n, dim = 6, DIM
+        lb = np.arange(dim) * 10.0
+        ub = lb + 1.0
+        candidates_batch = np.full((n, dim), 100.0)
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        assert np.all(result != candidates_batch)
+        assert np.all(result >= lb) and np.all(result <= ub)
+
+    def test_prob_var_fractional_matches_expected_rate(self):
+        dim = 6
+        n = 20
+        n_trials = 300
+        prob_var = 0.4
+        op = MutationUniform(prob=1.0, prob_var=prob_var)
+        lb, ub = self._range(dim)
+        candidates_batch = np.full((n, dim), 100.0)
+        rng = np.random.default_rng(2)
+        changed = np.zeros((n, dim))
+        for _ in range(n_trials):
+            result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+            changed += result != candidates_batch
+        observed_rate = changed.sum() / (n * dim * n_trials)
+        np.testing.assert_allclose(observed_rate, prob_var, atol=0.05)
+
+    def test_fractional_prob_gates_some_rows_not_others(self):
+        # prob_var=1.0 makes "changed" exactly track the row-level gate (no
+        # coincidental per-dimension pass-through to muddy the signal), and
+        # the out-of-bounds input value again rules out coincidental
+        # equality for gated rows.
+        op = MutationUniform(prob=0.5, prob_var=1.0)
+        rng = np.random.default_rng(3)
+        n, dim = 20, DIM
+        lb, ub = self._range(dim)
+        candidates_batch = np.full((n, dim), 100.0)
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        row_unchanged = (result == candidates_batch).all(axis=1)
+        row_changed = (result != candidates_batch).any(axis=1)
+        assert row_unchanged.any()
+        assert row_changed.any()
+
+    def test_determinism_same_seed_same_output(self):
+        op = MutationUniform(prob=0.7, prob_var=0.4)
+        dim = DIM
+        lb, ub = self._range(dim)
+        candidates_batch = np.random.default_rng(0).uniform(-2.0, 2.0, size=(15, dim))
+        result_a = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        result_b = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        np.testing.assert_array_equal(result_a, result_b)
+
+    def test_overrides_mutate_batch(self):
+        assert type(MutationUniform()).mutate_batch is not Mutation.mutate_batch
+
+
+class TestMutationUniformBatchUnboundedDimensions:
+    """Regression for Issue #224's Fix 4: mutate_batch used to draw a
+    replacement for every (row, dim) position unconditionally, via
+    ``rng.uniform(lb, ub, size=(k, dim))``, even for positions var_gate
+    would discard -- raising OverflowError as soon as ANY dimension in the
+    batch was unbounded, regardless of whether that dimension was ever
+    actually gated in. The fix draws a replacement only for the positions
+    var_gate selects, mirroring how the scalar mutate() only ever calls
+    rng.uniform for a dimension that actually passed its per-dimension
+    gate."""
+
+    def test_prob_var_zero_with_infinite_bounds_does_not_raise(self):
+        op = MutationUniform(prob=1.0, prob_var=0.0)
+        lb = np.array([-np.inf, -np.inf])
+        ub = np.array([np.inf, np.inf])
+        batch = np.array([[1.0, 2.0], [3.0, 4.0]])
+        rng = np.random.default_rng(0)
+        result = op.mutate_batch(batch, (lb, ub), rng=rng)
+        np.testing.assert_array_equal(result, batch)
+
+    def test_mixed_bounded_unbounded_dims_no_raise_bounded_dim_in_bounds(self):
+        # seed=0 with this exact (n=5, dim=2, prob=1.0, prob_var=0.3)
+        # configuration draws a var_gate that never selects the unbounded
+        # column (1) but does select the bounded column (0) for rows 3-4 --
+        # verified via a standalone reconstruction of the gate/var_gate draw
+        # sequence, asserted below as the test's precondition so the test
+        # cannot silently go vacuous if the draw order ever changes.
+        lb = np.array([-5.0, -np.inf])
+        ub = np.array([5.0, np.inf])
+        n, dim = 5, 2
+        prob, prob_var = 1.0, 0.3
+
+        check_rng = np.random.default_rng(0)
+        gate = check_rng.random(n) < prob
+        var_gate = check_rng.random((int(gate.sum()), dim)) < prob_var
+        assert not var_gate[:, 1].any(), "precondition: unbounded col never gated"
+        assert var_gate[:, 0].any(), "precondition: bounded col gated at least once"
+
+        op = MutationUniform(prob=prob, prob_var=prob_var)
+        batch = np.full((n, dim), 100.0)
+        rng = np.random.default_rng(0)
+        result = op.mutate_batch(batch, (lb, ub), rng=rng)
+        assert result is not None
+
+        # Unbounded column is untouched (never gated in, and no crash).
+        np.testing.assert_array_equal(result[:, 1], batch[:, 1])
+        # Bounded column: gated positions land within [lb, ub]; ungated
+        # positions are byte-identical to the input.
+        changed = result[gate][var_gate[:, 0], 0]
+        assert changed.size > 0
+        assert np.all(changed >= lb[0]) and np.all(changed <= ub[0])
+        unchanged_mask = ~var_gate[:, 0]
+        np.testing.assert_array_equal(
+            result[gate][unchanged_mask, 0], batch[gate][unchanged_mask, 0]
+        )
+
+
+# ---------------------------------------------------------------------------
+# MutationPolynomial.mutate_batch
+#
+# NOTE: same caveat as TestMutationUniformBatch above -- mutate_batch's
+# output is NOT expected to be bit-identical to a loop calling mutate() once
+# per candidate, for any batch size (see the "Notes" section of
+# MutationPolynomial.mutate_batch's docstring). None of the tests below
+# assert or rely on any such equivalence. The formula-correctness test
+# instead pins down mutate_batch's random draws with a scripted fake rng, so
+# delta1/u are fully controlled and the resulting delta_q can be checked
+# against an independently re-derived reference computation, without
+# depending on mutate()'s and mutate_batch()'s RNG streams aligning.
+# ---------------------------------------------------------------------------
+
+
+class _ScriptedRNG:
+    """Fake rng exposing ``.random(size)``, ``.normal(loc, scale, size)``, and
+    ``.integers(low, high, size)``, each returning a fixed queue of pre-set
+    arrays in call order.
+
+    Used to fully control the sequence of random draws mutate_batch makes
+    internally (gate, var_gate, u / noise / integer replacement) so a chosen
+    set of values can be fed through the real formula deterministically.
+    ``normal_values``/``integers_values`` are optional and only needed by
+    callers whose ``mutate_batch`` calls ``rng.normal``/``rng.integers``
+    (e.g. ``MutationGaussian``/``_MutationDiscreteUniform``);
+    ``MutationPolynomial``'s formula only ever calls ``.random``, so it never
+    touches either queue.
+    """
+
+    def __init__(self, values, normal_values=None, integers_values=None):
+        self._values = list(values)
+        self._normal_values = list(normal_values) if normal_values is not None else []
+        self._integers_values = (
+            list(integers_values) if integers_values is not None else []
+        )
+
+    def random(self, size=None):
+        return self._values.pop(0)
+
+    def normal(self, loc=0.0, scale=1.0, size=None):
+        return self._normal_values.pop(0)
+
+    def integers(self, low, high, size=None):
+        return self._integers_values.pop(0)
+
+
+def _reference_delta_q(
+    delta1: np.ndarray, delta2: np.ndarray, u: np.ndarray, eta: float
+):
+    """Independent scalar-loop reimplementation of the polynomial mutation
+    delta_q formula.
+
+    Transcribed directly from ``MutationPolynomial.mutate()``'s inner loop
+    (not from ``mutate_batch``'s vectorized derivation) to catch any
+    transcription mistake in the vectorized version. Deliberately a plain
+    Python loop over flattened arrays -- correctness over speed, since this
+    is test-only reference code.
+    """
+    d1_flat = delta1.ravel()
+    d2_flat = delta2.ravel()
+    u_flat = u.ravel()
+    out = np.empty_like(d1_flat, dtype=float)
+    for i in range(d1_flat.shape[0]):
+        d1 = d1_flat[i]
+        d2 = d2_flat[i]
+        uu = u_flat[i]
+        if uu <= 0.5:
+            dq = (2.0 * uu + (1.0 - 2.0 * uu) * (1.0 - d1) ** (eta + 1.0)) ** (
+                1.0 / (eta + 1.0)
+            ) - 1.0
+        else:
+            dq = 1.0 - (
+                2.0 * (1.0 - uu) + 2.0 * (uu - 0.5) * (1.0 - d2) ** (eta + 1.0)
+            ) ** (1.0 / (eta + 1.0))
+        out[i] = dq
+    return out.reshape(delta1.shape)
+
+
+class TestMutationPolynomialBatch:
+    def _range(self, dim):
+        lb = np.full(dim, -5.0)
+        ub = np.full(dim, 5.0)
+        return lb, ub
+
+    def test_formula_matches_independent_reference(self):
+        # delta1 + delta2 == 1 always (both are derived from one point's
+        # position between lb/ub), so gridding delta1 (via `sub`) and u
+        # covers every reachable (delta1, delta2, u) combination without
+        # asserting an invalid geometry.
+        #
+        # lb/ub deliberately use two columns with distinct, non-unit-width,
+        # non-zero-origin bands (rather than a shared [-5, 5] or a [0, 1]
+        # band) for two reasons: (a) [0, 1] would make delta1 == sub and
+        # (ub - lb) == 1 numerically, silently passing even if the
+        # implementation dropped the "* (ub - lb)" scale factor or swapped
+        # `sub` for `delta1` in the final expression; (b) a shared band
+        # across columns cannot catch a transposed/mis-broadcast
+        # `(dim,)`-against-`(k, dim)` computation (same guard rationale as
+        # MutationUniform.mutate_batch's test_prob_one_prob_var_one_replaces
+        # _every_value).
+        delta1_vals = np.linspace(0.01, 0.99, 20)
+        u_vals = np.linspace(0.01, 0.99, 20)
+        d1_grid, u_grid = np.meshgrid(delta1_vals, u_vals, indexing="ij")
+        d1_flat = d1_grid.ravel()
+        u_flat = u_grid.ravel()
+        n = d1_flat.shape[0]
+        dim = 2
+        lb = np.array([-3.0, 2.0])
+        ub = np.array([7.0, 2.5])
+        sub = lb + d1_flat[:, None] * (ub - lb)
+        u_arr = np.repeat(u_flat[:, None], dim, axis=1)
+
+        for eta in (2.0, 20.0):
+            op = MutationPolynomial(prob=1.0, eta=eta, prob_var=1.0)
+            scripted = _ScriptedRNG(
+                [
+                    np.zeros(n),  # gate draw: 0 < prob=1.0 -> all rows pass
+                    np.zeros((n, dim)),  # var_gate draw: all dims pass
+                    u_arr,  # u draw: fully controlled, same per column
+                ]
+            )
+            # _ScriptedRNG only duck-types Generator's `.random(size)`; cast
+            # so `ty`/static type checkers don't flag the substitution.
+            result = op.mutate_batch(
+                sub, (lb, ub), rng=cast(np.random.Generator, scripted)
+            )
+            assert result is not None
+
+            expected_delta_q = _reference_delta_q(
+                np.repeat(d1_flat[:, None], dim, axis=1),
+                np.repeat((1.0 - d1_flat)[:, None], dim, axis=1),
+                u_arr,
+                eta,
+            )
+            expected = np.clip(sub + expected_delta_q * (ub - lb), lb, ub)
+            np.testing.assert_allclose(result, expected, rtol=1e-9, atol=1e-9)
+
+    def test_var_gate_pass_through_exact(self):
+        # Confirms np.where(var_gate, mutated, sub) leaves dimensions that
+        # fail the per-dimension gate exactly as `sub` (no recomputation),
+        # while gated dimensions match the expected formula output --
+        # pinned via the same scripted-rng control as the formula test
+        # above, rather than inferred from the statistical rate test.
+        n, dim = 5, 4
+        lb = np.array([-3.0, 2.0, 0.0, -10.0])
+        ub = np.array([7.0, 2.5, 1.0, 10.0])
+        rng_data = np.random.default_rng(7)
+        delta1 = rng_data.uniform(0.05, 0.95, size=(n, dim))
+        sub = lb + delta1 * (ub - lb)
+        u_arr = rng_data.uniform(0.05, 0.95, size=(n, dim))
+        # Checkerboard var_gate pattern with prob_var=0.5: threshold draw of
+        # 0.0 passes (0.0 < 0.5), 0.9 fails (0.9 >= 0.5).
+        var_draw = np.where((np.arange(n)[:, None] + np.arange(dim)) % 2 == 0, 0.0, 0.9)
+        passed = var_draw < 0.5
+        assert passed.any() and (~passed).any()
+
+        op = MutationPolynomial(prob=1.0, eta=15.0, prob_var=0.5)
+        scripted = _ScriptedRNG(
+            [
+                np.zeros(n),  # gate draw: all rows pass
+                var_draw,  # var_gate draw: checkerboard
+                u_arr,  # u draw: fully controlled
+            ]
+        )
+        result = op.mutate_batch(sub, (lb, ub), rng=cast(np.random.Generator, scripted))
+        assert result is not None
+
+        expected_delta_q = _reference_delta_q(delta1, 1.0 - delta1, u_arr, 15.0)
+        expected_mutated = np.clip(sub + expected_delta_q * (ub - lb), lb, ub)
+
+        np.testing.assert_array_equal(result[~passed], sub[~passed])
+        np.testing.assert_allclose(
+            result[passed], expected_mutated[passed], rtol=1e-9, atol=1e-9
+        )
+
+    def test_output_shape(self):
+        op = MutationPolynomial(prob=1.0, eta=20.0, prob_var=0.5)
+        rng = np.random.default_rng(0)
+        n, dim = 7, DIM
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, self._range(dim), rng=rng)
+        assert result is not None
+        assert result.shape == (n, dim)
+
+    def test_prob_zero_returns_input_unchanged(self):
+        op = MutationPolynomial(prob=0.0, eta=20.0, prob_var=1.0)
+        rng = np.random.default_rng(0)
+        n, dim = 6, DIM
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, self._range(dim), rng=rng)
+        np.testing.assert_array_equal(result, candidates_batch)
+
+    def test_respects_bounds(self):
+        op = MutationPolynomial(prob=1.0, eta=20.0, prob_var=1.0)
+        lb, ub = self._range(DIM)
+        rng = np.random.default_rng(0)
+        for _ in range(20):
+            candidates_batch = rng.uniform(-4.0, 4.0, size=(10, DIM))
+            result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+            assert result is not None
+            assert np.all(result >= lb) and np.all(result <= ub)
+
+    def test_prob_var_fractional_matches_expected_rate(self):
+        # var_gate=True dimensions change value with overwhelming
+        # probability under a continuous delta_q, so "value changed from
+        # input" is a reasonable proxy for "was gated" here.
+        dim = 6
+        n = 20
+        n_trials = 300
+        prob_var = 0.4
+        op = MutationPolynomial(prob=1.0, eta=20.0, prob_var=prob_var)
+        lb, ub = self._range(dim)
+        rng = np.random.default_rng(2)
+        changed = np.zeros((n, dim))
+        for _ in range(n_trials):
+            candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+            result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+            changed += result != candidates_batch
+        observed_rate = changed.sum() / (n * dim * n_trials)
+        np.testing.assert_allclose(observed_rate, prob_var, atol=0.05)
+
+    def test_fractional_prob_gates_some_rows_not_others(self):
+        op = MutationPolynomial(prob=0.5, eta=20.0, prob_var=1.0)
+        rng = np.random.default_rng(3)
+        n, dim = 20, DIM
+        lb, ub = self._range(dim)
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        row_unchanged = (result == candidates_batch).all(axis=1)
+        row_changed = (result != candidates_batch).any(axis=1)
+        assert row_unchanged.any()
+        assert row_changed.any()
+
+    def test_determinism_same_seed_same_output(self):
+        op = MutationPolynomial(prob=0.7, eta=20.0, prob_var=0.4)
+        dim = DIM
+        lb, ub = self._range(dim)
+        candidates_batch = np.random.default_rng(0).uniform(-2.0, 2.0, size=(15, dim))
+        result_a = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        result_b = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        np.testing.assert_array_equal(result_a, result_b)
+
+    def test_overrides_mutate_batch(self):
+        assert (
+            type(MutationPolynomial(eta=20.0)).mutate_batch is not Mutation.mutate_batch
+        )
+
+
+# ---------------------------------------------------------------------------
+# MutationGaussian.mutate_batch
+#
+# NOTE: same caveat as TestMutationUniformBatch/TestMutationPolynomialBatch
+# above -- mutate_batch's output is NOT expected to be bit-identical to a
+# loop calling mutate() once per candidate, for any batch size (see the
+# "Notes" section of MutationGaussian.mutate_batch's docstring). None of the
+# tests below assert or rely on any such equivalence.
+# ---------------------------------------------------------------------------
+
+
+class TestMutationGaussianBatch:
+    def _range(self, dim):
+        lb = np.full(dim, -5.0)
+        ub = np.full(dim, 5.0)
+        return lb, ub
+
+    def test_output_shape(self):
+        op = MutationGaussian(prob=1.0, sigma=0.1, prob_var=0.5)
+        rng = np.random.default_rng(0)
+        n, dim = 7, DIM
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, self._range(dim), rng=rng)
+        assert result is not None
+        assert result.shape == (n, dim)
+
+    def test_prob_zero_returns_input_unchanged(self):
+        op = MutationGaussian(prob=0.0, sigma=1.0, prob_var=1.0)
+        rng = np.random.default_rng(0)
+        n, dim = 6, DIM
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, self._range(dim), rng=rng)
+        np.testing.assert_array_equal(result, candidates_batch)
+
+    def test_var_gate_pass_through_and_noise_exact(self):
+        # Fully scripted rng: gate/var_gate/noise draws are all fixed, so
+        # dimensions failing var_gate must come back exactly as `sub` (no
+        # noise applied), and dimensions passing var_gate must come back as
+        # exactly `sub + noise` for the scripted noise array. No branching
+        # formula to verify here (unlike MutationPolynomial), so this is a
+        # plain addition/gating check.
+        n, dim = 5, 4
+        lb = np.array([-3.0, 2.0, 0.0, -10.0])
+        ub = np.array([7.0, 2.5, 1.0, 10.0])
+        rng_data = np.random.default_rng(7)
+        sub = rng_data.uniform(-2.0, 2.0, size=(n, dim))
+        noise = rng_data.normal(0.0, 1.0, size=(n, dim))
+        # Checkerboard var_gate pattern with prob_var=0.5: threshold draw of
+        # 0.0 passes (0.0 < 0.5), 0.9 fails (0.9 >= 0.5).
+        var_draw = np.where((np.arange(n)[:, None] + np.arange(dim)) % 2 == 0, 0.0, 0.9)
+        passed = var_draw < 0.5
+        assert passed.any() and (~passed).any()
+
+        op = MutationGaussian(prob=1.0, sigma=1.0, prob_var=0.5)
+        scripted = _ScriptedRNG(
+            [
+                np.zeros(n),  # gate draw: all rows pass
+                var_draw,  # var_gate draw: checkerboard
+            ],
+            normal_values=[noise],  # noise draw: fully controlled
+        )
+        result = op.mutate_batch(sub, (lb, ub), rng=cast(np.random.Generator, scripted))
+        assert result is not None
+
+        expected_mutated = sub + noise
+        np.testing.assert_array_equal(result[~passed], sub[~passed])
+        np.testing.assert_array_equal(result[passed], expected_mutated[passed])
+
+    def test_zero_sigma_no_change(self):
+        # prob=1.0/prob_var=1.0 forces every element through the noise path,
+        # so sigma=0.0 returning the input byte-identically is what pins
+        # self.sigma as the scale actually passed to rng.normal (rather
+        # than, say, a hardcoded scale=1.0).
+        op = MutationGaussian(prob=1.0, sigma=0.0, prob_var=1.0)
+        rng = np.random.default_rng(0)
+        n, dim = 6, DIM
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, self._range(dim), rng=rng)
+        np.testing.assert_array_equal(result, candidates_batch)
+
+    def test_no_bounds_clipping(self):
+        # Deliberately large sigma and candidates near lb/ub: mutated values
+        # must be able to legitimately land outside [lb, ub], pinning the
+        # absence of clipping as a regression guard (mutate() itself never
+        # clips Gaussian mutation output; mutate_batch must not "fix" this
+        # by adding an np.clip that would be a silent behavior change).
+        op = MutationGaussian(prob=1.0, sigma=100.0, prob_var=1.0)
+        lb, ub = self._range(DIM)
+        candidates_batch = np.tile(ub, (20, 1))
+        rng = np.random.default_rng(0)
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        assert np.any(result > ub) or np.any(result < lb)
+
+    def test_prob_var_fractional_matches_expected_rate(self):
+        # var_gate=True dimensions change value with overwhelming
+        # probability under continuous Gaussian noise (exactly 0.0 noise has
+        # probability zero), so "value changed from input" is a reasonable
+        # proxy for "was gated" here.
+        dim = 6
+        n = 20
+        n_trials = 300
+        prob_var = 0.4
+        op = MutationGaussian(prob=1.0, sigma=1.0, prob_var=prob_var)
+        lb, ub = self._range(dim)
+        rng = np.random.default_rng(2)
+        changed = np.zeros((n, dim))
+        for _ in range(n_trials):
+            candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+            result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+            changed += result != candidates_batch
+        observed_rate = changed.sum() / (n * dim * n_trials)
+        np.testing.assert_allclose(observed_rate, prob_var, atol=0.05)
+
+    def test_fractional_prob_gates_some_rows_not_others(self):
+        op = MutationGaussian(prob=0.5, sigma=1.0, prob_var=1.0)
+        rng = np.random.default_rng(3)
+        n, dim = 20, DIM
+        lb, ub = self._range(dim)
+        candidates_batch = rng.uniform(-2.0, 2.0, size=(n, dim))
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        row_unchanged = (result == candidates_batch).all(axis=1)
+        row_changed = (result != candidates_batch).any(axis=1)
+        assert row_unchanged.any()
+        assert row_changed.any()
+
+    def test_determinism_same_seed_same_output(self):
+        op = MutationGaussian(prob=0.7, sigma=0.5, prob_var=0.4)
+        dim = DIM
+        lb, ub = self._range(dim)
+        candidates_batch = np.random.default_rng(0).uniform(-2.0, 2.0, size=(15, dim))
+        result_a = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        result_b = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        np.testing.assert_array_equal(result_a, result_b)
+
+    def test_overrides_mutate_batch(self):
+        assert (
+            type(MutationGaussian(sigma=1.0)).mutate_batch is not Mutation.mutate_batch
+        )
+
+
+# ---------------------------------------------------------------------------
+# _MutationDiscreteUniform.mutate_batch (shared base for MutationIntegerUniform
+# and MutationCategorical)
+#
+# NOTE: same caveat as the batch test classes above -- mutate_batch's output
+# is NOT expected to be bit-identical to a loop calling mutate() once per
+# candidate, for any batch size (see the "Notes" section of
+# _MutationDiscreteUniform.mutate_batch's docstring). None of the tests below
+# assert or rely on any such equivalence.
+#
+# mutate_batch is implemented exactly once, on _MutationDiscreteUniform
+# itself, and inherited unchanged by both MutationIntegerUniform and
+# MutationCategorical (neither subclass overrides it). Every test here is
+# therefore parametrized over both concrete classes, to confirm the
+# inheritance actually works end to end rather than merely that the shared
+# base class's own logic is correct in isolation.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("cls", [MutationIntegerUniform, MutationCategorical])
+class TestMutationDiscreteUniformBatch:
+    def _range(self, dim):
+        # ub - lb == 9 (10 possible integer values per dimension) -- wide
+        # enough that a coincidental "new == old" draw on a gated dimension
+        # is rare and won't meaningfully bias the shape/bounds/pass-through
+        # checks below.
+        lb = np.zeros(dim)
+        ub = np.full(dim, 9.0)
+        return lb, ub
+
+    def test_output_shape(self, cls):
+        op = cls(prob=1.0, prob_var=0.5)
+        rng = np.random.default_rng(0)
+        n, dim = 7, DIM
+        lb, ub = self._range(dim)
+        candidates_batch = rng.integers(0, 10, size=(n, dim)).astype(float)
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        assert result.shape == (n, dim)
+
+    def test_prob_zero_returns_input_unchanged(self, cls):
+        op = cls(prob=0.0, prob_var=1.0)
+        rng = np.random.default_rng(0)
+        n, dim = 6, DIM
+        lb, ub = self._range(dim)
+        candidates_batch = rng.integers(0, 10, size=(n, dim)).astype(float)
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        np.testing.assert_array_equal(result, candidates_batch)
+
+    def test_replaced_values_are_integers_within_bounds(self, cls):
+        # lb/ub are distinct, non-overlapping per-dimension bands (rather
+        # than a shared range for every column) so the bounds check pins
+        # each column to its own band -- this would fail loudly under a
+        # transposed/mis-broadcast `rng.integers(lb, ub + 1, size=(k, dim))`
+        # call, which a same-band-per-column check could not detect (same
+        # guard rationale as
+        # TestMutationUniformBatch.test_prob_one_prob_var_one_replaces_every
+        # _value). The non-integer input value (2.5, outside every band)
+        # also makes "result is an integer" itself proof that every value
+        # was actually replaced, rather than merely consistent with the
+        # (already-integer) input being left untouched.
+        op = cls(prob=1.0, prob_var=1.0)
+        rng = np.random.default_rng(1)
+        n, dim = 20, DIM
+        lb = np.arange(dim) * 10.0
+        ub = lb + 4.0
+        candidates_batch = np.full((n, dim), 2.5)
+        for _ in range(20):
+            result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+            assert result is not None
+            assert np.all(result == np.round(result))
+            assert np.all(result >= lb) and np.all(result <= ub)
+
+    def test_var_gate_pass_through_and_replacement_exact(self, cls):
+        # Fully scripted rng: gate/var_gate/integer-replacement draws are all
+        # fixed, so dimensions failing var_gate must come back exactly as
+        # `sub` (no replacement applied), and dimensions passing var_gate
+        # must come back as exactly the scripted integer replacement (cast
+        # to float).
+        n, dim = 5, 4
+        lb = np.zeros(dim)
+        ub = np.full(dim, 9.0)
+        rng_data = np.random.default_rng(7)
+        sub = rng_data.integers(0, 10, size=(n, dim)).astype(float)
+        replacement = rng_data.integers(0, 10, size=(n, dim)).astype(float)
+        # Checkerboard var_gate pattern with prob_var=0.5: threshold draw of
+        # 0.0 passes (0.0 < 0.5), 0.9 fails (0.9 >= 0.5).
+        var_draw = np.where((np.arange(n)[:, None] + np.arange(dim)) % 2 == 0, 0.0, 0.9)
+        passed = var_draw < 0.5
+        assert passed.any() and (~passed).any()
+
+        op = cls(prob=1.0, prob_var=0.5)
+        scripted = _ScriptedRNG(
+            [
+                np.zeros(n),  # gate draw: all rows pass
+                var_draw,  # var_gate draw: checkerboard
+            ],
+            integers_values=[replacement.astype(int)],  # replacement draw
+        )
+        result = op.mutate_batch(sub, (lb, ub), rng=cast(np.random.Generator, scripted))
+        assert result is not None
+
+        np.testing.assert_array_equal(result[~passed], sub[~passed])
+        np.testing.assert_array_equal(result[passed], replacement[passed])
+
+    def test_prob_var_fractional_matches_expected_rate(self, cls):
+        # Use a wide integer range (100 possible values per dimension) so a
+        # gated dimension coincidentally redrawing its own value has only a
+        # 1% chance, keeping that bias well below the atol used to compare
+        # the observed "changed" rate against prob_var.
+        dim = 6
+        n = 20
+        n_trials = 300
+        prob_var = 0.4
+        op = cls(prob=1.0, prob_var=prob_var)
+        lb = np.zeros(dim)
+        ub = np.full(dim, 99.0)
+        candidates_batch = np.zeros((n, dim))
+        rng = np.random.default_rng(2)
+        changed = np.zeros((n, dim))
+        for _ in range(n_trials):
+            result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+            changed += result != candidates_batch
+        observed_rate = changed.sum() / (n * dim * n_trials)
+        np.testing.assert_allclose(observed_rate, prob_var, atol=0.05)
+
+    def test_fractional_prob_gates_some_rows_not_others(self, cls):
+        op = cls(prob=0.5, prob_var=1.0)
+        rng = np.random.default_rng(3)
+        n, dim = 20, DIM
+        lb, ub = self._range(dim)
+        candidates_batch = np.zeros((n, dim))
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert result is not None
+        row_unchanged = (result == candidates_batch).all(axis=1)
+        row_changed = (result != candidates_batch).any(axis=1)
+        assert row_unchanged.any()
+        assert row_changed.any()
+
+    def test_determinism_same_seed_same_output(self, cls):
+        op = cls(prob=0.7, prob_var=0.4)
+        dim = DIM
+        lb, ub = self._range(dim)
+        candidates_batch = (
+            np.random.default_rng(0).integers(0, 10, size=(15, dim)).astype(float)
+        )
+        result_a = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        result_b = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(42)
+        )
+        np.testing.assert_array_equal(result_a, result_b)
+
+    def test_overrides_mutate_batch(self, cls):
+        assert type(cls()).mutate_batch is not Mutation.mutate_batch
+
+
+# ---------------------------------------------------------------------------
 # DuplicateElimination
 # ---------------------------------------------------------------------------
 
@@ -1111,3 +2307,41 @@ class TestDuplicateElimination:
         ctx = _make_ctx(n_pop=10)
         candidates = ga.ask(ctx, provider)
         assert len(candidates) == 10
+
+
+# ---------------------------------------------------------------------------
+# GA + batched default crossover operators: end-to-end smoke test
+# (Issue #224, commit 7 — CrossoverSBX now dispatches through
+# crossover_batch by default on continuous-only problems.)
+# ---------------------------------------------------------------------------
+
+
+class TestGABatchedCrossoverSmoke:
+    def test_ga_with_sbx_runs_several_generations_on_sphere(self):
+        """Coarse sanity net for the new default crossover_batch dispatch
+        path: GA with CrossoverSBX (now batch-capable) on a continuous-only
+        problem must run several generations without error and produce
+        finite, in-bounds candidates. Not a strict numeric-equality check."""
+        dim = 5
+        lb = [-5.0] * dim
+        ub = [5.0] * dim
+        result = minimize(
+            lambda x: np.sum(x**2),
+            dim=dim,
+            lb=lb,
+            ub=ub,
+            algorithm=GA(
+                crossover=CrossoverSBX(prob=0.9, eta=15.0),
+                mutation=MutationPolynomial(prob=1.0, eta=20.0, prob_var=0.2),
+                parent_selection=TournamentSelection(2),
+                survivor_selection=TruncationSelection(),
+            ),
+            surrogate="rbf",
+            max_fe=150,
+            pop_size=10,
+            seed=0,
+            verbose=False,
+        )
+        assert result.fe > 0
+        assert np.isfinite(result.f).all()
+        assert np.all(result.x >= lb) and np.all(result.x <= ub)

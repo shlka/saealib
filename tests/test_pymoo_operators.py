@@ -2,19 +2,79 @@
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pytest
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
 
-from saealib import GA, TournamentSelection, TruncationSelection, minimize
+from saealib import (
+    GA,
+    CategoricalVariable,
+    ConfigurationError,
+    ContinuousVariable,
+    IntegerVariable,
+    TournamentSelection,
+    TruncationSelection,
+    minimize,
+)
+from saealib.comparators import SingleObjectiveComparator
+from saealib.context import OptimizationState
 from saealib.operators import PymooCrossover, PymooMutation
+from saealib.operators.dedup import DuplicateElimination
+from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
+from saealib.problem import Problem
 
 DIM = 6
 
 
 def _make_parents(rng: np.random.Generator) -> np.ndarray:
     return rng.uniform(-1.0, 1.0, size=(2, DIM))
+
+
+class _CountedSBX(SBX):
+    """SBX subclass counting real ``_do()`` invocations."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.n_do_calls = 0
+
+    def _do(self, *args, **kwargs):
+        self.n_do_calls += 1
+        return super()._do(*args, **kwargs)
+
+
+class _CountedPM(PM):
+    """PM subclass counting real ``_do()`` invocations."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.n_do_calls = 0
+
+    def _do(self, *args, **kwargs):
+        self.n_do_calls += 1
+        return super()._do(*args, **kwargs)
+
+
+class _BatchHookCrossover(PymooCrossover):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.post_batch_calls = 0
+
+    def post_crossover_batch(self, offspring_batch, parents_batch, rng, ctx=None):
+        self.post_batch_calls += 1
+        return offspring_batch
+
+
+class _BatchHookMutation(PymooMutation):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.post_batch_calls = 0
+
+    def post_mutation_batch(self, offspring_batch, mutate_range, rng, ctx=None):
+        self.post_batch_calls += 1
+        return offspring_batch
 
 
 # ---------------------------------------------------------------------------
@@ -86,6 +146,51 @@ class TestPymooCrossover:
         with pytest.raises(TypeError):
             op.crossover(p, rng=rng)
 
+    def test_crossover_batch_calls_do_once(self):
+        n_pair = 5
+        counted = _CountedSBX(eta=15)
+        op = PymooCrossover(counted)
+        rng = np.random.default_rng(5)
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+
+        result = op.crossover_batch(parents_batch, bounds=(lb, ub), rng=rng)
+        assert counted.n_do_calls == 1
+        assert result.shape == (n_pair, 2, DIM)
+
+        counted.n_do_calls = 0
+        for k in range(n_pair):
+            op.crossover(parents_batch[k], bounds=(lb, ub), rng=rng)
+        assert counted.n_do_calls == n_pair
+
+    def test_crossover_batch_matches_single_crossover_at_n_pair_one(self):
+        op = PymooCrossover(SBX(eta=15))
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+        p = np.random.default_rng(6).uniform(-1.0, 1.0, size=(2, DIM))
+
+        rng_batch = np.random.default_rng(7)
+        batch_result = op.crossover_batch(
+            p[np.newaxis, :, :], bounds=(lb, ub), rng=rng_batch
+        )
+        batch_result = batch_result[0]
+
+        rng_single = np.random.default_rng(7)
+        single_result = op.crossover(p, bounds=(lb, ub), rng=rng_single)
+
+        np.testing.assert_allclose(batch_result, single_result)
+
+    def test_crossover_batch_output_shape(self):
+        op = PymooCrossover(SBX(eta=15))
+        rng = np.random.default_rng(8)
+        n_pair = 3
+        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+        c = op.crossover_batch(parents_batch, bounds=(lb, ub), rng=rng)
+        assert c.shape == (n_pair, 2, DIM)
+
     def test_subdimensional_call_rebuilds_shim_problem(self):
         """A smaller dim slice (e.g. GA's per-type variable routing) works and
         does not reuse the wrong cached pymoo Problem shim."""
@@ -154,6 +259,101 @@ class TestPymooMutation:
             m = op.mutate(p, (lb, ub), rng=rng)
             assert np.all(m >= lb) and np.all(m <= ub)
 
+    def test_mutate_batch_calls_do_once(self):
+        n = 6
+        counted = _CountedPM(eta=20, prob_var=1.0)
+        op = PymooMutation(counted, prob=1.0)
+        rng = np.random.default_rng(9)
+        candidates_batch = rng.uniform(-1.0, 1.0, size=(n, DIM))
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert counted.n_do_calls == 1
+        assert result.shape == (n, DIM)
+
+        counted.n_do_calls = 0
+        for k in range(n):
+            op.mutate(candidates_batch[k], (lb, ub), rng=rng)
+        assert counted.n_do_calls == n
+
+    def test_mutate_derives_single_row_batch(self):
+        op = PymooMutation(PM(eta=20, prob_var=1.0), prob=1.0)
+        assert "mutate" not in vars(PymooMutation)
+
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+        p = np.random.default_rng(10).uniform(-1.0, 1.0, size=DIM)
+
+        rng_batch = np.random.default_rng(11)
+        batch_result = op.mutate_batch(p[np.newaxis, :], (lb, ub), rng=rng_batch)
+        batch_result = batch_result[0]
+
+        rng_single = np.random.default_rng(11)
+        single_result = op.mutate(p, (lb, ub), rng=rng_single)
+
+        np.testing.assert_allclose(batch_result, single_result)
+
+    def test_mutate_batch_prob_zero_returns_unchanged_without_do_call(self):
+        counted = _CountedPM(eta=20)
+        op = PymooMutation(counted, prob=0.0)
+        rng = np.random.default_rng(12)
+        n = 5
+        candidates_batch = rng.uniform(-1.0, 1.0, size=(n, DIM))
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        np.testing.assert_array_equal(result, candidates_batch)
+        assert counted.n_do_calls == 0
+
+    def test_mutate_batch_prob_one_mutates_all_rows_with_single_do_call(self):
+        counted = _CountedPM(eta=20, prob_var=1.0)
+        op = PymooMutation(counted, prob=1.0)
+        rng = np.random.default_rng(13)
+        n = 5
+        candidates_batch = rng.uniform(-1.0, 1.0, size=(n, DIM))
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+
+        result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert counted.n_do_calls == 1
+        assert not np.array_equal(result, candidates_batch)
+
+    def test_mutate_batch_fractional_prob_gates_rows_exactly(self):
+        seed = 14
+        counted = _CountedPM(eta=20, prob_var=1.0)
+        op = PymooMutation(counted, prob=0.5)
+        n = 8
+        candidates_batch = np.random.default_rng(seed + 1).uniform(
+            -1.0, 1.0, size=(n, DIM)
+        )
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+
+        # mutate_batch's gate draw is the first thing to touch the rng
+        # stream, so a parallel, identically-seeded generator predicts it.
+        expected_gate = np.random.default_rng(seed).random(n) < op.prob
+
+        result = op.mutate_batch(
+            candidates_batch, (lb, ub), rng=np.random.default_rng(seed)
+        )
+
+        np.testing.assert_array_equal(
+            result[~expected_gate], candidates_batch[~expected_gate]
+        )
+        assert counted.n_do_calls == 1
+
+    def test_mutate_batch_output_shape(self):
+        op = PymooMutation(PM(eta=20), prob=1.0)
+        rng = np.random.default_rng(15)
+        n = 4
+        candidates_batch = rng.uniform(-1.0, 1.0, size=(n, DIM))
+        lb = np.full(DIM, -1.0)
+        ub = np.full(DIM, 1.0)
+        m = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
+        assert m.shape == (n, DIM)
+
 
 # ---------------------------------------------------------------------------
 # End-to-end: pymoo operators driving saealib's own GA
@@ -182,3 +382,335 @@ class TestPymooOperatorsEndToEnd:
         )
         assert result.fe > 0
         assert np.isfinite(result.f).all()
+
+
+# ---------------------------------------------------------------------------
+# GA.ask() batch-path dispatch (Issue #224, commit 6)
+# ---------------------------------------------------------------------------
+
+
+class _NoopProvider:
+    """Minimal provider that silently discards dispatched events."""
+
+    def dispatch(self, event):
+        pass
+
+
+def _make_continuous_ctx(n_pop=10, seed=0, identical=False):
+    problem = Problem(
+        func=lambda x: np.array([np.sum(x**2)]),
+        dim=DIM,
+        n_obj=1,
+        direction=np.array([-1.0]),
+        lb=[-1.0] * DIM,
+        ub=[1.0] * DIM,
+        comparator=SingleObjectiveComparator(),
+    )
+    attrs = [
+        PopulationAttribute(name="x", dtype=np.float64, shape=(DIM,)),
+        PopulationAttribute(name="f", dtype=np.float64, shape=(1,)),
+        PopulationAttribute(name="g", dtype=np.float64, shape=(0,)),
+        PopulationAttribute(name="cv", dtype=np.float64, shape=()),
+    ]
+    rng = np.random.default_rng(seed)
+    pop = Population(attrs, init_capacity=n_pop + 5)
+    if identical:
+        xs = np.tile(rng.uniform(-1.0, 1.0, size=DIM), (n_pop, 1))
+    else:
+        xs = rng.uniform(-1.0, 1.0, size=(n_pop, DIM))
+    fs = np.array([[np.sum(x**2)] for x in xs])
+    pop.extend({"x": xs, "f": fs, "g": np.zeros((n_pop, 0)), "cv": np.zeros(n_pop)})
+    arc = Archive(attrs, init_capacity=5)
+    pareto_arc = ParetoArchive(attrs, init_capacity=5, direction=np.array([-1.0]))
+    return OptimizationState(
+        problem=problem,
+        population=pop,
+        archive=arc,
+        pareto_archive=pareto_arc,
+        rng=np.random.default_rng(seed),
+    )
+
+
+def _make_mixed_problem():
+    variables = [
+        ContinuousVariable(-1.0, 1.0),
+        ContinuousVariable(-1.0, 1.0),
+        IntegerVariable(0, 9),
+        CategoricalVariable(["a", "b", "c"]),
+    ]
+    return Problem(
+        func=lambda x: np.array([x[0]]),
+        dim=4,
+        n_obj=1,
+        direction=np.array([-1.0]),
+        variables=variables,
+    )
+
+
+def _make_mixed_ctx(n_pop=8, seed=42):
+    problem = _make_mixed_problem()
+    dim = problem.dim
+    n_obj = problem.n_obj
+    attrs = [
+        PopulationAttribute(name="x", dtype=np.float64, shape=(dim,)),
+        PopulationAttribute(name="f", dtype=np.float64, shape=(n_obj,)),
+        PopulationAttribute(name="g", dtype=np.float64, shape=(0,)),
+        PopulationAttribute(name="cv", dtype=np.float64, shape=()),
+    ]
+    rng = np.random.default_rng(seed)
+    pop = Population(attrs, init_capacity=n_pop + 2)
+    arc = Archive(attrs, init_capacity=n_pop + 2)
+    pareto_arc = ParetoArchive(
+        attrs, init_capacity=n_pop + 2, direction=problem.direction
+    )
+    xs = problem.repair(rng.uniform(problem.lb, problem.ub, size=(n_pop, dim)))
+    fs = np.zeros((n_pop, n_obj))
+    pop.extend({"x": xs, "f": fs, "g": np.zeros((n_pop, 0)), "cv": np.zeros(n_pop)})
+    arc.extend({"x": xs, "f": fs, "g": np.zeros((n_pop, 0)), "cv": np.zeros(n_pop)})
+    return OptimizationState(
+        problem=problem,
+        population=pop,
+        archive=arc,
+        pareto_archive=pareto_arc,
+        rng=np.random.default_rng(seed + 1),
+    )
+
+
+class TestGABatchDispatch:
+    """Verify GA.ask() dispatches batch and sequential variation as configured."""
+
+    def test_continuous_problem_calls_do_once_each(self):
+        """A single ga.ask() call with n_pair > 1 must call the wrapped
+        pymoo crossover's/mutation's _do() exactly once total, not once per
+        pair/individual — the actual proof the batch path is engaged."""
+        counted_cx = _CountedSBX(eta=15)
+        counted_mut = _CountedPM(eta=20)
+        ga = GA(
+            crossover=PymooCrossover(counted_cx, prob=1.0),
+            mutation=PymooMutation(counted_mut, prob=1.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        ctx = _make_continuous_ctx(n_pop=10)
+        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=13)
+        assert len(offspring) == 13
+        assert counted_cx.n_do_calls == 1
+        assert counted_mut.n_do_calls == 1
+
+    def test_sequential_mode_calls_do_once_per_unit(self):
+        counted_cx = _CountedSBX(eta=15)
+        counted_mut = _CountedPM(eta=20)
+        ga = GA(
+            crossover=PymooCrossover(counted_cx, prob=1.0),
+            mutation=PymooMutation(counted_mut, prob=1.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+            variation_execution="sequential",
+        )
+        n_offspring = 13
+        ga.ask(
+            _make_continuous_ctx(n_pop=10),
+            _NoopProvider(),
+            n_offspring=n_offspring,
+        )
+        n_pair = math.ceil(n_offspring / ga.crossover.n_children)
+        assert counted_cx.n_do_calls == n_pair
+        assert counted_mut.n_do_calls == n_pair * ga.crossover.n_children
+
+    def test_runtime_reassignment_takes_effect_on_next_ask(self):
+        counted_cx = _CountedSBX(eta=15)
+        counted_mut = _CountedPM(eta=20)
+        ga = GA(
+            crossover=PymooCrossover(counted_cx, prob=1.0),
+            mutation=PymooMutation(counted_mut, prob=1.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        ga.variation_execution = "sequential"
+        n_offspring = 13
+        ga.ask(
+            _make_continuous_ctx(n_pop=10),
+            _NoopProvider(),
+            n_offspring=n_offspring,
+        )
+        n_pair = math.ceil(n_offspring / ga.crossover.n_children)
+        assert counted_cx.n_do_calls == n_pair
+        assert counted_mut.n_do_calls == n_pair * ga.crossover.n_children
+
+    def test_operator_modes_are_controlled_independently(self):
+        counted_cx = _CountedSBX(eta=15)
+        counted_mut = _CountedPM(eta=20)
+        ga = GA(
+            crossover=PymooCrossover(counted_cx, prob=1.0),
+            mutation=PymooMutation(counted_mut, prob=1.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+            variation_execution={"crossover": "sequential"},
+        )
+        n_offspring = 13
+        ga.ask(
+            _make_continuous_ctx(n_pop=10),
+            _NoopProvider(),
+            n_offspring=n_offspring,
+        )
+        n_pair = math.ceil(n_offspring / ga.crossover.n_children)
+        assert counted_cx.n_do_calls == n_pair
+        assert counted_mut.n_do_calls == 1
+
+    @pytest.mark.parametrize(
+        "variation_execution",
+        [
+            "invalid",
+            {"mutation": "invalid"},
+            {"unknown": "batch"},
+            None,
+        ],
+    )
+    def test_invalid_variation_execution_fails_at_construction(
+        self, variation_execution
+    ):
+        with pytest.raises(ConfigurationError, match="variation_execution"):
+            GA(
+                crossover=PymooCrossover(SBX(eta=15), prob=1.0),
+                mutation=PymooMutation(PM(eta=20), prob=1.0),
+                parent_selection=TournamentSelection(2),
+                survivor_selection=TruncationSelection(),
+                variation_execution=variation_execution,
+            )
+
+    @pytest.mark.parametrize(
+        "variation_execution",
+        [
+            "invalid",
+            {"mutation": "invalid"},
+            {"unknown": "batch"},
+            None,
+        ],
+    )
+    def test_invalid_runtime_reassignment_fails_on_ask(self, variation_execution):
+        ga = GA(
+            crossover=PymooCrossover(SBX(eta=15), prob=1.0),
+            mutation=PymooMutation(PM(eta=20), prob=1.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        ga.variation_execution = variation_execution
+        with pytest.raises(ConfigurationError, match="variation_execution"):
+            ga.ask(_make_continuous_ctx(n_pop=10), _NoopProvider())
+
+    def test_batch_mode_invokes_overridden_batch_hooks_once(self):
+        crossover = _BatchHookCrossover(SBX(eta=15), prob=1.0)
+        mutation = _BatchHookMutation(PM(eta=20), prob=1.0)
+        ga = GA(
+            crossover=crossover,
+            mutation=mutation,
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        ga.ask(
+            _make_continuous_ctx(n_pop=10),
+            _NoopProvider(),
+            n_offspring=13,
+        )
+        assert crossover.post_batch_calls == 1
+        assert mutation.post_batch_calls == 1
+
+    def test_mixed_sequential_mode_calls_do_once_per_unit(self):
+        counted_cx = _CountedSBX(eta=15)
+        counted_mut = _CountedPM(eta=20)
+        ga = GA(
+            crossover=PymooCrossover(counted_cx, prob=1.0),
+            mutation=PymooMutation(counted_mut, prob=1.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+            variation_execution="sequential",
+        )
+        ctx = _make_mixed_ctx(n_pop=8)
+        n_offspring = 10
+        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=n_offspring)
+        n_children = ga.crossover.n_children
+        n_pair = math.ceil(n_offspring / n_children)
+        assert len(offspring) == n_offspring
+        assert counted_cx.n_do_calls == n_pair
+        assert counted_mut.n_do_calls == n_pair * n_children
+
+    def test_mixed_batch_mode_calls_do_once_each(self):
+        counted_cx = _CountedSBX(eta=15)
+        counted_mut = _CountedPM(eta=20)
+        ga = GA(
+            crossover=PymooCrossover(counted_cx, prob=1.0),
+            mutation=PymooMutation(counted_mut, prob=1.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        ctx = _make_mixed_ctx(n_pop=8)
+        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=10)
+        assert len(offspring) == 10
+        assert counted_cx.n_do_calls == 1
+        assert counted_mut.n_do_calls == 1
+
+    def test_with_post_wrapped_batch_operator_hooks_fire_once_per_unit(self):
+        """Extends TestGAHookInvocation (tests/test_operators.py) to a
+        batch-capable, with_post-wrapped operator: post_crossover/
+        post_mutation must still fire exactly once per pair/individual."""
+        cx_calls = [0]
+        mut_calls = [0]
+
+        def cx_hook(offspring, parents, rng, ctx):
+            cx_calls[0] += 1
+            return offspring
+
+        def mut_hook(offspring, mutate_range, rng, ctx):
+            mut_calls[0] += 1
+            return offspring
+
+        crossover = PymooCrossover(SBX(eta=15), prob=1.0).with_post(cx_hook)
+        mutation = PymooMutation(PM(eta=20), prob=1.0).with_post(mut_hook)
+        ga = GA(
+            crossover=crossover,
+            mutation=mutation,
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        ctx = _make_continuous_ctx(n_pop=10)
+        ga.ask(ctx, _NoopProvider(), n_offspring=13)
+        n_children = ga.crossover.n_children
+        n_pair = math.ceil(13 / n_children)
+        assert cx_calls[0] == n_pair
+        # post_mutation fires once per pre-truncation candidate (n_pair *
+        # n_children rows), not once per final n_offspring=13 individuals.
+        assert mut_calls[0] == n_pair * n_children
+
+    def test_duplicate_elimination_empty_gate_branch(self):
+        """prob=0.0 on both operators forces every offspring to be an exact
+        parent copy (guaranteed duplicate) while also driving crossover_batch's
+        gate.any() == False, exercising the empty-batch skip inside
+        _make_offspring's retry path."""
+        de = DuplicateElimination(atol=1e-10, rtol=0.0, max_retries=3)
+        ga = GA(
+            crossover=PymooCrossover(SBX(eta=15), prob=0.0),
+            mutation=PymooMutation(PM(eta=20), prob=0.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+            duplicate_elimination=de,
+        )
+        ctx = _make_continuous_ctx(n_pop=10)
+        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=10)
+        assert len(offspring) == 10
+
+    def test_duplicate_elimination_populated_gate_branch(self):
+        """An all-identical population + prob=1.0 crossover (SBX degenerates
+        to returning the parents unchanged when they are identical) forces
+        duplicates while keeping crossover_batch's gate.any() == True,
+        exercising the populated-batch path inside _make_offspring's retry."""
+        de = DuplicateElimination(atol=1e-10, rtol=0.0, max_retries=3)
+        ga = GA(
+            crossover=PymooCrossover(SBX(eta=15), prob=1.0),
+            mutation=PymooMutation(PM(eta=20), prob=0.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+            duplicate_elimination=de,
+        )
+        ctx = _make_continuous_ctx(n_pop=10, identical=True)
+        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=10)
+        assert len(offspring) == 10

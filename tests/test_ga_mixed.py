@@ -5,6 +5,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+# tests/ has no __init__.py, so pytest's default (prepend) import mode puts
+# tests/ itself on sys.path -- this makes test_operators.py importable as a
+# top-level module from any other file under tests/, the same way it is
+# from within test_operators.py.
+from test_operators import _MutationUnbatched
+
 from saealib import (
     GA,
     CategoricalVariable,
@@ -21,6 +27,7 @@ from saealib.operators import (
     MutationCategorical,
     MutationIntegerUniform,
     MutationPolynomial,
+    MutationUniform,
     TournamentSelection,
     TruncationSelection,
 )
@@ -79,6 +86,9 @@ class _CrossoverN1C(Crossover):
     def crossover(self, parent, bounds=None, rng=np.random.default_rng()):
         return parent[:1].copy()
 
+    def crossover_batch(self, parents_batch, bounds=None, rng=np.random.default_rng()):
+        return parents_batch[:, :1, :].copy()
+
 
 class _CrossoverP3(Crossover):
     """n_parents=3 stub."""
@@ -90,6 +100,9 @@ class _CrossoverP3(Crossover):
 
     def crossover(self, parent, bounds=None, rng=np.random.default_rng()):
         return parent[:2].copy()
+
+    def crossover_batch(self, parents_batch, bounds=None, rng=np.random.default_rng()):
+        return parents_batch[:, :2, :].copy()
 
 
 # ---------------------------------------------------------------------------
@@ -422,6 +435,48 @@ class TestGAMixedAsk:
         assert np.all(x >= problem.lb)
         assert np.all(x <= problem.ub)
 
+    def test_batch_mutation_gates_variable_types_independently(self):
+        def make_ga(continuous_prob):
+            return GA(
+                crossover=CrossoverSBX(0.0, eta=20.0),
+                mutation=MutationUniform(continuous_prob, prob_var=1.0),
+                integer_mutation=MutationIntegerUniform(0.0, prob_var=1.0),
+                categorical_mutation=MutationCategorical(0.0, prob_var=1.0),
+                parent_selection=TournamentSelection(2),
+                survivor_selection=TruncationSelection(),
+            )
+
+        problem = _make_problem_mixed()
+        active = make_ga(1.0).ask(
+            _make_ctx_for(problem, n_pop=8, seed=21),
+            _NoopProvider(),
+            n_offspring=10,
+        )
+        inactive = make_ga(0.0).ask(
+            _make_ctx_for(problem, n_pop=8, seed=21),
+            _NoopProvider(),
+            n_offspring=10,
+        )
+        active_x = active.get_array("x")
+        inactive_x = inactive.get_array("x")
+
+        assert np.all(active_x[:, 0] != inactive_x[:, 0])
+        np.testing.assert_array_equal(active_x[:, 1:], inactive_x[:, 1:])
+
+    def test_batch_mode_is_reproducible_for_mixed_problem(self):
+        problem = _make_problem_mixed()
+        first = _make_ga().ask(
+            _make_ctx_for(problem, n_pop=8, seed=17),
+            _NoopProvider(),
+            n_offspring=10,
+        )
+        second = _make_ga().ask(
+            _make_ctx_for(problem, n_pop=8, seed=17),
+            _NoopProvider(),
+            n_offspring=10,
+        )
+        np.testing.assert_array_equal(first.get_array("x"), second.get_array("x"))
+
     def test_ask_continuous_problem_shape(self):
         """All-continuous problem fast path returns correct shape."""
         problem = _make_problem_continuous()
@@ -449,3 +504,191 @@ class TestGAMixedAsk:
         ctx = _make_ctx_for(problem)
         with pytest.raises(ConfigurationError, match=r"integer_crossover\.n_children"):
             ga.ask(ctx, _NoopProvider())
+
+
+# ---------------------------------------------------------------------------
+# _mutate_candidates fallback-loop interleaving order (Issue #224, commit 6
+# review fix)
+# ---------------------------------------------------------------------------
+
+
+class TestMutateCandidatesInterleaveOrder:
+    """``_mutate_candidates``'s per-individual fallback loop must call
+    ``_route_mutation`` and ``post_mutation`` interleaved per individual —
+    i.e. ``mutate(0), post(0), mutate(1), post(1), ...`` — matching the
+    pre-batching behaviour byte-for-byte. A prior version of this method
+    ran the full ``_route_mutation`` loop first and only then a separate
+    ``post_mutation`` loop, which is invisible for the default (identity,
+    RNG-free) ``post_mutation`` hook but silently reorders RNG consumption
+    for a ``with_post`` hook that draws from ``rng``. This test uses such a
+    hook and cross-checks the library's output against an independently
+    hand-written interleaved reference loop fed an identically-seeded RNG.
+
+    Uses ``_MutationUnbatched`` (imported from ``tests/test_operators.py``)
+    as the test vehicle with explicit sequential execution. The problem
+    remains continuous-only, so ``_route_mutation`` still calls its scalar
+    ``mutate()`` exactly once per candidate.
+    ``_MutationUnbatched`` provides the required but unused
+    ``mutate_batch()`` primitive, while its scalar override draws exactly
+    one ``rng.random()`` value per call. Without that draw, this test would
+    pass regardless of whether ``_mutate_candidates`` actually interleaves
+    correctly, since a zero-draw ``mutate()`` produces byte-identical RNG
+    consumption under both the correct interleaved order and the buggy
+    two-pass order this test guards against.
+    """
+
+    def test_fallback_loop_matches_hand_written_interleaved_reference(self):
+        def rng_consuming_hook(offspring, mutate_range, rng, ctx):
+            # Visibly perturbs the output using a value drawn from rng, so
+            # that a reordering of RNG draws changes the returned array.
+            return offspring + rng.random() * 1e-3
+
+        mutation = _MutationUnbatched(prob=0.5).with_post(rng_consuming_hook)
+
+        ga = GA(
+            crossover=CrossoverSBX(1.0, eta=20.0),
+            mutation=mutation,
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+            variation_execution="sequential",
+        )
+        problem = _make_problem_continuous()
+        lb, ub = problem.lb, problem.ub
+        cand = np.random.default_rng(1).uniform(lb, ub, size=(6, problem.dim))
+
+        ctx = _make_ctx_for(problem)
+        ctx.rng = np.random.default_rng(2024)
+        actual = ga._mutate_candidates(ctx, cand.copy(), lb, ub, mixed=True)
+        assert mutation.batch_calls == 0
+
+        ref_rng = np.random.default_rng(2024)
+        expected = cand.copy()
+        for i in range(len(expected)):
+            expected[i] = _route_mutation(
+                expected[i],
+                lb,
+                ub,
+                ref_rng,
+                problem,
+                mutation,
+                ga.integer_mutation,
+                ga.categorical_mutation,
+            )
+            expected[i] = mutation.post_mutation(expected[i], (lb, ub), ref_rng, ctx)
+
+        np.testing.assert_allclose(actual, expected)
+
+        # Diagnostic-and-guard: recompute the *buggy* two-pass order (all
+        # _route_mutation calls first, then all post_mutation calls) from
+        # the same seed. If _mutate_candidates ever regressed to that
+        # ordering, `actual` would match `wrong_order` instead of
+        # `expected` -- this assertion is what would catch it, and is also
+        # the empirical proof that _MutationUnbatched's one-draw mutate()
+        # keeps this test capable of discriminating between the two orders
+        # (a zero-draw mutate() would make wrong_order == expected too).
+        wrong_rng = np.random.default_rng(2024)
+        wrong_order = cand.copy()
+        for i in range(len(wrong_order)):
+            wrong_order[i] = _route_mutation(
+                wrong_order[i],
+                lb,
+                ub,
+                wrong_rng,
+                problem,
+                mutation,
+                ga.integer_mutation,
+                ga.categorical_mutation,
+            )
+        for i in range(len(wrong_order)):
+            wrong_order[i] = mutation.post_mutation(
+                wrong_order[i], (lb, ub), wrong_rng, ctx
+            )
+        assert not np.allclose(actual, wrong_order)
+
+
+# ---------------------------------------------------------------------------
+# GA explicit sequential dispatch regression
+# ---------------------------------------------------------------------------
+
+
+class _CustomSBX(CrossoverSBX):
+    """Overrides only scalar crossover() with a no-op (returns the first
+    n_children parents unchanged); crossover_batch is inherited from
+    CrossoverSBX and would silently produce real SBX offspring instead if
+    GA dispatched to it directly."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.calls = 0
+
+    def crossover(self, parent, bounds=None, rng=np.random.default_rng()):
+        self.calls += 1
+        return parent[: self.n_children].copy()
+
+
+class _CustomMutation(MutationPolynomial):
+    """Overrides only scalar mutate() with a no-op; mutate_batch is
+    inherited from MutationPolynomial and would silently apply real
+    polynomial mutation instead if GA dispatched to it directly."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.calls = 0
+
+    def mutate(self, p, mutate_range, rng=np.random.default_rng()):
+        self.calls += 1
+        return p.copy()
+
+
+class TestGASequentialDispatch:
+    def test_custom_crossover_scalar_override_is_actually_invoked(self):
+        custom_crossover = _CustomSBX(1.0, eta=20.0)
+        ga = GA(
+            crossover=custom_crossover,
+            mutation=MutationPolynomial(prob=0.0, eta=20.0, prob_var=0.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+            variation_execution="sequential",
+        )
+        problem = _make_problem_continuous()
+        ctx = _make_ctx_for(problem, n_pop=6)
+        n_offspring = 8
+        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=n_offspring)
+
+        assert custom_crossover.calls > 0
+
+        # crossover() is a no-op copy of the parents, so with mutation
+        # disabled (prob=0.0) every offspring row must exactly equal some
+        # row drawn from the initial population -- real SBX offspring
+        # would essentially never coincide exactly with a parent.
+        x = offspring.get_array("x")
+        pop_x = ctx.population.get_array("x")
+        for row in x:
+            assert np.any(np.all(np.isclose(pop_x, row), axis=1))
+
+    def test_custom_mutation_scalar_override_is_actually_invoked(self):
+        custom_mutation = _CustomMutation(prob=1.0, eta=20.0, prob_var=1.0)
+        ga = GA(
+            # crossover disabled (prob=0.0) so offspring going into mutation
+            # are exact copies of parents, isolating the mutation dispatch.
+            crossover=CrossoverSBX(0.0, eta=20.0),
+            mutation=custom_mutation,
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+            variation_execution="sequential",
+        )
+        problem = _make_problem_continuous()
+        ctx = _make_ctx_for(problem, n_pop=6)
+        n_offspring = 8
+        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=n_offspring)
+
+        assert custom_mutation.calls > 0
+
+        # mutate() is a no-op copy, and crossover is disabled, so every
+        # offspring row must exactly equal some row from the initial
+        # population -- real polynomial mutation would essentially never
+        # coincide exactly with a parent.
+        x = offspring.get_array("x")
+        pop_x = ctx.population.get_array("x")
+        for row in x:
+            assert np.any(np.all(np.isclose(pop_x, row), axis=1))

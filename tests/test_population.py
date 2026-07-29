@@ -11,6 +11,8 @@ Tests cover:
 - ArchiveMixin / Archive: add, duplicate detection, get_duplicated_population,
   get_knn, tolerance-based matching
 - Cache: set_cache, get_cache, automatic invalidation on mutation
+- ParetoMixin.add() fast-path (#224): differential equivalence between the
+  vectorized ``dominates_many`` broadcast path and the original per-row loop
 """
 
 import warnings
@@ -18,6 +20,7 @@ import warnings
 import numpy as np
 import pytest
 
+from saealib.comparators import Dominator, EpsilonDominator, ParetoDominator
 from saealib.population import (
     Archive,
     Individual,
@@ -951,3 +954,644 @@ class TestPopulationCache:
         populated_pop.mod_value()
         assert populated_pop.get_cache("rank") is None
         assert populated_pop.get_cache("cd") is None
+
+
+# ===========================================================================
+# ParetoMixin.add() fast-path differential tests (#224)
+# ===========================================================================
+#
+# The fast path (a vectorized broadcast, using Dominator.dominates_many) and
+# the original per-row Python loop must produce byte-identical accept/reject
+# and survivor decisions.  The functions below are standalone, independent
+# transcriptions of the *pre-fast-path* add() logic (they call only
+# `dominator.dominates`/`dominator.dominates_many` and plain Python/NumPy —
+# never ParetoMixin.add() itself) so that comparing against them is a genuine
+# differential test, not the new code checked against itself.
+
+
+def _loop_new_dominates_existing(
+    f_a: np.ndarray | None,
+    cv_a: float,
+    f_b: np.ndarray | None,
+    cv_b: float,
+    dominator: Dominator,
+    direction: np.ndarray | None,
+    eps_cv: float,
+) -> bool:
+    """Standalone transcription of the pre-#224 ParetoMixin._new_dominates_existing."""
+    a_feasible = cv_a <= eps_cv
+    b_feasible = cv_b <= eps_cv
+    if a_feasible and not b_feasible:
+        return True
+    if not a_feasible and b_feasible:
+        return False
+    if a_feasible and b_feasible:
+        if f_a is None:
+            return False
+        if f_b is None:
+            return True
+        return bool(dominator.dominates(f_a, f_b, direction))
+    return cv_a < cv_b
+
+
+def _loop_masks(
+    f_new: np.ndarray | None,
+    cv_new: float,
+    f_arr: np.ndarray | None,
+    cv_arr: np.ndarray | None,
+    dominator: Dominator,
+    direction: np.ndarray | None,
+    eps_cv: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Standalone transcription of the pre-#224 two-loop add() comparison."""
+    if f_arr is not None:
+        n = f_arr.shape[0]
+    elif cv_arr is not None:
+        n = cv_arr.shape[0]
+    else:
+        n = 0
+    existing_dominates_new = np.zeros(n, dtype=bool)
+    new_dominates_existing = np.zeros(n, dtype=bool)
+    for i in range(n):
+        f_ex = f_arr[i] if f_arr is not None else None
+        cv_ex = float(cv_arr[i]) if cv_arr is not None else 0.0
+        existing_dominates_new[i] = _loop_new_dominates_existing(
+            f_ex, cv_ex, f_new, cv_new, dominator, direction, eps_cv
+        )
+        new_dominates_existing[i] = _loop_new_dominates_existing(
+            f_new, cv_new, f_ex, cv_ex, dominator, direction, eps_cv
+        )
+    return existing_dominates_new, new_dominates_existing
+
+
+def _fast_masks(
+    f_new: np.ndarray,
+    cv_new: float,
+    f_arr: np.ndarray,
+    cv_arr: np.ndarray | None,
+    dominator: Dominator,
+    direction: np.ndarray | None,
+    eps_cv: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Standalone transcription of ParetoMixin.add()'s vectorized fast-path formula."""
+    n = f_arr.shape[0]
+    cv_ex_arr = cv_arr.astype(float) if cv_arr is not None else np.zeros(n)
+    new_feasible = np.bool_(cv_new <= eps_cv)
+    ex_feasible = cv_ex_arr <= eps_cv
+
+    existing_dominates_new = np.zeros(n, dtype=bool)
+    new_dominates_existing = np.zeros(n, dtype=bool)
+
+    existing_dominates_new |= (~new_feasible) & ex_feasible
+    new_dominates_existing |= new_feasible & (~ex_feasible)
+
+    both_infeasible = (~new_feasible) & (~ex_feasible)
+    existing_dominates_new |= both_infeasible & (cv_ex_arr < cv_new)
+    new_dominates_existing |= both_infeasible & (cv_new < cv_ex_arr)
+
+    both_feasible = new_feasible & ex_feasible
+    if np.any(both_feasible):
+        # Only the both_feasible-masked subset is passed to dominates_many,
+        # mirroring ParetoMixin.add(): rows outside the mask may be
+        # infeasible with objective values that aren't guaranteed meaningful
+        # (e.g. non-positive under multiplicative epsilon-dominance), so
+        # including them in the call could crash even though their result
+        # would be discarded by the mask anyway.
+        feasible_idx = np.where(both_feasible)[0]
+        new_dom, ex_dom = dominator.dominates_many(
+            f_new, f_arr[feasible_idx], direction
+        )
+        new_dominates_existing[feasible_idx] |= new_dom
+        existing_dominates_new[feasible_idx] |= ex_dom
+    return existing_dominates_new, new_dominates_existing
+
+
+def _build_raw_archive(
+    n: int,
+    f_arr: np.ndarray | None,
+    cv_arr: np.ndarray | None,
+    direction: np.ndarray | None = None,
+    dominator: Dominator | None = None,
+    eps_cv: float = 0.0,
+) -> ParetoArchive:
+    """
+    Build a ParetoArchive pre-filled with *n* raw rows.
+
+    Uses the inherited ``Population.append`` (not ``ParetoMixin.add``) so the
+    existing rows are placed exactly as given, bypassing the dominance-
+    preserving filter — required so the differential tests can exercise
+    otherwise-invariant-violating combinations (ties, mutually dominated
+    rows, etc.) directly.
+    """
+    attrs = [PopulationAttribute(name="x", dtype=np.float64, shape=(1,))]
+    if f_arr is not None:
+        attrs.append(
+            PopulationAttribute(name="f", dtype=np.float64, shape=(f_arr.shape[1],))
+        )
+    if cv_arr is not None:
+        attrs.append(PopulationAttribute(name="cv", dtype=np.float64, shape=()))
+    archive = ParetoArchive(
+        attrs,
+        init_capacity=max(n + 5, 10),
+        direction=direction,
+        dominator=dominator,
+        eps_cv=eps_cv,
+    )
+    for i in range(n):
+        kwargs: dict = {"x": np.array([float(i)])}
+        if f_arr is not None:
+            kwargs["f"] = f_arr[i]
+        if cv_arr is not None:
+            kwargs["cv"] = float(cv_arr[i])
+        archive.append(**kwargs)
+    return archive
+
+
+def _check_scenario(
+    n: int,
+    f_arr: np.ndarray | None,
+    cv_arr: np.ndarray | None,
+    f_new: np.ndarray | None,
+    cv_new: float,
+    dominator: Dominator,
+    direction: np.ndarray | None = None,
+    eps_cv: float = 0.0,
+) -> None:
+    """
+    Core differential check, shared by every scenario below.
+
+    1. Computes the independent loop-based reference masks.
+    2. If the fast-path preconditions hold, also computes the standalone
+       fast-path formula and asserts it matches the reference exactly.
+    3. Runs the *real* ``ParetoArchive.add()`` end-to-end and asserts its
+       return index and the archive's post-add contents match what the
+       reference masks predict — this is what actually proves the production
+       fast path (not just its standalone transcription above) is correct.
+    """
+    ref_existing_dom, ref_new_dom = _loop_masks(
+        f_new, cv_new, f_arr, cv_arr, dominator, direction, eps_cv
+    )
+
+    has_nan = (f_new is not None and np.any(np.isnan(f_new))) or (
+        f_arr is not None and np.any(np.isnan(f_arr))
+    )
+    can_use_fast = f_arr is not None and f_new is not None and not has_nan
+    if can_use_fast:
+        fast_existing_dom, fast_new_dom = _fast_masks(
+            f_new, cv_new, f_arr, cv_arr, dominator, direction, eps_cv
+        )
+        np.testing.assert_array_equal(ref_existing_dom, fast_existing_dom)
+        np.testing.assert_array_equal(ref_new_dom, fast_new_dom)
+
+    archive = _build_raw_archive(n, f_arr, cv_arr, direction, dominator, eps_cv)
+    kwargs_new: dict = {"x": np.array([999.0])}
+    if f_new is not None:
+        kwargs_new["f"] = f_new
+    kwargs_new["cv"] = cv_new
+
+    real_idx = archive.add(**kwargs_new)
+
+    if np.any(ref_existing_dom):
+        assert real_idx == -1
+        assert len(archive) == n
+        if f_arr is not None:
+            np.testing.assert_array_equal(archive.get_array("f"), f_arr)
+        if cv_arr is not None:
+            np.testing.assert_array_equal(archive.get_array("cv"), cv_arr)
+    else:
+        survivors = ~ref_new_dom
+        n_survivors = int(np.sum(survivors))
+        # add() computes new_idx *after* deleting dominated existing rows, so
+        # the assigned index is the survivor count, not the original size n.
+        assert real_idx == n_survivors
+        assert len(archive) == n_survivors + 1
+        if f_arr is not None:
+            np.testing.assert_array_equal(
+                archive.get_array("f")[:n_survivors], f_arr[survivors]
+            )
+            if f_new is not None:
+                np.testing.assert_array_equal(
+                    archive.get_array("f")[n_survivors], f_new
+                )
+        if cv_arr is not None:
+            np.testing.assert_array_equal(
+                archive.get_array("cv")[:n_survivors], cv_arr[survivors]
+            )
+            assert archive.get_array("cv")[n_survivors] == pytest.approx(
+                cv_new, nan_ok=True
+            )
+
+
+class TestParetoMixinFastPathEquivalence:
+    """
+    Differential tests: ``ParetoMixin.add()``'s vectorized fast path vs the
+    original per-row Python loop (#224).
+
+    Every scenario asserts exact (not approximate) agreement — dominance
+    decisions are pure deterministic math, so there is no RNG-order excuse.
+    """
+
+    # -----------------------------------------------------------------------
+    # 1. Randomized battery: both feasible/infeasible mixes, ties, boundary
+    #    cv==eps_cv, direction combinations, ParetoDominator/EpsilonDominator.
+    # -----------------------------------------------------------------------
+    @pytest.mark.parametrize("n", [1, 2, 5, 20])
+    @pytest.mark.parametrize("eps_cv", [0.0, 0.5])
+    @pytest.mark.parametrize(
+        "direction_kind", ["none", "all_minimize", "all_maximize", "mixed"]
+    )
+    @pytest.mark.parametrize(
+        "dominator_kind",
+        ["pareto", "epsilon"],
+    )
+    def test_random_battery(
+        self, n: int, eps_cv: float, direction_kind: str, dominator_kind: str
+    ) -> None:
+        m = 3
+        if direction_kind == "none":
+            direction = None
+        elif direction_kind == "all_minimize":
+            direction = -np.ones(m)
+        elif direction_kind == "all_maximize":
+            direction = np.ones(m)
+        else:
+            direction = np.array([1.0, -1.0, 1.0])
+        dominator: Dominator = (
+            ParetoDominator() if dominator_kind == "pareto" else EpsilonDominator(0.3)
+        )
+
+        # Fixed (not hash()-based) per-case seed: Python's hash() on str/tuple
+        # is salted per-process (PYTHONHASHSEED), which would make a failing
+        # seed non-reproducible across runs -- exactly the wrong property for
+        # a differential test.
+        direction_offset = {
+            "none": 0,
+            "all_minimize": 11,
+            "all_maximize": 23,
+            "mixed": 37,
+        }[direction_kind]
+        dominator_offset = {"pareto": 0, "epsilon": 101}[dominator_kind]
+        seed = int(n * 1000 + eps_cv * 100 + direction_offset + dominator_offset)
+        rng = np.random.default_rng(seed)
+        for _ in range(10):
+            # cv values deliberately include the eps_cv boundary and ties.
+            cv_pool = np.array([0.0, eps_cv, eps_cv + 0.1, 1.0, 1.0, 2.0])
+            cv_arr = rng.choice(cv_pool, size=n)
+            cv_new = float(rng.choice(cv_pool))
+
+            f_arr = rng.integers(0, 3, size=(n, m)).astype(float)  # heavy tie rate
+            f_new = rng.integers(0, 3, size=m).astype(float)
+            # Occasionally force an exact tie with an existing row.
+            if n > 0 and rng.random() < 0.3:
+                f_new = f_arr[0].copy()
+
+            _check_scenario(
+                n, f_arr, cv_arr, f_new, cv_new, dominator, direction, eps_cv
+            )
+
+    # -----------------------------------------------------------------------
+    # 2. Archive size 0 and size 1
+    # -----------------------------------------------------------------------
+    def test_size_zero(self) -> None:
+        """Empty archive: comparison block is skipped entirely by both paths."""
+        f_arr = np.zeros((0, 2))
+        cv_arr = np.zeros(0)
+        _check_scenario(0, f_arr, cv_arr, np.array([1.0, 1.0]), 0.0, ParetoDominator())
+
+    def test_size_one(self) -> None:
+        f_arr = np.array([[1.0, 1.0]])
+        cv_arr = np.array([0.0])
+        _check_scenario(1, f_arr, cv_arr, np.array([2.0, 2.0]), 0.0, ParetoDominator())
+        _check_scenario(1, f_arr, cv_arr, np.array([0.5, 0.5]), 0.0, ParetoDominator())
+
+    # -----------------------------------------------------------------------
+    # 3. Schema without "f" and/or "cv" — fast path preconditions
+    # -----------------------------------------------------------------------
+    def test_no_f_attribute_wipes_archive(self) -> None:
+        """
+        No "f" schema attribute at all -> f_arr is None -> loop fallback.
+
+        Pre-existing (not-a-bug) behavior: the new solution, having an
+        objective value while the existing rows structurally cannot, is
+        treated as dominating every existing row (per
+        ``_new_dominates_existing``'s ``f_ex is None -> return True`` rule).
+        """
+        n = 3
+        cv_arr = np.zeros(n)
+        archive = _build_raw_archive(n, None, cv_arr, dominator=ParetoDominator())
+        idx = archive.add(x=np.array([999.0]), f=np.array([1.0, 1.0]), cv=0.0)
+        assert idx == 0  # every existing row wiped, single survivor at index 0
+        assert len(archive) == 1
+
+    def test_no_f_and_no_cv_attribute(self) -> None:
+        """Neither "f" nor "cv" in schema -> loop fallback, same wipe behavior."""
+        n = 3
+        archive = _build_raw_archive(n, None, None, dominator=ParetoDominator())
+        idx = archive.add(x=np.array([999.0]), f=np.array([1.0, 1.0]), cv=0.0)
+        assert idx == 0
+        assert len(archive) == 1
+
+    def test_cv_only_missing_still_uses_fast_path(self) -> None:
+        """ "f" present but "cv" absent from schema: fast path still engages."""
+        n = 5
+        f_arr = np.array([[3.0, 3.0], [4.0, 2.0], [2.0, 4.0], [1.0, 1.0], [5.0, 5.0]])
+        dominator = ParetoDominator()
+        counting = _CountingDominator(dominator)
+        archive = _build_raw_archive(n, f_arr, None, dominator=counting)
+        f_new = np.array([0.5, 0.5])
+        idx = archive.add(x=np.array([999.0]), f=f_new, cv=0.0)
+        assert counting.calls > 0  # fast path (dominates_many) was engaged
+        assert idx == 0
+        assert len(archive) == 1
+        np.testing.assert_array_equal(archive.get_array("f")[0], f_new)
+
+    def test_all_infeasible_skips_dominates_many_call(self) -> None:
+        """
+        When every existing row and the new candidate are infeasible, the
+        fast path takes the "both feasible" short-circuit (empty mask) and
+        never calls dominates_many -- exercises that branch explicitly,
+        not just via the masked-out-either-way argument.
+        """
+        n = 4
+        f_arr = np.array([[3.0, 3.0], [4.0, 2.0], [2.0, 4.0], [1.0, 1.0]])
+        cv_arr = np.full(n, 1.0)  # all infeasible (eps_cv=0.0)
+        dominator = ParetoDominator()
+        counting = _CountingDominator(dominator)
+        archive = _build_raw_archive(n, f_arr, cv_arr, dominator=counting)
+        f_new = np.array([0.5, 0.5])
+        idx = archive.add(x=np.array([999.0]), f=f_new, cv=2.0)  # also infeasible
+        assert counting.calls == 0  # both_feasible mask empty -> never called
+        # Lower cv wins among infeasible solutions: new (cv=2.0) is worse
+        # than every existing row (cv=1.0) -> rejected.
+        assert idx == -1
+        assert len(archive) == n
+
+    # -----------------------------------------------------------------------
+    # 4. f_new is None (all-NaN new candidate) -> falls back to loop
+    # -----------------------------------------------------------------------
+    def test_f_new_all_nan_falls_back(self) -> None:
+        n = 4
+        f_arr = np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [0.5, 0.5]])
+        cv_arr = np.zeros(n)
+        dominator = ParetoDominator()
+        counting = _CountingDominator(dominator)
+        archive = _build_raw_archive(n, f_arr, cv_arr, dominator=counting)
+        idx = archive.add(x=np.array([999.0]), f=np.array([np.nan, np.nan]), cv=0.0)
+        assert counting.calls == 0  # fast path never engaged (f_new is None)
+        # Both feasible, f_new is None -> _new_dominates_existing always False
+        # for "new dominates existing"; existing never dominates a None-f new
+        # candidate either (new_feasible and not ex_feasible never True here,
+        # both feasible -> f_a(existing) not None, f_b(new) None -> dominator
+        # branch: f_a is None? no; f_b is None -> "if f_b is None: return True"
+        # only applies when checking "existing dominates new" with f_a=f_ex,
+        # f_b=f_new=None -> existing dominates new is True for every row.
+        assert idx == -1
+        assert len(archive) == n
+
+    # -----------------------------------------------------------------------
+    # 5. Partial-NaN (not all-NaN) values -> has_nan catches it, loop fallback
+    # -----------------------------------------------------------------------
+    def test_partial_nan_in_f_new_falls_back(self) -> None:
+        n = 3
+        f_arr = np.array([[3.0, 3.0], [1.0, 1.0], [5.0, 5.0]])
+        cv_arr = np.zeros(n)
+        f_new = np.array([1.0, np.nan])  # not all-NaN -> _extract_fv keeps it
+        dominator = ParetoDominator()
+        counting = _CountingDominator(dominator)
+
+        has_nan = np.any(np.isnan(f_new)) or np.any(np.isnan(f_arr))
+        assert has_nan  # sanity: has_nan correctly flags a partial-NaN row
+
+        archive = _build_raw_archive(n, f_arr, cv_arr, dominator=counting)
+        idx = archive.add(x=np.array([999.0]), f=f_new, cv=0.0)
+        assert counting.calls == 0  # NaN requires the scalar fallback
+
+        ref_existing_dom, ref_new_dom = _loop_masks(
+            f_new, 0.0, f_arr, cv_arr, dominator, None, 0.0
+        )
+        if np.any(ref_existing_dom):
+            assert idx == -1
+            assert len(archive) == n
+        else:
+            n_survivors = n - int(np.sum(ref_new_dom))
+            assert idx == n_survivors
+            assert len(archive) == n_survivors + 1
+
+    def test_partial_nan_in_existing_row_falls_back(self) -> None:
+        n = 3
+        f_arr = np.array([[3.0, np.nan], [1.0, 1.0], [5.0, 5.0]])
+        cv_arr = np.zeros(n)
+        f_new = np.array([0.5, 0.5])
+        dominator = ParetoDominator()
+        counting = _CountingDominator(dominator)
+
+        has_nan = np.any(np.isnan(f_new)) or np.any(np.isnan(f_arr))
+        assert has_nan
+
+        archive = _build_raw_archive(n, f_arr, cv_arr, dominator=counting)
+        idx = archive.add(x=np.array([999.0]), f=f_new, cv=0.0)
+        assert counting.calls == 0  # NaN requires the scalar fallback
+
+        ref_existing_dom, ref_new_dom = _loop_masks(
+            f_new, 0.0, f_arr, cv_arr, dominator, None, 0.0
+        )
+        if np.any(ref_existing_dom):
+            assert idx == -1
+        else:
+            n_survivors = n - int(np.sum(ref_new_dom))
+            assert idx == n_survivors
+            assert len(archive) == n_survivors + 1
+
+    # -----------------------------------------------------------------------
+    # 6. Custom Dominator implements the required batch primitive
+    # -----------------------------------------------------------------------
+    def test_custom_dominator_with_naive_dominates_many(self) -> None:
+        """A minimal custom Dominator works end-to-end through add()."""
+
+        class MinimalDominator(Dominator):
+            def dominance_matrix(self, f, direction=None):
+                return ParetoDominator().dominance_matrix(f, direction)
+
+            @staticmethod
+            def _dominates_pair(fa, fb, direction):
+                if direction is not None:
+                    fa = fa * (-direction)
+                    fb = fb * (-direction)
+                return bool(np.all(fa <= fb) and np.any(fa < fb))
+
+            def dominates_many(self, fa, f_matrix, direction=None):
+                fa_dominates = np.array(
+                    [
+                        self._dominates_pair(fa, f_existing, direction)
+                        for f_existing in f_matrix
+                    ],
+                    dtype=bool,
+                )
+                dominates_fa = np.array(
+                    [
+                        self._dominates_pair(f_existing, fa, direction)
+                        for f_existing in f_matrix
+                    ],
+                    dtype=bool,
+                )
+                return fa_dominates, dominates_fa
+
+        n = 4
+        f_arr = np.array([[3.0, 3.0], [4.0, 2.0], [2.0, 4.0], [1.0, 1.0]])
+        cv_arr = np.zeros(n)
+        f_new = np.array([0.5, 0.5])
+        dominator = MinimalDominator()
+
+        _check_scenario(n, f_arr, cv_arr, f_new, 0.0, dominator)
+
+        # And confirm it really was accepted/dominates as ordinary Pareto would.
+        archive = _build_raw_archive(n, f_arr, cv_arr, dominator=dominator)
+        idx = archive.add(x=np.array([999.0]), f=f_new, cv=0.0)
+        assert idx == 0
+        assert len(archive) == 1
+
+    # -----------------------------------------------------------------------
+    # 7. NaN cv comparisons: False in both loop and fast path (IEEE 754)
+    # -----------------------------------------------------------------------
+    def test_cv_nan_comparisons_agree(self) -> None:
+        """NaN cv values compare False both ways in Python floats and NumPy."""
+        cv_new = float("nan")
+        cv_ex = 1.0
+        assert not (cv_new <= 0.0)  # new "feasible" check: False
+        assert not (cv_ex < cv_new)  # infeasible-tie check: False
+        assert not (cv_new < cv_ex)  # infeasible-tie check: False
+        cv_ex_arr = np.array([1.0])
+        assert not np.any(cv_ex_arr < cv_new)
+        assert not np.any(np.array([cv_new]) < cv_ex_arr)
+
+        # And an end-to-end differential check with cv_new = NaN.
+        n = 2
+        f_arr = np.array([[1.0, 1.0], [2.0, 2.0]])
+        cv_arr = np.array([0.0, 1.0])
+        _check_scenario(
+            n, f_arr, cv_arr, np.array([1.5, 1.5]), cv_new, ParetoDominator()
+        )
+
+    # -----------------------------------------------------------------------
+    # 8. both_feasible fast path must not see unmasked (infeasible-row) f
+    #    values -- regression for the bug where dominates_many was called on
+    #    the whole f_arr instead of the both_feasible-masked subset.
+    # -----------------------------------------------------------------------
+    def test_multiplicative_epsilon_infeasible_nonpositive_f_does_not_crash(
+        self,
+    ) -> None:
+        """
+        Exact reproduction from the bug report: an infeasible existing
+        member with non-positive ``f`` used to crash ``add()`` under
+        multiplicative epsilon-dominance, because the pre-fix fast path
+        passed the *whole* (unmasked) existing array to ``dominates_many``,
+        including infeasible rows whose ``f`` isn't guaranteed to satisfy
+        the multiplicative mode's ``f > 0`` requirement -- even though that
+        row's result is later discarded by the ``both_feasible`` mask.
+        """
+        f_arr = np.array([[1.0, 1.0], [-5.0, -3.0]])
+        cv_arr = np.array([0.0, 2.0])  # row 0 feasible, row 1 infeasible
+        f_new = np.array([0.5, 0.5])
+        cv_new = 0.0
+        dominator = EpsilonDominator(0.1, mode="multiplicative")
+
+        # Differential check against the untouched scalar loop (also
+        # confirms _fast_masks's standalone transcription agrees).
+        _check_scenario(2, f_arr, cv_arr, f_new, cv_new, dominator, eps_cv=0.0)
+
+        # And a direct end-to-end assertion, matching the reported repro.
+        archive = _build_raw_archive(2, f_arr, cv_arr, dominator=dominator, eps_cv=0.0)
+        idx = archive.add(x=np.array([999.0]), f=f_new, cv=cv_new)
+        # f_new=[0.5, 0.5] dominates the feasible existing row [1.0, 1.0];
+        # the infeasible row is dominated automatically (feasible beats
+        # infeasible) -- both existing rows are evicted, f_new survives.
+        assert idx == 0
+        assert len(archive) == 1
+        np.testing.assert_array_equal(archive.get_array("f")[0], f_new)
+
+    @pytest.mark.parametrize("n", [2, 5, 20])
+    def test_random_battery_multiplicative_epsilon_with_infeasible_nonpositive(
+        self, n: int
+    ) -> None:
+        """
+        Randomized battery for ``EpsilonDominator(mode="multiplicative")``
+        with infeasible rows whose objective values are non-positive
+        (garbage-but-valid for infeasible individuals, per the multiplicative
+        mode's f > 0 requirement) -- the exact combination that crashed the
+        pre-fix fast path, since infeasible rows are excluded from ever
+        reaching ``dominates_many`` only via the ``both_feasible`` mask.
+        """
+        dominator = EpsilonDominator(0.3, mode="multiplicative")
+        eps_cv = 0.0
+        m = 2
+        rng = np.random.default_rng(seed=6000 + n)
+        triggered = 0
+        for _ in range(20):
+            cv_arr = rng.choice([0.0, 0.5, 1.0, 2.0], size=n)
+            # Force at least one feasible and one infeasible existing row
+            # (n >= 2 is guaranteed by this test's parametrize list) so the
+            # bug's trigger condition -- both_feasible non-empty AND at
+            # least one infeasible row with non-positive f -- is exercised
+            # on every iteration rather than left to chance; leaving the
+            # remaining rows/magnitudes randomized still gives coverage
+            # variety across shapes and values.
+            cv_arr[0] = 2.0  # infeasible
+            cv_arr[1] = 0.0  # feasible
+            cv_new = 0.0  # feasible -> both_feasible includes row 1
+            # Feasible rows must stay strictly positive (mode requirement);
+            # infeasible rows are deliberately non-positive (garbage-but-
+            # valid), since the fix must keep them out of dominates_many
+            # entirely. The guard is tied to eps_cv (not a bare "<= 0.0" cv
+            # check) so it can't silently drift out of sync with the
+            # feasibility rule used inside add() itself.
+            f_arr = np.empty((n, m))
+            for i in range(n):
+                if cv_arr[i] <= eps_cv:
+                    f_arr[i] = rng.uniform(0.1, 3.0, size=m)
+                else:
+                    # Unconstrained draw first (so most components keep
+                    # sign/value variety across iterations), then force
+                    # exactly one component non-positive so the "at least
+                    # one infeasible row is non-positive" trigger condition
+                    # is still guaranteed every iteration -- a fully
+                    # negative row (the earlier version of this test) would
+                    # also crash if the fast-path masking were reintroduced
+                    # incorrectly but the index it maps to were still
+                    # wrong, since _quantize would reject before the
+                    # indexing bug could surface.
+                    f_arr[i] = rng.uniform(-3.0, 3.0, size=m)
+                    j = int(rng.integers(0, m))
+                    f_arr[i, j] = rng.uniform(-3.0, -0.1)
+            f_new = rng.uniform(0.1, 3.0, size=m)
+
+            both_feasible = (cv_new <= eps_cv) & (cv_arr <= eps_cv)
+            any_infeasible_nonpositive = np.any(
+                (cv_arr > eps_cv) & np.any(f_arr <= 0, axis=1)
+            )
+            if np.any(both_feasible) and any_infeasible_nonpositive:
+                triggered += 1
+
+            _check_scenario(n, f_arr, cv_arr, f_new, cv_new, dominator, eps_cv=eps_cv)
+
+        # Guard against the test silently stopping to exercise the bug's
+        # trigger condition (both_feasible non-empty AND at least one
+        # infeasible row with non-positive f) after a future refactor.
+        assert triggered > 0
+
+
+class _CountingDominator(Dominator):
+    """Wraps a Dominator, counting dominates_many calls (for fallback proofs)."""
+
+    def __init__(self, inner: Dominator) -> None:
+        self._inner = inner
+        self.calls = 0
+
+    def dominance_matrix(self, f, direction=None):
+        return self._inner.dominance_matrix(f, direction)
+
+    def dominates(self, fa, fb, direction=None):
+        return self._inner.dominates(fa, fb, direction)
+
+    def dominates_many(self, fa, f_matrix, direction=None):
+        self.calls += 1
+        return self._inner.dominates_many(fa, f_matrix, direction)

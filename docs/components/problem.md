@@ -97,8 +97,8 @@ For a variable type that needs a correspondence between category values and an i
 `PymooProblem(pymoo_problem, *, eq_tolerance=1e-6, **problem_kwargs)` wraps an already-constructed [pymoo](https://pymoo.org/) problem instance (a built-in benchmark, or existing research code) as a `Problem`, forwarding `problem_kwargs` (`comparator`, `handler`, `eps_cv`, `eps_obj`) to `Problem.__init__`.
 `direction` is always all `-1`, since pymoo problems are unconditionally minimization; pymoo's inequality constraints (`G`) map to `InequalityConstraint` and equality constraints (`H`) to `EqualityConstraint`, both verbatim (no sign flip).
 
-pymoo problems batch-evaluate (`_evaluate(X, out)`), but saealib's `Evaluator` calls `Problem.evaluate` one individual at a time, so `PymooProblem` doesn't exploit a wrapped problem's own vectorization.
-A one-slot cache keyed on `x` still keeps this to exactly one pymoo call per candidate — `evaluate_constraints()` and `evaluate()` are called back-to-back for the same `x` by `SerialEvaluator`, and would otherwise cost one pymoo call per constraint plus one for the objective.
+pymoo problems batch-evaluate (`_evaluate(X, out)`), and `PymooProblem.evaluate_batch` exploits this directly by calling the wrapped problem's own `evaluate(X, return_as_dictionary=True)` once for the whole batch; `SerialEvaluator` uses this automatically whenever it's available.
+For callers that evaluate row-by-row instead (calling `Problem.evaluate`/`evaluate_constraints` directly rather than going through `SerialEvaluator`), a one-slot cache keyed on `x` still keeps this to exactly one pymoo call per candidate — `evaluate_constraints()` and `evaluate()` are called back-to-back for the same `x`, and would otherwise cost one pymoo call per constraint plus one for the objective.
 
 See [Installation](../getting_started/installation.md) for the `pymoo` extra.
 

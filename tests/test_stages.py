@@ -9,9 +9,10 @@ from saealib import (
     SequentialSelection,
     TruncationSelection,
 )
+from saealib.callback import CallbackManager, PostEvaluationEvent
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
-from saealib.execution.evaluator import SerialEvaluator
+from saealib.execution.evaluator import EvaluationResult, Evaluator, SerialEvaluator
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.stages import (
@@ -81,6 +82,19 @@ def _make_ga() -> GA:
         parent_selection=SequentialSelection(),
         survivor_selection=TruncationSelection(),
     )
+
+
+class _StubEvaluator(Evaluator):
+    """Evaluator returning known, distinguishable f/g/cv values (no computation)."""
+
+    def __init__(self, f: np.ndarray, g: np.ndarray, cv: np.ndarray) -> None:
+        self._f = f
+        self._g = g
+        self._cv = cv
+
+    def evaluate_batch(self, x, problem):
+        n = len(x)
+        return EvaluationResult(f=self._f[:n], g=self._g[:n], cv=self._cv[:n])
 
 
 class _MockSurrogateManager:
@@ -205,3 +219,134 @@ class TestTrueEvaluationStage:
         stage = TrueEvaluationStage(SerialEvaluator(), n_eval=n_offspring + 100)
         new_state = stage.execute(state)
         assert new_state.fe == n_offspring
+
+    def test_bulk_write_matches_evaluator_result(self):
+        """f/g/cv written by the bulk assignment exactly match the evaluator output."""
+        state = self._state_with_offspring()
+        assert state.offspring is not None
+        n_offspring = len(state.offspring)
+        n_eval = n_offspring - 1
+
+        f = np.arange(n_offspring, dtype=float).reshape(n_offspring, N_OBJ)
+        g = np.zeros((n_offspring, 0))
+        cv = np.arange(100.0, 100.0 + n_offspring)
+
+        stage = TrueEvaluationStage(_StubEvaluator(f, g, cv), n_eval=n_eval)
+        new_state = stage.execute(state)
+
+        assert new_state.evaluated_offspring is not None
+        np.testing.assert_array_equal(new_state.evaluated_offspring.f, f[:n_eval])
+        np.testing.assert_array_equal(new_state.evaluated_offspring.g, g[:n_eval])
+        np.testing.assert_array_equal(new_state.evaluated_offspring.cv, cv[:n_eval])
+
+        assert new_state.offspring is not None
+        np.testing.assert_array_equal(new_state.offspring.f[:n_eval], f[:n_eval])
+        np.testing.assert_array_equal(new_state.offspring.g[:n_eval], g[:n_eval])
+        np.testing.assert_array_equal(new_state.offspring.cv[:n_eval], cv[:n_eval])
+
+    def test_candidates_beyond_n_are_untouched(self):
+        """Only the first n candidates are written; the rest keep their prior values."""
+        state = self._state_with_offspring()
+        assert state.offspring is not None
+        n_offspring = len(state.offspring)
+        n_eval = n_offspring - 1
+
+        before_f = np.array(state.offspring.f, copy=True)
+        before_g = np.array(state.offspring.g, copy=True)
+        before_cv = np.array(state.offspring.cv, copy=True)
+
+        f = np.arange(n_offspring, dtype=float).reshape(n_offspring, N_OBJ)
+        g = np.zeros((n_offspring, 0))
+        cv = np.arange(100.0, 100.0 + n_offspring)
+
+        stage = TrueEvaluationStage(_StubEvaluator(f, g, cv), n_eval=n_eval)
+        new_state = stage.execute(state)
+
+        assert new_state.offspring is not None
+        np.testing.assert_array_equal(new_state.offspring.f[n_eval:], before_f[n_eval:])
+        np.testing.assert_array_equal(new_state.offspring.g[n_eval:], before_g[n_eval:])
+        np.testing.assert_array_equal(
+            new_state.offspring.cv[n_eval:], before_cv[n_eval:]
+        )
+
+    def test_bulk_write_aligns_multi_column_arrays(self):
+        """With n_obj > 1 / n_constraints > 1, columns must not be transposed/mixed."""
+        n = 4
+        attrs_mo = [
+            PopulationAttribute(name="x", dtype=np.float64, shape=(DIM,)),
+            PopulationAttribute(name="f", dtype=np.float64, shape=(2,)),
+            PopulationAttribute(name="g", dtype=np.float64, shape=(3,)),
+            PopulationAttribute(name="cv", dtype=np.float64, shape=()),
+        ]
+        pop = Population(attrs_mo, init_capacity=n + 2)
+        pop.extend({"x": np.zeros((n, DIM))})  # f/g/cv fall back to the NaN default
+
+        state = self._state_with_offspring()
+        state = state.replace(offspring=pop)
+
+        # _StubEvaluator ignores `problem` entirely, so the state's n_obj=1
+        # problem (from _make_state) is harmless here.
+        f = np.arange(n * 2, dtype=float).reshape(n, 2)
+        g = np.arange(100.0, 100.0 + n * 3).reshape(n, 3)
+        cv = np.arange(200.0, 200.0 + n)
+
+        stage = TrueEvaluationStage(_StubEvaluator(f, g, cv))
+        new_state = stage.execute(state)
+
+        assert new_state.evaluated_offspring is not None
+        np.testing.assert_array_equal(new_state.evaluated_offspring.f, f)
+        np.testing.assert_array_equal(new_state.evaluated_offspring.g, g)
+        np.testing.assert_array_equal(new_state.evaluated_offspring.cv, cv)
+
+    def test_zero_constraints_does_not_crash_g_assignment(self):
+        """g has shape (n, 0) when the problem defines no constraints."""
+        state = self._state_with_offspring()
+        assert state.offspring is not None
+        n_offspring = len(state.offspring)
+
+        f = np.zeros((n_offspring, N_OBJ))
+        g = np.zeros((n_offspring, 0))
+        cv = np.zeros(n_offspring)
+
+        stage = TrueEvaluationStage(_StubEvaluator(f, g, cv))
+        new_state = stage.execute(state)
+        assert new_state.evaluated_offspring is not None
+        assert new_state.evaluated_offspring.g.shape == (n_offspring, 0)
+
+    def test_value_version_bumped_exactly_once(self):
+        """A single mod_value() call still signals the population as changed."""
+        state = self._state_with_offspring()
+        assert state.offspring is not None
+        v0 = state.offspring._value_version
+
+        stage = TrueEvaluationStage(SerialEvaluator(), n_eval=2)
+        new_state = stage.execute(state)
+
+        assert new_state.offspring is not None
+        assert new_state.offspring._value_version == v0 + 1
+
+    def test_post_evaluation_event_receives_written_values(self):
+        """PostEvaluationEvent.offspring carries the bulk-written f/g/cv values."""
+        state = self._state_with_offspring()
+        assert state.offspring is not None
+        n_offspring = len(state.offspring)
+        n_eval = n_offspring - 1
+
+        f = np.arange(n_offspring, dtype=float).reshape(n_offspring, N_OBJ)
+        g = np.zeros((n_offspring, 0))
+        cv = np.arange(100.0, 100.0 + n_offspring)
+
+        received = []
+        cbmanager = CallbackManager()
+        cbmanager.register(
+            PostEvaluationEvent, lambda event: received.append(event.offspring)
+        )
+
+        stage = TrueEvaluationStage(
+            _StubEvaluator(f, g, cv), cbmanager=cbmanager, n_eval=n_eval
+        )
+        stage.execute(state)
+
+        assert len(received) == 1
+        np.testing.assert_array_equal(received[0].f, f[:n_eval])
+        np.testing.assert_array_equal(received[0].cv, cv[:n_eval])

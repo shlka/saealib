@@ -37,9 +37,8 @@ class PymooMutation(Mutation):
         An already-constructed pymoo mutation operator instance.
     prob : float, optional
         Individual-level mutation probability. Unlike ``PymooCrossover``,
-        this class applies the gate itself (saealib's ``GA`` calls
-        ``mutate()`` unconditionally; each concrete ``Mutation`` owns its
-        own probability check). Defaults to 1.0.
+        this class applies the gate itself inside ``mutate_batch()``.
+        Defaults to 1.0.
 
     Notes
     -----
@@ -52,10 +51,10 @@ class PymooMutation(Mutation):
     routing in ``GA``) falls back to its own default rather than seeing a
     foreign, potentially non-``float`` value.
 
-    Like :class:`PymooCrossover`, this calls the wrapped operator's ``_do()``
-    once per individual (saealib's per-individual calling convention), pays
-    the corresponding per-call overhead, and forwards ``rng`` via pymoo's
-    ``random_state`` parameter for reproducibility. A minimal cached pymoo
+    ``mutate_batch()`` calls the wrapped operator's ``_do()`` at most once,
+    on the gated subset, and forwards ``rng`` via pymoo's ``random_state``
+    parameter for reproducibility. The inherited ``mutate()`` derives a
+    single-row call from that batch implementation. A minimal cached pymoo
     ``Problem`` shim is synthesized the same way.
     """
 
@@ -80,19 +79,28 @@ class PymooMutation(Mutation):
             self._problem_key = key
         return self._problem
 
-    def mutate(
+    def mutate_batch(
         self,
-        p: np.ndarray,
+        candidates_batch: np.ndarray,
         mutate_range: tuple,
         rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
-        Execute mutation via the wrapped pymoo operator.
+        Execute mutation on a batch of candidates via a single pymoo call.
+
+        Unlike ``Crossover.crossover_batch``, this method owns its own
+        ``prob`` gate: it draws one gate value per row (``rng.random(n) <
+        self.prob``, mirroring ``mutate()``'s per-call ``rng.random() >=
+        self.prob`` check) and only mutates the gated rows; ungated rows are
+        returned unchanged. The wrapped operator's ``_do()`` is called at
+        most once, on only the gated subset. If no row is gated
+        (``gate.sum() == 0``), ``_do()`` is not called at all, avoiding a
+        zero-length-batch call into the wrapped pymoo operator.
 
         Parameters
         ----------
-        p : np.ndarray
-            Parent individual. shape = (dim,)
+        candidates_batch : np.ndarray
+            Batch of candidate individuals. shape = (n, dim)
         mutate_range : tuple
             Tuple of (lower_bound, upper_bound) for mutation.
         rng : np.random.Generator, optional
@@ -101,11 +109,24 @@ class PymooMutation(Mutation):
         Returns
         -------
         np.ndarray
-            Mutated individual. shape = (dim,)
+            Mutated individuals. shape = (n, dim)
+
+        Notes
+        -----
+        For more than one gated row, a loop of separate single-row
+        ``mutate_batch`` calls (equivalently, separate :meth:`mutate` calls)
+        does not reproduce the same per-row results as one batched call with
+        the same seeded ``rng``. Pymoo operators such as PM draw each random
+        phase across the whole gated batch, whereas single-row calls
+        interleave phases per row.
         """
-        if rng.random() >= self.prob:
-            return p.copy()
-        problem = self._pymoo_problem(p.shape[0], mutate_range)
-        x_batch = np.asarray(p, dtype=float)[np.newaxis, :]
-        xp_batch = self.operator._do(problem, x_batch, random_state=rng)
-        return np.asarray(xp_batch, dtype=float)[0]
+        candidates_batch = np.asarray(candidates_batch, dtype=float)
+        n = candidates_batch.shape[0]
+        gate = rng.random(n) < self.prob
+        result = candidates_batch.copy()
+        if not np.any(gate):
+            return result
+        problem = self._pymoo_problem(candidates_batch.shape[-1], mutate_range)
+        mutated = self.operator._do(problem, candidates_batch[gate], random_state=rng)
+        result[gate] = np.asarray(mutated, dtype=float)
+        return result

@@ -1159,6 +1159,13 @@ class TestParetoDominator:
         assert not dom.dominates(fa, fb)
         assert not _pareto_dominates(fa, fb)
 
+    def test_dominates_nan_in_fb_is_infinitely_bad(self) -> None:
+        """NaN in fb is replaced with +inf before the batch comparison."""
+        dom = ParetoDominator()
+        fa = np.array([0.0, 0.0])
+        fb = np.array([np.nan, 1.0])
+        assert dom.dominates(fa, fb)
+
     def test_dominates_direction_maximize(self) -> None:
         """With direction=+1, larger values are better."""
         dom = ParetoDominator()
@@ -1222,6 +1229,10 @@ class TestParetoDominator:
                 # All off-diagonal True → every pair mutually dominated.
                 return np.ones((n, n), dtype=bool) & ~np.eye(n, dtype=bool)
 
+            def dominates_many(self, fa, f_matrix, direction=None):
+                dominates = np.ones(len(f_matrix), dtype=bool)
+                return dominates, dominates.copy()
+
         comp = ParetoComparator(dominator=AllDominatesDominator())
         # Under AllDominatesDominator, fa dominates fb → compare returns -1.
         fa = np.array([5.0, 5.0])
@@ -1245,6 +1256,12 @@ class TestParetoDominator:
                 _dom = ParetoDominator()
                 return _dom.dominance_matrix(f, direction).T
 
+            def dominates_many(self, fa, f_matrix, direction=None):
+                fa_dominates, dominates_fa = ParetoDominator().dominates_many(
+                    fa, f_matrix, direction
+                )
+                return dominates_fa, fa_dominates
+
         f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
         pop = _make_pop(f)
         comp = ParetoComparator(dominator=ReverseParetoDominator())
@@ -1262,6 +1279,12 @@ class TestParetoDominator:
                 direction: np.ndarray | None = None,
             ) -> np.ndarray:
                 return ParetoDominator().dominance_matrix(f, direction).T
+
+            def dominates_many(self, fa, f_matrix, direction=None):
+                fa_dominates, dominates_fa = ParetoDominator().dominates_many(
+                    fa, f_matrix, direction
+                )
+                return dominates_fa, fa_dominates
 
         f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
         pop = _make_pop(f)
@@ -1324,6 +1347,10 @@ class TestParetoDominator:
         class MyDominator(Dominator):
             def dominance_matrix(self, f, direction=None):
                 return np.zeros((len(f), len(f)), dtype=bool)
+
+            def dominates_many(self, fa, f_matrix, direction=None):
+                dominates = np.zeros(len(f_matrix), dtype=bool)
+                return dominates, dominates.copy()
 
         d = MyDominator()
         comp = ParetoComparator(dominator=d)
@@ -1472,6 +1499,135 @@ class TestEpsilonDominator:
         fb = np.array([0.9, 0.8])
         assert not dom.dominates(fa, fb)
         assert not dom.dominates(fb, fa)
+
+
+# ===========================================================================
+# Dominator.dominates_many Tests (#224 archive fast-path acceleration hook)
+# ===========================================================================
+# Fixed (not hash()-based) per-case seed offsets: Python's hash() on str is
+# salted per-process (PYTHONHASHSEED), which would make a failing seed
+# non-reproducible across runs -- exactly the wrong property for a
+# differential test.
+_DIRECTION_KIND_OFFSET = {
+    "none": 0,
+    "all_minimize": 11,
+    "all_maximize": 23,
+    "mixed": 37,
+}
+
+
+class TestDominatesMany:
+    """Tests for the required one-vs-many ``Dominator.dominates_many`` primitive."""
+
+    # -----------------------------------------------------------------------
+    # 1. Dominator.dominates_many is required
+    # -----------------------------------------------------------------------
+    def test_dominates_many_is_required(self) -> None:
+        """A subclass implementing only dominance_matrix remains abstract."""
+
+        class MinimalDominator(Dominator):
+            def dominance_matrix(self, f, direction=None):
+                return ParetoDominator().dominance_matrix(f, direction)
+
+        with pytest.raises(TypeError, match="dominates_many"):
+            MinimalDominator()
+
+    # -----------------------------------------------------------------------
+    # 2. ParetoDominator.dominates_many agrees exactly with dominates()
+    # -----------------------------------------------------------------------
+    @pytest.mark.parametrize("n,m", [(1, 2), (5, 3), (20, 4), (30, 1)])
+    @pytest.mark.parametrize(
+        "direction_kind", ["none", "all_minimize", "all_maximize", "mixed"]
+    )
+    def test_pareto_dominates_many_matches_dominates(
+        self, n: int, m: int, direction_kind: str
+    ) -> None:
+        """dominates_many()[0][i]/[1][i] match dominates(fa, f_matrix[i]) both ways."""
+        rng = np.random.default_rng(
+            seed=n * 100 + m + _DIRECTION_KIND_OFFSET[direction_kind]
+        )
+        dom = ParetoDominator()
+        fa = rng.random(m)
+        f_matrix = rng.random((n, m))
+        if direction_kind == "none":
+            direction = None
+        elif direction_kind == "all_minimize":
+            direction = -np.ones(m)
+        elif direction_kind == "all_maximize":
+            direction = np.ones(m)
+        else:
+            direction = np.array([1.0 if i % 2 == 0 else -1.0 for i in range(m)])
+
+        fa_dom, dom_fa = dom.dominates_many(fa, f_matrix, direction)
+        assert fa_dom.shape == (n,)
+        assert dom_fa.shape == (n,)
+        for i in range(n):
+            assert fa_dom[i] == dom.dominates(fa, f_matrix[i], direction), (i,)
+            assert dom_fa[i] == dom.dominates(f_matrix[i], fa, direction), (i,)
+
+    def test_pareto_dominates_many_ties(self) -> None:
+        """Identical rows and partial-objective ties are handled correctly."""
+        dom = ParetoDominator()
+        fa = np.array([1.0, 2.0, 3.0])
+        f_matrix = np.array(
+            [
+                [1.0, 2.0, 3.0],  # identical to fa -> neither dominates
+                [1.0, 2.0, 2.0],  # tie on 0,1, better on 2 -> row dominates fa
+                [1.0, 2.0, 4.0],  # tie on 0,1, worse on 2 -> fa dominates row
+            ]
+        )
+        fa_dom, dom_fa = dom.dominates_many(fa, f_matrix)
+        for i in range(len(f_matrix)):
+            assert fa_dom[i] == dom.dominates(fa, f_matrix[i])
+            assert dom_fa[i] == dom.dominates(f_matrix[i], fa)
+        assert not fa_dom[0]
+        assert not dom_fa[0]
+        assert dom_fa[1]
+        assert not fa_dom[1]
+        assert fa_dom[2]
+        assert not dom_fa[2]
+
+    # -----------------------------------------------------------------------
+    # 3. EpsilonDominator.dominates_many agrees exactly with dominates()
+    # -----------------------------------------------------------------------
+    @pytest.mark.parametrize("n,m", [(1, 2), (5, 3), (20, 2)])
+    @pytest.mark.parametrize(
+        "direction_kind", ["none", "all_minimize", "all_maximize", "mixed"]
+    )
+    def test_epsilon_dominates_many_matches_dominates(
+        self, n: int, m: int, direction_kind: str
+    ) -> None:
+        """EpsilonDominator.dominates_many matches dominates() row-by-row."""
+        rng = np.random.default_rng(
+            seed=n * 50 + m + _DIRECTION_KIND_OFFSET[direction_kind]
+        )
+        dom = EpsilonDominator(eps=0.3)
+        fa = rng.random(m)
+        f_matrix = rng.random((n, m))
+        if direction_kind == "none":
+            direction = None
+        elif direction_kind == "all_minimize":
+            direction = -np.ones(m)
+        elif direction_kind == "all_maximize":
+            direction = np.ones(m)
+        else:
+            direction = np.array([1.0 if i % 2 == 0 else -1.0 for i in range(m)])
+
+        fa_dom, dom_fa = dom.dominates_many(fa, f_matrix, direction)
+        for i in range(n):
+            assert fa_dom[i] == dom.dominates(fa, f_matrix[i], direction), (i,)
+            assert dom_fa[i] == dom.dominates(f_matrix[i], fa, direction), (i,)
+
+    def test_epsilon_dominates_many_same_box_ties(self) -> None:
+        """Points in the same eps-box neither dominate under dominates_many."""
+        dom = EpsilonDominator(eps=1.0)
+        fa = np.array([0.1, 0.2])
+        f_matrix = np.array([[0.9, 0.8], [1.5, 1.5]])
+        fa_dom, dom_fa = dom.dominates_many(fa, f_matrix)
+        assert not fa_dom[0]
+        assert not dom_fa[0]
+        assert fa_dom[1]
+        assert not dom_fa[1]
 
 
 # ===========================================================================

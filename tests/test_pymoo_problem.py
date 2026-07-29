@@ -78,15 +78,102 @@ class TestPymooProblem:
         g, _ = problem.evaluate_constraints(x)
         np.testing.assert_allclose(g, [x[0] - 0.5, x[1] - 0.2])
 
-    def test_eval_cache_avoids_redundant_pymoo_calls(self):
+    def test_eval_cache_avoids_redundant_pymoo_calls_row_by_row(self):
+        pymoo_problem = _CountedTinyEq()
+        problem = PymooProblem(pymoo_problem)
+        x = np.random.default_rng(2).uniform(-1.0, 1.0, size=(5, 2))
+        # Bypass evaluate_batch entirely, exercising the row-loop path
+        # (evaluate_constraints() + evaluate() called back-to-back per row,
+        # as SerialEvaluator's row-loop fallback does when evaluate_batch is
+        # unavailable).
+        for xi in x:
+            g_i, _ = problem.evaluate_constraints(xi)
+            problem.evaluate(xi, g_i)
+        # one evaluate_constraints() (2 constraints) + one evaluate() per row;
+        # the cache must collapse this to exactly one real pymoo call per row.
+        assert pymoo_problem.n_evaluate_calls == 5
+
+    def test_serial_evaluator_uses_evaluate_batch_single_pymoo_call(self):
         pymoo_problem = _CountedTinyEq()
         problem = PymooProblem(pymoo_problem)
         evaluator = SerialEvaluator()
         x = np.random.default_rng(2).uniform(-1.0, 1.0, size=(5, 2))
         evaluator.evaluate_batch(x, problem)
-        # one evaluate_constraints() (2 constraints) + one evaluate() per row;
-        # the cache must collapse this to exactly one real pymoo call per row.
-        assert pymoo_problem.n_evaluate_calls == 5
+        # SerialEvaluator prefers PymooProblem.evaluate_batch, which calls
+        # the wrapped pymoo problem's own vectorized evaluate() once for the
+        # whole batch, collapsing all 5 rows into a single real pymoo call.
+        assert pymoo_problem.n_evaluate_calls == 1
+
+    def test_evaluate_batch_single_pymoo_call(self):
+        pymoo_problem = _CountedTinyEq()
+        problem = PymooProblem(pymoo_problem)
+        x = np.random.default_rng(2).uniform(-1.0, 1.0, size=(5, 2))
+        problem.evaluate_batch(x)
+        assert pymoo_problem.n_evaluate_calls == 1
+
+    def test_evaluate_batch_g_column_order_ieq_then_eq(self):
+        pymoo_problem = _CountedTinyEq()
+        problem = PymooProblem(pymoo_problem)
+        x = np.array([[0.3, 0.1], [-0.2, 0.5]])
+
+        result = problem.evaluate_batch(x)
+        assert result is not None
+        _, g_batch = result
+
+        assert g_batch.shape == (2, 2)
+        np.testing.assert_allclose(g_batch[:, 0], x[:, 0] - 0.5)
+        np.testing.assert_allclose(g_batch[:, 1], x[:, 1] - 0.2)
+
+    def test_evaluate_batch_empty_batch(self):
+        pymoo_problem = _CountedTinyEq()
+        problem = PymooProblem(pymoo_problem)
+
+        result = problem.evaluate_batch(np.empty((0, 2)))
+        assert result is not None
+        f_batch, g_batch = result
+
+        assert f_batch.shape == (0, 1)
+        assert g_batch.shape == (0, 2)
+
+    def test_evaluate_batch_matches_zdt1(self):
+        zdt1 = get_problem("zdt1")
+        problem = PymooProblem(zdt1)
+        rng = np.random.default_rng(3)
+        x = rng.uniform(zdt1.xl, zdt1.xu, size=(5, zdt1.n_var))
+
+        result = problem.evaluate_batch(x)
+        assert result is not None
+        f_batch, g_batch = result
+
+        out = zdt1.evaluate(x, return_as_dictionary=True)
+        np.testing.assert_allclose(f_batch, out["F"])
+        assert g_batch.shape == (5, 0)
+
+        for i, xi in enumerate(x):
+            g_i, _ = problem.evaluate_constraints(xi)
+            f_i = problem.evaluate(xi, g_i)
+            np.testing.assert_allclose(f_batch[i], f_i)
+            np.testing.assert_allclose(g_batch[i], g_i)
+
+    def test_evaluate_batch_matches_bnh(self):
+        bnh = get_problem("bnh")
+        problem = PymooProblem(bnh)
+        rng = np.random.default_rng(4)
+        x = rng.uniform(bnh.xl, bnh.xu, size=(5, bnh.n_var))
+
+        result = problem.evaluate_batch(x)
+        assert result is not None
+        f_batch, g_batch = result
+
+        out = bnh.evaluate(x, return_as_dictionary=True)
+        np.testing.assert_allclose(f_batch, out["F"])
+        np.testing.assert_allclose(g_batch, out["G"])
+
+        for i, xi in enumerate(x):
+            g_i, _ = problem.evaluate_constraints(xi)
+            f_i = problem.evaluate(xi, g_i)
+            np.testing.assert_allclose(f_batch[i], f_i)
+            np.testing.assert_allclose(g_batch[i], g_i)
 
     def test_missing_bounds_raises_validation_error(self):
         class Unbounded(PmProb):

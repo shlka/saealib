@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
 from scipy.spatial import cKDTree  # type: ignore  # cKDTree has no bundled type stubs
 
+from saealib.comparators import Dominator
 from saealib.population.population import Individual, Population, PopulationAttribute
-
-if TYPE_CHECKING:
-    from saealib.comparators import Dominator
 
 
 class ArchiveMixin:
@@ -360,20 +358,66 @@ class ParetoMixin:
         if self._size > 0:  # ty: ignore[unresolved-attribute]
             f_arr = self.get_array("f") if "f" in self._schema else None  # ty: ignore[unresolved-attribute]
             cv_arr = self.get_array("cv") if "cv" in self._schema else None  # ty: ignore[unresolved-attribute]
+            n = self._size  # ty: ignore[unresolved-attribute]
 
-            for i in range(self._size):  # ty: ignore[unresolved-attribute]
-                f_ex = f_arr[i] if f_arr is not None else None
-                cv_ex = float(cv_arr[i]) if cv_arr is not None else 0.0
-                if self._existing_dominates_new(f_new, cv_new, f_ex, cv_ex):
+            has_nan = (f_new is not None and np.any(np.isnan(f_new))) or (
+                f_arr is not None and np.any(np.isnan(f_arr))
+            )
+
+            # dominates_many requires NaN-free objective values.
+            use_fast_path = not has_nan and f_new is not None and f_arr is not None
+
+            existing_dominates_new = np.zeros(n, dtype=bool)
+            new_dominates_existing = np.zeros(n, dtype=bool)
+
+            if use_fast_path:
+                cv_ex_arr = cv_arr.astype(float) if cv_arr is not None else np.zeros(n)
+                # np.bool_ (not a plain Python bool) so that `~` below is a
+                # correct logical negation rather than a bitwise int inversion.
+                new_feasible = np.bool_(cv_new <= self.eps_cv)
+                ex_feasible = cv_ex_arr <= self.eps_cv
+
+                existing_dominates_new |= (~new_feasible) & ex_feasible
+                new_dominates_existing |= new_feasible & (~ex_feasible)
+
+                both_infeasible = (~new_feasible) & (~ex_feasible)
+                existing_dominates_new |= both_infeasible & (cv_ex_arr < cv_new)
+                new_dominates_existing |= both_infeasible & (cv_new < cv_ex_arr)
+
+                both_feasible = new_feasible & ex_feasible
+                if np.any(both_feasible):
+                    # Only pass the both_feasible-masked subset to
+                    # dominates_many: existing rows outside that mask may be
+                    # infeasible with objective values that aren't guaranteed
+                    # meaningful (e.g. non-positive under multiplicative
+                    # epsilon-dominance's f > 0 requirement), so including
+                    # them in the call -- even though their result would
+                    # later be discarded by the mask -- can crash.
+                    feasible_idx = np.where(both_feasible)[0]
+                    new_dom, ex_dom = self.dominator.dominates_many(
+                        f_new, f_arr[feasible_idx], self.direction
+                    )
+                    new_dominates_existing[feasible_idx] |= new_dom
+                    existing_dominates_new[feasible_idx] |= ex_dom
+
+            if use_fast_path:
+                if existing_dominates_new.any():
                     return -1
+                dominated_mask = new_dominates_existing
+            else:
+                for i in range(n):
+                    f_ex = f_arr[i] if f_arr is not None else None
+                    cv_ex = float(cv_arr[i]) if cv_arr is not None else 0.0
+                    if self._existing_dominates_new(f_new, cv_new, f_ex, cv_ex):
+                        return -1
 
-            # Collect indices of existing solutions dominated by the new one.
-            dominated_mask = np.zeros(self._size, dtype=bool)  # ty: ignore[unresolved-attribute]
-            for i in range(self._size):  # ty: ignore[unresolved-attribute]
-                f_ex = f_arr[i] if f_arr is not None else None
-                cv_ex = float(cv_arr[i]) if cv_arr is not None else 0.0
-                if self._new_dominates_existing(f_new, cv_new, f_ex, cv_ex):
-                    dominated_mask[i] = True
+                # Collect indices of existing solutions dominated by the new one.
+                dominated_mask = np.zeros(n, dtype=bool)
+                for i in range(n):
+                    f_ex = f_arr[i] if f_arr is not None else None
+                    cv_ex = float(cv_arr[i]) if cv_arr is not None else 0.0
+                    if self._new_dominates_existing(f_new, cv_new, f_ex, cv_ex):
+                        dominated_mask[i] = True
 
             # Remove dominated solutions in one pass using delete().
             if np.any(dominated_mask):
