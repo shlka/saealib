@@ -477,10 +477,7 @@ def _make_mixed_ctx(n_pop=8, seed=42):
 
 
 class TestGABatchDispatch:
-    """Verify GA.ask() engages crossover_batch/mutate_batch for continuous-only
-    problems with batch-capable operators, and correctly falls back to the
-    per-pair/per-individual loop on mixed-variable problems (Issue #224,
-    commit 6 — the batch-vs-loop routing added to ga.py)."""
+    """Verify GA.ask() dispatches batch and sequential variation as configured."""
 
     def test_continuous_problem_calls_do_once_each(self):
         """A single ga.ask() call with n_pair > 1 must call the wrapped
@@ -618,11 +615,7 @@ class TestGABatchDispatch:
         assert crossover.post_batch_calls == 1
         assert mutation.post_batch_calls == 1
 
-    def test_mixed_problem_calls_do_once_per_pair_and_individual(self):
-        """Safety-net for the `mixed` short-circuit: on a mixed-variable
-        problem, _do() must be called once per pair/individual, i.e. the
-        batch path must NOT be engaged even though the continuous
-        crossover/mutation operators support it."""
+    def test_mixed_sequential_mode_calls_do_once_per_unit(self):
         counted_cx = _CountedSBX(eta=15)
         counted_mut = _CountedPM(eta=20)
         ga = GA(
@@ -630,6 +623,7 @@ class TestGABatchDispatch:
             mutation=PymooMutation(counted_mut, prob=1.0),
             parent_selection=TournamentSelection(2),
             survivor_selection=TruncationSelection(),
+            variation_execution="sequential",
         )
         ctx = _make_mixed_ctx(n_pop=8)
         n_offspring = 10
@@ -639,6 +633,21 @@ class TestGABatchDispatch:
         assert len(offspring) == n_offspring
         assert counted_cx.n_do_calls == n_pair
         assert counted_mut.n_do_calls == n_pair * n_children
+
+    def test_mixed_batch_mode_calls_do_once_each(self):
+        counted_cx = _CountedSBX(eta=15)
+        counted_mut = _CountedPM(eta=20)
+        ga = GA(
+            crossover=PymooCrossover(counted_cx, prob=1.0),
+            mutation=PymooMutation(counted_mut, prob=1.0),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        ctx = _make_mixed_ctx(n_pop=8)
+        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=10)
+        assert len(offspring) == 10
+        assert counted_cx.n_do_calls == 1
+        assert counted_mut.n_do_calls == 1
 
     def test_with_post_wrapped_batch_operator_hooks_fire_once_per_unit(self):
         """Extends TestGAHookInvocation (tests/test_operators.py) to a

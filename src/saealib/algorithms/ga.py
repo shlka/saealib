@@ -77,7 +77,7 @@ def _route_crossover(
     int_op: Crossover,
     cat_op: Crossover,
 ) -> np.ndarray:
-    """Apply per-type crossover and reassemble offspring."""
+    """Apply per-type crossover for the sequential path and reassemble offspring."""
     i_mask = problem.integer_mask
     cat_mask = problem.categorical_mask
     if not i_mask.any() and not cat_mask.any():
@@ -114,7 +114,7 @@ def _route_mutation(
     int_op: Mutation,
     cat_op: Mutation,
 ) -> np.ndarray:
-    """Apply per-type mutation and reassemble offspring."""
+    """Apply per-type mutation for the sequential path and reassemble offspring."""
     i_mask = problem.integer_mask
     cat_mask = problem.categorical_mask
     if not i_mask.any() and not cat_mask.any():
@@ -170,7 +170,10 @@ class GA(Algorithm):
         so a stateful hook cannot influence a later individual's operation.
         Sequential mode completes each individual's operation and hook before
         starting the next, preserving the pre-batching behavior byte-for-byte.
-        This is a semantic choice, not only a performance setting.
+        Mixed-variable problems now use per-type batch operations by default,
+        which changes their historical random-number sequence; select
+        sequential mode to preserve it. This is a semantic choice, not only a
+        performance setting.
     """
 
     def __init__(
@@ -219,6 +222,9 @@ class GA(Algorithm):
             operation-then-hook cycle finishes before the next begins,
             matching the library's pre-batching behavior byte-for-byte. This
             is a semantic choice, not only a performance setting.
+            Mixed-variable problems use per-type batch operations by default,
+            changing their historical random-number sequence; use sequential
+            mode to preserve it.
         integer_crossover : Crossover, optional
             Crossover operator for integer dimensions.
             Defaults to ``CrossoverIntegerSBX`` with the same rate as *crossover*.
@@ -416,8 +422,10 @@ class GA(Algorithm):
     ) -> np.ndarray:
         """Generate post-crossover offspring for a batch of parent groups.
 
-        Uses the configured batch mode for all-continuous problems. Mixed
-        problems and explicit sequential mode run the per-pair loop.
+        Batch mode operates on all dimensions together for continuous-only
+        problems and by variable-type column masks for mixed problems.
+        Sequential mode runs the per-pair loop. Mixed problems in batch mode
+        do not reproduce historical sequential random-number sequences.
 
         Parameters
         ----------
@@ -458,6 +466,43 @@ class GA(Algorithm):
             )
             return cand.reshape(n_pair * n_children, dim)
 
+        if mixed and mode == "batch":
+            gate = ctx.rng.random(n_pair) < self.crossover.prob
+            cand = parents_batch[:, :n_children].copy()
+            if gate.any():
+                gated_parents = parents_batch[gate]
+                gated_offspring = np.empty((int(gate.sum()), n_children, dim))
+                c_mask = ctx.problem.continuous_mask
+                i_mask = ctx.problem.integer_mask
+                cat_mask = ctx.problem.categorical_mask
+                if c_mask.any():
+                    gated_offspring[:, :, c_mask] = self.crossover.crossover_batch(
+                        gated_parents[:, :, c_mask],
+                        (lb[c_mask], ub[c_mask]),
+                        rng=ctx.rng,
+                    )
+                if i_mask.any():
+                    gated_offspring[:, :, i_mask] = (
+                        self.integer_crossover.crossover_batch(
+                            gated_parents[:, :, i_mask],
+                            (lb[i_mask], ub[i_mask]),
+                            rng=ctx.rng,
+                        )
+                    )
+                if cat_mask.any():
+                    gated_offspring[:, :, cat_mask] = (
+                        self.categorical_crossover.crossover_batch(
+                            gated_parents[:, :, cat_mask],
+                            (lb[cat_mask], ub[cat_mask]),
+                            rng=ctx.rng,
+                        )
+                    )
+                cand[gate] = gated_offspring
+            cand = self.crossover.post_crossover_batch(
+                cand, parents_batch, ctx.rng, ctx
+            )
+            return cand.reshape(n_pair * n_children, dim)
+
         cand = np.empty((n_pair * n_children, dim))
         for i in range(n_pair):
             parent = parents_batch[i]
@@ -488,8 +533,11 @@ class GA(Algorithm):
     ) -> np.ndarray:
         """Generate post-mutation offspring for a batch of candidates.
 
-        Uses the configured batch mode for all-continuous problems. Mixed
-        problems and explicit sequential mode run the per-individual loop.
+        Batch mode operates on all dimensions together for continuous-only
+        problems and by variable-type column masks for mixed problems.
+        Sequential mode runs the per-individual loop. Each type's batch
+        mutation gates independently. Mixed problems in batch mode do not
+        reproduce historical sequential random-number sequences.
 
         Parameters
         ----------
@@ -515,6 +563,25 @@ class GA(Algorithm):
         if use_batch:
             cand = self.mutation.mutate_batch(cand, (lb, ub), rng=ctx.rng)
             return self.mutation.post_mutation_batch(cand, (lb, ub), ctx.rng, ctx)
+
+        if mixed and mode == "batch":
+            result = cand.copy()
+            c_mask = ctx.problem.continuous_mask
+            i_mask = ctx.problem.integer_mask
+            cat_mask = ctx.problem.categorical_mask
+            if c_mask.any():
+                result[:, c_mask] = self.mutation.mutate_batch(
+                    cand[:, c_mask], (lb[c_mask], ub[c_mask]), rng=ctx.rng
+                )
+            if i_mask.any():
+                result[:, i_mask] = self.integer_mutation.mutate_batch(
+                    cand[:, i_mask], (lb[i_mask], ub[i_mask]), rng=ctx.rng
+                )
+            if cat_mask.any():
+                result[:, cat_mask] = self.categorical_mutation.mutate_batch(
+                    cand[:, cat_mask], (lb[cat_mask], ub[cat_mask]), rng=ctx.rng
+                )
+            return self.mutation.post_mutation_batch(result, (lb, ub), ctx.rng, ctx)
 
         for i in range(len(cand)):
             cand[i] = _route_mutation(

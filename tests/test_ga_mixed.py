@@ -27,6 +27,7 @@ from saealib.operators import (
     MutationCategorical,
     MutationIntegerUniform,
     MutationPolynomial,
+    MutationUniform,
     TournamentSelection,
     TruncationSelection,
 )
@@ -434,6 +435,48 @@ class TestGAMixedAsk:
         assert np.all(x >= problem.lb)
         assert np.all(x <= problem.ub)
 
+    def test_batch_mutation_gates_variable_types_independently(self):
+        def make_ga(continuous_prob):
+            return GA(
+                crossover=CrossoverSBX(0.0, eta=20.0),
+                mutation=MutationUniform(continuous_prob, prob_var=1.0),
+                integer_mutation=MutationIntegerUniform(0.0, prob_var=1.0),
+                categorical_mutation=MutationCategorical(0.0, prob_var=1.0),
+                parent_selection=TournamentSelection(2),
+                survivor_selection=TruncationSelection(),
+            )
+
+        problem = _make_problem_mixed()
+        active = make_ga(1.0).ask(
+            _make_ctx_for(problem, n_pop=8, seed=21),
+            _NoopProvider(),
+            n_offspring=10,
+        )
+        inactive = make_ga(0.0).ask(
+            _make_ctx_for(problem, n_pop=8, seed=21),
+            _NoopProvider(),
+            n_offspring=10,
+        )
+        active_x = active.get_array("x")
+        inactive_x = inactive.get_array("x")
+
+        assert np.all(active_x[:, 0] != inactive_x[:, 0])
+        np.testing.assert_array_equal(active_x[:, 1:], inactive_x[:, 1:])
+
+    def test_batch_mode_is_reproducible_for_mixed_problem(self):
+        problem = _make_problem_mixed()
+        first = _make_ga().ask(
+            _make_ctx_for(problem, n_pop=8, seed=17),
+            _NoopProvider(),
+            n_offspring=10,
+        )
+        second = _make_ga().ask(
+            _make_ctx_for(problem, n_pop=8, seed=17),
+            _NoopProvider(),
+            n_offspring=10,
+        )
+        np.testing.assert_array_equal(first.get_array("x"), second.get_array("x"))
+
     def test_ask_continuous_problem_shape(self):
         """All-continuous problem fast path returns correct shape."""
         problem = _make_problem_continuous()
@@ -482,9 +525,9 @@ class TestMutateCandidatesInterleaveOrder:
     hand-written interleaved reference loop fed an identically-seeded RNG.
 
     Uses ``_MutationUnbatched`` (imported from ``tests/test_operators.py``)
-    as the test vehicle and passes ``mixed=True`` to force the fallback
-    path. The problem itself remains continuous-only, so ``_route_mutation``
-    still calls its scalar ``mutate()`` exactly once per candidate.
+    as the test vehicle with explicit sequential execution. The problem
+    remains continuous-only, so ``_route_mutation`` still calls its scalar
+    ``mutate()`` exactly once per candidate.
     ``_MutationUnbatched`` provides the required but unused
     ``mutate_batch()`` primitive, while its scalar override draws exactly
     one ``rng.random()`` value per call. Without that draw, this test would
@@ -507,6 +550,7 @@ class TestMutateCandidatesInterleaveOrder:
             mutation=mutation,
             parent_selection=TournamentSelection(2),
             survivor_selection=TruncationSelection(),
+            variation_execution="sequential",
         )
         problem = _make_problem_continuous()
         lb, ub = problem.lb, problem.ub
@@ -514,8 +558,6 @@ class TestMutateCandidatesInterleaveOrder:
 
         ctx = _make_ctx_for(problem)
         ctx.rng = np.random.default_rng(2024)
-        # Every concrete Mutation now implements mutate_batch; mixed=True is
-        # what deliberately selects the per-individual fallback path here.
         actual = ga._mutate_candidates(ctx, cand.copy(), lb, ub, mixed=True)
         assert mutation.batch_calls == 0
 
