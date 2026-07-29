@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 02:51+0900\n"
+"POT-Creation-Date: 2026-07-28 22:03+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,150 +19,157 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../../tutorials/external_libraries.md:1
+#: ../../tutorials/external_libraries.md:1
 msgid "Integrating External Libraries"
 msgstr "外部ライブラリとの連携"
 
-#: ../../../tutorials/external_libraries.md:3
+#: ../../tutorials/external_libraries.md:3
 msgid ""
 "`saealib` provides adapters that thinly wrap external machine learning "
-"libraries behind its own abstract base classes."
-msgstr "`saealib`は、外部の機械学習ライブラリを、独自の抽象基底クラスの背後に薄くラップしたアダプタを提供します。"
+"and evolutionary-computation libraries behind its own abstract base "
+"classes."
+msgstr "`saealib`は、外部の機械学習ライブラリおよび進化計算ライブラリを、独自の抽象基底クラスの背後に薄くラップしたアダプタを提供します。"
 
-#: ../../../tutorials/external_libraries.md:5
+#: ../../tutorials/external_libraries.md:5
 msgid ""
 "The adapter only translates `saealib`-side data representations such as "
-"`Problem`/`Population`/`ctx`; the learning algorithm itself uses the "
-"external library's implementation as-is."
-msgstr "アダプタが翻訳するのは`Problem`/`Population`/`ctx`といった`saealib`側のデータ表現だけで、学習アルゴリズムそのものは外部ライブラリの実装をそのまま使います。"
+"`Problem`/`Population`/`ctx`; the learning algorithm or search operator "
+"itself uses the external library's implementation as-is."
+msgstr "アダプタが翻訳するのは`Problem`/`Population`/`ctx`といった`saealib`側のデータ表現だけで、学習アルゴリズムや探索演算子そのものは外部ライブラリの実装をそのまま使います。"
 
-#: ../../../tutorials/external_libraries.md:7
+#: ../../tutorials/external_libraries.md:7
 msgid ""
 "Currently, surrogate model adapters (scikit-learn, XGBoost, LightGBM, "
-"PyTorch) are implemented."
-msgstr "現時点では、サロゲートモデルのアダプタ(scikit-learn、XGBoost、LightGBM、PyTorch)が実装されています。"
+"PyTorch) and pymoo adapters "
+"(`Crossover`/`Mutation`/`Algorithm`/`Problem`) are implemented. For users"
+" who would rather remove the runtime dependency on an external "
+"evolutionary-computation library, [Porting operators to native saealib "
+"code](#porting-operators-to-native-saealib-code) below covers rewriting a"
+" pymoo- or DEAP-style operator as a native `Crossover`/`Mutation` "
+"subclass instead."
+msgstr "現時点では、サロゲートモデルのアダプタ（scikit-learn、XGBoost、LightGBM、PyTorch）と、pymooアダプタ（`Crossover`/`Mutation`/`Algorithm`/`Problem`）が実装されています。外部の進化計算ライブラリへのランタイム依存を取り除きたい場合は、後述の[saealibネイティブなコードへの移植](#porting-operators-to-native-saealib-code)で、pymooやDEAP風の演算子をネイティブな`Crossover`/`Mutation`サブクラスとして書き直す方法を扱っています。"
 
-#: ../../../tutorials/external_libraries.md:9
+#: ../../tutorials/external_libraries.md:9
 msgid "Installation"
 msgstr "インストール"
 
-#: ../../../tutorials/external_libraries.md:11
+#: ../../tutorials/external_libraries.md:11
 msgid "Each adapter can only be used once the corresponding `extra` is installed."
 msgstr "各アダプタは、対応する`extra`を指定してインストールしたときだけ使えます。"
 
-#: ../../../tutorials/external_libraries.md:17
+#: ../../tutorials/external_libraries.md:17
 msgid ""
 "See [Installation](../getting_started/installation.md) for how to install"
 " and the full list of extras."
 msgstr "インストール方法とextra一覧の詳細は[インストール](../getting_started/installation.md)を参照してください。"
 
-#: ../../../tutorials/external_libraries.md:19
+#: ../../tutorials/external_libraries.md:19
 msgid ""
 "Importing an adapter without the corresponding `extra` installed raises "
 "`ImportError`."
 msgstr "対応する`extra`をインストールしていない状態でアダプタをインポートすると、`ImportError`になります。"
 
-#: ../../../tutorials/external_libraries.md:21
+#: ../../tutorials/external_libraries.md:21
 msgid "Surrogate adapters"
 msgstr "サロゲートアダプタ"
 
-#: ../../../tutorials/external_libraries.md:23
+#: ../../tutorials/external_libraries.md:23
 msgid ""
 "Each adapter implements `saealib`'s `Surrogate` base class, and can be "
 "passed to the `surrogate` argument just like the built-in `RBFSurrogate`."
 msgstr "各アダプタは`saealib`の`Surrogate`基底クラスを実装しており、組み込みの`RBFSurrogate`と同じように`surrogate`引数へ渡せます。"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "Class"
 msgstr "クラス"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "Required `extra`"
 msgstr "対応する`extra`"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "Wrapped model"
 msgstr "ラップするモデル"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "`SklearnGPRSurrogate`"
 msgstr "`SklearnGPRSurrogate`"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "`sklearn`"
 msgstr "`sklearn`"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "Gaussian Process Regressor"
 msgstr "Gaussian Process Regressor"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "`SklearnRFRSurrogate`"
 msgstr "`SklearnRFRSurrogate`"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "Random Forest Regressor"
 msgstr "Random Forest Regressor"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "`SklearnSVMSurrogate`"
 msgstr "`SklearnSVMSurrogate`"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "Support Vector Regression"
 msgstr "Support Vector Regression"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "`SklearnNNSurrogate`"
 msgstr "`SklearnNNSurrogate`"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "Multi-layer Perceptron"
 msgstr "Multi-layer Perceptron"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "`SklearnXGBSurrogate`"
 msgstr "`SklearnXGBSurrogate`"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "`xgboost`"
 msgstr "`xgboost`"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "XGBoost regression"
 msgstr "XGBoost回帰"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "`SklearnLGBMSurrogate`"
 msgstr "`SklearnLGBMSurrogate`"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "`lightgbm`"
 msgstr "`lightgbm`"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "LightGBM regression"
 msgstr "LightGBM回帰"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "`TorchSurrogate`"
 msgstr "`TorchSurrogate`"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "`torch`"
 msgstr "`torch`"
 
-#: ../../../tutorials/external_libraries.md
+#: ../../tutorials/external_libraries.md
 msgid "Any PyTorch `nn.Module`"
 msgstr "任意のPyTorch `nn.Module`"
 
-#: ../../../tutorials/external_libraries.md:35
+#: ../../tutorials/external_libraries.md:35
 msgid ""
 "Keyword arguments to the constructor are passed straight through to the "
 "corresponding library's model."
 msgstr "コンストラクタへのキーワード引数は、そのまま対応するライブラリのモデルへ渡されます。"
 
-#: ../../../tutorials/external_libraries.md:59
+#: ../../tutorials/external_libraries.md:59
 msgid ""
 "Passing a `Surrogate` instance to the `surrogate` argument works the same"
 " as the `RBFSurrogate` example in \"Switching components\" in [Single-"
@@ -170,44 +177,221 @@ msgid ""
 "in a `LocalSurrogateManager`."
 msgstr "`Surrogate`インスタンスを`surrogate`引数に渡す挙動は、[単目的最適化](single_objective.md)の「コンポーネントの切り替え」で示した`RBFSurrogate`の例と同じで、内部で`LocalSurrogateManager`にラップされます。"
 
-#: ../../../tutorials/external_libraries.md:61
+#: ../../tutorials/external_libraries.md:61
 msgid ""
 "See [Surrogate](../components/surrogate.md) for adapters aimed at "
 "classification problems (e.g. feasibility classification) and the "
 "detailed arguments of each adapter."
 msgstr "分類問題向けのアダプタ（実行可能性分類など）や、各アダプタの詳細な引数は[Surrogate](../components/surrogate.md)を参照してください。"
 
-#: ../../../tutorials/external_libraries.md:63
+#: ../../tutorials/external_libraries.md:63
+msgid "pymoo adapters"
+msgstr "pymooアダプタ"
+
+#: ../../tutorials/external_libraries.md:65
+msgid ""
+"Each adapter wraps an already-constructed pymoo object and implements the"
+" corresponding `saealib` base class, so it can be passed anywhere that "
+"base class is expected."
+msgstr "各アダプタは構築済みのpymooオブジェクトをラップし、対応する`saealib`の基底クラスを実装しているため、その基底クラスが期待される場所ならどこにでも渡せます。"
+
+#: ../../tutorials/external_libraries.md
+msgid "Wraps"
+msgstr "ラップする対象"
+
+#: ../../tutorials/external_libraries.md
+msgid "`PymooCrossover`"
+msgstr "`PymooCrossover`"
+
+#: ../../tutorials/external_libraries.md
+msgid "A pymoo `Crossover` (e.g. `SBX()`)"
+msgstr "pymooの`Crossover`（例：`SBX()`）"
+
+#: ../../tutorials/external_libraries.md
+msgid "`PymooMutation`"
+msgstr "`PymooMutation`"
+
+#: ../../tutorials/external_libraries.md
+msgid "A pymoo `Mutation` (e.g. `PM()`)"
+msgstr "pymooの`Mutation`（例：`PM()`）"
+
+#: ../../tutorials/external_libraries.md
+msgid "`PymooAlgorithm`"
+msgstr "`PymooAlgorithm`"
+
+#: ../../tutorials/external_libraries.md
+msgid "A pymoo `Algorithm` (e.g. `NSGA2()`, `DE()`)"
+msgstr "pymooの`Algorithm`（例：`NSGA2()`、`DE()`）"
+
+#: ../../tutorials/external_libraries.md
+msgid "`PymooProblem`"
+msgstr "`PymooProblem`"
+
+#: ../../tutorials/external_libraries.md
+msgid "A pymoo `Problem` (a benchmark, or existing research code)"
+msgstr "pymooの`Problem`（ベンチマークや既存の研究コード）"
+
+#: ../../tutorials/external_libraries.md:74
+msgid "`PymooCrossover`/`PymooMutation` drop straight into `GA`:"
+msgstr "`PymooCrossover`/`PymooMutation`は、そのまま`GA`に組み込めます。"
+
+#: ../../tutorials/external_libraries.md:107
+msgid ""
+"`PymooAlgorithm` reuses a whole pymoo algorithm's own search and survival"
+" logic, and `PymooProblem` reuses an existing pymoo problem definition "
+"unchanged:"
+msgstr "`PymooAlgorithm`はpymooアルゴリズム全体の探索・生存選択ロジックをそのまま再利用し、`PymooProblem`は既存のpymoo問題定義をそのまま再利用します。"
+
+#: ../../tutorials/external_libraries.md:129
+msgid ""
+"`PymooAlgorithm` runs in \"engine mode\": the wrapped pymoo algorithm "
+"owns its own population and internal survival state, and `ctx.population`"
+" is refreshed from it after every generation rather than being the source"
+" of truth. See [Algorithm](../components/algorithm.md) for what this "
+"means in practice (no checkpoint/resume, `n_offspring` is ignored, and "
+"`PreSelectionStrategy`'s partial `tell()` needs an explicit opt-in)."
+msgstr ""
+"`PymooAlgorithm`は「エンジンモード」で動作します。ラップしたpymooアルゴリズムが自身の集団と内部の生存選択状態を保持し、`ctx.population`は正のデータではなく、世代ごとにそこから更新される値になります。"
+" "
+"これが実際に意味することについては[Algorithm](../components/algorithm.md)を参照してください（チェックポイント/再開は非対応、`n_offspring`は無視される、`PreSelectionStrategy`の部分的な`tell()`には明示的なオプトインが必要）。"
+
+#: ../../tutorials/external_libraries.md:133
+msgid "Porting operators to native saealib code"
+msgstr "saealibネイティブなコードへの移植"
+
+#: ../../tutorials/external_libraries.md:135
+msgid ""
+"Wrapping an external operator, as in the previous section, keeps a "
+"runtime dependency on the external library and pays a calling-granularity"
+" cost: saealib calls `crossover()`/`mutate()` once per parent group or "
+"individual, while most external libraries vectorize their operators over "
+"an entire population in one call. When that overhead matters, or when the"
+" runtime dependency itself is unwanted, porting the operator's logic into"
+" a native `Crossover`/`Mutation` subclass is usually a mechanical rewrite"
+" rather than a redesign — the core logic stays the same; only the batch "
+"loop and the RNG source change."
+msgstr "前節のように外部演算子をラップする方法では、外部ライブラリへのランタイム依存が残るうえ、呼び出し粒度の違いによるコストも生じます。saealibは`crossover()`/`mutate()`を親グループ1組・個体1つごとに呼び出しますが、多くの外部ライブラリは演算子を集団全体に対して1回でベクトル化して適用します。このオーバーヘッドが問題になる場合や、ランタイム依存そのものを避けたい場合は、演算子のロジックをネイティブな`Crossover`/`Mutation`サブクラスへ移植するのが有効です。多くの場合これは設計のやり直しではなく機械的な書き換えで済みます——中核のロジックはそのままで、バッチ処理のループとRNGの取得元だけが変わります。"
+
+#: ../../tutorials/external_libraries.md:137
+msgid ""
+"The one detail that is easy to get wrong when porting is *where* the "
+"individual-level probability gate lives. saealib's `GA` checks "
+"`Crossover.prob` itself before calling `crossover()`, but "
+"`Mutation.mutate()` must check `self.prob` itself — the same asymmetry "
+"already noted for `PymooMutation` above. Both pymoo's built-in mutations "
+"and DEAP's `toolbox.mutate()` (gated externally by `algorithms.varAnd`'s "
+"`mutpb`) leave this gate outside the operator, so a ported mutation "
+"usually needs a guard line that the original code did not have."
+msgstr "移植の際に間違えやすいのは、個体単位の確率ゲートを*どこに置くか*です。saealibの`GA`は`crossover()`を呼び出す前に`Crossover.prob`自身をチェックしますが、`Mutation.mutate()`は`self.prob`を自分自身でチェックしなければなりません——これは前述の`PymooMutation`で触れた非対称性と同じです。pymooの組み込みMutationも、DEAPの`toolbox.mutate()`（`algorithms.varAnd`の`mutpb`によって外部でゲートされる）も、このゲートを演算子の外に置いているため、移植したMutationには元のコードになかったガード行を追加する必要があるのが通常です。"
+
+#: ../../tutorials/external_libraries.md:139
+msgid "From pymoo"
+msgstr "pymooからの移植"
+
+#: ../../tutorials/external_libraries.md:141
+msgid ""
+"A custom pymoo `Mutation` typically vectorizes over the whole batch `X` "
+"(shape `(n_individuals, dim)`):"
+msgstr "カスタムのpymoo `Mutation`は通常、バッチ全体`X`（shape `(n_individuals, dim)`）に対してベクトル化されています。"
+
+#: ../../tutorials/external_libraries.md:161
+msgid ""
+"Ported to a native saealib `Mutation`, the batch dimension disappears; "
+"the only additions are the `prob` gate described above and the per-"
+"individual shape `(dim,)`:"
+msgstr "ネイティブなsaealibの`Mutation`へ移植すると、バッチの次元がなくなります。追加されるのは前述の`prob`ゲートと、個体単位のshape `(dim,)`だけです。"
+
+#: ../../tutorials/external_libraries.md:184
+msgid "From DEAP"
+msgstr "DEAPからの移植"
+
+#: ../../tutorials/external_libraries.md:186
+msgid ""
+"DEAP operators already work on one individual (or a pair) at a time, so "
+"porting is even more direct. A custom crossover:"
+msgstr "DEAPの演算子はもともと個体1つ（またはペア）単位で動作するため、移植はさらに直接的です。カスタムのcrossoverの例を示します。"
+
+#: ../../tutorials/external_libraries.md:199
+msgid ""
+"becomes a native `Crossover` by replacing the Python loop with a "
+"vectorized mask and `random.random()` with the `rng` saealib passes in, "
+"dropping DEAP's implicit global RNG state in favor of saealib's per-run "
+"`np.random.Generator` (kept reproducible via `minimize(..., seed=...)`):"
+msgstr "Pythonのループをベクトル化したマスクに置き換え、`random.random()`をsaealibが渡す`rng`に置き換えることで、ネイティブな`Crossover`になります。これによりDEAPの暗黙のグローバルRNG状態から、saealibの実行ごとの`np.random.Generator`（`minimize(..., seed=...)`で再現性が保たれます）に切り替わります。"
+
+#: ../../tutorials/external_libraries.md:220
+msgid ""
+"`toolbox.mate` is gated externally by `varAnd`'s `cxpb`, matching "
+"saealib's `GA`, so — unlike mutation — no extra gate is needed here."
+msgstr "`toolbox.mate`は`varAnd`の`cxpb`によって外部でゲートされており、これはsaealibの`GA`と同じ挙動です。そのため、mutationとは異なり、ここでは追加のゲートは不要です。"
+
+#: ../../tutorials/external_libraries.md:222
+msgid "Algorithm- and Problem-level code"
+msgstr "Algorithm・Problemレベルのコード"
+
+#: ../../tutorials/external_libraries.md:224
+msgid ""
+"Porting a whole search algorithm (survival selection, archive management,"
+" index-coupled state such as DE) is not a mechanical rewrite in the same "
+"way: it means reimplementing `Algorithm.ask()`/`tell()` from scratch. For"
+" pymoo specifically, the engine-mode `PymooAlgorithm` adapter above "
+"covers this case without a rewrite; for other libraries, see "
+"[Algorithm](../components/algorithm.md) for what a native `Algorithm` "
+"subclass needs to implement."
+msgstr "探索アルゴリズム全体（生存選択、アーカイブ管理、DEのようなインデックス結合状態など）の移植は、同じようには機械的に書き換えられません。`Algorithm.ask()`/`tell()`をゼロから再実装することになります。pymooに限っては、前述のエンジンモードの`PymooAlgorithm`アダプタを使えば書き換えずに済みます。他のライブラリについては、ネイティブな`Algorithm`サブクラスが実装すべき内容を[Algorithm](../components/algorithm.md)で確認してください。"
+
+#: ../../tutorials/external_libraries.md:226
 msgid "References"
 msgstr "参照"
 
-#: ../../../tutorials/external_libraries.md:65
+#: ../../tutorials/external_libraries.md:228
 #, python-brace-format
 msgid "{py:class}`saealib.Surrogate`"
 msgstr "{py:class}`saealib.Surrogate`"
 
-#: ../../../tutorials/external_libraries.md:66
+#: ../../tutorials/external_libraries.md:229
 #, python-brace-format
 msgid ""
 "{py:class}`saealib.SklearnGPRSurrogate` / "
 "{py:class}`saealib.SklearnRFRSurrogate` / "
 "{py:class}`saealib.SklearnSVMSurrogate` / "
 "{py:class}`saealib.SklearnNNSurrogate`"
-msgstr "{py:class}`saealib.SklearnGPRSurrogate` / {py:class}`saealib.SklearnRFRSurrogate` / {py:class}`saealib.SklearnSVMSurrogate` / {py:class}`saealib.SklearnNNSurrogate`"
+msgstr ""
+"{py:class}`saealib.SklearnGPRSurrogate` / "
+"{py:class}`saealib.SklearnRFRSurrogate` / "
+"{py:class}`saealib.SklearnSVMSurrogate` / "
+"{py:class}`saealib.SklearnNNSurrogate`"
 
-#: ../../../tutorials/external_libraries.md:67
+#: ../../tutorials/external_libraries.md:230
 #, python-brace-format
 msgid ""
 "{py:class}`saealib.SklearnXGBSurrogate` / "
 "{py:class}`saealib.SklearnLGBMSurrogate`"
-msgstr "{py:class}`saealib.SklearnXGBSurrogate` / {py:class}`saealib.SklearnLGBMSurrogate`"
+msgstr ""
+"{py:class}`saealib.SklearnXGBSurrogate` / "
+"{py:class}`saealib.SklearnLGBMSurrogate`"
 
-#: ../../../tutorials/external_libraries.md:68
+#: ../../tutorials/external_libraries.md:231
 #, python-brace-format
 msgid "{py:class}`saealib.TorchSurrogate`"
 msgstr "{py:class}`saealib.TorchSurrogate`"
 
-#: ../../../tutorials/external_libraries.md:69
+#: ../../tutorials/external_libraries.md:232
+#, python-brace-format
+msgid "{py:class}`saealib.PymooCrossover` / {py:class}`saealib.PymooMutation`"
+msgstr "{py:class}`saealib.PymooCrossover` / {py:class}`saealib.PymooMutation`"
+
+#: ../../tutorials/external_libraries.md:233
+#, python-brace-format
+msgid "{py:class}`saealib.PymooAlgorithm`"
+msgstr "{py:class}`saealib.PymooAlgorithm`"
+
+#: ../../tutorials/external_libraries.md:234
+#, python-brace-format
+msgid "{py:class}`saealib.PymooProblem`"
+msgstr "{py:class}`saealib.PymooProblem`"
+
+#: ../../tutorials/external_libraries.md:235
 #, python-brace-format
 msgid "{py:func}`saealib.minimize`"
 msgstr "{py:func}`saealib.minimize`"
@@ -271,4 +455,14 @@ msgstr "{py:func}`saealib.minimize`"
 
 #~ msgid "参照"
 #~ msgstr ""
+
+#~ msgid ""
+#~ "Currently, surrogate model adapters "
+#~ "(scikit-learn, XGBoost, LightGBM, PyTorch) "
+#~ "and pymoo adapters "
+#~ "(`Crossover`/`Mutation`/`Algorithm`/`Problem`) are "
+#~ "implemented."
+#~ msgstr ""
+#~ "現時点では、サロゲートモデルのアダプタ（scikit-"
+#~ "learn、XGBoost、LightGBM、PyTorch）と、pymooアダプタ（`Crossover`/`Mutation`/`Algorithm`/`Problem`）が実装されています。"
 

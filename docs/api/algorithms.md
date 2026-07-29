@@ -29,3 +29,13 @@
 
    saealib.PSO
 ```
+
+## pymoo / External Library Adapters
+
+```{eval-rst}
+.. autosummary::
+   :toctree: _autosummary
+   :nosignatures:
+
+   saealib.PymooAlgorithm
+```

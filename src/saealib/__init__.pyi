@@ -24,6 +24,9 @@ from saealib.acquisition import SMSEGOAcquisition as SMSEGOAcquisition
 from saealib.algorithms import GA as GA
 from saealib.algorithms import PSO as PSO
 from saealib.algorithms import Algorithm as Algorithm
+
+# algorithms (less common)
+from saealib.algorithms import PymooAlgorithm as PymooAlgorithm
 from saealib.api import Result as Result
 from saealib.api import maximize as maximize
 from saealib.api import minimize as minimize
@@ -109,6 +112,8 @@ from saealib.operators import MutationIntegerUniform as MutationIntegerUniform
 from saealib.operators import MutationPolynomial as MutationPolynomial
 from saealib.operators import MutationUniform as MutationUniform
 from saealib.operators import ParentSelection as ParentSelection
+from saealib.operators import PymooCrossover as PymooCrossover
+from saealib.operators import PymooMutation as PymooMutation
 from saealib.operators import RouletteWheelSelection as RouletteWheelSelection
 from saealib.operators import SequentialSelection as SequentialSelection
 from saealib.operators import SurvivorSelection as SurvivorSelection
@@ -135,6 +140,7 @@ from saealib.problem import EqualityConstraint as EqualityConstraint
 from saealib.problem import GradientRepairHandler as GradientRepairHandler
 from saealib.problem import InequalityConstraint as InequalityConstraint
 from saealib.problem import Problem as Problem
+from saealib.problem import PymooProblem as PymooProblem
 from saealib.problem import StaticToleranceHandler as StaticToleranceHandler
 from saealib.problem import exponential_epsilon_schedule as exponential_epsilon_schedule
 from saealib.problem import linear_epsilon_schedule as linear_epsilon_schedule

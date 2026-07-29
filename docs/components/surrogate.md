@@ -80,8 +80,9 @@ For pairwise comparison, use the dedicated `ComparisonSurrogate`-family implemen
 See [Installation](../getting_started/installation.md) for how to install each extra.
 
 ```{note}
-Adapters for BoTorch/SMT, and pymoo algorithm/operator adapters, beyond scikit-learn/XGBoost/LightGBM/PyTorch, are not currently implemented in `saealib`.
+Adapters for BoTorch/SMT surrogates, beyond scikit-learn/XGBoost/LightGBM/PyTorch, are not currently implemented in `saealib`.
 `pyproject.toml` has no corresponding extra either.
+pymoo has adapters, but at the [Problem](problem.md)/[Crossover](crossover.md)/[Mutation](mutation.md)/[Algorithm](algorithm.md) level, not as a `Surrogate` — pymoo doesn't provide surrogate models.
 ```
 
 ## Extension hooks

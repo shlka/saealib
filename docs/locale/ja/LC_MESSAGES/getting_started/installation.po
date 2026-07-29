@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 02:51+0900\n"
+"POT-Creation-Date: 2026-07-28 19:56+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -129,6 +129,14 @@ msgid "PyTorch-based components"
 msgstr "PyTorchベースのコンポーネント"
 
 #: ../../../getting_started/installation.md:32
+msgid "`pymoo`"
+msgstr "`pymoo`"
+
+#: ../../../getting_started/installation.md:32
+msgid "`PymooCrossover`/`PymooMutation`/`PymooAlgorithm`/`PymooProblem` adapters"
+msgstr "`PymooCrossover`/`PymooMutation`/`PymooAlgorithm`/`PymooProblem`アダプタ"
+
+#: ../../../getting_started/installation.md:32
 msgid "`parallel`"
 msgstr "`parallel`"
 
@@ -144,17 +152,17 @@ msgstr "`all`"
 msgid "All of the above"
 msgstr "上記すべて"
 
-#: ../../../getting_started/installation.md:59
+#: ../../../getting_started/installation.md:60
 msgid "Verifying the installation"
 msgstr "インストールの確認"
 
-#: ../../../getting_started/installation.md:60
+#: ../../../getting_started/installation.md:61
 msgid ""
 "Once installation is complete, check the version with the following "
 "command."
 msgstr "インストールが完了したら、次のコマンドでバージョンを確認できます。"
 
-#: ../../../getting_started/installation.md:66
+#: ../../../getting_started/installation.md:67
 msgid ""
 "See "
 "[CONTRIBUTING.md](https://github.com/shlka/saealib/blob/main/CONTRIBUTING.md)"

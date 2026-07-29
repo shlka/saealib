@@ -210,6 +210,8 @@ __all__ = [
 # ---------------------------------------------------------------------------
 
 _TIER2_MAP: dict[str, str] = {
+    # algorithms (less common)
+    "PymooAlgorithm": "saealib.algorithms",
     # comparators (less common)
     "Dominator": "saealib.comparators",
     "EpsilonDominanceComparator": "saealib.comparators",
@@ -246,6 +248,8 @@ _TIER2_MAP: dict[str, str] = {
     "MutationGaussian": "saealib.operators",
     "MutationIntegerUniform": "saealib.operators",
     "MutationUniform": "saealib.operators",
+    "PymooCrossover": "saealib.operators",
+    "PymooMutation": "saealib.operators",
     "RouletteWheelSelection": "saealib.operators",
     "SequentialSelection": "saealib.operators",
     "repair_clipping": "saealib.operators",
@@ -315,6 +319,7 @@ _TIER2_MAP: dict[str, str] = {
     "SklearnSVCClassificationSurrogate": "saealib.surrogate",
     # problem (less common)
     "GradientRepairHandler": "saealib.problem",
+    "PymooProblem": "saealib.problem",
     "exponential_epsilon_schedule": "saealib.problem",
     "linear_epsilon_schedule": "saealib.problem",
     # population (mixins)
