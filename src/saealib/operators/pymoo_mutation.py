@@ -37,9 +37,8 @@ class PymooMutation(Mutation):
         An already-constructed pymoo mutation operator instance.
     prob : float, optional
         Individual-level mutation probability. Unlike ``PymooCrossover``,
-        this class applies the gate itself (saealib's ``GA`` calls
-        ``mutate()`` unconditionally; each concrete ``Mutation`` owns its
-        own probability check). Defaults to 1.0.
+        this class applies the gate itself inside ``mutate_batch()``.
+        Defaults to 1.0.
 
     Notes
     -----
@@ -52,10 +51,10 @@ class PymooMutation(Mutation):
     routing in ``GA``) falls back to its own default rather than seeing a
     foreign, potentially non-``float`` value.
 
-    Like :class:`PymooCrossover`, this calls the wrapped operator's ``_do()``
-    once per individual (saealib's per-individual calling convention), pays
-    the corresponding per-call overhead, and forwards ``rng`` via pymoo's
-    ``random_state`` parameter for reproducibility. A minimal cached pymoo
+    ``mutate_batch()`` calls the wrapped operator's ``_do()`` at most once,
+    on the gated subset, and forwards ``rng`` via pymoo's ``random_state``
+    parameter for reproducibility. The inherited ``mutate()`` derives a
+    single-row call from that batch implementation. A minimal cached pymoo
     ``Problem`` shim is synthesized the same way.
     """
 
@@ -80,42 +79,12 @@ class PymooMutation(Mutation):
             self._problem_key = key
         return self._problem
 
-    def mutate(
-        self,
-        p: np.ndarray,
-        mutate_range: tuple,
-        rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray:
-        """
-        Execute mutation via the wrapped pymoo operator.
-
-        Parameters
-        ----------
-        p : np.ndarray
-            Parent individual. shape = (dim,)
-        mutate_range : tuple
-            Tuple of (lower_bound, upper_bound) for mutation.
-        rng : np.random.Generator, optional
-            Forwarded to the wrapped operator as ``random_state``.
-
-        Returns
-        -------
-        np.ndarray
-            Mutated individual. shape = (dim,)
-        """
-        if rng.random() >= self.prob:
-            return p.copy()
-        problem = self._pymoo_problem(p.shape[0], mutate_range)
-        x_batch = np.asarray(p, dtype=float)[np.newaxis, :]
-        xp_batch = self.operator._do(problem, x_batch, random_state=rng)
-        return np.asarray(xp_batch, dtype=float)[0]
-
     def mutate_batch(
         self,
         candidates_batch: np.ndarray,
         mutate_range: tuple,
         rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray | None:
+    ) -> np.ndarray:
         """
         Execute mutation on a batch of candidates via a single pymoo call.
 
@@ -144,14 +113,12 @@ class PymooMutation(Mutation):
 
         Notes
         -----
-        For batches with more than one gated row, per-row results are
-        **not** bit-identical to calling :meth:`mutate` once per candidate
-        in a loop with the same seeded ``rng`` (both consume the same total
-        number of random draws, but pymoo operators such as PM draw each
-        random phase across the whole gated batch in one call, whereas the
-        looped single-candidate calls interleave phases per row). Only a
-        batch with exactly one gated row is guaranteed to match a single
-        :meth:`mutate` call with an identically-seeded ``rng``.
+        For more than one gated row, a loop of separate single-row
+        ``mutate_batch`` calls (equivalently, separate :meth:`mutate` calls)
+        does not reproduce the same per-row results as one batched call with
+        the same seeded ``rng``. Pymoo operators such as PM draw each random
+        phase across the whole gated batch, whereas single-row calls
+        interleave phases per row.
         """
         candidates_batch = np.asarray(candidates_batch, dtype=float)
         n = candidates_batch.shape[0]

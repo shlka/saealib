@@ -451,18 +451,16 @@ class GA(Algorithm):
         overrides only the scalar method) and the problem is all-continuous
         (``not mixed``); ``prob`` gating happens inside
         ``mutate_batch`` itself, so no gate array is drawn here. Otherwise
-        runs the existing per-individual loop unchanged. If the batch call
-        declines (returns ``None``) for this particular invocation, falls
-        back to the per-individual loop as well. ``post_mutation`` fires
-        exactly once per individual regardless of which path is taken, but
-        the *ordering* relative to ``_route_mutation``/``mutate_batch``
-        differs between paths: the fallback (per-individual) loop calls
-        ``post_mutation`` immediately after ``_route_mutation`` for each
-        individual in turn, preserving the original pre-batching
-        interleaved order byte-for-byte; the batch path necessarily calls
-        ``mutate_batch`` once for the whole array before any
-        ``post_mutation`` call, since there is no per-row hook point during
-        a single batched call.
+        runs the existing per-individual loop unchanged. ``post_mutation``
+        fires exactly once per individual regardless of which path is taken,
+        but the *ordering* relative to
+        ``_route_mutation``/``mutate_batch`` differs between paths: the
+        fallback (per-individual) loop calls ``post_mutation`` immediately
+        after ``_route_mutation`` for each individual in turn, preserving
+        the original pre-batching interleaved order byte-for-byte; the batch
+        path necessarily calls ``mutate_batch`` once for the whole array
+        before any ``post_mutation`` call, since there is no per-row hook
+        point during a single batched call.
 
         Parameters
         ----------
@@ -488,16 +486,10 @@ class GA(Algorithm):
         mutation_batch_ok = (not mixed) and mutation_batch_supported
 
         if mutation_batch_ok:
-            mutated = self.mutation.mutate_batch(cand, (lb, ub), rng=ctx.rng)
-            if mutated is not None:
-                cand = mutated
-                for i in range(len(cand)):
-                    cand[i] = self.mutation.post_mutation(
-                        cand[i], (lb, ub), ctx.rng, ctx
-                    )
-                return cand
-            # Batch call declined for this specific invocation: redo this
-            # call's mutation section via the per-individual loop below.
+            cand = self.mutation.mutate_batch(cand, (lb, ub), rng=ctx.rng)
+            for i in range(len(cand)):
+                cand[i] = self.mutation.post_mutation(cand[i], (lb, ub), ctx.rng, ctx)
+            return cand
 
         for i in range(len(cand)):
             cand[i] = _route_mutation(

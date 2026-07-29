@@ -249,7 +249,6 @@ class TestPymooMutation:
         ub = np.full(DIM, 1.0)
 
         result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
-        assert result is not None
         assert counted.n_do_calls == 1
         assert result.shape == (n, DIM)
 
@@ -258,15 +257,16 @@ class TestPymooMutation:
             op.mutate(candidates_batch[k], (lb, ub), rng=rng)
         assert counted.n_do_calls == n
 
-    def test_mutate_batch_matches_single_mutate_at_n_one(self):
+    def test_mutate_derives_single_row_batch(self):
         op = PymooMutation(PM(eta=20, prob_var=1.0), prob=1.0)
+        assert "mutate" not in vars(PymooMutation)
+
         lb = np.full(DIM, -1.0)
         ub = np.full(DIM, 1.0)
         p = np.random.default_rng(10).uniform(-1.0, 1.0, size=DIM)
 
         rng_batch = np.random.default_rng(11)
         batch_result = op.mutate_batch(p[np.newaxis, :], (lb, ub), rng=rng_batch)
-        assert batch_result is not None
         batch_result = batch_result[0]
 
         rng_single = np.random.default_rng(11)
@@ -297,7 +297,6 @@ class TestPymooMutation:
         ub = np.full(DIM, 1.0)
 
         result = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
-        assert result is not None
         assert counted.n_do_calls == 1
         assert not np.array_equal(result, candidates_batch)
 
@@ -319,7 +318,6 @@ class TestPymooMutation:
         result = op.mutate_batch(
             candidates_batch, (lb, ub), rng=np.random.default_rng(seed)
         )
-        assert result is not None
 
         np.testing.assert_array_equal(
             result[~expected_gate], candidates_batch[~expected_gate]
@@ -334,7 +332,6 @@ class TestPymooMutation:
         lb = np.full(DIM, -1.0)
         ub = np.full(DIM, 1.0)
         m = op.mutate_batch(candidates_batch, (lb, ub), rng=rng)
-        assert m is not None
         assert m.shape == (n, DIM)
 
 
@@ -460,12 +457,11 @@ def _make_mixed_ctx(n_pop=8, seed=42):
 
 
 class TestPymooOperatorsDispatchConsistency:
-    """PymooCrossover inherits crossover from its crossover_batch primitive.
+    """Pymoo adapters inherit scalar operations from their batch primitives.
 
     A plain, unsubclassed instance must remain "consistent" under
     batch_override_is_consistent (Issue #224 follow-up fix) exactly like every
-    built-in operator. PymooMutation continues to define mutate/mutate_batch
-    together. This is what lets GA still engage the batch path for
+    built-in operator. This is what lets GA still engage the batch path for
     pymoo-wrapped operators (see
     TestGABatchDispatch.test_continuous_problem_calls_do_once_each below,
     which is the end-to-end proof).

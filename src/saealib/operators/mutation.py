@@ -21,8 +21,8 @@ class Mutation(ABC):
     Attributes
     ----------
     prob : float
-        Individual-level mutation probability. When ``rng.random() >= prob``,
-        the individual is returned unchanged.
+        Individual-level mutation probability. Rows whose gate draw is
+        greater than or equal to ``prob`` are returned unchanged.
     prob_var : float or None
         Per-variable mutation probability. ``None`` means the effective value
         is resolved at call time as ``min(0.5, 1 / dim)``.
@@ -31,7 +31,6 @@ class Mutation(ABC):
     prob: float = 1.0
     prob_var: float | None = None
 
-    @abstractmethod
     def mutate(
         self,
         p: np.ndarray,
@@ -39,7 +38,10 @@ class Mutation(ABC):
         rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
-        Execute mutation.
+        Execute mutation for one candidate.
+
+        This method is derived from :meth:`mutate_batch` by passing a
+        single-row batch.
 
         Parameters
         ----------
@@ -53,22 +55,27 @@ class Mutation(ABC):
         Returns
         -------
         np.ndarray
-            Mutated individual. shape = (dim,)
+            Mutated individual. shape = (dim,). The result is always
+            ``float64`` because :meth:`mutate_batch` casts its input
+            internally; unlike the former standalone implementations, this
+            does not preserve the input's dtype.
         """
-        pass
+        return self.mutate_batch(p[np.newaxis, :], mutate_range, rng)[0]
 
+    @abstractmethod
     def mutate_batch(
         self,
         candidates_batch: np.ndarray,
         mutate_range: tuple,
         rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray | None:
+    ) -> np.ndarray:
         """
         Execute mutation on a batch of candidates at once.
 
-        Default implementation returns ``None``, meaning this operator does
-        not support batched mutation; the caller should fall back to
-        invoking :meth:`mutate` once per candidate.
+        This is the required primitive that every concrete mutation class
+        must implement directly. Each implementation self-gates ``prob``
+        internally; see Notes for why this differs from
+        ``Crossover.crossover_batch``.
 
         Parameters
         ----------
@@ -81,22 +88,19 @@ class Mutation(ABC):
 
         Returns
         -------
-        np.ndarray or None
-            Mutated individuals. shape = (n, dim), or ``None`` if batched
-            mutation is unsupported for this particular call/shape.
+        np.ndarray
+            Mutated individuals. shape = (n, dim)
 
         Notes
         -----
         Unlike ``Crossover.crossover_batch``, ``prob`` gating is NOT the
         caller's responsibility here — it must be applied by the overriding
-        implementation itself, per row, mirroring how every concrete
-        :meth:`mutate` self-gates today (``if rng.random() >= self.prob:
-        return p.copy()``). Overriding implementations must draw one gate
+        implementation itself, per row. Implementations must draw one gate
         value per row and leave ungated rows unchanged, rather than expecting
         the caller to pre-filter ``candidates_batch``. This is a deliberate
         asymmetry with ``Crossover.crossover_batch``.
         """
-        return None
+        pass
 
     def post_mutation(
         self,
@@ -181,55 +185,20 @@ class MutationUniform(Mutation):
         self.prob = prob
         self.prob_var = prob_var
 
-    def mutate(
-        self,
-        p: np.ndarray,
-        mutate_range: tuple,
-        rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray:
-        """
-        Execute uniform mutation.
-
-        Parameters
-        ----------
-        p : np.ndarray
-            Parent individual. shape = (dim,)
-        mutate_range : tuple
-            Tuple of (lower_bound, upper_bound) for mutation.
-        rng : np.random.Generator, optional
-            Random number generator, by default np.random.default_rng()
-
-        Returns
-        -------
-        np.ndarray
-            Mutated individual.
-        """
-        if rng.random() >= self.prob:
-            return p.copy()
-        dim = len(p)
-        p_var = self.prob_var if self.prob_var is not None else min(0.5, 1.0 / dim)
-        c = p.copy()
-        lb, ub = mutate_range
-        for i in range(dim):
-            if rng.random() < p_var:
-                c[i] = rng.uniform(lb[i], ub[i])
-        return c
-
     def mutate_batch(
         self,
         candidates_batch: np.ndarray,
         mutate_range: tuple,
         rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray | None:
+    ) -> np.ndarray:
         """
         Execute uniform mutation on a batch of candidates at once.
 
-        Applies the same two-level gating as :meth:`mutate`, but vectorized:
-        an individual-level ``prob`` gate (one Bernoulli draw per row,
-        ``rng.random(n) < self.prob``, mirroring ``mutate()``'s
-        ``rng.random() >= self.prob`` early return) selects which rows are
-        touched at all; a per-dimension ``prob_var`` gate is then drawn only
-        for the selected rows, and only dimensions passing that gate are
+        This is the primary uniform mutation implementation. An
+        individual-level ``prob`` gate (one Bernoulli draw per row via
+        ``rng.random(n) < self.prob``) selects which rows are touched at all;
+        a per-dimension ``prob_var`` gate is then drawn only for the selected
+        rows, and only dimensions passing that gate are
         replaced with a value drawn ``Uniform(lb[i], ub[i])``. The
         replacement is drawn only for the positions ``var_gate`` actually
         selects (via boolean fancy-indexing into the broadcast ``lb``/``ub``
@@ -261,34 +230,23 @@ class MutationUniform(Mutation):
 
         Notes
         -----
-        Unlike every ``Crossover.crossover_batch`` override (which draws a
-        fixed, shape-determined number of random values per row regardless
-        of outcome), :meth:`mutate` draws one gate value per dimension and,
-        only when that gate passes, a second value for the replacement --
-        an interleaved, data-dependent draw count (``dim + k`` draws, where
-        ``k`` is however many dimensions happen to pass the gate). A
-        vectorized implementation cannot reproduce that exact sequence: it
-        must draw a full ``(dim,)`` (or, batched, ``(k, dim)``) gate array in
-        one call, then a single replacement-value draw sized to however many
-        positions ``var_gate`` selected (``var_gate.sum()`` values, not a
-        full ``(k, dim)`` array), since NumPy vectorized calls cannot
-        conditionally skip drawing per element within a single call. That is
-        a different total draw count and a different interleaving than
-        ``mutate()``'s, for any ``dim > 1`` and generally even for
-        ``dim == 1``. Consequently, this method's output is **not**
-        bit-identical to calling :meth:`mutate` once per candidate in a
-        loop with the same seeded ``rng``, for any batch size -- not even
-        ``n == 1`` -- unlike the ``n_pair == 1`` exact-match guarantee that
-        holds for every ``Crossover.crossover_batch`` override. No test
-        should assert such equivalence; only the statistical/distributional
-        semantics (independent per-dimension replacement at rate
-        ``prob_var``, exact pass-through of ungated rows/dimensions) are
-        guaranteed to match.
+        For multiple rows, a loop of separate single-row ``mutate_batch``
+        calls (equivalently, separate :meth:`mutate` calls) does not
+        reproduce the same per-row results as one batched call with the same
+        seeded ``rng``. Separate calls interleave each row's individual
+        gate, full per-dimension gate array, and replacement draws before
+        moving to the next row. The number of replacements is
+        data-dependent (``dim + m`` post-individual-gate draws, where ``m``
+        dimensions pass the variable gate). One batched call instead draws
+        all individual gates, then a full ``(k, dim)`` variable-gate array
+        for the ``k`` selected rows, followed by one replacement draw sized
+        to all selected positions. NumPy vectorized calls cannot
+        conditionally skip drawing per element within a single call, so the
+        draw count and interleaving generally diverge. Only the statistical
+        and distributional semantics are guaranteed to match.
 
         The output is always ``float64`` (via the internal ``dtype=float``
-        cast), regardless of the input array's dtype -- consistent with
-        ``PymooMutation.mutate_batch``, but unlike :meth:`mutate`, which
-        preserves whatever dtype ``p`` already has.
+        cast), regardless of the input array's dtype.
         """
         candidates_batch = np.asarray(candidates_batch, dtype=float)
         n, dim = candidates_batch.shape
@@ -336,10 +294,10 @@ class MutationPolynomial(Mutation):
     -----
     Originates from Deb & Goyal (1996); the primary paper has not been
     obtained (it is credited here by name only). The asymmetric
-    delta1/delta2 perturbation formula implemented in :meth:`mutate` has
-    been verified against Deb's own official NSGA-II reference
-    implementation (``nsga2-gnuplot-v1.1.6/mutation.c``, function
-    ``real_mutate_ind``).
+    delta1/delta2 perturbation formula implemented in
+    :meth:`mutate_batch` has been verified against Deb's own official
+    NSGA-II reference implementation
+    (``nsga2-gnuplot-v1.1.6/mutation.c``, function ``real_mutate_ind``).
     """
 
     def __init__(self, prob: float = 1.0, *, eta: float, prob_var: float | None = None):
@@ -360,67 +318,20 @@ class MutationPolynomial(Mutation):
         self.eta = eta
         self.prob_var = prob_var
 
-    def mutate(
-        self,
-        p: np.ndarray,
-        mutate_range: tuple,
-        rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray:
-        """
-        Execute polynomial mutation.
-
-        Parameters
-        ----------
-        p : np.ndarray
-            Parent individual. shape = (dim,)
-        mutate_range : tuple
-            Tuple of (lower_bound, upper_bound) for mutation.
-        rng : np.random.Generator, optional
-            Random number generator, by default np.random.default_rng()
-
-        Returns
-        -------
-        np.ndarray
-            Mutated individual.
-        """
-        if rng.random() >= self.prob:
-            return p.copy()
-        dim = len(p)
-        p_var = self.prob_var if self.prob_var is not None else min(0.5, 1.0 / dim)
-        c = p.copy()
-        lb, ub = mutate_range
-        for i in range(dim):
-            if rng.random() < p_var:
-                delta1 = (c[i] - lb[i]) / (ub[i] - lb[i])
-                delta2 = (ub[i] - c[i]) / (ub[i] - lb[i])
-                u = rng.random()
-                if u <= 0.5:
-                    delta_q = (
-                        2.0 * u + (1.0 - 2.0 * u) * (1.0 - delta1) ** (self.eta + 1)
-                    ) ** (1.0 / (self.eta + 1)) - 1.0
-                else:
-                    delta_q = 1.0 - (
-                        2.0 * (1.0 - u)
-                        + 2.0 * (u - 0.5) * (1.0 - delta2) ** (self.eta + 1)
-                    ) ** (1.0 / (self.eta + 1))
-                c[i] = np.clip(c[i] + delta_q * (ub[i] - lb[i]), lb[i], ub[i])
-        return c
-
     def mutate_batch(
         self,
         candidates_batch: np.ndarray,
         mutate_range: tuple,
         rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray | None:
+    ) -> np.ndarray:
         """
         Execute polynomial mutation on a batch of candidates at once.
 
-        Applies the same two-level gating as :meth:`mutate`, but vectorized:
-        an individual-level ``prob`` gate (one Bernoulli draw per row,
-        ``rng.random(n) < self.prob``, mirroring ``mutate()``'s
-        ``rng.random() >= self.prob`` early return) selects which rows are
-        touched at all; a per-dimension ``prob_var`` gate is then drawn only
-        for the selected rows, and only dimensions passing that gate are
+        This is the primary polynomial mutation implementation. An
+        individual-level ``prob`` gate (one Bernoulli draw per row via
+        ``rng.random(n) < self.prob``) selects which rows are touched at all;
+        a per-dimension ``prob_var`` gate is then drawn only for the selected
+        rows, and only dimensions passing that gate are
         replaced. Unlike :meth:`~MutationUniform.mutate_batch`, the
         replacement value is not a plain uniform draw: it is the asymmetric
         ``delta1``/``delta2`` polynomial perturbation formula (Deb & Goyal,
@@ -455,31 +366,20 @@ class MutationPolynomial(Mutation):
 
         Notes
         -----
-        Unlike every ``Crossover.crossover_batch`` override (which draws a
-        fixed, shape-determined number of random values per row regardless
-        of outcome), :meth:`mutate` draws one gate value per dimension and,
-        only when that gate passes, a second value ``u`` used inside the
-        polynomial perturbation formula -- an interleaved, data-dependent
-        draw count (``dim + k`` draws, where ``k`` is however many
-        dimensions happen to pass the gate). A vectorized implementation
-        cannot reproduce that sequence: it must draw a full ``(k, dim)``
-        gate array and a full ``(k, dim)`` ``u`` array in separate calls,
-        since NumPy vectorized calls cannot conditionally skip drawing per
-        element. That is a different total draw count and a different
-        interleaving than ``mutate()``'s, for any ``dim > 1`` and generally
-        even for ``dim == 1``. Consequently, this method's output is
-        **not** bit-identical to calling :meth:`mutate` once per candidate
-        in a loop with the same seeded ``rng``, for any batch size -- not
-        even ``n == 1``. No test should assert such equivalence; only the
-        statistical/distributional semantics (independent per-dimension
-        mutation at rate ``prob_var`` using the correct polynomial formula,
-        exact pass-through of ungated rows/dimensions) are guaranteed to
+        For multiple rows, a loop of separate single-row ``mutate_batch``
+        calls (equivalently, separate :meth:`mutate` calls) does not
+        reproduce the same per-row results as one batched call with the same
+        seeded ``rng``. Separate calls interleave each row's individual
+        gate, full per-dimension gate array, and full ``u`` array before
+        moving to the next row. One batched call instead draws all
+        individual gates, then the variable-gate arrays for all gated rows,
+        then the ``u`` arrays for all of them. These phases therefore have a
+        different draw order whenever more than one row is involved. Only
+        the statistical and distributional semantics are guaranteed to
         match.
 
         The output is always ``float64`` (via the internal ``dtype=float``
-        cast), regardless of the input array's dtype -- consistent with
-        :meth:`MutationUniform.mutate_batch`, but unlike :meth:`mutate`,
-        which preserves whatever dtype ``p`` already has.
+        cast), regardless of the input array's dtype.
         """
         candidates_batch = np.asarray(candidates_batch, dtype=float)
         n, dim = candidates_batch.shape
@@ -557,54 +457,20 @@ class MutationGaussian(Mutation):
         self.sigma = sigma
         self.prob_var = prob_var
 
-    def mutate(
-        self,
-        p: np.ndarray,
-        mutate_range: tuple,
-        rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray:
-        """
-        Execute Gaussian mutation.
-
-        Parameters
-        ----------
-        p : np.ndarray
-            Parent individual. shape = (dim,)
-        mutate_range : tuple
-            Tuple of (lower_bound, upper_bound) for mutation.
-        rng : np.random.Generator, optional
-            Random number generator, by default np.random.default_rng()
-
-        Returns
-        -------
-        np.ndarray
-            Mutated individual.
-        """
-        if rng.random() >= self.prob:
-            return p.copy()
-        dim = len(p)
-        p_var = self.prob_var if self.prob_var is not None else min(0.5, 1.0 / dim)
-        c = p.copy()
-        for i in range(dim):
-            if rng.random() < p_var:
-                c[i] = c[i] + rng.normal(0.0, self.sigma)
-        return c
-
     def mutate_batch(
         self,
         candidates_batch: np.ndarray,
         mutate_range: tuple,
         rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray | None:
+    ) -> np.ndarray:
         """
         Execute Gaussian mutation on a batch of candidates at once.
 
-        Applies the same two-level gating as :meth:`mutate`, but vectorized:
-        an individual-level ``prob`` gate (one Bernoulli draw per row,
-        ``rng.random(n) < self.prob``, mirroring ``mutate()``'s
-        ``rng.random() >= self.prob`` early return) selects which rows are
-        touched at all; a per-dimension ``prob_var`` gate is then drawn only
-        for the selected rows, and only dimensions passing that gate are
+        This is the primary Gaussian mutation implementation. An
+        individual-level ``prob`` gate (one Bernoulli draw per row via
+        ``rng.random(n) < self.prob``) selects which rows are touched at all;
+        a per-dimension ``prob_var`` gate is then drawn only for the selected
+        rows, and only dimensions passing that gate are
         replaced by adding ``Normal(0.0, self.sigma)`` noise. Unlike
         :meth:`~MutationUniform.mutate_batch` and
         :meth:`~MutationPolynomial.mutate_batch`, the replacement value has
@@ -625,11 +491,8 @@ class MutationGaussian(Mutation):
         mutate_range : tuple
             Tuple of (lower_bound, upper_bound). Accepted for interface
             uniformity with the ``Mutation`` ABC and the other
-            ``mutate_batch`` overrides, but **unused** -- exactly like
-            :meth:`mutate`, this operator adds unbounded Gaussian noise with
-            no clipping to ``[lb, ub]``. Do not add a ``np.clip`` here; that
-            would be a silent behavior change relative to :meth:`mutate`,
-            not a faithful vectorization of it.
+            ``mutate_batch`` overrides, but **unused**. This operator adds
+            unbounded Gaussian noise with no clipping to ``[lb, ub]``.
         rng : np.random.Generator, optional
             Random number generator, by default np.random.default_rng()
 
@@ -640,30 +503,20 @@ class MutationGaussian(Mutation):
 
         Notes
         -----
-        Unlike every ``Crossover.crossover_batch`` override (which draws a
-        fixed, shape-determined number of random values per row regardless
-        of outcome), :meth:`mutate` draws one gate value per dimension and,
-        only when that gate passes, a second value for the noise -- an
-        interleaved, data-dependent draw count (``dim + k`` draws, where
-        ``k`` is however many dimensions happen to pass the gate). A
-        vectorized implementation cannot reproduce that sequence: it must
-        draw a full ``(k, dim)`` gate array and a full ``(k, dim)`` noise
-        array in separate calls, since NumPy vectorized calls cannot
-        conditionally skip drawing per element. That is a different total
-        draw count and a different interleaving than ``mutate()``'s, for any
-        ``dim > 1`` and generally even for ``dim == 1``. Consequently, this
-        method's output is **not** bit-identical to calling :meth:`mutate`
-        once per candidate in a loop with the same seeded ``rng``, for any
-        batch size -- not even ``n == 1``. No test should assert such
-        equivalence; only the statistical/distributional semantics
-        (independent per-dimension noise addition at rate ``prob_var``,
-        exact pass-through of ungated rows/dimensions) are guaranteed to
+        For multiple rows, a loop of separate single-row ``mutate_batch``
+        calls (equivalently, separate :meth:`mutate` calls) does not
+        reproduce the same per-row results as one batched call with the same
+        seeded ``rng``. Separate calls interleave each row's individual
+        gate, full per-dimension gate array, and full noise array before
+        moving to the next row. One batched call instead draws all
+        individual gates, then the variable-gate arrays for all gated rows,
+        then the noise arrays for all of them. These phases therefore have a
+        different draw order whenever more than one row is involved. Only
+        the statistical and distributional semantics are guaranteed to
         match.
 
         The output is always ``float64`` (via the internal ``dtype=float``
-        cast), regardless of the input array's dtype -- consistent with the
-        other two ``mutate_batch`` overrides, but unlike :meth:`mutate`,
-        which preserves whatever dtype ``p`` already has.
+        cast), regardless of the input array's dtype.
         """
         candidates_batch = np.asarray(candidates_batch, dtype=float)
         n, dim = candidates_batch.shape
@@ -694,70 +547,34 @@ class _MutationDiscreteUniform(Mutation):
         self.prob = prob
         self.prob_var = prob_var
 
-    def mutate(
-        self,
-        p: np.ndarray,
-        mutate_range: tuple,
-        rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray:
-        """
-        Execute discrete uniform mutation.
-
-        Parameters
-        ----------
-        p : np.ndarray
-            Parent individual. shape = (dim,)
-        mutate_range : tuple
-            Tuple of (lower_bound, upper_bound) arrays.
-        rng : np.random.Generator, optional
-            Random number generator, by default np.random.default_rng()
-
-        Returns
-        -------
-        np.ndarray
-            Mutated individual.
-        """
-        if rng.random() >= self.prob:
-            return p.copy()
-        dim = len(p)
-        p_var = self.prob_var if self.prob_var is not None else min(0.5, 1.0 / dim)
-        c = p.copy()
-        lb, ub = mutate_range
-        for i in range(dim):
-            if rng.random() < p_var:
-                c[i] = float(rng.integers(int(lb[i]), int(ub[i]) + 1))
-        return c
-
     def mutate_batch(
         self,
         candidates_batch: np.ndarray,
         mutate_range: tuple,
         rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray | None:
+    ) -> np.ndarray:
         """
         Execute discrete uniform mutation on a batch of candidates at once.
 
-        Applies the same two-level gating as :meth:`mutate`, but vectorized:
-        an individual-level ``prob`` gate (one Bernoulli draw per row,
-        ``rng.random(n) < self.prob``, mirroring ``mutate()``'s
-        ``rng.random() >= self.prob`` early return) selects which rows are
-        touched at all; a per-dimension ``prob_var`` gate is then drawn only
-        for the selected rows, and only dimensions passing that gate are
+        This is the primary discrete uniform mutation implementation. An
+        individual-level ``prob`` gate (one Bernoulli draw per row via
+        ``rng.random(n) < self.prob``) selects which rows are touched at all;
+        a per-dimension ``prob_var`` gate is then drawn only for the selected
+        rows, and only dimensions passing that gate are
         replaced with a value drawn as a uniform random integer from
         ``[lb[i], ub[i]]`` (both inclusive) via
         ``rng.integers(lb, ub + 1, size=(k, dim))`` -- ``rng.integers``'s
-        ``high`` argument is exclusive by default, so ``ub + 1`` reproduces
-        the scalar :meth:`mutate`'s inclusive upper bound (``int(ub[i]) +
-        1``). The integer draw is cast to ``float`` via ``.astype(float)``,
-        consistent with :meth:`mutate`'s own ``float(rng.integers(...))``
-        cast -- the whole codebase represents integer/categorical dimensions
-        as floats internally. Rows that fail the individual-level gate are
-        returned byte-identical to the input; dimensions failing the
-        per-dimension gate on a selected row keep their original value
-        exactly (``np.where`` copies rather than recomputes them). If no row
-        passes the individual-level gate (``gate.sum() == 0``), no further
-        random draws happen at all and the input is returned unchanged,
-        mirroring ``MutationUniform.mutate_batch``'s empty-gate skip.
+        ``high`` argument is exclusive by default, so ``ub + 1`` makes the
+        upper bound inclusive. The integer draw is cast to ``float`` via
+        ``.astype(float)`` because the whole codebase represents integer and
+        categorical dimensions as floats internally. Rows that fail the
+        individual-level gate are returned byte-identical to the input;
+        dimensions failing the per-dimension gate on a selected row keep
+        their original value exactly (``np.where`` copies rather than
+        recomputes them). If no row passes the individual-level gate
+        (``gate.sum() == 0``), no further random draws happen at all and the
+        input is returned unchanged, mirroring
+        ``MutationUniform.mutate_batch``'s empty-gate skip.
 
         Parameters
         ----------
@@ -775,30 +592,20 @@ class _MutationDiscreteUniform(Mutation):
 
         Notes
         -----
-        Unlike every ``Crossover.crossover_batch`` override (which draws a
-        fixed, shape-determined number of random values per row regardless
-        of outcome), :meth:`mutate` draws one gate value per dimension and,
-        only when that gate passes, a second value for the integer
-        replacement -- an interleaved, data-dependent draw count (``dim +
-        k`` draws, where ``k`` is however many dimensions happen to pass the
-        gate). A vectorized implementation cannot reproduce that sequence:
-        it must draw a full ``(k, dim)`` gate array and a full ``(k, dim)``
-        replacement array in separate calls, since NumPy vectorized calls
-        cannot conditionally skip drawing per element. That is a different
-        total draw count and a different interleaving than ``mutate()``'s,
-        for any ``dim > 1`` and generally even for ``dim == 1``.
-        Consequently, this method's output is **not** bit-identical to
-        calling :meth:`mutate` once per candidate in a loop with the same
-        seeded ``rng``, for any batch size -- not even ``n == 1``. No test
-        should assert such equivalence; only the statistical/distributional
-        semantics (independent per-dimension replacement at rate
-        ``prob_var``, exact pass-through of ungated rows/dimensions) are
-        guaranteed to match.
+        For multiple rows, a loop of separate single-row ``mutate_batch``
+        calls (equivalently, separate :meth:`mutate` calls) does not
+        reproduce the same per-row results as one batched call with the same
+        seeded ``rng``. Separate calls interleave each row's individual
+        gate, full per-dimension gate array, and full replacement array
+        before moving to the next row. One batched call instead draws all
+        individual gates, then the variable-gate arrays for all gated rows,
+        then the replacement arrays for all of them. These phases therefore
+        have a different draw order whenever more than one row is involved.
+        Only the statistical and distributional semantics are guaranteed to
+        match.
 
         The output is always ``float64`` (via the internal ``dtype=float``
-        cast), regardless of the input array's dtype -- consistent with the
-        other ``mutate_batch`` overrides, but unlike :meth:`mutate`, which
-        preserves whatever dtype ``p`` already has.
+        cast), regardless of the input array's dtype.
         """
         candidates_batch = np.asarray(candidates_batch, dtype=float)
         n, dim = candidates_batch.shape

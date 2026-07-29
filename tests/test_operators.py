@@ -633,21 +633,12 @@ class TestMutationGaussian:
 
 
 # ---------------------------------------------------------------------------
-# Mutation base: mutate_batch default
+# Mutation base: mutate_batch requirement
 # ---------------------------------------------------------------------------
 
 
 class _MutationUnbatched(Mutation):
-    """Minimal dummy Mutation that does not override mutate_batch.
-
-    MutationUniform (Issue #224, commit 9), MutationPolynomial (commit 10),
-    and MutationGaussian (commit 11) now all override mutate_batch, so none
-    of them is a suitable subject for the "still returns None"
-    default-implementation check below, or for any test that needs to
-    exercise the per-individual fallback loop in
-    ``GA._mutate_candidates``. This fresh subclass fills that role instead
-    and is reused across test files for that purpose -- see
-    ``tests/test_ga_mixed.py::TestMutateCandidatesInterleaveOrder``.
+    """Mutation dummy used by the GA fallback-loop interleaving test.
 
     ``mutate()`` draws exactly one ``rng.random()`` value per call (gated on
     ``prob`` like every real Mutation, though the outcome is always
@@ -660,6 +651,7 @@ class _MutationUnbatched(Mutation):
     def __init__(self, prob: float = 1.0):
         super().__init__()
         self.prob = prob
+        self.batch_calls = 0
 
     def mutate(
         self,
@@ -674,19 +666,50 @@ class _MutationUnbatched(Mutation):
             return p.copy()
         return p.copy()
 
+    def mutate_batch(
+        self,
+        candidates_batch: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator = np.random.default_rng(),
+    ) -> np.ndarray:
+        self.batch_calls += 1
+        return candidates_batch.copy()
 
-class TestMutationBatchDefault:
-    def _range(self):
-        lb = np.full(DIM, -5.0)
-        ub = np.full(DIM, 5.0)
-        return lb, ub
 
-    def test_default_returns_none_unbatched(self):
-        op = _MutationUnbatched(prob=0.9)
-        rng = np.random.default_rng(0)
-        candidates_batch = rng.uniform(-2.0, 2.0, size=(5, DIM))
-        result = op.mutate_batch(candidates_batch, self._range(), rng=rng)
-        assert result is None
+class _MutationWithoutBatch(Mutation):
+    """Minimal dummy Mutation that does not implement mutate_batch."""
+
+    def mutate(
+        self,
+        p: np.ndarray,
+        mutate_range: tuple,
+        rng: np.random.Generator = np.random.default_rng(),
+    ) -> np.ndarray:
+        return p.copy()
+
+
+class TestMutationBatchRequired:
+    def test_mutate_batch_is_required(self):
+        with pytest.raises(TypeError, match="mutate_batch"):
+            _MutationWithoutBatch()
+
+
+class TestMutationDerived:
+    """Confirm built-ins inherit the scalar operation from the batch primitive."""
+
+    @pytest.mark.parametrize(
+        "op",
+        [
+            MutationUniform(),
+            MutationPolynomial(eta=20.0),
+            MutationGaussian(sigma=1.0),
+            MutationIntegerUniform(),
+            MutationCategorical(),
+        ],
+    )
+    def test_inherits_mutate(self, op):
+        assert "mutate" not in vars(type(op))
+        assert op.mutate.__func__ is Mutation.mutate
 
 
 # ---------------------------------------------------------------------------

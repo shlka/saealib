@@ -31,7 +31,6 @@ from saealib.operators import (
     TruncationSelection,
 )
 from saealib.operators.crossover import Crossover
-from saealib.operators.mutation import Mutation
 
 
 def _make_ga(**kwargs):
@@ -471,8 +470,7 @@ class TestGAMixedAsk:
 
 
 class TestMutateCandidatesInterleaveOrder:
-    """``_mutate_candidates``'s per-individual fallback loop (taken whenever
-    ``self.mutation`` does not override ``mutate_batch``) must call
+    """``_mutate_candidates``'s per-individual fallback loop must call
     ``_route_mutation`` and ``post_mutation`` interleaved per individual —
     i.e. ``mutate(0), post(0), mutate(1), post(1), ...`` — matching the
     pre-batching behaviour byte-for-byte. A prior version of this method
@@ -484,14 +482,12 @@ class TestMutateCandidatesInterleaveOrder:
     hand-written interleaved reference loop fed an identically-seeded RNG.
 
     Uses ``_MutationUnbatched`` (imported from ``tests/test_operators.py``)
-    as the test vehicle rather than any real, evolving built-in
-    ``Mutation`` class: MutationUniform (commit 9), MutationPolynomial
-    (commit 10), and MutationGaussian (commit 11) all now override
-    ``mutate_batch``, and each one gaining that override in turn broke this
-    test's premise the moment it did. A dedicated test-local dummy that will
-    never grow a ``mutate_batch`` override closes that hole permanently.
-    ``_MutationUnbatched.mutate()`` still draws exactly one ``rng.random()``
-    value per call (see its docstring) -- without that draw, this test would
+    as the test vehicle and passes ``mixed=True`` to force the fallback
+    path. The problem itself remains continuous-only, so ``_route_mutation``
+    still calls its scalar ``mutate()`` exactly once per candidate.
+    ``_MutationUnbatched`` provides the required but unused
+    ``mutate_batch()`` primitive, while its scalar override draws exactly
+    one ``rng.random()`` value per call. Without that draw, this test would
     pass regardless of whether ``_mutate_candidates`` actually interleaves
     correctly, since a zero-draw ``mutate()`` produces byte-identical RNG
     consumption under both the correct interleaved order and the buggy
@@ -505,13 +501,6 @@ class TestMutateCandidatesInterleaveOrder:
             return offspring + rng.random() * 1e-3
 
         mutation = _MutationUnbatched(prob=0.5).with_post(rng_consuming_hook)
-        # Sanity check: mirrors the production predicate in
-        # _mutate_candidates that decides the fallback path is taken.
-        # (Checking `type(mutation).mutate_batch is _MutationUnbatched
-        # .mutate_batch` would be vacuous here, since with_post always
-        # returns a shallow copy of the same type regardless of whether
-        # that type overrides mutate_batch.)
-        assert type(mutation).mutate_batch is Mutation.mutate_batch
 
         ga = GA(
             crossover=CrossoverSBX(1.0, eta=20.0),
@@ -525,7 +514,10 @@ class TestMutateCandidatesInterleaveOrder:
 
         ctx = _make_ctx_for(problem)
         ctx.rng = np.random.default_rng(2024)
-        actual = ga._mutate_candidates(ctx, cand.copy(), lb, ub, mixed=False)
+        # Every concrete Mutation now implements mutate_batch; mixed=True is
+        # what deliberately selects the per-individual fallback path here.
+        actual = ga._mutate_candidates(ctx, cand.copy(), lb, ub, mixed=True)
+        assert mutation.batch_calls == 0
 
         ref_rng = np.random.default_rng(2024)
         expected = cand.copy()
