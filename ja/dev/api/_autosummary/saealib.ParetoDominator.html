@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.ParetoDominator &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 ドキュメント</title>
+    <title>saealib.ParetoDominator &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=d2a17be3"></script>
+    <script src="../../_static/documentation_options.js?v=0cca27f2"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -799,6 +799,9 @@ direction transform).</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.ParetoDominator.dominates" title="saealib.ParetoDominator.dominates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dominates</span></code></a></p></td>
 <td><p>Return True if fa dominates fb.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.ParetoDominator.dominates_many" title="saealib.ParetoDominator.dominates_many"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dominates_many</span></code></a></p></td>
+<td><p>Compute one-vs-many Pareto dominance via a single O(n) broadcast.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -836,9 +839,9 @@ Pareto-dominates row j.</p>
 <dt class="sig sig-object py" id="saealib.ParetoDominator.dominates">
 <span class="sig-prename descclassname"><span class="pre">ParetoDominator.</span></span><span class="sig-name descname"><span class="pre">dominates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.ParetoDominator.dominates" title="Link to this definition">#</a></dt>
 <dd><p>Return True if fa dominates fb.</p>
-<p>Derived from <code class="docutils literal notranslate"><span class="pre">dominance_matrix</span></code> on a 2-row stack to guarantee
-agreement with the batched path.  NaN values in fa always return
-False (consistent with <code class="docutils literal notranslate"><span class="pre">dominance_matrix</span></code> assuming finite input).</p>
+<p>Derived from <code class="docutils literal notranslate"><span class="pre">dominates_many</span></code> with a single-row objective matrix.
+NaN values in fa always return False. NaN values in fb are treated as
+infinitely bad.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -849,6 +852,27 @@ False (consistent with <code class="docutils literal notranslate"><span class="p
 </dd>
 <dt class="field-even">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.ParetoDominator.dominates_many">
+<span class="sig-prename descclassname"><span class="pre">ParetoDominator.</span></span><span class="sig-name descname"><span class="pre">dominates_many</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/comparators/dominance.html#ParetoDominator.dominates_many"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.ParetoDominator.dominates_many" title="Link to this definition">#</a></dt>
+<dd><p>Compute one-vs-many Pareto dominance via a single O(n) broadcast.</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fa</strong> (<em>np.ndarray</em>) -- shape: (n_obj,)</p></li>
+<li><p><strong>f_matrix</strong> (<em>np.ndarray</em>) -- shape: (n, n_obj). Must contain no NaN values.</p></li>
+<li><p><strong>direction</strong> (<em>np.ndarray</em><em> or </em><em>None</em>) -- Per-objective direction. <code class="docutils literal notranslate"><span class="pre">None</span></code> -&gt; minimize all.</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(fa_dominates,</span> <span class="pre">dominates_fa)</span></code>, each shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[np.ndarray, np.ndarray]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -906,6 +930,7 @@ False (consistent with <code class="docutils literal notranslate"><span class="p
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ParetoDominator.__init__"><code class="docutils literal notranslate"><span class="pre">ParetoDominator.__init__()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ParetoDominator.dominance_matrix"><code class="docutils literal notranslate"><span class="pre">ParetoDominator.dominance_matrix()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ParetoDominator.dominates"><code class="docutils literal notranslate"><span class="pre">ParetoDominator.dominates()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ParetoDominator.dominates_many"><code class="docutils literal notranslate"><span class="pre">ParetoDominator.dominates_many()</span></code></a></li>
 </ul>
   </nav></div>
 

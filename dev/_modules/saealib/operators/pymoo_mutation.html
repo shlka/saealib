@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.operators.pymoo_mutation &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 documentation</title>
+    <title>saealib.operators.pymoo_mutation &#8212; saealib 0.1.0b5.dev70+g7b5949608 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=4bbbc04d"></script>
+    <script src="../../../_static/documentation_options.js?v=95d09c5c"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -983,9 +983,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        An already-constructed pymoo mutation operator instance.</span>
 <span class="sd">    prob : float, optional</span>
 <span class="sd">        Individual-level mutation probability. Unlike ``PymooCrossover``,</span>
-<span class="sd">        this class applies the gate itself (saealib&#39;s ``GA`` calls</span>
-<span class="sd">        ``mutate()`` unconditionally; each concrete ``Mutation`` owns its</span>
-<span class="sd">        own probability check). Defaults to 1.0.</span>
+<span class="sd">        this class applies the gate itself inside ``mutate_batch()``.</span>
+<span class="sd">        Defaults to 1.0.</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
@@ -998,10 +997,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    routing in ``GA``) falls back to its own default rather than seeing a</span>
 <span class="sd">    foreign, potentially non-``float`` value.</span>
 
-<span class="sd">    Like :class:`PymooCrossover`, this calls the wrapped operator&#39;s ``_do()``</span>
-<span class="sd">    once per individual (saealib&#39;s per-individual calling convention), pays</span>
-<span class="sd">    the corresponding per-call overhead, and forwards ``rng`` via pymoo&#39;s</span>
-<span class="sd">    ``random_state`` parameter for reproducibility. A minimal cached pymoo</span>
+<span class="sd">    ``mutate_batch()`` calls the wrapped operator&#39;s ``_do()`` at most once,</span>
+<span class="sd">    on the gated subset, and forwards ``rng`` via pymoo&#39;s ``random_state``</span>
+<span class="sd">    parameter for reproducibility. The inherited ``mutate()`` derives a</span>
+<span class="sd">    single-row call from that batch implementation. A minimal cached pymoo</span>
 <span class="sd">    ``Problem`` shim is synthesized the same way.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -1029,21 +1028,30 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">_problem_key</span> <span class="o">=</span> <span class="n">key</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span>
 
-<div class="viewcode-block" id="PymooMutation.mutate">
-<a class="viewcode-back" href="../../../api/_autosummary/saealib.PymooMutation.html#saealib.PymooMutation.mutate">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span>
+<div class="viewcode-block" id="PymooMutation.mutate_batch">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.PymooMutation.html#saealib.PymooMutation.mutate_batch">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate_batch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">candidates_batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">mutate_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
         <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(),</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Execute mutation via the wrapped pymoo operator.</span>
+<span class="sd">        Execute mutation on a batch of candidates via a single pymoo call.</span>
+
+<span class="sd">        Unlike ``Crossover.crossover_batch``, this method owns its own</span>
+<span class="sd">        ``prob`` gate: it draws one gate value per row (``rng.random(n) &lt;</span>
+<span class="sd">        self.prob``, mirroring ``mutate()``&#39;s per-call ``rng.random() &gt;=</span>
+<span class="sd">        self.prob`` check) and only mutates the gated rows; ungated rows are</span>
+<span class="sd">        returned unchanged. The wrapped operator&#39;s ``_do()`` is called at</span>
+<span class="sd">        most once, on only the gated subset. If no row is gated</span>
+<span class="sd">        (``gate.sum() == 0``), ``_do()`` is not called at all, avoiding a</span>
+<span class="sd">        zero-length-batch call into the wrapped pymoo operator.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        p : np.ndarray</span>
-<span class="sd">            Parent individual. shape = (dim,)</span>
+<span class="sd">        candidates_batch : np.ndarray</span>
+<span class="sd">            Batch of candidate individuals. shape = (n, dim)</span>
 <span class="sd">        mutate_range : tuple</span>
 <span class="sd">            Tuple of (lower_bound, upper_bound) for mutation.</span>
 <span class="sd">        rng : np.random.Generator, optional</span>
@@ -1052,14 +1060,27 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        np.ndarray</span>
-<span class="sd">            Mutated individual. shape = (dim,)</span>
+<span class="sd">            Mutated individuals. shape = (n, dim)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        For more than one gated row, a loop of separate single-row</span>
+<span class="sd">        ``mutate_batch`` calls (equivalently, separate :meth:`mutate` calls)</span>
+<span class="sd">        does not reproduce the same per-row results as one batched call with</span>
+<span class="sd">        the same seeded ``rng``. Pymoo operators such as PM draw each random</span>
+<span class="sd">        phase across the whole gated batch, whereas single-row calls</span>
+<span class="sd">        interleave phases per row.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pymoo_problem</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mutate_range</span><span class="p">)</span>
-        <span class="n">x_batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:]</span>
-        <span class="n">xp_batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operator</span><span class="o">.</span><span class="n">_do</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">x_batch</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">xp_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
+        <span class="n">candidates_batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">candidates_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="n">problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pymoo_problem</span><span class="p">(</span><span class="n">candidates_batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">mutate_range</span><span class="p">)</span>
+        <span class="n">mutated</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operator</span><span class="o">.</span><span class="n">_do</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">candidates_batch</span><span class="p">[</span><span class="n">gate</span><span class="p">],</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mutated</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
 </div>
 
 </pre></div>

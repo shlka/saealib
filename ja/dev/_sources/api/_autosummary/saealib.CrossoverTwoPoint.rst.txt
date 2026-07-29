@@ -17,7 +17,9 @@
 
    ~CrossoverTwoPoint.__init__
    ~CrossoverTwoPoint.crossover
+   ~CrossoverTwoPoint.crossover_batch
    ~CrossoverTwoPoint.post_crossover
+   ~CrossoverTwoPoint.post_crossover_batch
    ~CrossoverTwoPoint.with_post
 
 
@@ -34,7 +36,13 @@
 .. automethod:: saealib.CrossoverTwoPoint.crossover
 
 
+.. automethod:: saealib.CrossoverTwoPoint.crossover_batch
+
+
 .. automethod:: saealib.CrossoverTwoPoint.post_crossover
+
+
+.. automethod:: saealib.CrossoverTwoPoint.post_crossover_batch
 
 
 .. automethod:: saealib.CrossoverTwoPoint.with_post

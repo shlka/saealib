@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.JoblibEvaluator &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 documentation</title>
+    <title>saealib.JoblibEvaluator &#8212; saealib 0.1.0b5.dev70+g7b5949608 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=4bbbc04d"></script>
+    <script src="../../_static/documentation_options.js?v=95d09c5c"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -818,6 +818,9 @@ manager to limit inner workers.</p>
 <p>Async evaluation is out of scope for this class.  Asynchronous
 candidate dispatch would require changes to the <code class="docutils literal notranslate"><span class="pre">Algorithm.ask</span></code> /
 <code class="docutils literal notranslate"><span class="pre">Algorithm.tell</span></code> interface and is tracked separately.</p>
+<p>This evaluator does not use <code class="docutils literal notranslate"><span class="pre">Problem.evaluate_batch</span></code> even when a
+<code class="docutils literal notranslate"><span class="pre">Problem</span></code> overrides it; combining per-row parallel dispatch (this
+class) with a single vectorized batch call is tracked separately.</p>
 </dd></dl>
 
 <p class="rubric">Methods</p>

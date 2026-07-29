@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.execution.evaluator &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 ドキュメント</title>
+    <title>saealib.execution.evaluator &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=d2a17be3"></script>
+    <script src="../../../_static/documentation_options.js?v=0cca27f2"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1028,10 +1028,19 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.SerialEvaluator.html#saealib.SerialEvaluator.evaluate_batch">[ドキュメント]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EvaluationResult</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Evaluate each row of ``x`` one at a time.</span>
+<span class="sd">        Evaluate ``x``, preferring ``problem.evaluate_batch`` when available.</span>
 
-<span class="sd">        Produces results equivalent to the per-candidate evaluation loops that</span>
-<span class="sd">        previously lived in each Strategy and Initializer.</span>
+<span class="sd">        First tries ``problem.evaluate_batch(x)``: if the ``Problem`` overrides</span>
+<span class="sd">        it to return raw ``(f_batch, g_batch)`` for the whole batch in one</span>
+<span class="sd">        call, this skips ``problem.evaluate``/``problem.evaluate_constraints``</span>
+<span class="sd">        entirely and only runs the (cheap) per-row constraint-handler calls</span>
+<span class="sd">        (``handler.compute_cv`` / ``handler.augment_objective``) needed to turn</span>
+<span class="sd">        the raw batch into final ``f`` / ``cv`` values. Otherwise it falls back</span>
+<span class="sd">        to evaluating each row one at a time via</span>
+<span class="sd">        :meth:`~saealib.problem.Problem.evaluate` /</span>
+<span class="sd">        :meth:`~saealib.problem.Problem.evaluate_constraints`, reproducing the</span>
+<span class="sd">        per-candidate evaluation loops that previously lived in each Strategy</span>
+<span class="sd">        and Initializer.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1052,6 +1061,19 @@ window.runMermaid = runMermaid;</script>
         <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">n_obj</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
         <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n_constraints</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
         <span class="n">cv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">evaluate_batch</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">f_raw</span><span class="p">,</span> <span class="n">g_raw</span> <span class="o">=</span> <span class="n">raw</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="n">cv</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+                    <span class="n">problem</span><span class="o">.</span><span class="n">handler</span><span class="o">.</span><span class="n">compute_cv</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">g_raw</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="p">)</span>
+                <span class="n">f</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">handler</span><span class="o">.</span><span class="n">augment_objective</span><span class="p">(</span>
+                    <span class="n">f_raw</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">problem</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">g_raw</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">g</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">g_raw</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">EvaluationResult</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="o">=</span><span class="n">g</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">cv</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">xi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
             <span class="n">g_i</span><span class="p">,</span> <span class="n">cv_i</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">evaluate_constraints</span><span class="p">(</span><span class="n">xi</span><span class="p">)</span>
@@ -1113,6 +1135,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Async evaluation is out of scope for this class.  Asynchronous</span>
 <span class="sd">    candidate dispatch would require changes to the ``Algorithm.ask`` /</span>
 <span class="sd">    ``Algorithm.tell`` interface and is tracked separately.</span>
+
+<span class="sd">    This evaluator does not use ``Problem.evaluate_batch`` even when a</span>
+<span class="sd">    ``Problem`` overrides it; combining per-row parallel dispatch (this</span>
+<span class="sd">    class) with a single vectorized batch call is tracked separately.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="JoblibEvaluator.__init__">

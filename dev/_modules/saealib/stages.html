@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.stages &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 documentation</title>
+    <title>saealib.stages &#8212; saealib 0.1.0b5.dev70+g7b5949608 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=4bbbc04d"></script>
+    <script src="../../_static/documentation_options.js?v=95d09c5c"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1340,10 +1340,13 @@ window.runMermaid = runMermaid;</script>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">))</span>
 
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluator</span><span class="o">.</span><span class="n">evaluate_batch</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">x</span><span class="p">[:</span><span class="n">n</span><span class="p">],</span> <span class="n">state</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
-            <span class="n">candidates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">f</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-            <span class="n">candidates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">g</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-            <span class="n">candidates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">cv</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">cv</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="c1"># Bulk write into the backing arrays directly: going through</span>
+        <span class="c1"># Individual.__setattr__ per row costs 3*n weakref-resolution +</span>
+        <span class="c1"># mod_value() round-trips (measured ~1634x overhead vs. this).</span>
+        <span class="n">candidates</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;f&quot;</span><span class="p">][:</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">f</span>
+        <span class="n">candidates</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;g&quot;</span><span class="p">][:</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">g</span>
+        <span class="n">candidates</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;cv&quot;</span><span class="p">][:</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">cv</span>
+        <span class="n">candidates</span><span class="o">.</span><span class="n">mod_value</span><span class="p">()</span>
 
         <span class="n">evaluated</span> <span class="o">=</span> <span class="n">candidates</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)))</span>
 

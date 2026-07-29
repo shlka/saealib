@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Problem &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 ドキュメント</title>
+    <title>Problem &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=d2a17be3"></script>
+    <script src="../_static/documentation_options.js?v=0cca27f2"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -617,7 +617,7 @@
 <section id="external-library-adapters">
 <h2>外部ライブラリアダプタ<a class="headerlink" href="#external-library-adapters" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">PymooProblem(pymoo_problem,</span> <span class="pre">*,</span> <span class="pre">eq_tolerance=1e-6,</span> <span class="pre">**problem_kwargs)</span></code>は、構築済みの<a class="reference external" href="https://pymoo.org/">pymoo</a>問題インスタンス（組み込みベンチマークや既存の研究コード）を<code class="docutils literal notranslate"><span class="pre">Problem</span></code>としてラップし、<code class="docutils literal notranslate"><span class="pre">problem_kwargs</span></code>（<code class="docutils literal notranslate"><span class="pre">comparator</span></code>、<code class="docutils literal notranslate"><span class="pre">handler</span></code>、<code class="docutils literal notranslate"><span class="pre">eps_cv</span></code>、<code class="docutils literal notranslate"><span class="pre">eps_obj</span></code>）は<code class="docutils literal notranslate"><span class="pre">Problem.__init__</span></code>へそのまま渡されます。 pymooの問題は常に最小化なので<code class="docutils literal notranslate"><span class="pre">direction</span></code>は常に全て<code class="docutils literal notranslate"><span class="pre">-1</span></code>になり、pymooの不等式制約（<code class="docutils literal notranslate"><span class="pre">G</span></code>）は<code class="docutils literal notranslate"><span class="pre">InequalityConstraint</span></code>へ、等式制約（<code class="docutils literal notranslate"><span class="pre">H</span></code>）は<code class="docutils literal notranslate"><span class="pre">EqualityConstraint</span></code>へ、いずれも符号を変えずにそのままマッピングされます。</p>
-<p>pymooの問題はバッチ評価（<code class="docutils literal notranslate"><span class="pre">_evaluate(X,</span> <span class="pre">out)</span></code>）を前提としていますが、saealibの<code class="docutils literal notranslate"><span class="pre">Evaluator</span></code>は<code class="docutils literal notranslate"><span class="pre">Problem.evaluate</span></code>を個体単位で1つずつ呼ぶため、<code class="docutils literal notranslate"><span class="pre">PymooProblem</span></code>はラップした問題自身のベクトル化を活かせません。 それでも<code class="docutils literal notranslate"><span class="pre">x</span></code>をキーとする1スロットのキャッシュにより、候補ごとにpymoo呼び出しは正確に1回で済みます。<code class="docutils literal notranslate"><span class="pre">evaluate_constraints()</span></code>と<code class="docutils literal notranslate"><span class="pre">evaluate()</span></code>は同じ<code class="docutils literal notranslate"><span class="pre">x</span></code>に対して<code class="docutils literal notranslate"><span class="pre">SerialEvaluator</span></code>から連続して呼ばれるため、キャッシュがなければ制約の数だけpymoo呼び出しが発生し、さらに目的関数の分も加わってしまいます。</p>
+<p>pymooの問題はバッチ評価（<code class="docutils literal notranslate"><span class="pre">_evaluate(X,</span> <span class="pre">out)</span></code>）を前提としており、<code class="docutils literal notranslate"><span class="pre">PymooProblem.evaluate_batch</span></code>はラップした問題自身の<code class="docutils literal notranslate"><span class="pre">evaluate(X,</span> <span class="pre">return_as_dictionary=True)</span></code>をバッチ全体に対して1回だけ呼び出すことで、これを直接活用します。 <code class="docutils literal notranslate"><span class="pre">SerialEvaluator</span></code>は利用可能な場合これを自動的に使用します。 一方、<code class="docutils literal notranslate"><span class="pre">SerialEvaluator</span></code>を介さず<code class="docutils literal notranslate"><span class="pre">Problem.evaluate</span></code>/<code class="docutils literal notranslate"><span class="pre">evaluate_constraints</span></code>を直接呼んで個体単位で評価する呼び出し元に対しては、<code class="docutils literal notranslate"><span class="pre">x</span></code>をキーとする1スロットのキャッシュにより、候補ごとにpymoo呼び出しは正確に1回で済みます。<code class="docutils literal notranslate"><span class="pre">evaluate_constraints()</span></code>と<code class="docutils literal notranslate"><span class="pre">evaluate()</span></code>は同じ<code class="docutils literal notranslate"><span class="pre">x</span></code>に対して連続して呼ばれるため、キャッシュがなければ制約の数だけpymoo呼び出しが発生し、さらに目的関数の分も加わってしまいます。</p>
 <p><code class="docutils literal notranslate"><span class="pre">pymoo</span></code> extraについては<a class="reference internal" href="../getting_started/installation.html"><span class="std std-doc">インストール</span></a>を参照してください。</p>
 </section>
 <section id="related-components">

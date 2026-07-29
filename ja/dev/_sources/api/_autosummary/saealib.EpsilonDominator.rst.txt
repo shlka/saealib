@@ -18,6 +18,7 @@
    ~EpsilonDominator.__init__
    ~EpsilonDominator.dominance_matrix
    ~EpsilonDominator.dominates
+   ~EpsilonDominator.dominates_many
 
 
 
@@ -34,6 +35,9 @@
 
 
 .. automethod:: saealib.EpsilonDominator.dominates
+
+
+.. automethod:: saealib.EpsilonDominator.dominates_many
 
 
 

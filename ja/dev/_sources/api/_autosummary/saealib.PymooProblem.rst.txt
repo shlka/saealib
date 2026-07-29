@@ -17,6 +17,7 @@
 
    ~PymooProblem.__init__
    ~PymooProblem.evaluate
+   ~PymooProblem.evaluate_batch
    ~PymooProblem.evaluate_constraints
    ~PymooProblem.repair
 
@@ -32,6 +33,9 @@
 
 
 .. automethod:: saealib.PymooProblem.evaluate
+
+
+.. automethod:: saealib.PymooProblem.evaluate_batch
 
 
 .. automethod:: saealib.PymooProblem.evaluate_constraints

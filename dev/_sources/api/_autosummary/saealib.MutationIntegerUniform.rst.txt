@@ -17,7 +17,9 @@
 
    ~MutationIntegerUniform.__init__
    ~MutationIntegerUniform.mutate
+   ~MutationIntegerUniform.mutate_batch
    ~MutationIntegerUniform.post_mutation
+   ~MutationIntegerUniform.post_mutation_batch
    ~MutationIntegerUniform.with_post
 
 
@@ -34,7 +36,13 @@
 .. automethod:: saealib.MutationIntegerUniform.mutate
 
 
+.. automethod:: saealib.MutationIntegerUniform.mutate_batch
+
+
 .. automethod:: saealib.MutationIntegerUniform.post_mutation
+
+
+.. automethod:: saealib.MutationIntegerUniform.post_mutation_batch
 
 
 .. automethod:: saealib.MutationIntegerUniform.with_post

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.SerialEvaluator &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 ドキュメント</title>
+    <title>saealib.SerialEvaluator &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=d2a17be3"></script>
+    <script src="../../_static/documentation_options.js?v=0cca27f2"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -790,7 +790,7 @@
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.SerialEvaluator.evaluate_batch" title="saealib.SerialEvaluator.evaluate_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_batch</span></code></a></p></td>
-<td><p>Evaluate each row of <code class="docutils literal notranslate"><span class="pre">x</span></code> one at a time.</p></td>
+<td><p>Evaluate <code class="docutils literal notranslate"><span class="pre">x</span></code>, preferring <code class="docutils literal notranslate"><span class="pre">problem.evaluate_batch</span></code> when available.</p></td>
 </tr>
 </tbody>
 </table>
@@ -804,9 +804,18 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.SerialEvaluator.evaluate_batch">
 <span class="sig-prename descclassname"><span class="pre">SerialEvaluator.</span></span><span class="sig-name descname"><span class="pre">evaluate_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/execution/evaluator.html#SerialEvaluator.evaluate_batch"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.SerialEvaluator.evaluate_batch" title="Link to this definition">#</a></dt>
-<dd><p>Evaluate each row of <code class="docutils literal notranslate"><span class="pre">x</span></code> one at a time.</p>
-<p>Produces results equivalent to the per-candidate evaluation loops that
-previously lived in each Strategy and Initializer.</p>
+<dd><p>Evaluate <code class="docutils literal notranslate"><span class="pre">x</span></code>, preferring <code class="docutils literal notranslate"><span class="pre">problem.evaluate_batch</span></code> when available.</p>
+<p>First tries <code class="docutils literal notranslate"><span class="pre">problem.evaluate_batch(x)</span></code>: if the <code class="docutils literal notranslate"><span class="pre">Problem</span></code> overrides
+it to return raw <code class="docutils literal notranslate"><span class="pre">(f_batch,</span> <span class="pre">g_batch)</span></code> for the whole batch in one
+call, this skips <code class="docutils literal notranslate"><span class="pre">problem.evaluate</span></code>/<code class="docutils literal notranslate"><span class="pre">problem.evaluate_constraints</span></code>
+entirely and only runs the (cheap) per-row constraint-handler calls
+(<code class="docutils literal notranslate"><span class="pre">handler.compute_cv</span></code> / <code class="docutils literal notranslate"><span class="pre">handler.augment_objective</span></code>) needed to turn
+the raw batch into final <code class="docutils literal notranslate"><span class="pre">f</span></code> / <code class="docutils literal notranslate"><span class="pre">cv</span></code> values. Otherwise it falls back
+to evaluating each row one at a time via
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">evaluate()</span></code> /
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">evaluate_constraints()</span></code>, reproducing the
+per-candidate evaluation loops that previously lived in each Strategy
+and Initializer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

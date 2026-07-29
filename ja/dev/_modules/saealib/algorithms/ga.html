@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.algorithms.ga &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 ドキュメント</title>
+    <title>saealib.algorithms.ga &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=d2a17be3"></script>
+    <script src="../../../_static/documentation_options.js?v=0cca27f2"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -948,7 +948,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Literal</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -956,18 +956,60 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostAskEvent</span><span class="p">,</span> <span class="n">PostCrossoverEvent</span><span class="p">,</span> <span class="n">PostMutationEvent</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigurationError</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.crossover</span><span class="w"> </span><span class="kn">import</span> <span class="n">CrossoverCategorical</span><span class="p">,</span> <span class="n">CrossoverIntegerSBX</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.crossover</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Crossover</span><span class="p">,</span>
+    <span class="n">CrossoverCategorical</span><span class="p">,</span>
+    <span class="n">CrossoverIntegerSBX</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.dedup</span><span class="w"> </span><span class="kn">import</span> <span class="n">DuplicateElimination</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.mutation</span><span class="w"> </span><span class="kn">import</span> <span class="n">MutationCategorical</span><span class="p">,</span> <span class="n">MutationIntegerUniform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.mutation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Mutation</span><span class="p">,</span>
+    <span class="n">MutationCategorical</span><span class="p">,</span>
+    <span class="n">MutationIntegerUniform</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">Population</span><span class="p">,</span> <span class="n">PopulationAttribute</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.crossover</span><span class="w"> </span><span class="kn">import</span> <span class="n">Crossover</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.mutation</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mutation</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParentSelection</span><span class="p">,</span> <span class="n">SurvivorSelection</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatchable</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_variation_execution</span><span class="p">(</span>
+    <span class="n">variation_execution</span><span class="p">:</span> <span class="p">(</span>
+        <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;batch&quot;</span><span class="p">,</span> <span class="s2">&quot;sequential&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;batch&quot;</span><span class="p">,</span> <span class="s2">&quot;sequential&quot;</span><span class="p">]]</span>
+    <span class="p">),</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;crossover&quot;</span><span class="p">,</span> <span class="s2">&quot;mutation&quot;</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;batch&quot;</span><span class="p">,</span> <span class="s2">&quot;sequential&quot;</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate and resolve variation execution mode for one operator.&quot;&quot;&quot;</span>
+    <span class="n">valid_modes</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;batch&quot;</span><span class="p">,</span> <span class="s2">&quot;sequential&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variation_execution</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">variation_execution</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_modes</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span>
+                <span class="s2">&quot;variation_execution must be &#39;batch&#39;, &#39;sequential&#39;, or a dict &quot;</span>
+                <span class="s2">&quot;mapping &#39;crossover&#39; and/or &#39;mutation&#39; to one of those modes&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">variation_execution</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variation_execution</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span>
+            <span class="s2">&quot;variation_execution must be &#39;batch&#39;, &#39;sequential&#39;, or a dict &quot;</span>
+            <span class="s2">&quot;mapping &#39;crossover&#39; and/or &#39;mutation&#39; to one of those modes&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">unknown_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">variation_execution</span><span class="p">)</span> <span class="o">-</span> <span class="p">{</span><span class="s2">&quot;crossover&quot;</span><span class="p">,</span> <span class="s2">&quot;mutation&quot;</span><span class="p">}</span>
+    <span class="n">invalid_values</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">value</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">variation_execution</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_modes</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">unknown_keys</span> <span class="ow">or</span> <span class="n">invalid_values</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span>
+            <span class="s2">&quot;variation_execution must be &#39;batch&#39;, &#39;sequential&#39;, or a dict &quot;</span>
+            <span class="s2">&quot;mapping &#39;crossover&#39; and/or &#39;mutation&#39; to one of those modes&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">variation_execution</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="s2">&quot;batch&quot;</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_route_crossover</span><span class="p">(</span>
@@ -980,7 +1022,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">int_op</span><span class="p">:</span> <span class="n">Crossover</span><span class="p">,</span>
     <span class="n">cat_op</span><span class="p">:</span> <span class="n">Crossover</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply per-type crossover and reassemble offspring.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply per-type crossover for the sequential path and reassemble offspring.&quot;&quot;&quot;</span>
     <span class="n">i_mask</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">integer_mask</span>
     <span class="n">cat_mask</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">categorical_mask</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">i_mask</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">cat_mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
@@ -1017,7 +1059,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">int_op</span><span class="p">:</span> <span class="n">Mutation</span><span class="p">,</span>
     <span class="n">cat_op</span><span class="p">:</span> <span class="n">Mutation</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply per-type mutation and reassemble offspring.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply per-type mutation for the sequential path and reassemble offspring.&quot;&quot;&quot;</span>
     <span class="n">i_mask</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">integer_mask</span>
     <span class="n">cat_mask</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">categorical_mask</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">i_mask</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">cat_mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
@@ -1067,6 +1109,18 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        When set, offspring that duplicate any member of the current population</span>
 <span class="sd">        are replaced by re-generated candidates (up to ``max_retries`` attempts).</span>
 <span class="sd">        ``None`` disables duplicate elimination (default behaviour).</span>
+<span class="sd">    variation_execution : {&quot;batch&quot;, &quot;sequential&quot;} or dict</span>
+<span class="sd">        Execution mode for crossover and mutation. A string applies to both;</span>
+<span class="sd">        a dict may set ``&quot;crossover&quot;`` and ``&quot;mutation&quot;`` independently, with</span>
+<span class="sd">        omitted keys defaulting to ``&quot;batch&quot;``. In batch mode, all gate</span>
+<span class="sd">        decisions and operations complete before any post-operation hook runs,</span>
+<span class="sd">        so a stateful hook cannot influence a later individual&#39;s operation.</span>
+<span class="sd">        Sequential mode completes each individual&#39;s operation and hook before</span>
+<span class="sd">        starting the next, preserving the pre-batching behavior byte-for-byte.</span>
+<span class="sd">        Mixed-variable problems now use per-type batch operations by default,</span>
+<span class="sd">        which changes their historical random-number sequence; select</span>
+<span class="sd">        sequential mode to preserve it. This is a semantic choice, not only a</span>
+<span class="sd">        performance setting.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="GA.__init__">
@@ -1079,6 +1133,9 @@ window.runMermaid = runMermaid;</script>
         <span class="n">survivor_selection</span><span class="p">:</span> <span class="n">SurvivorSelection</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">duplicate_elimination</span><span class="p">:</span> <span class="n">DuplicateElimination</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">variation_execution</span><span class="p">:</span> <span class="p">(</span>
+            <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;batch&quot;</span><span class="p">,</span> <span class="s2">&quot;sequential&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;batch&quot;</span><span class="p">,</span> <span class="s2">&quot;sequential&quot;</span><span class="p">]]</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="s2">&quot;batch&quot;</span><span class="p">,</span>
         <span class="n">integer_crossover</span><span class="p">:</span> <span class="n">Crossover</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">integer_mutation</span><span class="p">:</span> <span class="n">Mutation</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">categorical_crossover</span><span class="p">:</span> <span class="n">Crossover</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1101,6 +1158,22 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            When provided, offspring that duplicate any member of the current</span>
 <span class="sd">            population are replaced by re-generated candidates.  ``None``</span>
 <span class="sd">            (default) disables duplicate elimination.</span>
+<span class="sd">        variation_execution : {&quot;batch&quot;, &quot;sequential&quot;} or dict, optional</span>
+<span class="sd">            Execution mode for crossover and mutation. A string applies to</span>
+<span class="sd">            both operators. A dict may contain ``&quot;crossover&quot;`` and</span>
+<span class="sd">            ``&quot;mutation&quot;`` independently; an omitted key defaults to</span>
+<span class="sd">            ``&quot;batch&quot;``. In batch mode, every individual&#39;s gate decision and</span>
+<span class="sd">            operation is computed before any ``post_crossover`` or</span>
+<span class="sd">            ``post_mutation`` hook runs for any individual in that call. A</span>
+<span class="sd">            stateful hook may observe earlier hooks in the subsequent</span>
+<span class="sd">            post-processing pass, but cannot influence a later individual&#39;s</span>
+<span class="sd">            operation. In sequential mode, each individual&#39;s complete</span>
+<span class="sd">            operation-then-hook cycle finishes before the next begins,</span>
+<span class="sd">            matching the library&#39;s pre-batching behavior byte-for-byte. This</span>
+<span class="sd">            is a semantic choice, not only a performance setting.</span>
+<span class="sd">            Mixed-variable problems use per-type batch operations by default,</span>
+<span class="sd">            changing their historical random-number sequence; use sequential</span>
+<span class="sd">            mode to preserve it.</span>
 <span class="sd">        integer_crossover : Crossover, optional</span>
 <span class="sd">            Crossover operator for integer dimensions.</span>
 <span class="sd">            Defaults to ``CrossoverIntegerSBX`` with the same rate as *crossover*.</span>
@@ -1120,6 +1193,8 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">parent_selection</span> <span class="o">=</span> <span class="n">parent_selection</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">survivor_selection</span> <span class="o">=</span> <span class="n">survivor_selection</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_elimination</span> <span class="o">=</span> <span class="n">duplicate_elimination</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variation_execution</span> <span class="o">=</span> <span class="n">variation_execution</span>
+        <span class="n">_resolve_variation_execution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variation_execution</span><span class="p">,</span> <span class="s2">&quot;crossover&quot;</span><span class="p">)</span>
 
         <span class="n">_cr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">crossover</span><span class="p">,</span> <span class="s2">&quot;prob&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
         <span class="n">_pv</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mutation</span><span class="p">,</span> <span class="s2">&quot;prob_var&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -1240,6 +1315,10 @@ window.runMermaid = runMermaid;</script>
                         <span class="s2">&quot;for mixed-variable routing&quot;</span>
                     <span class="p">)</span>
 
+        <span class="n">mixed</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">integer_mask</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">or</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">categorical_mask</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+        <span class="p">)</span>
+
         <span class="n">pop</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
         <span class="n">popsize</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pop</span><span class="p">)</span>
         <span class="n">target</span> <span class="o">=</span> <span class="n">n_offspring</span> <span class="k">if</span> <span class="n">n_offspring</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">popsize</span>
@@ -1260,44 +1339,13 @@ window.runMermaid = runMermaid;</script>
         <span class="n">handler</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">handler</span>
         <span class="n">constraints</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">constraints</span>
 
-        <span class="n">cand</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_pair</span> <span class="o">*</span> <span class="n">n_children</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">dim</span><span class="p">))</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_pair</span><span class="p">):</span>
-            <span class="n">parent</span> <span class="o">=</span> <span class="n">pop</span><span class="p">[</span><span class="n">parent_idx_m</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
-            <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="o">.</span><span class="n">prob</span><span class="p">:</span>
-                <span class="n">c</span> <span class="o">=</span> <span class="n">_route_crossover</span><span class="p">(</span>
-                    <span class="n">parent</span><span class="p">,</span>
-                    <span class="n">lb</span><span class="p">,</span>
-                    <span class="n">ub</span><span class="p">,</span>
-                    <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span>
-                    <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">integer_crossover</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">categorical_crossover</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">c</span> <span class="o">=</span> <span class="n">parent</span><span class="p">[:</span><span class="n">n_children</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="o">.</span><span class="n">post_crossover</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
-            <span class="n">cand</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">n_children</span> <span class="p">:</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_children</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cand</span><span class="p">)):</span>
-            <span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">repair</span><span class="p">(</span><span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">constraints</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
-            <span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">repair</span><span class="p">(</span><span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">parents_batch</span> <span class="o">=</span> <span class="n">pop</span><span class="p">[</span><span class="n">parent_idx_m</span><span class="p">]</span>
+        <span class="n">cand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crossover_pairs</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">parents_batch</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">,</span> <span class="n">mixed</span><span class="p">)</span>
+        <span class="n">cand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repair_batch</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">cand</span><span class="p">,</span> <span class="n">handler</span><span class="p">,</span> <span class="n">constraints</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
         <span class="n">provider</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">PostCrossoverEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">candidates</span><span class="o">=</span><span class="n">cand</span><span class="p">))</span>
 
-        <span class="n">cand_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cand</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cand_len</span><span class="p">):</span>
-            <span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">_route_mutation</span><span class="p">(</span>
-                <span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                <span class="n">lb</span><span class="p">,</span>
-                <span class="n">ub</span><span class="p">,</span>
-                <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span>
-                <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">mutation</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">integer_mutation</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">categorical_mutation</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutation</span><span class="o">.</span><span class="n">post_mutation</span><span class="p">(</span><span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">),</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
-            <span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">repair</span><span class="p">(</span><span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">constraints</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
-            <span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">repair</span><span class="p">(</span><span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">cand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mutate_candidates</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">cand</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">,</span> <span class="n">mixed</span><span class="p">)</span>
+        <span class="n">cand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repair_batch</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">cand</span><span class="p">,</span> <span class="n">handler</span><span class="p">,</span> <span class="n">constraints</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
         <span class="n">provider</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">PostMutationEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">candidates</span><span class="o">=</span><span class="n">cand</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_elimination</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1320,6 +1368,211 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="n">cand_pop</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_crossover_pairs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
+        <span class="n">parents_batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">lb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">ub</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mixed</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate post-crossover offspring for a batch of parent groups.</span>
+
+<span class="sd">        Batch mode operates on all dimensions together for continuous-only</span>
+<span class="sd">        problems and by variable-type column masks for mixed problems.</span>
+<span class="sd">        Sequential mode runs the per-pair loop. Mixed problems in batch mode</span>
+<span class="sd">        do not reproduce historical sequential random-number sequences.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ctx : OptimizationState</span>
+<span class="sd">            Current optimization context.</span>
+<span class="sd">        parents_batch : np.ndarray</span>
+<span class="sd">            Batch of parent groups. shape = (n_pair, n_parents, dim)</span>
+<span class="sd">        lb : np.ndarray</span>
+<span class="sd">            Lower bounds.</span>
+<span class="sd">        ub : np.ndarray</span>
+<span class="sd">            Upper bounds.</span>
+<span class="sd">        mixed : bool</span>
+<span class="sd">            Whether the problem has any integer or categorical dimensions.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Offspring. shape = (n_pair * n_children, dim)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_pair</span> <span class="o">=</span> <span class="n">parents_batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">n_children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="o">.</span><span class="n">n_children</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">dim</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="n">_resolve_variation_execution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variation_execution</span><span class="p">,</span> <span class="s2">&quot;crossover&quot;</span><span class="p">)</span>
+        <span class="n">use_batch</span> <span class="o">=</span> <span class="p">(</span><span class="ow">not</span> <span class="n">mixed</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;batch&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">use_batch</span><span class="p">:</span>
+            <span class="n">gate</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n_pair</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="o">.</span><span class="n">prob</span>
+            <span class="k">if</span> <span class="n">gate</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="n">batch_offspring</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="o">.</span><span class="n">crossover_batch</span><span class="p">(</span>
+                    <span class="n">parents_batch</span><span class="p">[</span><span class="n">gate</span><span class="p">],</span> <span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">),</span> <span class="n">rng</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">rng</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">batch_offspring</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_children</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
+            <span class="n">cand</span> <span class="o">=</span> <span class="n">parents_batch</span><span class="p">[:,</span> <span class="p">:</span><span class="n">n_children</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">cand</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">batch_offspring</span>
+            <span class="n">cand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="o">.</span><span class="n">post_crossover_batch</span><span class="p">(</span>
+                <span class="n">cand</span><span class="p">,</span> <span class="n">parents_batch</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">cand</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n_pair</span> <span class="o">*</span> <span class="n">n_children</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">mixed</span> <span class="ow">and</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;batch&quot;</span><span class="p">:</span>
+            <span class="n">gate</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n_pair</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="o">.</span><span class="n">prob</span>
+            <span class="n">cand</span> <span class="o">=</span> <span class="n">parents_batch</span><span class="p">[:,</span> <span class="p">:</span><span class="n">n_children</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">gate</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="n">gated_parents</span> <span class="o">=</span> <span class="n">parents_batch</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span>
+                <span class="n">gated_offspring</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span> <span class="n">n_children</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
+                <span class="n">c_mask</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">continuous_mask</span>
+                <span class="n">i_mask</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">integer_mask</span>
+                <span class="n">cat_mask</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">categorical_mask</span>
+                <span class="k">if</span> <span class="n">c_mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="n">gated_offspring</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">c_mask</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="o">.</span><span class="n">crossover_batch</span><span class="p">(</span>
+                        <span class="n">gated_parents</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">c_mask</span><span class="p">],</span>
+                        <span class="p">(</span><span class="n">lb</span><span class="p">[</span><span class="n">c_mask</span><span class="p">],</span> <span class="n">ub</span><span class="p">[</span><span class="n">c_mask</span><span class="p">]),</span>
+                        <span class="n">rng</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="n">i_mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="n">gated_offspring</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i_mask</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">integer_crossover</span><span class="o">.</span><span class="n">crossover_batch</span><span class="p">(</span>
+                            <span class="n">gated_parents</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i_mask</span><span class="p">],</span>
+                            <span class="p">(</span><span class="n">lb</span><span class="p">[</span><span class="n">i_mask</span><span class="p">],</span> <span class="n">ub</span><span class="p">[</span><span class="n">i_mask</span><span class="p">]),</span>
+                            <span class="n">rng</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="n">cat_mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="n">gated_offspring</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">cat_mask</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">categorical_crossover</span><span class="o">.</span><span class="n">crossover_batch</span><span class="p">(</span>
+                            <span class="n">gated_parents</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">cat_mask</span><span class="p">],</span>
+                            <span class="p">(</span><span class="n">lb</span><span class="p">[</span><span class="n">cat_mask</span><span class="p">],</span> <span class="n">ub</span><span class="p">[</span><span class="n">cat_mask</span><span class="p">]),</span>
+                            <span class="n">rng</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="n">cand</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">gated_offspring</span>
+            <span class="n">cand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="o">.</span><span class="n">post_crossover_batch</span><span class="p">(</span>
+                <span class="n">cand</span><span class="p">,</span> <span class="n">parents_batch</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">cand</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n_pair</span> <span class="o">*</span> <span class="n">n_children</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span>
+
+        <span class="n">cand</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_pair</span> <span class="o">*</span> <span class="n">n_children</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_pair</span><span class="p">):</span>
+            <span class="n">parent</span> <span class="o">=</span> <span class="n">parents_batch</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="o">.</span><span class="n">prob</span><span class="p">:</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">_route_crossover</span><span class="p">(</span>
+                    <span class="n">parent</span><span class="p">,</span>
+                    <span class="n">lb</span><span class="p">,</span>
+                    <span class="n">ub</span><span class="p">,</span>
+                    <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span>
+                    <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">integer_crossover</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">categorical_crossover</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">parent</span><span class="p">[:</span><span class="n">n_children</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="o">.</span><span class="n">post_crossover</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+            <span class="n">cand</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">n_children</span> <span class="p">:</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_children</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span>
+        <span class="k">return</span> <span class="n">cand</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_mutate_candidates</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
+        <span class="n">cand</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">lb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">ub</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mixed</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate post-mutation offspring for a batch of candidates.</span>
+
+<span class="sd">        Batch mode operates on all dimensions together for continuous-only</span>
+<span class="sd">        problems and by variable-type column masks for mixed problems.</span>
+<span class="sd">        Sequential mode runs the per-individual loop. Each type&#39;s batch</span>
+<span class="sd">        mutation gates independently. Mixed problems in batch mode do not</span>
+<span class="sd">        reproduce historical sequential random-number sequences.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ctx : OptimizationState</span>
+<span class="sd">            Current optimization context.</span>
+<span class="sd">        cand : np.ndarray</span>
+<span class="sd">            Candidates to mutate. shape = (n, dim)</span>
+<span class="sd">        lb : np.ndarray</span>
+<span class="sd">            Lower bounds.</span>
+<span class="sd">        ub : np.ndarray</span>
+<span class="sd">            Upper bounds.</span>
+<span class="sd">        mixed : bool</span>
+<span class="sd">            Whether the problem has any integer or categorical dimensions.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Mutated candidates. shape = (n, dim)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="n">_resolve_variation_execution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variation_execution</span><span class="p">,</span> <span class="s2">&quot;mutation&quot;</span><span class="p">)</span>
+        <span class="n">use_batch</span> <span class="o">=</span> <span class="p">(</span><span class="ow">not</span> <span class="n">mixed</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;batch&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">use_batch</span><span class="p">:</span>
+            <span class="n">cand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutation</span><span class="o">.</span><span class="n">mutate_batch</span><span class="p">(</span><span class="n">cand</span><span class="p">,</span> <span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">),</span> <span class="n">rng</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutation</span><span class="o">.</span><span class="n">post_mutation_batch</span><span class="p">(</span><span class="n">cand</span><span class="p">,</span> <span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">),</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">mixed</span> <span class="ow">and</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;batch&quot;</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">cand</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">c_mask</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">continuous_mask</span>
+            <span class="n">i_mask</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">integer_mask</span>
+            <span class="n">cat_mask</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">categorical_mask</span>
+            <span class="k">if</span> <span class="n">c_mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="n">result</span><span class="p">[:,</span> <span class="n">c_mask</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutation</span><span class="o">.</span><span class="n">mutate_batch</span><span class="p">(</span>
+                    <span class="n">cand</span><span class="p">[:,</span> <span class="n">c_mask</span><span class="p">],</span> <span class="p">(</span><span class="n">lb</span><span class="p">[</span><span class="n">c_mask</span><span class="p">],</span> <span class="n">ub</span><span class="p">[</span><span class="n">c_mask</span><span class="p">]),</span> <span class="n">rng</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">rng</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">i_mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="n">result</span><span class="p">[:,</span> <span class="n">i_mask</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">integer_mutation</span><span class="o">.</span><span class="n">mutate_batch</span><span class="p">(</span>
+                    <span class="n">cand</span><span class="p">[:,</span> <span class="n">i_mask</span><span class="p">],</span> <span class="p">(</span><span class="n">lb</span><span class="p">[</span><span class="n">i_mask</span><span class="p">],</span> <span class="n">ub</span><span class="p">[</span><span class="n">i_mask</span><span class="p">]),</span> <span class="n">rng</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">rng</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">cat_mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="n">result</span><span class="p">[:,</span> <span class="n">cat_mask</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_mutation</span><span class="o">.</span><span class="n">mutate_batch</span><span class="p">(</span>
+                    <span class="n">cand</span><span class="p">[:,</span> <span class="n">cat_mask</span><span class="p">],</span> <span class="p">(</span><span class="n">lb</span><span class="p">[</span><span class="n">cat_mask</span><span class="p">],</span> <span class="n">ub</span><span class="p">[</span><span class="n">cat_mask</span><span class="p">]),</span> <span class="n">rng</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">rng</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutation</span><span class="o">.</span><span class="n">post_mutation_batch</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">),</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cand</span><span class="p">)):</span>
+            <span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">_route_mutation</span><span class="p">(</span>
+                <span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                <span class="n">lb</span><span class="p">,</span>
+                <span class="n">ub</span><span class="p">,</span>
+                <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span>
+                <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mutation</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">integer_mutation</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">categorical_mutation</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutation</span><span class="o">.</span><span class="n">post_mutation</span><span class="p">(</span><span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">),</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cand</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_repair_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
+        <span class="n">cand</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">handler</span><span class="p">,</span>
+        <span class="n">constraints</span><span class="p">,</span>
+        <span class="n">lb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">ub</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Repair *cand* via the constraint handler (row-wise), then the problem.</span>
+
+<span class="sd">        ``handler.repair`` stays row-by-row (mirrors how ``PSO`` already</span>
+<span class="sd">        leaves it), while ``ctx.problem.repair`` is called once for the</span>
+<span class="sd">        whole batch since it already accepts ``(n, dim)`` arrays.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cand</span><span class="p">)):</span>
+            <span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">repair</span><span class="p">(</span><span class="n">cand</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">constraints</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">repair</span><span class="p">(</span><span class="n">cand</span><span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_make_offspring</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
@@ -1336,6 +1589,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Used exclusively by the duplicate-elimination retry loop in</span>
 <span class="sd">        :meth:`ask` to silently replace duplicate candidates.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mixed</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">integer_mask</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">or</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">categorical_mask</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+        <span class="p">)</span>
         <span class="n">n_children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="o">.</span><span class="n">n_children</span>
         <span class="n">n_pair</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">n_target</span> <span class="o">/</span> <span class="n">n_children</span><span class="p">)</span>
         <span class="n">parent_idx</span> <span class="o">=</span> <span class="p">(</span>
@@ -1348,41 +1604,11 @@ window.runMermaid = runMermaid;</script>
             <span class="p">)</span>
             <span class="o">%</span> <span class="n">popsize</span>
         <span class="p">)</span>
-        <span class="n">batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_pair</span> <span class="o">*</span> <span class="n">n_children</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">dim</span><span class="p">))</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_pair</span><span class="p">):</span>
-            <span class="n">parent</span> <span class="o">=</span> <span class="n">pop</span><span class="p">[</span><span class="n">parent_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
-            <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="o">.</span><span class="n">prob</span><span class="p">:</span>
-                <span class="n">c</span> <span class="o">=</span> <span class="n">_route_crossover</span><span class="p">(</span>
-                    <span class="n">parent</span><span class="p">,</span>
-                    <span class="n">lb</span><span class="p">,</span>
-                    <span class="n">ub</span><span class="p">,</span>
-                    <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span>
-                    <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">integer_crossover</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">categorical_crossover</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">c</span> <span class="o">=</span> <span class="n">parent</span><span class="p">[:</span><span class="n">n_children</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="o">.</span><span class="n">post_crossover</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
-            <span class="n">batch</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">n_children</span> <span class="p">:</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_children</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)):</span>
-            <span class="n">batch</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">repair</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">constraints</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
-            <span class="n">batch</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">repair</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)):</span>
-            <span class="n">batch</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">_route_mutation</span><span class="p">(</span>
-                <span class="n">batch</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                <span class="n">lb</span><span class="p">,</span>
-                <span class="n">ub</span><span class="p">,</span>
-                <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span>
-                <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">mutation</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">integer_mutation</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">categorical_mutation</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">batch</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutation</span><span class="o">.</span><span class="n">post_mutation</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">),</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
-            <span class="n">batch</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">repair</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">constraints</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
-            <span class="n">batch</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">repair</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">parents_batch</span> <span class="o">=</span> <span class="n">pop</span><span class="p">[</span><span class="n">parent_idx</span><span class="p">]</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crossover_pairs</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">parents_batch</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">,</span> <span class="n">mixed</span><span class="p">)</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repair_batch</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">handler</span><span class="p">,</span> <span class="n">constraints</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mutate_candidates</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">,</span> <span class="n">mixed</span><span class="p">)</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repair_batch</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">handler</span><span class="p">,</span> <span class="n">constraints</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">batch</span>
 
 <div class="viewcode-block" id="GA.tell">

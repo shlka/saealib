@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>外部ライブラリとの連携 &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 ドキュメント</title>
+    <title>外部ライブラリとの連携 &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=d2a17be3"></script>
+    <script src="../_static/documentation_options.js?v=0cca27f2"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -699,8 +699,8 @@
 </section>
 <section id="porting-operators-to-native-saealib-code">
 <span id="id1"></span><h2>saealibネイティブなコードへの移植<a class="headerlink" href="#porting-operators-to-native-saealib-code" title="Link to this heading">#</a></h2>
-<p>前節のように外部演算子をラップする方法では、外部ライブラリへのランタイム依存が残るうえ、呼び出し粒度の違いによるコストも生じます。saealibは<code class="docutils literal notranslate"><span class="pre">crossover()</span></code>/<code class="docutils literal notranslate"><span class="pre">mutate()</span></code>を親グループ1組・個体1つごとに呼び出しますが、多くの外部ライブラリは演算子を集団全体に対して1回でベクトル化して適用します。このオーバーヘッドが問題になる場合や、ランタイム依存そのものを避けたい場合は、演算子のロジックをネイティブな<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>サブクラスへ移植するのが有効です。多くの場合これは設計のやり直しではなく機械的な書き換えで済みます——中核のロジックはそのままで、バッチ処理のループとRNGの取得元だけが変わります。</p>
-<p>移植の際に間違えやすいのは、個体単位の確率ゲートを<em>どこに置くか</em>です。saealibの<code class="docutils literal notranslate"><span class="pre">GA</span></code>は<code class="docutils literal notranslate"><span class="pre">crossover()</span></code>を呼び出す前に<code class="docutils literal notranslate"><span class="pre">Crossover.prob</span></code>自身をチェックしますが、<code class="docutils literal notranslate"><span class="pre">Mutation.mutate()</span></code>は<code class="docutils literal notranslate"><span class="pre">self.prob</span></code>を自分自身でチェックしなければなりません——これは前述の<code class="docutils literal notranslate"><span class="pre">PymooMutation</span></code>で触れた非対称性と同じです。pymooの組み込みMutationも、DEAPの<code class="docutils literal notranslate"><span class="pre">toolbox.mutate()</span></code>（<code class="docutils literal notranslate"><span class="pre">algorithms.varAnd</span></code>の<code class="docutils literal notranslate"><span class="pre">mutpb</span></code>によって外部でゲートされる）も、このゲートを演算子の外に置いているため、移植したMutationには元のコードになかったガード行を追加する必要があるのが通常です。</p>
+<p>前節のように外部演算子をラップすると、そのライブラリへの実行時依存が残ります。pymooアダプタはすでに<code class="docutils literal notranslate"><span class="pre">GA</span></code>の既定のバッチモードで集団単位のベクトル化を維持し、バッチ全体またはゲートを通過した部分集合に対してラップした演算子を1回だけ呼ぶため、個体ごとの呼び出しオーバーヘッドをなくす目的での移植は通常不要です。実行時依存を取り除きたい場合や、ソフトウェア論文のために演算子のロジックをsaealibネイティブなコードとして直接監査・引用できる状態にしたい場合に移植します。中心となるロジックは通常そのままで、必要に応じた配列shapeの調整とsaealibのRNGへの置き換えが主な変更点です。</p>
+<p>移植時に間違えやすい点は、個体レベルの確率ゲートを置く場所です。saealibの<code class="docutils literal notranslate"><span class="pre">GA</span></code>は<code class="docutils literal notranslate"><span class="pre">Crossover.prob</span></code>を自ら判定し、ゲートを通過した親グループだけを<code class="docutils literal notranslate"><span class="pre">crossover_batch()</span></code>へ渡します。一方、<code class="docutils literal notranslate"><span class="pre">Mutation.mutate_batch()</span></code>は行ごとに1つの<code class="docutils literal notranslate"><span class="pre">self.prob</span></code>ゲートを抽選し、通過しなかった行を変更せずに残す必要があります。pymooの組み込みMutationもDEAPの<code class="docutils literal notranslate"><span class="pre">toolbox.mutate()</span></code>（<code class="docutils literal notranslate"><span class="pre">algorithms.varAnd</span></code>の<code class="docutils literal notranslate"><span class="pre">mutpb</span></code>によって外部でゲートされます）もゲートを演算子の外に置くため、移植後のMutationには元のコードになかったゲート配列が通常必要です。</p>
 <section id="from-pymoo">
 <h3>pymooからの移植<a class="headerlink" href="#from-pymoo" title="Link to this heading">#</a></h3>
 <p>カスタムのpymoo <code class="docutils literal notranslate"><span class="pre">Mutation</span></code>は通常、バッチ全体<code class="docutils literal notranslate"><span class="pre">X</span></code>（shape <code class="docutils literal notranslate"><span class="pre">(n_individuals,</span> <span class="pre">dim)</span></code>）に対してベクトル化されています。</p>
@@ -721,7 +721,7 @@
         <span class="k">return</span> <span class="n">Xp</span>
 </pre></div>
 </div>
-<p>ネイティブなsaealibの<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>へ移植すると、バッチの次元がなくなります。追加されるのは前述の<code class="docutils literal notranslate"><span class="pre">prob</span></code>ゲートと、個体単位のshape <code class="docutils literal notranslate"><span class="pre">(dim,)</span></code>だけです。</p>
+<p>saealibネイティブな<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>へ移植しても、バッチ軸は維持します。<code class="docutils literal notranslate"><span class="pre">_do()</span></code>の本体はほぼそのまま<code class="docutils literal notranslate"><span class="pre">mutate_batch()</span></code>へ移せます。主な追加点はsaealibの行単位の<code class="docutils literal notranslate"><span class="pre">prob</span></code>ゲートです。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mutation</span>
 
@@ -733,19 +733,26 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="o">=</span> <span class="n">prob_var</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">mutate_range</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()):</span>
-        <span class="k">if</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">))</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span>
-        <span class="n">c</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">+=</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">))[</span><span class="n">mask</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">c</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates_batch</span><span class="p">,</span> <span class="n">mutate_range</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()):</span>
+        <span class="n">candidates_batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">candidates_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="n">selected</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">selected</span><span class="p">),</span> <span class="n">dim</span><span class="p">))</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">selected</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">selected</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">+=</span> <span class="n">noise</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">selected</span>
+        <span class="k">return</span> <span class="n">result</span>
 </pre></div>
 </div>
 </section>
 <section id="from-deap">
 <h3>DEAPからの移植<a class="headerlink" href="#from-deap" title="Link to this heading">#</a></h3>
-<p>DEAPの演算子はもともと個体1つ（またはペア）単位で動作するため、移植はさらに直接的です。カスタムのcrossoverの例を示します。</p>
+<p>DEAPの演算子は1個体または1つの親ペアを処理するため、saealibネイティブな移植では先頭にバッチ軸を追加し、その軸でもベクトル化する必要があります。次のカスタム交叉を考えます。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
 
 
@@ -756,7 +763,7 @@
     <span class="k">return</span> <span class="n">ind1</span><span class="p">,</span> <span class="n">ind2</span>
 </pre></div>
 </div>
-<p>Pythonのループをベクトル化したマスクに置き換え、<code class="docutils literal notranslate"><span class="pre">random.random()</span></code>をsaealibが渡す<code class="docutils literal notranslate"><span class="pre">rng</span></code>に置き換えることで、ネイティブな<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>になります。これによりDEAPの暗黙のグローバルRNG状態から、saealibの実行ごとの<code class="docutils literal notranslate"><span class="pre">np.random.Generator</span></code>（<code class="docutils literal notranslate"><span class="pre">minimize(...,</span> <span class="pre">seed=...)</span></code>で再現性が保たれます）に切り替わります。</p>
+<p>親ペアと次元の両方でベクトル化すると、saealibネイティブな<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>になります。また、<code class="docutils literal notranslate"><span class="pre">random.random()</span></code>をsaealibから渡される<code class="docutils literal notranslate"><span class="pre">rng</span></code>へ置き換え、DEAPの暗黙のグローバルRNG状態ではなく、実行ごとの<code class="docutils literal notranslate"><span class="pre">np.random.Generator</span></code>を使います（<code class="docutils literal notranslate"><span class="pre">minimize(...,</span> <span class="pre">seed=...)</span></code>で再現性を維持できます）。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Crossover</span>
 
@@ -767,12 +774,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">prob</span> <span class="o">=</span> <span class="n">prob</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">swap_rate</span> <span class="o">=</span> <span class="n">swap_rate</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">crossover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()):</span>
-        <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">parent</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">parent</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">p1</span><span class="p">))</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">swap_rate</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">crossover_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parents_batch</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()):</span>
+        <span class="n">n_pair</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">parents_batch</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">parents_batch</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="n">parents_batch</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">n_pair</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">swap_rate</span>
         <span class="n">c1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">p1</span><span class="p">)</span>
         <span class="n">c2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">toolbox.mate</span></code>は<code class="docutils literal notranslate"><span class="pre">varAnd</span></code>の<code class="docutils literal notranslate"><span class="pre">cxpb</span></code>によって外部でゲートされており、これはsaealibの<code class="docutils literal notranslate"><span class="pre">GA</span></code>と同じ挙動です。そのため、mutationとは異なり、ここでは追加のゲートは不要です。</p>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Algorithm &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 ドキュメント</title>
+    <title>Algorithm &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=d2a17be3"></script>
+    <script src="../_static/documentation_options.js?v=0cca27f2"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -588,6 +588,7 @@
 <p><code class="docutils literal notranslate"><span class="pre">GA</span></code>は、それ自体が探索ロジックを持つのではなく、<code class="docutils literal notranslate"><span class="pre">crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">mutation</span></code>/<code class="docutils literal notranslate"><span class="pre">parent_selection</span></code>/<code class="docutils literal notranslate"><span class="pre">survivor_selection</span></code>という4つの演算子を注入して組み立てるコンテナです。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">GA</span><span class="p">(</span><span class="n">crossover</span><span class="p">,</span> <span class="n">mutation</span><span class="p">,</span> <span class="n">parent_selection</span><span class="p">,</span> <span class="n">survivor_selection</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
    <span class="n">duplicate_elimination</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+   <span class="n">variation_execution</span><span class="o">=</span><span class="s2">&quot;batch&quot;</span><span class="p">,</span>
    <span class="n">integer_crossover</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">integer_mutation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
    <span class="n">categorical_crossover</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">categorical_mutation</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </pre></div>
@@ -599,12 +600,13 @@
 <li><p><a class="reference internal" href="parent_selection.html"><span class="std std-doc">ParentSelection</span></a>：交叉に使う親個体を選ぶ</p></li>
 <li><p><a class="reference internal" href="survivor_selection.html"><span class="std std-doc">SurvivorSelection</span></a>：次世代に残す個体を選ぶ</p></li>
 </ul>
+<p><code class="docutils literal notranslate"><span class="pre">variation_execution</span></code>で交叉と変異のバッチ実行または逐次実行を選択でき、辞書を使えばそれぞれを独立に指定できます。既定はバッチです。操作とフックの完全な実行順序および再現性の意味については、以下の<code class="docutils literal notranslate"><span class="pre">GA</span></code> APIリファレンスを参照してください。</p>
 <p><code class="docutils literal notranslate"><span class="pre">GA.tell()</span></code>は、現世代の個体群と<code class="docutils literal notranslate"><span class="pre">ask()</span></code>が生成した子個体群を1つのプールへ統合し、<code class="docutils literal notranslate"><span class="pre">survivor_selection</span></code>でそのプールから生存個体を選ぶ、という(μ+λ)方式で個体群を更新します。 プールに何を含めるか（親を含めるかどうか）は<code class="docutils literal notranslate"><span class="pre">GA</span></code>側の責務であり、<code class="docutils literal notranslate"><span class="pre">SurvivorSelection</span></code>のインターフェース自体には現れません。</p>
 </section>
 <section id="ga-handling-mixed-variable-problems">
 <h3>GA：混合変数問題への対応<a class="headerlink" href="#ga-handling-mixed-variable-problems" title="Link to this heading">#</a></h3>
 <p>設計変数に整数変数とカテゴリ変数が混在する問題では、<code class="docutils literal notranslate"><span class="pre">GA</span></code>は連続変数用の<code class="docutils literal notranslate"><span class="pre">crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">mutation</span></code>とは別に、型ごとの演算子を使い分けます。 <code class="docutils literal notranslate"><span class="pre">integer_crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">integer_mutation</span></code>/<code class="docutils literal notranslate"><span class="pre">categorical_crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">categorical_mutation</span></code>を省略すると、それぞれ<code class="docutils literal notranslate"><span class="pre">CrossoverIntegerSBX</span></code>/<code class="docutils literal notranslate"><span class="pre">MutationIntegerUniform</span></code>/<code class="docutils literal notranslate"><span class="pre">CrossoverCategorical</span></code>/<code class="docutils literal notranslate"><span class="pre">MutationCategorical</span></code>が自動的に補われます。 補われる演算子の確率パラメータ（<code class="docutils literal notranslate"><span class="pre">prob</span></code>/<code class="docutils literal notranslate"><span class="pre">prob_var</span></code>）は、連続変数用の<code class="docutils literal notranslate"><span class="pre">crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">mutation</span></code>から引き継がれます。</p>
-<p>型ごとに補う演算子であっても、<code class="docutils literal notranslate"><span class="pre">n_children</span></code>/<code class="docutils literal notranslate"><span class="pre">n_parents</span></code>は連続変数用の<code class="docutils literal notranslate"><span class="pre">crossover</span></code>と一致していなければなりません。 一致しない場合は<code class="docutils literal notranslate"><span class="pre">ConfigurationError</span></code>になります。 これは、<code class="docutils literal notranslate"><span class="pre">GA</span></code>が親個体を変数の型ごとの列に分割し、各演算子を該当する列だけに適用してから結果を1つの個体へ組み立て直すという実装上、子の個体数と親の個体数が型ごとにずれてはならないためです。</p>
+<p>型ごとに演算子を指定する場合でも、<code class="docutils literal notranslate"><span class="pre">n_children</span></code>/<code class="docutils literal notranslate"><span class="pre">n_parents</span></code>は連続変数用の<code class="docutils literal notranslate"><span class="pre">crossover</span></code>と一致させる必要があります。一致しない場合は<code class="docutils literal notranslate"><span class="pre">ConfigurationError</span></code>になります。<code class="docutils literal notranslate"><span class="pre">GA</span></code>は親個体を変数型ごとの列に分割し、各演算子を該当する列だけに適用してから1個体へ組み立て直すため、型の間で子や親の数を変えられません。既定のバッチモードでは、型ごとの演算子のバッチメソッドを各列に適用します。<code class="docutils literal notranslate"><span class="pre">variation_execution=&quot;sequential&quot;</span></code>では従来のペア単位・個体単位のルーティングを使い、その乱数列を維持します。</p>
 <p>変数の型は<a class="reference internal" href="problem.html"><span class="std std-doc">Problem</span></a>の<code class="docutils literal notranslate"><span class="pre">variables</span></code>引数で定義します。</p>
 </section>
 <section id="ga-auxiliary-utilities">

@@ -18,6 +18,7 @@
    ~ParetoDominator.__init__
    ~ParetoDominator.dominance_matrix
    ~ParetoDominator.dominates
+   ~ParetoDominator.dominates_many
 
 
 
@@ -34,6 +35,9 @@
 
 
 .. automethod:: saealib.ParetoDominator.dominates
+
+
+.. automethod:: saealib.ParetoDominator.dominates_many
 
 
 

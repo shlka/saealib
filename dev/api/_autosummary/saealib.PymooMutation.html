@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.PymooMutation &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 documentation</title>
+    <title>saealib.PymooMutation &#8212; saealib 0.1.0b5.dev70+g7b5949608 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=4bbbc04d"></script>
+    <script src="../../_static/documentation_options.js?v=95d09c5c"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -787,9 +787,8 @@ reuse it unchanged inside saealib’s <code class="docutils literal notranslate"
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>operator</strong> (<em>pymoo.core.mutation.Mutation</em>) – An already-constructed pymoo mutation operator instance.</p></li>
 <li><p><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – Individual-level mutation probability. Unlike <code class="docutils literal notranslate"><span class="pre">PymooCrossover</span></code>,
-this class applies the gate itself (saealib’s <code class="docutils literal notranslate"><span class="pre">GA</span></code> calls
-<code class="docutils literal notranslate"><span class="pre">mutate()</span></code> unconditionally; each concrete <code class="docutils literal notranslate"><span class="pre">Mutation</span></code> owns its
-own probability check). Defaults to 1.0.</p></li>
+this class applies the gate itself inside <code class="docutils literal notranslate"><span class="pre">mutate_batch()</span></code>.
+Defaults to 1.0.</p></li>
 </ul>
 </dd>
 </dl>
@@ -802,10 +801,10 @@ what saealib’s <code class="docutils literal notranslate"><span class="pre">pr
 <code class="docutils literal notranslate"><span class="pre">None</span></code> here so that any saealib code reading it (e.g. mixed-variable
 routing in <code class="docutils literal notranslate"><span class="pre">GA</span></code>) falls back to its own default rather than seeing a
 foreign, potentially non-<code class="docutils literal notranslate"><span class="pre">float</span></code> value.</p>
-<p>Like <a class="reference internal" href="saealib.PymooCrossover.html#saealib.PymooCrossover" title="saealib.PymooCrossover"><code class="xref py py-class docutils literal notranslate"><span class="pre">PymooCrossover</span></code></a>, this calls the wrapped operator’s <code class="docutils literal notranslate"><span class="pre">_do()</span></code>
-once per individual (saealib’s per-individual calling convention), pays
-the corresponding per-call overhead, and forwards <code class="docutils literal notranslate"><span class="pre">rng</span></code> via pymoo’s
-<code class="docutils literal notranslate"><span class="pre">random_state</span></code> parameter for reproducibility. A minimal cached pymoo
+<p><code class="docutils literal notranslate"><span class="pre">mutate_batch()</span></code> calls the wrapped operator’s <code class="docutils literal notranslate"><span class="pre">_do()</span></code> at most once,
+on the gated subset, and forwards <code class="docutils literal notranslate"><span class="pre">rng</span></code> via pymoo’s <code class="docutils literal notranslate"><span class="pre">random_state</span></code>
+parameter for reproducibility. The inherited <code class="docutils literal notranslate"><span class="pre">mutate()</span></code> derives a
+single-row call from that batch implementation. A minimal cached pymoo
 <code class="docutils literal notranslate"><span class="pre">Problem</span></code> shim is synthesized the same way.</p>
 </dd></dl>
 
@@ -816,10 +815,16 @@ the corresponding per-call overhead, and forwards <code class="docutils literal 
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.PymooMutation.mutate" title="saealib.PymooMutation.mutate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mutate</span></code></a></p></td>
-<td><p>Execute mutation via the wrapped pymoo operator.</p></td>
+<td><p>Execute mutation for one candidate.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.PymooMutation.post_mutation" title="saealib.PymooMutation.post_mutation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_mutation</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.PymooMutation.mutate_batch" title="saealib.PymooMutation.mutate_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mutate_batch</span></code></a></p></td>
+<td><p>Execute mutation on a batch of candidates via a single pymoo call.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.PymooMutation.post_mutation" title="saealib.PymooMutation.post_mutation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_mutation</span></code></a></p></td>
 <td><p>Post-mutation lifecycle hook; override to inject custom processing.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.PymooMutation.post_mutation_batch" title="saealib.PymooMutation.post_mutation_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_mutation_batch</span></code></a></p></td>
+<td><p>Run the post-mutation lifecycle hook for a batch.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.PymooMutation.with_post" title="saealib.PymooMutation.with_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_post</span></code></a></p></td>
 <td><p>Return a copy of this operator with <code class="docutils literal notranslate"><span class="pre">fn</span></code> appended to the hook.</p></td>
@@ -846,23 +851,71 @@ the corresponding per-call overhead, and forwards <code class="docutils literal 
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.PymooMutation.mutate">
-<span class="sig-prename descclassname"><span class="pre">PymooMutation.</span></span><span class="sig-name descname"><span class="pre">mutate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutate_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7FB61F9D4660</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/operators/pymoo_mutation.html#PymooMutation.mutate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.PymooMutation.mutate" title="Link to this definition">#</a></dt>
-<dd><p>Execute mutation via the wrapped pymoo operator.</p>
+<span class="sig-prename descclassname"><span class="pre">PymooMutation.</span></span><span class="sig-name descname"><span class="pre">mutate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutate_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7F55F75E4660</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.PymooMutation.mutate" title="Link to this definition">#</a></dt>
+<dd><p>Execute mutation for one candidate.</p>
+<p>This method is derived from <a class="reference internal" href="#saealib.PymooMutation.mutate_batch" title="saealib.PymooMutation.mutate_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mutate_batch()</span></code></a> by passing a
+single-row batch.</p>
+<p class="rubric">Notes</p>
+<p>Overriding only this method (not <a class="reference internal" href="#saealib.PymooMutation.mutate_batch" title="saealib.PymooMutation.mutate_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mutate_batch()</span></code></a>) has no effect
+under GA’s default <code class="docutils literal notranslate"><span class="pre">variation_execution=&quot;batch&quot;</span></code>: the batch path
+calls <a class="reference internal" href="#saealib.PymooMutation.mutate_batch" title="saealib.PymooMutation.mutate_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mutate_batch()</span></code></a> directly and never calls <code class="docutils literal notranslate"><span class="pre">mutate()</span></code>.
+Such an override only takes effect under
+<code class="docutils literal notranslate"><span class="pre">variation_execution=&quot;sequential&quot;</span></code>. To customize behavior under
+both modes, override <a class="reference internal" href="#saealib.PymooMutation.mutate_batch" title="saealib.PymooMutation.mutate_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mutate_batch()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>p</strong> (<em>np.ndarray</em>) – Parent individual. shape = (dim,)</p></li>
 <li><p><strong>mutate_range</strong> (<em>tuple</em>) – Tuple of (lower_bound, upper_bound) for mutation.</p></li>
-<li><p><strong>rng</strong> (<em>np.random.Generator</em><em>, </em><em>optional</em>) – Forwarded to the wrapped operator as <code class="docutils literal notranslate"><span class="pre">random_state</span></code>.</p></li>
+<li><p><strong>rng</strong> (<em>np.random.Generator</em><em>, </em><em>optional</em>) – Random number generator, by default np.random.default_rng()</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Mutated individual. shape = (dim,)</p>
+<dd class="field-even"><p>Mutated individual. shape = (dim,). The result is always
+<code class="docutils literal notranslate"><span class="pre">float64</span></code> because <a class="reference internal" href="#saealib.PymooMutation.mutate_batch" title="saealib.PymooMutation.mutate_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mutate_batch()</span></code></a> casts its input
+internally; unlike the former standalone implementations, this
+does not preserve the input’s dtype.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.PymooMutation.mutate_batch">
+<span class="sig-prename descclassname"><span class="pre">PymooMutation.</span></span><span class="sig-name descname"><span class="pre">mutate_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates_batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutate_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7F55F75E6180</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/operators/pymoo_mutation.html#PymooMutation.mutate_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.PymooMutation.mutate_batch" title="Link to this definition">#</a></dt>
+<dd><p>Execute mutation on a batch of candidates via a single pymoo call.</p>
+<p>Unlike <code class="docutils literal notranslate"><span class="pre">Crossover.crossover_batch</span></code>, this method owns its own
+<code class="docutils literal notranslate"><span class="pre">prob</span></code> gate: it draws one gate value per row (<code class="docutils literal notranslate"><span class="pre">rng.random(n)</span> <span class="pre">&lt;</span>
+<span class="pre">self.prob</span></code>, mirroring <code class="docutils literal notranslate"><span class="pre">mutate()</span></code>’s per-call <code class="docutils literal notranslate"><span class="pre">rng.random()</span> <span class="pre">&gt;=</span>
+<span class="pre">self.prob</span></code> check) and only mutates the gated rows; ungated rows are
+returned unchanged. The wrapped operator’s <code class="docutils literal notranslate"><span class="pre">_do()</span></code> is called at
+most once, on only the gated subset. If no row is gated
+(<code class="docutils literal notranslate"><span class="pre">gate.sum()</span> <span class="pre">==</span> <span class="pre">0</span></code>), <code class="docutils literal notranslate"><span class="pre">_do()</span></code> is not called at all, avoiding a
+zero-length-batch call into the wrapped pymoo operator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>candidates_batch</strong> (<em>np.ndarray</em>) – Batch of candidate individuals. shape = (n, dim)</p></li>
+<li><p><strong>mutate_range</strong> (<em>tuple</em>) – Tuple of (lower_bound, upper_bound) for mutation.</p></li>
+<li><p><strong>rng</strong> (<em>np.random.Generator</em><em>, </em><em>optional</em>) – Forwarded to the wrapped operator as <code class="docutils literal notranslate"><span class="pre">random_state</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mutated individuals. shape = (n, dim)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>For more than one gated row, a loop of separate single-row
+<code class="docutils literal notranslate"><span class="pre">mutate_batch</span></code> calls (equivalently, separate <a class="reference internal" href="#saealib.PymooMutation.mutate" title="saealib.PymooMutation.mutate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mutate()</span></code></a> calls)
+does not reproduce the same per-row results as one batched call with
+the same seeded <code class="docutils literal notranslate"><span class="pre">rng</span></code>. Pymoo operators such as PM draw each random
+phase across the whole gated batch, whereas single-row calls
+interleave phases per row.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -885,6 +938,38 @@ the corresponding per-call overhead, and forwards <code class="docutils literal 
 <dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.PymooMutation.post_mutation_batch">
+<span class="sig-prename descclassname"><span class="pre">PymooMutation.</span></span><span class="sig-name descname"><span class="pre">post_mutation_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">offspring_batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutate_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.PymooMutation.post_mutation_batch" title="Link to this definition">#</a></dt>
+<dd><p>Run the post-mutation lifecycle hook for a batch.</p>
+<p>The default implementation calls <a class="reference internal" href="#saealib.PymooMutation.post_mutation" title="saealib.PymooMutation.post_mutation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">post_mutation()</span></code></a> once per
+individual, in order. Override this method to provide genuinely
+vectorized post-processing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>offspring_batch</strong> (<em>np.ndarray</em>) – Offspring produced by mutation. shape = (n, dim)</p></li>
+<li><p><strong>mutate_range</strong> (<em>tuple</em>) – Tuple of (lower_bound, upper_bound) used for mutation.</p></li>
+<li><p><strong>rng</strong> (<em>np.random.Generator</em>) – Random number generator.</p></li>
+<li><p><strong>ctx</strong> (<em>OptimizationState</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Current optimization context.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Processed offspring. shape = (n, dim)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p><a class="reference internal" href="#saealib.PymooMutation.with_post" title="saealib.PymooMutation.with_post"><code class="xref py py-meth docutils literal notranslate"><span class="pre">with_post()</span></code></a> reassigns only the instance’s
+<a class="reference internal" href="#saealib.PymooMutation.post_mutation" title="saealib.PymooMutation.post_mutation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">post_mutation()</span></code></a> hook. A subclass override of this method is
+responsible for composing that hook itself. If the override does not
+call <code class="docutils literal notranslate"><span class="pre">self.post_mutation</span></code>, a hook installed with <a class="reference internal" href="#saealib.PymooMutation.with_post" title="saealib.PymooMutation.with_post"><code class="xref py py-meth docutils literal notranslate"><span class="pre">with_post()</span></code></a>
+will not run in GA batch mode. It still runs in GA sequential mode,
+which calls <a class="reference internal" href="#saealib.PymooMutation.post_mutation" title="saealib.PymooMutation.post_mutation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">post_mutation()</span></code></a> directly.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -956,7 +1041,9 @@ the corresponding per-call overhead, and forwards <code class="docutils literal 
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooMutation"><code class="docutils literal notranslate"><span class="pre">PymooMutation</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooMutation.__init__"><code class="docutils literal notranslate"><span class="pre">PymooMutation.__init__()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooMutation.mutate"><code class="docutils literal notranslate"><span class="pre">PymooMutation.mutate()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooMutation.mutate_batch"><code class="docutils literal notranslate"><span class="pre">PymooMutation.mutate_batch()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooMutation.post_mutation"><code class="docutils literal notranslate"><span class="pre">PymooMutation.post_mutation()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooMutation.post_mutation_batch"><code class="docutils literal notranslate"><span class="pre">PymooMutation.post_mutation_batch()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooMutation.with_post"><code class="docutils literal notranslate"><span class="pre">PymooMutation.with_post()</span></code></a></li>
 </ul>
   </nav></div>

@@ -17,6 +17,7 @@
 
    ~Problem.__init__
    ~Problem.evaluate
+   ~Problem.evaluate_batch
    ~Problem.evaluate_constraints
    ~Problem.repair
 
@@ -32,6 +33,9 @@
 
 
 .. automethod:: saealib.Problem.evaluate
+
+
+.. automethod:: saealib.Problem.evaluate_batch
 
 
 .. automethod:: saealib.Problem.evaluate_constraints

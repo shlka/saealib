@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.PymooProblem &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 documentation</title>
+    <title>saealib.PymooProblem &#8212; saealib 0.1.0b5.dev70+g7b5949608 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=4bbbc04d"></script>
+    <script src="../../_static/documentation_options.js?v=95d09c5c"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -800,11 +800,12 @@ Default: 1e-6.</p></li>
 <p class="rubric">Notes</p>
 <p>Unlike opfunu (scalar, single-objective), pymoo problems are
 batch-evaluated (<code class="docutils literal notranslate"><span class="pre">_evaluate(X,</span> <span class="pre">out)</span></code>) and may declare inequality
-(<code class="docutils literal notranslate"><span class="pre">G</span></code>) and equality (<code class="docutils literal notranslate"><span class="pre">H</span></code>) constraints. This adapter still evaluates
-one individual at a time — matching <code class="docutils literal notranslate"><span class="pre">SerialEvaluator</span></code>’s per-row
-contract — so a vectorized pymoo problem’s batching advantage is not
-exploited here; a batched saealib <code class="docutils literal notranslate"><span class="pre">Problem</span></code> protocol is out of scope
-for this adapter.</p>
+(<code class="docutils literal notranslate"><span class="pre">G</span></code>) and equality (<code class="docutils literal notranslate"><span class="pre">H</span></code>) constraints. <a class="reference internal" href="#saealib.PymooProblem.evaluate_batch" title="saealib.PymooProblem.evaluate_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">evaluate_batch()</span></code></a> exploits
+this by calling the wrapped pymoo problem’s own vectorized <code class="docutils literal notranslate"><span class="pre">evaluate</span></code>
+once for the whole batch; callers going through <a class="reference internal" href="#saealib.PymooProblem.evaluate" title="saealib.PymooProblem.evaluate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">evaluate()</span></code></a> /
+<a class="reference internal" href="#saealib.PymooProblem.evaluate_constraints" title="saealib.PymooProblem.evaluate_constraints"><code class="xref py py-meth docutils literal notranslate"><span class="pre">evaluate_constraints()</span></code></a> one row at a time instead fall back to the
+one-slot <code class="docutils literal notranslate"><span class="pre">_EvalCache</span></code>, which still collapses the per-row
+<code class="docutils literal notranslate"><span class="pre">evaluate_constraints()</span></code> + <code class="docutils literal notranslate"><span class="pre">evaluate()</span></code> pair into a single pymoo call.</p>
 <p><code class="docutils literal notranslate"><span class="pre">direction</span></code> is always all <code class="docutils literal notranslate"><span class="pre">-1</span></code>: pymoo problems are unconditionally
 minimization. Wrap in <a class="reference internal" href="../highlevel.html#saealib.maximize" title="saealib.maximize"><code class="xref py py-func docutils literal notranslate"><span class="pre">maximize()</span></code></a> only if the pymoo
 problem itself already negates what you want to maximize.</p>
@@ -822,10 +823,13 @@ flip — both conventions agree on “feasible when &lt;= 0”); <code class="do
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.PymooProblem.evaluate" title="saealib.PymooProblem.evaluate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate</span></code></a></p></td>
 <td><p>Evaluate the objective function at given solution x.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.PymooProblem.evaluate_constraints" title="saealib.PymooProblem.evaluate_constraints"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_constraints</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.PymooProblem.evaluate_batch" title="saealib.PymooProblem.evaluate_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_batch</span></code></a></p></td>
+<td><p>Evaluate a batch via the wrapped pymoo problem's own vectorized <code class="docutils literal notranslate"><span class="pre">evaluate</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.PymooProblem.evaluate_constraints" title="saealib.PymooProblem.evaluate_constraints"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_constraints</span></code></a></p></td>
 <td><p>Evaluate all constraint functions at x.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.PymooProblem.repair" title="saealib.PymooProblem.repair"><code class="xref py py-obj docutils literal notranslate"><span class="pre">repair</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.PymooProblem.repair" title="saealib.PymooProblem.repair"><code class="xref py py-obj docutils literal notranslate"><span class="pre">repair</span></code></a></p></td>
 <td><p>Project <em>x</em> onto valid variable domains.</p></td>
 </tr>
 </tbody>
@@ -894,6 +898,26 @@ available (e.g. from <a class="reference internal" href="#saealib.PymooProblem.e
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.PymooProblem.evaluate_batch">
+<span class="sig-prename descclassname"><span class="pre">PymooProblem.</span></span><span class="sig-name descname"><span class="pre">evaluate_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/problem/pymoo_problem.html#PymooProblem.evaluate_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.PymooProblem.evaluate_batch" title="Link to this definition">#</a></dt>
+<dd><p>Evaluate a batch via the wrapped pymoo problem’s own vectorized <code class="docutils literal notranslate"><span class="pre">evaluate</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>np.ndarray</em>) – Batch of candidates, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">dim)</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(f_batch,</span> <span class="pre">g_batch)</span></code> with shapes <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">n_obj)</span></code> and
+<code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">n_constraints)</span></code>; column order matches <code class="docutils literal notranslate"><span class="pre">self.constraints</span></code>
+(inequality columns from <code class="docutils literal notranslate"><span class="pre">G</span></code> first, then equality columns from
+<code class="docutils literal notranslate"><span class="pre">H</span></code>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[np.ndarray, np.ndarray]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -993,6 +1017,7 @@ Clips continuous dimensions to <code class="docutils literal notranslate"><span 
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooProblem"><code class="docutils literal notranslate"><span class="pre">PymooProblem</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooProblem.__init__"><code class="docutils literal notranslate"><span class="pre">PymooProblem.__init__()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooProblem.evaluate"><code class="docutils literal notranslate"><span class="pre">PymooProblem.evaluate()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooProblem.evaluate_batch"><code class="docutils literal notranslate"><span class="pre">PymooProblem.evaluate_batch()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooProblem.evaluate_constraints"><code class="docutils literal notranslate"><span class="pre">PymooProblem.evaluate_constraints()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooProblem.repair"><code class="docutils literal notranslate"><span class="pre">PymooProblem.repair()</span></code></a></li>
 </ul>

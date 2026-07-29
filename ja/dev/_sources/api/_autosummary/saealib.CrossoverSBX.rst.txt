@@ -17,7 +17,9 @@
 
    ~CrossoverSBX.__init__
    ~CrossoverSBX.crossover
+   ~CrossoverSBX.crossover_batch
    ~CrossoverSBX.post_crossover
+   ~CrossoverSBX.post_crossover_batch
    ~CrossoverSBX.with_post
 
 
@@ -34,7 +36,13 @@
 .. automethod:: saealib.CrossoverSBX.crossover
 
 
+.. automethod:: saealib.CrossoverSBX.crossover_batch
+
+
 .. automethod:: saealib.CrossoverSBX.post_crossover
+
+
+.. automethod:: saealib.CrossoverSBX.post_crossover_batch
 
 
 .. automethod:: saealib.CrossoverSBX.with_post

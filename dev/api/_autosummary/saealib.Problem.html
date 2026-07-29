@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.Problem &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 documentation</title>
+    <title>saealib.Problem &#8212; saealib 0.1.0b5.dev70+g7b5949608 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=4bbbc04d"></script>
+    <script src="../../_static/documentation_options.js?v=95d09c5c"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -948,10 +948,13 @@ objectives.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.Problem.evaluate" title="saealib.Problem.evaluate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate</span></code></a></p></td>
 <td><p>Evaluate the objective function at given solution x.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Problem.evaluate_constraints" title="saealib.Problem.evaluate_constraints"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_constraints</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Problem.evaluate_batch" title="saealib.Problem.evaluate_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_batch</span></code></a></p></td>
+<td><p>Evaluate the objective and constraint functions for a batch of solutions.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Problem.evaluate_constraints" title="saealib.Problem.evaluate_constraints"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_constraints</span></code></a></p></td>
 <td><p>Evaluate all constraint functions at x.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Problem.repair" title="saealib.Problem.repair"><code class="xref py py-obj docutils literal notranslate"><span class="pre">repair</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Problem.repair" title="saealib.Problem.repair"><code class="xref py py-obj docutils literal notranslate"><span class="pre">repair</span></code></a></p></td>
 <td><p>Project <em>x</em> onto valid variable domains.</p></td>
 </tr>
 </tbody>
@@ -1014,6 +1017,42 @@ available (e.g. from <a class="reference internal" href="#saealib.Problem.evalua
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.Problem.evaluate_batch">
+<span class="sig-prename descclassname"><span class="pre">Problem.</span></span><span class="sig-name descname"><span class="pre">evaluate_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/problem/problem.html#Problem.evaluate_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.Problem.evaluate_batch" title="Link to this definition">#</a></dt>
+<dd><p>Evaluate the objective and constraint functions for a batch of solutions.</p>
+<p>The default implementation returns <code class="docutils literal notranslate"><span class="pre">None</span></code>, meaning batch evaluation is
+not supported by this <code class="docutils literal notranslate"><span class="pre">Problem</span></code> – callers should fall back to the
+row-by-row path (<a class="reference internal" href="#saealib.Problem.evaluate" title="saealib.Problem.evaluate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">evaluate()</span></code></a> / <a class="reference internal" href="#saealib.Problem.evaluate_constraints" title="saealib.Problem.evaluate_constraints"><code class="xref py py-meth docutils literal notranslate"><span class="pre">evaluate_constraints()</span></code></a> applied
+one row at a time). Subclasses (or <code class="docutils literal notranslate"><span class="pre">Problem</span></code> instances constructed
+around a batch-capable <code class="docutils literal notranslate"><span class="pre">func</span></code>, e.g. a vectorized function, a GPU
+kernel, or an external library such as pymoo that can score many
+designs in one call) may override this method to evaluate all rows of
+<em>x</em> in a single call.</p>
+<p>The returned values are <strong>raw</strong>: unlike <a class="reference internal" href="#saealib.Problem.evaluate" title="saealib.Problem.evaluate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">evaluate()</span></code></a>, the objective
+batch is <em>not</em> passed through <code class="docutils literal notranslate"><span class="pre">handler.augment_objective</span></code>, and unlike
+<a class="reference internal" href="#saealib.Problem.evaluate_constraints" title="saealib.Problem.evaluate_constraints"><code class="xref py py-meth docutils literal notranslate"><span class="pre">evaluate_constraints()</span></code></a>, the constraint batch is <em>not</em> reduced via
+<code class="docutils literal notranslate"><span class="pre">handler.compute_cv</span></code>. Callers are expected to apply those
+transformations themselves afterward, per row.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>np.ndarray</em>) – Batch of solutions to evaluate. shape = (n, dim)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(f_batch,</span> <span class="pre">g_batch)</span></code> if batch evaluation is supported, else
+<code class="docutils literal notranslate"><span class="pre">None</span></code>.
+<code class="docutils literal notranslate"><span class="pre">f_batch</span></code> : raw objective values. shape = (n, n_obj)
+<code class="docutils literal notranslate"><span class="pre">g_batch</span></code> : raw constraint values, in the same column order as
+<code class="docutils literal notranslate"><span class="pre">self.constraints</span></code>. shape = (n, n_constraints); (n, 0) when the
+problem has no constraints.
+Row order matches the order of rows in <em>x</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[np.ndarray, np.ndarray] or None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1127,6 +1166,7 @@ Clips continuous dimensions to <code class="docutils literal notranslate"><span 
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Problem.__init__"><code class="docutils literal notranslate"><span class="pre">Problem.__init__()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Problem.evaluate"><code class="docutils literal notranslate"><span class="pre">Problem.evaluate()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Problem.evaluate_batch"><code class="docutils literal notranslate"><span class="pre">Problem.evaluate_batch()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Problem.evaluate_constraints"><code class="docutils literal notranslate"><span class="pre">Problem.evaluate_constraints()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Problem.repair"><code class="docutils literal notranslate"><span class="pre">Problem.repair()</span></code></a></li>
 </ul>

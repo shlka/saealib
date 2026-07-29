@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.Dominator &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 documentation</title>
+    <title>saealib.Dominator &#8212; saealib 0.1.0b5.dev70+g7b5949608 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=4bbbc04d"></script>
+    <script src="../../_static/documentation_options.js?v=95d09c5c"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -781,20 +781,26 @@
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Abstract base for dominance predicates.</p>
 <p>A <code class="docutils literal notranslate"><span class="pre">Dominator</span></code> encapsulates the definition of dominance between
-objective vectors independently of the sorting algorithm.  Two concrete
-operations are required and MUST agree with each other:</p>
+objective vectors independently of the sorting algorithm. Two primitive
+operations are required:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">dominance_matrix</span></code> — batched NxN boolean matrix (primary operation).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">dominates</span></code> — scalar pairwise predicate, derived from the matrix to
-guarantee consistency.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dominance_matrix</span></code> — an NxN boolean matrix used by non-dominated
+sorting.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dominates_many</span></code> — a one-vs-many comparison used by incremental
+archive updates.</p></li>
 </ul>
-<p>Parameters are the same for both methods:</p>
+<p>These primitives are independent and MUST agree on overlapping cases.
+The scalar <code class="docutils literal notranslate"><span class="pre">dominates</span></code> predicate is derived from <code class="docutils literal notranslate"><span class="pre">dominates_many</span></code> and
+therefore has no independent implementation for subclasses to keep in
+sync.</p>
+<p>Parameters are shared across these operations:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>f</strong> (<em>np.ndarray</em>) – Objective matrix. shape: (n, n_obj)  [<code class="docutils literal notranslate"><span class="pre">dominance_matrix</span></code>]</p></li>
 <li><p><strong>fa</strong> (<em>np.ndarray</em>) – Objective vectors. shape: (n_obj,)  [<code class="docutils literal notranslate"><span class="pre">dominates</span></code>]</p></li>
 <li><p><strong>fb</strong> (<em>np.ndarray</em>) – Objective vectors. shape: (n_obj,)  [<code class="docutils literal notranslate"><span class="pre">dominates</span></code>]</p></li>
+<li><p><strong>f_matrix</strong> (<em>np.ndarray</em>) – Objective matrix. shape: (n, n_obj)  [<code class="docutils literal notranslate"><span class="pre">dominates_many</span></code>]</p></li>
 <li><p><strong>direction</strong> (<em>np.ndarray</em><em> or </em><em>None</em>) – Per-objective optimization direction: +1 = maximize, -1 = minimize.
 <code class="docutils literal notranslate"><span class="pre">None</span></code> defaults to minimization for all objectives.</p></li>
 </ul>
@@ -813,6 +819,9 @@ guarantee consistency.</p></li>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Dominator.dominates" title="saealib.Dominator.dominates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dominates</span></code></a></p></td>
 <td><p>Return True if fa dominates fb.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Dominator.dominates_many" title="saealib.Dominator.dominates_many"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dominates_many</span></code></a></p></td>
+<td><p>One-vs-many dominance check, batched over <code class="docutils literal notranslate"><span class="pre">f_matrix</span></code>'s rows.</p></td>
 </tr>
 </tbody>
 </table>
@@ -849,9 +858,9 @@ guarantee consistency.</p></li>
 <dt class="sig sig-object py" id="saealib.Dominator.dominates">
 <span class="sig-prename descclassname"><span class="pre">Dominator.</span></span><span class="sig-name descname"><span class="pre">dominates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/comparators/dominance.html#Dominator.dominates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.Dominator.dominates" title="Link to this definition">#</a></dt>
 <dd><p>Return True if fa dominates fb.</p>
-<p>Derived from <code class="docutils literal notranslate"><span class="pre">dominance_matrix</span></code> on a 2-row stack to guarantee
-agreement with the batched path.  NaN values in fa always return
-False (consistent with <code class="docutils literal notranslate"><span class="pre">dominance_matrix</span></code> assuming finite input).</p>
+<p>Derived from <code class="docutils literal notranslate"><span class="pre">dominates_many</span></code> with a single-row objective matrix.
+NaN values in fa always return False. NaN values in fb are treated as
+infinitely bad.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -862,6 +871,33 @@ False (consistent with <code class="docutils literal notranslate"><span class="p
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.Dominator.dominates_many">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Dominator.</span></span><span class="sig-name descname"><span class="pre">dominates_many</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/comparators/dominance.html#Dominator.dominates_many"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.Dominator.dominates_many" title="Link to this definition">#</a></dt>
+<dd><p>One-vs-many dominance check, batched over <code class="docutils literal notranslate"><span class="pre">f_matrix</span></code>’s rows.</p>
+<p>Required primitive from which <a class="reference internal" href="#saealib.Dominator.dominates" title="saealib.Dominator.dominates"><code class="xref py py-meth docutils literal notranslate"><span class="pre">dominates()</span></code></a> is derived.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fa</strong> (<em>np.ndarray</em>) – A single objective vector. shape: (n_obj,)</p></li>
+<li><p><strong>f_matrix</strong> (<em>np.ndarray</em>) – Objective matrix to compare <cite>fa</cite> against, one row at a time.
+shape: (n, n_obj). Must contain no NaN values (callers are
+responsible for pre-filtering, same convention as
+<code class="docutils literal notranslate"><span class="pre">dominance_matrix</span></code>).</p></li>
+<li><p><strong>direction</strong> (<em>np.ndarray</em><em> or </em><em>None</em>) – Per-objective direction. <code class="docutils literal notranslate"><span class="pre">None</span></code> -&gt; minimize all.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(fa_dominates,</span> <span class="pre">dominates_fa)</span></code>, each shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>:
+<code class="docutils literal notranslate"><span class="pre">fa_dominates[i]</span></code> is True iff <code class="docutils literal notranslate"><span class="pre">fa</span></code> dominates <code class="docutils literal notranslate"><span class="pre">f_matrix[i]</span></code>;
+<code class="docutils literal notranslate"><span class="pre">dominates_fa[i]</span></code> is True iff <code class="docutils literal notranslate"><span class="pre">f_matrix[i]</span></code> dominates <code class="docutils literal notranslate"><span class="pre">fa</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[np.ndarray, np.ndarray]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -919,6 +955,7 @@ False (consistent with <code class="docutils literal notranslate"><span class="p
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Dominator.__init__"><code class="docutils literal notranslate"><span class="pre">Dominator.__init__()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Dominator.dominance_matrix"><code class="docutils literal notranslate"><span class="pre">Dominator.dominance_matrix()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Dominator.dominates"><code class="docutils literal notranslate"><span class="pre">Dominator.dominates()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Dominator.dominates_many"><code class="docutils literal notranslate"><span class="pre">Dominator.dominates_many()</span></code></a></li>
 </ul>
   </nav></div>
 

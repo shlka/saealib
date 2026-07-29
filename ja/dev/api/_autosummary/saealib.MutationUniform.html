@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.MutationUniform &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 ドキュメント</title>
+    <title>saealib.MutationUniform &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=d2a17be3"></script>
+    <script src="../../_static/documentation_options.js?v=0cca27f2"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -821,10 +821,16 @@ when <code class="docutils literal notranslate"><span class="pre">None</span></c
 <td><p>Initialize uniform mutation operator.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.MutationUniform.mutate" title="saealib.MutationUniform.mutate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mutate</span></code></a></p></td>
-<td><p>Execute uniform mutation.</p></td>
+<td><p>Execute mutation for one candidate.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.MutationUniform.post_mutation" title="saealib.MutationUniform.post_mutation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_mutation</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.MutationUniform.mutate_batch" title="saealib.MutationUniform.mutate_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mutate_batch</span></code></a></p></td>
+<td><p>Execute uniform mutation on a batch of candidates at once.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.MutationUniform.post_mutation" title="saealib.MutationUniform.post_mutation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_mutation</span></code></a></p></td>
 <td><p>Post-mutation lifecycle hook; override to inject custom processing.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.MutationUniform.post_mutation_batch" title="saealib.MutationUniform.post_mutation_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_mutation_batch</span></code></a></p></td>
+<td><p>Run the post-mutation lifecycle hook for a batch.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.MutationUniform.with_post" title="saealib.MutationUniform.with_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_post</span></code></a></p></td>
 <td><p>Return a copy of this operator with <code class="docutils literal notranslate"><span class="pre">fn</span></code> appended to the hook.</p></td>
@@ -849,8 +855,17 @@ when <code class="docutils literal notranslate"><span class="pre">None</span></c
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.MutationUniform.mutate">
-<span class="sig-prename descclassname"><span class="pre">MutationUniform.</span></span><span class="sig-name descname"><span class="pre">mutate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutate_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7FE135A489E0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/operators/mutation.html#MutationUniform.mutate"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.MutationUniform.mutate" title="Link to this definition">#</a></dt>
-<dd><p>Execute uniform mutation.</p>
+<span class="sig-prename descclassname"><span class="pre">MutationUniform.</span></span><span class="sig-name descname"><span class="pre">mutate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutate_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7FF70AEF5000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.MutationUniform.mutate" title="Link to this definition">#</a></dt>
+<dd><p>Execute mutation for one candidate.</p>
+<p>This method is derived from <a class="reference internal" href="#saealib.MutationUniform.mutate_batch" title="saealib.MutationUniform.mutate_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mutate_batch()</span></code></a> by passing a
+single-row batch.</p>
+<p class="rubric">メモ</p>
+<p>Overriding only this method (not <a class="reference internal" href="#saealib.MutationUniform.mutate_batch" title="saealib.MutationUniform.mutate_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mutate_batch()</span></code></a>) has no effect
+under GA's default <code class="docutils literal notranslate"><span class="pre">variation_execution=&quot;batch&quot;</span></code>: the batch path
+calls <a class="reference internal" href="#saealib.MutationUniform.mutate_batch" title="saealib.MutationUniform.mutate_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mutate_batch()</span></code></a> directly and never calls <code class="docutils literal notranslate"><span class="pre">mutate()</span></code>.
+Such an override only takes effect under
+<code class="docutils literal notranslate"><span class="pre">variation_execution=&quot;sequential&quot;</span></code>. To customize behavior under
+both modes, override <a class="reference internal" href="#saealib.MutationUniform.mutate_batch" title="saealib.MutationUniform.mutate_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mutate_batch()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -860,12 +875,72 @@ when <code class="docutils literal notranslate"><span class="pre">None</span></c
 </ul>
 </dd>
 <dt class="field-even">戻り値<span class="colon">:</span></dt>
-<dd class="field-even"><p>Mutated individual.</p>
+<dd class="field-even"><p>Mutated individual. shape = (dim,). The result is always
+<code class="docutils literal notranslate"><span class="pre">float64</span></code> because <a class="reference internal" href="#saealib.MutationUniform.mutate_batch" title="saealib.MutationUniform.mutate_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mutate_batch()</span></code></a> casts its input
+internally; unlike the former standalone implementations, this
+does not preserve the input's dtype.</p>
 </dd>
 <dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.MutationUniform.mutate_batch">
+<span class="sig-prename descclassname"><span class="pre">MutationUniform.</span></span><span class="sig-name descname"><span class="pre">mutate_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates_batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutate_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7FF70AEF4F20</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/operators/mutation.html#MutationUniform.mutate_batch"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.MutationUniform.mutate_batch" title="Link to this definition">#</a></dt>
+<dd><p>Execute uniform mutation on a batch of candidates at once.</p>
+<p>This is the primary uniform mutation implementation. An
+individual-level <code class="docutils literal notranslate"><span class="pre">prob</span></code> gate (one Bernoulli draw per row via
+<code class="docutils literal notranslate"><span class="pre">rng.random(n)</span> <span class="pre">&lt;</span> <span class="pre">self.prob</span></code>) selects which rows are touched at all;
+a per-dimension <code class="docutils literal notranslate"><span class="pre">prob_var</span></code> gate is then drawn only for the selected
+rows, and only dimensions passing that gate are
+replaced with a value drawn <code class="docutils literal notranslate"><span class="pre">Uniform(lb[i],</span> <span class="pre">ub[i])</span></code>. The
+replacement is drawn only for the positions <code class="docutils literal notranslate"><span class="pre">var_gate</span></code> actually
+selects (via boolean fancy-indexing into the broadcast <code class="docutils literal notranslate"><span class="pre">lb</span></code>/<code class="docutils literal notranslate"><span class="pre">ub</span></code>
+arrays, then <code class="docutils literal notranslate"><span class="pre">Generator.uniform</span></code>'s array-valued <code class="docutils literal notranslate"><span class="pre">low</span></code>/<code class="docutils literal notranslate"><span class="pre">high</span></code>
+form with no explicit <code class="docutils literal notranslate"><span class="pre">size</span></code>), rather than for every <code class="docutils literal notranslate"><span class="pre">(row,</span> <span class="pre">dim)</span></code>
+position unconditionally -- this avoids drawing (and validating the
+range of) a replacement for a dimension that <code class="docutils literal notranslate"><span class="pre">var_gate</span></code> will
+discard anyway, which matters when that dimension is unbounded (see
+Notes). Rows that fail the individual-level gate are returned
+byte-identical to the input; dimensions failing the per-dimension
+gate on a selected row keep their original value exactly. If no row
+passes the individual-level gate (<code class="docutils literal notranslate"><span class="pre">gate.sum()</span> <span class="pre">==</span> <span class="pre">0</span></code>), no further
+random draws happen at all and the input is returned unchanged,
+mirroring <code class="docutils literal notranslate"><span class="pre">PymooMutation.mutate_batch</span></code>'s empty-gate skip.</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>candidates_batch</strong> (<em>np.ndarray</em>) -- Batch of candidate individuals. shape = (n, dim)</p></li>
+<li><p><strong>mutate_range</strong> (<em>tuple</em>) -- Tuple of (lower_bound, upper_bound) for mutation.</p></li>
+<li><p><strong>rng</strong> (<em>np.random.Generator</em><em>, </em><em>optional</em>) -- Random number generator, by default np.random.default_rng()</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mutated individuals. shape = (n, dim)</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">メモ</p>
+<p>For multiple rows, a loop of separate single-row <code class="docutils literal notranslate"><span class="pre">mutate_batch</span></code>
+calls (equivalently, separate <a class="reference internal" href="#saealib.MutationUniform.mutate" title="saealib.MutationUniform.mutate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mutate()</span></code></a> calls) does not
+reproduce the same per-row results as one batched call with the same
+seeded <code class="docutils literal notranslate"><span class="pre">rng</span></code>. Separate calls interleave each row's individual
+gate, full per-dimension gate array, and replacement draws before
+moving to the next row. The number of replacements is
+data-dependent (<code class="docutils literal notranslate"><span class="pre">dim</span> <span class="pre">+</span> <span class="pre">m</span></code> post-individual-gate draws, where <code class="docutils literal notranslate"><span class="pre">m</span></code>
+dimensions pass the variable gate). One batched call instead draws
+all individual gates, then a full <code class="docutils literal notranslate"><span class="pre">(k,</span> <span class="pre">dim)</span></code> variable-gate array
+for the <code class="docutils literal notranslate"><span class="pre">k</span></code> selected rows, followed by one replacement draw sized
+to all selected positions. NumPy vectorized calls cannot
+conditionally skip drawing per element within a single call, so the
+draw count and interleaving generally diverge. Only the statistical
+and distributional semantics are guaranteed to match.</p>
+<p>The output is always <code class="docutils literal notranslate"><span class="pre">float64</span></code> (via the internal <code class="docutils literal notranslate"><span class="pre">dtype=float</span></code>
+cast), regardless of the input array's dtype.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -888,6 +963,38 @@ when <code class="docutils literal notranslate"><span class="pre">None</span></c
 <dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.MutationUniform.post_mutation_batch">
+<span class="sig-prename descclassname"><span class="pre">MutationUniform.</span></span><span class="sig-name descname"><span class="pre">post_mutation_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">offspring_batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutate_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.MutationUniform.post_mutation_batch" title="Link to this definition">#</a></dt>
+<dd><p>Run the post-mutation lifecycle hook for a batch.</p>
+<p>The default implementation calls <a class="reference internal" href="#saealib.MutationUniform.post_mutation" title="saealib.MutationUniform.post_mutation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">post_mutation()</span></code></a> once per
+individual, in order. Override this method to provide genuinely
+vectorized post-processing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>offspring_batch</strong> (<em>np.ndarray</em>) -- Offspring produced by mutation. shape = (n, dim)</p></li>
+<li><p><strong>mutate_range</strong> (<em>tuple</em>) -- Tuple of (lower_bound, upper_bound) used for mutation.</p></li>
+<li><p><strong>rng</strong> (<em>np.random.Generator</em>) -- Random number generator.</p></li>
+<li><p><strong>ctx</strong> (<em>OptimizationState</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Current optimization context.</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>Processed offspring. shape = (n, dim)</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">メモ</p>
+<p><a class="reference internal" href="#saealib.MutationUniform.with_post" title="saealib.MutationUniform.with_post"><code class="xref py py-meth docutils literal notranslate"><span class="pre">with_post()</span></code></a> reassigns only the instance's
+<a class="reference internal" href="#saealib.MutationUniform.post_mutation" title="saealib.MutationUniform.post_mutation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">post_mutation()</span></code></a> hook. A subclass override of this method is
+responsible for composing that hook itself. If the override does not
+call <code class="docutils literal notranslate"><span class="pre">self.post_mutation</span></code>, a hook installed with <a class="reference internal" href="#saealib.MutationUniform.with_post" title="saealib.MutationUniform.with_post"><code class="xref py py-meth docutils literal notranslate"><span class="pre">with_post()</span></code></a>
+will not run in GA batch mode. It still runs in GA sequential mode,
+which calls <a class="reference internal" href="#saealib.MutationUniform.post_mutation" title="saealib.MutationUniform.post_mutation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">post_mutation()</span></code></a> directly.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -963,7 +1070,9 @@ when <code class="docutils literal notranslate"><span class="pre">None</span></c
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.MutationUniform.__init__"><code class="docutils literal notranslate"><span class="pre">MutationUniform.__init__()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.MutationUniform.mutate"><code class="docutils literal notranslate"><span class="pre">MutationUniform.mutate()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.MutationUniform.mutate_batch"><code class="docutils literal notranslate"><span class="pre">MutationUniform.mutate_batch()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.MutationUniform.post_mutation"><code class="docutils literal notranslate"><span class="pre">MutationUniform.post_mutation()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.MutationUniform.post_mutation_batch"><code class="docutils literal notranslate"><span class="pre">MutationUniform.post_mutation_batch()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.MutationUniform.with_post"><code class="docutils literal notranslate"><span class="pre">MutationUniform.with_post()</span></code></a></li>
 </ul>
   </nav></div>

@@ -17,7 +17,9 @@
 
    ~CrossoverCategorical.__init__
    ~CrossoverCategorical.crossover
+   ~CrossoverCategorical.crossover_batch
    ~CrossoverCategorical.post_crossover
+   ~CrossoverCategorical.post_crossover_batch
    ~CrossoverCategorical.with_post
 
 
@@ -34,7 +36,13 @@
 .. automethod:: saealib.CrossoverCategorical.crossover
 
 
+.. automethod:: saealib.CrossoverCategorical.crossover_batch
+
+
 .. automethod:: saealib.CrossoverCategorical.post_crossover
+
+
+.. automethod:: saealib.CrossoverCategorical.post_crossover_batch
 
 
 .. automethod:: saealib.CrossoverCategorical.with_post

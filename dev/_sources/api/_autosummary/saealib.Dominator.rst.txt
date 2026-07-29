@@ -18,6 +18,7 @@
    ~Dominator.__init__
    ~Dominator.dominance_matrix
    ~Dominator.dominates
+   ~Dominator.dominates_many
 
 
 
@@ -34,6 +35,9 @@
 
 
 .. automethod:: saealib.Dominator.dominates
+
+
+.. automethod:: saealib.Dominator.dominates_many
 
 
 

@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.comparators.dominance &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 ドキュメント</title>
+    <title>saealib.comparators.dominance &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=d2a17be3"></script>
+    <script src="../../../_static/documentation_options.js?v=0cca27f2"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -957,14 +957,20 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Abstract base for dominance predicates.</span>
 
 <span class="sd">    A ``Dominator`` encapsulates the definition of dominance between</span>
-<span class="sd">    objective vectors independently of the sorting algorithm.  Two concrete</span>
-<span class="sd">    operations are required and MUST agree with each other:</span>
+<span class="sd">    objective vectors independently of the sorting algorithm. Two primitive</span>
+<span class="sd">    operations are required:</span>
 
-<span class="sd">    - ``dominance_matrix`` — batched NxN boolean matrix (primary operation).</span>
-<span class="sd">    - ``dominates`` — scalar pairwise predicate, derived from the matrix to</span>
-<span class="sd">      guarantee consistency.</span>
+<span class="sd">    - ``dominance_matrix`` — an NxN boolean matrix used by non-dominated</span>
+<span class="sd">      sorting.</span>
+<span class="sd">    - ``dominates_many`` — a one-vs-many comparison used by incremental</span>
+<span class="sd">      archive updates.</span>
 
-<span class="sd">    Parameters are the same for both methods:</span>
+<span class="sd">    These primitives are independent and MUST agree on overlapping cases.</span>
+<span class="sd">    The scalar ``dominates`` predicate is derived from ``dominates_many`` and</span>
+<span class="sd">    therefore has no independent implementation for subclasses to keep in</span>
+<span class="sd">    sync.</span>
+
+<span class="sd">    Parameters are shared across these operations:</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -972,6 +978,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Objective matrix. shape: (n, n_obj)  [``dominance_matrix``]</span>
 <span class="sd">    fa, fb : np.ndarray</span>
 <span class="sd">        Objective vectors. shape: (n_obj,)  [``dominates``]</span>
+<span class="sd">    f_matrix : np.ndarray</span>
+<span class="sd">        Objective matrix. shape: (n, n_obj)  [``dominates_many``]</span>
 <span class="sd">    direction : np.ndarray or None</span>
 <span class="sd">        Per-objective optimization direction: +1 = maximize, -1 = minimize.</span>
 <span class="sd">        ``None`` defaults to minimization for all objectives.</span>
@@ -1016,9 +1024,9 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return True if fa dominates fb.</span>
 
-<span class="sd">        Derived from ``dominance_matrix`` on a 2-row stack to guarantee</span>
-<span class="sd">        agreement with the batched path.  NaN values in fa always return</span>
-<span class="sd">        False (consistent with ``dominance_matrix`` assuming finite input).</span>
+<span class="sd">        Derived from ``dominates_many`` with a single-row objective matrix.</span>
+<span class="sd">        NaN values in fa always return False. NaN values in fb are treated as</span>
+<span class="sd">        infinitely bad.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1037,8 +1045,43 @@ window.runMermaid = runMermaid;</script>
             <span class="k">return</span> <span class="kc">False</span>
         <span class="c1"># Replace NaN in fb with +inf so it appears infinitely bad (dominated).</span>
         <span class="n">fb_safe</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">fb</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">fb</span><span class="p">)</span>
-        <span class="n">stacked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">fa</span><span class="p">,</span> <span class="n">fb_safe</span><span class="p">])</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dominance_matrix</span><span class="p">(</span><span class="n">stacked</span><span class="p">,</span> <span class="n">direction</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span></div>
+        <span class="n">fa_dominates</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dominates_many</span><span class="p">(</span><span class="n">fa</span><span class="p">,</span> <span class="n">fb_safe</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">direction</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">fa_dominates</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="Dominator.dominates_many">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Dominator.html#saealib.Dominator.dominates_many">[ドキュメント]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dominates_many</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">fa</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">f_matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        One-vs-many dominance check, batched over ``f_matrix``&#39;s rows.</span>
+
+<span class="sd">        Required primitive from which :meth:`dominates` is derived.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fa : np.ndarray</span>
+<span class="sd">            A single objective vector. shape: (n_obj,)</span>
+<span class="sd">        f_matrix : np.ndarray</span>
+<span class="sd">            Objective matrix to compare `fa` against, one row at a time.</span>
+<span class="sd">            shape: (n, n_obj). Must contain no NaN values (callers are</span>
+<span class="sd">            responsible for pre-filtering, same convention as</span>
+<span class="sd">            ``dominance_matrix``).</span>
+<span class="sd">        direction : np.ndarray or None</span>
+<span class="sd">            Per-objective direction. ``None`` -&gt; minimize all.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple[np.ndarray, np.ndarray]</span>
+<span class="sd">            ``(fa_dominates, dominates_fa)``, each shape ``(n,)``:</span>
+<span class="sd">            ``fa_dominates[i]`` is True iff ``fa`` dominates ``f_matrix[i]``;</span>
+<span class="sd">            ``dominates_fa[i]`` is True iff ``f_matrix[i]`` dominates ``fa``.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
 </div>
 
 
@@ -1094,6 +1137,44 @@ window.runMermaid = runMermaid;</script>
             <span class="n">leq_all</span> <span class="o">&amp;=</span> <span class="n">col</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">col</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
             <span class="n">less_any</span> <span class="o">|=</span> <span class="n">col</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">col</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
         <span class="k">return</span> <span class="n">leq_all</span> <span class="o">&amp;</span> <span class="n">less_any</span></div>
+
+
+<div class="viewcode-block" id="ParetoDominator.dominates_many">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.ParetoDominator.html#saealib.ParetoDominator.dominates_many">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dominates_many</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">fa</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">f_matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute one-vs-many Pareto dominance via a single O(n) broadcast.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fa : np.ndarray</span>
+<span class="sd">            shape: (n_obj,)</span>
+<span class="sd">        f_matrix : np.ndarray</span>
+<span class="sd">            shape: (n, n_obj). Must contain no NaN values.</span>
+<span class="sd">        direction : np.ndarray or None</span>
+<span class="sd">            Per-objective direction. ``None`` -&gt; minimize all.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple[np.ndarray, np.ndarray]</span>
+<span class="sd">            ``(fa_dominates, dominates_fa)``, each shape ``(n,)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">fa</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">f_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">f_matrix</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fa_t</span> <span class="o">=</span> <span class="n">fa</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">direction</span><span class="p">)</span>
+            <span class="n">f_t</span> <span class="o">=</span> <span class="n">f_matrix</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">direction</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fa_t</span> <span class="o">=</span> <span class="n">fa</span>
+            <span class="n">f_t</span> <span class="o">=</span> <span class="n">f_matrix</span>
+        <span class="n">fa_dominates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">fa_t</span> <span class="o">&lt;=</span> <span class="n">f_t</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">fa_t</span> <span class="o">&lt;</span> <span class="n">f_t</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">dominates_fa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">f_t</span> <span class="o">&lt;=</span> <span class="n">fa_t</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">f_t</span> <span class="o">&lt;</span> <span class="n">fa_t</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fa_dominates</span><span class="p">,</span> <span class="n">dominates_fa</span></div>
 </div>
 
 
@@ -1148,10 +1229,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Because ``log(1 + eps_i) = log1p(eps_i)`` is used internally, the</span>
 <span class="sd">    multiplicative rule is numerically stable for small ``eps``.</span>
 
-<span class="sd">    The dominance-matrix computation delegates entirely to an internal</span>
-<span class="sd">    :class:`ParetoDominator` instance operating on the quantized box</span>
-<span class="sd">    coordinates.  This guarantees that :meth:`dominates` (inherited from</span>
-<span class="sd">    :class:`Dominator`) and :meth:`dominance_matrix` always agree.</span>
+<span class="sd">    The dominance-matrix and one-vs-many computations delegate entirely to an</span>
+<span class="sd">    internal :class:`ParetoDominator` instance operating on the quantized box</span>
+<span class="sd">    coordinates. This keeps the two required primitives consistent.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -1259,6 +1339,20 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quantize</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pareto</span><span class="o">.</span><span class="n">dominance_matrix</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EpsilonDominator.dominates_many">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.EpsilonDominator.html#saealib.EpsilonDominator.dominates_many">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dominates_many</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">fa</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">f_matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Quantize both sides into eps-box coordinates, delegate to ParetoDominator.&quot;&quot;&quot;</span>
+        <span class="n">fa_q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quantize</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">fa</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+        <span class="n">f_q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quantize</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">f_matrix</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pareto</span><span class="o">.</span><span class="n">dominates_many</span><span class="p">(</span><span class="n">fa_q</span><span class="p">,</span> <span class="n">f_q</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span></div>
 </div>
 
 

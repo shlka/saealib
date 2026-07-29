@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.EpsilonDominator &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 ドキュメント</title>
+    <title>saealib.EpsilonDominator &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=d2a17be3"></script>
+    <script src="../../_static/documentation_options.js?v=0cca27f2"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -821,10 +821,9 @@ All values must be strictly positive (&gt; 0).</p></li>
 </div>
 <p>Because <code class="docutils literal notranslate"><span class="pre">log(1</span> <span class="pre">+</span> <span class="pre">eps_i)</span> <span class="pre">=</span> <span class="pre">log1p(eps_i)</span></code> is used internally, the
 multiplicative rule is numerically stable for small <code class="docutils literal notranslate"><span class="pre">eps</span></code>.</p>
-<p>The dominance-matrix computation delegates entirely to an internal
-<a class="reference internal" href="saealib.ParetoDominator.html#saealib.ParetoDominator" title="saealib.ParetoDominator"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParetoDominator</span></code></a> instance operating on the quantized box
-coordinates.  This guarantees that <a class="reference internal" href="#saealib.EpsilonDominator.dominates" title="saealib.EpsilonDominator.dominates"><code class="xref py py-meth docutils literal notranslate"><span class="pre">dominates()</span></code></a> (inherited from
-<a class="reference internal" href="saealib.Dominator.html#saealib.Dominator" title="saealib.Dominator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dominator</span></code></a>) and <a class="reference internal" href="#saealib.EpsilonDominator.dominance_matrix" title="saealib.EpsilonDominator.dominance_matrix"><code class="xref py py-meth docutils literal notranslate"><span class="pre">dominance_matrix()</span></code></a> always agree.</p>
+<p>The dominance-matrix and one-vs-many computations delegate entirely to an
+internal <a class="reference internal" href="saealib.ParetoDominator.html#saealib.ParetoDominator" title="saealib.ParetoDominator"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParetoDominator</span></code></a> instance operating on the quantized box
+coordinates. This keeps the two required primitives consistent.</p>
 <p class="rubric">参照</p>
 <p><span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id26" title="Marco Laumanns, Lothar Thiele, Kalyanmoy Deb, and Eckart Zitzler. Combining convergence and diversity in evolutionary multiobjective optimization. Evolutionary Computation, 10(3):263–282, 2002. doi:10.1162/106365602760234108.">6</a>]</span>: Laumanns, M., Thiele, L., Deb, K., &amp;
 Zitzler, E. (2002). Combining Convergence and Diversity in Evolutionary
@@ -842,6 +841,9 @@ Multiobjective Optimization. <em>Evolutionary Computation</em>, 10(3), 263-282.<
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.EpsilonDominator.dominates" title="saealib.EpsilonDominator.dominates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dominates</span></code></a></p></td>
 <td><p>Return True if fa dominates fb.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.EpsilonDominator.dominates_many" title="saealib.EpsilonDominator.dominates_many"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dominates_many</span></code></a></p></td>
+<td><p>Quantize both sides into eps-box coordinates, delegate to ParetoDominator.</p></td>
 </tr>
 </tbody>
 </table>
@@ -895,9 +897,9 @@ handling and the accumulation logic are not duplicated.</p>
 <dt class="sig sig-object py" id="saealib.EpsilonDominator.dominates">
 <span class="sig-prename descclassname"><span class="pre">EpsilonDominator.</span></span><span class="sig-name descname"><span class="pre">dominates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.EpsilonDominator.dominates" title="Link to this definition">#</a></dt>
 <dd><p>Return True if fa dominates fb.</p>
-<p>Derived from <code class="docutils literal notranslate"><span class="pre">dominance_matrix</span></code> on a 2-row stack to guarantee
-agreement with the batched path.  NaN values in fa always return
-False (consistent with <code class="docutils literal notranslate"><span class="pre">dominance_matrix</span></code> assuming finite input).</p>
+<p>Derived from <code class="docutils literal notranslate"><span class="pre">dominates_many</span></code> with a single-row objective matrix.
+NaN values in fa always return False. NaN values in fb are treated as
+infinitely bad.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -908,6 +910,24 @@ False (consistent with <code class="docutils literal notranslate"><span class="p
 </dd>
 <dt class="field-even">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.EpsilonDominator.dominates_many">
+<span class="sig-prename descclassname"><span class="pre">EpsilonDominator.</span></span><span class="sig-name descname"><span class="pre">dominates_many</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/comparators/dominance.html#EpsilonDominator.dominates_many"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.EpsilonDominator.dominates_many" title="Link to this definition">#</a></dt>
+<dd><p>Quantize both sides into eps-box coordinates, delegate to ParetoDominator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fa</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>f_matrix</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>direction</strong> (<em>ndarray</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[<em>ndarray</em>, <em>ndarray</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -965,6 +985,7 @@ False (consistent with <code class="docutils literal notranslate"><span class="p
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.EpsilonDominator.__init__"><code class="docutils literal notranslate"><span class="pre">EpsilonDominator.__init__()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.EpsilonDominator.dominance_matrix"><code class="docutils literal notranslate"><span class="pre">EpsilonDominator.dominance_matrix()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.EpsilonDominator.dominates"><code class="docutils literal notranslate"><span class="pre">EpsilonDominator.dominates()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.EpsilonDominator.dominates_many"><code class="docutils literal notranslate"><span class="pre">EpsilonDominator.dominates_many()</span></code></a></li>
 </ul>
   </nav></div>
 

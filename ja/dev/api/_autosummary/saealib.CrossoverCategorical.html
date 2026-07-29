@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.CrossoverCategorical &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 ドキュメント</title>
+    <title>saealib.CrossoverCategorical &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=d2a17be3"></script>
+    <script src="../../_static/documentation_options.js?v=0cca27f2"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -809,10 +809,16 @@ value, preserving the validity of categorical indices.</p>
 <td><p>Initialize categorical crossover operator.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.CrossoverCategorical.crossover" title="saealib.CrossoverCategorical.crossover"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crossover</span></code></a></p></td>
-<td><p>Execute categorical crossover.</p></td>
+<td><p>Execute crossover for one parent group.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.CrossoverCategorical.post_crossover" title="saealib.CrossoverCategorical.post_crossover"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_crossover</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.CrossoverCategorical.crossover_batch" title="saealib.CrossoverCategorical.crossover_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crossover_batch</span></code></a></p></td>
+<td><p>Execute categorical crossover on a batch of parent pairs at once.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.CrossoverCategorical.post_crossover" title="saealib.CrossoverCategorical.post_crossover"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_crossover</span></code></a></p></td>
 <td><p>Post-crossover lifecycle hook; override to inject custom processing.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.CrossoverCategorical.post_crossover_batch" title="saealib.CrossoverCategorical.post_crossover_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_crossover_batch</span></code></a></p></td>
+<td><p>Run the post-crossover lifecycle hook for a batch.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.CrossoverCategorical.with_post" title="saealib.CrossoverCategorical.with_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_post</span></code></a></p></td>
 <td><p>Return a copy of this operator with <code class="docutils literal notranslate"><span class="pre">fn</span></code> appended to the hook.</p></td>
@@ -834,23 +840,61 @@ value, preserving the validity of categorical indices.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.CrossoverCategorical.crossover">
-<span class="sig-prename descclassname"><span class="pre">CrossoverCategorical.</span></span><span class="sig-name descname"><span class="pre">crossover</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7FE135A48580</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/operators/crossover.html#CrossoverCategorical.crossover"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.CrossoverCategorical.crossover" title="Link to this definition">#</a></dt>
-<dd><p>Execute categorical crossover.</p>
+<span class="sig-prename descclassname"><span class="pre">CrossoverCategorical.</span></span><span class="sig-name descname"><span class="pre">crossover</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7FF70AEAA260</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.CrossoverCategorical.crossover" title="Link to this definition">#</a></dt>
+<dd><p>Execute crossover for one parent group.</p>
+<p>This method is derived from <a class="reference internal" href="#saealib.CrossoverCategorical.crossover_batch" title="saealib.CrossoverCategorical.crossover_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">crossover_batch()</span></code></a> by passing a
+single-pair batch.</p>
+<p class="rubric">メモ</p>
+<p>Overriding only this method (not <a class="reference internal" href="#saealib.CrossoverCategorical.crossover_batch" title="saealib.CrossoverCategorical.crossover_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">crossover_batch()</span></code></a>) has no
+effect under GA's default <code class="docutils literal notranslate"><span class="pre">variation_execution=&quot;batch&quot;</span></code>: the batch
+path calls <a class="reference internal" href="#saealib.CrossoverCategorical.crossover_batch" title="saealib.CrossoverCategorical.crossover_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">crossover_batch()</span></code></a> directly and never calls
+<code class="docutils literal notranslate"><span class="pre">crossover()</span></code>. Such an override only takes effect under
+<code class="docutils literal notranslate"><span class="pre">variation_execution=&quot;sequential&quot;</span></code>. To customize behavior under
+both modes, override <a class="reference internal" href="#saealib.CrossoverCategorical.crossover_batch" title="saealib.CrossoverCategorical.crossover_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">crossover_batch()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>parent</strong> (<em>np.ndarray</em>) -- Parent individuals. shape = (2, dim)</p></li>
-<li><p><strong>bounds</strong> (<em>tuple</em><em> of </em><em>(</em><em>np.ndarray</em><em>, </em><em>np.ndarray</em><em>) or </em><em>None</em>) -- Ignored.</p></li>
+<li><p><strong>parent</strong> (<em>np.ndarray</em>) -- Parent individuals. shape = (n_parents, dim)</p></li>
+<li><p><strong>bounds</strong> (<em>tuple</em><em> of </em><em>(</em><em>np.ndarray</em><em>, </em><em>np.ndarray</em><em>) or </em><em>None</em>) -- Lower and upper bounds for each variable. <code class="docutils literal notranslate"><span class="pre">None</span></code> means unbounded.</p></li>
 <li><p><strong>rng</strong> (<em>np.random.Generator</em><em>, </em><em>optional</em>) -- Random number generator, by default np.random.default_rng()</p></li>
 </ul>
 </dd>
 <dt class="field-even">戻り値<span class="colon">:</span></dt>
-<dd class="field-even"><p>Offspring individuals. shape = (2, dim)</p>
+<dd class="field-even"><p>Offspring individuals. shape = (n_offspring, dim)</p>
 </dd>
 <dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.CrossoverCategorical.crossover_batch">
+<span class="sig-prename descclassname"><span class="pre">CrossoverCategorical.</span></span><span class="sig-name descname"><span class="pre">crossover_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parents_batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7FF70AEF4820</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/operators/crossover.html#CrossoverCategorical.crossover_batch"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.CrossoverCategorical.crossover_batch" title="Link to this definition">#</a></dt>
+<dd><p>Execute categorical crossover on a batch of parent pairs at once.</p>
+<p>This is the primary categorical crossover implementation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parents_batch</strong> (<em>np.ndarray</em>) -- Batch of parent pairs. shape = (n_pair, 2, dim)</p></li>
+<li><p><strong>bounds</strong> (<em>tuple</em><em> of </em><em>(</em><em>np.ndarray</em><em>, </em><em>np.ndarray</em><em>) or </em><em>None</em>) -- Ignored.</p></li>
+<li><p><strong>rng</strong> (<em>np.random.Generator</em><em>, </em><em>optional</em>) -- Random number generator, by default np.random.default_rng()</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>Offspring individuals. shape = (n_pair, 2, dim)</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">メモ</p>
+<p>For <code class="docutils literal notranslate"><span class="pre">n_pair</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>, a loop of separate single-pair
+<code class="docutils literal notranslate"><span class="pre">crossover_batch</span></code> calls (equivalently, separate <a class="reference internal" href="#saealib.CrossoverCategorical.crossover" title="saealib.CrossoverCategorical.crossover"><code class="xref py py-meth docutils literal notranslate"><span class="pre">crossover()</span></code></a>
+calls) does not reproduce the same per-row results as one batched
+call with the same seeded <code class="docutils literal notranslate"><span class="pre">rng</span></code>. Drawing
+<code class="docutils literal notranslate"><span class="pre">rng.random(size=(n_pair,</span> <span class="pre">dim))</span></code> for the whole batch has a
+different draw order from looping <code class="docutils literal notranslate"><span class="pre">rng.random(dim)</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -873,6 +917,39 @@ value, preserving the validity of categorical indices.</p>
 <dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.CrossoverCategorical.post_crossover_batch">
+<span class="sig-prename descclassname"><span class="pre">CrossoverCategorical.</span></span><span class="sig-name descname"><span class="pre">post_crossover_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">offspring_batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parents_batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.CrossoverCategorical.post_crossover_batch" title="Link to this definition">#</a></dt>
+<dd><p>Run the post-crossover lifecycle hook for a batch.</p>
+<p>The default implementation calls <a class="reference internal" href="#saealib.CrossoverCategorical.post_crossover" title="saealib.CrossoverCategorical.post_crossover"><code class="xref py py-meth docutils literal notranslate"><span class="pre">post_crossover()</span></code></a> once per
+parent group, in order. Override this method to provide genuinely
+vectorized post-processing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>offspring_batch</strong> (<em>np.ndarray</em>) -- Offspring produced by crossover.
+shape = (n_pair, n_children, dim)</p></li>
+<li><p><strong>parents_batch</strong> (<em>np.ndarray</em>) -- Batch of parent groups. shape = (n_pair, n_parents, dim)</p></li>
+<li><p><strong>rng</strong> (<em>np.random.Generator</em>) -- Random number generator.</p></li>
+<li><p><strong>ctx</strong> (<em>OptimizationState</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Current optimization context.</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>Processed offspring. shape = (n_pair, n_children, dim)</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">メモ</p>
+<p><a class="reference internal" href="#saealib.CrossoverCategorical.with_post" title="saealib.CrossoverCategorical.with_post"><code class="xref py py-meth docutils literal notranslate"><span class="pre">with_post()</span></code></a> reassigns only the instance's
+<a class="reference internal" href="#saealib.CrossoverCategorical.post_crossover" title="saealib.CrossoverCategorical.post_crossover"><code class="xref py py-meth docutils literal notranslate"><span class="pre">post_crossover()</span></code></a> hook. A subclass override of this method is
+responsible for composing that hook itself. If the override does not
+call <code class="docutils literal notranslate"><span class="pre">self.post_crossover</span></code>, a hook installed with <a class="reference internal" href="#saealib.CrossoverCategorical.with_post" title="saealib.CrossoverCategorical.with_post"><code class="xref py py-meth docutils literal notranslate"><span class="pre">with_post()</span></code></a>
+will not run in GA batch mode. It still runs in GA sequential mode,
+which calls <a class="reference internal" href="#saealib.CrossoverCategorical.post_crossover" title="saealib.CrossoverCategorical.post_crossover"><code class="xref py py-meth docutils literal notranslate"><span class="pre">post_crossover()</span></code></a> directly.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -947,7 +1024,9 @@ value, preserving the validity of categorical indices.</p>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CrossoverCategorical.__init__"><code class="docutils literal notranslate"><span class="pre">CrossoverCategorical.__init__()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CrossoverCategorical.crossover"><code class="docutils literal notranslate"><span class="pre">CrossoverCategorical.crossover()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CrossoverCategorical.crossover_batch"><code class="docutils literal notranslate"><span class="pre">CrossoverCategorical.crossover_batch()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CrossoverCategorical.post_crossover"><code class="docutils literal notranslate"><span class="pre">CrossoverCategorical.post_crossover()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CrossoverCategorical.post_crossover_batch"><code class="docutils literal notranslate"><span class="pre">CrossoverCategorical.post_crossover_batch()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CrossoverCategorical.with_post"><code class="docutils literal notranslate"><span class="pre">CrossoverCategorical.with_post()</span></code></a></li>
 </ul>
   </nav></div>

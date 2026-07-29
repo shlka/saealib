@@ -17,7 +17,9 @@
 
    ~CrossoverBLXAlpha.__init__
    ~CrossoverBLXAlpha.crossover
+   ~CrossoverBLXAlpha.crossover_batch
    ~CrossoverBLXAlpha.post_crossover
+   ~CrossoverBLXAlpha.post_crossover_batch
    ~CrossoverBLXAlpha.with_post
 
 
@@ -34,7 +36,13 @@
 .. automethod:: saealib.CrossoverBLXAlpha.crossover
 
 
+.. automethod:: saealib.CrossoverBLXAlpha.crossover_batch
+
+
 .. automethod:: saealib.CrossoverBLXAlpha.post_crossover
+
+
+.. automethod:: saealib.CrossoverBLXAlpha.post_crossover_batch
 
 
 .. automethod:: saealib.CrossoverBLXAlpha.with_post

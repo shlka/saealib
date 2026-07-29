@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.operators.mutation &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 documentation</title>
+    <title>saealib.operators.mutation &#8212; saealib 0.1.0b5.dev70+g7b5949608 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=4bbbc04d"></script>
+    <script src="../../../_static/documentation_options.js?v=95d09c5c"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -952,6 +952,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register</span>
 
@@ -967,8 +968,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
 <span class="sd">    prob : float</span>
-<span class="sd">        Individual-level mutation probability. When ``rng.random() &gt;= prob``,</span>
-<span class="sd">        the individual is returned unchanged.</span>
+<span class="sd">        Individual-level mutation probability. Rows whose gate draw is</span>
+<span class="sd">        greater than or equal to ``prob`` are returned unchanged.</span>
 <span class="sd">    prob_var : float or None</span>
 <span class="sd">        Per-variable mutation probability. ``None`` means the effective value</span>
 <span class="sd">        is resolved at call time as ``min(0.5, 1 / dim)``.</span>
@@ -979,7 +980,6 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="Mutation.mutate">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.Mutation.html#saealib.Mutation.mutate">[docs]</a>
-    <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
@@ -987,7 +987,19 @@ window.runMermaid = runMermaid;</script>
         <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(),</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Execute mutation.</span>
+<span class="sd">        Execute mutation for one candidate.</span>
+
+<span class="sd">        This method is derived from :meth:`mutate_batch` by passing a</span>
+<span class="sd">        single-row batch.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Overriding only this method (not :meth:`mutate_batch`) has no effect</span>
+<span class="sd">        under GA&#39;s default ``variation_execution=&quot;batch&quot;``: the batch path</span>
+<span class="sd">        calls :meth:`mutate_batch` directly and never calls ``mutate()``.</span>
+<span class="sd">        Such an override only takes effect under</span>
+<span class="sd">        ``variation_execution=&quot;sequential&quot;``. To customize behavior under</span>
+<span class="sd">        both modes, override :meth:`mutate_batch`.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1001,7 +1013,53 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        np.ndarray</span>
-<span class="sd">            Mutated individual. shape = (dim,)</span>
+<span class="sd">            Mutated individual. shape = (dim,). The result is always</span>
+<span class="sd">            ``float64`` because :meth:`mutate_batch` casts its input</span>
+<span class="sd">            internally; unlike the former standalone implementations, this</span>
+<span class="sd">            does not preserve the input&#39;s dtype.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutate_batch</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:],</span> <span class="n">mutate_range</span><span class="p">,</span> <span class="n">rng</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Mutation.mutate_batch">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Mutation.html#saealib.Mutation.mutate_batch">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates_batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mutate_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+        <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(),</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute mutation on a batch of candidates at once.</span>
+
+<span class="sd">        This is the required primitive that every concrete mutation class</span>
+<span class="sd">        must implement directly. Each implementation self-gates ``prob``</span>
+<span class="sd">        internally; see Notes for why this differs from</span>
+<span class="sd">        ``Crossover.crossover_batch``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        candidates_batch : np.ndarray</span>
+<span class="sd">            Batch of candidate individuals. shape = (n, dim)</span>
+<span class="sd">        mutate_range : tuple</span>
+<span class="sd">            Tuple of (lower_bound, upper_bound) for mutation.</span>
+<span class="sd">        rng : np.random.Generator, optional</span>
+<span class="sd">            Random number generator, by default np.random.default_rng()</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Mutated individuals. shape = (n, dim)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Unlike ``Crossover.crossover_batch``, ``prob`` gating is NOT the</span>
+<span class="sd">        caller&#39;s responsibility here — it must be applied by the overriding</span>
+<span class="sd">        implementation itself, per row. Implementations must draw one gate</span>
+<span class="sd">        value per row and leave ungated rows unchanged, rather than expecting</span>
+<span class="sd">        the caller to pre-filter ``candidates_batch``. This is a deliberate</span>
+<span class="sd">        asymmetry with ``Crossover.crossover_batch``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span></div>
 
@@ -1036,6 +1094,52 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="n">offspring</span></div>
 
 
+<div class="viewcode-block" id="Mutation.post_mutation_batch">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Mutation.html#saealib.Mutation.post_mutation_batch">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post_mutation_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">offspring_batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mutate_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+        <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run the post-mutation lifecycle hook for a batch.</span>
+
+<span class="sd">        The default implementation calls :meth:`post_mutation` once per</span>
+<span class="sd">        individual, in order. Override this method to provide genuinely</span>
+<span class="sd">        vectorized post-processing.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        offspring_batch : np.ndarray</span>
+<span class="sd">            Offspring produced by mutation. shape = (n, dim)</span>
+<span class="sd">        mutate_range : tuple</span>
+<span class="sd">            Tuple of (lower_bound, upper_bound) used for mutation.</span>
+<span class="sd">        rng : np.random.Generator</span>
+<span class="sd">            Random number generator.</span>
+<span class="sd">        ctx : OptimizationState or None, optional</span>
+<span class="sd">            Current optimization context.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Processed offspring. shape = (n, dim)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        :meth:`with_post` reassigns only the instance&#39;s</span>
+<span class="sd">        :meth:`post_mutation` hook. A subclass override of this method is</span>
+<span class="sd">        responsible for composing that hook itself. If the override does not</span>
+<span class="sd">        call ``self.post_mutation``, a hook installed with :meth:`with_post`</span>
+<span class="sd">        will not run in GA batch mode. It still runs in GA sequential mode,</span>
+<span class="sd">        which calls :meth:`post_mutation` directly.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">offspring_batch</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">offspring_batch</span><span class="p">)):</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_mutation</span><span class="p">(</span><span class="n">offspring_batch</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">mutate_range</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
 <div class="viewcode-block" id="Mutation.with_post">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.Mutation.html#saealib.Mutation.with_post">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">with_post</span><span class="p">(</span>
@@ -1044,7 +1148,7 @@ window.runMermaid = runMermaid;</script>
             <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">,</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span>
             <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="p">],</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Mutation</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a copy of this operator with ``fn`` appended to the hook.</span>
 
 <span class="sd">        Parameters</span>
@@ -1101,21 +1205,41 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="o">=</span> <span class="n">prob_var</span></div>
 
 
-<div class="viewcode-block" id="MutationUniform.mutate">
-<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationUniform.html#saealib.MutationUniform.mutate">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span>
+<div class="viewcode-block" id="MutationUniform.mutate_batch">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationUniform.html#saealib.MutationUniform.mutate_batch">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate_batch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">candidates_batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">mutate_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
         <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(),</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Execute uniform mutation.</span>
+<span class="sd">        Execute uniform mutation on a batch of candidates at once.</span>
+
+<span class="sd">        This is the primary uniform mutation implementation. An</span>
+<span class="sd">        individual-level ``prob`` gate (one Bernoulli draw per row via</span>
+<span class="sd">        ``rng.random(n) &lt; self.prob``) selects which rows are touched at all;</span>
+<span class="sd">        a per-dimension ``prob_var`` gate is then drawn only for the selected</span>
+<span class="sd">        rows, and only dimensions passing that gate are</span>
+<span class="sd">        replaced with a value drawn ``Uniform(lb[i], ub[i])``. The</span>
+<span class="sd">        replacement is drawn only for the positions ``var_gate`` actually</span>
+<span class="sd">        selects (via boolean fancy-indexing into the broadcast ``lb``/``ub``</span>
+<span class="sd">        arrays, then ``Generator.uniform``&#39;s array-valued ``low``/``high``</span>
+<span class="sd">        form with no explicit ``size``), rather than for every ``(row, dim)``</span>
+<span class="sd">        position unconditionally -- this avoids drawing (and validating the</span>
+<span class="sd">        range of) a replacement for a dimension that ``var_gate`` will</span>
+<span class="sd">        discard anyway, which matters when that dimension is unbounded (see</span>
+<span class="sd">        Notes). Rows that fail the individual-level gate are returned</span>
+<span class="sd">        byte-identical to the input; dimensions failing the per-dimension</span>
+<span class="sd">        gate on a selected row keep their original value exactly. If no row</span>
+<span class="sd">        passes the individual-level gate (``gate.sum() == 0``), no further</span>
+<span class="sd">        random draws happen at all and the input is returned unchanged,</span>
+<span class="sd">        mirroring ``PymooMutation.mutate_batch``&#39;s empty-gate skip.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        p : np.ndarray</span>
-<span class="sd">            Parent individual. shape = (dim,)</span>
+<span class="sd">        candidates_batch : np.ndarray</span>
+<span class="sd">            Batch of candidate individuals. shape = (n, dim)</span>
 <span class="sd">        mutate_range : tuple</span>
 <span class="sd">            Tuple of (lower_bound, upper_bound) for mutation.</span>
 <span class="sd">        rng : np.random.Generator, optional</span>
@@ -1124,18 +1248,54 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        np.ndarray</span>
-<span class="sd">            Mutated individual.</span>
+<span class="sd">            Mutated individuals. shape = (n, dim)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        For multiple rows, a loop of separate single-row ``mutate_batch``</span>
+<span class="sd">        calls (equivalently, separate :meth:`mutate` calls) does not</span>
+<span class="sd">        reproduce the same per-row results as one batched call with the same</span>
+<span class="sd">        seeded ``rng``. Separate calls interleave each row&#39;s individual</span>
+<span class="sd">        gate, full per-dimension gate array, and replacement draws before</span>
+<span class="sd">        moving to the next row. The number of replacements is</span>
+<span class="sd">        data-dependent (``dim + m`` post-individual-gate draws, where ``m``</span>
+<span class="sd">        dimensions pass the variable gate). One batched call instead draws</span>
+<span class="sd">        all individual gates, then a full ``(k, dim)`` variable-gate array</span>
+<span class="sd">        for the ``k`` selected rows, followed by one replacement draw sized</span>
+<span class="sd">        to all selected positions. NumPy vectorized calls cannot</span>
+<span class="sd">        conditionally skip drawing per element within a single call, so the</span>
+<span class="sd">        draw count and interleaving generally diverge. Only the statistical</span>
+<span class="sd">        and distributional semantics are guaranteed to match.</span>
+
+<span class="sd">        The output is always ``float64`` (via the internal ``dtype=float``</span>
+<span class="sd">        cast), regardless of the input array&#39;s dtype.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">candidates_batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">candidates_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">p_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">dim</span><span class="p">)</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">mutate_range</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">p_var</span><span class="p">:</span>
-                <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">lb</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ub</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">c</span></div>
+        <span class="n">gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">var_gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">p_var</span>
+        <span class="n">mutated</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">var_gate</span><span class="p">):</span>
+            <span class="c1"># Draw a replacement only for the positions var_gate actually</span>
+            <span class="c1"># selects, rather than for every (row, dim) position</span>
+            <span class="c1"># unconditionally: rng.uniform validates the range of every</span>
+            <span class="c1"># position it draws for, even ones that would be discarded by</span>
+            <span class="c1"># np.where afterwards, so an unfiltered draw raises OverflowError</span>
+            <span class="c1"># as soon as any unbounded (lb=-inf/ub=inf) dimension is present</span>
+            <span class="c1"># anywhere in the batch -- regardless of whether that dimension</span>
+            <span class="c1"># is ever actually gated in.</span>
+            <span class="n">lb_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
+            <span class="n">ub_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">ub</span><span class="p">,</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
+            <span class="n">mutated</span><span class="p">[</span><span class="n">var_gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">lb_b</span><span class="p">[</span><span class="n">var_gate</span><span class="p">],</span> <span class="n">ub_b</span><span class="p">[</span><span class="n">var_gate</span><span class="p">])</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">mutated</span>
+        <span class="k">return</span> <span class="n">result</span></div>
 </div>
 
 
@@ -1160,10 +1320,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    -----</span>
 <span class="sd">    Originates from Deb &amp; Goyal (1996); the primary paper has not been</span>
 <span class="sd">    obtained (it is credited here by name only). The asymmetric</span>
-<span class="sd">    delta1/delta2 perturbation formula implemented in :meth:`mutate` has</span>
-<span class="sd">    been verified against Deb&#39;s own official NSGA-II reference</span>
-<span class="sd">    implementation (``nsga2-gnuplot-v1.1.6/mutation.c``, function</span>
-<span class="sd">    ``real_mutate_ind``).</span>
+<span class="sd">    delta1/delta2 perturbation formula implemented in</span>
+<span class="sd">    :meth:`mutate_batch` has been verified against Deb&#39;s own official</span>
+<span class="sd">    NSGA-II reference implementation</span>
+<span class="sd">    (``nsga2-gnuplot-v1.1.6/mutation.c``, function ``real_mutate_ind``).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="MutationPolynomial.__init__">
@@ -1187,21 +1347,44 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="o">=</span> <span class="n">prob_var</span></div>
 
 
-<div class="viewcode-block" id="MutationPolynomial.mutate">
-<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial.mutate">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span>
+<div class="viewcode-block" id="MutationPolynomial.mutate_batch">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial.mutate_batch">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate_batch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">candidates_batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">mutate_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
         <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(),</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Execute polynomial mutation.</span>
+<span class="sd">        Execute polynomial mutation on a batch of candidates at once.</span>
+
+<span class="sd">        This is the primary polynomial mutation implementation. An</span>
+<span class="sd">        individual-level ``prob`` gate (one Bernoulli draw per row via</span>
+<span class="sd">        ``rng.random(n) &lt; self.prob``) selects which rows are touched at all;</span>
+<span class="sd">        a per-dimension ``prob_var`` gate is then drawn only for the selected</span>
+<span class="sd">        rows, and only dimensions passing that gate are</span>
+<span class="sd">        replaced. Unlike :meth:`~MutationUniform.mutate_batch`, the</span>
+<span class="sd">        replacement value is not a plain uniform draw: it is the asymmetric</span>
+<span class="sd">        ``delta1``/``delta2`` polynomial perturbation formula (Deb &amp; Goyal,</span>
+<span class="sd">        1996), which itself branches on a second per-dimension draw ``u``</span>
+<span class="sd">        (``u &lt;= 0.5`` vs. ``u &gt; 0.5``). That inner branch is vectorized by</span>
+<span class="sd">        computing both branches (``delta_q_lo``, ``delta_q_hi``) over the</span>
+<span class="sd">        full ``(k, dim)`` array unconditionally and selecting between them</span>
+<span class="sd">        with ``np.where(u &lt;= 0.5, delta_q_lo, delta_q_hi)`` -- the same</span>
+<span class="sd">        &quot;compute both sides, select after&quot; pattern already used by</span>
+<span class="sd">        :meth:`CrossoverSBX.crossover_batch`&#39;s ``_beta_q`` helper. Rows that</span>
+<span class="sd">        fail the individual-level gate are returned byte-identical to the</span>
+<span class="sd">        input; dimensions failing the per-dimension gate on a selected row</span>
+<span class="sd">        keep their original value exactly (``np.where`` copies rather than</span>
+<span class="sd">        recomputes them). If no row passes the individual-level gate</span>
+<span class="sd">        (``gate.sum() == 0``), no further random draws happen at all and the</span>
+<span class="sd">        input is returned unchanged, mirroring</span>
+<span class="sd">        ``MutationUniform.mutate_batch``&#39;s empty-gate skip.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        p : np.ndarray</span>
-<span class="sd">            Parent individual. shape = (dim,)</span>
+<span class="sd">        candidates_batch : np.ndarray</span>
+<span class="sd">            Batch of candidate individuals. shape = (n, dim)</span>
 <span class="sd">        mutate_range : tuple</span>
 <span class="sd">            Tuple of (lower_bound, upper_bound) for mutation.</span>
 <span class="sd">        rng : np.random.Generator, optional</span>
@@ -1210,30 +1393,50 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        np.ndarray</span>
-<span class="sd">            Mutated individual.</span>
+<span class="sd">            Mutated individuals. shape = (n, dim)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        For multiple rows, a loop of separate single-row ``mutate_batch``</span>
+<span class="sd">        calls (equivalently, separate :meth:`mutate` calls) does not</span>
+<span class="sd">        reproduce the same per-row results as one batched call with the same</span>
+<span class="sd">        seeded ``rng``. Separate calls interleave each row&#39;s individual</span>
+<span class="sd">        gate, full per-dimension gate array, and full ``u`` array before</span>
+<span class="sd">        moving to the next row. One batched call instead draws all</span>
+<span class="sd">        individual gates, then the variable-gate arrays for all gated rows,</span>
+<span class="sd">        then the ``u`` arrays for all of them. These phases therefore have a</span>
+<span class="sd">        different draw order whenever more than one row is involved. Only</span>
+<span class="sd">        the statistical and distributional semantics are guaranteed to</span>
+<span class="sd">        match.</span>
+
+<span class="sd">        The output is always ``float64`` (via the internal ``dtype=float``</span>
+<span class="sd">        cast), regardless of the input array&#39;s dtype.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">candidates_batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">candidates_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">p_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">dim</span><span class="p">)</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">mutate_range</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">p_var</span><span class="p">:</span>
-                <span class="n">delta1</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">lb</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">ub</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">lb</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-                <span class="n">delta2</span> <span class="o">=</span> <span class="p">(</span><span class="n">ub</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">ub</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">lb</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-                <span class="n">u</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">u</span> <span class="o">&lt;=</span> <span class="mf">0.5</span><span class="p">:</span>
-                    <span class="n">delta_q</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="mf">2.0</span> <span class="o">*</span> <span class="n">u</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">u</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">delta1</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-                    <span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">-</span> <span class="mf">1.0</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">delta_q</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span>
-                        <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">u</span><span class="p">)</span>
-                        <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">u</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">delta2</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-                    <span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-                <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">delta_q</span> <span class="o">*</span> <span class="p">(</span><span class="n">ub</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">lb</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">lb</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ub</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">c</span></div>
+        <span class="n">gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">var_gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">p_var</span>
+        <span class="n">delta1</span> <span class="o">=</span> <span class="p">(</span><span class="n">sub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">)</span>
+        <span class="n">delta2</span> <span class="o">=</span> <span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">sub</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">)</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
+        <span class="n">delta_q_lo</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">u</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">u</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">delta1</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">**</span> <span class="p">(</span>
+            <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="n">delta_q_hi</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span>
+            <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">u</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">u</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">delta2</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">delta_q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">u</span> <span class="o">&lt;=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">delta_q_lo</span><span class="p">,</span> <span class="n">delta_q_hi</span><span class="p">)</span>
+        <span class="n">mutated</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">sub</span> <span class="o">+</span> <span class="n">delta_q</span> <span class="o">*</span> <span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">),</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
+        <span class="n">result_sub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">var_gate</span><span class="p">,</span> <span class="n">mutated</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">result_sub</span>
+        <span class="k">return</span> <span class="n">result</span></div>
 </div>
 
 
@@ -1292,40 +1495,84 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="o">=</span> <span class="n">prob_var</span></div>
 
 
-<div class="viewcode-block" id="MutationGaussian.mutate">
-<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationGaussian.html#saealib.MutationGaussian.mutate">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span>
+<div class="viewcode-block" id="MutationGaussian.mutate_batch">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationGaussian.html#saealib.MutationGaussian.mutate_batch">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate_batch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">candidates_batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">mutate_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
         <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(),</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Execute Gaussian mutation.</span>
+<span class="sd">        Execute Gaussian mutation on a batch of candidates at once.</span>
+
+<span class="sd">        This is the primary Gaussian mutation implementation. An</span>
+<span class="sd">        individual-level ``prob`` gate (one Bernoulli draw per row via</span>
+<span class="sd">        ``rng.random(n) &lt; self.prob``) selects which rows are touched at all;</span>
+<span class="sd">        a per-dimension ``prob_var`` gate is then drawn only for the selected</span>
+<span class="sd">        rows, and only dimensions passing that gate are</span>
+<span class="sd">        replaced by adding ``Normal(0.0, self.sigma)`` noise. Unlike</span>
+<span class="sd">        :meth:`~MutationUniform.mutate_batch` and</span>
+<span class="sd">        :meth:`~MutationPolynomial.mutate_batch`, the replacement value has</span>
+<span class="sd">        no branching formula -- it is simply ``sub + noise`` -- so this is</span>
+<span class="sd">        the simplest of the three ``mutate_batch`` overrides. Rows that fail</span>
+<span class="sd">        the individual-level gate are returned byte-identical to the input;</span>
+<span class="sd">        dimensions failing the per-dimension gate on a selected row keep</span>
+<span class="sd">        their original value exactly (``np.where`` copies rather than</span>
+<span class="sd">        recomputes them). If no row passes the individual-level gate</span>
+<span class="sd">        (``gate.sum() == 0``), no further random draws happen at all and the</span>
+<span class="sd">        input is returned unchanged, mirroring</span>
+<span class="sd">        ``MutationUniform.mutate_batch``&#39;s empty-gate skip.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        p : np.ndarray</span>
-<span class="sd">            Parent individual. shape = (dim,)</span>
+<span class="sd">        candidates_batch : np.ndarray</span>
+<span class="sd">            Batch of candidate individuals. shape = (n, dim)</span>
 <span class="sd">        mutate_range : tuple</span>
-<span class="sd">            Tuple of (lower_bound, upper_bound) for mutation.</span>
+<span class="sd">            Tuple of (lower_bound, upper_bound). Accepted for interface</span>
+<span class="sd">            uniformity with the ``Mutation`` ABC and the other</span>
+<span class="sd">            ``mutate_batch`` overrides, but **unused**. This operator adds</span>
+<span class="sd">            unbounded Gaussian noise with no clipping to ``[lb, ub]``.</span>
 <span class="sd">        rng : np.random.Generator, optional</span>
 <span class="sd">            Random number generator, by default np.random.default_rng()</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        np.ndarray</span>
-<span class="sd">            Mutated individual.</span>
+<span class="sd">            Mutated individuals. shape = (n, dim)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        For multiple rows, a loop of separate single-row ``mutate_batch``</span>
+<span class="sd">        calls (equivalently, separate :meth:`mutate` calls) does not</span>
+<span class="sd">        reproduce the same per-row results as one batched call with the same</span>
+<span class="sd">        seeded ``rng``. Separate calls interleave each row&#39;s individual</span>
+<span class="sd">        gate, full per-dimension gate array, and full noise array before</span>
+<span class="sd">        moving to the next row. One batched call instead draws all</span>
+<span class="sd">        individual gates, then the variable-gate arrays for all gated rows,</span>
+<span class="sd">        then the noise arrays for all of them. These phases therefore have a</span>
+<span class="sd">        different draw order whenever more than one row is involved. Only</span>
+<span class="sd">        the statistical and distributional semantics are guaranteed to</span>
+<span class="sd">        match.</span>
+
+<span class="sd">        The output is always ``float64`` (via the internal ``dtype=float``</span>
+<span class="sd">        cast), regardless of the input array&#39;s dtype.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">candidates_batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">candidates_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">p_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">dim</span><span class="p">)</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">p_var</span><span class="p">:</span>
-                <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">c</span></div>
+        <span class="n">gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">var_gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">p_var</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
+        <span class="n">mutated</span> <span class="o">=</span> <span class="n">sub</span> <span class="o">+</span> <span class="n">noise</span>
+        <span class="n">result_sub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">var_gate</span><span class="p">,</span> <span class="n">mutated</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">result_sub</span>
+        <span class="k">return</span> <span class="n">result</span></div>
 </div>
 
 
@@ -1342,19 +1589,39 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">prob</span> <span class="o">=</span> <span class="n">prob</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="o">=</span> <span class="n">prob_var</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate_batch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">candidates_batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">mutate_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
         <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(),</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Execute discrete uniform mutation.</span>
+<span class="sd">        Execute discrete uniform mutation on a batch of candidates at once.</span>
+
+<span class="sd">        This is the primary discrete uniform mutation implementation. An</span>
+<span class="sd">        individual-level ``prob`` gate (one Bernoulli draw per row via</span>
+<span class="sd">        ``rng.random(n) &lt; self.prob``) selects which rows are touched at all;</span>
+<span class="sd">        a per-dimension ``prob_var`` gate is then drawn only for the selected</span>
+<span class="sd">        rows, and only dimensions passing that gate are</span>
+<span class="sd">        replaced with a value drawn as a uniform random integer from</span>
+<span class="sd">        ``[lb[i], ub[i]]`` (both inclusive) via</span>
+<span class="sd">        ``rng.integers(lb, ub + 1, size=(k, dim))`` -- ``rng.integers``&#39;s</span>
+<span class="sd">        ``high`` argument is exclusive by default, so ``ub + 1`` makes the</span>
+<span class="sd">        upper bound inclusive. The integer draw is cast to ``float`` via</span>
+<span class="sd">        ``.astype(float)`` because the whole codebase represents integer and</span>
+<span class="sd">        categorical dimensions as floats internally. Rows that fail the</span>
+<span class="sd">        individual-level gate are returned byte-identical to the input;</span>
+<span class="sd">        dimensions failing the per-dimension gate on a selected row keep</span>
+<span class="sd">        their original value exactly (``np.where`` copies rather than</span>
+<span class="sd">        recomputes them). If no row passes the individual-level gate</span>
+<span class="sd">        (``gate.sum() == 0``), no further random draws happen at all and the</span>
+<span class="sd">        input is returned unchanged, mirroring</span>
+<span class="sd">        ``MutationUniform.mutate_batch``&#39;s empty-gate skip.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        p : np.ndarray</span>
-<span class="sd">            Parent individual. shape = (dim,)</span>
+<span class="sd">        candidates_batch : np.ndarray</span>
+<span class="sd">            Batch of candidate individuals. shape = (n, dim)</span>
 <span class="sd">        mutate_range : tuple</span>
 <span class="sd">            Tuple of (lower_bound, upper_bound) arrays.</span>
 <span class="sd">        rng : np.random.Generator, optional</span>
@@ -1363,18 +1630,42 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        np.ndarray</span>
-<span class="sd">            Mutated individual.</span>
+<span class="sd">            Mutated individuals. shape = (n, dim)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        For multiple rows, a loop of separate single-row ``mutate_batch``</span>
+<span class="sd">        calls (equivalently, separate :meth:`mutate` calls) does not</span>
+<span class="sd">        reproduce the same per-row results as one batched call with the same</span>
+<span class="sd">        seeded ``rng``. Separate calls interleave each row&#39;s individual</span>
+<span class="sd">        gate, full per-dimension gate array, and full replacement array</span>
+<span class="sd">        before moving to the next row. One batched call instead draws all</span>
+<span class="sd">        individual gates, then the variable-gate arrays for all gated rows,</span>
+<span class="sd">        then the replacement arrays for all of them. These phases therefore</span>
+<span class="sd">        have a different draw order whenever more than one row is involved.</span>
+<span class="sd">        Only the statistical and distributional semantics are guaranteed to</span>
+<span class="sd">        match.</span>
+
+<span class="sd">        The output is always ``float64`` (via the internal ``dtype=float``</span>
+<span class="sd">        cast), regardless of the input array&#39;s dtype.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">candidates_batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">candidates_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">p_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">dim</span><span class="p">)</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">mutate_range</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">p_var</span><span class="p">:</span>
-                <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">lb</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">ub</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">c</span>
+        <span class="n">gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">var_gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">p_var</span>
+        <span class="n">lb_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">ub_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ub</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">replacement</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="n">lb_int</span><span class="p">,</span> <span class="n">ub_int</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">mutated</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">var_gate</span><span class="p">,</span> <span class="n">replacement</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">mutated</span>
+        <span class="k">return</span> <span class="n">result</span>
 
 
 <div class="viewcode-block" id="MutationIntegerUniform">

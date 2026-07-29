@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.operators.pymoo_crossover &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 ドキュメント</title>
+    <title>saealib.operators.pymoo_crossover &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=d2a17be3"></script>
+    <script src="../../../_static/documentation_options.js?v=0cca27f2"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1002,9 +1002,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        An already-constructed pymoo crossover operator instance.</span>
 <span class="sd">    prob : float, optional</span>
 <span class="sd">        Individual-level crossover probability, gated by saealib&#39;s ``GA``</span>
-<span class="sd">        before ``crossover()`` is even called. Defaults to the wrapped</span>
-<span class="sd">        operator&#39;s own ``prob.value`` (pymoo wraps it as a</span>
-<span class="sd">        ``pymoo.core.variable.Real``).</span>
+<span class="sd">        before ``crossover_batch()``/``crossover()`` is even called (on the</span>
+<span class="sd">        gated subset in batch mode, per gated pair in sequential mode).</span>
+<span class="sd">        Defaults to the wrapped operator&#39;s own ``prob.value`` (pymoo wraps</span>
+<span class="sd">        it as a ``pymoo.core.variable.Real``).</span>
 <span class="sd">    n_parents : int, optional</span>
 <span class="sd">        Defaults to ``operator.n_parents``.</span>
 <span class="sd">    n_children : int, optional</span>
@@ -1012,12 +1013,10 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
-<span class="sd">    saealib calls ``crossover()`` once per parent group (``operators/crossover.py``&#39;s</span>
-<span class="sd">    ABC contract, exercised by ``GA.ask()``), whereas pymoo crossovers are written to</span>
-<span class="sd">    vectorize over the whole population in one call. This adapter calls the wrapped</span>
-<span class="sd">    operator&#39;s ``_do()`` (not ``.do()``, which would apply pymoo&#39;s own ``prob`` gate</span>
-<span class="sd">    a second time on top of saealib&#39;s) with a single mating group per call. This is</span>
-<span class="sd">    correct but pays per-call overhead that a native saealib operator would not.</span>
+<span class="sd">    ``crossover_batch()`` calls the wrapped operator&#39;s ``_do()`` (not</span>
+<span class="sd">    ``.do()``, which would apply pymoo&#39;s own ``prob`` gate a second time on</span>
+<span class="sd">    top of saealib&#39;s). The inherited ``crossover()`` derives a single-parent-</span>
+<span class="sd">    group call from that batch implementation.</span>
 
 <span class="sd">    A minimal internal ``pymoo.core.problem.Problem`` is synthesized to satisfy</span>
 <span class="sd">    operators (e.g. SBX) that read ``problem.xl``/``problem.xu``/``problem.n_var``;</span>
@@ -1070,21 +1069,24 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">_problem_key</span> <span class="o">=</span> <span class="n">key</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span>
 
-<div class="viewcode-block" id="PymooCrossover.crossover">
-<a class="viewcode-back" href="../../../api/_autosummary/saealib.PymooCrossover.html#saealib.PymooCrossover.crossover">[ドキュメント]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">crossover</span><span class="p">(</span>
+<div class="viewcode-block" id="PymooCrossover.crossover_batch">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.PymooCrossover.html#saealib.PymooCrossover.crossover_batch">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">crossover_batch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">parent</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">parents_batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(),</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Execute crossover via the wrapped pymoo operator.</span>
+<span class="sd">        Execute crossover on a batch of parent pairs via a single pymoo call.</span>
+
+<span class="sd">        This is the adapter&#39;s primary crossover implementation and calls the</span>
+<span class="sd">        wrapped operator&#39;s ``_do()`` exactly once for the whole batch.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        parent : np.ndarray</span>
-<span class="sd">            Parent individuals. shape = (n_parents, dim)</span>
+<span class="sd">        parents_batch : np.ndarray</span>
+<span class="sd">            Batch of parent groups. shape = (n_pair, n_parents, dim)</span>
 <span class="sd">        bounds : tuple of (np.ndarray, np.ndarray) or None</span>
 <span class="sd">            Lower and upper bounds for each variable.</span>
 <span class="sd">        rng : np.random.Generator, optional</span>
@@ -1093,12 +1095,24 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        np.ndarray</span>
-<span class="sd">            Offspring individuals. shape = (n_children, dim)</span>
+<span class="sd">            Offspring individuals. shape = (n_pair, n_children, dim)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        For ``n_pair &gt; 1``, a loop of separate single-pair</span>
+<span class="sd">        ``crossover_batch`` calls (equivalently, separate :meth:`crossover`</span>
+<span class="sd">        calls) does not reproduce the same per-row results as one batched</span>
+<span class="sd">        call with the same seeded ``rng``. Operators such as pymoo&#39;s SBX draw</span>
+<span class="sd">        each random phase across the whole batch, whereas single-pair calls</span>
+<span class="sd">        interleave phases per row.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pymoo_problem</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">bounds</span><span class="p">)</span>
-        <span class="n">x_batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:]</span>
-        <span class="n">q_batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operator</span><span class="o">.</span><span class="n">_do</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">x_batch</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span></div>
+        <span class="n">problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pymoo_problem</span><span class="p">(</span><span class="n">parents_batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">bounds</span><span class="p">)</span>
+        <span class="c1"># saealib&#39;s (n_pair, n_parents, dim) vs. pymoo&#39;s own</span>
+        <span class="c1"># (n_parents, n_matings, dim) convention: swap the first two axes</span>
+        <span class="c1"># (a view, no copy) rather than reshaping.</span>
+        <span class="n">x_pymoo_layout</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">parents_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">q_pymoo_layout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operator</span><span class="o">.</span><span class="n">_do</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">x_pymoo_layout</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">q_pymoo_layout</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

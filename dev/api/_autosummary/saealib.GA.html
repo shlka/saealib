@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.GA &#8212; saealib 0.1.0b5.dev69+gb4e80f7f8 documentation</title>
+    <title>saealib.GA &#8212; saealib 0.1.0b5.dev70+g7b5949608 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=4bbbc04d"></script>
+    <script src="../../_static/documentation_options.js?v=95d09c5c"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -777,7 +777,7 @@
 <h1>saealib.GA<a class="headerlink" href="#saealib-ga" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.GA">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">GA</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crossover</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_selection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">survivor_selection</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_elimination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integer_crossover</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integer_mutation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_crossover</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_mutation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/algorithms/ga.html#GA"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.GA" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">GA</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crossover</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_selection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">survivor_selection</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_elimination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variation_execution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'batch'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integer_crossover</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integer_mutation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_crossover</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_mutation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/algorithms/ga.html#GA"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.GA" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="saealib.Algorithm.html#saealib.Algorithm" title="saealib.algorithms.base.Algorithm"><code class="xref py py-class docutils literal notranslate"><span class="pre">Algorithm</span></code></a></p>
 <p>Genetic Algorithm class.</p>
 <dl class="field-list simple">
@@ -788,6 +788,7 @@
 <li><p><strong>parent_selection</strong> (<a class="reference internal" href="saealib.ParentSelection.html#saealib.ParentSelection" title="saealib.ParentSelection"><em>ParentSelection</em></a>)</p></li>
 <li><p><strong>survivor_selection</strong> (<a class="reference internal" href="saealib.SurvivorSelection.html#saealib.SurvivorSelection" title="saealib.SurvivorSelection"><em>SurvivorSelection</em></a>)</p></li>
 <li><p><strong>duplicate_elimination</strong> (<a class="reference internal" href="saealib.DuplicateElimination.html#saealib.DuplicateElimination" title="saealib.DuplicateElimination"><em>DuplicateElimination</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>variation_execution</strong> (<em>Literal</em><em>[</em><em>'batch'</em><em>, </em><em>'sequential'</em><em>] </em><em>| </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Literal</em><em>[</em><em>'batch'</em><em>, </em><em>'sequential'</em><em>]</em><em>]</em>)</p></li>
 <li><p><strong>integer_crossover</strong> (<a class="reference internal" href="saealib.Crossover.html#saealib.Crossover" title="saealib.Crossover"><em>Crossover</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>integer_mutation</strong> (<a class="reference internal" href="saealib.Mutation.html#saealib.Mutation" title="saealib.Mutation"><em>Mutation</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>categorical_crossover</strong> (<a class="reference internal" href="saealib.Crossover.html#saealib.Crossover" title="saealib.Crossover"><em>Crossover</em></a><em> | </em><em>None</em>)</p></li>
@@ -896,6 +897,27 @@ are replaced by re-generated candidates (up to <code class="docutils literal not
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saealib.GA.variation_execution">
+<span class="sig-name descname"><span class="pre">variation_execution</span></span><a class="headerlink" href="#saealib.GA.variation_execution" title="Link to this definition">#</a></dt>
+<dd><p>Execution mode for crossover and mutation. A string applies to both;
+a dict may set <code class="docutils literal notranslate"><span class="pre">&quot;crossover&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;mutation&quot;</span></code> independently, with
+omitted keys defaulting to <code class="docutils literal notranslate"><span class="pre">&quot;batch&quot;</span></code>. In batch mode, all gate
+decisions and operations complete before any post-operation hook runs,
+so a stateful hook cannot influence a later individual’s operation.
+Sequential mode completes each individual’s operation and hook before
+starting the next, preserving the pre-batching behavior byte-for-byte.
+Mixed-variable problems now use per-type batch operations by default,
+which changes their historical random-number sequence; select
+sequential mode to preserve it. This is a semantic choice, not only a
+performance setting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>{“batch”, “sequential”} or dict</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <p class="rubric">Methods</p>
@@ -922,7 +944,7 @@ are replaced by re-generated candidates (up to <code class="docutils literal not
 <p class="rubric">Method Details</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.GA.__init__">
-<span class="sig-prename descclassname"><span class="pre">GA.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crossover</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_selection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">survivor_selection</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_elimination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integer_crossover</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integer_mutation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_crossover</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_mutation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/algorithms/ga.html#GA.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.GA.__init__" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">GA.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crossover</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_selection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">survivor_selection</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_elimination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variation_execution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'batch'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integer_crossover</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integer_mutation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_crossover</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_mutation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/algorithms/ga.html#GA.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.GA.__init__" title="Link to this definition">#</a></dt>
 <dd><p>Initialize GA (Genetic Algorithm) class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -934,6 +956,21 @@ are replaced by re-generated candidates (up to <code class="docutils literal not
 <li><p><strong>duplicate_elimination</strong> (<a class="reference internal" href="saealib.DuplicateElimination.html#saealib.DuplicateElimination" title="saealib.DuplicateElimination"><em>DuplicateElimination</em></a><em>, </em><em>optional</em>) – When provided, offspring that duplicate any member of the current
 population are replaced by re-generated candidates.  <code class="docutils literal notranslate"><span class="pre">None</span></code>
 (default) disables duplicate elimination.</p></li>
+<li><p><strong>variation_execution</strong> (<em>{&quot;batch&quot;</em><em>, </em><em>&quot;sequential&quot;}</em><em> or </em><em>dict</em><em>, </em><em>optional</em>) – Execution mode for crossover and mutation. A string applies to
+both operators. A dict may contain <code class="docutils literal notranslate"><span class="pre">&quot;crossover&quot;</span></code> and
+<code class="docutils literal notranslate"><span class="pre">&quot;mutation&quot;</span></code> independently; an omitted key defaults to
+<code class="docutils literal notranslate"><span class="pre">&quot;batch&quot;</span></code>. In batch mode, every individual’s gate decision and
+operation is computed before any <code class="docutils literal notranslate"><span class="pre">post_crossover</span></code> or
+<code class="docutils literal notranslate"><span class="pre">post_mutation</span></code> hook runs for any individual in that call. A
+stateful hook may observe earlier hooks in the subsequent
+post-processing pass, but cannot influence a later individual’s
+operation. In sequential mode, each individual’s complete
+operation-then-hook cycle finishes before the next begins,
+matching the library’s pre-batching behavior byte-for-byte. This
+is a semantic choice, not only a performance setting.
+Mixed-variable problems use per-type batch operations by default,
+changing their historical random-number sequence; use sequential
+mode to preserve it.</p></li>
 <li><p><strong>integer_crossover</strong> (<a class="reference internal" href="saealib.Crossover.html#saealib.Crossover" title="saealib.Crossover"><em>Crossover</em></a><em>, </em><em>optional</em>) – Crossover operator for integer dimensions.
 Defaults to <code class="docutils literal notranslate"><span class="pre">CrossoverIntegerSBX</span></code> with the same rate as <em>crossover</em>.</p></li>
 <li><p><strong>integer_mutation</strong> (<a class="reference internal" href="saealib.Mutation.html#saealib.Mutation" title="saealib.Mutation"><em>Mutation</em></a><em>, </em><em>optional</em>) – Mutation operator for integer dimensions.
@@ -1071,6 +1108,7 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">Mutatio
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.GA.categorical_crossover"><code class="docutils literal notranslate"><span class="pre">GA.categorical_crossover</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.GA.categorical_mutation"><code class="docutils literal notranslate"><span class="pre">GA.categorical_mutation</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.GA.duplicate_elimination"><code class="docutils literal notranslate"><span class="pre">GA.duplicate_elimination</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.GA.variation_execution"><code class="docutils literal notranslate"><span class="pre">GA.variation_execution</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.GA.__init__"><code class="docutils literal notranslate"><span class="pre">GA.__init__()</span></code></a></li>

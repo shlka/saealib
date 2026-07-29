@@ -17,7 +17,9 @@
 
    ~MutationCategorical.__init__
    ~MutationCategorical.mutate
+   ~MutationCategorical.mutate_batch
    ~MutationCategorical.post_mutation
+   ~MutationCategorical.post_mutation_batch
    ~MutationCategorical.with_post
 
 
@@ -34,7 +36,13 @@
 .. automethod:: saealib.MutationCategorical.mutate
 
 
+.. automethod:: saealib.MutationCategorical.mutate_batch
+
+
 .. automethod:: saealib.MutationCategorical.post_mutation
+
+
+.. automethod:: saealib.MutationCategorical.post_mutation_batch
 
 
 .. automethod:: saealib.MutationCategorical.with_post

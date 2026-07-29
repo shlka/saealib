@@ -17,7 +17,9 @@
 
    ~Mutation.__init__
    ~Mutation.mutate
+   ~Mutation.mutate_batch
    ~Mutation.post_mutation
+   ~Mutation.post_mutation_batch
    ~Mutation.with_post
 
 
@@ -34,7 +36,13 @@
 .. automethod:: saealib.Mutation.mutate
 
 
+.. automethod:: saealib.Mutation.mutate_batch
+
+
 .. automethod:: saealib.Mutation.post_mutation
+
+
+.. automethod:: saealib.Mutation.post_mutation_batch
 
 
 .. automethod:: saealib.Mutation.with_post
