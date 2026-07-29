@@ -5,18 +5,21 @@ To change the mutation scheme, you only need to swap out this `Mutation`, not `G
 
 ## Mutation's role
 
-`Mutation` requires only one method, `mutate(p, mutate_range, rng=...)`, to be implemented.
-`p` receives the individual to be mutated with shape `(dim,)`, and returns the mutated individual with the same shape `(dim,)`.
+`Mutation` requires only one method, `mutate_batch(candidates_batch, mutate_range, rng=...)`, to be implemented.
+It receives candidate individuals with shape `(n, dim)` and returns mutated individuals with the same shape.
 `mutate_range` receives the design variables' lower and upper bounds as a `(lb, ub)` tuple.
+The base class derives the convenience method `mutate(p, mutate_range, rng=...)` from a single-row call to `mutate_batch()`.
+`GA` uses this convenience method under `variation_execution="sequential"`.
+Overriding only `mutate()` has no effect in the default batch mode; see [Algorithm](algorithm.md) and the `GA` API reference for `variation_execution`.
 
 The individual-level mutation probability is held by the class attribute `prob`.
-Whereas for `Crossover` the decision of whether to perform crossover was `GA`'s responsibility, for `Mutation` this decision is made by `mutate()`'s implementation itself.
-Every built-in class checks `rng.random() >= self.prob` at the top of `mutate()`, and if not satisfied, simply duplicates and returns the individual as-is.
-This means `GA` doesn't need to be aware of the individual-level probability at all — it just calls `mutate()` unconditionally on every selected individual.
-Note that when implementing a custom `Mutation`, you need to write this `prob` check yourself.
+Whereas for `Crossover` the decision of whether to perform crossover is `GA`'s responsibility, each `Mutation` implementation makes its own mutation decision.
+Every `mutate_batch()` implementation must draw one gate per row and leave ungated rows unchanged.
+This also supplies the self-gate for the inherited single-row `mutate()`.
+`GA` therefore calls the selected mutation method unconditionally and doesn't pre-filter candidates; a custom `Mutation` must implement this `prob` gate itself.
 
 The other class attribute, `prob_var`, is the per-variable mutation probability.
-When `None`, it resolves to `min(0.5, 1/dim)` when `mutate()` is called.
+When `None`, built-in mutations resolve it to `min(0.5, 1/dim)` when `mutate_batch()` is called.
 
 ## Built-in Mutations
 
@@ -36,6 +39,7 @@ The basic decision is: choose `MutationUniform` if you want the search's coarsen
 For problems where design variables mix integer and categorical variables, `GA` uses a different `Mutation` instance per variable type.
 If the `GA` constructor's `integer_mutation`/`categorical_mutation` arguments are omitted, `MutationIntegerUniform`/`MutationCategorical` are supplied automatically (with `prob_var` inherited from the continuous-variable `mutation`).
 `GA.ask()` splits individuals into columns by variable type, applies each `Mutation` only to its corresponding columns, and then reassembles the results.
+The default batch mode calls each type's `mutate_batch()` on its columns; sequential mode calls each type's `mutate()` and preserves the earlier per-individual routing and random-number sequence.
 The correspondence between variable types and `Mutation` is determined by [Problem](problem.md)'s `variables` argument.
 
 ```{note}
@@ -47,9 +51,11 @@ Keep this difference in mind if you resolve classes from strings via the Registr
 
 `PymooMutation(operator, *, prob=1.0)` wraps an already-constructed [pymoo](https://pymoo.org/) mutation operator (e.g. `PM()`) so existing pymoo-based research code can be reused unchanged inside `GA`.
 
-Unlike `PymooCrossover`, `prob` is applied by `PymooMutation` itself, matching every built-in `Mutation`'s convention that the individual-level probability check lives inside `mutate()`.
+Unlike `PymooCrossover`, `prob` is applied by `PymooMutation` itself, matching every built-in `Mutation`'s convention that the individual-level probability check lives inside `mutate_batch()`.
 `prob_var` is deliberately not mirrored from the wrapped pymoo operator — it stays `None` here, so mixed-variable routing in `GA` falls back to its own default rather than reading a foreign, non-`float` value.
-As with `PymooCrossover`, `mutate()` is called once per individual, and `rng` is forwarded via pymoo's `random_state` parameter.
+In `GA`'s default batch mode, `PymooMutation.mutate_batch()` calls the wrapped operator's `_do()` at most once, on the gated subset.
+Under `variation_execution="sequential"`, the inherited `mutate()` passes one individual to that batch implementation, so `_do()` is called once per gated individual, exactly as with a direct `mutate()` call.
+`rng` is forwarded via pymoo's `random_state` parameter.
 
 See [Installation](../getting_started/installation.md) for the `pymoo` extra.
 
@@ -75,10 +81,14 @@ clipped = base.with_post(clip_offspring)
 `fn`'s signature is `fn(offspring, mutate_range, rng, ctx) -> np.ndarray`, receiving the result of the existing hook (by default an identity function that does nothing) and returning an additional transformation.
 Calling `with_post` multiple times chains the hooks in the order called.
 
+In batch mode, `GA` calls `post_mutation_batch(offspring_batch, mutate_range, rng, ctx)`.
+Its default implementation calls `post_mutation()` once per individual, so hooks installed by `with_post()` continue to work.
+Override `post_mutation_batch()` when the post-processing itself should be genuinely vectorized; such an override is responsible for composing any `with_post()` hook it needs to retain.
+
 ## Implementing a custom Mutation
 
-If you need a custom mutation scheme, subclass `Mutation` and implement only `mutate()`.
-The following example is a simple mutation that replaces a chosen dimension with the midpoint of its value range.
+If you need a custom mutation scheme, subclass `Mutation` and implement `mutate_batch()`.
+The following example replaces selected dimensions with the midpoint of their value range.
 
 ```python
 import numpy as np
@@ -91,20 +101,28 @@ class MidpointMutation(Mutation):
         self.prob = prob
         self.prob_var = prob_var
 
-    def mutate(self, p, mutate_range, rng=np.random.default_rng()):
-        if rng.random() >= self.prob:
-            return p.copy()
-        dim = len(p)
+    def mutate_batch(
+        self, candidates_batch, mutate_range, rng=np.random.default_rng()
+    ):
+        candidates_batch = np.asarray(candidates_batch, dtype=float)
+        n, dim = candidates_batch.shape
         p_var = self.prob_var if self.prob_var is not None else min(0.5, 1.0 / dim)
-        c = p.copy()
+        gate = rng.random(n) < self.prob
+        result = candidates_batch.copy()
+        if not np.any(gate):
+            return result
+
+        selected = result[gate]
+        var_gate = rng.random(selected.shape) < p_var
         lb, ub = mutate_range
-        for i in range(dim):
-            if rng.random() < p_var:
-                c[i] = (lb[i] + ub[i]) / 2.0
-        return c
+        midpoint = (np.asarray(lb) + np.asarray(ub)) / 2.0
+        selected[var_gate] = np.broadcast_to(midpoint, selected.shape)[var_gate]
+        result[gate] = selected
+        return result
 ```
 
-Both the individual-level check via `prob` and the variable-level check via `prob_var` need to be written yourself, following the same convention as the built-in classes.
+The individual-level gate must contain one draw per row and preserve every ungated row.
+The variable-level `prob_var` gate is operator-specific but follows the same convention as the built-in classes here.
 Omitting these checks results in an implementation where every dimension always mutates.
 
 ## Related components

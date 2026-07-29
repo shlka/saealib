@@ -55,9 +55,10 @@ class PymooCrossover(Crossover):
         An already-constructed pymoo crossover operator instance.
     prob : float, optional
         Individual-level crossover probability, gated by saealib's ``GA``
-        before ``crossover()`` is even called. Defaults to the wrapped
-        operator's own ``prob.value`` (pymoo wraps it as a
-        ``pymoo.core.variable.Real``).
+        before ``crossover_batch()``/``crossover()`` is even called (on the
+        gated subset in batch mode, per gated pair in sequential mode).
+        Defaults to the wrapped operator's own ``prob.value`` (pymoo wraps
+        it as a ``pymoo.core.variable.Real``).
     n_parents : int, optional
         Defaults to ``operator.n_parents``.
     n_children : int, optional

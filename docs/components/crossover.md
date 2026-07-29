@@ -5,15 +5,19 @@ To change the crossover scheme, you only need to swap out this `Crossover`, not 
 
 ## Crossover's role
 
-`Crossover` requires only one method, `crossover(parent, bounds=None, rng=...)`, to be implemented.
-`parent` is passed the array of parent individuals used for crossover.
-By default, it receives `n_parents = 2` parents with shape `(n_parents, dim)` and returns `n_children = 2` children with shape `(n_children, dim)`.
+`Crossover` requires only one method, `crossover_batch(parents_batch, bounds=None, rng=...)`, to be implemented.
+It receives `n_pair` parent groups with shape `(n_pair, n_parents, dim)` and returns their children with shape `(n_pair, n_children, dim)`.
+By default, each group contains `n_parents = 2` parents and produces `n_children = 2` children.
 To implement a crossover scheme other than 2-parents-2-children, override the `n_parents`/`n_children` class attributes in the subclass.
 `bounds` receives the design variables' lower and upper bounds as a `(lb, ub)` tuple, or `None` for unbounded.
 
-The individual-level probability deciding whether crossover is performed at all is judged by the caller, not inside `crossover()`.
-`GA.ask()` only calls `crossover()` for pairs satisfying `ctx.rng.random() < self.crossover.prob`; pairs that don't satisfy it simply duplicate the parents as children.
-In other words, while the `prob` class attribute itself is held by `Crossover`, deciding whether to perform crossover based on it is `GA`'s responsibility — `crossover()`'s implementation can always assume crossover is happening.
+The base class derives the convenience method `crossover(parent, bounds=None, rng=...)` from a single-pair call to `crossover_batch()`.
+`GA` uses this convenience method under `variation_execution="sequential"`.
+Overriding only `crossover()` has no effect in the default batch mode; see [Algorithm](algorithm.md) and the `GA` API reference for `variation_execution`.
+
+The individual-level probability deciding whether crossover is performed at all is judged by `GA`, not inside either crossover method.
+In the default batch mode, `GA.ask()` draws the gates and calls `crossover_batch()` on only the gated parent groups; in sequential mode, it calls `crossover()` for each gated group.
+Groups that fail the gate simply duplicate the parents as children, so both method implementations can assume crossover is happening.
 
 ## Built-in Crossovers
 
@@ -33,6 +37,7 @@ The basic decision is: `CrossoverBLXAlpha`/`CrossoverUniform` work well for unco
 For problems where design variables mix integer and categorical variables, `GA` uses a different `Crossover` instance per variable type.
 If the `GA` constructor's `integer_crossover`/`categorical_crossover` arguments are omitted, `CrossoverIntegerSBX`/`CrossoverCategorical` are supplied automatically (with `eta`/`prob` inherited from the continuous-variable `crossover`).
 `GA.ask()` splits parent individuals into columns by variable type, applies each `Crossover` only to its corresponding columns, and then reassembles the results.
+The default batch mode calls each type's `crossover_batch()` on its columns; sequential mode calls each type's `crossover()` and preserves the earlier per-pair routing and random-number sequence.
 Because of this mechanism, if you pass a custom class to `integer_crossover`/`categorical_crossover`, its `n_children`/`n_parents` must match the continuous-variable `crossover`.
 A mismatch raises `ConfigurationError`.
 
@@ -48,7 +53,9 @@ Keep this difference in mind if you resolve classes from strings via the Registr
 `PymooCrossover(operator, *, prob=None, n_parents=None, n_children=None)` wraps an already-constructed [pymoo](https://pymoo.org/) crossover operator (e.g. `SBX()`) so existing pymoo-based research code can be reused unchanged inside `GA`.
 `prob`/`n_parents`/`n_children` default to the wrapped operator's own values.
 
-Because `crossover()` is called once per parent group while pymoo operators are written to vectorize over a whole population in one call, `PymooCrossover` calls the wrapped operator's `_do()` once per group — correct, but with per-call overhead a native saealib operator wouldn't pay.
+In `GA`'s default batch mode, `PymooCrossover.crossover_batch()` calls the wrapped operator's `_do()` once for the whole gated batch, retaining pymoo's population-level vectorization.
+Under `variation_execution="sequential"`, the inherited `crossover()` passes one parent group to that batch implementation, so `_do()` is called once per group, exactly as with a direct `crossover()` call.
+Avoiding that per-group overhead for large populations is a primary reason to use the adapter in the default batch mode.
 `rng` is forwarded to the wrapped operator via pymoo's own `random_state` parameter, so results stay reproducible under saealib's seeding.
 
 See [Installation](../getting_started/installation.md) for the `pymoo` extra.
@@ -75,10 +82,14 @@ repaired = base.with_post(clip_to_bounds)
 `fn`'s signature is `fn(offspring, parents, rng, ctx) -> np.ndarray`, receiving the result of the existing hook (by default an identity function that does nothing) and returning an additional transformation.
 Calling `with_post` multiple times chains the hooks in the order called.
 
+In batch mode, `GA` calls `post_crossover_batch(offspring_batch, parents_batch, rng, ctx)`.
+Its default implementation calls `post_crossover()` once per parent group, so hooks installed by `with_post()` continue to work.
+Override `post_crossover_batch()` when the post-processing itself should be genuinely vectorized; such an override is responsible for composing any `with_post()` hook it needs to retain.
+
 ## Implementing a custom Crossover
 
-If you need a custom crossover scheme, subclass `Crossover` and implement only `crossover()`.
-The following example is a simple crossover that returns the average of two parents as both children, unchanged.
+If you need a custom crossover scheme, subclass `Crossover` and implement `crossover_batch()`.
+The following example returns the average of each parent pair as both children.
 
 ```python
 import numpy as np
@@ -90,12 +101,16 @@ class AverageCrossover(Crossover):
         super().__init__()
         self.prob = prob
 
-    def crossover(self, parent, bounds=None, rng=np.random.default_rng()):
-        mean = parent.mean(axis=0)
-        return np.array([mean, mean])
+    def crossover_batch(
+        self, parents_batch, bounds=None, rng=np.random.default_rng()
+    ):
+        mean = parents_batch.mean(axis=1)
+        return np.repeat(mean[:, np.newaxis, :], self.n_children, axis=1)
 ```
 
-If you want `n_parents`/`n_children` to be something other than 2, or want to add custom rounding logic that uses `bounds`, override the class attributes and add a reference to `bounds` inside `crossover()`.
+If you want `n_parents`/`n_children` to be something other than 2, or want custom rounding logic that uses `bounds`, override the class attributes and use `bounds` inside `crossover_batch()`.
+The inherited `crossover()` automatically handles a single parent group.
+An override of `crossover()` alone is only useful when extending an already concrete crossover specifically for `variation_execution="sequential"`.
 
 ## Related components
 

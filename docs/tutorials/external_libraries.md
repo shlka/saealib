@@ -132,9 +132,14 @@ See [Algorithm](../components/algorithm.md) for what this means in practice (no 
 (porting-operators-to-native-saealib-code)=
 ## Porting operators to native saealib code
 
-Wrapping an external operator, as in the previous section, keeps a runtime dependency on the external library and pays a calling-granularity cost: saealib calls `crossover()`/`mutate()` once per parent group or individual, while most external libraries vectorize their operators over an entire population in one call. When that overhead matters, or when the runtime dependency itself is unwanted, porting the operator's logic into a native `Crossover`/`Mutation` subclass is usually a mechanical rewrite rather than a redesign — the core logic stays the same; only the batch loop and the RNG source change.
+Wrapping an external operator, as in the previous section, keeps a runtime dependency on that library.
+The pymoo adapters already preserve population-level vectorization in `GA`'s default batch mode, calling the wrapped operator once for the whole batch or gated subset, so porting is not normally needed to remove per-item calling overhead.
+Port an operator when you want to remove the runtime dependency, or when its logic should be directly auditable and citable as native saealib code for a software paper.
+The core logic usually stays the same; the main changes are adapting the array shape where necessary and using saealib's RNG.
 
-The one detail that is easy to get wrong when porting is *where* the individual-level probability gate lives. saealib's `GA` checks `Crossover.prob` itself before calling `crossover()`, but `Mutation.mutate()` must check `self.prob` itself — the same asymmetry already noted for `PymooMutation` above. Both pymoo's built-in mutations and DEAP's `toolbox.mutate()` (gated externally by `algorithms.varAnd`'s `mutpb`) leave this gate outside the operator, so a ported mutation usually needs a guard line that the original code did not have.
+The one detail that is easy to get wrong when porting is *where* the individual-level probability gate lives.
+saealib's `GA` checks `Crossover.prob` itself and passes only gated parent groups to `crossover_batch()`, but `Mutation.mutate_batch()` must draw one `self.prob` gate per row and leave ungated rows unchanged.
+Both pymoo's built-in mutations and DEAP's `toolbox.mutate()` (gated externally by `algorithms.varAnd`'s `mutpb`) leave this gate outside the operator, so a ported mutation usually needs a gate array that the original code did not have.
 
 ### From pymoo
 
@@ -158,7 +163,8 @@ class MyPymooMutation(PymooMutationBase):
         return Xp
 ```
 
-Ported to a native saealib `Mutation`, the batch dimension disappears; the only additions are the `prob` gate described above and the per-individual shape `(dim,)`:
+Ported to a native saealib `Mutation`, the batch axis stays in place.
+The `_do()` body maps almost directly to `mutate_batch()`; the main addition is saealib's per-row `prob` gate:
 
 ```python
 import numpy as np
@@ -172,18 +178,28 @@ class MyMutation(Mutation):
         self.sigma = sigma
         self.prob_var = prob_var
 
-    def mutate(self, p, mutate_range, rng=np.random.default_rng()):
-        if rng.random() >= self.prob:
-            return p.copy()
-        c = p.copy()
-        mask = rng.random(len(p)) < self.prob_var
-        c[mask] += rng.normal(0, self.sigma, size=len(p))[mask]
-        return c
+    def mutate_batch(
+        self, candidates_batch, mutate_range, rng=np.random.default_rng()
+    ):
+        candidates_batch = np.asarray(candidates_batch, dtype=float)
+        n, dim = candidates_batch.shape
+        gate = rng.random(n) < self.prob
+        result = candidates_batch.copy()
+        if not np.any(gate):
+            return result
+
+        selected = result[gate]
+        mask = rng.random((len(selected), dim)) < self.prob_var
+        noise = rng.normal(0, self.sigma, size=selected.shape)
+        selected[mask] += noise[mask]
+        result[gate] = selected
+        return result
 ```
 
 ### From DEAP
 
-DEAP operators already work on one individual (or a pair) at a time, so porting is even more direct. A custom crossover:
+DEAP operators work on one individual or parent pair at a time, so a native saealib port must add and vectorize over a leading batch axis.
+A custom crossover:
 
 ```python
 import random
@@ -196,7 +212,8 @@ def my_cx(ind1, ind2, swap_rate=0.5):
     return ind1, ind2
 ```
 
-becomes a native `Crossover` by replacing the Python loop with a vectorized mask and `random.random()` with the `rng` saealib passes in, dropping DEAP's implicit global RNG state in favor of saealib's per-run `np.random.Generator` (kept reproducible via `minimize(..., seed=...)`):
+becomes a native `Crossover` by vectorizing over both the parent pairs and dimensions.
+It also replaces `random.random()` with the `rng` saealib passes in, dropping DEAP's implicit global RNG state in favor of saealib's per-run `np.random.Generator` (kept reproducible via `minimize(..., seed=...)`):
 
 ```python
 import numpy as np
@@ -209,12 +226,15 @@ class MyCrossover(Crossover):
         self.prob = prob
         self.swap_rate = swap_rate
 
-    def crossover(self, parent, bounds=None, rng=np.random.default_rng()):
-        p1, p2 = parent[0], parent[1]
-        mask = rng.random(len(p1)) < self.swap_rate
+    def crossover_batch(
+        self, parents_batch, bounds=None, rng=np.random.default_rng()
+    ):
+        n_pair, _, dim = parents_batch.shape
+        p1, p2 = parents_batch[:, 0, :], parents_batch[:, 1, :]
+        mask = rng.random((n_pair, dim)) < self.swap_rate
         c1 = np.where(mask, p2, p1)
         c2 = np.where(mask, p1, p2)
-        return np.array([c1, c2])
+        return np.stack((c1, c2), axis=1)
 ```
 
 `toolbox.mate` is gated externally by `varAnd`'s `cxpb`, matching saealib's `GA`, so — unlike mutation — no extra gate is needed here.
