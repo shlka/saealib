@@ -384,15 +384,20 @@ class ParetoMixin:
                 and f_arr is not None
             )
 
+            # Hoisted above the `if use_fast_path:` block below (rather than
+            # declared inside it) so that both names stay bound regardless
+            # of whether use_fast_path flips to False partway through that
+            # block (dominates_many declining a specific call) -- the
+            # second `if use_fast_path:` further down reads them.
+            existing_dominates_new = np.zeros(n, dtype=bool)
+            new_dominates_existing = np.zeros(n, dtype=bool)
+
             if use_fast_path:
                 cv_ex_arr = cv_arr.astype(float) if cv_arr is not None else np.zeros(n)
                 # np.bool_ (not a plain Python bool) so that `~` below is a
                 # correct logical negation rather than a bitwise int inversion.
                 new_feasible = np.bool_(cv_new <= self.eps_cv)
                 ex_feasible = cv_ex_arr <= self.eps_cv
-
-                existing_dominates_new = np.zeros(n, dtype=bool)
-                new_dominates_existing = np.zeros(n, dtype=bool)
 
                 existing_dominates_new |= (~new_feasible) & ex_feasible
                 new_dominates_existing |= new_feasible & (~ex_feasible)
@@ -403,18 +408,31 @@ class ParetoMixin:
 
                 both_feasible = new_feasible & ex_feasible
                 if np.any(both_feasible):
-                    # This branch only runs when dominates_many_supported is
-                    # True (see use_fast_path above), i.e. dominates_many is
-                    # guaranteed non-None here; ty can't see that invariant
-                    # across batch_override_is_consistent's function
-                    # boundary, hence the ignore (same convention as
-                    # tests/test_population.py's _fast_masks helper).
-                    new_dom, ex_dom = self.dominator.dominates_many(  # ty: ignore[not-iterable]
-                        f_new, f_arr, self.direction
+                    # Only pass the both_feasible-masked subset to
+                    # dominates_many: existing rows outside that mask may be
+                    # infeasible with objective values that aren't guaranteed
+                    # meaningful (e.g. non-positive under multiplicative
+                    # epsilon-dominance's f > 0 requirement), so including
+                    # them in the call -- even though their result would
+                    # later be discarded by the mask -- can crash. Also,
+                    # dominates_many is an opt-in hook (see Dominator
+                    # docstring) that may decline any individual call by
+                    # returning None even when dominates_many_supported is
+                    # True; when it does, fall back to the scalar per-row
+                    # loop for the whole comparison instead of assuming the
+                    # tuple unpack below is safe.
+                    feasible_idx = np.where(both_feasible)[0]
+                    dominates_many_result = self.dominator.dominates_many(
+                        f_new, f_arr[feasible_idx], self.direction
                     )
-                    new_dominates_existing |= both_feasible & new_dom
-                    existing_dominates_new |= both_feasible & ex_dom
+                    if dominates_many_result is None:
+                        use_fast_path = False
+                    else:
+                        new_dom, ex_dom = dominates_many_result
+                        new_dominates_existing[feasible_idx] |= new_dom
+                        existing_dominates_new[feasible_idx] |= ex_dom
 
+            if use_fast_path:
                 if existing_dominates_new.any():
                     return -1
                 dominated_mask = new_dominates_existing
