@@ -101,9 +101,7 @@ class MidpointMutation(Mutation):
         self.prob = prob
         self.prob_var = prob_var
 
-    def mutate_batch(
-        self, candidates_batch, mutate_range, rng=np.random.default_rng()
-    ):
+    def mutate_batch(self, candidates_batch, mutate_range, rng=np.random.default_rng()):
         candidates_batch = np.asarray(candidates_batch, dtype=float)
         n, dim = candidates_batch.shape
         p_var = self.prob_var if self.prob_var is not None else min(0.5, 1.0 / dim)

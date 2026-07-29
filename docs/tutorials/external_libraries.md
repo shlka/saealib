@@ -178,9 +178,7 @@ class MyMutation(Mutation):
         self.sigma = sigma
         self.prob_var = prob_var
 
-    def mutate_batch(
-        self, candidates_batch, mutate_range, rng=np.random.default_rng()
-    ):
+    def mutate_batch(self, candidates_batch, mutate_range, rng=np.random.default_rng()):
         candidates_batch = np.asarray(candidates_batch, dtype=float)
         n, dim = candidates_batch.shape
         gate = rng.random(n) < self.prob
@@ -226,9 +224,7 @@ class MyCrossover(Crossover):
         self.prob = prob
         self.swap_rate = swap_rate
 
-    def crossover_batch(
-        self, parents_batch, bounds=None, rng=np.random.default_rng()
-    ):
+    def crossover_batch(self, parents_batch, bounds=None, rng=np.random.default_rng()):
         n_pair, _, dim = parents_batch.shape
         p1, p2 = parents_batch[:, 0, :], parents_batch[:, 1, :]
         mask = rng.random((n_pair, dim)) < self.swap_rate

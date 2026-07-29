@@ -101,9 +101,7 @@ class AverageCrossover(Crossover):
         super().__init__()
         self.prob = prob
 
-    def crossover_batch(
-        self, parents_batch, bounds=None, rng=np.random.default_rng()
-    ):
+    def crossover_batch(self, parents_batch, bounds=None, rng=np.random.default_rng()):
         mean = parents_batch.mean(axis=1)
         return np.repeat(mean[:, np.newaxis, :], self.n_children, axis=1)
 ```

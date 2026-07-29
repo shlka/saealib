@@ -8,6 +8,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
+from typing_extensions import Self
 
 from saealib.registry import register
 
@@ -191,7 +192,7 @@ class Crossover(ABC):
             [np.ndarray, np.ndarray, np.random.Generator, OptimizationState | None],
             np.ndarray,
         ],
-    ) -> Crossover:
+    ) -> Self:
         """Return a copy of this operator with ``fn`` appended to the hook.
 
         Parameters

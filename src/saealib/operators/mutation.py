@@ -8,6 +8,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
+from typing_extensions import Self
 
 from saealib.registry import register
 
@@ -187,7 +188,7 @@ class Mutation(ABC):
             [np.ndarray, tuple, np.random.Generator, OptimizationState | None],
             np.ndarray,
         ],
-    ) -> Mutation:
+    ) -> Self:
         """Return a copy of this operator with ``fn`` appended to the hook.
 
         Parameters
