@@ -65,12 +65,10 @@ class PymooCrossover(Crossover):
 
     Notes
     -----
-    saealib calls ``crossover()`` once per parent group (``operators/crossover.py``'s
-    ABC contract, exercised by ``GA.ask()``), whereas pymoo crossovers are written to
-    vectorize over the whole population in one call. This adapter calls the wrapped
-    operator's ``_do()`` (not ``.do()``, which would apply pymoo's own ``prob`` gate
-    a second time on top of saealib's) with a single mating group per call. This is
-    correct but pays per-call overhead that a native saealib operator would not.
+    ``crossover_batch()`` calls the wrapped operator's ``_do()`` (not
+    ``.do()``, which would apply pymoo's own ``prob`` gate a second time on
+    top of saealib's). The inherited ``crossover()`` derives a single-parent-
+    group call from that batch implementation.
 
     A minimal internal ``pymoo.core.problem.Problem`` is synthesized to satisfy
     operators (e.g. SBX) that read ``problem.xl``/``problem.xu``/``problem.n_var``;
@@ -120,46 +118,17 @@ class PymooCrossover(Crossover):
             self._problem_key = key
         return self._problem
 
-    def crossover(
-        self,
-        parent: np.ndarray,
-        bounds: tuple[np.ndarray, np.ndarray] | None = None,
-        rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray:
-        """
-        Execute crossover via the wrapped pymoo operator.
-
-        Parameters
-        ----------
-        parent : np.ndarray
-            Parent individuals. shape = (n_parents, dim)
-        bounds : tuple of (np.ndarray, np.ndarray) or None
-            Lower and upper bounds for each variable.
-        rng : np.random.Generator, optional
-            Forwarded to the wrapped operator as ``random_state``.
-
-        Returns
-        -------
-        np.ndarray
-            Offspring individuals. shape = (n_children, dim)
-        """
-        problem = self._pymoo_problem(parent.shape[1], bounds)
-        x_batch = np.asarray(parent, dtype=float)[:, np.newaxis, :]
-        q_batch = self.operator._do(problem, x_batch, random_state=rng)
-        return np.asarray(q_batch, dtype=float)[:, 0, :]
-
     def crossover_batch(
         self,
         parents_batch: np.ndarray,
         bounds: tuple[np.ndarray, np.ndarray] | None = None,
         rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray | None:
+    ) -> np.ndarray:
         """
         Execute crossover on a batch of parent pairs via a single pymoo call.
 
-        Unlike :meth:`crossover`, which pays per-call overhead for a single
-        pair, this calls the wrapped operator's ``_do()`` exactly once for
-        the whole batch.
+        This is the adapter's primary crossover implementation and calls the
+        wrapped operator's ``_do()`` exactly once for the whole batch.
 
         Parameters
         ----------
@@ -177,15 +146,12 @@ class PymooCrossover(Crossover):
 
         Notes
         -----
-        For ``n_pair > 1``, per-row results are **not** bit-identical to
-        calling :meth:`crossover` once per pair in a loop with the same
-        seeded ``rng``, even though both consume the same total number of
-        random draws. Operators such as pymoo's SBX draw each random phase
-        (e.g. the crossover mask, then the beta values) across the *whole*
-        batch in one call, whereas the looped single-pair calls interleave
-        phases per row; the two draw orders diverge as soon as more than one
-        pair is involved. Only ``n_pair == 1`` is guaranteed to match a
-        single :meth:`crossover` call with an identically-seeded ``rng``.
+        For ``n_pair > 1``, a loop of separate single-pair
+        ``crossover_batch`` calls (equivalently, separate :meth:`crossover`
+        calls) does not reproduce the same per-row results as one batched
+        call with the same seeded ``rng``. Operators such as pymoo's SBX draw
+        each random phase across the whole batch, whereas single-pair calls
+        interleave phases per row.
         """
         problem = self._pymoo_problem(parents_batch.shape[-1], bounds)
         # saealib's (n_pair, n_parents, dim) vs. pymoo's own

@@ -36,7 +36,6 @@ class Crossover(ABC):
     n_children: int = 2
     prob: float = 1.0
 
-    @abstractmethod
     def crossover(
         self,
         parent: np.ndarray,
@@ -44,7 +43,10 @@ class Crossover(ABC):
         rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
-        Execute crossover.
+        Execute crossover for one parent group.
+
+        This method is derived from :meth:`crossover_batch` by passing a
+        single-pair batch.
 
         Parameters
         ----------
@@ -60,20 +62,20 @@ class Crossover(ABC):
         np.ndarray
             Offspring individuals. shape = (n_offspring, dim)
         """
-        pass
+        return self.crossover_batch(parent[np.newaxis, :, :], bounds, rng)[0]
 
+    @abstractmethod
     def crossover_batch(
         self,
         parents_batch: np.ndarray,
         bounds: tuple[np.ndarray, np.ndarray] | None = None,
         rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray | None:
+    ) -> np.ndarray:
         """
         Execute crossover on a batch of parent pairs at once.
 
-        Default implementation returns ``None``, meaning this operator does
-        not support batched crossover; the caller should fall back to
-        invoking :meth:`crossover` once per pair.
+        This is the required primitive that every concrete crossover class
+        must implement directly.
 
         Parameters
         ----------
@@ -90,19 +92,16 @@ class Crossover(ABC):
 
         Returns
         -------
-        np.ndarray or None
-            Offspring individuals. shape = (n_pair, n_children, dim), or
-            ``None`` if batched crossover is unsupported for this particular
-            call/shape.
+        np.ndarray
+            Offspring individuals. shape = (n_pair, n_children, dim)
 
         Notes
         -----
-        No ``prob`` gating is performed inside ``crossover_batch``, mirroring
-        :meth:`crossover`: the caller is responsible for having already
-        filtered ``parents_batch`` down to only the pairs that should undergo
-        crossover.
+        No ``prob`` gating is performed inside ``crossover_batch``: the caller
+        is responsible for having already filtered ``parents_batch`` down to
+        only the pairs that should undergo crossover.
         """
-        return None
+        pass
 
     def post_crossover(
         self,
@@ -176,7 +175,7 @@ class CrossoverBLXAlpha(Crossover):
     Originates from Eshelman & Schaffer (1993); the primary paper has not
     been obtained and is credited here by name only. The interval
     ``[c_min - alpha*I, c_max + alpha*I]`` formula implemented in
-    :meth:`crossover` has been verified against Herrera, Lozano &
+    :meth:`crossover_batch` has been verified against Herrera, Lozano &
     Verdegay (1998), Section 4.3, which restates the BLX-alpha definition
     while surveying real-coded GA operators.
 
@@ -203,48 +202,16 @@ class CrossoverBLXAlpha(Crossover):
         self.prob = prob
         self.alpha = alpha
 
-    def crossover(
-        self,
-        parent: np.ndarray,
-        bounds: tuple[np.ndarray, np.ndarray] | None = None,
-        rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray:
-        """
-        Execute BLX-alpha crossover.
-
-        Parameters
-        ----------
-        parent : np.ndarray
-            Parent individuals. shape = (2, dim)
-        bounds : tuple of (np.ndarray, np.ndarray) or None
-            Ignored; BLX-alpha is inherently unbounded.
-        rng : np.random.Generator, optional
-            Random number generator, by default np.random.default_rng()
-
-        Returns
-        -------
-        np.ndarray
-            Offspring individuals. shape = (2, dim)
-        """
-        p1 = parent[0]
-        p2 = parent[1]
-        dim = len(p1)
-        blend = rng.uniform(-self.alpha, 1 + self.alpha, size=dim)
-        c1 = blend * p1 + (1 - blend) * p2
-        c2 = (1 - blend) * p1 + blend * p2
-        return np.array([c1, c2])
-
     def crossover_batch(
         self,
         parents_batch: np.ndarray,
         bounds: tuple[np.ndarray, np.ndarray] | None = None,
         rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray | None:
+    ) -> np.ndarray:
         """
         Execute BLX-alpha crossover on a batch of parent pairs at once.
 
-        Mirrors :meth:`crossover`, vectorized over an extra leading
-        ``n_pair`` axis.
+        This is the primary BLX-alpha implementation.
 
         Parameters
         ----------
@@ -262,13 +229,12 @@ class CrossoverBLXAlpha(Crossover):
 
         Notes
         -----
-        For ``n_pair > 1``, per-row results are **not** bit-identical to
-        calling :meth:`crossover` once per pair in a loop with the same
-        seeded ``rng``: drawing ``rng.uniform(size=(n_pair, dim))`` for the
-        whole batch in one call is not the same draw order as looping
-        ``rng.uniform(size=dim)`` once per pair. Only ``n_pair == 1`` is
-        guaranteed to match a single :meth:`crossover` call with an
-        identically-seeded ``rng``.
+        For ``n_pair > 1``, a loop of separate single-pair
+        ``crossover_batch`` calls (equivalently, separate :meth:`crossover`
+        calls) does not reproduce the same per-row results as one batched
+        call with the same seeded ``rng``. Drawing
+        ``rng.uniform(size=(n_pair, dim))`` for the whole batch has a
+        different draw order from looping ``rng.uniform(size=dim)``.
         """
         p1 = parents_batch[:, 0, :]
         p2 = parents_batch[:, 1, :]
@@ -320,99 +286,17 @@ class CrossoverSBX(Crossover):
         self.eta = eta
         self.prob_var = prob_var
 
-    def crossover(
-        self,
-        parent: np.ndarray,
-        bounds: tuple[np.ndarray, np.ndarray] | None = None,
-        rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray:
-        """
-        Execute SBX crossover.
-
-        Parameters
-        ----------
-        parent : np.ndarray
-            Parent individuals. shape = (2, dim)
-        bounds : tuple of (np.ndarray, np.ndarray) or None
-            Lower and upper bounds. When provided and finite, the bounded
-            SBX variant is applied.
-        rng : np.random.Generator, optional
-            Random number generator, by default np.random.default_rng()
-
-        Returns
-        -------
-        np.ndarray
-            Offspring individuals. shape = (2, dim)
-        """
-        p1 = parent[0]
-        p2 = parent[1]
-        dim = len(p1)
-
-        use_bounded = (
-            bounds is not None
-            and np.all(np.isfinite(bounds[0]))
-            and np.all(np.isfinite(bounds[1]))
-        )
-
-        if use_bounded:
-            lb, ub = bounds  # type: ignore[misc]
-            y1 = np.minimum(p1, p2)
-            y2 = np.maximum(p1, p2)
-            diff = y2 - y1
-            separated = diff > 1e-14
-            safe_diff = np.where(separated, diff, 1.0)
-            u = rng.uniform(0.0, 1.0, size=dim)
-
-            def _beta_q(beta_limit: np.ndarray) -> np.ndarray:
-                alpha = 2.0 - beta_limit ** (-(self.eta + 1))
-                return np.where(
-                    u <= 1.0 / alpha,
-                    (alpha * u) ** (1.0 / (self.eta + 1)),
-                    (1.0 / (2.0 - alpha * u)) ** (1.0 / (self.eta + 1)),
-                )
-
-            beta_q1 = _beta_q(1.0 + 2.0 * (y1 - lb) / safe_diff)
-            beta_q2 = _beta_q(1.0 + 2.0 * (ub - y2) / safe_diff)
-            o1 = np.clip(0.5 * ((y1 + y2) - beta_q1 * diff), lb, ub)
-            o2 = np.clip(0.5 * ((y1 + y2) + beta_q2 * diff), lb, ub)
-            # assign the lower/upper-side offspring to c1/c2 with a fresh
-            # 50/50 draw per dimension, independent of parent identity
-            # (matches DEAP's cxSimulatedBinaryBounded and pymoo's net effect)
-            swap = rng.random(size=dim) < 0.5
-            c1_sbx = np.where(swap, o2, o1)
-            c2_sbx = np.where(swap, o1, o2)
-            # skip crossover where parents are identical
-            c1_sbx = np.where(separated, c1_sbx, p1)
-            c2_sbx = np.where(separated, c2_sbx, p2)
-        else:
-            u = rng.uniform(0.0, 1.0, size=dim)
-            beta_q = np.where(
-                u <= 0.5,
-                (2.0 * u) ** (1.0 / (self.eta + 1)),
-                (1.0 / (2.0 * (1.0 - u))) ** (1.0 / (self.eta + 1)),
-            )
-            mid = 0.5 * (p1 + p2)
-            half_diff = 0.5 * beta_q * (p2 - p1)
-            c1_sbx = mid - half_diff
-            c2_sbx = mid + half_diff
-
-        do_cross = rng.random(size=dim) < self.prob_var
-        c1 = np.where(do_cross, c1_sbx, p1)
-        c2 = np.where(do_cross, c2_sbx, p2)
-        return np.array([c1, c2])
-
     def crossover_batch(
         self,
         parents_batch: np.ndarray,
         bounds: tuple[np.ndarray, np.ndarray] | None = None,
         rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray | None:
+    ) -> np.ndarray:
         """
         Execute SBX crossover on a batch of parent pairs at once.
 
-        Mirrors :meth:`crossover`, vectorized over an extra leading
-        ``n_pair`` axis; the underlying formula is unchanged, only the
-        array shapes grow by one axis.
+        This is the primary SBX implementation, vectorized over the leading
+        ``n_pair`` axis.
 
         Parameters
         ----------
@@ -431,13 +315,12 @@ class CrossoverSBX(Crossover):
 
         Notes
         -----
-        For ``n_pair > 1``, per-row results are **not** bit-identical to
-        calling :meth:`crossover` once per pair in a loop with the same
-        seeded ``rng``: drawing e.g. ``u = rng.uniform(size=(n_pair, dim))``
-        for the whole batch in one call is not the same draw order as
-        looping ``u = rng.uniform(size=dim)`` once per pair. Only
-        ``n_pair == 1`` is guaranteed to match a single :meth:`crossover`
-        call with an identically-seeded ``rng``.
+        For ``n_pair > 1``, a loop of separate single-pair
+        ``crossover_batch`` calls (equivalently, separate :meth:`crossover`
+        calls) does not reproduce the same per-row results as one batched
+        call with the same seeded ``rng``. Drawing each random phase for the
+        whole batch has a different draw order from interleaving those phases
+        one pair at a time.
         """
         p1 = parents_batch[:, 0, :]
         p2 = parents_batch[:, 1, :]
@@ -534,47 +417,16 @@ class CrossoverUniform(Crossover):
         self.prob = prob
         self.swap_rate = swap_rate
 
-    def crossover(
-        self,
-        parent: np.ndarray,
-        bounds: tuple[np.ndarray, np.ndarray] | None = None,
-        rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray:
-        """
-        Execute uniform crossover.
-
-        Parameters
-        ----------
-        parent : np.ndarray
-            Parent individuals. shape = (2, dim)
-        bounds : tuple of (np.ndarray, np.ndarray) or None
-            Ignored.
-        rng : np.random.Generator, optional
-            Random number generator, by default np.random.default_rng()
-
-        Returns
-        -------
-        np.ndarray
-            Offspring individuals. shape = (2, dim)
-        """
-        p1 = parent[0]
-        p2 = parent[1]
-        mask = rng.random(len(p1)) < self.swap_rate
-        c1 = np.where(mask, p2, p1)
-        c2 = np.where(mask, p1, p2)
-        return np.array([c1, c2])
-
     def crossover_batch(
         self,
         parents_batch: np.ndarray,
         bounds: tuple[np.ndarray, np.ndarray] | None = None,
         rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray | None:
+    ) -> np.ndarray:
         """
         Execute uniform crossover on a batch of parent pairs at once.
 
-        Mirrors :meth:`crossover`, vectorized over an extra leading
-        ``n_pair`` axis.
+        This is the primary uniform crossover implementation.
 
         Parameters
         ----------
@@ -592,13 +444,12 @@ class CrossoverUniform(Crossover):
 
         Notes
         -----
-        For ``n_pair > 1``, per-row results are **not** bit-identical to
-        calling :meth:`crossover` once per pair in a loop with the same
-        seeded ``rng``: drawing ``rng.random(size=(n_pair, dim))`` for the
-        whole batch in one call is not the same draw order as looping
-        ``rng.random(dim)`` once per pair. Only ``n_pair == 1`` is
-        guaranteed to match a single :meth:`crossover` call with an
-        identically-seeded ``rng``.
+        For ``n_pair > 1``, a loop of separate single-pair
+        ``crossover_batch`` calls (equivalently, separate :meth:`crossover`
+        calls) does not reproduce the same per-row results as one batched
+        call with the same seeded ``rng``. Drawing
+        ``rng.random(size=(n_pair, dim))`` for the whole batch has a
+        different draw order from looping ``rng.random(dim)``.
         """
         p1 = parents_batch[:, 0, :]
         p2 = parents_batch[:, 1, :]
@@ -631,50 +482,18 @@ class CrossoverOnePoint(Crossover):
         super().__init__()
         self.prob = prob
 
-    def crossover(
-        self,
-        parent: np.ndarray,
-        bounds: tuple[np.ndarray, np.ndarray] | None = None,
-        rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray:
-        """
-        Execute one-point crossover.
-
-        Parameters
-        ----------
-        parent : np.ndarray
-            Parent individuals. shape = (2, dim)
-        bounds : tuple of (np.ndarray, np.ndarray) or None
-            Ignored.
-        rng : np.random.Generator, optional
-            Random number generator, by default np.random.default_rng()
-
-        Returns
-        -------
-        np.ndarray
-            Offspring individuals. shape = (2, dim)
-        """
-        p1 = parent[0]
-        p2 = parent[1]
-        dim = len(p1)
-        point = rng.integers(1, dim)
-        c1 = np.concatenate([p1[:point], p2[point:]])
-        c2 = np.concatenate([p2[:point], p1[point:]])
-        return np.array([c1, c2])
-
     def crossover_batch(
         self,
         parents_batch: np.ndarray,
         bounds: tuple[np.ndarray, np.ndarray] | None = None,
         rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray | None:
+    ) -> np.ndarray:
         """
         Execute one-point crossover on a batch of parent pairs at once.
 
-        Mirrors :meth:`crossover`, vectorized over an extra leading
-        ``n_pair`` axis: each pair still gets its own independently-drawn
-        cut point, reconstructed via a broadcast mask instead of a per-row
-        ``np.concatenate``.
+        This is the primary one-point crossover implementation. Each pair
+        gets its own independently drawn cut point, and offspring are
+        reconstructed via a broadcast mask.
 
         Parameters
         ----------
@@ -692,12 +511,11 @@ class CrossoverOnePoint(Crossover):
 
         Notes
         -----
-        ``rng.integers(1, dim, size=n_pair)`` draws ``n_pair`` independent
-        cut points in one call, consuming the same underlying random stream
-        as ``n_pair`` sequential scalar ``rng.integers(1, dim)`` calls.
-        Consequently, for ``n_pair == 1`` this is guaranteed to exactly
-        match a single :meth:`crossover` call with an identically-seeded
-        ``rng``.
+        ``rng.integers(1, dim, size=n_pair)`` consumes the same random stream
+        as ``n_pair`` separate single-pair ``crossover_batch`` calls
+        (equivalently, separate :meth:`crossover` calls). Consequently, every
+        row reproduces the corresponding result from that loop with an
+        identically seeded ``rng``.
         """
         p1 = parents_batch[:, 0, :]
         p2 = parents_batch[:, 1, :]
@@ -733,44 +551,12 @@ class CrossoverTwoPoint(Crossover):
         super().__init__()
         self.prob = prob
 
-    def crossover(
-        self,
-        parent: np.ndarray,
-        bounds: tuple[np.ndarray, np.ndarray] | None = None,
-        rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray:
-        """
-        Execute two-point crossover.
-
-        Parameters
-        ----------
-        parent : np.ndarray
-            Parent individuals. shape = (2, dim)
-        bounds : tuple of (np.ndarray, np.ndarray) or None
-            Ignored.
-        rng : np.random.Generator, optional
-            Random number generator, by default np.random.default_rng()
-
-        Returns
-        -------
-        np.ndarray
-            Offspring individuals. shape = (2, dim)
-        """
-        p1 = parent[0]
-        p2 = parent[1]
-        dim = len(p1)
-        pts = np.sort(rng.choice(dim + 1, size=2, replace=False))
-        pt1, pt2 = pts[0], pts[1]
-        c1 = np.concatenate([p1[:pt1], p2[pt1:pt2], p1[pt2:]])
-        c2 = np.concatenate([p2[:pt1], p1[pt1:pt2], p2[pt2:]])
-        return np.array([c1, c2])
-
     def crossover_batch(
         self,
         parents_batch: np.ndarray,
         bounds: tuple[np.ndarray, np.ndarray] | None = None,
         rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray | None:
+    ) -> np.ndarray:
         """
         Execute two-point crossover on a batch of parent pairs at once.
 
@@ -784,11 +570,10 @@ class CrossoverTwoPoint(Crossover):
         wrong -- sampling semantics, and there is no algebraic substitute
         that reproduces ``replace=False`` choice exactly. So the two cut
         points are still drawn with a small per-row Python loop, preserving
-        :meth:`crossover`'s exact ``rng.choice`` semantics and RNG
-        consumption order row by row. The vectorization benefit instead
-        comes from reconstructing the offspring (the ``dim``-sized part)
-        for the whole batch at once via a broadcast mask, replacing the
-        per-row ``np.concatenate`` calls.
+        the single-pair ``rng.choice`` semantics and RNG consumption order
+        row by row. The vectorization benefit instead comes from
+        reconstructing the offspring (the ``dim``-sized part) for the whole
+        batch at once via a broadcast mask.
 
         Parameters
         ----------
@@ -806,12 +591,11 @@ class CrossoverTwoPoint(Crossover):
 
         Notes
         -----
-        Because the cut-point loop consumes ``rng`` in exactly the same
-        per-row order as an external loop over :meth:`crossover` would,
-        **every** row (not just ``n_pair == 1``) reproduces the cut points
-        and offspring of a loop of :meth:`crossover` calls driven by an
-        identically-seeded ``rng``, unlike the "``n_pair == 1`` only"
-        caveat that applies to the other batched operators in this module.
+        Because the cut-point loop consumes ``rng`` in the same per-row order
+        as separate single-pair ``crossover_batch`` calls (equivalently,
+        separate :meth:`crossover` calls), every row reproduces the
+        corresponding result from that loop with an identically seeded
+        ``rng``.
         """
         p1 = parents_batch[:, 0, :]
         p2 = parents_batch[:, 1, :]
@@ -870,96 +654,17 @@ class CrossoverIntegerSBX(Crossover):
         self.eta = eta
         self.prob_var = prob_var
 
-    def crossover(
-        self,
-        parent: np.ndarray,
-        bounds: tuple[np.ndarray, np.ndarray] | None = None,
-        rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray:
-        """
-        Execute integer SBX crossover.
-
-        Parameters
-        ----------
-        parent : np.ndarray
-            Parent individuals. shape = (2, dim)
-        bounds : tuple of (np.ndarray, np.ndarray) or None
-            Lower and upper bounds. When provided and finite, the bounded
-            SBX variant is applied before rounding.
-        rng : np.random.Generator, optional
-            Random number generator, by default np.random.default_rng()
-
-        Returns
-        -------
-        np.ndarray
-            Offspring individuals with integer values. shape = (2, dim)
-        """
-        p1 = parent[0]
-        p2 = parent[1]
-        dim = len(p1)
-
-        use_bounded = (
-            bounds is not None
-            and np.all(np.isfinite(bounds[0]))
-            and np.all(np.isfinite(bounds[1]))
-        )
-
-        if use_bounded:
-            lb, ub = bounds  # type: ignore[misc]
-            y1 = np.minimum(p1, p2)
-            y2 = np.maximum(p1, p2)
-            diff = y2 - y1
-            separated = diff > 1e-14
-            safe_diff = np.where(separated, diff, 1.0)
-            u = rng.uniform(0.0, 1.0, size=dim)
-
-            def _beta_q(beta_limit: np.ndarray) -> np.ndarray:
-                alpha = 2.0 - beta_limit ** (-(self.eta + 1))
-                return np.where(
-                    u <= 1.0 / alpha,
-                    (alpha * u) ** (1.0 / (self.eta + 1)),
-                    (1.0 / (2.0 - alpha * u)) ** (1.0 / (self.eta + 1)),
-                )
-
-            beta_q1 = _beta_q(1.0 + 2.0 * (y1 - lb) / safe_diff)
-            beta_q2 = _beta_q(1.0 + 2.0 * (ub - y2) / safe_diff)
-            o1 = np.clip(np.round(0.5 * ((y1 + y2) - beta_q1 * diff)), lb, ub)
-            o2 = np.clip(np.round(0.5 * ((y1 + y2) + beta_q2 * diff)), lb, ub)
-            swap = rng.random(size=dim) < 0.5
-            c1_sbx = np.where(swap, o2, o1)
-            c2_sbx = np.where(swap, o1, o2)
-            c1_sbx = np.where(separated, c1_sbx, p1)
-            c2_sbx = np.where(separated, c2_sbx, p2)
-        else:
-            u = rng.uniform(0.0, 1.0, size=dim)
-            beta_q = np.where(
-                u <= 0.5,
-                (2.0 * u) ** (1.0 / (self.eta + 1)),
-                (1.0 / (2.0 * (1.0 - u))) ** (1.0 / (self.eta + 1)),
-            )
-            mid = 0.5 * (p1 + p2)
-            half_diff = 0.5 * beta_q * (p2 - p1)
-            c1_sbx = np.round(mid - half_diff)
-            c2_sbx = np.round(mid + half_diff)
-
-        do_cross = rng.random(size=dim) < self.prob_var
-        c1 = np.where(do_cross, c1_sbx, p1)
-        c2 = np.where(do_cross, c2_sbx, p2)
-        return np.array([c1, c2])
-
     def crossover_batch(
         self,
         parents_batch: np.ndarray,
         bounds: tuple[np.ndarray, np.ndarray] | None = None,
         rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray | None:
+    ) -> np.ndarray:
         """
         Execute integer SBX crossover on a batch of parent pairs at once.
 
-        Mirrors :meth:`crossover`, vectorized over an extra leading
-        ``n_pair`` axis; the underlying formula (including the rounding to
-        the nearest integer) is unchanged, only the array shapes grow by
-        one axis.
+        This is the primary integer SBX implementation, vectorized over the
+        leading ``n_pair`` axis.
 
         Parameters
         ----------
@@ -978,13 +683,12 @@ class CrossoverIntegerSBX(Crossover):
 
         Notes
         -----
-        For ``n_pair > 1``, per-row results are **not** bit-identical to
-        calling :meth:`crossover` once per pair in a loop with the same
-        seeded ``rng``: drawing e.g. ``u = rng.uniform(size=(n_pair, dim))``
-        for the whole batch in one call is not the same draw order as
-        looping ``u = rng.uniform(size=dim)`` once per pair. Only
-        ``n_pair == 1`` is guaranteed to match a single :meth:`crossover`
-        call with an identically-seeded ``rng``.
+        For ``n_pair > 1``, a loop of separate single-pair
+        ``crossover_batch`` calls (equivalently, separate :meth:`crossover`
+        calls) does not reproduce the same per-row results as one batched
+        call with the same seeded ``rng``. Drawing each random phase for the
+        whole batch has a different draw order from interleaving those phases
+        one pair at a time.
         """
         p1 = parents_batch[:, 0, :]
         p2 = parents_batch[:, 1, :]
@@ -1066,47 +770,16 @@ class CrossoverCategorical(Crossover):
         super().__init__()
         self.prob = prob
 
-    def crossover(
-        self,
-        parent: np.ndarray,
-        bounds: tuple[np.ndarray, np.ndarray] | None = None,
-        rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray:
-        """
-        Execute categorical crossover.
-
-        Parameters
-        ----------
-        parent : np.ndarray
-            Parent individuals. shape = (2, dim)
-        bounds : tuple of (np.ndarray, np.ndarray) or None
-            Ignored.
-        rng : np.random.Generator, optional
-            Random number generator, by default np.random.default_rng()
-
-        Returns
-        -------
-        np.ndarray
-            Offspring individuals. shape = (2, dim)
-        """
-        p1 = parent[0]
-        p2 = parent[1]
-        mask = rng.random(len(p1)) < 0.5
-        c1 = np.where(mask, p2, p1)
-        c2 = np.where(mask, p1, p2)
-        return np.array([c1, c2])
-
     def crossover_batch(
         self,
         parents_batch: np.ndarray,
         bounds: tuple[np.ndarray, np.ndarray] | None = None,
         rng: np.random.Generator = np.random.default_rng(),
-    ) -> np.ndarray | None:
+    ) -> np.ndarray:
         """
         Execute categorical crossover on a batch of parent pairs at once.
 
-        Mirrors :meth:`crossover`, vectorized over an extra leading
-        ``n_pair`` axis.
+        This is the primary categorical crossover implementation.
 
         Parameters
         ----------
@@ -1124,13 +797,12 @@ class CrossoverCategorical(Crossover):
 
         Notes
         -----
-        For ``n_pair > 1``, per-row results are **not** bit-identical to
-        calling :meth:`crossover` once per pair in a loop with the same
-        seeded ``rng``: drawing ``rng.random(size=(n_pair, dim))`` for the
-        whole batch in one call is not the same draw order as looping
-        ``rng.random(dim)`` once per pair. Only ``n_pair == 1`` is
-        guaranteed to match a single :meth:`crossover` call with an
-        identically-seeded ``rng``.
+        For ``n_pair > 1``, a loop of separate single-pair
+        ``crossover_batch`` calls (equivalently, separate :meth:`crossover`
+        calls) does not reproduce the same per-row results as one batched
+        call with the same seeded ``rng``. Drawing
+        ``rng.random(size=(n_pair, dim))`` for the whole batch has a
+        different draw order from looping ``rng.random(dim)``.
         """
         p1 = parents_batch[:, 0, :]
         p2 = parents_batch[:, 1, :]

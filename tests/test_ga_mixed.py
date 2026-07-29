@@ -86,6 +86,9 @@ class _CrossoverN1C(Crossover):
     def crossover(self, parent, bounds=None, rng=np.random.default_rng()):
         return parent[:1].copy()
 
+    def crossover_batch(self, parents_batch, bounds=None, rng=np.random.default_rng()):
+        return parents_batch[:, :1, :].copy()
+
 
 class _CrossoverP3(Crossover):
     """n_parents=3 stub."""
@@ -97,6 +100,9 @@ class _CrossoverP3(Crossover):
 
     def crossover(self, parent, bounds=None, rng=np.random.default_rng()):
         return parent[:2].copy()
+
+    def crossover_batch(self, parents_batch, bounds=None, rng=np.random.default_rng()):
+        return parents_batch[:, :2, :].copy()
 
 
 # ---------------------------------------------------------------------------

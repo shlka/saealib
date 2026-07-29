@@ -136,7 +136,6 @@ class TestPymooCrossover:
         ub = np.full(DIM, 1.0)
 
         result = op.crossover_batch(parents_batch, bounds=(lb, ub), rng=rng)
-        assert result is not None
         assert counted.n_do_calls == 1
         assert result.shape == (n_pair, 2, DIM)
 
@@ -155,7 +154,6 @@ class TestPymooCrossover:
         batch_result = op.crossover_batch(
             p[np.newaxis, :, :], bounds=(lb, ub), rng=rng_batch
         )
-        assert batch_result is not None
         batch_result = batch_result[0]
 
         rng_single = np.random.default_rng(7)
@@ -171,7 +169,6 @@ class TestPymooCrossover:
         lb = np.full(DIM, -1.0)
         ub = np.full(DIM, 1.0)
         c = op.crossover_batch(parents_batch, bounds=(lb, ub), rng=rng)
-        assert c is not None
         assert c.shape == (n_pair, 2, DIM)
 
     def test_subdimensional_call_rebuilds_shim_problem(self):
@@ -463,14 +460,16 @@ def _make_mixed_ctx(n_pop=8, seed=42):
 
 
 class TestPymooOperatorsDispatchConsistency:
-    """PymooCrossover/PymooMutation define crossover/crossover_batch (resp.
-    mutate/mutate_batch) together in the same adapter class, so a plain,
-    unsubclassed instance must remain "consistent" under
-    batch_override_is_consistent (Issue #224 follow-up fix) exactly like
-    every built-in operator — this is what lets GA still engage the batch
-    path for pymoo-wrapped operators (see
+    """PymooCrossover inherits crossover from its crossover_batch primitive.
+
+    A plain, unsubclassed instance must remain "consistent" under
+    batch_override_is_consistent (Issue #224 follow-up fix) exactly like every
+    built-in operator. PymooMutation continues to define mutate/mutate_batch
+    together. This is what lets GA still engage the batch path for
+    pymoo-wrapped operators (see
     TestGABatchDispatch.test_continuous_problem_calls_do_once_each below,
-    which is the end-to-end proof)."""
+    which is the end-to-end proof).
+    """
 
     def test_pymoo_crossover_consistent(self):
         op = PymooCrossover(SBX(eta=15))

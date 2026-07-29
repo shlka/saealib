@@ -501,18 +501,12 @@ class TestCrossoverNChildren:
 
 
 # ---------------------------------------------------------------------------
-# Crossover base: crossover_batch default
+# Crossover base: crossover_batch requirement
 # ---------------------------------------------------------------------------
 
 
 class _CrossoverUnbatched(Crossover):
-    """Minimal dummy Crossover that does not override crossover_batch.
-
-    All built-in Crossover classes now override crossover_batch (commits
-    7-8), so none of them remain suitable subjects for the "still returns
-    None" default-implementation check below; this fresh subclass fills
-    that role instead.
-    """
+    """Minimal dummy Crossover that does not implement crossover_batch."""
 
     def __init__(self, prob: float = 0.9):
         super().__init__()
@@ -527,24 +521,14 @@ class _CrossoverUnbatched(Crossover):
         return np.array([parent[0], parent[1]])
 
 
-class TestCrossoverBatchDefault:
-    def test_default_returns_none(self):
-        op = _CrossoverUnbatched(prob=0.9)
-        rng = np.random.default_rng(0)
-        n_pair = 3
-        parents_batch = rng.uniform(-1.0, 1.0, size=(n_pair, 2, DIM))
-        result = op.crossover_batch(parents_batch, rng=rng)
-        assert result is None
+class TestCrossoverBatchRequired:
+    def test_crossover_batch_is_required(self):
+        with pytest.raises(TypeError, match="crossover_batch"):
+            _CrossoverUnbatched(prob=0.9)
 
 
-class TestCrossoverBatchOverridden:
-    """Positive mirror of TestCrossoverBatchDefault: confirms all seven
-    built-in Crossover classes actually satisfy GA._crossover_pairs's
-    dispatch criterion (``type(op).crossover_batch is not
-    Crossover.crossover_batch``), i.e. that commit 7's and commit 8's new
-    methods are picked up by GA's existing batch-vs-loop routing rather
-    than silently shadowed by some other override.
-    """
+class TestCrossoverDerived:
+    """Confirm built-ins inherit the scalar operation from the batch primitive."""
 
     @pytest.mark.parametrize(
         "op",
@@ -558,8 +542,9 @@ class TestCrossoverBatchOverridden:
             CrossoverTwoPoint(prob=0.9),
         ],
     )
-    def test_overrides_crossover_batch(self, op):
-        assert type(op).crossover_batch is not Crossover.crossover_batch
+    def test_inherits_crossover(self, op):
+        assert "crossover" not in vars(type(op))
+        assert op.crossover.__func__ is Crossover.crossover
 
 
 # ---------------------------------------------------------------------------
@@ -661,10 +646,8 @@ class _MutationUnbatched(Mutation):
     default-implementation check below, or for any test that needs to
     exercise the per-individual fallback loop in
     ``GA._mutate_candidates``. This fresh subclass fills that role instead
-    (and is reused across test files for that purpose -- see
-    ``tests/test_ga_mixed.py::TestMutateCandidatesInterleaveOrder``),
-    mirroring how commit 8's _CrossoverUnbatched fills the same role for
-    Crossover.
+    and is reused across test files for that purpose -- see
+    ``tests/test_ga_mixed.py::TestMutateCandidatesInterleaveOrder``.
 
     ``mutate()`` draws exactly one ``rng.random()`` value per call (gated on
     ``prob`` like every real Mutation, though the outcome is always

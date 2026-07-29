@@ -362,9 +362,8 @@ class GA(Algorithm):
         class-attribute identity check is insufficient once a user subclass
         overrides only the scalar method) and the problem is all-continuous
         (``not mixed``); otherwise runs the existing per-pair loop unchanged.
-        If the batch call declines (returns ``None``) for this particular
-        invocation, falls back to the per-pair loop as well. ``post_crossover``
-        fires exactly once per pair regardless of which path is taken.
+        ``post_crossover`` fires exactly once per pair regardless of which path
+        is taken.
 
         Parameters
         ----------
@@ -400,21 +399,18 @@ class GA(Algorithm):
                 )
             else:
                 batch_offspring = np.empty((0, n_children, dim))
-            if batch_offspring is not None:
-                cand = np.empty((n_pair * n_children, dim))
-                gi = 0
-                for i in range(n_pair):
-                    parent = parents_batch[i]
-                    if gate[i]:
-                        c = batch_offspring[gi]
-                        gi += 1
-                    else:
-                        c = parent[:n_children].copy()
-                    c = self.crossover.post_crossover(c, parent, ctx.rng, ctx)
-                    cand[i * n_children : (i + 1) * n_children] = c
-                return cand
-            # Batch call declined for this specific invocation: redo this
-            # call's crossover section via the per-pair loop below.
+            cand = np.empty((n_pair * n_children, dim))
+            gi = 0
+            for i in range(n_pair):
+                parent = parents_batch[i]
+                if gate[i]:
+                    c = batch_offspring[gi]
+                    gi += 1
+                else:
+                    c = parent[:n_children].copy()
+                c = self.crossover.post_crossover(c, parent, ctx.rng, ctx)
+                cand[i * n_children : (i + 1) * n_children] = c
+            return cand
 
         cand = np.empty((n_pair * n_children, dim))
         for i in range(n_pair):
