@@ -47,7 +47,7 @@ flowchart TD
 
 ## Configuration in saealib
 
-Algorithm 1 in the paper is formulated as **maximizing** a reward, whereas `LowerConfidenceBound` assumes minimization and computes $\mathrm{LCB}(x) = \mu(x) - \kappa\sigma(x)$, returning it with its sign flipped so that score comparisons line up with saealib's other acquisition functions (to match saealib's overall convention that "higher score is better").
+The cited GP-UCB formulation is expressed as **maximizing** a reward, whereas `LowerConfidenceBound` assumes minimization and computes $\mathrm{LCB}(x) = \mu(x) - \kappa\sigma(x)$, returning it with its sign flipped so that score comparisons line up with saealib's other acquisition functions (to match saealib's overall convention that "higher score is better").
 
 Converting $\mu(x)$ into a minimization space and then flipping the sign gives $-(\mu(x) - \kappa\sigma(x)) = -\mu(x) + \kappa\sigma(x)$, which matches the direction of the upper confidence bound $\mu(x) + \kappa\sigma(x)$ in the maximization space.
 Therefore, `LowerConfidenceBound`'s `kappa` corresponds to the paper's $\sqrt{\beta_t}$.
@@ -110,21 +110,21 @@ Since the specific crossover, mutation, and selection operators are not part of 
 
 **κ (exploration–exploitation trade-off)**: Adjusted via `LowerConfidenceBound(kappa=...)`. The default is `2.0`.
 
-Algorithm 1 in the paper gives this weight not as a fixed value but as $\sqrt{\beta_t}$, dependent on the iteration count $t$.
-For example, when the search domain $D$ is a finite set, choosing $\beta_t$ as follows yields a theoretical upper bound on the cumulative regret (Theorem 1).
+The cited work gives this weight not as a fixed value but as $\sqrt{\beta_t}$, dependent on the iteration count $t$.
+For example, when the search domain $D$ is a finite set, choosing $\beta_t$ as follows yields a theoretical upper bound on the cumulative regret.
 
 $$\beta_t = 2 \log\left(\frac{|D|\, t^2 \pi^2}{6\delta}\right)$$
 
 Because this expression grows logarithmically in $t$, the exploration weight increases only gradually as iterations proceed.
-For a compact $D$ (Theorem 2), or for functions with bounded RKHS norm without assuming a GP prior (Theorem 3), schedules of $\beta_t$ increasing in $t$ are given as well, each with a different form.
+For a compact $D$, or for functions with bounded RKHS norm without assuming a GP prior, schedules of $\beta_t$ increasing in $t$ are given as well, each with a different form.
 The theoretical contribution the name GP-UCB refers to is precisely this correspondence between the $\beta_t$ schedule and the upper bound on cumulative regret.
 
 `LowerConfidenceBound`'s `kappa` is a constant fixed across iterations, and does not implement this $\sqrt{\beta_t}$ schedule.
 Therefore, GP-UCB with a fixed `kappa` is a naive fixed-weight UCB heuristic that does not carry the regret guarantee derived theoretically in the paper.
-The paper itself reports, in its experiments section, that using the $\beta_t$ given by Theorem 1 as-is is overly exploratory, and that scaling the coefficient down by 1/5 via cross-validation performed better — so using a fixed or empirically tuned weight in practice does not contradict the paper.
+The paper itself reports, in its experiments section, that using the theoretical $\beta_t$ schedule as-is is overly exploratory, and that scaling the coefficient down by 1/5 via cross-validation performed better — so using a fixed or empirically tuned weight in practice does not contradict the paper.
 However, there is no theoretical basis for how this fixed weight is chosen, and the default `kappa=2.0` is merely fixing a value equivalent to $\beta_t=4.0$.
 
-If you want to change `kappa` dynamically with $t$, rewriting `surrogate_manager.acquisition.kappa` every generation via `CallbackManager` can bring it closer to a schedule equivalent to Theorem 1.
+If you want to change `kappa` dynamically with $t$, rewriting `surrogate_manager.acquisition.kappa` every generation via `CallbackManager` can bring it closer to a corresponding iteration-dependent schedule.
 
 ## Related
 

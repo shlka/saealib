@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.EpsilonConstraintHandler &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
+    <title>saealib.EpsilonConstraintHandler &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=0cca27f2"></script>
+    <script src="../../_static/documentation_options.js?v=0bb4a1f3"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -804,16 +804,16 @@ that ε controls the feasibility threshold globally).</p></li>
 <li><p><em>Inequality</em> constraints: <code class="docutils literal notranslate"><span class="pre">max(0,</span> <span class="pre">g(x)</span> <span class="pre">-</span> <span class="pre">threshold)</span> <span class="pre">**</span> <span class="pre">2</span></code>  (squared
 positive part; the constraint's <code class="docutils literal notranslate"><span class="pre">threshold</span></code> still applies).</p></li>
 </ul>
-<p>This matches the sum-of-constraint-violation measure in Eq. (7) of
+<p>This follows the constraint-violation formulation summarized by
 Mezura-Montes &amp; Coello Coello (2011): inequality violations are squared,
-equality violations are the unsquared absolute value. Eq. (7) is stated
-for constraint values that have been normalised beforehand (see the
-sentence following Eq. (7) in Section 2.4); this handler aggregates the
-raw <code class="docutils literal notranslate"><span class="pre">g</span></code>/<code class="docutils literal notranslate"><span class="pre">h</span></code> values without that normalisation, so constraints on
+equality violations are the unsquared absolute value. The cited survey states
+the formulation for constraint values that have been normalised beforehand;
+this handler aggregates the raw <code class="docutils literal notranslate"><span class="pre">g</span></code>/<code class="docutils literal notranslate"><span class="pre">h</span></code> values without that
+normalisation, so constraints on
 very different scales will not contribute evenly to <code class="docutils literal notranslate"><span class="pre">cv</span></code>.</p>
 <p>The ε-constrained method itself originates from Takahama &amp; Sakai
 (2006); that paper has not been obtained, so it is credited here by
-name only. Eq. (7)-(9) above are cited via the Mezura-Montes &amp; Coello
+name only. The details above are supported by the Mezura-Montes &amp; Coello
 Coello (2011) survey, which was read directly and attributes the
 method to Takahama &amp; Sakai in its own text.</p>
 <p class="rubric">参照</p>

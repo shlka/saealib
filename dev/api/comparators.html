@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Comparators &#8212; saealib 0.1.0b5.dev70+g7b5949608 documentation</title>
+    <title>Comparators &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=95d09c5c"></script>
+    <script src="../_static/documentation_options.js?v=92ae1a5d"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -850,7 +850,7 @@
 <span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">non_dominated_sort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">dominator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/saealib/comparators/nds.html#non_dominated_sort"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.non_dominated_sort" title="Link to this definition">#</a></dt>
 <dd><p>Non-dominated sorting via a vectorized dominance matrix.</p>
 <p>Implements the fast-nondominated-sort front-peeling scheme of Deb et
-al. (2002), Section III-A: each individual’s domination count is
+al. (2002): each individual’s domination count is
 decremented as its dominators are peeled off, front by front. This
 implementation replaces the original Python double loop with a NumPy
 dominance matrix accumulated one objective at a time.</p>
@@ -883,7 +883,7 @@ None defaults to minimization for all objectives.</p></li>
 <p><span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id22" title="Kalyanmoy Deb, Amrit Pratap, Sameer Agarwal, and T. Meyarivan. A fast and elitist multiobjective genetic algorithm: nsga-ii. IEEE Transactions on Evolutionary Computation, 6(2):182–197, 2002. doi:10.1109/4235.996017.">3</a>]</span>: Deb, K., Pratap, A., Agarwal, S., &amp; Meyarivan,
 T. (2002). A fast and elitist multiobjective genetic algorithm:
 NSGA-II. <em>IEEE Transactions on Evolutionary Computation</em>, 6(2),
-182-197. (Section III-A, “Fast Nondominated Sorting Approach”.)</p>
+182-197.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -954,7 +954,7 @@ neighbors once sorted by that objective.</p>
 <p><span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id22" title="Kalyanmoy Deb, Amrit Pratap, Sameer Agarwal, and T. Meyarivan. A fast and elitist multiobjective genetic algorithm: nsga-ii. IEEE Transactions on Evolutionary Computation, 6(2):182–197, 2002. doi:10.1109/4235.996017.">3</a>]</span>: Deb, K., Pratap, A., Agarwal, S., &amp; Meyarivan,
 T. (2002). A fast and elitist multiobjective genetic algorithm:
 NSGA-II. <em>IEEE Transactions on Evolutionary Computation</em>, 6(2),
-182-197. (Section III-B.1, “Density Estimation”.)</p>
+182-197.</p>
 </dd></dl>
 
 <dl class="py function">

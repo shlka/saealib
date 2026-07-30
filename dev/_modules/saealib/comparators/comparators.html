@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.comparators.comparators &#8212; saealib 0.1.0b5.dev70+g7b5949608 documentation</title>
+    <title>saealib.comparators.comparators &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=95d09c5c"></script>
+    <script src="../../../_static/documentation_options.js?v=92ae1a5d"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1561,8 +1561,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Ordering rules:</span>
 
 <span class="sd">    - **Feasible block**: the non-dominated subset (``F(i) &lt; 1``) is ordered</span>
-<span class="sd">      by the iterative nearest-neighbour truncation operator of Section 3.2</span>
-<span class="sd">      (&quot;Environmental Selection&quot;) -- see :func:`spea2_truncation_order` --</span>
+<span class="sd">      by the iterative nearest-neighbour truncation procedure -- see</span>
+<span class="sd">      :func:`spea2_truncation_order` --</span>
 <span class="sd">      instead of a one-shot sort, so that boundary/extreme solutions are</span>
 <span class="sd">      preferentially retained under truncation.  The dominated subset</span>
 <span class="sd">      (``F(i) &gt;= 1``) follows, sorted by ascending SPEA2 fitness (lower =</span>
@@ -1668,8 +1668,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Sort feasible individuals via SPEA2 environmental selection.</span>
 
 <span class="sd">        Within the feasible block, the non-dominated subset (``F(i) &lt; 1``)</span>
-<span class="sd">        is ordered by :func:`spea2_truncation_order` (Zitzler et al. 2001,</span>
-<span class="sd">        Section 3.2), and the dominated subset (``F(i) &gt;= 1``) follows,</span>
+<span class="sd">        is ordered by :func:`spea2_truncation_order` (Zitzler et al. 2001),</span>
+<span class="sd">        and the dominated subset (``F(i) &gt;= 1``) follows,</span>
 <span class="sd">        ordered by ascending SPEA2 fitness. Infeasible individuals come</span>
 <span class="sd">        last, ordered by ascending constraint violation.</span>
 
@@ -1798,7 +1798,7 @@ window.runMermaid = runMermaid;</script>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Beume et al. (2007) default hypervolume reference point.</span>
 
-<span class="sd">    Section 2.1.3, &quot;Handling of boundary solutions&quot;: the reference point is</span>
+<span class="sd">    the boundary-solution handling described in the cited work: the reference point is</span>
 <span class="sd">    the vector of the currently worst objective values increased by 1.0,</span>
 <span class="sd">    recomputed every generation. For a maximized objective, &quot;worst&quot;</span>
 <span class="sd">    (the direction to move *away* from) is the minimum observed value, and</span>
@@ -1863,7 +1863,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        which IS defined and safe to use.</span>
 
 <span class="sd">    .. note::</span>
-<span class="sd">        **Deferred gap.** Beume et al. (2007) Section 2.1.3 special-cases</span>
+<span class="sd">        **Deferred gap.** Beume et al. (2007) explicitly special-cases</span>
 <span class="sd">        two-objective problems: the reference point is skipped entirely and</span>
 <span class="sd">        the two extremal (best-per-objective) solutions are unconditionally</span>
 <span class="sd">        kept.  This comparator always computes a reference point and HV</span>
@@ -1884,7 +1884,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Reference point in the *original* objective space, shape</span>
 <span class="sd">        ``(n_obj,)``.  If ``None`` (default), it is recomputed fresh on</span>
 <span class="sd">        every call as the front&#39;s worst objective values plus ``1.0``</span>
-<span class="sd">        (Beume et al. 2007, Section 2.1.3) -- see</span>
+<span class="sd">        (Beume et al. 2007, boundary-solution handling) -- see</span>
 <span class="sd">        :func:`_hv_default_reference_point`.</span>
 <span class="sd">    margin : float</span>
 <span class="sd">        Unused by the default (``reference_point=None``) computation, which</span>
@@ -2212,7 +2212,7 @@ window.runMermaid = runMermaid;</script>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize objectives using NSGA-III ideal point + hyperplane intercepts.</span>
 
-<span class="sd">    Deb &amp; Jain (2014), Section IV-B.</span>
+<span class="sd">    Deb &amp; Jain (2014).</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -2264,7 +2264,7 @@ window.runMermaid = runMermaid;</script>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Associate each individual with the closest reference line.</span>
 
-<span class="sd">    Deb &amp; Jain (2014), Section IV-C. Uses perpendicular distance from</span>
+<span class="sd">    Deb &amp; Jain (2014). Uses perpendicular distance from</span>
 <span class="sd">    ``f_norm[i]`` to the ray from the origin through ``reference_points[r]``.</span>
 
 <span class="sd">    Parameters</span>
@@ -2307,7 +2307,7 @@ window.runMermaid = runMermaid;</script>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Order individuals in a front using NSGA-III niche-preservation.</span>
 
-<span class="sd">    Deb &amp; Jain (2014), Algorithm 2. Selects ``n_needed`` individuals from</span>
+<span class="sd">    Deb &amp; Jain (2014). Selects ``n_needed`` individuals from</span>
 <span class="sd">    ``front_local`` in preference order, updating ``niche_count`` in-place.</span>
 
 <span class="sd">    Parameters</span>
@@ -2364,7 +2364,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    - sort_population: non-dominated sorting + normalization + niche preservation</span>
 <span class="sd">    - compare_population: inherited from ParetoComparator (Pareto dominance)</span>
 
-<span class="sd">    The NSGA-III selection mechanism (Deb &amp; Jain 2014, Algorithm 1):</span>
+<span class="sd">    The NSGA-III selection mechanism (Deb &amp; Jain 2014):</span>
 
 <span class="sd">    1. Non-dominated sorting (same fronts as NSGA-II).</span>
 <span class="sd">    2. Normalize objectives over ``S_t`` (the fronts accumulated so far, not</span>
@@ -2497,7 +2497,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">dist_full</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_feasible</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
             <span class="n">niche_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference_points</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
 
-            <span class="c1"># Deb &amp; Jain (2014) Algorithm 1 normalizes over S_t = F_1 union</span>
+            <span class="c1"># Deb &amp; Jain (2014) normalizes over S_t = F_1 union</span>
             <span class="c1"># ... union F_l, the fronts accumulated up to and including the</span>
             <span class="c1"># last one needed to reach the target population size, not over</span>
             <span class="c1"># the full combined population R_t. This class already</span>
@@ -2554,10 +2554,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">      distance: lower rank wins, ties broken by smaller distance to the</span>
 <span class="sd">      nearest reference point -- see :meth:`compare_population`</span>
 
-<span class="sd">    The R-NSGA-II selection mechanism (Deb &amp; Sundar 2006), Steps 1-3:</span>
+<span class="sd">    The R-NSGA-II selection mechanism (Deb &amp; Sundar 2006):</span>
 
 <span class="sd">    1. Non-dominated sorting (same fronts as NSGA-II).</span>
-<span class="sd">    2. Normalize objectives by range (min-max per objective, Eq. 3).</span>
+<span class="sd">    2. Normalize objectives by range (min-max per objective).</span>
 <span class="sd">    3. Step 1: for each reference point, compute the normalized Euclidean</span>
 <span class="sd">       distance of every individual in the front to that point and rank them</span>
 <span class="sd">       ascending (closest = rank 1).</span>
@@ -2745,7 +2745,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">assoc_idx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">dist_min</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Order a single front via R-NSGA-II Steps 1-3 (Deb &amp; Sundar 2006).</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Order a single front via the R-NSGA-II procedure (Deb &amp; Sundar 2006).</span>
 
 <span class="sd">        Step 1: for each reference point, rank the front&#39;s individuals in</span>
 <span class="sd">        ascending order of normalized Euclidean distance to that point</span>

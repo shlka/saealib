@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.comparators.nds &#8212; saealib 0.1.0b5.dev70+g7b5949608 documentation</title>
+    <title>saealib.comparators.nds &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=95d09c5c"></script>
+    <script src="../../../_static/documentation_options.js?v=92ae1a5d"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -963,7 +963,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Non-dominated sorting via a vectorized dominance matrix.</span>
 
 <span class="sd">    Implements the fast-nondominated-sort front-peeling scheme of Deb et</span>
-<span class="sd">    al. (2002), Section III-A: each individual&#39;s domination count is</span>
+<span class="sd">    al. (2002): each individual&#39;s domination count is</span>
 <span class="sd">    decremented as its dominators are peeled off, front by front. This</span>
 <span class="sd">    implementation replaces the original Python double loop with a NumPy</span>
 <span class="sd">    dominance matrix accumulated one objective at a time.</span>
@@ -997,7 +997,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    :cite:`deb2002nsga2`: Deb, K., Pratap, A., Agarwal, S., &amp; Meyarivan,</span>
 <span class="sd">    T. (2002). A fast and elitist multiobjective genetic algorithm:</span>
 <span class="sd">    NSGA-II. *IEEE Transactions on Evolutionary Computation*, 6(2),</span>
-<span class="sd">    182-197. (Section III-A, &quot;Fast Nondominated Sorting Approach&quot;.)</span>
+<span class="sd">    182-197.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_dom</span> <span class="o">=</span> <span class="n">dominator</span> <span class="k">if</span> <span class="n">dominator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_PARETO_DOMINATOR</span>
 
@@ -1227,7 +1227,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    :cite:`deb2002nsga2`: Deb, K., Pratap, A., Agarwal, S., &amp; Meyarivan,</span>
 <span class="sd">    T. (2002). A fast and elitist multiobjective genetic algorithm:</span>
 <span class="sd">    NSGA-II. *IEEE Transactions on Evolutionary Computation*, 6(2),</span>
-<span class="sd">    182-197. (Section III-B.1, &quot;Density Estimation&quot;.)</span>
+<span class="sd">    182-197.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">n</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">f_front</span><span class="o">.</span><span class="n">shape</span>
     <span class="n">cd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
@@ -1378,7 +1378,7 @@ window.runMermaid = runMermaid;</script>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Order a non-dominated set via the SPEA2 archive truncation operator.</span>
 
-<span class="sd">    Implements Section 3.2 (&quot;Environmental Selection&quot;) of Zitzler et al.</span>
+<span class="sd">    Implements the environmental-selection procedure of Zitzler et al.</span>
 <span class="sd">    (2001): while the set is larger than 1, remove the individual ``i`` for</span>
 <span class="sd">    which ``i &lt;=_d j`` holds for every remaining ``j``, where ``i &lt;=_d j``</span>
 <span class="sd">    compares the two individuals&#39; sorted distance-to-neighbour vectors</span>
@@ -1410,7 +1410,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ----------</span>
 <span class="sd">    :cite:`zitzler2001spea2`: Zitzler, E., Laumanns, M., &amp; Thiele, L. (2001).</span>
 <span class="sd">    SPEA2: Improving the Strength Pareto Evolutionary Algorithm. TIK-Report</span>
-<span class="sd">    103, ETH Zurich, Switzerland. (Section 3.2, &quot;Environmental Selection&quot;.)</span>
+<span class="sd">    103, ETH Zurich, Switzerland.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
     <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>

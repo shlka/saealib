@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>NSGA-III &#8212; saealib 0.1.0b5.dev70+g7b5949608 documentation</title>
+    <title>NSGA-III &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=95d09c5c"></script>
+    <script src="../_static/documentation_options.js?v=92ae1a5d"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1046,7 +1046,7 @@ The worst-case per-generation complexity combining normalization, association, a
 <td><p>L1-2, 8</p></td>
 </tr>
 <tr class="row-odd"><td><p>Parent selection</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=1)</span></code> (with tournament size 1, no comparison is actually performed, corresponding to the paper’s Section IV-F description of “choose parents randomly from <span class="math notranslate nohighlight">\(P_{t+1}\)</span>”)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=1)</span></code> (with tournament size 1, no comparison is actually performed, corresponding to the paper’s description of “choose parents randomly from <span class="math notranslate nohighlight">\(P_{t+1}\)</span>”)</p></td>
 <td><p>L1, 8</p></td>
 </tr>
 <tr class="row-even"><td><p>Crossover</p></td>
@@ -1112,12 +1112,12 @@ In NSGA-II, <code class="docutils literal notranslate"><span class="pre">NSGA2Co
 </section>
 <section id="parameters-and-variants">
 <h2>Parameters and variants<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
-<p><strong><span class="math notranslate nohighlight">\(\eta_c\)</span> (SBX distribution index) and crossover probability <span class="math notranslate nohighlight">\(p_c\)</span></strong>: The paper’s Table II reports using <span class="math notranslate nohighlight">\(p_c=1\)</span> (<code class="docutils literal notranslate"><span class="pre">CrossoverSBX(prob=1.0)</span></code>) and <span class="math notranslate nohighlight">\(\eta_c=30\)</span> (<code class="docutils literal notranslate"><span class="pre">CrossoverSBX(eta=30.0)</span></code>) for NSGA-III.
+<p><strong><span class="math notranslate nohighlight">\(\eta_c\)</span> (SBX distribution index) and crossover probability <span class="math notranslate nohighlight">\(p_c\)</span></strong>: The paper reports using <span class="math notranslate nohighlight">\(p_c=1\)</span> (<code class="docutils literal notranslate"><span class="pre">CrossoverSBX(prob=1.0)</span></code>) and <span class="math notranslate nohighlight">\(\eta_c=30\)</span> (<code class="docutils literal notranslate"><span class="pre">CrossoverSBX(eta=30.0)</span></code>) for NSGA-III.
 Both the crossover probability and distribution index are larger than NSGA-II’s defaults (<span class="math notranslate nohighlight">\(p_c=0.9\)</span>, <span class="math notranslate nohighlight">\(\eta_c=20\)</span>), a setting that generates offspring closer to the parents with higher probability <span class="bibtex-citation" id="id3">[<a class="reference internal" href="../references.html#id27" title="Kalyanmoy Deb and Himanshu Jain. An evolutionary many-objective optimization algorithm using reference-point-based nondominated sorting approach, part i: solving problems with box constraints. IEEE Transactions on Evolutionary Computation, 18(4):577–601, 2014. doi:10.1109/TEVC.2013.2281535.">7</a>]</span>.</p>
 <p><strong>Correspondence between population size <span class="math notranslate nohighlight">\(N\)</span> and reference-point count <span class="math notranslate nohighlight">\(H\)</span></strong>: The paper recommends choosing the population size <span class="math notranslate nohighlight">\(N\)</span> as the smallest multiple of 4 at or above the reference-point count <span class="math notranslate nohighlight">\(H\)</span>.
 Unless <code class="docutils literal notranslate"><span class="pre">set_initializer()</span></code> is called, <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> uses <code class="docutils literal notranslate"><span class="pre">LHSInitializer(n_init_population=4*dim)</span></code> as the default, so this population size depends only on the decision-variable dimension <code class="docutils literal notranslate"><span class="pre">dim</span></code>, and is not tied to <code class="docutils literal notranslate"><span class="pre">H</span></code>.
 If you want the population size deliberately matched to <code class="docutils literal notranslate"><span class="pre">H</span></code>, check the number of rows returned by <code class="docutils literal notranslate"><span class="pre">uniform_weight_vectors</span></code> and explicitly specify <code class="docutils literal notranslate"><span class="pre">n_init_population</span></code> via <code class="docutils literal notranslate"><span class="pre">set_initializer()</span></code>.</p>
-<p><strong>Why parent selection isn’t tournament-based</strong>: Section IV-F of the paper states that, since NSGA-III already secures diversity through its niche-preservation operation, it chooses parents randomly rather than using an explicit selection operator <span class="bibtex-citation" id="id4">[<a class="reference internal" href="../references.html#id27" title="Kalyanmoy Deb and Himanshu Jain. An evolutionary many-objective optimization algorithm using reference-point-based nondominated sorting approach, part i: solving problems with box constraints. IEEE Transactions on Evolutionary Computation, 18(4):577–601, 2014. doi:10.1109/TEVC.2013.2281535.">7</a>]</span>.
+<p><strong>Why parent selection isn’t tournament-based</strong>: The paper states that, since NSGA-III already secures diversity through its niche-preservation operation, it chooses parents randomly rather than using an explicit selection operator <span class="bibtex-citation" id="id4">[<a class="reference internal" href="../references.html#id27" title="Kalyanmoy Deb and Himanshu Jain. An evolutionary many-objective optimization algorithm using reference-point-based nondominated sorting approach, part i: solving problems with box constraints. IEEE Transactions on Evolutionary Computation, 18(4):577–601, 2014. doi:10.1109/TEVC.2013.2281535.">7</a>]</span>.
 <code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=1)</span></code> expresses this “random parent selection,” since no comparison is actually performed when the tournament size is 1.
 Changing <code class="docutils literal notranslate"><span class="pre">tournament_size</span></code> to 2 or more adds the same dominance-based selection pressure as NSGA-II/SPEA2, introducing a selection mechanism the paper deliberately excludes.</p>
 <p><strong>Swapping the dominator (dominance predicate)</strong>: <code class="docutils literal notranslate"><span class="pre">NSGA3Comparator(reference_points,</span> <span class="pre">dominator=...)</span></code> lets you inject a <a class="reference internal" href="../components/dominance.html"><span class="std std-doc">Dominator</span></a> other than the default <code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>.

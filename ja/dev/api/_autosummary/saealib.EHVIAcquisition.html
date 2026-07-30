@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.EHVIAcquisition &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
+    <title>saealib.EHVIAcquisition &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=0cca27f2"></script>
+    <script src="../../_static/documentation_options.js?v=0bb4a1f3"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -781,8 +781,9 @@
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">EHVIAcquisition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/acquisition/ehvi.html#EHVIAcquisition"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.EHVIAcquisition" title="Link to this definition">#</a></dt>
 <dd><p>ベースクラス: <a class="reference internal" href="saealib.AcquisitionFunction.html#saealib.AcquisitionFunction" title="saealib.acquisition.base.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a></p>
 <p>Expected Hypervolume Improvement (EHVI) acquisition function.</p>
-<p>Estimates EHVI via Monte Carlo sampling (Hupkens 2015 Eq. 1; HVI
-definition from Daulton 2020 Definition 2):</p>
+<p>Estimates EHVI via Monte Carlo sampling. The exact EHVI and HVI concepts
+follow Hupkens (2015) and Daulton et al. (2020); the sample average
+below is the approximation used by this implementation:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">EHVI</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">S</span><span class="p">)</span> <span class="o">*</span> <span class="n">sum_s</span> <span class="n">HVI</span><span class="p">(</span><span class="n">y_s</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
 <span class="n">y_s</span> <span class="o">~</span> <span class="n">N</span><span class="p">(</span><span class="n">mu</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">diag</span><span class="p">(</span><span class="n">sigma</span><span class="o">^</span><span class="mi">2</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span>   <span class="p">[</span><span class="n">independent</span> <span class="n">objectives</span><span class="p">]</span>
 </pre></div>

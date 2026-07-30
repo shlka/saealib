@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.acquisition.parego &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
+    <title>saealib.acquisition.parego &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=0cca27f2"></script>
+    <script src="../../../_static/documentation_options.js?v=0bb4a1f3"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -967,7 +967,8 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Scalarises objectives using the Augmented Tchebycheff function with a</span>
 <span class="sd">    randomly sampled weight vector, then applies Expected Improvement on the</span>
-<span class="sd">    scalarised prediction (Knowles 2006; formula from Chugh 2020 Eq. 8).</span>
+<span class="sd">    scalarised prediction (Knowles 2006; a scalarization variant informed by</span>
+<span class="sd">    Chugh 2020).</span>
 
 <span class="sd">    Scalarised objective (minimised)::</span>
 
@@ -1010,8 +1011,8 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    :cite:`chugh2020scalarizing`: Chugh, T. (2020). Scalarizing functions in</span>
 <span class="sd">    Bayesian multiobjective optimization. *2020 IEEE Congress on</span>
-<span class="sd">    Evolutionary Computation (CEC)*, 1-8. (Eq. 8; scalarization formula</span>
-<span class="sd">    used here.)</span>
+<span class="sd">    Evolutionary Computation (CEC)*, 1-8. (Scalarization-family reference;</span>
+<span class="sd">    saealib uses the weighted augmentation variant documented above.)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">requires_uncertainty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
@@ -1035,7 +1036,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">weights</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">z_star</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Augmented Tchebycheff scalarization (Chugh 2020 Eq. 8).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Augmented Tchebycheff scalarization variant used by saealib.&quot;&quot;&quot;</span>
         <span class="n">diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">f</span> <span class="o">-</span> <span class="n">z_star</span><span class="p">)</span>  <span class="c1"># (..., n_obj)</span>
         <span class="n">weighted</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">*</span> <span class="n">diff</span>  <span class="c1"># (..., n_obj)</span>
         <span class="k">return</span> <span class="n">weighted</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">weighted</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>

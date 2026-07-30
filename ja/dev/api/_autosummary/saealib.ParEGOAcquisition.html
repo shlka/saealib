@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.ParEGOAcquisition &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
+    <title>saealib.ParEGOAcquisition &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=0cca27f2"></script>
+    <script src="../../_static/documentation_options.js?v=0bb4a1f3"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -783,7 +783,8 @@
 <p>ParEGO acquisition function for multi-objective Bayesian optimisation.</p>
 <p>Scalarises objectives using the Augmented Tchebycheff function with a
 randomly sampled weight vector, then applies Expected Improvement on the
-scalarised prediction (Knowles 2006; formula from Chugh 2020 Eq. 8).</p>
+scalarised prediction (Knowles 2006; a scalarization variant informed by
+Chugh 2020).</p>
 <p>Scalarised objective (minimised):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">g</span><span class="p">(</span><span class="n">f</span><span class="p">;</span> <span class="n">w</span><span class="p">,</span> <span class="n">z</span><span class="o">*</span><span class="p">)</span> <span class="o">=</span> <span class="n">max_i</span> <span class="p">[</span><span class="n">w_i</span> <span class="o">|</span><span class="n">f_i</span> <span class="o">-</span> <span class="n">z_i</span><span class="o">*|</span><span class="p">]</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">sum_i</span> <span class="n">w_i</span> <span class="o">|</span><span class="n">f_i</span> <span class="o">-</span> <span class="n">z_i</span><span class="o">*|</span>
 </pre></div>
@@ -821,8 +822,8 @@ multiobjective optimization problems. <em>IEEE Transactions on
 Evolutionary Computation</em>, 10(1), 50-66. (Conceptual origin.)</p>
 <p><span class="bibtex-citation" id="id2">[<a class="reference internal" href="../../references.html#id48" title="Tinkle Chugh. Scalarizing functions in bayesian multiobjective optimization. In 2020 IEEE Congress on Evolutionary Computation (CEC), 1–8. 2020. doi:10.1109/CEC48606.2020.9185706.">30</a>]</span>: Chugh, T. (2020). Scalarizing functions in
 Bayesian multiobjective optimization. <em>2020 IEEE Congress on
-Evolutionary Computation (CEC)</em>, 1-8. (Eq. 8; scalarization formula
-used here.)</p>
+Evolutionary Computation (CEC)</em>, 1-8. (Scalarization-family reference;
+saealib uses the weighted augmentation variant documented above.)</p>
 </dd></dl>
 
 <p class="rubric">Methods</p>

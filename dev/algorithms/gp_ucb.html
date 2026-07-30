@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>GP-UCB (Gaussian Process Upper Confidence Bound) &#8212; saealib 0.1.0b5.dev70+g7b5949608 documentation</title>
+    <title>GP-UCB (Gaussian Process Upper Confidence Bound) &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=95d09c5c"></script>
+    <script src="../_static/documentation_options.js?v=92ae1a5d"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1021,7 +1021,7 @@ Increasing <span class="math notranslate nohighlight">\(\beta_t\)</span> accordi
     </pre></section>
 <section id="configuration-in-saealib">
 <h2>Configuration in saealib<a class="headerlink" href="#configuration-in-saealib" title="Link to this heading">#</a></h2>
-<p>Algorithm 1 in the paper is formulated as <strong>maximizing</strong> a reward, whereas <code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code> assumes minimization and computes <span class="math notranslate nohighlight">\(\mathrm{LCB}(x) = \mu(x) - \kappa\sigma(x)\)</span>, returning it with its sign flipped so that score comparisons line up with saealib’s other acquisition functions (to match saealib’s overall convention that “higher score is better”).</p>
+<p>The cited GP-UCB formulation is expressed as <strong>maximizing</strong> a reward, whereas <code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code> assumes minimization and computes <span class="math notranslate nohighlight">\(\mathrm{LCB}(x) = \mu(x) - \kappa\sigma(x)\)</span>, returning it with its sign flipped so that score comparisons line up with saealib’s other acquisition functions (to match saealib’s overall convention that “higher score is better”).</p>
 <p>Converting <span class="math notranslate nohighlight">\(\mu(x)\)</span> into a minimization space and then flipping the sign gives <span class="math notranslate nohighlight">\(-(\mu(x) - \kappa\sigma(x)) = -\mu(x) + \kappa\sigma(x)\)</span>, which matches the direction of the upper confidence bound <span class="math notranslate nohighlight">\(\mu(x) + \kappa\sigma(x)\)</span> in the maximization space.
 Therefore, <code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code>’s <code class="docutils literal notranslate"><span class="pre">kappa</span></code> corresponds to the paper’s <span class="math notranslate nohighlight">\(\sqrt{\beta_t}\)</span>.</p>
 <div class="pst-scrollable-table-container"><table class="table">
@@ -1103,18 +1103,18 @@ Therefore, <code class="docutils literal notranslate"><span class="pre">LowerCon
 <section id="parameters-and-variants">
 <h2>Parameters and variants<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
 <p><strong>κ (exploration–exploitation trade-off)</strong>: Adjusted via <code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound(kappa=...)</span></code>. The default is <code class="docutils literal notranslate"><span class="pre">2.0</span></code>.</p>
-<p>Algorithm 1 in the paper gives this weight not as a fixed value but as <span class="math notranslate nohighlight">\(\sqrt{\beta_t}\)</span>, dependent on the iteration count <span class="math notranslate nohighlight">\(t\)</span>.
-For example, when the search domain <span class="math notranslate nohighlight">\(D\)</span> is a finite set, choosing <span class="math notranslate nohighlight">\(\beta_t\)</span> as follows yields a theoretical upper bound on the cumulative regret (Theorem 1).</p>
+<p>The cited work gives this weight not as a fixed value but as <span class="math notranslate nohighlight">\(\sqrt{\beta_t}\)</span>, dependent on the iteration count <span class="math notranslate nohighlight">\(t\)</span>.
+For example, when the search domain <span class="math notranslate nohighlight">\(D\)</span> is a finite set, choosing <span class="math notranslate nohighlight">\(\beta_t\)</span> as follows yields a theoretical upper bound on the cumulative regret.</p>
 <div class="math notranslate nohighlight">
 \[\beta_t = 2 \log\left(\frac{|D|\, t^2 \pi^2}{6\delta}\right)\]</div>
 <p>Because this expression grows logarithmically in <span class="math notranslate nohighlight">\(t\)</span>, the exploration weight increases only gradually as iterations proceed.
-For a compact <span class="math notranslate nohighlight">\(D\)</span> (Theorem 2), or for functions with bounded RKHS norm without assuming a GP prior (Theorem 3), schedules of <span class="math notranslate nohighlight">\(\beta_t\)</span> increasing in <span class="math notranslate nohighlight">\(t\)</span> are given as well, each with a different form.
+For a compact <span class="math notranslate nohighlight">\(D\)</span>, or for functions with bounded RKHS norm without assuming a GP prior, schedules of <span class="math notranslate nohighlight">\(\beta_t\)</span> increasing in <span class="math notranslate nohighlight">\(t\)</span> are given as well, each with a different form.
 The theoretical contribution the name GP-UCB refers to is precisely this correspondence between the <span class="math notranslate nohighlight">\(\beta_t\)</span> schedule and the upper bound on cumulative regret.</p>
 <p><code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code>’s <code class="docutils literal notranslate"><span class="pre">kappa</span></code> is a constant fixed across iterations, and does not implement this <span class="math notranslate nohighlight">\(\sqrt{\beta_t}\)</span> schedule.
 Therefore, GP-UCB with a fixed <code class="docutils literal notranslate"><span class="pre">kappa</span></code> is a naive fixed-weight UCB heuristic that does not carry the regret guarantee derived theoretically in the paper.
-The paper itself reports, in its experiments section, that using the <span class="math notranslate nohighlight">\(\beta_t\)</span> given by Theorem 1 as-is is overly exploratory, and that scaling the coefficient down by 1/5 via cross-validation performed better — so using a fixed or empirically tuned weight in practice does not contradict the paper.
+The paper itself reports, in its experiments section, that using the theoretical <span class="math notranslate nohighlight">\(\beta_t\)</span> schedule as-is is overly exploratory, and that scaling the coefficient down by 1/5 via cross-validation performed better — so using a fixed or empirically tuned weight in practice does not contradict the paper.
 However, there is no theoretical basis for how this fixed weight is chosen, and the default <code class="docutils literal notranslate"><span class="pre">kappa=2.0</span></code> is merely fixing a value equivalent to <span class="math notranslate nohighlight">\(\beta_t=4.0\)</span>.</p>
-<p>If you want to change <code class="docutils literal notranslate"><span class="pre">kappa</span></code> dynamically with <span class="math notranslate nohighlight">\(t\)</span>, rewriting <code class="docutils literal notranslate"><span class="pre">surrogate_manager.acquisition.kappa</span></code> every generation via <code class="docutils literal notranslate"><span class="pre">CallbackManager</span></code> can bring it closer to a schedule equivalent to Theorem 1.</p>
+<p>If you want to change <code class="docutils literal notranslate"><span class="pre">kappa</span></code> dynamically with <span class="math notranslate nohighlight">\(t\)</span>, rewriting <code class="docutils literal notranslate"><span class="pre">surrogate_manager.acquisition.kappa</span></code> every generation via <code class="docutils literal notranslate"><span class="pre">CallbackManager</span></code> can bring it closer to a corresponding iteration-dependent schedule.</p>
 </section>
 <section id="related">
 <h2>Related<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>

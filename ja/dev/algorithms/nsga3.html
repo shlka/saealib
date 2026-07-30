@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>NSGA-III &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
+    <title>NSGA-III &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=0cca27f2"></script>
+    <script src="../_static/documentation_options.js?v=0bb4a1f3"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1040,7 +1040,7 @@ window.runMermaid = runMermaid;</script>
 <td><p>L1-2, 8</p></td>
 </tr>
 <tr class="row-odd"><td><p>親選択</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=1)</span></code>（トーナメントサイズ1では比較処理自体が実行されないため、論文がSection IV-Fで述べる「<span class="math notranslate nohighlight">\(P_{t+1}\)</span>からランダムに親を選ぶ」動作に対応する）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=1)</span></code>（トーナメントサイズ1では比較処理自体が実行されないため、論文が述べる「<span class="math notranslate nohighlight">\(P_{t+1}\)</span>からランダムに親を選ぶ」動作に対応する）</p></td>
 <td><p>L1, 8</p></td>
 </tr>
 <tr class="row-even"><td><p>交叉</p></td>
@@ -1105,9 +1105,9 @@ window.runMermaid = runMermaid;</script>
 </section>
 <section id="parameters-and-variants">
 <h2>パラメータと変種<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
-<p><strong><span class="math notranslate nohighlight">\(\eta_c\)</span>（SBX分布指数）と交叉確率<span class="math notranslate nohighlight">\(p_c\)</span></strong>：論文のTable IIは、NSGA-IIIで<span class="math notranslate nohighlight">\(p_c=1\)</span>（<code class="docutils literal notranslate"><span class="pre">CrossoverSBX(prob=1.0)</span></code>）、<span class="math notranslate nohighlight">\(\eta_c=30\)</span>（<code class="docutils literal notranslate"><span class="pre">CrossoverSBX(eta=30.0)</span></code>）を使ったと報告しています。 NSGA-IIの既定値（<span class="math notranslate nohighlight">\(p_c=0.9\)</span>、<span class="math notranslate nohighlight">\(\eta_c=20\)</span>）より交叉確率と分布指数のいずれも大きく、親に近い子個体をより高い確率で生成する設定になっています<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../references.html#id27" title="Kalyanmoy Deb and Himanshu Jain. An evolutionary many-objective optimization algorithm using reference-point-based nondominated sorting approach, part i: solving problems with box constraints. IEEE Transactions on Evolutionary Computation, 18(4):577–601, 2014. doi:10.1109/TEVC.2013.2281535.">7</a>]</span>。</p>
+<p><strong><span class="math notranslate nohighlight">\(\eta_c\)</span>（SBX分布指数）と交叉確率<span class="math notranslate nohighlight">\(p_c\)</span></strong>：論文は、NSGA-IIIで<span class="math notranslate nohighlight">\(p_c=1\)</span>（<code class="docutils literal notranslate"><span class="pre">CrossoverSBX(prob=1.0)</span></code>）、<span class="math notranslate nohighlight">\(\eta_c=30\)</span>（<code class="docutils literal notranslate"><span class="pre">CrossoverSBX(eta=30.0)</span></code>）を使ったと報告しています。 NSGA-IIの既定値（<span class="math notranslate nohighlight">\(p_c=0.9\)</span>、<span class="math notranslate nohighlight">\(\eta_c=20\)</span>）より交叉確率と分布指数のいずれも大きく、親に近い子個体をより高い確率で生成する設定になっています<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../references.html#id27" title="Kalyanmoy Deb and Himanshu Jain. An evolutionary many-objective optimization algorithm using reference-point-based nondominated sorting approach, part i: solving problems with box constraints. IEEE Transactions on Evolutionary Computation, 18(4):577–601, 2014. doi:10.1109/TEVC.2013.2281535.">7</a>]</span>。</p>
 <p><strong>個体数<span class="math notranslate nohighlight">\(N\)</span>と参照点数<span class="math notranslate nohighlight">\(H\)</span>の対応</strong>：論文は、参照点数<span class="math notranslate nohighlight">\(H\)</span>に対して個体数<span class="math notranslate nohighlight">\(N\)</span>を<span class="math notranslate nohighlight">\(H\)</span>以上で最小の4の倍数に選ぶことを推奨しています。 <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>は<code class="docutils literal notranslate"><span class="pre">set_initializer()</span></code>を呼ばない場合<code class="docutils literal notranslate"><span class="pre">LHSInitializer(n_init_population=4*dim)</span></code>を既定値として使うため、この個体数は決定変数の次元<code class="docutils literal notranslate"><span class="pre">dim</span></code>にのみ依存し、<code class="docutils literal notranslate"><span class="pre">H</span></code>とは連動しません。 <code class="docutils literal notranslate"><span class="pre">H</span></code>に対して個体数を意図的に揃えたい場合は、<code class="docutils literal notranslate"><span class="pre">uniform_weight_vectors</span></code>が返す配列の行数を確認したうえで、<code class="docutils literal notranslate"><span class="pre">set_initializer()</span></code>で<code class="docutils literal notranslate"><span class="pre">n_init_population</span></code>を明示的に指定します。</p>
-<p><strong>親選択がトーナメントでない理由</strong>：論文Section IV-Fは、NSGA-IIIがニッチ保存操作によってすでに多様性を確保しているため、明示的な選択演算子を用いず親をランダムに選ぶと述べています<span class="bibtex-citation" id="id4">[<a class="reference internal" href="../references.html#id27" title="Kalyanmoy Deb and Himanshu Jain. An evolutionary many-objective optimization algorithm using reference-point-based nondominated sorting approach, part i: solving problems with box constraints. IEEE Transactions on Evolutionary Computation, 18(4):577–601, 2014. doi:10.1109/TEVC.2013.2281535.">7</a>]</span>。 <code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=1)</span></code>は、トーナメントサイズが1のとき比較処理自体が実行されないため、この「ランダムな親選択」を表現します。 <code class="docutils literal notranslate"><span class="pre">tournament_size</span></code>を2以上に変更すると、NSGA-II/SPEA2と同じ優越関係ベースの選択圧が加わり、論文が意図的に排除した選択機構を導入することになります。</p>
+<p><strong>親選択がトーナメントでない理由</strong>：論文は、NSGA-IIIがニッチ保存操作によってすでに多様性を確保しているため、明示的な選択演算子を用いず親をランダムに選ぶと述べています<span class="bibtex-citation" id="id4">[<a class="reference internal" href="../references.html#id27" title="Kalyanmoy Deb and Himanshu Jain. An evolutionary many-objective optimization algorithm using reference-point-based nondominated sorting approach, part i: solving problems with box constraints. IEEE Transactions on Evolutionary Computation, 18(4):577–601, 2014. doi:10.1109/TEVC.2013.2281535.">7</a>]</span>。 <code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=1)</span></code>は、トーナメントサイズが1のとき比較処理自体が実行されないため、この「ランダムな親選択」を表現します。 <code class="docutils literal notranslate"><span class="pre">tournament_size</span></code>を2以上に変更すると、NSGA-II/SPEA2と同じ優越関係ベースの選択圧が加わり、論文が意図的に排除した選択機構を導入することになります。</p>
 <p><strong>dominator（支配述語）の差し替え</strong>：<code class="docutils literal notranslate"><span class="pre">NSGA3Comparator(reference_points,</span> <span class="pre">dominator=...)</span></code>で、既定の<code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>以外の<a class="reference internal" href="../components/dominance.html"><span class="std std-doc">Dominator</span></a>を注入できます。 非優越ソート自体の結果が変わるため、フロント分割とニッチ保存の対象個体群もこの支配述語に依存します。</p>
 </section>
 <section id="related">

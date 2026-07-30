@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.GradientRepairHandler &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
+    <title>saealib.GradientRepairHandler &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=0cca27f2"></script>
+    <script src="../../_static/documentation_options.js?v=0bb4a1f3"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -786,27 +786,28 @@ to <a class="reference internal" href="#saealib.GradientRepairHandler.repair" ti
 iteration, the set of currently-violated constraints is determined
 (equality: <code class="docutils literal notranslate"><span class="pre">|h(x)|</span> <span class="pre">&gt;</span> <span class="pre">tolerance</span></code>; inequality: <code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">&gt;</span> <span class="pre">threshold</span></code>),
 their raw values and gradients are stacked into <code class="docutils literal notranslate"><span class="pre">ΔV</span></code> and the Jacobian
-<code class="docutils literal notranslate"><span class="pre">J</span></code> (Eq. 6), and a single simultaneous update is applied:</p>
+<code class="docutils literal notranslate"><span class="pre">J</span></code>, and a single simultaneous update is applied:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Δx</span> <span class="o">=</span> <span class="n">pinv</span><span class="p">(</span><span class="n">J</span><span class="p">)</span> <span class="o">@</span> <span class="n">ΔV</span>
 <span class="n">x</span> <span class="o">&lt;-</span> <span class="n">x</span> <span class="o">+</span> <span class="n">Δx</span>
 </pre></div>
 </div>
-<p>using the Moore-Penrose pseudoinverse (Eq. 8), since <code class="docutils literal notranslate"><span class="pre">J</span></code> is generally
+<p>using the Moore-Penrose pseudoinverse, since <code class="docutils literal notranslate"><span class="pre">J</span></code> is generally
 not square. Satisfied constraints contribute no row to <code class="docutils literal notranslate"><span class="pre">J</span></code>/<code class="docutils literal notranslate"><span class="pre">ΔV</span></code> for
-that iteration, per the paper's Section 3.1 remark that &quot;there is no
+that iteration, per the paper's remark that &quot;there is no
 need to adjust ... non-violated constraints.&quot; Iteration stops early once
 no constraint is violated, or once <code class="docutils literal notranslate"><span class="pre">max(|Δx|)</span> <span class="pre">&lt;</span> <span class="pre">epsilon</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">ΔV</span></code> follows Eq. (9): for an inequality constraint (single upper bound
-<code class="docutils literal notranslate"><span class="pre">threshold</span></code> only, per <a class="reference internal" href="saealib.InequalityConstraint.html#saealib.InequalityConstraint" title="saealib.InequalityConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">InequalityConstraint</span></code></a>), <code class="docutils literal notranslate"><span class="pre">ΔV_i</span> <span class="pre">=</span>
+<p><code class="docutils literal notranslate"><span class="pre">ΔV</span></code> follows the cited repair procedure. For an inequality constraint
+(single upper bound <code class="docutils literal notranslate"><span class="pre">threshold</span></code> only, per
+<a class="reference internal" href="saealib.InequalityConstraint.html#saealib.InequalityConstraint" title="saealib.InequalityConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">InequalityConstraint</span></code></a>), <code class="docutils literal notranslate"><span class="pre">ΔV_i</span> <span class="pre">=</span>
 <span class="pre">threshold</span> <span class="pre">-</span> <span class="pre">g(x)</span></code>. For an <a class="reference internal" href="saealib.EqualityConstraint.html#saealib.EqualityConstraint" title="saealib.EqualityConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">EqualityConstraint</span></code></a> (<code class="docutils literal notranslate"><span class="pre">h(x)</span> <span class="pre">=</span> <span class="pre">0</span></code> by
 construction, i.e. the target value is already embedded as 0), <code class="docutils literal notranslate"><span class="pre">ΔV_i</span> <span class="pre">=</span>
-<span class="pre">-h(x)</span></code>; both are the paper's &quot;target minus current value&quot; (see the
-worked example in Section 3.2, point A, where <code class="docutils literal notranslate"><span class="pre">ΔV</span> <span class="pre">=</span> <span class="pre">c</span> <span class="pre">-</span> <span class="pre">h(x)</span> <span class="pre">=</span> <span class="pre">1</span></code>,
-which is the sign that the printed Eq. (9) equality row does not
+<span class="pre">-h(x)</span></code>; both are the paper's &quot;target minus current value.&quot; The paper's
+worked example uses <code class="docutils literal notranslate"><span class="pre">ΔV</span> <span class="pre">=</span> <span class="pre">c</span> <span class="pre">-</span> <span class="pre">h(x)</span> <span class="pre">=</span> <span class="pre">1</span></code>,
+which is the sign that the printed equality row does not
 literally show but the numeric example requires).</p>
 <p>When <a class="reference internal" href="saealib.InequalityConstraint.html#saealib.InequalityConstraint.gradient" title="saealib.InequalityConstraint.gradient"><code class="xref py py-meth docutils literal notranslate"><span class="pre">gradient()</span></code></a> returns <code class="docutils literal notranslate"><span class="pre">None</span></code> for a
 violated constraint, <code class="xref py py-func docutils literal notranslate"><span class="pre">_numerical_gradient()</span></code> supplies a
-forward-difference approximation (Eq. 7) instead of skipping it — this
+forward-difference approximation instead of skipping it — this
 is what lets the handler now repair both equality and inequality
 constraints regardless of whether an analytical Jacobian is available.</p>
 <p>After all iterations the result is clipped to <code class="docutils literal notranslate"><span class="pre">[lb,</span> <span class="pre">ub]</span></code> so bounds

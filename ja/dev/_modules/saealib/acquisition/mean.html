@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.acquisition.mean &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
+    <title>saealib.acquisition.mean &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=0cca27f2"></script>
+    <script src="../../../_static/documentation_options.js?v=0bb4a1f3"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1056,17 +1056,17 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    overridden to the worst possible value (``-np.inf``) for any candidate</span>
 <span class="sd">    that violates the distance constraint::</span>
 
-<span class="sd">        ||x - x_j|| &gt;= beta_i * Delta_i,  j = 1, ..., k + i - 1   (Eq. 1)</span>
+<span class="sd">        ||x - x_j|| &gt;= beta_i * Delta_i,  j = 1, ..., k + i - 1</span>
 
 <span class="sd">    i.e. whose minimum distance to every previously evaluated point falls</span>
 <span class="sd">    below the current iteration&#39;s threshold ``beta_i * Delta``. ``beta_i``</span>
 <span class="sd">    cycles through ``search_pattern``: the parameters are set by performing</span>
 <span class="sd">    cycles of ``N + 1`` iterations, with ``beta_i = beta_{i + N + 1}`` for</span>
-<span class="sd">    all ``i &gt;= 1`` and ``1 &gt;= beta_1 &gt;= ... &gt;= beta_{N+1} = 0`` (Section 2.1).</span>
+<span class="sd">    all ``i &gt;= 1`` and ``1 &gt;= beta_1 &gt;= ... &gt;= beta_{N+1} = 0`` in the cited work.</span>
 <span class="sd">    One entry of ``search_pattern`` is consumed each time :meth:`score` is</span>
 <span class="sd">    called, so the first call uses ``search_pattern[0]``.</span>
 
-<span class="sd">    Regis &amp; Shoemaker (2005) define ``Delta_i`` (Eq. 2) as the maximin</span>
+<span class="sd">    Regis &amp; Shoemaker (2005) define ``Delta_i``  as the maximin</span>
 <span class="sd">    distance of any point in the feasible domain D from the previously</span>
 <span class="sd">    evaluated points -- a quantity that requires knowledge of D&#39;s bounds,</span>
 <span class="sd">    which ``AcquisitionFunction`` has no access to (see</span>
@@ -1076,7 +1076,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    would shrink monotonically as more points are evaluated and bias the</span>
 <span class="sd">    schedule toward premature local search, which the paper&#39;s own</span>
 <span class="sd">    approximate ``Delta_i`` (computed from cover points spanning the full</span>
-<span class="sd">    domain D, Section 4.3) does not do. Callers should supply the diagonal</span>
+<span class="sd">    domain D) does not do. Callers should supply the diagonal</span>
 <span class="sd">    length of the design space&#39;s box bounds (e.g.</span>
 <span class="sd">    ``np.linalg.norm(ub - lb)``) or a maximin estimate obtained via the</span>
 <span class="sd">    paper&#39;s own cover-points approximation.</span>
@@ -1090,14 +1090,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ----------</span>
 <span class="sd">    delta : float</span>
 <span class="sd">        Distance scale for the current threshold ``beta_i * delta``</span>
-<span class="sd">        (Eq. 2, &quot;Delta_i&quot; in the paper). See class docstring for why this</span>
+<span class="sd">        (&quot;Delta_i&quot; in the cited work). See class docstring for why this</span>
 <span class="sd">        must be supplied directly rather than derived from the archive.</span>
 <span class="sd">    search_pattern : Sequence[float]</span>
 <span class="sd">        The beta cycling sequence ``&lt;beta_1, ..., beta_{N+1}=0&gt;``</span>
-<span class="sd">        (Section 2.1). Defaults to the paper&#39;s own SP1 =</span>
-<span class="sd">        ``&lt;0.95, 0.25, 0.05, 0.03, 0&gt;`` (Section 4.3), reported as the</span>
+<span class="sd">        in the cited work. Defaults to the paper&#39;s own SP1 =</span>
+<span class="sd">        ``&lt;0.95, 0.25, 0.05, 0.03, 0&gt;``; reported as the</span>
 <span class="sd">        stronger of the two search patterns the paper tested on the</span>
-<span class="sd">        Dixon-Szego benchmark suite (Table 2).</span>
+<span class="sd">        Dixon-Szego benchmark suite.</span>
 <span class="sd">    weights : np.ndarray or None</span>
 <span class="sd">        Weights for magnitude-aware scalarization of multi-objective</span>
 <span class="sd">        predicted means. shape: (n_obj,). See :class:`MeanPrediction`.</span>
@@ -1111,7 +1111,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    :cite:`regis2005cors`: Regis, R. G., &amp; Shoemaker, C. A. (2005).</span>
 <span class="sd">    Constrained global optimization of expensive black box functions using</span>
 <span class="sd">    radial basis functions. *Journal of Global Optimization*, 31(1),</span>
-<span class="sd">    153-171. Eq. (1)-(2), Section 2.1.</span>
+<span class="sd">    153-171.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1158,7 +1158,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        np.ndarray</span>
 <span class="sd">            Scores. shape: (n_samples,). Candidates whose minimum distance</span>
 <span class="sd">            to every evaluated point in ``reference`` is below the current</span>
-<span class="sd">            ``beta_i * delta`` threshold receive ``-np.inf`` (Eq. 1).</span>
+<span class="sd">            ``beta_i * delta`` threshold receive ``-np.inf``.</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
@@ -1185,8 +1185,8 @@ window.runMermaid = runMermaid;</script>
             <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">threshold</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">evaluated_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="c1"># beta_i == 0 makes Eq. (1) trivially satisfied by every point;</span>
-            <span class="c1"># an empty archive likewise leaves no distance constraint to check.</span>
+            <span class="c1"># beta_i == 0 makes the distance constraint trivially satisfied by</span>
+            <span class="c1"># every point; an empty archive likewise leaves no constraint to check.</span>
             <span class="k">return</span> <span class="n">scores</span>
 
         <span class="n">candidate_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_candidate_x</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span>
@@ -1201,7 +1201,7 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;CORSDistance requires prediction.x (the candidate design &quot;</span>
-                <span class="s2">&quot;vectors) to evaluate the Eq. (1) distance constraint; the &quot;</span>
+                <span class="s2">&quot;vectors) to evaluate the distance constraint; the &quot;</span>
                 <span class="s2">&quot;surrogate&#39;s predict() must populate it.&quot;</span>
             <span class="p">)</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>

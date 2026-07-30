@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>EGO（Efficient Global Optimization） &#8212; saealib 0.1.0b5.dev70+g7b5949608 ドキュメント</title>
+    <title>EGO（Efficient Global Optimization） &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=0cca27f2"></script>
+    <script src="../_static/documentation_options.js?v=0bb4a1f3"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1093,7 +1093,7 @@ window.runMermaid = runMermaid;</script>
 </section>
 <section id="parameters-and-variants">
 <h2>パラメータと変種<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
-<p><strong>ξ（探索と活用のトレードオフ）</strong>：<code class="docutils literal notranslate"><span class="pre">ExpectedImprovement(xi=...)</span></code>で調整します。 既定値は<code class="docutils literal notranslate"><span class="pre">0.01</span></code>で、Brochu et al. (2010)が推奨する値に基づきます<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id9" title="Eric Brochu, Vlad M. Cora, and Nando de Freitas. A tutorial on Bayesian optimization of expensive cost functions, with application to active user modeling and hierarchical reinforcement learning. 2010. arXiv:1012.2599.">36</a>]</span>。 <span class="math notranslate nohighlight">\(\xi=0\)</span>では活用(exploitation)寄りになり、大きくすると探索(exploration)寄りになります。</p>
+<p><strong>ξ（exploration–exploitation trade-off）</strong>：<code class="docutils literal notranslate"><span class="pre">ExpectedImprovement(xi=...)</span></code>で調整します。 既定値の<code class="docutils literal notranslate"><span class="pre">0.01</span></code>は、EGOの原提案で規定された値ではなく、実用上のheuristicです。 Brochu et al. (2010)は、この値が先行実験で使われたことを紹介しています<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id9" title="Eric Brochu, Vlad M. Cora, and Nando de Freitas. A tutorial on Bayesian optimization of expensive cost functions, with application to active user modeling and hierarchical reinforcement learning. 2010. arXiv:1012.2599.">36</a>]</span>。 <span class="math notranslate nohighlight">\(\xi=0\)</span>ではexploitation寄りになり、大きくするとexploration寄りになります。</p>
 <p><strong>evaluation_ratio（逐次評価とバッチ評価の切り替え）</strong>：文献のEGOは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムです。 saealibの<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>は、GAが生成した子個体群のうちEIスコア上位<code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>の割合をまとめて真評価するバッチ拡張になっています。 <code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づきます。</p>
 </section>
 <section id="related">
