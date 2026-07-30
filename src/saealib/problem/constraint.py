@@ -339,17 +339,17 @@ class EpsilonConstraintHandler(ConstraintHandler):
     - *Inequality* constraints: ``max(0, g(x) - threshold) ** 2``  (squared
       positive part; the constraint's ``threshold`` still applies).
 
-    This matches the sum-of-constraint-violation measure in Eq. (7) of
+    This follows the constraint-violation formulation summarized by
     Mezura-Montes & Coello Coello (2011): inequality violations are squared,
-    equality violations are the unsquared absolute value. Eq. (7) is stated
-    for constraint values that have been normalised beforehand (see the
-    sentence following Eq. (7) in Section 2.4); this handler aggregates the
-    raw ``g``/``h`` values without that normalisation, so constraints on
+    equality violations are the unsquared absolute value. The cited survey states
+    the formulation for constraint values that have been normalised beforehand;
+    this handler aggregates the raw ``g``/``h`` values without that
+    normalisation, so constraints on
     very different scales will not contribute evenly to ``cv``.
 
     The ε-constrained method itself originates from Takahama & Sakai
     (2006); that paper has not been obtained, so it is credited here by
-    name only. Eq. (7)-(9) above are cited via the Mezura-Montes & Coello
+    name only. The details above are supported by the Mezura-Montes & Coello
     Coello (2011) survey, which was read directly and attributes the
     method to Takahama & Sakai in its own text.
 
@@ -394,7 +394,7 @@ def _numerical_gradient(
     c: InequalityConstraint, x: np.ndarray, g0: float
 ) -> np.ndarray:
     """
-    Forward-difference approximation of ``c``'s gradient at ``x`` (Eq. 7).
+    Forward-difference approximation of ``c``'s gradient at ``x``.
 
     Step size ``sqrt(eps_machine) * max(1, |x_i|)`` follows the standard
     forward-difference rule of thumb (balances truncation vs. rounding
@@ -420,29 +420,30 @@ class GradientRepairHandler(ConstraintHandler):
     iteration, the set of currently-violated constraints is determined
     (equality: ``|h(x)| > tolerance``; inequality: ``g(x) > threshold``),
     their raw values and gradients are stacked into ``ΔV`` and the Jacobian
-    ``J`` (Eq. 6), and a single simultaneous update is applied::
+    ``J``, and a single simultaneous update is applied::
 
         Δx = pinv(J) @ ΔV
         x <- x + Δx
 
-    using the Moore-Penrose pseudoinverse (Eq. 8), since ``J`` is generally
+    using the Moore-Penrose pseudoinverse, since ``J`` is generally
     not square. Satisfied constraints contribute no row to ``J``/``ΔV`` for
-    that iteration, per the paper's Section 3.1 remark that "there is no
+    that iteration, per the paper's remark that "there is no
     need to adjust ... non-violated constraints." Iteration stops early once
     no constraint is violated, or once ``max(|Δx|) < epsilon``.
 
-    ``ΔV`` follows Eq. (9): for an inequality constraint (single upper bound
-    ``threshold`` only, per :class:`InequalityConstraint`), ``ΔV_i =
+    ``ΔV`` follows the cited repair procedure. For an inequality constraint
+    (single upper bound ``threshold`` only, per
+    :class:`InequalityConstraint`), ``ΔV_i =
     threshold - g(x)``. For an :class:`EqualityConstraint` (``h(x) = 0`` by
     construction, i.e. the target value is already embedded as 0), ``ΔV_i =
-    -h(x)``; both are the paper's "target minus current value" (see the
-    worked example in Section 3.2, point A, where ``ΔV = c - h(x) = 1``,
-    which is the sign that the printed Eq. (9) equality row does not
+    -h(x)``; both are the paper's "target minus current value." The paper's
+    worked example uses ``ΔV = c - h(x) = 1``,
+    which is the sign that the printed equality row does not
     literally show but the numeric example requires).
 
     When :meth:`~InequalityConstraint.gradient` returns ``None`` for a
     violated constraint, :func:`_numerical_gradient` supplies a
-    forward-difference approximation (Eq. 7) instead of skipping it — this
+    forward-difference approximation instead of skipping it — this
     is what lets the handler now repair both equality and inequality
     constraints regardless of whether an analytical Jacobian is available.
 

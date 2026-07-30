@@ -479,7 +479,7 @@ class MutationGaussian(Mutation):
     -----
     Originates from Rechenberg (1973); the original (German-language)
     monograph has not been obtained and is credited here by name only.
-    Section 2 of the survey below summarizes Rechenberg's (1+1)-ES with
+    The survey below summarizes Rechenberg's (1+1)-ES with
     Gaussian mutation and its mutation-strength (standard deviation)
     parameterization, consistent with this operator.
 

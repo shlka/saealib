@@ -98,7 +98,8 @@ Since the specific crossover, mutation, and selection operators are not part of 
 ## Parameters and variants
 
 **ξ (exploration–exploitation trade-off)**: Adjusted via `ExpectedImprovement(xi=...)`.
-The default is `0.01`, based on the value recommended by Brochu et al. (2010) {cite}`brochu2010tutorial`.
+The default is `0.01`, a practical heuristic rather than a value prescribed by the original EGO formulation.
+Brochu et al. (2010) discuss prior experimental use of this value {cite}`brochu2010tutorial`.
 $\xi=0$ leans toward exploitation, and larger values lean toward exploration.
 
 **evaluation_ratio (switching between sequential and batch evaluation)**: EGO as described in the literature is a sequential algorithm that executes steps 3-4 of the pseudocode for a single point per loop.

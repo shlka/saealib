@@ -20,7 +20,8 @@ class ParEGOAcquisition(AcquisitionFunction):
 
     Scalarises objectives using the Augmented Tchebycheff function with a
     randomly sampled weight vector, then applies Expected Improvement on the
-    scalarised prediction (Knowles 2006; formula from Chugh 2020 Eq. 8).
+    scalarised prediction (Knowles 2006; a scalarization variant informed by
+    Chugh 2020).
 
     Scalarised objective (minimised)::
 
@@ -63,8 +64,8 @@ class ParEGOAcquisition(AcquisitionFunction):
 
     :cite:`chugh2020scalarizing`: Chugh, T. (2020). Scalarizing functions in
     Bayesian multiobjective optimization. *2020 IEEE Congress on
-    Evolutionary Computation (CEC)*, 1-8. (Eq. 8; scalarization formula
-    used here.)
+    Evolutionary Computation (CEC)*, 1-8. (Scalarization-family reference;
+    saealib uses the weighted augmentation variant documented above.)
     """
 
     requires_uncertainty: bool = True
@@ -85,7 +86,7 @@ class ParEGOAcquisition(AcquisitionFunction):
         weights: np.ndarray,
         z_star: np.ndarray,
     ) -> np.ndarray:
-        """Augmented Tchebycheff scalarization (Chugh 2020 Eq. 8)."""
+        """Augmented Tchebycheff scalarization variant used by saealib."""
         diff = np.abs(f - z_star)  # (..., n_obj)
         weighted = weights * diff  # (..., n_obj)
         return weighted.max(axis=-1) + self.alpha * weighted.sum(axis=-1)

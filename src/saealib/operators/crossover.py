@@ -232,7 +232,7 @@ class CrossoverBLXAlpha(Crossover):
     been obtained and is credited here by name only. The interval
     ``[c_min - alpha*I, c_max + alpha*I]`` formula implemented in
     :meth:`crossover_batch` has been verified against Herrera, Lozano &
-    Verdegay (1998), Section 4.3, which restates the BLX-alpha definition
+    Verdegay (1998), which restates the BLX-alpha definition
     while surveying real-coded GA operators.
 
     References

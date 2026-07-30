@@ -8,7 +8,6 @@ In A. Abraham, L. Jain, & R. Goldberg (Eds.),
 Evolutionary Multiobjective Optimization (pp. 105-145). Springer.
 https://doi.org/10.1007/1-84628-137-7_6
 
-Section 6.7, Eq. (6.18)-(6.25).
 """
 
 from __future__ import annotations
@@ -40,7 +39,7 @@ def dtlz1(n_obj: int = 3, k: int = 5) -> Problem:
     :cite:`deb2005dtlz`: Deb, K., Thiele, L., Laumanns, M., & Zitzler,
     E. (2005). Scalable test problems for evolutionary multiobjective
     optimization. In *Evolutionary Multiobjective Optimization*
-    (pp. 105-145). Springer. (Section 6.7, Eq. (6.18)-(6.19).)
+    (pp. 105-145). Springer.
     """
     n_var = n_obj - 1 + k
 
@@ -84,7 +83,7 @@ def dtlz2(n_obj: int = 3, k: int = 10) -> Problem:
     :cite:`deb2005dtlz`: Deb, K., Thiele, L., Laumanns, M., & Zitzler,
     E. (2005). Scalable test problems for evolutionary multiobjective
     optimization. In *Evolutionary Multiobjective Optimization*
-    (pp. 105-145). Springer. (Section 6.7, Eq. (6.20).)
+    (pp. 105-145). Springer.
     """
     n_var = n_obj - 1 + k
 
@@ -121,7 +120,7 @@ def dtlz3(n_obj: int = 3, k: int = 10) -> Problem:
     :cite:`deb2005dtlz`: Deb, K., Thiele, L., Laumanns, M., & Zitzler,
     E. (2005). Scalable test problems for evolutionary multiobjective
     optimization. In *Evolutionary Multiobjective Optimization*
-    (pp. 105-145). Springer. (Section 6.7, Eq. (6.21).)
+    (pp. 105-145). Springer.
     """
     n_var = n_obj - 1 + k
 
@@ -161,7 +160,7 @@ def dtlz4(n_obj: int = 3, k: int = 10, alpha: float = 100.0) -> Problem:
     :cite:`deb2005dtlz`: Deb, K., Thiele, L., Laumanns, M., & Zitzler,
     E. (2005). Scalable test problems for evolutionary multiobjective
     optimization. In *Evolutionary Multiobjective Optimization*
-    (pp. 105-145). Springer. (Section 6.7, Eq. (6.22).)
+    (pp. 105-145). Springer.
     """
     n_var = n_obj - 1 + k
 
@@ -196,7 +195,8 @@ def dtlz5(n_obj: int = 3, k: int = 10) -> Problem:
     """DTLZ5 -- degenerate 1-D Pareto curve on unit hypersphere.
 
     Replaces the uniform theta mapping of DTLZ2 with a g-dependent mapping
-    (Eq. 6.10) that collapses the PF to a curve: only x_1 varies freely.
+    described in the cited work. This collapses the PF to a curve, so only
+    x_1 varies freely.
     Pareto front: g(x_M)=0 (all x_i=0.5), theta_i=pi/4 for i>=2, sum(f_i^2)=1.
 
     Parameters
@@ -211,7 +211,7 @@ def dtlz5(n_obj: int = 3, k: int = 10) -> Problem:
     :cite:`deb2005dtlz`: Deb, K., Thiele, L., Laumanns, M., & Zitzler,
     E. (2005). Scalable test problems for evolutionary multiobjective
     optimization. In *Evolutionary Multiobjective Optimization*
-    (pp. 105-145). Springer. (Section 6.7, Eq. (6.23).)
+    (pp. 105-145). Springer.
     """
     n_var = n_obj - 1 + k
 
@@ -252,7 +252,7 @@ def dtlz6(n_obj: int = 3, k: int = 10) -> Problem:
     :cite:`deb2005dtlz`: Deb, K., Thiele, L., Laumanns, M., & Zitzler,
     E. (2005). Scalable test problems for evolutionary multiobjective
     optimization. In *Evolutionary Multiobjective Optimization*
-    (pp. 105-145). Springer. (Section 6.7, Eq. (6.24).)
+    (pp. 105-145). Springer.
     """
     n_var = n_obj - 1 + k
 
@@ -292,7 +292,7 @@ def dtlz7(n_obj: int = 3, k: int = 20) -> Problem:
     :cite:`deb2005dtlz`: Deb, K., Thiele, L., Laumanns, M., & Zitzler,
     E. (2005). Scalable test problems for evolutionary multiobjective
     optimization. In *Evolutionary Multiobjective Optimization*
-    (pp. 105-145). Springer. (Section 6.7, Eq. (6.25).)
+    (pp. 105-145). Springer.
     """
     n_var = n_obj - 1 + k
 

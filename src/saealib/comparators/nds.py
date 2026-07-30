@@ -17,7 +17,7 @@ def non_dominated_sort(
     Non-dominated sorting via a vectorized dominance matrix.
 
     Implements the fast-nondominated-sort front-peeling scheme of Deb et
-    al. (2002), Section III-A: each individual's domination count is
+    al. (2002): each individual's domination count is
     decremented as its dominators are peeled off, front by front. This
     implementation replaces the original Python double loop with a NumPy
     dominance matrix accumulated one objective at a time.
@@ -51,7 +51,7 @@ def non_dominated_sort(
     :cite:`deb2002nsga2`: Deb, K., Pratap, A., Agarwal, S., & Meyarivan,
     T. (2002). A fast and elitist multiobjective genetic algorithm:
     NSGA-II. *IEEE Transactions on Evolutionary Computation*, 6(2),
-    182-197. (Section III-A, "Fast Nondominated Sorting Approach".)
+    182-197.
     """
     _dom = dominator if dominator is not None else _PARETO_DOMINATOR
 
@@ -272,7 +272,7 @@ def crowding_distance(f_front: np.ndarray) -> np.ndarray:
     :cite:`deb2002nsga2`: Deb, K., Pratap, A., Agarwal, S., & Meyarivan,
     T. (2002). A fast and elitist multiobjective genetic algorithm:
     NSGA-II. *IEEE Transactions on Evolutionary Computation*, 6(2),
-    182-197. (Section III-B.1, "Density Estimation".)
+    182-197.
     """
     n, m = f_front.shape
     cd = np.zeros(n)
@@ -416,7 +416,7 @@ def spea2_truncation_order(f: np.ndarray) -> np.ndarray:
     """
     Order a non-dominated set via the SPEA2 archive truncation operator.
 
-    Implements Section 3.2 ("Environmental Selection") of Zitzler et al.
+    Implements the environmental-selection procedure of Zitzler et al.
     (2001): while the set is larger than 1, remove the individual ``i`` for
     which ``i <=_d j`` holds for every remaining ``j``, where ``i <=_d j``
     compares the two individuals' sorted distance-to-neighbour vectors
@@ -448,7 +448,7 @@ def spea2_truncation_order(f: np.ndarray) -> np.ndarray:
     ----------
     :cite:`zitzler2001spea2`: Zitzler, E., Laumanns, M., & Thiele, L. (2001).
     SPEA2: Improving the Strength Pareto Evolutionary Algorithm. TIK-Report
-    103, ETH Zurich, Switzerland. (Section 3.2, "Environmental Selection".)
+    103, ETH Zurich, Switzerland.
     """
     f = np.asarray(f, dtype=float)
     n = len(f)

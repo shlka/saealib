@@ -99,17 +99,17 @@ class CORSDistance(AcquisitionFunction):
     overridden to the worst possible value (``-np.inf``) for any candidate
     that violates the distance constraint::
 
-        ||x - x_j|| >= beta_i * Delta_i,  j = 1, ..., k + i - 1   (Eq. 1)
+        ||x - x_j|| >= beta_i * Delta_i,  j = 1, ..., k + i - 1
 
     i.e. whose minimum distance to every previously evaluated point falls
     below the current iteration's threshold ``beta_i * Delta``. ``beta_i``
     cycles through ``search_pattern``: the parameters are set by performing
     cycles of ``N + 1`` iterations, with ``beta_i = beta_{i + N + 1}`` for
-    all ``i >= 1`` and ``1 >= beta_1 >= ... >= beta_{N+1} = 0`` (Section 2.1).
+    all ``i >= 1`` and ``1 >= beta_1 >= ... >= beta_{N+1} = 0`` in the cited work.
     One entry of ``search_pattern`` is consumed each time :meth:`score` is
     called, so the first call uses ``search_pattern[0]``.
 
-    Regis & Shoemaker (2005) define ``Delta_i`` (Eq. 2) as the maximin
+    Regis & Shoemaker (2005) define ``Delta_i``  as the maximin
     distance of any point in the feasible domain D from the previously
     evaluated points -- a quantity that requires knowledge of D's bounds,
     which ``AcquisitionFunction`` has no access to (see
@@ -119,7 +119,7 @@ class CORSDistance(AcquisitionFunction):
     would shrink monotonically as more points are evaluated and bias the
     schedule toward premature local search, which the paper's own
     approximate ``Delta_i`` (computed from cover points spanning the full
-    domain D, Section 4.3) does not do. Callers should supply the diagonal
+    domain D) does not do. Callers should supply the diagonal
     length of the design space's box bounds (e.g.
     ``np.linalg.norm(ub - lb)``) or a maximin estimate obtained via the
     paper's own cover-points approximation.
@@ -133,14 +133,14 @@ class CORSDistance(AcquisitionFunction):
     ----------
     delta : float
         Distance scale for the current threshold ``beta_i * delta``
-        (Eq. 2, "Delta_i" in the paper). See class docstring for why this
+        ("Delta_i" in the cited work). See class docstring for why this
         must be supplied directly rather than derived from the archive.
     search_pattern : Sequence[float]
         The beta cycling sequence ``<beta_1, ..., beta_{N+1}=0>``
-        (Section 2.1). Defaults to the paper's own SP1 =
-        ``<0.95, 0.25, 0.05, 0.03, 0>`` (Section 4.3), reported as the
+        in the cited work. Defaults to the paper's own SP1 =
+        ``<0.95, 0.25, 0.05, 0.03, 0>``; reported as the
         stronger of the two search patterns the paper tested on the
-        Dixon-Szego benchmark suite (Table 2).
+        Dixon-Szego benchmark suite.
     weights : np.ndarray or None
         Weights for magnitude-aware scalarization of multi-objective
         predicted means. shape: (n_obj,). See :class:`MeanPrediction`.
@@ -154,7 +154,7 @@ class CORSDistance(AcquisitionFunction):
     :cite:`regis2005cors`: Regis, R. G., & Shoemaker, C. A. (2005).
     Constrained global optimization of expensive black box functions using
     radial basis functions. *Journal of Global Optimization*, 31(1),
-    153-171. Eq. (1)-(2), Section 2.1.
+    153-171.
     """
 
     def __init__(
@@ -201,7 +201,7 @@ class CORSDistance(AcquisitionFunction):
         np.ndarray
             Scores. shape: (n_samples,). Candidates whose minimum distance
             to every evaluated point in ``reference`` is below the current
-            ``beta_i * delta`` threshold receive ``-np.inf`` (Eq. 1).
+            ``beta_i * delta`` threshold receive ``-np.inf``.
 
         Raises
         ------
@@ -228,8 +228,8 @@ class CORSDistance(AcquisitionFunction):
             else np.empty((0, 0))
         )
         if threshold <= 0 or evaluated_x.shape[0] == 0:
-            # beta_i == 0 makes Eq. (1) trivially satisfied by every point;
-            # an empty archive likewise leaves no distance constraint to check.
+            # beta_i == 0 makes the distance constraint trivially satisfied by
+            # every point; an empty archive likewise leaves no constraint to check.
             return scores
 
         candidate_x = self._candidate_x(prediction)
@@ -244,7 +244,7 @@ class CORSDistance(AcquisitionFunction):
         if x is None:
             raise ValueError(
                 "CORSDistance requires prediction.x (the candidate design "
-                "vectors) to evaluate the Eq. (1) distance constraint; the "
+                "vectors) to evaluate the distance constraint; the "
                 "surrogate's predict() must populate it."
             )
         x = np.atleast_2d(np.asarray(x, dtype=float))

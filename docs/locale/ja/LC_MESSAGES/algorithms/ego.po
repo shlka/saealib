@@ -194,10 +194,12 @@ msgstr "パラメータと変種"
 #, python-brace-format
 msgid ""
 "**ξ (exploration–exploitation trade-off)**: Adjusted via "
-"`ExpectedImprovement(xi=...)`. The default is `0.01`, based on the value "
-"recommended by Brochu et al. (2010) {cite}`brochu2010tutorial`. $\\xi=0$ "
-"leans toward exploitation, and larger values lean toward exploration."
-msgstr "**ξ（探索と活用のトレードオフ）**：`ExpectedImprovement(xi=...)`で調整します。 既定値は`0.01`で、Brochu et al. (2010)が推奨する値に基づきます{cite}`brochu2010tutorial`。 $\\xi=0$では活用(exploitation)寄りになり、大きくすると探索(exploration)寄りになります。"
+"`ExpectedImprovement(xi=...)`. The default is `0.01`, a practical "
+"heuristic rather than a value prescribed by the original EGO formulation. "
+"Brochu et al. (2010) discuss prior experimental use of this value "
+"{cite}`brochu2010tutorial`. $\\xi=0$ leans toward exploitation, and "
+"larger values lean toward exploration."
+msgstr "**ξ（exploration–exploitation trade-off）**：`ExpectedImprovement(xi=...)`で調整します。 既定値の`0.01`は、EGOの原提案で規定された値ではなく、実用上のheuristicです。 Brochu et al. (2010)は、この値が先行実験で使われたことを紹介しています{cite}`brochu2010tutorial`。 $\\xi=0$ではexploitation寄りになり、大きくするとexploration寄りになります。"
 
 #: ../../../algorithms/ego.md:104
 msgid ""

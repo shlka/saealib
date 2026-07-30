@@ -122,13 +122,13 @@ msgstr "saealibでの構成"
 #: ../../../algorithms/gp_ucb.md:50
 #, python-brace-format
 msgid ""
-"Algorithm 1 in the paper is formulated as **maximizing** a reward, "
+"The cited GP-UCB formulation is expressed as **maximizing** a reward, "
 "whereas `LowerConfidenceBound` assumes minimization and computes "
 "$\\mathrm{LCB}(x) = \\mu(x) - \\kappa\\sigma(x)$, returning it with its "
 "sign flipped so that score comparisons line up with saealib's other "
 "acquisition functions (to match saealib's overall convention that "
 "\"higher score is better\")."
-msgstr "論文のAlgorithm 1は報酬の**最大化**として定式化されているのに対し、`LowerConfidenceBound`は最小化を前提に $\\mathrm{LCB}(x) = \\mu(x) - \\kappa\\sigma(x)$ を計算し、スコアの大小比較を他の獲得関数と揃えるために符号を反転して返します（`saealib`全体の規約「スコアは高いほど良い」に合わせるため）。"
+msgstr "引用文献のGP-UCBは報酬の**最大化**として定式化されているのに対し、`LowerConfidenceBound`は最小化を前提に $\\mathrm{LCB}(x) = \\mu(x) - \\kappa\\sigma(x)$ を計算し、スコアの大小比較を他の獲得関数と揃えるために符号を反転して返します（`saealib`全体の規約「スコアは高いほど良い」に合わせるため）。"
 
 #: ../../../algorithms/gp_ucb.md:52
 #, python-brace-format
@@ -241,12 +241,11 @@ msgstr "**κ（探索と活用のトレードオフ）**：`LowerConfidenceBound
 #: ../../../algorithms/gp_ucb.md:111
 #, python-brace-format
 msgid ""
-"Algorithm 1 in the paper gives this weight not as a fixed value but as "
+"The cited work gives this weight not as a fixed value but as "
 "$\\sqrt{\\beta_t}$, dependent on the iteration count $t$. For example, "
 "when the search domain $D$ is a finite set, choosing $\\beta_t$ as "
-"follows yields a theoretical upper bound on the cumulative regret "
-"(Theorem 1)."
-msgstr "論文のAlgorithm 1は、この重みを固定値ではなく反復回数 $t$ に依存する $\\sqrt{\\beta_t}$ として与えます。 たとえば探索空間 $D$ が有限集合の場合、$\\beta_t$ は次のように選ぶことで累積リグレットの理論的な上界が導出できます（Theorem 1）。"
+"follows yields a theoretical upper bound on the cumulative regret."
+msgstr "引用文献では、この重みを固定値ではなく反復回数 $t$ に依存する $\\sqrt{\\beta_t}$ として与えます。 たとえば探索空間 $D$ が有限集合の場合、$\\beta_t$ は次のように選ぶことで累積リグレットの理論的な上界が導出できます。"
 
 #: ../../../algorithms/gp_ucb.md:114
 #, python-brace-format
@@ -256,13 +255,13 @@ msgstr "\\beta_t = 2 \\log\\left(\\frac{|D|\\, t^2 \\pi^2}{6\\delta}\\right)"
 #: ../../../algorithms/gp_ucb.md:116
 msgid ""
 "Because this expression grows logarithmically in $t$, the exploration "
-"weight increases only gradually as iterations proceed. For a compact $D$ "
-"(Theorem 2), or for functions with bounded RKHS norm without assuming a "
-"GP prior (Theorem 3), schedules of $\\beta_t$ increasing in $t$ are given"
+"weight increases only gradually as iterations proceed. For a compact $D$,"
+" or for functions with bounded RKHS norm without assuming a "
+"GP prior, schedules of $\\beta_t$ increasing in $t$ are given"
 " as well, each with a different form. The theoretical contribution the "
 "name GP-UCB refers to is precisely this correspondence between the "
 "$\\beta_t$ schedule and the upper bound on cumulative regret."
-msgstr "この式は $t$ について対数的に増加するため、探索の重みは反復が進むほど緩やかに大きくなります。 コンパクトな $D$ の場合（Theorem 2）や、GP事前分布を仮定せずRKHSノルムが有界な関数を扱う場合（Theorem 3）にも、それぞれ形は異なるものの、$t$ に関して増加する $\\beta_t$ のスケジュールが与えられます。 GP-UCBという名前が指す理論的な貢献は、まさにこの $\\beta_t$ のスケジュールと累積リグレットの上界の対応関係にあります。"
+msgstr "この式は $t$ について対数的に増加するため、探索の重みは反復が進むほど緩やかに大きくなります。 コンパクトな $D$ の場合や、GP事前分布を仮定せずRKHSノルムが有界な関数を扱う場合にも、それぞれ形は異なるものの、$t$ に関して増加する $\\beta_t$ のスケジュールが与えられます。 GP-UCBという名前が指す理論的な貢献は、まさにこの $\\beta_t$ のスケジュールと累積リグレットの上界の対応関係にあります。"
 
 #: ../../../algorithms/gp_ucb.md:120
 #, python-brace-format
@@ -272,21 +271,21 @@ msgid ""
 "UCB with a fixed `kappa` is a naive fixed-weight UCB heuristic that does "
 "not carry the regret guarantee derived theoretically in the paper. The "
 "paper itself reports, in its experiments section, that using the "
-"$\\beta_t$ given by Theorem 1 as-is is overly exploratory, and that "
+"theoretical $\\beta_t$ schedule as-is is overly exploratory, and that "
 "scaling the coefficient down by 1/5 via cross-validation performed better"
 " — so using a fixed or empirically tuned weight in practice does not "
 "contradict the paper. However, there is no theoretical basis for how this"
 " fixed weight is chosen, and the default `kappa=2.0` is merely fixing a "
 "value equivalent to $\\beta_t=4.0$."
-msgstr "`LowerConfidenceBound`の`kappa`は反復を通じて固定された定数であり、この $\\sqrt{\\beta_t}$ のスケジュールを実装していません。 したがって`kappa`を固定したままのGP-UCBは、論文が理論的に導出した意味でのリグレット保証を持たない、素朴な固定重みUCBヒューリスティックです。 論文自身も実験節で、Theorem 1が与える $\\beta_t$ をそのまま使うと過剰に探索的になり、交差検証で係数を1/5にスケールした方が性能が良かったと報告しており、実務上は固定または経験的に調整した重みを使うこと自体は論文とも矛盾しません。 ただし、この固定重みの選び方に理論的根拠はなく、`kappa=2.0`という既定値も$\\beta_t=4.0$相当の値を固定しているに過ぎません。"
+msgstr "`LowerConfidenceBound`の`kappa`は反復を通じて固定された定数であり、この $\\sqrt{\\beta_t}$ のスケジュールを実装していません。 したがって`kappa`を固定したままのGP-UCBは、論文が理論的に導出した意味でのリグレット保証を持たない、素朴な固定重みUCBヒューリスティックです。 論文自身も実験節で、理論上の $\\beta_t$ をそのまま使うと過剰に探索的になり、交差検証で係数を1/5にスケールした方が性能が良かったと報告しており、実務上は固定または経験的に調整した重みを使うこと自体は論文とも矛盾しません。 ただし、この固定重みの選び方に理論的根拠はなく、`kappa=2.0`という既定値も$\\beta_t=4.0$相当の値を固定しているに過ぎません。"
 
 #: ../../../algorithms/gp_ucb.md:125
 msgid ""
 "If you want to change `kappa` dynamically with $t$, rewriting "
 "`surrogate_manager.acquisition.kappa` every generation via "
-"`CallbackManager` can bring it closer to a schedule equivalent to Theorem"
-" 1."
-msgstr "$t$ に応じて`kappa`を動的に変更したい場合は、`CallbackManager`で世代ごとに`surrogate_manager.acquisition.kappa`を書き換えることで、Theorem 1相当のスケジュールに近づけられます。"
+"`CallbackManager` can bring it closer to a corresponding iteration-"
+"dependent schedule."
+msgstr "$t$ に応じて`kappa`を動的に変更したい場合は、`CallbackManager`で世代ごとに`surrogate_manager.acquisition.kappa`を書き換えることで、対応する反復依存スケジュールに近づけられます。"
 
 #: ../../../algorithms/gp_ucb.md:127
 msgid "Related"
@@ -539,7 +538,7 @@ msgstr "[EGO](ego.md)：同じGPサロゲートモデル＋`IndividualBasedStrat
 #~ msgstr ""
 
 #~ msgid ""
-#~ "論文のAlgorithm 1は、この重みを固定値ではなく反復回数 $t$ に依存する "
+#~ "引用文献では、この重みを固定値ではなく反復回数 $t$ に依存する "
 #~ "$\\sqrt{\\beta_t}$ として与える。 たとえば探索空間 $D$ "
 #~ "が有限集合の場合、$\\beta_t$ は次のように選ぶことで累積リグレットの理論的な上界が導出できる（Theorem "
 #~ "1）。"
@@ -559,7 +558,7 @@ msgstr "[EGO](ego.md)：同じGPサロゲートモデル＋`IndividualBasedStrat
 #~ "$\\sqrt{\\beta_t}$ のスケジュールを実装していない。 したがって`kappa"
 #~ "`を固定したままのGP-"
 #~ "UCBは、論文が理論的に導出した意味でのリグレット保証を持たない、素朴な固定重みUCBヒューリスティックである。 "
-#~ "論文自身も実験節で、Theorem 1が与える $\\beta_t$ "
+#~ "論文自身も実験節で、理論上の $\\beta_t$ "
 #~ "をそのまま使うと過剰に探索的になり、交差検証で係数を1/5にスケールした方が性能が良かったと報告しており、実務上は固定または経験的に調整した重みを使うこと自体は論文とも矛盾しない。"
 #~ " "
 #~ "ただし、この固定重みの選び方に理論的根拠はなく、`kappa=2.0`という既定値も$\\beta_t=4.0$相当の値を固定しているに過ぎない。"

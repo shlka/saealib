@@ -19,8 +19,9 @@ class EHVIAcquisition(AcquisitionFunction):
     """
     Expected Hypervolume Improvement (EHVI) acquisition function.
 
-    Estimates EHVI via Monte Carlo sampling (Hupkens 2015 Eq. 1; HVI
-    definition from Daulton 2020 Definition 2)::
+    Estimates EHVI via Monte Carlo sampling. The exact EHVI and HVI concepts
+    follow Hupkens (2015) and Daulton et al. (2020); the sample average
+    below is the approximation used by this implementation::
 
         EHVI(x) = (1/S) * sum_s HVI(y_s, P, r)
         y_s ~ N(mu(x), diag(sigma^2(x)))   [independent objectives]

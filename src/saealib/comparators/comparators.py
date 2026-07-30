@@ -543,8 +543,8 @@ class SPEA2Comparator(Comparator):
     Ordering rules:
 
     - **Feasible block**: the non-dominated subset (``F(i) < 1``) is ordered
-      by the iterative nearest-neighbour truncation operator of Section 3.2
-      ("Environmental Selection") -- see :func:`spea2_truncation_order` --
+      by the iterative nearest-neighbour truncation procedure -- see
+      :func:`spea2_truncation_order` --
       instead of a one-shot sort, so that boundary/extreme solutions are
       preferentially retained under truncation.  The dominated subset
       (``F(i) >= 1``) follows, sorted by ascending SPEA2 fitness (lower =
@@ -645,8 +645,8 @@ class SPEA2Comparator(Comparator):
         Sort feasible individuals via SPEA2 environmental selection.
 
         Within the feasible block, the non-dominated subset (``F(i) < 1``)
-        is ordered by :func:`spea2_truncation_order` (Zitzler et al. 2001,
-        Section 3.2), and the dominated subset (``F(i) >= 1``) follows,
+        is ordered by :func:`spea2_truncation_order` (Zitzler et al. 2001),
+        and the dominated subset (``F(i) >= 1``) follows,
         ordered by ascending SPEA2 fitness. Infeasible individuals come
         last, ordered by ascending constraint violation.
 
@@ -767,7 +767,7 @@ def _hv_default_reference_point(
 ) -> np.ndarray:
     """Beume et al. (2007) default hypervolume reference point.
 
-    Section 2.1.3, "Handling of boundary solutions": the reference point is
+    the boundary-solution handling described in the cited work: the reference point is
     the vector of the currently worst objective values increased by 1.0,
     recomputed every generation. For a maximized objective, "worst"
     (the direction to move *away* from) is the minimum observed value, and
@@ -830,7 +830,7 @@ class HypervolumeComparator(ParetoComparator):
         which IS defined and safe to use.
 
     .. note::
-        **Deferred gap.** Beume et al. (2007) Section 2.1.3 special-cases
+        **Deferred gap.** Beume et al. (2007) explicitly special-cases
         two-objective problems: the reference point is skipped entirely and
         the two extremal (best-per-objective) solutions are unconditionally
         kept.  This comparator always computes a reference point and HV
@@ -851,7 +851,7 @@ class HypervolumeComparator(ParetoComparator):
         Reference point in the *original* objective space, shape
         ``(n_obj,)``.  If ``None`` (default), it is recomputed fresh on
         every call as the front's worst objective values plus ``1.0``
-        (Beume et al. 2007, Section 2.1.3) -- see
+        (Beume et al. 2007, boundary-solution handling) -- see
         :func:`_hv_default_reference_point`.
     margin : float
         Unused by the default (``reference_point=None``) computation, which
@@ -1160,7 +1160,7 @@ def _normalize_objectives(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Normalize objectives using NSGA-III ideal point + hyperplane intercepts.
 
-    Deb & Jain (2014), Section IV-B.
+    Deb & Jain (2014).
 
     Parameters
     ----------
@@ -1212,7 +1212,7 @@ def _associate_to_reference_points(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Associate each individual with the closest reference line.
 
-    Deb & Jain (2014), Section IV-C. Uses perpendicular distance from
+    Deb & Jain (2014). Uses perpendicular distance from
     ``f_norm[i]`` to the ray from the origin through ``reference_points[r]``.
 
     Parameters
@@ -1255,7 +1255,7 @@ def _niche_count_select(
 ) -> np.ndarray:
     """Order individuals in a front using NSGA-III niche-preservation.
 
-    Deb & Jain (2014), Algorithm 2. Selects ``n_needed`` individuals from
+    Deb & Jain (2014). Selects ``n_needed`` individuals from
     ``front_local`` in preference order, updating ``niche_count`` in-place.
 
     Parameters
@@ -1310,7 +1310,7 @@ class NSGA3Comparator(ParetoComparator):
     - sort_population: non-dominated sorting + normalization + niche preservation
     - compare_population: inherited from ParetoComparator (Pareto dominance)
 
-    The NSGA-III selection mechanism (Deb & Jain 2014, Algorithm 1):
+    The NSGA-III selection mechanism (Deb & Jain 2014):
 
     1. Non-dominated sorting (same fronts as NSGA-II).
     2. Normalize objectives over ``S_t`` (the fronts accumulated so far, not
@@ -1438,7 +1438,7 @@ class NSGA3Comparator(ParetoComparator):
             dist_full = np.full(n_feasible, np.inf)
             niche_count = np.zeros(len(self._reference_points), dtype=int)
 
-            # Deb & Jain (2014) Algorithm 1 normalizes over S_t = F_1 union
+            # Deb & Jain (2014) normalizes over S_t = F_1 union
             # ... union F_l, the fronts accumulated up to and including the
             # last one needed to reach the target population size, not over
             # the full combined population R_t. This class already
@@ -1491,10 +1491,10 @@ class RNSGA2Comparator(ParetoComparator):
       distance: lower rank wins, ties broken by smaller distance to the
       nearest reference point -- see :meth:`compare_population`
 
-    The R-NSGA-II selection mechanism (Deb & Sundar 2006), Steps 1-3:
+    The R-NSGA-II selection mechanism (Deb & Sundar 2006):
 
     1. Non-dominated sorting (same fronts as NSGA-II).
-    2. Normalize objectives by range (min-max per objective, Eq. 3).
+    2. Normalize objectives by range (min-max per objective).
     3. Step 1: for each reference point, compute the normalized Euclidean
        distance of every individual in the front to that point and rank them
        ascending (closest = rank 1).
@@ -1673,7 +1673,7 @@ class RNSGA2Comparator(ParetoComparator):
         assoc_idx: np.ndarray,
         dist_min: np.ndarray,
     ) -> np.ndarray:
-        """Order a single front via R-NSGA-II Steps 1-3 (Deb & Sundar 2006).
+        """Order a single front via the R-NSGA-II procedure (Deb & Sundar 2006).
 
         Step 1: for each reference point, rank the front's individuals in
         ascending order of normalized Euclidean distance to that point

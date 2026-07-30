@@ -64,7 +64,7 @@ The worst-case per-generation complexity combining normalization, association, a
 | Role | saealib implementation | Corresponding step |
 |---|---|---|
 | Search algorithm | `GA` (`ask()` performs crossover and mutation; `tell()` performs combining $R_t=P_t\cup Q_t$ and survivor selection) | L1-2, 8 |
-| Parent selection | `TournamentSelection(tournament_size=1)` (with tournament size 1, no comparison is actually performed, corresponding to the paper's Section IV-F description of "choose parents randomly from $P_{t+1}$") | L1, 8 |
+| Parent selection | `TournamentSelection(tournament_size=1)` (with tournament size 1, no comparison is actually performed, corresponding to the paper's description of "choose parents randomly from $P_{t+1}$") | L1, 8 |
 | Crossover | `CrossoverSBX(prob=1.0, eta=30.0)` | L1, 8 |
 | Mutation | `MutationPolynomial(eta=20.0)` | L1, 8 |
 | Reference point generation | `uniform_weight_vectors(n_obj, n_divisions)` (generates the initial value $Z^s$ of $Z^r$ via the Das-Dennis simplex lattice) | L5 |
@@ -110,14 +110,14 @@ DTLZ2 with 3 objectives is used instead of a 2-objective ZDT benchmark because N
 
 ## Parameters and variants
 
-**$\eta_c$ (SBX distribution index) and crossover probability $p_c$**: The paper's Table II reports using $p_c=1$ (`CrossoverSBX(prob=1.0)`) and $\eta_c=30$ (`CrossoverSBX(eta=30.0)`) for NSGA-III.
+**$\eta_c$ (SBX distribution index) and crossover probability $p_c$**: The paper reports using $p_c=1$ (`CrossoverSBX(prob=1.0)`) and $\eta_c=30$ (`CrossoverSBX(eta=30.0)`) for NSGA-III.
 Both the crossover probability and distribution index are larger than NSGA-II's defaults ($p_c=0.9$, $\eta_c=20$), a setting that generates offspring closer to the parents with higher probability {cite}`deb2014nsga3`.
 
 **Correspondence between population size $N$ and reference-point count $H$**: The paper recommends choosing the population size $N$ as the smallest multiple of 4 at or above the reference-point count $H$.
 Unless `set_initializer()` is called, `Optimizer` uses `LHSInitializer(n_init_population=4*dim)` as the default, so this population size depends only on the decision-variable dimension `dim`, and is not tied to `H`.
 If you want the population size deliberately matched to `H`, check the number of rows returned by `uniform_weight_vectors` and explicitly specify `n_init_population` via `set_initializer()`.
 
-**Why parent selection isn't tournament-based**: Section IV-F of the paper states that, since NSGA-III already secures diversity through its niche-preservation operation, it chooses parents randomly rather than using an explicit selection operator {cite}`deb2014nsga3`.
+**Why parent selection isn't tournament-based**: The paper states that, since NSGA-III already secures diversity through its niche-preservation operation, it chooses parents randomly rather than using an explicit selection operator {cite}`deb2014nsga3`.
 `TournamentSelection(tournament_size=1)` expresses this "random parent selection," since no comparison is actually performed when the tournament size is 1.
 Changing `tournament_size` to 2 or more adds the same dominance-based selection pressure as NSGA-II/SPEA2, introducing a selection mechanism the paper deliberately excludes.
 

@@ -217,9 +217,9 @@ msgstr "親選択"
 #, python-brace-format
 msgid ""
 "`TournamentSelection(tournament_size=1)` (with tournament size 1, no "
-"comparison is actually performed, corresponding to the paper's Section "
-"IV-F description of \"choose parents randomly from $P_{t+1}$\")"
-msgstr "`TournamentSelection(tournament_size=1)`（トーナメントサイズ1では比較処理自体が実行されないため、論文がSection IV-Fで述べる「$P_{t+1}$からランダムに親を選ぶ」動作に対応する）"
+"comparison is actually performed, corresponding to the paper's "
+"description of \"choose parents randomly from $P_{t+1}$\")"
+msgstr "`TournamentSelection(tournament_size=1)`（トーナメントサイズ1では比較処理自体が実行されないため、論文が述べる「$P_{t+1}$からランダムに親を選ぶ」動作に対応する）"
 
 #: ../../../algorithms/nsga3.md:42
 msgid "L1, 8"
@@ -322,12 +322,12 @@ msgstr "パラメータと変種"
 #, python-brace-format
 msgid ""
 "**$\\eta_c$ (SBX distribution index) and crossover probability $p_c$**: "
-"The paper's Table II reports using $p_c=1$ (`CrossoverSBX(prob=1.0)`) and"
+"The paper reports using $p_c=1$ (`CrossoverSBX(prob=1.0)`) and"
 " $\\eta_c=30$ (`CrossoverSBX(eta=30.0)`) for NSGA-III. Both the crossover"
 " probability and distribution index are larger than NSGA-II's defaults "
 "($p_c=0.9$, $\\eta_c=20$), a setting that generates offspring closer to "
 "the parents with higher probability {cite}`deb2014nsga3`."
-msgstr "**$\\eta_c$（SBX分布指数）と交叉確率$p_c$**：論文のTable IIは、NSGA-IIIで$p_c=1$（`CrossoverSBX(prob=1.0)`）、$\\eta_c=30$（`CrossoverSBX(eta=30.0)`）を使ったと報告しています。 NSGA-IIの既定値（$p_c=0.9$、$\\eta_c=20$）より交叉確率と分布指数のいずれも大きく、親に近い子個体をより高い確率で生成する設定になっています{cite}`deb2014nsga3`。"
+msgstr "**$\\eta_c$（SBX分布指数）と交叉確率$p_c$**：論文は、NSGA-IIIで$p_c=1$（`CrossoverSBX(prob=1.0)`）、$\\eta_c=30$（`CrossoverSBX(eta=30.0)`）を使ったと報告しています。 NSGA-IIの既定値（$p_c=0.9$、$\\eta_c=20$）より交叉確率と分布指数のいずれも大きく、親に近い子個体をより高い確率で生成する設定になっています{cite}`deb2014nsga3`。"
 
 #: ../../../algorithms/nsga3.md:116
 msgid ""
@@ -346,7 +346,7 @@ msgstr "**個体数$N$と参照点数$H$の対応**：論文は、参照点数$H
 #: ../../../algorithms/nsga3.md:120
 #, python-brace-format
 msgid ""
-"**Why parent selection isn't tournament-based**: Section IV-F of the "
+"**Why parent selection isn't tournament-based**: The "
 "paper states that, since NSGA-III already secures diversity through its "
 "niche-preservation operation, it chooses parents randomly rather than "
 "using an explicit selection operator {cite}`deb2014nsga3`. "
@@ -355,7 +355,7 @@ msgid ""
 "tournament size is 1. Changing `tournament_size` to 2 or more adds the "
 "same dominance-based selection pressure as NSGA-II/SPEA2, introducing a "
 "selection mechanism the paper deliberately excludes."
-msgstr "**親選択がトーナメントでない理由**：論文Section IV-Fは、NSGA-IIIがニッチ保存操作によってすでに多様性を確保しているため、明示的な選択演算子を用いず親をランダムに選ぶと述べています{cite}`deb2014nsga3`。 `TournamentSelection(tournament_size=1)`は、トーナメントサイズが1のとき比較処理自体が実行されないため、この「ランダムな親選択」を表現します。 `tournament_size`を2以上に変更すると、NSGA-II/SPEA2と同じ優越関係ベースの選択圧が加わり、論文が意図的に排除した選択機構を導入することになります。"
+msgstr "**親選択がトーナメントでない理由**：論文は、NSGA-IIIがニッチ保存操作によってすでに多様性を確保しているため、明示的な選択演算子を用いず親をランダムに選ぶと述べています{cite}`deb2014nsga3`。 `TournamentSelection(tournament_size=1)`は、トーナメントサイズが1のとき比較処理自体が実行されないため、この「ランダムな親選択」を表現します。 `tournament_size`を2以上に変更すると、NSGA-II/SPEA2と同じ優越関係ベースの選択圧が加わり、論文が意図的に排除した選択機構を導入することになります。"
 
 #: ../../../algorithms/nsga3.md:124
 msgid ""
@@ -612,7 +612,7 @@ msgstr "[Dominator](../components/dominance.md)：`dominator`引数として差�
 #~ msgstr ""
 
 #~ msgid ""
-#~ "**$\\eta_c$（SBX分布指数）と交叉確率$p_c$**: 論文のTable IIは、NSGA-"
+#~ "**$\\eta_c$（SBX分布指数）と交叉確率$p_c$**: 論文は、NSGA-"
 #~ "IIIで$p_c=1$（`CrossoverSBX(prob=1.0)`）、$\\eta_c=30$（`CrossoverSBX(eta=30.0)`）を使ったと報告している。"
 #~ " NSGA-"
 #~ "IIの既定値（$p_c=0.9$、$\\eta_c=20$）より交叉確率・分布指数のいずれも大きく、親に近い子個体をより高い確率で生成する設定になっている{cite}`deb2014nsga3`。"
@@ -627,7 +627,7 @@ msgstr "[Dominator](../components/dominance.md)：`dominator`引数として差�
 #~ msgstr ""
 
 #~ msgid ""
-#~ "**親選択がトーナメントでない理由**: 論文Section IV-Fは、NSGA-"
+#~ "**親選択がトーナメントでない理由**: 論文は、NSGA-"
 #~ "IIIがニッチ保存操作によってすでに多様性を確保しているため、明示的な選択演算子を用いず親をランダムに選ぶと述べている{cite}`deb2014nsga3`。"
 #~ " "
 #~ "`TournamentSelection(tournament_size=1)`は、トーナメントサイズが1のとき比較処理自体が実行されないため、この「ランダムな親選択」を表現する。"
