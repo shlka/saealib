@@ -212,6 +212,7 @@ __all__ = [
 _TIER2_MAP: dict[str, str] = {
     # algorithms (less common)
     "DeapGenerateUpdateAlgorithm": "saealib.algorithms",
+    "NevergradAlgorithm": "saealib.algorithms",
     "PymooAlgorithm": "saealib.algorithms",
     # comparators (less common)
     "Dominator": "saealib.comparators",
