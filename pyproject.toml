@@ -36,7 +36,8 @@ xgboost = ["xgboost>=1.7.0"]
 lightgbm = ["lightgbm>=3.0.0"]
 torch = ["torch>=2.0.0"]
 pymoo = ["pymoo>=0.6.2,<0.7"]
-all = ["saealib[parallel,sklearn,xgboost,lightgbm,torch,pymoo]"]
+deap = ["deap>=1.4,<2"]
+all = ["saealib[parallel,sklearn,xgboost,lightgbm,torch,pymoo,deap]"]
 
 [project.urls]
 Homepage = "https://github.com/shlka/saealib"
@@ -66,6 +67,7 @@ dev = [
     "lightgbm>=3.0.0",
     "torch>=2.0.0",
     "pymoo>=0.6.2,<0.7",
+    "deap>=1.4,<2",
 ]
 docs = [
     "myst-parser>=4.0.1",

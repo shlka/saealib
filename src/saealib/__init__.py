@@ -244,6 +244,8 @@ _TIER2_MAP: dict[str, str] = {
     "CrossoverOnePoint": "saealib.operators",
     "CrossoverTwoPoint": "saealib.operators",
     "CrossoverUniform": "saealib.operators",
+    "DeapCrossover": "saealib.operators",
+    "DeapMutation": "saealib.operators",
     "MutationCategorical": "saealib.operators",
     "MutationGaussian": "saealib.operators",
     "MutationIntegerUniform": "saealib.operators",

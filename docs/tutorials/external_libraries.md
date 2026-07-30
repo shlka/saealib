@@ -4,7 +4,7 @@
 
 The adapter only translates `saealib`-side data representations such as `Problem`/`Population`/`ctx`; the learning algorithm or search operator itself uses the external library's implementation as-is.
 
-Currently, surrogate model adapters (scikit-learn, XGBoost, LightGBM, PyTorch) and pymoo adapters (`Crossover`/`Mutation`/`Algorithm`/`Problem`) are implemented. For users who would rather remove the runtime dependency on an external evolutionary-computation library, [Porting operators to native saealib code](#porting-operators-to-native-saealib-code) below covers rewriting a pymoo- or DEAP-style operator as a native `Crossover`/`Mutation` subclass instead.
+Currently, surrogate model adapters (scikit-learn, XGBoost, LightGBM, PyTorch), pymoo adapters (`Crossover`/`Mutation`/`Algorithm`/`Problem`), and DEAP adapters (`Crossover`/`Mutation`) are implemented. For users who would rather remove the runtime dependency on an external evolutionary-computation library, [Porting operators to native saealib code](#porting-operators-to-native-saealib-code) below covers rewriting a pymoo- or DEAP-style operator as a native `Crossover`/`Mutation` subclass instead.
 
 ## Installation
 

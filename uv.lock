@@ -681,6 +681,20 @@ wheels = [
 ]
 
 [[package]]
+name = "deap"
+version = "1.4.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "moocore" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0c/74/31d2dc3bfcf36257ef4ef2d00a9451696d43d10284bf1495340b2e62aecc/deap-1.4.4.tar.gz", hash = "sha256:50d4bd924fca5a16a3dba8bfdb1140a55e9c24ce50816ab4f5683d2f31c2d734", size = 1053722, upload-time = "2026-04-17T21:03:12.548Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7d/6e/4ba2e2e45fde8483b67e7bee7401a7f132e02c4058d31b6db301f546089a/deap-1.4.4-py3-none-any.whl", hash = "sha256:06c2fcf2e9f870da035c1372c9156ee817c2c31659ee70aae2dcc0849d2c8c49", size = 93078, upload-time = "2026-04-17T21:03:10.952Z" },
+]
+
+[[package]]
 name = "deprecated"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2076,6 +2090,7 @@ dependencies = [
 
 [package.optional-dependencies]
 all = [
+    { name = "deap" },
     { name = "joblib" },
     { name = "lightgbm" },
     { name = "pymoo" },
@@ -2083,6 +2098,9 @@ all = [
     { name = "scikit-learn", version = "1.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "torch" },
     { name = "xgboost" },
+]
+deap = [
+    { name = "deap" },
 ]
 lightgbm = [
     { name = "lightgbm" },
@@ -2106,6 +2124,7 @@ xgboost = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "deap" },
     { name = "lightgbm" },
     { name = "opfunu" },
     { name = "pymoo" },
@@ -2138,6 +2157,8 @@ docs = [
 
 [package.metadata]
 requires-dist = [
+    { name = "deap", marker = "extra == 'all'", specifier = ">=1.4,<2" },
+    { name = "deap", marker = "extra == 'deap'", specifier = ">=1.4,<2" },
     { name = "joblib", marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "joblib", marker = "extra == 'parallel'", specifier = ">=1.0.0" },
     { name = "lightgbm", marker = "extra == 'all'", specifier = ">=3.0.0" },
@@ -2155,10 +2176,11 @@ requires-dist = [
     { name = "xgboost", marker = "extra == 'all'", specifier = ">=1.7.0" },
     { name = "xgboost", marker = "extra == 'xgboost'", specifier = ">=1.7.0" },
 ]
-provides-extras = ["all", "lightgbm", "parallel", "pymoo", "sklearn", "torch", "xgboost"]
+provides-extras = ["all", "deap", "lightgbm", "parallel", "pymoo", "sklearn", "torch", "xgboost"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "deap", specifier = ">=1.4,<2" },
     { name = "lightgbm", specifier = ">=3.0.0" },
     { name = "opfunu", specifier = ">=1.0.4" },
     { name = "pymoo", specifier = ">=0.6.2,<0.7" },
