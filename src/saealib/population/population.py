@@ -353,7 +353,13 @@ class Population(Generic[T_Individual]):
         """
         self._extend_internal(other, preserve_ids=False)
 
-    def _extend_internal(self, other: Self | dict, *, preserve_ids: bool) -> None:
+    def _extend_internal(
+        self,
+        other: Self | dict,
+        *,
+        preserve_ids: bool,
+        allow_duplicate_ids: bool = False,
+    ) -> None:
         """Extend this population; ``preserve_ids`` controls ``id`` acceptance.
 
         The public and internal ``id`` columns use the same acceptance rules.
@@ -392,13 +398,16 @@ class Population(Generic[T_Individual]):
                     other_size, self._schema["id"].default, dtype=np.int64
                 )
             real_incoming = incoming_ids[incoming_ids != -1]
-            if len(real_incoming) != len(np.unique(real_incoming)):
+            if not allow_duplicate_ids and len(real_incoming) != len(
+                np.unique(real_incoming)
+            ):
                 raise ValidationError(
                     "Duplicate candidate id within the extended batch"
                 )
             if (
                 self._size > 0
                 and len(real_incoming) > 0
+                and not allow_duplicate_ids
                 and np.any(np.isin(self._get_mutable_array("id"), real_incoming))
             ):
                 raise ValidationError(

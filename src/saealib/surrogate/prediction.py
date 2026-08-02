@@ -99,8 +99,6 @@ class SurrogatePrediction:
         """Validate channel names, row alignment, and optional arrays."""
         if not isinstance(self.channels, dict):
             raise ValidationError("SurrogatePrediction.channels must be a dict")
-        if not self.channels:
-            return
         for name, channel in self.channels.items():
             if not isinstance(name, str) or not name:
                 raise ValidationError(
@@ -108,14 +106,14 @@ class SurrogatePrediction:
                 )
             if not isinstance(channel, PredictionChannel):
                 raise ValidationError(f"channel {name!r} is not a PredictionChannel")
-        n = next(iter(self.channels.values())).value.shape[0]
+        n = next(iter(self.channels.values())).value.shape[0] if self.channels else 0
         if any(channel.value.shape[0] != n for channel in self.channels.values()):
             raise ValidationError(
                 "all prediction channels must have the same row count"
             )
         if self.x is not None:
             x = np.asarray(self.x)
-            if x.ndim != 2 or x.dtype == object:
+            if x.ndim != 2 or x.dtype == object or x.shape[0] != n:
                 raise ValidationError("prediction x must have shape (n, dim)")
             self.x = np.array(x, dtype=np.float64, order="C", copy=True)
         if self.label is not None:

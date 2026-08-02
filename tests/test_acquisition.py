@@ -26,6 +26,7 @@ from saealib.acquisition import (
     ProductOfFeasibility,
 )
 from saealib.acquisition.mean import CORSDistance
+from saealib.exceptions import ValidationError
 from saealib.population import Archive, PopulationAttribute
 from saealib.surrogate.prediction import SurrogatePrediction
 
@@ -374,10 +375,8 @@ class TestCORSDistance:
             CORSDistance(delta=10.0).score(pred, reference=reference)
 
     def test_x_row_mismatch_raises(self) -> None:
-        reference = _archive_x([0.0]).x
-        pred = _pred_x(value=[[5.0], [6.0]], x=[[0.0], [1.0], [2.0]])
-        with pytest.raises(ValueError, match="one row per candidate"):
-            CORSDistance(delta=10.0).score(pred, reference=reference)
+        with pytest.raises(ValidationError, match="shape"):
+            _pred_x(value=[[5.0], [6.0]], x=[[0.0], [1.0], [2.0]])
 
     def test_direction_scalarizes_base_score(self) -> None:
         """The unconstrained base score respects direction, like MeanPrediction."""

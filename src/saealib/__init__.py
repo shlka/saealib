@@ -47,6 +47,7 @@ from saealib.callback import (
 from saealib.checkpoint import CheckpointCallback
 from saealib.comparators import Comparator, NSGA2Comparator, SingleObjectiveComparator
 from saealib.exceptions import (
+    CheckpointError,
     ConfigurationError,
     EvaluationProtocolError,
     SaealibError,
@@ -170,6 +171,7 @@ __all__ = [
     "CallbackManager",
     "CategoricalVariable",
     "CheckpointCallback",
+    "CheckpointError",
     "Comparator",
     "ComparatorWorstFallback",
     "ConfigurationError",

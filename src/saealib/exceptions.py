@@ -1,6 +1,7 @@
 """Public exception hierarchy for saealib."""
 
 __all__ = [
+    "CheckpointError",
     "ConfigurationError",
     "EvaluationProtocolError",
     "SaealibError",
@@ -18,6 +19,10 @@ class ValidationError(SaealibError, ValueError):
 
 class ConfigurationError(SaealibError, ValueError):
     """Raised when an :class:`~saealib.Optimizer` is misconfigured at run time."""
+
+
+class CheckpointError(ValidationError):
+    """Raised when a checkpoint is invalid or cannot be migrated."""
 
 
 class EvaluationProtocolError(SaealibError, ValueError):
