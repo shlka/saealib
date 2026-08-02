@@ -20,6 +20,7 @@ dict) via ``state.replace(data={**state.data, "key": value})``.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -33,14 +34,18 @@ from saealib.callback import (
     SurrogateEndEvent,
     SurrogateStartEvent,
 )
-from saealib.exceptions import ValidationError
+from saealib.exceptions import EvaluationProtocolError, ValidationError
+from saealib.execution.evaluator import (
+    EvaluationRequest,
+    EvaluationStatus,
+    Evaluator,
+    PendingEvaluation,
+)
 from saealib.pipeline import Pipeline, Stage
 from saealib.strategies.base import assign_tell_f
 from saealib.surrogate.manager import _split_prediction
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from saealib.acquisition.base import AcquisitionFunction
     from saealib.algorithms.base import Algorithm
     from saealib.callback import CallbackManager, Event
@@ -427,6 +432,365 @@ class SortByScoreStage(Stage):
         )
 
 
+class EvaluationPlanStage(Stage):
+    """Create an owned request and pending record."""
+
+    name = "evaluation_plan"
+    label = "Plan evaluation"
+    notation = r"$R \leftarrow \text{plan}(Q)$"
+
+    def __init__(
+        self, n_eval: int | Callable[[OptimizationState], int] | None = None
+    ) -> None:
+        super().__init__()
+        self._n_eval = n_eval
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        candidates = state.offspring
+        if candidates is None:
+            raise EvaluationProtocolError("evaluation candidates are missing")
+        if self._n_eval is None:
+            n = len(candidates)
+        elif isinstance(self._n_eval, int):
+            n = self._n_eval
+        else:
+            n = self._n_eval(state)
+        n = min(max(int(n), 0), len(candidates))
+        if "id" in candidates.schema:
+            ids = np.array(candidates.get_array("id")[:n], dtype=np.int64, copy=True)
+        else:
+            ids = state.candidate_id_allocator.allocate(n)
+        if len(ids) != len(np.unique(ids)) or np.any(ids < 0):
+            raise EvaluationProtocolError("evaluation candidate ids must be unique")
+        request_id = np.int64(state.request_id_allocator.allocate(1)[0])
+        request = EvaluationRequest(request_id, ids, candidates.x[:n])
+        pending = PendingEvaluation(
+            request, EvaluationStatus.PENDING, np.empty(0, dtype=np.int64)
+        )
+        return state.replace(
+            evaluation_request=request,
+            pending_evaluations={**state.pending_evaluations, int(request_id): pending},
+            evaluation_updates=[],
+            evaluation_update_new_ids=[],
+            evaluation_new_ids=np.empty(0, dtype=np.int64),
+        )
+
+
+class EvaluationSubmitStage(Stage):
+    """Submit the planned request to an evaluator."""
+
+    name = "evaluation_submit"
+    label = "Submit evaluation"
+    notation = r"$H \leftarrow \text{submit}(R)$"
+
+    def __init__(self, evaluator: Evaluator) -> None:
+        super().__init__()
+        self._evaluator = evaluator
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        request = state.evaluation_request
+        if request is None:
+            raise EvaluationProtocolError("evaluation request is missing")
+        handle = self._evaluator.submit(request, state.problem)
+        pending = state.pending_evaluations[int(request.request_id)]
+        pending = PendingEvaluation(
+            request, EvaluationStatus.PENDING, pending.applied_candidate_ids
+        )
+        return state.replace(
+            evaluation_handles={
+                **state.evaluation_handles,
+                int(request.request_id): handle,
+            },
+            pending_evaluations={
+                **state.pending_evaluations,
+                int(request.request_id): pending,
+            },
+        )
+
+
+class EvaluationCollectStage(Stage):
+    """Collect delivered updates for the active request."""
+
+    name = "evaluation_collect"
+    label = "Collect evaluation"
+    notation = r"$U \leftarrow \text{collect}(H)$"
+
+    def __init__(self, evaluator: Evaluator) -> None:
+        super().__init__()
+        self._evaluator = evaluator
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        request = state.evaluation_request
+        if request is None or int(request.request_id) not in state.evaluation_handles:
+            raise EvaluationProtocolError("evaluation handle is missing")
+        handle = state.evaluation_handles[int(request.request_id)]
+        updates = self._evaluator.collect(handle)
+        pending = state.pending_evaluations[int(request.request_id)]
+        if updates:
+            expected = pending.last_delivered_sequence + 1
+            for update in updates:
+                if (
+                    update.request_id != request.request_id
+                    or update.sequence != expected
+                ):
+                    raise EvaluationProtocolError(
+                        "evaluation updates must be ascending and contiguous"
+                    )
+                expected += 1
+            last = updates[-1]
+            pending = PendingEvaluation(
+                request,
+                last.status,
+                pending.applied_candidate_ids,
+                last.sequence,
+                pending.last_acknowledged_sequence,
+            )
+        return state.replace(
+            evaluation_updates=updates,
+            evaluation_update_new_ids=[],
+            pending_evaluations={
+                **state.pending_evaluations,
+                int(request.request_id): pending,
+            },
+        )
+
+
+class EvaluationApplyStage(Stage):
+    """Validate and apply delivered result rows atomically."""
+
+    name = "evaluation_apply"
+    label = "Apply evaluation"
+    notation = r"$Q \leftarrow \text{apply}(U)$"
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        candidates = state.offspring
+        request = state.evaluation_request
+        pending = (
+            state.pending_evaluations.get(int(request.request_id)) if request else None
+        )
+        if candidates is None or request is None or pending is None:
+            raise EvaluationProtocolError("evaluation state is incomplete")
+        live_ids = (
+            np.asarray(candidates.get_array("id"), dtype=np.int64)
+            if "id" in candidates.schema
+            else request.candidate_ids
+        )
+        request_set = set(map(int, request.candidate_ids))
+        applied = set(map(int, pending.applied_candidate_ids))
+        seen_result_ids: set[int] = set()
+        new_ids: list[int] = []
+        per_update_new_ids: list[np.ndarray] = []
+        evaluated_indices: list[int] = []
+        operations: list[tuple[np.ndarray, dict[str, np.ndarray]]] = []
+        next_status = pending.status
+        expected_sequence = pending.last_acknowledged_sequence + 1
+        terminal = {
+            EvaluationStatus.COMPLETED,
+            EvaluationStatus.FAILED,
+            EvaluationStatus.CANCELLED,
+        }
+        allowed = {
+            EvaluationStatus.PENDING: {
+                EvaluationStatus.RUNNING,
+                EvaluationStatus.PARTIAL,
+                EvaluationStatus.COMPLETED,
+                EvaluationStatus.FAILED,
+                EvaluationStatus.CANCELLED,
+            },
+            EvaluationStatus.RUNNING: {
+                EvaluationStatus.PARTIAL,
+                EvaluationStatus.COMPLETED,
+                EvaluationStatus.FAILED,
+                EvaluationStatus.CANCELLED,
+            },
+            EvaluationStatus.PARTIAL: {
+                EvaluationStatus.PARTIAL,
+                EvaluationStatus.COMPLETED,
+                EvaluationStatus.FAILED,
+                EvaluationStatus.CANCELLED,
+            },
+        }
+        processed = False
+        for update in state.evaluation_updates:
+            if (
+                update.request_id != request.request_id
+                or update.sequence != expected_sequence
+            ):
+                raise EvaluationProtocolError(
+                    "evaluation update sequence or request mismatch"
+                )
+            expected_sequence += 1
+            if (
+                pending.last_acknowledged_sequence >= 0 and pending.status in terminal
+            ) or (processed and next_status in terminal):
+                raise EvaluationProtocolError("terminal evaluation cannot transition")
+            prior_status = (
+                EvaluationStatus.PENDING
+                if not processed and pending.last_acknowledged_sequence < 0
+                else next_status
+            )
+            if (
+                update.status
+                in (
+                    EvaluationStatus.PENDING,
+                    EvaluationStatus.RUNNING,
+                )
+                and update.result is not None
+            ):
+                raise EvaluationProtocolError(
+                    "pending or running updates cannot carry results"
+                )
+            if update.status not in allowed.get(prior_status, set()):
+                raise EvaluationProtocolError("illegal evaluation status transition")
+            if update.status is EvaluationStatus.PARTIAL and (
+                update.result is None or len(update.candidate_ids) == 0
+            ):
+                raise EvaluationProtocolError(
+                    "partial updates require a non-empty result"
+                )
+            if (
+                update.status in (EvaluationStatus.FAILED, EvaluationStatus.CANCELLED)
+                and update.error is None
+            ):
+                raise EvaluationProtocolError(
+                    "failed or cancelled updates require structured error info"
+                )
+            update_set = set(map(int, update.candidate_ids))
+            if not update_set <= request_set or len(update_set) != len(
+                update.candidate_ids
+            ):
+                raise EvaluationProtocolError(
+                    "evaluation update candidate membership is invalid"
+                )
+            if update_set & applied or update_set & seen_result_ids:
+                raise EvaluationProtocolError("evaluation result was duplicated")
+            update_new_ids: list[int] = []
+            if update.result is not None:
+                result_ids = update.result.candidate_ids
+                if result_ids is None or not np.array_equal(
+                    result_ids, update.candidate_ids
+                ):
+                    raise EvaluationProtocolError(
+                        "result candidate_ids do not match update"
+                    )
+                rows_found = [
+                    np.flatnonzero(live_ids == candidate_id)
+                    for candidate_id in update.candidate_ids
+                ]
+                if any(len(row) != 1 for row in rows_found):
+                    raise EvaluationProtocolError(
+                        "evaluation candidate is not in the population"
+                    )
+                rows = [int(row[0]) for row in rows_found]
+                values = {
+                    "f": update.result.f,
+                    "g": update.result.g,
+                    "cv": update.result.cv,
+                }
+                operations.append((np.asarray(rows, dtype=np.intp), values))
+                update_new_ids.extend(map(int, update.candidate_ids))
+                new_ids.extend(update_new_ids)
+                seen_result_ids.update(update_new_ids)
+                evaluated_indices.extend(rows)
+            per_update_new_ids.append(np.asarray(update_new_ids, dtype=np.int64))
+            next_status = update.status
+            processed = True
+        if (
+            state.evaluation_updates
+            and state.evaluation_updates[-1].status is EvaluationStatus.COMPLETED
+        ):
+            accounted = applied | set(new_ids)
+            if accounted != request_set:
+                raise EvaluationProtocolError("completed update does not cover request")
+        for rows, values in operations:
+            candidates.update_rows(rows, values)
+        evaluated = candidates.extract(np.asarray(evaluated_indices, dtype=np.intp))
+        updated_pending = PendingEvaluation(
+            request,
+            next_status,
+            np.asarray(sorted(applied | set(new_ids)), dtype=np.int64),
+            pending.last_delivered_sequence,
+            pending.last_acknowledged_sequence,
+        )
+        return state.replace(
+            offspring=candidates,
+            evaluated_offspring=evaluated,
+            evaluation_new_ids=np.asarray(new_ids, dtype=np.int64),
+            evaluation_update_new_ids=per_update_new_ids,
+            pending_evaluations={
+                **state.pending_evaluations,
+                int(request.request_id): updated_pending,
+            },
+        )
+
+
+class EvaluationAcknowledgeStage(Stage):
+    """Acknowledge committed updates and account for their evaluations."""
+
+    name = "evaluation_acknowledge"
+    label = "Acknowledge evaluation"
+    notation = r"$H \leftarrow \text{ack}(U)$"
+
+    def __init__(
+        self, evaluator: Evaluator, cbmanager: CallbackManager | None = None
+    ) -> None:
+        super().__init__()
+        self._evaluator = evaluator
+        self._cbmanager = cbmanager
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        request = state.evaluation_request
+        if request is None:
+            raise EvaluationProtocolError("evaluation request is missing")
+        handle = state.evaluation_handles[int(request.request_id)]
+        pending = state.pending_evaluations[int(request.request_id)]
+        current = state
+        pending_map = dict(state.pending_evaluations)
+        handles = dict(state.evaluation_handles)
+        pending_ids = set(map(int, pending.applied_candidate_ids))
+        new_by_update = state.evaluation_update_new_ids
+        if len(new_by_update) != len(state.evaluation_updates):
+            raise EvaluationProtocolError("evaluation update bookkeeping is missing")
+        for update, update_new_ids in zip(
+            state.evaluation_updates, new_by_update, strict=True
+        ):
+            self._evaluator.acknowledge(handle, update.sequence)
+            pending_ids.update(map(int, update_new_ids))
+            updated_pending = PendingEvaluation(
+                request,
+                update.status,
+                np.asarray(sorted(pending_ids), dtype=np.int64),
+                pending.last_delivered_sequence,
+                update.sequence,
+            )
+            terminal = update.status in (
+                EvaluationStatus.COMPLETED,
+                EvaluationStatus.FAILED,
+                EvaluationStatus.CANCELLED,
+            )
+            if terminal:
+                pending_map.pop(int(request.request_id), None)
+                handles.pop(int(request.request_id), None)
+            else:
+                pending_map[int(request.request_id)] = updated_pending
+            current = current.replace(
+                fe=current.fe + len(update_new_ids),
+                pending_evaluations=pending_map.copy(),
+                evaluation_handles=handles.copy(),
+            )
+            if len(update_new_ids) and self._cbmanager is not None:
+                self._cbmanager.dispatch(
+                    PostEvaluationEvent(
+                        ctx=current,
+                        offspring=current.evaluated_offspring,
+                        request_id=request.request_id,
+                        candidate_ids=update_new_ids,
+                        status=update.status,
+                    )
+                )
+        return current
+
+
 class TrueEvaluationStage(Stage):
     """Evaluate offspring with the true objective function.
 
@@ -517,6 +881,37 @@ class ArchiveUpdateStage(Stage):
             state.archive.add(entry)
             state.pareto_archive.add(entry)
         return state
+
+
+class FeedbackStage(Stage):
+    """Copy evaluated objective channels into the offspring batch."""
+
+    name = "feedback"
+    label = "Apply feedback"
+    notation = r"$\mathcal{Q} \leftarrow \mathrm{feedback}(\mathcal{Q})$"
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        offspring = state.offspring
+        evaluated = state.evaluated_offspring
+        if offspring is None or evaluated is None or len(evaluated) == 0:
+            return state
+        if "id" in offspring.schema and "id" in evaluated.schema:
+            ids = np.asarray(evaluated.get_array("id"), dtype=np.int64)
+            rows = [
+                int(np.flatnonzero(offspring.get_array("id") == candidate_id)[0])
+                for candidate_id in ids
+            ]
+        else:
+            rows = list(range(len(evaluated)))
+        offspring.update_rows(
+            np.asarray(rows, dtype=np.intp),
+            {
+                "f": evaluated.get_array("f"),
+                "g": evaluated.get_array("g"),
+                "cv": evaluated.get_array("cv"),
+            },
+        )
+        return state.replace(offspring=offspring)
 
 
 class TellStage(Stage):

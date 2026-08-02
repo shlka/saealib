@@ -17,10 +17,15 @@ from saealib.stages import (
     ArchiveUpdateStage,
     AskStage,
     CountGenerationStage,
+    EvaluationAcknowledgeStage,
+    EvaluationApplyStage,
+    EvaluationCollectStage,
+    EvaluationPlanStage,
+    EvaluationSubmitStage,
+    FeedbackStage,
     SortByScoreStage,
     SurrogatePredictStage,
     TellStage,
-    TrueEvaluationStage,
 )
 from saealib.strategies.base import OptimizationStrategy
 
@@ -69,15 +74,18 @@ class IndividualBasedStrategy(OptimizationStrategy):
                     cbmanager=cbmanager,
                 ),
                 SortByScoreStage(),
-                TrueEvaluationStage(
-                    provider.evaluator,
-                    cbmanager=cbmanager,
+                EvaluationPlanStage(
                     n_eval=functools.partial(
                         _n_eval_by_ratio, ratio=self.evaluation_ratio
                     ),
                 ),
+                EvaluationSubmitStage(provider.evaluator),
+                EvaluationCollectStage(provider.evaluator),
+                EvaluationApplyStage(),
                 ArchiveUpdateStage(),
+                FeedbackStage(),
                 TellStage(provider.algorithm),
+                EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
             ]
         )
 

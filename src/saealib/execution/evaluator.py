@@ -10,36 +10,196 @@ without touching the pipeline code.
 
 from __future__ import annotations
 
+import pickle
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+from enum import Enum, auto
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
+
+from saealib.exceptions import EvaluationProtocolError, ValidationError
 
 if TYPE_CHECKING:
     from saealib.problem import Problem
 
 
+class EvaluationStatus(Enum):
+    """State of a submitted evaluation."""
+
+    PENDING = auto()
+    RUNNING = auto()
+    PARTIAL = auto()
+    COMPLETED = auto()
+    FAILED = auto()
+    CANCELLED = auto()
+
+
+def _owned_array(value: Any, *, dtype: np.dtype, ndim: int, name: str) -> np.ndarray:
+    arr = np.asarray(value)
+    if arr.dtype != dtype or arr.ndim != ndim:
+        raise ValidationError(f"{name} must have dtype {dtype} and ndim {ndim}")
+    result = np.array(arr, dtype=dtype, order="C", copy=True)
+    result.flags.writeable = False
+    return result
+
+
 @dataclass
 class EvaluationResult:
-    """
-    Batched result of evaluating a set of design vectors.
-
-    Attributes
-    ----------
-    f : np.ndarray
-        Objective values. shape = (n, n_obj)
-    g : np.ndarray
-        Raw constraint values. shape = (n, n_constraints).
-        Has shape (n, 0) when the problem defines no constraints.
-    cv : np.ndarray
-        Aggregate constraint violation per candidate. shape = (n, )
-        All zeros when the problem defines no constraints.
-    """
+    """Validated numeric result for a batch of candidates."""
 
     f: np.ndarray
     g: np.ndarray
     cv: np.ndarray
+    candidate_ids: np.ndarray | None = None
+    cost: np.ndarray | None = None
+    noise: np.ndarray | None = None
+    outputs: dict[str, np.ndarray] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Validate and own all numeric channels."""
+        self.f = _owned_array(self.f, dtype=np.dtype(np.float64), ndim=2, name="f")
+        self.g = _owned_array(self.g, dtype=np.dtype(np.float64), ndim=2, name="g")
+        self.cv = _owned_array(self.cv, dtype=np.dtype(np.float64), ndim=1, name="cv")
+        n = len(self.f)
+        if len(self.g) != n or len(self.cv) != n:
+            raise ValidationError("EvaluationResult channel lengths must match")
+        if self.candidate_ids is not None:
+            self.candidate_ids = _owned_array(
+                self.candidate_ids,
+                dtype=np.dtype(np.int64),
+                ndim=1,
+                name="candidate_ids",
+            )
+            if len(self.candidate_ids) != n:
+                raise ValidationError("candidate_ids length must match result rows")
+            if len(np.unique(self.candidate_ids)) != n:
+                raise ValidationError("candidate_ids must be unique")
+        if self.cost is not None:
+            self.cost = _owned_array(
+                self.cost, dtype=np.dtype(np.float64), ndim=1, name="cost"
+            )
+            if len(self.cost) != n:
+                raise ValidationError("cost length must match result rows")
+        if self.noise is not None:
+            self.noise = _owned_array(
+                self.noise, dtype=np.dtype(np.float64), ndim=2, name="noise"
+            )
+            if self.noise.shape[0] != n or self.noise.shape[1] != self.f.shape[1]:
+                raise ValidationError("noise must have shape (n, n_obj)")
+        normalized: dict[str, np.ndarray] = {}
+        for name, value in self.outputs.items():
+            arr = np.asarray(value)
+            if arr.dtype != np.float64 or arr.ndim == 0 or arr.shape[0] != n:
+                raise ValidationError(
+                    f"outputs[{name!r}] must be float64 with leading size {n}"
+                )
+            arr = np.array(arr, dtype=np.float64, order="C", copy=True)
+            arr.flags.writeable = False
+            normalized[name] = arr
+        pickle.dumps(normalized)
+        self.outputs = normalized
+
+
+@dataclass(frozen=True)
+class EvaluationErrorInfo:
+    """Serializable error information for a failed evaluation."""
+
+    error_type: str
+    message: str
+    details: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Validate error details are serializable."""
+        pickle.dumps(dict(self.details))
+
+
+@dataclass(frozen=True)
+class EvaluationRequest:
+    """Owned input snapshot for one evaluation request."""
+
+    request_id: np.int64
+    candidate_ids: np.ndarray
+    x: np.ndarray
+    outputs: tuple[str, ...] = ("f", "g", "cv")
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Validate and own request arrays."""
+        if np.asarray(self.request_id).shape != ():
+            raise ValidationError("request_id must be scalar")
+        object.__setattr__(self, "request_id", np.int64(self.request_id))
+        ids = _owned_array(
+            self.candidate_ids, dtype=np.dtype(np.int64), ndim=1, name="candidate_ids"
+        )
+        x = _owned_array(self.x, dtype=np.dtype(np.float64), ndim=2, name="x")
+        if len(ids) != len(x) or len(ids) != len(np.unique(ids)):
+            raise ValidationError("request candidate_ids must be unique and match x")
+        object.__setattr__(self, "candidate_ids", ids)
+        object.__setattr__(self, "x", x)
+        metadata = dict(self.metadata)
+        pickle.dumps(metadata)
+        object.__setattr__(self, "metadata", metadata)
+
+
+@dataclass
+class EvaluationHandle:
+    """Runtime reference to submitted evaluation work."""
+
+    request_id: np.int64
+    status: EvaluationStatus
+    backend_token: Any = None
+    _sync_result: EvaluationResult | None = None
+    _sync_error: EvaluationErrorInfo | None = None
+    _delivered_sequence: int = -1
+    _acknowledged_sequence: int = -1
+
+
+@dataclass(frozen=True)
+class EvaluationUpdate:
+    """One delivered evaluation update."""
+
+    request_id: np.int64
+    status: EvaluationStatus
+    candidate_ids: np.ndarray
+    result: EvaluationResult | None = None
+    error: EvaluationErrorInfo | None = None
+    sequence: int = 0
+
+    def __post_init__(self) -> None:
+        """Validate update row identity."""
+        if self.sequence < 0:
+            raise EvaluationProtocolError("update sequence must be non-negative")
+        ids = _owned_array(
+            self.candidate_ids, dtype=np.dtype(np.int64), ndim=1, name="candidate_ids"
+        )
+        if len(ids) != len(np.unique(ids)):
+            raise EvaluationProtocolError("update candidate_ids must be unique")
+        object.__setattr__(self, "candidate_ids", ids)
+        if self.result is not None and self.result.candidate_ids is None:
+            raise EvaluationProtocolError("lifecycle result requires candidate_ids")
+
+
+@dataclass(frozen=True)
+class PendingEvaluation:
+    """Serializable record for submitted work."""
+
+    request: EvaluationRequest
+    status: EvaluationStatus
+    applied_candidate_ids: np.ndarray
+    last_delivered_sequence: int = -1
+    last_acknowledged_sequence: int = -1
+
+    def __post_init__(self) -> None:
+        """Validate and own applied candidate IDs."""
+        ids = _owned_array(
+            self.applied_candidate_ids,
+            dtype=np.dtype(np.int64),
+            ndim=1,
+            name="applied_candidate_ids",
+        )
+        object.__setattr__(self, "applied_candidate_ids", ids)
 
 
 class Evaluator(ABC):
@@ -63,6 +223,67 @@ class Evaluator(ABC):
             Batched objective values, raw constraint values, and violations.
         """
         ...
+
+    def submit(self, request: EvaluationRequest, problem: Problem) -> EvaluationHandle:
+        """Submit a request through the synchronous adapter."""
+        try:
+            result = self.evaluate_batch(request.x, problem)
+        except Exception as exc:
+            error = EvaluationErrorInfo(type(exc).__name__, str(exc))
+            return EvaluationHandle(
+                request.request_id, EvaluationStatus.FAILED, _sync_error=error
+            )
+        if result.candidate_ids is None:
+            result.candidate_ids = request.candidate_ids
+            result.__post_init__()
+        elif not np.array_equal(result.candidate_ids, request.candidate_ids):
+            raise EvaluationProtocolError("result candidate_ids do not match request")
+        return EvaluationHandle(
+            request.request_id, EvaluationStatus.COMPLETED, _sync_result=result
+        )
+
+    @classmethod
+    def has_partial_lifecycle_override(cls) -> bool:
+        """Return whether lifecycle adapter methods are only partly overridden."""
+        methods = ("submit", "collect", "acknowledge")
+        overridden = [
+            getattr(cls, name) is not getattr(Evaluator, name) for name in methods
+        ]
+        return any(overridden) and not all(overridden)
+
+    def collect(
+        self, handle: EvaluationHandle, *, wait: bool = True
+    ) -> list[EvaluationUpdate]:
+        """Return unacknowledged updates for a handle."""
+        if handle._sync_result is None and handle._sync_error is None:
+            return []
+        if handle._acknowledged_sequence >= 0:
+            return []
+        ids = (
+            handle._sync_result.candidate_ids
+            if handle._sync_result is not None
+            and handle._sync_result.candidate_ids is not None
+            else np.empty(0, dtype=np.int64)
+        )
+        update = EvaluationUpdate(
+            request_id=handle.request_id,
+            status=handle.status,
+            candidate_ids=ids,
+            result=handle._sync_result,
+            error=handle._sync_error,
+            sequence=0,
+        )
+        handle._delivered_sequence = 0
+        return [update]
+
+    def acknowledge(self, handle: EvaluationHandle, sequence: int) -> None:
+        """Acknowledge one contiguous update sequence."""
+        if (
+            sequence != handle._acknowledged_sequence + 1
+            or sequence > handle._delivered_sequence
+        ):
+            raise EvaluationProtocolError("evaluation sequences must be contiguous")
+        handle._acknowledged_sequence = sequence
 
 
 class SerialEvaluator(Evaluator):

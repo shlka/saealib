@@ -15,10 +15,15 @@ from saealib.stages import (
     ArchiveUpdateStage,
     AskStage,
     CountGenerationStage,
+    EvaluationAcknowledgeStage,
+    EvaluationApplyStage,
+    EvaluationCollectStage,
+    EvaluationPlanStage,
+    EvaluationSubmitStage,
+    FeedbackStage,
     SurrogatePredictStage,
     TellStage,
     TopKSelectionStage,
-    TrueEvaluationStage,
 )
 from saealib.strategies.base import OptimizationStrategy
 
@@ -77,9 +82,14 @@ class PreSelectionStrategy(OptimizationStrategy):
                     cbmanager=cbmanager,
                 ),
                 TopKSelectionStage(k=self.n_select),
-                TrueEvaluationStage(provider.evaluator, cbmanager=cbmanager),
+                EvaluationPlanStage(),
+                EvaluationSubmitStage(provider.evaluator),
+                EvaluationCollectStage(provider.evaluator),
+                EvaluationApplyStage(),
                 ArchiveUpdateStage(),
+                FeedbackStage(),
                 TellStage(provider.algorithm),
+                EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
             ]
         )
 

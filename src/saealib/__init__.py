@@ -46,8 +46,23 @@ from saealib.callback import (
 )
 from saealib.checkpoint import CheckpointCallback
 from saealib.comparators import Comparator, NSGA2Comparator, SingleObjectiveComparator
-from saealib.exceptions import ConfigurationError, SaealibError, ValidationError
-from saealib.execution.evaluator import EvaluationResult, Evaluator, SerialEvaluator
+from saealib.exceptions import (
+    ConfigurationError,
+    EvaluationProtocolError,
+    SaealibError,
+    ValidationError,
+)
+from saealib.execution.evaluator import (
+    EvaluationErrorInfo,
+    EvaluationHandle,
+    EvaluationRequest,
+    EvaluationResult,
+    EvaluationStatus,
+    EvaluationUpdate,
+    Evaluator,
+    PendingEvaluation,
+    SerialEvaluator,
+)
 from saealib.execution.initializer import (
     Initializer,
     LHSInitializer,
@@ -88,6 +103,12 @@ from saealib.stages import (
     ArchiveUpdateStage,
     AskStage,
     CountGenerationStage,
+    EvaluationAcknowledgeStage,
+    EvaluationApplyStage,
+    EvaluationCollectStage,
+    EvaluationPlanStage,
+    EvaluationSubmitStage,
+    FeedbackStage,
     InitializationStage,
     SortByScoreStage,
     SurrogateFitStage,
@@ -147,10 +168,17 @@ __all__ = [
     "DuplicateElimination",
     "EpsilonConstraintHandler",
     "EqualityConstraint",
+    "EvaluationErrorInfo",
+    "EvaluationHandle",
+    "EvaluationProtocolError",
+    "EvaluationRequest",
     "EvaluationResult",
+    "EvaluationStatus",
+    "EvaluationUpdate",
     "Evaluator",
     "Event",
     "ExpectedImprovement",
+    "FeedbackStage",
     "GenerationBasedStrategy",
     "GenerationEndEvent",
     "GenerationStartEvent",
@@ -170,6 +198,7 @@ __all__ = [
     "Optimizer",
     "ParentSelection",
     "ParetoArchive",
+    "PendingEvaluation",
     "Pipeline",
     "PointwiseAcquisition",
     "Population",
