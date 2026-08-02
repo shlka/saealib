@@ -135,4 +135,4 @@ class TorchSurrogate(RegressionSurrogate):
 
         if pred.ndim == 1:
             pred = pred.reshape(-1, 1)
-        return SurrogatePrediction(value=pred)
+        return SurrogatePrediction.objective(value=pred)

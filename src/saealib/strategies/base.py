@@ -12,7 +12,7 @@ from saealib.optimizer import ComponentProvider
 
 if TYPE_CHECKING:
     from saealib.population import Individual
-    from saealib.surrogate.prediction import SurrogatePrediction
+from saealib.surrogate.prediction import SurrogatePrediction
 
 
 def assign_tell_f(

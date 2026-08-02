@@ -104,8 +104,8 @@ class TestRoundTripAcrossProblems:
         assert isinstance(manager, LocalSurrogateManager)
         assert isinstance(manager.surrogate, RBFSurrogate)
         assert manager.surrogate.dim == 5
-        assert isinstance(manager.acquisition, MeanPrediction)
-        assert manager.acquisition.direction is problem5.direction
+        assert isinstance(opt5.acquisition, MeanPrediction)
+        np.testing.assert_array_equal(opt5.acquisition.direction, problem5.direction)
 
         termination = opt5.termination
         assert termination is not None

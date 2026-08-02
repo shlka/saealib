@@ -5,16 +5,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from scipy.stats import norm
 
-from saealib.acquisition.base import AcquisitionFunction
+from saealib.acquisition.base import PointwiseAcquisition
+from saealib.acquisition.kernels import (
+    probability_of_feasibility_kernel,
+    product_of_feasibility_kernel,
+)
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
     from saealib.population import Archive
 
 
-class ProbabilityOfFeasibility(AcquisitionFunction):
+class ProbabilityOfFeasibility(PointwiseAcquisition):
     """
     Probability of Feasibility (PoF) acquisition function.
 
@@ -95,11 +98,10 @@ class ProbabilityOfFeasibility(AcquisitionFunction):
         assert prediction.std is not None
         mu = prediction.value[:, self.obj_idx]  # (n_samples,)
         sigma = prediction.std[:, self.obj_idx]  # (n_samples,)
-        sigma = np.maximum(sigma, 1e-9)
-        return norm.cdf((0.0 - mu) / sigma)  # P(g(x) <= 0)
+        return probability_of_feasibility_kernel(mu, sigma)
 
 
-class ProductOfFeasibility(AcquisitionFunction):
+class ProductOfFeasibility(PointwiseAcquisition):
     r"""Joint probability of feasibility across all constraint columns.
 
     Computes the product of per-constraint feasibility probabilities:
@@ -119,18 +121,8 @@ class ProductOfFeasibility(AcquisitionFunction):
     ``ConstraintObjectiveSet`` (which returns ``archive.g`` as ``train_y``),
     typically via ``PerObjectiveSurrogate([GP(), ...] * n_constraints)``.
 
-    To combine with an objective acquisition (e.g. EI), wrap both managers
-    in a ``CompositeSurrogateManager`` with ``product_combine``::
-
-        ei_manager = GlobalSurrogateManager(GP(), EI(), ArchiveObjectiveSet())
-        pof_manager = GlobalSurrogateManager(
-            PerObjectiveSurrogate([GP()] * n_constraints),
-            ProductOfFeasibility(),
-            ConstraintObjectiveSet(),
-        )
-        optimizer.set_surrogate_manager(
-            CompositeSurrogateManager([ei_manager, pof_manager], product_combine)
-        )
+    Combine this acquisition with an objective acquisition through
+    ``CompositeAcquisition`` and configure the result on the optimizer.
 
     Requires a surrogate that provides uncertainty estimates (std).
 
@@ -196,6 +188,4 @@ class ProductOfFeasibility(AcquisitionFunction):
             )
         assert prediction.std is not None
         mu = prediction.value  # (n_samples, n_constraints)
-        sigma = np.maximum(prediction.std, 1e-9)  # (n_samples, n_constraints)
-        pof = norm.cdf((0.0 - mu) / sigma)  # (n_samples, n_constraints)
-        return np.prod(pof, axis=1)  # (n_samples,)
+        return product_of_feasibility_kernel(mu, prediction.std)

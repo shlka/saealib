@@ -2,41 +2,48 @@
 Tests for the surrogate manager module.
 
 Tests cover:
-- _split_prediction: splits batch SurrogatePrediction into per-sample objects
+- _split_prediction / _stack_predictions: per-sample <-> batched conversion
 - _rank_normalize: rank-based normalization to [0, 1]
-- GlobalSurrogateManager: fits on full archive, batch predict and score
-- LocalSurrogateManager: KNN per candidate, per-candidate fit and score
-- CompositeSurrogateManager: combines scores from multiple sub-managers via combine_fn
-- PairwiseSurrogateManager: scores by win rate against archive reference points
+- GlobalSurrogateManager: fits on full archive, batch predict
+- LocalSurrogateManager: KNN per candidate, per-candidate fit and predict
+- CompositeSurrogateManager: full multi-channel composition -- one named
+  PredictionChannel per sub-manager
+- PairwiseSurrogateManager: predicts a per-candidate win rate against archive
+  reference points as a "win_rate" prediction channel, read via
+  WinRateAcquisition
+- NoveltyAcquisition/DensityAcquisition/NichingAcquisition: archive-only
+  acquisitions, ported verbatim from the retired ArchiveBasedManager hierarchy
 """
 
 import numpy as np
 import pytest
 
-from saealib.acquisition import MeanPrediction
+from saealib.acquisition import CompositeAcquisition, MeanPrediction
+from saealib.acquisition.archive_based import (
+    DensityAcquisition,
+    NichingAcquisition,
+    NoveltyAcquisition,
+)
+from saealib.acquisition.winrate import WinRateAcquisition
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
+from saealib.exceptions import ValidationError
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
+from saealib.stages import AcquisitionStage, SurrogatePredictStage
 from saealib.surrogate.accuracy import (
     KFoldAccuracyEvaluator,
     SpearmanCorrelation,
     SurrogateAccuracy,
-)
-from saealib.surrogate.archive_manager import (
-    ArchiveBasedManager,
-    DensityManager,
-    NichingManager,
-    NoveltyManager,
 )
 from saealib.surrogate.manager import (
     CompositeSurrogateManager,
     GlobalSurrogateManager,
     LocalSurrogateManager,
     PairwiseSurrogateManager,
-    SurrogateManager,
     _rank_normalize,
     _split_prediction,
+    _stack_predictions,
     product_combine,
     rank_weighted_combine,
 )
@@ -108,40 +115,43 @@ class TestSplitPrediction:
     """Tests for the _split_prediction helper."""
 
     def test_splits_into_correct_count(self) -> None:
-        pred = SurrogatePrediction(value=np.zeros((4, 2)))
+        pred = SurrogatePrediction.objective(value=np.zeros((4, 2)))
         parts = _split_prediction(pred)
         assert len(parts) == 4
 
     def test_each_part_has_shape_1_nobj(self) -> None:
-        pred = SurrogatePrediction(value=np.arange(6).reshape(3, 2).astype(float))
+        pred = SurrogatePrediction.objective(
+            value=np.arange(6).reshape(3, 2).astype(float)
+        )
         parts = _split_prediction(pred)
         for p in parts:
             assert p.value.shape == (1, 2)
 
     def test_values_preserved(self) -> None:
         mean = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
-        pred = SurrogatePrediction(value=mean)
+        pred = SurrogatePrediction.objective(value=mean)
         parts = _split_prediction(pred)
         for i, p in enumerate(parts):
             np.testing.assert_array_equal(p.value[0], mean[i])
 
     def test_std_split_correctly(self) -> None:
         std = np.array([[0.1, 0.2], [0.3, 0.4]])
-        pred = SurrogatePrediction(value=np.zeros((2, 2)), std=std)
+        pred = SurrogatePrediction.objective(value=np.zeros((2, 2)), std=std)
         parts = _split_prediction(pred)
         assert parts[0].std is not None
         assert parts[0].std.shape == (1, 2)
         np.testing.assert_array_almost_equal(parts[0].std[0], [0.1, 0.2])
 
     def test_std_none_propagates(self) -> None:
-        pred = SurrogatePrediction(value=np.zeros((3, 1)))
+        pred = SurrogatePrediction.objective(value=np.zeros((3, 1)))
         parts = _split_prediction(pred)
         for p in parts:
             assert p.std is None
 
     def test_label_split_correctly(self) -> None:
         label = np.array([0.0, 1.0, 2.0])
-        pred = SurrogatePrediction(value=np.zeros((3, 1)), label=label)
+        pred = SurrogatePrediction.objective(value=np.zeros((3, 1)))
+        pred = SurrogatePrediction(channels=pred.channels, label=label)
         parts = _split_prediction(pred)
         for i, p in enumerate(parts):
             assert p.label is not None
@@ -149,7 +159,7 @@ class TestSplitPrediction:
 
     def test_x_split_correctly(self) -> None:
         x = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
-        pred = SurrogatePrediction(value=np.zeros((3, 1)), x=x)
+        pred = SurrogatePrediction.objective(value=np.zeros((3, 1)), x=x)
         parts = _split_prediction(pred)
         for i, p in enumerate(parts):
             assert p.x is not None
@@ -157,7 +167,7 @@ class TestSplitPrediction:
             np.testing.assert_array_equal(p.x[0], x[i])
 
     def test_x_none_propagates(self) -> None:
-        pred = SurrogatePrediction(value=np.zeros((3, 1)))
+        pred = SurrogatePrediction.objective(value=np.zeros((3, 1)))
         parts = _split_prediction(pred)
         for p in parts:
             assert p.x is None
@@ -165,14 +175,15 @@ class TestSplitPrediction:
     def test_metadata_shared(self) -> None:
         """metadata dict is shared (not deep-copied) across splits."""
         meta = {"key": "val"}
-        pred = SurrogatePrediction(value=np.zeros((2, 1)), metadata=meta)
+        pred = SurrogatePrediction.objective(value=np.zeros((2, 1)), metadata=meta)
         parts = _split_prediction(pred)
         for p in parts:
             assert p.metadata is meta
 
     def test_tell_f_split_correctly(self) -> None:
         tell_f = np.array([[10.0], [20.0], [30.0]])
-        pred = SurrogatePrediction(value=np.zeros((3, 1)), _tell_f=tell_f)
+        pred = SurrogatePrediction.objective(value=np.zeros((3, 1)))
+        pred = SurrogatePrediction(channels=pred.channels, _tell_f=tell_f)
         parts = _split_prediction(pred)
         assert parts[0].has_tell_f
         assert parts[0].tell_f.shape == (1, 1)
@@ -181,14 +192,15 @@ class TestSplitPrediction:
         np.testing.assert_array_almost_equal(parts[2].tell_f[0], [30.0])
 
     def test_tell_f_none_propagates(self) -> None:
-        pred = SurrogatePrediction(value=np.zeros((3, 1)))
+        pred = SurrogatePrediction.objective(value=np.zeros((3, 1)))
         parts = _split_prediction(pred)
         for p in parts:
             assert not p.has_tell_f
 
     def test_tell_f_shape_preserved_after_split(self) -> None:
         tell_f = np.array([[1.0, 2.0], [3.0, 4.0]])
-        pred = SurrogatePrediction(value=np.zeros((2, 2)), _tell_f=tell_f)
+        pred = SurrogatePrediction.objective(value=np.zeros((2, 2)))
+        pred = SurrogatePrediction(channels=pred.channels, _tell_f=tell_f)
         parts = _split_prediction(pred)
         assert parts[0].has_tell_f
         assert parts[0].tell_f.shape == (1, 2)
@@ -198,6 +210,98 @@ class TestSplitPrediction:
         np.testing.assert_array_almost_equal(parts[1].tell_f[0], [3.0, 4.0])
 
 
+class TestStackPredictions:
+    """Tests for the _stack_predictions helper (inverse of _split_prediction)."""
+
+    def test_empty_list_returns_empty_channels(self) -> None:
+        result = _stack_predictions([])
+        assert result.channels == {}
+
+    def test_stacks_value_across_rows(self) -> None:
+        parts = [
+            SurrogatePrediction.objective(value=np.array([[1.0, 2.0]])),
+            SurrogatePrediction.objective(value=np.array([[3.0, 4.0]])),
+        ]
+        stacked = _stack_predictions(parts)
+        np.testing.assert_array_equal(stacked.value, [[1.0, 2.0], [3.0, 4.0]])
+
+    def test_stacks_std_when_present_on_all(self) -> None:
+        parts = [
+            SurrogatePrediction.objective(
+                value=np.zeros((1, 1)), std=np.full((1, 1), 0.1)
+            ),
+            SurrogatePrediction.objective(
+                value=np.zeros((1, 1)), std=np.full((1, 1), 0.2)
+            ),
+        ]
+        stacked = _stack_predictions(parts)
+        assert stacked.std is not None
+        np.testing.assert_array_almost_equal(stacked.std, [[0.1], [0.2]])
+
+    def test_std_none_when_none_on_all(self) -> None:
+        parts = [
+            SurrogatePrediction.objective(value=np.zeros((1, 1))),
+            SurrogatePrediction.objective(value=np.zeros((1, 1))),
+        ]
+        stacked = _stack_predictions(parts)
+        assert stacked.std is None
+
+    def test_mixed_std_raises(self) -> None:
+        parts = [
+            SurrogatePrediction.objective(value=np.zeros((1, 1)), std=np.zeros((1, 1))),
+            SurrogatePrediction.objective(value=np.zeros((1, 1))),
+        ]
+        with pytest.raises(ValidationError):
+            _stack_predictions(parts)
+
+    def test_round_trips_with_split_prediction(self) -> None:
+        original = SurrogatePrediction.objective(
+            value=np.array([[1.0], [2.0], [3.0]]), std=np.full((3, 1), 0.5)
+        )
+        original = SurrogatePrediction(
+            channels=original.channels,
+            label=np.array([0, 1, 1]),
+        )
+        parts = _split_prediction(original)
+        stacked = _stack_predictions(parts)
+        np.testing.assert_array_equal(stacked.value, original.value)
+        np.testing.assert_array_almost_equal(stacked.std, original.std)
+        np.testing.assert_array_equal(stacked.label, original.label)
+
+    def test_stacks_label_when_present_on_all(self) -> None:
+        parts = [
+            SurrogatePrediction(
+                channels=SurrogatePrediction.objective(value=np.zeros((1, 1))).channels,
+                label=np.array([0]),
+            ),
+            SurrogatePrediction(
+                channels=SurrogatePrediction.objective(value=np.zeros((1, 1))).channels,
+                label=np.array([1]),
+            ),
+        ]
+        stacked = _stack_predictions(parts)
+        np.testing.assert_array_equal(stacked.label, [0, 1])
+
+    def test_label_none_when_none_on_all(self) -> None:
+        parts = [
+            SurrogatePrediction.objective(value=np.zeros((1, 1))),
+            SurrogatePrediction.objective(value=np.zeros((1, 1))),
+        ]
+        stacked = _stack_predictions(parts)
+        assert stacked.label is None
+
+    def test_mixed_label_raises(self) -> None:
+        parts = [
+            SurrogatePrediction(
+                channels=SurrogatePrediction.objective(value=np.zeros((1, 1))).channels,
+                label=np.array([0]),
+            ),
+            SurrogatePrediction.objective(value=np.zeros((1, 1))),
+        ]
+        with pytest.raises(ValidationError):
+            _stack_predictions(parts)
+
+
 # ===========================================================================
 # SurrogatePrediction Properties Tests
 # ===========================================================================
@@ -205,72 +309,22 @@ class TestSurrogatePredictionProperties:
     """Tests for tell_f property and has_tell_f."""
 
     def test_tell_f_uses_override_when_set(self) -> None:
-        pred = SurrogatePrediction(value=np.array([[0.0]]), _tell_f=np.array([[99.0]]))
+        pred = SurrogatePrediction.objective(value=np.array([[0.0]]))
+        pred = SurrogatePrediction(channels=pred.channels, _tell_f=np.array([[99.0]]))
         np.testing.assert_array_almost_equal(pred.tell_f, [[99.0]])
 
     def test_tell_f_falls_back_to_mean(self) -> None:
-        pred = SurrogatePrediction(value=np.array([[42.0]]))
+        pred = SurrogatePrediction.objective(value=np.array([[42.0]]))
         np.testing.assert_array_almost_equal(pred.tell_f, [[42.0]])
 
     def test_has_tell_f_true_when_set(self) -> None:
-        pred = SurrogatePrediction(value=np.array([[0.0]]), _tell_f=np.array([[1.0]]))
+        pred = SurrogatePrediction.objective(value=np.array([[0.0]]))
+        pred = SurrogatePrediction(channels=pred.channels, _tell_f=np.array([[1.0]]))
         assert pred.has_tell_f is True
 
     def test_has_tell_f_false_when_none(self) -> None:
-        pred = SurrogatePrediction(value=np.array([[0.0]]))
+        pred = SurrogatePrediction.objective(value=np.array([[0.0]]))
         assert pred.has_tell_f is False
-
-
-# ===========================================================================
-# _sanitize_nan Tests
-# ===========================================================================
-class TestSanitizeNan:
-    """Tests for SurrogateManager._sanitize_nan."""
-
-    def test_no_nan_unchanged(self) -> None:
-        scores = np.array([1.0, 2.0, 3.0])
-        preds = [SurrogatePrediction(value=np.array([[v]])) for v in scores]
-        s, p = SurrogateManager._sanitize_nan(scores, preds)
-        np.testing.assert_array_equal(s, scores)
-        assert not p[0].has_tell_f
-
-    def test_nan_score_becomes_neginf(self) -> None:
-        scores = np.array([1.0, np.nan, 3.0])
-        preds = [SurrogatePrediction(value=np.array([[v]])) for v in [1.0, 0.0, 3.0]]
-        s, _ = SurrogateManager._sanitize_nan(scores, preds)
-        assert s[1] == -np.inf
-        assert s[0] == 1.0 and s[2] == 3.0
-
-    def test_nan_prediction_gets_explicit_tell_f_nan(self) -> None:
-        scores = np.array([np.nan, 1.0])
-        preds = [
-            SurrogatePrediction(value=np.array([[np.nan]])),
-            SurrogatePrediction(value=np.array([[1.0]])),
-        ]
-        _, p = SurrogateManager._sanitize_nan(scores, preds)
-        assert p[0].has_tell_f
-        assert np.all(np.isnan(p[0].tell_f))
-        assert not p[1].has_tell_f
-
-    def test_x_preserved_on_nan_prediction(self) -> None:
-        scores = np.array([np.nan, 1.0])
-        preds = [
-            SurrogatePrediction(value=np.array([[np.nan]]), x=np.array([[9.0]])),
-            SurrogatePrediction(value=np.array([[1.0]]), x=np.array([[8.0]])),
-        ]
-        _, p = SurrogateManager._sanitize_nan(scores, preds)
-        assert p[0].x is not None
-        np.testing.assert_array_equal(p[0].x, [[9.0]])
-
-    def test_original_scores_not_mutated(self) -> None:
-        scores = np.array([np.nan, 1.0])
-        preds = [
-            SurrogatePrediction(value=np.array([[0.0]])),
-            SurrogatePrediction(value=np.array([[1.0]])),
-        ]
-        orig = scores.copy()
-        SurrogateManager._sanitize_nan(scores, preds)
-        np.testing.assert_array_equal(scores, orig)
 
 
 # ===========================================================================
@@ -333,58 +387,37 @@ class TestRankNormalize:
 class TestGlobalSurrogateManager:
     """Tests for GlobalSurrogateManager."""
 
-    def test_score_candidates_returns_tuple(
+    def test_predict_returns_surrogate_prediction(
         self,
         surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
-        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        result = manager.score_candidates(candidates, archive_1obj)
-        assert isinstance(result, tuple)
-        assert len(result) == 2
+        manager = GlobalSurrogateManager(surrogate_1obj)
+        prediction = manager.predict(candidates, archive_1obj)
+        assert isinstance(prediction, SurrogatePrediction)
 
-    def test_scores_shape(
+    def test_prediction_value_shape(
         self,
         surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
-        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        scores, _ = manager.score_candidates(candidates, archive_1obj)
+        manager = GlobalSurrogateManager(surrogate_1obj)
+        prediction = manager.predict(candidates, archive_1obj)
+        assert prediction.value.shape == (len(candidates), N_OBJ)
+
+    def test_scores_shape_via_acquisition(
+        self,
+        surrogate_1obj: RBFSurrogate,
+        archive_1obj: Archive,
+        candidates: np.ndarray,
+    ) -> None:
+        manager = GlobalSurrogateManager(surrogate_1obj)
+        acquisition = MeanPrediction()
+        prediction = manager.predict(candidates, archive_1obj)
+        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
         assert scores.shape == (len(candidates),)
-
-    def test_predictions_count(
-        self,
-        surrogate_1obj: RBFSurrogate,
-        archive_1obj: Archive,
-        candidates: np.ndarray,
-    ) -> None:
-        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        _, predictions = manager.score_candidates(candidates, archive_1obj)
-        assert len(predictions) == len(candidates)
-
-    def test_predictions_are_surrogate_prediction(
-        self,
-        surrogate_1obj: RBFSurrogate,
-        archive_1obj: Archive,
-        candidates: np.ndarray,
-    ) -> None:
-        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        _, predictions = manager.score_candidates(candidates, archive_1obj)
-        for p in predictions:
-            assert isinstance(p, SurrogatePrediction)
-
-    def test_prediction_mean_shape_per_candidate(
-        self,
-        surrogate_1obj: RBFSurrogate,
-        archive_1obj: Archive,
-        candidates: np.ndarray,
-    ) -> None:
-        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        _, predictions = manager.score_candidates(candidates, archive_1obj)
-        for p in predictions:
-            assert p.value.shape == (1, N_OBJ)
 
     def test_scores_finite(
         self,
@@ -392,11 +425,13 @@ class TestGlobalSurrogateManager:
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
-        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        scores, _ = manager.score_candidates(candidates, archive_1obj)
+        manager = GlobalSurrogateManager(surrogate_1obj)
+        acquisition = MeanPrediction()
+        prediction = manager.predict(candidates, archive_1obj)
+        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
         assert np.all(np.isfinite(scores))
 
-    def test_biobj_scores_shape(
+    def test_biobj_prediction_and_scores_shape(
         self,
         surrogate_2obj: RBFSurrogate,
         archive_2obj: Archive,
@@ -404,13 +439,12 @@ class TestGlobalSurrogateManager:
     ) -> None:
         """Bi-objective: scores still shape (n_candidates,)."""
         weights = np.array([-1.0, -1.0])
-        manager = GlobalSurrogateManager(
-            surrogate_2obj, MeanPrediction(weights=weights)
-        )
-        scores, predictions = manager.score_candidates(candidates, archive_2obj)
+        manager = GlobalSurrogateManager(surrogate_2obj)
+        acquisition = MeanPrediction(weights=weights)
+        prediction = manager.predict(candidates, archive_2obj)
+        scores = acquisition.evaluate(candidates, prediction, archive_2obj).scores
         assert scores.shape == (len(candidates),)
-        for p in predictions:
-            assert p.value.shape == (1, 2)
+        assert prediction.value.shape == (len(candidates), 2)
 
 
 # ===========================================================================
@@ -419,54 +453,43 @@ class TestGlobalSurrogateManager:
 class TestLocalSurrogateManager:
     """Tests for LocalSurrogateManager."""
 
-    def test_score_candidates_returns_tuple(
+    def test_predict_returns_surrogate_prediction(
         self,
         surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
         manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), training_set=KNNObjectiveSet(10)
+            surrogate_1obj, training_set=KNNObjectiveSet(10)
         )
-        result = manager.score_candidates(candidates, archive_1obj)
-        assert isinstance(result, tuple) and len(result) == 2
+        prediction = manager.predict(candidates, archive_1obj)
+        assert isinstance(prediction, SurrogatePrediction)
 
-    def test_scores_shape(
+    def test_scores_shape_via_acquisition(
         self,
         surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
         manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), training_set=KNNObjectiveSet(10)
+            surrogate_1obj, training_set=KNNObjectiveSet(10)
         )
-        scores, _ = manager.score_candidates(candidates, archive_1obj)
+        acquisition = MeanPrediction()
+        prediction = manager.predict(candidates, archive_1obj)
+        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
         assert scores.shape == (len(candidates),)
 
-    def test_predictions_count(
+    def test_prediction_value_shape(
         self,
         surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
         candidates: np.ndarray,
     ) -> None:
         manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), training_set=KNNObjectiveSet(10)
+            surrogate_1obj, training_set=KNNObjectiveSet(10)
         )
-        _, predictions = manager.score_candidates(candidates, archive_1obj)
-        assert len(predictions) == len(candidates)
-
-    def test_prediction_mean_shape(
-        self,
-        surrogate_1obj: RBFSurrogate,
-        archive_1obj: Archive,
-        candidates: np.ndarray,
-    ) -> None:
-        manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), training_set=KNNObjectiveSet(10)
-        )
-        _, predictions = manager.score_candidates(candidates, archive_1obj)
-        for p in predictions:
-            assert p.value.shape == (1, N_OBJ)
+        prediction = manager.predict(candidates, archive_1obj)
+        assert prediction.value.shape == (len(candidates), N_OBJ)
 
     def test_n_neighbors_default(
         self,
@@ -475,11 +498,12 @@ class TestLocalSurrogateManager:
         candidates: np.ndarray,
     ) -> None:
         """Default training_set is KNNObjectiveSet(50), clamped to archive size."""
-        manager = LocalSurrogateManager(surrogate_1obj, MeanPrediction())
+        manager = LocalSurrogateManager(surrogate_1obj)
         assert isinstance(manager.training_set, KNNObjectiveSet)
         assert manager.training_set.n_neighbors == 50
         # archive has only 20 points, get_knn should still work
-        scores, _ = manager.score_candidates(candidates, archive_1obj)
+        prediction = manager.predict(candidates, archive_1obj)
+        scores = MeanPrediction().evaluate(candidates, prediction, archive_1obj).scores
         assert scores.shape == (len(candidates),)
 
     def test_scores_finite(
@@ -489,9 +513,11 @@ class TestLocalSurrogateManager:
         candidates: np.ndarray,
     ) -> None:
         manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), training_set=KNNObjectiveSet(10)
+            surrogate_1obj, training_set=KNNObjectiveSet(10)
         )
-        scores, _ = manager.score_candidates(candidates, archive_1obj)
+        acquisition = MeanPrediction()
+        prediction = manager.predict(candidates, archive_1obj)
+        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
         assert np.all(np.isfinite(scores))
 
 
@@ -499,158 +525,119 @@ class TestLocalSurrogateManager:
 # CompositeSurrogateManager Tests
 # ===========================================================================
 class TestCompositeSurrogateManager:
-    """Tests for CompositeSurrogateManager."""
+    """Tests for CompositeSurrogateManager.
+
+    Each sub-manager contributes a named ``PredictionChannel``.
+    """
 
     def test_empty_managers_raises_value_error(self) -> None:
+        # Use a plain (non-Composite) acquisition so the raise provably
+        # comes from CompositeSurrogateManager's own guard, not from
+        # CompositeAcquisition's identically-worded empty-mapping guard.
         with pytest.raises(ValueError, match="at least one"):
-            CompositeSurrogateManager([], combine_fn=product_combine)
+            CompositeSurrogateManager({})
+
+    def test_predict_composes_named_channels(
+        self, archive_1obj: Archive, candidates: np.ndarray
+    ) -> None:
+        """Each sub-manager contributes its own named PredictionChannel."""
+        m1 = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
+        m2 = LocalSurrogateManager(
+            RBFSurrogate(gaussian_kernel, DIM),
+            training_set=KNNObjectiveSet(5),
+        )
+        mgr = CompositeSurrogateManager({"a": m1, "b": m2})
+        composite_pred = mgr.predict(candidates, archive_1obj)
+
+        m1_standalone = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
+        m2_standalone = LocalSurrogateManager(
+            RBFSurrogate(gaussian_kernel, DIM),
+            training_set=KNNObjectiveSet(5),
+        )
+        m1_pred = m1_standalone.predict(candidates, archive_1obj)
+        m2_pred = m2_standalone.predict(candidates, archive_1obj)
+
+        np.testing.assert_array_equal(composite_pred.channels["a"].value, m1_pred.value)
+        np.testing.assert_array_equal(composite_pred.channels["b"].value, m2_pred.value)
+        # RBF-global vs. RBF-local-KNN genuinely differ, so this catches a
+        # channel-mapping bug (e.g. both keys pointing at the same manager).
+        assert not np.array_equal(
+            composite_pred.channels["a"].value, composite_pred.channels["b"].value
+        )
+
+    def test_single_manager_predict(
+        self,
+        surrogate_1obj: RBFSurrogate,
+        archive_1obj: Archive,
+        candidates: np.ndarray,
+    ) -> None:
+        m = GlobalSurrogateManager(surrogate_1obj)
+        composite_acq = CompositeAcquisition(
+            {"objective": MeanPrediction()}, combine_fn=product_combine
+        )
+        mgr = CompositeSurrogateManager({"objective": m})
+        prediction = mgr.predict(candidates, archive_1obj)
+        scores = composite_acq.evaluate(candidates, prediction, archive_1obj).scores
+        assert scores.shape == (len(candidates),)
 
     def test_product_combine_scores_shape(
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
-        m1 = GlobalSurrogateManager(
-            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
+        m1 = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
+        m2 = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
+        composite_acq = CompositeAcquisition(
+            {"a": MeanPrediction(), "b": MeanPrediction()}, combine_fn=product_combine
         )
-        m2 = GlobalSurrogateManager(
-            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        mgr = CompositeSurrogateManager([m1, m2], combine_fn=product_combine)
-        scores, _ = mgr.score_candidates(candidates, archive_1obj)
+        mgr = CompositeSurrogateManager({"a": m1, "b": m2})
+        prediction = mgr.predict(candidates, archive_1obj)
+        scores = composite_acq.evaluate(candidates, prediction, archive_1obj).scores
         assert scores.shape == (len(candidates),)
 
     def test_rank_weighted_combine_scores_in_0_1(
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
-        m1 = GlobalSurrogateManager(
-            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
+        m1 = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
+        m2 = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
+        composite_acq = CompositeAcquisition(
+            {"a": MeanPrediction(), "b": MeanPrediction()},
+            combine_fn=rank_weighted_combine(),
         )
-        m2 = GlobalSurrogateManager(
-            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        mgr = CompositeSurrogateManager([m1, m2], combine_fn=rank_weighted_combine())
-        scores, _ = mgr.score_candidates(candidates, archive_1obj)
+        mgr = CompositeSurrogateManager({"a": m1, "b": m2})
+        prediction = mgr.predict(candidates, archive_1obj)
+        scores = composite_acq.evaluate(candidates, prediction, archive_1obj).scores
         assert np.all(scores >= 0.0)
         assert np.all(scores <= 1.0)
 
     def test_rank_weighted_combine_custom_weights(
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
-        m1 = GlobalSurrogateManager(
-            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
+        m1 = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
+        m2 = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
+        composite_acq = CompositeAcquisition(
+            {"a": MeanPrediction(), "b": MeanPrediction()},
+            combine_fn=rank_weighted_combine(np.array([1.0, 3.0])),
         )
-        m2 = GlobalSurrogateManager(
-            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        mgr = CompositeSurrogateManager(
-            [m1, m2], combine_fn=rank_weighted_combine(np.array([1.0, 3.0]))
-        )
-        scores, _ = mgr.score_candidates(candidates, archive_1obj)
-        assert scores.shape == (len(candidates),)
-
-    def test_predictions_from_first_manager(
-        self, archive_1obj: Archive, candidates: np.ndarray
-    ) -> None:
-        """predictions always come from managers[0]."""
-        m1 = GlobalSurrogateManager(
-            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        m2 = GlobalSurrogateManager(
-            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        mgr = CompositeSurrogateManager([m1, m2], combine_fn=product_combine)
-        _, predictions = mgr.score_candidates(candidates, archive_1obj)
-        assert len(predictions) == len(candidates)
-        for p in predictions:
-            assert isinstance(p, SurrogatePrediction)
-
-    def test_single_manager(
-        self,
-        surrogate_1obj: RBFSurrogate,
-        archive_1obj: Archive,
-        candidates: np.ndarray,
-    ) -> None:
-        m = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        mgr = CompositeSurrogateManager([m], combine_fn=product_combine)
-        scores, _ = mgr.score_candidates(candidates, archive_1obj)
+        mgr = CompositeSurrogateManager({"a": m1, "b": m2})
+        prediction = mgr.predict(candidates, archive_1obj)
+        scores = composite_acq.evaluate(candidates, prediction, archive_1obj).scores
         assert scores.shape == (len(candidates),)
 
 
 # ===========================================================================
-# ArchiveBasedManager Tests
+# Archive-based acquisitions (formerly ArchiveBasedManager hierarchy)
 # ===========================================================================
 
 
-class _ConstantArchiveManager(ArchiveBasedManager):
-    """Minimal concrete subclass for testing ArchiveBasedManager base behaviour."""
+class TestNoveltyAcquisition:
+    """Tests for NoveltyAcquisition (verbatim port of former NoveltyManager)."""
 
-    def compute_scores(self, candidates_x, archive, ctx=None) -> np.ndarray:
-        return np.ones(len(candidates_x))
-
-
-class TestArchiveBasedManager:
-    """Tests for the ArchiveBasedManager base class via _ConstantArchiveManager."""
-
-    def test_score_candidates_returns_tuple(
+    def test_evaluate_returns_acquisition_result(
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
-        mgr = _ConstantArchiveManager()
-        result = mgr.score_candidates(candidates, archive_1obj)
-        assert isinstance(result, tuple) and len(result) == 2
-
-    def test_scores_shape(self, archive_1obj: Archive, candidates: np.ndarray) -> None:
-        mgr = _ConstantArchiveManager()
-        scores, _ = mgr.score_candidates(candidates, archive_1obj)
-        assert scores.shape == (len(candidates),)
-
-    def test_predictions_count(
-        self, archive_1obj: Archive, candidates: np.ndarray
-    ) -> None:
-        mgr = _ConstantArchiveManager()
-        _, preds = mgr.score_candidates(candidates, archive_1obj)
-        assert len(preds) == len(candidates)
-
-    def test_tell_f_is_nan(self, archive_1obj: Archive, candidates: np.ndarray) -> None:
-        mgr = _ConstantArchiveManager()
-        _, preds = mgr.score_candidates(candidates, archive_1obj)
-        for p in preds:
-            assert p.has_tell_f
-            assert np.all(np.isnan(p.tell_f))
-
-    def test_tell_f_shape_matches_n_obj(
-        self, archive_1obj: Archive, candidates: np.ndarray
-    ) -> None:
-        mgr = _ConstantArchiveManager()
-        _, preds = mgr.score_candidates(candidates, archive_1obj)
-        for p in preds:
-            assert p.tell_f.shape == (1, N_OBJ)
-
-    def test_tell_f_shape_biobj(
-        self, archive_2obj: Archive, candidates: np.ndarray
-    ) -> None:
-        mgr = _ConstantArchiveManager()
-        _, preds = mgr.score_candidates(candidates, archive_2obj)
-        for p in preds:
-            assert p.tell_f.shape == (1, 2)
-
-    def test_empty_archive_n_obj_fallback(self, candidates: np.ndarray) -> None:
-        """Empty archive: n_obj defaults to 1."""
-        attrs = [
-            PopulationAttribute(name="x", dtype=np.float64, shape=(DIM,)),
-            PopulationAttribute(name="f", dtype=np.float64, shape=(1,)),
-        ]
-        empty_arc = Archive(attrs, init_capacity=10)
-        mgr = _ConstantArchiveManager()
-        _, preds = mgr.score_candidates(candidates, empty_arc)
-        for p in preds:
-            assert p.tell_f.shape == (1, 1)
-            assert np.all(np.isnan(p.tell_f))
-
-
-# ===========================================================================
-# NoveltyManager Tests
-# ===========================================================================
-class TestNoveltyManager:
-    """Tests for NoveltyManager."""
+        acq = NoveltyAcquisition(k=3)
+        result = acq.evaluate(candidates, None, archive_1obj)
+        assert result.scores is not None
+        assert result.scores.shape == (len(candidates),)
 
     def test_empty_archive_returns_ones(self, candidates: np.ndarray) -> None:
         attrs = [
@@ -658,53 +645,52 @@ class TestNoveltyManager:
             PopulationAttribute(name="f", dtype=np.float64, shape=(1,)),
         ]
         empty_arc = Archive(attrs, init_capacity=10)
-        mgr = NoveltyManager(k=3)
-        scores = mgr.compute_scores(candidates, empty_arc)
+        acq = NoveltyAcquisition(k=3)
+        scores = acq.evaluate(candidates, None, empty_arc).scores
         np.testing.assert_array_equal(scores, np.ones(len(candidates)))
-
-    def test_scores_shape(self, archive_1obj: Archive, candidates: np.ndarray) -> None:
-        mgr = NoveltyManager(k=1)
-        scores = mgr.compute_scores(candidates, archive_1obj)
-        assert scores.shape == (len(candidates),)
 
     def test_scores_nonnegative(
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
-        mgr = NoveltyManager(k=3)
-        scores = mgr.compute_scores(candidates, archive_1obj)
+        acq = NoveltyAcquisition(k=3)
+        scores = acq.evaluate(candidates, None, archive_1obj).scores
         assert np.all(scores >= 0.0)
 
     def test_more_distant_point_has_higher_novelty(self, archive_1obj: Archive) -> None:
         """A point far from the archive should score higher than a nearby one."""
         near = archive_1obj.x[0:1] + 1e-6  # almost identical to archive point
         far = np.array([[100.0, 100.0]])
-        mgr = NoveltyManager(k=1)
-        score_near = mgr.compute_scores(near, archive_1obj)[0]
-        score_far = mgr.compute_scores(far, archive_1obj)[0]
+        acq = NoveltyAcquisition(k=1)
+        score_near = acq.evaluate(near, None, archive_1obj).scores[0]
+        score_far = acq.evaluate(far, None, archive_1obj).scores[0]
         assert score_far > score_near
 
     def test_k_clamped_to_archive_size(self, archive_1obj: Archive) -> None:
         """k larger than archive size should not raise an error."""
-        mgr = NoveltyManager(k=1000)
+        acq = NoveltyAcquisition(k=1000)
         candidates = np.zeros((3, DIM))
-        scores = mgr.compute_scores(candidates, archive_1obj)
+        scores = acq.evaluate(candidates, None, archive_1obj).scores
         assert scores.shape == (3,)
         assert np.all(np.isfinite(scores))
 
     def test_k_affects_scores(self, archive_1obj: Archive) -> None:
         """Different k values yield different scores (unless all distances equal)."""
         candidates = np.zeros((5, DIM))
-        s1 = NoveltyManager(k=1).compute_scores(candidates, archive_1obj)
-        s5 = NoveltyManager(k=5).compute_scores(candidates, archive_1obj)
+        s1 = NoveltyAcquisition(k=1).evaluate(candidates, None, archive_1obj).scores
+        s5 = NoveltyAcquisition(k=5).evaluate(candidates, None, archive_1obj).scores
         # mean of 1 NN vs mean of 5 NN — they may differ
         assert s1.shape == s5.shape == (5,)
 
+    def test_direction_sensitive_is_false(self) -> None:
+        """Pure x-space distance; must opt out of direction auto-injection."""
+        assert NoveltyAcquisition().direction_sensitive is False
+
 
 # ===========================================================================
-# DensityManager Tests
+# DensityAcquisition Tests (verbatim port of former DensityManager)
 # ===========================================================================
-class TestDensityManager:
-    """Tests for DensityManager."""
+class TestDensityAcquisition:
+    """Tests for DensityAcquisition."""
 
     def test_empty_archive_returns_ones(self, candidates: np.ndarray) -> None:
         attrs = [
@@ -712,65 +698,72 @@ class TestDensityManager:
             PopulationAttribute(name="f", dtype=np.float64, shape=(1,)),
         ]
         empty_arc = Archive(attrs, init_capacity=10)
-        mgr = DensityManager(eps=1.0)
-        scores = mgr.compute_scores(candidates, empty_arc)
+        acq = DensityAcquisition(eps=1.0)
+        scores = acq.evaluate(candidates, None, empty_arc).scores
         np.testing.assert_array_equal(scores, np.ones(len(candidates)))
 
     def test_scores_shape(self, archive_1obj: Archive, candidates: np.ndarray) -> None:
-        mgr = DensityManager(eps=1.0)
-        scores = mgr.compute_scores(candidates, archive_1obj)
+        acq = DensityAcquisition(eps=1.0)
+        scores = acq.evaluate(candidates, None, archive_1obj).scores
         assert scores.shape == (len(candidates),)
 
     def test_scores_positive(
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
-        mgr = DensityManager(eps=1.0)
-        scores = mgr.compute_scores(candidates, archive_1obj)
+        acq = DensityAcquisition(eps=1.0)
+        scores = acq.evaluate(candidates, None, archive_1obj).scores
         assert np.all(scores > 0.0)
 
     def test_sparse_region_has_higher_score(self, archive_1obj: Archive) -> None:
         """Point far from archive (no neighbors within eps) should score higher."""
         dense = archive_1obj.x[0:1] + 0.01  # inside many eps-balls
         sparse = np.array([[100.0, 100.0]])  # far away, zero neighbors
-        mgr = DensityManager(eps=0.5)
-        score_dense = mgr.compute_scores(dense, archive_1obj)[0]
-        score_sparse = mgr.compute_scores(sparse, archive_1obj)[0]
+        acq = DensityAcquisition(eps=0.5)
+        score_dense = acq.evaluate(dense, None, archive_1obj).scores[0]
+        score_sparse = acq.evaluate(sparse, None, archive_1obj).scores[0]
         assert score_sparse > score_dense
 
     def test_eps_affects_scores(self, archive_1obj: Archive) -> None:
-        """Larger eps counts more neighbors → lower inverse density."""
+        """Larger eps counts more neighbors -> lower inverse density."""
         candidate = np.zeros((1, DIM))
-        score_small_eps = DensityManager(eps=0.01).compute_scores(
-            candidate, archive_1obj
-        )[0]
-        score_large_eps = DensityManager(eps=100.0).compute_scores(
-            candidate, archive_1obj
-        )[0]
+        score_small_eps = (
+            DensityAcquisition(eps=0.01)
+            .evaluate(candidate, None, archive_1obj)
+            .scores[0]
+        )
+        score_large_eps = (
+            DensityAcquisition(eps=100.0)
+            .evaluate(candidate, None, archive_1obj)
+            .scores[0]
+        )
         assert score_small_eps >= score_large_eps
 
+    def test_direction_sensitive_is_false(self) -> None:
+        assert DensityAcquisition().direction_sensitive is False
+
 
 # ===========================================================================
-# NichingManager Tests
+# NichingAcquisition Tests (verbatim port of former NichingManager)
 # ===========================================================================
-class TestNichingManager:
-    """Tests for NichingManager."""
+class TestNichingAcquisition:
+    """Tests for NichingAcquisition."""
 
     def test_scores_shape(self, archive_1obj: Archive, candidates: np.ndarray) -> None:
-        mgr = NichingManager()
-        scores = mgr.compute_scores(candidates, archive_1obj)
+        acq = NichingAcquisition()
+        scores = acq.evaluate(candidates, None, archive_1obj).scores
         assert scores.shape == (len(candidates),)
 
     def test_single_candidate_returns_ones(self, archive_1obj: Archive) -> None:
-        mgr = NichingManager()
+        acq = NichingAcquisition()
         single = np.zeros((1, DIM))
-        scores = mgr.compute_scores(single, archive_1obj)
+        scores = acq.evaluate(single, None, archive_1obj).scores
         np.testing.assert_array_equal(scores, np.ones(1))
 
     def test_scores_nonnegative(
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
-        mgr = NichingManager()
-        scores = mgr.compute_scores(candidates, archive_1obj)
+        acq = NichingAcquisition()
+        scores = acq.evaluate(candidates, None, archive_1obj).scores
         assert np.all(scores >= 0.0)
 
     def test_isolated_candidate_has_higher_score(self, archive_1obj: Archive) -> None:
@@ -778,8 +771,8 @@ class TestNichingManager:
         clustered = np.array([[0.0, 0.0], [0.01, 0.0], [0.0, 0.01]])
         isolated_point = np.array([100.0, 100.0])
         candidates = np.vstack([clustered, isolated_point[np.newaxis]])
-        mgr = NichingManager()
-        scores = mgr.compute_scores(candidates, archive_1obj)
+        acq = NichingAcquisition()
+        scores = acq.evaluate(candidates, None, archive_1obj).scores
         assert scores[-1] > scores[0]
 
     def test_empty_archive(self, candidates: np.ndarray) -> None:
@@ -789,83 +782,13 @@ class TestNichingManager:
             PopulationAttribute(name="f", dtype=np.float64, shape=(1,)),
         ]
         empty_arc = Archive(attrs, init_capacity=10)
-        mgr = NichingManager()
-        scores = mgr.compute_scores(candidates, empty_arc)
+        acq = NichingAcquisition()
+        scores = acq.evaluate(candidates, None, empty_arc).scores
         assert scores.shape == (len(candidates),)
         assert np.all(np.isfinite(scores))
 
-
-# ===========================================================================
-# CompositeSurrogateManager + ArchiveBasedManager Integration Tests
-# ===========================================================================
-class TestCompositeSurrogateManagerWithArchiveBased:
-    """Integration tests: CompositeSurrogateManager with ArchiveBasedManager."""
-
-    def test_regression_novelty_ensemble_scores_shape(
-        self, archive_1obj: Archive, candidates: np.ndarray
-    ) -> None:
-        m_reg = GlobalSurrogateManager(
-            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        mgr = CompositeSurrogateManager(
-            [m_reg, NoveltyManager(k=3)],
-            combine_fn=rank_weighted_combine(np.array([0.7, 0.3])),
-        )
-        scores, _ = mgr.score_candidates(candidates, archive_1obj)
-        assert scores.shape == (len(candidates),)
-
-    def test_regression_novelty_ensemble_scores_in_0_1(
-        self, archive_1obj: Archive, candidates: np.ndarray
-    ) -> None:
-        m_reg = GlobalSurrogateManager(
-            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        mgr = CompositeSurrogateManager(
-            [m_reg, NoveltyManager(k=3)], combine_fn=rank_weighted_combine()
-        )
-        scores, _ = mgr.score_candidates(candidates, archive_1obj)
-        assert np.all(scores >= 0.0) and np.all(scores <= 1.0)
-
-    def test_regression_first_tell_f_is_finite(
-        self, archive_1obj: Archive, candidates: np.ndarray
-    ) -> None:
-        """Regression surrogate listed first → predictions returned are finite."""
-        m_reg = GlobalSurrogateManager(
-            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        mgr = CompositeSurrogateManager(
-            [m_reg, NoveltyManager(k=3)], combine_fn=rank_weighted_combine()
-        )
-        _, preds = mgr.score_candidates(candidates, archive_1obj)
-        for p in preds:
-            assert np.all(np.isfinite(p.tell_f))
-
-    def test_novelty_only_ensemble_tell_f_is_nan(
-        self, archive_1obj: Archive, candidates: np.ndarray
-    ) -> None:
-        """ArchiveBasedManager alone → predictions have NaN tell_f."""
-        mgr = CompositeSurrogateManager(
-            [NoveltyManager(k=3)], combine_fn=rank_weighted_combine()
-        )
-        _, preds = mgr.score_candidates(candidates, archive_1obj)
-        for p in preds:
-            assert p.has_tell_f
-            assert np.all(np.isnan(p.tell_f))
-
-    def test_regression_density_ensemble_scores_shape(
-        self, archive_1obj: Archive, candidates: np.ndarray
-    ) -> None:
-        m_reg = GlobalSurrogateManager(
-            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
-        mgr = CompositeSurrogateManager(
-            [m_reg, DensityManager(eps=0.5)],
-            combine_fn=rank_weighted_combine(np.array([0.6, 0.4])),
-        )
-        scores, preds = mgr.score_candidates(candidates, archive_1obj)
-        assert scores.shape == (len(candidates),)
-        for p in preds:
-            assert np.all(np.isfinite(p.tell_f))
+    def test_direction_sensitive_is_false(self) -> None:
+        assert NichingAcquisition().direction_sensitive is False
 
 
 # ===========================================================================
@@ -939,68 +862,18 @@ class TestSurrogateHooks:
 
 
 # ===========================================================================
-# SurrogateManager lifecycle hooks (post_score / with_post_score)
+# NOTE: SurrogateManager.post_score / with_post_score removed
 # ===========================================================================
+# `post_score`/`with_post_score` were removed from SurrogateManager per plan
+# Section 5.3 ("score aggregation" is a responsibility removed from the
+# manager) -- there is no longer a scores-shaped hook on the manager to test.
+# `Surrogate.post_fit`/`with_post_fit` (tested above via TestSurrogateHooks)
+# is unaffected; the two tests below just exercise it through `predict()`
+# instead of the removed `score_candidates()`.
 
 
-class TestSurrogateManagerHooks:
-    """Tests for SurrogateManager.post_score and with_post_score."""
-
-    def test_post_score_default_is_noop(
-        self,
-        surrogate_1obj: RBFSurrogate,
-        archive_1obj: Archive,
-        candidates: np.ndarray,
-    ) -> None:
-        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        scores, predictions = manager.score_candidates(candidates, archive_1obj)
-        result_s, result_p = manager.post_score(scores, predictions, ctx=None)
-        np.testing.assert_array_equal(result_s, scores)
-        assert result_p is predictions
-
-    def test_with_post_score_transforms_scores(
-        self,
-        surrogate_1obj: RBFSurrogate,
-        archive_1obj: Archive,
-        candidates: np.ndarray,
-    ) -> None:
-        def zero_scores(scores, predictions, ctx):
-            return np.zeros_like(scores), predictions
-
-        manager = GlobalSurrogateManager(
-            surrogate_1obj, MeanPrediction()
-        ).with_post_score(zero_scores)
-        scores, _ = manager.score_candidates(candidates, archive_1obj)
-        np.testing.assert_array_equal(scores, np.zeros(len(candidates)))
-
-    def test_with_post_score_called_once_per_score_candidates(
-        self,
-        surrogate_1obj: RBFSurrogate,
-        archive_1obj: Archive,
-        candidates: np.ndarray,
-    ) -> None:
-        call_count = [0]
-
-        def hook(scores, predictions, ctx):
-            call_count[0] += 1
-            return scores, predictions
-
-        manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), training_set=KNNObjectiveSet(10)
-        ).with_post_score(hook)
-        manager.score_candidates(candidates, archive_1obj)
-        assert call_count[0] == 1
-
-    def test_with_post_score_does_not_mutate_original(
-        self,
-        surrogate_1obj: RBFSurrogate,
-        archive_1obj: Archive,
-        candidates: np.ndarray,
-    ) -> None:
-        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        _ = manager.with_post_score(lambda s, p, ctx: (np.zeros_like(s), p))
-        scores, _ = manager.score_candidates(candidates, archive_1obj)
-        assert not np.all(scores == 0.0)
+class TestSurrogateManagerPostFitViaPredict:
+    """post_fit is still invoked from predict(), unchanged by the split."""
 
     def test_post_fit_called_in_global_manager(
         self,
@@ -1014,8 +887,8 @@ class TestSurrogateManagerHooks:
             called[0] = True
 
         surrogate = surrogate_1obj.with_post_fit(hook)
-        manager = GlobalSurrogateManager(surrogate, MeanPrediction())
-        manager.score_candidates(candidates, archive_1obj)
+        manager = GlobalSurrogateManager(surrogate)
+        manager.predict(candidates, archive_1obj)
         assert called[0]
 
     def test_post_fit_called_per_candidate_in_local_manager(
@@ -1030,10 +903,8 @@ class TestSurrogateManagerHooks:
             call_count[0] += 1
 
         surrogate = surrogate_1obj.with_post_fit(hook)
-        manager = LocalSurrogateManager(
-            surrogate, MeanPrediction(), training_set=KNNObjectiveSet(10)
-        )
-        manager.score_candidates(candidates, archive_1obj)
+        manager = LocalSurrogateManager(surrogate, training_set=KNNObjectiveSet(10))
+        manager.predict(candidates, archive_1obj)
         assert call_count[0] == len(candidates)
 
 
@@ -1050,7 +921,7 @@ class TestSurrogateManagerGenerationHook:
         surrogate_1obj: RBFSurrogate,
         archive_1obj: Archive,
     ) -> None:
-        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
+        manager = GlobalSurrogateManager(surrogate_1obj)
         assert manager.on_generation_end(0, archive_1obj, ctx=None) is None
 
     def test_with_on_generation_end_fn_is_called(
@@ -1063,9 +934,7 @@ class TestSurrogateManagerGenerationHook:
         def hook(gen, archive, ctx):
             calls.append((gen, archive, ctx))
 
-        manager = GlobalSurrogateManager(
-            surrogate_1obj, MeanPrediction()
-        ).with_on_generation_end(hook)
+        manager = GlobalSurrogateManager(surrogate_1obj).with_on_generation_end(hook)
         manager.on_generation_end(3, archive_1obj, ctx=None)
 
         assert len(calls) == 1
@@ -1078,7 +947,7 @@ class TestSurrogateManagerGenerationHook:
     ) -> None:
         order: list[int] = []
         manager = (
-            GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
+            GlobalSurrogateManager(surrogate_1obj)
             .with_on_generation_end(lambda g, a, ctx: order.append(1))
             .with_on_generation_end(lambda g, a, ctx: order.append(2))
         )
@@ -1095,7 +964,7 @@ class TestSurrogateManagerGenerationHook:
         def hook(g, a, ctx):
             called[0] = True
 
-        original = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
+        original = GlobalSurrogateManager(surrogate_1obj)
         _ = original.with_on_generation_end(hook)
         original.on_generation_end(0, archive_1obj)
         assert not called[0]
@@ -1110,13 +979,13 @@ class TestLastAccuracy:
     def test_last_accuracy_none_by_default(
         self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
-        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
+        manager = GlobalSurrogateManager(surrogate_1obj)
         assert manager.last_accuracy is None
 
     def test_last_accuracy_none_without_evaluator(
         self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
-        manager = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
+        manager = GlobalSurrogateManager(surrogate_1obj)
         manager.fit(archive_1obj)
         assert manager.last_accuracy is None
 
@@ -1124,9 +993,7 @@ class TestLastAccuracy:
         self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=5)
-        manager = GlobalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
-        )
+        manager = GlobalSurrogateManager(surrogate_1obj, accuracy_evaluator=evaluator)
         manager.fit(archive_1obj)
         assert isinstance(manager.last_accuracy, SurrogateAccuracy)
         assert "spearman" in manager.last_accuracy.metrics
@@ -1135,40 +1002,32 @@ class TestLastAccuracy:
         self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
-        manager = GlobalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
-        )
+        manager = GlobalSurrogateManager(surrogate_1obj, accuracy_evaluator=evaluator)
         rng = np.random.default_rng(0)
         candidates = rng.uniform(-2.0, 2.0, size=(5, DIM))
-        manager.score_candidates(candidates, archive_1obj, refit=True)
+        manager.predict(candidates, archive_1obj, refit=True)
         assert manager.last_accuracy is not None
 
     def test_last_accuracy_not_updated_when_refit_false(
         self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
-        manager = GlobalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
-        )
+        manager = GlobalSurrogateManager(surrogate_1obj, accuracy_evaluator=evaluator)
         manager.fit(archive_1obj)
         first = manager.last_accuracy
 
         rng = np.random.default_rng(1)
         candidates = rng.uniform(-2.0, 2.0, size=(5, DIM))
-        manager.score_candidates(candidates, archive_1obj, refit=False)
+        manager.predict(candidates, archive_1obj, refit=False)
         assert manager.last_accuracy is first  # same object, not updated
 
     def test_composite_propagates_last_accuracy_from_first_manager(
         self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
-        m1 = GlobalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
-        )
-        m2 = GlobalSurrogateManager(surrogate_1obj, MeanPrediction())
-        composite = CompositeSurrogateManager(
-            [m1, m2], combine_fn=rank_weighted_combine()
-        )
+        m1 = GlobalSurrogateManager(surrogate_1obj, accuracy_evaluator=evaluator)
+        m2 = GlobalSurrogateManager(surrogate_1obj)
+        composite = CompositeSurrogateManager({"a": m1, "b": m2})
         composite.fit(archive_1obj)
         assert composite.last_accuracy is m1.last_accuracy
         assert composite.last_accuracy is not None
@@ -1178,16 +1037,14 @@ class TestLocalSurrogateManagerAccuracy:
     def test_last_accuracy_none_by_default(
         self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
-        manager = LocalSurrogateManager(surrogate_1obj, MeanPrediction())
+        manager = LocalSurrogateManager(surrogate_1obj)
         assert manager.last_accuracy is None
 
     def test_fit_sets_last_accuracy(
         self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
-        manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
-        )
+        manager = LocalSurrogateManager(surrogate_1obj, accuracy_evaluator=evaluator)
         manager.fit(archive_1obj)
         assert isinstance(manager.last_accuracy, SurrogateAccuracy)
         assert "spearman" in manager.last_accuracy.metrics
@@ -1195,20 +1052,18 @@ class TestLocalSurrogateManagerAccuracy:
     def test_fit_noop_without_evaluator(
         self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
-        manager = LocalSurrogateManager(surrogate_1obj, MeanPrediction())
+        manager = LocalSurrogateManager(surrogate_1obj)
         manager.fit(archive_1obj)
         assert manager.last_accuracy is None
 
-    def test_last_accuracy_set_after_score_candidates_with_refit(
+    def test_last_accuracy_set_after_predict_with_refit(
         self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
-        manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
-        )
+        manager = LocalSurrogateManager(surrogate_1obj, accuracy_evaluator=evaluator)
         rng = np.random.default_rng(0)
         candidates = rng.uniform(-2.0, 2.0, size=(5, DIM))
-        manager.score_candidates(candidates, archive_1obj, refit=True)
+        manager.predict(candidates, archive_1obj, refit=True)
         assert isinstance(manager.last_accuracy, SurrogateAccuracy)
         assert "spearman" in manager.last_accuracy.metrics
         # n_samples = number of candidates for which validation was possible
@@ -1218,31 +1073,27 @@ class TestLocalSurrogateManagerAccuracy:
         self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
-        manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
-        )
+        manager = LocalSurrogateManager(surrogate_1obj, accuracy_evaluator=evaluator)
         rng = np.random.default_rng(0)
         candidates = rng.uniform(-2.0, 2.0, size=(5, DIM))
-        manager.score_candidates(candidates, archive_1obj, refit=True)
+        manager.predict(candidates, archive_1obj, refit=True)
         first = manager.last_accuracy
-        manager.score_candidates(candidates, archive_1obj, refit=False)
+        manager.predict(candidates, archive_1obj, refit=False)
         assert manager.last_accuracy is first  # not updated
 
     def test_generation_based_pattern_sets_last_accuracy(
         self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
-        """fit() + score_candidates(refit=False) pattern (GenerationBasedStrategy)."""
+        """fit() + predict(refit=False) pattern (GenerationBasedStrategy)."""
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
-        manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
-        )
+        manager = LocalSurrogateManager(surrogate_1obj, accuracy_evaluator=evaluator)
         rng = np.random.default_rng(0)
         candidates = rng.uniform(-2.0, 2.0, size=(5, DIM))
         manager.fit(archive_1obj)
         assert isinstance(manager.last_accuracy, SurrogateAccuracy)
         accuracy_after_fit = manager.last_accuracy
         # inner loop: refit=False should not update last_accuracy
-        manager.score_candidates(candidates, archive_1obj, refit=False)
+        manager.predict(candidates, archive_1obj, refit=False)
         assert manager.last_accuracy is accuracy_after_fit
 
     def test_nearest_neighbor_excluded_from_training(
@@ -1251,15 +1102,19 @@ class TestLocalSurrogateManagerAccuracy:
         """Nearest archive neighbor is held out; training uses n_neighbors-1 points."""
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
         manager_with = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
+            surrogate_1obj, accuracy_evaluator=evaluator
         )
-        manager_without = LocalSurrogateManager(
-            RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()
-        )
+        manager_without = LocalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
         rng = np.random.default_rng(99)
         candidates = rng.uniform(-2.0, 2.0, size=(5, DIM))
-        scores_with, _ = manager_with.score_candidates(candidates, archive_1obj)
-        scores_without, _ = manager_without.score_candidates(candidates, archive_1obj)
+        pred_with = manager_with.predict(candidates, archive_1obj)
+        pred_without = manager_without.predict(candidates, archive_1obj)
+        scores_with = (
+            MeanPrediction().evaluate(candidates, pred_with, archive_1obj).scores
+        )
+        scores_without = (
+            MeanPrediction().evaluate(candidates, pred_without, archive_1obj).scores
+        )
         # Scores differ because the nearest neighbor is excluded from training
         # when an accuracy evaluator is active (k-1 vs k training points).
         assert scores_with.shape == scores_without.shape
@@ -1270,9 +1125,7 @@ class TestLocalSurrogateManagerAccuracy:
     ) -> None:
         """_update_accuracy uses LOO self-exclusion; RBF no longer gives perfect score."""  # noqa: E501
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
-        manager = LocalSurrogateManager(
-            surrogate_1obj, MeanPrediction(), accuracy_evaluator=evaluator
-        )
+        manager = LocalSurrogateManager(surrogate_1obj, accuracy_evaluator=evaluator)
         manager.fit(archive_1obj)
         assert manager.last_accuracy is not None
         # With self-exclusion, RBF accuracy is < 1.0 (not perfectly interpolated)
@@ -1338,7 +1191,7 @@ def ctx_pairwise(archive_pairwise: Archive) -> OptimizationState:
 class TestPairwiseSurrogateManager:
     """E2E tests for PairwiseSurrogateManager with SklearnRFCClassificationSurrogate."""
 
-    def test_score_candidates_returns_correct_shape(
+    def test_predict_returns_correct_shape(
         self,
         archive_pairwise: Archive,
         ctx_pairwise: OptimizationState,
@@ -1348,29 +1201,31 @@ class TestPairwiseSurrogateManager:
             SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0),
             n_ref=5,
         )
-        scores, predictions = manager.score_candidates(
-            candidates, archive_pairwise, ctx_pairwise
+        prediction = manager.predict(candidates, archive_pairwise, ctx_pairwise)
+        scores = (
+            WinRateAcquisition()
+            .evaluate(candidates, prediction, archive_pairwise, ctx_pairwise)
+            .scores
         )
         assert scores.shape == (len(candidates),)
-        assert len(predictions) == len(candidates)
+        assert prediction.channels["win_rate"].value.shape == (len(candidates), 1)
 
-    def test_fit_then_score_refit_false(
+    def test_fit_then_predict_refit_false(
         self,
         archive_pairwise: Archive,
         ctx_pairwise: OptimizationState,
         candidates: np.ndarray,
     ) -> None:
-        """fit() + score_candidates(refit=False) pattern works without error."""
+        """fit() + predict(refit=False) pattern works without error."""
         manager = PairwiseSurrogateManager(
             SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0),
             n_ref=5,
         )
         manager.fit(archive_pairwise, ctx_pairwise)
-        scores, predictions = manager.score_candidates(
+        prediction = manager.predict(
             candidates, archive_pairwise, ctx_pairwise, refit=False
         )
-        assert scores.shape == (len(candidates),)
-        assert len(predictions) == len(candidates)
+        assert prediction.channels["win_rate"].value.shape == (len(candidates), 1)
 
     def test_predictions_have_nan_tell_f(
         self,
@@ -1378,17 +1233,20 @@ class TestPairwiseSurrogateManager:
         ctx_pairwise: OptimizationState,
         candidates: np.ndarray,
     ) -> None:
-        """tell_f is NaN so strategies skip pbest assignment."""
+        """tell_f falls back to all-NaN so strategies skip pbest assignment.
+
+        No explicit ``_tell_f`` override is set -- the "win_rate" channel
+        name (not "objective") means ``SurrogatePrediction.tell_f`` finds no
+        objective channel and falls through to its NaN fallback on its own
+        .
+        """
         manager = PairwiseSurrogateManager(
             SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0),
             n_ref=5,
         )
-        _, predictions = manager.score_candidates(
-            candidates, archive_pairwise, ctx_pairwise
-        )
-        for p in predictions:
-            assert p.has_tell_f
-            assert np.all(np.isnan(p.tell_f))
+        prediction = manager.predict(candidates, archive_pairwise, ctx_pairwise)
+        assert not prediction.has_tell_f
+        assert np.all(np.isnan(prediction.tell_f))
 
     def test_scores_in_0_1_range(
         self,
@@ -1401,7 +1259,12 @@ class TestPairwiseSurrogateManager:
             SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0),
             n_ref=5,
         )
-        scores, _ = manager.score_candidates(candidates, archive_pairwise, ctx_pairwise)
+        prediction = manager.predict(candidates, archive_pairwise, ctx_pairwise)
+        scores = (
+            WinRateAcquisition()
+            .evaluate(candidates, prediction, archive_pairwise, ctx_pairwise)
+            .scores
+        )
         assert np.all(scores >= 0.0)
         assert np.all(scores <= 1.0)
 
@@ -1412,40 +1275,80 @@ class TestPairwiseSurrogateManager:
         )
         assert isinstance(manager.training_set, PairwiseComparisonSet)
 
+    def test_runs_through_strategy_stage_wiring(
+        self,
+        archive_pairwise: Archive,
+        ctx_pairwise: OptimizationState,
+        candidates: np.ndarray,
+    ) -> None:
+        """Pairwise predictions can be scored by a separately supplied acquisition."""
+        manager = PairwiseSurrogateManager(
+            SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0),
+            n_ref=5,
+        )
+        attrs = [
+            PopulationAttribute(name="x", dtype=np.float64, shape=(DIM,)),
+            PopulationAttribute(name="f", dtype=np.float64, shape=(N_OBJ,)),
+            PopulationAttribute(name="g", dtype=np.float64, shape=(0,)),
+            PopulationAttribute(name="cv", dtype=np.float64, shape=()),
+        ]
+        offspring = Population(attrs, init_capacity=len(candidates))
+        offspring.extend(
+            {
+                "x": candidates,
+                "f": np.full((len(candidates), N_OBJ), np.nan),
+                "g": np.zeros((len(candidates), 0)),
+                "cv": np.zeros(len(candidates)),
+            }
+        )
+        state = ctx_pairwise.replace(offspring=offspring)
+
+        predict_stage = SurrogatePredictStage(manager, cbmanager=None)
+        state = predict_stage.execute(state)
+        acquisition_stage = AcquisitionStage(WinRateAcquisition(), cbmanager=None)
+        state = acquisition_stage.execute(state)
+
+        assert state.scores is not None
+        assert state.scores.shape == (len(candidates),)
+        assert np.all(state.scores >= 0.0) and np.all(state.scores <= 1.0)
+
 
 # ===========================================================================
-# SurrogateManager.iter_acquisitions (Issue #198)
+# Acquisition ownership
 # ===========================================================================
 class TestIterAcquisitions:
-    """Tests for iter_acquisitions(), used by Optimizer direction auto-injection."""
-
-    def test_global_manager_yields_single_acquisition(
+    def test_managers_do_not_expose_acquisition(
         self, surrogate_1obj: RBFSurrogate
     ) -> None:
-        acq = MeanPrediction()
-        manager = GlobalSurrogateManager(surrogate_1obj, acq)
-        assert list(manager.iter_acquisitions()) == [acq]
+        managers = [
+            GlobalSurrogateManager(surrogate_1obj),
+            LocalSurrogateManager(surrogate_1obj),
+            PairwiseSurrogateManager(
+                SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0)
+            ),
+        ]
+        for manager in managers:
+            assert not hasattr(manager, "acquisition")
+            assert not hasattr(manager, "iter_acquisitions")
 
-    def test_local_manager_yields_single_acquisition(
+    def test_composite_acquisition_is_provider_owned(
         self, surrogate_1obj: RBFSurrogate
     ) -> None:
-        acq = MeanPrediction()
-        manager = LocalSurrogateManager(surrogate_1obj, acq)
-        assert list(manager.iter_acquisitions()) == [acq]
+        m1 = GlobalSurrogateManager(surrogate_1obj)
+        m2 = GlobalSurrogateManager(surrogate_1obj)
+        acq_a = MeanPrediction()
+        acq_b = MeanPrediction()
+        composite_acq = CompositeAcquisition(
+            {"a": acq_a, "b": acq_b}, combine_fn=product_combine
+        )
+        composite = CompositeSurrogateManager({"a": m1, "b": m2})
+        assert not hasattr(composite, "acquisition")
+        assert composite_acq.acquisitions == {"a": acq_a, "b": acq_b}
 
-    def test_composite_manager_yields_all_sub_manager_acquisitions(
-        self, surrogate_1obj: RBFSurrogate
-    ) -> None:
-        acq1 = MeanPrediction()
-        acq2 = MeanPrediction()
-        m1 = GlobalSurrogateManager(surrogate_1obj, acq1)
-        m2 = GlobalSurrogateManager(surrogate_1obj, acq2)
-        composite = CompositeSurrogateManager([m1, m2], combine_fn=product_combine)
-        assert list(composite.iter_acquisitions()) == [acq1, acq2]
-
-    def test_pairwise_manager_yields_nothing(self) -> None:
-        """PairwiseSurrogateManager has no acquisition function at all."""
+    def test_pairwise_acquisition_is_independently_constructed(self) -> None:
         manager = PairwiseSurrogateManager(
             SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0)
         )
-        assert list(manager.iter_acquisitions()) == []
+        acquisition = WinRateAcquisition()
+        assert not hasattr(manager, "acquisition")
+        assert isinstance(acquisition, WinRateAcquisition)

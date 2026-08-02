@@ -265,32 +265,38 @@ class TestSklearnLGBMSurrogate:
 # ===========================================================================
 class TestSklearnSurrogateIntegration:
     def test_global_manager_svm(self, archive_1obj, candidates) -> None:
-        manager = GlobalSurrogateManager(SklearnSVMSurrogate(), MeanPrediction())
-        scores, preds = manager.score_candidates(candidates, archive_1obj)
+        acquisition = MeanPrediction()
+        manager = GlobalSurrogateManager(SklearnSVMSurrogate())
+        prediction = manager.predict(candidates, archive_1obj)
+        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
         assert scores.shape == (len(candidates),)
-        assert len(preds) == len(candidates)
-        for p in preds:
-            assert p.value.shape == (1, 1)
+        assert prediction.value.shape == (len(candidates), 1)
 
     def test_global_manager_rfr(self, archive_1obj, candidates) -> None:
+        acquisition = MeanPrediction()
         manager = GlobalSurrogateManager(
-            SklearnRFRSurrogate(n_estimators=10, random_state=0), MeanPrediction()
+            SklearnRFRSurrogate(n_estimators=10, random_state=0)
         )
-        scores, _ = manager.score_candidates(candidates, archive_1obj)
+        prediction = manager.predict(candidates, archive_1obj)
+        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
         assert scores.shape == (len(candidates),)
 
     def test_global_manager_xgb(self, archive_1obj, candidates) -> None:
+        acquisition = MeanPrediction()
         manager = GlobalSurrogateManager(
-            SklearnXGBSurrogate(n_estimators=10, verbosity=0), MeanPrediction()
+            SklearnXGBSurrogate(n_estimators=10, verbosity=0)
         )
-        scores, _ = manager.score_candidates(candidates, archive_1obj)
+        prediction = manager.predict(candidates, archive_1obj)
+        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
         assert scores.shape == (len(candidates),)
 
     def test_global_manager_lgbm(self, archive_1obj, candidates) -> None:
+        acquisition = MeanPrediction()
         manager = GlobalSurrogateManager(
-            SklearnLGBMSurrogate(n_estimators=10, verbose=-1), MeanPrediction()
+            SklearnLGBMSurrogate(n_estimators=10, verbose=-1)
         )
-        scores, _ = manager.score_candidates(candidates, archive_1obj)
+        prediction = manager.predict(candidates, archive_1obj)
+        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
         assert scores.shape == (len(candidates),)
 
 

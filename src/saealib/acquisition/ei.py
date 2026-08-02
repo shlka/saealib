@@ -5,16 +5,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from scipy.stats import norm
 
-from saealib.acquisition.base import AcquisitionFunction, direction_to_minimize_sign
+from saealib.acquisition.base import PointwiseAcquisition, direction_to_minimize_sign
+from saealib.acquisition.kernels import expected_improvement_kernel
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
     from saealib.population import Archive
 
 
-class ExpectedImprovement(AcquisitionFunction):
+class ExpectedImprovement(PointwiseAcquisition):
     """
     Expected Improvement (EI) acquisition function.
 
@@ -122,7 +122,4 @@ class ExpectedImprovement(AcquisitionFunction):
         ref = np.asarray(reference, dtype=float)
         f_best = float(ref.flat[self.obj_idx]) if ref.ndim > 0 else float(ref)
 
-        sigma = np.maximum(sigma, 1e-9)  # avoid division by zero
-        z = (f_best - mu - self.xi) / sigma
-        ei = (f_best - mu - self.xi) * norm.cdf(z) + sigma * norm.pdf(z)
-        return np.maximum(ei, 0.0)
+        return expected_improvement_kernel(mu, sigma, f_best, self.xi)

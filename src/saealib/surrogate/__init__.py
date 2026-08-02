@@ -9,12 +9,6 @@ from saealib.surrogate.accuracy import (
     SurrogateAccuracy,
     SurrogateAccuracyMetric,
 )
-from saealib.surrogate.archive_manager import (
-    ArchiveBasedManager,
-    DensityManager,
-    NichingManager,
-    NoveltyManager,
-)
 from saealib.surrogate.base import ComparisonSurrogate, RegressionSurrogate, Surrogate
 from saealib.surrogate.manager import (
     CompositeSurrogateManager,
@@ -26,7 +20,7 @@ from saealib.surrogate.manager import (
     rank_weighted_combine,
 )
 from saealib.surrogate.per_objective import PerObjectiveSurrogate
-from saealib.surrogate.prediction import SurrogatePrediction
+from saealib.surrogate.prediction import PredictionChannel, SurrogatePrediction
 from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
 from saealib.surrogate.sklearn_surrogate import (
     SklearnClassificationSurrogate,
@@ -65,12 +59,10 @@ __all__ = [
     "RMSE",
     "AccuracyBasedSurrogateSwitcher",
     "AccuracyEvaluator",
-    "ArchiveBasedManager",
     "ArchiveObjectiveSet",
     "ComparisonSurrogate",
     "CompositeSurrogateManager",
     "ConstraintObjectiveSet",
-    "DensityManager",
     "FeasibilityClassificationSet",
     "GenCtrlSwitcher",
     "GlobalSurrogateManager",
@@ -82,11 +74,10 @@ __all__ = [
     "LevelBasedSet",
     "LocalSurrogateManager",
     "ManagerSwitcher",
-    "NichingManager",
-    "NoveltyManager",
     "PairwiseComparisonSet",
     "PairwiseSurrogateManager",
     "PerObjectiveSurrogate",
+    "PredictionChannel",
     "R2Score",
     "RBFSurrogate",
     "ReferencePointComparisonSet",

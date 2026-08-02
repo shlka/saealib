@@ -198,22 +198,27 @@ class TestSklearnGPRSurrogateWithAcquisition:
 # ===========================================================================
 class TestSklearnGPRSurrogateManager:
     def test_global_manager_ei(self, archive_1obj, candidates) -> None:
-        manager = GlobalSurrogateManager(SklearnGPRSurrogate(), ExpectedImprovement())
-        scores, preds = manager.score_candidates(candidates, archive_1obj)
+        acquisition = ExpectedImprovement()
+        manager = GlobalSurrogateManager(SklearnGPRSurrogate())
+        prediction = manager.predict(candidates, archive_1obj)
+        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
         assert scores.shape == (len(candidates),)
         assert np.all(scores >= 0.0)
-        assert len(preds) == len(candidates)
-        for p in preds:
-            assert p.std is not None
+        assert prediction.value.shape == (len(candidates), 1)
+        assert prediction.std is not None
 
     def test_global_manager_lcb(self, archive_1obj, candidates) -> None:
-        manager = GlobalSurrogateManager(SklearnGPRSurrogate(), LowerConfidenceBound())
-        scores, _ = manager.score_candidates(candidates, archive_1obj)
+        acquisition = LowerConfidenceBound()
+        manager = GlobalSurrogateManager(SklearnGPRSurrogate())
+        prediction = manager.predict(candidates, archive_1obj)
+        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
         assert scores.shape == (len(candidates),)
 
     def test_global_manager_max_uncertainty(self, archive_1obj, candidates) -> None:
-        manager = GlobalSurrogateManager(SklearnGPRSurrogate(), MaxUncertainty())
-        scores, _ = manager.score_candidates(candidates, archive_1obj)
+        acquisition = MaxUncertainty()
+        manager = GlobalSurrogateManager(SklearnGPRSurrogate())
+        prediction = manager.predict(candidates, archive_1obj)
+        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
         assert scores.shape == (len(candidates),)
 
 

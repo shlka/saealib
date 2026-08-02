@@ -177,9 +177,9 @@ class TestTorchSurrogate:
 class TestTorchSurrogateIntegration:
     def test_global_manager_1obj(self, archive_1obj, candidates) -> None:
         s = TorchSurrogate(_make_model_1obj(), epochs=10)
-        manager = GlobalSurrogateManager(s, MeanPrediction())
-        scores, preds = manager.score_candidates(candidates, archive_1obj)
+        acquisition = MeanPrediction()
+        manager = GlobalSurrogateManager(s)
+        prediction = manager.predict(candidates, archive_1obj)
+        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
         assert scores.shape == (len(candidates),)
-        assert len(preds) == len(candidates)
-        for p in preds:
-            assert p.value.shape == (1, 1)
+        assert prediction.value.shape == (len(candidates), 1)

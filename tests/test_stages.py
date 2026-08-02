@@ -9,6 +9,7 @@ from saealib import (
     SequentialSelection,
     TruncationSelection,
 )
+from saealib.acquisition import MeanPrediction
 from saealib.callback import CallbackManager, PostEvaluationEvent
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
@@ -16,9 +17,10 @@ from saealib.execution.evaluator import EvaluationResult, Evaluator, SerialEvalu
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.stages import (
+    AcquisitionStage,
     AskStage,
     SurrogateFitStage,
-    SurrogateScoreStage,
+    SurrogatePredictStage,
     TrueEvaluationStage,
 )
 from saealib.surrogate.prediction import SurrogatePrediction
@@ -101,16 +103,9 @@ class _MockSurrogateManager:
     def fit(self, archive, ctx=None):
         pass
 
-    def score_candidates(self, candidates_x, archive, ctx=None, *, refit=True):
+    def predict(self, candidates_x, archive, ctx=None, *, refit=True):
         n = len(candidates_x)
-        scores = np.linspace(1.0, 0.0, n)
-        predictions = [
-            SurrogatePrediction(
-                value=np.array([[1.0]]), std=None, label=None, metadata={}
-            )
-            for _ in range(n)
-        ]
-        return scores, predictions
+        return SurrogatePrediction.objective(value=np.ones((n, 1)))
 
 
 # ---------------------------------------------------------------------------
@@ -159,21 +154,26 @@ class TestSurrogateFitStage:
 
 
 # ---------------------------------------------------------------------------
-# SurrogateScoreStage — cbmanager=None branches
+# SurrogatePredictStage / AcquisitionStage — cbmanager=None branches
 # ---------------------------------------------------------------------------
 
 
-class TestSurrogateScoreStageNoCbmanager:
-    """cbmanager=None skips SurrogateStartEvent / SurrogateEndEvent dispatch."""
+class TestSurrogatePredictAcquisitionStageNoCbmanager:
+    """cbmanager=None skips SurrogateStartEvent / SurrogateEndEvent /
+    AcquisitionStartEvent / AcquisitionEndEvent dispatch."""
 
     def test_execute_sets_scores_and_predictions(self):
         state = _make_state()
         state = AskStage(_make_ga(), cbmanager=None).execute(state)
 
-        stage = SurrogateScoreStage(_MockSurrogateManager(), cbmanager=None)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        sm = _MockSurrogateManager()
+        acquisition = MeanPrediction()
+        state = SurrogatePredictStage(sm, cbmanager=None).execute(state)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        assert state.predictions is not None
+
+        stage = AcquisitionStage(acquisition, cbmanager=None)
         new_state = stage.execute(state)
         assert new_state.scores is not None
-        assert new_state.predictions is not None
 
     def test_scores_length_matches_offspring(self):
         state = _make_state()
@@ -181,10 +181,111 @@ class TestSurrogateScoreStageNoCbmanager:
         assert state.offspring is not None
         n = len(state.offspring)
 
-        stage = SurrogateScoreStage(_MockSurrogateManager(), cbmanager=None)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        sm = _MockSurrogateManager()
+        acquisition = MeanPrediction()
+        state = SurrogatePredictStage(sm, cbmanager=None).execute(state)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        stage = AcquisitionStage(acquisition, cbmanager=None)
         new_state = stage.execute(state)
         assert new_state.scores is not None
         assert len(new_state.scores) == n
+
+
+# ---------------------------------------------------------------------------
+# AcquisitionStage — empty candidates and prepare() caching
+# ---------------------------------------------------------------------------
+
+
+class _SpyAcquisition:
+    """Records prepare()/evaluate() call counts and rng draws."""
+
+    direction_sensitive = False
+
+    def __init__(self):
+        self.prepare_calls = 0
+        self.evaluate_calls = 0
+
+    def prepare(self, archive, ctx=None):
+        self.prepare_calls += 1
+        if ctx is not None:
+            ctx.rng.random()  # consume rng so empty-input non-consumption is checkable
+        return "prepared"
+
+    def evaluate(self, candidates_x, prediction, archive, ctx=None, *, prepared=None):
+        self.evaluate_calls += 1
+        assert prepared == "prepared"
+        n = len(candidates_x)
+        from saealib.acquisition import AcquisitionResult
+
+        return AcquisitionResult(scores=np.ones(n))
+
+
+class TestAcquisitionStageEmptyAndCaching:
+    def test_empty_offspring_skips_prepare_and_evaluate(self):
+        state = _make_state()
+        state = AskStage(_make_ga(), cbmanager=None).execute(state)
+        assert state.offspring is not None
+        state = state.replace(
+            offspring=state.offspring.extract(np.array([], dtype=int))
+        )
+
+        acq = _SpyAcquisition()
+        stage = AcquisitionStage(acq)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        new_state = stage.execute(state)
+
+        assert acq.prepare_calls == 0
+        assert acq.evaluate_calls == 0
+        assert new_state.scores is not None
+        assert len(new_state.scores) == 0
+
+    def test_empty_offspring_does_not_advance_rng(self):
+        state = _make_state()
+        state = AskStage(_make_ga(), cbmanager=None).execute(state)
+        assert state.offspring is not None
+        state = state.replace(
+            offspring=state.offspring.extract(np.array([], dtype=int))
+        )
+        rng_state_before = state.rng.bit_generator.state
+
+        acq = _SpyAcquisition()
+        stage = AcquisitionStage(acq)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        stage.execute(state)
+
+        assert state.rng.bit_generator.state == rng_state_before
+
+    def test_prepare_cached_within_same_generation_and_archive_version(self):
+        state = _make_state()
+        state = AskStage(_make_ga(), cbmanager=None).execute(state)
+
+        acq = _SpyAcquisition()
+        stage = AcquisitionStage(acq)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        stage.execute(state)
+        stage.execute(state)  # same gen, same archive versions
+
+        assert acq.prepare_calls == 1
+        assert acq.evaluate_calls == 2
+
+    def test_prepare_recomputed_on_generation_change(self):
+        state = _make_state()
+        state = AskStage(_make_ga(), cbmanager=None).execute(state)
+
+        acq = _SpyAcquisition()
+        stage = AcquisitionStage(acq)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        stage.execute(state)
+        stage.execute(state.replace(gen=state.gen + 1))
+
+        assert acq.prepare_calls == 2
+
+    def test_prepare_recomputed_on_archive_structure_change(self):
+        state = _make_state()
+        state = AskStage(_make_ga(), cbmanager=None).execute(state)
+
+        acq = _SpyAcquisition()
+        stage = AcquisitionStage(acq)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        stage.execute(state)
+        state.archive.add(x=np.zeros(DIM), f=np.zeros(N_OBJ), g=np.zeros(0), cv=0.0)
+        stage.execute(state)
+
+        assert acq.prepare_calls == 2
 
 
 # ---------------------------------------------------------------------------

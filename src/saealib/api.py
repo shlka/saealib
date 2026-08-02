@@ -8,7 +8,9 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from saealib.acquisition.base import AcquisitionFunction
 from saealib.acquisition.mean import MeanPrediction
+from saealib.acquisition.winrate import WinRateAcquisition
 from saealib.callback import GenerationStartEvent, logging_generation
 from saealib.context import OptimizationState
 from saealib.exceptions import ValidationError
@@ -128,22 +130,28 @@ def _resolve_algorithm(algorithm: str | Algorithm | None) -> Algorithm | None:
 def _resolve_surrogate(
     surrogate: str | Surrogate | SurrogateManager | None,
     problem: Problem,
-) -> SurrogateManager:
+) -> tuple[SurrogateManager, AcquisitionFunction | None]:
     if surrogate is None:
         raise ValidationError(
             "surrogate=None is not supported. "
             "Use 'rbf' or a Surrogate/SurrogateManager instance."
         )
     if isinstance(surrogate, SurrogateManager):
-        return surrogate
+        acquisition = (
+            WinRateAcquisition()
+            if type(surrogate).__name__ == "PairwiseSurrogateManager"
+            else None
+        )
+        return surrogate, acquisition
     if isinstance(surrogate, str):
         if surrogate.lower() == "rbf":
             from saealib.defaults import load_defaults
 
             spec = load_defaults()["presets"]["ga_rbf_ib"]["surrogate_manager"]
-            return Optimizer._build_surrogate_manager_from_spec(
+            manager = Optimizer._build_surrogate_manager_from_spec(
                 spec, problem.dim, problem.direction
             )
+            return manager, MeanPrediction(direction=problem.direction)
         raise ValidationError(
             f"Unknown surrogate: {surrogate!r}. "
             "Use 'rbf' or a Surrogate/SurrogateManager instance."
@@ -152,9 +160,8 @@ def _resolve_surrogate(
 
     return LocalSurrogateManager(
         surrogate,
-        MeanPrediction(direction=problem.direction),
         training_set=KNNObjectiveSet(),
-    )
+    ), MeanPrediction(direction=problem.direction)
 
 
 def _resolve_strategy(
@@ -248,7 +255,10 @@ def _run(
         # set_algorithm(); Optimizer._resolve_defaults() then fills it in.
         opt.set_algorithm(_resolve_algorithm(algorithm))  # type: ignore
     if surrogate is not _UNSET:
-        opt.set_surrogate_manager(_resolve_surrogate(surrogate, problem))
+        manager, acquisition = _resolve_surrogate(surrogate, problem)
+        opt.set_surrogate_manager(manager)
+        if acquisition is not None:
+            opt.set_acquisition(acquisition)
     if strategy is not _UNSET:
         opt.set_strategy(_resolve_strategy(strategy, pop_size))  # type: ignore
 

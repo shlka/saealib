@@ -25,7 +25,12 @@ __version__ = version("saealib")
 #   exports can't silently drift out of this scheme.
 # ---------------------------------------------------------------------------
 
-from saealib.acquisition import AcquisitionFunction, ExpectedImprovement
+from saealib.acquisition import (
+    AcquisitionFunction,
+    AcquisitionResult,
+    ExpectedImprovement,
+    PointwiseAcquisition,
+)
 from saealib.algorithms import GA, PSO, Algorithm
 from saealib.api import Result, maximize, minimize
 from saealib.callback import (
@@ -79,6 +84,7 @@ from saealib.problem import (
 )
 from saealib.registry import register
 from saealib.stages import (
+    AcquisitionStage,
     ArchiveUpdateStage,
     AskStage,
     CountGenerationStage,
@@ -86,7 +92,7 @@ from saealib.stages import (
     SortByScoreStage,
     SurrogateFitStage,
     SurrogateOnlyLoopStage,
-    SurrogateScoreStage,
+    SurrogatePredictStage,
     TellStage,
     TopKSelectionStage,
     TrueEvaluationStage,
@@ -121,6 +127,8 @@ __all__ = [
     "GA",
     "PSO",
     "AcquisitionFunction",
+    "AcquisitionResult",
+    "AcquisitionStage",
     "Algorithm",
     "Archive",
     "ArchiveUpdateStage",
@@ -163,6 +171,7 @@ __all__ = [
     "ParentSelection",
     "ParetoArchive",
     "Pipeline",
+    "PointwiseAcquisition",
     "Population",
     "PopulationAttribute",
     "PostEvaluationEvent",
@@ -183,7 +192,7 @@ __all__ = [
     "SurrogateFitStage",
     "SurrogateManager",
     "SurrogateOnlyLoopStage",
-    "SurrogateScoreStage",
+    "SurrogatePredictStage",
     "SurvivorSelection",
     "TellStage",
     "Termination",
@@ -254,23 +263,25 @@ _TIER2_MAP: dict[str, str] = {
     "SequentialSelection": "saealib.operators",
     "repair_clipping": "saealib.operators",
     # acquisition (less common)
+    "CompositeAcquisition": "saealib.acquisition",
+    "DensityAcquisition": "saealib.acquisition",
     "EHVIAcquisition": "saealib.acquisition",
     "LowerConfidenceBound": "saealib.acquisition",
     "MaxUncertainty": "saealib.acquisition",
     "MeanPrediction": "saealib.acquisition",
+    "NichingAcquisition": "saealib.acquisition",
+    "NoveltyAcquisition": "saealib.acquisition",
     "ParEGOAcquisition": "saealib.acquisition",
     "ProbabilityOfFeasibility": "saealib.acquisition",
     "ProductOfFeasibility": "saealib.acquisition",
     "SMSEGOAcquisition": "saealib.acquisition",
+    "WinRateAcquisition": "saealib.acquisition",
     # surrogate (specialized)
-    "ArchiveBasedManager": "saealib.surrogate",
     "CompositeSurrogateManager": "saealib.surrogate",
-    "DensityManager": "saealib.surrogate",
     "GlobalSurrogateManager": "saealib.surrogate",
     "LocalSurrogateManager": "saealib.surrogate",
-    "NichingManager": "saealib.surrogate",
-    "NoveltyManager": "saealib.surrogate",
     "PerObjectiveSurrogate": "saealib.surrogate",
+    "PredictionChannel": "saealib.surrogate",
     "RBFSurrogate": "saealib.surrogate",
     "SklearnGPRSurrogate": "saealib.surrogate",
     "SklearnLGBMSurrogate": "saealib.surrogate",
@@ -326,6 +337,8 @@ _TIER2_MAP: dict[str, str] = {
     "ArchiveMixin": "saealib.population",
     "ParetoMixin": "saealib.population",
     # callbacks (less common)
+    "AcquisitionEndEvent": "saealib.callback",
+    "AcquisitionStartEvent": "saealib.callback",
     "PostAskEvent": "saealib.callback",
     "PostCrossoverEvent": "saealib.callback",
     "PostMutationEvent": "saealib.callback",

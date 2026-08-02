@@ -10,17 +10,24 @@ __all__: list[str]
 # ---------------------------------------------------------------------------
 
 from saealib.acquisition import AcquisitionFunction as AcquisitionFunction
+from saealib.acquisition import AcquisitionResult as AcquisitionResult
 
 # acquisition (less common)
+from saealib.acquisition import CompositeAcquisition as CompositeAcquisition
+from saealib.acquisition import DensityAcquisition as DensityAcquisition
 from saealib.acquisition import EHVIAcquisition as EHVIAcquisition
 from saealib.acquisition import ExpectedImprovement as ExpectedImprovement
 from saealib.acquisition import LowerConfidenceBound as LowerConfidenceBound
 from saealib.acquisition import MaxUncertainty as MaxUncertainty
 from saealib.acquisition import MeanPrediction as MeanPrediction
+from saealib.acquisition import NichingAcquisition as NichingAcquisition
+from saealib.acquisition import NoveltyAcquisition as NoveltyAcquisition
 from saealib.acquisition import ParEGOAcquisition as ParEGOAcquisition
+from saealib.acquisition import PointwiseAcquisition as PointwiseAcquisition
 from saealib.acquisition import ProbabilityOfFeasibility as ProbabilityOfFeasibility
 from saealib.acquisition import ProductOfFeasibility as ProductOfFeasibility
 from saealib.acquisition import SMSEGOAcquisition as SMSEGOAcquisition
+from saealib.acquisition import WinRateAcquisition as WinRateAcquisition
 from saealib.algorithms import GA as GA
 from saealib.algorithms import PSO as PSO
 from saealib.algorithms import Algorithm as Algorithm
@@ -30,6 +37,8 @@ from saealib.algorithms import PymooAlgorithm as PymooAlgorithm
 from saealib.api import Result as Result
 from saealib.api import maximize as maximize
 from saealib.api import minimize as minimize
+from saealib.callback import AcquisitionEndEvent as AcquisitionEndEvent
+from saealib.callback import AcquisitionStartEvent as AcquisitionStartEvent
 from saealib.callback import CallbackManager as CallbackManager
 from saealib.callback import Event as Event
 from saealib.callback import GenerationEndEvent as GenerationEndEvent
@@ -147,6 +156,7 @@ from saealib.problem import linear_epsilon_schedule as linear_epsilon_schedule
 from saealib.registry import register as register
 
 # stages
+from saealib.stages import AcquisitionStage as AcquisitionStage
 from saealib.stages import ArchiveUpdateStage as ArchiveUpdateStage
 from saealib.stages import AskStage as AskStage
 from saealib.stages import CountGenerationStage as CountGenerationStage
@@ -154,7 +164,7 @@ from saealib.stages import InitializationStage as InitializationStage
 from saealib.stages import SortByScoreStage as SortByScoreStage
 from saealib.stages import SurrogateFitStage as SurrogateFitStage
 from saealib.stages import SurrogateOnlyLoopStage as SurrogateOnlyLoopStage
-from saealib.stages import SurrogateScoreStage as SurrogateScoreStage
+from saealib.stages import SurrogatePredictStage as SurrogatePredictStage
 from saealib.stages import TellStage as TellStage
 from saealib.stages import TopKSelectionStage as TopKSelectionStage
 from saealib.stages import TrueEvaluationStage as TrueEvaluationStage
@@ -173,9 +183,6 @@ from saealib.surrogate import (
 # surrogate (accuracy evaluation)
 from saealib.surrogate import AccuracyEvaluator as AccuracyEvaluator
 
-# surrogate (specialized)
-from saealib.surrogate import ArchiveBasedManager as ArchiveBasedManager
-
 # surrogate (training-set builders)
 from saealib.surrogate import ArchiveObjectiveSet as ArchiveObjectiveSet
 
@@ -183,7 +190,6 @@ from saealib.surrogate import ArchiveObjectiveSet as ArchiveObjectiveSet
 from saealib.surrogate import ComparisonSurrogate as ComparisonSurrogate
 from saealib.surrogate import CompositeSurrogateManager as CompositeSurrogateManager
 from saealib.surrogate import ConstraintObjectiveSet as ConstraintObjectiveSet
-from saealib.surrogate import DensityManager as DensityManager
 from saealib.surrogate import (
     FeasibilityClassificationSet as FeasibilityClassificationSet,
 )
@@ -197,11 +203,10 @@ from saealib.surrogate import LevelBasedSet as LevelBasedSet
 from saealib.surrogate import LocalSurrogateManager as LocalSurrogateManager
 from saealib.surrogate import LOOAccuracyEvaluator as LOOAccuracyEvaluator
 from saealib.surrogate import ManagerSwitcher as ManagerSwitcher
-from saealib.surrogate import NichingManager as NichingManager
-from saealib.surrogate import NoveltyManager as NoveltyManager
 from saealib.surrogate import PairwiseComparisonSet as PairwiseComparisonSet
 from saealib.surrogate import PairwiseSurrogateManager as PairwiseSurrogateManager
 from saealib.surrogate import PerObjectiveSurrogate as PerObjectiveSurrogate
+from saealib.surrogate import PredictionChannel as PredictionChannel
 from saealib.surrogate import R2Score as R2Score
 from saealib.surrogate import RBFSurrogate as RBFSurrogate
 from saealib.surrogate import ReferencePointComparisonSet as ReferencePointComparisonSet

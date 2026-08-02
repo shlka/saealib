@@ -89,4 +89,4 @@ class PerObjectiveSurrogate(RegressionSurrogate):
         if self.provides_uncertainty:
             std = np.column_stack([p.std for p in preds])  # type: ignore  # provides_uncertainty guarantees non-None; ty can't narrow in list comp
         x = np.atleast_2d(np.asarray(test_x, dtype=float))
-        return SurrogatePrediction(value=value, std=std, x=x)
+        return SurrogatePrediction.objective(value=value, std=std, x=x)

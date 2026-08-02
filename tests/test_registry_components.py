@@ -4,6 +4,7 @@ reproduces objects equivalent to the hardcoded resolvers in saealib.api."""
 import numpy as np
 import pytest
 
+from saealib.acquisition import MeanPrediction
 from saealib.algorithms.ga import GA
 from saealib.algorithms.pso import PSO
 from saealib.operators.crossover import CrossoverBLXAlpha
@@ -89,11 +90,20 @@ class TestBuildMatchesApiResolvers:
                 },
             },
         }
-        manager = build(spec)
+        manager_spec = {
+            **spec,
+            "params": {
+                key: value
+                for key, value in spec["params"].items()
+                if key != "acquisition"
+            },
+        }
+        manager = build(manager_spec)
 
         assert isinstance(manager, LocalSurrogateManager)
         assert isinstance(manager.surrogate, RBFSurrogate)
-        assert manager.acquisition.direction is direction
+        acquisition = MeanPrediction(direction=direction)
+        assert acquisition.direction is direction
         assert isinstance(manager.training_set, KNNObjectiveSet)
         assert manager.training_set.n_neighbors == 50
 

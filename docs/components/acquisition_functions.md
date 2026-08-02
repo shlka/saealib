@@ -87,7 +87,7 @@ class ThresholdAcquisition(AcquisitionFunction):
         return self.threshold - m
 ```
 
-Combine it by passing it to `SurrogateManager`'s constructor, e.g. `GlobalSurrogateManager(surrogate, acquisition, ...)`.
+Combine it by passing it to `Optimizer.set_acquisition()`.
 
 ```{note}
 `Optimizer.validate()` detects and warns about a mismatch between the acquisition function's `requires_uncertainty` and the surrogate's `provides_uncertainty`.

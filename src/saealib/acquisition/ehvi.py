@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 import numpy.typing as npt
 
-from saealib.acquisition.base import AcquisitionFunction, direction_to_minimize_sign
+from saealib.acquisition.base import PointwiseAcquisition, direction_to_minimize_sign
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.utils.indicators import _non_dominated, hypervolume
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from saealib.population import Archive
 
 
-class EHVIAcquisition(AcquisitionFunction):
+class EHVIAcquisition(PointwiseAcquisition):
     """
     Expected Hypervolume Improvement (EHVI) acquisition function.
 

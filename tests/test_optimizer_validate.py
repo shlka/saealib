@@ -1,4 +1,4 @@
-"""Tests for Optimizer.validate() — Issue #73."""
+"""Tests for Optimizer.validate()."""
 
 from __future__ import annotations
 
@@ -141,9 +141,9 @@ def test_acquisition_uncertainty_mismatch():
     opt.set_surrogate_manager(
         GlobalSurrogateManager(
             RBFSurrogate(kernel=gaussian_kernel, dim=DIM),
-            ExpectedImprovement(),
         )
     )
+    opt.set_acquisition(ExpectedImprovement())
     assert any("uncertainty" in m for m in opt.validate())
 
 
@@ -152,9 +152,9 @@ def test_mean_prediction_with_rbf_ok():
     opt.set_surrogate_manager(
         GlobalSurrogateManager(
             RBFSurrogate(kernel=gaussian_kernel, dim=DIM),
-            MeanPrediction(),
         )
     )
+    opt.set_acquisition(MeanPrediction())
     assert opt.validate() == []
 
 
@@ -195,7 +195,7 @@ def test_iterate_succeeds_with_no_components_set():
 
 
 # ---------------------------------------------------------------------------
-# Acquisition direction auto-injection (Issue #198)
+# Acquisition direction injection
 # ---------------------------------------------------------------------------
 
 
@@ -204,9 +204,9 @@ def test_acquisition_direction_length_mismatch():
     opt.set_surrogate_manager(
         GlobalSurrogateManager(
             RBFSurrogate(kernel=gaussian_kernel, dim=DIM),
-            ExpectedImprovement(direction=np.array([1.0, 1.0])),  # len 2 != n_obj=1
         )
     )
+    opt.set_acquisition(ExpectedImprovement(direction=np.array([1.0, 1.0])))
     assert any("direction" in m for m in opt.validate())
 
 
@@ -219,8 +219,9 @@ def test_inject_acquisition_directions_sets_from_problem():
     opt.set_termination(MagicMock())
     acq = MeanPrediction()
     opt.set_surrogate_manager(
-        GlobalSurrogateManager(RBFSurrogate(kernel=gaussian_kernel, dim=2), acq)
+        GlobalSurrogateManager(RBFSurrogate(kernel=gaussian_kernel, dim=2))
     )
+    opt.set_acquisition(acq)
     opt._inject_acquisition_directions()
     np.testing.assert_array_equal(acq.direction, problem.direction)
 
@@ -229,8 +230,9 @@ def test_inject_acquisition_directions_idempotent():
     opt = _fully_configured()
     acq = MeanPrediction()
     opt.set_surrogate_manager(
-        GlobalSurrogateManager(RBFSurrogate(kernel=gaussian_kernel, dim=DIM), acq)
+        GlobalSurrogateManager(RBFSurrogate(kernel=gaussian_kernel, dim=DIM))
     )
+    opt.set_acquisition(acq)
     opt._inject_acquisition_directions()
     first = acq.direction
     opt._inject_acquisition_directions()
@@ -242,8 +244,9 @@ def test_inject_acquisition_directions_preserves_explicit_direction():
     explicit = np.array([1.0])
     acq = MeanPrediction(direction=explicit)
     opt.set_surrogate_manager(
-        GlobalSurrogateManager(RBFSurrogate(kernel=gaussian_kernel, dim=DIM), acq)
+        GlobalSurrogateManager(RBFSurrogate(kernel=gaussian_kernel, dim=DIM))
     )
+    opt.set_acquisition(acq)
     opt._inject_acquisition_directions()
     assert acq.direction is explicit
 
@@ -257,8 +260,9 @@ def test_inject_acquisition_directions_skips_direction_insensitive():
         MaxUncertainty(),
     ):
         opt.set_surrogate_manager(
-            GlobalSurrogateManager(RBFSurrogate(kernel=gaussian_kernel, dim=DIM), acq)
+            GlobalSurrogateManager(RBFSurrogate(kernel=gaussian_kernel, dim=DIM))
         )
+        opt.set_acquisition(acq)
         opt._inject_acquisition_directions()
         # These acquisitions never declare a `direction` field at all; opting
         # out via direction_sensitive=False means injection must not add one.
@@ -282,7 +286,8 @@ def test_iterate_injects_acquisition_direction_end_to_end():
         Optimizer(problem, seed=0)
         .set_initializer(LHSInitializer(n_init_archive=10, n_init_population=8, seed=0))
         .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.5))
-        .set_surrogate_manager(GlobalSurrogateManager(SklearnGPRSurrogate(), acq))
+        .set_surrogate_manager(GlobalSurrogateManager(SklearnGPRSurrogate()))
+        .set_acquisition(acq)
     )
     gen = opt.iterate()
     next(gen)

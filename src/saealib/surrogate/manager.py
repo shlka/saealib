@@ -1,21 +1,20 @@
-"""
-Surrogate manager: coordinates the fit/predict/score pipeline.
+"""Surrogate managers for fitting models and producing predictions.
 
 Responsibility split:
   Surrogate           -- fits a model and predicts SurrogatePrediction
   AcquisitionFunction -- converts SurrogatePrediction to scalar scores
-  SurrogateManager    -- coordinates the two above; exposes score_candidates()
+  SurrogateManager    -- coordinates training and prediction; exposes predict()
 
 Classes
 -------
 GlobalSurrogateManager
-    Fits once on the full archive; batch predict and score.
+    Fits once on the full archive; batch predict.
 LocalSurrogateManager
     Fits a local KNN model per candidate.
 CompositeSurrogateManager
-    Combines scores from multiple sub-managers via an injectable combine_fn.
+    Composes named predictions from multiple sub-managers.
 PairwiseSurrogateManager
-    Fits a pairwise classifier; scores by win rate against archive references.
+    Fits a pairwise classifier and predicts per-candidate win rates.
 
 Combine functions
 -----------------
@@ -29,15 +28,16 @@ from __future__ import annotations
 
 import copy
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
 
+from saealib.exceptions import ValidationError
 from saealib.registry import register
 from saealib.surrogate.accuracy import AccuracyEvaluator, SurrogateAccuracy
 from saealib.surrogate.base import ComparisonSurrogate, Surrogate
-from saealib.surrogate.prediction import SurrogatePrediction
+from saealib.surrogate.prediction import PredictionChannel, SurrogatePrediction
 from saealib.surrogate.training_set import (
     ArchiveObjectiveSet,
     KNNObjectiveSet,
@@ -46,7 +46,6 @@ from saealib.surrogate.training_set import (
 )
 
 if TYPE_CHECKING:
-    from saealib.acquisition.base import AcquisitionFunction
     from saealib.context import OptimizationState
     from saealib.population import Archive
 
@@ -55,10 +54,14 @@ class SurrogateManager(ABC):
     """
     Abstract base class for surrogate managers.
 
-    A SurrogateManager coordinates the fit/predict/score pipeline and
-    returns both scalar acquisition scores and the underlying predictions
-    so that callers (e.g. IndividualBasedStrategy) can assign predicted
-    objective values to offspring.
+    A SurrogateManager is narrowed to training and prediction management
+    It coordinates ``TrainingSet`` construction, model fitting, and prediction,
+    and returns a ``SurrogatePrediction`` for callers
+    (e.g. :class:`~saealib.stages.SurrogatePredictStage`) to score via an
+    independent :class:`~saealib.acquisition.base.AcquisitionFunction` and
+    to assign predicted objective values from. Acquisition scoring, score
+    composition, and NaN sanitization are not manager responsibilities
+    policy-owned downstream.
 
     Attributes
     ----------
@@ -69,39 +72,6 @@ class SurrogateManager(ABC):
 
     last_accuracy: SurrogateAccuracy | None = None
 
-    @staticmethod
-    def _sanitize_nan(
-        scores: np.ndarray,
-        predictions: list[SurrogatePrediction],
-    ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
-        """Replace NaN scores with -inf and mark failed predictions explicitly.
-
-        Any candidate whose acquisition score is NaN (surrogate fit failed,
-        external library returned NaN, etc.) is given score=-inf so it is
-        never selected by the strategy's pre-selection step.  The
-        corresponding prediction's _tell_f is set to an explicit NaN array,
-        following the same convention as ArchiveBasedManager, so strategies
-        can detect and handle invalid predictions without comparing NaN
-        objective values.
-        """
-        nan_mask = np.isnan(scores)
-        if not nan_mask.any():
-            return scores, predictions
-        scores = scores.copy()
-        scores[nan_mask] = -np.inf
-        for i in np.where(nan_mask)[0]:
-            p = predictions[i]
-            nan_f = np.full_like(p.value, np.nan)
-            predictions[i] = SurrogatePrediction(
-                value=p.value,
-                std=p.std,
-                label=p.label,
-                x=p.x,
-                _tell_f=nan_f,
-                metadata=p.metadata,
-            )
-        return scores, predictions
-
     def fit(
         self,
         archive: Archive,
@@ -110,7 +80,7 @@ class SurrogateManager(ABC):
         """
         Pre-fit the surrogate on the archive.
 
-        Call once before a sequence of ``score_candidates(..., refit=False)``
+        Call once before a sequence of ``predict(..., refit=False)``
         calls when the archive does not change between calls (e.g. the
         surrogate-only inner loop of ``GenerationBasedStrategy``).
         The default implementation is a no-op; override in managers that
@@ -125,16 +95,16 @@ class SurrogateManager(ABC):
         """
 
     @abstractmethod
-    def score_candidates(
+    def predict(
         self,
         candidates_x: np.ndarray,
         archive: Archive,
         ctx: OptimizationState | None = None,
         *,
         refit: bool = True,
-    ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
+    ) -> SurrogatePrediction:
         """
-        Score candidate solutions using the surrogate model.
+        Predict candidate solutions using the surrogate model.
 
         Parameters
         ----------
@@ -146,88 +116,18 @@ class SurrogateManager(ABC):
             Current optimization context. Passed to ``TrainingSet.build``
             for strategies that require comparator or population access.
         refit : bool, optional
-            If ``True`` (default), fit the surrogate before scoring.
+            If ``True`` (default), fit the surrogate before predicting.
             Pass ``False`` after an explicit :meth:`fit` call to skip
             redundant re-fitting when the archive has not changed.
 
         Returns
         -------
-        scores : np.ndarray
-            Acquisition scores. shape: (n_candidates,). Higher is better.
-        predictions : list[SurrogatePrediction]
-            Surrogate predictions for each candidate.
-            predictions[i].value shape: (1, n_obj)
+        SurrogatePrediction
+            One batched prediction covering every row of ``candidates_x``.
+            Acquisition scoring is not performed here — pass the result to
+            an :class:`~saealib.acquisition.base.AcquisitionFunction`.
         """
         ...
-
-    def iter_acquisitions(self) -> Iterator[AcquisitionFunction]:
-        """Yield every ``AcquisitionFunction`` owned by this manager.
-
-        Used by ``Optimizer._inject_acquisition_directions()`` to auto-inject
-        ``problem.direction`` into direction-sensitive acquisition functions
-        at run start. The default implementation yields ``self.acquisition``
-        if present (covers ``GlobalSurrogateManager``/``LocalSurrogateManager``)
-        and nothing otherwise (e.g. ``PairwiseSurrogateManager``, which has no
-        acquisition function). ``CompositeSurrogateManager`` overrides this to
-        delegate to its sub-managers.
-
-        Returns
-        -------
-        Iterator[AcquisitionFunction]
-        """
-        acq = getattr(self, "acquisition", None)
-        if acq is not None:
-            yield acq
-
-    def post_score(
-        self,
-        scores: np.ndarray,
-        predictions: list[SurrogatePrediction],
-        ctx: OptimizationState | None = None,
-    ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
-        """Post-score lifecycle hook; override to inject custom processing.
-
-        Parameters
-        ----------
-        scores : np.ndarray
-            Acquisition scores. shape: (n_candidates,)
-        predictions : list[SurrogatePrediction]
-            Surrogate predictions for each candidate.
-        ctx : OptimizationState or None, optional
-            Current optimization context.
-
-        Returns
-        -------
-        tuple[np.ndarray, list[SurrogatePrediction]]
-            Processed scores and predictions.
-        """
-        return scores, predictions
-
-    def with_post_score(
-        self,
-        fn: Callable[
-            [np.ndarray, list[SurrogatePrediction], OptimizationState | None],
-            tuple[np.ndarray, list[SurrogatePrediction]],
-        ],
-    ) -> SurrogateManager:
-        """Return a copy of this manager with ``fn`` appended to the hook.
-
-        Parameters
-        ----------
-        fn : callable
-            ``fn(scores, predictions, ctx) -> (scores, predictions)``
-
-        Returns
-        -------
-        SurrogateManager
-            Shallow copy with the hook registered.
-        """
-        new = copy.copy(self)
-        prev = self.post_score
-        new.post_score = lambda scores, predictions, ctx=None: fn(  # type: ignore  # lambda hook; slot type stricter than inferred lambda signature
-            *prev(scores, predictions, ctx), ctx
-        )
-        return new
 
     def on_generation_end(
         self,
@@ -280,11 +180,9 @@ class GlobalSurrogateManager(SurrogateManager):
     ----------
     surrogate : Surrogate
         Surrogate model instance.
-    acquisition : AcquisitionFunction
-        Acquisition function used to score predictions.
     training_set : TrainingSet or None
         Strategy object for building training data. Defaults to
-        ``ArchiveObjectiveSet()``, which preserves the previous behaviour.
+        ``ArchiveObjectiveSet()``.
     accuracy_evaluator : AccuracyEvaluator or None
         If provided, :meth:`fit` computes accuracy metrics after each fit
         and stores them in :attr:`last_accuracy`.
@@ -293,12 +191,10 @@ class GlobalSurrogateManager(SurrogateManager):
     def __init__(
         self,
         surrogate: Surrogate,
-        acquisition: AcquisitionFunction,
         training_set: TrainingSet | None = None,
         accuracy_evaluator: AccuracyEvaluator | None = None,
     ):
         self.surrogate = surrogate
-        self.acquisition = acquisition
         self.training_set: TrainingSet = (
             training_set if training_set is not None else ArchiveObjectiveSet()
         )
@@ -324,27 +220,18 @@ class GlobalSurrogateManager(SurrogateManager):
                 self.surrogate, data.train_x, data.train_y
             )
 
-    def score_candidates(
+    def predict(
         self,
         candidates_x: np.ndarray,
         archive: Archive,
         ctx: OptimizationState | None = None,
         *,
         refit: bool = True,
-    ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
-        """Fit on full archive, predict and score all candidates at once."""
+    ) -> SurrogatePrediction:
+        """Fit on full archive, then predict all candidates at once."""
         if refit:
             self.fit(archive, ctx)
-
-        rng = ctx.rng if ctx is not None else None
-        reference = self.acquisition.compute_reference(archive, rng=rng)
-        prediction = self.surrogate.predict(candidates_x)  # mean: (n_candidates, n_obj)
-        scores = self.acquisition.score(prediction, reference, rng=rng)
-
-        # Split batch prediction into per-candidate SurrogatePrediction objects
-        predictions = _split_prediction(prediction)
-        scores, predictions = self._sanitize_nan(scores, predictions)
-        return self.post_score(scores, predictions, ctx)
+        return self.surrogate.predict(candidates_x)  # mean: (n_candidates, n_obj)
 
 
 @register()
@@ -365,14 +252,11 @@ class LocalSurrogateManager(SurrogateManager):
     ----------
     surrogate : Surrogate
         Surrogate model instance (re-fit per candidate).
-    acquisition : AcquisitionFunction
-        Acquisition function used to score predictions.
     training_set : TrainingSet or None
         Strategy object for building training data per candidate. Defaults to
-        ``KNNObjectiveSet(n_neighbors=50)``, which preserves the previous
-        behaviour.
+        ``KNNObjectiveSet(n_neighbors=50)``.
     accuracy_evaluator : AccuracyEvaluator or None
-        If provided, :meth:`score_candidates` computes accuracy metrics when
+        If provided, :meth:`predict` computes accuracy metrics when
         ``refit=True`` and stores them in :attr:`last_accuracy`.  Accuracy is
         estimated by fitting a local model for each archive point via the same
         ``training_set`` and comparing the prediction against the true value.
@@ -381,12 +265,10 @@ class LocalSurrogateManager(SurrogateManager):
     def __init__(
         self,
         surrogate: Surrogate,
-        acquisition: AcquisitionFunction,
         training_set: TrainingSet | None = None,
         accuracy_evaluator: AccuracyEvaluator | None = None,
     ):
         self.surrogate = surrogate
-        self.acquisition = acquisition
         self.training_set: TrainingSet = (
             training_set
             if training_set is not None
@@ -403,7 +285,7 @@ class LocalSurrogateManager(SurrogateManager):
 
         For ``LocalSurrogateManager``, there is no persistent global surrogate
         to pre-fit; local models are always built per candidate inside
-        :meth:`score_candidates`.  However, calling :meth:`fit` explicitly
+        :meth:`predict`.  However, calling :meth:`fit` explicitly
         (as ``GenerationBasedStrategy`` does before its inner loop) still
         triggers accuracy evaluation so that :attr:`last_accuracy` is available
         regardless of which strategy is used.
@@ -412,15 +294,15 @@ class LocalSurrogateManager(SurrogateManager):
             population = ctx.population if ctx is not None else None
             self._update_accuracy(archive, population, ctx)
 
-    def score_candidates(
+    def predict(
         self,
         candidates_x: np.ndarray,
         archive: Archive,
         ctx: OptimizationState | None = None,
         *,
         refit: bool = True,
-    ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
-        """Fit a local model per candidate and score each individually.
+    ) -> SurrogatePrediction:
+        """Fit a local model per candidate and predict each individually.
 
         When ``refit=True`` and an ``accuracy_evaluator`` is configured,
         accuracy is estimated inline using a nearest-neighbor holdout method:
@@ -432,10 +314,13 @@ class LocalSurrogateManager(SurrogateManager):
         training-set size is ``n_neighbors - 1`` when an accuracy evaluator is
         active.  Without an accuracy evaluator the full ``n_neighbors`` points
         are always used.
+
+        A different local model is fit per candidate, but the per-candidate
+        single-row predictions are stacked (see :func:`_stack_predictions`)
+        into one batched ``SurrogatePrediction`` covering every row of
+        ``candidates_x``, matching the base class contract.
         """
         predictions: list[SurrogatePrediction] = []
-        rng = ctx.rng if ctx is not None else None
-        reference = self.acquisition.compute_reference(archive, rng=rng)
         population = ctx.population if ctx is not None else None
         compute_accuracy = refit and self.accuracy_evaluator is not None
         y_true_list: list[np.ndarray] = []
@@ -469,11 +354,6 @@ class LocalSurrogateManager(SurrogateManager):
                 except Exception:
                     pass
 
-        scores = np.array(
-            [self.acquisition.score(p, reference, rng=rng)[0] for p in predictions]
-        )
-        scores, predictions = self._sanitize_nan(scores, predictions)
-
         if compute_accuracy:
             if y_true_list:
                 y_true = np.stack(y_true_list)
@@ -485,7 +365,7 @@ class LocalSurrogateManager(SurrogateManager):
             else:
                 self.last_accuracy = SurrogateAccuracy(n_samples=0)
 
-        return self.post_score(scores, predictions, ctx)
+        return _stack_predictions(predictions)
 
     def _update_accuracy(
         self,
@@ -577,7 +457,7 @@ def rank_weighted_combine(
     -------
     callable
         A function ``(list[np.ndarray]) -> np.ndarray`` suitable for
-        ``CompositeSurrogateManager``.
+        ``CompositeAcquisition``.
     """
     if weights is not None:
         w = np.asarray(weights, dtype=float)
@@ -594,51 +474,47 @@ def rank_weighted_combine(
 
 
 class CompositeSurrogateManager(SurrogateManager):
-    """Surrogate manager that combines scores from multiple sub-managers.
+    """Surrogate manager that composes predictions from multiple named sub-managers.
 
-    Each sub-manager's ``score_candidates`` is called independently.
-    The resulting score arrays are combined by ``combine_fn``.
-    Predictions (for ``tell_f`` assignment) are taken from ``managers[0]``.
+    This manager owns named child managers, calls each child's :meth:`predict`, and
+    returns a single :class:`~saealib.surrogate.prediction.SurrogatePrediction`
+    whose ``channels`` mapping contains one named
+    :class:`~saealib.surrogate.prediction.PredictionChannel` per child. It
+    never combines acquisition scores itself -- pair it with
+    :class:`~saealib.acquisition.base.CompositeAcquisition`, which evaluates
+    each configured channel's acquisition and combines the resulting score
+    arrays::
+
+        ei_manager = GlobalSurrogateManager(GP())
+        pof_manager = GlobalSurrogateManager(
+            PerObjectiveSurrogate([GP()] * n_constraints)
+        )
+        composite_acq = CompositeAcquisition(
+            {
+                "objective": ExpectedImprovement(),
+                "feasibility": ProductOfFeasibility(),
+            },
+            combine_fn=product_combine,
+        )
+        surrogate_manager = CompositeSurrogateManager(
+            {"objective": ei_manager, "feasibility": pof_manager},
+        )
 
     Parameters
     ----------
-    managers : list[SurrogateManager]
-        Sub-managers to combine. Must be non-empty.
-        ``managers[0]`` provides the ``SurrogatePrediction`` objects returned
-        by ``score_candidates``; its predicted objective values flow into
-        ``assign_tell_f`` in the strategies.
-    combine_fn : callable(list[np.ndarray]) -> np.ndarray
-        Accepts a list of score arrays (each shape ``(n_candidates,)``) and
-        returns a single combined score array of the same shape.
-        Use :func:`product_combine` for element-wise product (e.g. EI x PoF)
-        or :func:`rank_weighted_combine` for rank-normalised weighted average.
-
-    Examples
-    --------
-    EI x PoF (objective x feasibility product):
-
-    >>> manager = CompositeSurrogateManager(
-    ...     [ei_manager, pof_manager],
-    ...     combine_fn=product_combine,
-    ... )
-
-    Rank-normalised ensemble (equivalent to former EnsembleSurrogateManager):
-
-    >>> manager = CompositeSurrogateManager(
-    ...     [m1, m2],
-    ...     combine_fn=rank_weighted_combine(weights=[0.3, 0.7]),
-    ... )
+    managers : dict[str, SurrogateManager]
+        Named sub-managers to compose. Must be non-empty. Each key becomes
+        the corresponding ``PredictionChannel``'s name in :meth:`predict`'s
+        result.
     """
 
     def __init__(
         self,
-        managers: list[SurrogateManager],
-        combine_fn: Callable[[list[np.ndarray]], np.ndarray],
+        managers: dict[str, SurrogateManager],
     ):
         if not managers:
             raise ValueError("CompositeSurrogateManager requires at least one manager.")
         self.managers = managers
-        self.combine_fn = combine_fn
 
     def fit(
         self,
@@ -647,51 +523,58 @@ class CompositeSurrogateManager(SurrogateManager):
     ) -> None:
         """Pre-fit all sub-managers.
 
-        :attr:`last_accuracy` is propagated from ``managers[0]`` so callers
-        can read a representative accuracy value from this composite manager.
+        :attr:`last_accuracy` is propagated from the first sub-manager (in
+        configuration insertion order) so callers can read a representative
+        accuracy value from this composite manager.
         """
-        for manager in self.managers:
+        for manager in self.managers.values():
             manager.fit(archive, ctx)
-        self.last_accuracy = self.managers[0].last_accuracy
+        self.last_accuracy = next(iter(self.managers.values())).last_accuracy
 
-    def iter_acquisitions(self) -> Iterator[AcquisitionFunction]:
-        """Yield the acquisition functions of every sub-manager."""
-        for manager in self.managers:
-            yield from manager.iter_acquisitions()
-
-    def score_candidates(
+    def predict(
         self,
         candidates_x: np.ndarray,
         archive: Archive,
         ctx: OptimizationState | None = None,
         *,
         refit: bool = True,
-    ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
-        """Combine scores from all sub-managers using ``combine_fn``.
+    ) -> SurrogatePrediction:
+        """Predict via every sub-manager, one named channel each.
 
-        Returns the predictions from ``managers[0]`` as representative.
+        Returns
+        -------
+        SurrogatePrediction
+            ``channels`` maps each configuration key to a
+            ``PredictionChannel`` built from that sub-manager's own
+            ``value``/``std`` (i.e. its own primary/objective channel). If a
+            sub-manager's ``predict()`` exposes no ``"objective"`` channel,
+            accessing ``.value``/``.std`` raises ``KeyError`` -- a genuine
+            misconfiguration, not handled defensively here.
         """
-        all_scores: list[np.ndarray] = []
-        first_predictions: list[SurrogatePrediction] | None = None
-
-        for i, manager in enumerate(self.managers):
-            scores, preds = manager.score_candidates(
-                candidates_x, archive, ctx, refit=refit
+        channels: dict[str, PredictionChannel] = {}
+        for name, manager in self.managers.items():
+            child_pred = manager.predict(candidates_x, archive, ctx, refit=refit)
+            channels[name] = PredictionChannel(
+                value=child_pred.value, std=child_pred.std
             )
-            all_scores.append(scores)
-            if i == 0:
-                first_predictions = preds
-
-        combined = self.combine_fn(all_scores)
-        scores, predictions = self._sanitize_nan(combined, first_predictions)  # type: ignore  # _sanitize_nan return typed as Any; tuple unpacking safe at runtime
-        return self.post_score(scores, predictions, ctx)
+        return SurrogatePrediction(channels=channels)
 
 
 class PairwiseSurrogateManager(SurrogateManager):
     """Surrogate manager for pairwise comparison surrogates.
 
-    Scores candidates by pairing each with reference points sampled from
-    the archive and averaging the predicted win probability over all pairs.
+    :meth:`predict` pairs each candidate with reference points sampled once
+    per call from the archive and averages the predicted win probability
+    over all pairs, returning the result as a ``"win_rate"`` prediction
+    channel. Pair with :class:`~saealib.acquisition.winrate.WinRateAcquisition`
+    This manager performs the
+    full reference-sampling + pair-construction + ``predict_proba()`` +
+    per-candidate win-rate-aggregation sequence itself, rather than the usual
+    "manager predicts, then acquisition scores" split -- the
+    ``(candidate, reference)`` pairs are not known until this manager's own
+    reference-sampling logic runs, and ``AcquisitionFunction`` deliberately
+    has no ``Surrogate``/``SurrogateManager`` access to construct and predict
+    on them itself.
 
     The surrogate must be a :class:`~saealib.surrogate.base.ComparisonSurrogate`
     that implements ``predict_proba()``.
@@ -704,8 +587,10 @@ class PairwiseSurrogateManager(SurrogateManager):
         Training data builder.  Defaults to ``PairwiseComparisonSet()``.
         ``ctx`` is required when using ``PairwiseComparisonSet``.
     n_ref : int
-        Number of archive points sampled as reference per candidate.
-        When the archive has fewer than ``n_ref`` points all are used.
+        Number of archive points sampled, once per :meth:`predict` call, as
+        the shared reference set every candidate in that call is compared
+        against. When the archive has fewer than ``n_ref`` points all are
+        used.
     """
 
     def __init__(
@@ -740,15 +625,19 @@ class PairwiseSurrogateManager(SurrogateManager):
         self.surrogate.fit(data.train_x, data.train_y)
         self.surrogate.post_fit(data.train_x, data.train_y, ctx)
 
-    def score_candidates(
+    def predict(
         self,
         candidates_x: np.ndarray,
         archive: Archive,
         ctx: OptimizationState | None = None,
         *,
         refit: bool = True,
-    ) -> tuple[np.ndarray, list[SurrogatePrediction]]:
-        """Score candidates by mean win rate against archive reference points.
+    ) -> SurrogatePrediction:
+        """Predict per-candidate mean win rate against archive reference points.
+
+        Draws a reference subset from the archive exactly once per call
+        (not once per candidate) -- this RNG-consumption timing is a
+        once per candidate batch.
 
         Parameters
         ----------
@@ -758,18 +647,23 @@ class PairwiseSurrogateManager(SurrogateManager):
             Archive of evaluated solutions.
         ctx : OptimizationState or None
             Optimization context.  Required when ``refit=True`` and the
-            training set is ``PairwiseComparisonSet``.
+            training set is ``PairwiseComparisonSet``, and to supply
+            ``ctx.rng`` for reference sampling (falls back to a fresh
+            unseeded generator when ``ctx`` is ``None``).
         refit : bool
-            If ``True`` (default), fit the surrogate before scoring.
+            If ``True`` (default), fit the surrogate before predicting.
 
         Returns
         -------
-        scores : np.ndarray
-            Win rate scores. shape: (n_candidates,). Higher is better.
-        predictions : list[SurrogatePrediction]
-            One ``SurrogatePrediction`` per candidate.  ``value`` holds the
-            scalar win rate (shape ``(1,)``); ``_tell_f`` is NaN so that
-            strategies skip pbest assignment.
+        SurrogatePrediction
+            A single ``"win_rate"`` channel, deliberately not named
+            ``"objective"``: naming it ``"objective"`` would make
+            downstream ``tell_f`` resolution treat the win rate as a real
+            predicted objective. With no ``"objective"`` channel present,
+            ``SurrogatePrediction.tell_f`` falls through to its all-NaN
+            fallback automatically, reproducing the win-rate manager's
+            former explicit NaN-marking with no extra code here. ``value``
+            shape: ``(n_candidates, 1)``.
         """
         if refit:
             self.fit(archive, ctx)
@@ -785,30 +679,45 @@ class PairwiseSurrogateManager(SurrogateManager):
         else:
             ref_x = archive_x
 
-        scores = np.empty(len(candidates_x))
-        predictions: list[SurrogatePrediction] = []
-
+        win_rates = np.empty(len(candidates_x))
         for i, x_c in enumerate(candidates_x):
             pairs = np.stack([np.concatenate([x_c, x_r]) for x_r in ref_x])
             pred = self.surrogate.predict_proba(pairs)
-            win_rate = float(np.mean(pred.value[:, 0]))
-            scores[i] = win_rate
-            predictions.append(
-                SurrogatePrediction(
-                    value=np.full((1,), win_rate),
-                    _tell_f=np.full((1,), np.nan),
-                )
-            )
+            win_rates[i] = float(np.mean(pred.value[:, 0]))
 
-        return self.post_score(scores, predictions, ctx)
+        return SurrogatePrediction(
+            channels={"win_rate": PredictionChannel(value=win_rates[:, None])}
+        )
 
 
 def _split_prediction(prediction: SurrogatePrediction) -> list[SurrogatePrediction]:
-    """Split a batch SurrogatePrediction into per-sample SurrogatePrediction objects."""
-    n = prediction.value.shape[0]
+    """Split a batch SurrogatePrediction into per-sample SurrogatePrediction objects.
+
+    Inverse of :func:`_stack_predictions`. Every named channel in
+    ``prediction.channels`` is sliced per row; ``covariance``/``samples`` are
+    implementation-specific joint quantities and are carried over unsliced
+    (reused, not copied) on each per-sample channel, matching how ``x``/
+    ``label``/``_tell_f``/``metadata`` are handled below.
+    """
+    if prediction.channels:
+        n = next(iter(prediction.channels.values())).value.shape[0]
+    elif prediction.x is not None:
+        n = prediction.x.shape[0]
+    else:
+        n = 0
+
     result = []
     for i in range(n):
-        std_i = prediction.std[i : i + 1] if prediction.std is not None else None
+        channels_i = {
+            name: PredictionChannel(
+                value=channel.value[i : i + 1],
+                std=channel.std[i : i + 1] if channel.std is not None else None,
+                covariance=channel.covariance,
+                samples=channel.samples,
+                metadata=channel.metadata,
+            )
+            for name, channel in prediction.channels.items()
+        }
         label_i = prediction.label[i : i + 1] if prediction.label is not None else None
         x_i = prediction.x[i : i + 1] if prediction.x is not None else None
         tell_f_i = (
@@ -816,15 +725,86 @@ def _split_prediction(prediction: SurrogatePrediction) -> list[SurrogatePredicti
         )
         result.append(
             SurrogatePrediction(
-                value=prediction.value[i : i + 1],
-                std=std_i,
-                label=label_i,
+                channels=channels_i,
                 x=x_i,
+                label=label_i,
                 _tell_f=tell_f_i,
                 metadata=prediction.metadata,
             )
         )
     return result
+
+
+def _stack_predictions(predictions: list[SurrogatePrediction]) -> SurrogatePrediction:
+    """Stack per-sample SurrogatePrediction objects into one batched prediction.
+
+    Inverse of :func:`_split_prediction`. Every prediction in *predictions*
+    must share the same channel names (e.g. ``LocalSurrogateManager`` always
+    predicts through the same ``self.surrogate.predict()``, so this always
+    holds in practice). ``covariance``/``samples`` are not stacked (they are
+    implementation-specific joint quantities that do not concatenate
+    meaningfully row-by-row); only ``value``/``std`` are stacked per channel.
+    ``label`` is stacked the same way ``std`` is (all-or-nothing). ``_tell_f``
+    is not stacked: no built-in ``Surrogate.predict()`` sets it, so per-sample
+    ``_tell_f`` never survives a round trip through this function.
+
+    Parameters
+    ----------
+    predictions : list[SurrogatePrediction]
+        Per-sample predictions, each with ``value``/``std`` shaped
+        ``(1, n_output)`` per channel.
+
+    Returns
+    -------
+    SurrogatePrediction
+        One batched prediction with ``value``/``std`` shaped
+        ``(n, n_output)`` per channel. Returns an empty-channels prediction
+        for an empty input list.
+
+    Raises
+    ------
+    ValidationError
+        If a channel's ``std`` is present (non-``None``) on some but not all
+        predictions -- a partial ``std`` cannot be stacked without silently
+        fabricating missing values. The same rule applies to ``label``.
+    """
+    if not predictions:
+        return SurrogatePrediction(channels={})
+
+    channel_names = predictions[0].channels.keys()
+    channels: dict[str, PredictionChannel] = {}
+    for name in channel_names:
+        values = [p.channels[name].value for p in predictions]
+        stds = [p.channels[name].std for p in predictions]
+        if all(s is None for s in stds):
+            std = None
+        elif all(s is not None for s in stds):
+            std = np.concatenate(stds, axis=0)  # type: ignore  # narrowed by all() check above
+        else:
+            raise ValidationError(
+                f"Cannot stack channel {name!r}: std is present on some "
+                "predictions but not others."
+            )
+        channels[name] = PredictionChannel(
+            value=np.concatenate(values, axis=0),
+            std=std,
+        )
+
+    x = None
+    if all(p.x is not None for p in predictions):
+        x = np.concatenate([p.x for p in predictions], axis=0)
+
+    labels = [p.label for p in predictions]
+    if all(label is None for label in labels):
+        label = None
+    elif all(label is not None for label in labels):
+        label = np.concatenate(labels, axis=0)  # type: ignore  # narrowed by all() check above
+    else:
+        raise ValidationError(
+            "Cannot stack predictions: label is present on some but not others."
+        )
+
+    return SurrogatePrediction(channels=channels, x=x, label=label)
 
 
 def _rank_normalize(scores: np.ndarray) -> np.ndarray:

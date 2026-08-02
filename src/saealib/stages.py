@@ -8,9 +8,9 @@ Standard pipeline fields on OptimizationState
 ``offspring``
     Current candidate population (Population), set by AskStage.
 ``scores``
-    1-D acquisition score array (np.ndarray), set by SurrogateScoreStage.
+    1-D acquisition score array (np.ndarray), set by AcquisitionStage.
 ``predictions``
-    Per-candidate SurrogatePrediction list, set by SurrogateScoreStage.
+    Batched SurrogatePrediction for ``offspring``, set by SurrogatePredictStage.
 ``evaluated_offspring``
     Sub-population with true objective values, set by TrueEvaluationStage.
 
@@ -24,18 +24,24 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from saealib.acquisition.base import AcquisitionResult
 from saealib.callback import (
+    AcquisitionEndEvent,
+    AcquisitionStartEvent,
     PostEvaluationEvent,
+    PostSurrogateFitEvent,
     SurrogateEndEvent,
     SurrogateStartEvent,
 )
 from saealib.exceptions import ValidationError
 from saealib.pipeline import Pipeline, Stage
 from saealib.strategies.base import assign_tell_f
+from saealib.surrogate.manager import _split_prediction
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from saealib.acquisition.base import AcquisitionFunction
     from saealib.algorithms.base import Algorithm
     from saealib.callback import CallbackManager, Event
     from saealib.context import OptimizationState
@@ -165,29 +171,31 @@ class AskStage(Stage):
         return state.replace(offspring=candidates)
 
 
-class SurrogateScoreStage(Stage):
-    """Score offspring with the surrogate model.
+class SurrogatePredictStage(Stage):
+    """Predict offspring with the surrogate model; assign per-candidate tell_f.
 
-    Reads ``state.offspring``, writes scores and predictions to
-    ``state.scores`` and ``state.predictions``.  Also assigns predicted
-    objective values (``tell_f``) to each candidate so that ``TellStage``
-    can use them for surrogate-only generations.
+    Reads ``state.offspring``, writes the batched prediction to
+    ``state.predictions``.  Also assigns predicted objective values
+    (``tell_f``) to each candidate -- via
+    :func:`~saealib.strategies.base.assign_tell_f` -- so that
+    ``TellStage`` can use them for surrogate-only generations.  Does not
+    compute acquisition scores; pair with :class:`AcquisitionStage` for that.
 
     Parameters
     ----------
     surrogate_manager : SurrogateManager
-        Manager that coordinates fit / predict / score.
+        Manager that coordinates fit / predict.
     cbmanager : CallbackManager or None
         If provided, SurrogateStartEvent and SurrogateEndEvent are dispatched.
     refit : bool
-        Passed directly to ``surrogate_manager.score_candidates()``.
+        Passed directly to ``surrogate_manager.predict()``.
         Set to ``False`` inside inner loops where the surrogate was already
         fitted by an explicit ``SurrogateFitStage``.
     """
 
-    name = "surrogate_score"
-    label = "Surrogate scoring"
-    notation = r"$\mathbf{s} \leftarrow \text{score}(\mathcal{Q}, \mathcal{A})$"
+    name = "surrogate_predict"
+    label = "Surrogate prediction"
+    notation = r"$\hat{y} \leftarrow \text{predict}(\mathcal{Q}, \mathcal{A})$"
 
     def __init__(
         self,
@@ -210,18 +218,123 @@ class SurrogateScoreStage(Stage):
                 SurrogateStartEvent(ctx=state, offspring=candidates)
             )
 
-        scores, predictions = self._sm.score_candidates(
+        prediction = self._sm.predict(
             candidates.x, state.archive, state, refit=self._refit
         )
-        for i, pred in enumerate(predictions):
+        if self._refit and self._cbmanager is not None:
+            self._cbmanager.dispatch(
+                PostSurrogateFitEvent(
+                    ctx=state,
+                    surrogate=getattr(self._sm, "surrogate", None),
+                )
+            )
+        for i, pred in enumerate(_split_prediction(prediction)):
             assign_tell_f(candidates[i], pred, state)
 
         if self._cbmanager is not None:
             self._cbmanager.dispatch(SurrogateEndEvent(ctx=state, offspring=candidates))
 
-        return state.replace(
-            offspring=candidates, scores=scores, predictions=predictions
-        )
+        return state.replace(offspring=candidates, predictions=prediction)
+
+
+class AcquisitionStage(Stage):
+    """Score offspring via an independent AcquisitionFunction.
+
+    Reads ``state.offspring``/``state.predictions``, writes the resulting
+    score array to ``state.scores``.
+
+    Caches ``acquisition.prepare()``'s result per ``(acquisition instance
+    identity, generation, archive.value_version, archive.structure_version)``
+    A stage instance running the same acquisition
+    against an unchanged archive within one generation does not recompute the
+    reference, while a mid-generation archive append (structure_version bump)
+    or value-only mutation (value_version bump) correctly invalidates it.
+
+    Empty candidate input (``len(state.offspring) == 0``) skips straight to
+    an empty ``AcquisitionResult`` without touching the cache or calling
+    ``prepare()``/``evaluate()``, so it never advances RNG state.
+
+    Parameters
+    ----------
+    acquisition : AcquisitionFunction
+        Acquisition function that scores ``state.offspring`` against
+        ``state.predictions``.
+    cbmanager : CallbackManager or None
+        If provided, AcquisitionStartEvent and AcquisitionEndEvent are
+        dispatched.  AcquisitionEndEvent is not dispatched if
+        ``acquisition.evaluate()`` raises.
+    """
+
+    name = "acquisition"
+    label = "Acquisition scoring"
+    notation = (
+        r"$\mathbf{s} \leftarrow \text{acquire}(\mathcal{Q}, \hat{y}, \mathcal{A})$"
+    )
+
+    def __init__(
+        self,
+        acquisition: AcquisitionFunction,
+        cbmanager: CallbackManager | None = None,
+    ) -> None:
+        super().__init__()
+        self._acquisition = acquisition
+        self._cbmanager = cbmanager
+        # Single-entry cache: id(self._acquisition) is constant for the life
+        # of this stage instance, so only (gen, value_version,
+        # structure_version) actually varies -- a growing dict would retain
+        # every past generation's prepared reference for as long as this
+        # stage instance is reused.
+        self._prepared_cache_key: tuple[int, int, int, int] | None = None
+        self._prepared_cache_value: object = None
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        candidates = state.offspring
+        assert candidates is not None
+
+        if self._cbmanager is not None:
+            self._cbmanager.dispatch(
+                AcquisitionStartEvent(ctx=state, offspring=candidates)
+            )
+
+        if len(candidates) == 0:
+            result = AcquisitionResult(scores=np.empty(0, dtype=np.float64))
+        else:
+            archive = state.archive
+            key = (
+                id(self._acquisition),
+                state.gen,
+                archive.value_version,
+                archive.structure_version,
+            )
+            if key != self._prepared_cache_key:
+                self._prepared_cache_value = self._acquisition.prepare(archive, state)
+                self._prepared_cache_key = key
+            prepared = self._prepared_cache_value
+
+            raw = self._acquisition.evaluate(
+                candidates.x, state.predictions, archive, state, prepared=prepared
+            )
+            if raw.scores is None:
+                raise ValidationError(
+                    f"{type(self._acquisition).__name__}.evaluate() returned an "
+                    "AcquisitionResult with scores=None; AcquisitionStage requires "
+                    "a non-None score array."
+                )
+            scores = np.array(raw.scores, dtype=np.float64, copy=True)
+            if scores.shape != (len(candidates),):
+                raise ValidationError(
+                    f"{type(self._acquisition).__name__}.evaluate() returned "
+                    f"scores with shape {scores.shape}, expected "
+                    f"({len(candidates)},)."
+                )
+            result = AcquisitionResult(scores=scores, artifacts=raw.artifacts)
+
+        if self._cbmanager is not None:
+            self._cbmanager.dispatch(
+                AcquisitionEndEvent(ctx=state, offspring=candidates, result=result)
+            )
+
+        return state.replace(scores=result.scores)
 
 
 class SurrogateFitStage(Stage):
@@ -229,7 +342,7 @@ class SurrogateFitStage(Stage):
 
     Use this before a surrogate-only inner loop where the archive does not
     change between iterations.  Pass ``refit=False`` to the downstream
-    :class:`SurrogateScoreStage` to skip redundant refitting.
+    :class:`SurrogatePredictStage` to skip redundant refitting.
 
     Parameters
     ----------
@@ -241,12 +354,23 @@ class SurrogateFitStage(Stage):
     label = "Fit surrogate"
     notation = r"$\hat{f} \leftarrow \text{fit}(\mathcal{A})$"
 
-    def __init__(self, surrogate_manager: SurrogateManager) -> None:
+    def __init__(
+        self,
+        surrogate_manager: SurrogateManager,
+        cbmanager: CallbackManager | None = None,
+    ) -> None:
         super().__init__()
         self._sm = surrogate_manager
+        self._cbmanager = cbmanager
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         self._sm.fit(state.archive, state)
+        if self._cbmanager is not None:
+            self._cbmanager.dispatch(
+                PostSurrogateFitEvent(
+                    ctx=state, surrogate=getattr(self._sm, "surrogate", None)
+                )
+            )
         return state
 
 
@@ -439,8 +563,8 @@ class SurrogateOnlyLoopStage(Stage):
     """Run *gen_ctrl* surrogate-only generations before real evaluation.
 
     Fits the surrogate model once on the current archive, then repeats
-    ``gen_ctrl`` times: CountGeneration → Ask → SurrogateScore(refit=False)
-    → Tell.  If *gen_ctrl* is 0 this stage is a no-op.
+    ``gen_ctrl`` times: CountGeneration → Ask → SurrogatePredict(refit=False)
+    → Acquisition → Tell.  If *gen_ctrl* is 0 this stage is a no-op.
 
     Used by :class:`~saealib.strategies.gb.GenerationBasedStrategy` to
     execute inner surrogate-driven generations before a single true-evaluation
@@ -451,18 +575,24 @@ class SurrogateOnlyLoopStage(Stage):
     algorithm : Algorithm
         Evolutionary algorithm for ask/tell.
     surrogate_manager : SurrogateManager
-        Manager used for fitting and scoring.
+        Manager used for fitting and prediction.
     gen_ctrl : int
         Number of surrogate-only generations.
     cbmanager : CallbackManager or None
         Forwarded to inner stages for event dispatching.
+    acquisition : AcquisitionFunction
+        Acquisition function used to score offspring inside the inner loop.
+        Keyword-only so existing positional
+        ``SurrogateOnlyLoopStage(algorithm, surrogate_manager, gen_ctrl,
+        cbmanager)`` calls stay valid.
     """
 
     name = "surrogate_only_loop"
     label = "Surrogate-only generations"
     notation = (
         r"$\text{for}\;i=1\dots gen\_ctrl$: "
-        r"$P \leftarrow \mathrm{tell}(P,\,\mathrm{score}(\mathrm{ask}(P)))$"
+        r"$P \leftarrow \mathrm{tell}(P,\,"
+        r"\mathrm{acquire}(\mathrm{predict}(\mathrm{ask}(P))))$"
     )
 
     def __init__(
@@ -471,18 +601,22 @@ class SurrogateOnlyLoopStage(Stage):
         surrogate_manager: SurrogateManager,
         gen_ctrl: int,
         cbmanager: CallbackManager | None = None,
+        *,
+        acquisition: AcquisitionFunction,
     ) -> None:
         super().__init__()
         self._gen_ctrl = gen_ctrl
         self._sm = surrogate_manager
+        self._cbmanager = cbmanager
         if gen_ctrl > 0:
             self._inner = Pipeline(
                 [
                     CountGenerationStage(),
                     AskStage(algorithm, cbmanager=cbmanager),
-                    SurrogateScoreStage(
+                    SurrogatePredictStage(
                         surrogate_manager, cbmanager=cbmanager, refit=False
                     ),
+                    AcquisitionStage(acquisition, cbmanager=cbmanager),
                     TellStage(algorithm),
                 ]
             )
@@ -507,6 +641,12 @@ class SurrogateOnlyLoopStage(Stage):
     def execute(self, state: OptimizationState) -> OptimizationState:
         if self._gen_ctrl > 0:
             self._sm.fit(state.archive, state)
+            if self._cbmanager is not None:
+                self._cbmanager.dispatch(
+                    PostSurrogateFitEvent(
+                        ctx=state, surrogate=getattr(self._sm, "surrogate", None)
+                    )
+                )
             for _ in range(self._gen_ctrl):
                 state = self._inner.execute(state)
         return state

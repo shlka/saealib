@@ -169,6 +169,11 @@ class ParetoDominator(Dominator):
         if direction is not None:
             g = g * (-direction)
         k, m = g.shape
+        if m == 2:
+            a, b = g.T
+            leq_all = (a[:, None] <= a[None, :]) & (b[:, None] <= b[None, :])
+            less_any = (a[:, None] < a[None, :]) | (b[:, None] < b[None, :])
+            return leq_all & less_any
         leq_all = np.ones((k, k), dtype=bool)
         less_any = np.zeros((k, k), dtype=bool)
         for obj in range(m):
@@ -393,7 +398,7 @@ def _pareto_dominates(
     NaN values in fa are treated as non-dominating (returns False).
 
     .. deprecated::
-        Thin wrapper kept for backward compatibility.  Use
+        Thin wrapper. Use
         ``ParetoDominator().dominates(fa, fb, direction)`` instead.
 
     Parameters
@@ -416,7 +421,7 @@ def _dominance_matrix(g: np.ndarray) -> np.ndarray:
     every objective) and must contain no NaN values.
 
     .. deprecated::
-        Thin wrapper kept for backward compatibility.  Use
+        Thin wrapper. Use
         ``ParetoDominator().dominance_matrix(g)`` instead.
 
     Parameters

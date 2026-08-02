@@ -6,6 +6,8 @@ the optimization lifecycle.
 """
 
 from saealib.callback.events import (
+    AcquisitionEndEvent,
+    AcquisitionStartEvent,
     Event,
     GenerationEndEvent,
     GenerationStartEvent,
@@ -25,6 +27,8 @@ from saealib.callback.handlers import logging_generation, logging_generation_hv
 from saealib.callback.manager import CallbackManager
 
 __all__ = [
+    "AcquisitionEndEvent",
+    "AcquisitionStartEvent",
     "CallbackManager",
     "Event",
     "GenerationEndEvent",

@@ -37,7 +37,7 @@ def _pred(value, std=None):
     """Build a SurrogatePrediction from plain arrays."""
     m = np.asarray(value, dtype=float)
     s = np.asarray(std, dtype=float) if std is not None else None
-    return SurrogatePrediction(value=m, std=s)
+    return SurrogatePrediction.objective(value=m, std=s)
 
 
 def _archive(rows):
@@ -55,7 +55,7 @@ def _archive(rows):
 def _pred_x(value, x):
     """Build a SurrogatePrediction with candidate coordinates in the x field."""
     m = np.asarray(value, dtype=float)
-    return SurrogatePrediction(value=m, x=np.asarray(x, dtype=float))
+    return SurrogatePrediction.objective(value=m, x=np.asarray(x, dtype=float))
 
 
 def _archive_x(xs):

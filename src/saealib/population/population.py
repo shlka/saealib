@@ -277,11 +277,12 @@ class Population(Generic[T_Individual]):
         element: T_Individual | dict[str, Any] | None = None,
         *,
         preserve_ids: bool,
+        allow_duplicate_ids: bool = False,
         **kwargs,
     ) -> None:
         """Append a new individual; ``preserve_ids`` controls ``id`` acceptance.
 
-        See ADR-0001 §2.2 for the public/internal ``id`` acceptance contract.
+        The public and internal ``id`` columns use the same acceptance rules.
 
         Parameters
         ----------
@@ -316,6 +317,7 @@ class Population(Generic[T_Individual]):
                 )
             if (
                 id_val != -1
+                and not allow_duplicate_ids
                 and self._size > 0
                 and np.any(self._get_mutable_array("id") == id_val)
             ):
@@ -354,7 +356,7 @@ class Population(Generic[T_Individual]):
     def _extend_internal(self, other: Self | dict, *, preserve_ids: bool) -> None:
         """Extend this population; ``preserve_ids`` controls ``id`` acceptance.
 
-        See ADR-0001 §2.2 for the public/internal ``id`` acceptance contract.
+        The public and internal ``id`` columns use the same acceptance rules.
 
         Parameters
         ----------
@@ -633,7 +635,7 @@ class Population(Generic[T_Individual]):
         arr = np.asarray(value)
         if expected_dtype == np.dtype(object) or arr.dtype == np.dtype(object):
             raise ValidationError(
-                "update_rows() rejects object-dtype columns/values (ADR-0001 §2.3)"
+                "update_rows() rejects object-dtype columns and values"
             )
         if arr.shape != expected_shape or arr.dtype != expected_dtype:
             raise ValidationError(
@@ -743,6 +745,16 @@ class Population(Generic[T_Individual]):
     def attrs(self) -> list[PopulationAttribute]:
         """Return the list of attributes in the population."""
         return list(self._schema.values())
+
+    @property
+    def value_version(self) -> int:
+        """Return the current value-version counter, bumped by ``mod_value()``."""
+        return self._value_version
+
+    @property
+    def structure_version(self) -> int:
+        """Return the current structure-version counter, bumped by ``mod_structure``."""
+        return self._structure_version
 
     def __len__(self) -> int:
         """Return the size of the population."""

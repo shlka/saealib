@@ -69,10 +69,10 @@ class OptimizationState:
         :class:`~saealib.stages.ArchiveUpdateStage`.
     scores : np.ndarray or None
         Acquisition scores for ``offspring``, shape ``(n_candidates,)``.
-        Set by :class:`~saealib.stages.SurrogateScoreStage`.
-    predictions : list[SurrogatePrediction] or None
-        Per-candidate surrogate predictions for ``offspring``.
-        Set by :class:`~saealib.stages.SurrogateScoreStage`.
+        Set by :class:`~saealib.stages.AcquisitionStage`.
+    predictions : SurrogatePrediction or None
+        Batched surrogate prediction covering every row of ``offspring``.
+        Set by :class:`~saealib.stages.SurrogatePredictStage`.
     data : dict[str, Any]
         User-extensible key-value store.  Custom stages and callbacks may
         store arbitrary values here.  Use ``state.replace(data={**state.data,
@@ -95,7 +95,7 @@ class OptimizationState:
     offspring: Population | None = None
     evaluated_offspring: Population | None = None
     scores: np.ndarray | None = None
-    predictions: list[SurrogatePrediction] | None = None
+    predictions: SurrogatePrediction | None = None
 
     # User-extensible data
     data: dict[str, Any] = field(default_factory=dict)

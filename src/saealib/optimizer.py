@@ -9,11 +9,13 @@ import pickle
 import warnings
 from collections.abc import Generator
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, cast
 
 from typing_extensions import Self
 
+from saealib.acquisition.base import AcquisitionFunction, CompositeAcquisition
 from saealib.acquisition.mean import MeanPrediction
+from saealib.acquisition.winrate import WinRateAcquisition
 from saealib.callback import (
     CallbackManager,
     Event,
@@ -24,7 +26,11 @@ from saealib.context import OptimizationState
 from saealib.exceptions import ConfigurationError, ValidationError
 from saealib.execution.evaluator import Evaluator, SerialEvaluator
 from saealib.execution.runner import Runner
-from saealib.surrogate.manager import LocalSurrogateManager, SurrogateManager
+from saealib.surrogate.manager import (
+    LocalSurrogateManager,
+    PairwiseSurrogateManager,
+    SurrogateManager,
+)
 from saealib.surrogate.rbf import gaussian_kernel
 from saealib.termination import Termination
 from saealib.termination import max_fe as max_fe_cond
@@ -66,6 +72,11 @@ class ComponentProvider(Protocol):
     @property
     def surrogate_manager(self) -> SurrogateManager:
         """Return the surrogate manager instance."""
+        ...
+
+    @property
+    def acquisition(self) -> AcquisitionFunction:
+        """Acquisition function owned by the provider, not the manager."""
         ...
 
     @property
@@ -142,6 +153,7 @@ class Optimizer:
         self.cbmanager.register(GenerationStartEvent, logging_generation)
         self.initializer: Initializer | None = None
         self.evaluator: Evaluator = SerialEvaluator()
+        self.acquisition: AcquisitionFunction = cast(AcquisitionFunction, None)
         self.instance_name: str = ""
         self._preset: dict | None = None
 
@@ -165,6 +177,13 @@ class Optimizer:
     def set_surrogate_manager(self, manager: SurrogateManager) -> Self:
         """Set the surrogate manager. Returns self."""
         self.surrogate_manager = manager
+        if isinstance(manager, PairwiseSurrogateManager) and self.acquisition is None:
+            self.acquisition = WinRateAcquisition()
+        return self
+
+    def set_acquisition(self, acquisition) -> Self:
+        """Set the independent acquisition component."""
+        self.acquisition = acquisition
         return self
 
     def set_surrogate(self, surrogate: Surrogate, n_neighbors: int = 50) -> Self:
@@ -172,15 +191,14 @@ class Optimizer:
         Wrap a raw Surrogate in a LocalSurrogateManager. Returns self.
 
         Equivalent to ``set_surrogate_manager(LocalSurrogateManager(surrogate, ...))``.
-        Provided for backward compatibility.
         """
         from saealib.surrogate.training_set import KNNObjectiveSet
 
         self.surrogate_manager = LocalSurrogateManager(
             surrogate,
-            MeanPrediction(direction=self.problem.direction),
             training_set=KNNObjectiveSet(n_neighbors=n_neighbors),
         )
+        self.acquisition = MeanPrediction(direction=self.problem.direction)
         return self
 
     def set_strategy(self, strategy: OptimizationStrategy) -> Self:
@@ -311,6 +329,14 @@ class Optimizer:
                 f"{type(strategy).__name__} requires a surrogate_manager; "
                 "call set_surrogate_manager() or set_surrogate()"
             )
+        if (
+            strategy is not None
+            and getattr(strategy, "requires_surrogate", False)
+            and self.acquisition is None
+        ):
+            issues.append(
+                "a provider-owned acquisition is required; call set_acquisition()"
+            )
 
         _dim = getattr(self.problem.comparator, "direction", None)
         if (
@@ -325,7 +351,7 @@ class Optimizer:
             )
 
         if surrogate_manager is not None:
-            acq = getattr(surrogate_manager, "acquisition", None)
+            acq = self.acquisition
             surr = getattr(surrogate_manager, "surrogate", None)
             if (
                 acq is not None
@@ -339,7 +365,7 @@ class Optimizer:
                     "(provides_uncertainty=False)"
                 )
 
-            for acq in surrogate_manager.iter_acquisitions():
+            for acq in self._iter_acquisitions():
                 _adir = getattr(acq, "direction", None)
                 if (
                     _adir is not None
@@ -385,10 +411,12 @@ class Optimizer:
                 )
                 self.algorithm = algorithm
             if surrogate_manager is None and "surrogate_manager" in user_preset:
-                surrogate_manager = self._build_surrogate_manager(
+                surrogate_manager, acquisition = self._build_components_from_spec(
                     user_preset["surrogate_manager"]
                 )
                 self.surrogate_manager = surrogate_manager
+                if self.acquisition is None:
+                    self.acquisition = acquisition
             if strategy is None and "strategy" in user_preset:
                 strategy = build(
                     _inject_params(
@@ -412,9 +440,12 @@ class Optimizer:
             if algorithm is None and "algorithm" in preset:
                 self.algorithm = build(preset["algorithm"])
             if surrogate_manager is None and "surrogate_manager" in preset:
-                self.surrogate_manager = self._build_surrogate_manager(
+                manager, acquisition = self._build_components_from_spec(
                     preset["surrogate_manager"]
                 )
+                self.surrogate_manager = manager
+                if self.acquisition is None:
+                    self.acquisition = acquisition
             if strategy is None and "strategy" in preset:
                 self.strategy = build(preset["strategy"])
 
@@ -437,15 +468,22 @@ class Optimizer:
         an acquisition function that already has an explicit ``direction`` (or
         opts out via ``direction_sensitive = False``) is left untouched.
         """
-        surrogate_manager = getattr(self, "surrogate_manager", None)
-        if surrogate_manager is None:
-            return
-        for acq in surrogate_manager.iter_acquisitions():
+        for acq in self._iter_acquisitions():
             if (
                 getattr(acq, "direction_sensitive", True)
                 and getattr(acq, "direction", None) is None
             ):
                 acq.direction = self.problem.direction
+
+    def _iter_acquisitions(self):
+        """Yield provider-owned acquisitions, including composite children."""
+        acquisition = self.acquisition
+        if acquisition is None:
+            return
+        if isinstance(acquisition, CompositeAcquisition):
+            yield from acquisition.acquisitions.values()
+        else:
+            yield acquisition
 
     def _select_preset_name(self, defaults: dict, algorithm: Algorithm | None) -> str:
         if algorithm is not None:
@@ -461,9 +499,40 @@ class Optimizer:
         return defaults["fallback"]
 
     def _build_surrogate_manager(self, spec: dict) -> SurrogateManager:
-        return self._build_surrogate_manager_from_spec(
+        manager, _ = self._build_components_from_spec(spec)
+        return manager
+
+    def _build_components_from_spec(
+        self, spec: dict
+    ) -> tuple[SurrogateManager, AcquisitionFunction]:
+        return self._build_components_from_spec_static(
             spec, self.problem.dim, self.problem.direction
         )
+
+    @staticmethod
+    def _build_components_from_spec_static(
+        spec: dict, dim: int, direction
+    ) -> tuple[SurrogateManager, AcquisitionFunction]:
+        from saealib.registry import _inject_params, build
+
+        manager_spec = copy.deepcopy(spec)
+        params = manager_spec.setdefault("params", {})
+        params.setdefault(
+            "surrogate",
+            {"type": "RBFSurrogate", "params": {"kernel": gaussian_kernel, "dim": dim}},
+        )
+        acquisition_spec = params.pop("acquisition", None)
+        if acquisition_spec is None:
+            acquisition_spec = (
+                {"type": "WinRateAcquisition", "params": {}}
+                if manager_spec.get("type") == "PairwiseSurrogateManager"
+                else {"type": "MeanPrediction", "params": {"direction": direction}}
+            )
+        manager_spec = _inject_params(manager_spec, dim=dim, direction=direction)
+        acquisition_spec = _inject_params(
+            copy.deepcopy(acquisition_spec), dim=dim, direction=direction
+        )
+        return build(manager_spec), build(acquisition_spec)
 
     @staticmethod
     def _build_surrogate_manager_from_spec(
@@ -482,10 +551,7 @@ class Optimizer:
             "surrogate",
             {"type": "RBFSurrogate", "params": {"kernel": gaussian_kernel, "dim": dim}},
         )
-        params.setdefault(
-            "acquisition",
-            {"type": "MeanPrediction", "params": {"direction": direction}},
-        )
+        params.pop("acquisition", None)
         spec = _inject_params(spec, dim=dim, direction=direction)
         return build(spec)
 

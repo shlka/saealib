@@ -10,16 +10,18 @@ from saealib import (
     SequentialSelection,
     TruncationSelection,
 )
+from saealib.acquisition import MeanPrediction
 from saealib.algorithms.base import Algorithm
 from saealib.execution.evaluator import SerialEvaluator
 from saealib.pipeline import Pipeline
 from saealib.population import Archive, Population
 from saealib.stages import (
+    AcquisitionStage,
     ArchiveUpdateStage,
     AskStage,
     CountGenerationStage,
     SurrogateOnlyLoopStage,
-    SurrogateScoreStage,
+    SurrogatePredictStage,
     TellStage,
     TopKSelectionStage,
     TrueEvaluationStage,
@@ -54,19 +56,15 @@ class _MinimalAlgo(Algorithm):
 
 
 class _MockSurrogateManager:
+    def __init__(self):
+        self.acquisition = MeanPrediction()
+
     def fit(self, archive, ctx=None):
         pass
 
-    def score_candidates(self, candidates_x, archive, ctx=None, *, refit=True):
+    def predict(self, candidates_x, archive, ctx=None, *, refit=True):
         n = len(candidates_x)
-        scores = np.linspace(1.0, 0.0, n)
-        predictions = [
-            SurrogatePrediction(
-                value=np.array([[1.0]]), std=None, label=None, metadata={}
-            )
-            for _ in range(n)
-        ]
-        return scores, predictions
+        return SurrogatePrediction.objective(value=np.ones((n, 1)))
 
 
 class _MockProvider:
@@ -78,6 +76,7 @@ class _MockProvider:
             survivor_selection=TruncationSelection(),
         )
         self.surrogate_manager = _MockSurrogateManager()
+        self.acquisition = MeanPrediction()
         self.evaluator = SerialEvaluator()
 
     def dispatch(self, event):
@@ -94,7 +93,8 @@ def _make_ps_pipeline():
         [
             CountGenerationStage(),
             AskStage(p.algorithm),
-            SurrogateScoreStage(p.surrogate_manager),
+            SurrogatePredictStage(p.surrogate_manager),
+            AcquisitionStage(p.acquisition),
             TopKSelectionStage(k=5),
             TrueEvaluationStage(p.evaluator),
             ArchiveUpdateStage(),
@@ -109,7 +109,12 @@ def _make_gb_pipeline(gen_ctrl: int = 3):
     p = _make_provider()
     return Pipeline(
         [
-            SurrogateOnlyLoopStage(p.algorithm, p.surrogate_manager, gen_ctrl),
+            SurrogateOnlyLoopStage(
+                p.algorithm,
+                p.surrogate_manager,
+                gen_ctrl,
+                acquisition=p.acquisition,
+            ),
             CountGenerationStage(),
             AskStage(p.algorithm),
             TrueEvaluationStage(p.evaluator),
@@ -157,7 +162,8 @@ class TestPipelineGetItem:
         expected_names = {
             "count_generation",
             "ask",
-            "surrogate_score",
+            "surrogate_predict",
+            "acquisition",
             "top_k_selection",
             "true_evaluation",
             "archive_update",
@@ -231,7 +237,8 @@ class TestPipelinePseudocode:
         assert r"\mathrm{select}" in out
         assert r"\mathrm{crossover}" in out
         assert r"\mathrm{mutate}" in out
-        assert r"\text{score}" in out
+        assert r"\text{predict}" in out
+        assert r"\text{acquire}" in out
         assert r"\text{top-}" in out
         assert r"\text{eval}" in out
 
@@ -275,7 +282,12 @@ class TestPipelinePseudocode:
 class TestSurrogateOnlyLoopPseudocode:
     def _make(self, gen_ctrl: int = 3):
         p = _make_provider()
-        return SurrogateOnlyLoopStage(p.algorithm, p.surrogate_manager, gen_ctrl)
+        return SurrogateOnlyLoopStage(
+            p.algorithm,
+            p.surrogate_manager,
+            gen_ctrl,
+            acquisition=p.acquisition,
+        )
 
     def test_expand_false_is_single_line(self):
         out = self._make().to_pseudocode(expand=False)
@@ -294,7 +306,8 @@ class TestSurrogateOnlyLoopPseudocode:
         assert r"\mathrm{select}" in out
         assert r"\mathrm{crossover}" in out
         assert r"\mathrm{mutate}" in out
-        assert r"\text{score}" in out
+        assert r"\text{predict}" in out
+        assert r"\text{acquire}" in out
         # TellStage with GA expands via tell_notation
         assert r"Update population" in out
         assert r"(\mu+\lambda)" in out
@@ -306,7 +319,7 @@ class TestSurrogateOnlyLoopPseudocode:
     def test_stages_attribute_exposed(self):
         sol = self._make()
         assert sol.stages is not None
-        assert len(sol.stages) == 4  # CountGeneration, Ask, Score, Tell
+        assert len(sol.stages) == 5  # CountGeneration, Ask, Predict, Acquisition, Tell
 
     def test_stages_empty_when_gen_ctrl_zero(self):
         sol = self._make(gen_ctrl=0)

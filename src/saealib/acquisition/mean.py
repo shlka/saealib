@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from scipy.spatial import distance
 
-from saealib.acquisition.base import AcquisitionFunction
+from saealib.acquisition.base import PointwiseAcquisition
 from saealib.registry import register
 from saealib.surrogate.prediction import SurrogatePrediction
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 @register()
-class MeanPrediction(AcquisitionFunction):
+class MeanPrediction(PointwiseAcquisition):
     """
     Acquisition function based on predicted mean value (exploitation).
 
@@ -89,7 +89,7 @@ class MeanPrediction(AcquisitionFunction):
 
 
 @register()
-class CORSDistance(AcquisitionFunction):
+class CORSDistance(PointwiseAcquisition):
     """
     CORS distance-constrained predicted-mean acquisition function.
 
