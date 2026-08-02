@@ -223,5 +223,6 @@ class TestPerObjectiveSurrogateIntegration:
         manager = GlobalSurrogateManager(s)
         prediction = manager.predict(candidates, archive_2obj)
         scores = acquisition.evaluate(candidates, prediction, archive_2obj).scores
+        assert scores is not None
         assert scores.shape == (len(candidates),)
         assert prediction.value.shape == (len(candidates), 2)

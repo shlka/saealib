@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from saealib.callback import PostEvaluationEvent
+from saealib.context import EvaluationPlanState
 from saealib.exceptions import (
     CheckpointError,
     EvaluationFatalError,
@@ -25,13 +26,18 @@ from saealib.execution.evaluator import (
     Evaluator,
     PendingEvaluation,
 )
-from saealib.policies.feedback import FeedbackPolicy, FeedbackResult
+from saealib.policies.evaluation import (
+    _aggregate_repeated_updates,
+    _combine_plan_updates,
+    _continue_fidelity_plan,
+)
+from saealib.policies.feedback import FeedbackBuilder, FeedbackResult
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
 
 
-class AsyncScheduler:
+class AsyncEvaluationScheduler:
     """Coordinate asynchronous requests and serialized state mutation."""
 
     def __init__(
@@ -43,7 +49,7 @@ class AsyncScheduler:
         max_reserved_cost: float | None = None,
         timeout: float | None = None,
         retry_limit: int = 0,
-        feedback_policy: FeedbackPolicy | None = None,
+        feedback_builder: FeedbackBuilder | None = None,
         algorithm: Any = None,
         callback_manager: Any = None,
     ) -> None:
@@ -68,7 +74,7 @@ class AsyncScheduler:
         self.max_reserved_cost = max_reserved_cost
         self.timeout = timeout
         self.retry_limit = retry_limit
-        self.feedback_policy = feedback_policy
+        self.feedback_builder = feedback_builder
         self.algorithm = algorithm
         self.callback_manager = callback_manager
         self._fatal_states: dict[int, OptimizationState] = {}
@@ -107,26 +113,55 @@ class AsyncScheduler:
             raise EvaluationProtocolError(
                 "batch submission requires rollback-capable evaluator"
             )
-        if len(state.pending_evaluations) + len(requests) > self.max_pending:
-            raise EvaluationProtocolError("worker capacity would be exceeded")
         if state.offspring is None:
             raise EvaluationProtocolError("asynchronous submission requires offspring")
         existing = set(map(int, self.pending_candidate_ids(state)))
+        plan_ids = {request.metadata.get("plan_id") for request in requests}
+        allow_replicates = (
+            bool(requests)
+            and len(plan_ids) == 1
+            and None not in plan_ids
+            and all("replicate" in request.metadata for request in requests)
+        )
+        batch_candidates: set[int] = set()
         reserved_fe = self.reserved_fe(state)
         reserved_cost = self.reserved_cost(state)
         seen_requests: set[int] = set()
         plans: list[tuple[EvaluationRequest, float]] = []
+        occupied_requests = (
+            set(map(int, state.pending_evaluations))
+            | set(map(int, state.evaluation_handles))
+            | set(map(int, state.evaluation_owners))
+        )
         for request in requests:
             request_id = int(request.request_id)
-            if request_id in seen_requests or request_id in state.pending_evaluations:
+            if request_id in seen_requests or request_id in occupied_requests:
                 raise EvaluationProtocolError(
                     f"request {request_id} is already pending"
                 )
             seen_requests.add(request_id)
+            occupied_requests.add(request_id)
+        if len(state.pending_evaluations) + len(requests) > self.max_pending:
+            raise EvaluationProtocolError("worker capacity would be exceeded")
+        for request in requests:
+            request_id = int(request.request_id)
             candidate_ids = set(map(int, request.candidate_ids))
-            if existing.intersection(candidate_ids):
+            pending_same_plan = any(
+                pending.request.metadata.get("plan_id")
+                == request.metadata.get("plan_id")
+                and "replicate" in pending.request.metadata
+                and "replicate" in request.metadata
+                for pending in state.pending_evaluations.values()
+            )
+            if existing.intersection(candidate_ids) and not (
+                pending_same_plan and request.metadata.get("plan_id") in plan_ids
+            ):
                 raise EvaluationProtocolError(
                     "a candidate is pending in another request"
+                )
+            if not allow_replicates and batch_candidates.intersection(candidate_ids):
+                raise EvaluationProtocolError(
+                    "a candidate is present in more than one request"
                 )
             estimated_cost = float(
                 request.metadata.get("estimated_cost", len(candidate_ids))
@@ -146,7 +181,9 @@ class AsyncScheduler:
             ):
                 raise EvaluationProtocolError("reserved cost budget would be exceeded")
             plans.append((request, estimated_cost))
-            existing.update(candidate_ids)
+            batch_candidates.update(candidate_ids)
+            if not allow_replicates:
+                existing.update(candidate_ids)
             reserved_fe += len(candidate_ids)
             reserved_cost += estimated_cost
         handles = dict(state.evaluation_handles)
@@ -178,12 +215,7 @@ class AsyncScheduler:
                 pending_map[request_id] = pending
                 owners[request_id] = state.offspring
         except Exception as exc:
-            cleanup_failed = []
-            for _, handle in started:
-                if not self.evaluator.cancel(handle) and not self.evaluator.detach(
-                    handle
-                ):
-                    cleanup_failed.append(_)
+            cleanup_failed = self._cleanup_started_handles(started)
             if cleanup_failed:
                 partial = state.replace(
                     evaluation_handles=handles,
@@ -203,6 +235,13 @@ class AsyncScheduler:
             evaluation_owners=owners,
             pending_evaluations=pending_map,
         )
+
+    def _cleanup_started_handles(self, started: list[tuple[int, Any]]) -> list[int]:
+        cleanup_failed = []
+        for request_id, handle in started:
+            if not self.evaluator.cancel(handle) and not self.evaluator.detach(handle):
+                cleanup_failed.append(request_id)
+        return cleanup_failed
 
     def cancel(self, state: OptimizationState, request_id: int) -> OptimizationState:
         """Cancel a pending request and commit its terminal update."""
@@ -390,6 +429,18 @@ class AsyncScheduler:
         if processing.get(key) == "committed":
             return state
         if processing.get(key) == "callback-completed":
+            previous = next(
+                (
+                    item
+                    for item in current_pending.buffered_updates
+                    if item.sequence == key
+                ),
+                None,
+            )
+            if previous is None or not self._same_update(previous, update):
+                raise EvaluationProtocolError(
+                    "redelivered callback update payload differs"
+                )
             if update.status not in {
                 EvaluationStatus.COMPLETED,
                 EvaluationStatus.FAILED,
@@ -499,10 +550,86 @@ class AsyncScheduler:
             )
         else:
             current = state
+        if (
+            not replay
+            and current.evaluation_plan is not None
+            and update.result is not None
+        ):
+            plan_updates = {
+                request_id: list(updates)
+                for request_id, updates in current.evaluation_plan_updates.items()
+            }
+            plan_updates.setdefault(request_id, []).append(update)
+            current = current.replace(evaluation_plan_updates=plan_updates)
         current_pending = current.pending_evaluations[request_id]
         if current_pending.feedback_result is not None:
             current = current.replace(feedback_result=current_pending.feedback_result)
-        has_rows = update.result is not None and len(update.candidate_ids) > 0
+        current_plan = current.evaluation_plan
+        if current_plan is not None and update.status in {
+            EvaluationStatus.COMPLETED,
+            EvaluationStatus.FAILED,
+            EvaluationStatus.CANCELLED,
+        }:
+            plan_state = current.evaluation_plan_state
+            completed = set(plan_state.completed if plan_state else ())
+            acknowledged = set(plan_state.acknowledged if plan_state else ())
+            completed.add(request_id)
+            plan_ids = {int(item.request_id) for item in current_plan.requests}
+            if plan_ids <= completed | acknowledged:
+                continuation_plan = _continue_fidelity_plan(
+                    current_plan, current.evaluation_plan_updates, current
+                )
+                if continuation_plan is not None:
+                    promoted_id = continuation_plan.artifacts.get("promoted_request_id")
+                    if promoted_id is None:
+                        raise EvaluationProtocolError(
+                            "fidelity continuation is missing its request ID"
+                        )
+                    current = current.replace(
+                        evaluation_plan=continuation_plan,
+                        evaluation_plan_state=EvaluationPlanState(
+                            submitted=plan_state.submitted if plan_state else (),
+                            completed=tuple(sorted(completed)),
+                            acknowledged=tuple(sorted(acknowledged)),
+                            deferred=(int(promoted_id),),
+                            continuation=continuation_plan.continuation,
+                            feedback=plan_state.feedback if plan_state else None,
+                        ),
+                    )
+                    current_plan = continuation_plan
+        repeated_plan = self._is_repeated_plan(current_plan)
+        plan_effect_update = update
+        if current_plan is not None and len(current_plan.requests) > 1:
+            plan_state = current.evaluation_plan_state
+            completed = set(plan_state.completed if plan_state else ())
+            acknowledged = set(plan_state.acknowledged if plan_state else ())
+            plan_ids = {int(request.request_id) for request in current_plan.requests}
+            if update.status in {
+                EvaluationStatus.COMPLETED,
+                EvaluationStatus.FAILED,
+                EvaluationStatus.CANCELLED,
+            }:
+                completed.add(request_id)
+            if plan_ids <= completed | acknowledged:
+                plan_effect_update = (
+                    self._aggregate_plan_update(current, update)
+                    if repeated_plan
+                    else _combine_plan_updates(
+                        current_plan, current.evaluation_plan_updates, update
+                    )
+                )
+            else:
+                plan_effect_update = None
+        population_update = update
+        if current_plan is not None and len(current_plan.requests) > 1:
+            population_update = plan_effect_update
+        if population_update is None:
+            has_rows = False
+        else:
+            has_rows = (
+                population_update.result is not None
+                and len(population_update.candidate_ids) > 0
+            )
         ranks = {
             "received": 0,
             "population-applied": 1,
@@ -515,19 +642,19 @@ class AsyncScheduler:
             "callback-completed": 8,
         }
         stage_rank = ranks.get(processing.get(key, "received"), 0)
-        if stage_rank < 1 and has_rows:
-            current = self._apply_population(current, update)
+        if population_update is not None and stage_rank < 1 and has_rows:
+            current = self._apply_population(current, population_update)
             current = progress(current, "population-applied")
             stage_rank = 1
-        if stage_rank < 2 and has_rows:
-            current = self._apply_archive(current, update)
+        if plan_effect_update is not None and stage_rank < 2 and has_rows:
+            current = self._apply_archive(current, plan_effect_update)
             current = progress(current, "archived")
             stage_rank = 2
-        if stage_rank < 3 and has_rows:
-            current = self._apply_feedback(current, update)
+        if plan_effect_update is not None and stage_rank < 3 and has_rows:
+            current = self._apply_feedback(current, plan_effect_update)
             current = progress(current, "feedback-applied")
             stage_rank = 3
-        if stage_rank < 4 and has_rows:
+        if plan_effect_update is not None and stage_rank < 4 and has_rows:
             current = progress(
                 current,
                 "tell-started",
@@ -536,7 +663,7 @@ class AsyncScheduler:
                 ),
             )
             try:
-                current = self._apply_tell(current, update)
+                current = self._apply_tell(current, plan_effect_update)
             except Exception as exc:
                 raise EvaluationFatalError(
                     "algorithm tell failed after side effects; update is fatal",
@@ -545,7 +672,7 @@ class AsyncScheduler:
             current = progress(current, "told")
             stage_rank = 4
         if stage_rank < 5:
-            if has_rows:
+            if update.result is not None:
                 current = current.replace(fe=current.fe + len(update.candidate_ids))
             current = progress(current, "fe-applied")
         if stage_rank < 6:
@@ -591,14 +718,32 @@ class AsyncScheduler:
                 current_pending.request.outputs,
                 current_pending.request.metadata,
             )
+            # Reservation is per candidate, not per retry request.  Using
+            # current_pending.reserved_cost as the numerator compounds the
+            # previous proportional reduction and under-reserves on the
+            # second retry.  A scalar estimate cannot represent candidate-
+            # specific costs; retain proportional allocation until the
+            # request contract grows per-candidate estimates.
+            unit_cost = fsum((current_pending.reserved_cost,)) / len(
+                current_pending.request.candidate_ids
+            )
+            retry_cost = unit_cost * len(remaining)
+            other_reserved_cost = fsum(
+                pending.reserved_cost
+                for rid, pending in current.pending_evaluations.items()
+                if rid != request_id
+            )
+            if (
+                self.max_reserved_cost is not None
+                and fsum((other_reserved_cost, retry_cost)) > self.max_reserved_cost
+            ):
+                raise EvaluationProtocolError("retry would exceed reserved cost budget")
             new_handle = self.evaluator.submit(request, state.problem)
             retry_pending = PendingEvaluation(
                 request,
                 EvaluationStatus.PENDING,
                 applied,
-                reserved_cost=current_pending.reserved_cost
-                * len(remaining)
-                / len(original_ids),
+                reserved_cost=retry_cost,
                 retry_count=current_pending.retry_count + 1,
                 checkpointable=self.evaluator.can_reattach(
                     PendingEvaluation(
@@ -668,7 +813,11 @@ class AsyncScheduler:
                     request_id: current_pending,
                 }
             )
-        if len(update.candidate_ids) and self.callback_manager is not None:
+        if (
+            plan_effect_update is not None
+            and len(plan_effect_update.candidate_ids)
+            and self.callback_manager is not None
+        ):
             current = progress(
                 current,
                 "callback-started",
@@ -680,16 +829,16 @@ class AsyncScheduler:
             offspring = None
             owner = self._owner(current, request_id)
             offspring = owner.extract(
-                self._rows(current, update.candidate_ids, request_id)
+                self._rows(current, plan_effect_update.candidate_ids, request_id)
             )
             try:
                 self.callback_manager.dispatch(
                     PostEvaluationEvent(
                         ctx=current,
                         offspring=offspring,
-                        candidate_ids=update.candidate_ids,
-                        request_id=update.request_id,
-                        status=update.status,
+                        candidate_ids=plan_effect_update.candidate_ids,
+                        request_id=plan_effect_update.request_id,
+                        status=plan_effect_update.status,
                     )
                 )
             except Exception as exc:
@@ -709,7 +858,46 @@ class AsyncScheduler:
                 evaluation_handles=handles,
                 evaluation_owners=owners,
             )
+            plan_state = current.evaluation_plan_state
+            if plan_state is not None:
+                completed = tuple(sorted(set(plan_state.completed) | {request_id}))
+                acknowledged = tuple(
+                    sorted(set(plan_state.acknowledged) | {request_id})
+                )
+                deferred = tuple(
+                    item for item in plan_state.deferred if item != request_id
+                )
+                current = current.replace(
+                    evaluation_plan_state=EvaluationPlanState(
+                        submitted=tuple(
+                            sorted(set(plan_state.submitted) | {request_id})
+                        ),
+                        completed=completed,
+                        acknowledged=acknowledged,
+                        deferred=deferred,
+                        continuation=plan_state.continuation,
+                        feedback=plan_state.feedback,
+                    )
+                )
         return current
+
+    @staticmethod
+    def _is_repeated_plan(plan: Any) -> bool:
+        """Return whether a plan must aggregate all replicate requests."""
+        return bool(
+            plan is not None
+            and len(plan.requests) > 1
+            and all("replicate" in request.metadata for request in plan.requests)
+        )
+
+    def _aggregate_plan_update(
+        self, state: OptimizationState, update: EvaluationUpdate
+    ) -> EvaluationUpdate | None:
+        """Build one stable-ID result after all replicate requests finish."""
+        plan = state.evaluation_plan
+        if plan is None:
+            return update
+        return _aggregate_repeated_updates(plan, state.evaluation_plan_updates, update)
 
     def _validate_update(
         self, pending: PendingEvaluation, update: EvaluationUpdate
@@ -820,13 +1008,13 @@ class AsyncScheduler:
             np.array_equal(left.result.f, right.result.f)
             and np.array_equal(left.result.g, right.result.g)
             and np.array_equal(left.result.cv, right.result.cv)
-            and AsyncScheduler._optional_array_equal(
+            and AsyncEvaluationScheduler._optional_array_equal(
                 left.result.candidate_ids, right.result.candidate_ids
             )
-            and AsyncScheduler._optional_array_equal(
+            and AsyncEvaluationScheduler._optional_array_equal(
                 left.result.cost, right.result.cost
             )
-            and AsyncScheduler._optional_array_equal(
+            and AsyncEvaluationScheduler._optional_array_equal(
                 left.result.noise, right.result.noise
             )
             and left.result.outputs.keys() == right.result.outputs.keys()
@@ -919,7 +1107,6 @@ class AsyncScheduler:
                     archive._value_version,
                     dict(archive._cache),
                     getattr(archive, "_kdtree", None),
-                    list(getattr(archive, "_deprecated_duplicate_indices", [])),
                 )
             )
         try:
@@ -947,36 +1134,36 @@ class AsyncScheduler:
                                 archive.delete(np.flatnonzero(ids == values["id"]))
                     archive.add(values)
         except Exception:
-            for (
-                archive,
-                snapshot,
-                size,
-                structure_version,
-                value_version,
-                cache,
-                kdtree,
-                duplicate_indices,
-            ) in snapshots:
-                archive._data = snapshot
-                archive._size = size
-                archive._structure_version = structure_version
-                archive._value_version = value_version
-                archive._cache = cache
-                if hasattr(archive, "_kdtree"):
-                    archive._kdtree = kdtree
-                if hasattr(archive, "_deprecated_duplicate_indices"):
-                    archive._deprecated_duplicate_indices = duplicate_indices
+            self._restore_archive_snapshots(snapshots)
             raise
         return state
+
+    def _restore_archive_snapshots(self, snapshots: list[tuple[Any, ...]]) -> None:
+        for (
+            archive,
+            snapshot,
+            size,
+            structure_version,
+            value_version,
+            cache,
+            kdtree,
+        ) in snapshots:
+            archive._data = snapshot
+            archive._size = size
+            archive._structure_version = structure_version
+            archive._value_version = value_version
+            archive._cache = cache
+            if hasattr(archive, "_kdtree"):
+                archive._kdtree = kdtree
 
     def _apply_feedback(
         self, state: OptimizationState, update: EvaluationUpdate
     ) -> OptimizationState:
-        if self.feedback_policy is None or update.result is None:
+        if self.feedback_builder is None or update.result is None:
             return state
         evaluation = update.result
         owner = self._owner(state, int(update.request_id))
-        result: FeedbackResult = self.feedback_policy.build(
+        result: FeedbackResult = self.feedback_builder.build(
             owner,
             state.pending_evaluations[int(update.request_id)].prediction
             or state.predictions,

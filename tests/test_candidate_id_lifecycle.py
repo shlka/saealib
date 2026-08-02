@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 import pytest
 
@@ -157,6 +159,6 @@ def test_ask_stage_rejects_all_real_duplicate_id_batch():
         pareto_archive=pareto,
         rng=np.random.default_rng(0),
     )
-    stage = AskStage(_DuplicateRealIdAlgorithm(), cbmanager=None)
+    stage = AskStage(cast(Any, _DuplicateRealIdAlgorithm()), cbmanager=None)
     with pytest.raises(ValidationError):
         stage.execute(state)

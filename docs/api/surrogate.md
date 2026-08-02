@@ -11,7 +11,6 @@
    saealib.RegressionSurrogate
    saealib.ComparisonSurrogate
    saealib.SurrogatePrediction
-   saealib.CorrelatedQuadraticSurrogate
 ```
 
 ## Surrogate Managers

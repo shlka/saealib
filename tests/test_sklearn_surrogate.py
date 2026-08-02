@@ -269,6 +269,7 @@ class TestSklearnSurrogateIntegration:
         manager = GlobalSurrogateManager(SklearnSVMSurrogate())
         prediction = manager.predict(candidates, archive_1obj)
         scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
+        assert scores is not None
         assert scores.shape == (len(candidates),)
         assert prediction.value.shape == (len(candidates), 1)
 
@@ -279,6 +280,7 @@ class TestSklearnSurrogateIntegration:
         )
         prediction = manager.predict(candidates, archive_1obj)
         scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
+        assert scores is not None
         assert scores.shape == (len(candidates),)
 
     def test_global_manager_xgb(self, archive_1obj, candidates) -> None:
@@ -288,6 +290,7 @@ class TestSklearnSurrogateIntegration:
         )
         prediction = manager.predict(candidates, archive_1obj)
         scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
+        assert scores is not None
         assert scores.shape == (len(candidates),)
 
     def test_global_manager_lgbm(self, archive_1obj, candidates) -> None:
@@ -297,6 +300,7 @@ class TestSklearnSurrogateIntegration:
         )
         prediction = manager.predict(candidates, archive_1obj)
         scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
+        assert scores is not None
         assert scores.shape == (len(candidates),)
 
 

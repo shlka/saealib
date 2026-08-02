@@ -1,6 +1,6 @@
 # Evaluator
 
-`OptimizationStrategy` and `Initializer` delegate converting a batch of design-variable candidates into objective values, raw constraint values, and constraint violation to `Evaluator`, a swappable execution backend.
+`OptimizationStrategy` builds an `EvaluationPlan`; its requests are then submitted by the synchronous evaluator or asynchronous scheduler. Each request converts a batch of design-variable candidates into objective values, raw constraint values, and constraint violation.
 Whether evaluation runs sequentially or in parallel can be switched by swapping out only `Evaluator`, without changing the pipeline-side code.
 
 ## Evaluator's role
@@ -26,8 +26,8 @@ Besides `backend`'s default `"loky"` (a process pool serializing with cloudpickl
 In configurations using multiple `JoblibEvaluator`s at once, such as an island model, CPU cores can end up over-reserved.
 Either limit each island's `n_jobs` to `1` and control overall concurrency via the parallelism across islands, or use `joblib.parallel_backend` as a context manager to limit the number of inner workers.
 For independent completion times, use `AsyncEvaluator` with
-`SteadyStateStrategy`, `AsyncScheduler`, and
-`Optimizer.set_async_scheduler()`. Each steady-state candidate can occupy its
+`SteadyStateStrategy`, `AsyncEvaluationScheduler`, and
+`Optimizer.set_async_evaluation_scheduler()`. Each steady-state candidate can occupy its
 own pending request; the scheduler owns those requests and serializes
 population and archive updates while `collect(wait=False)` remains
 non-blocking.
@@ -35,9 +35,9 @@ non-blocking.
 Swap it via `Optimizer.set_evaluator(evaluator)`.
 
 `EvaluationRequest.metadata` is consumed by evaluators that expose explicit
-execution policies. `FidelityEvaluator` reads `fidelity`, while
-`RepeatedEvaluationRunner` submits separate requests with stable candidate IDs
-and stores every observation in an append history.
+execution planners. `RepeatedEvaluation` returns one `EvaluationPlan` request
+per replicate with stable candidate IDs. The scheduler owns capacity, budget,
+and request lifecycle.
 
 ## Implementing a custom Evaluator
 
@@ -82,5 +82,5 @@ Because [ConstraintHandler](constraints.md)'s `augment_objective` corrects the o
 - {py:class}`saealib.SerialEvaluator`
 - {py:class}`saealib.JoblibEvaluator`
 - {py:class}`saealib.AsyncEvaluator`
-- {py:class}`saealib.AsyncScheduler`
+- {py:class}`saealib.AsyncEvaluationScheduler`
 - {py:class}`saealib.EvaluationResult`

@@ -650,5 +650,6 @@ class TestReferencePointComparisonSet:
         candidates_x = np.random.default_rng(0).uniform(-2.0, 2.0, size=(5, DIM))
         prediction = mgr.predict(candidates_x, arc, ctx)
         scores = acquisition.evaluate(candidates_x, prediction, arc, ctx).scores
+        assert scores is not None
         assert scores.shape == (5,)
         assert prediction.value.shape == (5, 1)

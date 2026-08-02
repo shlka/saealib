@@ -23,3 +23,13 @@
    saealib.DirectStrategy
    saealib.SteadyStateStrategy
 ```
+
+## Island execution
+
+```{eval-rst}
+.. autosummary::
+   :toctree: _autosummary
+   :nosignatures:
+
+   saealib.IslandModel
+```

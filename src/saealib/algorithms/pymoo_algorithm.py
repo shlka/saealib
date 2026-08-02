@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     from pymoo.core.problem import Problem as PymooCoreProblem
 
     from saealib.context import OptimizationState
-    from saealib.identity import IDAllocator
     from saealib.optimizer import Dispatchable
     from saealib.problem import Problem
 
@@ -127,6 +126,8 @@ class PymooAlgorithm(Algorithm):
         self._eq_idx: np.ndarray = np.empty(0, dtype=np.int64)
         self._infills: _PymooPopulationLike | None = None
 
+    _candidate_id_attr = "saealib_candidate_id"
+
     def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
         """Add a ``pymoo_idx`` column tracking position in the pymoo infill pop."""
         return [PopulationAttribute("pymoo_idx", np.int64, (), default=-1)]
@@ -197,12 +198,38 @@ class PymooAlgorithm(Algorithm):
         f = offspring.get_array("f")
         g = offspring.get_array("g")
         if scatter_order is not None:
+            scatter_order = np.asarray(scatter_order, dtype=np.int64)
+            if (
+                len(scatter_order) != len(f)
+                or np.any(scatter_order < 0)
+                or np.any(scatter_order >= len(pymoo_pop))
+            ):
+                raise ConfigurationError("pymoo_idx is outside the infill population")
+            if len(np.unique(scatter_order)) != len(scatter_order):
+                raise ConfigurationError("pymoo_idx contains duplicate positions")
             n = len(pymoo_pop)
-            f_full = np.empty((n, f.shape[1]), dtype=float)
+            try:
+                f_full = np.array(pymoo_pop.get("F"), dtype=float, copy=True)
+                if f_full.shape != (n, f.shape[1]):
+                    f_full = np.zeros((n, f.shape[1]), dtype=float)
+            except (AttributeError, KeyError, TypeError, ValueError):
+                f_full = np.zeros((n, f.shape[1]), dtype=float)
             f_full[scatter_order] = f
             f = f_full
             if g.shape[1] > 0:
                 g_full = np.zeros((n, g.shape[1]), dtype=float)
+                try:
+                    old_g = np.asarray(pymoo_pop.get("G"), dtype=float)
+                    if old_g.shape == g_full.shape:
+                        g_full[:] = old_g
+                except (AttributeError, KeyError, TypeError, ValueError):
+                    pass
+                try:
+                    old_h = np.asarray(pymoo_pop.get("H"), dtype=float)
+                    if old_h.shape == (n, len(self._eq_idx)):
+                        g_full[:, self._eq_idx] = old_h
+                except (AttributeError, KeyError, TypeError, ValueError):
+                    pass
                 g_full[scatter_order] = g
                 g = g_full
         pymoo_pop.set("F", -problem.direction * f)
@@ -234,6 +261,8 @@ class PymooAlgorithm(Algorithm):
                 "Set both to the same value."
             )
         init.set("X", ctx.population.get_array("x"))
+        if "id" in ctx.population.schema:
+            self._set_pymoo_candidate_ids(init, ctx.population.get_array("id"))
         self._assign_objectives(init, ctx.population, ctx.problem)
         self.pymoo_algorithm.tell(infills=init)
         self._initialized = True
@@ -282,7 +311,12 @@ class PymooAlgorithm(Algorithm):
         provider.dispatch(PostAskEvent(ctx=ctx, candidates=x))
 
         cand = ctx.population.empty_like(capacity=len(x))
-        cand.extend({"x": x, "pymoo_idx": np.arange(len(x), dtype=np.int64)})
+        data = {"x": x, "pymoo_idx": np.arange(len(x), dtype=np.int64)}
+        if "id" in ctx.population.schema:
+            candidate_ids = ctx.candidate_id_allocator.allocate(len(x))
+            self._set_pymoo_candidate_ids(infills, candidate_ids)
+            data["id"] = candidate_ids
+        cand._extend_internal(data, preserve_ids=True)
         return cand
 
     def tell(
@@ -306,6 +340,10 @@ class PymooAlgorithm(Algorithm):
         """
         assert self._infills is not None
         idx = offspring.get_array("pymoo_idx").astype(np.int64, copy=False)
+        if idx.ndim != 1 or np.any(idx < 0) or np.any(idx >= len(self._infills)):
+            raise ConfigurationError("pymoo_idx is outside the infill population")
+        if len(np.unique(idx)) != len(idx):
+            raise ConfigurationError("pymoo_idx contains duplicate positions")
 
         if len(idx) == len(self._infills):
             # Full reorder (possibly identity). Scatter F/G/H back into
@@ -315,6 +353,15 @@ class PymooAlgorithm(Algorithm):
             self._assign_objectives(
                 self._infills, offspring, ctx.problem, scatter_order=idx
             )
+            if "id" in offspring.schema:
+                full_ids = self._pymoo_candidate_ids(self._infills)
+                if full_ids is None:
+                    raise ConfigurationError(
+                        "pymoo infill candidate provenance is missing"
+                    )
+                full_ids = full_ids.copy()
+                full_ids[idx] = offspring.get_array("id")
+                self._set_pymoo_candidate_ids(self._infills, full_ids)
             infills = self._infills
         else:
             if not self.allow_partial_tell:
@@ -332,39 +379,53 @@ class PymooAlgorithm(Algorithm):
             # offspring directly, so no further reordering is needed here.
             infills = self._infills[idx]  # type: ignore  # pymoo Population is ndarray-subscriptable; not worth modeling numpy's full __getitem__ overload set in the Protocol
             self._assign_objectives(infills, offspring, ctx.problem)
+            if "id" in offspring.schema:
+                full_ids = self._pymoo_candidate_ids(self._infills)
+                if full_ids is None:
+                    raise ConfigurationError(
+                        "pymoo infill candidate provenance is missing"
+                    )
+                full_ids = full_ids.copy()
+                full_ids[idx] = offspring.get_array("id")
+                self._set_pymoo_candidate_ids(self._infills, full_ids)
 
         self.pymoo_algorithm.tell(infills=infills)
         self._sync_population(ctx)
 
-    @staticmethod
-    def _match_survivor_ids(
-        prev_x: np.ndarray,
-        prev_ids: np.ndarray,
-        new_x: np.ndarray,
-        allocator: IDAllocator,
-    ) -> np.ndarray:
-        """Match rows by exact ``x``; unmatched rows get freshly minted ids."""
-        available: dict[bytes, list[int]] = {}
-        for i in range(len(prev_x)):
-            key = np.ascontiguousarray(prev_x[i]).tobytes()
-            available.setdefault(key, []).append(int(prev_ids[i]))
+    @classmethod
+    def _set_pymoo_candidate_ids(
+        cls, pymoo_pop: _PymooPopulationLike, candidate_ids: np.ndarray
+    ) -> None:
+        """Attach stable saealib candidate IDs to pymoo individuals."""
+        candidate_ids = np.asarray(candidate_ids, dtype=np.int64)
+        if candidate_ids.ndim != 1 or len(candidate_ids) != len(pymoo_pop):
+            raise ConfigurationError("pymoo candidate provenance has invalid shape")
+        pymoo_pop.set(
+            cls._candidate_id_attr,
+            candidate_ids,
+        )
 
-        n = len(new_x)
-        ids = np.empty(n, dtype=np.int64)
-        unmatched: list[int] = []
-        for i in range(n):
-            key = np.ascontiguousarray(new_x[i]).tobytes()
-            bucket = available.get(key)
-            if bucket:
-                ids[i] = bucket.pop()
-            else:
-                unmatched.append(i)
-
-        if unmatched:
-            fresh = allocator.allocate(len(unmatched))
-            for j, i in enumerate(unmatched):
-                ids[i] = fresh[j]
-        return ids
+    @classmethod
+    def _pymoo_candidate_ids(cls, pymoo_pop: _PymooPopulationLike) -> np.ndarray | None:
+        """Read survivor provenance retained by pymoo's population objects."""
+        try:
+            values = pymoo_pop.get(cls._candidate_id_attr)
+        except (AttributeError, KeyError, TypeError):
+            return None
+        if values is None:
+            return None
+        raw_values = np.asarray(values).reshape(-1)
+        if raw_values.dtype == object and any(value is None for value in raw_values):
+            return None
+        try:
+            values = raw_values.astype(np.int64, copy=False)
+        except (TypeError, ValueError):
+            return None
+        if len(values) != len(pymoo_pop) or np.any(values < 0):
+            return None
+        if len(np.unique(values)) != len(values):
+            raise ConfigurationError("pymoo survivor candidate IDs are not unique")
+        return values
 
     def _sync_population(self, ctx: OptimizationState) -> None:
         """Rebuild ctx.population in-place from the wrapped algorithm's own .pop."""
@@ -387,6 +448,7 @@ class PymooAlgorithm(Algorithm):
         if len(self._eq_idx) > 0:
             g[:, self._eq_idx] = np.asarray(alg_pop.get("H"), dtype=float)
         cv = np.asarray(alg_pop.get("CV"), dtype=float).reshape(n)
+        survivor_ids = self._pymoo_candidate_ids(alg_pop)
 
         new_pop_data = {
             "x": x,
@@ -396,12 +458,12 @@ class PymooAlgorithm(Algorithm):
             "pymoo_idx": np.full(n, -1, dtype=np.int64),
         }
         if "id" in ctx.population.schema:
-            new_pop_data["id"] = self._match_survivor_ids(
-                ctx.population.get_array("x"),
-                ctx.population.get_array("id"),
-                x,
-                ctx.candidate_id_allocator,
-            )
+            if survivor_ids is None:
+                raise ConfigurationError(
+                    "pymoo survivor candidate provenance is missing; "
+                    "survival must preserve saealib_candidate_id"
+                )
+            new_pop_data["id"] = survivor_ids
 
         ctx.population.clear()
         ctx.population._extend_internal(new_pop_data, preserve_ids=True)

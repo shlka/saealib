@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 import pytest
 
@@ -50,9 +52,6 @@ def _make_problem() -> Problem:
 class _MockSurrogateManager:
     def fit(self, archive, ctx=None):
         pass
-
-    def score_candidates(self, candidates_x, archive, ctx=None, *, refit=True):
-        return np.zeros(len(candidates_x)), []
 
 
 class _MockProvider:
@@ -163,18 +162,26 @@ def test_sobol_initializer_importable_from_execution():
 
 
 def test_random_initializer_same_seed_reproducible(problem, provider):
-    ctx1 = RandomInitializer(N_ARCHIVE, N_POP, seed=42).initialize(provider, problem)
+    ctx1 = RandomInitializer(N_ARCHIVE, N_POP, seed=42).initialize(
+        cast(Any, provider), problem
+    )
     provider2 = _MockProvider()
-    ctx2 = RandomInitializer(N_ARCHIVE, N_POP, seed=42).initialize(provider2, problem)
+    ctx2 = RandomInitializer(N_ARCHIVE, N_POP, seed=42).initialize(
+        cast(Any, provider2), problem
+    )
     np.testing.assert_array_equal(
         ctx1.archive.get_array("x"), ctx2.archive.get_array("x")
     )
 
 
 def test_sobol_initializer_same_seed_reproducible(problem, provider):
-    ctx1 = SobolInitializer(N_ARCHIVE, N_POP, seed=42).initialize(provider, problem)
+    ctx1 = SobolInitializer(N_ARCHIVE, N_POP, seed=42).initialize(
+        cast(Any, provider), problem
+    )
     provider2 = _MockProvider()
-    ctx2 = SobolInitializer(N_ARCHIVE, N_POP, seed=42).initialize(provider2, problem)
+    ctx2 = SobolInitializer(N_ARCHIVE, N_POP, seed=42).initialize(
+        cast(Any, provider2), problem
+    )
     np.testing.assert_array_equal(
         ctx1.archive.get_array("x"), ctx2.archive.get_array("x")
     )

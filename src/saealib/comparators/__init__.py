@@ -11,12 +11,9 @@ from saealib.comparators.comparators import (
     WeightedSumComparator,
 )
 from saealib.comparators.dominance import (
-    _PARETO_DOMINATOR,
     Dominator,
     EpsilonDominator,
     ParetoDominator,
-    _dominance_matrix,
-    _pareto_dominates,
 )
 from saealib.comparators.nds import (
     NonDominatedSorter,

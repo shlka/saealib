@@ -9,10 +9,10 @@ Where [Surrogate](surrogate.md) handles only fit/predict, `SurrogateManager` coo
 `SurrogateManager`'s abstract method is `predict()`; fitting and generation hooks have default implementations.
 
 **`predict(candidates_x, archive, ctx=None, *, refit=True) -> SurrogatePrediction`** (abstract): Predicts the candidates.
-With `refit=True` (the default), the surrogate is retrained before scoring.
+With `refit=True` (the default), the surrogate is retrained before prediction.
 
 **`fit(archive, ctx=None) -> None`**: A no-op by default.
-A pre-fit hook meant to be called once before a series of `score_candidates(..., refit=False)` calls, used in situations where the archive doesn't change (such as `GenerationBasedStrategy`'s surrogate-only inner loop).
+A pre-fit hook meant to be called once before a series of `predict(..., refit=False)` calls, used when the archive does not change.
 
 **`last_accuracy: SurrogateAccuracy | None`** (class attribute): The accuracy metric computed by the most recent `fit`.
 Covered in detail in [Surrogate accuracy evaluation and dynamic switching](surrogate_switching.md).
@@ -35,49 +35,47 @@ Also extensible via the same copy-and-chain approach.
 `n_neighbors` isn't a constructor argument of `LocalSurrogateManager` itself — it's a parameter of the default `training_set`.
 Because it reuses and refits the same `surrogate` instance across candidates, it isn't thread-safe.
 
-`CompositeSurrogateManager(managers, combine_fn)` calls each manager in `managers`'s `score_candidates` independently, and combines the resulting score arrays via `combine_fn`.
-`product_combine` (element-wise product, e.g. EI×PoF) and `rank_weighted_combine(weights=None)` (generates a function that returns a rank-normalized weighted average) are provided as functions to pass as `combine_fn`.
+`CompositeSurrogateManager(managers)` calls each named manager's `predict()` and returns a multi-channel `SurrogatePrediction`.
+Use `CompositeAcquisition` to evaluate one acquisition per channel and combine the resulting score arrays with `product_combine` or `rank_weighted_combine(weights=None)`.
 
 `PairwiseSurrogateManager(surrogate, training_set=None, n_ref=10)` uses `PairwiseComparisonSet()` when `training_set` is omitted.
 
 See [TrainingSet](training_set.md) and [Surrogate accuracy evaluation and dynamic switching](surrogate_switching.md), respectively, for details on each manager's `training_set`/`accuracy_evaluator` arguments.
 
-### ArchiveBasedManager: the family that doesn't train a surrogate
+### Archive-based acquisitions
 
-`ArchiveBasedManager` is an abstract subclass of `SurrogateManager` that trains no surrogate model at all, scoring candidates directly from the archive.
-Its only abstract method is `compute_scores(candidates_x, archive, ctx=None) -> np.ndarray`.
-Scores are kept separate from objective feedback.
+These acquisitions score candidate geometry directly against the archive and do not require a surrogate prediction.
 
 | Class | Parameters | Meaning of the score |
 |---|---|---|
-| `NoveltyManager` | `k=1` | Higher when the average distance to the k nearest archive points is larger |
-| `DensityManager` | `eps=1.0` | The reciprocal of the ε-neighborhood density (prioritizes sparse regions) |
-| `NichingManager` | None | The minimum distance among candidates + the minimum distance to the archive |
+| `NoveltyAcquisition` | `k=1` | Higher when the average distance to the k nearest archive points is larger |
+| `InverseDensityAcquisition` | `eps=1.0` | The reciprocal of the ε-neighborhood density |
+| `MaximinDistanceAcquisition` | None | The minimum distance among candidates plus the minimum distance to the archive |
 
-## Implementing a custom SurrogateManager
+## Extending SurrogateManager and archive-based acquisitions
 
-If you need a custom scoring scheme, subclass `SurrogateManager` and implement only `score_candidates()`.
-For a pattern that scores directly from the archive without training a surrogate, it's lighter-weight to subclass `ArchiveBasedManager` and implement only `compute_scores()`.
+If you need a custom prediction scheme, subclass `SurrogateManager` and implement `predict()`.
+For a custom archive-based criterion, subclass `AcquisitionFunction` and implement its evaluation contract.
 
 ```python
 import numpy as np
-from saealib import ArchiveBasedManager
+from saealib import AcquisitionFunction, AcquisitionResult
 
 
-class ConstantScoreManager(ArchiveBasedManager):
-    """A minimal surrogate manager that always returns a constant score, never referencing the archive."""
+class ConstantAcquisition(AcquisitionFunction):
+    """A minimal acquisition that assigns every candidate the same score."""
 
-    def compute_scores(self, candidates_x, archive, ctx=None):
-        return np.ones(len(candidates_x))
+    def evaluate(self, candidates_x, prediction, archive, ctx=None, *, prepared=None):
+        return AcquisitionResult(scores=np.ones(len(candidates_x)))
 ```
 
 ## Related components
 
 - [Surrogate](surrogate.md): The fit/predict implementation `SurrogateManager` coordinates
 - [TrainingSet](training_set.md): Used by each `SurrogateManager` to extract training data
-- [AcquisitionFunction](acquisition_functions.md): The `acquisition` argument of `GlobalSurrogateManager`/`LocalSurrogateManager`
+- [AcquisitionFunction](acquisition_functions.md): Scores the predictions in `AcquisitionStage`
 - [Surrogate accuracy evaluation and dynamic switching](surrogate_switching.md): Details of `accuracy_evaluator`/`last_accuracy`
-- [strategies](strategies.md): The caller of `score_candidates()`
+- [strategies](strategies.md): Assemble `SurrogatePredictStage` and `AcquisitionStage`
 
 ## References
 
@@ -88,7 +86,6 @@ class ConstantScoreManager(ArchiveBasedManager):
 - {py:class}`saealib.PairwiseSurrogateManager`
 - {py:func}`saealib.product_combine`
 - {py:func}`saealib.rank_weighted_combine`
-- {py:class}`saealib.ArchiveBasedManager`
-- {py:class}`saealib.NoveltyManager`
-- {py:class}`saealib.DensityManager`
-- {py:class}`saealib.NichingManager`
+- {py:class}`saealib.NoveltyAcquisition`
+- {py:class}`saealib.InverseDensityAcquisition`
+- {py:class}`saealib.MaximinDistanceAcquisition`

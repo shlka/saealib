@@ -5,8 +5,8 @@
 
 ## OptimizationStrategy's role
 
-`OptimizationStrategy` requires only one method, `step(ctx, provider) -> OptimizationState | None`, to be implemented.
-Returning `None` is a convention for legacy-style implementations that update `ctx` in-place; all 4 built-in strategies return an updated `OptimizationState`.
+`OptimizationStrategy` requires `build_pipeline(provider) -> Pipeline` to be implemented.
+Its `step(ctx, provider) -> OptimizationState` method executes that pipeline and returns the updated state.
 
 The class attribute `requires_surrogate: bool` indicates whether this strategy needs a `SurrogateManager`.
 `Optimizer.validate()` checks this attribute to confirm you aren't trying to use a strategy with `requires_surrogate=True` while `surrogate_manager` is unset.
@@ -26,7 +26,7 @@ The class attribute `requires_surrogate: bool` indicates whether this strategy n
 `DirectStrategy` is the comparison baseline that uses no surrogate at all, with `requires_surrogate=False`.
 
 For steady-state execution, combine `DirectStrategy` with an
-`AsyncScheduler`. The scheduler fills available worker slots, polls without
+`AsyncEvaluationScheduler`. The scheduler fills available worker slots, polls without
 blocking, and commits each completed update in the lifecycle order.
 
 ### Each Strategy's pipeline structure
@@ -34,8 +34,8 @@ blocking, and commits each completed update in the lifecycle order.
 | Class | Pipeline |
 |---|---|
 | `DirectStrategy` | CountGeneration → Ask → TrueEvaluation → ArchiveUpdate → Tell |
-| `IndividualBasedStrategy` | CountGeneration → Ask → SurrogateScore → SortByScore → TrueEvaluation (ratio-based) → ArchiveUpdate → Tell |
-| `PreSelectionStrategy` | CountGeneration → Ask (n_candidates) → SurrogateScore → TopKSelection(k=n_select) → TrueEvaluation → ArchiveUpdate → Tell |
+| `IndividualBasedStrategy` | CountGeneration → Ask → SurrogatePredictStage → AcquisitionStage → SortByScore → TrueEvaluation (ratio-based) → ArchiveUpdate → Tell |
+| `PreSelectionStrategy` | CountGeneration → Ask (n_candidates) → SurrogatePredictStage → AcquisitionStage → TopKSelection(k=n_select) → TrueEvaluation → ArchiveUpdate → Tell |
 | `GenerationBasedStrategy` | SurrogateOnlyLoop (gen_ctrl times) → CountGeneration → Ask → TrueEvaluation → ArchiveUpdate → Tell |
 
 See [Stage](stage.md) for the contract each individual stage satisfies.
@@ -49,23 +49,30 @@ For problems where the surrogate's approximation error itself is unacceptable, o
 
 ## Behavior of runtime swapping
 
-Every Strategy's `step()` unconditionally executes `self.pipeline = self._build_pipeline(provider)` before running the pipeline, every time it's called.
+Every Strategy's `step()` builds the current pipeline from `provider` before running it.
 Because the pipeline isn't cached, swapping `provider.algorithm` or `provider.surrogate_manager` mid-run is reliably reflected from the next generation onward.
 
 ## Implementing a custom Strategy
 
 If you need a custom candidate-selection scheme, there are two approaches.
 
-**Subclass `OptimizationStrategy` directly**: Implement `step()` yourself.
+**Subclass `OptimizationStrategy` directly**: Implement `build_pipeline()`.
 This is also the form you'd use when building a new pipeline by combining [Pipeline/Stage](extension_guidelines.md).
 
 ```python
 from saealib import OptimizationStrategy, Pipeline
+from saealib.policies.evaluation import EvaluateAll
+from saealib.policies.feedback import TrueOnlyFeedback
 from saealib.stages import (
-    CountGenerationStage,
     AskStage,
-    TrueEvaluationStage,
     ArchiveUpdateStage,
+    CountGenerationStage,
+    EvaluationAcknowledgeStage,
+    EvaluationApplyStage,
+    EvaluationCollectStage,
+    EvaluationPlanStage,
+    EvaluationSubmitStage,
+    FeedbackStage,
     TellStage,
 )
 
@@ -75,18 +82,23 @@ class SimpleDirectStrategy(OptimizationStrategy):
 
     requires_surrogate = False
 
-    def step(self, ctx, provider):
+    def build_pipeline(self, provider):
         cbmanager = getattr(provider, "cbmanager", None)
         pipeline = Pipeline(
             [
                 CountGenerationStage(),
                 AskStage(provider.algorithm, cbmanager=cbmanager),
-                TrueEvaluationStage(provider.evaluator, cbmanager=cbmanager),
+                EvaluationPlanStage(EvaluateAll()),
+                EvaluationSubmitStage(provider.evaluator),
+                EvaluationCollectStage(provider.evaluator),
+                EvaluationApplyStage(),
                 ArchiveUpdateStage(),
+                FeedbackStage(TrueOnlyFeedback()),
                 TellStage(provider.algorithm),
+                EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
             ]
         )
-        return pipeline.execute(ctx)
+        return pipeline
 ```
 
 If you just want to fine-tune an existing strategy's pipeline, it's lighter-weight to swap out only part of the built-in pipeline via [Pipeline.replace/find](extension_guidelines.md), rather than writing a new `OptimizationStrategy`.
@@ -94,7 +106,7 @@ If you just want to fine-tune an existing strategy's pipeline, it's lighter-weig
 ## Related components
 
 - [Stage](stage.md): The contract of each individual pipeline stage a Strategy combines
-- [SurrogateManager](surrogate_manager.md): The scoring mechanism used by strategies with `requires_surrogate=True`
+- [SurrogateManager](surrogate_manager.md): The prediction mechanism used by strategies with `requires_surrogate=True`
 - [Extension guidelines](extension_guidelines.md): Rearranging stages via `Pipeline.replace`/`find`
 - [Components overview](index.md): The diagram of the overall pipeline structure
 
@@ -105,4 +117,4 @@ If you just want to fine-tune an existing strategy's pipeline, it's lighter-weig
 - {py:class}`saealib.GenerationBasedStrategy`
 - {py:class}`saealib.PreSelectionStrategy`
 - {py:class}`saealib.DirectStrategy`
-- {py:class}`saealib.AsyncScheduler`
+- {py:class}`saealib.AsyncEvaluationScheduler`

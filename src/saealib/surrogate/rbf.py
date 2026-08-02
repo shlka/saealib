@@ -190,8 +190,8 @@ class RBFSurrogate(RegressionSurrogate):
             prediction.value shape: (n_samples, n_obj)
             prediction.std  is None (RBF interpolation provides no uncertainty)
             prediction.x holds the (n_samples, n_features) query points
-            passed to this call (candidates when called from
-            score_candidates, holdout/archive points when called for
+            passed to this call (candidates when called from a prediction
+            stage, holdout/archive points when called for
             accuracy evaluation), needed by acquisition functions that have
             no other channel to the points being scored (e.g. CORSDistance).
         """

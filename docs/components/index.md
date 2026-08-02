@@ -7,7 +7,7 @@ First we show how the components fit together in the overall pipeline, then move
 
 `Optimizer` bundles the following components and drives the generation loop until `Termination` decides to stop.
 `OptimizationStrategy` orchestrates the processing for a single generation.
-`Algorithm` generates candidate solutions (ask), `SurrogateManager` scores them cheaply, the strategy decides which candidates receive an expensive true evaluation, and the result is reflected in both `Algorithm`'s population (tell) and the `Archive`.
+`Algorithm` generates candidate solutions (ask), `SurrogateManager` predicts their outcomes cheaply, and `AcquisitionFunction` scores those predictions. The strategy then decides which candidates receive an expensive true evaluation, and the result is reflected in both `Algorithm`'s population (tell) and the `Archive`.
 `Archive` also doubles as the surrogate's training data.
 
 ```{mermaid}
@@ -15,7 +15,8 @@ flowchart TD
     INIT["Initializer<br/>(generates the initial population)"] --> STEP
     subgraph STEP["OptimizationStrategy.step() (one generation)"]
         direction TB
-        ASK["Algorithm.ask()<br/>Generate candidates"] --> SCORE["SurrogateManager<br/>score_candidates()"]
+        ASK["Algorithm.ask()<br/>Generate candidates"] --> PREDICT["SurrogatePredictStage<br/>SurrogateManager.predict()"]
+        PREDICT --> SCORE["AcquisitionStage<br/>AcquisitionFunction"]
         SCORE --> SEL["Select candidates<br/>for true evaluation"]
         SEL --> EVAL["Evaluator →<br/>Problem (expensive)"]
         EVAL --> TELL["Algorithm.tell()<br/>Update population"]
@@ -42,7 +43,7 @@ The role of each component is as follows.
 | [Initializer](initialization.md) | Generates the initial population and archive before the loop starts |
 | [Algorithm](algorithm.md) | The evolutionary search itself (GA/PSO). `ask()` generates candidates, `tell()` updates the population |
 | [OptimizationStrategy](strategies.md) | Orchestrates one generation's pipeline and decides which candidates receive a true evaluation |
-| [SurrogateManager](surrogate_manager.md) | Bridges surrogate fitting and scoring, exposing `score_candidates()` |
+| [SurrogateManager](surrogate_manager.md) | Coordinates fitting and `predict()` |
 | [Surrogate](surrogate.md) | Fits and predicts using the archive's data. Knows nothing about how scoring works |
 | [AcquisitionFunction](acquisition_functions.md) | Converts predictions into a scalar score (higher is better). Knows nothing about the model's details |
 | [Evaluator](evaluation.md) | Runs true evaluation (sequentially, or in parallel via the `parallel` extra) |
@@ -76,9 +77,7 @@ opt = (
             TruncationSelection(),
         )
     )
-    .set_surrogate_manager(
-        GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, dim=5))
-    )
+    .set_surrogate_manager(GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, dim=5)))
     .set_acquisition(MeanPrediction())
     .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.1))
     .set_termination(Termination(max_fe(100)))

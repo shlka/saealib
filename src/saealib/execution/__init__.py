@@ -18,11 +18,11 @@ from saealib.execution.initializer import (
     RandomInitializer,
     SobolInitializer,
 )
-from saealib.execution.scheduler import AsyncScheduler
+from saealib.execution.scheduler import AsyncEvaluationScheduler
 
 __all__ = [
+    "AsyncEvaluationScheduler",
     "AsyncEvaluator",
-    "AsyncScheduler",
     "EvaluationErrorInfo",
     "EvaluationHandle",
     "EvaluationRequest",

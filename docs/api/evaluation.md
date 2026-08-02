@@ -11,14 +11,15 @@
    saealib.EvaluationResult
 ```
 
-## Policies
+## Planners
 
 ```{eval-rst}
 .. autosummary::
    :toctree: _autosummary
    :nosignatures:
 
-   saealib.EvaluationPolicy
+   saealib.EvaluationPlanner
+   saealib.EvaluationPlan
    saealib.EvaluateAll
    saealib.TopKEvaluation
    saealib.RatioEvaluation
@@ -27,11 +28,4 @@
    saealib.FidelityPromotion
    saealib.ReplicateSummary
    saealib.aggregate_replicates
-   saealib.RepeatedEvaluationRunner
-   saealib.EvaluationWorkflowResult
-   saealib.FidelityEvaluator
-   saealib.FidelityPromotionRunner
-   saealib.FidelityWorkflowResult
-   saealib.SeededNoiseEvaluator
-   saealib.ArchiveSnapshot
 ```

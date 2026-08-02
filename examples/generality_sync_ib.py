@@ -7,8 +7,12 @@ from saealib import (
     SklearnGPRSurrogate,
     Termination,
     max_fe,
-    reference_problem,
 )
+
+try:
+    from examples._support import reference_problem
+except ModuleNotFoundError:
+    from _support import reference_problem
 
 
 def main():

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 03:01+0900\n"
+"POT-Creation-Date: 2026-08-02 10:23+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,158 +19,190 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../../components/strategies.md:1
+#: ../../components/strategies.md:1
 msgid "OptimizationStrategy"
 msgstr "OptimizationStrategy"
 
-#: ../../../components/strategies.md:3
+#: ../../components/strategies.md:3
 msgid ""
 "`saealib` delegates the decision of which candidate solutions receive an "
 "expensive true evaluation to `OptimizationStrategy`, a swappable "
 "component. `step()` executes one generation's \"generate, score, "
 "evaluate, update.\""
-msgstr "`saealib`は、どの候補解に高コストな真の評価を割り当てるかという判断を、`OptimizationStrategy`という差し替え可能なコンポーネントに委ねています。 `step()`が1世代分の「生成、スコアリング、評価、更新」を実行します。"
+msgstr ""
+"`saealib`は、どの候補解に高コストな真の評価を割り当てるかという判断を、`OptimizationStrategy`という差し替え可能なコンポーネントに委ねています。"
+" `step()`が1世代分の「生成、スコアリング、評価、更新」を実行します。"
 
-#: ../../../components/strategies.md:6
+#: ../../components/strategies.md:6
 msgid "OptimizationStrategy's role"
 msgstr "OptimizationStrategyの役割"
 
-#: ../../../components/strategies.md:8
+#: ../../components/strategies.md:8
 msgid ""
-"`OptimizationStrategy` requires only one method, `step(ctx, provider) -> "
-"OptimizationState | None`, to be implemented. Returning `None` is a "
-"convention for legacy-style implementations that update `ctx` in-place; "
-"all 4 built-in strategies return an updated `OptimizationState`."
-msgstr "`OptimizationStrategy`が実装を要求するメソッドは`step(ctx, provider) -> OptimizationState | None`の1つだけです。 `None`を返すのは、`ctx`をin-place更新するレガシースタイルの実装向けの取り決めであり、組み込みの4種は全て更新後の`OptimizationState`を返します。"
+"`OptimizationStrategy` requires `build_pipeline(provider) -> Pipeline` to"
+" be implemented. Its `step(ctx, provider) -> OptimizationState` method "
+"executes that pipeline and returns the updated state."
+msgstr "`OptimizationStrategy`は`build_pipeline(provider) -> Pipeline`の実装を要求します。`step(ctx, provider) -> OptimizationState`メソッドがそのパイプラインを実行し、更新後の状態を返します。"
 
-#: ../../../components/strategies.md:11
+#: ../../components/strategies.md:11
 msgid ""
 "The class attribute `requires_surrogate: bool` indicates whether this "
 "strategy needs a `SurrogateManager`. `Optimizer.validate()` checks this "
 "attribute to confirm you aren't trying to use a strategy with "
 "`requires_surrogate=True` while `surrogate_manager` is unset."
-msgstr "クラス属性`requires_surrogate: bool`は、この戦略が`SurrogateManager`を必要とするかを示します。 `Optimizer.validate()`がこの属性を見て、`surrogate_manager`が未設定のまま`requires_surrogate=True`の戦略を使おうとしていないかを確認します。"
+msgstr ""
+"クラス属性`requires_surrogate: bool`は、この戦略が`SurrogateManager`を必要とするかを示します。 "
+"`Optimizer.validate()`がこの属性を見て、`surrogate_manager`が未設定のまま`requires_surrogate=True`の戦略を使おうとしていないかを確認します。"
 
-#: ../../../components/strategies.md:14
+#: ../../components/strategies.md:14
 msgid "Built-in Strategies"
 msgstr "組み込みStrategy"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid "Class"
 msgstr "クラス"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid "Parameters"
 msgstr "パラメータ"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid "Approach"
 msgstr "方式"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid "`DirectStrategy`"
 msgstr "`DirectStrategy`"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid "None"
 msgstr "なし"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid "Uses no surrogate; truly evaluates every generated candidate"
 msgstr "サロゲートを使わず、生成した候補を全件真に評価する"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
+msgid "`SteadyStateStrategy`"
+msgstr "`SteadyStateStrategy`"
+
+#: ../../components/strategies.md
+msgid "Generates one candidate per step and supports asynchronous refill"
+msgstr "1ステップにつき1候補を生成し、非同期補充に対応する"
+
+#: ../../components/strategies.md
 msgid "`IndividualBasedStrategy`"
 msgstr "`IndividualBasedStrategy`"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid "`evaluation_ratio: float = 0.1`"
 msgstr "`evaluation_ratio: float = 0.1`"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid ""
 "Scores every candidate with the surrogate, and truly evaluates only the "
 "top `evaluation_ratio` fraction"
 msgstr "全候補をサロゲートでスコアリングし、上位`evaluation_ratio`の割合だけ真に評価する"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid "`PreSelectionStrategy`"
 msgstr "`PreSelectionStrategy`"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid "`n_candidates: int, n_select: int` (both required)"
 msgstr "`n_candidates: int, n_select: int`（共に必須）"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid ""
 "Generates `n_candidates`, scores them, and truly evaluates only the top "
 "`n_select`"
 msgstr "`n_candidates`件を生成してスコアリングし、上位`n_select`件だけ真に評価する"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid "`GenerationBasedStrategy`"
 msgstr "`GenerationBasedStrategy`"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid "`gen_ctrl: int` (required)"
 msgstr "`gen_ctrl: int`（必須）"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid ""
 "Advances `gen_ctrl` generations using only the surrogate, then truly "
 "evaluates a single generation"
 msgstr "`gen_ctrl`世代分をサロゲートのみで進め、その後1世代だけ真に評価する"
 
-#: ../../../components/strategies.md:23
+#: ../../components/strategies.md:24
 msgid ""
 "`IndividualBasedStrategy` selects by fraction of individuals, while "
 "`PreSelectionStrategy` selects by count of individuals. "
 "`GenerationBasedStrategy` switches between surrogate and true evaluation "
 "by generation, not by individual. `DirectStrategy` is the comparison "
 "baseline that uses no surrogate at all, with `requires_surrogate=False`."
-msgstr "`IndividualBasedStrategy`は個体の割合、`PreSelectionStrategy`は個体の件数で選抜する点が異なります。 `GenerationBasedStrategy`は個体単位ではなく世代単位でサロゲートと真の評価を切り替えます。 `DirectStrategy`はサロゲートを一切使わない比較対象で、`requires_surrogate=False`です。"
+msgstr ""
+"`IndividualBasedStrategy`は個体の割合、`PreSelectionStrategy`は個体の件数で選抜する点が異なります。"
+" `GenerationBasedStrategy`は個体単位ではなく世代単位でサロゲートと真の評価を切り替えます。 "
+"`DirectStrategy`はサロゲートを一切使わない比較対象で、`requires_surrogate=False`です。"
 
-#: ../../../components/strategies.md:27
+#: ../../components/strategies.md:28
+msgid ""
+"For steady-state execution, combine `DirectStrategy` with an "
+"`AsyncEvaluationScheduler`. The scheduler fills available worker slots, "
+"polls without blocking, and commits each completed update in the "
+"lifecycle order."
+msgstr "定常状態実行では、`DirectStrategy`と`AsyncEvaluationScheduler`を組み合わせます。スケジューラは利用可能なワーカースロットを埋め、ブロックせずにポーリングし、完了した更新をライフサイクル順にコミットします。"
+
+#: ../../components/strategies.md:32
 msgid "Each Strategy's pipeline structure"
 msgstr "各Strategyのパイプライン構成"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid "Pipeline"
 msgstr "パイプライン"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid "CountGeneration → Ask → TrueEvaluation → ArchiveUpdate → Tell"
 msgstr "CountGeneration → Ask → TrueEvaluation → ArchiveUpdate → Tell"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid ""
-"CountGeneration → Ask → SurrogateScore → SortByScore → TrueEvaluation "
-"(ratio-based) → ArchiveUpdate → Tell"
-msgstr "CountGeneration → Ask → SurrogateScore → SortByScore → TrueEvaluation(比率指定) → ArchiveUpdate → Tell"
+"CountGeneration → Ask → SurrogatePredictStage → AcquisitionStage → "
+"SortByScore → TrueEvaluation (ratio-based) → ArchiveUpdate → Tell"
+msgstr ""
+"CountGeneration → Ask → SurrogatePredictStage → AcquisitionStage → "
+"SortByScore → TrueEvaluation（比率指定）→ ArchiveUpdate → Tell"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid ""
-"CountGeneration → Ask (n_candidates) → SurrogateScore → "
-"TopKSelection(k=n_select) → TrueEvaluation → ArchiveUpdate → Tell"
-msgstr "CountGeneration → Ask(n_candidates件) → SurrogateScore → TopKSelection(k=n_select) → TrueEvaluation → ArchiveUpdate → Tell"
+"CountGeneration → Ask (n_candidates) → SurrogatePredictStage → "
+"AcquisitionStage → TopKSelection(k=n_select) → TrueEvaluation → "
+"ArchiveUpdate → Tell"
+msgstr ""
+"CountGeneration → Ask（n_candidates）→ SurrogatePredictStage → "
+"AcquisitionStage → TopKSelection（k=n_select）→ TrueEvaluation → "
+"ArchiveUpdate → Tell"
 
-#: ../../../components/strategies.md
+#: ../../components/strategies.md
 msgid ""
 "SurrogateOnlyLoop (gen_ctrl times) → CountGeneration → Ask → "
 "TrueEvaluation → ArchiveUpdate → Tell"
-msgstr "SurrogateOnlyLoop(gen_ctrl回) → CountGeneration → Ask → TrueEvaluation → ArchiveUpdate → Tell"
+msgstr ""
+"SurrogateOnlyLoop(gen_ctrl回) → CountGeneration → Ask → TrueEvaluation → "
+"ArchiveUpdate → Tell"
 
-#: ../../../components/strategies.md:36
+#: ../../components/strategies.md:41
 msgid ""
 "See [Stage](stage.md) for the contract each individual stage satisfies. "
 "See [Components overview](index.md) for the overall pipeline diagram."
-msgstr "各[Stage](stage.md)単体の契約は、そちらのページを参照してください。 全体のパイプライン図は[コンポーネント概要](index.md)を参照してください。"
+msgstr ""
+"各[Stage](stage.md)単体の契約は、そちらのページを参照してください。 "
+"全体のパイプライン図は[コンポーネント概要](index.md)を参照してください。"
 
-#: ../../../components/strategies.md:39
+#: ../../components/strategies.md:44
 msgid "Which Strategy to choose"
 msgstr "どのStrategyを選ぶか"
 
-#: ../../../components/strategies.md:41
+#: ../../components/strategies.md:46
 msgid ""
 "For problems where evaluation cost is extremely high, "
 "`IndividualBasedStrategy` or `PreSelectionStrategy`, which use the "
@@ -182,37 +214,43 @@ msgid ""
 "approximation error itself is unacceptable, or evaluation cost is "
 "sufficiently low, relying solely on true evaluation via `DirectStrategy` "
 "is reasonable."
-msgstr "評価コストが極めて高い問題では、サロゲートで大半の候補を足切りする`IndividualBasedStrategy`や`PreSelectionStrategy`が有効です。 サロゲートの信頼度がまだ低い探索初期や、サロゲートの学習コスト自体を頻繁に払いたくない場合は、複数世代をまとめてサロゲートのみで進める`GenerationBasedStrategy`が適しています。 サロゲートの近似誤差そのものが許容できない、あるいは評価コストが十分低い問題では、`DirectStrategy`で真の評価だけに頼るのが妥当です。"
+msgstr ""
+"評価コストが極めて高い問題では、サロゲートで大半の候補を足切りする`IndividualBasedStrategy`や`PreSelectionStrategy`が有効です。"
+" "
+"サロゲートの信頼度がまだ低い探索初期や、サロゲートの学習コスト自体を頻繁に払いたくない場合は、複数世代をまとめてサロゲートのみで進める`GenerationBasedStrategy`が適しています。"
+" "
+"サロゲートの近似誤差そのものが許容できない、あるいは評価コストが十分低い問題では、`DirectStrategy`で真の評価だけに頼るのが妥当です。"
 
-#: ../../../components/strategies.md:45
+#: ../../components/strategies.md:50
 msgid "Behavior of runtime swapping"
 msgstr "実行時差し替えの挙動"
 
-#: ../../../components/strategies.md:47
+#: ../../components/strategies.md:52
 msgid ""
-"Every Strategy's `step()` unconditionally executes `self.pipeline = "
-"self._build_pipeline(provider)` before running the pipeline, every time "
-"it's called. Because the pipeline isn't cached, swapping "
+"Every Strategy's `step()` builds the current pipeline from `provider` "
+"before running it. Because the pipeline isn't cached, swapping "
 "`provider.algorithm` or `provider.surrogate_manager` mid-run is reliably "
 "reflected from the next generation onward."
-msgstr "各Strategyの`step()`は、呼ばれるたびに無条件で`self.pipeline = self._build_pipeline(provider)`を実行してからパイプラインを実行します。 パイプラインをキャッシュしないため、`provider.algorithm`や`provider.surrogate_manager`を実行中に差し替えても、次の世代から確実に反映されます。"
+msgstr "各Strategyの`step()`は、実行前に`provider`から現在のパイプラインを構築します。パイプラインはキャッシュされないため、実行途中で`provider.algorithm`または`provider.surrogate_manager`を差し替えると、次の世代から確実に反映されます。"
 
-#: ../../../components/strategies.md:50
+#: ../../components/strategies.md:55
 msgid "Implementing a custom Strategy"
 msgstr "独自Strategyの実装方法"
 
-#: ../../../components/strategies.md:52
+#: ../../components/strategies.md:57
 msgid "If you need a custom candidate-selection scheme, there are two approaches."
 msgstr "独自の候補選抜方式が必要な場合、2つのアプローチがあります。"
 
-#: ../../../components/strategies.md:54
+#: ../../components/strategies.md:59
 msgid ""
-"**Subclass `OptimizationStrategy` directly**: Implement `step()` "
-"yourself. This is also the form you'd use when building a new pipeline by"
-" combining [Pipeline/Stage](extension_guidelines.md)."
-msgstr "**`OptimizationStrategy`を直接継承する**：`step()`を自分で実装します。 [Pipeline/Stage](extension_guidelines.md)を組み合わせて新しいパイプラインを構築する場合も、この形になります。"
+"**Subclass `OptimizationStrategy` directly**: Implement "
+"`build_pipeline()`. This is also the form you'd use when building a new "
+"pipeline by combining [Pipeline/Stage](extension_guidelines.md)."
+msgstr ""
+"**`OptimizationStrategy`を直接継承する**：`build_pipeline()`を実装します。 "
+"[Pipeline/Stage](extension_guidelines.md)を組み合わせて新しいパイプラインを構築する場合も、この形になります。"
 
-#: ../../../components/strategies.md:82
+#: ../../components/strategies.md:104
 msgid ""
 "If you just want to fine-tune an existing strategy's pipeline, it's "
 "lighter-weight to swap out only part of the built-in pipeline via "
@@ -220,205 +258,64 @@ msgid ""
 "new `OptimizationStrategy`."
 msgstr "既存戦略のパイプラインを微調整したいだけであれば、`OptimizationStrategy`を新しく書くのではなく、[Pipeline.replace/find](extension_guidelines.md)で組み込みパイプラインの一部だけを差し替えるほうが軽量です。"
 
-#: ../../../components/strategies.md:84
+#: ../../components/strategies.md:106
 msgid "Related components"
 msgstr "関連コンポーネント"
 
-#: ../../../components/strategies.md:86
+#: ../../components/strategies.md:108
 msgid ""
 "[Stage](stage.md): The contract of each individual pipeline stage a "
 "Strategy combines"
 msgstr "[Stage](stage.md)：各Strategyが組み合わせるパイプラインステージ単体の契約"
 
-#: ../../../components/strategies.md:87
+#: ../../components/strategies.md:109
 msgid ""
-"[SurrogateManager](surrogate_manager.md): The scoring mechanism used by "
-"strategies with `requires_surrogate=True`"
-msgstr "[SurrogateManager](surrogate_manager.md)：`requires_surrogate=True`の戦略が使うスコアリング機構"
+"[SurrogateManager](surrogate_manager.md): The prediction mechanism used "
+"by strategies with `requires_surrogate=True`"
+msgstr "[SurrogateManager](surrogate_manager.md)：`requires_surrogate=True`の戦略が使う予測機構"
 
-#: ../../../components/strategies.md:88
+#: ../../components/strategies.md:110
 msgid ""
 "[Extension guidelines](extension_guidelines.md): Rearranging stages via "
 "`Pipeline.replace`/`find`"
 msgstr "[拡張のガイドライン](extension_guidelines.md)：`Pipeline.replace`/`find`によるステージの並べ替え"
 
-#: ../../../components/strategies.md:89
+#: ../../components/strategies.md:111
 msgid ""
 "[Components overview](index.md): The diagram of the overall pipeline "
 "structure"
 msgstr "[コンポーネント概要](index.md)：パイプライン全体の構成図"
 
-#: ../../../components/strategies.md:91
+#: ../../components/strategies.md:113
 msgid "References"
 msgstr "参照"
 
-#: ../../../components/strategies.md:93
+#: ../../components/strategies.md:115
 #, python-brace-format
 msgid "{py:class}`saealib.OptimizationStrategy`"
 msgstr "{py:class}`saealib.OptimizationStrategy`"
 
-#: ../../../components/strategies.md:94
+#: ../../components/strategies.md:116
 #, python-brace-format
 msgid "{py:class}`saealib.IndividualBasedStrategy`"
 msgstr "{py:class}`saealib.IndividualBasedStrategy`"
 
-#: ../../../components/strategies.md:95
+#: ../../components/strategies.md:117
 #, python-brace-format
 msgid "{py:class}`saealib.GenerationBasedStrategy`"
 msgstr "{py:class}`saealib.GenerationBasedStrategy`"
 
-#: ../../../components/strategies.md:96
+#: ../../components/strategies.md:118
 #, python-brace-format
 msgid "{py:class}`saealib.PreSelectionStrategy`"
 msgstr "{py:class}`saealib.PreSelectionStrategy`"
 
-#: ../../../components/strategies.md:97
+#: ../../components/strategies.md:119
 #, python-brace-format
 msgid "{py:class}`saealib.DirectStrategy`"
 msgstr "{py:class}`saealib.DirectStrategy`"
 
-#~ msgid ""
-#~ "`saealib`は、どの候補解に高コストな真の評価を割り当てるかという判断を、`OptimizationStrategy`という差し替え可能なコンポーネントに委ねている。"
-#~ " `step()`が1世代分の「生成、スコアリング、評価、更新」を実行する。"
-#~ msgstr ""
-
-#~ msgid "OptimizationStrategyの役割"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`OptimizationStrategy`が実装を要求するメソッドは`step(ctx, provider) ->"
-#~ " OptimizationState | None`の1つだけである。 "
-#~ "`None`を返すのは、`ctx`をin-"
-#~ "place更新するレガシースタイルの実装向けの取り決めであり、組み込みの4種は全て更新後の`OptimizationState`を返す。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "クラス属性`requires_surrogate: "
-#~ "bool`は、この戦略が`SurrogateManager`を必要とするかを示す。 "
-#~ "`Optimizer.validate()`がこの属性を見て、`surrogate_manager`が未設定のまま`requires_surrogate=True`の戦略を使おうとしていないかを確認する。"
-#~ msgstr ""
-
-#~ msgid "組み込みStrategy"
-#~ msgstr ""
-
-#~ msgid "クラス"
-#~ msgstr ""
-
-#~ msgid "パラメータ"
-#~ msgstr ""
-
-#~ msgid "方式"
-#~ msgstr ""
-
-#~ msgid "なし"
-#~ msgstr ""
-
-#~ msgid "サロゲートを使わず、生成した候補を全件真に評価する"
-#~ msgstr ""
-
-#~ msgid "全候補をサロゲートでスコアリングし、上位`evaluation_ratio`の割合だけ真に評価する"
-#~ msgstr ""
-
-#~ msgid "`n_candidates: int, n_select: int`（共に必須）"
-#~ msgstr ""
-
-#~ msgid "`n_candidates`件を生成してスコアリングし、上位`n_select`件だけ真に評価する"
-#~ msgstr ""
-
-#~ msgid "`gen_ctrl: int`（必須）"
-#~ msgstr ""
-
-#~ msgid "`gen_ctrl`世代分をサロゲートのみで進め、その後1世代だけ真に評価する"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`IndividualBasedStrategy`は個体の割合、`PreSelectionStrategy`は個体の件数で選抜する点が異なる。"
-#~ " `GenerationBasedStrategy`は個体単位ではなく世代単位でサロゲートと真の評価を切り替える。 "
-#~ "`DirectStrategy`はサロゲートを一切使わない比較対象で、`requires_surrogate=False`である。"
-#~ msgstr ""
-
-#~ msgid "各Strategyのパイプライン構成"
-#~ msgstr ""
-
-#~ msgid "パイプライン"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "CountGeneration → Ask → SurrogateScore →"
-#~ " SortByScore → TrueEvaluation(比率指定) → "
-#~ "ArchiveUpdate → Tell"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "CountGeneration → Ask(n_candidates件) → "
-#~ "SurrogateScore → TopKSelection(k=n_select) → "
-#~ "TrueEvaluation → ArchiveUpdate → Tell"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "SurrogateOnlyLoop(gen_ctrl回) → CountGeneration → "
-#~ "Ask → TrueEvaluation → ArchiveUpdate →"
-#~ " Tell"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "各[Stage](stage.md)単体の契約は、そちらのページを参照する。 "
-#~ "全体のパイプライン図は[コンポーネント概要](index.md)を参照する。"
-#~ msgstr ""
-
-#~ msgid "どのStrategyを選ぶか"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "評価コストが極めて高い問題では、サロゲートで大半の候補を足切りする`IndividualBasedStrategy`や`PreSelectionStrategy`が有効である。"
-#~ " "
-#~ "サロゲートの信頼度がまだ低い探索初期や、サロゲートの学習コスト自体を頻繁に払いたくない場合は、複数世代をまとめてサロゲートのみで進める`GenerationBasedStrategy`が適している。"
-#~ " "
-#~ "サロゲートの近似誤差そのものが許容できない、あるいは評価コストが十分低い問題では、`DirectStrategy`で真の評価だけに頼るのが妥当である。"
-#~ msgstr ""
-
-#~ msgid "実行時差し替えの挙動"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "各Strategyの`step()`は、呼ばれるたびに無条件で`self.pipeline = "
-#~ "self._build_pipeline(provider)`を実行してからパイプラインを実行する。 "
-#~ "パイプラインをキャッシュしないため、`provider.algorithm`や`provider.surrogate_manager`を実行中に差し替えても、次の世代から確実に反映される。"
-#~ msgstr ""
-
-#~ msgid "独自Strategyの実装方法"
-#~ msgstr ""
-
-#~ msgid "独自の候補選抜方式が必要な場合、2つのアプローチがある。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "**`OptimizationStrategy`を直接継承する**：`step()`を自分で実装する。 "
-#~ "[Pipeline/Stage](extension_guidelines.md)を組み合わせて新しいパイプラインを構築する場合も、この形になる。"
-#~ msgstr ""
-
-#~ msgid "既存戦略のパイプラインを微調整したいだけであれば、`OptimizationStrategy`を新しく書くのではなく、[Pipeline.replace/find](extension_guidelines.md)で組み込みパイプラインの一部だけを差し替えるほうが軽量である。"
-#~ msgstr ""
-
-#~ msgid "関連コンポーネント"
-#~ msgstr ""
-
-#~ msgid "[Stage](stage.md) — 各Strategyが組み合わせるパイプラインステージ単体の契約"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "[SurrogateManager](surrogate_manager.md) — "
-#~ "`requires_surrogate=True`の戦略が使うスコアリング機構"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "[拡張のガイドライン](extension_guidelines.md) — "
-#~ "`Pipeline.replace`/`find`によるステージの並べ替え"
-#~ msgstr ""
-
-#~ msgid "[コンポーネント概要](index.md) — パイプライン全体の構成図"
-#~ msgstr ""
-
-#~ msgid "参照"
-#~ msgstr ""
-
+#: ../../components/strategies.md:120
+#, python-brace-format
+msgid "{py:class}`saealib.AsyncEvaluationScheduler`"
+msgstr "{py:class}`saealib.AsyncEvaluationScheduler`"

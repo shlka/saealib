@@ -1,10 +1,7 @@
-"""Archive-based acquisition functions: score candidates directly from the archive.
+"""Acquisition functions that evaluate candidate geometry against the archive.
 
-Score candidates without using a surrogate prediction. These are direct ports
-of the former ``NoveltyManager``/``DensityManager``/``NichingManager``
-(``surrogate/archive_manager.py``, retired per ADR-0001 Section 1.4 / plan
-Section 5.6) -- ``compute_scores()`` bodies moved verbatim; ``prediction`` is
-ignored since none of these criteria touch a surrogate at all.
+These criteria do not use surrogate predictions; they operate directly on
+candidate and archive design points.
 """
 
 from __future__ import annotations
@@ -59,7 +56,7 @@ class NoveltyAcquisition(AcquisitionFunction):
         return AcquisitionResult(scores=np.asarray(scores, dtype=np.float64))
 
 
-class DensityAcquisition(AcquisitionFunction):
+class InverseDensityAcquisition(AcquisitionFunction):
     """
     Score = inverse eps-NN density. Prefer candidates in sparse regions.
 
@@ -96,7 +93,7 @@ class DensityAcquisition(AcquisitionFunction):
         return AcquisitionResult(scores=np.asarray(scores, dtype=np.float64))
 
 
-class NichingAcquisition(AcquisitionFunction):
+class MaximinDistanceAcquisition(AcquisitionFunction):
     """Score = min distance to other candidates + min distance to archive.
 
     Promotes diversity among candidates. ``prediction`` is ignored -- this is

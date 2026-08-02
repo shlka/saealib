@@ -7,6 +7,7 @@ Tests cover:
 """
 
 import operator
+from typing import Any, cast
 
 import numpy as np
 
@@ -20,13 +21,16 @@ from saealib import (
     TruncationSelection,
 )
 from saealib.acquisition import AcquisitionResult, MeanPrediction
-from saealib.acquisition.archive_based import DensityAcquisition, NoveltyAcquisition
+from saealib.acquisition.archive_based import (
+    InverseDensityAcquisition,
+    NoveltyAcquisition,
+)
 from saealib.acquisition.base import _UNSET, AcquisitionFunction
 from saealib.callback import AcquisitionEndEvent, CallbackManager
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.execution.evaluator import SerialEvaluator
-from saealib.policies import EvaluationPolicy, FeedbackPolicy
+from saealib.policies import EvaluationPlanner, FeedbackBuilder
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.strategies.gb import GenerationBasedStrategy
@@ -103,7 +107,7 @@ def _make_ga() -> GA:
 
 
 class _LinspaceAcquisition(AcquisitionFunction):
-    """Descending linspace scores, matching the former mock's score_candidates()."""
+    """Descending linspace scores for the strategy selection test."""
 
     def evaluate(self, candidates_x, prediction, archive, ctx=None, *, prepared=_UNSET):
         n = len(candidates_x)
@@ -125,8 +129,8 @@ class _MockProvider:
     seed: int | None = None
     strategy = IndividualBasedStrategy(evaluation_ratio=0.1)
     termination: Termination = Termination(max_gen(100_000))
-    evaluation_policy: EvaluationPolicy | None = None
-    feedback_policy: FeedbackPolicy | None = None
+    evaluation_planner: EvaluationPlanner | None = None
+    feedback_builder: FeedbackBuilder | None = None
 
     def __init__(self, algorithm, surrogate_manager, acquisition=None):
         self.algorithm = algorithm
@@ -192,7 +196,7 @@ class TestGenerationBasedStrategy:
         ctx, provider, strategy = self._setup(gen_ctrl=3)
         ctx = strategy.step(ctx, provider)
         pipeline_ref = strategy.pipeline
-        strategy.step(ctx, provider)
+        strategy.step(ctx, cast(Any, provider))
         assert strategy.pipeline is not pipeline_ref
 
     def test_surrogate_fit_called_once_per_step(self):
@@ -207,7 +211,7 @@ class TestGenerationBasedStrategy:
         provider = _MockProvider(_make_ga(), manager, MeanPrediction())
         strategy = GenerationBasedStrategy(gen_ctrl=3)
 
-        strategy.step(ctx, provider)
+        strategy.step(ctx, cast(Any, provider))
 
         assert fit_count[0] == 1
 
@@ -223,7 +227,7 @@ class TestGenerationBasedStrategy:
         provider = _MockProvider(_make_ga(), manager, MeanPrediction())
         strategy = GenerationBasedStrategy(gen_ctrl=1)
 
-        strategy.step(ctx, provider)
+        strategy.step(ctx, cast(Any, provider))
 
         # LocalSurrogateManager always fits per candidate; refit=False is ignored
         n_offspring = len(ctx.population)
@@ -323,7 +327,7 @@ def _make_novelty_manager() -> tuple[GlobalSurrogateManager, AcquisitionFunction
 def _make_density_manager() -> tuple[GlobalSurrogateManager, AcquisitionFunction]:
     return (
         GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM)),
-        DensityAcquisition(eps=1.0),
+        InverseDensityAcquisition(eps=1.0),
     )
 
 
@@ -387,8 +391,8 @@ class TestIndividualBasedStrategyWithNoveltyAcquisition:
         assert ctx.gen == 1
 
 
-class TestPreSelectionStrategyWithDensityAcquisition:
-    """End-to-end: PreSelectionStrategy scored by DensityAcquisition."""
+class TestPreSelectionStrategyWithInverseDensityAcquisition:
+    """End-to-end: PreSelectionStrategy scored by InverseDensityAcquisition."""
 
     def _setup(self, n_candidates: int = 20, n_select: int = 5):
         ctx = _make_ctx()
@@ -402,7 +406,7 @@ class TestPreSelectionStrategyWithDensityAcquisition:
         ctx = strategy.step(ctx, provider)
 
     def test_acquisition_scores_are_density_based(self):
-        """Scores actually come from DensityAcquisition, not a constant fallback.
+        """Scores actually come from InverseDensityAcquisition, not a constant fallback.
 
         Same reasoning as the Novelty test above, mirrored for the
         eps-neighborhood density criterion.

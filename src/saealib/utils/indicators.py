@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from saealib.comparators import _dominance_matrix
+from saealib.comparators import ParetoDominator
 
 
 def hypervolume(f: np.ndarray, reference_point: np.ndarray) -> float:
@@ -201,6 +201,6 @@ def _non_dominated(f: np.ndarray) -> np.ndarray:
         return f
     # dom[i, j] = True iff row i dominates row j; a row is dominated when any
     # column of dom is True for it (i.e. dom.any(axis=0)[j] is True).
-    dom = _dominance_matrix(f)
+    dom = ParetoDominator().dominance_matrix(f)
     dominated = dom.any(axis=0)
     return f[~dominated]

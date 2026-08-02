@@ -10,7 +10,7 @@ Tests cover:
 - Crossover (base): n_children default and consistency with output shape
 - MutationPolynomial: output shape, within-bounds, zero-rate
 - MutationGaussian: output shape, zero-rate, zero-sigma
-- RouletteWheelSelection: output shape, probability bias
+- LinearRankSelection: output shape, probability bias
 """
 
 from typing import cast
@@ -39,7 +39,7 @@ from saealib.operators.mutation import (
     MutationPolynomial,
     MutationUniform,
 )
-from saealib.operators.selection import RouletteWheelSelection, TournamentSelection
+from saealib.operators.selection import LinearRankSelection, TournamentSelection
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -713,20 +713,20 @@ class TestMutationDerived:
 
 
 # ---------------------------------------------------------------------------
-# RouletteWheelSelection
+# LinearRankSelection
 # ---------------------------------------------------------------------------
 
 
-class TestRouletteWheelSelection:
+class TestLinearRankSelection:
     def test_output_shape(self):
-        op = RouletteWheelSelection()
+        op = LinearRankSelection()
         ctx = _make_ctx(n_pop=10)
         rng = np.random.default_rng(0)
         idx = op.select(ctx, ctx.population, n_pair=4, n_parents=2, rng=rng)
         assert idx.shape == (4, 2)
 
     def test_indices_in_range(self):
-        op = RouletteWheelSelection()
+        op = LinearRankSelection()
         ctx = _make_ctx(n_pop=10)
         rng = np.random.default_rng(0)
         idx = op.select(ctx, ctx.population, n_pair=5, n_parents=2, rng=rng)
@@ -734,7 +734,7 @@ class TestRouletteWheelSelection:
 
     def test_best_selected_more_often(self):
         """Best individual (lowest f) should appear more than worst over many trials."""
-        op = RouletteWheelSelection()
+        op = LinearRankSelection()
         n_pop = 10
         ctx = _make_ctx(n_pop=n_pop, rng_seed=0)
         # Identify best and worst indices via comparator

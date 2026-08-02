@@ -4,7 +4,7 @@ from typing import Protocol
 
 import numpy as np
 
-from saealib.comparators.dominance import _PARETO_DOMINATOR, Dominator, ParetoDominator
+from saealib.comparators.dominance import Dominator, ParetoDominator
 
 
 def non_dominated_sort(
@@ -53,7 +53,8 @@ def non_dominated_sort(
     NSGA-II. *IEEE Transactions on Evolutionary Computation*, 6(2),
     182-197.
     """
-    _dom = dominator if dominator is not None else _PARETO_DOMINATOR
+    use_default_pareto = dominator is None
+    _dom = dominator if dominator is not None else ParetoDominator()
 
     n = len(f)
     nan_mask = np.any(np.isnan(f), axis=1)
@@ -67,7 +68,7 @@ def non_dominated_sort(
         # dominator is responsible for applying the direction transform.
         g = np.asarray(f[valid], dtype=float)
 
-        if _dom is _PARETO_DOMINATOR and g.shape[1] == 2:
+        if use_default_pareto and g.shape[1] == 2:
             local_ranks = _two_objective_ranks(g, direction)
             ranks[valid] = local_ranks
             for rank in range(int(local_ranks.max()) + 1):
@@ -193,7 +194,7 @@ def dda_non_dominated_sort(
     fronts : list[list[int]]
         ``fronts[i]`` contains the global indices of individuals in front i.
     """
-    _dom = dominator if dominator is not None else _PARETO_DOMINATOR
+    _dom = dominator if dominator is not None else ParetoDominator()
 
     n = len(f)
     nan_mask = np.any(np.isnan(f), axis=1)

@@ -1,5 +1,6 @@
 import dataclasses
 import pickle
+from typing import Any, cast
 
 import numpy as np
 import pytest
@@ -20,14 +21,18 @@ from saealib.execution.evaluator import (
     Evaluator,
 )
 from saealib.optimizer import Optimizer
+from saealib.policies.evaluation import RepeatedEvaluation
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.stages import (
+    ArchiveUpdateStage,
     EvaluationAcknowledgeStage,
     EvaluationApplyStage,
     EvaluationCollectStage,
     EvaluationPlanStage,
     EvaluationSubmitStage,
+    FeedbackStage,
+    TellStage,
 )
 
 
@@ -94,6 +99,64 @@ class _OutOfOrderEvaluator(_MultiEvaluator):
     def collect(self, handle, *, wait=True):
         updates = super().collect(handle, wait=wait)
         return [updates[1], updates[0]]
+
+
+class _SplitPartialEvaluator(_Evaluator):
+    def __init__(self):
+        self.acks = []
+
+    def submit(self, request, problem):
+        return EvaluationHandle(
+            request.request_id,
+            EvaluationStatus.RUNNING,
+            backend_token=request,
+        )
+
+    def collect(self, handle, *, wait=True):
+        request = handle.backend_token
+        if handle._delivered_sequence < 0:
+            ids = request.candidate_ids[:1]
+            result = EvaluationResult(
+                np.array([[1.0]]),
+                np.empty((1, 0)),
+                np.zeros(1),
+                ids,
+            )
+            handle._delivered_sequence = 0
+            return [
+                EvaluationUpdate(
+                    request.request_id,
+                    EvaluationStatus.PARTIAL,
+                    ids,
+                    result,
+                    sequence=0,
+                )
+            ]
+        if handle._delivered_sequence == 0:
+            ids = request.candidate_ids[1:]
+            result = EvaluationResult(
+                np.array([[2.0]]),
+                np.empty((1, 0)),
+                np.zeros(1),
+                ids,
+            )
+            handle._delivered_sequence = 1
+            return [
+                EvaluationUpdate(
+                    request.request_id,
+                    EvaluationStatus.COMPLETED,
+                    ids,
+                    result,
+                    sequence=1,
+                )
+            ]
+        return []
+
+    def acknowledge(self, handle, sequence):
+        if sequence != handle._acknowledged_sequence + 1:
+            raise EvaluationProtocolError("non-contiguous acknowledgement")
+        self.acks.append((int(handle.request_id), sequence))
+        handle._acknowledged_sequence = sequence
 
 
 def _state() -> OptimizationState:
@@ -250,6 +313,93 @@ def test_multi_update_lifecycle_is_contiguous_and_exactly_once():
     assert all(event.ctx.fe == i for i, event in enumerate(events, 1))
 
 
+def test_partial_collects_keep_unacknowledged_sequence_until_terminal():
+    state = _state()
+    evaluator = _SplitPartialEvaluator()
+    algorithm_calls = []
+
+    class Algorithm:
+        def tell(self, state, provider, offspring):
+            algorithm_calls.append(offspring.id.tolist())
+
+    state = EvaluationPlanStage().execute(state)
+    state = EvaluationSubmitStage(evaluator).execute(state)
+    state = EvaluationCollectStage(evaluator).execute(state)
+    assert [update.sequence for update in state.evaluation_updates] == [0]
+    assert state.evaluation_updates[0].status is EvaluationStatus.PARTIAL
+    assert state.fe == 0
+    assert len(state.archive) == 0
+    for stage in (
+        EvaluationApplyStage(),
+        ArchiveUpdateStage(),
+        FeedbackStage(),
+        TellStage(cast(Any, Algorithm())),
+        EvaluationAcknowledgeStage(evaluator),
+    ):
+        assert stage.execute(state) is state
+    assert algorithm_calls == []
+    assert evaluator.acks == []
+
+    state = EvaluationCollectStage(evaluator).execute(state)
+    assert [update.sequence for update in state.evaluation_updates] == [0, 1]
+    assert [update.status for update in state.evaluation_updates] == [
+        EvaluationStatus.PARTIAL,
+        EvaluationStatus.COMPLETED,
+    ]
+    state = EvaluationApplyStage().execute(state)
+    state = ArchiveUpdateStage().execute(state)
+    state = FeedbackStage().execute(state)
+    state = TellStage(cast(Any, Algorithm())).execute(state)
+    state = EvaluationAcknowledgeStage(evaluator).execute(state)
+    assert algorithm_calls == [[10, 11]]
+    assert evaluator.acks == [(0, 0), (0, 1)]
+    assert state.fe == 2
+    assert state.pending_evaluations == {}
+
+
+def test_repeated_partial_collects_keep_each_request_history():
+    state = EvaluationPlanStage(RepeatedEvaluation(2)).execute(_state())
+    evaluator = _SplitPartialEvaluator()
+    algorithm_calls = []
+
+    class Algorithm:
+        def tell(self, state, provider, offspring):
+            algorithm_calls.append(offspring.id.tolist())
+
+    state = EvaluationSubmitStage(evaluator).execute(state)
+    state = EvaluationCollectStage(evaluator).execute(state)
+    assert state.evaluation_updates == []
+    assert all(
+        [update.sequence for update in updates] == [0]
+        for updates in state.evaluation_plan_updates.values()
+    )
+    for stage in (
+        EvaluationApplyStage(),
+        ArchiveUpdateStage(),
+        FeedbackStage(),
+        TellStage(cast(Any, Algorithm())),
+        EvaluationAcknowledgeStage(evaluator),
+    ):
+        assert stage.execute(state) is state
+    assert algorithm_calls == []
+    assert evaluator.acks == []
+
+    state = EvaluationCollectStage(evaluator).execute(state)
+    assert all(
+        [update.sequence for update in updates] == [0, 1]
+        for updates in state.evaluation_plan_updates.values()
+    )
+    state = EvaluationApplyStage().execute(state)
+    state = ArchiveUpdateStage().execute(state)
+    state = FeedbackStage().execute(state)
+    state = TellStage(cast(Any, Algorithm())).execute(state)
+    state = EvaluationAcknowledgeStage(evaluator).execute(state)
+    assert algorithm_calls == [[10, 11]]
+    assert evaluator.acks == [(0, 0), (0, 1), (1, 0), (1, 1)]
+    assert state.fe == 4
+    assert state.pending_evaluations == {}
+
+
 @pytest.mark.parametrize("evaluator", [_GapEvaluator(), _OutOfOrderEvaluator()])
 def test_collect_rejects_gap_and_out_of_order(evaluator):
     state = EvaluationPlanStage().execute(_state())
@@ -283,10 +433,13 @@ def test_partial_lifecycle_override_is_rejected():
         Optimizer(_state().problem).set_evaluator(_PartialOverrideEvaluator())
 
 
-def test_checkpoint_rejects_pending_and_accepts_completed_state(tmp_path):
+def test_checkpoint_preserves_sync_plan_and_accepts_completed_state(tmp_path):
     state = EvaluationPlanStage().execute(_state())
-    with pytest.raises(ValidationError):
-        state.save(tmp_path / "pending.npz")
+    pending_path = tmp_path / "pending.npz"
+    state.save(pending_path)
+    pending_loaded = OptimizationState.load(pending_path, state.problem)
+    assert pending_loaded.evaluation_plan is not None
+    assert pending_loaded.pending_evaluations
     completed = _state()
     path = tmp_path / "complete.npz"
     completed.save(path)

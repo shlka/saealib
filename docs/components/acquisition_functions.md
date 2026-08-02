@@ -1,16 +1,17 @@
 # AcquisitionFunction
 
-[SurrogateManager](surrogate_manager.md) delegates the conversion of a [Surrogate](surrogate.md)'s predictions into a scalar score to `AcquisitionFunction`, a swappable component.
+`SurrogatePredictStage` passes a [Surrogate](surrogate.md)'s predictions to `AcquisitionStage`, which delegates scalar scoring to `AcquisitionFunction`.
 `AcquisitionFunction` only receives `Surrogate`'s prediction results, and knows nothing about the model's internals (what algorithm produced the prediction).
 
 ## AcquisitionFunction's role
 
-`AcquisitionFunction` requires two methods to be implemented.
+`AcquisitionFunction` requires `evaluate(candidates_x, prediction, archive, ctx=None, *, prepared=...) -> AcquisitionResult`.
+For pointwise criteria, the `PointwiseAcquisition` convenience base class splits this into two methods.
 
-**`compute_reference(archive, rng=None) -> Any`**: Computes a reference value used for scoring (such as the current best value) from the archive.
+**`compute_reference(archive, rng=None) -> Any`**: On `PointwiseAcquisition`, computes a reference value used for scoring (such as the current best value) from the archive.
 An acquisition function that doesn't use a reference value may return `None`.
 
-**`score(prediction, reference, rng=None) -> np.ndarray`**: Computes a score from `SurrogatePrediction` and the reference value.
+**`score(prediction, reference, rng=None) -> np.ndarray`**: On `PointwiseAcquisition`, computes a score from `SurrogatePrediction` and the reference value.
 As with saealib's overall convention, a higher score is better.
 
 The class attribute `requires_uncertainty: bool` indicates whether this acquisition function needs `SurrogatePrediction.std` (uncertainty).
@@ -31,9 +32,13 @@ Acquisition functions with no notion of objective direction, such as feasibility
 | `ParEGOAcquisition` | ParEGO via random scalarization {cite}`knowles2006parego,chugh2020scalarizing`. For multi-objective use | `True` |
 | `ProbabilityOfFeasibility` | Feasibility probability for a single constraint {cite}`schonlau1997pof,gelbart2014pof` | `True` |
 | `ProductOfFeasibility` | Product of feasibility probabilities across multiple constraints {cite}`gelbart2014pof` | `True` |
+| `NoveltyAcquisition` | Mean distance to the nearest archive points | `False` |
+| `InverseDensityAcquisition` | Inverse archive neighborhood density | `False` |
+| `MaximinDistanceAcquisition` | Candidate and archive diversity criterion | `False` |
 
-All 8 classes other than `MeanPrediction` have `requires_uncertainty=True`.
-To use an uncertainty-based acquisition function, the `Surrogate` it's paired with must return `std` (`provides_uncertainty=True`). Joint batch acquisitions additionally require a candidate covariance or another explicit joint posterior representation; `CorrelatedQuadraticSurrogate` is a deterministic public example of that contract.
+The uncertainty-based acquisitions in the table have `requires_uncertainty=True`.
+Archive-based acquisitions (`NoveltyAcquisition`, `InverseDensityAcquisition`, and `MaximinDistanceAcquisition`) do not require predictive uncertainty.
+To use an uncertainty-based acquisition function, the `Surrogate` it's paired with must return `std` (`provides_uncertainty=True`). Joint batch acquisitions additionally require a candidate covariance or another explicit joint posterior representation; see the examples for a deterministic implementation of that contract.
 Among the built-in surrogates, only `SklearnGPRSurrogate` satisfies this.
 See the uncertainty-support table in [Surrogate](surrogate.md) for details.
 
@@ -41,19 +46,22 @@ See the uncertainty-support table in [Surrogate](surrogate.md) for details.
 This is because the magnitude of uncertainty or a feasibility probability has no notion of maximizing vs. minimizing direction.
 
 `ProbabilityOfFeasibility`/`ProductOfFeasibility` are used paired with a classification or regression surrogate that predicts a constraint value `g`.
-The typical usage is to extract training data with [TrainingSet](training_set.md)'s `ConstraintObjectiveSet`, and combine it with the objective-side acquisition function (e.g. EI) via `CompositeSurrogateManager`'s `product_combine`.
+The typical usage is to extract training data with [TrainingSet](training_set.md)'s `ConstraintObjectiveSet`, and combine it with the objective-side acquisition function (e.g. EI) via `CompositeAcquisition`'s `product_combine`.
 
 ```python
-ei_manager = GlobalSurrogateManager(
-    gp_surrogate, ExpectedImprovement(), ArchiveObjectiveSet()
-)
+ei_manager = GlobalSurrogateManager(gp_surrogate, ArchiveObjectiveSet())
 pof_manager = GlobalSurrogateManager(
     PerObjectiveSurrogate([gp_g1, gp_g2]),
-    ProductOfFeasibility(),
     ConstraintObjectiveSet(),
 )
 optimizer.set_surrogate_manager(
-    CompositeSurrogateManager([ei_manager, pof_manager], product_combine)
+    CompositeSurrogateManager({"objective": ei_manager, "feasibility": pof_manager})
+)
+optimizer.set_acquisition(
+    CompositeAcquisition(
+        {"objective": ExpectedImprovement(), "feasibility": ProductOfFeasibility()},
+        product_combine,
+    )
 )
 ```
 
@@ -67,14 +75,14 @@ If `direction` isn't specified explicitly, `problem.direction` is injected autom
 
 ## Implementing a custom AcquisitionFunction
 
-If you need a custom scoring scheme, subclass `AcquisitionFunction` and implement `compute_reference()`/`score()`.
+If you need a custom pointwise scoring scheme, subclass `PointwiseAcquisition` and implement `compute_reference()`/`score()`.
 The following example is a simple acquisition function that gives a higher score to candidates whose predictive mean falls further below a threshold.
 
 ```python
-from saealib import AcquisitionFunction
+from saealib import PointwiseAcquisition
 
 
-class ThresholdAcquisition(AcquisitionFunction):
+class ThresholdAcquisition(PointwiseAcquisition):
     """Gives a higher score to candidates whose predictive mean falls further below a threshold (assumes minimization)."""
 
     def __init__(self, threshold: float = 0.0):
@@ -98,7 +106,7 @@ This warning will catch you if you pair an acquisition function with `requires_u
 ## Related components
 
 - [Surrogate](surrogate.md): The source of `SurrogatePrediction`. See here also for the uncertainty-support table
-- [SurrogateManager](surrogate_manager.md): Combines `AcquisitionFunction` with `Surrogate`
+- [SurrogateManager](surrogate_manager.md): Provides predictions to `AcquisitionFunction`
 - [TrainingSet](training_set.md): Constraint data extraction paired with `ProbabilityOfFeasibility`/`ProductOfFeasibility`
 
 ## References

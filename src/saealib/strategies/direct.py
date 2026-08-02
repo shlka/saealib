@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from saealib.pipeline import Pipeline
 from saealib.policies.evaluation import EvaluateAll
-from saealib.policies.feedback import TrueOnlyFeedback
+from saealib.policies.feedback import FeedbackBuilder, TrueOnlyFeedback
 from saealib.registry import register
 from saealib.stages import (
     ArchiveUpdateStage,
@@ -39,8 +39,8 @@ class DirectStrategy(OptimizationStrategy):
 
     requires_surrogate: bool = False
 
-    evaluation_policy = EvaluateAll()
-    feedback_policy = TrueOnlyFeedback()
+    evaluation_planner = EvaluateAll()
+    feedback_builder = TrueOnlyFeedback()
 
     def __init__(self, n_offspring: int | None = None) -> None:
         if n_offspring is not None and n_offspring < 1:
@@ -48,33 +48,36 @@ class DirectStrategy(OptimizationStrategy):
         self.n_offspring = n_offspring
         self.pipeline: Pipeline | None = None
 
-    def _build_pipeline(self, provider: ComponentProvider) -> Pipeline:
+    def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
+        """Build the current direct evaluation pipeline."""
         cbmanager = getattr(provider, "cbmanager", None)
-        scheduler = getattr(provider, "async_scheduler", None)
-        evaluation_policy = (
-            getattr(provider, "evaluation_policy", None) or self.evaluation_policy
+        scheduler = getattr(provider, "async_evaluation_scheduler", None)
+        evaluation_planner = (
+            getattr(provider, "evaluation_planner", None) or self.evaluation_planner
         )
-        feedback_policy = (
-            getattr(provider, "feedback_policy", None) or self.feedback_policy
+        feedback_builder = cast(
+            FeedbackBuilder | None, getattr(provider, "feedback_builder", None)
         )
+        if feedback_builder is None:
+            feedback_builder = self.feedback_builder
         if scheduler is not None:
             evaluation_tail = [
                 AsyncEvaluationSubmitStage(
                     scheduler,
-                    evaluation_policy,
-                    feedback_policy,
+                    evaluation_planner,
+                    feedback_builder,
                     provider.algorithm,
                     cbmanager,
                 )
             ]
         else:
             evaluation_tail = [
-                EvaluationPlanStage(evaluation_policy),
+                EvaluationPlanStage(evaluation_planner),
                 EvaluationSubmitStage(provider.evaluator),
                 EvaluationCollectStage(provider.evaluator),
                 EvaluationApplyStage(),
                 ArchiveUpdateStage(),
-                FeedbackStage(feedback_policy),
+                FeedbackStage(feedback_builder),
                 TellStage(provider.algorithm),
                 EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
             ]
@@ -110,14 +113,14 @@ class DirectStrategy(OptimizationStrategy):
         provider : ComponentProvider
             Component provider.
         """
-        scheduler = getattr(provider, "async_scheduler", None)
+        scheduler = getattr(provider, "async_evaluation_scheduler", None)
         if scheduler is not None and ctx.pending_evaluations:
             ctx = scheduler.poll(ctx, wait=False)
             if not ctx.pending_evaluations:
                 return ctx
             if len(ctx.pending_evaluations) >= scheduler.max_pending:
                 return ctx
-        self.pipeline = self._build_pipeline(provider)
+        self.pipeline = self.build_pipeline(provider)
         return self.pipeline.execute(ctx)
 
 

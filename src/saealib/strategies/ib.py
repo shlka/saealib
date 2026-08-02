@@ -7,11 +7,11 @@ surrogate model. The top-evaluation_ratio fraction are selected for true evaluat
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from saealib.pipeline import Pipeline
 from saealib.policies.evaluation import RatioEvaluation
-from saealib.policies.feedback import MixedFeedback
+from saealib.policies.feedback import FeedbackBuilder, MixedFeedback
 from saealib.registry import register
 from saealib.stages import (
     AcquisitionStage,
@@ -34,6 +34,8 @@ from saealib.strategies.base import OptimizationStrategy
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
     from saealib.optimizer import ComponentProvider
+
+_MISSING = object()
 
 
 @register()
@@ -60,39 +62,42 @@ class IndividualBasedStrategy(OptimizationStrategy):
         self.pipeline: Pipeline | None = None
 
     @property
-    def evaluation_policy(self):
-        """Return the current ratio policy."""
+    def evaluation_planner(self):
+        """Return the current ratio planner."""
         return RatioEvaluation(self.evaluation_ratio, sanitize_nonfinite=True)
 
-    feedback_policy = MixedFeedback()
+    feedback_builder = MixedFeedback()
 
-    def _build_pipeline(self, provider: ComponentProvider) -> Pipeline:
+    def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
+        """Build the current individual-based pipeline."""
         cbmanager = getattr(provider, "cbmanager", None)
-        scheduler = getattr(provider, "async_scheduler", None)
-        evaluation_policy = (
-            getattr(provider, "evaluation_policy", None) or self.evaluation_policy
+        scheduler = getattr(provider, "async_evaluation_scheduler", None)
+        evaluation_planner = (
+            getattr(provider, "evaluation_planner", None) or self.evaluation_planner
         )
-        feedback_policy = (
-            getattr(provider, "feedback_policy", None) or self.feedback_policy
+        feedback_builder = cast(
+            FeedbackBuilder | None, getattr(provider, "feedback_builder", None)
         )
+        if feedback_builder is None:
+            feedback_builder = self.feedback_builder
         if scheduler is not None:
             evaluation_tail = [
                 AsyncEvaluationSubmitStage(
                     scheduler,
-                    evaluation_policy,
-                    feedback_policy,
+                    evaluation_planner,
+                    feedback_builder,
                     provider.algorithm,
                     cbmanager,
                 )
             ]
         else:
             evaluation_tail = [
-                EvaluationPlanStage(evaluation_policy),
+                EvaluationPlanStage(evaluation_planner),
                 EvaluationSubmitStage(provider.evaluator),
                 EvaluationCollectStage(provider.evaluator),
                 EvaluationApplyStage(),
                 ArchiveUpdateStage(),
-                FeedbackStage(feedback_policy),
+                FeedbackStage(feedback_builder),
                 TellStage(provider.algorithm),
                 EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
             ]
@@ -135,12 +140,12 @@ class IndividualBasedStrategy(OptimizationStrategy):
         provider : ComponentProvider
             Component provider.
         """
-        scheduler = getattr(provider, "async_scheduler", None)
+        scheduler = getattr(provider, "async_evaluation_scheduler", None)
         if scheduler is not None and ctx.pending_evaluations:
             ctx = scheduler.poll(ctx, wait=False)
             if not ctx.pending_evaluations:
                 return ctx
             if len(ctx.pending_evaluations) >= scheduler.max_pending:
                 return ctx
-        self.pipeline = self._build_pipeline(provider)
+        self.pipeline = self.build_pipeline(provider)
         return self.pipeline.execute(ctx)

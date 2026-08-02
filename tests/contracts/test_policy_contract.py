@@ -11,11 +11,17 @@ from saealib.execution.evaluator import EvaluationResult
 from saealib.policies import (
     ComparatorWorstFallback,
     EvaluateAll,
+    EvaluationPlan,
+    FidelityEvaluation,
+    FidelityPromotion,
     MixedFeedback,
     NoFeedback,
     PredictedFeedback,
+    RatioEvaluation,
+    RepeatedEvaluation,
     TopKEvaluation,
     TrueOnlyFeedback,
+    aggregate_replicates,
     select_ratio,
     select_top_k,
 )
@@ -83,21 +89,95 @@ def test_selection_boundaries_and_empty():
         select_ratio(np.ones(2), 1.1)
     with pytest.raises(ValidationError):
         select_top_k(np.array([1.0, np.nan]), 1)
-    assert TopKEvaluation(1, sanitize_nonfinite=True).plan(
+    plan = TopKEvaluation(1, sanitize_nonfinite=True).plan(
         _state().offspring,
         AcquisitionResult(np.array([1.0, np.nan], dtype=np.float64)),
         _state(),
-    ).candidate_ids.tolist() == [10]
+    )
+    np.testing.assert_array_equal(plan.requests[0].candidate_ids, [10])
+
+
+def test_plan_and_score_validation_covers_invalid_policy_inputs():
+    state = _state()
+    request = EvaluateAll().plan(state.offspring, None, state).requests[0]
+    with pytest.raises(ValidationError, match="contain a request"):
+        EvaluationPlan(())
+    with pytest.raises(ValidationError, match="duplicate request IDs"):
+        EvaluationPlan((request, request))
+    with pytest.raises(ValidationError, match="acquisition score array"):
+        TopKEvaluation(1).plan(state.offspring, None, state)
+    with pytest.raises(ValidationError, match="float64"):
+        TopKEvaluation(1).plan(
+            state.offspring,
+            AcquisitionResult(np.ones(2, dtype=np.float32)),
+            state,
+        )
+    with pytest.raises(ValidationError, match="integer"):
+        select_top_k(np.ones(2, dtype=np.float64), True)
+    with pytest.raises(ValidationError, match="within"):
+        select_top_k(np.ones(2, dtype=np.float64), -1)
+    with pytest.raises(ValidationError, match="float64"):
+        select_ratio(np.ones((2, 1), dtype=np.float64), 0.5)
+    ratio = RatioEvaluation(0.5).plan(
+        state.offspring,
+        AcquisitionResult(np.array([1.0, 0.0], dtype=np.float64)),
+        state,
+    )
+    assert len(ratio.requests[0].candidate_ids) == 1
+
+
+def test_repeated_and_fidelity_planners_validate_and_annotate_requests():
+    state = _state()
+    with pytest.raises(ValidationError, match="positive integer"):
+        RepeatedEvaluation(0)
+    with pytest.raises(ValidationError, match="positive integer"):
+        RepeatedEvaluation(True)
+    repeated = RepeatedEvaluation(2).plan(state.offspring, None, state)
+    assert len(repeated.requests) == 2
+    assert [request.metadata["replicate"] for request in repeated.requests] == [0, 1]
+    assert all(request.metadata["plan_id"] == 0 for request in repeated.requests)
+
+    with pytest.raises(ValidationError, match="non-negative integer"):
+        FidelityEvaluation(-1)
+    fidelity = FidelityEvaluation(3).plan(state.offspring, None, state)
+    assert fidelity.requests[0].metadata["fidelity"] == 3
+    with pytest.raises(ValidationError, match="next_fidelity"):
+        FidelityPromotion(1, 1)
+    with pytest.raises(ValidationError, match="promotion_count"):
+        FidelityPromotion(0, 1, promotion_count=0)
+    with pytest.raises(ValidationError, match="promotion_fraction"):
+        FidelityPromotion(0, 1, promotion_fraction=0.0)
+    promotion = FidelityPromotion(0, 2, promotion_count=1).plan(
+        state.offspring, None, state
+    )
+    assert promotion.continuation["kind"] == "fidelity_promotion"
+
+
+def test_replicate_aggregation_validates_shape_and_owns_summary():
+    with pytest.raises(ValidationError, match="observations"):
+        aggregate_replicates(np.array([1, 2]), np.ones((2, 1)))
+    summary = aggregate_replicates(
+        np.array([1, 2], dtype=np.int64),
+        np.array(
+            [
+                [[1.0], [3.0]],
+                [[3.0], [5.0]],
+            ],
+            dtype=np.float64,
+        ),
+    )
+    np.testing.assert_allclose(summary.mean, [[2.0], [4.0]])
+    np.testing.assert_array_equal(summary.count, [2, 2])
 
 
 def test_evaluation_policies_allocate_requests():
     state = _state()
     acquisition = AcquisitionResult(np.array([1.0, 0.0], dtype=np.float64))
-    request = TopKEvaluation(1).plan(state.offspring, acquisition, state)
+    request = TopKEvaluation(1).plan(state.offspring, acquisition, state).requests[0]
     assert request.request_id == 0
     np.testing.assert_array_equal(request.candidate_ids, [10])
     assert not request.x.flags.writeable
-    request_all = EvaluateAll().plan(state.offspring, None, state)
+    request_all = EvaluateAll().plan(state.offspring, None, state).requests[0]
     assert request_all.request_id == 1
     np.testing.assert_array_equal(request_all.candidate_ids, [10, 11])
 
@@ -131,6 +211,23 @@ def test_feedback_sources_and_objective_channel_requirement():
         PredictedFeedback().build(
             state.offspring,
             SurrogatePrediction({"win_rate": PredictionChannel(np.ones((2, 1)))}),
+            None,
+            [],
+            state,
+        )
+    assert len(TrueOnlyFeedback().build(state.offspring, None, None, [], state).f) == 0
+    with pytest.raises(ValidationError, match="prediction rows"):
+        PredictedFeedback().build(
+            state.offspring,
+            SurrogatePrediction({"objective": PredictionChannel(np.ones((1, 1)))}),
+            None,
+            [],
+            state,
+        )
+    with pytest.raises(ValidationError, match="objective shape"):
+        MixedFeedback().build(
+            state.offspring,
+            SurrogatePrediction({"objective": PredictionChannel(np.ones((1, 2)))}),
             None,
             [],
             state,
@@ -197,11 +294,13 @@ def test_feedback_result_rejects_misaligned_and_object_arrays():
 
 
 def test_builtin_strategy_policy_compositions():
-    assert isinstance(DirectStrategy().feedback_policy, TrueOnlyFeedback)
-    assert isinstance(IndividualBasedStrategy().feedback_policy, MixedFeedback)
-    assert isinstance(PreSelectionStrategy(8, 2).feedback_policy, TrueOnlyFeedback)
-    assert isinstance(GenerationBasedStrategy(1).feedback_policy, MixedFeedback)
-    assert isinstance(GenerationBasedStrategy(1).true_feedback_policy, TrueOnlyFeedback)
+    assert isinstance(DirectStrategy().feedback_builder, TrueOnlyFeedback)
+    assert isinstance(IndividualBasedStrategy().feedback_builder, MixedFeedback)
+    assert isinstance(PreSelectionStrategy(8, 2).feedback_builder, TrueOnlyFeedback)
+    assert isinstance(GenerationBasedStrategy(1).feedback_builder, MixedFeedback)
+    assert isinstance(
+        GenerationBasedStrategy(1).true_feedback_builder, TrueOnlyFeedback
+    )
 
 
 def test_generation_based_phase_policies_distinguish_bundled_and_explicit():
@@ -211,18 +310,18 @@ def test_generation_based_phase_policies_distinguish_bundled_and_explicit():
         acquisition=object(),
         evaluator=object(),
         cbmanager=None,
-        evaluation_policy=None,
-        feedback_policy=ComparatorWorstFallback(),
-        feedback_policy_explicit=False,
+        evaluation_planner=None,
+        feedback_builder=ComparatorWorstFallback(),
+        feedback_builder_explicit=False,
     )
     strategy = GenerationBasedStrategy(1)
-    pipeline = cast(Any, strategy)._build_pipeline(cast(Any, provider))
-    inner_feedback = pipeline.stages[0].stages[4]._policy
-    outer_feedback = pipeline.stages[8]._policy
+    pipeline = cast(Any, strategy).build_pipeline(cast(Any, provider))
+    inner_feedback = pipeline.stages[0].stages[4]._builder
+    outer_feedback = pipeline.stages[8]._builder
     assert isinstance(inner_feedback, PredictedFeedback)
     assert isinstance(outer_feedback, TrueOnlyFeedback)
 
-    provider.feedback_policy = NoFeedback()
-    provider.feedback_policy_explicit = True
-    pipeline = cast(Any, strategy)._build_pipeline(cast(Any, provider))
-    assert isinstance(pipeline.stages[8]._policy, NoFeedback)
+    provider.feedback_builder = NoFeedback()
+    provider.feedback_builder_explicit = True
+    pipeline = cast(Any, strategy).build_pipeline(cast(Any, provider))
+    assert isinstance(pipeline.stages[8]._builder, NoFeedback)

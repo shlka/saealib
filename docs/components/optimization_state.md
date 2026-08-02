@@ -35,13 +35,13 @@ There are also typed fields that each pipeline [Stage](stage.md) reads and write
 | Field | Written by | Read by |
 |---|---|---|
 | `offspring` | `AskStage` | Each subsequent stage |
-| `evaluated_offspring` | `TrueEvaluationStage` | `ArchiveUpdateStage` |
-| `scores` / `predictions` | `SurrogateScoreStage` | Each subsequent stage |
+| `evaluated_offspring` | `EvaluationApplyStage` | `ArchiveUpdateStage` |
+| `scores` / `predictions` / `acquisition_result` | `SurrogatePredictStage` / `AcquisitionStage` | Evaluation planning |
 
 `data` is a dictionary for user extension, used as a place for a custom `Stage` or `Callback` to add arbitrary values.
 Instead of a direct mutation like `state.data["key"] = value`, pass a newly built dictionary via `state.replace(data={**state.data, "key": value})`.
 
-The compatibility properties `population`, `archive`, and `pareto_archive` return the corresponding `"main"` or `"pareto"` entries. Additional collections can be added with `add_population(name, value)` and `add_archive(name, value)`.
+The convenience properties `population`, `archive`, and `pareto_archive` return the corresponding `"main"` or `"pareto"` entries. Additional collections can be added with `add_population(name, value)` and `add_archive(name, value)`.
 
 ## Convenience properties
 
@@ -54,7 +54,7 @@ They're provided as shorthand so you can write `ctx.dim` instead of `ctx.problem
 For example, `CountGenerationStage`, which advances the generation count, updates the field as `state.replace(gen=state.gen + 1)`.
 
 `OptimizationState` also provides helper methods `count_fe(count=1)`/`count_generation()` that increment `fe`/`gen`, but these are one-off mutations that bypass `replace()`.
-The only place in the built-in pipeline where these two are actually called is where [Initializer](initialization.md) adds the initial evaluation count to `fe`; the per-generation updates of `gen`/`fe` (`CountGenerationStage`/`TrueEvaluationStage`) are both unified on the path that uses `replace()`.
+The Runner owns asynchronous generation boundaries; refill steps do not increment `gen` while a generation is open.
 When writing a custom `Stage`, it's easier to preserve consistency by sticking to the `replace()` path as well.
 
 ## Checkpointing

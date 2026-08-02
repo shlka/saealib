@@ -61,33 +61,33 @@ class TestSetComponentsAreNeverOverwritten:
 
 
 class TestPolicyResolution:
-    def test_compatibility_defaults_include_explicit_fallback(self):
+    def test_defaults_include_explicit_fallback(self):
         opt = Optimizer(_problem())
         opt._resolve_defaults()
-        assert isinstance(opt.evaluation_policy, RatioEvaluation)
-        assert opt.evaluation_policy.sanitize_nonfinite is True
-        assert isinstance(opt.feedback_policy, ComparatorWorstFallback)
+        assert isinstance(opt.evaluation_planner, RatioEvaluation)
+        assert opt.evaluation_planner.sanitize_nonfinite is True
+        assert isinstance(opt.feedback_builder, ComparatorWorstFallback)
 
     def test_explicit_strategy_does_not_receive_bundled_policies(self):
         opt = Optimizer(_problem()).set_strategy(
             PreSelectionStrategy(n_candidates=8, n_select=2)
         )
         opt._resolve_defaults()
-        assert opt.evaluation_policy is None
-        assert opt.feedback_policy is None
+        assert opt.evaluation_planner is None
+        assert opt.feedback_builder is None
 
-    def test_explicit_policies_win_over_bundled_defaults(self):
+    def test_explicit_components_win_over_bundled_defaults(self):
         evaluation = EvaluateAll()
         feedback = NoFeedback()
         opt = (
             Optimizer(_problem())
             .set_strategy(PreSelectionStrategy(n_candidates=8, n_select=2))
-            .set_evaluation_policy(evaluation)
-            .set_feedback_policy(feedback)
+            .set_evaluation_planner(evaluation)
+            .set_feedback_builder(feedback)
         )
         opt._resolve_defaults()
-        assert opt.evaluation_policy is evaluation
-        assert opt.feedback_policy is feedback
+        assert opt.evaluation_planner is evaluation
+        assert opt.feedback_builder is feedback
 
 
 class TestPresetPrecedence:

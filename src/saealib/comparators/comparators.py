@@ -13,12 +13,9 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from saealib.comparators.dominance import (
-    _PARETO_DOMINATOR,  # noqa: F401
     Dominator,
     EpsilonDominator,
     ParetoDominator,
-    _dominance_matrix,  # noqa: F401
-    _pareto_dominates,  # noqa: F401
 )
 from saealib.comparators.nds import (
     NonDominatedSorter,

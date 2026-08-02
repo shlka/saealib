@@ -67,8 +67,7 @@ class Mutation(ABC):
         np.ndarray
             Mutated individual. shape = (dim,). The result is always
             ``float64`` because :meth:`mutate_batch` casts its input
-            internally; unlike the former standalone implementations, this
-            does not preserve the input's dtype.
+            internally; the result does not preserve the input's dtype.
         """
         return self.mutate_batch(p[np.newaxis, :], mutate_range, rng)[0]
 

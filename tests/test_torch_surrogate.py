@@ -181,5 +181,6 @@ class TestTorchSurrogateIntegration:
         manager = GlobalSurrogateManager(s)
         prediction = manager.predict(candidates, archive_1obj)
         scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
+        assert scores is not None
         assert scores.shape == (len(candidates),)
         assert prediction.value.shape == (len(candidates), 1)

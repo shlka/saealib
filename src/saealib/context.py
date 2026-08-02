@@ -17,6 +17,7 @@ from saealib.exceptions import CheckpointError, ValidationError
 from saealib.identity import IDAllocator
 
 if TYPE_CHECKING:
+    from saealib.acquisition.base import AcquisitionResult
     from saealib.comparators import Comparator
     from saealib.execution.evaluator import (
         EvaluationHandle,
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
         EvaluationUpdate,
         PendingEvaluation,
     )
+    from saealib.policies.evaluation import EvaluationPlan
     from saealib.policies.feedback import FeedbackResult
     from saealib.population import Archive, ParetoArchive, Population
     from saealib.problem import Problem
@@ -143,6 +145,56 @@ def _decoded_name(value: str) -> str:
     return name
 
 
+@dataclass(frozen=True)
+class EvaluationPlanState:
+    """Checkpointable lifecycle state for a multi-request evaluation plan."""
+
+    submitted: tuple[int, ...] = ()
+    completed: tuple[int, ...] = ()
+    acknowledged: tuple[int, ...] = ()
+    deferred: tuple[int, ...] = ()
+    continuation: Any = None
+    feedback: Any = None
+
+    def __post_init__(self) -> None:
+        """Validate request ID collections."""
+        for name in ("submitted", "completed", "acknowledged", "deferred"):
+            values = tuple(int(value) for value in getattr(self, name))
+            if len(values) != len(set(values)):
+                raise ValidationError(f"evaluation plan state {name} has duplicates")
+            object.__setattr__(self, name, values)
+        submitted = set(self.submitted)
+        completed = set(self.completed)
+        acknowledged = set(self.acknowledged)
+        deferred = set(self.deferred)
+        if not completed <= submitted:
+            raise ValidationError("completed requests must be submitted")
+        if not acknowledged <= completed:
+            raise ValidationError("acknowledged requests must be completed")
+        if deferred & (submitted | completed | acknowledged):
+            raise ValidationError("deferred requests cannot be terminal or submitted")
+
+
+def _validate_plan_state(
+    plan: EvaluationPlan | None, plan_state: EvaluationPlanState | None
+) -> None:
+    if plan is None:
+        return
+    if plan_state is None:
+        raise ValidationError(
+            "evaluation plan state is required while a plan is active"
+        )
+    plan_ids = {int(request.request_id) for request in plan.requests}
+    state_ids = (
+        set(plan_state.submitted)
+        | set(plan_state.completed)
+        | set(plan_state.acknowledged)
+        | set(plan_state.deferred)
+    )
+    if not state_ids <= plan_ids:
+        raise ValidationError("evaluation plan state references an unknown request")
+
+
 @dataclass(init=False)
 class OptimizationState:
     """
@@ -193,6 +245,8 @@ class OptimizationState:
     scores : np.ndarray or None
         Acquisition scores for ``offspring``, shape ``(n_candidates,)``.
         Set by :class:`~saealib.stages.AcquisitionStage`.
+    acquisition_result : AcquisitionResult or None
+        Complete acquisition output, including artifacts needed by planners.
     predictions : SurrogatePrediction or None
         Batched surrogate prediction covering every row of ``offspring``.
         Set by :class:`~saealib.stages.SurrogatePredictStage`.
@@ -217,9 +271,15 @@ class OptimizationState:
     offspring: Population | None = None
     evaluated_offspring: Population | None = None
     scores: np.ndarray | None = None
+    acquisition_result: AcquisitionResult | None = None
     predictions: SurrogatePrediction | None = None
     evaluation_request: EvaluationRequest | None = None
+    evaluation_plan: EvaluationPlan | None = None
+    evaluation_plan_state: EvaluationPlanState | None = None
     evaluation_updates: list[EvaluationUpdate] = field(default_factory=list)
+    evaluation_plan_updates: dict[int, list[EvaluationUpdate]] = field(
+        default_factory=dict
+    )
     evaluation_update_new_ids: list[np.ndarray] = field(default_factory=list)
     evaluation_new_ids: np.ndarray = field(
         default_factory=lambda: np.empty(0, dtype=np.int64)
@@ -249,9 +309,13 @@ class OptimizationState:
         offspring: Population | None = None,
         evaluated_offspring: Population | None = None,
         scores: np.ndarray | None = None,
+        acquisition_result: AcquisitionResult | None = None,
         predictions: SurrogatePrediction | None = None,
         evaluation_request: EvaluationRequest | None = None,
+        evaluation_plan: EvaluationPlan | None = None,
+        evaluation_plan_state: EvaluationPlanState | None = None,
         evaluation_updates: list[EvaluationUpdate] | None = None,
+        evaluation_plan_updates: dict[int, list[EvaluationUpdate]] | None = None,
         evaluation_update_new_ids: list[np.ndarray] | None = None,
         evaluation_new_ids: np.ndarray | None = None,
         evaluation_handles: dict[int, EvaluationHandle] | None = None,
@@ -293,10 +357,25 @@ class OptimizationState:
         self.offspring = offspring
         self.evaluated_offspring = evaluated_offspring
         self.scores = scores
+        self.acquisition_result = acquisition_result
         self.predictions = predictions
         self.evaluation_request = evaluation_request
+        self.evaluation_plan = evaluation_plan
+        self.evaluation_plan_state = evaluation_plan_state
+        _validate_plan_state(self.evaluation_plan, self.evaluation_plan_state)
+        if self.evaluation_plan is not None and evaluation_plan_updates is not None:
+            plan_ids = {
+                int(request.request_id) for request in self.evaluation_plan.requests
+            }
+            if not set(map(int, evaluation_plan_updates)) <= plan_ids:
+                raise ValidationError(
+                    "evaluation plan updates reference an unknown request"
+                )
         self.evaluation_updates = (
             [] if evaluation_updates is None else evaluation_updates
+        )
+        self.evaluation_plan_updates = (
+            {} if evaluation_plan_updates is None else evaluation_plan_updates
         )
         self.evaluation_update_new_ids = (
             [] if evaluation_update_new_ids is None else evaluation_update_new_ids
@@ -603,6 +682,22 @@ class OptimizationState:
         save_dict["_predictions"] = _json_array(
             None if self.predictions is None else _prediction_to_json(self.predictions)
         )
+        save_dict["_evaluation_plan"] = _json_array(
+            None
+            if self.evaluation_plan is None
+            else _plan_to_json(self.evaluation_plan)
+        )
+        save_dict["_evaluation_plan_state"] = _json_array(
+            None
+            if self.evaluation_plan_state is None
+            else _plan_state_to_json(self.evaluation_plan_state)
+        )
+        save_dict["_evaluation_plan_updates"] = _json_array(
+            {
+                str(request_id): [_update_to_json(update) for update in updates]
+                for request_id, updates in self.evaluation_plan_updates.items()
+            }
+        )
         save_dict["_data"] = _json_array(_json_safe(self.data))
         np.savez(p, **cast(Any, save_dict))
 
@@ -751,6 +846,129 @@ def _feedback_from_json(value: Any) -> Any:
             for name, array in value.get("artifacts", {}).items()
         },
     )
+
+
+def _request_to_json(request: Any) -> dict[str, Any]:
+    return {
+        "request_id": int(request.request_id),
+        "candidate_ids": _json_safe(request.candidate_ids),
+        "x": _json_safe(request.x),
+        "outputs": list(request.outputs),
+        "metadata": _json_safe(dict(request.metadata)),
+    }
+
+
+def _request_from_json(value: Any) -> Any:
+    from saealib.execution.evaluator import EvaluationRequest
+
+    if not isinstance(value, dict):
+        raise CheckpointError("evaluation request is malformed")
+    try:
+        return EvaluationRequest(
+            np.int64(value["request_id"]),
+            np.asarray(value["candidate_ids"], dtype=np.int64),
+            np.asarray(value["x"], dtype=np.float64),
+            tuple(value.get("outputs", ("f", "g", "cv"))),
+            value.get("metadata", {}),
+        )
+    except (KeyError, TypeError, ValueError, ValidationError) as exc:
+        raise CheckpointError("evaluation request is malformed") from exc
+
+
+def _plan_to_json(plan: Any) -> dict[str, Any]:
+    return {
+        "requests": [_request_to_json(request) for request in plan.requests],
+        "completion_rule": _json_safe(plan.completion_rule),
+        "continuation": _json_safe(plan.continuation),
+        "artifacts": _json_safe(dict(plan.artifacts)),
+    }
+
+
+def _plan_from_json(value: Any) -> Any:
+    from saealib.policies.evaluation import EvaluationPlan
+
+    if not isinstance(value, dict) or not isinstance(value.get("requests"), list):
+        raise CheckpointError("evaluation plan is malformed")
+    try:
+        return EvaluationPlan(
+            tuple(_request_from_json(item) for item in value["requests"]),
+            value.get("completion_rule"),
+            value.get("continuation"),
+            value.get("artifacts", {}),
+        )
+    except (TypeError, ValueError, ValidationError) as exc:
+        raise CheckpointError("evaluation plan is malformed") from exc
+
+
+def _plan_state_to_json(value: EvaluationPlanState) -> dict[str, Any]:
+    return {
+        "submitted": list(value.submitted),
+        "completed": list(value.completed),
+        "acknowledged": list(value.acknowledged),
+        "deferred": list(value.deferred),
+        "continuation": _json_safe(value.continuation),
+        "feedback": _json_safe(value.feedback),
+    }
+
+
+def _plan_state_from_json(value: Any) -> EvaluationPlanState:
+    if not isinstance(value, dict):
+        raise CheckpointError("evaluation plan state is malformed")
+    try:
+        return EvaluationPlanState(
+            tuple(value.get("submitted", ())),
+            tuple(value.get("completed", ())),
+            tuple(value.get("acknowledged", ())),
+            tuple(value.get("deferred", ())),
+            value.get("continuation"),
+            value.get("feedback"),
+        )
+    except (TypeError, ValueError, ValidationError) as exc:
+        raise CheckpointError("evaluation plan state is malformed") from exc
+
+
+def _update_to_json(update: Any) -> dict[str, Any]:
+    return {
+        "request_id": int(update.request_id),
+        "status": update.status.name,
+        "candidate_ids": _json_safe(update.candidate_ids),
+        "result": None if update.result is None else _result_to_json(update.result),
+        "error": None
+        if update.error is None
+        else {
+            "error_type": update.error.error_type,
+            "message": update.error.message,
+            "details": _json_safe(dict(update.error.details)),
+        },
+        "sequence": int(update.sequence),
+    }
+
+
+def _update_from_json(value: Any) -> Any:
+    from saealib.execution.evaluator import (
+        EvaluationErrorInfo,
+        EvaluationStatus,
+        EvaluationUpdate,
+    )
+
+    if not isinstance(value, dict):
+        raise CheckpointError("evaluation plan update is malformed")
+    error = value.get("error")
+    try:
+        return EvaluationUpdate(
+            np.int64(value["request_id"]),
+            EvaluationStatus[value["status"]],
+            np.asarray(value["candidate_ids"], dtype=np.int64),
+            None if value.get("result") is None else _result_from_json(value["result"]),
+            None
+            if error is None
+            else EvaluationErrorInfo(
+                error["error_type"], error["message"], error.get("details", {})
+            ),
+            int(value.get("sequence", 0)),
+        )
+    except (KeyError, TypeError, ValueError, ValidationError) as exc:
+        raise CheckpointError("evaluation plan update is malformed") from exc
 
 
 def _prediction_to_json(prediction: Any) -> dict[str, Any]:
@@ -1217,6 +1435,8 @@ def _load_v2(
     state_data = _read_json(data, "_data") if "_data" in data.files else {}
     if not isinstance(state_data, dict):
         raise CheckpointError("checkpoint data metadata must be a mapping")
+    state_data.pop("evaluation_plan", None)
+    state_data.pop("evaluation_updates", None)
     feedback_result = (
         None
         if "_feedback_result" not in data.files
@@ -1235,6 +1455,59 @@ def _load_v2(
             else _prediction_from_json(value)
         )
     )
+    evaluation_plan = (
+        None
+        if "_evaluation_plan" not in data.files
+        else (
+            None
+            if (value := _read_json(data, "_evaluation_plan")) is None
+            else _plan_from_json(value)
+        )
+    )
+    evaluation_plan_state = (
+        None
+        if "_evaluation_plan_state" not in data.files
+        else (
+            None
+            if (value := _read_json(data, "_evaluation_plan_state")) is None
+            else _plan_state_from_json(value)
+        )
+    )
+    plan_updates_payload = (
+        {}
+        if "_evaluation_plan_updates" not in data.files
+        else _read_json(data, "_evaluation_plan_updates")
+    )
+    if not isinstance(plan_updates_payload, dict):
+        raise CheckpointError("checkpoint evaluation plan updates are malformed")
+    evaluation_plan_updates = {}
+    try:
+        for request_id, updates in plan_updates_payload.items():
+            if not isinstance(updates, list):
+                raise CheckpointError(
+                    "checkpoint evaluation plan updates are malformed"
+                )
+            evaluation_plan_updates[int(request_id)] = [
+                _update_from_json(update) for update in updates
+            ]
+    except (TypeError, ValueError) as exc:
+        raise CheckpointError(
+            "checkpoint evaluation plan updates are malformed"
+        ) from exc
+    if evaluation_plan is not None and evaluation_plan_state is not None:
+        plan_ids = {int(request.request_id) for request in evaluation_plan.requests}
+        state_ids = (
+            set(evaluation_plan_state.submitted)
+            | set(evaluation_plan_state.completed)
+            | set(evaluation_plan_state.acknowledged)
+            | set(evaluation_plan_state.deferred)
+        )
+        if not state_ids <= plan_ids:
+            raise CheckpointError("evaluation plan state references an unknown request")
+        if not set(evaluation_plan_updates) <= plan_ids:
+            raise CheckpointError(
+                "evaluation plan updates reference an unknown request"
+            )
     rng = np.random.default_rng()
     rng.bit_generator.state = _read_json(data, "_rng_state")
     return cls(
@@ -1255,6 +1528,9 @@ def _load_v2(
         evaluation_owners=owners,
         feedback_result=feedback_result,
         predictions=predictions,
+        evaluation_plan=evaluation_plan,
+        evaluation_plan_state=evaluation_plan_state,
+        evaluation_plan_updates=evaluation_plan_updates,
         data={**state_data, "resumed": True},
     )
 
