@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import warnings
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -24,6 +25,7 @@ from saealib import (
 )
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
+from saealib.exceptions import ValidationError
 from saealib.problem import Problem
 
 # ---------------------------------------------------------------------------
@@ -173,6 +175,47 @@ def test_resumed_flag_npz(tmp_path):
     assert loaded.data.get("resumed") is True
 
 
+def _rewrite_npz(src: Path, dst: Path, **overrides) -> None:
+    """Copy an npz checkpoint to ``dst``, replacing/removing the given keys.
+
+    A value of ``None`` in ``overrides`` deletes that key entirely.
+    """
+    data = np.load(src, allow_pickle=False)
+    rebuilt = dict(data.items())
+    for key, value in overrides.items():
+        if value is None:
+            rebuilt.pop(key, None)
+        else:
+            rebuilt[key] = value
+    np.savez(dst, **rebuilt)
+
+
+def test_load_missing_schema_version_raises(tmp_path):
+    problem = _make_problem()
+    ctx = _make_optimizer(problem, seed=0, n_gen=2).run()
+    p = tmp_path / "ckpt.npz"
+    ctx.save(p)
+
+    stripped = tmp_path / "ckpt_stripped.npz"
+    _rewrite_npz(p, stripped, _checkpoint_schema_version=None)
+
+    with pytest.raises(ValidationError, match="_checkpoint_schema_version"):
+        OptimizationState.load(stripped, problem)
+
+
+def test_load_wrong_schema_version_raises(tmp_path):
+    problem = _make_problem()
+    ctx = _make_optimizer(problem, seed=0, n_gen=2).run()
+    p = tmp_path / "ckpt.npz"
+    ctx.save(p)
+
+    bad_version = tmp_path / "ckpt_bad_version.npz"
+    _rewrite_npz(p, bad_version, _checkpoint_schema_version=np.array(99))
+
+    with pytest.raises(ValidationError, match="Unsupported checkpoint schema version"):
+        OptimizationState.load(bad_version, problem)
+
+
 # ---------------------------------------------------------------------------
 # Optimizer.save_pickle / load_pickle
 # ---------------------------------------------------------------------------
@@ -195,6 +238,12 @@ def test_pickle_roundtrip(tmp_path):
 
     np.testing.assert_array_equal(ctx2.archive.x, ctx.archive.x)
     assert ctx2.gen == ctx.gen
+    np.testing.assert_array_equal(ctx2.archive.id, ctx.archive.id)
+    assert ctx.candidate_id_allocator.next_value > 0
+    assert (
+        ctx2.candidate_id_allocator.next_value == ctx.candidate_id_allocator.next_value
+    )
+    assert ctx2.request_id_allocator.next_value == ctx.request_id_allocator.next_value
 
 
 def test_resumed_flag_pickle(tmp_path):

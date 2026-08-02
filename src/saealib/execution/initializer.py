@@ -41,6 +41,7 @@ class Initializer(ABC):
             PopulationAttribute("f", float, (problem.n_obj,), default=np.nan),
             PopulationAttribute("g", float, (problem.n_constraints,), default=0.0),
             PopulationAttribute("cv", float, (), default=0.0),
+            PopulationAttribute("id", np.int64, (), default=-1),
         ]
         if provider.algorithm is not None:
             attrs_required = provider.algorithm.get_required_attrs(problem)
@@ -186,6 +187,8 @@ class LHSInitializer(Initializer):
 
         result = provider.evaluator.evaluate_batch(archive_x, problem)
 
+        ids = ctx.candidate_id_allocator.allocate(self.n_init_archive)
+
         # TODO: Register algorithm-specific attributes in the archive.
         for i in range(self.n_init_archive):
             data = {
@@ -193,6 +196,7 @@ class LHSInitializer(Initializer):
                 "f": result.f[i],
                 "g": result.g[i],
                 "cv": float(result.cv[i]),
+                "id": int(ids[i]),
             }
             archive.add(data)
             pareto_archive.add(data)
@@ -204,9 +208,11 @@ class LHSInitializer(Initializer):
         sorted_idx = problem.comparator.sort_population(archive)
         archive_sorted = archive.extract(sorted_idx)
         archive.clear()
-        archive.extend(archive_sorted)
+        archive._extend_internal(archive_sorted, preserve_ids=True)
 
-        population.extend(archive[: self.n_init_population])
+        population._extend_internal(
+            archive[: self.n_init_population], preserve_ids=True
+        )
 
         return ctx
 
@@ -275,12 +281,15 @@ class RandomInitializer(Initializer):
 
         result = provider.evaluator.evaluate_batch(archive_x, problem)
 
+        ids = ctx.candidate_id_allocator.allocate(self.n_init_archive)
+
         for i in range(self.n_init_archive):
             data = {
                 "x": archive_x[i],
                 "f": result.f[i],
                 "g": result.g[i],
                 "cv": float(result.cv[i]),
+                "id": int(ids[i]),
             }
             archive.add(data)
             pareto_archive.add(data)
@@ -292,9 +301,11 @@ class RandomInitializer(Initializer):
         sorted_idx = problem.comparator.sort_population(archive)
         archive_sorted = archive.extract(sorted_idx)
         archive.clear()
-        archive.extend(archive_sorted)
+        archive._extend_internal(archive_sorted, preserve_ids=True)
 
-        population.extend(archive[: self.n_init_population])
+        population._extend_internal(
+            archive[: self.n_init_population], preserve_ids=True
+        )
 
         return ctx
 
@@ -364,12 +375,15 @@ class SobolInitializer(Initializer):
 
         result = provider.evaluator.evaluate_batch(archive_x, problem)
 
+        ids = ctx.candidate_id_allocator.allocate(self.n_init_archive)
+
         for i in range(self.n_init_archive):
             data = {
                 "x": archive_x[i],
                 "f": result.f[i],
                 "g": result.g[i],
                 "cv": float(result.cv[i]),
+                "id": int(ids[i]),
             }
             archive.add(data)
             pareto_archive.add(data)
@@ -381,8 +395,10 @@ class SobolInitializer(Initializer):
         sorted_idx = problem.comparator.sort_population(archive)
         archive_sorted = archive.extract(sorted_idx)
         archive.clear()
-        archive.extend(archive_sorted)
+        archive._extend_internal(archive_sorted, preserve_ids=True)
 
-        population.extend(archive[: self.n_init_population])
+        population._extend_internal(
+            archive[: self.n_init_population], preserve_ids=True
+        )
 
         return ctx

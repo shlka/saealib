@@ -285,9 +285,7 @@ class TestInitialEvaluationEndEventMutation:
         def _trim_archive(event: InitialEvaluationEndEvent) -> None:
             arc = event.archive
             assert arc is not None
-            kept = arc.extract(list(range(n_keep)))
-            arc.clear()
-            arc.extend(kept)
+            arc.delete(list(range(n_keep, len(arc))))
 
         opt.cbmanager.register(InitialEvaluationEndEvent, _trim_archive)
 
@@ -326,9 +324,7 @@ class TestInitialEvaluationEndEventMutation:
         def _trim_archive(event: InitialEvaluationEndEvent) -> None:
             arc = event.archive
             assert arc is not None
-            kept = arc.extract(list(range(n_keep)))
-            arc.clear()
-            arc.extend(kept)
+            arc.delete(list(range(n_keep, len(arc))))
 
         opt.cbmanager.register(InitialEvaluationEndEvent, _trim_archive)
 

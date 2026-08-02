@@ -281,7 +281,7 @@ class TestPSOVelocityUpdate:
         ctx = _make_pso_ctx(init_pbest=True)
         # Force x == pbest_x so (pbest_x - x) = 0
         x = ctx.population.get_array("x")
-        ctx.population.get_array("pbest_x")[:] = x
+        ctx.population.update_array("pbest_x", x)
         cand = pso.ask(ctx, _DummyProvider())
         np.testing.assert_allclose(cand.get_array("velocity"), 0.0, atol=1e-12)
 
@@ -329,7 +329,7 @@ class TestPSOPbestUpdate:
         offspring = _make_offspring(
             ctx, f_new=f_new, pbest_f=ctx.population.get_array("pbest_f").copy()
         )
-        offspring.get_array("x")[:] = x_new
+        offspring.update_array("x", x_new)
         pso.tell(ctx, _DummyProvider(), offspring)
         np.testing.assert_array_equal(ctx.population.get_array("x"), x_new)
 

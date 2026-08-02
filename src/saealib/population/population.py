@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 import numpy as np
 from typing_extensions import Self
 
+from saealib.exceptions import ValidationError
+
 if TYPE_CHECKING:
     pass
 
@@ -268,6 +270,32 @@ class Population(Generic[T_Individual]):
         >>> pop.append(x=x_val, f=0.1)
         >>> pop.append(ind, f=0.1)
         """
+        self._append_internal(element, preserve_ids=False, **kwargs)
+
+    def _append_internal(
+        self,
+        element: T_Individual | dict[str, Any] | None = None,
+        *,
+        preserve_ids: bool,
+        **kwargs,
+    ) -> None:
+        """Append a new individual; ``preserve_ids`` controls ``id`` acceptance.
+
+        See ADR-0001 §2.2 for the public/internal ``id`` acceptance contract.
+
+        Parameters
+        ----------
+        element : Individual | dict | None
+            Data for the additional individual
+        preserve_ids : bool
+            If ``False`` (the public ``append()`` path), an explicit ``id``
+            other than the ``-1`` sentinel raises ``ValidationError``. If
+            ``True``, an explicit real ``id`` is accepted and validated for
+            uniqueness — used only by internal lifecycle code.
+        **kwargs :
+            Set attribute values individually and add them.
+            Alternatively, overwrite based on the element's value and add it.
+        """
         data: dict[str, Any] = {}
         if element is not None:
             if isinstance(element, dict):
@@ -277,6 +305,21 @@ class Population(Generic[T_Individual]):
                     if hasattr(element, key):
                         data[key] = getattr(element, key)
         data.update(kwargs)
+
+        if "id" in self._schema:
+            id_val = int(data.get("id", self._schema["id"].default))
+            if not preserve_ids and id_val != -1:
+                raise ValidationError(
+                    "append() does not accept an explicit 'id' other than the -1 "
+                    "sentinel; internal lifecycle code uses "
+                    "_append_internal(preserve_ids=True)"
+                )
+            if (
+                id_val != -1
+                and self._size > 0
+                and np.any(self._get_mutable_array("id") == id_val)
+            ):
+                raise ValidationError(f"Duplicate candidate id {id_val}")
 
         if self._size >= self._capacity:
             self._resize(self._capacity * 2)
@@ -306,6 +349,23 @@ class Population(Generic[T_Individual]):
         other : Population | dict
             The other population to extend from.
         """
+        self._extend_internal(other, preserve_ids=False)
+
+    def _extend_internal(self, other: Self | dict, *, preserve_ids: bool) -> None:
+        """Extend this population; ``preserve_ids`` controls ``id`` acceptance.
+
+        See ADR-0001 §2.2 for the public/internal ``id`` acceptance contract.
+
+        Parameters
+        ----------
+        other : Population | dict
+            The other population to extend from.
+        preserve_ids : bool
+            If ``False`` (the public ``extend()`` path), an explicit ``id``
+            other than the ``-1`` sentinel raises ``ValidationError``. If
+            ``True``, explicit real ``id`` values are accepted and validated
+            for uniqueness — used only by internal lifecycle code.
+        """
         if isinstance(other, Population):
             other_size = len(other)
             other_data = {k: other.get_array(k) for k in other.schema}
@@ -315,6 +375,33 @@ class Population(Generic[T_Individual]):
 
         if other_size == 0:
             return
+
+        if "id" in self._schema:
+            if "id" in other_data:
+                incoming_ids = np.asarray(other_data["id"]).astype(np.int64, copy=False)
+                if not preserve_ids and np.any(incoming_ids != -1):
+                    raise ValidationError(
+                        "extend() does not accept explicit 'id' values other than the "
+                        "-1 sentinel; internal lifecycle code uses "
+                        "_extend_internal(preserve_ids=True)"
+                    )
+            else:
+                incoming_ids = np.full(
+                    other_size, self._schema["id"].default, dtype=np.int64
+                )
+            real_incoming = incoming_ids[incoming_ids != -1]
+            if len(real_incoming) != len(np.unique(real_incoming)):
+                raise ValidationError(
+                    "Duplicate candidate id within the extended batch"
+                )
+            if (
+                self._size > 0
+                and len(real_incoming) > 0
+                and np.any(np.isin(self._get_mutable_array("id"), real_incoming))
+            ):
+                raise ValidationError(
+                    "Duplicate candidate id already present in population"
+                )
 
         if self._size + other_size > self._capacity:
             self._resize(max(self._capacity * 2, self._size + other_size))
@@ -476,9 +563,13 @@ class Population(Generic[T_Individual]):
             return self.get_array(key)
         return default
 
-    def get_array(self, key: str) -> np.ndarray:
+    def _get_mutable_array(self, key: str) -> np.ndarray:
         """
-        Get the array of a specific attribute.
+        Get a mutable view of a specific attribute's backing storage.
+
+        Bypasses read-only enforcement and bumps no version — callers are
+        responsible for calling ``mod_value()`` (or ``mod_structure()``)
+        themselves after mutating through this view.
 
         Parameters
         ----------
@@ -486,6 +577,23 @@ class Population(Generic[T_Individual]):
             The attribute name to get the array for.
         """
         return self._data[key][: self._size]
+
+    def get_array(self, key: str) -> np.ndarray:
+        """
+        Get the array of a specific attribute.
+
+        Returns a read-only view; mutating the returned array raises
+        ``ValueError``. Use ``update_array()`` or ``update_rows()`` to
+        mutate, so structure/value versions and caches stay in sync.
+
+        Parameters
+        ----------
+        key : str
+            The attribute name to get the array for.
+        """
+        view = self._get_mutable_array(key).view()
+        view.flags.writeable = False
+        return view
 
     def get_readonly_array(self, key: str) -> np.ndarray:
         """Return a read only view of the specified key."""
@@ -495,7 +603,135 @@ class Population(Generic[T_Individual]):
 
     def update_array(self, key: str, value: Any) -> None:
         """Update array in place and bump the value version."""
-        self.get_array(key)[:] = value
+        if key == "id":
+            raise ValidationError(
+                "Cannot update the reserved 'id' column via update_array()"
+            )
+        self._get_mutable_array(key)[:] = value
+        self.mod_value()
+
+    def _copy_validated_array(
+        self, value: Any, expected_shape: tuple[int, ...], expected_dtype: np.dtype
+    ) -> np.ndarray:
+        """
+        Validate ``value`` against an exact shape/dtype and return an owned copy.
+
+        Parameters
+        ----------
+        value : Any
+            The array-like value to validate.
+        expected_shape : tuple[int, ...]
+            The exact shape the value must have.
+        expected_dtype : np.dtype
+            The exact dtype the value must have (no silent casting).
+
+        Returns
+        -------
+        np.ndarray
+            A native-endian, C-contiguous owned copy of ``value``.
+        """
+        arr = np.asarray(value)
+        if expected_dtype == np.dtype(object) or arr.dtype == np.dtype(object):
+            raise ValidationError(
+                "update_rows() rejects object-dtype columns/values (ADR-0001 §2.3)"
+            )
+        if arr.shape != expected_shape or arr.dtype != expected_dtype:
+            raise ValidationError(
+                f"Expected array of shape {expected_shape} and dtype "
+                f"{expected_dtype}, got shape {arr.shape} and dtype {arr.dtype}"
+            )
+        return np.array(arr, dtype=expected_dtype, order="C", copy=True)
+
+    def update_rows(
+        self, indices: np.ndarray | list[int], values: dict[str, np.ndarray]
+    ) -> None:
+        """Atomically update multiple columns for the given rows.
+
+        Validates every index and value before mutating any backing storage,
+        so a validation failure never leaves a partial update applied. Bumps
+        the value version exactly once for a non-empty update; an update with
+        empty ``indices`` or an empty ``values`` mapping is a no-op and does
+        NOT bump the version.
+
+        Parameters
+        ----------
+        indices : np.ndarray | list[int]
+            Row indices to update. Must be 1-D, integer dtype, within
+            ``[0, len(self))``, and free of duplicates.
+        values : dict[str, np.ndarray]
+            Mapping of column name to the new values for those rows. Each
+            value array must match shape ``(len(indices), *schema[key].shape)``
+            and dtype ``schema[key].dtype`` exactly.
+
+        Raises
+        ------
+        ValidationError
+            If ``indices`` is invalid (wrong dtype/ndim, out of range, or
+            contains duplicates), if a key in ``values`` is unknown (or is
+            ``"id"``), or if a value array's shape/dtype does not match the
+            schema exactly.
+        """
+        if len(values) == 0:
+            return
+
+        indices_arr = np.asarray(indices)
+
+        if indices_arr.ndim != 1:
+            raise ValidationError(
+                "indices must be a 1-D integer array, not a scalar/0-D or "
+                "higher-dimensional array"
+            )
+        if indices_arr.dtype == np.bool_:
+            raise ValidationError(
+                "update_rows() expects an integer row-index array, not a boolean mask"
+            )
+        if indices_arr.dtype.kind not in "iu":
+            raise ValidationError("indices must be a 1-D integer array")
+
+        if len(indices_arr) == 0:
+            return
+
+        normalized_indices = indices_arr.astype(np.intp, copy=False)
+
+        if np.any((normalized_indices < 0) | (normalized_indices >= self._size)):
+            raise ValidationError(f"indices must be within [0, {self._size})")
+        if len(np.unique(normalized_indices)) != len(normalized_indices):
+            raise ValidationError("indices must not contain duplicates")
+
+        normalized_values: dict[str, np.ndarray] = {}
+        for key, value in values.items():
+            if key == "id":
+                raise ValidationError("Cannot update the reserved 'id' column")
+            if key not in self._schema:
+                raise ValidationError(f"Cannot update unknown column '{key}'")
+            attr = self._schema[key]
+            expected_shape = (len(normalized_indices), *attr.shape)
+            normalized_values[key] = self._copy_validated_array(
+                value, expected_shape, np.dtype(attr.dtype)
+            )
+
+        for key, arr in normalized_values.items():
+            self._data[key][normalized_indices] = arr
+
+        self.mod_value()
+
+    def _assign_ids(self, indices: np.ndarray, ids: np.ndarray) -> None:
+        """Assign real candidate IDs to rows currently holding the -1 sentinel.
+
+        Rejects reassigning a row that already has a real (non -1) id, and
+        rejects an assignment that would create a duplicate id in the live
+        population. Validates fully before mutating (atomic).
+        """
+        idx = np.asarray(indices, dtype=np.intp)
+        id_col = self._get_mutable_array("id")
+        if np.any(id_col[idx] != -1):
+            raise ValidationError("Cannot reassign an already-assigned candidate id")
+        prospective = id_col.copy()
+        prospective[idx] = ids
+        live = prospective[prospective != -1]
+        if len(live) != len(np.unique(live)):
+            raise ValidationError("Duplicate candidate id after assignment")
+        id_col[idx] = ids
         self.mod_value()
 
     @property
@@ -600,7 +836,11 @@ class Individual(Generic[T_Population]):
 
     def update_value(self, key: str, value: Any) -> None:
         """Update value in place and bump the value version."""
-        self._get_pop().get_array(key)[self._index] = value
+        if key == "id":
+            raise ValidationError(
+                "Cannot update the reserved 'id' column via update_value()"
+            )
+        self._get_pop()._get_mutable_array(key)[self._index] = value
         self._get_pop().mod_value()
 
     def __getattr__(self, name: str) -> Any:

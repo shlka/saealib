@@ -239,6 +239,9 @@ class PSO(Algorithm):
         pbest_x = offspring.get_array("pbest_x").copy()
         pbest_f = offspring.get_array("pbest_f").copy()
         pbest_cv = offspring.get_array("pbest_cv").copy()
+        has_id = "id" in offspring.schema
+        if has_id:
+            id_new = offspring.get_array("id")
 
         popsize = len(offspring)
         cmp = ctx.comparator
@@ -253,19 +256,21 @@ class PSO(Algorithm):
                 pbest_f[i] = f_new[i]
                 pbest_cv[i] = cv_new[i]
 
+        new_pop_data = {
+            "x": x_new,
+            "f": f_new,
+            "g": g_new,
+            "cv": cv_new,
+            "velocity": v_new,
+            "pbest_x": pbest_x,
+            "pbest_f": pbest_f,
+            "pbest_cv": pbest_cv,
+        }
+        if has_id:
+            new_pop_data["id"] = id_new
+
         ctx.population.clear()
-        ctx.population.extend(
-            {
-                "x": x_new,
-                "f": f_new,
-                "g": g_new,
-                "cv": cv_new,
-                "velocity": v_new,
-                "pbest_x": pbest_x,
-                "pbest_f": pbest_f,
-                "pbest_cv": pbest_cv,
-            }
-        )
+        ctx.population._extend_internal(new_pop_data, preserve_ids=True)
 
     # ------------------------------------------------------------------
     # Helpers

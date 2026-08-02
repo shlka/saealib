@@ -29,6 +29,7 @@ from saealib.callback import (
     SurrogateEndEvent,
     SurrogateStartEvent,
 )
+from saealib.exceptions import ValidationError
 from saealib.pipeline import Pipeline, Stage
 from saealib.strategies.base import assign_tell_f
 
@@ -149,6 +150,18 @@ class AskStage(Stage):
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         candidates = self._algorithm.ask(state, self._proxy, self._n_offspring)
+        if "id" in candidates.schema:
+            id_arr = candidates.get_array("id")
+            unassigned = np.where(id_arr == -1)[0]
+            if len(unassigned) > 0:
+                new_ids = state.candidate_id_allocator.allocate(len(unassigned))
+                candidates._assign_ids(unassigned, new_ids)
+            assigned = candidates.get_array("id")
+            real = assigned[assigned != -1]
+            if len(real) != len(np.unique(real)):
+                raise ValidationError(
+                    "AskStage received offspring with duplicate candidate ids"
+                )
         return state.replace(offspring=candidates)
 
 
@@ -338,13 +351,9 @@ class TrueEvaluationStage(Stage):
         n = min(n, len(candidates))
 
         result = self._evaluator.evaluate_batch(candidates.x[:n], state.problem)
-        # Bulk write into the backing arrays directly: going through
-        # Individual.__setattr__ per row costs 3*n weakref-resolution +
-        # mod_value() round-trips (measured ~1634x overhead vs. this).
-        candidates._data["f"][:n] = result.f
-        candidates._data["g"][:n] = result.g
-        candidates._data["cv"][:n] = result.cv
-        candidates.mod_value()
+        candidates.update_rows(
+            np.arange(n), {"f": result.f, "g": result.g, "cv": result.cv}
+        )
 
         evaluated = candidates.extract(list(range(n)))
 
@@ -375,9 +384,12 @@ class ArchiveUpdateStage(Stage):
     def execute(self, state: OptimizationState) -> OptimizationState:
         evaluated = state.evaluated_offspring
         assert evaluated is not None
+        has_id = "id" in evaluated.schema
         for i in range(len(evaluated)):
             ind = evaluated[i]
             entry = {"x": ind.x, "f": ind.f, "g": ind.g, "cv": float(ind.cv)}
+            if has_id:
+                entry["id"] = int(ind.id)
             state.archive.add(entry)
             state.pareto_archive.add(entry)
         return state
