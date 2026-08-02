@@ -9,6 +9,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from saealib.pipeline import Pipeline
+from saealib.policies.evaluation import TopKEvaluation
+from saealib.policies.feedback import TrueOnlyFeedback
 from saealib.registry import register
 from saealib.stages import (
     AcquisitionStage,
@@ -23,7 +25,6 @@ from saealib.stages import (
     FeedbackStage,
     SurrogatePredictStage,
     TellStage,
-    TopKSelectionStage,
 )
 from saealib.strategies.base import OptimizationStrategy
 
@@ -66,6 +67,15 @@ class PreSelectionStrategy(OptimizationStrategy):
         self.n_select = n_select
         self.pipeline: Pipeline | None = None
 
+    @property
+    def evaluation_policy(self):
+        """Return the current top-k policy."""
+        return TopKEvaluation(
+            min(self.n_select, self.n_candidates), sanitize_nonfinite=True
+        )
+
+    feedback_policy = TrueOnlyFeedback()
+
     def _build_pipeline(self, provider: ComponentProvider) -> Pipeline:
         cbmanager = getattr(provider, "cbmanager", None)
         return Pipeline(
@@ -81,13 +91,17 @@ class PreSelectionStrategy(OptimizationStrategy):
                     provider.acquisition,
                     cbmanager=cbmanager,
                 ),
-                TopKSelectionStage(k=self.n_select),
-                EvaluationPlanStage(),
+                EvaluationPlanStage(
+                    getattr(provider, "evaluation_policy", None)
+                    or self.evaluation_policy
+                ),
                 EvaluationSubmitStage(provider.evaluator),
                 EvaluationCollectStage(provider.evaluator),
                 EvaluationApplyStage(),
                 ArchiveUpdateStage(),
-                FeedbackStage(),
+                FeedbackStage(
+                    getattr(provider, "feedback_policy", None) or self.feedback_policy
+                ),
                 TellStage(provider.algorithm),
                 EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
             ]

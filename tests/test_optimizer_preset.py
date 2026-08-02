@@ -75,6 +75,10 @@ class TestSavePresetStripsProblemParams:
         assert path.exists()
         preset = yaml.safe_load(path.read_text("utf-8"))
         assert _no_dim_or_direction(preset)
+        assert preset["evaluation_policy"]["type"] == "RatioEvaluation"
+        assert preset["evaluation_policy"]["params"]["sanitize_nonfinite"] is True
+        assert preset["feedback_policy"]["type"] == "ComparatorWorstFallback"
+        assert preset["feedback_policy"]["params"]["inner"]["type"] == "MixedFeedback"
 
 
 class TestRoundTripAcrossProblems:

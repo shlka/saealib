@@ -82,8 +82,6 @@ class SurrogatePrediction:
     label : np.ndarray or None
         Predicted class labels. shape: (n_samples,).
         None unless the surrogate is a classification model.
-    _tell_f : np.ndarray or None
-        Explicit override for ``tell_f``. See ``tell_f`` below.
     metadata : dict
         Implementation-specific additional information
         (e.g., SHAP values, gradient estimates).
@@ -93,7 +91,6 @@ class SurrogatePrediction:
     channels: dict[str, PredictionChannel]
     x: np.ndarray | None = None
     label: np.ndarray | None = None
-    _tell_f: np.ndarray | None = field(default=None)
     metadata: dict[str, object] = field(default_factory=dict)
     # Values that are conventionally used should be implemented
     # as attributes rather than metadata.
@@ -126,8 +123,6 @@ class SurrogatePrediction:
             if label.shape != (n,) or label.dtype == object:
                 raise ValidationError("prediction label must have shape (n,)")
             self.label = np.array(label, copy=True)
-        if self._tell_f is not None:
-            self._tell_f = _owned_matrix(self._tell_f, "_tell_f", (n, None))
 
     @property
     def value(self) -> np.ndarray:
@@ -149,36 +144,6 @@ class SurrogatePrediction:
     def has_label(self) -> bool:
         """Return True if classification labels are available."""
         return self.label is not None
-
-    @property
-    def tell_f(self) -> np.ndarray:
-        """
-        Return the values to assign to offspring.f before ``algorithm.tell()``.
-
-        Resolution order: the explicit ``_tell_f`` override if set; otherwise
-        the ``"objective"`` channel's value if present; otherwise an array of
-        ``np.nan`` shaped like an arbitrary present channel's value (or shape
-        ``(0,)`` if ``channels`` is empty), so a non-objective-only
-        prediction (e.g. novelty, win-rate) never silently feeds a real
-        value into ``tell()``.
-        """
-        if self._tell_f is not None:
-            return self._tell_f
-        if "objective" in self.channels:
-            return self.value
-        return self._nan_fallback_tell_f()
-
-    def _nan_fallback_tell_f(self) -> np.ndarray:
-        """Build the NaN-filled fallback shape used by ``tell_f`` (see above)."""
-        if not self.channels:
-            return np.full((0,), np.nan)
-        any_channel = next(iter(self.channels.values()))
-        return np.full_like(any_channel.value, np.nan, dtype=np.float64)
-
-    @property
-    def has_tell_f(self) -> bool:
-        """Return True if a dedicated tell_f override is set."""
-        return self._tell_f is not None
 
     def select_channel(
         self, name: str, *, as_objective: bool = True

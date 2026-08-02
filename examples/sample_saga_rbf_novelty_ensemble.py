@@ -75,7 +75,7 @@ def main():
     strategy = IndividualBasedStrategy(evaluation_ratio=rsm)
 
     # Regression surrogate must be listed first so that EnsembleSurrogateManager
-    # returns its predictions (finite tell_f) as representative.
+    # returns its predictions as representative.
     surrogate_manager = EnsembleSurrogateManager(
         managers=[
             LocalSurrogateManager(

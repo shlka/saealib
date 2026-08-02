@@ -45,8 +45,8 @@ See [TrainingSet](training_set.md) and [Surrogate accuracy evaluation and dynami
 ### ArchiveBasedManager: the family that doesn't train a surrogate
 
 `ArchiveBasedManager` is an abstract subclass of `SurrogateManager` that trains no surrogate model at all, scoring candidates directly from the archive.
-Its only abstract method is `compute_scores(candidates_x, archive, ctx=None) -> np.ndarray`; `score_candidates()` wraps `compute_scores()`'s result in a `SurrogatePrediction` with `tell_f=NaN`.
-Since the score isn't an objective value, using it directly as `tell_f` would contaminate things like pbest — this design prevents that.
+Its only abstract method is `compute_scores(candidates_x, archive, ctx=None) -> np.ndarray`.
+Scores are kept separate from objective feedback.
 
 | Class | Parameters | Meaning of the score |
 |---|---|---|

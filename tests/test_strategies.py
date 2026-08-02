@@ -26,6 +26,7 @@ from saealib.callback import AcquisitionEndEvent, CallbackManager
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.execution.evaluator import SerialEvaluator
+from saealib.policies import EvaluationPolicy, FeedbackPolicy
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.strategies.gb import GenerationBasedStrategy
@@ -124,6 +125,8 @@ class _MockProvider:
     seed: int | None = None
     strategy = IndividualBasedStrategy(evaluation_ratio=0.1)
     termination: Termination = Termination(max_gen(100_000))
+    evaluation_policy: EvaluationPolicy | None = None
+    feedback_policy: FeedbackPolicy | None = None
 
     def __init__(self, algorithm, surrogate_manager, acquisition=None):
         self.algorithm = algorithm
@@ -243,6 +246,24 @@ class TestPreSelectionStrategy:
         strategy = PreSelectionStrategy(n_candidates=20, n_select=5)
         assert strategy.n_candidates == 20
         assert strategy.n_select == 5
+
+    def test_tell_receives_selected_candidates_only(self):
+        ctx, provider, strategy = self._setup(n_candidates=20, n_select=5)
+        told = []
+        tell = provider.algorithm.tell
+
+        def recording_tell(ctx_arg, dispatch, offspring):
+            told.append(offspring.x.copy())
+            tell(ctx_arg, dispatch, offspring)
+
+        provider.algorithm.tell = recording_tell
+        ctx = strategy.step(ctx, provider)
+        assert len(told) == 1
+        assert len(told[0]) == 5
+        np.testing.assert_array_equal(told[0], ctx.evaluated_offspring.x)
+        np.testing.assert_array_equal(
+            ctx.evaluation_new_ids, ctx.feedback_result.candidate_ids
+        )
 
     def test_fe_equals_n_select(self):
         ctx, provider, strategy = self._setup(n_candidates=20, n_select=5)

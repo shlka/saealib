@@ -36,14 +36,14 @@ from saealib.callback import (
 )
 from saealib.exceptions import EvaluationProtocolError, ValidationError
 from saealib.execution.evaluator import (
-    EvaluationRequest,
+    EvaluationResult,
     EvaluationStatus,
     Evaluator,
     PendingEvaluation,
 )
 from saealib.pipeline import Pipeline, Stage
-from saealib.strategies.base import assign_tell_f
-from saealib.surrogate.manager import _split_prediction
+from saealib.policies.evaluation import EvaluateAll, EvaluationPolicy
+from saealib.policies.feedback import FeedbackPolicy, MixedFeedback, TrueOnlyFeedback
 
 if TYPE_CHECKING:
     from saealib.acquisition.base import AcquisitionFunction
@@ -177,14 +177,12 @@ class AskStage(Stage):
 
 
 class SurrogatePredictStage(Stage):
-    """Predict offspring with the surrogate model; assign per-candidate tell_f.
+    """Predict offspring with the surrogate model.
 
     Reads ``state.offspring``, writes the batched prediction to
     ``state.predictions``.  Also assigns predicted objective values
-    (``tell_f``) to each candidate -- via
-    :func:`~saealib.strategies.base.assign_tell_f` -- so that
-    ``TellStage`` can use them for surrogate-only generations.  Does not
-    compute acquisition scores; pair with :class:`AcquisitionStage` for that.
+    ``TellStage`` receives feedback from a separate policy.  Does not compute
+    acquisition scores; pair with :class:`AcquisitionStage` for that.
 
     Parameters
     ----------
@@ -233,9 +231,6 @@ class SurrogatePredictStage(Stage):
                     surrogate=getattr(self._sm, "surrogate", None),
                 )
             )
-        for i, pred in enumerate(_split_prediction(prediction)):
-            assign_tell_f(candidates[i], pred, state)
-
         if self._cbmanager is not None:
             self._cbmanager.dispatch(SurrogateEndEvent(ctx=state, offspring=candidates))
 
@@ -439,37 +434,41 @@ class EvaluationPlanStage(Stage):
     label = "Plan evaluation"
     notation = r"$R \leftarrow \text{plan}(Q)$"
 
-    def __init__(
-        self, n_eval: int | Callable[[OptimizationState], int] | None = None
-    ) -> None:
+    def __init__(self, policy: EvaluationPolicy | None = None, *, n_eval=None) -> None:
         super().__init__()
+        if policy is not None and n_eval is not None:
+            raise ValidationError("provide either policy or n_eval")
+        self._policy = policy or EvaluateAll()
         self._n_eval = n_eval
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         candidates = state.offspring
         if candidates is None:
             raise EvaluationProtocolError("evaluation candidates are missing")
-        if self._n_eval is None:
-            n = len(candidates)
-        elif isinstance(self._n_eval, int):
-            n = self._n_eval
+        if self._n_eval is not None:
+            n = len(candidates) if self._n_eval is None else self._n_eval
+            n = n if isinstance(n, int) else n(state)
+            if n < 0 or n > len(candidates):
+                raise ValidationError("n_eval must be within the candidate batch")
+            from saealib.policies.evaluation import TopKEvaluation
+
+            request = TopKEvaluation(n).plan(
+                candidates, AcquisitionResult(scores=state.scores), state
+            )
         else:
-            n = self._n_eval(state)
-        n = min(max(int(n), 0), len(candidates))
-        if "id" in candidates.schema:
-            ids = np.array(candidates.get_array("id")[:n], dtype=np.int64, copy=True)
-        else:
-            ids = state.candidate_id_allocator.allocate(n)
-        if len(ids) != len(np.unique(ids)) or np.any(ids < 0):
-            raise EvaluationProtocolError("evaluation candidate ids must be unique")
-        request_id = np.int64(state.request_id_allocator.allocate(1)[0])
-        request = EvaluationRequest(request_id, ids, candidates.x[:n])
+            acquisition = (
+                None if state.scores is None else AcquisitionResult(scores=state.scores)
+            )
+            request = self._policy.plan(candidates, acquisition, state)
         pending = PendingEvaluation(
             request, EvaluationStatus.PENDING, np.empty(0, dtype=np.int64)
         )
         return state.replace(
             evaluation_request=request,
-            pending_evaluations={**state.pending_evaluations, int(request_id): pending},
+            pending_evaluations={
+                **state.pending_evaluations,
+                int(request.request_id): pending,
+            },
             evaluation_updates=[],
             evaluation_update_new_ids=[],
             evaluation_new_ids=np.empty(0, dtype=np.int64),
@@ -575,6 +574,7 @@ class EvaluationApplyStage(Stage):
             if "id" in candidates.schema
             else request.candidate_ids
         )
+        request_rows = request.metadata.get("row_indices")
         request_set = set(map(int, request.candidate_ids))
         applied = set(map(int, pending.applied_candidate_ids))
         seen_result_ids: set[int] = set()
@@ -673,10 +673,24 @@ class EvaluationApplyStage(Stage):
                     raise EvaluationProtocolError(
                         "result candidate_ids do not match update"
                     )
-                rows_found = [
-                    np.flatnonzero(live_ids == candidate_id)
-                    for candidate_id in update.candidate_ids
-                ]
+                if "id" not in candidates.schema and request_rows is not None:
+                    row_map = {
+                        int(candidate_id): int(row)
+                        for candidate_id, row in zip(
+                            request.candidate_ids, request_rows, strict=True
+                        )
+                    }
+                    rows_found = [
+                        np.array([row_map[int(candidate_id)]])
+                        if int(candidate_id) in row_map
+                        else np.empty(0, dtype=np.intp)
+                        for candidate_id in update.candidate_ids
+                    ]
+                else:
+                    rows_found = [
+                        np.flatnonzero(live_ids == candidate_id)
+                        for candidate_id in update.candidate_ids
+                    ]
                 if any(len(row) != 1 for row in rows_found):
                     raise EvaluationProtocolError(
                         "evaluation candidate is not in the population"
@@ -890,28 +904,51 @@ class FeedbackStage(Stage):
     label = "Apply feedback"
     notation = r"$\mathcal{Q} \leftarrow \mathrm{feedback}(\mathcal{Q})$"
 
+    def __init__(self, policy: FeedbackPolicy | None = None) -> None:
+        super().__init__()
+        self._policy = policy or TrueOnlyFeedback()
+
     def execute(self, state: OptimizationState) -> OptimizationState:
         offspring = state.offspring
         evaluated = state.evaluated_offspring
-        if offspring is None or evaluated is None or len(evaluated) == 0:
+        if offspring is None:
             return state
-        if "id" in offspring.schema and "id" in evaluated.schema:
-            ids = np.asarray(evaluated.get_array("id"), dtype=np.int64)
-            rows = [
-                int(np.flatnonzero(offspring.get_array("id") == candidate_id)[0])
-                for candidate_id in ids
-            ]
-        else:
-            rows = list(range(len(evaluated)))
-        offspring.update_rows(
-            np.asarray(rows, dtype=np.intp),
-            {
-                "f": evaluated.get_array("f"),
-                "g": evaluated.get_array("g"),
-                "cv": evaluated.get_array("cv"),
-            },
+        evaluation = None
+        if evaluated is not None and len(evaluated):
+            if "id" in evaluated.schema:
+                ids = np.array(evaluated.get_array("id"), dtype=np.int64, copy=True)
+            else:
+                ids = np.array(state.evaluation_new_ids, dtype=np.int64, copy=True)
+            evaluation = EvaluationResult(
+                np.array(evaluated.f, dtype=np.float64, copy=True),
+                np.array(evaluated.g, dtype=np.float64, copy=True),
+                np.array(evaluated.cv, dtype=np.float64, copy=True),
+                candidate_ids=ids,
+            )
+        result = self._policy.build(
+            offspring, state.predictions, evaluation, state.evaluation_new_ids, state
         )
-        return state.replace(offspring=offspring)
+        if len(result.candidate_ids) == 0:
+            return state.replace(feedback_result=result)
+        if "id" not in offspring.schema:
+            rows = [int(candidate_id) for candidate_id in result.candidate_ids]
+        else:
+            ids = offspring.get_array("id")
+            rows = []
+            for candidate_id in result.candidate_ids:
+                matches = np.flatnonzero(ids == candidate_id)
+                if len(matches) != 1:
+                    raise ValidationError(
+                        f"feedback candidate ID {candidate_id} is not in offspring"
+                    )
+                rows.append(int(matches[0]))
+        values = {"f": result.f}
+        if result.g is not None and "g" in offspring.schema:
+            values["g"] = result.g
+        if result.cv is not None and "cv" in offspring.schema:
+            values["cv"] = result.cv
+        offspring.update_rows(np.asarray(rows, dtype=np.intp), values)
+        return state.replace(offspring=offspring, feedback_result=result)
 
 
 class TellStage(Stage):
@@ -949,8 +986,22 @@ class TellStage(Stage):
         return f"{prefix}\\State {self.notation}"
 
     def execute(self, state: OptimizationState) -> OptimizationState:
-        assert state.offspring is not None
-        self._algorithm.tell(state, self._proxy, state.offspring)
+        result = state.feedback_result
+        if state.offspring is None or result is None or len(result.candidate_ids) == 0:
+            return state
+        if "id" in state.offspring.schema:
+            ids = state.offspring.get_array("id")
+            rows = []
+            for candidate_id in result.candidate_ids:
+                matches = np.flatnonzero(ids == candidate_id)
+                if len(matches) != 1:
+                    raise ValidationError(
+                        f"feedback candidate ID {candidate_id} is not in offspring"
+                    )
+                rows.append(int(matches[0]))
+        else:
+            rows = [int(candidate_id) for candidate_id in result.candidate_ids]
+        self._algorithm.tell(state, self._proxy, state.offspring.extract(rows))
         return state
 
 
@@ -998,6 +1049,7 @@ class SurrogateOnlyLoopStage(Stage):
         cbmanager: CallbackManager | None = None,
         *,
         acquisition: AcquisitionFunction,
+        feedback_policy: FeedbackPolicy | None = None,
     ) -> None:
         super().__init__()
         self._gen_ctrl = gen_ctrl
@@ -1012,6 +1064,7 @@ class SurrogateOnlyLoopStage(Stage):
                         surrogate_manager, cbmanager=cbmanager, refit=False
                     ),
                     AcquisitionStage(acquisition, cbmanager=cbmanager),
+                    FeedbackStage(feedback_policy or MixedFeedback()),
                     TellStage(algorithm),
                 ]
             )

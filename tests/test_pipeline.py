@@ -319,7 +319,7 @@ class TestSurrogateOnlyLoopPseudocode:
     def test_stages_attribute_exposed(self):
         sol = self._make()
         assert sol.stages is not None
-        assert len(sol.stages) == 5  # CountGeneration, Ask, Predict, Acquisition, Tell
+        assert len(sol.stages) == 6
 
     def test_stages_empty_when_gen_ctrl_zero(self):
         sol = self._make(gen_ctrl=0)

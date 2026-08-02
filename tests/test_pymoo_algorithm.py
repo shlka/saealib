@@ -337,18 +337,18 @@ class TestPymooAlgorithmEndToEnd:
         assert result.fe > 0
         assert result.x.shape[-1] == 10
 
-    def test_preselection_partial_tell_raises_configuration_error(self):
-        with pytest.raises(ConfigurationError):
-            minimize(
-                lambda x: np.sum(x**2),
-                dim=DIM,
-                lb=[-5.0] * DIM,
-                ub=[5.0] * DIM,
-                algorithm=PymooAlgorithm(PymooGA(pop_size=N_POP)),
-                surrogate="rbf",
-                strategy=PreSelectionStrategy(n_candidates=N_POP, n_select=N_POP - 3),
-                max_fe=100,
-                pop_size=N_POP,
-                seed=0,
-                verbose=False,
-            )
+    def test_preselection_partial_tell_uses_policy_feedback(self):
+        result = minimize(
+            lambda x: np.sum(x**2),
+            dim=DIM,
+            lb=[-5.0] * DIM,
+            ub=[5.0] * DIM,
+            algorithm=PymooAlgorithm(PymooGA(pop_size=N_POP), allow_partial_tell=True),
+            surrogate="rbf",
+            strategy=PreSelectionStrategy(n_candidates=N_POP, n_select=N_POP - 3),
+            max_fe=100,
+            pop_size=N_POP,
+            seed=0,
+            verbose=False,
+        )
+        assert result.fe > 0

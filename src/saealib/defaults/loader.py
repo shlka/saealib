@@ -16,6 +16,8 @@ _PRESET_KEYS = {
     "algorithm",
     "surrogate_manager",
     "strategy",
+    "evaluation_policy",
+    "feedback_policy",
     "termination",
 }
 

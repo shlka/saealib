@@ -180,34 +180,12 @@ class TestSplitPrediction:
         for p in parts:
             assert p.metadata is meta
 
-    def test_tell_f_split_correctly(self) -> None:
-        tell_f = np.array([[10.0], [20.0], [30.0]])
-        pred = SurrogatePrediction.objective(value=np.zeros((3, 1)))
-        pred = SurrogatePrediction(channels=pred.channels, _tell_f=tell_f)
+    def test_objective_channel_splits_correctly(self) -> None:
+        pred = SurrogatePrediction.objective(value=np.array([[10.0], [20.0], [30.0]]))
         parts = _split_prediction(pred)
-        assert parts[0].has_tell_f
-        assert parts[0].tell_f.shape == (1, 1)
-        np.testing.assert_array_almost_equal(parts[0].tell_f[0], [10.0])
-        np.testing.assert_array_almost_equal(parts[1].tell_f[0], [20.0])
-        np.testing.assert_array_almost_equal(parts[2].tell_f[0], [30.0])
-
-    def test_tell_f_none_propagates(self) -> None:
-        pred = SurrogatePrediction.objective(value=np.zeros((3, 1)))
-        parts = _split_prediction(pred)
-        for p in parts:
-            assert not p.has_tell_f
-
-    def test_tell_f_shape_preserved_after_split(self) -> None:
-        tell_f = np.array([[1.0, 2.0], [3.0, 4.0]])
-        pred = SurrogatePrediction.objective(value=np.zeros((2, 2)))
-        pred = SurrogatePrediction(channels=pred.channels, _tell_f=tell_f)
-        parts = _split_prediction(pred)
-        assert parts[0].has_tell_f
-        assert parts[0].tell_f.shape == (1, 2)
-        np.testing.assert_array_almost_equal(parts[0].tell_f[0], [1.0, 2.0])
-        assert parts[1].has_tell_f
-        assert parts[1].tell_f.shape == (1, 2)
-        np.testing.assert_array_almost_equal(parts[1].tell_f[0], [3.0, 4.0])
+        np.testing.assert_array_equal(parts[0].value, [[10.0]])
+        np.testing.assert_array_equal(parts[1].value, [[20.0]])
+        np.testing.assert_array_equal(parts[2].value, [[30.0]])
 
 
 class TestStackPredictions:
@@ -306,25 +284,11 @@ class TestStackPredictions:
 # SurrogatePrediction Properties Tests
 # ===========================================================================
 class TestSurrogatePredictionProperties:
-    """Tests for tell_f property and has_tell_f."""
+    """Tests for prediction channel properties."""
 
-    def test_tell_f_uses_override_when_set(self) -> None:
-        pred = SurrogatePrediction.objective(value=np.array([[0.0]]))
-        pred = SurrogatePrediction(channels=pred.channels, _tell_f=np.array([[99.0]]))
-        np.testing.assert_array_almost_equal(pred.tell_f, [[99.0]])
-
-    def test_tell_f_falls_back_to_mean(self) -> None:
+    def test_value_uses_objective_channel(self) -> None:
         pred = SurrogatePrediction.objective(value=np.array([[42.0]]))
-        np.testing.assert_array_almost_equal(pred.tell_f, [[42.0]])
-
-    def test_has_tell_f_true_when_set(self) -> None:
-        pred = SurrogatePrediction.objective(value=np.array([[0.0]]))
-        pred = SurrogatePrediction(channels=pred.channels, _tell_f=np.array([[1.0]]))
-        assert pred.has_tell_f is True
-
-    def test_has_tell_f_false_when_none(self) -> None:
-        pred = SurrogatePrediction.objective(value=np.array([[0.0]]))
-        assert pred.has_tell_f is False
+        np.testing.assert_array_almost_equal(pred.value, [[42.0]])
 
 
 # ===========================================================================
@@ -1227,26 +1191,19 @@ class TestPairwiseSurrogateManager:
         )
         assert prediction.channels["win_rate"].value.shape == (len(candidates), 1)
 
-    def test_predictions_have_nan_tell_f(
+    def test_predictions_keep_relational_channel(
         self,
         archive_pairwise: Archive,
         ctx_pairwise: OptimizationState,
         candidates: np.ndarray,
     ) -> None:
-        """tell_f falls back to all-NaN so strategies skip pbest assignment.
-
-        No explicit ``_tell_f`` override is set -- the "win_rate" channel
-        name (not "objective") means ``SurrogatePrediction.tell_f`` finds no
-        objective channel and falls through to its NaN fallback on its own
-        .
-        """
+        """Relational predictions are not objective predictions."""
         manager = PairwiseSurrogateManager(
             SklearnRFCClassificationSurrogate(n_estimators=5, random_state=0),
             n_ref=5,
         )
         prediction = manager.predict(candidates, archive_pairwise, ctx_pairwise)
-        assert not prediction.has_tell_f
-        assert np.all(np.isnan(prediction.tell_f))
+        assert "objective" not in prediction.channels
 
     def test_scores_in_0_1_range(
         self,
