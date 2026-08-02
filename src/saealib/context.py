@@ -22,6 +22,7 @@ if TYPE_CHECKING:
         EvaluationUpdate,
         PendingEvaluation,
     )
+    from saealib.policies.feedback import FeedbackResult
     from saealib.population import Archive, ParetoArchive, Population
     from saealib.problem import Problem
     from saealib.surrogate.prediction import SurrogatePrediction
@@ -111,6 +112,7 @@ class OptimizationState:
     )
     evaluation_handles: dict[int, EvaluationHandle] = field(default_factory=dict)
     pending_evaluations: dict[int, PendingEvaluation] = field(default_factory=dict)
+    feedback_result: FeedbackResult | None = None
 
     # User-extensible data
     data: dict[str, Any] = field(default_factory=dict)

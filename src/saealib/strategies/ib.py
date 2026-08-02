@@ -7,10 +7,11 @@ surrogate model. The top-evaluation_ratio fraction are selected for true evaluat
 
 from __future__ import annotations
 
-import functools
 from typing import TYPE_CHECKING
 
 from saealib.pipeline import Pipeline
+from saealib.policies.evaluation import RatioEvaluation
+from saealib.policies.feedback import MixedFeedback
 from saealib.registry import register
 from saealib.stages import (
     AcquisitionStage,
@@ -23,7 +24,6 @@ from saealib.stages import (
     EvaluationPlanStage,
     EvaluationSubmitStage,
     FeedbackStage,
-    SortByScoreStage,
     SurrogatePredictStage,
     TellStage,
 )
@@ -32,11 +32,6 @@ from saealib.strategies.base import OptimizationStrategy
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
     from saealib.optimizer import ComponentProvider
-
-
-def _n_eval_by_ratio(state: OptimizationState, *, ratio: float) -> int:
-    assert state.offspring is not None
-    return max(1, int(ratio * len(state.offspring)))
 
 
 @register()
@@ -62,6 +57,13 @@ class IndividualBasedStrategy(OptimizationStrategy):
         self.evaluation_ratio = evaluation_ratio
         self.pipeline: Pipeline | None = None
 
+    @property
+    def evaluation_policy(self):
+        """Return the current ratio policy."""
+        return RatioEvaluation(self.evaluation_ratio, sanitize_nonfinite=True)
+
+    feedback_policy = MixedFeedback()
+
     def _build_pipeline(self, provider: ComponentProvider) -> Pipeline:
         cbmanager = getattr(provider, "cbmanager", None)
         return Pipeline(
@@ -73,17 +75,17 @@ class IndividualBasedStrategy(OptimizationStrategy):
                     provider.acquisition,
                     cbmanager=cbmanager,
                 ),
-                SortByScoreStage(),
                 EvaluationPlanStage(
-                    n_eval=functools.partial(
-                        _n_eval_by_ratio, ratio=self.evaluation_ratio
-                    ),
+                    getattr(provider, "evaluation_policy", None)
+                    or self.evaluation_policy
                 ),
                 EvaluationSubmitStage(provider.evaluator),
                 EvaluationCollectStage(provider.evaluator),
                 EvaluationApplyStage(),
                 ArchiveUpdateStage(),
-                FeedbackStage(),
+                FeedbackStage(
+                    getattr(provider, "feedback_policy", None) or self.feedback_policy
+                ),
                 TellStage(provider.algorithm),
                 EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
             ]

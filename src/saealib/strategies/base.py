@@ -3,36 +3,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
-
-import numpy as np
 
 from saealib.context import OptimizationState
 from saealib.optimizer import ComponentProvider
-
-if TYPE_CHECKING:
-    from saealib.population import Individual
-from saealib.surrogate.prediction import SurrogatePrediction
-
-
-def assign_tell_f(
-    individual: Individual,
-    pred: SurrogatePrediction,
-    ctx: OptimizationState,
-) -> None:
-    """Assign predicted objective to individual, replacing NaN with worst population f.
-
-    When a surrogate fails (score sanitized to -inf by SurrogateManager), the
-    prediction's tell_f is an explicit NaN array.  Assigning NaN to individual.f
-    would corrupt the population sort.  Instead, we substitute the worst f value
-    currently in the population so that the individual is naturally eliminated by
-    the survivor selection without special NaN handling in comparators.
-    """
-    f = pred.tell_f[0]
-    if np.any(np.isnan(f)):
-        order = ctx.problem.comparator.sort_population(ctx.population)
-        f = ctx.population.get_array("f")[order[-1]].copy()
-    individual.f = f
+from saealib.policies.evaluation import EvaluateAll, EvaluationPolicy
+from saealib.policies.feedback import FeedbackPolicy, MixedFeedback
 
 
 class OptimizationStrategy(ABC):
@@ -51,6 +26,9 @@ class OptimizationStrategy(ABC):
 
     # Optimizer.validate() checks this to ensure surrogate_manager is configured.
     requires_surrogate: bool = False
+
+    evaluation_policy: EvaluationPolicy = EvaluateAll()
+    feedback_policy: FeedbackPolicy = MixedFeedback()
 
     @abstractmethod
     def step(

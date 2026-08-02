@@ -26,6 +26,8 @@ from saealib.context import OptimizationState
 from saealib.exceptions import ConfigurationError, ValidationError
 from saealib.execution.evaluator import Evaluator, SerialEvaluator
 from saealib.execution.runner import Runner
+from saealib.policies.evaluation import EvaluationPolicy
+from saealib.policies.feedback import FeedbackPolicy
 from saealib.surrogate.manager import (
     LocalSurrogateManager,
     PairwiseSurrogateManager,
@@ -77,6 +79,16 @@ class ComponentProvider(Protocol):
     @property
     def acquisition(self) -> AcquisitionFunction:
         """Acquisition function owned by the provider, not the manager."""
+        ...
+
+    @property
+    def evaluation_policy(self) -> EvaluationPolicy | None:
+        """Return the evaluation policy."""
+        ...
+
+    @property
+    def feedback_policy(self) -> FeedbackPolicy | None:
+        """Return the feedback policy."""
         ...
 
     @property
@@ -154,6 +166,8 @@ class Optimizer:
         self.initializer: Initializer | None = None
         self.evaluator: Evaluator = SerialEvaluator()
         self.acquisition: AcquisitionFunction = cast(AcquisitionFunction, None)
+        self.evaluation_policy: EvaluationPolicy | None = None
+        self.feedback_policy: FeedbackPolicy | None = None
         self.instance_name: str = ""
         self._preset: dict | None = None
 
@@ -184,6 +198,16 @@ class Optimizer:
     def set_acquisition(self, acquisition) -> Self:
         """Set the independent acquisition component."""
         self.acquisition = acquisition
+        return self
+
+    def set_evaluation_policy(self, policy: EvaluationPolicy) -> Self:
+        """Set the evaluation policy."""
+        self.evaluation_policy = policy
+        return self
+
+    def set_feedback_policy(self, policy: FeedbackPolicy) -> Self:
+        """Set the feedback policy."""
+        self.feedback_policy = policy
         return self
 
     def set_surrogate(self, surrogate: Surrogate, n_neighbors: int = 50) -> Self:
@@ -270,7 +294,14 @@ class Optimizer:
         from saealib.registry import _strip_params, to_spec
 
         preset: dict = {}
-        for name in ("algorithm", "surrogate_manager", "strategy", "termination"):
+        for name in (
+            "algorithm",
+            "surrogate_manager",
+            "strategy",
+            "evaluation_policy",
+            "feedback_policy",
+            "termination",
+        ):
             component = getattr(self, name, None)
             if component is None:
                 continue
@@ -328,6 +359,14 @@ class Optimizer:
             issues.append("initializer is not set; call set_initializer()")
         if termination is None:
             issues.append("termination is not set; call set_termination()")
+        if self.evaluation_policy is not None and not isinstance(
+            self.evaluation_policy, EvaluationPolicy
+        ):
+            issues.append("evaluation_policy must be an EvaluationPolicy")
+        if self.feedback_policy is not None and not isinstance(
+            self.feedback_policy, FeedbackPolicy
+        ):
+            issues.append("feedback_policy must be a FeedbackPolicy")
 
         if (
             strategy is not None
@@ -433,6 +472,10 @@ class Optimizer:
                     )
                 )
                 self.strategy = strategy
+            if self.evaluation_policy is None and "evaluation_policy" in user_preset:
+                self.evaluation_policy = build(user_preset["evaluation_policy"])
+            if self.feedback_policy is None and "feedback_policy" in user_preset:
+                self.feedback_policy = build(user_preset["feedback_policy"])
             if (
                 getattr(self, "termination", None) is None
                 and "termination" in user_preset
@@ -443,7 +486,14 @@ class Optimizer:
                     )
                 )
 
-        if algorithm is None or strategy is None or surrogate_manager is None:
+        use_bundled_policies = strategy is None
+        if (
+            algorithm is None
+            or strategy is None
+            or surrogate_manager is None
+            or self.evaluation_policy is None
+            or self.feedback_policy is None
+        ):
             defaults = load_defaults()
             preset = defaults["presets"][self._select_preset_name(defaults, algorithm)]
             if algorithm is None and "algorithm" in preset:
@@ -457,6 +507,18 @@ class Optimizer:
                     self.acquisition = acquisition
             if strategy is None and "strategy" in preset:
                 self.strategy = build(preset["strategy"])
+            if (
+                use_bundled_policies
+                and self.evaluation_policy is None
+                and "evaluation_policy" in preset
+            ):
+                self.evaluation_policy = build(preset["evaluation_policy"])
+            if (
+                use_bundled_policies
+                and self.feedback_policy is None
+                and "feedback_policy" in preset
+            ):
+                self.feedback_policy = build(preset["feedback_policy"])
 
         if self.initializer is None:
             from saealib.execution.initializer import LHSInitializer
@@ -872,6 +934,8 @@ class Optimizer:
             ("algorithm", opt.set_algorithm, Algorithm),
             ("strategy", opt.set_strategy, OptimizationStrategy),
             ("surrogate_manager", opt.set_surrogate_manager, SurrogateManager),
+            ("evaluation_policy", opt.set_evaluation_policy, EvaluationPolicy),
+            ("feedback_policy", opt.set_feedback_policy, FeedbackPolicy),
             ("termination", opt.set_termination, Termination),
         ):
             component = getattr(module, name, None)

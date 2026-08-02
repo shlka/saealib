@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from saealib.pipeline import Pipeline
+from saealib.policies.evaluation import EvaluateAll
+from saealib.policies.feedback import TrueOnlyFeedback
 from saealib.stages import (
     ArchiveUpdateStage,
     AskStage,
@@ -34,6 +36,9 @@ class DirectStrategy(OptimizationStrategy):
 
     requires_surrogate: bool = False
 
+    evaluation_policy = EvaluateAll()
+    feedback_policy = TrueOnlyFeedback()
+
     def __init__(self) -> None:
         self.pipeline: Pipeline | None = None
 
@@ -43,12 +48,17 @@ class DirectStrategy(OptimizationStrategy):
             [
                 CountGenerationStage(),
                 AskStage(provider.algorithm, cbmanager=cbmanager),
-                EvaluationPlanStage(),
+                EvaluationPlanStage(
+                    getattr(provider, "evaluation_policy", None)
+                    or self.evaluation_policy
+                ),
                 EvaluationSubmitStage(provider.evaluator),
                 EvaluationCollectStage(provider.evaluator),
                 EvaluationApplyStage(),
                 ArchiveUpdateStage(),
-                FeedbackStage(),
+                FeedbackStage(
+                    getattr(provider, "feedback_policy", None) or self.feedback_policy
+                ),
                 TellStage(provider.algorithm),
                 EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
             ]

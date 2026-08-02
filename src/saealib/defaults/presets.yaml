@@ -21,6 +21,13 @@ presets:
     strategy:
       type: IndividualBasedStrategy
       params: {evaluation_ratio: 0.1}
+    evaluation_policy:
+      type: RatioEvaluation
+      params: {ratio: 0.1, sanitize_nonfinite: true}
+    feedback_policy:
+      type: ComparatorWorstFallback
+      params:
+        inner: {type: MixedFeedback}
 
 # Selects a preset by the (already-set) algorithm's registered type name.
 by_algorithm:

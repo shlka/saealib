@@ -137,8 +137,8 @@ msgid "Class labels, only present for classification models"
 msgstr "分類モデルのみが持つクラスラベル"
 
 #: ../../../components/surrogate.md
-msgid "`tell_f`"
-msgstr "`tell_f`"
+msgid "feedback values"
+msgstr "feedback values"
 
 #: ../../../components/surrogate.md
 msgid ""
@@ -158,25 +158,21 @@ msgstr "SHAP値など実装固有の付加情報を格納する`dict`"
 
 #: ../../../components/surrogate.md:36
 msgid ""
-"`tell_f` is a property that falls back to `value` if the constructor "
-"argument `_tell_f` is unset. Three boolean properties — "
-"`has_uncertainty`/`has_label`/`has_tell_f` — let you check whether each "
+"`value` is a convenience property for the objective channel. "
+"`has_uncertainty`/`has_label` let you check whether each "
 "corresponding value is set."
 msgstr ""
-"`tell_f`は、コンストラクタ引数`_tell_f`が未設定なら`value`にフォールバックするプロパティです。 "
-"`has_uncertainty`/`has_label`/`has_tell_f`という3つの真偽値プロパティで、それぞれの値が設定されているかを確認できます。"
+"`value`は目的チャンネルの便利なプロパティです。 `has_uncertainty`/`has_label`という真偽値プロパティで値の有無を確認できます。"
 
 #: ../../../components/surrogate.md:39
 msgid ""
-"Explicitly passing a NaN array to `_tell_f` lets you prevent `value` from"
-" being used directly as `tell_f`. When a surrogate's prediction "
+"Prediction channels remain separate from feedback construction. When a surrogate's prediction "
 "represents a quantity that isn't the objective value (such as a novelty "
 "score), this mechanism prevents contaminating things like pbest. "
 "[SurrogateManager](surrogate_manager.md)'s `ArchiveBasedManager` family "
 "uses this technique."
 msgstr ""
-"`_tell_f`にNaN配列を明示的に渡すと、`value`をそのまま`tell_f`として使わせないようにできます。 "
-"サロゲートの予測値が目的関数値ではない量（novelty scoreなど）を表す場合、この仕組みでpbestなどの汚染を防ぎます。 "
+"予測チャンネルはfeedback構築から分離されています。 サロゲートの予測値が目的関数値ではない量（novelty scoreなど）を表す場合、policyが別に扱います。 "
 "[SurrogateManager](surrogate_manager.md)の`ArchiveBasedManager`系がこの手法を使います。"
 
 #: ../../../components/surrogate.md:43
@@ -637,12 +633,11 @@ msgstr "{py:class}`saealib.SklearnSVCClassificationSurrogate`"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "`tell_f`は、コンストラクタ引数`_tell_f`が未設定なら`value`にフォールバックするプロパティである。 "
-#~ "`has_uncertainty`/`has_label`/`has_tell_f`という3つの真偽値プロパティで、それぞれの値が設定されているかを確認できる。"
+#~ "`value`は目的チャンネルの便利なプロパティである。 `has_uncertainty`/`has_label`で値の有無を確認できる。"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "`_tell_f`にNaN配列を明示的に渡すと、`value`をそのまま`tell_f`として使わせないようにできる。 "
+#~ "予測チャンネルはfeedback構築から分離されている。 "
 #~ "サロゲートの予測値が目的関数値ではない量（novelty scoreなど）を表す場合、この仕組みでpbestなどの汚染を防ぐ。"
 #~ " "
 #~ "[SurrogateManager](surrogate_manager.md)の`ArchiveBasedManager`系がこの手法を使う。"
@@ -793,4 +788,3 @@ msgstr "{py:class}`saealib.SklearnSVCClassificationSurrogate`"
 #~ "scikit-"
 #~ "learn/XGBoost/LightGBM/PyTorch以外のBoTorch/SMTアダプタ、およびpymooのアルゴリズム/演算子アダプタは、現状`saealib`に実装されていません。"
 #~ " `pyproject.toml`にも対応するextraは存在しません。"
-

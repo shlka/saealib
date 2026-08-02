@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from saealib.pipeline import Pipeline
+from saealib.policies.feedback import MixedFeedback
 from saealib.registry import register
 from saealib.stages import (
     ArchiveUpdateStage,
@@ -43,6 +44,7 @@ class GenerationBasedStrategy(OptimizationStrategy):
     """
 
     requires_surrogate: bool = True
+    feedback_policy = MixedFeedback()
 
     def __init__(self, gen_ctrl: int) -> None:
         self.gen_ctrl = gen_ctrl
@@ -58,15 +60,24 @@ class GenerationBasedStrategy(OptimizationStrategy):
                     self.gen_ctrl,
                     cbmanager,
                     acquisition=provider.acquisition,
+                    feedback_policy=(
+                        getattr(provider, "feedback_policy", None)
+                        or self.feedback_policy
+                    ),
                 ),
                 CountGenerationStage(),
                 AskStage(provider.algorithm, cbmanager=cbmanager),
-                EvaluationPlanStage(),
+                EvaluationPlanStage(
+                    getattr(provider, "evaluation_policy", None)
+                    or self.evaluation_policy
+                ),
                 EvaluationSubmitStage(provider.evaluator),
                 EvaluationCollectStage(provider.evaluator),
                 EvaluationApplyStage(),
                 ArchiveUpdateStage(),
-                FeedbackStage(),
+                FeedbackStage(
+                    getattr(provider, "feedback_policy", None) or self.feedback_policy
+                ),
                 TellStage(provider.algorithm),
                 EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
             ]

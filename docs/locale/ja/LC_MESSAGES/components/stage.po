@@ -244,8 +244,8 @@ msgstr "`AskStage`は`algorithm.ask()`を呼んで`state.offspring`に書き込�
 msgid ""
 "`SurrogateScoreStage` scores via `surrogate_manager.score_candidates()`, "
 "writing to `state.scores`/`state.predictions` while also setting each "
-"candidate's `tell_f`."
-msgstr "`SurrogateScoreStage`は`surrogate_manager.score_candidates()`でスコアリングし、`state.scores`/`state.predictions`に書き込むと同時に、各候補の`tell_f`も設定します。"
+"candidate feedback."
+msgstr "`SurrogateScoreStage`は`surrogate_manager.score_candidates()`でスコアリングし、`state.scores`/`state.predictions`に書き込みます。"
 
 #: ../../../components/stage.md:51
 msgid ""
@@ -498,7 +498,7 @@ msgstr "{py:class}`saealib.InitializationStage`"
 #~ msgid "`AskStage`は`algorithm.ask()`を呼んで`state.offspring`に書き込み、`cbmanager`経由でPostCrossover/PostMutation/PostAskEventを発火する。"
 #~ msgstr ""
 
-#~ msgid "`SurrogateScoreStage`は`surrogate_manager.score_candidates()`でスコアリングし、`state.scores`/`state.predictions`に書き込むと同時に、各候補の`tell_f`も設定する。"
+#~ msgid "`SurrogateScoreStage`は`surrogate_manager.score_candidates()`でスコアリングし、`state.scores`/`state.predictions`に書き込む。"
 #~ msgstr ""
 
 #~ msgid ""
@@ -574,4 +574,3 @@ msgstr "{py:class}`saealib.InitializationStage`"
 
 #~ msgid "参照"
 #~ msgstr ""
-

@@ -139,6 +139,17 @@ from saealib.operators import repair_clipping as repair_clipping
 from saealib.optimizer import Optimizer as Optimizer
 from saealib.pipeline import Pipeline as Pipeline
 from saealib.pipeline import Stage as Stage
+from saealib.policies import ComparatorWorstFallback as ComparatorWorstFallback
+from saealib.policies import EvaluateAll as EvaluateAll
+from saealib.policies import EvaluationPolicy as EvaluationPolicy
+from saealib.policies import FeedbackPolicy as FeedbackPolicy
+from saealib.policies import FeedbackResult as FeedbackResult
+from saealib.policies import MixedFeedback as MixedFeedback
+from saealib.policies import NoFeedback as NoFeedback
+from saealib.policies import PredictedFeedback as PredictedFeedback
+from saealib.policies import RatioEvaluation as RatioEvaluation
+from saealib.policies import TopKEvaluation as TopKEvaluation
+from saealib.policies import TrueOnlyFeedback as TrueOnlyFeedback
 from saealib.population import Archive as Archive
 
 # population (mixins)

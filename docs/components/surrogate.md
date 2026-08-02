@@ -30,13 +30,9 @@ There are two marker base classes between `Surrogate` and `predict()`.
 | `value` | The predicted value. Shape `(n_samples, n_obj)` |
 | `std` | Uncertainty (standard deviation). `None` for surrogates that don't provide it |
 | `label` | Class labels, only present for classification models |
-| `tell_f` | The value assigned to offspring's `f` before calling `algorithm.tell()` (a property) |
 | `metadata` | A `dict` holding implementation-specific auxiliary information, such as SHAP values |
 
-`tell_f` is a property that falls back to `value` if the constructor argument `_tell_f` is unset.
-Three boolean properties — `has_uncertainty`/`has_label`/`has_tell_f` — let you check whether each corresponding value is set.
-
-Explicitly passing a NaN array to `_tell_f` lets you prevent `value` from being used directly as `tell_f`.
+`value` and `std` are convenience properties for the objective channel.
 When a surrogate's prediction represents a quantity that isn't the objective value (such as a novelty score), this mechanism prevents contaminating things like pbest.
 [SurrogateManager](surrogate_manager.md)'s `ArchiveBasedManager` family uses this technique.
 

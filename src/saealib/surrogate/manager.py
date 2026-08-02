@@ -57,11 +57,7 @@ class SurrogateManager(ABC):
     A SurrogateManager is narrowed to training and prediction management
     It coordinates ``TrainingSet`` construction, model fitting, and prediction,
     and returns a ``SurrogatePrediction`` for callers
-    (e.g. :class:`~saealib.stages.SurrogatePredictStage`) to score via an
-    independent :class:`~saealib.acquisition.base.AcquisitionFunction` and
-    to assign predicted objective values from. Acquisition scoring, score
-    composition, and NaN sanitization are not manager responsibilities
-    policy-owned downstream.
+            (e.g. :class:`~saealib.stages.SurrogatePredictStage`).
 
     Attributes
     ----------
@@ -658,12 +654,7 @@ class PairwiseSurrogateManager(SurrogateManager):
         SurrogatePrediction
             A single ``"win_rate"`` channel, deliberately not named
             ``"objective"``: naming it ``"objective"`` would make
-            downstream ``tell_f`` resolution treat the win rate as a real
-            predicted objective. With no ``"objective"`` channel present,
-            ``SurrogatePrediction.tell_f`` falls through to its all-NaN
-            fallback automatically, reproducing the win-rate manager's
-            former explicit NaN-marking with no extra code here. ``value``
-            shape: ``(n_candidates, 1)``.
+            predicted objective. ``value`` shape: ``(n_candidates, 1)``.
         """
         if refit:
             self.fit(archive, ctx)
@@ -697,7 +688,7 @@ def _split_prediction(prediction: SurrogatePrediction) -> list[SurrogatePredicti
     ``prediction.channels`` is sliced per row; ``covariance``/``samples`` are
     implementation-specific joint quantities and are carried over unsliced
     (reused, not copied) on each per-sample channel, matching how ``x``/
-    ``label``/``_tell_f``/``metadata`` are handled below.
+    ``label``/``metadata`` are handled below.
     """
     if prediction.channels:
         n = next(iter(prediction.channels.values())).value.shape[0]
@@ -720,15 +711,11 @@ def _split_prediction(prediction: SurrogatePrediction) -> list[SurrogatePredicti
         }
         label_i = prediction.label[i : i + 1] if prediction.label is not None else None
         x_i = prediction.x[i : i + 1] if prediction.x is not None else None
-        tell_f_i = (
-            prediction._tell_f[i : i + 1] if prediction._tell_f is not None else None
-        )
         result.append(
             SurrogatePrediction(
                 channels=channels_i,
                 x=x_i,
                 label=label_i,
-                _tell_f=tell_f_i,
                 metadata=prediction.metadata,
             )
         )
@@ -744,9 +731,7 @@ def _stack_predictions(predictions: list[SurrogatePrediction]) -> SurrogatePredi
     holds in practice). ``covariance``/``samples`` are not stacked (they are
     implementation-specific joint quantities that do not concatenate
     meaningfully row-by-row); only ``value``/``std`` are stacked per channel.
-    ``label`` is stacked the same way ``std`` is (all-or-nothing). ``_tell_f``
-    is not stacked: no built-in ``Surrogate.predict()`` sets it, so per-sample
-    ``_tell_f`` never survives a round trip through this function.
+    ``label`` is stacked the same way ``std`` is (all-or-nothing).
 
     Parameters
     ----------

@@ -46,7 +46,7 @@ The table shows how each Stage reads and writes `OptimizationState`'s standard f
 
 `AskStage` calls `algorithm.ask()`, writes to `state.offspring`, and fires PostCrossover/PostMutation/PostAskEvent via `cbmanager`.
 
-`SurrogateScoreStage` scores via `surrogate_manager.score_candidates()`, writing to `state.scores`/`state.predictions` while also setting each candidate's `tell_f`.
+`SurrogateScoreStage` scores via `surrogate_manager.score_candidates()`, writing to `state.scores`/`state.predictions`.
 
 `SurrogateFitStage` is used to pre-fit the surrogate once, ahead of an inner loop where the archive doesn't change.
 It's used together with passing `refit=False` to the downstream `SurrogateScoreStage`.
