@@ -77,8 +77,9 @@ opt = (
         )
     )
     .set_surrogate_manager(
-        GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, dim=5), MeanPrediction())
+        GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, dim=5))
     )
+    .set_acquisition(MeanPrediction())
     .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.1))
     .set_termination(Termination(max_fe(100)))
 )

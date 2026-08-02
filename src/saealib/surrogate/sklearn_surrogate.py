@@ -88,7 +88,7 @@ class SklearnSurrogate(RegressionSurrogate):
         assert self._models is not None
         preds = [m.predict(test) for m in self._models]
         value = np.column_stack(preds)
-        return SurrogatePrediction(value=value)
+        return SurrogatePrediction.objective(value=value)
 
 
 class SklearnSVMSurrogate(SklearnSurrogate):
@@ -209,7 +209,7 @@ class SklearnGPRSurrogate(SklearnSurrogate):
             stds.append(sigma)
         value = np.column_stack(means)
         std = np.column_stack(stds)
-        return SurrogatePrediction(value=value, std=std)
+        return SurrogatePrediction.objective(value=value, std=std)
 
 
 class SklearnXGBSurrogate(SklearnSurrogate):
@@ -337,7 +337,7 @@ class SklearnClassificationSurrogate(ComparisonSurrogate):
             test = test.reshape(1, -1)
         assert self._model is not None
         proba = self._model.predict_proba(test)
-        return SurrogatePrediction(value=proba[:, 1:2])
+        return SurrogatePrediction.objective(value=proba[:, 1:2])
 
 
 class SklearnSVCClassificationSurrogate(SklearnClassificationSurrogate):

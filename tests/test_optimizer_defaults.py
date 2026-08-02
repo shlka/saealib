@@ -138,8 +138,8 @@ class TestSurrogateManagerInjection:
         assert isinstance(manager, LocalSurrogateManager)
         assert isinstance(manager.surrogate, RBFSurrogate)
         assert manager.surrogate.dim == 3
-        assert isinstance(manager.acquisition, MeanPrediction)
-        assert manager.acquisition.direction is problem.direction
+        assert isinstance(opt.acquisition, MeanPrediction)
+        np.testing.assert_array_equal(opt.acquisition.direction, problem.direction)
 
     def test_training_set_uses_preset_n_neighbors(self):
         from saealib.surrogate.manager import LocalSurrogateManager

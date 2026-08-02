@@ -80,13 +80,14 @@ algorithm = GA(
     SequentialSelection(),
     TruncationSelection(),
 )
-surrogate_manager = GlobalSurrogateManager(SklearnGPRSurrogate(), ExpectedImprovement())
+surrogate_manager = GlobalSurrogateManager(SklearnGPRSurrogate())
 strategy = IndividualBasedStrategy(evaluation_ratio=0.2)
 
 opt = (
     Optimizer(problem)
     .set_algorithm(algorithm)
     .set_surrogate_manager(surrogate_manager)
+    .set_acquisition(ExpectedImprovement())
     .set_strategy(strategy)
     .set_termination(Termination(max_fe(200)))
 )

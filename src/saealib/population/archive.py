@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import Any
 
 import numpy as np
@@ -62,19 +63,27 @@ class ArchiveMixin:
         key_attr: str = "x",
         atol: float = 0.0,
         rtol: float = 0.0,
+        duplicate_policy: str = "keep_first",
         **kwargs,
     ):
         super().__init__(attrs=attrs, init_capacity=init_capacity)  # ty: ignore[unknown-argument]
 
         if key_attr not in self.schema:  # ty: ignore[unresolved-attribute]
             raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
-        self._duplicate_indices: list[int] = []
+        if duplicate_policy not in {"keep_first", "replace", "append"}:
+            raise ValueError(
+                "duplicate_policy must be 'keep_first', 'replace', or 'append'"
+            )
+        self._deprecated_duplicate_indices: list[int] = []
+        self.duplicate_policy = duplicate_policy
         self.key_attr = key_attr
         self.atol = atol
         self.rtol = rtol
         self._kdtree: cKDTree | None = None
 
-    def add(self, element: Individual | dict[str, Any] | None = None, **kwargs) -> int:
+    def add(
+        self: Any, element: Individual | dict[str, Any] | None = None, **kwargs
+    ) -> int:
         """
         Add a new solution to the archive. Duplicate solutions are ignored.
 
@@ -109,21 +118,63 @@ class ArchiveMixin:
 
         idx = self._find_idx(key_attr_val)
 
-        if idx is not None:
-            self._duplicate_indices.append(idx)
-            return idx
+        if idx is not None and self.duplicate_policy != "append":
+            if self.duplicate_policy == "keep_first":
+                self._deprecated_duplicate_indices.append(idx)
+                return idx
+
+            # A retry of the same candidate is a value-only update.  A spatial
+            # duplicate from another candidate must replace the whole row so
+            # that the ID remains provenance-correct.
+            incoming_id = _extract_id_value(self._schema, element, kwargs)  # type: ignore[unresolved-attribute]
+            existing_id = (
+                int(self.get_array("id")[idx]) if "id" in self.schema else incoming_id
+            )
+            if incoming_id == existing_id and "id" in self.schema:
+                values = {
+                    key: np.asarray(value, dtype=self._schema[key].dtype).reshape(
+                        (1, *self._schema[key].shape)
+                    )
+                    for key, value in kwargs.items()
+                    if key in self._schema and key != "id"
+                }
+                if isinstance(element, dict):
+                    values.update(
+                        {
+                            key: np.asarray(
+                                value, dtype=self._schema[key].dtype
+                            ).reshape((1, *self._schema[key].shape))
+                            for key, value in element.items()
+                            if key in self._schema and key != "id" and key not in values
+                        }
+                    )
+                if values:
+                    self.update_rows(np.array([idx]), values)
+                self._kdtree = None
+                return idx
+
+            self.delete(idx)
+            # Delete compacts rows; append the incoming observation below.
+            idx = None
         else:
-            id_val = _extract_id_value(self._schema, element, kwargs)  # ty: ignore[unresolved-attribute]
-            if id_val == -1:
-                raise ValidationError(
-                    "Archive.add() requires a real candidate id when the "
-                    "schema declares an 'id' column (got the -1 sentinel)"
-                )
-            new_idx = self._size  # ty: ignore[unresolved-attribute]
-            super()._append_internal(element, preserve_ids=True, **kwargs)  # ty: ignore[unresolved-attribute]
-            self._duplicate_indices.append(new_idx)
-            self._kdtree = None
-            return new_idx
+            pass
+
+        id_val = _extract_id_value(self._schema, element, kwargs)
+        if id_val == -1:
+            raise ValidationError(
+                "Archive.add() requires a real candidate id when the "
+                "schema declares an 'id' column (got the -1 sentinel)"
+            )
+        new_idx = self._size
+        super()._append_internal(
+            element,
+            preserve_ids=True,
+            allow_duplicate_ids=self.duplicate_policy == "append",
+            **kwargs,
+        )
+        self._deprecated_duplicate_indices.append(new_idx)
+        self._kdtree = None
+        return new_idx
 
     def _find_idx(self, element: np.ndarray | np.floating) -> int | None:
         """
@@ -164,17 +215,33 @@ class ArchiveMixin:
         -------
         Population without removing duplicates.
         """
-        all_length = len(self._duplicate_indices)
+        warnings.warn(
+            "get_duplicated_population() is deprecated; use an Archive with "
+            "duplicate_policy='append' for observation history.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        all_length = len(self._deprecated_duplicate_indices)
         dup_pop = Population(
             attrs=list(self._schema.values()),  # ty: ignore[unresolved-attribute]
             init_capacity=all_length,
         )
-        indices = np.array(self._duplicate_indices)
+        indices = np.array(self._deprecated_duplicate_indices)
         for k, v in self._data.items():  # ty: ignore[unresolved-attribute]
             dup_pop._data[k][:all_length] = v[indices]
         dup_pop._size = all_length
         dup_pop._structure_version = self._structure_version  # ty: ignore[unresolved-attribute]
         return dup_pop
+
+    @property
+    def _duplicate_indices(self) -> list[int]:
+        """Return the old duplicate index log and emit a warning."""
+        warnings.warn(
+            "Archive._duplicate_indices is deprecated; use duplicate_policy='append'.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._deprecated_duplicate_indices
 
     def delete(self, index):
         """Delete element(s) and invalidate the kNN cache."""

@@ -1,15 +1,14 @@
 # SurrogateManager
 
-Where [Surrogate](surrogate.md) handles only fit/predict, `SurrogateManager` coordinates the entire fit, predict, and scoring pipeline.
-Because `score_candidates()` returns not just the scalar score but also the original predictions, the caller (such as `IndividualBasedStrategy`) can assign predicted objective values to offspring.
+Where [Surrogate](surrogate.md) handles only fit/predict, `SurrogateManager` coordinates model fitting and batched prediction. An acquisition configured on the optimizer scores the returned predictions.
 
 `Optimizer.set_surrogate_manager()` is a separate top-level swap point from `Optimizer.set_surrogate()` (a simplified version that wraps a [Surrogate](surrogate.md) in `LocalSurrogateManager`).
 
 ## SurrogateManager's role
 
-`SurrogateManager`'s only abstract method is `score_candidates()`; everything else is a hook with a default implementation.
+`SurrogateManager`'s abstract method is `predict()`; fitting and generation hooks have default implementations.
 
-**`score_candidates(candidates_x, archive, ctx=None, *, refit=True) -> tuple[np.ndarray, list[SurrogatePrediction]]`** (abstract): Scores the candidates.
+**`predict(candidates_x, archive, ctx=None, *, refit=True) -> SurrogatePrediction`** (abstract): Predicts the candidates.
 With `refit=True` (the default), the surrogate is retrained before scoring.
 
 **`fit(archive, ctx=None) -> None`**: A no-op by default.
@@ -18,13 +17,6 @@ A pre-fit hook meant to be called once before a series of `score_candidates(...,
 **`last_accuracy: SurrogateAccuracy | None`** (class attribute): The accuracy metric computed by the most recent `fit`.
 Covered in detail in [Surrogate accuracy evaluation and dynamic switching](surrogate_switching.md).
 
-**`iter_acquisitions() -> Iterator[AcquisitionFunction]`**: An internal hook `Optimizer` uses to auto-inject `problem.direction` into each [AcquisitionFunction](acquisition_functions.md).
-The default returns `self.acquisition` if it exists.
-A manager with no acquisition function, like `PairwiseSurrogateManager`, returns nothing, and `CompositeSurrogateManager` delegates to its sub-managers.
-
-**`post_score(scores, predictions, ctx=None)`** / **`with_post_score(fn)`**: A post-scoring lifecycle hook.
-The same shape as [Surrogate](surrogate.md)'s `with_post_fit`; `with_post_score` returns a copy with the hook added, without modifying the original instance.
-
 **`on_generation_end(gen, archive, ctx=None)`** / **`with_on_generation_end(fn)`**: An end-of-generation hook.
 Also extensible via the same copy-and-chain approach.
 
@@ -32,14 +24,14 @@ Also extensible via the same copy-and-chain approach.
 
 | Class | Approach |
 |---|---|
-| `GlobalSurrogateManager` | Fits globally once over the entire archive, and predicts/scores every candidate at once |
+| `GlobalSurrogateManager` | Fits globally once over the entire archive and predicts every candidate at once |
 | `LocalSurrogateManager` | Fits locally per candidate, using its k nearest neighbors |
-| `CompositeSurrogateManager` | Combines scores from multiple managers |
-| `PairwiseSurrogateManager` | Scoring via a pairwise-comparison surrogate |
+| `CompositeSurrogateManager` | Combines named prediction channels |
+| `PairwiseSurrogateManager` | Predicts win rates with a pairwise-comparison surrogate |
 
-`GlobalSurrogateManager(surrogate, acquisition, training_set=None, accuracy_evaluator=None)` uses `ArchiveObjectiveSet()` when `training_set` is omitted.
+`GlobalSurrogateManager(surrogate, training_set=None, accuracy_evaluator=None)` uses `ArchiveObjectiveSet()` when `training_set` is omitted.
 
-`LocalSurrogateManager(surrogate, acquisition, training_set=None, accuracy_evaluator=None)` uses `KNNObjectiveSet(n_neighbors=50)` when `training_set` is omitted.
+`LocalSurrogateManager(surrogate, training_set=None, accuracy_evaluator=None)` uses `KNNObjectiveSet(n_neighbors=50)` when `training_set` is omitted.
 `n_neighbors` isn't a constructor argument of `LocalSurrogateManager` itself — it's a parameter of the default `training_set`.
 Because it reuses and refits the same `surrogate` instance across candidates, it isn't thread-safe.
 

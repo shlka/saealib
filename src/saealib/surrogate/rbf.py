@@ -199,4 +199,4 @@ class RBFSurrogate(RegressionSurrogate):
         test = np.atleast_2d(np.asarray(test_x, dtype=float))
         preds = [m.predict(test) for m in self._models]
         value = np.column_stack(preds)  # (n_samples, n_obj)
-        return SurrogatePrediction(value=value, x=test)
+        return SurrogatePrediction.objective(value=value, x=test)

@@ -11,10 +11,11 @@ from typing import TYPE_CHECKING
 from saealib.pipeline import Pipeline
 from saealib.registry import register
 from saealib.stages import (
+    AcquisitionStage,
     ArchiveUpdateStage,
     AskStage,
     CountGenerationStage,
-    SurrogateScoreStage,
+    SurrogatePredictStage,
     TellStage,
     TopKSelectionStage,
     TrueEvaluationStage,
@@ -70,7 +71,11 @@ class PreSelectionStrategy(OptimizationStrategy):
                     n_offspring=self.n_candidates,
                     cbmanager=cbmanager,
                 ),
-                SurrogateScoreStage(provider.surrogate_manager, cbmanager=cbmanager),
+                SurrogatePredictStage(provider.surrogate_manager, cbmanager=cbmanager),
+                AcquisitionStage(
+                    provider.acquisition,
+                    cbmanager=cbmanager,
+                ),
                 TopKSelectionStage(k=self.n_select),
                 TrueEvaluationStage(provider.evaluator, cbmanager=cbmanager),
                 ArchiveUpdateStage(),

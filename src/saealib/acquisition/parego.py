@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from scipy.stats import norm
 
-from saealib.acquisition.base import AcquisitionFunction, direction_to_minimize_sign
+from saealib.acquisition.base import PointwiseAcquisition, direction_to_minimize_sign
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
     from saealib.population import Archive
 
 
-class ParEGOAcquisition(AcquisitionFunction):
+class ParEGOAcquisition(PointwiseAcquisition):
     """
     ParEGO acquisition function for multi-objective Bayesian optimisation.
 

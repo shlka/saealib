@@ -477,7 +477,7 @@ class TestLevelBasedSet:
         ctx = _make_ctx(archive=arc)
         ts = LevelBasedSet(source="archive", n_levels=2)
         data = ts.build(arc, None, ctx)
-        pred = SurrogatePrediction(value=data.train_y.reshape(-1, 1))
+        pred = SurrogatePrediction.objective(value=data.train_y.reshape(-1, 1))
         acq = MeanPrediction(direction=np.array([1.0]))
         scores = acq.score(pred)
         assert scores[:2].min() > scores[2:].max()
@@ -644,10 +644,11 @@ class TestReferencePointComparisonSet:
         # MeanPrediction with direction=[1.0]: higher predicted label = higher score
         mgr = GlobalSurrogateManager(
             surrogate=SklearnRFRSurrogate(),
-            acquisition=MeanPrediction(direction=np.array([1.0])),
             training_set=ts,
         )
+        acquisition = MeanPrediction(direction=np.array([1.0]))
         candidates_x = np.random.default_rng(0).uniform(-2.0, 2.0, size=(5, DIM))
-        scores, predictions = mgr.score_candidates(candidates_x, arc, ctx)
+        prediction = mgr.predict(candidates_x, arc, ctx)
+        scores = acquisition.evaluate(candidates_x, prediction, arc, ctx).scores
         assert scores.shape == (5,)
-        assert len(predictions) == 5
+        assert prediction.value.shape == (5, 1)

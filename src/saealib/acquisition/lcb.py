@@ -6,14 +6,15 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from saealib.acquisition.base import AcquisitionFunction, direction_to_minimize_sign
+from saealib.acquisition.base import PointwiseAcquisition, direction_to_minimize_sign
+from saealib.acquisition.kernels import lower_confidence_bound_kernel
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
     from saealib.population import Archive
 
 
-class LowerConfidenceBound(AcquisitionFunction):
+class LowerConfidenceBound(PointwiseAcquisition):
     """
     Lower Confidence Bound (LCB) acquisition function.
 
@@ -111,4 +112,4 @@ class LowerConfidenceBound(AcquisitionFunction):
         )
         mu = prediction.value[:, self.obj_idx] * s_idx  # (n_samples,)
         sigma = prediction.std[:, self.obj_idx]  # (n_samples,)
-        return -(mu - self.kappa * sigma)  # negate: higher = better
+        return -lower_confidence_bound_kernel(mu, sigma, self.kappa)

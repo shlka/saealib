@@ -13,11 +13,12 @@ from typing import TYPE_CHECKING
 from saealib.pipeline import Pipeline
 from saealib.registry import register
 from saealib.stages import (
+    AcquisitionStage,
     ArchiveUpdateStage,
     AskStage,
     CountGenerationStage,
     SortByScoreStage,
-    SurrogateScoreStage,
+    SurrogatePredictStage,
     TellStage,
     TrueEvaluationStage,
 )
@@ -62,7 +63,11 @@ class IndividualBasedStrategy(OptimizationStrategy):
             [
                 CountGenerationStage(),
                 AskStage(provider.algorithm, cbmanager=cbmanager),
-                SurrogateScoreStage(provider.surrogate_manager, cbmanager=cbmanager),
+                SurrogatePredictStage(provider.surrogate_manager, cbmanager=cbmanager),
+                AcquisitionStage(
+                    provider.acquisition,
+                    cbmanager=cbmanager,
+                ),
                 SortByScoreStage(),
                 TrueEvaluationStage(
                     provider.evaluator,

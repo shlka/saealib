@@ -65,7 +65,18 @@ def non_dominated_sort(
     if len(valid) > 0:
         # Feed only direction-untransformed valid rows to the dominator; the
         # dominator is responsible for applying the direction transform.
-        g = f[valid].astype(float)
+        g = np.asarray(f[valid], dtype=float)
+
+        if _dom is _PARETO_DOMINATOR and g.shape[1] == 2:
+            local_ranks = _two_objective_ranks(g, direction)
+            ranks[valid] = local_ranks
+            for rank in range(int(local_ranks.max()) + 1):
+                fronts.append(valid[local_ranks == rank].tolist())
+            last_rank = len(fronts)
+            for i in np.where(nan_mask)[0]:
+                ranks[i] = last_rank
+                fronts.append([int(i)])
+            return ranks, fronts
 
         # Build the full dominance matrix for valid individuals.
         dom = _dom.dominance_matrix(g, direction)
@@ -93,6 +104,44 @@ def non_dominated_sort(
         fronts.append([int(i)])
 
     return ranks, fronts
+
+
+def _two_objective_ranks(f: np.ndarray, direction: np.ndarray | None) -> np.ndarray:
+    values = f if direction is None else f * (-np.asarray(direction))
+    order = np.lexsort((values[:, 1], values[:, 0]))
+    second = values[order, 1]
+    coords = np.unique(second)
+    coord_index = {value: index for index, value in enumerate(coords, 1)}
+    tree = np.zeros(len(coords) + 1, dtype=int)
+
+    def query(index: int) -> int:
+        result = 0
+        while index:
+            result = max(result, int(tree[index]))
+            index -= index & -index
+        return result
+
+    def update(index: int, value: int) -> None:
+        while index < len(tree):
+            tree[index] = max(tree[index], value)
+            index += index & -index
+
+    local_ranks = np.empty(len(f), dtype=int)
+    start = 0
+    while start < len(order):
+        stop = start + 1
+        while stop < len(order) and (
+            values[order[start], 0] == values[order[stop], 0]
+            and values[order[start], 1] == values[order[stop], 1]
+        ):
+            stop += 1
+        index = coord_index[second[start]]
+        rank = 1 + query(index)
+        for position in range(start, stop):
+            local_ranks[order[position]] = rank - 1
+        update(index, rank)
+        start = stop
+    return local_ranks
 
 
 def dda_non_dominated_sort(

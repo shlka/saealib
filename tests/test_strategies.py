@@ -1,5 +1,5 @@
 """
-Tests for optimization strategies (Issue #009).
+Tests for optimization strategies.
 
 Tests cover:
 - GenerationBasedStrategy: generation count, fe count, archive growth
@@ -19,8 +19,10 @@ from saealib import (
     SequentialSelection,
     TruncationSelection,
 )
-from saealib.acquisition import MeanPrediction
-from saealib.callback import CallbackManager
+from saealib.acquisition import AcquisitionResult, MeanPrediction
+from saealib.acquisition.archive_based import DensityAcquisition, NoveltyAcquisition
+from saealib.acquisition.base import _UNSET, AcquisitionFunction
+from saealib.callback import AcquisitionEndEvent, CallbackManager
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.execution.evaluator import SerialEvaluator
@@ -29,13 +31,10 @@ from saealib.problem import Problem
 from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
-from saealib.surrogate.archive_manager import DensityManager, NoveltyManager
 from saealib.surrogate.manager import (
-    CompositeSurrogateManager,
     GlobalSurrogateManager,
     LocalSurrogateManager,
     SurrogateManager,
-    rank_weighted_combine,
 )
 from saealib.surrogate.prediction import SurrogatePrediction
 from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
@@ -102,25 +101,23 @@ def _make_ga() -> GA:
     )
 
 
+class _LinspaceAcquisition(AcquisitionFunction):
+    """Descending linspace scores, matching the former mock's score_candidates()."""
+
+    def evaluate(self, candidates_x, prediction, archive, ctx=None, *, prepared=_UNSET):
+        n = len(candidates_x)
+        return AcquisitionResult(scores=np.linspace(1.0, 0.0, n))
+
+
 class _MockSurrogateManager:
-    """Returns uniform scores and constant predictions."""
+    """Returns constant predictions."""
 
     def fit(self, archive, ctx=None):
         pass
 
-    def score_candidates(self, candidates_x, archive, ctx=None, *, refit=True):
+    def predict(self, candidates_x, archive, ctx=None, *, refit=True):
         n = len(candidates_x)
-        scores = np.linspace(1.0, 0.0, n)
-        predictions = [
-            SurrogatePrediction(
-                value=np.array([[1.0]]),
-                std=None,
-                label=None,
-                metadata={},
-            )
-            for _ in range(n)
-        ]
-        return scores, predictions
+        return SurrogatePrediction.objective(value=np.ones((n, 1)))
 
 
 class _MockProvider:
@@ -128,9 +125,10 @@ class _MockProvider:
     strategy = IndividualBasedStrategy(evaluation_ratio=0.1)
     termination: Termination = Termination(max_gen(100_000))
 
-    def __init__(self, algorithm, surrogate_manager):
+    def __init__(self, algorithm, surrogate_manager, acquisition=None):
         self.algorithm = algorithm
         self.surrogate_manager = surrogate_manager
+        self.acquisition = acquisition or _LinspaceAcquisition()
         self.evaluator = SerialEvaluator()
         self.cbmanager = CallbackManager()
 
@@ -202,8 +200,8 @@ class TestGenerationBasedStrategy:
         surrogate = RBFSurrogate(gaussian_kernel, DIM).with_post_fit(
             lambda tx, ty, c: operator.setitem(fit_count, 0, fit_count[0] + 1)
         )
-        manager = GlobalSurrogateManager(surrogate, MeanPrediction())
-        provider = _MockProvider(_make_ga(), manager)
+        manager = GlobalSurrogateManager(surrogate)
+        provider = _MockProvider(_make_ga(), manager, MeanPrediction())
         strategy = GenerationBasedStrategy(gen_ctrl=3)
 
         strategy.step(ctx, provider)
@@ -218,8 +216,8 @@ class TestGenerationBasedStrategy:
         surrogate = RBFSurrogate(gaussian_kernel, DIM).with_post_fit(
             lambda tx, ty, c: operator.setitem(fit_count, 0, fit_count[0] + 1)
         )
-        manager = LocalSurrogateManager(surrogate, MeanPrediction())
-        provider = _MockProvider(_make_ga(), manager)
+        manager = LocalSurrogateManager(surrogate)
+        provider = _MockProvider(_make_ga(), manager, MeanPrediction())
         strategy = GenerationBasedStrategy(gen_ctrl=1)
 
         strategy.step(ctx, provider)
@@ -290,44 +288,57 @@ class TestPreSelectionStrategy:
 
 
 # ---------------------------------------------------------------------------
-# IndividualBasedStrategy + NoveltyManager (via CompositeSurrogateManager)
+# IndividualBasedStrategy/PreSelectionStrategy + archive-based acquisitions
 # ---------------------------------------------------------------------------
 
 
-def _make_ensemble_novelty() -> CompositeSurrogateManager:
-    """Regression surrogate first (finite tell_f) + NoveltyManager second."""
-    return CompositeSurrogateManager(
-        [
-            LocalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()),
-            NoveltyManager(k=3),
-        ],
-        combine_fn=rank_weighted_combine(np.array([0.7, 0.3])),
+def _make_novelty_manager() -> tuple[GlobalSurrogateManager, AcquisitionFunction]:
+    return (
+        GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM)),
+        NoveltyAcquisition(k=3),
     )
 
 
-def _make_ensemble_density() -> CompositeSurrogateManager:
-    """Regression surrogate first (finite tell_f) + DensityManager second."""
-    return CompositeSurrogateManager(
-        [
-            LocalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM), MeanPrediction()),
-            DensityManager(eps=1.0),
-        ],
-        combine_fn=rank_weighted_combine(np.array([0.7, 0.3])),
+def _make_density_manager() -> tuple[GlobalSurrogateManager, AcquisitionFunction]:
+    return (
+        GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM)),
+        DensityAcquisition(eps=1.0),
     )
 
 
-class TestIndividualBasedStrategyWithNoveltyManager:
-    """End-to-end: IndividualBasedStrategy + regression + NoveltyManager ensemble."""
+class TestIndividualBasedStrategyWithNoveltyAcquisition:
+    """End-to-end: IndividualBasedStrategy scored by NoveltyAcquisition."""
 
     def _setup(self, evaluation_ratio: float = 0.5):
         ctx = _make_ctx()
-        provider = _MockProvider(_make_ga(), _make_ensemble_novelty())
+        manager, acquisition = _make_novelty_manager()
+        provider = _MockProvider(_make_ga(), manager, acquisition)
         strategy = IndividualBasedStrategy(evaluation_ratio=evaluation_ratio)
         return ctx, provider, strategy
 
     def test_step_runs_without_error(self):
         ctx, provider, strategy = self._setup()
         strategy.step(ctx, provider)
+
+    def test_acquisition_scores_are_novelty_based(self):
+        """Scores actually come from NoveltyAcquisition, not a constant fallback.
+
+        Captures AcquisitionEndEvent.result.scores via a callback: k-NN
+        distances over a random archive/offspring pair are (near-)certainly
+        non-constant and always finite, unlike e.g. a manager that always
+        returns the same score regardless of acquisition content.
+        """
+        ctx, provider, strategy = self._setup()
+        captured: list[np.ndarray] = []
+        provider.cbmanager.register(
+            AcquisitionEndEvent,
+            lambda event: captured.append(event.result.scores),
+        )
+        strategy.step(ctx, provider)
+        assert len(captured) == 1
+        scores = captured[0]
+        assert np.all(np.isfinite(scores))
+        assert np.ptp(scores) > 0
 
     def test_fe_equals_evaluation_ratio_times_offspring(self):
         evaluation_ratio = 0.5
@@ -355,18 +366,37 @@ class TestIndividualBasedStrategyWithNoveltyManager:
         assert ctx.gen == 1
 
 
-class TestPreSelectionStrategyWithDensityManager:
-    """End-to-end: PreSelectionStrategy + regression + DensityManager ensemble."""
+class TestPreSelectionStrategyWithDensityAcquisition:
+    """End-to-end: PreSelectionStrategy scored by DensityAcquisition."""
 
     def _setup(self, n_candidates: int = 20, n_select: int = 5):
         ctx = _make_ctx()
-        provider = _MockProvider(_make_ga(), _make_ensemble_density())
+        manager, acquisition = _make_density_manager()
+        provider = _MockProvider(_make_ga(), manager, acquisition)
         strategy = PreSelectionStrategy(n_candidates=n_candidates, n_select=n_select)
         return ctx, provider, strategy
 
     def test_step_runs_without_error(self):
         ctx, provider, strategy = self._setup()
         ctx = strategy.step(ctx, provider)
+
+    def test_acquisition_scores_are_density_based(self):
+        """Scores actually come from DensityAcquisition, not a constant fallback.
+
+        Same reasoning as the Novelty test above, mirrored for the
+        eps-neighborhood density criterion.
+        """
+        ctx, provider, strategy = self._setup()
+        captured: list[np.ndarray] = []
+        provider.cbmanager.register(
+            AcquisitionEndEvent,
+            lambda event: captured.append(event.result.scores),
+        )
+        strategy.step(ctx, provider)
+        assert len(captured) == 1
+        scores = captured[0]
+        assert np.all(np.isfinite(scores))
+        assert np.ptp(scores) > 0
 
     def test_fe_equals_n_select(self):
         ctx, provider, strategy = self._setup(n_candidates=20, n_select=5)
@@ -455,22 +485,15 @@ class TestStrategyPipelineAttribute:
 
 
 class _SpyManager(SurrogateManager):
-    """Surrogate manager that counts score_candidates() calls."""
+    """Surrogate manager that counts predict() calls."""
 
     def __init__(self):
         self.call_count = 0
 
-    def score_candidates(self, candidates_x, archive, ctx=None, *, refit=True):
+    def predict(self, candidates_x, archive, ctx=None, *, refit=True):
         self.call_count += 1
         n = len(candidates_x)
-        scores = np.linspace(1.0, 0.0, n)
-        predictions = [
-            SurrogatePrediction(
-                value=np.array([[1.0]]), std=None, label=None, metadata={}
-            )
-            for _ in range(n)
-        ]
-        return scores, predictions
+        return SurrogatePrediction.objective(value=np.ones((n, 1)))
 
 
 class TestPipelineRebuildOnRuntimeReassignment:
@@ -485,6 +508,7 @@ class TestPipelineRebuildOnRuntimeReassignment:
             .set_algorithm(_make_ga())
             .set_strategy(strategy)
             .set_surrogate_manager(manager)
+            .set_acquisition(_LinspaceAcquisition())
             .set_termination(Termination(max_gen(100)))
         )
 

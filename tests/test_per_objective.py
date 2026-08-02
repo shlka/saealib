@@ -89,7 +89,7 @@ class _StubSurrogateWithUncertainty(Surrogate):
         if test.ndim == 1:
             test = test.reshape(1, -1)
         n = len(test)
-        return SurrogatePrediction(
+        return SurrogatePrediction.objective(
             value=np.ones((n, 1)),
             std=np.full((n, 1), 0.1),
         )
@@ -219,8 +219,9 @@ class TestPerObjectiveSurrogateIntegration:
             ]
         )
         weights = np.array([-1.0, -1.0])
-        manager = GlobalSurrogateManager(s, MeanPrediction(weights=weights))
-        scores, preds = manager.score_candidates(candidates, archive_2obj)
+        acquisition = MeanPrediction(weights=weights)
+        manager = GlobalSurrogateManager(s)
+        prediction = manager.predict(candidates, archive_2obj)
+        scores = acquisition.evaluate(candidates, prediction, archive_2obj).scores
         assert scores.shape == (len(candidates),)
-        for p in preds:
-            assert p.value.shape == (1, 2)
+        assert prediction.value.shape == (len(candidates), 2)

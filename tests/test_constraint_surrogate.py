@@ -1,9 +1,4 @@
-"""End-to-end tests for constraint surrogate integration (issue #86).
-
-Tests that CompositeSurrogateManager([ei_mgr, pof_mgr], product_combine)
-correctly combines an objective surrogate (EI) with a constraint surrogate
-(ProductOfFeasibility) on the G01 constrained benchmark.
-"""
+"""End-to-end tests for constraint surrogate integration."""
 
 from __future__ import annotations
 
@@ -12,6 +7,7 @@ import pytest
 
 from saealib import (
     GA,
+    CompositeAcquisition,
     CompositeSurrogateManager,
     CrossoverBLXAlpha,
     ExpectedImprovement,
@@ -95,19 +91,22 @@ class TestConstraintSurrogateG01:
 
         ei_mgr = GlobalSurrogateManager(
             SklearnGPRSurrogate(),
-            ExpectedImprovement(),
             training_set=ArchiveObjectiveSet(),
         )
+        ei_acq = ExpectedImprovement()
         pof_mgr = GlobalSurrogateManager(
             PerObjectiveSurrogate(
                 [SklearnGPRSurrogate() for _ in range(_N_CONSTRAINTS)]
             ),
-            ProductOfFeasibility(),
             training_set=ConstraintObjectiveSet(),
         )
-        surrogate_manager = CompositeSurrogateManager(
-            [ei_mgr, pof_mgr],
+        pof_acq = ProductOfFeasibility()
+        composite_acq = CompositeAcquisition(
+            {"objective": ei_acq, "feasibility": pof_acq},
             combine_fn=product_combine,
+        )
+        surrogate_manager = CompositeSurrogateManager(
+            {"objective": ei_mgr, "feasibility": pof_mgr},
         )
 
         optimizer = (
@@ -118,6 +117,7 @@ class TestConstraintSurrogateG01:
             .set_algorithm(_make_ga())
             .set_strategy(PreSelectionStrategy(n_candidates=20, n_select=3))
             .set_surrogate_manager(surrogate_manager)
+            .set_acquisition(composite_acq)
             .set_termination(Termination(max_fe(40)))
         )
         ctx = optimizer.run()
@@ -133,9 +133,8 @@ class TestConstraintSurrogateG01:
             )
             .set_algorithm(_make_ga())
             .set_strategy(PreSelectionStrategy(n_candidates=20, n_select=3))
-            .set_surrogate_manager(
-                GlobalSurrogateManager(SklearnGPRSurrogate(), ExpectedImprovement())
-            )
+            .set_surrogate_manager(GlobalSurrogateManager(SklearnGPRSurrogate()))
+            .set_acquisition(ExpectedImprovement())
             .set_termination(Termination(max_fe(15)))
         )
         # Run initialisation only (max_fe equals initial archive sample size)
@@ -158,15 +157,19 @@ class TestConstraintSurrogateG01:
 
         ei_mgr = GlobalSurrogateManager(
             SklearnGPRSurrogate(),
-            ExpectedImprovement(),
             training_set=ArchiveObjectiveSet(),
         )
+        ei_acq = ExpectedImprovement()
         pof_mgr = GlobalSurrogateManager(
             PerObjectiveSurrogate(
                 [SklearnGPRSurrogate() for _ in range(_N_CONSTRAINTS)]
             ),
-            ProductOfFeasibility(),
             training_set=ConstraintObjectiveSet(),
+        )
+        pof_acq = ProductOfFeasibility()
+        composite_acq = CompositeAcquisition(
+            {"objective": ei_acq, "feasibility": pof_acq},
+            combine_fn=product_combine,
         )
 
         optimizer = (
@@ -177,8 +180,11 @@ class TestConstraintSurrogateG01:
             .set_algorithm(_make_ga())
             .set_strategy(PreSelectionStrategy(n_candidates=30, n_select=5))
             .set_surrogate_manager(
-                CompositeSurrogateManager([ei_mgr, pof_mgr], product_combine)
+                CompositeSurrogateManager(
+                    {"objective": ei_mgr, "feasibility": pof_mgr},
+                )
             )
+            .set_acquisition(composite_acq)
             .set_termination(Termination(max_fe(60)))
         )
         ctx = optimizer.run()
@@ -236,9 +242,8 @@ class TestConstraintSurrogate2D:
             )
             .set_algorithm(_make_ga())
             .set_strategy(PreSelectionStrategy(n_candidates=20, n_select=3))
-            .set_surrogate_manager(
-                GlobalSurrogateManager(SklearnGPRSurrogate(), ExpectedImprovement())
-            )
+            .set_surrogate_manager(GlobalSurrogateManager(SklearnGPRSurrogate()))
+            .set_acquisition(ExpectedImprovement())
             .set_termination(Termination(max_fe(50)))
         )
         ctx = optimizer.run()
@@ -246,9 +251,9 @@ class TestConstraintSurrogate2D:
 
         pof_mgr = GlobalSurrogateManager(
             PerObjectiveSurrogate([SklearnGPRSurrogate()]),
-            ProductOfFeasibility(),
             training_set=ConstraintObjectiveSet(),
         )
+        pof_acq = ProductOfFeasibility()
 
         # Points clearly inside circle (g < 0)
         inside = np.array(
@@ -272,7 +277,8 @@ class TestConstraintSurrogate2D:
         )
 
         candidates = np.vstack([inside, outside])
-        scores, _ = pof_mgr.score_candidates(candidates, archive)
+        prediction = pof_mgr.predict(candidates, archive)
+        scores = pof_acq.evaluate(candidates, prediction, archive).scores
 
         pof_inside = scores[: len(inside)]
         pof_outside = scores[len(inside) :]
@@ -284,7 +290,7 @@ class TestConstraintSurrogate2D:
 
 
 # ---------------------------------------------------------------------------
-# Backward compatibility: zero-constraint problems
+# Zero-constraint problems
 # ---------------------------------------------------------------------------
 
 
@@ -308,9 +314,8 @@ class TestConstraintSurrogateBackwardCompat:
             )
             .set_algorithm(_make_ga())
             .set_strategy(PreSelectionStrategy(n_candidates=10, n_select=2))
-            .set_surrogate_manager(
-                GlobalSurrogateManager(SklearnGPRSurrogate(), ExpectedImprovement())
-            )
+            .set_surrogate_manager(GlobalSurrogateManager(SklearnGPRSurrogate()))
+            .set_acquisition(ExpectedImprovement())
             .set_termination(Termination(max_fe(20)))
         )
         ctx = optimizer.run()

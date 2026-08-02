@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
+    from saealib.acquisition.base import AcquisitionResult
     from saealib.context import OptimizationState
     from saealib.population import Archive, Population
     from saealib.surrogate.base import Surrogate
@@ -66,6 +67,42 @@ class SurrogateEndEvent(Event):
     """Fired after surrogate-based candidate scoring."""
 
     offspring: Population | None = None
+
+
+# --- Acquisition events ---
+
+
+@dataclass
+class AcquisitionStartEvent(Event):
+    """Fired before acquisition scoring, inside ``AcquisitionStage``.
+
+    Attributes
+    ----------
+    offspring : Population or None
+        Candidates about to be scored. Mirrors ``SurrogateStartEvent``'s
+        shape for consistency; carries candidate ids indirectly via
+        ``offspring.get_array("id")`` when the offspring schema has one.
+    """
+
+    offspring: Population | None = None
+
+
+@dataclass
+class AcquisitionEndEvent(Event):
+    """Fired after acquisition scoring succeeds, inside ``AcquisitionStage``.
+
+    Not dispatched if ``AcquisitionFunction.evaluate()`` raises.
+
+    Attributes
+    ----------
+    offspring : Population or None
+        Candidates that were scored.
+    result : AcquisitionResult or None
+        The validated acquisition result.
+    """
+
+    offspring: Population | None = None
+    result: AcquisitionResult | None = None
 
 
 # --- Algorithm.ask events ---

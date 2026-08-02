@@ -6,14 +6,14 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from saealib.acquisition.base import AcquisitionFunction
+from saealib.acquisition.base import PointwiseAcquisition
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
     from saealib.population import Archive
 
 
-class MaxUncertainty(AcquisitionFunction):
+class MaxUncertainty(PointwiseAcquisition):
     """
     Acquisition function that maximizes predictive uncertainty (exploration).
 

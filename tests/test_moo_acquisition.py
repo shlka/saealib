@@ -21,7 +21,7 @@ from saealib.surrogate.prediction import SurrogatePrediction
 def _pred(value, std=None):
     m = np.asarray(value, dtype=float)
     s = np.asarray(std, dtype=float) if std is not None else None
-    return SurrogatePrediction(value=m, std=s)
+    return SurrogatePrediction.objective(value=m, std=s)
 
 
 def _archive(*rows):

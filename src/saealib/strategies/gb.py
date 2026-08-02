@@ -52,6 +52,7 @@ class GenerationBasedStrategy(OptimizationStrategy):
                     provider.surrogate_manager,
                     self.gen_ctrl,
                     cbmanager,
+                    acquisition=provider.acquisition,
                 ),
                 CountGenerationStage(),
                 AskStage(provider.algorithm, cbmanager=cbmanager),
