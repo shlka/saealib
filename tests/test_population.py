@@ -434,9 +434,18 @@ class TestPopulationGetAndGetArray:
         assert arr.shape == (5,)
         assert arr[0] == 0.0
 
-    def test_get_array_returns_view(self, populated_pop: Population) -> None:
-        """get_array returns a slice view, so mutations are reflected."""
+    def test_get_array_returns_readonly_view(self, populated_pop: Population) -> None:
+        """get_array returns a read-only view; mutating it raises."""
         arr = populated_pop.get_array("f")
+        assert arr.flags.writeable is False
+        with pytest.raises(ValueError):
+            arr[:] = 999.0
+
+    def test_get_mutable_array_returns_mutable_view(
+        self, populated_pop: Population
+    ) -> None:
+        """_get_mutable_array returns a slice view, so mutations are reflected."""
+        arr = populated_pop._get_mutable_array("f")
         arr[0] = 999.0
         assert populated_pop.get_array("f")[0] == 999.0
 

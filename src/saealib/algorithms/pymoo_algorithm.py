@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from pymoo.core.problem import Problem as PymooCoreProblem
 
     from saealib.context import OptimizationState
+    from saealib.identity import IDAllocator
     from saealib.optimizer import Dispatchable
     from saealib.problem import Problem
 
@@ -335,6 +336,36 @@ class PymooAlgorithm(Algorithm):
         self.pymoo_algorithm.tell(infills=infills)
         self._sync_population(ctx)
 
+    @staticmethod
+    def _match_survivor_ids(
+        prev_x: np.ndarray,
+        prev_ids: np.ndarray,
+        new_x: np.ndarray,
+        allocator: IDAllocator,
+    ) -> np.ndarray:
+        """Match rows by exact ``x``; unmatched rows get freshly minted ids."""
+        available: dict[bytes, list[int]] = {}
+        for i in range(len(prev_x)):
+            key = np.ascontiguousarray(prev_x[i]).tobytes()
+            available.setdefault(key, []).append(int(prev_ids[i]))
+
+        n = len(new_x)
+        ids = np.empty(n, dtype=np.int64)
+        unmatched: list[int] = []
+        for i in range(n):
+            key = np.ascontiguousarray(new_x[i]).tobytes()
+            bucket = available.get(key)
+            if bucket:
+                ids[i] = bucket.pop()
+            else:
+                unmatched.append(i)
+
+        if unmatched:
+            fresh = allocator.allocate(len(unmatched))
+            for j, i in enumerate(unmatched):
+                ids[i] = fresh[j]
+        return ids
+
     def _sync_population(self, ctx: OptimizationState) -> None:
         """Rebuild ctx.population in-place from the wrapped algorithm's own .pop."""
         alg_pop = self.pymoo_algorithm.pop
@@ -357,13 +388,20 @@ class PymooAlgorithm(Algorithm):
             g[:, self._eq_idx] = np.asarray(alg_pop.get("H"), dtype=float)
         cv = np.asarray(alg_pop.get("CV"), dtype=float).reshape(n)
 
+        new_pop_data = {
+            "x": x,
+            "f": f,
+            "g": g,
+            "cv": cv,
+            "pymoo_idx": np.full(n, -1, dtype=np.int64),
+        }
+        if "id" in ctx.population.schema:
+            new_pop_data["id"] = self._match_survivor_ids(
+                ctx.population.get_array("x"),
+                ctx.population.get_array("id"),
+                x,
+                ctx.candidate_id_allocator,
+            )
+
         ctx.population.clear()
-        ctx.population.extend(
-            {
-                "x": x,
-                "f": f,
-                "g": g,
-                "cv": cv,
-                "pymoo_idx": np.full(n, -1, dtype=np.int64),
-            }
-        )
+        ctx.population._extend_internal(new_pop_data, preserve_ids=True)

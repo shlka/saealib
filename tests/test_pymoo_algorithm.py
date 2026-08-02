@@ -228,6 +228,69 @@ class TestPymooAlgorithmAskTell:
 
 
 # ---------------------------------------------------------------------------
+# _sync_population candidate-id continuity (Codex-review regression)
+# ---------------------------------------------------------------------------
+
+
+class TestPymooSyncPopulationIdContinuity:
+    def test_resyncing_unchanged_pop_preserves_ids(self):
+        problem = _make_problem()
+        algo = PymooAlgorithm(PymooGA(pop_size=N_POP))
+        attrs = [
+            PopulationAttribute("x", float, (problem.dim,), default=np.nan),
+            PopulationAttribute("f", float, (problem.n_obj,), default=np.nan),
+            PopulationAttribute("g", float, (problem.n_constraints,), default=0.0),
+            PopulationAttribute("cv", float, (), default=0.0),
+            PopulationAttribute("id", np.int64, (), default=-1),
+            *algo.get_required_attrs(problem),
+        ]
+        rng = np.random.default_rng(0)
+        xs = rng.uniform(problem.lb, problem.ub, size=(N_POP, problem.dim))
+        fs = np.array([problem.func(x) for x in xs])
+        pop = Population(attrs, init_capacity=N_POP + 5)
+        pop._extend_internal(
+            {
+                "x": xs,
+                "f": fs,
+                "g": np.zeros((N_POP, problem.n_constraints)),
+                "cv": np.zeros(N_POP),
+                "id": np.arange(N_POP, dtype=np.int64),
+            },
+            preserve_ids=True,
+        )
+        arc = Archive(attrs, init_capacity=N_POP + 5)
+        pareto_arc = ParetoArchive(
+            attrs, init_capacity=N_POP + 5, direction=problem.direction
+        )
+        ctx = OptimizationState(
+            problem=problem,
+            population=pop,
+            archive=arc,
+            pareto_archive=pareto_arc,
+            rng=np.random.default_rng(0),
+        )
+        ctx.candidate_id_allocator.allocate(N_POP)  # keep ahead of seeded ids
+
+        cand = algo.ask(ctx, _DummyProvider())
+        cand.update_array("f", np.array([problem.func(x) for x in cand.x]))
+        algo.tell(ctx, _DummyProvider(), cand)
+
+        ids_after_first_sync = ctx.population.get_array("id").copy()
+        x_after_first_sync = ctx.population.get_array("x").copy()
+        assert np.all(ids_after_first_sync != -1)
+        assert len(np.unique(ids_after_first_sync)) == N_POP
+
+        # Re-sync with no intervening ask()/tell(): the wrapped algorithm's
+        # .pop is unchanged, so every row's x is identical -- ids must be
+        # preserved exactly, not re-minted.
+        algo._sync_population(ctx)
+        np.testing.assert_array_equal(ctx.population.get_array("x"), x_after_first_sync)
+        np.testing.assert_array_equal(
+            ctx.population.get_array("id"), ids_after_first_sync
+        )
+
+
+# ---------------------------------------------------------------------------
 # End-to-end via minimize()
 # ---------------------------------------------------------------------------
 

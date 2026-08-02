@@ -676,10 +676,10 @@ class GA(Algorithm):
         popsize = len(ctx.population)
 
         pool = ctx.population.empty_like(capacity=popsize + len(offspring))
-        pool.extend(ctx.population)
-        pool.extend(offspring)
+        pool._extend_internal(ctx.population, preserve_ids=True)
+        pool._extend_internal(offspring, preserve_ids=True)
 
         survivor_idx = self.survivor_selection.select(ctx, pool, popsize)
 
         ctx.population.clear()
-        ctx.population.extend(pool.extract(survivor_idx))
+        ctx.population._extend_internal(pool.extract(survivor_idx), preserve_ids=True)

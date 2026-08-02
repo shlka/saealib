@@ -10,6 +10,9 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from saealib.exceptions import ValidationError
+from saealib.identity import IDAllocator
+
 if TYPE_CHECKING:
     from saealib.comparators import Comparator
     from saealib.population import Archive, ParetoArchive, Population
@@ -31,6 +34,8 @@ class OptimizationState:
     - ``archive`` is append-only; copying on every evaluation would incur
       O(FE²) cost, so in-place appends are permitted.
     - ``rng`` advances its internal state as a controlled side effect.
+    - ``candidate_id_allocator`` / ``request_id_allocator`` advance their
+      internal counters as a controlled side effect, identically to ``rng``.
 
     Attributes
     ----------
@@ -44,6 +49,12 @@ class OptimizationState:
         Pareto archive instance.
     rng : np.random.Generator
         Random number generator.  Advances its state as a side effect.
+    candidate_id_allocator : IDAllocator
+        Allocates stable, unique int64 candidate IDs.  Advances its state as
+        a side effect.
+    request_id_allocator : IDAllocator
+        Allocates stable, unique int64 evaluation request IDs.  Advances its
+        state as a side effect.
     fe : int
         Number of function evaluations.
     gen : int
@@ -74,6 +85,8 @@ class OptimizationState:
     archive: Archive
     pareto_archive: ParetoArchive
     rng: np.random.Generator
+    candidate_id_allocator: IDAllocator = field(default_factory=IDAllocator)
+    request_id_allocator: IDAllocator = field(default_factory=IDAllocator)
 
     fe: int = 0
     gen: int = 0
@@ -210,6 +223,11 @@ class OptimizationState:
         # Scalar counters
         save_dict["_fe"] = np.array(self.fe)
         save_dict["_gen"] = np.array(self.gen)
+        save_dict["_checkpoint_schema_version"] = np.array(1)
+        save_dict["_next_candidate_id"] = np.array(
+            self.candidate_id_allocator.next_value
+        )
+        save_dict["_next_request_id"] = np.array(self.request_id_allocator.next_value)
 
         # Archive arrays
         n_arch = len(self.archive)
@@ -262,6 +280,18 @@ class OptimizationState:
 
         data = np.load(p, allow_pickle=False)
 
+        if "_checkpoint_schema_version" not in data.files:
+            raise ValidationError(
+                "Checkpoint is missing '_checkpoint_schema_version' — it predates "
+                "the versioned checkpoint format and cannot be loaded"
+            )
+        schema_version = int(data["_checkpoint_schema_version"])
+        if schema_version != 1:
+            raise ValidationError(
+                f"Unsupported checkpoint schema version {schema_version} "
+                "(expected 1); migration tooling is not yet implemented"
+            )
+
         # Reconstruct attribute schema
         schema_list = json.loads(bytes(data["_schema"]).decode())
         attrs = []
@@ -285,11 +315,17 @@ class OptimizationState:
 
         archive = Archive(attrs=attrs, init_capacity=max(n_arch, 1))
         if n_arch > 0:
-            archive.extend({name: data[f"archive__{name}"] for name in attr_names})
+            archive._extend_internal(
+                {name: data[f"archive__{name}"] for name in attr_names},
+                preserve_ids=True,
+            )
 
         population = Population(attrs=attrs, init_capacity=max(n_pop, 1))
         if n_pop > 0:
-            population.extend({name: data[f"pop__{name}"] for name in attr_names})
+            population._extend_internal(
+                {name: data[f"pop__{name}"] for name in attr_names},
+                preserve_ids=True,
+            )
 
         pareto_archive = ParetoArchive(
             attrs=attrs,
@@ -297,8 +333,9 @@ class OptimizationState:
             direction=problem.direction,
         )
         if n_pareto > 0:
-            pareto_archive.extend(
-                {name: data[f"pareto__{name}"] for name in attr_names}
+            pareto_archive._extend_internal(
+                {name: data[f"pareto__{name}"] for name in attr_names},
+                preserve_ids=True,
             )
 
         # Restore RNG to exact saved state
@@ -306,12 +343,17 @@ class OptimizationState:
         rng = np.random.default_rng()
         rng.bit_generator.state = rng_state
 
+        candidate_id_allocator = IDAllocator(start=int(data["_next_candidate_id"]))
+        request_id_allocator = IDAllocator(start=int(data["_next_request_id"]))
+
         return cls(
             problem=problem,
             population=population,
             archive=archive,
             pareto_archive=pareto_archive,
             rng=rng,
+            candidate_id_allocator=candidate_id_allocator,
+            request_id_allocator=request_id_allocator,
             fe=int(data["_fe"]),
             gen=int(data["_gen"]),
             data={"resumed": True},

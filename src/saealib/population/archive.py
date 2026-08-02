@@ -8,7 +8,28 @@ import numpy as np
 from scipy.spatial import cKDTree  # type: ignore  # cKDTree has no bundled type stubs
 
 from saealib.comparators import Dominator
+from saealib.exceptions import ValidationError
 from saealib.population.population import Individual, Population, PopulationAttribute
+
+
+def _extract_id_value(
+    schema: dict[str, PopulationAttribute], element: Any, kwargs: dict[str, Any]
+) -> int | None:
+    """Return the effective ``id`` implied by an ``add()``/``append()`` call.
+
+    Returns ``None`` when the schema has no ``id`` column.
+    """
+    if "id" not in schema:
+        return None
+    id_val = kwargs.get("id")
+    if id_val is None:
+        if isinstance(element, dict):
+            id_val = element.get("id")
+        elif element is not None and hasattr(element, "id"):
+            id_val = getattr(element, "id")
+    if id_val is None:
+        id_val = schema["id"].default
+    return int(id_val)
 
 
 class ArchiveMixin:
@@ -92,8 +113,14 @@ class ArchiveMixin:
             self._duplicate_indices.append(idx)
             return idx
         else:
+            id_val = _extract_id_value(self._schema, element, kwargs)  # ty: ignore[unresolved-attribute]
+            if id_val == -1:
+                raise ValidationError(
+                    "Archive.add() requires a real candidate id when the "
+                    "schema declares an 'id' column (got the -1 sentinel)"
+                )
             new_idx = self._size  # ty: ignore[unresolved-attribute]
-            super().append(element, **kwargs)  # ty: ignore[unresolved-attribute]
+            super()._append_internal(element, preserve_ids=True, **kwargs)  # ty: ignore[unresolved-attribute]
             self._duplicate_indices.append(new_idx)
             self._kdtree = None
             return new_idx
@@ -153,6 +180,11 @@ class ArchiveMixin:
         """Delete element(s) and invalidate the kNN cache."""
         super().delete(index)  # ty: ignore[unresolved-attribute]
         self._kdtree = None
+
+    def mod_value(self) -> None:
+        """Invalidate the kNN cache on every value-only mutation, too."""
+        self._kdtree = None
+        super().mod_value()  # ty: ignore[unresolved-attribute]
 
     def _ensure_kdtree(self) -> None:
         if self._kdtree is None:
@@ -354,6 +386,20 @@ class ParetoMixin:
         """
         f_new, cv_new = self._extract_fv(element, kwargs)
 
+        id_val = _extract_id_value(self.schema, element, kwargs)  # ty: ignore[unresolved-attribute]
+        if id_val == -1:
+            raise ValidationError(
+                "ParetoArchive.add() requires a real candidate id when the "
+                "schema declares an 'id' column (got the -1 sentinel)"
+            )
+        if (
+            id_val is not None
+            and id_val != -1
+            and self._size > 0  # ty: ignore[unresolved-attribute]
+            and np.any(self.get_array("id") == id_val)  # ty: ignore[unresolved-attribute]
+        ):
+            raise ValidationError(f"Duplicate candidate id {id_val}")
+
         # Check whether any existing solution dominates the new one.
         if self._size > 0:  # ty: ignore[unresolved-attribute]
             f_arr = self.get_array("f") if "f" in self._schema else None  # ty: ignore[unresolved-attribute]
@@ -426,7 +472,7 @@ class ParetoMixin:
 
         # Append the new solution and return its index.
         new_idx: int = self._size  # ty: ignore[unresolved-attribute]
-        super().append(element, **kwargs)  # type: ignore[misc]  # ty: ignore[unresolved-attribute]
+        super()._append_internal(element, preserve_ids=True, **kwargs)  # type: ignore[misc]  # ty: ignore[unresolved-attribute]
         return new_idx
 
 
