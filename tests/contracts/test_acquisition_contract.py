@@ -1,6 +1,7 @@
 """Acquisition and archive boundary contracts."""
 
 import warnings
+from typing import Any, cast
 
 import numpy as np
 import pytest
@@ -44,7 +45,7 @@ def test_prediction_rejects_channel_row_mismatch() -> None:
 
 
 def test_manager_does_not_own_acquisition_and_provider_can_exchange_it() -> None:
-    manager = GlobalSurrogateManager(object())  # type: ignore[arg-type]
+    manager = GlobalSurrogateManager(cast(Any, object()))
     assert not hasattr(manager, "acquisition")
     assert not hasattr(manager, "iter_acquisitions")
     first = MeanPrediction()
@@ -92,11 +93,12 @@ def test_archive_duplicate_policy(policy: str, expected: int) -> None:
             PopulationAttribute("x", np.float64, (1,)),
             PopulationAttribute("f", np.float64, (1,)),
             PopulationAttribute("id", np.int64, (), -1),
+            PopulationAttribute("request_id", np.int64, (), -1),
         ],
         duplicate_policy=policy,
     )
-    archive.add(x=[0.0], f=[1.0], id=10)
-    archive.add(x=[0.0], f=[2.0], id=11)
+    archive.add(x=[0.0], f=[1.0], id=10, request_id=20)
+    archive.add(x=[0.0], f=[2.0], id=11, request_id=21)
     assert len(archive) == expected
     if policy == "replace":
         assert archive.id[0] == 11

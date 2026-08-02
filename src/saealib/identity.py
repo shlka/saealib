@@ -26,6 +26,13 @@ class IDAllocator:
     """
 
     def __init__(self, start: int = 0) -> None:
+        if isinstance(start, (bool, np.bool_)) or not isinstance(
+            start, (int, np.integer)
+        ):
+            raise ValidationError("IDAllocator start must be an integer")
+        start = int(start)
+        if start < 0 or start > np.iinfo(np.int64).max:
+            raise ValidationError("IDAllocator start is outside the int64 range")
         self._next = start
         self._lock = threading.Lock()
 

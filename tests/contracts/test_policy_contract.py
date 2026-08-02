@@ -1,3 +1,6 @@
+from types import SimpleNamespace
+from typing import Any, cast
+
 import numpy as np
 import pytest
 
@@ -198,3 +201,28 @@ def test_builtin_strategy_policy_compositions():
     assert isinstance(IndividualBasedStrategy().feedback_policy, MixedFeedback)
     assert isinstance(PreSelectionStrategy(8, 2).feedback_policy, TrueOnlyFeedback)
     assert isinstance(GenerationBasedStrategy(1).feedback_policy, MixedFeedback)
+    assert isinstance(GenerationBasedStrategy(1).true_feedback_policy, TrueOnlyFeedback)
+
+
+def test_generation_based_phase_policies_distinguish_bundled_and_explicit():
+    provider = SimpleNamespace(
+        algorithm=object(),
+        surrogate_manager=object(),
+        acquisition=object(),
+        evaluator=object(),
+        cbmanager=None,
+        evaluation_policy=None,
+        feedback_policy=ComparatorWorstFallback(),
+        feedback_policy_explicit=False,
+    )
+    strategy = GenerationBasedStrategy(1)
+    pipeline = cast(Any, strategy)._build_pipeline(cast(Any, provider))
+    inner_feedback = pipeline.stages[0].stages[4]._policy
+    outer_feedback = pipeline.stages[8]._policy
+    assert isinstance(inner_feedback, PredictedFeedback)
+    assert isinstance(outer_feedback, TrueOnlyFeedback)
+
+    provider.feedback_policy = NoFeedback()
+    provider.feedback_policy_explicit = True
+    pipeline = cast(Any, strategy)._build_pipeline(cast(Any, provider))
+    assert isinstance(pipeline.stages[8]._policy, NoFeedback)

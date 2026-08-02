@@ -33,6 +33,46 @@ def _extract_id_value(
     return int(id_val)
 
 
+def _collect_data(
+    schema: dict[str, PopulationAttribute], element: Any, kwargs: dict[str, Any]
+) -> dict[str, Any]:
+    data: dict[str, Any] = {}
+    if isinstance(element, dict):
+        data.update({key: value for key, value in element.items() if key in schema})
+    elif element is not None:
+        for key in schema:
+            if hasattr(element, key):
+                data[key] = getattr(element, key)
+    data.update({key: value for key, value in kwargs.items() if key in schema})
+    return data
+
+
+def _validate_data(
+    schema: dict[str, PopulationAttribute], data: dict[str, Any]
+) -> None:
+    for key, value in data.items():
+        attr = schema[key]
+        array = np.asarray(value)
+        if array.dtype == np.dtype(object) or array.dtype != np.dtype(attr.dtype):
+            raise ValidationError(f"invalid dtype for archive column {key!r}")
+        if array.shape != attr.shape:
+            raise ValidationError(f"invalid shape for archive column {key!r}")
+
+
+def _validate_observation_schema(
+    attrs: list[PopulationAttribute], duplicate_policy: str
+) -> None:
+    if duplicate_policy != "append":
+        return
+    schema = {attr.name: attr for attr in attrs}
+    if not {"id", "request_id"}.issubset(schema):
+        raise ValidationError("append archives require id and request_id columns")
+    for name in ("id", "request_id"):
+        attr = schema[name]
+        if np.dtype(attr.dtype) != np.dtype(np.int64) or attr.shape != ():
+            raise ValidationError(f"append archive {name} must be an int64 scalar")
+
+
 class ArchiveMixin:
     """
     A mixin class for using Population as an Archive.
@@ -66,14 +106,15 @@ class ArchiveMixin:
         duplicate_policy: str = "keep_first",
         **kwargs,
     ):
-        super().__init__(attrs=attrs, init_capacity=init_capacity)  # ty: ignore[unknown-argument]
-
-        if key_attr not in self.schema:  # ty: ignore[unresolved-attribute]
-            raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
         if duplicate_policy not in {"keep_first", "replace", "append"}:
             raise ValueError(
                 "duplicate_policy must be 'keep_first', 'replace', or 'append'"
             )
+        _validate_observation_schema(attrs, duplicate_policy)
+        super().__init__(attrs=attrs, init_capacity=init_capacity)  # ty: ignore[unknown-argument]
+
+        if key_attr not in self.schema:  # ty: ignore[unresolved-attribute]
+            raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
         self._deprecated_duplicate_indices: list[int] = []
         self.duplicate_policy = duplicate_policy
         self.key_attr = key_attr
@@ -107,14 +148,31 @@ class ArchiveMixin:
         >>> arcv.add(x=x_val, f=0.1)
         >>> arcv.add(ind, f=0.1)
         """
-        key_attr_val = kwargs.get(self.key_attr)
-        if key_attr_val is None:
-            if isinstance(element, dict):
-                key_attr_val = element.get(self.key_attr)
-            elif element is not None and hasattr(element, self.key_attr):
-                key_attr_val = getattr(element, self.key_attr)
+        data = _collect_data(self._schema, element, kwargs)  # type: ignore[unresolved-attribute]
+        key_attr_val = data.get(self.key_attr)
         if key_attr_val is None:
             raise ValueError(f"Solution must have {self.key_attr} attribute")
+
+        _validate_data(self._schema, data)  # type: ignore[unresolved-attribute]
+        incoming_id = _extract_id_value(self._schema, element, kwargs)  # type: ignore[unresolved-attribute]
+        if incoming_id == -1:
+            raise ValidationError(
+                "Archive.add() requires a real candidate id when the "
+                "schema declares an 'id' column (got the -1 sentinel)"
+            )
+        if self.duplicate_policy == "append":
+            request_id = data.get("request_id")
+            if request_id is None:
+                raise ValidationError("append observations require request_id")
+            if (
+                self._size
+                and "id" in self.schema
+                and np.any(
+                    (self.get_array("request_id") == request_id)
+                    & (self.get_array("id") == incoming_id)
+                )
+            ):
+                raise ValidationError("Duplicate (request_id, candidate_id) pair")
 
         idx = self._find_idx(key_attr_val)
 
@@ -126,7 +184,6 @@ class ArchiveMixin:
             # A retry of the same candidate is a value-only update.  A spatial
             # duplicate from another candidate must replace the whole row so
             # that the ID remains provenance-correct.
-            incoming_id = _extract_id_value(self._schema, element, kwargs)  # type: ignore[unresolved-attribute]
             existing_id = (
                 int(self.get_array("id")[idx]) if "id" in self.schema else incoming_id
             )
@@ -135,36 +192,27 @@ class ArchiveMixin:
                     key: np.asarray(value, dtype=self._schema[key].dtype).reshape(
                         (1, *self._schema[key].shape)
                     )
-                    for key, value in kwargs.items()
-                    if key in self._schema and key != "id"
+                    for key, value in data.items()
+                    if key != "id"
                 }
-                if isinstance(element, dict):
-                    values.update(
-                        {
-                            key: np.asarray(
-                                value, dtype=self._schema[key].dtype
-                            ).reshape((1, *self._schema[key].shape))
-                            for key, value in element.items()
-                            if key in self._schema and key != "id" and key not in values
-                        }
-                    )
                 if values:
                     self.update_rows(np.array([idx]), values)
                 self._kdtree = None
                 return idx
 
+            ids = self.get_array("id") if "id" in self.schema else np.empty(0)
+            if (
+                "id" in self.schema
+                and incoming_id != -1
+                and np.any(ids[np.arange(len(ids)) != idx] == incoming_id)
+            ):
+                raise ValidationError(f"Duplicate candidate id {incoming_id}")
             self.delete(idx)
             # Delete compacts rows; append the incoming observation below.
             idx = None
         else:
             pass
 
-        id_val = _extract_id_value(self._schema, element, kwargs)
-        if id_val == -1:
-            raise ValidationError(
-                "Archive.add() requires a real candidate id when the "
-                "schema declares an 'id' column (got the -1 sentinel)"
-            )
         new_idx = self._size
         super()._append_internal(
             element,
@@ -328,9 +376,19 @@ class ParetoMixin:
         direction: np.ndarray | None = None,
         dominator: Dominator | None = None,
         eps_cv: float = 0.0,
+        key_attr: str = "x",
+        atol: float = 0.0,
+        rtol: float = 0.0,
+        duplicate_policy: str = "keep_first",
         **kwargs,
     ):
-        super().__init__(attrs=attrs, init_capacity=init_capacity, **kwargs)  # ty: ignore[unknown-argument]
+        if duplicate_policy not in {"keep_first", "replace", "append"}:
+            raise ValueError("invalid duplicate_policy")
+        if duplicate_policy == "append":
+            raise ValidationError("ParetoArchive does not support append policy")
+        super().__init__(attrs=attrs, init_capacity=init_capacity)  # ty: ignore[unknown-argument]
+        if key_attr not in getattr(self, "_schema"):
+            raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
 
         # Import here to avoid circular imports at module load time.
         from saealib.comparators import ParetoDominator
@@ -340,6 +398,10 @@ class ParetoMixin:
             dominator if dominator is not None else ParetoDominator()
         )
         self.eps_cv = eps_cv
+        self.key_attr = key_attr
+        self.atol = atol
+        self.rtol = rtol
+        self.duplicate_policy = duplicate_policy
 
     # ------------------------------------------------------------------
     # Internal helpers

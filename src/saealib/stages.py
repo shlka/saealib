@@ -774,7 +774,7 @@ class EvaluationAcknowledgeStage(Stage):
                 request,
                 update.status,
                 np.asarray(sorted(pending_ids), dtype=np.int64),
-                pending.last_delivered_sequence,
+                update.sequence,
                 update.sequence,
             )
             terminal = update.status in (
@@ -793,10 +793,35 @@ class EvaluationAcknowledgeStage(Stage):
                 evaluation_handles=handles.copy(),
             )
             if len(update_new_ids) and self._cbmanager is not None:
+                offspring = current.offspring
+                if offspring is None:
+                    raise EvaluationProtocolError("offspring is missing for callback")
+                if "id" in offspring.schema:
+                    rows = [
+                        int(
+                            np.flatnonzero(offspring.get_array("id") == candidate_id)[0]
+                        )
+                        for candidate_id in update_new_ids
+                    ]
+                else:
+                    request_rows = request.metadata.get("row_indices")
+                    if request_rows is None:
+                        rows = [int(candidate_id) for candidate_id in update_new_ids]
+                    else:
+                        row_map = {
+                            int(candidate_id): int(row)
+                            for candidate_id, row in zip(
+                                request.candidate_ids, request_rows, strict=True
+                            )
+                        }
+                        rows = [
+                            row_map[int(candidate_id)]
+                            for candidate_id in update_new_ids
+                        ]
                 self._cbmanager.dispatch(
                     PostEvaluationEvent(
                         ctx=current,
-                        offspring=current.evaluated_offspring,
+                        offspring=offspring.extract(rows),
                         request_id=request.request_id,
                         candidate_ids=update_new_ids,
                         status=update.status,

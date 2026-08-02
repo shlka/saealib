@@ -92,6 +92,7 @@ from saealib.decomposition import DecompositionComparator as DecompositionCompar
 from saealib.decomposition import PBIDecomposition as PBIDecomposition
 from saealib.decomposition import TchebycheffDecomposition as TchebycheffDecomposition
 from saealib.decomposition import WeightedSumDecomposition as WeightedSumDecomposition
+from saealib.exceptions import CheckpointError as CheckpointError
 from saealib.exceptions import ConfigurationError as ConfigurationError
 from saealib.exceptions import EvaluationProtocolError as EvaluationProtocolError
 from saealib.exceptions import SaealibError as SaealibError

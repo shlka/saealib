@@ -237,6 +237,16 @@ def test_multi_update_lifecycle_is_contiguous_and_exactly_once():
     assert state.pending_evaluations == {}
     assert state.evaluation_handles == {}
     assert [event.candidate_ids.tolist() for event in events] == [[10], [11]]
+    assert [
+        event.offspring.id.tolist() for event in events if event.offspring is not None
+    ] == [
+        [10],
+        [11],
+    ]
+    assert [event.status for event in events] == [
+        EvaluationStatus.PARTIAL,
+        EvaluationStatus.COMPLETED,
+    ]
     assert all(event.ctx.fe == i for i, event in enumerate(events, 1))
 
 

@@ -92,6 +92,11 @@ class ComponentProvider(Protocol):
         ...
 
     @property
+    def feedback_policy_explicit(self) -> bool:
+        """Return whether the feedback policy was explicitly configured."""
+        ...
+
+    @property
     def evaluator(self) -> Evaluator:
         """Return the evaluator instance."""
         ...
@@ -168,6 +173,7 @@ class Optimizer:
         self.acquisition: AcquisitionFunction = cast(AcquisitionFunction, None)
         self.evaluation_policy: EvaluationPolicy | None = None
         self.feedback_policy: FeedbackPolicy | None = None
+        self.feedback_policy_explicit = False
         self.instance_name: str = ""
         self._preset: dict | None = None
 
@@ -208,6 +214,7 @@ class Optimizer:
     def set_feedback_policy(self, policy: FeedbackPolicy) -> Self:
         """Set the feedback policy."""
         self.feedback_policy = policy
+        self.feedback_policy_explicit = True
         return self
 
     def set_surrogate(self, surrogate: Surrogate, n_neighbors: int = 50) -> Self:
@@ -476,6 +483,7 @@ class Optimizer:
                 self.evaluation_policy = build(user_preset["evaluation_policy"])
             if self.feedback_policy is None and "feedback_policy" in user_preset:
                 self.feedback_policy = build(user_preset["feedback_policy"])
+                self.feedback_policy_explicit = True
             if (
                 getattr(self, "termination", None) is None
                 and "termination" in user_preset

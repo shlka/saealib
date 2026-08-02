@@ -23,9 +23,8 @@ Aside from these two, every other field follows the principle of immutable updat
 | Field | Content |
 |---|---|
 | `problem` | The [Problem](problem.md) being solved |
-| `population` | The current generation's [Population](population.md) |
-| `archive` | The [Archive](population.md) accumulating evaluated solutions |
-| `pareto_archive` | The [ParetoArchive](population.md) maintaining the non-dominated solution set |
+| `populations` | Named [Population](population.md) collections; `populations["main"]` is the current generation |
+| `archives` | Named [Archive](population.md) collections; `archives["main"]` accumulates evaluated solutions and `archives["pareto"]` maintains the non-dominated set |
 | `rng` | The random number generator |
 | `fe` | The evaluation count |
 | `gen` | The generation count |
@@ -41,6 +40,8 @@ There are also typed fields that each pipeline [Stage](stage.md) reads and write
 
 `data` is a dictionary for user extension, used as a place for a custom `Stage` or `Callback` to add arbitrary values.
 Instead of a direct mutation like `state.data["key"] = value`, pass a newly built dictionary via `state.replace(data={**state.data, "key": value})`.
+
+The compatibility properties `population`, `archive`, and `pareto_archive` return the corresponding `"main"` or `"pareto"` entries. Additional collections can be added with `add_population(name, value)` and `add_archive(name, value)`.
 
 ## Convenience properties
 
@@ -59,7 +60,7 @@ When writing a custom `Stage`, it's easier to preserve consistency by sticking t
 ## Checkpointing
 
 `save(path)`/`load(path, problem)` (the latter a classmethod) save and restore `OptimizationState` in npz format.
-Only the `archive`/`population`/`pareto_archive` arrays and `rng`'s complete bit-generator state are saved, and reproducibility is only guaranteed as far as reasonably possible (bit-exact resumption is intended within the same NumPy version and environment, but reproducibility across versions is not guaranteed).
+Named populations and archives, allocator state, metadata, and `rng`'s complete bit-generator state are saved. Checkpoints are only written at a completed evaluation boundary; pending evaluations are rejected. Reproducibility is only guaranteed as far as reasonably possible (bit-exact resumption is intended within the same NumPy version and environment, but reproducibility across versions is not guaranteed).
 
 Component-specific internal rngs, such as the one [NSGA3Comparator](comparators.md) holds (spawned from `state.rng`), are not included when saving.
 On resume, such internal rngs are freshly re-spawned from `state.rng`.
