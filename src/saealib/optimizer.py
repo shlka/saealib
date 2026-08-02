@@ -208,6 +208,10 @@ class Optimizer:
 
     def set_evaluator(self, evaluator: Evaluator) -> Self:
         """Set the evaluator. Returns self."""
+        if evaluator.has_partial_lifecycle_override():
+            raise ConfigurationError(
+                "submit(), collect(), and acknowledge() must be overridden together"
+            )
         self.evaluator = evaluator
         return self
 
@@ -305,6 +309,11 @@ class Optimizer:
             resuming from a checkpoint where initialization is not needed.
         """
         issues: list[str] = []
+
+        if self.evaluator.has_partial_lifecycle_override():
+            issues.append(
+                "submit(), collect(), and acknowledge() must be overridden together"
+            )
 
         algorithm = getattr(self, "algorithm", None)
         strategy = getattr(self, "strategy", None)

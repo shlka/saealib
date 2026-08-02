@@ -10,6 +10,7 @@ import numpy as np
 if TYPE_CHECKING:
     from saealib.acquisition.base import AcquisitionResult
     from saealib.context import OptimizationState
+    from saealib.execution.evaluator import EvaluationStatus
     from saealib.population import Archive, Population
     from saealib.surrogate.base import Surrogate
 
@@ -187,6 +188,9 @@ class PostEvaluationEvent(Event):
     """
 
     offspring: Population | None = None
+    request_id: np.int64 | None = None
+    candidate_ids: np.ndarray | None = None
+    status: EvaluationStatus | None = None
 
 
 # --- Initializer events ---

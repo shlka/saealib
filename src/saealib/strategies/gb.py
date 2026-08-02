@@ -15,9 +15,14 @@ from saealib.stages import (
     ArchiveUpdateStage,
     AskStage,
     CountGenerationStage,
+    EvaluationAcknowledgeStage,
+    EvaluationApplyStage,
+    EvaluationCollectStage,
+    EvaluationPlanStage,
+    EvaluationSubmitStage,
+    FeedbackStage,
     SurrogateOnlyLoopStage,
     TellStage,
-    TrueEvaluationStage,
 )
 from saealib.strategies.base import OptimizationStrategy
 
@@ -56,9 +61,14 @@ class GenerationBasedStrategy(OptimizationStrategy):
                 ),
                 CountGenerationStage(),
                 AskStage(provider.algorithm, cbmanager=cbmanager),
-                TrueEvaluationStage(provider.evaluator, cbmanager=cbmanager),
+                EvaluationPlanStage(),
+                EvaluationSubmitStage(provider.evaluator),
+                EvaluationCollectStage(provider.evaluator),
+                EvaluationApplyStage(),
                 ArchiveUpdateStage(),
+                FeedbackStage(),
                 TellStage(provider.algorithm),
+                EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
             ]
         )
 

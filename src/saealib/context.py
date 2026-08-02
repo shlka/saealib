@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import pickle
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -15,6 +16,12 @@ from saealib.identity import IDAllocator
 
 if TYPE_CHECKING:
     from saealib.comparators import Comparator
+    from saealib.execution.evaluator import (
+        EvaluationHandle,
+        EvaluationRequest,
+        EvaluationUpdate,
+        PendingEvaluation,
+    )
     from saealib.population import Archive, ParetoArchive, Population
     from saealib.problem import Problem
     from saealib.surrogate.prediction import SurrogatePrediction
@@ -96,9 +103,26 @@ class OptimizationState:
     evaluated_offspring: Population | None = None
     scores: np.ndarray | None = None
     predictions: SurrogatePrediction | None = None
+    evaluation_request: EvaluationRequest | None = None
+    evaluation_updates: list[EvaluationUpdate] = field(default_factory=list)
+    evaluation_update_new_ids: list[np.ndarray] = field(default_factory=list)
+    evaluation_new_ids: np.ndarray = field(
+        default_factory=lambda: np.empty(0, dtype=np.int64)
+    )
+    evaluation_handles: dict[int, EvaluationHandle] = field(default_factory=dict)
+    pending_evaluations: dict[int, PendingEvaluation] = field(default_factory=dict)
 
     # User-extensible data
     data: dict[str, Any] = field(default_factory=dict)
+
+    def __getstate__(self) -> dict[str, Any]:
+        """Exclude runtime evaluation handles from serialized state."""
+        state = self.__dict__.copy()
+        state["evaluation_handles"] = {}
+        state["evaluation_request"] = None
+        state["evaluation_updates"] = []
+        state["evaluation_update_new_ids"] = []
+        return state
 
     def replace(self, **kwargs: Any) -> OptimizationState:
         """Return a new state with the given fields replaced.
@@ -187,6 +211,8 @@ class OptimizationState:
         path : str or Path
             Destination file path.  The ``.npz`` extension is added if absent.
         """
+        if self.pending_evaluations:
+            raise ValidationError("cannot checkpoint while evaluations are pending")
         p = Path(path)
         if not p.suffix:
             p = p.with_suffix(".npz")
@@ -228,6 +254,9 @@ class OptimizationState:
             self.candidate_id_allocator.next_value
         )
         save_dict["_next_request_id"] = np.array(self.request_id_allocator.next_value)
+        save_dict["_pending_evaluations"] = np.frombuffer(
+            pickle.dumps(self.pending_evaluations), dtype=np.uint8
+        )
 
         # Archive arrays
         n_arch = len(self.archive)
@@ -345,6 +374,11 @@ class OptimizationState:
 
         candidate_id_allocator = IDAllocator(start=int(data["_next_candidate_id"]))
         request_id_allocator = IDAllocator(start=int(data["_next_request_id"]))
+        pending_evaluations = (
+            pickle.loads(bytes(data["_pending_evaluations"]))
+            if "_pending_evaluations" in data.files
+            else {}
+        )
 
         return cls(
             problem=problem,
@@ -354,6 +388,7 @@ class OptimizationState:
             rng=rng,
             candidate_id_allocator=candidate_id_allocator,
             request_id_allocator=request_id_allocator,
+            pending_evaluations=pending_evaluations,
             fe=int(data["_fe"]),
             gen=int(data["_gen"]),
             data={"resumed": True},

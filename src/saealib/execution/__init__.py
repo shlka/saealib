@@ -1,4 +1,15 @@
-from saealib.execution.evaluator import EvaluationResult, Evaluator, SerialEvaluator
+from saealib.execution.evaluator import (
+    EvaluationErrorInfo,
+    EvaluationHandle,
+    EvaluationRequest,
+    EvaluationResult,
+    EvaluationStatus,
+    EvaluationUpdate,
+    Evaluator,
+    JoblibEvaluator,
+    PendingEvaluation,
+    SerialEvaluator,
+)
 from saealib.execution.initializer import (
     Initializer,
     LHSInitializer,
@@ -7,10 +18,17 @@ from saealib.execution.initializer import (
 )
 
 __all__ = [
+    "EvaluationErrorInfo",
+    "EvaluationHandle",
+    "EvaluationRequest",
     "EvaluationResult",
+    "EvaluationStatus",
+    "EvaluationUpdate",
     "Evaluator",
     "Initializer",
+    "JoblibEvaluator",
     "LHSInitializer",
+    "PendingEvaluation",
     "RandomInitializer",
     "SerialEvaluator",
     "SobolInitializer",
