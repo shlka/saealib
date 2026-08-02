@@ -11,6 +11,7 @@
    saealib.RegressionSurrogate
    saealib.ComparisonSurrogate
    saealib.SurrogatePrediction
+   saealib.CorrelatedQuadraticSurrogate
 ```
 
 ## Surrogate Managers
@@ -91,19 +92,6 @@
    saealib.PairwiseComparisonSet
    saealib.ReferencePointComparisonSet
    saealib.TopKBipartitionSet
-```
-
-## Archive-Based Managers
-
-```{eval-rst}
-.. autosummary::
-   :toctree: _autosummary
-   :nosignatures:
-
-   saealib.ArchiveBasedManager
-   saealib.DensityManager
-   saealib.NichingManager
-   saealib.NoveltyManager
 ```
 
 ## Surrogate Switching

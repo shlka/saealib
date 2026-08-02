@@ -262,7 +262,7 @@ class Evaluator(ABC):
     def submit(self, request: EvaluationRequest, problem: Problem) -> EvaluationHandle:
         """Submit a request through the synchronous adapter."""
         try:
-            result = self.evaluate_batch(request.x, problem)
+            result = self.evaluate_request(request, problem)
         except Exception as exc:
             error = EvaluationErrorInfo(type(exc).__name__, str(exc))
             return EvaluationHandle(
@@ -276,6 +276,12 @@ class Evaluator(ABC):
         return EvaluationHandle(
             request.request_id, EvaluationStatus.COMPLETED, _sync_result=result
         )
+
+    def evaluate_request(
+        self, request: EvaluationRequest, problem: Problem
+    ) -> EvaluationResult:
+        """Evaluate a request, including its public metadata boundary."""
+        return self.evaluate_batch(request.x, problem)
 
     @classmethod
     def has_partial_lifecycle_override(cls) -> bool:
@@ -375,7 +381,9 @@ class AsyncEvaluator(Evaluator):
         """Submit work without blocking the caller."""
 
         def run() -> EvaluationResult:
-            return self.evaluate_batch(request.x, problem)
+            if self._evaluator is not None:
+                return self._evaluator.evaluate_request(request, problem)
+            return self.evaluate_request(request, problem)
 
         future = self._executor.submit(run)
         handle = EvaluationHandle(

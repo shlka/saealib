@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -142,3 +143,139 @@ class RatioEvaluation(EvaluationPolicy):
         )
         indices = select_ratio(scores, self.ratio)
         return self._request(candidates, indices, ctx)
+
+
+@register()
+class RepeatedEvaluation(EvaluationPolicy):
+    """Request candidates with an explicit replicate number."""
+
+    def __init__(self, replicates: int = 2):
+        if (
+            not isinstance(replicates, int)
+            or isinstance(replicates, bool)
+            or replicates < 1
+        ):
+            raise ValidationError("replicates must be a positive integer")
+        self.replicates = replicates
+
+    def plan(self, candidates, acquisition, ctx):
+        """Build one request and attach its replicate number."""
+        request = EvaluateAll().plan(candidates, acquisition, ctx)
+        metadata = dict(request.metadata)
+        metadata["replicate"] = int(metadata.get("replicate", 0)) % self.replicates
+        return EvaluationRequest(
+            request.request_id,
+            request.candidate_ids,
+            request.x,
+            request.outputs,
+            metadata,
+        )
+
+    def plan_replicates(self, candidates, ctx):
+        """Build one request per replicate for the same candidate IDs."""
+        first = EvaluateAll().plan(candidates, None, ctx)
+        requests = []
+        for replicate in range(self.replicates):
+            request_id = first.request_id
+            if replicate:
+                request_id = np.int64(ctx.request_id_allocator.allocate(1)[0])
+            requests.append(
+                EvaluationRequest(
+                    request_id,
+                    first.candidate_ids,
+                    first.x,
+                    first.outputs,
+                    {**first.metadata, "replicate": replicate},
+                )
+            )
+        return tuple(requests)
+
+
+@dataclass(frozen=True)
+class ReplicateSummary:
+    """Aggregated observations for one candidate batch."""
+
+    candidate_ids: np.ndarray
+    mean: np.ndarray
+    std: np.ndarray
+    count: np.ndarray
+
+    def __post_init__(self):
+        """Own arrays and validate aggregate shapes."""
+        ids = np.array(self.candidate_ids, dtype=np.int64, copy=True)
+        mean = np.array(self.mean, dtype=np.float64, copy=True)
+        std = np.array(self.std, dtype=np.float64, copy=True)
+        count = np.array(self.count, dtype=np.int64, copy=True)
+        if mean.ndim != 2 or std.shape != mean.shape or count.shape != (len(ids),):
+            raise ValidationError("replicate summary shapes are inconsistent")
+        object.__setattr__(self, "candidate_ids", ids)
+        object.__setattr__(self, "mean", mean)
+        object.__setattr__(self, "std", std)
+        object.__setattr__(self, "count", count)
+
+
+def aggregate_replicates(candidate_ids, observations) -> ReplicateSummary:
+    """Aggregate repeated objective observations by stable candidate ID."""
+    ids = np.asarray(candidate_ids, dtype=np.int64)
+    values = np.asarray(observations, dtype=np.float64)
+    if values.ndim != 3 or values.shape[1] != len(ids):
+        raise ValidationError(
+            "observations must have shape (replicate, candidate, objective)"
+        )
+    return ReplicateSummary(
+        ids,
+        values.mean(axis=0),
+        values.std(axis=0),
+        np.full(len(ids), values.shape[0], dtype=np.int64),
+    )
+
+
+@register()
+class FidelityEvaluation(EvaluationPolicy):
+    """Attach an explicit fidelity level to an evaluation request."""
+
+    def __init__(self, fidelity: int = 0):
+        if not isinstance(fidelity, int) or isinstance(fidelity, bool) or fidelity < 0:
+            raise ValidationError("fidelity must be a non-negative integer")
+        self.fidelity = fidelity
+
+    def plan(self, candidates, acquisition, ctx):
+        """Build one request and attach its fidelity level."""
+        request = EvaluateAll().plan(candidates, acquisition, ctx)
+        metadata = dict(request.metadata)
+        metadata["fidelity"] = self.fidelity
+        return EvaluationRequest(
+            request.request_id,
+            request.candidate_ids,
+            request.x,
+            request.outputs,
+            metadata,
+        )
+
+
+@register()
+class FidelityPromotion(FidelityEvaluation):
+    """Represent an explicit promotion from one fidelity level to another."""
+
+    def __init__(self, fidelity: int = 0, next_fidelity: int | None = None):
+        super().__init__(fidelity)
+        if next_fidelity is not None and (
+            not isinstance(next_fidelity, int)
+            or isinstance(next_fidelity, bool)
+            or next_fidelity <= fidelity
+        ):
+            raise ValidationError("next_fidelity must exceed fidelity")
+        self.next_fidelity = next_fidelity
+
+    def promote(self, request, ctx):
+        """Create a new request for the next fidelity level."""
+        if self.next_fidelity is None:
+            raise ValidationError("next_fidelity is not configured")
+        request_id = np.int64(ctx.request_id_allocator.allocate(1)[0])
+        return EvaluationRequest(
+            request_id,
+            request.candidate_ids,
+            request.x,
+            request.outputs,
+            {**request.metadata, "fidelity": self.next_fidelity},
+        )

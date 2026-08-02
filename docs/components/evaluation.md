@@ -25,9 +25,19 @@ Using `JoblibEvaluator` requires the `parallel` extra (`pip install saealib[para
 Besides `backend`'s default `"loky"` (a process pool serializing with cloudpickle), you can switch to third-party backends like `"dask"`/`"ray"` with a single parameter change (the corresponding package and cluster are required separately).
 In configurations using multiple `JoblibEvaluator`s at once, such as an island model, CPU cores can end up over-reserved.
 Either limit each island's `n_jobs` to `1` and control overall concurrency via the parallelism across islands, or use `joblib.parallel_backend` as a context manager to limit the number of inner workers.
-Asynchronous evaluation (a scheme where results are received at independent times per candidate) is currently outside `Evaluator`'s scope.
+For independent completion times, use `AsyncEvaluator` with
+`SteadyStateStrategy`, `AsyncScheduler`, and
+`Optimizer.set_async_scheduler()`. Each steady-state candidate can occupy its
+own pending request; the scheduler owns those requests and serializes
+population and archive updates while `collect(wait=False)` remains
+non-blocking.
 
 Swap it via `Optimizer.set_evaluator(evaluator)`.
+
+`EvaluationRequest.metadata` is consumed by evaluators that expose explicit
+execution policies. `FidelityEvaluator` reads `fidelity`, while
+`RepeatedEvaluationRunner` submits separate requests with stable candidate IDs
+and stores every observation in an append history.
 
 ## Implementing a custom Evaluator
 
@@ -71,4 +81,6 @@ Because [ConstraintHandler](constraints.md)'s `augment_objective` corrects the o
 - {py:class}`saealib.Evaluator`
 - {py:class}`saealib.SerialEvaluator`
 - {py:class}`saealib.JoblibEvaluator`
+- {py:class}`saealib.AsyncEvaluator`
+- {py:class}`saealib.AsyncScheduler`
 - {py:class}`saealib.EvaluationResult`

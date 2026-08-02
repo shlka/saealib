@@ -56,8 +56,7 @@ class SurrogateManager(ABC):
 
     A SurrogateManager is narrowed to training and prediction management
     It coordinates ``TrainingSet`` construction, model fitting, and prediction,
-    and returns a ``SurrogatePrediction`` for callers
-            (e.g. :class:`~saealib.stages.SurrogatePredictStage`).
+    and returns a ``SurrogatePrediction`` for callers.
 
     Attributes
     ----------

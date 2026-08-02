@@ -9,7 +9,7 @@ Concrete `Stage` implementations that make up the default generation-loop pipeli
 
    saealib.CountGenerationStage
    saealib.AskStage
-   saealib.SurrogateScoreStage
+   saealib.AcquisitionStage
    saealib.SurrogateFitStage
    saealib.TopKSelectionStage
    saealib.SortByScoreStage
