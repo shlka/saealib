@@ -16,6 +16,7 @@ The class attribute `requires_surrogate: bool` indicates whether this strategy n
 | Class | Parameters | Approach |
 |---|---|---|
 | `DirectStrategy` | None | Uses no surrogate; truly evaluates every generated candidate |
+| `SteadyStateStrategy` | None | Generates one candidate per step and supports asynchronous refill |
 | `IndividualBasedStrategy` | `evaluation_ratio: float = 0.1` | Scores every candidate with the surrogate, and truly evaluates only the top `evaluation_ratio` fraction |
 | `PreSelectionStrategy` | `n_candidates: int, n_select: int` (both required) | Generates `n_candidates`, scores them, and truly evaluates only the top `n_select` |
 | `GenerationBasedStrategy` | `gen_ctrl: int` (required) | Advances `gen_ctrl` generations using only the surrogate, then truly evaluates a single generation |
@@ -23,6 +24,10 @@ The class attribute `requires_surrogate: bool` indicates whether this strategy n
 `IndividualBasedStrategy` selects by fraction of individuals, while `PreSelectionStrategy` selects by count of individuals.
 `GenerationBasedStrategy` switches between surrogate and true evaluation by generation, not by individual.
 `DirectStrategy` is the comparison baseline that uses no surrogate at all, with `requires_surrogate=False`.
+
+For steady-state execution, combine `DirectStrategy` with an
+`AsyncScheduler`. The scheduler fills available worker slots, polls without
+blocking, and commits each completed update in the lifecycle order.
 
 ### Each Strategy's pipeline structure
 
@@ -100,3 +105,4 @@ If you just want to fine-tune an existing strategy's pipeline, it's lighter-weig
 - {py:class}`saealib.GenerationBasedStrategy`
 - {py:class}`saealib.PreSelectionStrategy`
 - {py:class}`saealib.DirectStrategy`
+- {py:class}`saealib.AsyncScheduler`

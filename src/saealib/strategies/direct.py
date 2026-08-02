@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from saealib.pipeline import Pipeline
 from saealib.policies.evaluation import EvaluateAll
 from saealib.policies.feedback import TrueOnlyFeedback
+from saealib.registry import register
 from saealib.stages import (
     ArchiveUpdateStage,
     AskStage,
@@ -41,7 +42,10 @@ class DirectStrategy(OptimizationStrategy):
     evaluation_policy = EvaluateAll()
     feedback_policy = TrueOnlyFeedback()
 
-    def __init__(self) -> None:
+    def __init__(self, n_offspring: int | None = None) -> None:
+        if n_offspring is not None and n_offspring < 1:
+            raise ValueError("n_offspring must be positive")
+        self.n_offspring = n_offspring
         self.pipeline: Pipeline | None = None
 
     def _build_pipeline(self, provider: ComponentProvider) -> Pipeline:
@@ -82,7 +86,11 @@ class DirectStrategy(OptimizationStrategy):
                     if scheduler is not None
                     else []
                 ),
-                AskStage(provider.algorithm, cbmanager=cbmanager),
+                AskStage(
+                    provider.algorithm,
+                    n_offspring=self.n_offspring,
+                    cbmanager=cbmanager,
+                ),
                 *evaluation_tail,
             ]
         )
@@ -111,3 +119,11 @@ class DirectStrategy(OptimizationStrategy):
                 return ctx
         self.pipeline = self._build_pipeline(provider)
         return self.pipeline.execute(ctx)
+
+
+@register()
+class SteadyStateStrategy(DirectStrategy):
+    """Evaluate one candidate per step and refill asynchronous worker slots."""
+
+    def __init__(self) -> None:
+        super().__init__(n_offspring=1)

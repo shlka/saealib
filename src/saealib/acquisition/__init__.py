@@ -17,6 +17,7 @@ from saealib.acquisition.base import (
     CompositeAcquisition,
     PointwiseAcquisition,
 )
+from saealib.acquisition.batch import BatchExpectedImprovement
 from saealib.acquisition.ehvi import EHVIAcquisition
 from saealib.acquisition.ei import ExpectedImprovement
 from saealib.acquisition.lcb import LowerConfidenceBound
@@ -30,6 +31,7 @@ from saealib.acquisition.winrate import WinRateAcquisition
 __all__ = [
     "AcquisitionFunction",
     "AcquisitionResult",
+    "BatchExpectedImprovement",
     "CompositeAcquisition",
     "DensityAcquisition",
     "EHVIAcquisition",

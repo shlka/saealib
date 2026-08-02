@@ -11,6 +11,7 @@ __all__: list[str]
 
 from saealib.acquisition import AcquisitionFunction as AcquisitionFunction
 from saealib.acquisition import AcquisitionResult as AcquisitionResult
+from saealib.acquisition import BatchExpectedImprovement as BatchExpectedImprovement
 
 # acquisition (less common)
 from saealib.acquisition import CompositeAcquisition as CompositeAcquisition
@@ -116,6 +117,20 @@ from saealib.execution.initializer import LHSInitializer as LHSInitializer
 from saealib.execution.initializer import RandomInitializer as RandomInitializer
 from saealib.execution.initializer import SobolInitializer as SobolInitializer
 from saealib.execution.scheduler import AsyncScheduler as AsyncScheduler
+from saealib.generality import ArchiveSnapshot as ArchiveSnapshot
+from saealib.generality import CooperativeCoevolution as CooperativeCoevolution
+from saealib.generality import (
+    CorrelatedQuadraticSurrogate as CorrelatedQuadraticSurrogate,
+)
+from saealib.generality import DynamicArchiveSelector as DynamicArchiveSelector
+from saealib.generality import EvaluationWorkflowResult as EvaluationWorkflowResult
+from saealib.generality import FidelityEvaluator as FidelityEvaluator
+from saealib.generality import FidelityPromotionRunner as FidelityPromotionRunner
+from saealib.generality import FidelityWorkflowResult as FidelityWorkflowResult
+from saealib.generality import MigrationPolicy as MigrationPolicy
+from saealib.generality import RepeatedEvaluationRunner as RepeatedEvaluationRunner
+from saealib.generality import SeededNoiseEvaluator as SeededNoiseEvaluator
+from saealib.generality import reference_problem as reference_problem
 from saealib.operators import Crossover as Crossover
 
 # operators (less common)
@@ -150,12 +165,17 @@ from saealib.policies import EvaluateAll as EvaluateAll
 from saealib.policies import EvaluationPolicy as EvaluationPolicy
 from saealib.policies import FeedbackPolicy as FeedbackPolicy
 from saealib.policies import FeedbackResult as FeedbackResult
+from saealib.policies import FidelityEvaluation as FidelityEvaluation
+from saealib.policies import FidelityPromotion as FidelityPromotion
 from saealib.policies import MixedFeedback as MixedFeedback
 from saealib.policies import NoFeedback as NoFeedback
 from saealib.policies import PredictedFeedback as PredictedFeedback
 from saealib.policies import RatioEvaluation as RatioEvaluation
+from saealib.policies import RepeatedEvaluation as RepeatedEvaluation
+from saealib.policies import ReplicateSummary as ReplicateSummary
 from saealib.policies import TopKEvaluation as TopKEvaluation
 from saealib.policies import TrueOnlyFeedback as TrueOnlyFeedback
+from saealib.policies import aggregate_replicates as aggregate_replicates
 from saealib.population import Archive as Archive
 
 # population (mixins)
@@ -204,6 +224,7 @@ from saealib.strategies import GenerationBasedStrategy as GenerationBasedStrateg
 from saealib.strategies import IndividualBasedStrategy as IndividualBasedStrategy
 from saealib.strategies import OptimizationStrategy as OptimizationStrategy
 from saealib.strategies import PreSelectionStrategy as PreSelectionStrategy
+from saealib.strategies import SteadyStateStrategy as SteadyStateStrategy
 from saealib.surrogate import RMSE as RMSE
 
 # surrogate (switching)

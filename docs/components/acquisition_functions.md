@@ -23,6 +23,7 @@ Acquisition functions with no notion of objective direction, such as feasibility
 |---|---|---|
 | `MeanPrediction` | The simplest acquisition function, using only the predictive mean | `False` |
 | `ExpectedImprovement` | Expected Improvement (EI) {cite}`jones1998ego` | `True` |
+| `BatchExpectedImprovement` | Joint EI with batch diversity for qEI-style selection | `True` |
 | `LowerConfidenceBound` | Lower Confidence Bound (LCB) {cite}`srinivas2012gpucb` | `True` |
 | `MaxUncertainty` | The larger the predictive uncertainty, the better (exploration-leaning) | `True` |
 | `EHVIAcquisition` | Expected Hypervolume Improvement {cite}`emmerich2006ehvi,hupkens2015ehvi,daulton2020ehvi`. For multi-objective use | `True` |
@@ -32,7 +33,7 @@ Acquisition functions with no notion of objective direction, such as feasibility
 | `ProductOfFeasibility` | Product of feasibility probabilities across multiple constraints {cite}`gelbart2014pof` | `True` |
 
 All 8 classes other than `MeanPrediction` have `requires_uncertainty=True`.
-To use an uncertainty-based acquisition function, the `Surrogate` it's paired with must return `std` (`provides_uncertainty=True`).
+To use an uncertainty-based acquisition function, the `Surrogate` it's paired with must return `std` (`provides_uncertainty=True`). Joint batch acquisitions additionally require a candidate covariance or another explicit joint posterior representation; `CorrelatedQuadraticSurrogate` is a deterministic public example of that contract.
 Among the built-in surrogates, only `SklearnGPRSurrogate` satisfies this.
 See the uncertainty-support table in [Surrogate](surrogate.md) for details.
 
@@ -105,6 +106,7 @@ This warning will catch you if you pair an acquisition function with `requires_u
 - {py:class}`saealib.AcquisitionFunction`
 - {py:class}`saealib.MeanPrediction`
 - {py:class}`saealib.ExpectedImprovement`
+- {py:class}`saealib.BatchExpectedImprovement`
 - {py:class}`saealib.LowerConfidenceBound`
 - {py:class}`saealib.MaxUncertainty`
 - {py:class}`saealib.EHVIAcquisition`

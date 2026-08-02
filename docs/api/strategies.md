@@ -21,4 +21,5 @@
    saealib.IndividualBasedStrategy
    saealib.PreSelectionStrategy
    saealib.DirectStrategy
+   saealib.SteadyStateStrategy
 ```
