@@ -225,6 +225,7 @@ class OptimizationState:
         default_factory=lambda: np.empty(0, dtype=np.int64)
     )
     evaluation_handles: dict[int, EvaluationHandle] = field(default_factory=dict)
+    evaluation_owners: dict[int, Population] = field(default_factory=dict)
     pending_evaluations: dict[int, PendingEvaluation] = field(default_factory=dict)
     feedback_result: FeedbackResult | None = None
 
@@ -254,6 +255,7 @@ class OptimizationState:
         evaluation_update_new_ids: list[np.ndarray] | None = None,
         evaluation_new_ids: np.ndarray | None = None,
         evaluation_handles: dict[int, EvaluationHandle] | None = None,
+        evaluation_owners: dict[int, Population] | None = None,
         pending_evaluations: dict[int, PendingEvaluation] | None = None,
         feedback_result: FeedbackResult | None = None,
         data: dict[str, Any] | None = None,
@@ -307,6 +309,7 @@ class OptimizationState:
         self.evaluation_handles = (
             {} if evaluation_handles is None else evaluation_handles
         )
+        self.evaluation_owners = {} if evaluation_owners is None else evaluation_owners
         self.pending_evaluations = (
             {} if pending_evaluations is None else pending_evaluations
         )
@@ -486,8 +489,13 @@ class OptimizationState:
         path : str or Path
             Destination file path.  The ``.npz`` extension is added if absent.
         """
-        if self.pending_evaluations:
-            raise ValidationError("cannot checkpoint while evaluations are pending")
+        if any(
+            not pending.checkpointable and pending.fatal_error is None
+            for pending in self.pending_evaluations.values()
+        ):
+            raise ValidationError(
+                "cannot checkpoint while synchronous evaluations are pending"
+            )
         p = Path(path)
         if not p.suffix:
             p = p.with_suffix(".npz")
@@ -497,6 +505,8 @@ class OptimizationState:
             "schema_version": CURRENT_CHECKPOINT_SCHEMA_VERSION,
             "populations": [],
             "archives": [],
+            "offspring": None,
+            "evaluation_owners": [],
         }
         for kind, collections in (
             ("population", self.populations),
@@ -516,6 +526,58 @@ class OptimizationState:
                     save_dict[f"{kind}__{encoded}__{_encoded_name(attr_name)}"] = (
                         np.array(array[: len(collection)], copy=True)
                     )
+        if self.offspring is not None:
+            if any(
+                self.offspring is population for population in self.populations.values()
+            ):
+                alias = next(
+                    name
+                    for name, population in self.populations.items()
+                    if population is self.offspring
+                )
+                manifest["offspring"] = {"alias": alias}
+            else:
+                descriptor = _collection_descriptor(
+                    "population", "offspring", self.offspring
+                )
+                manifest["offspring"] = descriptor
+                for attr_name, array in self.offspring._data.items():
+                    if array.dtype == object:
+                        raise CheckpointError("object dtype is not checkpointable")
+                    save_dict[f"offspring__{_encoded_name(attr_name)}"] = np.array(
+                        array[: len(self.offspring)], copy=True
+                    )
+
+        for request_id, owner in self.evaluation_owners.items():
+            alias = next(
+                (
+                    name
+                    for name, population in self.populations.items()
+                    if population is owner
+                ),
+                None,
+            )
+            if alias is not None:
+                manifest["evaluation_owners"].append(
+                    {"request_id": int(request_id), "alias": alias}
+                )
+                continue
+            if owner is self.offspring:
+                manifest["evaluation_owners"].append(
+                    {"request_id": int(request_id), "offspring": True}
+                )
+                continue
+            name = f"owner-{int(request_id)}"
+            descriptor = _collection_descriptor("population", name, owner)
+            manifest["evaluation_owners"].append(
+                {"request_id": int(request_id), "descriptor": descriptor}
+            )
+            for attr_name, array in owner._data.items():
+                if array.dtype == object:
+                    raise CheckpointError("object dtype is not checkpointable")
+                save_dict[
+                    f"evaluation_owner__{int(request_id)}__{_encoded_name(attr_name)}"
+                ] = np.array(array[: len(owner)], copy=True)
 
         save_dict["_manifest"] = _json_array(manifest)
         save_dict["_rng_state"] = _json_array(self.rng.bit_generator.state)
@@ -530,9 +592,17 @@ class OptimizationState:
         save_dict["_next_request_id"] = np.array(
             self.request_id_allocator.next_value, dtype=np.int64
         )
-        if self.pending_evaluations:
-            raise ValidationError("cannot checkpoint while evaluations are pending")
-        save_dict["_pending_evaluations"] = _json_array([])
+        save_dict["_pending_evaluations"] = _json_array(
+            [_pending_to_json(pending) for pending in self.pending_evaluations.values()]
+        )
+        save_dict["_feedback_result"] = _json_array(
+            None
+            if self.feedback_result is None
+            else _feedback_to_json(self.feedback_result)
+        )
+        save_dict["_predictions"] = _json_array(
+            None if self.predictions is None else _prediction_to_json(self.predictions)
+        )
         save_dict["_data"] = _json_array(_json_safe(self.data))
         np.savez(p, **cast(Any, save_dict))
 
@@ -613,6 +683,254 @@ def _read_json(data: Any, key: str) -> Any:
         return json.loads(bytes(data[key]).decode())
     except (TypeError, ValueError, json.JSONDecodeError) as exc:
         raise CheckpointError(f"Checkpoint key {key!r} is malformed") from exc
+
+
+def _result_to_json(result: Any) -> dict[str, Any]:
+    return {
+        "f": _json_safe(result.f),
+        "g": _json_safe(result.g),
+        "cv": _json_safe(result.cv),
+        "candidate_ids": _json_safe(result.candidate_ids),
+        "cost": _json_safe(result.cost),
+        "noise": _json_safe(result.noise),
+        "outputs": _json_safe(result.outputs),
+    }
+
+
+def _result_from_json(value: Any) -> Any:
+    from saealib.execution.evaluator import EvaluationResult
+
+    if not isinstance(value, dict):
+        raise CheckpointError("pending result is malformed")
+    return EvaluationResult(
+        np.asarray(value["f"], dtype=np.float64),
+        np.asarray(value["g"], dtype=np.float64),
+        np.asarray(value["cv"], dtype=np.float64),
+        None
+        if value.get("candidate_ids") is None
+        else np.asarray(value["candidate_ids"], dtype=np.int64),
+        None
+        if value.get("cost") is None
+        else np.asarray(value["cost"], dtype=np.float64),
+        None
+        if value.get("noise") is None
+        else np.asarray(value["noise"], dtype=np.float64),
+        {
+            str(key): np.asarray(array, dtype=np.float64)
+            for key, array in value.get("outputs", {}).items()
+        },
+    )
+
+
+def _feedback_to_json(result: Any) -> dict[str, Any]:
+    return {
+        "candidate_ids": _json_safe(result.candidate_ids),
+        "f": _json_safe(result.f),
+        "g": _json_safe(result.g),
+        "cv": _json_safe(result.cv),
+        "evaluated_mask": _json_safe(result.evaluated_mask),
+        "source": _json_safe(result.source),
+        "artifacts": _json_safe(result.artifacts),
+    }
+
+
+def _feedback_from_json(value: Any) -> Any:
+    from saealib.policies.feedback import FeedbackResult
+
+    if not isinstance(value, dict):
+        raise CheckpointError("feedback result is malformed")
+    return FeedbackResult(
+        np.asarray(value["candidate_ids"], dtype=np.int64),
+        np.asarray(value["f"], dtype=np.float64),
+        None if value.get("g") is None else np.asarray(value["g"], dtype=np.float64),
+        None if value.get("cv") is None else np.asarray(value["cv"], dtype=np.float64),
+        np.asarray(value["evaluated_mask"], dtype=bool),
+        np.asarray(value["source"], dtype=np.uint8),
+        {
+            str(name): np.asarray(array)
+            for name, array in value.get("artifacts", {}).items()
+        },
+    )
+
+
+def _prediction_to_json(prediction: Any) -> dict[str, Any]:
+    return {
+        "x": _json_safe(prediction.x),
+        "label": _json_safe(prediction.label),
+        "metadata": _json_safe(prediction.metadata),
+        "channels": {
+            name: {
+                "value": _json_safe(channel.value),
+                "std": _json_safe(channel.std),
+                "covariance": _json_safe(channel.covariance),
+                "samples": _json_safe(channel.samples),
+                "metadata": _json_safe(channel.metadata),
+            }
+            for name, channel in prediction.channels.items()
+        },
+    }
+
+
+def _prediction_from_json(value: Any) -> Any:
+    from saealib.surrogate.prediction import PredictionChannel, SurrogatePrediction
+
+    if not isinstance(value, dict) or not isinstance(value.get("channels"), dict):
+        raise CheckpointError("prediction is malformed")
+    channels = {}
+    for name, channel in value["channels"].items():
+        if not isinstance(channel, dict):
+            raise CheckpointError("prediction channel is malformed")
+        channels[name] = PredictionChannel(
+            np.asarray(channel["value"], dtype=np.float64),
+            None
+            if channel.get("std") is None
+            else np.asarray(channel["std"], dtype=np.float64),
+            None
+            if channel.get("covariance") is None
+            else np.asarray(channel["covariance"], dtype=np.float64),
+            None
+            if channel.get("samples") is None
+            else np.asarray(channel["samples"], dtype=np.float64),
+            channel.get("metadata", {}),
+        )
+    return SurrogatePrediction(
+        channels,
+        None if value.get("x") is None else np.asarray(value["x"]),
+        None if value.get("label") is None else np.asarray(value["label"]),
+        value.get("metadata", {}),
+    )
+
+
+def _pending_to_json(pending: Any) -> dict[str, Any]:
+    request = pending.request
+    return {
+        "request_id": int(request.request_id),
+        "candidate_ids": _json_safe(request.candidate_ids),
+        "x": _json_safe(request.x),
+        "outputs": list(request.outputs),
+        "metadata": _json_safe(dict(request.metadata)),
+        "status": pending.status.name,
+        "applied_candidate_ids": _json_safe(pending.applied_candidate_ids),
+        "last_delivered_sequence": pending.last_delivered_sequence,
+        "last_acknowledged_sequence": pending.last_acknowledged_sequence,
+        "processing": {str(key): value for key, value in pending.processing.items()},
+        "buffered_updates": [
+            {
+                "request_id": int(update.request_id),
+                "status": update.status.name,
+                "candidate_ids": _json_safe(update.candidate_ids),
+                "result": None
+                if update.result is None
+                else _result_to_json(update.result),
+                "error": None
+                if update.error is None
+                else {
+                    "error_type": update.error.error_type,
+                    "message": update.error.message,
+                    "details": _json_safe(dict(update.error.details)),
+                },
+                "sequence": update.sequence,
+            }
+            for update in pending.buffered_updates
+        ],
+        "reserved_cost": pending.reserved_cost,
+        "retry_count": pending.retry_count,
+        "checkpointable": pending.checkpointable,
+        "original_candidate_ids": _json_safe(pending.original_candidate_ids),
+        "feedback_result": None
+        if pending.feedback_result is None
+        else _feedback_to_json(pending.feedback_result),
+        "fatal_error": None
+        if pending.fatal_error is None
+        else {
+            "error_type": pending.fatal_error.error_type,
+            "message": pending.fatal_error.message,
+            "details": _json_safe(dict(pending.fatal_error.details)),
+        },
+        "prediction": None
+        if pending.prediction is None
+        else _prediction_to_json(pending.prediction),
+    }
+
+
+def _pending_from_json(value: Any) -> Any:
+    from saealib.execution.evaluator import (
+        EvaluationErrorInfo,
+        EvaluationRequest,
+        EvaluationStatus,
+        EvaluationUpdate,
+        PendingEvaluation,
+    )
+
+    if not isinstance(value, dict):
+        raise CheckpointError("pending evaluation is malformed")
+    try:
+        request = EvaluationRequest(
+            np.int64(value["request_id"]),
+            np.asarray(value["candidate_ids"], dtype=np.int64),
+            np.asarray(value["x"], dtype=np.float64),
+            tuple(value.get("outputs", ("f", "g", "cv"))),
+            value.get("metadata", {}),
+        )
+        updates = []
+        for item in value.get("buffered_updates", []):
+            error = item.get("error")
+            updates.append(
+                EvaluationUpdate(
+                    np.int64(item["request_id"]),
+                    EvaluationStatus[item["status"]],
+                    np.asarray(item["candidate_ids"], dtype=np.int64),
+                    None
+                    if item.get("result") is None
+                    else _result_from_json(item["result"]),
+                    None
+                    if error is None
+                    else EvaluationErrorInfo(
+                        error["error_type"], error["message"], error.get("details", {})
+                    ),
+                    int(item["sequence"]),
+                )
+            )
+        return PendingEvaluation(
+            request,
+            EvaluationStatus[value["status"]],
+            np.asarray(value["applied_candidate_ids"], dtype=np.int64),
+            int(value["last_delivered_sequence"]),
+            int(value["last_acknowledged_sequence"]),
+            {
+                int(key): str(status)
+                for key, status in value.get("processing", {}).items()
+            },
+            tuple(updates),
+            float(value.get("reserved_cost", 0.0)),
+            int(value.get("retry_count", 0)),
+            bool(value.get("checkpointable", False)),
+            None
+            if value.get("original_candidate_ids") is None
+            else np.asarray(value["original_candidate_ids"], dtype=np.int64),
+            None
+            if value.get("feedback_result") is None
+            else _feedback_from_json(value["feedback_result"]),
+            None
+            if value.get("fatal_error") is None
+            else EvaluationErrorInfo(
+                value["fatal_error"]["error_type"],
+                value["fatal_error"]["message"],
+                value["fatal_error"].get("details", {}),
+            ),
+            None
+            if value.get("prediction") is None
+            else _prediction_from_json(value["prediction"]),
+        )
+    except (
+        AttributeError,
+        IndexError,
+        KeyError,
+        TypeError,
+        ValueError,
+        ValidationError,
+    ) as exc:
+        raise CheckpointError("pending evaluation is malformed") from exc
 
 
 def _scalar_int(value: Any) -> int:
@@ -722,7 +1040,9 @@ def _attrs_from_descriptor(descriptor: dict[str, Any]) -> list[Any]:
     return attrs
 
 
-def _restore_collection(kind: str, descriptor: dict[str, Any], data: Any) -> Any:
+def _restore_collection(
+    kind: str, descriptor: dict[str, Any], data: Any, storage_prefix: str | None = None
+) -> Any:
     from saealib.population import Archive, ParetoArchive, Population
     from saealib.population.archive import _validate_observation_schema
 
@@ -780,7 +1100,10 @@ def _restore_collection(kind: str, descriptor: dict[str, Any], data: Any) -> Any
     encoded = _encoded_name(name)
     values: dict[str, np.ndarray] = {}
     for attr in attrs:
-        key = f"{kind}__{encoded}__{_encoded_name(attr.name)}"
+        if storage_prefix is None:
+            key = f"{kind}__{encoded}__{_encoded_name(attr.name)}"
+        else:
+            key = f"{storage_prefix}__{_encoded_name(attr.name)}"
         if key not in data.files:
             raise CheckpointError(f"Checkpoint is missing array {key!r}")
         array = np.asarray(data[key])
@@ -840,12 +1163,78 @@ def _load_v2(
         restored_archives
     ):
         raise CheckpointError("checkpoint is missing required main/pareto collections")
-    pending = _read_json(data, "_pending_evaluations")
-    if pending != []:
-        raise CheckpointError("non-empty pending evaluations cannot be restored")
+    offspring_payload = manifest.get("offspring")
+    if offspring_payload is None:
+        offspring = None
+    elif (
+        isinstance(offspring_payload, dict)
+        and set(offspring_payload) == {"alias"}
+        and offspring_payload["alias"] in restored_populations
+    ):
+        offspring = restored_populations[offspring_payload["alias"]]
+    elif isinstance(offspring_payload, dict):
+        offspring = _restore_collection(
+            "population", offspring_payload, data, storage_prefix="offspring"
+        )
+    else:
+        raise CheckpointError("checkpoint offspring descriptor is malformed")
+    owner_payload = manifest.get("evaluation_owners", [])
+    if not isinstance(owner_payload, list):
+        raise CheckpointError("checkpoint evaluation owners are malformed")
+    owners = {}
+    for item in owner_payload:
+        if not isinstance(item, dict) or not isinstance(item.get("request_id"), int):
+            raise CheckpointError("checkpoint evaluation owner is malformed")
+        request_id = item["request_id"]
+        if "alias" in item and item["alias"] in restored_populations:
+            owner = restored_populations[item["alias"]]
+        elif item.get("offspring") is True and offspring is not None:
+            owner = offspring
+        elif isinstance(item.get("descriptor"), dict):
+            owner = _restore_collection(
+                "population",
+                item["descriptor"],
+                data,
+                storage_prefix=f"evaluation_owner__{request_id}",
+            )
+        else:
+            raise CheckpointError("checkpoint evaluation owner is missing")
+        if request_id in owners:
+            raise CheckpointError("duplicate evaluation owner")
+        owners[request_id] = owner
+    pending_payload = _read_json(data, "_pending_evaluations")
+    if not isinstance(pending_payload, list):
+        raise CheckpointError("checkpoint pending evaluations are malformed")
+    pending = {}
+    for item in pending_payload:
+        restored = _pending_from_json(item)
+        if not restored.checkpointable and restored.fatal_error is None:
+            raise CheckpointError("non-checkpointable pending evaluation")
+        request_id = int(restored.request.request_id)
+        if request_id in pending:
+            raise CheckpointError("duplicate pending request id")
+        pending[request_id] = restored
     state_data = _read_json(data, "_data") if "_data" in data.files else {}
     if not isinstance(state_data, dict):
         raise CheckpointError("checkpoint data metadata must be a mapping")
+    feedback_result = (
+        None
+        if "_feedback_result" not in data.files
+        else (
+            None
+            if (value := _read_json(data, "_feedback_result")) is None
+            else _feedback_from_json(value)
+        )
+    )
+    predictions = (
+        None
+        if "_predictions" not in data.files
+        else (
+            None
+            if (value := _read_json(data, "_predictions")) is None
+            else _prediction_from_json(value)
+        )
+    )
     rng = np.random.default_rng()
     rng.bit_generator.state = _read_json(data, "_rng_state")
     return cls(
@@ -861,6 +1250,11 @@ def _load_v2(
         ),
         fe=_scalar_int(data["_fe"]),
         gen=_scalar_int(data["_gen"]),
+        offspring=offspring,
+        pending_evaluations=pending,
+        evaluation_owners=owners,
+        feedback_result=feedback_result,
+        predictions=predictions,
         data={**state_data, "resumed": True},
     )
 

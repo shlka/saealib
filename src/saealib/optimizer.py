@@ -26,6 +26,7 @@ from saealib.context import OptimizationState
 from saealib.exceptions import ConfigurationError, ValidationError
 from saealib.execution.evaluator import Evaluator, SerialEvaluator
 from saealib.execution.runner import Runner
+from saealib.execution.scheduler import AsyncScheduler
 from saealib.policies.evaluation import EvaluationPolicy
 from saealib.policies.feedback import FeedbackPolicy
 from saealib.surrogate.manager import (
@@ -89,6 +90,11 @@ class ComponentProvider(Protocol):
     @property
     def feedback_policy(self) -> FeedbackPolicy | None:
         """Return the feedback policy."""
+        ...
+
+    @property
+    def async_scheduler(self) -> AsyncScheduler | None:
+        """Return the optional asynchronous scheduler."""
         ...
 
     @property
@@ -174,6 +180,7 @@ class Optimizer:
         self.evaluation_policy: EvaluationPolicy | None = None
         self.feedback_policy: FeedbackPolicy | None = None
         self.feedback_policy_explicit = False
+        self.async_scheduler: AsyncScheduler | None = None
         self.instance_name: str = ""
         self._preset: dict | None = None
 
@@ -244,6 +251,15 @@ class Optimizer:
                 "submit(), collect(), and acknowledge() must be overridden together"
             )
         self.evaluator = evaluator
+        return self
+
+    def set_async_scheduler(self, scheduler: AsyncScheduler | None) -> Self:
+        """Configure asynchronous evaluation for built-in strategies."""
+        self.async_scheduler = scheduler
+        if scheduler is not None:
+            scheduler.algorithm = getattr(self, "algorithm", None)
+            scheduler.callback_manager = self.cbmanager
+            scheduler.feedback_policy = self.feedback_policy
         return self
 
     def set_termination(self, termination: Termination) -> Self:

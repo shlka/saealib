@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Generator
 from typing import TYPE_CHECKING
 
@@ -13,6 +14,7 @@ from saealib.callback import (
 )
 from saealib.comparators import NSGA3Comparator
 from saealib.context import OptimizationState
+from saealib.exceptions import CheckpointError, EvaluationFatalError
 
 if TYPE_CHECKING:
     from saealib.optimizer import Optimizer
@@ -87,18 +89,57 @@ class Runner:
         opt.dispatch(RunStartEvent(ctx=ctx))
         yield ctx
 
-        while not opt.termination.is_terminated(ctx):
+        generation_open = bool(ctx.pending_evaluations)
+        while True:
+            scheduler = getattr(opt, "async_scheduler", None)
+            if ctx.data.get("async_fatal"):
+                raise EvaluationFatalError(
+                    str(ctx.data["async_fatal"].get("reason", "async fatal")), ctx
+                )
+            if ctx.pending_evaluations:
+                if scheduler is None:
+                    raise CheckpointError(
+                        "pending evaluations require an asynchronous scheduler"
+                    )
+                if set(ctx.pending_evaluations) != set(ctx.evaluation_handles):
+                    ctx = scheduler.reattach(ctx)
+                before = ctx
+                ctx = scheduler.poll(ctx, wait=False)
+                if ctx.pending_evaluations:
+                    if opt.termination.is_terminated(ctx):
+                        if ctx is before:
+                            time.sleep(0.001)
+                        continue
+                    result = opt.strategy.step(ctx, opt)
+                    if result is not None:
+                        ctx = result
+                    if ctx.pending_evaluations:
+                        if ctx is before:
+                            time.sleep(0.001)
+                        continue
+                if generation_open:
+                    self._finish_generation(ctx)
+                    generation_open = False
+                    yield ctx
+            if opt.termination.is_terminated(ctx):
+                break
             opt.dispatch(GenerationStartEvent(ctx=ctx))
+            generation_open = True
             result = opt.strategy.step(ctx, opt)
             if result is not None:
                 ctx = result
-            handler = ctx.problem.handler
-            handler.on_generation_end(ctx.gen, ctx.population)
-            self._sync_eps_cv(ctx)
-            sm = getattr(opt, "surrogate_manager", None)
-            if sm is not None:
-                sm.on_generation_end(ctx.gen, ctx.archive, ctx)
-            opt.dispatch(GenerationEndEvent(ctx=ctx))
-            yield ctx
+            if not ctx.pending_evaluations:
+                self._finish_generation(ctx)
+                generation_open = False
+                yield ctx
 
         opt.dispatch(RunEndEvent(ctx=ctx))
+
+    def _finish_generation(self, ctx: OptimizationState) -> None:
+        handler = ctx.problem.handler
+        handler.on_generation_end(ctx.gen, ctx.population)
+        self._sync_eps_cv(ctx)
+        sm = getattr(self.optimizer, "surrogate_manager", None)
+        if sm is not None:
+            sm.on_generation_end(ctx.gen, ctx.archive, ctx)
+        self.optimizer.dispatch(GenerationEndEvent(ctx=ctx))

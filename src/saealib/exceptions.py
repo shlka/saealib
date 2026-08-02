@@ -1,9 +1,13 @@
 """Public exception hierarchy for saealib."""
 
+from typing import Any
+
 __all__ = [
     "CheckpointError",
     "ConfigurationError",
+    "EvaluationFatalError",
     "EvaluationProtocolError",
+    "EvaluationSubmissionError",
     "SaealibError",
     "ValidationError",
 ]
@@ -27,3 +31,19 @@ class CheckpointError(ValidationError):
 
 class EvaluationProtocolError(SaealibError, ValueError):
     """Raised when an evaluation lifecycle message violates its contract."""
+
+
+class EvaluationFatalError(EvaluationProtocolError, RuntimeError):
+    """Raised when a post-effect lifecycle failure cannot be retried."""
+
+    def __init__(self, message: str, state: Any) -> None:
+        super().__init__(message)
+        self.state = state
+
+
+class EvaluationSubmissionError(EvaluationProtocolError):
+    """Raised when submission leaves externally running work."""
+
+    def __init__(self, message: str, state: Any) -> None:
+        super().__init__(message)
+        self.state = state

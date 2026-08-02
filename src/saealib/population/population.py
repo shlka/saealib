@@ -355,7 +355,7 @@ class Population(Generic[T_Individual]):
 
     def _extend_internal(
         self,
-        other: Self | dict,
+        other: Any,
         *,
         preserve_ids: bool,
         allow_duplicate_ids: bool = False,
@@ -378,7 +378,7 @@ class Population(Generic[T_Individual]):
             other_size = len(other)
             other_data = {k: other.get_array(k) for k in other.schema}
         elif isinstance(other, dict):
-            other_size = len(next(iter(other.values())))
+            other_size = np.asarray(next(iter(other.values()))).shape[0]
             other_data = other
 
         if other_size == 0:

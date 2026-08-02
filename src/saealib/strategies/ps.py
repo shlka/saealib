@@ -16,6 +16,7 @@ from saealib.stages import (
     AcquisitionStage,
     ArchiveUpdateStage,
     AskStage,
+    AsyncEvaluationSubmitStage,
     CountGenerationStage,
     EvaluationAcknowledgeStage,
     EvaluationApplyStage,
@@ -23,6 +24,7 @@ from saealib.stages import (
     EvaluationPlanStage,
     EvaluationSubmitStage,
     FeedbackStage,
+    PendingEvaluationContextStage,
     SurrogatePredictStage,
     TellStage,
 )
@@ -78,32 +80,58 @@ class PreSelectionStrategy(OptimizationStrategy):
 
     def _build_pipeline(self, provider: ComponentProvider) -> Pipeline:
         cbmanager = getattr(provider, "cbmanager", None)
+        scheduler = getattr(provider, "async_scheduler", None)
+        evaluation_policy = (
+            getattr(provider, "evaluation_policy", None) or self.evaluation_policy
+        )
+        feedback_policy = (
+            getattr(provider, "feedback_policy", None) or self.feedback_policy
+        )
+        if scheduler is not None:
+            evaluation_tail = [
+                AsyncEvaluationSubmitStage(
+                    scheduler,
+                    evaluation_policy,
+                    feedback_policy,
+                    provider.algorithm,
+                    cbmanager,
+                )
+            ]
+        else:
+            evaluation_tail = [
+                EvaluationPlanStage(evaluation_policy),
+                EvaluationSubmitStage(provider.evaluator),
+                EvaluationCollectStage(provider.evaluator),
+                EvaluationApplyStage(),
+                ArchiveUpdateStage(),
+                FeedbackStage(feedback_policy),
+                TellStage(provider.algorithm),
+                EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
+            ]
         return Pipeline(
             [
                 CountGenerationStage(),
+                *(
+                    [PendingEvaluationContextStage(scheduler)]
+                    if scheduler is not None
+                    else []
+                ),
                 AskStage(
                     provider.algorithm,
                     n_offspring=self.n_candidates,
                     cbmanager=cbmanager,
                 ),
                 SurrogatePredictStage(provider.surrogate_manager, cbmanager=cbmanager),
+                *(
+                    [PendingEvaluationContextStage(scheduler)]
+                    if scheduler is not None
+                    else []
+                ),
                 AcquisitionStage(
                     provider.acquisition,
                     cbmanager=cbmanager,
                 ),
-                EvaluationPlanStage(
-                    getattr(provider, "evaluation_policy", None)
-                    or self.evaluation_policy
-                ),
-                EvaluationSubmitStage(provider.evaluator),
-                EvaluationCollectStage(provider.evaluator),
-                EvaluationApplyStage(),
-                ArchiveUpdateStage(),
-                FeedbackStage(
-                    getattr(provider, "feedback_policy", None) or self.feedback_policy
-                ),
-                TellStage(provider.algorithm),
-                EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
+                *evaluation_tail,
             ]
         )
 
@@ -128,5 +156,12 @@ class PreSelectionStrategy(OptimizationStrategy):
         OptimizationState
             Updated state after one generation step.
         """
+        scheduler = getattr(provider, "async_scheduler", None)
+        if scheduler is not None and ctx.pending_evaluations:
+            ctx = scheduler.poll(ctx, wait=False)
+            if not ctx.pending_evaluations:
+                return ctx
+            if len(ctx.pending_evaluations) >= scheduler.max_pending:
+                return ctx
         self.pipeline = self._build_pipeline(provider)
         return self.pipeline.execute(ctx)
