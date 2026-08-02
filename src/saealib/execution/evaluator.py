@@ -11,8 +11,10 @@ without touching the pipeline code.
 from __future__ import annotations
 
 import pickle
+import time
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
@@ -154,6 +156,11 @@ class EvaluationHandle:
     _sync_error: EvaluationErrorInfo | None = None
     _delivered_sequence: int = -1
     _acknowledged_sequence: int = -1
+    _submitted_at: float = field(default_factory=time.monotonic, repr=False)
+    _candidate_ids: np.ndarray | None = field(default=None, repr=False)
+    _detached: bool = field(default=False, repr=False)
+    _completed_at: float | None = field(default=None, repr=False)
+    _completion_key: int | None = field(default=None, repr=False)
 
 
 @dataclass(frozen=True)
@@ -190,6 +197,15 @@ class PendingEvaluation:
     applied_candidate_ids: np.ndarray
     last_delivered_sequence: int = -1
     last_acknowledged_sequence: int = -1
+    processing: Mapping[int, str] = field(default_factory=dict)
+    buffered_updates: tuple[EvaluationUpdate, ...] = ()
+    reserved_cost: float = 0.0
+    retry_count: int = 0
+    checkpointable: bool = False
+    original_candidate_ids: np.ndarray | None = None
+    feedback_result: Any = None
+    fatal_error: EvaluationErrorInfo | None = None
+    prediction: Any = None
 
     def __post_init__(self) -> None:
         """Validate and own applied candidate IDs."""
@@ -200,6 +216,25 @@ class PendingEvaluation:
             name="applied_candidate_ids",
         )
         object.__setattr__(self, "applied_candidate_ids", ids)
+        object.__setattr__(self, "processing", dict(self.processing))
+        original = (
+            self.request.candidate_ids
+            if self.original_candidate_ids is None
+            else self.original_candidate_ids
+        )
+        original = _owned_array(
+            original,
+            dtype=np.dtype(np.int64),
+            ndim=1,
+            name="original_candidate_ids",
+        )
+        if len(original) != len(np.unique(original)):
+            raise ValidationError("original_candidate_ids must be unique")
+        object.__setattr__(self, "original_candidate_ids", original)
+        if self.reserved_cost < 0 or not np.isfinite(self.reserved_cost):
+            raise ValidationError("reserved_cost must be finite and non-negative")
+        if self.retry_count < 0:
+            raise ValidationError("retry_count must be non-negative")
 
 
 class Evaluator(ABC):
@@ -251,10 +286,16 @@ class Evaluator(ABC):
         ]
         return any(overridden) and not all(overridden)
 
+    def supports_batch_rollback(self) -> bool:
+        """Return whether failed batch submission can be rolled back."""
+        return False
+
     def collect(
         self, handle: EvaluationHandle, *, wait: bool = True
     ) -> list[EvaluationUpdate]:
         """Return unacknowledged updates for a handle."""
+        if handle._detached:
+            return []
         if handle._sync_result is None and handle._sync_error is None:
             return []
         if handle._acknowledged_sequence >= 0:
@@ -284,6 +325,147 @@ class Evaluator(ABC):
         ):
             raise EvaluationProtocolError("evaluation sequences must be contiguous")
         handle._acknowledged_sequence = sequence
+
+    def cancel(self, handle: EvaluationHandle) -> bool:
+        """Cancel submitted work when the backend supports cancellation."""
+        return False
+
+    def detach(self, handle: EvaluationHandle) -> bool:
+        """Detach work whose result must no longer be delivered."""
+        return False
+
+    def can_reattach(self, pending: PendingEvaluation) -> bool:
+        """Return whether pending work can be restored after checkpoint load."""
+        return False
+
+    def reattach(
+        self, pending: PendingEvaluation, problem: Problem
+    ) -> EvaluationHandle:
+        """Restore a pending request or raise when unsupported."""
+        raise EvaluationProtocolError(
+            f"evaluator cannot reattach request {int(pending.request.request_id)}"
+        )
+
+
+class AsyncEvaluator(Evaluator):
+    """Thread-backed asynchronous evaluator."""
+
+    def __init__(
+        self,
+        evaluator: Evaluator | None = None,
+        *,
+        max_workers: int = 1,
+    ) -> None:
+        if max_workers < 1:
+            raise ValidationError("max_workers must be positive")
+        self._evaluator = evaluator
+        self._executor = ThreadPoolExecutor(max_workers=max_workers)
+
+    def evaluate_batch(self, x: np.ndarray, problem: Problem) -> EvaluationResult:
+        """Evaluate one batch on the wrapped evaluator."""
+        if self._evaluator is None:
+            raise EvaluationProtocolError("AsyncEvaluator requires a batch evaluator")
+        return self._evaluator.evaluate_batch(x, problem)
+
+    def supports_batch_rollback(self) -> bool:
+        """Return whether submitted futures can be detached."""
+        return True
+
+    def submit(self, request: EvaluationRequest, problem: Problem) -> EvaluationHandle:
+        """Submit work without blocking the caller."""
+
+        def run() -> EvaluationResult:
+            return self.evaluate_batch(request.x, problem)
+
+        future = self._executor.submit(run)
+        handle = EvaluationHandle(
+            request.request_id,
+            EvaluationStatus.PENDING,
+            backend_token=future,
+            _candidate_ids=request.candidate_ids,
+        )
+        future.add_done_callback(
+            lambda _: setattr(handle, "_completed_at", time.monotonic())
+        )
+        return handle
+
+    def collect(
+        self, handle: EvaluationHandle, *, wait: bool = True
+    ) -> list[EvaluationUpdate]:
+        """Collect one completed update, optionally without waiting."""
+        future = handle.backend_token
+        if not isinstance(future, Future):
+            raise EvaluationProtocolError("async handle has no Future backend token")
+        if not wait and not future.done():
+            return []
+        if handle._sync_result is None and handle._sync_error is None:
+            try:
+                result = future.result()
+                if handle._completed_at is None:
+                    handle._completed_at = time.monotonic()
+                if result.candidate_ids is None:
+                    result.candidate_ids = handle._candidate_ids
+                    result.__post_init__()
+                elif handle._candidate_ids is not None and not np.array_equal(
+                    result.candidate_ids, handle._candidate_ids
+                ):
+                    raise EvaluationProtocolError("async result candidate_ids mismatch")
+                handle._sync_result = result
+                handle.status = EvaluationStatus.COMPLETED
+            except Exception as exc:
+                if handle._completed_at is None:
+                    handle._completed_at = time.monotonic()
+                handle._sync_error = EvaluationErrorInfo(type(exc).__name__, str(exc))
+                handle.status = EvaluationStatus.FAILED
+        if handle._acknowledged_sequence >= 0:
+            return []
+        ids = (
+            handle._sync_result.candidate_ids
+            if handle._sync_result is not None
+            and handle._sync_result.candidate_ids is not None
+            else np.empty(0, dtype=np.int64)
+        )
+        handle._delivered_sequence = 0
+        return [
+            EvaluationUpdate(
+                handle.request_id,
+                handle.status,
+                ids,
+                handle._sync_result,
+                handle._sync_error,
+                0,
+            )
+        ]
+
+    def cancel(self, handle: EvaluationHandle) -> bool:
+        """Cancel work that has not started."""
+        future = handle.backend_token
+        if not isinstance(future, Future):
+            return False
+        cancelled = future.cancel()
+        if cancelled:
+            handle.status = EvaluationStatus.CANCELLED
+        return cancelled
+
+    def detach(self, handle: EvaluationHandle) -> bool:
+        """Detach a running future and discard its eventual result."""
+        future = handle.backend_token
+        if not isinstance(future, Future):
+            return False
+        handle._detached = True
+        handle.status = EvaluationStatus.CANCELLED
+        return True
+
+    def acknowledge(self, handle: EvaluationHandle, sequence: int) -> None:
+        """Acknowledge one asynchronous update."""
+        super().acknowledge(handle, sequence)
+
+    def close(self) -> None:
+        """Release worker resources."""
+        self._executor.shutdown(wait=True)
+
+
+ThreadPoolEvaluator = AsyncEvaluator
 
 
 class SerialEvaluator(Evaluator):

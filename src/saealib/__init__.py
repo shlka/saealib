@@ -49,11 +49,14 @@ from saealib.comparators import Comparator, NSGA2Comparator, SingleObjectiveComp
 from saealib.exceptions import (
     CheckpointError,
     ConfigurationError,
+    EvaluationFatalError,
     EvaluationProtocolError,
+    EvaluationSubmissionError,
     SaealibError,
     ValidationError,
 )
 from saealib.execution.evaluator import (
+    AsyncEvaluator,
     EvaluationErrorInfo,
     EvaluationHandle,
     EvaluationRequest,
@@ -63,6 +66,7 @@ from saealib.execution.evaluator import (
     Evaluator,
     PendingEvaluation,
     SerialEvaluator,
+    ThreadPoolEvaluator,
 )
 from saealib.execution.initializer import (
     Initializer,
@@ -70,6 +74,7 @@ from saealib.execution.initializer import (
     RandomInitializer,
     SobolInitializer,
 )
+from saealib.execution.scheduler import AsyncScheduler
 from saealib.operators import (
     Crossover,
     CrossoverSBX,
@@ -116,6 +121,7 @@ from saealib.stages import (
     AcquisitionStage,
     ArchiveUpdateStage,
     AskStage,
+    AsyncEvaluationSubmitStage,
     CountGenerationStage,
     EvaluationAcknowledgeStage,
     EvaluationApplyStage,
@@ -168,6 +174,9 @@ __all__ = [
     "Archive",
     "ArchiveUpdateStage",
     "AskStage",
+    "AsyncEvaluationSubmitStage",
+    "AsyncEvaluator",
+    "AsyncScheduler",
     "CallbackManager",
     "CategoricalVariable",
     "CheckpointCallback",
@@ -186,12 +195,14 @@ __all__ = [
     "EqualityConstraint",
     "EvaluateAll",
     "EvaluationErrorInfo",
+    "EvaluationFatalError",
     "EvaluationHandle",
     "EvaluationPolicy",
     "EvaluationProtocolError",
     "EvaluationRequest",
     "EvaluationResult",
     "EvaluationStatus",
+    "EvaluationSubmissionError",
     "EvaluationUpdate",
     "Evaluator",
     "Event",
@@ -250,6 +261,7 @@ __all__ = [
     "TellStage",
     "Termination",
     "TerminationCondition",
+    "ThreadPoolEvaluator",
     "TopKEvaluation",
     "TopKSelectionStage",
     "TournamentSelection",

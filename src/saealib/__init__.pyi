@@ -94,9 +94,12 @@ from saealib.decomposition import TchebycheffDecomposition as TchebycheffDecompo
 from saealib.decomposition import WeightedSumDecomposition as WeightedSumDecomposition
 from saealib.exceptions import CheckpointError as CheckpointError
 from saealib.exceptions import ConfigurationError as ConfigurationError
+from saealib.exceptions import EvaluationFatalError as EvaluationFatalError
 from saealib.exceptions import EvaluationProtocolError as EvaluationProtocolError
+from saealib.exceptions import EvaluationSubmissionError as EvaluationSubmissionError
 from saealib.exceptions import SaealibError as SaealibError
 from saealib.exceptions import ValidationError as ValidationError
+from saealib.execution.evaluator import AsyncEvaluator as AsyncEvaluator
 from saealib.execution.evaluator import EvaluationErrorInfo as EvaluationErrorInfo
 from saealib.execution.evaluator import EvaluationHandle as EvaluationHandle
 from saealib.execution.evaluator import EvaluationRequest as EvaluationRequest
@@ -107,10 +110,12 @@ from saealib.execution.evaluator import Evaluator as Evaluator
 from saealib.execution.evaluator import JoblibEvaluator as JoblibEvaluator
 from saealib.execution.evaluator import PendingEvaluation as PendingEvaluation
 from saealib.execution.evaluator import SerialEvaluator as SerialEvaluator
+from saealib.execution.evaluator import ThreadPoolEvaluator as ThreadPoolEvaluator
 from saealib.execution.initializer import Initializer as Initializer
 from saealib.execution.initializer import LHSInitializer as LHSInitializer
 from saealib.execution.initializer import RandomInitializer as RandomInitializer
 from saealib.execution.initializer import SobolInitializer as SobolInitializer
+from saealib.execution.scheduler import AsyncScheduler as AsyncScheduler
 from saealib.operators import Crossover as Crossover
 
 # operators (less common)
@@ -178,6 +183,7 @@ from saealib.registry import register as register
 from saealib.stages import AcquisitionStage as AcquisitionStage
 from saealib.stages import ArchiveUpdateStage as ArchiveUpdateStage
 from saealib.stages import AskStage as AskStage
+from saealib.stages import AsyncEvaluationSubmitStage as AsyncEvaluationSubmitStage
 from saealib.stages import CountGenerationStage as CountGenerationStage
 from saealib.stages import EvaluationAcknowledgeStage as EvaluationAcknowledgeStage
 from saealib.stages import EvaluationApplyStage as EvaluationApplyStage

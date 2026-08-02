@@ -21,7 +21,8 @@ dict) via ``state.replace(data={**state.data, "key": value})``.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from math import fsum
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -36,6 +37,7 @@ from saealib.callback import (
 )
 from saealib.exceptions import EvaluationProtocolError, ValidationError
 from saealib.execution.evaluator import (
+    EvaluationRequest,
     EvaluationResult,
     EvaluationStatus,
     Evaluator,
@@ -235,6 +237,28 @@ class SurrogatePredictStage(Stage):
             self._cbmanager.dispatch(SurrogateEndEvent(ctx=state, offspring=candidates))
 
         return state.replace(offspring=candidates, predictions=prediction)
+
+
+class PendingEvaluationContextStage(Stage):
+    """Expose asynchronous reservations to downstream components."""
+
+    name = "pending_evaluation_context"
+    label = "Pending evaluation context"
+    notation = r"$C \leftarrow \text{pending}(C)$"
+
+    def __init__(self, scheduler: Any) -> None:
+        super().__init__()
+        self._scheduler = scheduler
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        return state.replace(
+            data={
+                **state.data,
+                "pending_candidate_ids": self._scheduler.pending_candidate_ids(state),
+                "reserved_fe": self._scheduler.reserved_fe(state),
+                "reserved_cost": self._scheduler.reserved_cost(state),
+            }
+        )
 
 
 class AcquisitionStage(Stage):
@@ -473,6 +497,89 @@ class EvaluationPlanStage(Stage):
             evaluation_update_new_ids=[],
             evaluation_new_ids=np.empty(0, dtype=np.int64),
         )
+
+
+class AsyncEvaluationSubmitStage(Stage):
+    """Plan and submit one request to an asynchronous scheduler."""
+
+    name = "async_evaluation_submit"
+    label = "Submit asynchronous evaluation"
+
+    def __init__(
+        self,
+        scheduler: Any,
+        policy: EvaluationPolicy,
+        feedback_policy: FeedbackPolicy | None = None,
+        algorithm: Any = None,
+        callback_manager: Any = None,
+    ) -> None:
+        super().__init__()
+        self._scheduler = scheduler
+        self._policy = policy
+        self._feedback_policy = feedback_policy
+        self._algorithm = algorithm
+        self._callback_manager = callback_manager
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        candidates = state.offspring
+        if candidates is None:
+            raise EvaluationProtocolError("evaluation candidates are missing")
+        self._scheduler.feedback_policy = self._feedback_policy
+        self._scheduler.algorithm = self._algorithm
+        self._scheduler.callback_manager = self._callback_manager
+        hook_data = {
+            **state.data,
+            "pending_candidate_ids": self._scheduler.pending_candidate_ids(state),
+            "reserved_fe": self._scheduler.reserved_fe(state),
+            "reserved_cost": self._scheduler.reserved_cost(state),
+        }
+        state = state.replace(data=hook_data)
+        acquisition = (
+            None if state.scores is None else AcquisitionResult(scores=state.scores)
+        )
+        request = self._policy.plan(candidates, acquisition, state)
+        requests = [request]
+        capacity = self._scheduler.max_pending - len(state.pending_evaluations)
+        if capacity > 1 and len(request.candidate_ids) > 1:
+            chunks = np.array_split(
+                request.candidate_ids, min(capacity, len(request.candidate_ids))
+            )
+            requests = []
+            total_cost = float(
+                request.metadata.get("estimated_cost", len(request.candidate_ids))
+            )
+            allocated_cost = 0.0
+            for index, ids in enumerate(chunks):
+                rows = np.asarray(
+                    [
+                        int(np.flatnonzero(request.candidate_ids == value)[0])
+                        for value in ids
+                    ],
+                    dtype=np.intp,
+                )
+                request_id = request.request_id
+                if index:
+                    request_id = np.int64(state.request_id_allocator.allocate(1)[0])
+                chunk_cost = (
+                    total_cost - fsum((allocated_cost,))
+                    if index == len(chunks) - 1
+                    else total_cost * len(ids) / len(request.candidate_ids)
+                )
+                allocated_cost = fsum((allocated_cost, chunk_cost))
+                requests.append(
+                    EvaluationRequest(
+                        request_id,
+                        ids,
+                        request.x[rows],
+                        request.outputs,
+                        {
+                            **request.metadata,
+                            "estimated_cost": float(chunk_cost),
+                        },
+                    )
+                )
+        submitted = self._scheduler.submit(state, requests)
+        return submitted.replace(evaluation_request=request)
 
 
 class EvaluationSubmitStage(Stage):
