@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 
 from saealib import (
@@ -84,9 +86,6 @@ class _MockSurrogateManager:
     def fit(self, archive, ctx=None):
         pass
 
-    def score_candidates(self, candidates_x, archive, ctx=None, *, refit=True):
-        return np.zeros(len(candidates_x)), []
-
 
 class _MockProvider:
     seed: int | None = None
@@ -122,30 +121,30 @@ class TestDirectStrategy:
         strategy = DirectStrategy()
         ctx = _make_ctx()
         provider = _MockProvider()
-        strategy.step(ctx, provider)
+        strategy.step(ctx, cast(Any, provider))
         assert isinstance(strategy.pipeline, Pipeline)
 
     def test_pipeline_rebuilt_across_steps(self):
         strategy = DirectStrategy()
         ctx = _make_ctx()
         provider = _MockProvider()
-        strategy.step(ctx, provider)
+        strategy.step(ctx, cast(Any, provider))
         first = strategy.pipeline
-        strategy.step(ctx, provider)
+        strategy.step(ctx, cast(Any, provider))
         assert strategy.pipeline is not first
 
     def test_generation_incremented(self):
         strategy = DirectStrategy()
         ctx = _make_ctx()
         provider = _MockProvider()
-        ctx = strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, cast(Any, provider))
         assert ctx.gen == 1
 
     def test_fe_equals_offspring_count(self):
         strategy = DirectStrategy()
         ctx = _make_ctx()
         provider = _MockProvider()
-        ctx = strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, cast(Any, provider))
         assert ctx.fe == N_POP
 
     def test_archive_grows_by_offspring_count(self):
@@ -163,7 +162,7 @@ class TestDirectStrategy:
         # a parent has probability zero, keeping this count deterministic.
         provider.algorithm.crossover = CrossoverBLXAlpha(prob=1.0, alpha=0.4)
         before = len(ctx.archive)
-        ctx = strategy.step(ctx, provider)
+        ctx = strategy.step(ctx, cast(Any, provider))
         assert len(ctx.archive) == before + N_POP
 
 

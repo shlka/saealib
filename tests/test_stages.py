@@ -1,6 +1,9 @@
 """Tests for concrete Stage execute() logic in saealib.stages."""
 
+from typing import Any, cast
+
 import numpy as np
+import pytest
 
 from saealib import (
     GA,
@@ -13,12 +16,20 @@ from saealib.acquisition import MeanPrediction
 from saealib.callback import CallbackManager, PostEvaluationEvent
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
-from saealib.execution.evaluator import EvaluationResult, Evaluator, SerialEvaluator
+from saealib.exceptions import EvaluationProtocolError
+from saealib.execution.evaluator import (
+    EvaluationRequest,
+    EvaluationResult,
+    Evaluator,
+    SerialEvaluator,
+)
+from saealib.policies.evaluation import EvaluationPlan
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.stages import (
     AcquisitionStage,
     AskStage,
+    EvaluationPlanStage,
     SurrogateFitStage,
     SurrogatePredictStage,
     TrueEvaluationStage,
@@ -106,6 +117,58 @@ class _MockSurrogateManager:
     def predict(self, candidates_x, archive, ctx=None, *, refit=True):
         n = len(candidates_x)
         return SurrogatePrediction.objective(value=np.ones((n, 1)))
+
+
+class _Planner:
+    def __init__(self, plan):
+        self.plan_result = plan
+
+    def plan(self, candidates, acquisition, ctx):
+        return self.plan_result
+
+
+def _state_with_plannable_offspring() -> OptimizationState:
+    return AskStage(_make_ga()).execute(_make_state())
+
+
+def _plan_with_request(request_id: int = 0) -> EvaluationPlan:
+    return EvaluationPlan(
+        (
+            EvaluationRequest(
+                np.int64(request_id),
+                np.array([0], dtype=np.int64),
+                np.zeros((1, DIM), dtype=np.float64),
+            ),
+        )
+    )
+
+
+class TestEvaluationPlanStage:
+    def test_none_planner_uses_default_evaluate_all(self):
+        state = _state_with_plannable_offspring()
+        planned = EvaluationPlanStage(planner=None).execute(state)
+
+        assert planned.evaluation_plan is not None
+        assert len(planned.evaluation_plan.requests) == 1
+        assert state.offspring is not None
+        assert len(planned.evaluation_plan.requests[0].candidate_ids) == len(
+            state.offspring
+        )
+        assert planned.evaluation_request is planned.evaluation_plan.requests[0]
+
+    def test_rejects_planner_returning_non_plan(self):
+        state = _state_with_plannable_offspring()
+        with pytest.raises(EvaluationProtocolError, match="must return EvaluationPlan"):
+            EvaluationPlanStage(cast(Any, _Planner(object()))).execute(state)
+
+    def test_rejects_request_id_collision_with_existing_handle(self):
+        state = _state_with_plannable_offspring().replace(
+            evaluation_handles={0: object()}
+        )
+        with pytest.raises(EvaluationProtocolError, match="request ID collides"):
+            EvaluationPlanStage(cast(Any, _Planner(_plan_with_request()))).execute(
+                state
+            )
 
 
 # ---------------------------------------------------------------------------

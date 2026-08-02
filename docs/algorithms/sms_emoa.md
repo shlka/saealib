@@ -72,16 +72,16 @@ Because the paper's reduction procedure applies this only to the lowest front (s
 | Mutation | `MutationPolynomial(eta=20.0)` | L2 |
 | Non-dominated sorting + in-front HV contribution | `HypervolumeComparator` (`sort_population` internally calls non-dominated sorting and `hypervolume_contributions`) | L3-5 |
 | Survivor selection | `TruncationSelection()` (culls the last individual in `comparator.sort_population`'s order — i.e. the one with the smallest contribution in the lowest front) | L4-6 |
-| Evaluation strategy | `SteadyStateStrategy` with `AsyncScheduler` for steady-state completion | 2, 6-7 (in-generation evaluation) |
+| Evaluation strategy | `SteadyStateStrategy` with `AsyncEvaluationScheduler` for steady-state completion | 2, 6-7 (in-generation evaluation) |
 
 `SteadyStateStrategy` asks for one candidate per step and can be paired with
-`AsyncScheduler` when evaluations have different completion times. The
+`AsyncEvaluationScheduler` when evaluations have different completion times. The
 scheduler manages pending requests and applies each completed result serially.
 
 ```python
 from saealib import (
     AsyncEvaluator,
-    AsyncScheduler,
+    AsyncEvaluationScheduler,
     GA,
     HypervolumeComparator,
     Optimizer,
@@ -105,14 +105,14 @@ algorithm = GA(
     TruncationSelection(),
 )
 evaluator = AsyncEvaluator(SerialEvaluator(), max_workers=2)
-schedule = AsyncScheduler(evaluator, max_pending=2)
+schedule = AsyncEvaluationScheduler(evaluator, max_pending=2)
 
 opt = (
     Optimizer(problem)
     .set_algorithm(algorithm)
     .set_strategy(SteadyStateStrategy())
     .set_evaluator(evaluator)
-    .set_async_scheduler(schedule)
+    .set_async_evaluation_scheduler(schedule)
     .set_termination(Termination(max_fe(2000)))
 )
 ctx = opt.run()

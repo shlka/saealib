@@ -45,13 +45,8 @@ class PopulationAttribute:
     default: Any = np.nan
 
 
-class PropertyAvoidConfCheck(property):
-    """
-    A subclass of the property to avoid attribute conflict checks in Population.
-
-    Using for function 'bind_property', 'bind_property_array'.
-    This class and property behave identically, differing only in their class names.
-    """
+class _ConflictBypassProperty(property):
+    """Mark bound properties as exempt from population-name conflict warnings."""
 
     pass
 
@@ -65,7 +60,7 @@ def bind_property(key: str, doc: str = "") -> Any:
     def fset(self, value):
         self.update_value(key, value)
 
-    return PropertyAvoidConfCheck(fget, fset, doc=doc)
+    return _ConflictBypassProperty(fget, fset, doc=doc)
 
 
 def bind_property_array(key: str, doc: str = "") -> Any:
@@ -77,7 +72,7 @@ def bind_property_array(key: str, doc: str = "") -> Any:
     def fset(self, value):
         self.update_array(key, value)
 
-    return PropertyAvoidConfCheck(fget, fset, doc=doc)
+    return _ConflictBypassProperty(fget, fset, doc=doc)
 
 
 class Population(Generic[T_Individual]):
@@ -147,7 +142,7 @@ class Population(Generic[T_Individual]):
         for name in self.schema:
             if hasattr(cls, name):
                 attr = getattr(cls, name)
-                if isinstance(attr, PropertyAvoidConfCheck):
+                if isinstance(attr, _ConflictBypassProperty):
                     # No conflicts occur for properties added using the bind_property
                     # function or the bind_property_array function.
                     continue

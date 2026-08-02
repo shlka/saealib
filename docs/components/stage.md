@@ -34,11 +34,10 @@ The table shows how each Stage reads and writes `OptimizationState`'s standard f
 |---|---|---|
 | `CountGenerationStage()` | — | `gen` |
 | `AskStage(algorithm, n_offspring=None, cbmanager=None)` | — | `offspring` |
-| `SurrogateScoreStage(surrogate_manager, cbmanager=None, *, refit=True)` | `offspring` | `scores`, `predictions` |
+| `SurrogatePredictStage(surrogate_manager, cbmanager=None)` | `offspring` | `predictions` |
 | `SurrogateFitStage(surrogate_manager)` | `archive` | — |
-| `TopKSelectionStage(k)` | `offspring`, `scores` | `offspring` (only the top k) |
-| `SortByScoreStage()` | `offspring`, `scores` | `offspring`, `scores` (all entries, reordered descending) |
-| `TrueEvaluationStage(evaluator, cbmanager=None, n_eval=None)` | `offspring` | `evaluated_offspring`, `fe` |
+| `AcquisitionStage(acquisition, cbmanager=None)` | `offspring`, `predictions` | `scores`, `acquisition_result` |
+| `EvaluationPlanStage(planner)` | `offspring`, `acquisition_result` | `evaluation_plan`, `evaluation_request` |
 | `ArchiveUpdateStage()` | `evaluated_offspring` | `archive`, `pareto_archive` |
 | `TellStage(algorithm)` | `offspring` | `population` |
 | `SurrogateOnlyLoopStage(algorithm, surrogate_manager, gen_ctrl, cbmanager=None)` | — | The entire inner loop |
@@ -46,18 +45,13 @@ The table shows how each Stage reads and writes `OptimizationState`'s standard f
 
 `AskStage` calls `algorithm.ask()`, writes to `state.offspring`, and fires PostCrossover/PostMutation/PostAskEvent via `cbmanager`.
 
-`SurrogateScoreStage` scores via `surrogate_manager.score_candidates()`, writing to `state.scores`/`state.predictions`.
+`SurrogatePredictStage` obtains prediction data; `AcquisitionStage` computes scores and preserves the complete `AcquisitionResult` for planning.
 
 `SurrogateFitStage` is used to pre-fit the surrogate once, ahead of an inner loop where the archive doesn't change.
-It's used together with passing `refit=False` to the downstream `SurrogateScoreStage`.
-
-`TopKSelectionStage` keeps only the top k entries of `state.offspring` by descending `state.scores`, discarding the rest.
-Unlike `TopKSelectionStage`, `SortByScoreStage` keeps every candidate and just reorders them descending; it's used by IB-family strategies.
-
-`TrueEvaluationStage` evaluates the first `n_eval` entries of `state.offspring` (all of them if `None`; you can specify an `int` or a `Callable[[OptimizationState], int]`) with the true objective function.
+It is used before a surrogate prediction stage when an inner loop can reuse a fit.
 
 `SurrogateOnlyLoopStage` is a composite stage used by `GenerationBasedStrategy`.
-It repeats an inner loop of `CountGeneration → Ask → SurrogateScore(refit=False) → Tell` `gen_ctrl` times.
+It repeats an inner loop of `CountGeneration → Ask → SurrogatePredictStage(refit=False) → AcquisitionStage → Tell` `gen_ctrl` times.
 It's a no-op when `gen_ctrl=0`.
 
 ```{note}
@@ -109,11 +103,8 @@ Add a value via `state.replace(data={**state.data, "key": value})`.
 - {py:class}`saealib.Pipeline`
 - {py:class}`saealib.CountGenerationStage`
 - {py:class}`saealib.AskStage`
-- {py:class}`saealib.SurrogateScoreStage`
+- {py:class}`saealib.SurrogatePredictStage`
 - {py:class}`saealib.SurrogateFitStage`
-- {py:class}`saealib.TopKSelectionStage`
-- {py:class}`saealib.SortByScoreStage`
-- {py:class}`saealib.TrueEvaluationStage`
 - {py:class}`saealib.ArchiveUpdateStage`
 - {py:class}`saealib.TellStage`
 - {py:class}`saealib.SurrogateOnlyLoopStage`

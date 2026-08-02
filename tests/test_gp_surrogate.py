@@ -202,6 +202,7 @@ class TestSklearnGPRSurrogateManager:
         manager = GlobalSurrogateManager(SklearnGPRSurrogate())
         prediction = manager.predict(candidates, archive_1obj)
         scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
+        assert scores is not None
         assert scores.shape == (len(candidates),)
         assert np.all(scores >= 0.0)
         assert prediction.value.shape == (len(candidates), 1)
@@ -212,6 +213,7 @@ class TestSklearnGPRSurrogateManager:
         manager = GlobalSurrogateManager(SklearnGPRSurrogate())
         prediction = manager.predict(candidates, archive_1obj)
         scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
+        assert scores is not None
         assert scores.shape == (len(candidates),)
 
     def test_global_manager_max_uncertainty(self, archive_1obj, candidates) -> None:
@@ -219,6 +221,7 @@ class TestSklearnGPRSurrogateManager:
         manager = GlobalSurrogateManager(SklearnGPRSurrogate())
         prediction = manager.predict(candidates, archive_1obj)
         scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
+        assert scores is not None
         assert scores.shape == (len(candidates),)
 
 

@@ -11,8 +11,8 @@ Tests cover:
 - PairwiseSurrogateManager: predicts a per-candidate win rate against archive
   reference points as a "win_rate" prediction channel, read via
   WinRateAcquisition
-- NoveltyAcquisition/DensityAcquisition/NichingAcquisition: archive-only
-  acquisitions, ported verbatim from the retired ArchiveBasedManager hierarchy
+- NoveltyAcquisition/InverseDensityAcquisition/MaximinDistanceAcquisition: archive-only
+  archive-based acquisitions
 """
 
 import numpy as np
@@ -20,10 +20,11 @@ import pytest
 
 from saealib.acquisition import CompositeAcquisition, MeanPrediction
 from saealib.acquisition.archive_based import (
-    DensityAcquisition,
-    NichingAcquisition,
+    InverseDensityAcquisition,
+    MaximinDistanceAcquisition,
     NoveltyAcquisition,
 )
+from saealib.acquisition.base import AcquisitionResult
 from saealib.acquisition.winrate import WinRateAcquisition
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
@@ -57,6 +58,11 @@ from saealib.surrogate.training_set import KNNObjectiveSet, PairwiseComparisonSe
 # ---------------------------------------------------------------------------
 DIM = 2
 N_OBJ = 1
+
+
+def _scores(result: AcquisitionResult) -> np.ndarray:
+    assert result.scores is not None
+    return result.scores
 
 
 @pytest.fixture
@@ -138,9 +144,10 @@ class TestSplitPrediction:
         std = np.array([[0.1, 0.2], [0.3, 0.4]])
         pred = SurrogatePrediction.objective(value=np.zeros((2, 2)), std=std)
         parts = _split_prediction(pred)
-        assert parts[0].std is not None
-        assert parts[0].std.shape == (1, 2)
-        np.testing.assert_array_almost_equal(parts[0].std[0], [0.1, 0.2])
+        std = parts[0].std
+        assert std is not None
+        assert std.shape == (1, 2)
+        np.testing.assert_array_almost_equal(std[0], [0.1, 0.2])
 
     def test_std_none_propagates(self) -> None:
         pred = SurrogatePrediction.objective(value=np.zeros((3, 1)))
@@ -174,7 +181,7 @@ class TestSplitPrediction:
 
     def test_metadata_shared(self) -> None:
         """metadata dict is shared (not deep-copied) across splits."""
-        meta = {"key": "val"}
+        meta: dict[str, object] = {"key": "val"}
         pred = SurrogatePrediction.objective(value=np.zeros((2, 1)), metadata=meta)
         parts = _split_prediction(pred)
         for p in parts:
@@ -243,6 +250,8 @@ class TestStackPredictions:
         parts = _split_prediction(original)
         stacked = _stack_predictions(parts)
         np.testing.assert_array_equal(stacked.value, original.value)
+        assert stacked.std is not None
+        assert original.std is not None
         np.testing.assert_array_almost_equal(stacked.std, original.std)
         np.testing.assert_array_equal(stacked.label, original.label)
 
@@ -380,7 +389,7 @@ class TestGlobalSurrogateManager:
         manager = GlobalSurrogateManager(surrogate_1obj)
         acquisition = MeanPrediction()
         prediction = manager.predict(candidates, archive_1obj)
-        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
+        scores = _scores(acquisition.evaluate(candidates, prediction, archive_1obj))
         assert scores.shape == (len(candidates),)
 
     def test_scores_finite(
@@ -392,7 +401,7 @@ class TestGlobalSurrogateManager:
         manager = GlobalSurrogateManager(surrogate_1obj)
         acquisition = MeanPrediction()
         prediction = manager.predict(candidates, archive_1obj)
-        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
+        scores = _scores(acquisition.evaluate(candidates, prediction, archive_1obj))
         assert np.all(np.isfinite(scores))
 
     def test_biobj_prediction_and_scores_shape(
@@ -406,7 +415,7 @@ class TestGlobalSurrogateManager:
         manager = GlobalSurrogateManager(surrogate_2obj)
         acquisition = MeanPrediction(weights=weights)
         prediction = manager.predict(candidates, archive_2obj)
-        scores = acquisition.evaluate(candidates, prediction, archive_2obj).scores
+        scores = _scores(acquisition.evaluate(candidates, prediction, archive_2obj))
         assert scores.shape == (len(candidates),)
         assert prediction.value.shape == (len(candidates), 2)
 
@@ -440,7 +449,7 @@ class TestLocalSurrogateManager:
         )
         acquisition = MeanPrediction()
         prediction = manager.predict(candidates, archive_1obj)
-        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
+        scores = _scores(acquisition.evaluate(candidates, prediction, archive_1obj))
         assert scores.shape == (len(candidates),)
 
     def test_prediction_value_shape(
@@ -467,7 +476,9 @@ class TestLocalSurrogateManager:
         assert manager.training_set.n_neighbors == 50
         # archive has only 20 points, get_knn should still work
         prediction = manager.predict(candidates, archive_1obj)
-        scores = MeanPrediction().evaluate(candidates, prediction, archive_1obj).scores
+        scores = _scores(
+            MeanPrediction().evaluate(candidates, prediction, archive_1obj)
+        )
         assert scores.shape == (len(candidates),)
 
     def test_scores_finite(
@@ -481,7 +492,7 @@ class TestLocalSurrogateManager:
         )
         acquisition = MeanPrediction()
         prediction = manager.predict(candidates, archive_1obj)
-        scores = acquisition.evaluate(candidates, prediction, archive_1obj).scores
+        scores = _scores(acquisition.evaluate(candidates, prediction, archive_1obj))
         assert np.all(np.isfinite(scores))
 
 
@@ -541,7 +552,7 @@ class TestCompositeSurrogateManager:
         )
         mgr = CompositeSurrogateManager({"objective": m})
         prediction = mgr.predict(candidates, archive_1obj)
-        scores = composite_acq.evaluate(candidates, prediction, archive_1obj).scores
+        scores = _scores(composite_acq.evaluate(candidates, prediction, archive_1obj))
         assert scores.shape == (len(candidates),)
 
     def test_product_combine_scores_shape(
@@ -554,7 +565,7 @@ class TestCompositeSurrogateManager:
         )
         mgr = CompositeSurrogateManager({"a": m1, "b": m2})
         prediction = mgr.predict(candidates, archive_1obj)
-        scores = composite_acq.evaluate(candidates, prediction, archive_1obj).scores
+        scores = _scores(composite_acq.evaluate(candidates, prediction, archive_1obj))
         assert scores.shape == (len(candidates),)
 
     def test_rank_weighted_combine_scores_in_0_1(
@@ -568,7 +579,7 @@ class TestCompositeSurrogateManager:
         )
         mgr = CompositeSurrogateManager({"a": m1, "b": m2})
         prediction = mgr.predict(candidates, archive_1obj)
-        scores = composite_acq.evaluate(candidates, prediction, archive_1obj).scores
+        scores = _scores(composite_acq.evaluate(candidates, prediction, archive_1obj))
         assert np.all(scores >= 0.0)
         assert np.all(scores <= 1.0)
 
@@ -583,17 +594,17 @@ class TestCompositeSurrogateManager:
         )
         mgr = CompositeSurrogateManager({"a": m1, "b": m2})
         prediction = mgr.predict(candidates, archive_1obj)
-        scores = composite_acq.evaluate(candidates, prediction, archive_1obj).scores
+        scores = _scores(composite_acq.evaluate(candidates, prediction, archive_1obj))
         assert scores.shape == (len(candidates),)
 
 
 # ===========================================================================
-# Archive-based acquisitions (formerly ArchiveBasedManager hierarchy)
+# Archive-based acquisitions
 # ===========================================================================
 
 
 class TestNoveltyAcquisition:
-    """Tests for NoveltyAcquisition (verbatim port of former NoveltyManager)."""
+    """Tests for NoveltyAcquisition."""
 
     def test_evaluate_returns_acquisition_result(
         self, archive_1obj: Archive, candidates: np.ndarray
@@ -610,14 +621,14 @@ class TestNoveltyAcquisition:
         ]
         empty_arc = Archive(attrs, init_capacity=10)
         acq = NoveltyAcquisition(k=3)
-        scores = acq.evaluate(candidates, None, empty_arc).scores
+        scores = _scores(acq.evaluate(candidates, None, empty_arc))
         np.testing.assert_array_equal(scores, np.ones(len(candidates)))
 
     def test_scores_nonnegative(
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
         acq = NoveltyAcquisition(k=3)
-        scores = acq.evaluate(candidates, None, archive_1obj).scores
+        scores = _scores(acq.evaluate(candidates, None, archive_1obj))
         assert np.all(scores >= 0.0)
 
     def test_more_distant_point_has_higher_novelty(self, archive_1obj: Archive) -> None:
@@ -625,23 +636,23 @@ class TestNoveltyAcquisition:
         near = archive_1obj.x[0:1] + 1e-6  # almost identical to archive point
         far = np.array([[100.0, 100.0]])
         acq = NoveltyAcquisition(k=1)
-        score_near = acq.evaluate(near, None, archive_1obj).scores[0]
-        score_far = acq.evaluate(far, None, archive_1obj).scores[0]
+        score_near = _scores(acq.evaluate(near, None, archive_1obj))[0]
+        score_far = _scores(acq.evaluate(far, None, archive_1obj))[0]
         assert score_far > score_near
 
     def test_k_clamped_to_archive_size(self, archive_1obj: Archive) -> None:
         """k larger than archive size should not raise an error."""
         acq = NoveltyAcquisition(k=1000)
         candidates = np.zeros((3, DIM))
-        scores = acq.evaluate(candidates, None, archive_1obj).scores
+        scores = _scores(acq.evaluate(candidates, None, archive_1obj))
         assert scores.shape == (3,)
         assert np.all(np.isfinite(scores))
 
     def test_k_affects_scores(self, archive_1obj: Archive) -> None:
         """Different k values yield different scores (unless all distances equal)."""
         candidates = np.zeros((5, DIM))
-        s1 = NoveltyAcquisition(k=1).evaluate(candidates, None, archive_1obj).scores
-        s5 = NoveltyAcquisition(k=5).evaluate(candidates, None, archive_1obj).scores
+        s1 = _scores(NoveltyAcquisition(k=1).evaluate(candidates, None, archive_1obj))
+        s5 = _scores(NoveltyAcquisition(k=5).evaluate(candidates, None, archive_1obj))
         # mean of 1 NN vs mean of 5 NN — they may differ
         assert s1.shape == s5.shape == (5,)
 
@@ -651,10 +662,10 @@ class TestNoveltyAcquisition:
 
 
 # ===========================================================================
-# DensityAcquisition Tests (verbatim port of former DensityManager)
+# InverseDensityAcquisition tests
 # ===========================================================================
-class TestDensityAcquisition:
-    """Tests for DensityAcquisition."""
+class TestInverseDensityAcquisition:
+    """Tests for InverseDensityAcquisition."""
 
     def test_empty_archive_returns_ones(self, candidates: np.ndarray) -> None:
         attrs = [
@@ -662,72 +673,68 @@ class TestDensityAcquisition:
             PopulationAttribute(name="f", dtype=np.float64, shape=(1,)),
         ]
         empty_arc = Archive(attrs, init_capacity=10)
-        acq = DensityAcquisition(eps=1.0)
-        scores = acq.evaluate(candidates, None, empty_arc).scores
+        acq = InverseDensityAcquisition(eps=1.0)
+        scores = _scores(acq.evaluate(candidates, None, empty_arc))
         np.testing.assert_array_equal(scores, np.ones(len(candidates)))
 
     def test_scores_shape(self, archive_1obj: Archive, candidates: np.ndarray) -> None:
-        acq = DensityAcquisition(eps=1.0)
-        scores = acq.evaluate(candidates, None, archive_1obj).scores
+        acq = InverseDensityAcquisition(eps=1.0)
+        scores = _scores(acq.evaluate(candidates, None, archive_1obj))
         assert scores.shape == (len(candidates),)
 
     def test_scores_positive(
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
-        acq = DensityAcquisition(eps=1.0)
-        scores = acq.evaluate(candidates, None, archive_1obj).scores
+        acq = InverseDensityAcquisition(eps=1.0)
+        scores = _scores(acq.evaluate(candidates, None, archive_1obj))
         assert np.all(scores > 0.0)
 
     def test_sparse_region_has_higher_score(self, archive_1obj: Archive) -> None:
         """Point far from archive (no neighbors within eps) should score higher."""
         dense = archive_1obj.x[0:1] + 0.01  # inside many eps-balls
         sparse = np.array([[100.0, 100.0]])  # far away, zero neighbors
-        acq = DensityAcquisition(eps=0.5)
-        score_dense = acq.evaluate(dense, None, archive_1obj).scores[0]
-        score_sparse = acq.evaluate(sparse, None, archive_1obj).scores[0]
+        acq = InverseDensityAcquisition(eps=0.5)
+        score_dense = _scores(acq.evaluate(dense, None, archive_1obj))[0]
+        score_sparse = _scores(acq.evaluate(sparse, None, archive_1obj))[0]
         assert score_sparse > score_dense
 
     def test_eps_affects_scores(self, archive_1obj: Archive) -> None:
         """Larger eps counts more neighbors -> lower inverse density."""
         candidate = np.zeros((1, DIM))
-        score_small_eps = (
-            DensityAcquisition(eps=0.01)
-            .evaluate(candidate, None, archive_1obj)
-            .scores[0]
-        )
-        score_large_eps = (
-            DensityAcquisition(eps=100.0)
-            .evaluate(candidate, None, archive_1obj)
-            .scores[0]
-        )
+        score_small_eps = _scores(
+            InverseDensityAcquisition(eps=0.01).evaluate(candidate, None, archive_1obj)
+        )[0]
+        score_large_eps = _scores(
+            InverseDensityAcquisition(eps=100.0).evaluate(candidate, None, archive_1obj)
+        )[0]
         assert score_small_eps >= score_large_eps
 
     def test_direction_sensitive_is_false(self) -> None:
-        assert DensityAcquisition().direction_sensitive is False
+        assert InverseDensityAcquisition().direction_sensitive is False
 
 
 # ===========================================================================
-# NichingAcquisition Tests (verbatim port of former NichingManager)
+# MaximinDistanceAcquisition tests
 # ===========================================================================
-class TestNichingAcquisition:
-    """Tests for NichingAcquisition."""
+class TestMaximinDistanceAcquisition:
+    """Tests for MaximinDistanceAcquisition."""
 
     def test_scores_shape(self, archive_1obj: Archive, candidates: np.ndarray) -> None:
-        acq = NichingAcquisition()
-        scores = acq.evaluate(candidates, None, archive_1obj).scores
+        acq = MaximinDistanceAcquisition()
+        scores = _scores(acq.evaluate(candidates, None, archive_1obj))
         assert scores.shape == (len(candidates),)
 
     def test_single_candidate_returns_ones(self, archive_1obj: Archive) -> None:
-        acq = NichingAcquisition()
+        acq = MaximinDistanceAcquisition()
         single = np.zeros((1, DIM))
-        scores = acq.evaluate(single, None, archive_1obj).scores
+        scores = _scores(acq.evaluate(single, None, archive_1obj))
         np.testing.assert_array_equal(scores, np.ones(1))
 
     def test_scores_nonnegative(
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
-        acq = NichingAcquisition()
-        scores = acq.evaluate(candidates, None, archive_1obj).scores
+        acq = MaximinDistanceAcquisition()
+        scores = _scores(acq.evaluate(candidates, None, archive_1obj))
         assert np.all(scores >= 0.0)
 
     def test_isolated_candidate_has_higher_score(self, archive_1obj: Archive) -> None:
@@ -735,8 +742,8 @@ class TestNichingAcquisition:
         clustered = np.array([[0.0, 0.0], [0.01, 0.0], [0.0, 0.01]])
         isolated_point = np.array([100.0, 100.0])
         candidates = np.vstack([clustered, isolated_point[np.newaxis]])
-        acq = NichingAcquisition()
-        scores = acq.evaluate(candidates, None, archive_1obj).scores
+        acq = MaximinDistanceAcquisition()
+        scores = _scores(acq.evaluate(candidates, None, archive_1obj))
         assert scores[-1] > scores[0]
 
     def test_empty_archive(self, candidates: np.ndarray) -> None:
@@ -746,13 +753,13 @@ class TestNichingAcquisition:
             PopulationAttribute(name="f", dtype=np.float64, shape=(1,)),
         ]
         empty_arc = Archive(attrs, init_capacity=10)
-        acq = NichingAcquisition()
-        scores = acq.evaluate(candidates, None, empty_arc).scores
+        acq = MaximinDistanceAcquisition()
+        scores = _scores(acq.evaluate(candidates, None, empty_arc))
         assert scores.shape == (len(candidates),)
         assert np.all(np.isfinite(scores))
 
     def test_direction_sensitive_is_false(self) -> None:
-        assert NichingAcquisition().direction_sensitive is False
+        assert MaximinDistanceAcquisition().direction_sensitive is False
 
 
 # ===========================================================================
@@ -833,7 +840,7 @@ class TestSurrogateHooks:
 # manager) -- there is no longer a scores-shaped hook on the manager to test.
 # `Surrogate.post_fit`/`with_post_fit` (tested above via TestSurrogateHooks)
 # is unaffected; the two tests below just exercise it through `predict()`
-# instead of the removed `score_candidates()`.
+# through the current prediction API.
 
 
 class TestSurrogateManagerPostFitViaPredict:
@@ -962,7 +969,7 @@ class TestLastAccuracy:
         assert isinstance(manager.last_accuracy, SurrogateAccuracy)
         assert "spearman" in manager.last_accuracy.metrics
 
-    def test_last_accuracy_updated_on_score_candidates_with_refit(
+    def test_last_accuracy_updated_on_predict_with_refit(
         self, surrogate_1obj: RBFSurrogate, archive_1obj: Archive
     ) -> None:
         evaluator = KFoldAccuracyEvaluator(metrics=[SpearmanCorrelation()], n_splits=3)
@@ -1073,11 +1080,11 @@ class TestLocalSurrogateManagerAccuracy:
         candidates = rng.uniform(-2.0, 2.0, size=(5, DIM))
         pred_with = manager_with.predict(candidates, archive_1obj)
         pred_without = manager_without.predict(candidates, archive_1obj)
-        scores_with = (
-            MeanPrediction().evaluate(candidates, pred_with, archive_1obj).scores
+        scores_with = _scores(
+            MeanPrediction().evaluate(candidates, pred_with, archive_1obj)
         )
-        scores_without = (
-            MeanPrediction().evaluate(candidates, pred_without, archive_1obj).scores
+        scores_without = _scores(
+            MeanPrediction().evaluate(candidates, pred_without, archive_1obj)
         )
         # Scores differ because the nearest neighbor is excluded from training
         # when an accuracy evaluator is active (k-1 vs k training points).
@@ -1166,10 +1173,10 @@ class TestPairwiseSurrogateManager:
             n_ref=5,
         )
         prediction = manager.predict(candidates, archive_pairwise, ctx_pairwise)
-        scores = (
-            WinRateAcquisition()
-            .evaluate(candidates, prediction, archive_pairwise, ctx_pairwise)
-            .scores
+        scores = _scores(
+            WinRateAcquisition().evaluate(
+                candidates, prediction, archive_pairwise, ctx_pairwise
+            )
         )
         assert scores.shape == (len(candidates),)
         assert prediction.channels["win_rate"].value.shape == (len(candidates), 1)
@@ -1217,10 +1224,10 @@ class TestPairwiseSurrogateManager:
             n_ref=5,
         )
         prediction = manager.predict(candidates, archive_pairwise, ctx_pairwise)
-        scores = (
-            WinRateAcquisition()
-            .evaluate(candidates, prediction, archive_pairwise, ctx_pairwise)
-            .scores
+        scores = _scores(
+            WinRateAcquisition().evaluate(
+                candidates, prediction, archive_pairwise, ctx_pairwise
+            )
         )
         assert np.all(scores >= 0.0)
         assert np.all(scores <= 1.0)

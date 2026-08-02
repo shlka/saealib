@@ -26,9 +26,9 @@ from saealib.context import OptimizationState
 from saealib.exceptions import ConfigurationError, ValidationError
 from saealib.execution.evaluator import Evaluator, SerialEvaluator
 from saealib.execution.runner import Runner
-from saealib.execution.scheduler import AsyncScheduler
-from saealib.policies.evaluation import EvaluationPolicy
-from saealib.policies.feedback import FeedbackPolicy
+from saealib.execution.scheduler import AsyncEvaluationScheduler
+from saealib.policies.evaluation import EvaluationPlanner
+from saealib.policies.feedback import FeedbackBuilder
 from saealib.surrogate.manager import (
     LocalSurrogateManager,
     PairwiseSurrogateManager,
@@ -83,23 +83,23 @@ class ComponentProvider(Protocol):
         ...
 
     @property
-    def evaluation_policy(self) -> EvaluationPolicy | None:
-        """Return the evaluation policy."""
+    def evaluation_planner(self) -> EvaluationPlanner | None:
+        """Return the evaluation planner."""
         ...
 
     @property
-    def feedback_policy(self) -> FeedbackPolicy | None:
-        """Return the feedback policy."""
+    def feedback_builder(self) -> FeedbackBuilder | None:
+        """Return the configured feedback builder."""
         ...
 
     @property
-    def async_scheduler(self) -> AsyncScheduler | None:
-        """Return the optional asynchronous scheduler."""
+    def async_evaluation_scheduler(self) -> AsyncEvaluationScheduler | None:
+        """Return the optional asynchronous evaluation scheduler."""
         ...
 
     @property
-    def feedback_policy_explicit(self) -> bool:
-        """Return whether the feedback policy was explicitly configured."""
+    def feedback_builder_explicit(self) -> bool:
+        """Return whether the feedback builder was explicitly configured."""
         ...
 
     @property
@@ -177,10 +177,10 @@ class Optimizer:
         self.initializer: Initializer | None = None
         self.evaluator: Evaluator = SerialEvaluator()
         self.acquisition: AcquisitionFunction = cast(AcquisitionFunction, None)
-        self.evaluation_policy: EvaluationPolicy | None = None
-        self.feedback_policy: FeedbackPolicy | None = None
-        self.feedback_policy_explicit = False
-        self.async_scheduler: AsyncScheduler | None = None
+        self._evaluation_planner: EvaluationPlanner | None = None
+        self.feedback_builder: FeedbackBuilder | None = None
+        self.feedback_builder_explicit = False
+        self.async_evaluation_scheduler: AsyncEvaluationScheduler | None = None
         self.instance_name: str = ""
         self._preset: dict | None = None
 
@@ -213,15 +213,26 @@ class Optimizer:
         self.acquisition = acquisition
         return self
 
-    def set_evaluation_policy(self, policy: EvaluationPolicy) -> Self:
-        """Set the evaluation policy."""
-        self.evaluation_policy = policy
+    @property
+    def evaluation_planner(self) -> EvaluationPlanner | None:
+        """Return the configured evaluation planner."""
+        return self._evaluation_planner
+
+    @evaluation_planner.setter
+    def evaluation_planner(self, planner: EvaluationPlanner | None) -> None:
+        self._evaluation_planner = planner
+
+    def set_evaluation_planner(self, planner: EvaluationPlanner) -> Self:
+        """Set the evaluation planner."""
+        self.evaluation_planner = planner
         return self
 
-    def set_feedback_policy(self, policy: FeedbackPolicy) -> Self:
-        """Set the feedback policy."""
-        self.feedback_policy = policy
-        self.feedback_policy_explicit = True
+    def set_feedback_builder(self, builder: FeedbackBuilder) -> Self:
+        """Set the feedback builder."""
+        self.feedback_builder = builder
+        self.feedback_builder_explicit = True
+        if self.async_evaluation_scheduler is not None:
+            self.async_evaluation_scheduler.feedback_builder = builder
         return self
 
     def set_surrogate(self, surrogate: Surrogate, n_neighbors: int = 50) -> Self:
@@ -253,13 +264,15 @@ class Optimizer:
         self.evaluator = evaluator
         return self
 
-    def set_async_scheduler(self, scheduler: AsyncScheduler | None) -> Self:
+    def set_async_evaluation_scheduler(
+        self, scheduler: AsyncEvaluationScheduler | None
+    ) -> Self:
         """Configure asynchronous evaluation for built-in strategies."""
-        self.async_scheduler = scheduler
+        self.async_evaluation_scheduler = scheduler
         if scheduler is not None:
             scheduler.algorithm = getattr(self, "algorithm", None)
             scheduler.callback_manager = self.cbmanager
-            scheduler.feedback_policy = self.feedback_policy
+            scheduler.feedback_builder = self.feedback_builder
         return self
 
     def set_termination(self, termination: Termination) -> Self:
@@ -321,8 +334,8 @@ class Optimizer:
             "algorithm",
             "surrogate_manager",
             "strategy",
-            "evaluation_policy",
-            "feedback_policy",
+            "evaluation_planner",
+            "feedback_builder",
             "termination",
         ):
             component = getattr(self, name, None)
@@ -364,16 +377,39 @@ class Optimizer:
         """
         issues: list[str] = []
 
-        if self.evaluator.has_partial_lifecycle_override():
-            issues.append(
-                "submit(), collect(), and acknowledge() must be overridden together"
-            )
+        self._validate_evaluator_lifecycle(issues)
 
         algorithm = getattr(self, "algorithm", None)
         strategy = getattr(self, "strategy", None)
         termination = getattr(self, "termination", None)
         surrogate_manager = getattr(self, "surrogate_manager", None)
 
+        self._validate_required_components(
+            issues, algorithm, strategy, termination, require_initializer
+        )
+        self._validate_component_protocols(issues)
+        self._validate_strategy_requirements(issues, strategy, surrogate_manager)
+        self._validate_comparator_direction(issues)
+
+        if surrogate_manager is not None:
+            self._validate_surrogate_compatibility(issues, surrogate_manager)
+
+        return issues
+
+    def _validate_evaluator_lifecycle(self, issues: list[str]) -> None:
+        if self.evaluator.has_partial_lifecycle_override():
+            issues.append(
+                "submit(), collect(), and acknowledge() must be overridden together"
+            )
+
+    def _validate_required_components(
+        self,
+        issues: list[str],
+        algorithm: object,
+        strategy: object,
+        termination: object,
+        require_initializer: bool,
+    ) -> None:
         if algorithm is None:
             issues.append("algorithm is not set; call set_algorithm()")
         if strategy is None:
@@ -382,15 +418,23 @@ class Optimizer:
             issues.append("initializer is not set; call set_initializer()")
         if termination is None:
             issues.append("termination is not set; call set_termination()")
-        if self.evaluation_policy is not None and not isinstance(
-            self.evaluation_policy, EvaluationPolicy
-        ):
-            issues.append("evaluation_policy must be an EvaluationPolicy")
-        if self.feedback_policy is not None and not isinstance(
-            self.feedback_policy, FeedbackPolicy
-        ):
-            issues.append("feedback_policy must be a FeedbackPolicy")
 
+    def _validate_component_protocols(self, issues: list[str]) -> None:
+        if self.evaluation_planner is not None and not isinstance(
+            self.evaluation_planner, EvaluationPlanner
+        ):
+            issues.append("evaluation_planner must be an EvaluationPlanner")
+        if self.feedback_builder is not None and not isinstance(
+            self.feedback_builder, FeedbackBuilder
+        ):
+            issues.append("feedback_builder must be a FeedbackBuilder")
+
+    def _validate_strategy_requirements(
+        self,
+        issues: list[str],
+        strategy: object,
+        surrogate_manager: object,
+    ) -> None:
         if (
             strategy is not None
             and getattr(strategy, "requires_surrogate", False)
@@ -409,6 +453,7 @@ class Optimizer:
                 "a provider-owned acquisition is required; call set_acquisition()"
             )
 
+    def _validate_comparator_direction(self, issues: list[str]) -> None:
         _dim = getattr(self.problem.comparator, "direction", None)
         if (
             _dim is not None
@@ -421,35 +466,35 @@ class Optimizer:
                 f"problem.n_obj ({self.problem.n_obj})"
             )
 
-        if surrogate_manager is not None:
-            acq = self.acquisition
-            surr = getattr(surrogate_manager, "surrogate", None)
+    def _validate_surrogate_compatibility(
+        self, issues: list[str], surrogate_manager: object
+    ) -> None:
+        acq = self.acquisition
+        surr = getattr(surrogate_manager, "surrogate", None)
+        if (
+            acq is not None
+            and surr is not None
+            and getattr(acq, "requires_uncertainty", False)
+            and not getattr(surr, "provides_uncertainty", False)
+        ):
+            issues.append(
+                f"{type(acq).__name__} requires uncertainty estimates but "
+                f"{type(surr).__name__} does not provide them "
+                "(provides_uncertainty=False)"
+            )
+
+        for acq in self._iter_acquisitions():
+            _adir = getattr(acq, "direction", None)
             if (
-                acq is not None
-                and surr is not None
-                and getattr(acq, "requires_uncertainty", False)
-                and not getattr(surr, "provides_uncertainty", False)
+                _adir is not None
+                and hasattr(_adir, "__len__")
+                and len(_adir) > 0
+                and len(_adir) != self.problem.n_obj
             ):
                 issues.append(
-                    f"{type(acq).__name__} requires uncertainty estimates but "
-                    f"{type(surr).__name__} does not provide them "
-                    "(provides_uncertainty=False)"
+                    f"{type(acq).__name__} direction length ({len(_adir)}) does "
+                    f"not match problem.n_obj ({self.problem.n_obj})"
                 )
-
-            for acq in self._iter_acquisitions():
-                _adir = getattr(acq, "direction", None)
-                if (
-                    _adir is not None
-                    and hasattr(_adir, "__len__")
-                    and len(_adir) > 0
-                    and len(_adir) != self.problem.n_obj
-                ):
-                    issues.append(
-                        f"{type(acq).__name__} direction length ({len(_adir)}) does "
-                        f"not match problem.n_obj ({self.problem.n_obj})"
-                    )
-
-        return issues
 
     def _resolve_defaults(self) -> None:
         """Fill unset components with library defaults (Registry + presets file).
@@ -495,11 +540,13 @@ class Optimizer:
                     )
                 )
                 self.strategy = strategy
-            if self.evaluation_policy is None and "evaluation_policy" in user_preset:
-                self.evaluation_policy = build(user_preset["evaluation_policy"])
-            if self.feedback_policy is None and "feedback_policy" in user_preset:
-                self.feedback_policy = build(user_preset["feedback_policy"])
-                self.feedback_policy_explicit = True
+            if self.evaluation_planner is None:
+                spec = user_preset.get("evaluation_planner")
+                if spec is not None:
+                    self.evaluation_planner = build(spec)
+            if self.feedback_builder is None and "feedback_builder" in user_preset:
+                self.feedback_builder = build(user_preset["feedback_builder"])
+                self.feedback_builder_explicit = True
             if (
                 getattr(self, "termination", None) is None
                 and "termination" in user_preset
@@ -515,8 +562,8 @@ class Optimizer:
             algorithm is None
             or strategy is None
             or surrogate_manager is None
-            or self.evaluation_policy is None
-            or self.feedback_policy is None
+            or self.evaluation_planner is None
+            or self.feedback_builder is None
         ):
             defaults = load_defaults()
             preset = defaults["presets"][self._select_preset_name(defaults, algorithm)]
@@ -533,16 +580,16 @@ class Optimizer:
                 self.strategy = build(preset["strategy"])
             if (
                 use_bundled_policies
-                and self.evaluation_policy is None
-                and "evaluation_policy" in preset
+                and self.evaluation_planner is None
+                and "evaluation_planner" in preset
             ):
-                self.evaluation_policy = build(preset["evaluation_policy"])
+                self.evaluation_planner = build(preset["evaluation_planner"])
             if (
                 use_bundled_policies
-                and self.feedback_policy is None
-                and "feedback_policy" in preset
+                and self.feedback_builder is None
+                and "feedback_builder" in preset
             ):
-                self.feedback_policy = build(preset["feedback_policy"])
+                self.feedback_builder = build(preset["feedback_builder"])
 
         if self.initializer is None:
             from saealib.execution.initializer import LHSInitializer
@@ -958,8 +1005,8 @@ class Optimizer:
             ("algorithm", opt.set_algorithm, Algorithm),
             ("strategy", opt.set_strategy, OptimizationStrategy),
             ("surrogate_manager", opt.set_surrogate_manager, SurrogateManager),
-            ("evaluation_policy", opt.set_evaluation_policy, EvaluationPolicy),
-            ("feedback_policy", opt.set_feedback_policy, FeedbackPolicy),
+            ("evaluation_planner", opt.set_evaluation_planner, EvaluationPlanner),
+            ("feedback_builder", opt.set_feedback_builder, FeedbackBuilder),
             ("termination", opt.set_termination, Termination),
         ):
             component = getattr(module, name, None)

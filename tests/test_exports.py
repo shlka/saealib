@@ -5,6 +5,11 @@ Tier 1 / Tier 2 / namespace-only policy these tests enforce.
 """
 
 import importlib
+import importlib.util
+from pathlib import Path
+from typing import Any, cast
+
+import pytest
 
 import saealib
 
@@ -53,6 +58,31 @@ NAMESPACE_ONLY: dict[str, set[str]] = {
     "saealib.defaults": {"dump_preset", "load_defaults", "load_preset"},
 }
 
+REMOVED_EXPERIMENTAL_EXPORTS = {
+    "ArchiveSnapshot",
+    "CooperativeCoevolution",
+    "CorrelatedQuadraticSurrogate",
+    "DynamicArchiveSelector",
+    "EvaluationWorkflowResult",
+    "FidelityEvaluator",
+    "FidelityPromotionRunner",
+    "FidelityWorkflowResult",
+    "MigrationPolicy",
+    "RepeatedEvaluationRunner",
+    "SeededNoiseEvaluator",
+    "reference_problem",
+}
+
+REMOVED_CANONICAL_ALIASES = {
+    "EvaluationPolicy",
+    "FeedbackPolicy",
+    "DensityAcquisition",
+    "NichingAcquisition",
+    "RouletteWheelSelection",
+    "MigrationPolicy",
+    "AsyncScheduler",
+}
+
 
 def test_tier1_and_tier2_do_not_overlap():
     assert set(saealib.__all__).isdisjoint(saealib._TIER2_MAP)
@@ -61,6 +91,44 @@ def test_tier1_and_tier2_do_not_overlap():
 def test_tier1_and_tier2_names_resolve():
     for name in list(saealib.__all__) + list(saealib._TIER2_MAP):
         assert hasattr(saealib, name), f"{name} listed but not resolvable"
+
+
+def test_experimental_generality_code_is_not_a_library_export():
+    assert REMOVED_EXPERIMENTAL_EXPORTS.isdisjoint(vars(saealib))
+    assert importlib.util.find_spec("saealib.generality") is None
+    assert not (Path(__file__).parents[1] / "src/saealib/generality.py").exists()
+
+
+def test_removed_aliases_are_not_importable():
+    for name in REMOVED_CANONICAL_ALIASES:
+        assert not hasattr(saealib, name)
+    for module_name in (
+        "saealib.acquisition",
+        "saealib.execution",
+        "saealib.operators",
+        "saealib.policies",
+    ):
+        module = importlib.import_module(module_name)
+        assert all(not hasattr(module, name) for name in REMOVED_CANONICAL_ALIASES)
+
+
+@pytest.mark.parametrize(
+    ("module_name", "name"),
+    [("saealib", name) for name in sorted(REMOVED_CANONICAL_ALIASES)],
+)
+def test_removed_root_names_fail_import(module_name, name):
+    with pytest.raises(ImportError):
+        exec(f"from {module_name} import {name}", {})
+
+
+def test_removed_parameter_names_fail_construction():
+    from saealib.execution import AsyncEvaluationScheduler, SerialEvaluator
+    from saealib.stages import FeedbackStage
+
+    with pytest.raises(TypeError):
+        cast(Any, AsyncEvaluationScheduler)(SerialEvaluator(), feedback_policy=None)
+    with pytest.raises(TypeError):
+        cast(Any, FeedbackStage)(policy=None)
 
 
 def test_subpackage_exports_are_covered():

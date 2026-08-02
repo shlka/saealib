@@ -7,10 +7,15 @@ by one generation of true objective evaluations.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from saealib.pipeline import Pipeline
-from saealib.policies.feedback import MixedFeedback, PredictedFeedback, TrueOnlyFeedback
+from saealib.policies.feedback import (
+    FeedbackBuilder,
+    MixedFeedback,
+    PredictedFeedback,
+    TrueOnlyFeedback,
+)
 from saealib.registry import register
 from saealib.stages import (
     ArchiveUpdateStage,
@@ -33,6 +38,8 @@ if TYPE_CHECKING:
     from saealib.context import OptimizationState
     from saealib.optimizer import ComponentProvider
 
+_MISSING = object()
+
 
 @register()
 class GenerationBasedStrategy(OptimizationStrategy):
@@ -46,42 +53,45 @@ class GenerationBasedStrategy(OptimizationStrategy):
     """
 
     requires_surrogate: bool = True
-    feedback_policy = MixedFeedback()
-    true_feedback_policy = TrueOnlyFeedback()
+    feedback_builder = MixedFeedback()
+    true_feedback_builder = TrueOnlyFeedback()
 
     def __init__(self, gen_ctrl: int) -> None:
         self.gen_ctrl = gen_ctrl
         self.pipeline: Pipeline | None = None
 
-    def _build_pipeline(self, provider: ComponentProvider) -> Pipeline:
+    def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
+        """Build the current generation-based pipeline."""
         cbmanager = getattr(provider, "cbmanager", None)
-        scheduler = getattr(provider, "async_scheduler", None)
-        evaluation_policy = (
-            getattr(provider, "evaluation_policy", None) or self.evaluation_policy
+        scheduler = getattr(provider, "async_evaluation_scheduler", None)
+        evaluation_planner = (
+            getattr(provider, "evaluation_planner", None) or self.evaluation_planner
         )
-        feedback_policy = (
-            getattr(provider, "feedback_policy", None)
-            if getattr(provider, "feedback_policy_explicit", False)
-            else None
-        ) or self.true_feedback_policy
+        builder_explicit = getattr(provider, "feedback_builder_explicit", None)
+        configured_builder = getattr(provider, "feedback_builder", None)
+        feedback_builder: FeedbackBuilder | None = None
+        if builder_explicit:
+            feedback_builder = cast(FeedbackBuilder | None, configured_builder)
+        if feedback_builder is None:
+            feedback_builder = self.true_feedback_builder
         if scheduler is not None:
             evaluation_tail = [
                 AsyncEvaluationSubmitStage(
                     scheduler,
-                    evaluation_policy,
-                    feedback_policy,
+                    evaluation_planner,
+                    feedback_builder,
                     provider.algorithm,
                     cbmanager,
                 )
             ]
         else:
             evaluation_tail = [
-                EvaluationPlanStage(evaluation_policy),
+                EvaluationPlanStage(evaluation_planner),
                 EvaluationSubmitStage(provider.evaluator),
                 EvaluationCollectStage(provider.evaluator),
                 EvaluationApplyStage(),
                 ArchiveUpdateStage(),
-                FeedbackStage(feedback_policy),
+                FeedbackStage(feedback_builder),
                 TellStage(provider.algorithm),
                 EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
             ]
@@ -93,7 +103,7 @@ class GenerationBasedStrategy(OptimizationStrategy):
                     self.gen_ctrl,
                     cbmanager,
                     acquisition=provider.acquisition,
-                    feedback_policy=PredictedFeedback(),
+                    feedback_builder=PredictedFeedback(),
                 ),
                 CountGenerationStage(),
                 *(
@@ -121,12 +131,12 @@ class GenerationBasedStrategy(OptimizationStrategy):
         provider : ComponentProvider
             Component provider.
         """
-        scheduler = getattr(provider, "async_scheduler", None)
+        scheduler = getattr(provider, "async_evaluation_scheduler", None)
         if scheduler is not None and ctx.pending_evaluations:
             ctx = scheduler.poll(ctx, wait=False)
             if not ctx.pending_evaluations:
                 return ctx
             if len(ctx.pending_evaluations) >= scheduler.max_pending:
                 return ctx
-        self.pipeline = self._build_pipeline(provider)
+        self.pipeline = self.build_pipeline(provider)
         return self.pipeline.execute(ctx)

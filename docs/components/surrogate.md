@@ -34,7 +34,7 @@ There are two marker base classes between `Surrogate` and `predict()`.
 
 `value` and `std` are convenience properties for the objective channel.
 When a surrogate's prediction represents a quantity that isn't the objective value (such as a novelty score), this mechanism prevents contaminating things like pbest.
-[SurrogateManager](surrogate_manager.md)'s `ArchiveBasedManager` family uses this technique.
+Archive-based criteria such as `NoveltyAcquisition` instead receive candidate and archive design points directly.
 
 ## Built-in Surrogates
 
@@ -141,7 +141,7 @@ To use an uncertainty-based [AcquisitionFunction](acquisition_functions.md), `Su
 
 ## Related components
 
-- [SurrogateManager](surrogate_manager.md): Coordinates `Surrogate`'s fit/predict and combines it with scoring
+- [SurrogateManager](surrogate_manager.md): Coordinates `Surrogate`'s fit/predict
 - [TrainingSet](training_set.md): How training data passed to `Surrogate` is extracted
 - [AcquisitionFunction](acquisition_functions.md): Converts `predict()`'s result into a score
 - [Surrogate accuracy evaluation and dynamic switching](surrogate_switching.md): Evaluating a surrogate's generalization performance

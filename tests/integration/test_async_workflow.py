@@ -1,19 +1,22 @@
 import time
 from types import SimpleNamespace
+from typing import Any, cast
 
 import numpy as np
 import pytest
 
 from saealib.callback import CallbackManager, GenerationEndEvent, PostEvaluationEvent
-from saealib.context import OptimizationState
+from saealib.context import EvaluationPlanState, OptimizationState
 from saealib.exceptions import (
     CheckpointError,
     EvaluationFatalError,
     EvaluationProtocolError,
+    EvaluationSubmissionError,
+    ValidationError,
 )
 from saealib.execution import (
+    AsyncEvaluationScheduler,
     AsyncEvaluator,
-    AsyncScheduler,
     EvaluationErrorInfo,
     EvaluationHandle,
     EvaluationRequest,
@@ -25,9 +28,25 @@ from saealib.execution import (
     SerialEvaluator,
 )
 from saealib.execution.runner import Runner
+from saealib.policies.evaluation import (
+    EvaluateAll,
+    FidelityPromotion,
+    RepeatedEvaluation,
+)
 from saealib.policies.feedback import TrueOnlyFeedback
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
+from saealib.stages import (
+    ArchiveUpdateStage,
+    AsyncEvaluationSubmitStage,
+    EvaluationAcknowledgeStage,
+    EvaluationApplyStage,
+    EvaluationCollectStage,
+    EvaluationPlanStage,
+    EvaluationSubmitStage,
+    FeedbackStage,
+    TellStage,
+)
 from saealib.strategies import DirectStrategy
 from saealib.surrogate.prediction import PredictionChannel, SurrogatePrediction
 
@@ -112,6 +131,78 @@ class ReattachEvaluator(Evaluator):
             EvaluationStatus.PENDING,
             backend_token=(pending.request, problem),
         )
+
+
+class ControlledReplicateEvaluator(ReattachEvaluator):
+    def __init__(self):
+        super().__init__()
+        self.release_id = 0
+        self.submitted_ids = []
+
+    def submit(self, request, problem):
+        self.submitted_ids.append(int(request.request_id))
+        return super().submit(request, problem)
+
+    def supports_batch_rollback(self):
+        return True
+
+    def collect(self, handle, *, wait=True):
+        if int(handle.request_id) != self.release_id:
+            return []
+        return super().collect(handle, wait=wait)
+
+
+class ControlledFidelityEvaluator(ReattachEvaluator):
+    def __init__(self):
+        super().__init__()
+        self.released = set()
+        self.submitted = []
+
+    def submit(self, request, problem):
+        self.submitted.append(request)
+        return super().submit(request, problem)
+
+    def collect(self, handle, *, wait=True):
+        if int(handle.request_id) not in self.released:
+            return []
+        return super().collect(handle, wait=wait)
+
+
+class FidelityValueEvaluator(ReattachEvaluator):
+    def collect(self, handle, *, wait=True):
+        return _add_fidelity_value(super().collect(handle, wait=wait), handle)
+
+
+class ControlledFidelityValueEvaluator(ControlledFidelityEvaluator):
+    def collect(self, handle, *, wait=True):
+        return _add_fidelity_value(super().collect(handle, wait=wait), handle)
+
+
+def _add_fidelity_value(updates, handle):
+    if not updates:
+        return updates
+    request, _ = handle.backend_token
+    fidelity = float(request.metadata.get("fidelity", 0))
+    if fidelity == 0:
+        return updates
+    update = updates[0]
+    assert update.result is not None
+    result = EvaluationResult(
+        update.result.f + fidelity * 10.0,
+        update.result.g,
+        update.result.cv,
+        candidate_ids=update.candidate_ids,
+    )
+    return [
+        EvaluationUpdate(
+            update.request_id,
+            update.status,
+            update.candidate_ids,
+            result,
+            update.error,
+            update.sequence,
+        )
+    ]
 
 
 class PartialRetryEvaluator(Evaluator):
@@ -209,14 +300,18 @@ def make_state():
 
 def requests():
     return [
-        EvaluationRequest(0, np.array([10], dtype=np.int64), np.array([[0.2]])),
-        EvaluationRequest(1, np.array([11], dtype=np.int64), np.array([[0.1]])),
+        EvaluationRequest(
+            np.int64(0), np.array([10], dtype=np.int64), np.array([[0.2]])
+        ),
+        EvaluationRequest(
+            np.int64(1), np.array([11], dtype=np.int64), np.array([[0.1]])
+        ),
     ]
 
 
 def test_async_out_of_order_and_nonblocking_poll():
     state = make_state()
-    scheduler = AsyncScheduler(
+    scheduler = AsyncEvaluationScheduler(
         AsyncEvaluator(SlowEvaluator(), max_workers=2), max_pending=2
     )
     state = scheduler.submit(state, requests())
@@ -227,10 +322,336 @@ def test_async_out_of_order_and_nonblocking_poll():
     assert state.fe == 2
 
 
+def test_repeated_plan_waits_for_all_requests_before_tell():
+    class Algorithm:
+        def __init__(self):
+            self.told = []
+
+        def tell(self, state, provider, offspring):
+            self.told.extend(offspring.get_array("id").tolist())
+
+    state = make_state()
+    evaluator = ControlledReplicateEvaluator()
+    algorithm = Algorithm()
+    scheduler = AsyncEvaluationScheduler(
+        evaluator,
+        max_pending=2,
+        feedback_builder=TrueOnlyFeedback(),
+        algorithm=algorithm,
+    )
+    plan = RepeatedEvaluation(2).plan(state.offspring, None, state)
+    state = state.replace(
+        evaluation_plan=plan,
+        evaluation_plan_state=EvaluationPlanState(
+            submitted=tuple(int(request.request_id) for request in plan.requests),
+            deferred=(),
+        ),
+    )
+    state = scheduler.submit(state, plan.requests)
+    state = scheduler.poll(state, wait=False)
+    assert state.pending_evaluations.keys() == {1}
+    assert state.evaluation_plan is plan
+    assert state.evaluation_plan_state is not None
+    assert state.evaluation_plan_state.completed == (0,)
+    assert algorithm.told == []
+
+    evaluator.release_id = 1
+    state = scheduler.poll(state, wait=True)
+    assert state.pending_evaluations == {}
+    assert algorithm.told == [10, 11]
+    assert state.evaluation_plan_state is not None
+    assert state.evaluation_plan_state.completed == (0, 1)
+    assert state.fe == 4
+
+
+def test_async_callback_runs_after_tell():
+    order = []
+
+    class Algorithm:
+        def tell(self, state, provider, offspring):
+            order.append("tell")
+
+    class Callback:
+        def dispatch(self, event):
+            order.append("event")
+
+    state = make_state()
+    scheduler = AsyncEvaluationScheduler(
+        ReattachEvaluator(),
+        algorithm=Algorithm(),
+        feedback_builder=TrueOnlyFeedback(),
+        callback_manager=Callback(),
+    )
+    state = scheduler.submit(state, [requests()[0]])
+    scheduler.poll(state, wait=True)
+
+    assert order == ["tell", "event"]
+
+
+def test_repeated_sync_plan_uses_the_same_terminal_lifecycle():
+    class Algorithm:
+        def __init__(self):
+            self.tell_count = 0
+
+        def tell(self, state, provider, offspring):
+            self.tell_count += 1
+
+    state = make_state()
+    algorithm = Algorithm()
+    evaluator = ReattachEvaluator()
+    state = EvaluationPlanStage(RepeatedEvaluation(2)).execute(state)
+    state = EvaluationSubmitStage(evaluator).execute(state)
+    state = EvaluationCollectStage(evaluator).execute(state)
+    state = EvaluationApplyStage().execute(state)
+    state = ArchiveUpdateStage().execute(state)
+    state = FeedbackStage(TrueOnlyFeedback()).execute(state)
+    state = TellStage(cast(Any, algorithm)).execute(state)
+    state = EvaluationAcknowledgeStage(evaluator).execute(state)
+
+    assert algorithm.tell_count == 1
+    assert state.fe == 4
+    assert state.evaluation_plan is None
+
+
+def test_sync_fidelity_promotion_delays_feedback_until_final_request():
+    class Algorithm:
+        def __init__(self):
+            self.told = []
+
+        def tell(self, state, provider, offspring):
+            self.told.append(offspring.get_array("id").tolist())
+
+    state = make_state()
+    evaluator = FidelityValueEvaluator()
+    algorithm = Algorithm()
+    planner = FidelityPromotion(0, 1, promotion_count=1)
+    state = EvaluationPlanStage(planner).execute(state)
+    low = state.evaluation_request
+    assert low is not None
+    state = EvaluationSubmitStage(evaluator).execute(state)
+    state = EvaluationCollectStage(evaluator).execute(state)
+    assert state.evaluation_updates == []
+    assert algorithm.told == []
+
+    state = EvaluationPlanStage(planner).execute(state)
+    assert state.evaluation_plan is not None
+    high = state.evaluation_plan.requests[1]
+    assert int(high.request_id) != int(low.request_id)
+    np.testing.assert_array_equal(high.candidate_ids, [11])
+    state = EvaluationSubmitStage(evaluator).execute(state)
+    state = EvaluationCollectStage(evaluator).execute(state)
+    assert state.evaluation_plan_state is not None
+    assert len(state.evaluation_updates) == 1
+    assert algorithm.told == []
+
+    for stage in (
+        EvaluationApplyStage(),
+        ArchiveUpdateStage(),
+        FeedbackStage(TrueOnlyFeedback()),
+        TellStage(cast(Any, algorithm)),
+        EvaluationAcknowledgeStage(evaluator),
+    ):
+        state = stage.execute(state)
+
+    assert len(algorithm.told) == 1
+    assert state.evaluation_plan is None
+    assert state.pending_evaluations == {}
+    assert state.evaluation_handles == {}
+    assert sorted(evaluator.acknowledged) == [(0, 0), (1, 0)]
+    assert state.offspring is not None
+    np.testing.assert_allclose(state.offspring.get_array("f"), [[0.2], [10.1]])
+    high_row = int(np.flatnonzero(state.archive.id == 11)[0])
+    np.testing.assert_allclose(state.archive.f[high_row], [10.1])
+
+
+def test_async_fidelity_promotion_uses_plan_continuation_and_checkpoint(tmp_path):
+    order = []
+
+    class Algorithm:
+        def tell(self, state, provider, offspring):
+            order.append(("tell", offspring.get_array("id").tolist()))
+
+    class Callback:
+        def dispatch(self, event):
+            order.append(("event", event.candidate_ids.tolist()))
+
+    state = make_state()
+    evaluator = ControlledFidelityValueEvaluator()
+    algorithm = Algorithm()
+    planner = FidelityPromotion(0, 1, promotion_count=1)
+    scheduler = AsyncEvaluationScheduler(
+        evaluator,
+        max_pending=1,
+        feedback_builder=TrueOnlyFeedback(),
+        algorithm=algorithm,
+        callback_manager=Callback(),
+    )
+    state = AsyncEvaluationSubmitStage(
+        scheduler,
+        planner,
+        feedback_builder=TrueOnlyFeedback(),
+        algorithm=algorithm,
+        callback_manager=Callback(),
+    ).execute(state)
+    low = evaluator.submitted[0]
+    evaluator.released.add(int(low.request_id))
+    state = scheduler.poll(state, wait=True)
+
+    assert order == []
+    assert state.evaluation_plan is not None
+    assert state.evaluation_plan_state is not None
+    assert state.evaluation_plan_state.completed == (int(low.request_id),)
+    assert not state.pending_evaluations
+
+    state = AsyncEvaluationSubmitStage(
+        scheduler,
+        planner,
+        feedback_builder=TrueOnlyFeedback(),
+        algorithm=algorithm,
+        callback_manager=Callback(),
+    ).execute(state)
+    high = evaluator.submitted[1]
+    assert int(high.request_id) != int(low.request_id)
+    assert high.metadata["promotion_of"] == int(low.request_id)
+    np.testing.assert_array_equal(high.candidate_ids, [11])
+    assert state.evaluation_plan is not None
+    assert [int(request.request_id) for request in state.evaluation_plan.requests] == [
+        int(low.request_id),
+        int(high.request_id),
+    ]
+    assert state.evaluation_plan_state is not None
+    assert set(state.evaluation_plan_state.submitted) == {
+        int(low.request_id),
+        int(high.request_id),
+    }
+
+    checkpoint = tmp_path / "fidelity.npz"
+    state.save(checkpoint)
+    state = OptimizationState.load(checkpoint, state.problem)
+    state = scheduler.reattach(state)
+    assert [int(request.request_id) for request in evaluator.submitted] == [
+        int(low.request_id),
+        int(high.request_id),
+    ]
+    evaluator.released.add(int(high.request_id))
+    state = scheduler.poll(state, wait=True)
+
+    assert order[0][0] == "tell"
+    assert order[1][0] == "event"
+    assert len(order) == 2
+    assert state.evaluation_plan_state is not None
+    assert set(state.evaluation_plan_state.completed) == {
+        int(low.request_id),
+        int(high.request_id),
+    }
+    assert state.offspring is not None
+    np.testing.assert_allclose(state.offspring.get_array("f"), [[0.2], [10.1]])
+    high_row = int(np.flatnonzero(state.archive.id == 11)[0])
+    np.testing.assert_allclose(state.archive.f[high_row], [10.1])
+    assert sorted(evaluator.acknowledged) == [
+        (int(low.request_id), 0),
+        (int(high.request_id), 0),
+    ]
+
+
+def test_async_chunk_ids_are_owned_by_the_plan_until_all_complete(tmp_path):
+    state = make_state()
+    population = state.offspring.empty_like(capacity=4)
+    population._extend_internal(
+        {
+            "id": np.arange(10, 14, dtype=np.int64),
+            "x": np.arange(4, dtype=np.float64).reshape(-1, 1),
+            "f": np.full((4, 1), np.nan),
+            "g": np.empty((4, 0)),
+            "cv": np.zeros(4),
+        },
+        preserve_ids=True,
+    )
+    state = state.replace(population=population, offspring=population)
+    evaluator = ControlledReplicateEvaluator()
+    scheduler = AsyncEvaluationScheduler(evaluator, max_pending=2)
+    state = AsyncEvaluationSubmitStage(scheduler, EvaluateAll()).execute(state)
+
+    assert state.evaluation_plan is not None
+    plan_ids = tuple(
+        int(request.request_id) for request in state.evaluation_plan.requests
+    )
+    assert len(plan_ids) == 2
+    assert state.evaluation_plan_state is not None
+    assert state.evaluation_plan_state.submitted == plan_ids
+    assert state.evaluation_plan_state.deferred == ()
+
+    state = scheduler.poll(state, wait=False)
+    assert state.evaluation_plan is not None
+    assert state.evaluation_plan_state is not None
+    assert state.evaluation_plan_state.completed == (0,)
+    assert tuple(state.pending_evaluations) == (1,)
+
+    checkpoint = tmp_path / "chunks.npz"
+    state.save(checkpoint)
+    state = OptimizationState.load(checkpoint, state.problem)
+    assert state.evaluation_plan is not None
+    assert state.evaluation_plan_state is not None
+    assert state.evaluation_plan_state.completed == (0,)
+    state = scheduler.reattach(state)
+    evaluator.release_id = 1
+    state = scheduler.poll(state, wait=True)
+    assert state.evaluation_plan is not None
+    assert state.evaluation_plan_state is not None
+    assert state.evaluation_plan_state.completed == (0, 1)
+
+
+def test_deferred_replicate_split_preserves_completed_plan_history(tmp_path):
+    state = make_state()
+    evaluator = ControlledReplicateEvaluator()
+    scheduler = AsyncEvaluationScheduler(evaluator, max_pending=2)
+    state = AsyncEvaluationSubmitStage(scheduler, RepeatedEvaluation(3)).execute(state)
+    assert state.evaluation_plan is not None
+    assert [int(request.request_id) for request in state.evaluation_plan.requests] == [
+        0,
+        1,
+        2,
+    ]
+
+    state = scheduler.poll(state, wait=False)
+    evaluator.release_id = 1
+    state = scheduler.poll(state, wait=True)
+    assert state.evaluation_plan is not None
+    assert state.evaluation_plan_state is not None
+    assert state.evaluation_plan_state.completed == (0, 1)
+    assert set(state.evaluation_plan_updates) == {0, 1}
+
+    checkpoint = tmp_path / "deferred-replicate.npz"
+    state.save(checkpoint)
+    state = OptimizationState.load(checkpoint, state.problem)
+    state = AsyncEvaluationSubmitStage(scheduler, RepeatedEvaluation(3)).execute(state)
+    assert state.evaluation_plan is not None
+    plan_ids = [int(request.request_id) for request in state.evaluation_plan.requests]
+    assert plan_ids[:2] == [0, 1]
+    assert len(plan_ids) == 4
+    assert set(state.evaluation_plan_updates) == {0, 1}
+    assert state.evaluation_plan_state is not None
+    assert set(state.evaluation_plan_state.completed) == {0, 1}
+    assert set(state.evaluation_plan_state.submitted) == {0, 1, 2, 3}
+
+    assert sorted(state.pending_evaluations) == plan_ids[2:]
+    assert evaluator.submitted_ids == [0, 1, 2, 3]
+    remaining_ids = sorted(state.pending_evaluations)
+    evaluator.release_id = int(remaining_ids[0])
+    state = scheduler.poll(state, wait=False)
+    assert sorted(state.pending_evaluations) == remaining_ids[1:]
+    evaluator.release_id = int(remaining_ids[1])
+    state = scheduler.poll(state, wait=True)
+    assert state.evaluation_plan is not None
+    assert state.evaluation_plan_state is not None
+    assert set(state.evaluation_plan_state.completed) == {0, 1, 2, 3}
+    assert set(state.evaluation_plan_updates) == {0, 1, 2, 3}
+
+
 def test_completed_futures_commit_by_completion_time():
     state = make_state()
     evaluator = AsyncEvaluator(SlowEvaluator(), max_workers=2)
-    scheduler = AsyncScheduler(evaluator, max_pending=2)
+    scheduler = AsyncEvaluationScheduler(evaluator, max_pending=2)
     try:
         state = scheduler.submit(state, requests())
         time.sleep(0.25)
@@ -243,7 +664,7 @@ def test_completed_futures_commit_by_completion_time():
 def test_async_capacity_and_reserved_budget():
     state = make_state()
     evaluator = AsyncEvaluator(SlowEvaluator(), max_workers=2)
-    scheduler = AsyncScheduler(evaluator, max_pending=1, max_reserved_fe=1)
+    scheduler = AsyncEvaluationScheduler(evaluator, max_pending=1, max_reserved_fe=1)
     state = scheduler.submit(state, [requests()[0]])
     try:
         scheduler.submit(state, [requests()[1]])
@@ -254,10 +675,196 @@ def test_async_capacity_and_reserved_budget():
     evaluator.close()
 
 
+def test_batch_submit_rolls_back_started_handles_after_midway_failure():
+    class MidwayFailureEvaluator(ReattachEvaluator):
+        def __init__(self):
+            super().__init__()
+            self.submit_calls = 0
+            self.cancelled = []
+
+        def supports_batch_rollback(self):
+            return True
+
+        def submit(self, request, problem):
+            self.submit_calls += 1
+            if self.submit_calls == 2:
+                raise RuntimeError("second submission failed")
+            return super().submit(request, problem)
+
+        def cancel(self, handle):
+            self.cancelled.append(int(handle.request_id))
+            return True
+
+    state = make_state()
+    evaluator = MidwayFailureEvaluator()
+    scheduler = AsyncEvaluationScheduler(evaluator, max_pending=2)
+    with pytest.raises(RuntimeError, match="second submission failed"):
+        scheduler.submit(state, requests())
+    assert evaluator.cancelled == [0]
+    assert state.pending_evaluations == {}
+    assert state.evaluation_handles == {}
+
+
+def test_batch_submit_reports_started_handles_when_cleanup_fails():
+    class UncleanableMidwayFailureEvaluator(ReattachEvaluator):
+        def __init__(self):
+            super().__init__()
+            self.submit_calls = 0
+            self.cancelled = []
+            self.detached = []
+
+        def supports_batch_rollback(self):
+            return True
+
+        def submit(self, request, problem):
+            self.submit_calls += 1
+            if self.submit_calls == 2:
+                raise RuntimeError("second submission failed")
+            return super().submit(request, problem)
+
+        def cancel(self, handle):
+            self.cancelled.append(int(handle.request_id))
+            return False
+
+        def detach(self, handle):
+            self.detached.append(int(handle.request_id))
+            return False
+
+    state = make_state()
+    evaluator = UncleanableMidwayFailureEvaluator()
+    scheduler = AsyncEvaluationScheduler(evaluator, max_pending=2)
+    with pytest.raises(EvaluationSubmissionError, match="cannot be cleaned up") as exc:
+        scheduler.submit(state, requests())
+    assert evaluator.cancelled == [0]
+    assert evaluator.detached == [0]
+    assert set(exc.value.state.pending_evaluations) == {0}
+    assert set(exc.value.state.evaluation_handles) == {0}
+
+
+def test_cancel_succeeds_and_removes_pending_request():
+    class CancellingEvaluator(ReattachEvaluator):
+        def cancel(self, handle):
+            return True
+
+    state = make_state()
+    evaluator = CancellingEvaluator()
+    scheduler = AsyncEvaluationScheduler(evaluator)
+    state = scheduler.submit(state, [requests()[0]])
+    state = scheduler.cancel(state, 0)
+    assert state.pending_evaluations == {}
+    assert state.evaluation_handles == {}
+    assert state.fe == 0
+
+
+def test_cancel_rejects_backend_failure_and_unregistered_request():
+    class RejectCancelEvaluator(ReattachEvaluator):
+        def cancel(self, handle):
+            return False
+
+    state = make_state()
+    scheduler = AsyncEvaluationScheduler(RejectCancelEvaluator())
+    state = scheduler.submit(state, [requests()[0]])
+    with pytest.raises(EvaluationProtocolError, match="cannot be cancelled"):
+        scheduler.cancel(state, 0)
+    assert set(state.pending_evaluations) == {0}
+
+    with pytest.raises(EvaluationProtocolError, match="not pending"):
+        scheduler.cancel(state, 99)
+
+
+def test_timeout_cancels_backend_work():
+    class CancellingEvaluator(ReattachEvaluator):
+        def __init__(self):
+            super().__init__()
+            self.cancelled = []
+
+        def cancel(self, handle):
+            self.cancelled.append(int(handle.request_id))
+            return True
+
+    state = make_state()
+    evaluator = CancellingEvaluator()
+    scheduler = AsyncEvaluationScheduler(evaluator, timeout=0)
+    state = scheduler.submit(state, [requests()[0]])
+    state = scheduler.poll(state, wait=False)
+    assert evaluator.cancelled == [0]
+    assert state.pending_evaluations == {}
+    assert state.evaluation_handles == {}
+    assert state.fe == 0
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"max_pending": 0}, "max_pending"),
+        ({"max_reserved_fe": -1}, "max_reserved_fe"),
+        ({"max_reserved_cost": -1}, "max_reserved_cost"),
+    ],
+)
+def test_scheduler_rejects_invalid_capacity_limits(kwargs, message):
+    with pytest.raises(ValidationError, match=message):
+        AsyncEvaluationScheduler(ReattachEvaluator(), **kwargs)
+
+
+@pytest.mark.parametrize("estimated_cost", [-1.0, np.nan, np.inf])
+def test_submit_rejects_invalid_estimated_cost(estimated_cost):
+    request = EvaluationRequest(
+        np.int64(0),
+        np.array([10], dtype=np.int64),
+        np.array([[0.2]]),
+        metadata={"estimated_cost": estimated_cost},
+    )
+    with pytest.raises(ValidationError, match="estimated_cost"):
+        AsyncEvaluationScheduler(ReattachEvaluator()).submit(make_state(), [request])
+
+
+def test_submit_rejects_reserved_cost_overflow():
+    request = EvaluationRequest(
+        np.int64(0),
+        np.array([10], dtype=np.int64),
+        np.array([[0.2]]),
+        metadata={"estimated_cost": 1.0},
+    )
+    scheduler = AsyncEvaluationScheduler(ReattachEvaluator(), max_reserved_cost=0.5)
+    with pytest.raises(EvaluationProtocolError, match="reserved cost"):
+        scheduler.submit(make_state(), [request])
+
+
+def test_partial_failure_is_terminal_when_retry_limit_is_exhausted():
+    state = make_state()
+    request = EvaluationRequest(
+        np.int64(0),
+        np.array([10, 11], dtype=np.int64),
+        np.array([[0.2], [0.1]], dtype=np.float64),
+    )
+    evaluator = PartialRetryEvaluator()
+    scheduler = AsyncEvaluationScheduler(evaluator, retry_limit=0)
+    state = scheduler.submit(state, [request])
+    state = scheduler.poll(state, wait=True)
+    assert evaluator.attempts == 1
+    assert evaluator.collected == [(0, [10, 11])]
+    assert state.pending_evaluations == {}
+    assert state.fe == 1
+    np.testing.assert_array_equal(state.archive.id, [10])
+
+
+def test_request_id_collision_is_rejected_before_state_changes():
+    state = make_state()
+    evaluator = ReattachEvaluator()
+    scheduler = AsyncEvaluationScheduler(evaluator)
+    state = scheduler.submit(state, [requests()[0]])
+    before_pending = dict(state.pending_evaluations)
+    before_handles = dict(state.evaluation_handles)
+    with pytest.raises(EvaluationProtocolError, match="already pending"):
+        scheduler.submit(state, [requests()[0]])
+    assert state.pending_evaluations == before_pending
+    assert state.evaluation_handles == before_handles
+
+
 def test_async_checkpoint_requires_reattach(tmp_path):
     state = make_state()
     evaluator = AsyncEvaluator(SlowEvaluator())
-    scheduler = AsyncScheduler(evaluator)
+    scheduler = AsyncEvaluationScheduler(evaluator)
     state = scheduler.submit(state, [requests()[0]])
     try:
         try:
@@ -279,7 +886,7 @@ def test_async_checkpoint_requires_reattach(tmp_path):
 def test_reattachable_pending_checkpoint_resumes_once(tmp_path):
     state = make_state()
     evaluator = ReattachEvaluator()
-    scheduler = AsyncScheduler(evaluator)
+    scheduler = AsyncEvaluationScheduler(evaluator)
     state = scheduler.submit(state, [requests()[0]])
     path = tmp_path / "pending.npz"
     state.save(path)
@@ -290,6 +897,7 @@ def test_reattachable_pending_checkpoint_resumes_once(tmp_path):
     assert restored.pending_evaluations == {}
     assert restored.fe == 1
     assert evaluator.acknowledged == [(0, 0)]
+    assert restored.offspring is not None
     np.testing.assert_allclose(restored.offspring.f[0], [0.2])
     np.testing.assert_array_equal(restored.archive.id, [10])
 
@@ -297,7 +905,7 @@ def test_reattachable_pending_checkpoint_resumes_once(tmp_path):
 def test_timeout_detaches_running_future_without_applying_result():
     state = make_state()
     evaluator = AsyncEvaluator(SlowEvaluator())
-    scheduler = AsyncScheduler(evaluator, timeout=0.001)
+    scheduler = AsyncEvaluationScheduler(evaluator, timeout=0.001)
     try:
         state = scheduler.submit(state, [requests()[0]])
         time.sleep(0.01)
@@ -313,7 +921,7 @@ def test_async_evaluation_exception_becomes_failed_update():
     state = make_state()
     evaluator = AsyncEvaluator(FailingEvaluator())
     try:
-        scheduler = AsyncScheduler(evaluator)
+        scheduler = AsyncEvaluationScheduler(evaluator)
         state = scheduler.submit(state, [requests()[0]])
         state = scheduler.poll(state, wait=True)
         assert state.pending_evaluations == {}
@@ -324,7 +932,7 @@ def test_async_evaluation_exception_becomes_failed_update():
 
 def test_timeout_requires_termination_capability():
     try:
-        AsyncScheduler(BareEvaluator(), timeout=0.01)
+        AsyncEvaluationScheduler(BareEvaluator(), timeout=0.01)
     except Exception as exc:
         assert "timeout" in str(exc)
     else:
@@ -333,7 +941,7 @@ def test_timeout_requires_termination_capability():
 
 def test_batch_submit_requires_rollback_capability_before_side_effects():
     evaluator = FailSecondEvaluator()
-    scheduler = AsyncScheduler(evaluator, max_pending=2)
+    scheduler = AsyncEvaluationScheduler(evaluator, max_pending=2)
     state = make_state()
     try:
         scheduler.submit(state, requests())
@@ -358,22 +966,22 @@ def test_direct_strategy_uses_scheduler_for_submit_and_poll():
     state = make_state()
     algorithm = Algorithm()
     evaluator = AsyncEvaluator(SlowEvaluator(), max_workers=2)
-    scheduler = AsyncScheduler(evaluator, max_pending=2)
+    scheduler = AsyncEvaluationScheduler(evaluator, max_pending=2)
     provider = SimpleNamespace(
         algorithm=algorithm,
         evaluator=evaluator,
-        evaluation_policy=None,
-        feedback_policy=None,
-        async_scheduler=scheduler,
+        evaluation_planner=None,
+        feedback_builder=None,
+        async_evaluation_scheduler=scheduler,
         cbmanager=None,
     )
     try:
         strategy = DirectStrategy()
-        pending = strategy.step(state, provider)
+        pending = strategy.step(state, cast(Any, provider))
         assert len(pending.pending_evaluations) == 2
         while pending.pending_evaluations:
             time.sleep(0.3)
-            pending = strategy.step(pending, provider)
+            pending = strategy.step(pending, cast(Any, provider))
         assert sorted(algorithm.tell_ids) == [10, 11]
         assert pending.fe == 2
     finally:
@@ -390,16 +998,16 @@ def test_partial_failure_retries_only_unapplied_candidates():
 
     state = make_state()
     request = EvaluationRequest(
-        0,
+        np.int64(0),
         np.array([10, 11], dtype=np.int64),
         np.array([[0.2], [0.1]], dtype=np.float64),
     )
     evaluator = PartialRetryEvaluator()
     algorithm = Algorithm()
-    scheduler = AsyncScheduler(
+    scheduler = AsyncEvaluationScheduler(
         evaluator,
         retry_limit=1,
-        feedback_policy=TrueOnlyFeedback(),
+        feedback_builder=TrueOnlyFeedback(),
         algorithm=algorithm,
     )
     state = scheduler.submit(state, [request])
@@ -426,10 +1034,10 @@ def test_partial_retry_with_callback_keeps_applied_ids():
     state = make_state()
     evaluator = PartialRetryEvaluator()
     algorithm = Algorithm()
-    scheduler = AsyncScheduler(
+    scheduler = AsyncEvaluationScheduler(
         evaluator,
         retry_limit=1,
-        feedback_policy=TrueOnlyFeedback(),
+        feedback_builder=TrueOnlyFeedback(),
         algorithm=algorithm,
         callback_manager=callback,
     )
@@ -437,7 +1045,7 @@ def test_partial_retry_with_callback_keeps_applied_ids():
         state,
         [
             EvaluationRequest(
-                0,
+                np.int64(0),
                 np.array([10, 11], dtype=np.int64),
                 np.array([[0.2], [0.1]], dtype=np.float64),
             )
@@ -460,17 +1068,17 @@ def test_runner_drains_after_generation_termination():
 
     state = make_state()
     evaluator = AsyncEvaluator(SlowEvaluator(), max_workers=2)
-    scheduler = AsyncScheduler(evaluator, max_pending=1)
+    scheduler = AsyncEvaluationScheduler(evaluator, max_pending=1)
     cbmanager = CallbackManager()
     events = []
     cbmanager.register(GenerationEndEvent, lambda event: events.append(event))
     optimizer = SimpleNamespace(
         strategy=DirectStrategy(),
         evaluator=evaluator,
-        evaluation_policy=None,
-        feedback_policy=None,
-        feedback_policy_explicit=False,
-        async_scheduler=scheduler,
+        evaluation_planner=None,
+        feedback_builder=None,
+        feedback_builder_explicit=False,
+        async_evaluation_scheduler=scheduler,
         algorithm=Algorithm(),
         cbmanager=cbmanager,
         surrogate_manager=None,
@@ -479,7 +1087,7 @@ def test_runner_drains_after_generation_termination():
         problem=state.problem,
     )
     try:
-        result = list(Runner(optimizer).iterate_from(state))
+        result = list(Runner(cast(Any, optimizer)).iterate_from(state))
         final = result[-1]
         assert final.fe == 2
         assert final.pending_evaluations == {}
@@ -511,15 +1119,15 @@ def test_runner_does_not_refill_after_termination_threshold():
 
     state = make_state()
     evaluator = CountingEvaluator()
-    scheduler = AsyncScheduler(evaluator, max_pending=2)
+    scheduler = AsyncEvaluationScheduler(evaluator, max_pending=2)
     state = scheduler.submit(state, requests())
     algorithm = Algorithm()
     optimizer = SimpleNamespace(
         strategy=DirectStrategy(),
         evaluator=evaluator,
-        evaluation_policy=None,
-        feedback_policy=None,
-        async_scheduler=scheduler,
+        evaluation_planner=None,
+        feedback_builder=None,
+        async_evaluation_scheduler=scheduler,
         algorithm=algorithm,
         cbmanager=CallbackManager(),
         surrogate_manager=None,
@@ -528,7 +1136,7 @@ def test_runner_does_not_refill_after_termination_threshold():
         problem=state.problem,
     )
     try:
-        final = Runner(optimizer).run_from(state)
+        final = Runner(cast(Any, optimizer)).run_from(state)
         assert final.fe == 2
         assert evaluator.submit_count == 2
         assert algorithm.asks == 0
@@ -546,7 +1154,7 @@ def test_runner_reattaches_loaded_pending_state(tmp_path):
 
     state = make_state()
     evaluator = ReattachEvaluator()
-    scheduler = AsyncScheduler(evaluator)
+    scheduler = AsyncEvaluationScheduler(evaluator)
     state = scheduler.submit(state, [requests()[0]])
     path = tmp_path / "runner.npz"
     state.save(path)
@@ -554,10 +1162,10 @@ def test_runner_reattaches_loaded_pending_state(tmp_path):
     optimizer = SimpleNamespace(
         strategy=DirectStrategy(),
         evaluator=evaluator,
-        evaluation_policy=None,
-        feedback_policy=None,
-        feedback_policy_explicit=False,
-        async_scheduler=scheduler,
+        evaluation_planner=None,
+        feedback_builder=None,
+        feedback_builder_explicit=False,
+        async_evaluation_scheduler=scheduler,
         algorithm=Algorithm(),
         cbmanager=CallbackManager(),
         surrogate_manager=None,
@@ -565,7 +1173,7 @@ def test_runner_reattaches_loaded_pending_state(tmp_path):
         dispatch=lambda event: None,
         problem=state.problem,
     )
-    result = list(Runner(optimizer).iterate_from(restored))
+    result = list(Runner(cast(Any, optimizer)).iterate_from(restored))
     assert result[-1].fe == 1
     assert result[-1].pending_evaluations == {}
 
@@ -599,7 +1207,7 @@ def test_checkpoint_replays_buffered_update_without_backend_redelivery(tmp_path)
     path = tmp_path / "buffered.npz"
     state.save(path)
     restored = OptimizationState.load(path, state.problem)
-    scheduler = AsyncScheduler(ReattachEvaluator())
+    scheduler = AsyncEvaluationScheduler(ReattachEvaluator())
     restored = scheduler.reattach(restored)
     assert restored.pending_evaluations == {}
     assert restored.fe == 1
@@ -618,7 +1226,7 @@ def test_callback_failure_is_fatal_without_losing_pending_or_fe():
     state = make_state()
     evaluator = ReattachEvaluator()
     callback = FailingCallback()
-    scheduler = AsyncScheduler(evaluator, callback_manager=callback)
+    scheduler = AsyncEvaluationScheduler(evaluator, callback_manager=callback)
     state = scheduler.submit(state, [requests()[0]])
     try:
         scheduler.poll(state, wait=True)
@@ -635,7 +1243,7 @@ def test_callback_failure_is_fatal_without_losing_pending_or_fe():
 def test_callback_completed_replay_only_cleans_pending(tmp_path):
     state = make_state()
     evaluator = ReattachEvaluator()
-    scheduler = AsyncScheduler(evaluator)
+    scheduler = AsyncEvaluationScheduler(evaluator)
     state = scheduler.submit(state, [requests()[0]])
     update = evaluator.collect(state.evaluation_handles[0])[0]
     pending = state.pending_evaluations[0]
@@ -659,7 +1267,7 @@ def test_callback_completed_replay_only_cleans_pending(tmp_path):
     path = tmp_path / "callback-completed.npz"
     state.save(path)
     restored = OptimizationState.load(path, state.problem)
-    restored = AsyncScheduler(ReattachEvaluator()).reattach(restored)
+    restored = AsyncEvaluationScheduler(ReattachEvaluator()).reattach(restored)
     assert restored.pending_evaluations == {}
     assert restored.fe == 0
     assert len(restored.archive) == 0
@@ -759,41 +1367,47 @@ def test_partial_callback_checkpoint_reattaches_and_finishes(tmp_path):
 
     callback = CallbackManager()
     callback_ids = []
-    callback.register(
-        PostEvaluationEvent,
-        lambda event: callback_ids.extend(event.candidate_ids.tolist()),
-    )
+
+    def collect_callback_ids(event: PostEvaluationEvent) -> None:
+        assert event.candidate_ids is not None
+        callback_ids.extend(event.candidate_ids.tolist())
+
+    callback.register(PostEvaluationEvent, collect_callback_ids)
     algorithm = Algorithm()
     evaluator = TwoStageEvaluator()
-    scheduler = AsyncScheduler(
+    scheduler = AsyncEvaluationScheduler(
         evaluator,
         retry_limit=1,
-        feedback_policy=TrueOnlyFeedback(),
+        feedback_builder=TrueOnlyFeedback(),
         algorithm=algorithm,
         callback_manager=callback,
     )
     request = EvaluationRequest(
-        0,
+        np.int64(0),
         np.array([10, 11], dtype=np.int64),
         np.array([[0.2], [0.1]]),
     )
     state = scheduler.submit(make_state(), [request])
     state = scheduler.poll(state, wait=False)
     assert state.pending_evaluations[0].last_acknowledged_sequence == 0
+    assert state.pending_evaluations[0].status is EvaluationStatus.PARTIAL
+    assert state.pending_evaluations[0].processing[0] == "callback-completed"
     path = tmp_path / "partial-callback.npz"
     scheduler.checkpoint(state, path)
     restored = OptimizationState.load(path, state.problem)
-    resumed = AsyncScheduler(
+    assert restored.pending_evaluations[0].status is EvaluationStatus.PARTIAL
+    assert restored.pending_evaluations[0].processing[0] == "callback-completed"
+    resumed = AsyncEvaluationScheduler(
         evaluator,
         retry_limit=1,
-        feedback_policy=TrueOnlyFeedback(),
+        feedback_builder=TrueOnlyFeedback(),
         algorithm=algorithm,
         callback_manager=callback,
     ).reattach(restored)
-    resumed = AsyncScheduler(
+    resumed = AsyncEvaluationScheduler(
         evaluator,
         retry_limit=1,
-        feedback_policy=TrueOnlyFeedback(),
+        feedback_builder=TrueOnlyFeedback(),
         algorithm=algorithm,
         callback_manager=callback,
     ).poll(resumed, wait=True)
@@ -815,10 +1429,10 @@ def test_fatal_tombstone_roundtrip_raises_typed_error(tmp_path):
 
     state = make_state()
     evaluator = AsyncEvaluator(SlowEvaluator())
-    scheduler = AsyncScheduler(
+    scheduler = AsyncEvaluationScheduler(
         evaluator,
         algorithm=FailingAlgorithm(),
-        feedback_policy=TrueOnlyFeedback(),
+        feedback_builder=TrueOnlyFeedback(),
     )
     state = scheduler.submit(state, [requests()[0]])
     try:
@@ -833,7 +1447,7 @@ def test_fatal_tombstone_roundtrip_raises_typed_error(tmp_path):
     fatal_state.save(path)
     restored = OptimizationState.load(path, state.problem)
     with pytest.raises(EvaluationFatalError) as caught:
-        AsyncScheduler(AsyncEvaluator(SlowEvaluator())).reattach(restored)
+        AsyncEvaluationScheduler(AsyncEvaluator(SlowEvaluator())).reattach(restored)
     assert caught.value.state is restored
 
 
@@ -849,8 +1463,8 @@ def test_tell_failure_cannot_be_retried_after_tell_started():
     state = make_state()
     evaluator = ReattachEvaluator()
     algorithm = FailingAlgorithm()
-    scheduler = AsyncScheduler(
-        evaluator, algorithm=algorithm, feedback_policy=TrueOnlyFeedback()
+    scheduler = AsyncEvaluationScheduler(
+        evaluator, algorithm=algorithm, feedback_builder=TrueOnlyFeedback()
     )
     state = scheduler.submit(state, [requests()[0]])
     try:
@@ -870,9 +1484,9 @@ def test_tell_failure_cannot_be_retried_after_tell_started():
 
 def test_async_archive_updates_main_and_pareto_once():
     state = make_state()
-    scheduler = AsyncScheduler(ReattachEvaluator())
+    scheduler = AsyncEvaluationScheduler(ReattachEvaluator())
     request = EvaluationRequest(
-        0, np.array([10, 11], dtype=np.int64), state.offspring.x.copy()
+        np.int64(0), np.array([10, 11], dtype=np.int64), state.offspring.x.copy()
     )
     state = scheduler.submit(state, [request])
     state = scheduler.poll(state, wait=True)
@@ -909,15 +1523,15 @@ def test_archive_re_evaluation_uses_latest_observation():
     archive = Archive(ATTRS, 2, duplicate_policy="replace")
     state = make_state().replace(archive=archive)
     evaluator = ReevaluateEvaluator()
-    scheduler = AsyncScheduler(evaluator)
+    scheduler = AsyncEvaluationScheduler(evaluator)
     first = EvaluationRequest(
-        0,
+        np.int64(0),
         np.array([10], dtype=np.int64),
         np.array([[0.2]]),
         metadata={"value": 0.2},
     )
     second = EvaluationRequest(
-        1,
+        np.int64(1),
         np.array([10], dtype=np.int64),
         np.array([[0.2]]),
         metadata={"value": 0.8},
@@ -934,10 +1548,10 @@ def test_append_archive_keeps_distinct_request_observations():
     attrs = [*ATTRS, PopulationAttribute("request_id", np.int64, (), -1)]
     state = make_state().replace(archive=Archive(attrs, 2, duplicate_policy="append"))
     evaluator = ReattachEvaluator()
-    scheduler = AsyncScheduler(evaluator)
+    scheduler = AsyncEvaluationScheduler(evaluator)
     for request_id in (0, 1):
         request = EvaluationRequest(
-            request_id,
+            np.int64(request_id),
             np.array([10], dtype=np.int64),
             np.array([[0.2]]),
         )
@@ -961,12 +1575,12 @@ def test_chunk_cost_budget_uses_fsum_boundary():
         preserve_ids=True,
     )
     state = make_state().replace(population=population, offspring=population)
-    scheduler = AsyncScheduler(
+    scheduler = AsyncEvaluationScheduler(
         ReattachEvaluator(), max_pending=8, max_reserved_cost=0.1
     )
     for index in range(8):
         request = EvaluationRequest(
-            index,
+            np.int64(index),
             np.array([index], dtype=np.int64),
             population.x[index : index + 1],
             metadata={"estimated_cost": 0.1 / 8},
@@ -985,7 +1599,7 @@ def test_pending_prediction_snapshot_survives_wave_overwrite(tmp_path):
         x=np.array([[0.2]]),
     )
     state = make_state().replace(predictions=first)
-    scheduler = AsyncScheduler(ReattachEvaluator())
+    scheduler = AsyncEvaluationScheduler(ReattachEvaluator())
     state = scheduler.submit(state, [requests()[0]])
     state = state.replace(predictions=second)
     assert state.pending_evaluations[0].prediction.value[0, 0] == 1.0
@@ -1004,7 +1618,7 @@ def test_batch_submit_requires_declared_rollback_capability():
             return False
 
     state = make_state()
-    scheduler = AsyncScheduler(FalseRollbackEvaluator(), max_pending=2)
+    scheduler = AsyncEvaluationScheduler(FalseRollbackEvaluator(), max_pending=2)
     with pytest.raises(EvaluationProtocolError, match="rollback"):
         scheduler.submit(state, requests())
 
@@ -1018,7 +1632,7 @@ def test_timeout_without_runtime_termination_keeps_fatal_tombstone():
             return False
 
     state = make_state()
-    scheduler = AsyncScheduler(UnstoppableEvaluator(), timeout=0)
+    scheduler = AsyncEvaluationScheduler(UnstoppableEvaluator(), timeout=0)
     state = scheduler.submit(state, [requests()[0]])
     state = scheduler.poll(state, wait=False)
     assert state.pending_evaluations[0].fatal_error is not None

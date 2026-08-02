@@ -1,6 +1,7 @@
 from saealib.policies.evaluation import (
     EvaluateAll,
-    EvaluationPolicy,
+    EvaluationPlan,
+    EvaluationPlanner,
     FidelityEvaluation,
     FidelityPromotion,
     RatioEvaluation,
@@ -13,7 +14,7 @@ from saealib.policies.evaluation import (
 )
 from saealib.policies.feedback import (
     ComparatorWorstFallback,
-    FeedbackPolicy,
+    FeedbackBuilder,
     FeedbackResult,
     MixedFeedback,
     NoFeedback,
@@ -24,8 +25,9 @@ from saealib.policies.feedback import (
 __all__ = [
     "ComparatorWorstFallback",
     "EvaluateAll",
-    "EvaluationPolicy",
-    "FeedbackPolicy",
+    "EvaluationPlan",
+    "EvaluationPlanner",
+    "FeedbackBuilder",
     "FeedbackResult",
     "FidelityEvaluation",
     "FidelityPromotion",

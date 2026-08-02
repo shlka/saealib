@@ -21,8 +21,8 @@ from saealib.operators.pymoo_crossover import PymooCrossover
 from saealib.operators.pymoo_mutation import PymooMutation
 from saealib.operators.repair import repair_clipping
 from saealib.operators.selection import (
+    LinearRankSelection,
     ParentSelection,
-    RouletteWheelSelection,
     SequentialSelection,
     SurvivorSelection,
     TournamentSelection,
@@ -39,6 +39,7 @@ __all__ = [
     "CrossoverTwoPoint",
     "CrossoverUniform",
     "DuplicateElimination",
+    "LinearRankSelection",
     "Mutation",
     "MutationCategorical",
     "MutationGaussian",
@@ -48,7 +49,6 @@ __all__ = [
     "ParentSelection",
     "PymooCrossover",
     "PymooMutation",
-    "RouletteWheelSelection",
     "SequentialSelection",
     "SurvivorSelection",
     "TournamentSelection",

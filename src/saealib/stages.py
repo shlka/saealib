@@ -21,6 +21,8 @@ dict) via ``state.replace(data={**state.data, "key": value})``.
 from __future__ import annotations
 
 from collections.abc import Callable
+from copy import deepcopy
+from dataclasses import replace
 from math import fsum
 from typing import TYPE_CHECKING, Any
 
@@ -35,6 +37,7 @@ from saealib.callback import (
     SurrogateEndEvent,
     SurrogateStartEvent,
 )
+from saealib.context import EvaluationPlanState
 from saealib.exceptions import EvaluationProtocolError, ValidationError
 from saealib.execution.evaluator import (
     EvaluationRequest,
@@ -44,8 +47,14 @@ from saealib.execution.evaluator import (
     PendingEvaluation,
 )
 from saealib.pipeline import Pipeline, Stage
-from saealib.policies.evaluation import EvaluateAll, EvaluationPolicy
-from saealib.policies.feedback import FeedbackPolicy, MixedFeedback, TrueOnlyFeedback
+from saealib.policies.evaluation import (
+    EvaluateAll,
+    EvaluationPlan,
+    EvaluationPlanner,
+    _aggregate_repeated_updates,
+    _continue_fidelity_plan,
+)
+from saealib.policies.feedback import FeedbackBuilder, MixedFeedback, TrueOnlyFeedback
 
 if TYPE_CHECKING:
     from saealib.acquisition.base import AcquisitionFunction
@@ -60,12 +69,7 @@ if TYPE_CHECKING:
 
 
 class _DispatchProxy:
-    """Minimal ComponentProvider used to thread callbacks through Algorithm.ask/tell.
-
-    This shim preserves compatibility with the current Algorithm interface while
-    the full provider is being phased out.  It will be removed once Algorithm.ask
-    and Algorithm.tell no longer accept a provider argument.
-    """
+    """Minimal component provider used to pass callbacks to ``Algorithm``."""
 
     def __init__(self, cbmanager: CallbackManager | None = None) -> None:
         self._cbmanager = cbmanager
@@ -103,6 +107,22 @@ class _DispatchProxy:
         return None
 
 
+def _plan_complete(state: OptimizationState) -> bool:
+    """Return whether every request in the active plan is terminal."""
+    plan = state.evaluation_plan
+    if plan is None:
+        return True
+    plan_state = state.evaluation_plan_state
+    if plan_state is None:
+        return False
+    terminal = set(plan_state.completed) | set(plan_state.acknowledged)
+    return {int(request.request_id) for request in plan.requests} <= terminal
+
+
+def _plan_incomplete(state: OptimizationState) -> bool:
+    return state.evaluation_plan is not None and not _plan_complete(state)
+
+
 # ---------------------------------------------------------------------------
 # Concrete stages
 # ---------------------------------------------------------------------------
@@ -116,6 +136,11 @@ class CountGenerationStage(Stage):
     notation = r"$gen \leftarrow gen + 1$"
 
     def execute(self, state: OptimizationState) -> OptimizationState:
+        # Async steady-state refill calls strategy.step() while an earlier
+        # generation is still open.  Those calls are insertions, not new
+        # generations; Runner owns the generation boundary and its events.
+        if state.pending_evaluations:
+            return state
         return state.replace(gen=state.gen + 1)
 
 
@@ -162,6 +187,8 @@ class AskStage(Stage):
         return f"{prefix}\\State {self.notation}"
 
     def execute(self, state: OptimizationState) -> OptimizationState:
+        if _plan_incomplete(state):
+            return state
         candidates = self._algorithm.ask(state, self._proxy, self._n_offspring)
         if "id" in candidates.schema:
             id_arr = candidates.get_array("id")
@@ -338,27 +365,34 @@ class AcquisitionStage(Stage):
             raw = self._acquisition.evaluate(
                 candidates.x, state.predictions, archive, state, prepared=prepared
             )
-            if raw.scores is None:
-                raise ValidationError(
-                    f"{type(self._acquisition).__name__}.evaluate() returned an "
-                    "AcquisitionResult with scores=None; AcquisitionStage requires "
-                    "a non-None score array."
-                )
-            scores = np.array(raw.scores, dtype=np.float64, copy=True)
-            if scores.shape != (len(candidates),):
+            scores = (
+                None
+                if raw.scores is None
+                else np.array(raw.scores, dtype=np.float64, copy=True)
+            )
+            if scores is not None and scores.shape != (len(candidates),):
                 raise ValidationError(
                     f"{type(self._acquisition).__name__}.evaluate() returned "
                     f"scores with shape {scores.shape}, expected "
                     f"({len(candidates)},)."
                 )
-            result = AcquisitionResult(scores=scores, artifacts=raw.artifacts)
+            result = AcquisitionResult(scores=scores, artifacts=deepcopy(raw.artifacts))
 
         if self._cbmanager is not None:
             self._cbmanager.dispatch(
                 AcquisitionEndEvent(ctx=state, offspring=candidates, result=result)
             )
 
-        return state.replace(scores=result.scores)
+        # Keep the complete result alive until planning.  In particular,
+        # joint acquisitions may put candidate ordering or covariance data in
+        # artifacts; reconstructing AcquisitionResult from scores loses it.
+        return state.replace(
+            scores=result.scores,
+            acquisition_result=AcquisitionResult(
+                scores=result.scores,
+                artifacts=deepcopy(result.artifacts),
+            ),
+        )
 
 
 class SurrogateFitStage(Stage):
@@ -458,14 +492,34 @@ class EvaluationPlanStage(Stage):
     label = "Plan evaluation"
     notation = r"$R \leftarrow \text{plan}(Q)$"
 
-    def __init__(self, policy: EvaluationPolicy | None = None, *, n_eval=None) -> None:
+    def __init__(
+        self,
+        planner: EvaluationPlanner | None = None,
+        n_eval=None,
+    ) -> None:
         super().__init__()
-        if policy is not None and n_eval is not None:
-            raise ValidationError("provide either policy or n_eval")
-        self._policy = policy or EvaluateAll()
+        if planner is not None and n_eval is not None:
+            raise ValidationError("provide planner or n_eval")
+        self._planner = planner or EvaluateAll()
         self._n_eval = n_eval
 
     def execute(self, state: OptimizationState) -> OptimizationState:
+        if _plan_incomplete(state):
+            plan = state.evaluation_plan
+            if plan is None:
+                raise EvaluationProtocolError("evaluation plan is missing")
+            if state.evaluation_request is not None:
+                return state
+            plan_state = state.evaluation_plan_state
+            terminal = set(plan_state.completed if plan_state else ()) | set(
+                plan_state.acknowledged if plan_state else ()
+            )
+            next_request = next(
+                request
+                for request in plan.requests
+                if int(request.request_id) not in terminal
+            )
+            return state.replace(evaluation_request=next_request)
         candidates = state.offspring
         if candidates is None:
             raise EvaluationProtocolError("evaluation candidates are missing")
@@ -476,25 +530,48 @@ class EvaluationPlanStage(Stage):
                 raise ValidationError("n_eval must be within the candidate batch")
             from saealib.policies.evaluation import TopKEvaluation
 
-            request = TopKEvaluation(n).plan(
-                candidates, AcquisitionResult(scores=state.scores), state
+            acquisition = state.acquisition_result or AcquisitionResult(
+                scores=state.scores
             )
+            plan = TopKEvaluation(n).plan(candidates, acquisition, state)
         else:
-            acquisition = (
-                None if state.scores is None else AcquisitionResult(scores=state.scores)
+            acquisition = state.acquisition_result
+            if acquisition is None and state.scores is not None:
+                acquisition = AcquisitionResult(scores=state.scores)
+            plan = self._planner.plan(candidates, acquisition, state)
+        if not isinstance(plan, EvaluationPlan):
+            raise EvaluationProtocolError(
+                "evaluation planner must return EvaluationPlan"
             )
-            request = self._policy.plan(candidates, acquisition, state)
-        pending = PendingEvaluation(
-            request, EvaluationStatus.PENDING, np.empty(0, dtype=np.int64)
+        plan_ids = {int(item.request_id) for item in plan.requests}
+        occupied_ids = (
+            set(map(int, state.pending_evaluations))
+            | set(map(int, state.evaluation_handles))
+            | set(map(int, state.evaluation_owners))
         )
+        if plan_ids & occupied_ids:
+            raise EvaluationProtocolError(
+                "evaluation plan request ID collides with existing work"
+            )
+        pending_map = dict(state.pending_evaluations)
+        for planned in plan.requests:
+            pending_map[int(planned.request_id)] = PendingEvaluation(
+                planned,
+                EvaluationStatus.PENDING,
+                np.empty(0, dtype=np.int64),
+                checkpointable=True,
+            )
+        request = plan.requests[0]
         return state.replace(
             evaluation_request=request,
-            pending_evaluations={
-                **state.pending_evaluations,
-                int(request.request_id): pending,
-            },
+            evaluation_plan=plan,
+            evaluation_plan_state=EvaluationPlanState(
+                deferred=tuple(int(item.request_id) for item in plan.requests)
+            ),
+            pending_evaluations=pending_map,
             evaluation_updates=[],
             evaluation_update_new_ids=[],
+            evaluation_plan_updates={},
             evaluation_new_ids=np.empty(0, dtype=np.int64),
         )
 
@@ -508,15 +585,15 @@ class AsyncEvaluationSubmitStage(Stage):
     def __init__(
         self,
         scheduler: Any,
-        policy: EvaluationPolicy,
-        feedback_policy: FeedbackPolicy | None = None,
+        planner: EvaluationPlanner,
+        feedback_builder: FeedbackBuilder | None = None,
         algorithm: Any = None,
         callback_manager: Any = None,
     ) -> None:
         super().__init__()
         self._scheduler = scheduler
-        self._policy = policy
-        self._feedback_policy = feedback_policy
+        self._planner = planner
+        self._feedback_builder = feedback_builder
         self._algorithm = algorithm
         self._callback_manager = callback_manager
 
@@ -524,7 +601,7 @@ class AsyncEvaluationSubmitStage(Stage):
         candidates = state.offspring
         if candidates is None:
             raise EvaluationProtocolError("evaluation candidates are missing")
-        self._scheduler.feedback_policy = self._feedback_policy
+        self._scheduler.feedback_builder = self._feedback_builder
         self._scheduler.algorithm = self._algorithm
         self._scheduler.callback_manager = self._callback_manager
         hook_data = {
@@ -534,13 +611,52 @@ class AsyncEvaluationSubmitStage(Stage):
             "reserved_cost": self._scheduler.reserved_cost(state),
         }
         state = state.replace(data=hook_data)
-        acquisition = (
-            None if state.scores is None else AcquisitionResult(scores=state.scores)
-        )
-        request = self._policy.plan(candidates, acquisition, state)
-        requests = [request]
+        acquisition = state.acquisition_result
+        if acquisition is None and state.scores is not None:
+            acquisition = AcquisitionResult(scores=state.scores)
+        plan = state.evaluation_plan
+        if plan is not None and state.evaluation_plan_state is not None:
+            plan_state = state.evaluation_plan_state
+            terminal = set(plan_state.completed) | set(plan_state.acknowledged)
+            if all(int(item.request_id) in terminal for item in plan.requests):
+                state = state.replace(
+                    evaluation_plan=None,
+                    evaluation_plan_state=None,
+                    evaluation_plan_updates={},
+                )
+                plan = None
+        if plan is None:
+            plan = self._planner.plan(candidates, acquisition, state)
+        if not isinstance(plan, EvaluationPlan):
+            raise EvaluationProtocolError(
+                "evaluation planner must return EvaluationPlan"
+            )
+        plan_state = state.evaluation_plan_state
+        submitted_ids = set(plan_state.submitted if plan_state else ())
+        completed_ids = set(plan_state.completed if plan_state else ())
+        acknowledged_ids = set(plan_state.acknowledged if plan_state else ())
+        active_pending = {
+            request_id: pending
+            for request_id, pending in state.pending_evaluations.items()
+            if request_id in state.evaluation_handles
+            or request_id not in {int(item.request_id) for item in plan.requests}
+        }
+        if len(active_pending) != len(state.pending_evaluations):
+            state = state.replace(pending_evaluations=active_pending)
+        remaining_requests = [
+            request
+            for request in plan.requests
+            if int(request.request_id) not in submitted_ids
+            and int(request.request_id) not in completed_ids
+            and int(request.request_id) not in acknowledged_ids
+        ]
         capacity = self._scheduler.max_pending - len(state.pending_evaluations)
-        if capacity > 1 and len(request.candidate_ids) > 1:
+        if (
+            len(remaining_requests) == 1
+            and capacity > 1
+            and len(remaining_requests[0].candidate_ids) > 1
+        ):
+            request = remaining_requests[0]
             chunks = np.array_split(
                 request.candidate_ids, min(capacity, len(request.candidate_ids))
             )
@@ -578,8 +694,56 @@ class AsyncEvaluationSubmitStage(Stage):
                         },
                     )
                 )
+            plan_requests = list(plan.requests)
+            target_index = next(
+                index
+                for index, planned in enumerate(plan_requests)
+                if int(planned.request_id) == int(request.request_id)
+            )
+            plan_requests[target_index : target_index + 1] = requests
+            plan = EvaluationPlan(
+                tuple(plan_requests),
+                completion_rule=plan.completion_rule,
+                continuation=plan.continuation,
+                artifacts=plan.artifacts,
+            )
+            remaining_requests = [
+                planned
+                for planned in plan.requests
+                if int(planned.request_id) not in submitted_ids
+                and int(planned.request_id) not in completed_ids
+                and int(planned.request_id) not in acknowledged_ids
+            ]
+        requests = list(remaining_requests[:capacity])
+        deferred = tuple(
+            int(request.request_id) for request in remaining_requests[capacity:]
+        )
+        if not requests:
+            return state.replace(
+                evaluation_plan=plan,
+                evaluation_plan_state=EvaluationPlanState(
+                    submitted=tuple(sorted(submitted_ids)),
+                    completed=tuple(sorted(completed_ids)),
+                    acknowledged=tuple(sorted(acknowledged_ids)),
+                    deferred=deferred,
+                    continuation=plan.continuation,
+                ),
+            )
         submitted = self._scheduler.submit(state, requests)
-        return submitted.replace(evaluation_request=request)
+        request = requests[0]
+        return submitted.replace(
+            evaluation_request=request,
+            evaluation_plan=plan,
+            evaluation_plan_state=EvaluationPlanState(
+                submitted=tuple(
+                    sorted(submitted_ids | {int(item.request_id) for item in requests})
+                ),
+                completed=tuple(sorted(completed_ids)),
+                acknowledged=tuple(sorted(acknowledged_ids)),
+                deferred=deferred,
+                continuation=plan.continuation,
+            ),
+        )
 
 
 class EvaluationSubmitStage(Stage):
@@ -597,20 +761,85 @@ class EvaluationSubmitStage(Stage):
         request = state.evaluation_request
         if request is None:
             raise EvaluationProtocolError("evaluation request is missing")
-        handle = self._evaluator.submit(request, state.problem)
-        pending = state.pending_evaluations[int(request.request_id)]
-        pending = PendingEvaluation(
-            request, EvaluationStatus.PENDING, pending.applied_candidate_ids
+        plan = state.evaluation_plan
+        requests = plan.requests if plan is not None else (request,)
+        plan_state = state.evaluation_plan_state
+        completed_ids = set(plan_state.completed if plan_state else ())
+        acknowledged_ids = set(plan_state.acknowledged if plan_state else ())
+        requests = tuple(
+            item
+            for item in requests
+            if int(item.request_id) not in completed_ids
+            and int(item.request_id) not in acknowledged_ids
+            and int(item.request_id) not in state.evaluation_handles
         )
+        if not requests:
+            return state
+        request_ids = [int(item.request_id) for item in requests]
+        if len(request_ids) != len(set(request_ids)):
+            raise EvaluationProtocolError(
+                "evaluation submit contains duplicate request IDs"
+            )
+        plan_id_set = set(request_ids)
+        pending_map = dict(state.pending_evaluations)
+        for planned_id in plan_id_set:
+            if planned_id not in state.evaluation_handles:
+                pending_map.pop(planned_id, None)
+        occupied_ids = (
+            (set(map(int, pending_map)) - plan_id_set)
+            | set(map(int, state.evaluation_handles))
+            | set(map(int, state.evaluation_owners))
+        )
+        if occupied_ids.intersection(request_ids):
+            raise EvaluationProtocolError(
+                "evaluation submit request ID collides with existing work"
+            )
+        handles = dict(state.evaluation_handles)
+        for planned in requests:
+            handle = self._evaluator.submit(planned, state.problem)
+            handles[int(planned.request_id)] = handle
+            pending = pending_map.get(int(planned.request_id))
+            if pending is None:
+                pending = PendingEvaluation(
+                    planned, EvaluationStatus.PENDING, np.empty(0, dtype=np.int64)
+                )
+            pending_map[int(planned.request_id)] = PendingEvaluation(
+                planned,
+                EvaluationStatus.PENDING,
+                pending.applied_candidate_ids,
+                checkpointable=True,
+            )
         return state.replace(
-            evaluation_handles={
-                **state.evaluation_handles,
-                int(request.request_id): handle,
-            },
-            pending_evaluations={
-                **state.pending_evaluations,
-                int(request.request_id): pending,
-            },
+            evaluation_handles=handles,
+            pending_evaluations=pending_map,
+            evaluation_plan_state=(
+                None
+                if plan_state is None
+                else EvaluationPlanState(
+                    submitted=tuple(
+                        sorted(
+                            set(plan_state.submitted)
+                            | {int(item.request_id) for item in requests}
+                        )
+                    ),
+                    completed=plan_state.completed,
+                    acknowledged=plan_state.acknowledged,
+                    deferred=tuple(
+                        sorted(
+                            int(item.request_id)
+                            for item in (plan.requests if plan is not None else ())
+                            if int(item.request_id)
+                            not in (
+                                set(plan_state.submitted)
+                                | {int(item.request_id) for item in requests}
+                                | set(plan_state.completed)
+                                | set(plan_state.acknowledged)
+                            )
+                        )
+                    ),
+                    continuation=plan.continuation if plan is not None else None,
+                )
+            ),
         )
 
 
@@ -629,34 +858,141 @@ class EvaluationCollectStage(Stage):
         request = state.evaluation_request
         if request is None or int(request.request_id) not in state.evaluation_handles:
             raise EvaluationProtocolError("evaluation handle is missing")
-        handle = state.evaluation_handles[int(request.request_id)]
-        updates = self._evaluator.collect(handle)
-        pending = state.pending_evaluations[int(request.request_id)]
-        if updates:
-            expected = pending.last_delivered_sequence + 1
-            for update in updates:
-                if (
-                    update.request_id != request.request_id
-                    or update.sequence != expected
-                ):
-                    raise EvaluationProtocolError(
-                        "evaluation updates must be ascending and contiguous"
-                    )
-                expected += 1
-            last = updates[-1]
-            pending = PendingEvaluation(
-                request,
-                last.status,
-                pending.applied_candidate_ids,
-                last.sequence,
-                pending.last_acknowledged_sequence,
+        plan = state.evaluation_plan
+        requests = plan.requests if plan is not None else (request,)
+        all_updates = {}
+        current_updates = []
+        current_was_cached = False
+        pending_map = dict(state.pending_evaluations)
+        for planned in requests:
+            planned_id = int(planned.request_id)
+            previous_updates = tuple(state.evaluation_plan_updates.get(planned_id, ()))
+            planned_pending = pending_map[planned_id]
+            if (
+                _plan_incomplete(state)
+                and planned_pending.last_delivered_sequence >= 0
+                and planned_pending.status
+                in {
+                    EvaluationStatus.COMPLETED,
+                    EvaluationStatus.FAILED,
+                    EvaluationStatus.CANCELLED,
+                }
+            ):
+                all_updates[planned_id] = list(previous_updates)
+                if planned_id == int(request.request_id):
+                    current_was_cached = True
+                continue
+            handle = state.evaluation_handles[int(planned.request_id)]
+            delivered = self._evaluator.collect(handle)
+            all_updates[planned_id] = list(previous_updates) + list(delivered)
+            if delivered:
+                expected = planned_pending.last_delivered_sequence + 1
+                for update in delivered:
+                    if (
+                        update.request_id != planned.request_id
+                        or update.sequence != expected
+                    ):
+                        raise EvaluationProtocolError(
+                            "evaluation updates must be ascending and contiguous"
+                        )
+                    expected += 1
+                pending_map[planned_id] = replace(
+                    planned_pending,
+                    status=delivered[-1].status,
+                    last_delivered_sequence=delivered[-1].sequence,
+                    buffered_updates=planned_pending.buffered_updates
+                    + tuple(delivered),
+                )
+            if planned_id == int(request.request_id):
+                current_updates = all_updates[planned_id]
+        updates = current_updates
+        prior = state.evaluation_plan_state
+        completed_set = set(prior.completed if prior is not None else ())
+        completed_set.update(
+            request_id
+            for request_id, values in all_updates.items()
+            if values
+            and values[-1].status
+            in {
+                EvaluationStatus.COMPLETED,
+                EvaluationStatus.FAILED,
+                EvaluationStatus.CANCELLED,
+            }
+        )
+        completed = tuple(sorted(completed_set))
+        continuation_plan = None
+        if isinstance(plan, EvaluationPlan) and set(
+            int(item.request_id) for item in plan.requests
+        ) <= set(completed):
+            continuation_plan = _continue_fidelity_plan(plan, all_updates, state)
+        if continuation_plan is not None:
+            promoted_id = continuation_plan.artifacts.get("promoted_request_id")
+            if promoted_id is None:
+                raise EvaluationProtocolError(
+                    "fidelity continuation is missing its request ID"
+                )
+            promoted = next(
+                request
+                for request in continuation_plan.requests
+                if int(request.request_id) == int(promoted_id)
             )
+            plan = continuation_plan
+            updates = []
+            return state.replace(
+                evaluation_request=promoted,
+                evaluation_plan=plan,
+                evaluation_updates=[],
+                evaluation_plan_updates=all_updates,
+                evaluation_update_new_ids=[],
+                evaluation_new_ids=np.empty(0, dtype=np.int64),
+                evaluation_plan_state=EvaluationPlanState(
+                    submitted=prior.submitted if prior is not None else (),
+                    completed=completed,
+                    acknowledged=prior.acknowledged if prior is not None else (),
+                    deferred=(int(promoted.request_id),),
+                    continuation=plan.continuation,
+                    feedback=prior.feedback if prior is not None else None,
+                ),
+                pending_evaluations=pending_map,
+            )
+        if (
+            isinstance(plan, EvaluationPlan)
+            and len(plan.requests) > 1
+            and all("replicate" in item.metadata for item in plan.requests)
+            and set(int(item.request_id) for item in plan.requests) <= set(completed)
+        ):
+            final_update = all_updates[int(request.request_id)][-1]
+            aggregate = _aggregate_repeated_updates(plan, all_updates, final_update)
+            pending = pending_map[int(request.request_id)]
+            updates = [
+                replace(
+                    aggregate,
+                    sequence=pending.last_acknowledged_sequence + 1,
+                )
+            ]
+        if isinstance(plan, EvaluationPlan) and len(plan.requests) > 1:
+            plan_ids = {int(item.request_id) for item in plan.requests}
+            if not plan_ids <= set(completed):
+                updates = []
+            elif current_was_cached and not updates:
+                updates = list(all_updates[int(request.request_id)])
         return state.replace(
             evaluation_updates=updates,
+            evaluation_plan_updates=all_updates,
             evaluation_update_new_ids=[],
+            evaluation_plan_state=(
+                None
+                if prior is None
+                else EvaluationPlanState(
+                    submitted=prior.submitted,
+                    completed=completed,
+                    deferred=prior.deferred,
+                    continuation=prior.continuation,
+                    feedback=prior.feedback,
+                )
+            ),
             pending_evaluations={
-                **state.pending_evaluations,
-                int(request.request_id): pending,
+                **pending_map,
             },
         )
 
@@ -669,6 +1005,8 @@ class EvaluationApplyStage(Stage):
     notation = r"$Q \leftarrow \text{apply}(U)$"
 
     def execute(self, state: OptimizationState) -> OptimizationState:
+        if _plan_incomplete(state):
+            return state
         candidates = state.offspring
         request = state.evaluation_request
         pending = (
@@ -823,6 +1161,35 @@ class EvaluationApplyStage(Stage):
             accounted = applied | set(new_ids)
             if accounted != request_set:
                 raise EvaluationProtocolError("completed update does not cover request")
+        extra_ids: list[int] = []
+        repeated_plan = state.evaluation_plan is not None and all(
+            "replicate" in item.metadata for item in state.evaluation_plan.requests
+        )
+        if state.evaluation_plan is not None and not repeated_plan:
+            extra_indices: list[int] = []
+            for planned in state.evaluation_plan.requests:
+                if int(planned.request_id) == int(request.request_id):
+                    continue
+                for update in state.evaluation_plan_updates.get(
+                    int(planned.request_id), ()
+                ):
+                    if update.result is None:
+                        continue
+                    rows = [
+                        int(np.flatnonzero(live_ids == candidate_id)[0])
+                        for candidate_id in update.candidate_ids
+                    ]
+                    candidates.update_rows(
+                        np.asarray(rows, dtype=np.intp),
+                        {
+                            "f": update.result.f,
+                            "g": update.result.g,
+                            "cv": update.result.cv,
+                        },
+                    )
+                    extra_indices.extend(rows)
+                    extra_ids.extend(map(int, update.candidate_ids))
+            evaluated_indices.extend(extra_indices)
         for rows, values in operations:
             candidates.update_rows(rows, values)
         evaluated = candidates.extract(np.asarray(evaluated_indices, dtype=np.intp))
@@ -836,7 +1203,7 @@ class EvaluationApplyStage(Stage):
         return state.replace(
             offspring=candidates,
             evaluated_offspring=evaluated,
-            evaluation_new_ids=np.asarray(new_ids, dtype=np.int64),
+            evaluation_new_ids=np.asarray(new_ids + extra_ids, dtype=np.int64),
             evaluation_update_new_ids=per_update_new_ids,
             pending_evaluations={
                 **state.pending_evaluations,
@@ -860,11 +1227,14 @@ class EvaluationAcknowledgeStage(Stage):
         self._cbmanager = cbmanager
 
     def execute(self, state: OptimizationState) -> OptimizationState:
+        if _plan_incomplete(state):
+            return state
         request = state.evaluation_request
         if request is None:
             raise EvaluationProtocolError("evaluation request is missing")
         handle = state.evaluation_handles[int(request.request_id)]
         pending = state.pending_evaluations[int(request.request_id)]
+        plan = state.evaluation_plan
         current = state
         pending_map = dict(state.pending_evaluations)
         handles = dict(state.evaluation_handles)
@@ -872,10 +1242,18 @@ class EvaluationAcknowledgeStage(Stage):
         new_by_update = state.evaluation_update_new_ids
         if len(new_by_update) != len(state.evaluation_updates):
             raise EvaluationProtocolError("evaluation update bookkeeping is missing")
+        raw_updates = state.evaluation_updates
+        if isinstance(plan, EvaluationPlan) and len(plan.requests) > 1:
+            raw_updates = tuple(
+                state.evaluation_plan_updates.get(
+                    int(request.request_id), state.evaluation_updates
+                )
+            )
+        for update in raw_updates:
+            self._evaluator.acknowledge(handle, update.sequence)
         for update, update_new_ids in zip(
             state.evaluation_updates, new_by_update, strict=True
         ):
-            self._evaluator.acknowledge(handle, update.sequence)
             pending_ids.update(map(int, update_new_ids))
             updated_pending = PendingEvaluation(
                 request,
@@ -934,7 +1312,35 @@ class EvaluationAcknowledgeStage(Stage):
                         status=update.status,
                     )
                 )
-        return current
+        if isinstance(plan, EvaluationPlan) and len(plan.requests) > 1:
+            all_updates = state.evaluation_plan_updates
+            for planned in plan.requests:
+                planned_id = int(planned.request_id)
+                if planned_id == int(request.request_id):
+                    continue
+                extra_handle = handles.get(planned_id)
+                if extra_handle is None:
+                    pending_map.pop(planned_id, None)
+                    continue
+                extra_pending = pending_map.get(planned_id)
+                for update in all_updates.get(planned_id, ()):
+                    self._evaluator.acknowledge(extra_handle, update.sequence)
+                    if update.result is not None:
+                        current = current.replace(
+                            fe=current.fe + len(update.candidate_ids)
+                        )
+                if extra_pending is not None:
+                    pending_map.pop(planned_id, None)
+                    handles.pop(planned_id, None)
+            current = current.replace(
+                pending_evaluations=pending_map.copy(),
+                evaluation_handles=handles.copy(),
+            )
+        return current.replace(
+            evaluation_plan=None,
+            evaluation_plan_state=None,
+            evaluation_plan_updates={},
+        )
 
 
 class TrueEvaluationStage(Stage):
@@ -1016,6 +1422,8 @@ class ArchiveUpdateStage(Stage):
     notation = r"$\mathcal{A} \leftarrow \mathcal{A} \cup \mathcal{Q}_{eval}$"
 
     def execute(self, state: OptimizationState) -> OptimizationState:
+        if _plan_incomplete(state):
+            return state
         evaluated = state.evaluated_offspring
         assert evaluated is not None
         has_id = "id" in evaluated.schema
@@ -1025,7 +1433,14 @@ class ArchiveUpdateStage(Stage):
             if has_id:
                 entry["id"] = int(ind.id)
             state.archive.add(entry)
-            state.pareto_archive.add(entry)
+            if not has_id or int(ind.id) not in set(
+                map(int, state.pareto_archive.get_array("id"))
+            ):
+                state.pareto_archive.add(entry)
+        if has_id and len(evaluated):
+            _, first = np.unique(evaluated.get_array("id"), return_index=True)
+            evaluated_for_feedback = evaluated.extract(np.sort(first))
+            return state.replace(evaluated_offspring=evaluated_for_feedback)
         return state
 
 
@@ -1036,11 +1451,16 @@ class FeedbackStage(Stage):
     label = "Apply feedback"
     notation = r"$\mathcal{Q} \leftarrow \mathrm{feedback}(\mathcal{Q})$"
 
-    def __init__(self, policy: FeedbackPolicy | None = None) -> None:
+    def __init__(
+        self,
+        builder: FeedbackBuilder | None = None,
+    ) -> None:
         super().__init__()
-        self._policy = policy or TrueOnlyFeedback()
+        self._builder = builder or TrueOnlyFeedback()
 
     def execute(self, state: OptimizationState) -> OptimizationState:
+        if _plan_incomplete(state):
+            return state
         offspring = state.offspring
         evaluated = state.evaluated_offspring
         if offspring is None:
@@ -1057,7 +1477,7 @@ class FeedbackStage(Stage):
                 np.array(evaluated.cv, dtype=np.float64, copy=True),
                 candidate_ids=ids,
             )
-        result = self._policy.build(
+        result = self._builder.build(
             offspring, state.predictions, evaluation, state.evaluation_new_ids, state
         )
         if len(result.candidate_ids) == 0:
@@ -1118,6 +1538,8 @@ class TellStage(Stage):
         return f"{prefix}\\State {self.notation}"
 
     def execute(self, state: OptimizationState) -> OptimizationState:
+        if _plan_incomplete(state):
+            return state
         result = state.feedback_result
         if state.offspring is None or result is None or len(result.candidate_ids) == 0:
             return state
@@ -1181,7 +1603,7 @@ class SurrogateOnlyLoopStage(Stage):
         cbmanager: CallbackManager | None = None,
         *,
         acquisition: AcquisitionFunction,
-        feedback_policy: FeedbackPolicy | None = None,
+        feedback_builder: FeedbackBuilder | None = None,
     ) -> None:
         super().__init__()
         self._gen_ctrl = gen_ctrl
@@ -1196,7 +1618,7 @@ class SurrogateOnlyLoopStage(Stage):
                         surrogate_manager, cbmanager=cbmanager, refit=False
                     ),
                     AcquisitionStage(acquisition, cbmanager=cbmanager),
-                    FeedbackStage(feedback_policy or MixedFeedback()),
+                    FeedbackStage(feedback_builder or MixedFeedback()),
                     TellStage(algorithm),
                 ]
             )

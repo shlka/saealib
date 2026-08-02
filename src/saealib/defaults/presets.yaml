@@ -21,10 +21,10 @@ presets:
     strategy:
       type: IndividualBasedStrategy
       params: {evaluation_ratio: 0.1}
-    evaluation_policy:
+    evaluation_planner:
       type: RatioEvaluation
       params: {ratio: 0.1, sanitize_nonfinite: true}
-    feedback_policy:
+    feedback_builder:
       type: ComparatorWorstFallback
       params:
         inner: {type: MixedFeedback}

@@ -7,8 +7,8 @@ scores used to rank candidates for true evaluation.
 """
 
 from saealib.acquisition.archive_based import (
-    DensityAcquisition,
-    NichingAcquisition,
+    InverseDensityAcquisition,
+    MaximinDistanceAcquisition,
     NoveltyAcquisition,
 )
 from saealib.acquisition.base import (
@@ -33,13 +33,13 @@ __all__ = [
     "AcquisitionResult",
     "BatchExpectedImprovement",
     "CompositeAcquisition",
-    "DensityAcquisition",
     "EHVIAcquisition",
     "ExpectedImprovement",
+    "InverseDensityAcquisition",
     "LowerConfidenceBound",
     "MaxUncertainty",
+    "MaximinDistanceAcquisition",
     "MeanPrediction",
-    "NichingAcquisition",
     "NoveltyAcquisition",
     "ParEGOAcquisition",
     "PointwiseAcquisition",

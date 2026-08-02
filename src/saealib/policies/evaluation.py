@@ -1,19 +1,67 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, field
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from saealib.acquisition.base import AcquisitionResult
 from saealib.exceptions import ValidationError
-from saealib.execution.evaluator import EvaluationRequest
+from saealib.execution.evaluator import (
+    EvaluationRequest,
+    EvaluationResult,
+    EvaluationStatus,
+    EvaluationUpdate,
+)
 from saealib.registry import register
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
     from saealib.population import Population
+
+
+@dataclass(frozen=True)
+class EvaluationPlan:
+    """Composable evaluation work returned by a planner.
+
+    A plan can contain one request (the ordinary fast path) or several
+    requests such as replicates.  ``continuation`` is an opaque, serializable
+    workflow descriptor for promotion/racing decisions; execution remains the
+    evaluator/scheduler responsibility.
+    """
+
+    requests: tuple[EvaluationRequest, ...]
+    completion_rule: Any = None
+    continuation: Any = None
+    artifacts: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Validate and own the request tuple and artifact mapping."""
+        requests = tuple(self.requests)
+        if not requests:
+            raise ValidationError("an evaluation plan must contain a request")
+        request_ids = [int(request.request_id) for request in requests]
+        if len(request_ids) != len(set(request_ids)):
+            raise ValidationError("an evaluation plan contains duplicate request IDs")
+        object.__setattr__(self, "requests", requests)
+        object.__setattr__(self, "artifacts", MappingProxyType(dict(self.artifacts)))
+
+
+class EvaluationPlanner(ABC):
+    """Public contract for planners that may produce multiple requests."""
+
+    @abstractmethod
+    def plan(
+        self,
+        candidates: Population,
+        acquisition: AcquisitionResult | None,
+        ctx: OptimizationState,
+    ) -> EvaluationPlan:
+        """Return composable evaluation work."""
+        ...
 
 
 def _scores(
@@ -55,19 +103,7 @@ def select_ratio(scores: np.ndarray, ratio: float) -> np.ndarray:
     return select_top_k(scores, n)
 
 
-class EvaluationPolicy(ABC):
-    """Construct an evaluation request from a candidate batch."""
-
-    @abstractmethod
-    def plan(
-        self,
-        candidates: Population,
-        acquisition: AcquisitionResult | None,
-        ctx: OptimizationState,
-    ) -> EvaluationRequest:
-        """Plan one request."""
-        ...
-
+class _RequestPlanner(EvaluationPlanner):
     @staticmethod
     def _request(
         candidates: Population, indices: np.ndarray, ctx: OptimizationState
@@ -97,16 +133,17 @@ class EvaluationPolicy(ABC):
 
 
 @register()
-class EvaluateAll(EvaluationPolicy):
+class EvaluateAll(_RequestPlanner):
     """Evaluate every candidate."""
 
     def plan(self, candidates, acquisition, ctx):
         """Build a request containing every candidate."""
-        return self._request(candidates, np.arange(len(candidates), dtype=np.intp), ctx)
+        indices = np.arange(len(candidates), dtype=np.intp)
+        return EvaluationPlan((self._request(candidates, indices, ctx),))
 
 
 @register()
-class TopKEvaluation(EvaluationPolicy):
+class TopKEvaluation(_RequestPlanner):
     """Evaluate the stable top-k acquisition scores."""
 
     def __init__(self, k: int, sanitize_nonfinite: bool = False) -> None:
@@ -123,11 +160,11 @@ class TopKEvaluation(EvaluationPolicy):
             ),
             self.k,
         )
-        return self._request(candidates, indices, ctx)
+        return EvaluationPlan((self._request(candidates, indices, ctx),))
 
 
 @register()
-class RatioEvaluation(EvaluationPolicy):
+class RatioEvaluation(_RequestPlanner):
     """Evaluate the stable prefix selected by a ratio."""
 
     def __init__(self, ratio: float, sanitize_nonfinite: bool = False) -> None:
@@ -142,11 +179,11 @@ class RatioEvaluation(EvaluationPolicy):
             sanitize_nonfinite=self.sanitize_nonfinite,
         )
         indices = select_ratio(scores, self.ratio)
-        return self._request(candidates, indices, ctx)
+        return EvaluationPlan((self._request(candidates, indices, ctx),))
 
 
 @register()
-class RepeatedEvaluation(EvaluationPolicy):
+class RepeatedEvaluation(_RequestPlanner):
     """Request candidates with an explicit replicate number."""
 
     def __init__(self, replicates: int = 2):
@@ -159,21 +196,28 @@ class RepeatedEvaluation(EvaluationPolicy):
         self.replicates = replicates
 
     def plan(self, candidates, acquisition, ctx):
-        """Build one request and attach its replicate number."""
-        request = EvaluateAll().plan(candidates, acquisition, ctx)
-        metadata = dict(request.metadata)
-        metadata["replicate"] = int(metadata.get("replicate", 0)) % self.replicates
-        return EvaluationRequest(
-            request.request_id,
-            request.candidate_ids,
-            request.x,
-            request.outputs,
-            metadata,
+        """Build one request per replicate."""
+        requests = self.plan_replicates(candidates, ctx)
+        plan_id = int(requests[0].request_id)
+        requests = tuple(
+            EvaluationRequest(
+                request.request_id,
+                request.candidate_ids,
+                request.x,
+                request.outputs,
+                {**request.metadata, "plan_id": plan_id},
+            )
+            for request in requests
+        )
+        return EvaluationPlan(
+            requests,
+            completion_rule="all_requests_completed",
+            artifacts={"replicates": self.replicates},
         )
 
     def plan_replicates(self, candidates, ctx):
         """Build one request per replicate for the same candidate IDs."""
-        first = EvaluateAll().plan(candidates, None, ctx)
+        first = EvaluateAll().plan(candidates, None, ctx).requests[0]
         requests = []
         for replicate in range(self.replicates):
             request_id = first.request_id
@@ -230,8 +274,175 @@ def aggregate_replicates(candidate_ids, observations) -> ReplicateSummary:
     )
 
 
+def _aggregate_repeated_updates(
+    plan: EvaluationPlan,
+    updates_by_request: Mapping[int, Iterable[EvaluationUpdate]],
+    final_update: EvaluationUpdate,
+) -> EvaluationUpdate:
+    """Aggregate a completed repeated plan for the standard lifecycle."""
+    if final_update.status is not EvaluationStatus.COMPLETED:
+        return final_update
+    observations: dict[int, list[tuple[np.ndarray, np.ndarray, np.ndarray]]] = {}
+    for request in plan.requests:
+        for update in updates_by_request.get(int(request.request_id), ()):
+            if update.result is None:
+                continue
+            for row, candidate_id in enumerate(update.candidate_ids):
+                observations.setdefault(int(candidate_id), []).append(
+                    (
+                        np.asarray(update.result.f[row], dtype=np.float64),
+                        np.asarray(update.result.g[row], dtype=np.float64),
+                        np.asarray(update.result.cv[row], dtype=np.float64),
+                    )
+                )
+    candidate_ids = np.asarray(plan.requests[0].candidate_ids, dtype=np.int64)
+    if any(int(candidate_id) not in observations for candidate_id in candidate_ids):
+        return final_update
+    f = np.asarray(
+        [
+            np.mean([item[0] for item in observations[int(candidate_id)]], axis=0)
+            for candidate_id in candidate_ids
+        ],
+        dtype=np.float64,
+    )
+    g = np.asarray(
+        [
+            np.mean([item[1] for item in observations[int(candidate_id)]], axis=0)
+            for candidate_id in candidate_ids
+        ],
+        dtype=np.float64,
+    )
+    cv = np.asarray(
+        [
+            np.mean([item[2] for item in observations[int(candidate_id)]])
+            for candidate_id in candidate_ids
+        ],
+        dtype=np.float64,
+    )
+    return EvaluationUpdate(
+        final_update.request_id,
+        final_update.status,
+        candidate_ids,
+        EvaluationResult(f, g, cv, candidate_ids=candidate_ids),
+        final_update.error,
+        final_update.sequence,
+    )
+
+
+def _combine_plan_updates(
+    plan: EvaluationPlan,
+    updates_by_request: Mapping[int, Iterable[EvaluationUpdate]],
+    final_update: EvaluationUpdate,
+) -> EvaluationUpdate:
+    """Combine the latest result for each candidate in a multi-request plan."""
+    values: dict[int, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
+    ordered_requests = sorted(
+        enumerate(plan.requests),
+        key=lambda item: (
+            float(item[1].metadata.get("fidelity", -np.inf)),
+            item[0],
+        ),
+    )
+    for _, request in ordered_requests:
+        for update in updates_by_request.get(int(request.request_id), ()):
+            if update.result is None:
+                continue
+            for row, candidate_id in enumerate(update.candidate_ids):
+                values[int(candidate_id)] = (
+                    np.asarray(update.result.f[row], dtype=np.float64),
+                    np.asarray(update.result.g[row], dtype=np.float64),
+                    np.asarray(update.result.cv[row], dtype=np.float64),
+                )
+    candidate_order: list[int] = []
+    seen: set[int] = set()
+    for request in plan.requests:
+        for candidate_id in request.candidate_ids:
+            candidate_id = int(candidate_id)
+            if candidate_id in values and candidate_id not in seen:
+                candidate_order.append(candidate_id)
+                seen.add(candidate_id)
+    candidate_ids = np.asarray(candidate_order, dtype=np.int64)
+    if len(candidate_ids) == 0:
+        return final_update
+    f = np.asarray([values[int(candidate_id)][0] for candidate_id in candidate_ids])
+    g = np.asarray([values[int(candidate_id)][1] for candidate_id in candidate_ids])
+    cv = np.asarray([values[int(candidate_id)][2] for candidate_id in candidate_ids])
+    return EvaluationUpdate(
+        final_update.request_id,
+        final_update.status,
+        candidate_ids,
+        EvaluationResult(f, g, cv, candidate_ids=candidate_ids),
+        final_update.error,
+        final_update.sequence,
+    )
+
+
+def _continue_fidelity_plan(
+    plan: EvaluationPlan,
+    updates_by_request: Mapping[int, Iterable[EvaluationUpdate]],
+    ctx: OptimizationState,
+) -> EvaluationPlan | None:
+    """Add the selected high-fidelity request to a promotion plan."""
+    continuation = plan.continuation
+    if not isinstance(continuation, Mapping):
+        return None
+    if continuation.get("kind") != "fidelity_promotion":
+        return None
+    if len(plan.requests) != 1:
+        return None
+    low_request = plan.requests[0]
+    low_update = None
+    for update in updates_by_request.get(int(low_request.request_id), ()):
+        if update.result is not None:
+            low_update = update
+    if low_update is None or low_update.result is None:
+        return None
+    count = continuation.get("promotion_count")
+    if count is None:
+        fraction = float(continuation.get("promotion_fraction", 0.5))
+        count = max(1, int(np.ceil(len(low_update.candidate_ids) * fraction)))
+    count = min(int(count), len(low_update.candidate_ids))
+    if count < 1:
+        return None
+    direction = np.asarray(ctx.problem.direction, dtype=np.float64)
+    order = np.argsort(
+        -direction[0] * np.asarray(low_update.result.f[:, 0], dtype=np.float64),
+        kind="stable",
+    )[:count]
+    selected_ids = np.asarray(low_update.candidate_ids[order], dtype=np.int64)
+    low_rows = np.asarray(
+        [
+            int(np.flatnonzero(low_request.candidate_ids == value)[0])
+            for value in selected_ids
+        ],
+        dtype=np.intp,
+    )
+    request_id = np.int64(ctx.request_id_allocator.allocate(1)[0])
+    high_request = EvaluationRequest(
+        request_id,
+        selected_ids,
+        low_request.x[low_rows],
+        low_request.outputs,
+        {
+            **low_request.metadata,
+            "fidelity": int(continuation["next_fidelity"]),
+            "promotion_of": int(low_request.request_id),
+        },
+    )
+    return EvaluationPlan(
+        (low_request, high_request),
+        completion_rule="all_requests_completed",
+        continuation={"kind": "fidelity_promotion_complete"},
+        artifacts={
+            **dict(plan.artifacts),
+            "promoted_candidate_ids": selected_ids.tolist(),
+            "promoted_request_id": int(high_request.request_id),
+        },
+    )
+
+
 @register()
-class FidelityEvaluation(EvaluationPolicy):
+class FidelityEvaluation(_RequestPlanner):
     """Attach an explicit fidelity level to an evaluation request."""
 
     def __init__(self, fidelity: int = 0):
@@ -241,15 +452,19 @@ class FidelityEvaluation(EvaluationPolicy):
 
     def plan(self, candidates, acquisition, ctx):
         """Build one request and attach its fidelity level."""
-        request = EvaluateAll().plan(candidates, acquisition, ctx)
+        request = EvaluateAll().plan(candidates, acquisition, ctx).requests[0]
         metadata = dict(request.metadata)
         metadata["fidelity"] = self.fidelity
-        return EvaluationRequest(
-            request.request_id,
-            request.candidate_ids,
-            request.x,
-            request.outputs,
-            metadata,
+        return EvaluationPlan(
+            (
+                EvaluationRequest(
+                    request.request_id,
+                    request.candidate_ids,
+                    request.x,
+                    request.outputs,
+                    metadata,
+                ),
+            )
         )
 
 
@@ -257,7 +472,14 @@ class FidelityEvaluation(EvaluationPolicy):
 class FidelityPromotion(FidelityEvaluation):
     """Represent an explicit promotion from one fidelity level to another."""
 
-    def __init__(self, fidelity: int = 0, next_fidelity: int | None = None):
+    def __init__(
+        self,
+        fidelity: int = 0,
+        next_fidelity: int | None = None,
+        *,
+        promotion_count: int | None = None,
+        promotion_fraction: float = 0.5,
+    ):
         super().__init__(fidelity)
         if next_fidelity is not None and (
             not isinstance(next_fidelity, int)
@@ -265,17 +487,31 @@ class FidelityPromotion(FidelityEvaluation):
             or next_fidelity <= fidelity
         ):
             raise ValidationError("next_fidelity must exceed fidelity")
+        if promotion_count is not None and (
+            not isinstance(promotion_count, int)
+            or isinstance(promotion_count, bool)
+            or promotion_count < 1
+        ):
+            raise ValidationError("promotion_count must be positive")
+        if not np.isfinite(promotion_fraction) or not 0.0 < promotion_fraction <= 1.0:
+            raise ValidationError("promotion_fraction must be in (0, 1]")
         self.next_fidelity = next_fidelity
+        self.promotion_count = promotion_count
+        self.promotion_fraction = promotion_fraction
 
-    def promote(self, request, ctx):
-        """Create a new request for the next fidelity level."""
+    def plan(self, candidates, acquisition, ctx):
+        """Build a low-fidelity request with a standard continuation marker."""
+        plan = super().plan(candidates, acquisition, ctx)
         if self.next_fidelity is None:
-            raise ValidationError("next_fidelity is not configured")
-        request_id = np.int64(ctx.request_id_allocator.allocate(1)[0])
-        return EvaluationRequest(
-            request_id,
-            request.candidate_ids,
-            request.x,
-            request.outputs,
-            {**request.metadata, "fidelity": self.next_fidelity},
+            return plan
+        return EvaluationPlan(
+            plan.requests,
+            completion_rule="fidelity_promotion",
+            continuation={
+                "kind": "fidelity_promotion",
+                "next_fidelity": self.next_fidelity,
+                "promotion_count": self.promotion_count,
+                "promotion_fraction": self.promotion_fraction,
+            },
+            artifacts={"fidelity": self.fidelity},
         )

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -114,7 +115,7 @@ def test_strategy_requires_surrogate_present():
     opt.set_surrogate_manager(
         GlobalSurrogateManager(
             RBFSurrogate(kernel=gaussian_kernel, dim=DIM),
-            MeanPrediction(),
+            cast(Any, MeanPrediction()),
         )
     )
     assert not any("surrogate_manager" in m for m in opt.validate())

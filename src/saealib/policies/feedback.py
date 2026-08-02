@@ -109,7 +109,7 @@ def _empty(n_obj: int) -> FeedbackResult:
     )
 
 
-class FeedbackPolicy(ABC):
+class FeedbackBuilder(ABC):
     """Build algorithm feedback from true and predicted values."""
 
     @abstractmethod
@@ -118,7 +118,7 @@ class FeedbackPolicy(ABC):
 
 
 @register()
-class TrueOnlyFeedback(FeedbackPolicy):
+class TrueOnlyFeedback(FeedbackBuilder):
     """Return completed true objective rows."""
 
     def __init__(self) -> None:
@@ -142,7 +142,7 @@ class TrueOnlyFeedback(FeedbackPolicy):
 
 
 @register()
-class PredictedFeedback(FeedbackPolicy):
+class PredictedFeedback(FeedbackBuilder):
     """Return the objective prediction channel."""
 
     def __init__(self) -> None:
@@ -162,7 +162,7 @@ class PredictedFeedback(FeedbackPolicy):
 
 
 @register()
-class MixedFeedback(FeedbackPolicy):
+class MixedFeedback(FeedbackBuilder):
     """Prefer true rows and fill the remainder from objective predictions."""
 
     def __init__(self) -> None:
@@ -198,7 +198,7 @@ class MixedFeedback(FeedbackPolicy):
 
 
 @register()
-class NoFeedback(FeedbackPolicy):
+class NoFeedback(FeedbackBuilder):
     """Return an empty feedback batch."""
 
     def __init__(self) -> None:
@@ -210,10 +210,10 @@ class NoFeedback(FeedbackPolicy):
 
 
 @register()
-class ComparatorWorstFallback(FeedbackPolicy):
+class ComparatorWorstFallback(FeedbackBuilder):
     """Fill missing rows with the comparator's worst population objective."""
 
-    def __init__(self, inner: FeedbackPolicy | None = None) -> None:
+    def __init__(self, inner: FeedbackBuilder | None = None) -> None:
         self.inner = inner or MixedFeedback()
 
     def build(self, candidates, prediction, evaluation, evaluated_indices, ctx):

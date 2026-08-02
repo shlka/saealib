@@ -1,34 +1,82 @@
 import numpy as np
 
 from saealib import (
-    FidelityEvaluator,
+    PSO,
+    DirectStrategy,
+    EvaluationResult,
+    Evaluator,
     FidelityPromotion,
-    FidelityPromotionRunner,
-    reference_problem,
+    LHSInitializer,
+    Optimizer,
+    Termination,
+    max_fe,
 )
+
+try:
+    from examples._support import reference_problem
+except ModuleNotFoundError:
+    from _support import reference_problem
+
+
+class FidelityEvaluator(Evaluator):
+    """Example evaluator that reads fidelity from request metadata."""
+
+    def __init__(self, evaluate):
+        self._evaluate = evaluate
+        self.requests = []
+
+    def evaluate_batch(self, x, problem):
+        """Evaluate initial candidates at the default fidelity."""
+        return self._evaluate_request(x, problem, 0, np.arange(len(x), dtype=np.int64))
+
+    def evaluate_request(self, request, problem):
+        """Evaluate a planned request at its explicit fidelity."""
+        self.requests.append(request)
+        return self._evaluate_request(
+            request.x,
+            problem,
+            int(request.metadata.get("fidelity", 0)),
+            request.candidate_ids,
+        )
+
+    def _evaluate_request(self, x, problem, fidelity, candidate_ids):
+        values = []
+        constraints = []
+        violations = []
+        for row in x:
+            g, cv = problem.evaluate_constraints(row)
+            values.append(self._evaluate(row.copy(), fidelity))
+            constraints.append(g)
+            violations.append(cv)
+        return EvaluationResult(
+            f=np.asarray(values, dtype=np.float64).reshape((-1, problem.n_obj)),
+            g=np.asarray(constraints, dtype=np.float64).reshape(
+                (len(x), problem.n_constraints)
+            ),
+            cv=np.asarray(violations, dtype=np.float64),
+            candidate_ids=candidate_ids,
+            cost=np.full(len(x), fidelity + 1.0, dtype=np.float64),
+            outputs={"fidelity": np.full(len(x), fidelity, dtype=np.float64)},
+        )
 
 
 def main():
-    """Run an explicitly labeled fidelity evaluation."""
+    """Run an explicit fidelity plan through the standard optimizer stages."""
     problem = reference_problem()
     evaluator = FidelityEvaluator(
         lambda row, fidelity: problem.evaluate(row) + (0.5 if fidelity == 0 else 0.0)
     )
-    workflow = FidelityPromotionRunner(evaluator, FidelityPromotion(0, 1)).run(
-        np.array([[0.25, -0.25], [0.8, 0.8]], dtype=np.float64),
-        np.array([10, 11], dtype=np.int64),
-        problem,
+    state = (
+        Optimizer(problem, seed=13)
+        .set_initializer(LHSInitializer(2, 2, 13))
+        .set_algorithm(PSO())
+        .set_strategy(DirectStrategy(n_offspring=1))
+        .set_evaluator(evaluator)
+        .set_evaluation_planner(FidelityPromotion(0, 1, promotion_count=1))
+        .set_termination(Termination(max_fe(3)))
+        .run()
     )
-    return {
-        "low": workflow.low_result,
-        "high": workflow.high_result,
-        "promoted": workflow.high_request.metadata["fidelity"] == 1,
-        "low_request": workflow.low_request,
-        "high_request": workflow.high_request,
-        "archive": workflow.archive,
-        "fe": workflow.fe,
-        "cost": workflow.cost,
-    }
+    return {"state": state, "requests": tuple(evaluator.requests)}
 
 
 if __name__ == "__main__":

@@ -342,12 +342,9 @@ class LocalSurrogateManager(SurrogateManager):
             predictions.append(pred)
 
             if val_x is not None and val_y is not None:
-                try:
-                    val_pred = self.surrogate.predict(val_x)
-                    y_true_list.append(val_y[0])
-                    y_pred_list.append(val_pred.value[0])
-                except Exception:
-                    pass
+                self._record_accuracy_prediction(
+                    self.surrogate, val_x, val_y, y_true_list, y_pred_list
+                )
 
         if compute_accuracy:
             if y_true_list:
@@ -361,6 +358,21 @@ class LocalSurrogateManager(SurrogateManager):
                 self.last_accuracy = SurrogateAccuracy(n_samples=0)
 
         return _stack_predictions(predictions)
+
+    def _record_accuracy_prediction(
+        self,
+        surrogate: Surrogate,
+        query_x: np.ndarray,
+        true_y: np.ndarray,
+        y_true_list: list[np.ndarray],
+        y_pred_list: list[np.ndarray],
+    ) -> None:
+        try:
+            prediction = surrogate.predict(query_x)
+            y_true_list.append(true_y[0])
+            y_pred_list.append(prediction.value[0])
+        except Exception:
+            pass
 
     def _update_accuracy(
         self,
@@ -405,11 +417,15 @@ class LocalSurrogateManager(SurrogateManager):
             surrogate_copy = copy.deepcopy(self.surrogate)
             try:
                 surrogate_copy.fit(train_x, train_y)
-                pred = surrogate_copy.predict(archive_x[i : i + 1])
-                y_true_list.append(archive_y[i])
-                y_pred_list.append(pred.value[0])
             except Exception:
                 continue
+            self._record_accuracy_prediction(
+                surrogate_copy,
+                archive_x[i : i + 1],
+                archive_y[i : i + 1],
+                y_true_list,
+                y_pred_list,
+            )
 
         if not y_true_list:
             self.last_accuracy = SurrogateAccuracy(n_samples=n)

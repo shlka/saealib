@@ -8,7 +8,7 @@ Tests cover:
   __getattr__, __getitem__, name conflict warning, resize
 - Individual: getattr, setattr, version invalidation, pop property
 - bind_property / bind_property_array
-- ArchiveMixin / Archive: add, duplicate detection, get_duplicated_population,
+- ArchiveMixin / Archive: add and duplicate detection,
   get_knn, tolerance-based matching
 - Cache: set_cache, get_cache, automatic invalidation on mutation
 - ParetoMixin.add() fast-path (#224): differential equivalence between the
@@ -648,16 +648,12 @@ class TestArchive:
         assert idx == 1
         assert len(archive) == 2
 
-    def test_get_duplicated_population(self, archive: Archive) -> None:
+    def test_duplicate_history_requires_append_policy(self, archive: Archive) -> None:
         archive.add(x=np.array([1.0, 2.0]), f=0.1)
         archive.add(x=np.array([3.0, 4.0]), f=0.2)
         archive.add(x=np.array([1.0, 2.0]), f=0.3)  # duplicate
-
-        dup_pop = archive.get_duplicated_population()
-        assert len(dup_pop) == 3  # total number of add() calls
-        # first 2 are unique (idx 0, 1), 3rd is a duplicate (refers to idx 0)
-        np.testing.assert_array_equal(dup_pop.x[0], [1.0, 2.0])
-        np.testing.assert_array_equal(dup_pop.x[2], [1.0, 2.0])
+        assert len(archive) == 2
+        assert not hasattr(archive, "get_duplicated_population")
 
     def test_get_knn(self, archive: Archive) -> None:
         archive.add(x=np.array([0.0, 0.0]), f=0.0)

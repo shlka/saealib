@@ -1,12 +1,10 @@
-"""
-SAGA-RBF + NoveltyManager ensemble example.
+"""SAGA-RBF + novelty acquisition ensemble example.
 
 Demonstrates exploration-exploitation balance by combining a regression
-surrogate (RBF, exploitation) with a novelty scorer (exploration) via
-EnsembleSurrogateManager.
+surrogate (RBF, exploitation) with a novelty acquisition (exploration) via
+CompositeSurrogateManager and CompositeAcquisition.
 
-The regression surrogate is listed first so that EnsembleSurrogateManager
-returns its predictions as representative, keeping offspring.f finite.
+The objective channel supplies the predicted objective values.
 """
 
 import logging
@@ -16,12 +14,12 @@ from opfunu.cec_based import cec2015
 
 from saealib import (
     GA,
+    CompositeSurrogateManager,
     CrossoverBLXAlpha,
-    EnsembleSurrogateManager,
     IndividualBasedStrategy,
     LHSInitializer,
     MutationUniform,
-    NoveltyManager,
+    NoveltyAcquisition,
     Optimizer,
     Problem,
     RBFSurrogate,
@@ -31,8 +29,8 @@ from saealib import (
     gaussian_kernel,
     max_fe,
 )
-from saealib.acquisition import MeanPrediction
-from saealib.surrogate.manager import LocalSurrogateManager
+from saealib.acquisition import CompositeAcquisition, MeanPrediction
+from saealib.surrogate.manager import GlobalSurrogateManager, rank_weighted_combine
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("saealib.surrogate.rbf").setLevel(logging.CRITICAL)
@@ -74,17 +72,20 @@ def main():
     termination = Termination(max_fe(200 * dim))
     strategy = IndividualBasedStrategy(evaluation_ratio=rsm)
 
-    # Regression surrogate must be listed first so that EnsembleSurrogateManager
-    # returns its predictions as representative.
-    surrogate_manager = EnsembleSurrogateManager(
-        managers=[
-            LocalSurrogateManager(
-                RBFSurrogate(gaussian_kernel, dim),
-                MeanPrediction(weights=np.array([-1.0])),
-            ),
-            NoveltyManager(k=novelty_k),
-        ],
-        weights=np.array([1.0 - novelty_weight, novelty_weight]),
+    surrogate_manager = CompositeSurrogateManager(
+        managers={
+            "objective": GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, dim)),
+            "novelty": GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, dim)),
+        }
+    )
+    acquisition = CompositeAcquisition(
+        acquisitions={
+            "objective": MeanPrediction(weights=np.array([-1.0])),
+            "novelty": NoveltyAcquisition(k=novelty_k),
+        },
+        combine_fn=rank_weighted_combine(
+            np.array([1.0 - novelty_weight, novelty_weight])
+        ),
     )
 
     opt = (
@@ -93,6 +94,7 @@ def main():
         .set_algorithm(algorithm)
         .set_termination(termination)
         .set_surrogate_manager(surrogate_manager)
+        .set_acquisition(acquisition)
         .set_strategy(strategy)
     )
     opt.run()

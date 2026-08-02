@@ -16,6 +16,7 @@ import yaml
 from saealib.acquisition.mean import MeanPrediction
 from saealib.algorithms.ga import GA
 from saealib.context import OptimizationState
+from saealib.defaults.loader import dump_preset, load_preset
 from saealib.exceptions import ValidationError
 from saealib.operators.crossover import CrossoverSBX
 from saealib.operators.selection import SequentialSelection, TruncationSelection
@@ -75,10 +76,10 @@ class TestSavePresetStripsProblemParams:
         assert path.exists()
         preset = yaml.safe_load(path.read_text("utf-8"))
         assert _no_dim_or_direction(preset)
-        assert preset["evaluation_policy"]["type"] == "RatioEvaluation"
-        assert preset["evaluation_policy"]["params"]["sanitize_nonfinite"] is True
-        assert preset["feedback_policy"]["type"] == "ComparatorWorstFallback"
-        assert preset["feedback_policy"]["params"]["inner"]["type"] == "MixedFeedback"
+        assert preset["evaluation_planner"]["type"] == "RatioEvaluation"
+        assert preset["evaluation_planner"]["params"]["sanitize_nonfinite"] is True
+        assert preset["feedback_builder"]["type"] == "ComparatorWorstFallback"
+        assert preset["feedback_builder"]["params"]["inner"]["type"] == "MixedFeedback"
 
 
 class TestRoundTripAcrossProblems:
@@ -216,3 +217,23 @@ class TestPresetEndToEndRun:
         assert isinstance(manager.surrogate, RBFSurrogate)
         assert manager.surrogate.dim == 5
         assert callable(manager.surrogate.kernel)
+
+
+def test_legacy_feedback_key_is_rejected() -> None:
+    with pytest.raises(ValidationError, match="Unknown preset key"):
+        load_preset({"feedback_policy": {"type": "NoFeedback"}})
+
+
+def test_dump_preset_writes_only_canonical_keys(tmp_path) -> None:
+    path = dump_preset(
+        {
+            "evaluation_planner": {"type": "EvaluateAll"},
+            "feedback_builder": {"type": "NoFeedback"},
+        },
+        tmp_path / "canonical",
+    )
+    loaded = yaml.safe_load(path.read_text())
+    assert "evaluation_planner" in loaded
+    assert "feedback_builder" in loaded
+    assert "evaluation_policy" not in loaded
+    assert "feedback_policy" not in loaded

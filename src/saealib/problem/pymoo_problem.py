@@ -18,9 +18,9 @@ class _EvalCache:
     """One-slot memo so F/G/H for a given x cost exactly one pymoo evaluation.
 
     saealib's ``SerialEvaluator`` calls ``evaluate_constraints(x)`` and then
-    ``evaluate(x, g)`` back-to-back for the same ``x``, once per constraint
-    for the former. Without this cache, an n-constraint problem would trigger
-    ``n + 1`` pymoo evaluations per candidate instead of one.
+    ``evaluate(x, g)`` back-to-back for the same ``x``. Without this cache, an
+    n-constraint problem would trigger ``n + 1`` pymoo evaluations per
+    candidate instead of one.
     """
 
     def __init__(self, pymoo_problem: PymooCoreProblem, n_ieq: int, n_eq: int) -> None:
@@ -95,7 +95,7 @@ class PymooProblem(Problem):
 
     ``G`` maps to :class:`InequalityConstraint` (``threshold=0.0``, no sign
     flip — both conventions agree on "feasible when <= 0"); ``H`` maps to
-    :class:`EqualityConstraint`, verbatim.
+    :class:`EqualityConstraint` without modification.
     """
 
     def __init__(

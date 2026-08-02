@@ -279,6 +279,7 @@ class TestConstraintSurrogate2D:
         candidates = np.vstack([inside, outside])
         prediction = pof_mgr.predict(candidates, archive)
         scores = pof_acq.evaluate(candidates, prediction, archive).scores
+        assert scores is not None
 
         pof_inside = scores[: len(inside)]
         pof_outside = scores[len(inside) :]

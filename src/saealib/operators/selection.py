@@ -47,7 +47,6 @@ class ParentSelection(ABC):
         pass
 
 
-# TODO: check required
 class TournamentSelection(ParentSelection):
     """
     Tournament selection operator.
@@ -167,9 +166,9 @@ class SequentialSelection(ParentSelection):
         return selected_idx
 
 
-class RouletteWheelSelection(ParentSelection):
+class LinearRankSelection(ParentSelection):
     """
-    Roulette wheel selection operator using linear rank-based probabilities.
+    Parent selection using linear rank-based probabilities.
 
     Selection probability is proportional to rank: the best individual has
     the highest probability and the worst has the lowest. This avoids
@@ -178,7 +177,7 @@ class RouletteWheelSelection(ParentSelection):
     """
 
     def __init__(self):
-        """Initialize roulette wheel selection operator."""
+        """Initialize linear rank selection."""
         super().__init__()
 
     def select(
@@ -190,7 +189,7 @@ class RouletteWheelSelection(ParentSelection):
         rng: np.random.Generator = np.random.default_rng(),
     ) -> np.ndarray:
         """
-        Execute roulette wheel selection.
+        Execute linear rank selection.
 
         Parameters
         ----------

@@ -16,8 +16,8 @@ _PRESET_KEYS = {
     "algorithm",
     "surrogate_manager",
     "strategy",
-    "evaluation_policy",
-    "feedback_policy",
+    "evaluation_planner",
+    "feedback_builder",
     "termination",
 }
 
@@ -59,6 +59,7 @@ def load_preset(source: str | Path | dict[str, Any]) -> dict[str, Any]:
     schema_version = preset.get("schema_version")
     if schema_version is not None and schema_version != 1:
         raise ValidationError(f"Unsupported preset schema_version: {schema_version!r}.")
+    preset = dict(preset)
     unknown = set(preset) - _PRESET_KEYS
     if unknown:
         raise ValidationError(
@@ -86,6 +87,7 @@ def dump_preset(preset: dict[str, Any], path: str | Path) -> Path:
     p = Path(path)
     if not p.suffix:
         p = p.with_suffix(".yaml")
+    preset = load_preset(preset)
     preset = {"schema_version": preset.get("schema_version", 1), **preset}
     p.write_text(yaml.safe_dump(preset, sort_keys=False), encoding="utf-8")
     return p

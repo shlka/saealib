@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from typing import Any
 
 import numpy as np
@@ -115,7 +114,6 @@ class ArchiveMixin:
 
         if key_attr not in self.schema:  # ty: ignore[unresolved-attribute]
             raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
-        self._deprecated_duplicate_indices: list[int] = []
         self.duplicate_policy = duplicate_policy
         self.key_attr = key_attr
         self.atol = atol
@@ -178,7 +176,6 @@ class ArchiveMixin:
 
         if idx is not None and self.duplicate_policy != "append":
             if self.duplicate_policy == "keep_first":
-                self._deprecated_duplicate_indices.append(idx)
                 return idx
 
             # A retry of the same candidate is a value-only update.  A spatial
@@ -220,7 +217,6 @@ class ArchiveMixin:
             allow_duplicate_ids=self.duplicate_policy == "append",
             **kwargs,
         )
-        self._deprecated_duplicate_indices.append(new_idx)
         self._kdtree = None
         return new_idx
 
@@ -254,42 +250,6 @@ class ArchiveMixin:
         if indices.size > 0:
             return int(indices[0])
         return None
-
-    def get_duplicated_population(self) -> Population:
-        """
-        Return a Population object without removing duplicates.
-
-        Returns
-        -------
-        Population without removing duplicates.
-        """
-        warnings.warn(
-            "get_duplicated_population() is deprecated; use an Archive with "
-            "duplicate_policy='append' for observation history.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        all_length = len(self._deprecated_duplicate_indices)
-        dup_pop = Population(
-            attrs=list(self._schema.values()),  # ty: ignore[unresolved-attribute]
-            init_capacity=all_length,
-        )
-        indices = np.array(self._deprecated_duplicate_indices)
-        for k, v in self._data.items():  # ty: ignore[unresolved-attribute]
-            dup_pop._data[k][:all_length] = v[indices]
-        dup_pop._size = all_length
-        dup_pop._structure_version = self._structure_version  # ty: ignore[unresolved-attribute]
-        return dup_pop
-
-    @property
-    def _duplicate_indices(self) -> list[int]:
-        """Return the old duplicate index log and emit a warning."""
-        warnings.warn(
-            "Archive._duplicate_indices is deprecated; use duplicate_policy='append'.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self._deprecated_duplicate_indices
 
     def delete(self, index):
         """Delete element(s) and invalidate the kNN cache."""

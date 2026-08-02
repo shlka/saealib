@@ -166,7 +166,8 @@ flowchart LR
     INIT["Initializer<br/>(initial design)"] --> STEP
     subgraph STEP["OptimizationStrategy.step() — one generation"]
         direction LR
-        ASK["Algorithm.ask()<br/>generate candidates"] --> SCORE["SurrogateManager<br/>score_candidates()"]
+        ASK["Algorithm.ask()<br/>generate candidates"] --> PREDICT["SurrogatePredictStage<br/>SurrogateManager.predict()"]
+        PREDICT --> SCORE["AcquisitionStage<br/>AcquisitionFunction"]
         SCORE --> SEL["select candidates<br/>for true evaluation"]
         SEL --> EVAL["Evaluator →<br/>Problem (expensive)"]
         EVAL --> TELL["Algorithm.tell()<br/>update population"]
@@ -195,7 +196,7 @@ observed or altered at any point without subclassing (see [Key Features](#key-fe
   `tell()` updates the population.
 - **OptimizationStrategy**: Owns the generation pipeline and decides which candidates get a true
   evaluation (individual-based, generation-based, pre-selection, or direct).
-- **SurrogateManager**: Coordinates surrogate fitting and scoring; exposes `score_candidates()`.
+- **SurrogateManager**: Coordinates surrogate fitting and exposes `predict()`.
   - **Surrogate**: Fits a model on archive data and predicts — knows nothing about scoring.
   - **AcquisitionFunction**: Converts predictions into scalar scores (higher = better) — knows
     nothing about the model.

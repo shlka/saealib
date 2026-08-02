@@ -12,11 +12,20 @@ Tests cover:
   empty-batch edge case
 """
 
+from typing import Any, cast
+
 import numpy as np
 import pytest
 
 from saealib import EvaluationResult, Evaluator, Optimizer, SerialEvaluator
-from saealib.execution.evaluator import JoblibEvaluator
+from saealib.exceptions import EvaluationProtocolError, ValidationError
+from saealib.execution.evaluator import (
+    EvaluationRequest,
+    EvaluationStatus,
+    EvaluationUpdate,
+    JoblibEvaluator,
+    PendingEvaluation,
+)
 from saealib.problem import InequalityConstraint, Problem
 
 
@@ -117,6 +126,103 @@ class TestSerialEvaluator:
         result = SerialEvaluator().evaluate_batch(np.array([[3.0, 4.0]]), p)
         assert result.f.shape == (1, 1)
         assert result.f[0, 0] == pytest.approx(25.0)
+
+
+class TestEvaluatorBoundaryValidation:
+    def test_evaluation_result_rejects_misaligned_optional_channels(self):
+        with pytest.raises(ValidationError, match="channel lengths"):
+            EvaluationResult(np.ones((2, 1)), np.ones((1, 0)), np.zeros(2))
+        with pytest.raises(ValidationError, match="candidate_ids length"):
+            EvaluationResult(
+                np.ones((2, 1)),
+                np.ones((2, 0)),
+                np.zeros(2),
+                candidate_ids=np.array([1], dtype=np.int64),
+            )
+        with pytest.raises(ValidationError, match="candidate_ids must be unique"):
+            EvaluationResult(
+                np.ones((2, 1)),
+                np.ones((2, 0)),
+                np.zeros(2),
+                candidate_ids=np.array([1, 1], dtype=np.int64),
+            )
+        with pytest.raises(ValidationError, match="cost length"):
+            EvaluationResult(
+                np.ones((2, 1)),
+                np.ones((2, 0)),
+                np.zeros(2),
+                cost=np.ones(1),
+            )
+        with pytest.raises(ValidationError, match="noise must have"):
+            EvaluationResult(
+                np.ones((2, 1)),
+                np.ones((2, 0)),
+                np.zeros(2),
+                noise=np.ones((2, 2)),
+            )
+        with pytest.raises(ValidationError, match="outputs"):
+            EvaluationResult(
+                np.ones((2, 1)),
+                np.ones((2, 0)),
+                np.zeros(2),
+                outputs={"bad": np.ones((1, 1), dtype=np.float64)},
+            )
+
+    def test_request_update_and_pending_records_reject_invalid_identity(self):
+        with pytest.raises(ValidationError, match="request_id"):
+            EvaluationRequest(
+                cast(Any, np.array([1, 2])),
+                np.array([1, 2]),
+                np.ones((2, 1)),
+            )
+        with pytest.raises(ValidationError, match="unique and match"):
+            EvaluationRequest(
+                np.int64(1), np.array([1, 1], dtype=np.int64), np.ones((2, 1))
+            )
+        request = EvaluationRequest(
+            np.int64(1), np.array([1, 2], dtype=np.int64), np.ones((2, 1))
+        )
+        with pytest.raises(EvaluationProtocolError, match="non-negative"):
+            EvaluationUpdate(
+                request.request_id,
+                EvaluationStatus.COMPLETED,
+                np.array([], dtype=np.int64),
+                sequence=-1,
+            )
+        with pytest.raises(EvaluationProtocolError, match="must be unique"):
+            EvaluationUpdate(
+                request.request_id,
+                EvaluationStatus.PARTIAL,
+                np.array([1, 1], dtype=np.int64),
+            )
+        with pytest.raises(EvaluationProtocolError, match="candidate_ids"):
+            EvaluationUpdate(
+                request.request_id,
+                EvaluationStatus.COMPLETED,
+                np.array([1], dtype=np.int64),
+                EvaluationResult(np.ones((1, 1)), np.ones((1, 0)), np.zeros(1)),
+            )
+        with pytest.raises(ValidationError, match="original_candidate_ids"):
+            PendingEvaluation(
+                request,
+                EvaluationStatus.PENDING,
+                np.array([], dtype=np.int64),
+                original_candidate_ids=np.array([1, 1], dtype=np.int64),
+            )
+        with pytest.raises(ValidationError, match="reserved_cost"):
+            PendingEvaluation(
+                request,
+                EvaluationStatus.PENDING,
+                np.array([], dtype=np.int64),
+                reserved_cost=-1.0,
+            )
+        with pytest.raises(ValidationError, match="retry_count"):
+            PendingEvaluation(
+                request,
+                EvaluationStatus.PENDING,
+                np.array([], dtype=np.int64),
+                retry_count=-1,
+            )
 
 
 class TestSerialEvaluatorBatchHook:

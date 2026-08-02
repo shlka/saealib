@@ -15,13 +15,13 @@ from saealib.acquisition import BatchExpectedImprovement as BatchExpectedImprove
 
 # acquisition (less common)
 from saealib.acquisition import CompositeAcquisition as CompositeAcquisition
-from saealib.acquisition import DensityAcquisition as DensityAcquisition
 from saealib.acquisition import EHVIAcquisition as EHVIAcquisition
 from saealib.acquisition import ExpectedImprovement as ExpectedImprovement
+from saealib.acquisition import InverseDensityAcquisition as InverseDensityAcquisition
 from saealib.acquisition import LowerConfidenceBound as LowerConfidenceBound
+from saealib.acquisition import MaximinDistanceAcquisition as MaximinDistanceAcquisition
 from saealib.acquisition import MaxUncertainty as MaxUncertainty
 from saealib.acquisition import MeanPrediction as MeanPrediction
-from saealib.acquisition import NichingAcquisition as NichingAcquisition
 from saealib.acquisition import NoveltyAcquisition as NoveltyAcquisition
 from saealib.acquisition import ParEGOAcquisition as ParEGOAcquisition
 from saealib.acquisition import PointwiseAcquisition as PointwiseAcquisition
@@ -116,21 +116,10 @@ from saealib.execution.initializer import Initializer as Initializer
 from saealib.execution.initializer import LHSInitializer as LHSInitializer
 from saealib.execution.initializer import RandomInitializer as RandomInitializer
 from saealib.execution.initializer import SobolInitializer as SobolInitializer
-from saealib.execution.scheduler import AsyncScheduler as AsyncScheduler
-from saealib.generality import ArchiveSnapshot as ArchiveSnapshot
-from saealib.generality import CooperativeCoevolution as CooperativeCoevolution
-from saealib.generality import (
-    CorrelatedQuadraticSurrogate as CorrelatedQuadraticSurrogate,
+from saealib.execution.scheduler import (
+    AsyncEvaluationScheduler as AsyncEvaluationScheduler,
 )
-from saealib.generality import DynamicArchiveSelector as DynamicArchiveSelector
-from saealib.generality import EvaluationWorkflowResult as EvaluationWorkflowResult
-from saealib.generality import FidelityEvaluator as FidelityEvaluator
-from saealib.generality import FidelityPromotionRunner as FidelityPromotionRunner
-from saealib.generality import FidelityWorkflowResult as FidelityWorkflowResult
-from saealib.generality import MigrationPolicy as MigrationPolicy
-from saealib.generality import RepeatedEvaluationRunner as RepeatedEvaluationRunner
-from saealib.generality import SeededNoiseEvaluator as SeededNoiseEvaluator
-from saealib.generality import reference_problem as reference_problem
+from saealib.islands import IslandModel as IslandModel
 from saealib.operators import Crossover as Crossover
 
 # operators (less common)
@@ -142,6 +131,7 @@ from saealib.operators import CrossoverSBX as CrossoverSBX
 from saealib.operators import CrossoverTwoPoint as CrossoverTwoPoint
 from saealib.operators import CrossoverUniform as CrossoverUniform
 from saealib.operators import DuplicateElimination as DuplicateElimination
+from saealib.operators import LinearRankSelection as LinearRankSelection
 from saealib.operators import Mutation as Mutation
 from saealib.operators import MutationCategorical as MutationCategorical
 from saealib.operators import MutationGaussian as MutationGaussian
@@ -151,7 +141,6 @@ from saealib.operators import MutationUniform as MutationUniform
 from saealib.operators import ParentSelection as ParentSelection
 from saealib.operators import PymooCrossover as PymooCrossover
 from saealib.operators import PymooMutation as PymooMutation
-from saealib.operators import RouletteWheelSelection as RouletteWheelSelection
 from saealib.operators import SequentialSelection as SequentialSelection
 from saealib.operators import SurvivorSelection as SurvivorSelection
 from saealib.operators import TournamentSelection as TournamentSelection
@@ -162,8 +151,9 @@ from saealib.pipeline import Pipeline as Pipeline
 from saealib.pipeline import Stage as Stage
 from saealib.policies import ComparatorWorstFallback as ComparatorWorstFallback
 from saealib.policies import EvaluateAll as EvaluateAll
-from saealib.policies import EvaluationPolicy as EvaluationPolicy
-from saealib.policies import FeedbackPolicy as FeedbackPolicy
+from saealib.policies import EvaluationPlan as EvaluationPlan
+from saealib.policies import EvaluationPlanner as EvaluationPlanner
+from saealib.policies import FeedbackBuilder as FeedbackBuilder
 from saealib.policies import FeedbackResult as FeedbackResult
 from saealib.policies import FidelityEvaluation as FidelityEvaluation
 from saealib.policies import FidelityPromotion as FidelityPromotion
@@ -212,13 +202,10 @@ from saealib.stages import EvaluationPlanStage as EvaluationPlanStage
 from saealib.stages import EvaluationSubmitStage as EvaluationSubmitStage
 from saealib.stages import FeedbackStage as FeedbackStage
 from saealib.stages import InitializationStage as InitializationStage
-from saealib.stages import SortByScoreStage as SortByScoreStage
 from saealib.stages import SurrogateFitStage as SurrogateFitStage
 from saealib.stages import SurrogateOnlyLoopStage as SurrogateOnlyLoopStage
 from saealib.stages import SurrogatePredictStage as SurrogatePredictStage
 from saealib.stages import TellStage as TellStage
-from saealib.stages import TopKSelectionStage as TopKSelectionStage
-from saealib.stages import TrueEvaluationStage as TrueEvaluationStage
 from saealib.strategies import DirectStrategy as DirectStrategy
 from saealib.strategies import GenerationBasedStrategy as GenerationBasedStrategy
 from saealib.strategies import IndividualBasedStrategy as IndividualBasedStrategy

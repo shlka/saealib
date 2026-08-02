@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 import pytest
 from pymoo.algorithms.moo.nsga2 import NSGA2
@@ -67,6 +69,7 @@ def _make_ctx(
     problem: Problem,
     n_pop: int = N_POP,
     rng_seed: int = 0,
+    with_ids: bool = False,
 ) -> OptimizationState:
     rng = np.random.default_rng(rng_seed)
     attrs = [
@@ -76,12 +79,20 @@ def _make_ctx(
         PopulationAttribute("cv", float, (), default=0.0),
         *algo.get_required_attrs(problem),
     ]
+    if with_ids:
+        attrs.insert(4, PopulationAttribute("id", np.int64, (), default=-1))
     pop = Population(attrs, init_capacity=n_pop + 5)
     xs = rng.uniform(problem.lb, problem.ub, size=(n_pop, problem.dim))
     fs = np.array([problem.func(x) for x in xs])
     gs = np.zeros((n_pop, problem.n_constraints))
     cvs = np.zeros(n_pop)
-    pop.extend({"x": xs, "f": fs, "g": gs, "cv": cvs})
+    data = {"x": xs, "f": fs, "g": gs, "cv": cvs}
+    if with_ids:
+        pop._extend_internal(
+            {**data, "id": np.arange(n_pop, dtype=np.int64)}, preserve_ids=True
+        )
+    else:
+        pop.extend(data)
     arc = Archive(attrs, init_capacity=n_pop + 5)
     pareto_arc = ParetoArchive(
         attrs, init_capacity=n_pop + 5, direction=problem.direction
@@ -228,7 +239,7 @@ class TestPymooAlgorithmAskTell:
 
 
 # ---------------------------------------------------------------------------
-# _sync_population candidate-id continuity (Codex-review regression)
+# _sync_population candidate-ID continuity
 # ---------------------------------------------------------------------------
 
 
@@ -288,6 +299,91 @@ class TestPymooSyncPopulationIdContinuity:
         np.testing.assert_array_equal(
             ctx.population.get_array("id"), ids_after_first_sync
         )
+
+    def test_duplicate_x_rows_keep_explicit_pymoo_ids(self):
+        problem = _make_problem()
+        algo = PymooAlgorithm(PymooGA(pop_size=N_POP))
+        ctx = _make_ctx(algo, problem, with_ids=True)
+        ctx.population.update_array("x", np.zeros_like(ctx.population.x))
+        ctx.candidate_id_allocator.allocate(N_POP)
+
+        cand = algo.ask(ctx, _DummyProvider())
+        cand.update_array("f", np.array([problem.func(x) for x in cand.x]))
+        algo.tell(ctx, _DummyProvider(), cand)
+
+        ids = ctx.population.get_array("id")
+        xs = ctx.population.get_array("x")
+        assert len(np.unique(ids)) == len(ids)
+        for row in range(len(xs)):
+            matches = np.flatnonzero(np.all(xs == xs[row], axis=1))
+            if len(matches) > 1:
+                assert len(np.unique(ids[matches])) == len(matches)
+
+    @pytest.mark.parametrize("offspring_objective", [0.0, 1_000.0])
+    def test_survivor_ids_match_pymoo_provenance_for_both_sources(
+        self, offspring_objective
+    ):
+        problem = _make_problem()
+        algo = PymooAlgorithm(NSGA2(pop_size=N_POP))
+        ctx = _make_ctx(algo, problem, with_ids=True)
+        ctx.candidate_id_allocator.allocate(N_POP)
+        parent_ids = ctx.population.get_array("id").copy()
+        cand = algo.ask(ctx, _DummyProvider())
+        offspring_ids = cand.get_array("id").copy()
+        cand.update_array(
+            "f", np.full((len(cand), 1), offspring_objective, dtype=np.float64)
+        )
+
+        algo.tell(ctx, _DummyProvider(), cand)
+
+        pymoo_ids = np.asarray(
+            cast(Any, algo.pymoo_algorithm.pop).get("saealib_candidate_id"),
+            dtype=np.int64,
+        )
+        np.testing.assert_array_equal(ctx.population.get_array("id"), pymoo_ids)
+        assert set(pymoo_ids) <= set(parent_ids) | set(offspring_ids)
+        expected_source = offspring_ids if offspring_objective == 0.0 else parent_ids
+        assert set(pymoo_ids) == set(expected_source)
+
+    def test_partial_tell_scatter_preserves_noncontiguous_provenance(self):
+        problem = _make_problem()
+        algo = PymooAlgorithm(NSGA2(pop_size=N_POP), allow_partial_tell=True)
+        ctx = _make_ctx(algo, problem, with_ids=True)
+        ctx.candidate_id_allocator.allocate(N_POP)
+        cand = algo.ask(ctx, _DummyProvider())
+        infill_ids = cand.get_array("id").copy()
+        selected_idx = np.array([1, 3, 6, 9], dtype=np.intp)
+        selected = cand.extract(selected_idx)
+        selected.update_array("f", np.full((len(selected), 1), 0.0, dtype=np.float64))
+
+        algo.tell(ctx, _DummyProvider(), selected)
+
+        assert algo._infills is not None
+        updated_ids = np.asarray(
+            algo._pymoo_candidate_ids(algo._infills), dtype=np.int64
+        )
+        np.testing.assert_array_equal(
+            updated_ids[selected_idx], selected.get_array("id")
+        )
+        unselected_idx = np.setdiff1d(np.arange(N_POP), selected_idx)
+        np.testing.assert_array_equal(
+            updated_ids[unselected_idx], infill_ids[unselected_idx]
+        )
+
+    def test_missing_survivor_provenance_is_rejected(self):
+        problem = _make_problem()
+        algo = PymooAlgorithm(NSGA2(pop_size=N_POP))
+        ctx = _make_ctx(algo, problem, with_ids=True)
+        ctx.candidate_id_allocator.allocate(N_POP)
+        cand = algo.ask(ctx, _DummyProvider())
+        cand.update_array("f", np.zeros((len(cand), 1), dtype=np.float64))
+        assert algo._infills is not None
+        algo._infills.set(
+            algo._candidate_id_attr, np.full(len(cand), -1, dtype=np.int64)
+        )
+
+        with pytest.raises(ConfigurationError, match="provenance"):
+            algo.tell(ctx, _DummyProvider(), cand)
 
 
 # ---------------------------------------------------------------------------

@@ -49,13 +49,14 @@ from saealib.comparators import (
     ParetoDominator,
     RNSGA2Comparator,
     SingleObjectiveComparator,
-    _pareto_dominates,
 )
 from saealib.comparators.comparators import _normalize_objectives
 from saealib.population import Population, PopulationAttribute
 from saealib.utils.indicators import _non_dominated, hypervolume_contributions
 
 logging.getLogger("saealib.surrogate.rbf").setLevel(logging.CRITICAL)
+
+_default_dominator = ParetoDominator()
 
 
 # ---------------------------------------------------------------------------
@@ -205,18 +206,18 @@ class TestNonDominatedSort:
 
     @pytest.mark.parametrize("n,m", [(1, 1), (2, 1), (50, 2), (50, 5)])
     def test_equivalence_random(self, n: int, m: int) -> None:
-        """Vectorised result matches a brute-force reference using _pareto_dominates."""
+        """Vectorised result matches a brute-force Pareto reference."""
         rng = np.random.default_rng(seed=n * 100 + m)
         f = rng.random((n, m))
 
         ranks, fronts = non_dominated_sort(f)
 
-        # Brute-force: build dominance via _pareto_dominates oracle.
+        # Brute-force reference using the public dominator.
         dom_count = np.zeros(n, int)
         dom_set: list[list[int]] = [[] for _ in range(n)]
         for i in range(n):
             for j in range(n):
-                if i != j and _pareto_dominates(f[i], f[j]):
+                if i != j and _default_dominator.dominates(f[i], f[j]):
                     dom_set[i].append(j)
                     dom_count[j] += 1
         ref_ranks = np.full(n, -1, int)
@@ -1140,24 +1141,24 @@ class TestParetoDominator:
     """Tests for ParetoDominator and the Dominator ABC seam."""
 
     # -----------------------------------------------------------------------
-    # 1. dominates() parity with legacy _pareto_dominates
+    # 1. dominates() behavior
     # -----------------------------------------------------------------------
     def test_dominates_parity_random_pairs(self) -> None:
-        """ParetoDominator.dominates agrees with legacy _pareto_dominates."""
+        """ParetoDominator.dominates matches the Pareto definition."""
         rng = np.random.default_rng(0)
         dom = ParetoDominator()
         for _ in range(200):
             fa = rng.random(3)
             fb = rng.random(3)
-            assert dom.dominates(fa, fb) == _pareto_dominates(fa, fb), (fa, fb)
+            expected = np.all(fa <= fb) and np.any(fa < fb)
+            assert dom.dominates(fa, fb) == expected, (fa, fb)
 
     def test_dominates_nan_in_fa_returns_false(self) -> None:
-        """NaN in fa → never dominates (consistent with legacy behaviour)."""
+        """NaN in fa never dominates."""
         dom = ParetoDominator()
         fa = np.array([np.nan, 0.0])
         fb = np.array([1.0, 1.0])
         assert not dom.dominates(fa, fb)
-        assert not _pareto_dominates(fa, fb)
 
     def test_dominates_nan_in_fb_is_infinitely_bad(self) -> None:
         """NaN in fb is replaced with +inf before the batch comparison."""
@@ -1173,7 +1174,6 @@ class TestParetoDominator:
         fa = np.array([3.0, 3.0])
         fb = np.array([1.0, 1.0])
         assert dom.dominates(fa, fb, direction)
-        assert _pareto_dominates(fa, fb, direction)
         assert not dom.dominates(fb, fa, direction)
 
     def test_dominates_direction_minimize(self) -> None:
@@ -1183,7 +1183,6 @@ class TestParetoDominator:
         fa = np.array([1.0, 1.0])
         fb = np.array([3.0, 3.0])
         assert dom.dominates(fa, fb, direction)
-        assert _pareto_dominates(fa, fb, direction)
 
     # -----------------------------------------------------------------------
     # 2. dominance_matrix() parity with brute-force and scalar↔batched

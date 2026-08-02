@@ -3,12 +3,11 @@
 # This file is distributed under the same license as the saealib package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 02:54+0900\n"
+"POT-Creation-Date: 2026-08-02 10:23+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,11 +18,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../../components/index.md:1 ../../../components/index.md:13
+#: ../../components/index.md:1 ../../components/index.md:13
 msgid "Components"
 msgstr "コンポーネント"
 
-#: ../../../components/index.md:3
+#: ../../components/index.md:3
 msgid ""
 "Detailed usage of each component and guidelines for extending it. First "
 "we show how the components fit together in the overall pipeline, then "
@@ -32,156 +31,157 @@ msgstr ""
 "各コンポーネントの詳しい使い方と拡張ガイドラインです。 "
 "まず全体のパイプラインでコンポーネント同士がどう組み合わさるかを示し、そのあとページ単位の詳細に入ります。"
 
-#: ../../../components/index.md:6
+#: ../../components/index.md:6
 msgid "Overall pipeline structure"
 msgstr "パイプライン全体の構成"
 
-#: ../../../components/index.md:8
+#: ../../components/index.md:8
 msgid ""
 "`Optimizer` bundles the following components and drives the generation "
 "loop until `Termination` decides to stop. `OptimizationStrategy` "
 "orchestrates the processing for a single generation. `Algorithm` "
-"generates candidate solutions (ask), `SurrogateManager` scores them "
-"cheaply, the strategy decides which candidates receive an expensive true "
+"generates candidate solutions (ask), `SurrogateManager` predicts their "
+"outcomes cheaply, and `AcquisitionFunction` scores those predictions. The"
+" strategy then decides which candidates receive an expensive true "
 "evaluation, and the result is reflected in both `Algorithm`'s population "
 "(tell) and the `Archive`. `Archive` also doubles as the surrogate's "
 "training data."
-msgstr ""
-"`Optimizer`は以下のコンポーネントを束ね、`Termination`が終了と判定するまで世代ループを駆動します。 "
-"1世代分の処理は`OptimizationStrategy`が統括します。 "
-"`Algorithm`が候補解を生成し（ask）、`SurrogateManager`がそれを安価にスコアリングし、戦略がどの候補解に高コストな真の評価を割り当てるかを決め、結果は`Algorithm`側の個体群（tell）と`Archive`の両方に反映されます。"
+msgstr "`Optimizer`は以下のコンポーネントを束ね、`Termination`が終了と判定するまで世代ループを駆動します。"
+" 1世代分の処理は`OptimizationStrategy`が統括します。"
+" `Algorithm`が候補解を生成し（ask）、`SurrogateManager`が予測し、`AcquisitionFunction`がその予測をスコアリングします。"
+" 戦略は高コストな真の評価を割り当てる候補を決め、結果を`Algorithm`側の個体群（tell）と`Archive`の両方へ反映します。"
 " `Archive`はサロゲートの学習データも兼ねています。"
 
-#: ../../../components/index.md:35
+#: ../../components/index.md:36
 msgid ""
 "Each stage fires typed events via `CallbackManager`, so you can observe "
 "or intervene in the pipeline's progress without subclassing (see "
 "[CallbackManager](callbacks.md))."
 msgstr "各ステージは`CallbackManager`経由で型付きイベントを発火するため、サブクラス化せずにパイプラインの途中経過を観察したり操作したりできます（[CallbackManager](callbacks.md)を参照）。"
 
-#: ../../../components/index.md:37
+#: ../../components/index.md:38
 msgid "The role of each component is as follows."
 msgstr "各コンポーネントの役割は次の通りです。"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid "Role"
 msgstr "役割"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid "[Problem](problem.md)"
 msgstr "[Problem](problem.md)"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid ""
 "Defines the objective function, design variables, search range, "
 "constraints, and optimization direction"
 msgstr "目的関数、設計変数、探索範囲、制約、最適化の方向(direction)を定義する"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid "[Initializer](initialization.md)"
 msgstr "[Initializer](initialization.md)"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid "Generates the initial population and archive before the loop starts"
 msgstr "ループ開始前に初期個体群とアーカイブを生成する"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid "[Algorithm](algorithm.md)"
 msgstr "[Algorithm](algorithm.md)"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid ""
 "The evolutionary search itself (GA/PSO). `ask()` generates candidates, "
 "`tell()` updates the population"
 msgstr "進化的探索本体（GA/PSO）。`ask()`が候補解を生成し、`tell()`が個体群を更新する"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid "[OptimizationStrategy](strategies.md)"
 msgstr "[OptimizationStrategy](strategies.md)"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid ""
 "Orchestrates one generation's pipeline and decides which candidates "
 "receive a true evaluation"
 msgstr "1世代分のパイプラインを統括し、どの候補解が真の評価を受けるかを決める"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid "[SurrogateManager](surrogate_manager.md)"
 msgstr "[SurrogateManager](surrogate_manager.md)"
 
-#: ../../../components/index.md:13
-msgid "Bridges surrogate fitting and scoring, exposing `score_candidates()`"
-msgstr "サロゲートのフィットとスコアリングを橋渡しし、`score_candidates()`を公開する"
+#: ../../components/index.md:13
+msgid "Coordinates fitting and `predict()`"
+msgstr "フィットと`predict()`を協調させる"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid "[Surrogate](surrogate.md)"
 msgstr "[Surrogate](surrogate.md)"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid ""
 "Fits and predicts using the archive's data. Knows nothing about how "
 "scoring works"
 msgstr "アーカイブのデータでフィットし予測する。スコアリングの方法は関知しない"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid "[AcquisitionFunction](acquisition_functions.md)"
 msgstr "[AcquisitionFunction](acquisition_functions.md)"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid ""
 "Converts predictions into a scalar score (higher is better). Knows "
 "nothing about the model's details"
 msgstr "予測値を（高いほど良い）スカラースコアへ変換する。モデルの詳細は関知しない"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid "[Evaluator](evaluation.md)"
 msgstr "[Evaluator](evaluation.md)"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid ""
 "Runs true evaluation (sequentially, or in parallel via the `parallel` "
 "extra)"
 msgstr "真の評価を実行する（逐次、または`parallel`エクストラによる並列）"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid "[Archive](population.md)"
 msgstr "[Archive](population.md)"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid ""
 "Accumulates every truly evaluated point. Also doubles as the surrogate's "
 "training dataset"
 msgstr "真に評価済みの点をすべて蓄積する。サロゲートの学習データセットも兼ねる"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid "[Termination](termination.md)"
 msgstr "[Termination](termination.md)"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid "Judges the loop's termination condition (default: maximum evaluations)"
 msgstr "ループの終了条件を判定する（既定は最大評価回数）"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid "[CallbackManager](callbacks.md)"
 msgstr "[CallbackManager](callbacks.md)"
 
-#: ../../../components/index.md:13
+#: ../../components/index.md:13
 msgid ""
 "Observes and records events throughout the pipeline, and also enables "
 "swapping components at runtime"
 msgstr "パイプライン各所のイベントを観察して記録し、実行時のコンポーネント差し替えにも使う"
 
-#: ../../../components/index.md:53
+#: ../../components/index.md:54
 msgid "Assembling with the low-level API"
 msgstr "低レベルAPIでの組み立て"
 
-#: ../../../components/index.md:55
+#: ../../components/index.md:56
 msgid ""
 "Using `Optimizer` directly lets you swap out each component individually "
 "via method chaining."
 msgstr "`Optimizer`を直接使うと、各コンポーネントをメソッドチェーンで個別に差し替えられます。"
 
-#: ../../../components/index.md:87
+#: ../../components/index.md:91
 msgid ""
 "The high-level API (`minimize()`/`maximize()`) is this same pipeline "
 "auto-configured with sensible defaults. For research use cases that need "
@@ -194,439 +194,261 @@ msgstr ""
 "世代ごとの検査やカスタムループ制御が必要な研究用途では、`.run()`の代わりに`.iterate()`を使います。 "
 "`.iterate()`を使った実例は[単目的最適化](../tutorials/single_objective.md)などのチュートリアルにあります。"
 
-#: ../../../components/index.md:91
+#: ../../components/index.md:95
 msgid ""
 "See [OptimizationStrategy](strategies.md) for how each strategy "
 "configures this pipeline internally, and [Stage](stage.md) for the "
 "contract of the individual stages that make up the pipeline."
 msgstr "各Strategyが内部でこのパイプラインをどう構成するかは[OptimizationStrategy](strategies.md)を、パイプラインを構成するステージ単体の契約は[Stage](stage.md)を参照してください。"
 
-#: ../../../components/index.md:97
+#: ../../components/index.md:101
 msgid "Extension guidelines"
 msgstr "{fa}`wand-magic-sparkles;sd-mr-1` 拡張のガイドライン"
 
-#: ../../../components/index.md:101
+#: ../../components/index.md:105
 msgid ""
 "For when subclassing is too heavy: `with_post`/`with_post_fit`, "
 "`Pipeline`/`Stage`, `CallbackManager`, `Registry`."
 msgstr "サブクラス化では重すぎる場合に：`with_post`/`with_post_fit`、`Pipeline`/`Stage`、`CallbackManager`、`Registry`。"
 
-#: ../../../components/index.md:105
+#: ../../components/index.md:109
 msgid "Problem definition and ranking"
 msgstr "問題定義とランキング"
 
-#: ../../../components/index.md:111
+#: ../../components/index.md:115
 msgid "Problem"
 msgstr "{fa}`compass;sd-mr-1` Problem"
 
-#: ../../../components/index.md:115
+#: ../../components/index.md:119
 msgid "Defines the objective function, variables, direction, and constraints."
 msgstr "目的関数、変数、方向(direction)、制約を定義します。"
 
-#: ../../../components/index.md:118
+#: ../../components/index.md:122
 msgid "ConstraintHandler"
 msgstr "{fa}`filter;sd-mr-1` ConstraintHandler"
 
-#: ../../../components/index.md:122
+#: ../../components/index.md:126
 msgid ""
 "How to implement your own constraint-violation aggregation, feasibility "
 "judgment, and repair strategy."
 msgstr "制約違反の集約、実行可能性判定、修復戦略を独自実装する方法。"
 
-#: ../../../components/index.md:125
+#: ../../components/index.md:129
 msgid "Comparator"
 msgstr "{fa}`arrow-down-up-across-line;sd-mr-1` Comparator"
 
-#: ../../../components/index.md:129
+#: ../../components/index.md:133
 msgid "Ranking solutions. When to use NSGA2/SPEA2/HV and the like."
 msgstr "解の順位付け。NSGA2/SPEA2/HVなどの使い分け。"
 
-#: ../../../components/index.md:132
+#: ../../components/index.md:136
 msgid "Dominator"
 msgstr "{fa}`crown;sd-mr-1` Dominator"
 
-#: ../../../components/index.md:136
+#: ../../components/index.md:140
 msgid ""
 "How to implement your own dominance relations, such as Pareto dominance "
 "or ε-dominance."
 msgstr "Pareto支配やε支配などの支配関係を独自実装する方法。"
 
-#: ../../../components/index.md:139
+#: ../../components/index.md:143
 msgid "NonDominatedSorter"
 msgstr "{fa}`arrow-down-wide-short;sd-mr-1` NonDominatedSorter"
 
-#: ../../../components/index.md:143
+#: ../../components/index.md:147
 msgid ""
 "Swapping the non-dominated sorting algorithm. Also covers computing "
 "crowding distance and SPEA2 fitness."
 msgstr "非優越ソートアルゴリズムの差し替え。crowding distanceやSPEA2 fitnessの計算も。"
 
-#: ../../../components/index.md:146
+#: ../../components/index.md:150
 msgid "Decomposition"
 msgstr "{fa}`scissors;sd-mr-1` Decomposition"
 
-#: ../../../components/index.md:150
+#: ../../components/index.md:154
 msgid ""
 "MOEA/D-style scalarizing (decomposition) functions and "
 "`DecompositionComparator`."
 msgstr "MOEA/D風のスカラー化（分解）関数と`DecompositionComparator`。"
 
-#: ../../../components/index.md:154
+#: ../../components/index.md:158
 msgid "Search algorithms"
 msgstr "探索アルゴリズム"
 
-#: ../../../components/index.md:160
+#: ../../components/index.md:164
 msgid "Algorithm"
 msgstr "{fa}`dna;sd-mr-1` Algorithm"
 
-#: ../../../components/index.md:164
+#: ../../components/index.md:168
 msgid "GA and PSO, and how to implement a custom `Algorithm`."
 msgstr "GAとPSO、カスタム`Algorithm`の実装方法。"
 
-#: ../../../components/index.md:167
+#: ../../components/index.md:171
 msgid "Crossover"
 msgstr "{fa}`code-fork;sd-mr-1` Crossover"
 
-#: ../../../components/index.md:171
+#: ../../components/index.md:175
 msgid ""
 "BLX-α, SBX, uniform crossover, and more. When to use each for mixed-"
 "variable problems."
 msgstr "BLX-α/SBX/一様交叉など。混合変数問題での使い分け。"
 
-#: ../../../components/index.md:174
+#: ../../components/index.md:178
 msgid "Mutation"
 msgstr "{fa}`bolt-lightning;sd-mr-1` Mutation"
 
-#: ../../../components/index.md:178
+#: ../../components/index.md:182
 msgid ""
 "Uniform, Gaussian, polynomial mutation, and more. When to use each for "
 "mixed-variable problems."
 msgstr "一様/ガウス/多項式突然変異など。混合変数問題での使い分け。"
 
-#: ../../../components/index.md:181
+#: ../../components/index.md:185
 msgid "ParentSelection"
 msgstr "{fa}`hand-pointer;sd-mr-1` ParentSelection"
 
-#: ../../../components/index.md:185
+#: ../../components/index.md:189
 msgid "Parent-selection schemes such as tournament and roulette-wheel selection."
 msgstr "トーナメント選択やルーレット選択などの親選択方式。"
 
-#: ../../../components/index.md:188
+#: ../../components/index.md:192
 msgid "SurvivorSelection"
 msgstr "{fa}`user-check;sd-mr-1` SurvivorSelection"
 
-#: ../../../components/index.md:192
+#: ../../components/index.md:196
 msgid ""
 "Survivor-selection (generational replacement) schemes such as truncation "
 "selection."
 msgstr "打ち切り選択などの生存選択（世代交代）方式。"
 
-#: ../../../components/index.md:196
+#: ../../components/index.md:200
 msgid "Surrogate modeling"
 msgstr "サロゲートモデリング"
 
-#: ../../../components/index.md:202
+#: ../../components/index.md:206
 msgid "Surrogate"
 msgstr "{fa}`brain;sd-mr-1` Surrogate"
 
-#: ../../../components/index.md:206
+#: ../../components/index.md:210
 msgid ""
 "Built-in surrogates, external-library adapters, and how to implement a "
 "custom `Surrogate`."
 msgstr "組み込みサロゲート、外部ライブラリアダプタ、独自Surrogateの実装方法。"
 
-#: ../../../components/index.md:209
+#: ../../components/index.md:213
 msgid "SurrogateManager"
 msgstr "{fa}`sitemap;sd-mr-1` SurrogateManager"
 
-#: ../../../components/index.md:213
+#: ../../components/index.md:217
 msgid ""
 "Bridges the surrogate's predictions and the acquisition function's "
 "scoring."
 msgstr "サロゲートの予測と獲得関数のスコアリングを橋渡しします。"
 
-#: ../../../components/index.md:216
+#: ../../components/index.md:220
 msgid "TrainingSet"
 msgstr "{fa}`database;sd-mr-1` TrainingSet"
 
-#: ../../../components/index.md:220
+#: ../../components/index.md:224
 msgid "Where the surrogate's training data comes from, and with which labels."
 msgstr "サロゲートの学習データをどこから、どのラベルで抽出するか。"
 
-#: ../../../components/index.md:223
+#: ../../components/index.md:227
 msgid "AcquisitionFunction"
 msgstr "{fa}`calculator;sd-mr-1` AcquisitionFunction"
 
-#: ../../../components/index.md:227
+#: ../../components/index.md:231
 msgid "Scores candidates from the surrogate's predictions."
 msgstr "サロゲートの予測値から候補解をスコアリングします。"
 
-#: ../../../components/index.md:230
+#: ../../components/index.md:234
 msgid "AccuracyBasedSurrogateSwitcher"
 msgstr "{fa}`toggle-on;sd-mr-1` AccuracyBasedSurrogateSwitcher"
 
-#: ../../../components/index.md:234
+#: ../../components/index.md:238
 msgid ""
 "Accuracy metrics, evaluation methods, and dynamic component switching "
 "inside an `iterate()` loop."
 msgstr "精度指標、評価方法、`iterate()`ループでの動的なコンポーネント切り替え。"
 
-#: ../../../components/index.md:238
+#: ../../components/index.md:242
 msgid "Execution and evaluation strategy"
 msgstr "実行基盤と評価戦略"
 
-#: ../../../components/index.md:244
+#: ../../components/index.md:248
 msgid "Initializer"
 msgstr "{fa}`play;sd-mr-1` Initializer"
 
-#: ../../../components/index.md:248
+#: ../../components/index.md:252
 msgid ""
 "How the initial population and archive are generated (LHS/Random/Sobol), "
 "and custom implementations."
 msgstr "初期個体群とアーカイブの生成方法（LHS/Random/Sobol）と独自実装。"
 
-#: ../../../components/index.md:251
+#: ../../components/index.md:255
 msgid "Evaluator"
 msgstr "{fa}`microchip;sd-mr-1` Evaluator"
 
-#: ../../../components/index.md:255
+#: ../../components/index.md:259
 msgid "Sequential and parallel backends for objective function evaluation."
 msgstr "目的関数評価の逐次実行と並列実行のバックエンド。"
 
-#: ../../../components/index.md:258
+#: ../../components/index.md:262
 msgid "OptimizationStrategy"
 msgstr "{fa}`chess-knight;sd-mr-1` OptimizationStrategy"
 
-#: ../../../components/index.md:262
+#: ../../components/index.md:266
 msgid "Decides which candidates receive a true evaluation."
 msgstr "どの候補解に真の評価を行うかを決定します。"
 
-#: ../../../components/index.md:265
+#: ../../components/index.md:269
 msgid "Termination"
 msgstr "{fa}`stop;sd-mr-1` Termination"
 
-#: ../../../components/index.md:269
+#: ../../components/index.md:273
 msgid "How to combine termination conditions (`|`/`&`/`~`) and write your own."
 msgstr "終了条件の組み合わせ方（`|`/`&`/`~`）と独自条件の書き方。"
 
-#: ../../../components/index.md:273
+#: ../../components/index.md:277
 msgid "Observation and core data structures"
 msgstr "観察とコアデータ構造"
 
-#: ../../../components/index.md:279
+#: ../../components/index.md:283
 msgid "CallbackManager"
 msgstr "{fa}`eye;sd-mr-1` CallbackManager"
 
-#: ../../../components/index.md:283
+#: ../../components/index.md:287
 msgid ""
 "Observe the optimization pipeline, for logging and reaching into its "
 "internals."
 msgstr "最適化パイプラインを観察し、ログ記録や内部へのアクセスを行います。"
 
-#: ../../../components/index.md:286
+#: ../../components/index.md:290
 msgid "Stage"
 msgstr "{fa}`bars-staggered;sd-mr-1` Stage"
 
-#: ../../../components/index.md:290
+#: ../../components/index.md:294
 msgid ""
 "The stages that make up the generation loop inside "
 "`OptimizationStrategy`. How to implement a custom `Stage`."
 msgstr "OptimizationStrategy内部の世代ループを構成するステージ。独自Stageの実装方法。"
 
-#: ../../../components/index.md:293
+#: ../../components/index.md:297
 msgid "OptimizationState"
 msgstr "{fa}`hard-drive;sd-mr-1` OptimizationState"
 
-#: ../../../components/index.md:297
+#: ../../components/index.md:301
 msgid ""
 "The state (ctx) that flows through the pipeline. Its main fields and "
 "checkpointing."
 msgstr "パイプラインを貫通する状態(ctx)。主要フィールドとチェックポイント。"
 
-#: ../../../components/index.md:300
+#: ../../components/index.md:304
 msgid "Population"
 msgstr "{fa}`users;sd-mr-1` Population"
 
-#: ../../../components/index.md:304
+#: ../../components/index.md:308
 msgid ""
 "The data structure and API for the population and archive. How "
 "Archive/ParetoArchive work."
 msgstr "個体群とアーカイブのデータ構造とAPI。Archive/ParetoArchiveの仕組み。"
-
-#~ msgid "Components"
-#~ msgstr ""
-
-#~ msgid "コンポーネント"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "各コンポーネントの詳しい使い方と拡張ガイドラインです。 "
-#~ "まず全体のパイプラインでコンポーネント同士がどう組み合わさるかを示し、そのあとページ単位の詳細に入ります。"
-#~ msgstr ""
-
-#~ msgid "パイプライン全体の構成"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`Optimizer`は以下のコンポーネントを束ね、`Termination`が終了と判定するまで世代ループを駆動します。 "
-#~ "1世代分の処理は`OptimizationStrategy`が統括します。 "
-#~ "`Algorithm`が候補解を生成し（ask）、`SurrogateManager`がそれを安価にスコアリングし、戦略がどの候補解に高コストな真の評価を割り当てるかを決め、結果は`Algorithm`側の母集団（tell）と`Archive`の両方に反映されます。"
-#~ " `Archive`はサロゲートの学習データも兼ねています。"
-#~ msgstr ""
-
-#~ msgid "各ステージは`CallbackManager`経由で型付きイベントを発火するため、サブクラス化せずにパイプラインの途中経過を観察したり操作したりできます（[CallbackManager](callbacks.md)を参照）。"
-#~ msgstr ""
-
-#~ msgid "各コンポーネントの役割は次の通りです。"
-#~ msgstr ""
-
-#~ msgid "役割"
-#~ msgstr ""
-
-#~ msgid "目的関数・設計変数・探索範囲・制約・最適化の方向(direction)を定義する"
-#~ msgstr ""
-
-#~ msgid "ループ開始前に初期集団とアーカイブを生成する"
-#~ msgstr ""
-
-#~ msgid "進化的探索本体（GA/PSO）。`ask()`が候補解を生成し、`tell()`が母集団を更新する"
-#~ msgstr ""
-
-#~ msgid "1世代分のパイプラインを統括し、どの候補解が真の評価を受けるかを決める"
-#~ msgstr ""
-
-#~ msgid "サロゲートのフィットとスコアリングを橋渡しし、`score_candidates()`を公開する"
-#~ msgstr ""
-
-#~ msgid "アーカイブのデータでフィットし予測する。スコアリングの方法は関知しない"
-#~ msgstr ""
-
-#~ msgid "予測値を（高いほど良い）スカラースコアへ変換する。モデルの詳細は関知しない"
-#~ msgstr ""
-
-#~ msgid "真の評価を実行する（逐次、または`parallel`エクストラによる並列）"
-#~ msgstr ""
-
-#~ msgid "真に評価済みの点をすべて蓄積する。サロゲートの学習データセットも兼ねる"
-#~ msgstr ""
-
-#~ msgid "ループの終了条件を判定する（既定は最大評価回数）"
-#~ msgstr ""
-
-#~ msgid "パイプライン各所のイベントを観察・記録し、実行時のコンポーネント差し替えにも使う"
-#~ msgstr ""
-
-#~ msgid "低レベルAPIでの組み立て"
-#~ msgstr ""
-
-#~ msgid "`Optimizer`を直接使うと、各コンポーネントをメソッドチェーンで個別に差し替えられます。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "高レベルAPI（`minimize()`/`maximize()`）は、このパイプラインをsensible "
-#~ "defaultsで自動構成したものです。 "
-#~ "世代ごとの検査やカスタムループ制御が必要な研究用途では、`.run()`の代わりに`.iterate()`を使います。 "
-#~ "`.iterate()`を使った実例は[単目的最適化](../tutorials/single_objective.md)などのチュートリアルにあります。"
-#~ msgstr ""
-
-#~ msgid "各Strategyが内部でこのパイプラインをどう構成するかは[OptimizationStrategy](strategies.md)を、パイプラインを構成するステージ単体の契約は[Stage](stage.md)を参照してください。"
-#~ msgstr ""
-
-#~ msgid "拡張のガイドライン"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "サブクラス化では重すぎる場合に: "
-#~ "`with_post`/`with_post_fit`、`Pipeline`/`Stage`、`CallbackManager`、`Registry`。"
-#~ msgstr ""
-
-#~ msgid "問題定義とランキング"
-#~ msgstr ""
-
-#~ msgid "目的関数、変数、方向(direction)、制約を定義します。"
-#~ msgstr ""
-
-#~ msgid "制約違反の集約、実行可能性判定、修復戦略を独自実装する方法。"
-#~ msgstr ""
-
-#~ msgid "解の順位付け。NSGA2/SPEA2/HVなどの使い分け。"
-#~ msgstr ""
-
-#~ msgid "Pareto支配やε支配などの支配関係を独自実装する方法。"
-#~ msgstr ""
-
-#~ msgid "非劣ソートアルゴリズムの差し替え。crowding distanceやSPEA2 fitnessの計算も。"
-#~ msgstr ""
-
-#~ msgid "MOEA/D風のスカラー化（分解）関数と`DecompositionComparator`。"
-#~ msgstr ""
-
-#~ msgid "探索アルゴリズム"
-#~ msgstr ""
-
-#~ msgid "GAとPSO、カスタム`Algorithm`の実装方法。"
-#~ msgstr ""
-
-#~ msgid "BLX-α/SBX/一様交叉など。混合変数問題での使い分け。"
-#~ msgstr ""
-
-#~ msgid "一様/ガウス/多項式突然変異など。混合変数問題での使い分け。"
-#~ msgstr ""
-
-#~ msgid "トーナメント選択やルーレット選択などの親選択方式。"
-#~ msgstr ""
-
-#~ msgid "打ち切り選択などの生存選択（世代交代）方式。"
-#~ msgstr ""
-
-#~ msgid "サロゲートモデリング"
-#~ msgstr ""
-
-#~ msgid "組み込みサロゲート、外部ライブラリアダプタ、独自Surrogateの実装方法。"
-#~ msgstr ""
-
-#~ msgid "サロゲートの予測と獲得関数のスコアリングを橋渡しします。"
-#~ msgstr ""
-
-#~ msgid "サロゲートの学習データをどこから、どのラベルで抽出するか。"
-#~ msgstr ""
-
-#~ msgid "サロゲートの予測値から候補解をスコアリングします。"
-#~ msgstr ""
-
-#~ msgid "精度指標、評価方法、`iterate()`ループでの動的なコンポーネント切り替え。"
-#~ msgstr ""
-
-#~ msgid "実行基盤と評価戦略"
-#~ msgstr ""
-
-#~ msgid "初期集団とアーカイブの生成方法（LHS/Random/Sobol）と独自実装。"
-#~ msgstr ""
-
-#~ msgid "目的関数評価の逐次実行と並列実行のバックエンド。"
-#~ msgstr ""
-
-#~ msgid "どの候補解に真の評価を行うかを決定します。"
-#~ msgstr ""
-
-#~ msgid "終了条件の組み合わせ方（`|`/`&`/`~`）と独自条件の書き方。"
-#~ msgstr ""
-
-#~ msgid "観察とコアデータ構造"
-#~ msgstr ""
-
-#~ msgid "最適化パイプラインを観察し、ログ記録や内部へのアクセスを行います。"
-#~ msgstr ""
-
-#~ msgid "OptimizationStrategy内部の世代ループを構成するステージ。独自Stageの実装方法。"
-#~ msgstr ""
-
-#~ msgid "パイプラインを貫通する状態(ctx)。主要フィールドとチェックポイント。"
-#~ msgstr ""
-
-#~ msgid "個体群とアーカイブのデータ構造とAPI。Archive/ParetoArchiveの仕組み。"
-#~ msgstr ""
-
-#~ msgid "Component"
-#~ msgstr ""
-

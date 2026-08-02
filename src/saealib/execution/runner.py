@@ -14,9 +14,10 @@ from saealib.callback import (
 )
 from saealib.comparators import NSGA3Comparator
 from saealib.context import OptimizationState
-from saealib.exceptions import CheckpointError, EvaluationFatalError
+from saealib.exceptions import EvaluationFatalError
 
 if TYPE_CHECKING:
+    from saealib.execution.scheduler import AsyncEvaluationScheduler
     from saealib.optimizer import Optimizer
 
 
@@ -91,36 +92,22 @@ class Runner:
 
         generation_open = bool(ctx.pending_evaluations)
         while True:
-            scheduler = getattr(opt, "async_scheduler", None)
+            scheduler = getattr(opt, "async_evaluation_scheduler", None)
             if ctx.data.get("async_fatal"):
                 raise EvaluationFatalError(
                     str(ctx.data["async_fatal"].get("reason", "async fatal")), ctx
                 )
             if ctx.pending_evaluations:
-                if scheduler is None:
-                    raise CheckpointError(
-                        "pending evaluations require an asynchronous scheduler"
-                    )
-                if set(ctx.pending_evaluations) != set(ctx.evaluation_handles):
-                    ctx = scheduler.reattach(ctx)
-                before = ctx
-                ctx = scheduler.poll(ctx, wait=False)
-                if ctx.pending_evaluations:
-                    if opt.termination.is_terminated(ctx):
-                        if ctx is before:
-                            time.sleep(0.001)
-                        continue
-                    result = opt.strategy.step(ctx, opt)
-                    if result is not None:
-                        ctx = result
-                    if ctx.pending_evaluations:
-                        if ctx is before:
-                            time.sleep(0.001)
-                        continue
-                if generation_open:
-                    self._finish_generation(ctx)
-                    generation_open = False
+                (
+                    ctx,
+                    generation_open,
+                    generation_finished,
+                    continue_loop,
+                ) = self._process_pending(ctx, generation_open, scheduler)
+                if generation_finished:
                     yield ctx
+                if continue_loop:
+                    continue
             if opt.termination.is_terminated(ctx):
                 break
             opt.dispatch(GenerationStartEvent(ctx=ctx))
@@ -134,6 +121,42 @@ class Runner:
                 yield ctx
 
         opt.dispatch(RunEndEvent(ctx=ctx))
+
+    def _process_pending(
+        self,
+        ctx: OptimizationState,
+        generation_open: bool,
+        scheduler: AsyncEvaluationScheduler | None,
+    ) -> tuple[OptimizationState, bool, bool, bool]:
+        opt = self.optimizer
+        if scheduler is None:
+            result = opt.strategy.step(ctx, opt)
+            if result is not None:
+                ctx = result
+            if ctx.pending_evaluations:
+                return ctx, generation_open, False, True
+        else:
+            if set(ctx.pending_evaluations) != set(ctx.evaluation_handles):
+                ctx = scheduler.reattach(ctx)
+            before = ctx
+            ctx = scheduler.poll(ctx, wait=False)
+            if ctx.pending_evaluations:
+                if opt.termination.is_terminated(ctx):
+                    if ctx is before:
+                        time.sleep(0.001)
+                    return ctx, generation_open, False, True
+                result = opt.strategy.step(ctx, opt)
+                if result is not None:
+                    ctx = result
+                if ctx.pending_evaluations:
+                    if ctx is before:
+                        time.sleep(0.001)
+                    return ctx, generation_open, False, True
+
+        if generation_open:
+            self._finish_generation(ctx)
+            return ctx, False, True, scheduler is None
+        return ctx, generation_open, False, scheduler is None
 
     def _finish_generation(self, ctx: OptimizationState) -> None:
         handler = ctx.problem.handler
