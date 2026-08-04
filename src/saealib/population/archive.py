@@ -236,7 +236,6 @@ class ArchiveMixin:
         """
         if self._size == 0:  # ty: ignore[unresolved-attribute]
             return None
-        # TODO: Handling cases where the element is not a np.ndarray
         key_attr_arr = self.get_array(self.key_attr)  # ty: ignore[unresolved-attribute]
         element = np.array(element, dtype=self._schema[self.key_attr].dtype)  # ty: ignore[unresolved-attribute]
         if element.ndim == 0:

@@ -208,7 +208,6 @@ def _build_result(ctx: OptimizationState) -> Result:
             best_x = ctx.pareto_archive.get_array("x")
             best_f = ctx.pareto_archive.get_array("f")
         else:
-            # Fallback: pareto_archive is empty (should not happen in normal use)
             from saealib.comparators import non_dominated_sort
 
             _, fronts = non_dominated_sort(archive_f[pool], direction=direction)

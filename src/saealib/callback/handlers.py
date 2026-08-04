@@ -35,8 +35,11 @@ def logging_generation(event: GenerationStartEvent) -> None:
     if ctx.n_obj == 1:
         cmp = ctx.comparator
         sorted_idxs = cmp.sort_population(ctx.archive)
-        best_idx = sorted_idxs[0]
-        best_f = ctx.archive.get_array("f")[best_idx]
+        best_f = (
+            ctx.archive.get_array("f")[sorted_idxs[0]]
+            if len(sorted_idxs) > 0
+            else "n/a"
+        )
         logger.info(f"Generation {ctx.gen} started. fe: {ctx.fe}. Best f: {best_f}")
     else:
         f = ctx.archive.get_array("f")

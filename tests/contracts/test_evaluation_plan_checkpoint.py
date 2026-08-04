@@ -1,13 +1,16 @@
 import json
+from typing import cast
 
 import numpy as np
 import pytest
 from test_named_state_checkpoint import _problem, _state
 
+from saealib.acquisition import AcquisitionFunction, AcquisitionResult
 from saealib.context import EvaluationPlanState
 from saealib.exceptions import CheckpointError, ValidationError
 from saealib.execution.evaluator import EvaluationRequest
-from saealib.policies.evaluation import EvaluationPlan
+from saealib.policies.evaluation import EvaluationPlan, EvaluationPlanner
+from saealib.stages import AcquisitionStage, EvaluationPlanStage
 
 
 def test_multi_request_plan_round_trip(tmp_path):
@@ -25,7 +28,10 @@ def test_multi_request_plan_round_trip(tmp_path):
         evaluation_plan=EvaluationPlan(
             requests,
             completion_rule="all_requests_completed",
-            artifacts={"replicates": 3},
+            artifacts={
+                "replicate_ids": np.array([1, 2, 3], dtype=np.int64),
+                "summary": {"count": 3, "complete": True},
+            },
         ),
         evaluation_plan_state=EvaluationPlanState(
             submitted=(1, 2), deferred=(3,), continuation=False, feedback=True
@@ -41,8 +47,78 @@ def test_multi_request_plan_round_trip(tmp_path):
         3,
     ]
     assert restored.evaluation_plan.requests[1].metadata["replicate"] == 2
+    artifacts = restored.evaluation_plan.artifacts
+    assert artifacts["summary"] == {
+        "count": len(restored.evaluation_plan.requests),
+        "complete": True,
+    }
+    np.testing.assert_array_equal(
+        artifacts["replicate_ids"],
+        [int(request.request_id) for request in restored.evaluation_plan.requests],
+    )
     assert restored.evaluation_plan_state.deferred == (3,)
     assert restored.evaluation_plan_state.feedback is True
+
+
+class _ArtifactAcquisition(AcquisitionFunction):
+    def evaluate(self, candidates_x, prediction, archive, ctx=None, *, prepared=None):
+        return AcquisitionResult(
+            scores=np.array([0.25, 0.75], dtype=np.float64),
+            artifacts={"candidate_order": candidates_x[:, 0].copy()},
+        )
+
+
+class _RecordingPlanner:
+    def __init__(self):
+        self.received = None
+
+    def plan(self, candidates, acquisition, ctx):
+        self.received = acquisition
+        assert acquisition is not None
+        return EvaluationPlan(
+            (
+                EvaluationRequest(
+                    np.int64(1), candidates.id.copy(), candidates.x.copy()
+                ),
+            ),
+            artifacts={
+                "acquisition_artifact": acquisition.artifacts["candidate_order"]
+            },
+        )
+
+
+def test_acquisition_result_artifacts_reach_evaluation_planner():
+    state = _state()
+    state = state.replace(offspring=state.population)
+    scored = AcquisitionStage(_ArtifactAcquisition(), cbmanager=None).execute(state)
+
+    acquisition_result = scored.acquisition_result
+    offspring = scored.offspring
+    assert acquisition_result is not None
+    assert offspring is not None
+    scores = acquisition_result.scores
+    assert scores is not None
+    assert scores.shape == (len(offspring),)
+    np.testing.assert_array_equal(
+        acquisition_result.artifacts["candidate_order"],
+        offspring.x[:, 0],
+    )
+
+    planner = _RecordingPlanner()
+    planned = EvaluationPlanStage(planner=cast(EvaluationPlanner, planner)).execute(
+        scored
+    )
+
+    assert planner.received is acquisition_result
+    np.testing.assert_array_equal(
+        planner.received.artifacts["candidate_order"],
+        acquisition_result.artifacts["candidate_order"],
+    )
+    assert (
+        planned.evaluation_plan is not None
+        and planned.evaluation_plan.artifacts["acquisition_artifact"]
+        is acquisition_result.artifacts["candidate_order"]
+    )
 
 
 def test_plan_state_rejects_invalid_relationships_and_update_ids():

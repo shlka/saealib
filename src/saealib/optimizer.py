@@ -122,7 +122,6 @@ class ComponentProvider(Protocol):
         ...
 
 
-# class Optimizer(ComponentProvider):
 class Optimizer:
     """
     Optimizer class for evolutionary algorithms.

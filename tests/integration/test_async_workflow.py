@@ -1451,6 +1451,27 @@ def test_fatal_tombstone_roundtrip_raises_typed_error(tmp_path):
     assert caught.value.state is restored
 
 
+def test_scheduler_fatal_state_retains_the_keyed_state_reference():
+    class FailingAlgorithm:
+        def tell(self, state, provider, offspring):
+            raise RuntimeError("tell failed")
+
+    state = make_state()
+    evaluator = ReattachEvaluator()
+    scheduler = AsyncEvaluationScheduler(
+        evaluator,
+        algorithm=FailingAlgorithm(),
+        feedback_builder=TrueOnlyFeedback(),
+    )
+    state = scheduler.submit(state, [requests()[0]])
+    with pytest.raises(EvaluationFatalError) as caught:
+        scheduler.poll(state, wait=True)
+
+    retained = scheduler._fatal_states[id(state)]
+    assert retained[0] is state
+    assert retained[1] is caught.value.state
+
+
 def test_tell_failure_cannot_be_retried_after_tell_started():
     class FailingAlgorithm:
         def __init__(self):

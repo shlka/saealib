@@ -2,8 +2,7 @@
 Contract tests for ``Population.update_rows()`` (ADR-0001 §2.3) and its
 interaction with ``ArchiveMixin``'s KD-tree cache (ADR-0001 §2.4).
 
-Covers the documented contract only (semantic-contract style, per
-``.claude/rules/python-native-backend-readiness.md``): validation ordering,
+Covers the documented contract only: validation ordering,
 atomicity, version-bump semantics, and copy-not-alias behavior.
 """
 

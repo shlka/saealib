@@ -77,7 +77,7 @@ class AsyncEvaluationScheduler:
         self.feedback_builder = feedback_builder
         self.algorithm = algorithm
         self.callback_manager = callback_manager
-        self._fatal_states: dict[int, OptimizationState] = {}
+        self._fatal_states: dict[int, tuple[OptimizationState, OptimizationState]] = {}
 
     def pending_candidate_ids(self, state: OptimizationState) -> np.ndarray:
         """Return candidate IDs reserved by pending requests."""
@@ -275,8 +275,9 @@ class AsyncEvaluationScheduler:
                 )
         fatal = self._fatal_states.get(id(state))
         if fatal is not None:
+            _, fatal_state = fatal
             raise EvaluationFatalError(
-                "async update has a persistent fatal state", fatal
+                "async update has a persistent fatal state", fatal_state
             )
         current = state
         while current.pending_evaluations:
@@ -361,7 +362,7 @@ class AsyncEvaluationScheduler:
                 try:
                     current = self._commit_update(current, pending, handle, update)
                 except EvaluationFatalError as exc:
-                    self._fatal_states[id(state)] = exc.state
+                    self._fatal_states[id(state)] = (state, exc.state)
                     raise
                 progress = True
             if not wait or not current.pending_evaluations:

@@ -176,8 +176,6 @@ class LHSInitializer(Initializer):
 
         ctx = self._create_context(problem, archive, pareto_archive, population, rng)
 
-        # TODO: Assign different metadata per dimension (mixed variable support).
-        # TODO: Support initialization of CV and other attributes.
         archive_x = scipy.stats.qmc.LatinHypercube(d=problem.dim, rng=rng).random(
             self.n_init_archive
         )
@@ -189,7 +187,6 @@ class LHSInitializer(Initializer):
 
         ids = ctx.candidate_id_allocator.allocate(self.n_init_archive)
 
-        # TODO: Register algorithm-specific attributes in the archive.
         for i in range(self.n_init_archive):
             data = {
                 "x": archive_x[i],

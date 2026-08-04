@@ -16,7 +16,7 @@ except ModuleNotFoundError:
 
 
 def main():
-    """Run expected-improvement global optimization."""
+    """Run ParEGO global optimization."""
     problem = reference_problem()
     return (
         Optimizer(problem, seed=23)

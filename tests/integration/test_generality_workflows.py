@@ -330,6 +330,7 @@ def test_examples_use_their_actual_public_components():
         "generality_qei.py": "archive",
         "generality_async.py": "archive",
         "generality_pairwise.py": "archive",
+        "generality_ehvi.py": "archive",
     }
     for name, attribute in examples.items():
         result = _load_example(name).main()
@@ -344,11 +345,24 @@ def test_examples_use_their_actual_public_components():
     )
 
     islands = _load_example("generality_islands.py").main()
-    assert len(islands["events"]) == 1
     assert len(islands["islands"]) == 2
+    assert islands["events"]
+    assert any(
+        np.array_equal(source_row, target_row)
+        for source_row in islands["islands"][0]
+        for target_row in islands["islands"][1]
+    )
     dynamic = _load_example("generality_dynamic_archive.py").main()
     assert len(dynamic["snapshots"]) == 2
-    assert dynamic["selected"].environment == 10
+    assert dynamic["selected_name"] == "env_10"
+    assert dynamic["selected_name"] != "env_0"
+    assert dynamic["selected"] is dynamic["state"].archives[dynamic["selected_name"]]
+    ehvi_state = _load_example("generality_ehvi.py").main()
+    assert ehvi_state.problem.n_obj == 2
+    pareto_f = ehvi_state.pareto_archive.get_array("f")
+    assert len(pareto_f) >= 4
+    distinct_pareto_f = np.unique(pareto_f, axis=0)
+    assert len(distinct_pareto_f) >= 2
     noisy = _load_example("generality_noisy.py").main()
     assert noisy["state"].fe == 8
     assert len(noisy["requests"]) == 3
@@ -369,3 +383,31 @@ def test_examples_use_their_actual_public_components():
     assert set(fidelity["requests"][1].candidate_ids) <= set(
         fidelity["requests"][0].candidate_ids
     )
+
+
+def test_ehvi_example_invokes_ehvi_acquisition(monkeypatch):
+    example = _load_example("generality_ehvi.py")
+    calls = []
+    base_ehvi = example.EHVIAcquisition
+
+    class RecordingEHVI(base_ehvi):
+        def evaluate(
+            self, candidates_x, prediction, archive, ctx=None, *, prepared=None
+        ):
+            result = super().evaluate(
+                candidates_x,
+                prediction,
+                archive,
+                ctx,
+                prepared=prepared,
+            )
+            calls.append((prediction.value.shape, result.scores.copy()))
+            return result
+
+    monkeypatch.setattr(example, "EHVIAcquisition", RecordingEHVI)
+    state = example.main()
+
+    assert state.problem.n_obj == 2
+    assert calls
+    assert all(shape[1] == 2 for shape, _scores in calls)
+    assert all(np.all(np.isfinite(scores)) for _shape, scores in calls)
