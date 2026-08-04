@@ -15,7 +15,7 @@ except ModuleNotFoundError:
 
 
 def main():
-    """Run two independent optimizers and exchange their best designs."""
+    """Run two optimizers and exchange their best designs on a ring."""
     optimizers = tuple(
         Optimizer(reference_problem(), seed=seed)
         .set_initializer(LHSInitializer(2, 2, seed))
@@ -24,11 +24,10 @@ def main():
         .set_termination(Termination(max_fe(4)))
         for seed in (7, 11)
     )
-    states = IslandModel(optimizers).run()
-    islands = tuple(state.archive.get_array("x").copy() for state in states)
-    migrated = list(islands)
-    migrated[1][0] = migrated[0][0]
-    return {"islands": tuple(migrated), "events": ((0, 1),)}
+    model = IslandModel(optimizers, topology="ring", migration_interval=1)
+    states = model.run()
+    islands = tuple(state.population.get_array("x").copy() for state in states)
+    return {"islands": islands, "events": tuple(model.migration_events)}
 
 
 if __name__ == "__main__":

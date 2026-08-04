@@ -105,11 +105,7 @@ class LowerConfidenceBound(PointwiseAcquisition):
             )
         assert prediction.std is not None
         s = direction_to_minimize_sign(self.direction)
-        s_idx = (
-            s[self.obj_idx]  # type: ignore  # ty narrows bare np.ndarray isinstance to object dtype; s is float ndarray at runtime
-            if isinstance(s, np.ndarray)
-            else s
-        )
+        s_idx = s[self.obj_idx] if isinstance(s, np.ndarray) else s
         mu = prediction.value[:, self.obj_idx] * s_idx  # (n_samples,)
         sigma = prediction.std[:, self.obj_idx]  # (n_samples,)
         return -lower_confidence_bound_kernel(mu, sigma, self.kappa)
