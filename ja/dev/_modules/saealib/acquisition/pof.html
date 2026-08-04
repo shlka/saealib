@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.acquisition.pof &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>saealib.acquisition.pof &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../../../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -950,9 +950,12 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">norm</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PointwiseAcquisition</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">probability_of_feasibility_kernel</span><span class="p">,</span>
+    <span class="n">product_of_feasibility_kernel</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurrogatePrediction</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -961,7 +964,7 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="ProbabilityOfFeasibility">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.ProbabilityOfFeasibility.html#saealib.ProbabilityOfFeasibility">[ドキュメント]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ProbabilityOfFeasibility</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProbabilityOfFeasibility</span><span class="p">(</span><span class="n">PointwiseAcquisition</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Probability of Feasibility (PoF) acquisition function.</span>
 
@@ -1050,15 +1053,14 @@ window.runMermaid = runMermaid;</script>
         <span class="k">assert</span> <span class="n">prediction</span><span class="o">.</span><span class="n">std</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">mu</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">value</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_idx</span><span class="p">]</span>  <span class="c1"># (n_samples,)</span>
         <span class="n">sigma</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">std</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_idx</span><span class="p">]</span>  <span class="c1"># (n_samples,)</span>
-        <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="mf">1e-9</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">((</span><span class="mf">0.0</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">)</span>  <span class="c1"># P(g(x) &lt;= 0)</span></div>
+        <span class="k">return</span> <span class="n">probability_of_feasibility_kernel</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span></div>
 </div>
 
 
 
 <div class="viewcode-block" id="ProductOfFeasibility">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.ProductOfFeasibility.html#saealib.ProductOfFeasibility">[ドキュメント]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ProductOfFeasibility</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProductOfFeasibility</span><span class="p">(</span><span class="n">PointwiseAcquisition</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Joint probability of feasibility across all constraint columns.</span>
 
 <span class="sd">    Computes the product of per-constraint feasibility probabilities:</span>
@@ -1078,18 +1080,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ``ConstraintObjectiveSet`` (which returns ``archive.g`` as ``train_y``),</span>
 <span class="sd">    typically via ``PerObjectiveSurrogate([GP(), ...] * n_constraints)``.</span>
 
-<span class="sd">    To combine with an objective acquisition (e.g. EI), wrap both managers</span>
-<span class="sd">    in a ``CompositeSurrogateManager`` with ``product_combine``::</span>
-
-<span class="sd">        ei_manager = GlobalSurrogateManager(GP(), EI(), ArchiveObjectiveSet())</span>
-<span class="sd">        pof_manager = GlobalSurrogateManager(</span>
-<span class="sd">            PerObjectiveSurrogate([GP()] * n_constraints),</span>
-<span class="sd">            ProductOfFeasibility(),</span>
-<span class="sd">            ConstraintObjectiveSet(),</span>
-<span class="sd">        )</span>
-<span class="sd">        optimizer.set_surrogate_manager(</span>
-<span class="sd">            CompositeSurrogateManager([ei_manager, pof_manager], product_combine)</span>
-<span class="sd">        )</span>
+<span class="sd">    Combine this acquisition with an objective acquisition through</span>
+<span class="sd">    ``CompositeAcquisition`` and configure the result on the optimizer.</span>
 
 <span class="sd">    Requires a surrogate that provides uncertainty estimates (std).</span>
 
@@ -1160,9 +1152,7 @@ window.runMermaid = runMermaid;</script>
             <span class="p">)</span>
         <span class="k">assert</span> <span class="n">prediction</span><span class="o">.</span><span class="n">std</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">mu</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">value</span>  <span class="c1"># (n_samples, n_constraints)</span>
-        <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">prediction</span><span class="o">.</span><span class="n">std</span><span class="p">,</span> <span class="mf">1e-9</span><span class="p">)</span>  <span class="c1"># (n_samples, n_constraints)</span>
-        <span class="n">pof</span> <span class="o">=</span> <span class="n">norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">((</span><span class="mf">0.0</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">)</span>  <span class="c1"># (n_samples, n_constraints)</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">pof</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (n_samples,)</span></div>
+        <span class="k">return</span> <span class="n">product_of_feasibility_kernel</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">prediction</span><span class="o">.</span><span class="n">std</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

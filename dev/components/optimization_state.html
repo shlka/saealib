@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OptimizationState &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>OptimizationState &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../_static/documentation_options.js?v=2243f322"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -581,25 +581,22 @@ This is a property of NumPy’s <code class="docutils literal notranslate"><span
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">problem</span></code></p></td>
 <td><p>The <a class="reference internal" href="problem.html"><span class="std std-doc">Problem</span></a> being solved</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">population</span></code></p></td>
-<td><p>The current generation’s <a class="reference internal" href="population.html"><span class="std std-doc">Population</span></a></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">populations</span></code></p></td>
+<td><p>Named <a class="reference internal" href="population.html"><span class="std std-doc">Population</span></a> collections; <code class="docutils literal notranslate"><span class="pre">populations[&quot;main&quot;]</span></code> is the current generation</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">archive</span></code></p></td>
-<td><p>The <a class="reference internal" href="population.html"><span class="std std-doc">Archive</span></a> accumulating evaluated solutions</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">archives</span></code></p></td>
+<td><p>Named <a class="reference internal" href="population.html"><span class="std std-doc">Archive</span></a> collections; <code class="docutils literal notranslate"><span class="pre">archives[&quot;main&quot;]</span></code> accumulates evaluated solutions and <code class="docutils literal notranslate"><span class="pre">archives[&quot;pareto&quot;]</span></code> maintains the non-dominated set</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pareto_archive</span></code></p></td>
-<td><p>The <a class="reference internal" href="population.html"><span class="std std-doc">ParetoArchive</span></a> maintaining the non-dominated solution set</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rng</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rng</span></code></p></td>
 <td><p>The random number generator</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fe</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fe</span></code></p></td>
 <td><p>The evaluation count</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">gen</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">gen</span></code></p></td>
 <td><p>The generation count</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">data</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">data</span></code></p></td>
 <td><p>A free-form dictionary for user extension</p></td>
 </tr>
 </tbody>
@@ -619,18 +616,19 @@ This is a property of NumPy’s <code class="docutils literal notranslate"><span
 <td><p>Each subsequent stage</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">evaluated_offspring</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">TrueEvaluationStage</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">EvaluationApplyStage</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">ArchiveUpdateStage</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">scores</span></code> / <code class="docutils literal notranslate"><span class="pre">predictions</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">SurrogateScoreStage</span></code></p></td>
-<td><p>Each subsequent stage</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">scores</span></code> / <code class="docutils literal notranslate"><span class="pre">predictions</span></code> / <code class="docutils literal notranslate"><span class="pre">acquisition_result</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SurrogatePredictStage</span></code> / <code class="docutils literal notranslate"><span class="pre">AcquisitionStage</span></code></p></td>
+<td><p>Evaluation planning</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">data</span></code> is a dictionary for user extension, used as a place for a custom <code class="docutils literal notranslate"><span class="pre">Stage</span></code> or <code class="docutils literal notranslate"><span class="pre">Callback</span></code> to add arbitrary values.
 Instead of a direct mutation like <code class="docutils literal notranslate"><span class="pre">state.data[&quot;key&quot;]</span> <span class="pre">=</span> <span class="pre">value</span></code>, pass a newly built dictionary via <code class="docutils literal notranslate"><span class="pre">state.replace(data={**state.data,</span> <span class="pre">&quot;key&quot;:</span> <span class="pre">value})</span></code>.</p>
+<p>The convenience properties <code class="docutils literal notranslate"><span class="pre">population</span></code>, <code class="docutils literal notranslate"><span class="pre">archive</span></code>, and <code class="docutils literal notranslate"><span class="pre">pareto_archive</span></code> return the corresponding <code class="docutils literal notranslate"><span class="pre">&quot;main&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;pareto&quot;</span></code> entries. Additional collections can be added with <code class="docutils literal notranslate"><span class="pre">add_population(name,</span> <span class="pre">value)</span></code> and <code class="docutils literal notranslate"><span class="pre">add_archive(name,</span> <span class="pre">value)</span></code>.</p>
 </section>
 <section id="convenience-properties">
 <h2>Convenience properties<a class="headerlink" href="#convenience-properties" title="Link to this heading">#</a></h2>
@@ -642,13 +640,13 @@ They’re provided as shorthand so you can write <code class="docutils literal n
 <p><code class="docutils literal notranslate"><span class="pre">replace(**kwargs)</span> <span class="pre">-&gt;</span> <span class="pre">OptimizationState</span></code> is a wrapper around <code class="docutils literal notranslate"><span class="pre">dataclasses.replace</span></code>, the most frequently used update method throughout the pipeline.
 For example, <code class="docutils literal notranslate"><span class="pre">CountGenerationStage</span></code>, which advances the generation count, updates the field as <code class="docutils literal notranslate"><span class="pre">state.replace(gen=state.gen</span> <span class="pre">+</span> <span class="pre">1)</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">OptimizationState</span></code> also provides helper methods <code class="docutils literal notranslate"><span class="pre">count_fe(count=1)</span></code>/<code class="docutils literal notranslate"><span class="pre">count_generation()</span></code> that increment <code class="docutils literal notranslate"><span class="pre">fe</span></code>/<code class="docutils literal notranslate"><span class="pre">gen</span></code>, but these are one-off mutations that bypass <code class="docutils literal notranslate"><span class="pre">replace()</span></code>.
-The only place in the built-in pipeline where these two are actually called is where <a class="reference internal" href="initialization.html"><span class="std std-doc">Initializer</span></a> adds the initial evaluation count to <code class="docutils literal notranslate"><span class="pre">fe</span></code>; the per-generation updates of <code class="docutils literal notranslate"><span class="pre">gen</span></code>/<code class="docutils literal notranslate"><span class="pre">fe</span></code> (<code class="docutils literal notranslate"><span class="pre">CountGenerationStage</span></code>/<code class="docutils literal notranslate"><span class="pre">TrueEvaluationStage</span></code>) are both unified on the path that uses <code class="docutils literal notranslate"><span class="pre">replace()</span></code>.
+The Runner owns asynchronous generation boundaries; refill steps do not increment <code class="docutils literal notranslate"><span class="pre">gen</span></code> while a generation is open.
 When writing a custom <code class="docutils literal notranslate"><span class="pre">Stage</span></code>, it’s easier to preserve consistency by sticking to the <code class="docutils literal notranslate"><span class="pre">replace()</span></code> path as well.</p>
 </section>
 <section id="checkpointing">
 <h2>Checkpointing<a class="headerlink" href="#checkpointing" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">save(path)</span></code>/<code class="docutils literal notranslate"><span class="pre">load(path,</span> <span class="pre">problem)</span></code> (the latter a classmethod) save and restore <code class="docutils literal notranslate"><span class="pre">OptimizationState</span></code> in npz format.
-Only the <code class="docutils literal notranslate"><span class="pre">archive</span></code>/<code class="docutils literal notranslate"><span class="pre">population</span></code>/<code class="docutils literal notranslate"><span class="pre">pareto_archive</span></code> arrays and <code class="docutils literal notranslate"><span class="pre">rng</span></code>’s complete bit-generator state are saved, and reproducibility is only guaranteed as far as reasonably possible (bit-exact resumption is intended within the same NumPy version and environment, but reproducibility across versions is not guaranteed).</p>
+Named populations and archives, allocator state, metadata, and <code class="docutils literal notranslate"><span class="pre">rng</span></code>’s complete bit-generator state are saved. Checkpoints are only written at a completed evaluation boundary; pending evaluations are rejected. Reproducibility is only guaranteed as far as reasonably possible (bit-exact resumption is intended within the same NumPy version and environment, but reproducibility across versions is not guaranteed).</p>
 <p>Component-specific internal rngs, such as the one <a class="reference internal" href="comparators.html"><span class="std std-doc">NSGA3Comparator</span></a> holds (spawned from <code class="docutils literal notranslate"><span class="pre">state.rng</span></code>), are not included when saving.
 On resume, such internal rngs are freshly re-spawned from <code class="docutils literal notranslate"><span class="pre">state.rng</span></code>.</p>
 <p>See <a class="reference internal" href="../tutorials/checkpoint.html"><span class="std std-doc">Checkpointing</span></a> for how to use automatic checkpoint saving.

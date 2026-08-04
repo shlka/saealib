@@ -1,0 +1,35 @@
+﻿saealib.LinearRankSelection
+===========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: LinearRankSelection
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~LinearRankSelection.__init__
+   ~LinearRankSelection.select
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.LinearRankSelection.__init__
+
+
+.. automethod:: saealib.LinearRankSelection.select
+
+
+

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Dominator &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>Dominator &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../_static/documentation_options.js?v=2243f322"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -598,8 +598,7 @@ There are two quantization modes.</p>
 <p><a class="reference internal" href="comparators.html"><span class="std std-doc">EpsilonDominanceComparator</span></a> is a thin wrapper that simply passes <code class="docutils literal notranslate"><span class="pre">EpsilonDominator(eps,</span> <span class="pre">mode)</span></code> to <code class="docutils literal notranslate"><span class="pre">ParetoComparator</span></code>’s <code class="docutils literal notranslate"><span class="pre">dominator</span></code> argument.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The functions <code class="docutils literal notranslate"><span class="pre">_pareto_dominates</span></code>/<code class="docutils literal notranslate"><span class="pre">_dominance_matrix</span></code> remaining in the module are deprecated backward-compatibility wrappers.
-For new code, use <code class="docutils literal notranslate"><span class="pre">ParetoDominator().dominates(...)</span></code>/<code class="docutils literal notranslate"><span class="pre">ParetoDominator().dominance_matrix(...)</span></code> directly.</p>
+<p>For new code, use <code class="docutils literal notranslate"><span class="pre">ParetoDominator().dominates(...)</span></code>/<code class="docutils literal notranslate"><span class="pre">ParetoDominator().dominance_matrix(...)</span></code> directly.</p>
 </div>
 </section>
 <section id="implementing-a-custom-dominator">

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>SurrogateManager &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>SurrogateManager &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -557,16 +557,14 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="surrogatemanager">
 <h1>SurrogateManager<a class="headerlink" href="#surrogatemanager" title="Link to this heading">#</a></h1>
-<p><a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>がfit/predictだけを担うのに対し、<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>はfit、predict、スコアリングのパイプライン全体を協調させます。 <code class="docutils literal notranslate"><span class="pre">score_candidates()</span></code>はスカラースコアだけでなく元の予測値も返すため、呼び出し側（<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>など）は予測目的関数値を子個体へ割り当てられます。</p>
+<p><a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>がfit/predictだけを扱うのに対し、<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>はモデルのフィットとバッチ予測を協調させます。オプティマイザに設定した<code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>が、返された予測をスコア化します。</p>
 <p><code class="docutils literal notranslate"><span class="pre">Optimizer.set_surrogate_manager()</span></code>は、<code class="docutils literal notranslate"><span class="pre">Optimizer.set_surrogate()</span></code>（<a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>を<code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code>でラップする簡易版）とは別のトップレベル差し替え点です。</p>
 <section id="surrogatemanager-s-role">
 <h2>SurrogateManagerの役割<a class="headerlink" href="#surrogatemanager-s-role" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>の抽象メソッドは<code class="docutils literal notranslate"><span class="pre">score_candidates()</span></code>の1つだけで、残りはフックとして既定実装を持ちます。</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">score_candidates(candidates_x,</span> <span class="pre">archive,</span> <span class="pre">ctx=None,</span> <span class="pre">*,</span> <span class="pre">refit=True)</span> <span class="pre">-&gt;</span> <span class="pre">tuple[np.ndarray,</span> <span class="pre">list[SurrogatePrediction]]</span></code></strong>（抽象）：候補群をスコアリングします。 <code class="docutils literal notranslate"><span class="pre">refit=True</span></code>（既定）ではスコアリング前にサロゲートを学習し直します。</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">fit(archive,</span> <span class="pre">ctx=None)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code></strong>：既定はno-op。 <code class="docutils literal notranslate"><span class="pre">score_candidates(...,</span> <span class="pre">refit=False)</span></code>を連続で呼ぶ前に1回だけ呼ぶプレフィット用のフックで、アーカイブが変化しない場面（<code class="docutils literal notranslate"><span class="pre">GenerationBasedStrategy</span></code>のサロゲートのみ内部ループなど）で使います。</p>
+<p><code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>の抽象メソッドは<code class="docutils literal notranslate"><span class="pre">predict()</span></code>です。フィットと世代フックには既定実装があります。</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">predict(candidates_x,</span> <span class="pre">archive,</span> <span class="pre">ctx=None,</span> <span class="pre">*,</span> <span class="pre">refit=True)</span> <span class="pre">-&gt;</span> <span class="pre">SurrogatePrediction</span></code></strong>（抽象メソッド）：候補を予測します。<code class="docutils literal notranslate"><span class="pre">refit=True</span></code>（既定値）の場合は、予測前にサロゲートを再学習します。</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">fit(archive,</span> <span class="pre">ctx=None)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code></strong>：既定では何もしません。アーカイブが変化しない場合に、<code class="docutils literal notranslate"><span class="pre">predict(...,</span> <span class="pre">refit=False)</span></code>を連続して呼び出す前に1回だけ呼ぶ事前フィット用フックです。</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">last_accuracy:</span> <span class="pre">SurrogateAccuracy</span> <span class="pre">|</span> <span class="pre">None</span></code></strong>（クラス属性）：直近の<code class="docutils literal notranslate"><span class="pre">fit</span></code>が計算した精度指標。 詳細は<a class="reference internal" href="surrogate_switching.html"><span class="std std-doc">サロゲート精度評価と動的切り替え</span></a>で扱います。</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">iter_acquisitions()</span> <span class="pre">-&gt;</span> <span class="pre">Iterator[AcquisitionFunction]</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>が<code class="docutils literal notranslate"><span class="pre">problem.direction</span></code>を各<a class="reference internal" href="acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>へ自動注入するために使う内部フック。 既定は<code class="docutils literal notranslate"><span class="pre">self.acquisition</span></code>があればそれを1つ返します。 <code class="docutils literal notranslate"><span class="pre">PairwiseSurrogateManager</span></code>のように獲得関数を持たないマネージャーは何も返さず、<code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager</span></code>はサブマネージャーへ委譲します。</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">post_score(scores,</span> <span class="pre">predictions,</span> <span class="pre">ctx=None)</span></code></strong> / <strong><code class="docutils literal notranslate"><span class="pre">with_post_score(fn)</span></code></strong>：スコアリング後処理のライフサイクルフック。 <a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>の<code class="docutils literal notranslate"><span class="pre">with_post_fit</span></code>と同型で、<code class="docutils literal notranslate"><span class="pre">with_post_score</span></code>は元のインスタンスを変更せずコピーにフックを追加します。</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">on_generation_end(gen,</span> <span class="pre">archive,</span> <span class="pre">ctx=None)</span></code></strong> / <strong><code class="docutils literal notranslate"><span class="pre">with_on_generation_end(fn)</span></code></strong>：世代末フック。 同じくコピー＋チェーン方式で拡張できます。</p>
 </section>
 <section id="built-in-surrogatemanagers">
@@ -579,28 +577,28 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code></p></td>
-<td><p>アーカイブ全体で1回グローバルにフィットし、全候補を一括predict/score</p></td>
+<td><p>アーカイブ全体で1回グローバルにフィットし、全候補を一括予測する</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code></p></td>
 <td><p>候補ごとにk近傍でローカルフィット</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager</span></code></p></td>
-<td><p>複数マネージャーのスコアを合成</p></td>
+<td><p>名前付きの予測チャンネルを組み合わせる</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">PairwiseSurrogateManager</span></code></p></td>
-<td><p>ペア比較サロゲートによるスコアリング</p></td>
+<td><p>ペア比較サロゲートで勝率を予測する</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager(surrogate,</span> <span class="pre">acquisition,</span> <span class="pre">training_set=None,</span> <span class="pre">accuracy_evaluator=None)</span></code>は、<code class="docutils literal notranslate"><span class="pre">training_set</span></code>省略時に<code class="docutils literal notranslate"><span class="pre">ArchiveObjectiveSet()</span></code>が使われます。</p>
-<p><code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager(surrogate,</span> <span class="pre">acquisition,</span> <span class="pre">training_set=None,</span> <span class="pre">accuracy_evaluator=None)</span></code>は、<code class="docutils literal notranslate"><span class="pre">training_set</span></code>省略時に<code class="docutils literal notranslate"><span class="pre">KNNObjectiveSet(n_neighbors=50)</span></code>が使われます。 <code class="docutils literal notranslate"><span class="pre">n_neighbors</span></code>は<code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code>自体のコンストラクタ引数ではなく、既定の<code class="docutils literal notranslate"><span class="pre">training_set</span></code>が持つパラメータです。 候補間で同一の<code class="docutils literal notranslate"><span class="pre">surrogate</span></code>インスタンスを使い回して再フィットする実装のため、スレッドセーフではありません。</p>
-<p><code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager(managers,</span> <span class="pre">combine_fn)</span></code>は、各<code class="docutils literal notranslate"><span class="pre">managers</span></code>の<code class="docutils literal notranslate"><span class="pre">score_candidates</span></code>を独立に呼び、結果のスコア配列を<code class="docutils literal notranslate"><span class="pre">combine_fn</span></code>で合成します。 <code class="docutils literal notranslate"><span class="pre">combine_fn</span></code>に渡す関数として、<code class="docutils literal notranslate"><span class="pre">product_combine</span></code>（要素積。例：EI×PoF）と<code class="docutils literal notranslate"><span class="pre">rank_weighted_combine(weights=None)</span></code>（ランク正規化した重み付き平均を返す関数を生成する）が用意されています。</p>
+<p><code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager(surrogate,</span> <span class="pre">training_set=None,</span> <span class="pre">accuracy_evaluator=None)</span></code>は、<code class="docutils literal notranslate"><span class="pre">training_set</span></code>省略時に<code class="docutils literal notranslate"><span class="pre">ArchiveObjectiveSet()</span></code>が使われます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager(surrogate,</span> <span class="pre">training_set=None,</span> <span class="pre">accuracy_evaluator=None)</span></code>は、<code class="docutils literal notranslate"><span class="pre">training_set</span></code>省略時に<code class="docutils literal notranslate"><span class="pre">KNNObjectiveSet(n_neighbors=50)</span></code>が使われます。 <code class="docutils literal notranslate"><span class="pre">n_neighbors</span></code>は<code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code>自体のコンストラクタ引数ではなく、既定の<code class="docutils literal notranslate"><span class="pre">training_set</span></code>が持つパラメータです。 候補間で同一の<code class="docutils literal notranslate"><span class="pre">surrogate</span></code>インスタンスを使い回して再フィットする実装のため、スレッドセーフではありません。</p>
+<p><code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager(managers)</span></code>は各名前付きマネージャーの<code class="docutils literal notranslate"><span class="pre">predict()</span></code>を呼び出し、複数チャンネルの<code class="docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code>を返します。<code class="docutils literal notranslate"><span class="pre">CompositeAcquisition</span></code>を使うとチャンネルごとに取得関数を評価し、結果のスコア配列を<code class="docutils literal notranslate"><span class="pre">product_combine</span></code>または<code class="docutils literal notranslate"><span class="pre">rank_weighted_combine(weights=None)</span></code>で組み合わせられます。</p>
 <p><code class="docutils literal notranslate"><span class="pre">PairwiseSurrogateManager(surrogate,</span> <span class="pre">training_set=None,</span> <span class="pre">n_ref=10)</span></code>は、<code class="docutils literal notranslate"><span class="pre">training_set</span></code>省略時に<code class="docutils literal notranslate"><span class="pre">PairwiseComparisonSet()</span></code>が使われます。</p>
 <p>各マネージャーの<code class="docutils literal notranslate"><span class="pre">training_set</span></code>/<code class="docutils literal notranslate"><span class="pre">accuracy_evaluator</span></code>引数の詳細は、それぞれ<a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>と<a class="reference internal" href="surrogate_switching.html"><span class="std std-doc">サロゲート精度評価と動的切り替え</span></a>を参照してください。</p>
-<section id="archivebasedmanager-the-family-that-doesn-t-train-a-surrogate">
-<h3>ArchiveBasedManager：サロゲートを学習しない系列<a class="headerlink" href="#archivebasedmanager-the-family-that-doesn-t-train-a-surrogate" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">ArchiveBasedManager</span></code>は<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>の抽象サブクラスで、サロゲートモデルを一切学習せず、アーカイブから直接候補をスコアリングします。 抽象メソッドは<code class="docutils literal notranslate"><span class="pre">compute_scores(candidates_x,</span> <span class="pre">archive,</span> <span class="pre">ctx=None)</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code>だけで、<code class="docutils literal notranslate"><span class="pre">score_candidates()</span></code>は<code class="docutils literal notranslate"><span class="pre">compute_scores()</span></code>の結果を<code class="docutils literal notranslate"><span class="pre">tell_f=NaN</span></code>の<code class="docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code>でラップします。 スコアが目的関数値ではないため、そのまま<code class="docutils literal notranslate"><span class="pre">tell_f</span></code>として使うとpbestなどが汚染されてしまいます。それを防ぐための設計です。</p>
+<section id="archive-based-acquisitions">
+<h3>アーカイブベースの取得関数<a class="headerlink" href="#archive-based-acquisitions" title="Link to this heading">#</a></h3>
+<p>これらの取得関数は候補の幾何学的な特徴をアーカイブと直接比較してスコア化するため、サロゲートの予測を必要としません。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>クラス</p></th>
@@ -609,35 +607,35 @@
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NoveltyManager</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NoveltyAcquisition</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">k=1</span></code></p></td>
 <td><p>アーカイブへのk近傍平均距離が大きいほど良い</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DensityManager</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">InverseDensityAcquisition</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">eps=1.0</span></code></p></td>
 <td><p>ε近傍密度の逆数（疎な領域を優先）</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NichingManager</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MaximinDistanceAcquisition</span></code></p></td>
 <td><p>なし</p></td>
-<td><p>候補間の最小距離＋アーカイブとの最小距離</p></td>
+<td><p>候補間の最小距離とアーカイブまでの最小距離の合計</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </section>
 </section>
-<section id="implementing-a-custom-surrogatemanager">
-<h2>独自SurrogateManagerの実装方法<a class="headerlink" href="#implementing-a-custom-surrogatemanager" title="Link to this heading">#</a></h2>
-<p>独自のスコアリング方式が必要な場合は、<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>を継承して<code class="docutils literal notranslate"><span class="pre">score_candidates()</span></code>だけを実装すればよいです。 サロゲートを学習せずアーカイブから直接スコアするパターンであれば、<code class="docutils literal notranslate"><span class="pre">ArchiveBasedManager</span></code>を継承して<code class="docutils literal notranslate"><span class="pre">compute_scores()</span></code>だけを実装するほうが軽量です。</p>
+<section id="extending-surrogatemanager-and-archive-based-acquisitions">
+<h2>SurrogateManagerとアーカイブベースの取得関数の拡張<a class="headerlink" href="#extending-surrogatemanager-and-archive-based-acquisitions" title="Link to this heading">#</a></h2>
+<p>独自の予測方式が必要な場合は<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>を継承して<code class="docutils literal notranslate"><span class="pre">predict()</span></code>を実装します。独自のアーカイブベース基準が必要な場合は<code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>を継承して評価契約を実装します。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArchiveBasedManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">AcquisitionResult</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">ConstantScoreManager</span><span class="p">(</span><span class="n">ArchiveBasedManager</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A minimal surrogate manager that always returns a constant score, never referencing the archive.&quot;&quot;&quot;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConstantAcquisition</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A minimal acquisition that assigns every candidate the same score.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates_x</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">candidates_x</span><span class="p">))</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates_x</span><span class="p">,</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">prepared</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">AcquisitionResult</span><span class="p">(</span><span class="n">scores</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">candidates_x</span><span class="p">)))</span>
 </pre></div>
 </div>
 </section>
@@ -646,9 +644,9 @@
 <ul class="simple">
 <li><p><a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>：<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>が協調させるfit/predictの実体</p></li>
 <li><p><a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>：各<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>が学習データの抽出に使う</p></li>
-<li><p><a class="reference internal" href="acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>：<code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code>/<code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code>の<code class="docutils literal notranslate"><span class="pre">acquisition</span></code>引数</p></li>
+<li><p><a class="reference internal" href="acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>：<code class="docutils literal notranslate"><span class="pre">AcquisitionStage</span></code>で予測をスコア化する</p></li>
 <li><p><a class="reference internal" href="surrogate_switching.html"><span class="std std-doc">サロゲート精度評価と動的切り替え</span></a>：<code class="docutils literal notranslate"><span class="pre">accuracy_evaluator</span></code>/<code class="docutils literal notranslate"><span class="pre">last_accuracy</span></code>の詳細</p></li>
-<li><p><a class="reference internal" href="strategies.html"><span class="std std-doc">strategies</span></a>：<code class="docutils literal notranslate"><span class="pre">score_candidates()</span></code>を呼ぶ側</p></li>
+<li><p><a class="reference internal" href="strategies.html"><span class="std std-doc">strategies</span></a>：<code class="docutils literal notranslate"><span class="pre">SurrogatePredictStage</span></code>と<code class="docutils literal notranslate"><span class="pre">AcquisitionStage</span></code>を組み立てる</p></li>
 </ul>
 </section>
 <section id="references">
@@ -661,10 +659,9 @@
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager" title="saealib.PairwiseSurrogateManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PairwiseSurrogateManager</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.product_combine.html#saealib.product_combine" title="saealib.product_combine"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.product_combine()</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.rank_weighted_combine.html#saealib.rank_weighted_combine" title="saealib.rank_weighted_combine"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.rank_weighted_combine()</span></code></a></p></li>
-<li><p><a class="reference internal" href="../api/_autosummary/saealib.ArchiveBasedManager.html#saealib.ArchiveBasedManager" title="saealib.ArchiveBasedManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ArchiveBasedManager</span></code></a></p></li>
-<li><p><a class="reference internal" href="../api/_autosummary/saealib.NoveltyManager.html#saealib.NoveltyManager" title="saealib.NoveltyManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.NoveltyManager</span></code></a></p></li>
-<li><p><a class="reference internal" href="../api/_autosummary/saealib.DensityManager.html#saealib.DensityManager" title="saealib.DensityManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.DensityManager</span></code></a></p></li>
-<li><p><a class="reference internal" href="../api/_autosummary/saealib.NichingManager.html#saealib.NichingManager" title="saealib.NichingManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.NichingManager</span></code></a></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.NoveltyAcquisition</span></code></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.InverseDensityAcquisition</span></code></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MaximinDistanceAcquisition</span></code></p></li>
 </ul>
 </section>
 </section>
@@ -718,10 +715,10 @@
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogatemanager-s-role">SurrogateManagerの役割</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-surrogatemanagers">組み込みSurrogateManager</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#archivebasedmanager-the-family-that-doesn-t-train-a-surrogate">ArchiveBasedManager：サロゲートを学習しない系列</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#archive-based-acquisitions">アーカイブベースの取得関数</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-surrogatemanager">独自SurrogateManagerの実装方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extending-surrogatemanager-and-archive-based-acquisitions">SurrogateManagerとアーカイブベースの取得関数の拡張</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
 </ul>

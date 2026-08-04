@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>GP-UCB（Gaussian Process Upper Confidence Bound） &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>GP-UCB（Gaussian Process Upper Confidence Bound） &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1104,7 +1104,7 @@ window.runMermaid = runMermaid;</script>
 \[\beta_t = 2 \log\left(\frac{|D|\, t^2 \pi^2}{6\delta}\right)\]</div>
 <p>この式は <span class="math notranslate nohighlight">\(t\)</span> について対数的に増加するため、探索の重みは反復が進むほど緩やかに大きくなります。 コンパクトな <span class="math notranslate nohighlight">\(D\)</span> の場合や、GP事前分布を仮定せずRKHSノルムが有界な関数を扱う場合にも、それぞれ形は異なるものの、<span class="math notranslate nohighlight">\(t\)</span> に関して増加する <span class="math notranslate nohighlight">\(\beta_t\)</span> のスケジュールが与えられます。 GP-UCBという名前が指す理論的な貢献は、まさにこの <span class="math notranslate nohighlight">\(\beta_t\)</span> のスケジュールと累積リグレットの上界の対応関係にあります。</p>
 <p><code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code>の<code class="docutils literal notranslate"><span class="pre">kappa</span></code>は反復を通じて固定された定数であり、この <span class="math notranslate nohighlight">\(\sqrt{\beta_t}\)</span> のスケジュールを実装していません。 したがって<code class="docutils literal notranslate"><span class="pre">kappa</span></code>を固定したままのGP-UCBは、論文が理論的に導出した意味でのリグレット保証を持たない、素朴な固定重みUCBヒューリスティックです。 論文自身も実験節で、理論上の <span class="math notranslate nohighlight">\(\beta_t\)</span> をそのまま使うと過剰に探索的になり、交差検証で係数を1/5にスケールした方が性能が良かったと報告しており、実務上は固定または経験的に調整した重みを使うこと自体は論文とも矛盾しません。 ただし、この固定重みの選び方に理論的根拠はなく、<code class="docutils literal notranslate"><span class="pre">kappa=2.0</span></code>という既定値も<span class="math notranslate nohighlight">\(\beta_t=4.0\)</span>相当の値を固定しているに過ぎません。</p>
-<p><span class="math notranslate nohighlight">\(t\)</span> に応じて<code class="docutils literal notranslate"><span class="pre">kappa</span></code>を動的に変更したい場合は、<code class="docutils literal notranslate"><span class="pre">CallbackManager</span></code>で世代ごとに<code class="docutils literal notranslate"><span class="pre">surrogate_manager.acquisition.kappa</span></code>を書き換えることで、対応する反復依存スケジュールに近づけられます。</p>
+<p><span class="math notranslate nohighlight">\(t\)</span> に応じて<code class="docutils literal notranslate"><span class="pre">kappa</span></code>を動的に変更したい場合は、世代コールバックからオプティマイザの獲得関数を更新します。</p>
 </section>
 <section id="related">
 <h2>関連<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>

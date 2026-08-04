@@ -18,6 +18,7 @@
    :nosignatures:
 
    saealib.ExpectedImprovement
+   saealib.BatchExpectedImprovement
    saealib.LowerConfidenceBound
    saealib.MaxUncertainty
    saealib.MeanPrediction

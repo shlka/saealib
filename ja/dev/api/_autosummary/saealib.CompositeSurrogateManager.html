@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.CompositeSurrogateManager &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>saealib.CompositeSurrogateManager &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -569,7 +569,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.ParentSelection.html">saealib.ParentSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TournamentSelection.html">saealib.TournamentSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SequentialSelection.html">saealib.SequentialSelection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.RouletteWheelSelection.html">saealib.RouletteWheelSelection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.LinearRankSelection.html">saealib.LinearRankSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurvivorSelection.html">saealib.SurvivorSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TruncationSelection.html">saealib.TruncationSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.DuplicateElimination.html">saealib.DuplicateElimination</a></li>
@@ -613,10 +613,6 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.PairwiseComparisonSet.html">saealib.PairwiseComparisonSet</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ReferencePointComparisonSet.html">saealib.ReferencePointComparisonSet</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TopKBipartitionSet.html">saealib.TopKBipartitionSet</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.ArchiveBasedManager.html">saealib.ArchiveBasedManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.DensityManager.html">saealib.DensityManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.NichingManager.html">saealib.NichingManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.NoveltyManager.html">saealib.NoveltyManager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AccuracyBasedSurrogateSwitcher.html">saealib.AccuracyBasedSurrogateSwitcher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.GenCtrlSwitcher.html">saealib.GenCtrlSwitcher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ManagerSwitcher.html">saealib.ManagerSwitcher</a></li>
@@ -635,6 +631,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../acquisition.html">Acquisition Functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionFunction.html">saealib.AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ExpectedImprovement.html">saealib.ExpectedImprovement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.BatchExpectedImprovement.html">saealib.BatchExpectedImprovement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.LowerConfidenceBound.html">saealib.LowerConfidenceBound</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.MaxUncertainty.html">saealib.MaxUncertainty</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.MeanPrediction.html">saealib.MeanPrediction</a></li>
@@ -651,6 +648,8 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.IndividualBasedStrategy.html">saealib.IndividualBasedStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PreSelectionStrategy.html">saealib.PreSelectionStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.DirectStrategy.html">saealib.DirectStrategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.SteadyStateStrategy.html">saealib.SteadyStateStrategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.IslandModel.html">saealib.IslandModel</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../initialization.html">Initialization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -665,6 +664,16 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.SerialEvaluator.html">saealib.SerialEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.JoblibEvaluator.html">saealib.JoblibEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanner.html">saealib.EvaluationPlanner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlan.html">saealib.EvaluationPlan</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluateAll.html">saealib.EvaluateAll</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.TopKEvaluation.html">saealib.TopKEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.RatioEvaluation.html">saealib.RatioEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.RepeatedEvaluation.html">saealib.RepeatedEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FidelityEvaluation.html">saealib.FidelityEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FidelityPromotion.html">saealib.FidelityPromotion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.ReplicateSummary.html">saealib.ReplicateSummary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.aggregate_replicates.html">saealib.aggregate_replicates</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../termination.html">Termination</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -699,11 +708,10 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../stages.html">Stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CountGenerationStage.html">saealib.CountGenerationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AskStage.html">saealib.AskStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateScoreStage.html">saealib.SurrogateScoreStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionStage.html">saealib.AcquisitionStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.SurrogatePredictStage.html">saealib.SurrogatePredictStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanStage.html">saealib.EvaluationPlanStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateFitStage.html">saealib.SurrogateFitStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.TopKSelectionStage.html">saealib.TopKSelectionStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.SortByScoreStage.html">saealib.SortByScoreStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.TrueEvaluationStage.html">saealib.TrueEvaluationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ArchiveUpdateStage.html">saealib.ArchiveUpdateStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TellStage.html">saealib.TellStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateOnlyLoopStage.html">saealib.SurrogateOnlyLoopStage</a></li>
@@ -778,41 +786,40 @@
 <h1>saealib.CompositeSurrogateManager<a class="headerlink" href="#saealib-compositesurrogatemanager" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.CompositeSurrogateManager">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">CompositeSurrogateManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">managers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">combine_fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#CompositeSurrogateManager"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.CompositeSurrogateManager" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">CompositeSurrogateManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">managers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#CompositeSurrogateManager"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.CompositeSurrogateManager" title="Link to this definition">#</a></dt>
 <dd><p>ベースクラス: <a class="reference internal" href="saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.surrogate.manager.SurrogateManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurrogateManager</span></code></a></p>
-<p>Surrogate manager that combines scores from multiple sub-managers.</p>
-<p>Each sub-manager's <code class="docutils literal notranslate"><span class="pre">score_candidates</span></code> is called independently.
-The resulting score arrays are combined by <code class="docutils literal notranslate"><span class="pre">combine_fn</span></code>.
-Predictions (for <code class="docutils literal notranslate"><span class="pre">tell_f</span></code> assignment) are taken from <code class="docutils literal notranslate"><span class="pre">managers[0]</span></code>.</p>
+<p>Surrogate manager that composes predictions from multiple named sub-managers.</p>
+<p>This manager owns named child managers, calls each child's <a class="reference internal" href="#saealib.CompositeSurrogateManager.predict" title="saealib.CompositeSurrogateManager.predict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">predict()</span></code></a>, and
+returns a single <a class="reference internal" href="saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.surrogate.prediction.SurrogatePrediction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code></a>
+whose <code class="docutils literal notranslate"><span class="pre">channels</span></code> mapping contains one named
+<code class="xref py py-class docutils literal notranslate"><span class="pre">PredictionChannel</span></code> per child. It
+never combines acquisition scores itself -- pair it with
+<code class="xref py py-class docutils literal notranslate"><span class="pre">CompositeAcquisition</span></code>, which evaluates
+each configured channel's acquisition and combines the resulting score
+arrays:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ei_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">GP</span><span class="p">())</span>
+<span class="n">pof_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span>
+    <span class="n">PerObjectiveSurrogate</span><span class="p">([</span><span class="n">GP</span><span class="p">()]</span> <span class="o">*</span> <span class="n">n_constraints</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">composite_acq</span> <span class="o">=</span> <span class="n">CompositeAcquisition</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;objective&quot;</span><span class="p">:</span> <span class="n">ExpectedImprovement</span><span class="p">(),</span>
+        <span class="s2">&quot;feasibility&quot;</span><span class="p">:</span> <span class="n">ProductOfFeasibility</span><span class="p">(),</span>
+    <span class="p">},</span>
+    <span class="n">combine_fn</span><span class="o">=</span><span class="n">product_combine</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">CompositeSurrogateManager</span><span class="p">(</span>
+    <span class="p">{</span><span class="s2">&quot;objective&quot;</span><span class="p">:</span> <span class="n">ei_manager</span><span class="p">,</span> <span class="s2">&quot;feasibility&quot;</span><span class="p">:</span> <span class="n">pof_manager</span><span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>managers</strong> (<em>list</em><em>[</em><a class="reference internal" href="saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.SurrogateManager"><em>SurrogateManager</em></a><em>]</em>) -- Sub-managers to combine. Must be non-empty.
-<code class="docutils literal notranslate"><span class="pre">managers[0]</span></code> provides the <code class="docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code> objects returned
-by <code class="docutils literal notranslate"><span class="pre">score_candidates</span></code>; its predicted objective values flow into
-<code class="docutils literal notranslate"><span class="pre">assign_tell_f</span></code> in the strategies.</p></li>
-<li><p><strong>combine_fn</strong> (<em>callable</em><em>(</em><em>list</em><em>[</em><em>np.ndarray</em><em>]</em><em>) </em><em>-&gt; np.ndarray</em>) -- Accepts a list of score arrays (each shape <code class="docutils literal notranslate"><span class="pre">(n_candidates,)</span></code>) and
-returns a single combined score array of the same shape.
-Use <a class="reference internal" href="saealib.product_combine.html#saealib.product_combine" title="saealib.product_combine"><code class="xref py py-func docutils literal notranslate"><span class="pre">product_combine()</span></code></a> for element-wise product (e.g. EI x PoF)
-or <a class="reference internal" href="saealib.rank_weighted_combine.html#saealib.rank_weighted_combine" title="saealib.rank_weighted_combine"><code class="xref py py-func docutils literal notranslate"><span class="pre">rank_weighted_combine()</span></code></a> for rank-normalised weighted average.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>managers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.SurrogateManager"><em>SurrogateManager</em></a><em>]</em>) -- Named sub-managers to compose. Must be non-empty. Each key becomes
+the corresponding <code class="docutils literal notranslate"><span class="pre">PredictionChannel</span></code>'s name in <a class="reference internal" href="#saealib.CompositeSurrogateManager.predict" title="saealib.CompositeSurrogateManager.predict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">predict()</span></code></a>'s
+result.</p>
 </dd>
 </dl>
-<p class="rubric">サンプル</p>
-<p>EI x PoF (objective x feasibility product):</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">manager</span> <span class="o">=</span> <span class="n">CompositeSurrogateManager</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="p">[</span><span class="n">ei_manager</span><span class="p">,</span> <span class="n">pof_manager</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">combine_fn</span><span class="o">=</span><span class="n">product_combine</span><span class="p">,</span>
-<span class="gp">... </span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Rank-normalised ensemble (equivalent to former EnsembleSurrogateManager):</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">manager</span> <span class="o">=</span> <span class="n">CompositeSurrogateManager</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="p">[</span><span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">combine_fn</span><span class="o">=</span><span class="n">rank_weighted_combine</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">]),</span>
-<span class="gp">... </span><span class="p">)</span>
-</pre></div>
-</div>
 </dd></dl>
 
 <p class="rubric">Methods</p>
@@ -824,22 +831,13 @@ or <a class="reference internal" href="saealib.rank_weighted_combine.html#saeali
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.CompositeSurrogateManager.fit" title="saealib.CompositeSurrogateManager.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a></p></td>
 <td><p>Pre-fit all sub-managers.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.CompositeSurrogateManager.iter_acquisitions" title="saealib.CompositeSurrogateManager.iter_acquisitions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iter_acquisitions</span></code></a></p></td>
-<td><p>Yield the acquisition functions of every sub-manager.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.CompositeSurrogateManager.on_generation_end" title="saealib.CompositeSurrogateManager.on_generation_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_generation_end</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.CompositeSurrogateManager.on_generation_end" title="saealib.CompositeSurrogateManager.on_generation_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_generation_end</span></code></a></p></td>
 <td><p>End-of-generation hook; override to update internal state.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.CompositeSurrogateManager.post_score" title="saealib.CompositeSurrogateManager.post_score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_score</span></code></a></p></td>
-<td><p>Post-score lifecycle hook; override to inject custom processing.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.CompositeSurrogateManager.score_candidates" title="saealib.CompositeSurrogateManager.score_candidates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">score_candidates</span></code></a></p></td>
-<td><p>Combine scores from all sub-managers using <code class="docutils literal notranslate"><span class="pre">combine_fn</span></code>.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.CompositeSurrogateManager.predict" title="saealib.CompositeSurrogateManager.predict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">predict</span></code></a></p></td>
+<td><p>Predict via every sub-manager, one named channel each.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.CompositeSurrogateManager.with_on_generation_end" title="saealib.CompositeSurrogateManager.with_on_generation_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_on_generation_end</span></code></a></p></td>
-<td><p>Return a copy of this manager with <code class="docutils literal notranslate"><span class="pre">fn</span></code> appended to the hook.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.CompositeSurrogateManager.with_post_score" title="saealib.CompositeSurrogateManager.with_post_score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_post_score</span></code></a></p></td>
 <td><p>Return a copy of this manager with <code class="docutils literal notranslate"><span class="pre">fn</span></code> appended to the hook.</p></td>
 </tr>
 </tbody>
@@ -848,13 +846,10 @@ or <a class="reference internal" href="saealib.rank_weighted_combine.html#saeali
 <p class="rubric">Method Details</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.CompositeSurrogateManager.__init__">
-<span class="sig-prename descclassname"><span class="pre">CompositeSurrogateManager.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">managers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">combine_fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#CompositeSurrogateManager.__init__"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.CompositeSurrogateManager.__init__" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CompositeSurrogateManager.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">managers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#CompositeSurrogateManager.__init__"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.CompositeSurrogateManager.__init__" title="Link to this definition">#</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>managers</strong> (<em>list</em><em>[</em><a class="reference internal" href="saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.surrogate.manager.SurrogateManager"><em>SurrogateManager</em></a><em>]</em>)</p></li>
-<li><p><strong>combine_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>list</em><em>[</em><em>ndarray</em><em>]</em><em>]</em><em>, </em><em>ndarray</em><em>]</em>)</p></li>
-</ul>
+<dd class="field-odd"><p><strong>managers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.surrogate.manager.SurrogateManager"><em>SurrogateManager</em></a><em>]</em>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -863,8 +858,9 @@ or <a class="reference internal" href="saealib.rank_weighted_combine.html#saeali
 <dt class="sig sig-object py" id="saealib.CompositeSurrogateManager.fit">
 <span class="sig-prename descclassname"><span class="pre">CompositeSurrogateManager.</span></span><span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">archive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#CompositeSurrogateManager.fit"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.CompositeSurrogateManager.fit" title="Link to this definition">#</a></dt>
 <dd><p>Pre-fit all sub-managers.</p>
-<p><code class="xref py py-attr docutils literal notranslate"><span class="pre">last_accuracy</span></code> is propagated from <code class="docutils literal notranslate"><span class="pre">managers[0]</span></code> so callers
-can read a representative accuracy value from this composite manager.</p>
+<p><code class="xref py py-attr docutils literal notranslate"><span class="pre">last_accuracy</span></code> is propagated from the first sub-manager (in
+configuration insertion order) so callers can read a representative
+accuracy value from this composite manager.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -874,17 +870,6 @@ can read a representative accuracy value from this composite manager.</p>
 </dd>
 <dt class="field-even">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="saealib.CompositeSurrogateManager.iter_acquisitions">
-<span class="sig-prename descclassname"><span class="pre">CompositeSurrogateManager.</span></span><span class="sig-name descname"><span class="pre">iter_acquisitions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#CompositeSurrogateManager.iter_acquisitions"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.CompositeSurrogateManager.iter_acquisitions" title="Link to this definition">#</a></dt>
-<dd><p>Yield the acquisition functions of every sub-manager.</p>
-<dl class="field-list simple">
-<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Iterator[<a class="reference internal" href="saealib.AcquisitionFunction.html#saealib.AcquisitionFunction" title="saealib.AcquisitionFunction">AcquisitionFunction</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -908,32 +893,21 @@ can read a representative accuracy value from this composite manager.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="saealib.CompositeSurrogateManager.post_score">
-<span class="sig-prename descclassname"><span class="pre">CompositeSurrogateManager.</span></span><span class="sig-name descname"><span class="pre">post_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.CompositeSurrogateManager.post_score" title="Link to this definition">#</a></dt>
-<dd><p>Post-score lifecycle hook; override to inject custom processing.</p>
+<dt class="sig sig-object py" id="saealib.CompositeSurrogateManager.predict">
+<span class="sig-prename descclassname"><span class="pre">CompositeSurrogateManager.</span></span><span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">refit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#CompositeSurrogateManager.predict"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.CompositeSurrogateManager.predict" title="Link to this definition">#</a></dt>
+<dd><p>Predict via every sub-manager, one named channel each.</p>
 <dl class="field-list simple">
-<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>scores</strong> (<em>np.ndarray</em>) -- Acquisition scores. shape: (n_candidates,)</p></li>
-<li><p><strong>predictions</strong> (<em>list</em><em>[</em><a class="reference internal" href="saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction"><em>SurrogatePrediction</em></a><em>]</em>) -- Surrogate predictions for each candidate.</p></li>
-<li><p><strong>ctx</strong> (<em>OptimizationState</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Current optimization context.</p></li>
-</ul>
+<dt class="field-odd">戻り値<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">channels</span></code> maps each configuration key to a
+<code class="docutils literal notranslate"><span class="pre">PredictionChannel</span></code> built from that sub-manager's own
+<code class="docutils literal notranslate"><span class="pre">value</span></code>/<code class="docutils literal notranslate"><span class="pre">std</span></code> (i.e. its own primary/objective channel). If a
+sub-manager's <code class="docutils literal notranslate"><span class="pre">predict()</span></code> exposes no <code class="docutils literal notranslate"><span class="pre">&quot;objective&quot;</span></code> channel,
+accessing <code class="docutils literal notranslate"><span class="pre">.value</span></code>/<code class="docutils literal notranslate"><span class="pre">.std</span></code> raises <code class="docutils literal notranslate"><span class="pre">KeyError</span></code> -- a genuine
+misconfiguration, not handled defensively here.</p>
 </dd>
-<dt class="field-even">戻り値<span class="colon">:</span></dt>
-<dd class="field-even"><p>Processed scores and predictions.</p>
+<dt class="field-even">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction">SurrogatePrediction</a></p>
 </dd>
-<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[np.ndarray, list[<a class="reference internal" href="saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction">SurrogatePrediction</a>]]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="saealib.CompositeSurrogateManager.score_candidates">
-<span class="sig-prename descclassname"><span class="pre">CompositeSurrogateManager.</span></span><span class="sig-name descname"><span class="pre">score_candidates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">refit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#CompositeSurrogateManager.score_candidates"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.CompositeSurrogateManager.score_candidates" title="Link to this definition">#</a></dt>
-<dd><p>Combine scores from all sub-managers using <code class="docutils literal notranslate"><span class="pre">combine_fn</span></code>.</p>
-<p>Returns the predictions from <code class="docutils literal notranslate"><span class="pre">managers[0]</span></code> as representative.</p>
-<dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>candidates_x</strong> (<em>np.ndarray</em>)</p></li>
@@ -941,9 +915,6 @@ can read a representative accuracy value from this composite manager.</p>
 <li><p><strong>ctx</strong> (<em>OptimizationState</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>refit</strong> (<em>bool</em>)</p></li>
 </ul>
-</dd>
-<dt class="field-even">戻り値の型<span class="colon">:</span></dt>
-<dd class="field-even"><p>tuple[np.ndarray, list[<a class="reference internal" href="saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction">SurrogatePrediction</a>]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -955,23 +926,6 @@ can read a representative accuracy value from this composite manager.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>fn</strong> (<em>callable</em>) -- <code class="docutils literal notranslate"><span class="pre">fn(gen,</span> <span class="pre">archive,</span> <span class="pre">ctx)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code></p>
-</dd>
-<dt class="field-even">戻り値<span class="colon">:</span></dt>
-<dd class="field-even"><p>Shallow copy with the hook registered.</p>
-</dd>
-<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.SurrogateManager">SurrogateManager</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="saealib.CompositeSurrogateManager.with_post_score">
-<span class="sig-prename descclassname"><span class="pre">CompositeSurrogateManager.</span></span><span class="sig-name descname"><span class="pre">with_post_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.CompositeSurrogateManager.with_post_score" title="Link to this definition">#</a></dt>
-<dd><p>Return a copy of this manager with <code class="docutils literal notranslate"><span class="pre">fn</span></code> appended to the hook.</p>
-<dl class="field-list simple">
-<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>fn</strong> (<em>callable</em>) -- <code class="docutils literal notranslate"><span class="pre">fn(scores,</span> <span class="pre">predictions,</span> <span class="pre">ctx)</span> <span class="pre">-&gt;</span> <span class="pre">(scores,</span> <span class="pre">predictions)</span></code></p>
 </dd>
 <dt class="field-even">戻り値<span class="colon">:</span></dt>
 <dd class="field-even"><p>Shallow copy with the hook registered.</p>
@@ -1034,12 +988,9 @@ can read a representative accuracy value from this composite manager.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CompositeSurrogateManager"><code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CompositeSurrogateManager.__init__"><code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager.__init__()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CompositeSurrogateManager.fit"><code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager.fit()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CompositeSurrogateManager.iter_acquisitions"><code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager.iter_acquisitions()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CompositeSurrogateManager.on_generation_end"><code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager.on_generation_end()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CompositeSurrogateManager.post_score"><code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager.post_score()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CompositeSurrogateManager.score_candidates"><code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager.score_candidates()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CompositeSurrogateManager.predict"><code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager.predict()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CompositeSurrogateManager.with_on_generation_end"><code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager.with_on_generation_end()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.CompositeSurrogateManager.with_post_score"><code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager.with_post_score()</span></code></a></li>
 </ul>
   </nav></div>
 

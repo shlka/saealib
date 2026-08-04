@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.problem.pymoo_problem &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>saealib.problem.pymoo_problem &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../../../_static/documentation_options.js?v=2243f322"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -962,9 +962,9 @@ window.runMermaid = runMermaid;</script>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;One-slot memo so F/G/H for a given x cost exactly one pymoo evaluation.</span>
 
 <span class="sd">    saealib&#39;s ``SerialEvaluator`` calls ``evaluate_constraints(x)`` and then</span>
-<span class="sd">    ``evaluate(x, g)`` back-to-back for the same ``x``, once per constraint</span>
-<span class="sd">    for the former. Without this cache, an n-constraint problem would trigger</span>
-<span class="sd">    ``n + 1`` pymoo evaluations per candidate instead of one.</span>
+<span class="sd">    ``evaluate(x, g)`` back-to-back for the same ``x``. Without this cache, an</span>
+<span class="sd">    n-constraint problem would trigger ``n + 1`` pymoo evaluations per</span>
+<span class="sd">    candidate instead of one.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pymoo_problem</span><span class="p">:</span> <span class="n">PymooCoreProblem</span><span class="p">,</span> <span class="n">n_ieq</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_eq</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1041,7 +1041,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    ``G`` maps to :class:`InequalityConstraint` (``threshold=0.0``, no sign</span>
 <span class="sd">    flip — both conventions agree on &quot;feasible when &lt;= 0&quot;); ``H`` maps to</span>
-<span class="sd">    :class:`EqualityConstraint`, verbatim.</span>
+<span class="sd">    :class:`EqualityConstraint` without modification.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="PymooProblem.__init__">

@@ -16,6 +16,7 @@
 
 
    ~GenerationBasedStrategy.__init__
+   ~GenerationBasedStrategy.build_pipeline
    ~GenerationBasedStrategy.step
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.GenerationBasedStrategy.__init__
+
+
+.. automethod:: saealib.GenerationBasedStrategy.build_pipeline
 
 
 .. automethod:: saealib.GenerationBasedStrategy.step

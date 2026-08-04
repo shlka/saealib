@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.ArchiveMixin &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>saealib.ArchiveMixin &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../../_static/documentation_options.js?v=2243f322"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -568,7 +568,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.ParentSelection.html">saealib.ParentSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TournamentSelection.html">saealib.TournamentSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SequentialSelection.html">saealib.SequentialSelection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.RouletteWheelSelection.html">saealib.RouletteWheelSelection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.LinearRankSelection.html">saealib.LinearRankSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurvivorSelection.html">saealib.SurvivorSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TruncationSelection.html">saealib.TruncationSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.DuplicateElimination.html">saealib.DuplicateElimination</a></li>
@@ -612,10 +612,6 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.PairwiseComparisonSet.html">saealib.PairwiseComparisonSet</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ReferencePointComparisonSet.html">saealib.ReferencePointComparisonSet</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TopKBipartitionSet.html">saealib.TopKBipartitionSet</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.ArchiveBasedManager.html">saealib.ArchiveBasedManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.DensityManager.html">saealib.DensityManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.NichingManager.html">saealib.NichingManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.NoveltyManager.html">saealib.NoveltyManager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AccuracyBasedSurrogateSwitcher.html">saealib.AccuracyBasedSurrogateSwitcher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.GenCtrlSwitcher.html">saealib.GenCtrlSwitcher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ManagerSwitcher.html">saealib.ManagerSwitcher</a></li>
@@ -634,6 +630,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../acquisition.html">Acquisition Functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionFunction.html">saealib.AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ExpectedImprovement.html">saealib.ExpectedImprovement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.BatchExpectedImprovement.html">saealib.BatchExpectedImprovement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.LowerConfidenceBound.html">saealib.LowerConfidenceBound</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.MaxUncertainty.html">saealib.MaxUncertainty</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.MeanPrediction.html">saealib.MeanPrediction</a></li>
@@ -650,6 +647,8 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.IndividualBasedStrategy.html">saealib.IndividualBasedStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PreSelectionStrategy.html">saealib.PreSelectionStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.DirectStrategy.html">saealib.DirectStrategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.SteadyStateStrategy.html">saealib.SteadyStateStrategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.IslandModel.html">saealib.IslandModel</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../initialization.html">Initialization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -664,6 +663,16 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.SerialEvaluator.html">saealib.SerialEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.JoblibEvaluator.html">saealib.JoblibEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanner.html">saealib.EvaluationPlanner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlan.html">saealib.EvaluationPlan</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluateAll.html">saealib.EvaluateAll</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.TopKEvaluation.html">saealib.TopKEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.RatioEvaluation.html">saealib.RatioEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.RepeatedEvaluation.html">saealib.RepeatedEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FidelityEvaluation.html">saealib.FidelityEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FidelityPromotion.html">saealib.FidelityPromotion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.ReplicateSummary.html">saealib.ReplicateSummary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.aggregate_replicates.html">saealib.aggregate_replicates</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../termination.html">Termination</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -698,11 +707,10 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../stages.html">Stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CountGenerationStage.html">saealib.CountGenerationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AskStage.html">saealib.AskStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateScoreStage.html">saealib.SurrogateScoreStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionStage.html">saealib.AcquisitionStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.SurrogatePredictStage.html">saealib.SurrogatePredictStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanStage.html">saealib.EvaluationPlanStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateFitStage.html">saealib.SurrogateFitStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.TopKSelectionStage.html">saealib.TopKSelectionStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.SortByScoreStage.html">saealib.SortByScoreStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.TrueEvaluationStage.html">saealib.TrueEvaluationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ArchiveUpdateStage.html">saealib.ArchiveUpdateStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TellStage.html">saealib.TellStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateOnlyLoopStage.html">saealib.SurrogateOnlyLoopStage</a></li>
@@ -777,7 +785,7 @@
 <h1>saealib.ArchiveMixin<a class="headerlink" href="#saealib-archivemixin" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.ArchiveMixin">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">ArchiveMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_capacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_attr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/population/archive.html#ArchiveMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.ArchiveMixin" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">ArchiveMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_capacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_attr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_policy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'keep_first'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/population/archive.html#ArchiveMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.ArchiveMixin" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A mixin class for using Population as an Archive.</p>
 <p>Must be subclassed via multiple inheritance as a subclass of the Population class.
@@ -792,6 +800,7 @@ Duplicate removal and range queries can be performed.</p>
 <li><p><strong>key_attr</strong> (<em>str</em>)</p></li>
 <li><p><strong>atol</strong> (<em>float</em>)</p></li>
 <li><p><strong>rtol</strong> (<em>float</em>)</p></li>
+<li><p><strong>duplicate_policy</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -864,11 +873,11 @@ Duplicate removal and range queries can be performed.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.ArchiveMixin.delete" title="saealib.ArchiveMixin.delete"><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete</span></code></a></p></td>
 <td><p>Delete element(s) and invalidate the kNN cache.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.ArchiveMixin.get_duplicated_population" title="saealib.ArchiveMixin.get_duplicated_population"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_duplicated_population</span></code></a></p></td>
-<td><p>Return a Population object without removing duplicates.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.ArchiveMixin.get_knn" title="saealib.ArchiveMixin.get_knn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_knn</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.ArchiveMixin.get_knn" title="saealib.ArchiveMixin.get_knn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_knn</span></code></a></p></td>
 <td><p>Get k-nearest neighbors of the given solution from the archive.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.ArchiveMixin.mod_value" title="saealib.ArchiveMixin.mod_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mod_value</span></code></a></p></td>
+<td><p>Invalidate the kNN cache on every value-only mutation, too.</p></td>
 </tr>
 </tbody>
 </table>
@@ -876,7 +885,7 @@ Duplicate removal and range queries can be performed.</p>
 <p class="rubric">Method Details</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.ArchiveMixin.__init__">
-<span class="sig-prename descclassname"><span class="pre">ArchiveMixin.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_capacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_attr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/population/archive.html#ArchiveMixin.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.ArchiveMixin.__init__" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ArchiveMixin.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_capacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_attr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_policy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'keep_first'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/population/archive.html#ArchiveMixin.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.ArchiveMixin.__init__" title="Link to this definition">#</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -885,6 +894,7 @@ Duplicate removal and range queries can be performed.</p>
 <li><p><strong>key_attr</strong> (<em>str</em>)</p></li>
 <li><p><strong>atol</strong> (<em>float</em>)</p></li>
 <li><p><strong>rtol</strong> (<em>float</em>)</p></li>
+<li><p><strong>duplicate_policy</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -900,6 +910,7 @@ Duplicate removal and range queries can be performed.</p>
 <li><p><strong>element</strong> (<a class="reference internal" href="saealib.Individual.html#saealib.Individual" title="saealib.Individual"><em>Individual</em></a><em> | </em><em>dict</em><em> | </em><em>None</em>) – Data for the additional individual</p></li>
 <li><p><strong>**kwargs</strong> – Set attribute values individually and add them.
 Alternatively, overwrite based on the element’s value and add it.</p></li>
+<li><p><strong>self</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -925,17 +936,6 @@ Alternatively, overwrite based on the element’s value and add it.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="saealib.ArchiveMixin.get_duplicated_population">
-<span class="sig-prename descclassname"><span class="pre">ArchiveMixin.</span></span><span class="sig-name descname"><span class="pre">get_duplicated_population</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/population/archive.html#ArchiveMixin.get_duplicated_population"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.ArchiveMixin.get_duplicated_population" title="Link to this definition">#</a></dt>
-<dd><p>Return a Population object without removing duplicates.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Population without removing duplicates.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="saealib.ArchiveMixin.get_knn">
 <span class="sig-prename descclassname"><span class="pre">ArchiveMixin.</span></span><span class="sig-name descname"><span class="pre">get_knn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/population/archive.html#ArchiveMixin.get_knn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.ArchiveMixin.get_knn" title="Link to this definition">#</a></dt>
 <dd><p>Get k-nearest neighbors of the given solution from the archive.</p>
@@ -951,6 +951,17 @@ Alternatively, overwrite based on the element’s value and add it.</p></li>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple[np.ndarray, np.ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.ArchiveMixin.mod_value">
+<span class="sig-prename descclassname"><span class="pre">ArchiveMixin.</span></span><span class="sig-name descname"><span class="pre">mod_value</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/population/archive.html#ArchiveMixin.mod_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.ArchiveMixin.mod_value" title="Link to this definition">#</a></dt>
+<dd><p>Invalidate the kNN cache on every value-only mutation, too.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1015,8 +1026,8 @@ Alternatively, overwrite based on the element’s value and add it.</p></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ArchiveMixin.__init__"><code class="docutils literal notranslate"><span class="pre">ArchiveMixin.__init__()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ArchiveMixin.add"><code class="docutils literal notranslate"><span class="pre">ArchiveMixin.add()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ArchiveMixin.delete"><code class="docutils literal notranslate"><span class="pre">ArchiveMixin.delete()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ArchiveMixin.get_duplicated_population"><code class="docutils literal notranslate"><span class="pre">ArchiveMixin.get_duplicated_population()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ArchiveMixin.get_knn"><code class="docutils literal notranslate"><span class="pre">ArchiveMixin.get_knn()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ArchiveMixin.mod_value"><code class="docutils literal notranslate"><span class="pre">ArchiveMixin.mod_value()</span></code></a></li>
 </ul>
   </nav></div>
 

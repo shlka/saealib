@@ -17,12 +17,9 @@
 
    ~GlobalSurrogateManager.__init__
    ~GlobalSurrogateManager.fit
-   ~GlobalSurrogateManager.iter_acquisitions
    ~GlobalSurrogateManager.on_generation_end
-   ~GlobalSurrogateManager.post_score
-   ~GlobalSurrogateManager.score_candidates
+   ~GlobalSurrogateManager.predict
    ~GlobalSurrogateManager.with_on_generation_end
-   ~GlobalSurrogateManager.with_post_score
 
 
 
@@ -38,22 +35,13 @@
 .. automethod:: saealib.GlobalSurrogateManager.fit
 
 
-.. automethod:: saealib.GlobalSurrogateManager.iter_acquisitions
-
-
 .. automethod:: saealib.GlobalSurrogateManager.on_generation_end
 
 
-.. automethod:: saealib.GlobalSurrogateManager.post_score
-
-
-.. automethod:: saealib.GlobalSurrogateManager.score_candidates
+.. automethod:: saealib.GlobalSurrogateManager.predict
 
 
 .. automethod:: saealib.GlobalSurrogateManager.with_on_generation_end
-
-
-.. automethod:: saealib.GlobalSurrogateManager.with_post_score
 
 
 

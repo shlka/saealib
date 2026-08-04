@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.exceptions &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>saealib.exceptions &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -945,7 +945,17 @@ window.runMermaid = runMermaid;</script>
   <h1>saealib.exceptions のソースコード</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Public exception hierarchy for saealib.&quot;&quot;&quot;</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ConfigurationError&quot;</span><span class="p">,</span> <span class="s2">&quot;SaealibError&quot;</span><span class="p">,</span> <span class="s2">&quot;ValidationError&quot;</span><span class="p">]</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;CheckpointError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ConfigurationError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;EvaluationFatalError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;EvaluationProtocolError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;EvaluationSubmissionError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SaealibError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ValidationError&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 
 
 <div class="viewcode-block" id="SaealibError">
@@ -967,6 +977,30 @@ window.runMermaid = runMermaid;</script>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConfigurationError</span><span class="p">(</span><span class="n">SaealibError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when an :class:`~saealib.Optimizer` is misconfigured at run time.&quot;&quot;&quot;</span></div>
 
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CheckpointError</span><span class="p">(</span><span class="n">ValidationError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when a checkpoint is invalid or cannot be migrated.&quot;&quot;&quot;</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationProtocolError</span><span class="p">(</span><span class="n">SaealibError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when an evaluation lifecycle message violates its contract.&quot;&quot;&quot;</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationFatalError</span><span class="p">(</span><span class="n">EvaluationProtocolError</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when a post-effect lifecycle failure cannot be retried.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">state</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationSubmissionError</span><span class="p">(</span><span class="n">EvaluationProtocolError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when submission leaves externally running work.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">state</span>
 </pre></div>
 
                 </article>

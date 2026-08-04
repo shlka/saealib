@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.strategies.base &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>saealib.strategies.base &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../../../_static/documentation_options.js?v=2243f322"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -947,36 +947,11 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComponentProvider</span>
-
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Individual</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurrogatePrediction</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">assign_tell_f</span><span class="p">(</span>
-    <span class="n">individual</span><span class="p">:</span> <span class="n">Individual</span><span class="p">,</span>
-    <span class="n">pred</span><span class="p">:</span> <span class="n">SurrogatePrediction</span><span class="p">,</span>
-    <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assign predicted objective to individual, replacing NaN with worst population f.</span>
-
-<span class="sd">    When a surrogate fails (score sanitized to -inf by SurrogateManager), the</span>
-<span class="sd">    prediction&#39;s tell_f is an explicit NaN array.  Assigning NaN to individual.f</span>
-<span class="sd">    would corrupt the population sort.  Instead, we substitute the worst f value</span>
-<span class="sd">    currently in the population so that the individual is naturally eliminated by</span>
-<span class="sd">    the survivor selection without special NaN handling in comparators.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">f</span> <span class="o">=</span> <span class="n">pred</span><span class="o">.</span><span class="n">tell_f</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">f</span><span class="p">)):</span>
-        <span class="n">order</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">comparator</span><span class="o">.</span><span class="n">sort_population</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="p">)</span>
-        <span class="n">f</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)[</span><span class="n">order</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">individual</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">f</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.policies.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluateAll</span><span class="p">,</span> <span class="n">EvaluationPlanner</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.policies.feedback</span><span class="w"> </span><span class="kn">import</span> <span class="n">FeedbackBuilder</span><span class="p">,</span> <span class="n">MixedFeedback</span>
 
 
 <div class="viewcode-block" id="OptimizationStrategy">
@@ -984,26 +959,32 @@ window.runMermaid = runMermaid;</script>
 <span class="k">class</span><span class="w"> </span><span class="nc">OptimizationStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for optimization strategies.</span>
 
-<span class="sd">    Built-in strategies compose their generation logic from ``Pipeline``</span>
-<span class="sd">    stages and rebuild that pipeline on every :meth:`step` call, so</span>
-<span class="sd">    reassigning components on the provider (e.g. ``provider.algorithm``,</span>
-<span class="sd">    ``provider.surrogate_manager``) or mutating a strategy&#39;s own parameters</span>
-<span class="sd">    mid-run takes effect from the next call onward. This is a convention</span>
-<span class="sd">    followed by each built-in strategy via a ``_build_pipeline`` method</span>
-<span class="sd">    (not part of this ABC) rather than an enforced contract; a subclass</span>
-<span class="sd">    wanting to customize stage composition should override</span>
-<span class="sd">    ``_build_pipeline`` following the same pattern.</span>
+<span class="sd">    Strategies compose their generation logic from a pipeline built for each</span>
+<span class="sd">    step.  ``build_pipeline`` is the public extension contract, so provider</span>
+<span class="sd">    replacements and strategy parameter changes are observed on the next</span>
+<span class="sd">    execution.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># Optimizer.validate() checks this to ensure surrogate_manager is configured.</span>
     <span class="n">requires_surrogate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
+    <span class="n">evaluation_planner</span><span class="p">:</span> <span class="n">EvaluationPlanner</span> <span class="o">=</span> <span class="n">EvaluateAll</span><span class="p">()</span>
+
+    <span class="n">feedback_builder</span><span class="p">:</span> <span class="n">FeedbackBuilder</span> <span class="o">=</span> <span class="n">MixedFeedback</span><span class="p">()</span>
+
+<div class="viewcode-block" id="OptimizationStrategy.build_pipeline">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.OptimizationStrategy.html#saealib.OptimizationStrategy.build_pipeline">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provider</span><span class="p">:</span> <span class="n">ComponentProvider</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the next pipeline from the current component provider.&quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
 <div class="viewcode-block" id="OptimizationStrategy.step">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.OptimizationStrategy.html#saealib.OptimizationStrategy.step">[docs]</a>
-    <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span> <span class="n">provider</span><span class="p">:</span> <span class="n">ComponentProvider</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform one generation step: generate, score, evaluate, and update.</span>
 
@@ -1016,12 +997,10 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        OptimizationState or None</span>
-<span class="sd">            Updated state when the strategy uses the functional Pipeline API.</span>
-<span class="sd">            ``None`` for strategies that mutate *ctx* in-place (legacy style).</span>
-<span class="sd">            Callers must handle both: ``ctx = result if result is not None else ctx``.</span>
+<span class="sd">        OptimizationState</span>
+<span class="sd">            Updated state returned by the pipeline.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">pass</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_pipeline</span><span class="p">(</span><span class="n">provider</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

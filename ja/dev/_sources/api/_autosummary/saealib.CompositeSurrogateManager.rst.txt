@@ -17,12 +17,9 @@
 
    ~CompositeSurrogateManager.__init__
    ~CompositeSurrogateManager.fit
-   ~CompositeSurrogateManager.iter_acquisitions
    ~CompositeSurrogateManager.on_generation_end
-   ~CompositeSurrogateManager.post_score
-   ~CompositeSurrogateManager.score_candidates
+   ~CompositeSurrogateManager.predict
    ~CompositeSurrogateManager.with_on_generation_end
-   ~CompositeSurrogateManager.with_post_score
 
 
 
@@ -38,22 +35,13 @@
 .. automethod:: saealib.CompositeSurrogateManager.fit
 
 
-.. automethod:: saealib.CompositeSurrogateManager.iter_acquisitions
-
-
 .. automethod:: saealib.CompositeSurrogateManager.on_generation_end
 
 
-.. automethod:: saealib.CompositeSurrogateManager.post_score
-
-
-.. automethod:: saealib.CompositeSurrogateManager.score_candidates
+.. automethod:: saealib.CompositeSurrogateManager.predict
 
 
 .. automethod:: saealib.CompositeSurrogateManager.with_on_generation_end
-
-
-.. automethod:: saealib.CompositeSurrogateManager.with_post_score
 
 
 

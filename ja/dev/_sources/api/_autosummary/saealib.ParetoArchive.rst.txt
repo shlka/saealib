@@ -34,6 +34,7 @@
    ~ParetoArchive.set_cache
    ~ParetoArchive.truncate
    ~ParetoArchive.update_array
+   ~ParetoArchive.update_rows
 
 
 
@@ -98,6 +99,9 @@
 
 
 .. automethod:: saealib.ParetoArchive.update_array
+
+
+.. automethod:: saealib.ParetoArchive.update_rows
 
 
 

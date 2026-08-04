@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.acquisition.lcb &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>saealib.acquisition.lcb &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../../../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -951,7 +951,8 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">direction_to_minimize_sign</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PointwiseAcquisition</span><span class="p">,</span> <span class="n">direction_to_minimize_sign</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">lower_confidence_bound_kernel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurrogatePrediction</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -960,7 +961,7 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="LowerConfidenceBound">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.LowerConfidenceBound.html#saealib.LowerConfidenceBound">[ドキュメント]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">LowerConfidenceBound</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LowerConfidenceBound</span><span class="p">(</span><span class="n">PointwiseAcquisition</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Lower Confidence Bound (LCB) acquisition function.</span>
 
@@ -1059,14 +1060,10 @@ window.runMermaid = runMermaid;</script>
             <span class="p">)</span>
         <span class="k">assert</span> <span class="n">prediction</span><span class="o">.</span><span class="n">std</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">s</span> <span class="o">=</span> <span class="n">direction_to_minimize_sign</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
-        <span class="n">s_idx</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">s</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">obj_idx</span><span class="p">]</span>  <span class="c1"># type: ignore  # ty narrows bare np.ndarray isinstance to object dtype; s is float ndarray at runtime</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
-            <span class="k">else</span> <span class="n">s</span>
-        <span class="p">)</span>
+        <span class="n">s_idx</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">obj_idx</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="k">else</span> <span class="n">s</span>
         <span class="n">mu</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">value</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">s_idx</span>  <span class="c1"># (n_samples,)</span>
         <span class="n">sigma</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">std</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_idx</span><span class="p">]</span>  <span class="c1"># (n_samples,)</span>
-        <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="n">mu</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">kappa</span> <span class="o">*</span> <span class="n">sigma</span><span class="p">)</span>  <span class="c1"># negate: higher = better</span></div>
+        <span class="k">return</span> <span class="o">-</span><span class="n">lower_confidence_bound_kernel</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kappa</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

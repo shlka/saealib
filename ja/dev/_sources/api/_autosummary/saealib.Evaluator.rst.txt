@@ -16,7 +16,17 @@
 
 
    ~Evaluator.__init__
+   ~Evaluator.acknowledge
+   ~Evaluator.can_reattach
+   ~Evaluator.cancel
+   ~Evaluator.collect
+   ~Evaluator.detach
    ~Evaluator.evaluate_batch
+   ~Evaluator.evaluate_request
+   ~Evaluator.has_partial_lifecycle_override
+   ~Evaluator.reattach
+   ~Evaluator.submit
+   ~Evaluator.supports_batch_rollback
 
 
 
@@ -29,7 +39,37 @@
 .. automethod:: saealib.Evaluator.__init__
 
 
+.. automethod:: saealib.Evaluator.acknowledge
+
+
+.. automethod:: saealib.Evaluator.can_reattach
+
+
+.. automethod:: saealib.Evaluator.cancel
+
+
+.. automethod:: saealib.Evaluator.collect
+
+
+.. automethod:: saealib.Evaluator.detach
+
+
 .. automethod:: saealib.Evaluator.evaluate_batch
+
+
+.. automethod:: saealib.Evaluator.evaluate_request
+
+
+.. automethod:: saealib.Evaluator.has_partial_lifecycle_override
+
+
+.. automethod:: saealib.Evaluator.reattach
+
+
+.. automethod:: saealib.Evaluator.submit
+
+
+.. automethod:: saealib.Evaluator.supports_batch_rollback
 
 
 

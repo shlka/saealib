@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.comparators.dominance &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>saealib.comparators.dominance &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../../../_static/documentation_options.js?v=2243f322"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1129,6 +1129,11 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">g</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">direction</span><span class="p">)</span>
         <span class="n">k</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">leq_all</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">a</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">b</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">b</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span>
+            <span class="n">less_any</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">a</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span> <span class="o">|</span> <span class="p">(</span><span class="n">b</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">b</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span>
+            <span class="k">return</span> <span class="n">leq_all</span> <span class="o">&amp;</span> <span class="n">less_any</span>
         <span class="n">leq_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">k</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
         <span class="n">less_any</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">k</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
@@ -1354,62 +1359,6 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pareto</span><span class="o">.</span><span class="n">dominates_many</span><span class="p">(</span><span class="n">fa_q</span><span class="p">,</span> <span class="n">f_q</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span></div>
 </div>
 
-
-
-<span class="c1"># Module-level singleton used by legacy wrappers (_pareto_dominates,</span>
-<span class="c1"># _dominance_matrix) so callers that import them directly stay correct.</span>
-<span class="n">_PARETO_DOMINATOR</span><span class="p">:</span> <span class="n">ParetoDominator</span> <span class="o">=</span> <span class="n">ParetoDominator</span><span class="p">()</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_pareto_dominates</span><span class="p">(</span>
-    <span class="n">fa</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Return True if fa Pareto-dominates fb.</span>
-
-<span class="sd">    NaN values in fa are treated as non-dominating (returns False).</span>
-
-<span class="sd">    .. deprecated::</span>
-<span class="sd">        Thin wrapper kept for backward compatibility.  Use</span>
-<span class="sd">        ``ParetoDominator().dominates(fa, fb, direction)`` instead.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    fa, fb : np.ndarray</span>
-<span class="sd">        Objective vectors to compare.</span>
-<span class="sd">    direction : np.ndarray or None</span>
-<span class="sd">        Per-objective optimization direction: +1 = maximize, -1 = minimize.</span>
-<span class="sd">        None defaults to minimization for all objectives.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">_PARETO_DOMINATOR</span><span class="o">.</span><span class="n">dominates</span><span class="p">(</span><span class="n">fa</span><span class="p">,</span> <span class="n">fb</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_dominance_matrix</span><span class="p">(</span><span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Compute the NxN boolean dominance matrix from a direction-transformed matrix.</span>
-
-<span class="sd">    ``D[i, j]`` is True if row i Pareto-dominates row j.  The input ``g``</span>
-<span class="sd">    must already have the direction transform applied (smaller = better for</span>
-<span class="sd">    every objective) and must contain no NaN values.</span>
-
-<span class="sd">    .. deprecated::</span>
-<span class="sd">        Thin wrapper kept for backward compatibility.  Use</span>
-<span class="sd">        ``ParetoDominator().dominance_matrix(g)`` instead.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    g : np.ndarray</span>
-<span class="sd">        Objective matrix after direction transform. shape: (k, n_obj).</span>
-<span class="sd">        Must contain no NaN values.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    np.ndarray</span>
-<span class="sd">        Boolean matrix of shape (k, k).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># g is already direction-transformed; pass direction=None so no second</span>
-    <span class="c1"># transform is applied inside ParetoDominator.</span>
-    <span class="k">return</span> <span class="n">_PARETO_DOMINATOR</span><span class="o">.</span><span class="n">dominance_matrix</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
 </pre></div>
 
                 </article>

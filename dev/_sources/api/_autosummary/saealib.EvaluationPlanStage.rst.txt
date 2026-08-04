@@ -1,0 +1,39 @@
+﻿saealib.EvaluationPlanStage
+===========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: EvaluationPlanStage
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~EvaluationPlanStage.__init__
+   ~EvaluationPlanStage.execute
+   ~EvaluationPlanStage.to_pseudocode
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.EvaluationPlanStage.__init__
+
+
+.. automethod:: saealib.EvaluationPlanStage.execute
+
+
+.. automethod:: saealib.EvaluationPlanStage.to_pseudocode
+
+
+

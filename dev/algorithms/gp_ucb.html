@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>GP-UCB (Gaussian Process Upper Confidence Bound) &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>GP-UCB (Gaussian Process Upper Confidence Bound) &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../_static/documentation_options.js?v=2243f322"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1114,7 +1114,7 @@ The theoretical contribution the name GP-UCB refers to is precisely this corresp
 Therefore, GP-UCB with a fixed <code class="docutils literal notranslate"><span class="pre">kappa</span></code> is a naive fixed-weight UCB heuristic that does not carry the regret guarantee derived theoretically in the paper.
 The paper itself reports, in its experiments section, that using the theoretical <span class="math notranslate nohighlight">\(\beta_t\)</span> schedule as-is is overly exploratory, and that scaling the coefficient down by 1/5 via cross-validation performed better — so using a fixed or empirically tuned weight in practice does not contradict the paper.
 However, there is no theoretical basis for how this fixed weight is chosen, and the default <code class="docutils literal notranslate"><span class="pre">kappa=2.0</span></code> is merely fixing a value equivalent to <span class="math notranslate nohighlight">\(\beta_t=4.0\)</span>.</p>
-<p>If you want to change <code class="docutils literal notranslate"><span class="pre">kappa</span></code> dynamically with <span class="math notranslate nohighlight">\(t\)</span>, rewriting <code class="docutils literal notranslate"><span class="pre">surrogate_manager.acquisition.kappa</span></code> every generation via <code class="docutils literal notranslate"><span class="pre">CallbackManager</span></code> can bring it closer to a corresponding iteration-dependent schedule.</p>
+<p>If you want to change <code class="docutils literal notranslate"><span class="pre">kappa</span></code> dynamically with <span class="math notranslate nohighlight">\(t\)</span>, update the optimizer’s acquisition from a generation callback.</p>
 </section>
 <section id="related">
 <h2>Related<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>

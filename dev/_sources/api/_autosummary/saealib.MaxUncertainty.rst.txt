@@ -17,6 +17,8 @@
 
    ~MaxUncertainty.__init__
    ~MaxUncertainty.compute_reference
+   ~MaxUncertainty.evaluate
+   ~MaxUncertainty.prepare
    ~MaxUncertainty.score
 
 
@@ -31,6 +33,12 @@
 
 
 .. automethod:: saealib.MaxUncertainty.compute_reference
+
+
+.. automethod:: saealib.MaxUncertainty.evaluate
+
+
+.. automethod:: saealib.MaxUncertainty.prepare
 
 
 .. automethod:: saealib.MaxUncertainty.score

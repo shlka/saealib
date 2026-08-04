@@ -124,7 +124,7 @@ Therefore, GP-UCB with a fixed `kappa` is a naive fixed-weight UCB heuristic tha
 The paper itself reports, in its experiments section, that using the theoretical $\beta_t$ schedule as-is is overly exploratory, and that scaling the coefficient down by 1/5 via cross-validation performed better — so using a fixed or empirically tuned weight in practice does not contradict the paper.
 However, there is no theoretical basis for how this fixed weight is chosen, and the default `kappa=2.0` is merely fixing a value equivalent to $\beta_t=4.0$.
 
-If you want to change `kappa` dynamically with $t$, rewriting `surrogate_manager.acquisition.kappa` every generation via `CallbackManager` can bring it closer to a corresponding iteration-dependent schedule.
+If you want to change `kappa` dynamically with $t$, update the optimizer's acquisition from a generation callback.
 
 ## Related
 

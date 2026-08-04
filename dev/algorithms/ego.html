@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>EGO (Efficient Global Optimization) &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>EGO (Efficient Global Optimization) &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../_static/documentation_options.js?v=2243f322"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1077,13 +1077,14 @@ Because EI is a scalar value computed from both this predictive mean and predict
     <span class="n">SequentialSelection</span><span class="p">(),</span>
     <span class="n">TruncationSelection</span><span class="p">(),</span>
 <span class="p">)</span>
-<span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">SklearnGPRSurrogate</span><span class="p">(),</span> <span class="n">ExpectedImprovement</span><span class="p">())</span>
+<span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">SklearnGPRSurrogate</span><span class="p">())</span>
 <span class="n">strategy</span> <span class="o">=</span> <span class="n">IndividualBasedStrategy</span><span class="p">(</span><span class="n">evaluation_ratio</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
 
 <span class="n">opt</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_surrogate_manager</span><span class="p">(</span><span class="n">surrogate_manager</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_acquisition</span><span class="p">(</span><span class="n">ExpectedImprovement</span><span class="p">())</span>
     <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">strategy</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">200</span><span class="p">)))</span>
 <span class="p">)</span>

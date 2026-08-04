@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>SMS-EMOA (S Metric Selection EMOA) &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>SMS-EMOA (S Metric Selection EMOA) &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../_static/documentation_options.js?v=2243f322"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1068,47 +1068,29 @@ Because the paper’s reduction procedure applies this only to the lowest front 
 <td><p>L4-6</p></td>
 </tr>
 <tr class="row-even"><td><p>Evaluation strategy</p></td>
-<td><p>A custom <code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code> (a one-individual-per-generation version of <code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code>; described below)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code> with <code class="docutils literal notranslate"><span class="pre">AsyncEvaluationScheduler</span></code> for steady-state completion</p></td>
 <td><p>2, 6-7 (in-generation evaluation)</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code> doesn’t pass <code class="docutils literal notranslate"><span class="pre">n_offspring</span></code> to <code class="docutils literal notranslate"><span class="pre">AskStage</span></code>, defaulting to <span class="math notranslate nohighlight">\((\mu+\lambda)\)</span> generational replacement that generates as many offspring as the population size.
-Since SMS-EMOA is a steady-state algorithm generating only one new individual per generation, using <code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code> as-is would diverge from step 2 of the pseudocode.
-Following the procedure shown in “Implementing a custom Strategy” in <a class="reference internal" href="../components/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>, we assemble a <code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code>-equivalent pipeline with <code class="docutils literal notranslate"><span class="pre">AskStage(n_offspring=1)</span></code> specified instead.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">GA</span><span class="p">,</span> <span class="n">HypervolumeComparator</span><span class="p">,</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">OptimizationStrategy</span><span class="p">,</span> <span class="n">Pipeline</span>
+<p><code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code> asks for one candidate per step and can be paired with
+<code class="docutils literal notranslate"><span class="pre">AsyncEvaluationScheduler</span></code> when evaluations have different completion times. The
+scheduler manages pending requests and applies each completed result serially.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AsyncEvaluator</span><span class="p">,</span>
+    <span class="n">AsyncEvaluationScheduler</span><span class="p">,</span>
+    <span class="n">GA</span><span class="p">,</span>
+    <span class="n">HypervolumeComparator</span><span class="p">,</span>
+    <span class="n">Optimizer</span><span class="p">,</span>
+    <span class="n">SerialEvaluator</span><span class="p">,</span>
+    <span class="n">SteadyStateStrategy</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.benchmarks</span><span class="w"> </span><span class="kn">import</span> <span class="n">zdt1</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.crossover</span><span class="w"> </span><span class="kn">import</span> <span class="n">CrossoverSBX</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.mutation</span><span class="w"> </span><span class="kn">import</span> <span class="n">MutationPolynomial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">TournamentSelection</span><span class="p">,</span> <span class="n">TruncationSelection</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.stages</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">ArchiveUpdateStage</span><span class="p">,</span>
-    <span class="n">AskStage</span><span class="p">,</span>
-    <span class="n">CountGenerationStage</span><span class="p">,</span>
-    <span class="n">TellStage</span><span class="p">,</span>
-    <span class="n">TrueEvaluationStage</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">Termination</span><span class="p">,</span> <span class="n">max_fe</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">SteadyStateStrategy</span><span class="p">(</span><span class="n">OptimizationStrategy</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A one-individual-per-generation version of DirectStrategy (SMS-EMOA&#39;s steady-state selection).&quot;&quot;&quot;</span>
-
-    <span class="n">requires_surrogate</span> <span class="o">=</span> <span class="kc">False</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">provider</span><span class="p">):</span>
-        <span class="n">cbmanager</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;cbmanager&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">pipeline</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">CountGenerationStage</span><span class="p">(),</span>
-                <span class="n">AskStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="n">n_offspring</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">),</span>
-                <span class="n">TrueEvaluationStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">,</span> <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">),</span>
-                <span class="n">ArchiveUpdateStage</span><span class="p">(),</span>
-                <span class="n">TellStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">),</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
 
 
 <span class="n">problem</span> <span class="o">=</span> <span class="n">zdt1</span><span class="p">(</span><span class="n">n_var</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
@@ -1120,11 +1102,15 @@ Following the procedure shown in “Implementing a custom Strategy” in <a clas
     <span class="n">TournamentSelection</span><span class="p">(</span><span class="n">tournament_size</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
     <span class="n">TruncationSelection</span><span class="p">(),</span>
 <span class="p">)</span>
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">AsyncEvaluator</span><span class="p">(</span><span class="n">SerialEvaluator</span><span class="p">(),</span> <span class="n">max_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">schedule</span> <span class="o">=</span> <span class="n">AsyncEvaluationScheduler</span><span class="p">(</span><span class="n">evaluator</span><span class="p">,</span> <span class="n">max_pending</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
 <span class="n">opt</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">SteadyStateStrategy</span><span class="p">())</span>
+    <span class="o">.</span><span class="n">set_evaluator</span><span class="p">(</span><span class="n">evaluator</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_async_evaluation_scheduler</span><span class="p">(</span><span class="n">schedule</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">2000</span><span class="p">)))</span>
 <span class="p">)</span>
 <span class="n">ctx</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>

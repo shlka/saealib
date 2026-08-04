@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.execution.initializer &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>saealib.execution.initializer &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../../../_static/documentation_options.js?v=2243f322"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -987,6 +987,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">PopulationAttribute</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">n_obj</span><span class="p">,),</span> <span class="n">default</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
             <span class="n">PopulationAttribute</span><span class="p">(</span><span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">n_constraints</span><span class="p">,),</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
             <span class="n">PopulationAttribute</span><span class="p">(</span><span class="s2">&quot;cv&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="p">(),</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+            <span class="n">PopulationAttribute</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="p">(),</span> <span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
         <span class="p">]</span>
         <span class="k">if</span> <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">attrs_required</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">get_required_attrs</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
@@ -1132,8 +1133,6 @@ window.runMermaid = runMermaid;</script>
 
         <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_context</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">pareto_archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
 
-        <span class="c1"># TODO: Assign different metadata per dimension (mixed variable support).</span>
-        <span class="c1"># TODO: Support initialization of CV and other attributes.</span>
         <span class="n">archive_x</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">qmc</span><span class="o">.</span><span class="n">LatinHypercube</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span><span class="o">.</span><span class="n">random</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span>
         <span class="p">)</span>
@@ -1143,13 +1142,15 @@ window.runMermaid = runMermaid;</script>
 
         <span class="n">result</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate_batch</span><span class="p">(</span><span class="n">archive_x</span><span class="p">,</span> <span class="n">problem</span><span class="p">)</span>
 
-        <span class="c1"># TODO: Register algorithm-specific attributes in the archive.</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">candidate_id_allocator</span><span class="o">.</span><span class="n">allocate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">)</span>
+
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">):</span>
             <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">archive_x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
                 <span class="s2">&quot;f&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">f</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
                 <span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">g</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
                 <span class="s2">&quot;cv&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">cv</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
+                <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">ids</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
             <span class="p">}</span>
             <span class="n">archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
             <span class="n">pareto_archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -1161,9 +1162,11 @@ window.runMermaid = runMermaid;</script>
         <span class="n">sorted_idx</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">comparator</span><span class="o">.</span><span class="n">sort_population</span><span class="p">(</span><span class="n">archive</span><span class="p">)</span>
         <span class="n">archive_sorted</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">sorted_idx</span><span class="p">)</span>
         <span class="n">archive</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="n">archive</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">archive_sorted</span><span class="p">)</span>
+        <span class="n">archive</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span><span class="n">archive_sorted</span><span class="p">,</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="n">population</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">archive</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span><span class="p">])</span>
+        <span class="n">population</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span>
+            <span class="n">archive</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span><span class="p">],</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">ctx</span></div>
 </div>
@@ -1241,12 +1244,15 @@ window.runMermaid = runMermaid;</script>
 
         <span class="n">result</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate_batch</span><span class="p">(</span><span class="n">archive_x</span><span class="p">,</span> <span class="n">problem</span><span class="p">)</span>
 
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">candidate_id_allocator</span><span class="o">.</span><span class="n">allocate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">)</span>
+
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">):</span>
             <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">archive_x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
                 <span class="s2">&quot;f&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">f</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
                 <span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">g</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
                 <span class="s2">&quot;cv&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">cv</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
+                <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">ids</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
             <span class="p">}</span>
             <span class="n">archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
             <span class="n">pareto_archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -1258,9 +1264,11 @@ window.runMermaid = runMermaid;</script>
         <span class="n">sorted_idx</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">comparator</span><span class="o">.</span><span class="n">sort_population</span><span class="p">(</span><span class="n">archive</span><span class="p">)</span>
         <span class="n">archive_sorted</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">sorted_idx</span><span class="p">)</span>
         <span class="n">archive</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="n">archive</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">archive_sorted</span><span class="p">)</span>
+        <span class="n">archive</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span><span class="n">archive_sorted</span><span class="p">,</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="n">population</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">archive</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span><span class="p">])</span>
+        <span class="n">population</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span>
+            <span class="n">archive</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span><span class="p">],</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">ctx</span></div>
 </div>
@@ -1339,12 +1347,15 @@ window.runMermaid = runMermaid;</script>
 
         <span class="n">result</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate_batch</span><span class="p">(</span><span class="n">archive_x</span><span class="p">,</span> <span class="n">problem</span><span class="p">)</span>
 
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">candidate_id_allocator</span><span class="o">.</span><span class="n">allocate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">)</span>
+
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">):</span>
             <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">archive_x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
                 <span class="s2">&quot;f&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">f</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
                 <span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">g</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
                 <span class="s2">&quot;cv&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">cv</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
+                <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">ids</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
             <span class="p">}</span>
             <span class="n">archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
             <span class="n">pareto_archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -1356,9 +1367,11 @@ window.runMermaid = runMermaid;</script>
         <span class="n">sorted_idx</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">comparator</span><span class="o">.</span><span class="n">sort_population</span><span class="p">(</span><span class="n">archive</span><span class="p">)</span>
         <span class="n">archive_sorted</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">sorted_idx</span><span class="p">)</span>
         <span class="n">archive</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="n">archive</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">archive_sorted</span><span class="p">)</span>
+        <span class="n">archive</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span><span class="n">archive_sorted</span><span class="p">,</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="n">population</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">archive</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span><span class="p">])</span>
+        <span class="n">population</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span>
+            <span class="n">archive</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span><span class="p">],</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">ctx</span></div>
 </div>

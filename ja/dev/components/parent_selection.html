@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>ParentSelection &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>ParentSelection &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -580,19 +580,19 @@
 <td><p>なし</p></td>
 <td><p>比較を行わず、個体群のインデックスを順番に割り当てるだけ</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">RouletteWheelSelection</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LinearRankSelection</span></code></p></td>
 <td><p>なし</p></td>
-<td><p>順位に基づく線形ランクベースの確率でルーレット選択する</p></td>
+<td><p>順位から導いた線形ランクベースの確率で選択する</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>は、<code class="docutils literal notranslate"><span class="pre">ctx.comparator.compare_population</span></code>による1対1比較を繰り返してトーナメント内の最良個体を選びます<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id20" title="Tobias Blickle and Lothar Thiele. A comparison of selection schemes used in evolutionary algorithms. Evolutionary Computation, 4(4):361–394, 1996. doi:10.1162/evco.1996.4.4.361.">15</a>]</span>。 <code class="docutils literal notranslate"><span class="pre">compare_population</span></code>は<a class="reference internal" href="comparators.html"><span class="std std-doc">SPEA2Comparator</span></a>や<a class="reference internal" href="comparators.html"><span class="std std-doc">HypervolumeComparator</span></a>のように2点だけの直接比較（<code class="docutils literal notranslate"><span class="pre">compare()</span></code>）が使えないComparatorでも定義されているため、どの<code class="docutils literal notranslate"><span class="pre">Comparator</span></code>と組み合わせても問題なく動作します。</p>
 <p><code class="docutils literal notranslate"><span class="pre">SequentialSelection</span></code>は比較を一切行わないため、選択圧という概念自体を持たない最も単純な選択方式です。 どの<code class="docutils literal notranslate"><span class="pre">Comparator</span></code>とも組み合わせられます。</p>
-<p><code class="docutils literal notranslate"><span class="pre">RouletteWheelSelection</span></code>は、生の適応度ではなく<code class="docutils literal notranslate"><span class="pre">ctx.comparator.sort_population</span></code>が返す順位を確率に変換します。 これにより、目的関数値が負の値を取ったりスケールが大きく異なったりする問題でも、数値的な問題を起こさずに選択確率を計算できます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">LinearRankSelection</span></code>は、生の適応度ではなく<code class="docutils literal notranslate"><span class="pre">ctx.comparator.sort_population</span></code>が返す順位を確率に変換します。 これにより、目的関数値が負の値を取ったりスケールが大きく異なったりする問題でも、数値的な問題を起こさずに選択確率を計算できます。</p>
 <div class="admonition note">
 <p class="admonition-title">注釈</p>
-<p><code class="docutils literal notranslate"><span class="pre">SequentialSelection</span></code>のみ<code class="docutils literal notranslate"><span class="pre">&#64;register()</span></code>済みで、<code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>/<code class="docutils literal notranslate"><span class="pre">RouletteWheelSelection</span></code>は現状Registry未登録です。 Registry経由でクラスを文字列から解決する使い方をする場合はこの違いに注意してください。</p>
+<p><code class="docutils literal notranslate"><span class="pre">SequentialSelection</span></code>のみ<code class="docutils literal notranslate"><span class="pre">&#64;register()</span></code>済みで、<code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>/<code class="docutils literal notranslate"><span class="pre">LinearRankSelection</span></code>は現状Registry未登録です。 Registry経由でクラスを文字列から解決する使い方をする場合はこの違いに注意してください。</p>
 </div>
 </section>
 <section id="implementing-a-custom-parentselection">
@@ -617,7 +617,7 @@
 <ul class="simple">
 <li><p><a class="reference internal" href="algorithm.html"><span class="std std-doc">Algorithm</span></a>：<code class="docutils literal notranslate"><span class="pre">GA</span></code>が<code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code>をどう組み合わせるか</p></li>
 <li><p><a class="reference internal" href="crossover.html"><span class="std std-doc">Crossover</span></a>：<code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code>が選んだ親個体を受け取る演算子</p></li>
-<li><p><a class="reference internal" href="comparators.html"><span class="std std-doc">Comparator</span></a>：<code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>/<code class="docutils literal notranslate"><span class="pre">RouletteWheelSelection</span></code>が個体を比較する際に使う</p></li>
+<li><p><a class="reference internal" href="comparators.html"><span class="std std-doc">Comparator</span></a>：<code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>/<code class="docutils literal notranslate"><span class="pre">LinearRankSelection</span></code>が個体を比較する際に使う</p></li>
 </ul>
 </section>
 <section id="references">
@@ -626,7 +626,7 @@
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.ParentSelection.html#saealib.ParentSelection" title="saealib.ParentSelection"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ParentSelection</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.TournamentSelection.html#saealib.TournamentSelection" title="saealib.TournamentSelection"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.TournamentSelection</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.SequentialSelection.html#saealib.SequentialSelection" title="saealib.SequentialSelection"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SequentialSelection</span></code></a></p></li>
-<li><p><a class="reference internal" href="../api/_autosummary/saealib.RouletteWheelSelection.html#saealib.RouletteWheelSelection" title="saealib.RouletteWheelSelection"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.RouletteWheelSelection</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/_autosummary/saealib.LinearRankSelection.html#saealib.LinearRankSelection" title="saealib.LinearRankSelection"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.LinearRankSelection</span></code></a></p></li>
 </ul>
 </section>
 </section>

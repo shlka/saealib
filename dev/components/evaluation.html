@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Evaluator &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>Evaluator &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../_static/documentation_options.js?v=2243f322"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -556,7 +556,7 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="evaluator">
 <h1>Evaluator<a class="headerlink" href="#evaluator" title="Link to this heading">#</a></h1>
-<p><code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code> and <code class="docutils literal notranslate"><span class="pre">Initializer</span></code> delegate converting a batch of design-variable candidates into objective values, raw constraint values, and constraint violation to <code class="docutils literal notranslate"><span class="pre">Evaluator</span></code>, a swappable execution backend.
+<p><code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code> builds an <code class="docutils literal notranslate"><span class="pre">EvaluationPlan</span></code>; its requests are then submitted by the synchronous evaluator or asynchronous scheduler. Each request converts a batch of design-variable candidates into objective values, raw constraint values, and constraint violation.
 Whether evaluation runs sequentially or in parallel can be switched by swapping out only <code class="docutils literal notranslate"><span class="pre">Evaluator</span></code>, without changing the pipeline-side code.</p>
 <section id="evaluator-s-role">
 <h2>Evaluator’s role<a class="headerlink" href="#evaluator-s-role" title="Link to this heading">#</a></h2>
@@ -594,8 +594,17 @@ Whether evaluation runs sequentially or in parallel can be switched by swapping 
 Besides <code class="docutils literal notranslate"><span class="pre">backend</span></code>’s default <code class="docutils literal notranslate"><span class="pre">&quot;loky&quot;</span></code> (a process pool serializing with cloudpickle), you can switch to third-party backends like <code class="docutils literal notranslate"><span class="pre">&quot;dask&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;ray&quot;</span></code> with a single parameter change (the corresponding package and cluster are required separately).
 In configurations using multiple <code class="docutils literal notranslate"><span class="pre">JoblibEvaluator</span></code>s at once, such as an island model, CPU cores can end up over-reserved.
 Either limit each island’s <code class="docutils literal notranslate"><span class="pre">n_jobs</span></code> to <code class="docutils literal notranslate"><span class="pre">1</span></code> and control overall concurrency via the parallelism across islands, or use <code class="docutils literal notranslate"><span class="pre">joblib.parallel_backend</span></code> as a context manager to limit the number of inner workers.
-Asynchronous evaluation (a scheme where results are received at independent times per candidate) is currently outside <code class="docutils literal notranslate"><span class="pre">Evaluator</span></code>’s scope.</p>
+For independent completion times, use <code class="docutils literal notranslate"><span class="pre">AsyncEvaluator</span></code> with
+<code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code>, <code class="docutils literal notranslate"><span class="pre">AsyncEvaluationScheduler</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">Optimizer.set_async_evaluation_scheduler()</span></code>. Each steady-state candidate can occupy its
+own pending request; the scheduler owns those requests and serializes
+population and archive updates while <code class="docutils literal notranslate"><span class="pre">collect(wait=False)</span></code> remains
+non-blocking.</p>
 <p>Swap it via <code class="docutils literal notranslate"><span class="pre">Optimizer.set_evaluator(evaluator)</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">EvaluationRequest.metadata</span></code> is consumed by evaluators that expose explicit
+execution planners. <code class="docutils literal notranslate"><span class="pre">RepeatedEvaluation</span></code> returns one <code class="docutils literal notranslate"><span class="pre">EvaluationPlan</span></code> request
+per replicate with stable candidate IDs. The scheduler owns capacity, budget,
+and request lifecycle.</p>
 </section>
 <section id="implementing-a-custom-evaluator">
 <h2>Implementing a custom Evaluator<a class="headerlink" href="#implementing-a-custom-evaluator" title="Link to this heading">#</a></h2>
@@ -640,6 +649,8 @@ Because <a class="reference internal" href="constraints.html"><span class="std s
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Evaluator.html#saealib.Evaluator" title="saealib.Evaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Evaluator</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.SerialEvaluator.html#saealib.SerialEvaluator" title="saealib.SerialEvaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SerialEvaluator</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.JoblibEvaluator.html#saealib.JoblibEvaluator" title="saealib.JoblibEvaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.JoblibEvaluator</span></code></a></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.AsyncEvaluator</span></code></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.AsyncEvaluationScheduler</span></code></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.EvaluationResult.html#saealib.EvaluationResult" title="saealib.EvaluationResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.EvaluationResult</span></code></a></p></li>
 </ul>
 </section>

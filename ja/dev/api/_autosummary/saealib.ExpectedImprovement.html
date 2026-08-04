@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.ExpectedImprovement &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>saealib.ExpectedImprovement &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
     <link rel="icon" href="../../_static/icon.svg"/>
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="検索" href="../../search.html" />
-    <link rel="next" title="saealib.LowerConfidenceBound" href="saealib.LowerConfidenceBound.html" />
+    <link rel="next" title="saealib.BatchExpectedImprovement" href="saealib.BatchExpectedImprovement.html" />
     <link rel="prev" title="saealib.AcquisitionFunction" href="saealib.AcquisitionFunction.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="ja"/>
@@ -569,7 +569,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.ParentSelection.html">saealib.ParentSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TournamentSelection.html">saealib.TournamentSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SequentialSelection.html">saealib.SequentialSelection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.RouletteWheelSelection.html">saealib.RouletteWheelSelection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.LinearRankSelection.html">saealib.LinearRankSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurvivorSelection.html">saealib.SurvivorSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TruncationSelection.html">saealib.TruncationSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.DuplicateElimination.html">saealib.DuplicateElimination</a></li>
@@ -613,10 +613,6 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.PairwiseComparisonSet.html">saealib.PairwiseComparisonSet</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ReferencePointComparisonSet.html">saealib.ReferencePointComparisonSet</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TopKBipartitionSet.html">saealib.TopKBipartitionSet</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.ArchiveBasedManager.html">saealib.ArchiveBasedManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.DensityManager.html">saealib.DensityManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.NichingManager.html">saealib.NichingManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.NoveltyManager.html">saealib.NoveltyManager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AccuracyBasedSurrogateSwitcher.html">saealib.AccuracyBasedSurrogateSwitcher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.GenCtrlSwitcher.html">saealib.GenCtrlSwitcher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ManagerSwitcher.html">saealib.ManagerSwitcher</a></li>
@@ -635,6 +631,7 @@
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../acquisition.html">Acquisition Functions</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionFunction.html">saealib.AcquisitionFunction</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">saealib.ExpectedImprovement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.BatchExpectedImprovement.html">saealib.BatchExpectedImprovement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.LowerConfidenceBound.html">saealib.LowerConfidenceBound</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.MaxUncertainty.html">saealib.MaxUncertainty</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.MeanPrediction.html">saealib.MeanPrediction</a></li>
@@ -651,6 +648,8 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.IndividualBasedStrategy.html">saealib.IndividualBasedStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PreSelectionStrategy.html">saealib.PreSelectionStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.DirectStrategy.html">saealib.DirectStrategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.SteadyStateStrategy.html">saealib.SteadyStateStrategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.IslandModel.html">saealib.IslandModel</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../initialization.html">Initialization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -665,6 +664,16 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.SerialEvaluator.html">saealib.SerialEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.JoblibEvaluator.html">saealib.JoblibEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanner.html">saealib.EvaluationPlanner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlan.html">saealib.EvaluationPlan</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluateAll.html">saealib.EvaluateAll</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.TopKEvaluation.html">saealib.TopKEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.RatioEvaluation.html">saealib.RatioEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.RepeatedEvaluation.html">saealib.RepeatedEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FidelityEvaluation.html">saealib.FidelityEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FidelityPromotion.html">saealib.FidelityPromotion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.ReplicateSummary.html">saealib.ReplicateSummary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.aggregate_replicates.html">saealib.aggregate_replicates</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../termination.html">Termination</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -699,11 +708,10 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../stages.html">Stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CountGenerationStage.html">saealib.CountGenerationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AskStage.html">saealib.AskStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateScoreStage.html">saealib.SurrogateScoreStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionStage.html">saealib.AcquisitionStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.SurrogatePredictStage.html">saealib.SurrogatePredictStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanStage.html">saealib.EvaluationPlanStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateFitStage.html">saealib.SurrogateFitStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.TopKSelectionStage.html">saealib.TopKSelectionStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.SortByScoreStage.html">saealib.SortByScoreStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.TrueEvaluationStage.html">saealib.TrueEvaluationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ArchiveUpdateStage.html">saealib.ArchiveUpdateStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TellStage.html">saealib.TellStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateOnlyLoopStage.html">saealib.SurrogateOnlyLoopStage</a></li>
@@ -779,7 +787,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.ExpectedImprovement">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">ExpectedImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/acquisition/ei.html#ExpectedImprovement"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.ExpectedImprovement" title="Link to this definition">#</a></dt>
-<dd><p>ベースクラス: <a class="reference internal" href="saealib.AcquisitionFunction.html#saealib.AcquisitionFunction" title="saealib.acquisition.base.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a></p>
+<dd><p>ベースクラス: <code class="xref py py-class docutils literal notranslate"><span class="pre">PointwiseAcquisition</span></code></p>
 <p>Expected Improvement (EI) acquisition function.</p>
 <p>EI balances exploration and exploitation by computing the expected
 amount of improvement over the current best observed value.</p>
@@ -822,6 +830,12 @@ of Global Optimization</em>, 13(4), 455-492.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.ExpectedImprovement.compute_reference" title="saealib.ExpectedImprovement.compute_reference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_reference</span></code></a></p></td>
 <td><p>Return fixed reference if set, otherwise component-wise best from archive.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.ExpectedImprovement.evaluate" title="saealib.ExpectedImprovement.evaluate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate</span></code></a></p></td>
+<td><p>Reject <code class="docutils literal notranslate"><span class="pre">prediction</span> <span class="pre">is</span> <span class="pre">None</span></code>, resolve the reference, then <code class="docutils literal notranslate"><span class="pre">score()</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.ExpectedImprovement.prepare" title="saealib.ExpectedImprovement.prepare"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare</span></code></a></p></td>
+<td><p>Delegate to <code class="docutils literal notranslate"><span class="pre">compute_reference(archive,</span> <span class="pre">rng=ctx.rng</span> <span class="pre">if</span> <span class="pre">ctx</span> <span class="pre">else</span> <span class="pre">None)</span></code>.</p></td>
+</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.ExpectedImprovement.score" title="saealib.ExpectedImprovement.score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">score</span></code></a></p></td>
 <td><p>Compute Expected Improvement scores.</p></td>
 </tr>
@@ -857,6 +871,46 @@ of Global Optimization</em>, 13(4), 455-492.</p>
 </dd>
 <dt class="field-even">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.ExpectedImprovement.evaluate">
+<span class="sig-prename descclassname"><span class="pre">ExpectedImprovement.</span></span><span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prepared=&lt;object</span> <span class="pre">object&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.ExpectedImprovement.evaluate" title="Link to this definition">#</a></dt>
+<dd><p>Reject <code class="docutils literal notranslate"><span class="pre">prediction</span> <span class="pre">is</span> <span class="pre">None</span></code>, resolve the reference, then <code class="docutils literal notranslate"><span class="pre">score()</span></code>.</p>
+<p>See <a class="reference internal" href="saealib.AcquisitionFunction.html#saealib.AcquisitionFunction.evaluate" title="saealib.AcquisitionFunction.evaluate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AcquisitionFunction.evaluate()</span></code></a> for the shared parameter
+contract, including the <code class="docutils literal notranslate"><span class="pre">_UNSET</span></code> vs. explicit <code class="docutils literal notranslate"><span class="pre">prepared=None</span></code>
+distinction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>candidates_x</strong> (<em>np.ndarray</em>)</p></li>
+<li><p><strong>prediction</strong> (<a class="reference internal" href="saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction"><em>SurrogatePrediction</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>archive</strong> (<a class="reference internal" href="saealib.Archive.html#saealib.Archive" title="saealib.Archive"><em>Archive</em></a>)</p></li>
+<li><p><strong>ctx</strong> (<em>OptimizationState</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>prepared</strong> (<em>Any</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-even"><p>AcquisitionResult</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.ExpectedImprovement.prepare">
+<span class="sig-prename descclassname"><span class="pre">ExpectedImprovement.</span></span><span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">archive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.ExpectedImprovement.prepare" title="Link to this definition">#</a></dt>
+<dd><p>Delegate to <code class="docutils literal notranslate"><span class="pre">compute_reference(archive,</span> <span class="pre">rng=ctx.rng</span> <span class="pre">if</span> <span class="pre">ctx</span> <span class="pre">else</span> <span class="pre">None)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>archive</strong> (<a class="reference internal" href="saealib.Archive.html#saealib.Archive" title="saealib.Archive"><em>Archive</em></a>)</p></li>
+<li><p><strong>ctx</strong> (<em>OptimizationState</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-even"><p>Any</p>
 </dd>
 </dl>
 </dd></dl>
@@ -908,11 +962,11 @@ The objective at index obj_idx is used.</p></li>
       </div>
     </a>
     <a class="right-next"
-       href="saealib.LowerConfidenceBound.html"
+       href="saealib.BatchExpectedImprovement.html"
        title="次ページ">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">次へ</p>
-        <p class="prev-next-title">saealib.LowerConfidenceBound</p>
+        <p class="prev-next-title">saealib.BatchExpectedImprovement</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -938,6 +992,8 @@ The objective at index obj_idx is used.</p></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ExpectedImprovement"><code class="docutils literal notranslate"><span class="pre">ExpectedImprovement</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ExpectedImprovement.__init__"><code class="docutils literal notranslate"><span class="pre">ExpectedImprovement.__init__()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ExpectedImprovement.compute_reference"><code class="docutils literal notranslate"><span class="pre">ExpectedImprovement.compute_reference()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ExpectedImprovement.evaluate"><code class="docutils literal notranslate"><span class="pre">ExpectedImprovement.evaluate()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ExpectedImprovement.prepare"><code class="docutils literal notranslate"><span class="pre">ExpectedImprovement.prepare()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ExpectedImprovement.score"><code class="docutils literal notranslate"><span class="pre">ExpectedImprovement.score()</span></code></a></li>
 </ul>
   </nav></div>

@@ -17,12 +17,9 @@
 
    ~PairwiseSurrogateManager.__init__
    ~PairwiseSurrogateManager.fit
-   ~PairwiseSurrogateManager.iter_acquisitions
    ~PairwiseSurrogateManager.on_generation_end
-   ~PairwiseSurrogateManager.post_score
-   ~PairwiseSurrogateManager.score_candidates
+   ~PairwiseSurrogateManager.predict
    ~PairwiseSurrogateManager.with_on_generation_end
-   ~PairwiseSurrogateManager.with_post_score
 
 
 
@@ -38,22 +35,13 @@
 .. automethod:: saealib.PairwiseSurrogateManager.fit
 
 
-.. automethod:: saealib.PairwiseSurrogateManager.iter_acquisitions
-
-
 .. automethod:: saealib.PairwiseSurrogateManager.on_generation_end
 
 
-.. automethod:: saealib.PairwiseSurrogateManager.post_score
-
-
-.. automethod:: saealib.PairwiseSurrogateManager.score_candidates
+.. automethod:: saealib.PairwiseSurrogateManager.predict
 
 
 .. automethod:: saealib.PairwiseSurrogateManager.with_on_generation_end
-
-
-.. automethod:: saealib.PairwiseSurrogateManager.with_post_score
 
 
 

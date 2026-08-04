@@ -27,7 +27,6 @@
    ~Archive.get
    ~Archive.get_array
    ~Archive.get_cache
-   ~Archive.get_duplicated_population
    ~Archive.get_knn
    ~Archive.get_readonly_array
    ~Archive.mod_structure
@@ -36,6 +35,7 @@
    ~Archive.set_cache
    ~Archive.truncate
    ~Archive.update_array
+   ~Archive.update_rows
 
 
 
@@ -81,9 +81,6 @@
 .. automethod:: saealib.Archive.get_cache
 
 
-.. automethod:: saealib.Archive.get_duplicated_population
-
-
 .. automethod:: saealib.Archive.get_knn
 
 
@@ -106,6 +103,9 @@
 
 
 .. automethod:: saealib.Archive.update_array
+
+
+.. automethod:: saealib.Archive.update_rows
 
 
 

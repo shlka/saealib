@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Stage &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>Stage &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../_static/documentation_options.js?v=2243f322"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -613,39 +613,35 @@ Because <code class="docutils literal notranslate"><span class="pre">Pipeline</s
 <td><p>—</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">offspring</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SurrogateScoreStage(surrogate_manager,</span> <span class="pre">cbmanager=None,</span> <span class="pre">*,</span> <span class="pre">refit=True)</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SurrogatePredictStage(surrogate_manager,</span> <span class="pre">cbmanager=None)</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">offspring</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">scores</span></code>, <code class="docutils literal notranslate"><span class="pre">predictions</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">predictions</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SurrogateFitStage(surrogate_manager)</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">archive</span></code></p></td>
 <td><p>—</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TopKSelectionStage(k)</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">offspring</span></code>, <code class="docutils literal notranslate"><span class="pre">scores</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">offspring</span></code> (only the top k)</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AcquisitionStage(acquisition,</span> <span class="pre">cbmanager=None)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">offspring</span></code>, <code class="docutils literal notranslate"><span class="pre">predictions</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">scores</span></code>, <code class="docutils literal notranslate"><span class="pre">acquisition_result</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SortByScoreStage()</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">offspring</span></code>, <code class="docutils literal notranslate"><span class="pre">scores</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">offspring</span></code>, <code class="docutils literal notranslate"><span class="pre">scores</span></code> (all entries, reordered descending)</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">EvaluationPlanStage(planner)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">offspring</span></code>, <code class="docutils literal notranslate"><span class="pre">acquisition_result</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">evaluation_plan</span></code>, <code class="docutils literal notranslate"><span class="pre">evaluation_request</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TrueEvaluationStage(evaluator,</span> <span class="pre">cbmanager=None,</span> <span class="pre">n_eval=None)</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">offspring</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">evaluated_offspring</span></code>, <code class="docutils literal notranslate"><span class="pre">fe</span></code></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ArchiveUpdateStage()</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ArchiveUpdateStage()</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">evaluated_offspring</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">archive</span></code>, <code class="docutils literal notranslate"><span class="pre">pareto_archive</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TellStage(algorithm)</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TellStage(algorithm)</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">offspring</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">population</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SurrogateOnlyLoopStage(algorithm,</span> <span class="pre">surrogate_manager,</span> <span class="pre">gen_ctrl,</span> <span class="pre">cbmanager=None)</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SurrogateOnlyLoopStage(algorithm,</span> <span class="pre">surrogate_manager,</span> <span class="pre">gen_ctrl,</span> <span class="pre">cbmanager=None)</span></code></p></td>
 <td><p>—</p></td>
 <td><p>The entire inner loop</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">InitializationStage(initializer,</span> <span class="pre">provider,</span> <span class="pre">problem)</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">InitializationStage(initializer,</span> <span class="pre">provider,</span> <span class="pre">problem)</span></code></p></td>
 <td><p>—</p></td>
 <td><p>Rebuilds the entire state</p></td>
 </tr>
@@ -653,14 +649,11 @@ Because <code class="docutils literal notranslate"><span class="pre">Pipeline</s
 </table>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">AskStage</span></code> calls <code class="docutils literal notranslate"><span class="pre">algorithm.ask()</span></code>, writes to <code class="docutils literal notranslate"><span class="pre">state.offspring</span></code>, and fires PostCrossover/PostMutation/PostAskEvent via <code class="docutils literal notranslate"><span class="pre">cbmanager</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">SurrogateScoreStage</span></code> scores via <code class="docutils literal notranslate"><span class="pre">surrogate_manager.score_candidates()</span></code>, writing to <code class="docutils literal notranslate"><span class="pre">state.scores</span></code>/<code class="docutils literal notranslate"><span class="pre">state.predictions</span></code> while also setting each candidate’s <code class="docutils literal notranslate"><span class="pre">tell_f</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">SurrogatePredictStage</span></code> obtains prediction data; <code class="docutils literal notranslate"><span class="pre">AcquisitionStage</span></code> computes scores and preserves the complete <code class="docutils literal notranslate"><span class="pre">AcquisitionResult</span></code> for planning.</p>
 <p><code class="docutils literal notranslate"><span class="pre">SurrogateFitStage</span></code> is used to pre-fit the surrogate once, ahead of an inner loop where the archive doesn’t change.
-It’s used together with passing <code class="docutils literal notranslate"><span class="pre">refit=False</span></code> to the downstream <code class="docutils literal notranslate"><span class="pre">SurrogateScoreStage</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">TopKSelectionStage</span></code> keeps only the top k entries of <code class="docutils literal notranslate"><span class="pre">state.offspring</span></code> by descending <code class="docutils literal notranslate"><span class="pre">state.scores</span></code>, discarding the rest.
-Unlike <code class="docutils literal notranslate"><span class="pre">TopKSelectionStage</span></code>, <code class="docutils literal notranslate"><span class="pre">SortByScoreStage</span></code> keeps every candidate and just reorders them descending; it’s used by IB-family strategies.</p>
-<p><code class="docutils literal notranslate"><span class="pre">TrueEvaluationStage</span></code> evaluates the first <code class="docutils literal notranslate"><span class="pre">n_eval</span></code> entries of <code class="docutils literal notranslate"><span class="pre">state.offspring</span></code> (all of them if <code class="docutils literal notranslate"><span class="pre">None</span></code>; you can specify an <code class="docutils literal notranslate"><span class="pre">int</span></code> or a <code class="docutils literal notranslate"><span class="pre">Callable[[OptimizationState],</span> <span class="pre">int]</span></code>) with the true objective function.</p>
+It is used before a surrogate prediction stage when an inner loop can reuse a fit.</p>
 <p><code class="docutils literal notranslate"><span class="pre">SurrogateOnlyLoopStage</span></code> is a composite stage used by <code class="docutils literal notranslate"><span class="pre">GenerationBasedStrategy</span></code>.
-It repeats an inner loop of <code class="docutils literal notranslate"><span class="pre">CountGeneration</span> <span class="pre">→</span> <span class="pre">Ask</span> <span class="pre">→</span> <span class="pre">SurrogateScore(refit=False)</span> <span class="pre">→</span> <span class="pre">Tell</span></code> <code class="docutils literal notranslate"><span class="pre">gen_ctrl</span></code> times.
+It repeats an inner loop of <code class="docutils literal notranslate"><span class="pre">CountGeneration</span> <span class="pre">→</span> <span class="pre">Ask</span> <span class="pre">→</span> <span class="pre">SurrogatePredictStage(refit=False)</span> <span class="pre">→</span> <span class="pre">AcquisitionStage</span> <span class="pre">→</span> <span class="pre">Tell</span></code> <code class="docutils literal notranslate"><span class="pre">gen_ctrl</span></code> times.
 It’s a no-op when <code class="docutils literal notranslate"><span class="pre">gen_ctrl=0</span></code>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -712,11 +705,8 @@ Add a value via <code class="docutils literal notranslate"><span class="pre">sta
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Pipeline.html#saealib.Pipeline" title="saealib.Pipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Pipeline</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.CountGenerationStage.html#saealib.CountGenerationStage" title="saealib.CountGenerationStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.CountGenerationStage</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.AskStage.html#saealib.AskStage" title="saealib.AskStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.AskStage</span></code></a></p></li>
-<li><p><a class="reference internal" href="../api/_autosummary/saealib.SurrogateScoreStage.html#saealib.SurrogateScoreStage" title="saealib.SurrogateScoreStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SurrogateScoreStage</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/_autosummary/saealib.SurrogatePredictStage.html#saealib.SurrogatePredictStage" title="saealib.SurrogatePredictStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SurrogatePredictStage</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.SurrogateFitStage.html#saealib.SurrogateFitStage" title="saealib.SurrogateFitStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SurrogateFitStage</span></code></a></p></li>
-<li><p><a class="reference internal" href="../api/_autosummary/saealib.TopKSelectionStage.html#saealib.TopKSelectionStage" title="saealib.TopKSelectionStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.TopKSelectionStage</span></code></a></p></li>
-<li><p><a class="reference internal" href="../api/_autosummary/saealib.SortByScoreStage.html#saealib.SortByScoreStage" title="saealib.SortByScoreStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SortByScoreStage</span></code></a></p></li>
-<li><p><a class="reference internal" href="../api/_autosummary/saealib.TrueEvaluationStage.html#saealib.TrueEvaluationStage" title="saealib.TrueEvaluationStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.TrueEvaluationStage</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.ArchiveUpdateStage.html#saealib.ArchiveUpdateStage" title="saealib.ArchiveUpdateStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ArchiveUpdateStage</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.TellStage.html#saealib.TellStage" title="saealib.TellStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.TellStage</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.SurrogateOnlyLoopStage.html#saealib.SurrogateOnlyLoopStage" title="saealib.SurrogateOnlyLoopStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SurrogateOnlyLoopStage</span></code></a></p></li>

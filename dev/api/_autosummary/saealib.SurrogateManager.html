@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.SurrogateManager &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>saealib.SurrogateManager &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../../_static/documentation_options.js?v=2243f322"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -568,7 +568,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.ParentSelection.html">saealib.ParentSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TournamentSelection.html">saealib.TournamentSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SequentialSelection.html">saealib.SequentialSelection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.RouletteWheelSelection.html">saealib.RouletteWheelSelection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.LinearRankSelection.html">saealib.LinearRankSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurvivorSelection.html">saealib.SurvivorSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TruncationSelection.html">saealib.TruncationSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.DuplicateElimination.html">saealib.DuplicateElimination</a></li>
@@ -612,10 +612,6 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.PairwiseComparisonSet.html">saealib.PairwiseComparisonSet</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ReferencePointComparisonSet.html">saealib.ReferencePointComparisonSet</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TopKBipartitionSet.html">saealib.TopKBipartitionSet</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.ArchiveBasedManager.html">saealib.ArchiveBasedManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.DensityManager.html">saealib.DensityManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.NichingManager.html">saealib.NichingManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.NoveltyManager.html">saealib.NoveltyManager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AccuracyBasedSurrogateSwitcher.html">saealib.AccuracyBasedSurrogateSwitcher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.GenCtrlSwitcher.html">saealib.GenCtrlSwitcher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ManagerSwitcher.html">saealib.ManagerSwitcher</a></li>
@@ -634,6 +630,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../acquisition.html">Acquisition Functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionFunction.html">saealib.AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ExpectedImprovement.html">saealib.ExpectedImprovement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.BatchExpectedImprovement.html">saealib.BatchExpectedImprovement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.LowerConfidenceBound.html">saealib.LowerConfidenceBound</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.MaxUncertainty.html">saealib.MaxUncertainty</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.MeanPrediction.html">saealib.MeanPrediction</a></li>
@@ -650,6 +647,8 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.IndividualBasedStrategy.html">saealib.IndividualBasedStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PreSelectionStrategy.html">saealib.PreSelectionStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.DirectStrategy.html">saealib.DirectStrategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.SteadyStateStrategy.html">saealib.SteadyStateStrategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.IslandModel.html">saealib.IslandModel</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../initialization.html">Initialization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -664,6 +663,16 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.SerialEvaluator.html">saealib.SerialEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.JoblibEvaluator.html">saealib.JoblibEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanner.html">saealib.EvaluationPlanner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlan.html">saealib.EvaluationPlan</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluateAll.html">saealib.EvaluateAll</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.TopKEvaluation.html">saealib.TopKEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.RatioEvaluation.html">saealib.RatioEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.RepeatedEvaluation.html">saealib.RepeatedEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FidelityEvaluation.html">saealib.FidelityEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FidelityPromotion.html">saealib.FidelityPromotion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.ReplicateSummary.html">saealib.ReplicateSummary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.aggregate_replicates.html">saealib.aggregate_replicates</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../termination.html">Termination</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -698,11 +707,10 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../stages.html">Stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CountGenerationStage.html">saealib.CountGenerationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AskStage.html">saealib.AskStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateScoreStage.html">saealib.SurrogateScoreStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionStage.html">saealib.AcquisitionStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.SurrogatePredictStage.html">saealib.SurrogatePredictStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanStage.html">saealib.EvaluationPlanStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateFitStage.html">saealib.SurrogateFitStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.TopKSelectionStage.html">saealib.TopKSelectionStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.SortByScoreStage.html">saealib.SortByScoreStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.TrueEvaluationStage.html">saealib.TrueEvaluationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ArchiveUpdateStage.html">saealib.ArchiveUpdateStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TellStage.html">saealib.TellStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateOnlyLoopStage.html">saealib.SurrogateOnlyLoopStage</a></li>
@@ -780,10 +788,9 @@
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">SurrogateManager</span></span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#SurrogateManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.SurrogateManager" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Abstract base class for surrogate managers.</p>
-<p>A SurrogateManager coordinates the fit/predict/score pipeline and
-returns both scalar acquisition scores and the underlying predictions
-so that callers (e.g. IndividualBasedStrategy) can assign predicted
-objective values to offspring.</p>
+<p>A SurrogateManager is narrowed to training and prediction management
+It coordinates <code class="docutils literal notranslate"><span class="pre">TrainingSet</span></code> construction, model fitting, and prediction,
+and returns a <code class="docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code> for callers.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="saealib.SurrogateManager.last_accuracy">
 <span class="sig-name descname"><span class="pre">last_accuracy</span></span><a class="headerlink" href="#saealib.SurrogateManager.last_accuracy" title="Link to this definition">#</a></dt>
@@ -807,22 +814,13 @@ objective values to offspring.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.SurrogateManager.fit" title="saealib.SurrogateManager.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a></p></td>
 <td><p>Pre-fit the surrogate on the archive.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.SurrogateManager.iter_acquisitions" title="saealib.SurrogateManager.iter_acquisitions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iter_acquisitions</span></code></a></p></td>
-<td><p>Yield every <code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code> owned by this manager.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.SurrogateManager.on_generation_end" title="saealib.SurrogateManager.on_generation_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_generation_end</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.SurrogateManager.on_generation_end" title="saealib.SurrogateManager.on_generation_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_generation_end</span></code></a></p></td>
 <td><p>End-of-generation hook; override to update internal state.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.SurrogateManager.post_score" title="saealib.SurrogateManager.post_score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_score</span></code></a></p></td>
-<td><p>Post-score lifecycle hook; override to inject custom processing.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.SurrogateManager.score_candidates" title="saealib.SurrogateManager.score_candidates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">score_candidates</span></code></a></p></td>
-<td><p>Score candidate solutions using the surrogate model.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.SurrogateManager.predict" title="saealib.SurrogateManager.predict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">predict</span></code></a></p></td>
+<td><p>Predict candidate solutions using the surrogate model.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.SurrogateManager.with_on_generation_end" title="saealib.SurrogateManager.with_on_generation_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_on_generation_end</span></code></a></p></td>
-<td><p>Return a copy of this manager with <code class="docutils literal notranslate"><span class="pre">fn</span></code> appended to the hook.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.SurrogateManager.with_post_score" title="saealib.SurrogateManager.with_post_score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_post_score</span></code></a></p></td>
 <td><p>Return a copy of this manager with <code class="docutils literal notranslate"><span class="pre">fn</span></code> appended to the hook.</p></td>
 </tr>
 </tbody>
@@ -838,7 +836,7 @@ objective values to offspring.</p>
 <dt class="sig sig-object py" id="saealib.SurrogateManager.fit">
 <span class="sig-prename descclassname"><span class="pre">SurrogateManager.</span></span><span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">archive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#SurrogateManager.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.SurrogateManager.fit" title="Link to this definition">#</a></dt>
 <dd><p>Pre-fit the surrogate on the archive.</p>
-<p>Call once before a sequence of <code class="docutils literal notranslate"><span class="pre">score_candidates(...,</span> <span class="pre">refit=False)</span></code>
+<p>Call once before a sequence of <code class="docutils literal notranslate"><span class="pre">predict(...,</span> <span class="pre">refit=False)</span></code>
 calls when the archive does not change between calls (e.g. the
 surrogate-only inner loop of <code class="docutils literal notranslate"><span class="pre">GenerationBasedStrategy</span></code>).
 The default implementation is a no-op; override in managers that
@@ -852,24 +850,6 @@ maintain a fitted surrogate model.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="saealib.SurrogateManager.iter_acquisitions">
-<span class="sig-prename descclassname"><span class="pre">SurrogateManager.</span></span><span class="sig-name descname"><span class="pre">iter_acquisitions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#SurrogateManager.iter_acquisitions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.SurrogateManager.iter_acquisitions" title="Link to this definition">#</a></dt>
-<dd><p>Yield every <code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code> owned by this manager.</p>
-<p>Used by <code class="docutils literal notranslate"><span class="pre">Optimizer._inject_acquisition_directions()</span></code> to auto-inject
-<code class="docutils literal notranslate"><span class="pre">problem.direction</span></code> into direction-sensitive acquisition functions
-at run start. The default implementation yields <code class="docutils literal notranslate"><span class="pre">self.acquisition</span></code>
-if present (covers <code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code>/<code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code>)
-and nothing otherwise (e.g. <code class="docutils literal notranslate"><span class="pre">PairwiseSurrogateManager</span></code>, which has no
-acquisition function). <code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager</span></code> overrides this to
-delegate to its sub-managers.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Iterator[<a class="reference internal" href="saealib.AcquisitionFunction.html#saealib.AcquisitionFunction" title="saealib.AcquisitionFunction">AcquisitionFunction</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -893,30 +873,9 @@ delegate to its sub-managers.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="saealib.SurrogateManager.post_score">
-<span class="sig-prename descclassname"><span class="pre">SurrogateManager.</span></span><span class="sig-name descname"><span class="pre">post_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#SurrogateManager.post_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.SurrogateManager.post_score" title="Link to this definition">#</a></dt>
-<dd><p>Post-score lifecycle hook; override to inject custom processing.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>scores</strong> (<em>np.ndarray</em>) – Acquisition scores. shape: (n_candidates,)</p></li>
-<li><p><strong>predictions</strong> (<em>list</em><em>[</em><a class="reference internal" href="saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction"><em>SurrogatePrediction</em></a><em>]</em>) – Surrogate predictions for each candidate.</p></li>
-<li><p><strong>ctx</strong> (<em>OptimizationState</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Current optimization context.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Processed scores and predictions.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[np.ndarray, list[<a class="reference internal" href="saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction">SurrogatePrediction</a>]]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="saealib.SurrogateManager.score_candidates">
-<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SurrogateManager.</span></span><span class="sig-name descname"><span class="pre">score_candidates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">refit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#SurrogateManager.score_candidates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.SurrogateManager.score_candidates" title="Link to this definition">#</a></dt>
-<dd><p>Score candidate solutions using the surrogate model.</p>
+<dt class="sig sig-object py" id="saealib.SurrogateManager.predict">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SurrogateManager.</span></span><span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">refit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#SurrogateManager.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.SurrogateManager.predict" title="Link to this definition">#</a></dt>
+<dd><p>Predict candidate solutions using the surrogate model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -924,21 +883,18 @@ delegate to its sub-managers.</p>
 <li><p><strong>archive</strong> (<a class="reference internal" href="saealib.Archive.html#saealib.Archive" title="saealib.Archive"><em>Archive</em></a>) – Archive of evaluated solutions used for surrogate training.</p></li>
 <li><p><strong>ctx</strong> (<em>OptimizationState</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Current optimization context. Passed to <code class="docutils literal notranslate"><span class="pre">TrainingSet.build</span></code>
 for strategies that require comparator or population access.</p></li>
-<li><p><strong>refit</strong> (<em>bool</em><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code> (default), fit the surrogate before scoring.
+<li><p><strong>refit</strong> (<em>bool</em><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code> (default), fit the surrogate before predicting.
 Pass <code class="docutils literal notranslate"><span class="pre">False</span></code> after an explicit <a class="reference internal" href="#saealib.SurrogateManager.fit" title="saealib.SurrogateManager.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code></a> call to skip
 redundant re-fitting when the archive has not changed.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>scores</strong> (<em>np.ndarray</em>) – Acquisition scores. shape: (n_candidates,). Higher is better.</p></li>
-<li><p><strong>predictions</strong> (<em>list[SurrogatePrediction]</em>) – Surrogate predictions for each candidate.
-predictions[i].value shape: (1, n_obj)</p></li>
-</ul>
-</p>
+<dd class="field-even"><p>One batched prediction covering every row of <code class="docutils literal notranslate"><span class="pre">candidates_x</span></code>.
+Acquisition scoring is not performed here — pass the result to
+an <a class="reference internal" href="saealib.AcquisitionFunction.html#saealib.AcquisitionFunction" title="saealib.acquisition.base.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[np.ndarray, list[<a class="reference internal" href="saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction">SurrogatePrediction</a>]]</p>
+<dd class="field-odd"><p><a class="reference internal" href="saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction">SurrogatePrediction</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -950,23 +906,6 @@ predictions[i].value shape: (1, n_obj)</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>fn</strong> (<em>callable</em>) – <code class="docutils literal notranslate"><span class="pre">fn(gen,</span> <span class="pre">archive,</span> <span class="pre">ctx)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code></p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Shallow copy with the hook registered.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#saealib.SurrogateManager" title="saealib.SurrogateManager">SurrogateManager</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="saealib.SurrogateManager.with_post_score">
-<span class="sig-prename descclassname"><span class="pre">SurrogateManager.</span></span><span class="sig-name descname"><span class="pre">with_post_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/manager.html#SurrogateManager.with_post_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.SurrogateManager.with_post_score" title="Link to this definition">#</a></dt>
-<dd><p>Return a copy of this manager with <code class="docutils literal notranslate"><span class="pre">fn</span></code> appended to the hook.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>fn</strong> (<em>callable</em>) – <code class="docutils literal notranslate"><span class="pre">fn(scores,</span> <span class="pre">predictions,</span> <span class="pre">ctx)</span> <span class="pre">-&gt;</span> <span class="pre">(scores,</span> <span class="pre">predictions)</span></code></p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Shallow copy with the hook registered.</p>
@@ -1032,12 +971,9 @@ predictions[i].value shape: (1, n_obj)</p></li>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SurrogateManager.__init__"><code class="docutils literal notranslate"><span class="pre">SurrogateManager.__init__()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SurrogateManager.fit"><code class="docutils literal notranslate"><span class="pre">SurrogateManager.fit()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SurrogateManager.iter_acquisitions"><code class="docutils literal notranslate"><span class="pre">SurrogateManager.iter_acquisitions()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SurrogateManager.on_generation_end"><code class="docutils literal notranslate"><span class="pre">SurrogateManager.on_generation_end()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SurrogateManager.post_score"><code class="docutils literal notranslate"><span class="pre">SurrogateManager.post_score()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SurrogateManager.score_candidates"><code class="docutils literal notranslate"><span class="pre">SurrogateManager.score_candidates()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SurrogateManager.predict"><code class="docutils literal notranslate"><span class="pre">SurrogateManager.predict()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SurrogateManager.with_on_generation_end"><code class="docutils literal notranslate"><span class="pre">SurrogateManager.with_on_generation_end()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SurrogateManager.with_post_score"><code class="docutils literal notranslate"><span class="pre">SurrogateManager.with_post_score()</span></code></a></li>
 </ul>
   </nav></div>
 

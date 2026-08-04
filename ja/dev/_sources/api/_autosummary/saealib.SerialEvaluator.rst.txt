@@ -16,7 +16,17 @@
 
 
    ~SerialEvaluator.__init__
+   ~SerialEvaluator.acknowledge
+   ~SerialEvaluator.can_reattach
+   ~SerialEvaluator.cancel
+   ~SerialEvaluator.collect
+   ~SerialEvaluator.detach
    ~SerialEvaluator.evaluate_batch
+   ~SerialEvaluator.evaluate_request
+   ~SerialEvaluator.has_partial_lifecycle_override
+   ~SerialEvaluator.reattach
+   ~SerialEvaluator.submit
+   ~SerialEvaluator.supports_batch_rollback
 
 
 
@@ -29,7 +39,37 @@
 .. automethod:: saealib.SerialEvaluator.__init__
 
 
+.. automethod:: saealib.SerialEvaluator.acknowledge
+
+
+.. automethod:: saealib.SerialEvaluator.can_reattach
+
+
+.. automethod:: saealib.SerialEvaluator.cancel
+
+
+.. automethod:: saealib.SerialEvaluator.collect
+
+
+.. automethod:: saealib.SerialEvaluator.detach
+
+
 .. automethod:: saealib.SerialEvaluator.evaluate_batch
+
+
+.. automethod:: saealib.SerialEvaluator.evaluate_request
+
+
+.. automethod:: saealib.SerialEvaluator.has_partial_lifecycle_override
+
+
+.. automethod:: saealib.SerialEvaluator.reattach
+
+
+.. automethod:: saealib.SerialEvaluator.submit
+
+
+.. automethod:: saealib.SerialEvaluator.supports_batch_rollback
 
 
 

@@ -17,12 +17,9 @@
 
    ~SurrogateManager.__init__
    ~SurrogateManager.fit
-   ~SurrogateManager.iter_acquisitions
    ~SurrogateManager.on_generation_end
-   ~SurrogateManager.post_score
-   ~SurrogateManager.score_candidates
+   ~SurrogateManager.predict
    ~SurrogateManager.with_on_generation_end
-   ~SurrogateManager.with_post_score
 
 
 
@@ -38,22 +35,13 @@
 .. automethod:: saealib.SurrogateManager.fit
 
 
-.. automethod:: saealib.SurrogateManager.iter_acquisitions
-
-
 .. automethod:: saealib.SurrogateManager.on_generation_end
 
 
-.. automethod:: saealib.SurrogateManager.post_score
-
-
-.. automethod:: saealib.SurrogateManager.score_candidates
+.. automethod:: saealib.SurrogateManager.predict
 
 
 .. automethod:: saealib.SurrogateManager.with_on_generation_end
-
-
-.. automethod:: saealib.SurrogateManager.with_post_score
 
 
 

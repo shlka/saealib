@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.SerialEvaluator &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>saealib.SerialEvaluator &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../../_static/documentation_options.js?v=2243f322"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -568,7 +568,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.ParentSelection.html">saealib.ParentSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TournamentSelection.html">saealib.TournamentSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SequentialSelection.html">saealib.SequentialSelection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.RouletteWheelSelection.html">saealib.RouletteWheelSelection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.LinearRankSelection.html">saealib.LinearRankSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurvivorSelection.html">saealib.SurvivorSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TruncationSelection.html">saealib.TruncationSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.DuplicateElimination.html">saealib.DuplicateElimination</a></li>
@@ -612,10 +612,6 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.PairwiseComparisonSet.html">saealib.PairwiseComparisonSet</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ReferencePointComparisonSet.html">saealib.ReferencePointComparisonSet</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TopKBipartitionSet.html">saealib.TopKBipartitionSet</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.ArchiveBasedManager.html">saealib.ArchiveBasedManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.DensityManager.html">saealib.DensityManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.NichingManager.html">saealib.NichingManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.NoveltyManager.html">saealib.NoveltyManager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AccuracyBasedSurrogateSwitcher.html">saealib.AccuracyBasedSurrogateSwitcher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.GenCtrlSwitcher.html">saealib.GenCtrlSwitcher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ManagerSwitcher.html">saealib.ManagerSwitcher</a></li>
@@ -634,6 +630,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../acquisition.html">Acquisition Functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionFunction.html">saealib.AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ExpectedImprovement.html">saealib.ExpectedImprovement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.BatchExpectedImprovement.html">saealib.BatchExpectedImprovement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.LowerConfidenceBound.html">saealib.LowerConfidenceBound</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.MaxUncertainty.html">saealib.MaxUncertainty</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.MeanPrediction.html">saealib.MeanPrediction</a></li>
@@ -650,6 +647,8 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.IndividualBasedStrategy.html">saealib.IndividualBasedStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PreSelectionStrategy.html">saealib.PreSelectionStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.DirectStrategy.html">saealib.DirectStrategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.SteadyStateStrategy.html">saealib.SteadyStateStrategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.IslandModel.html">saealib.IslandModel</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../initialization.html">Initialization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -664,6 +663,16 @@
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">saealib.SerialEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.JoblibEvaluator.html">saealib.JoblibEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanner.html">saealib.EvaluationPlanner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlan.html">saealib.EvaluationPlan</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluateAll.html">saealib.EvaluateAll</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.TopKEvaluation.html">saealib.TopKEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.RatioEvaluation.html">saealib.RatioEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.RepeatedEvaluation.html">saealib.RepeatedEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FidelityEvaluation.html">saealib.FidelityEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FidelityPromotion.html">saealib.FidelityPromotion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.ReplicateSummary.html">saealib.ReplicateSummary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.aggregate_replicates.html">saealib.aggregate_replicates</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../termination.html">Termination</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -698,11 +707,10 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../stages.html">Stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CountGenerationStage.html">saealib.CountGenerationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AskStage.html">saealib.AskStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateScoreStage.html">saealib.SurrogateScoreStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionStage.html">saealib.AcquisitionStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.SurrogatePredictStage.html">saealib.SurrogatePredictStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanStage.html">saealib.EvaluationPlanStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateFitStage.html">saealib.SurrogateFitStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.TopKSelectionStage.html">saealib.TopKSelectionStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.SortByScoreStage.html">saealib.SortByScoreStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.TrueEvaluationStage.html">saealib.TrueEvaluationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ArchiveUpdateStage.html">saealib.ArchiveUpdateStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TellStage.html">saealib.TellStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateOnlyLoopStage.html">saealib.SurrogateOnlyLoopStage</a></li>
@@ -788,8 +796,38 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.SerialEvaluator.__init__" title="saealib.SerialEvaluator.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.SerialEvaluator.evaluate_batch" title="saealib.SerialEvaluator.evaluate_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_batch</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.SerialEvaluator.acknowledge" title="saealib.SerialEvaluator.acknowledge"><code class="xref py py-obj docutils literal notranslate"><span class="pre">acknowledge</span></code></a></p></td>
+<td><p>Acknowledge one contiguous update sequence.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.SerialEvaluator.can_reattach" title="saealib.SerialEvaluator.can_reattach"><code class="xref py py-obj docutils literal notranslate"><span class="pre">can_reattach</span></code></a></p></td>
+<td><p>Return whether pending work can be restored after checkpoint load.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.SerialEvaluator.cancel" title="saealib.SerialEvaluator.cancel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cancel</span></code></a></p></td>
+<td><p>Cancel submitted work when the backend supports cancellation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.SerialEvaluator.collect" title="saealib.SerialEvaluator.collect"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collect</span></code></a></p></td>
+<td><p>Return unacknowledged updates for a handle.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.SerialEvaluator.detach" title="saealib.SerialEvaluator.detach"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detach</span></code></a></p></td>
+<td><p>Detach work whose result must no longer be delivered.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.SerialEvaluator.evaluate_batch" title="saealib.SerialEvaluator.evaluate_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_batch</span></code></a></p></td>
 <td><p>Evaluate <code class="docutils literal notranslate"><span class="pre">x</span></code>, preferring <code class="docutils literal notranslate"><span class="pre">problem.evaluate_batch</span></code> when available.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.SerialEvaluator.evaluate_request" title="saealib.SerialEvaluator.evaluate_request"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_request</span></code></a></p></td>
+<td><p>Evaluate a request, including its public metadata boundary.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.SerialEvaluator.has_partial_lifecycle_override" title="saealib.SerialEvaluator.has_partial_lifecycle_override"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_partial_lifecycle_override</span></code></a></p></td>
+<td><p>Return whether lifecycle adapter methods are only partly overridden.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.SerialEvaluator.reattach" title="saealib.SerialEvaluator.reattach"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reattach</span></code></a></p></td>
+<td><p>Restore a pending request or raise when unsupported.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.SerialEvaluator.submit" title="saealib.SerialEvaluator.submit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">submit</span></code></a></p></td>
+<td><p>Submit a request through the synchronous adapter.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.SerialEvaluator.supports_batch_rollback" title="saealib.SerialEvaluator.supports_batch_rollback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_batch_rollback</span></code></a></p></td>
+<td><p>Return whether failed batch submission can be rolled back.</p></td>
 </tr>
 </tbody>
 </table>
@@ -799,6 +837,82 @@
 <dt class="sig sig-object py" id="saealib.SerialEvaluator.__init__">
 <span class="sig-prename descclassname"><span class="pre">SerialEvaluator.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#saealib.SerialEvaluator.__init__" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.SerialEvaluator.acknowledge">
+<span class="sig-prename descclassname"><span class="pre">SerialEvaluator.</span></span><span class="sig-name descname"><span class="pre">acknowledge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.SerialEvaluator.acknowledge" title="Link to this definition">#</a></dt>
+<dd><p>Acknowledge one contiguous update sequence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handle</strong> (<em>EvaluationHandle</em>)</p></li>
+<li><p><strong>sequence</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.SerialEvaluator.can_reattach">
+<span class="sig-prename descclassname"><span class="pre">SerialEvaluator.</span></span><span class="sig-name descname"><span class="pre">can_reattach</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pending</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.SerialEvaluator.can_reattach" title="Link to this definition">#</a></dt>
+<dd><p>Return whether pending work can be restored after checkpoint load.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>pending</strong> (<em>PendingEvaluation</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.SerialEvaluator.cancel">
+<span class="sig-prename descclassname"><span class="pre">SerialEvaluator.</span></span><span class="sig-name descname"><span class="pre">cancel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.SerialEvaluator.cancel" title="Link to this definition">#</a></dt>
+<dd><p>Cancel submitted work when the backend supports cancellation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handle</strong> (<em>EvaluationHandle</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.SerialEvaluator.collect">
+<span class="sig-prename descclassname"><span class="pre">SerialEvaluator.</span></span><span class="sig-name descname"><span class="pre">collect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.SerialEvaluator.collect" title="Link to this definition">#</a></dt>
+<dd><p>Return unacknowledged updates for a handle.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handle</strong> (<em>EvaluationHandle</em>)</p></li>
+<li><p><strong>wait</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<em>EvaluationUpdate</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.SerialEvaluator.detach">
+<span class="sig-prename descclassname"><span class="pre">SerialEvaluator.</span></span><span class="sig-name descname"><span class="pre">detach</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.SerialEvaluator.detach" title="Link to this definition">#</a></dt>
+<dd><p>Detach work whose result must no longer be delivered.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handle</strong> (<em>EvaluationHandle</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.SerialEvaluator.evaluate_batch">
@@ -827,6 +941,79 @@ and Initializer.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="saealib.EvaluationResult.html#saealib.EvaluationResult" title="saealib.EvaluationResult">EvaluationResult</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.SerialEvaluator.evaluate_request">
+<span class="sig-prename descclassname"><span class="pre">SerialEvaluator.</span></span><span class="sig-name descname"><span class="pre">evaluate_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.SerialEvaluator.evaluate_request" title="Link to this definition">#</a></dt>
+<dd><p>Evaluate a request, including its public metadata boundary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>EvaluationRequest</em>)</p></li>
+<li><p><strong>problem</strong> (<a class="reference internal" href="saealib.Problem.html#saealib.Problem" title="saealib.Problem"><em>Problem</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="saealib.EvaluationResult.html#saealib.EvaluationResult" title="saealib.EvaluationResult">EvaluationResult</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.SerialEvaluator.has_partial_lifecycle_override">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SerialEvaluator.</span></span><span class="sig-name descname"><span class="pre">has_partial_lifecycle_override</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#saealib.SerialEvaluator.has_partial_lifecycle_override" title="Link to this definition">#</a></dt>
+<dd><p>Return whether lifecycle adapter methods are only partly overridden.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.SerialEvaluator.reattach">
+<span class="sig-prename descclassname"><span class="pre">SerialEvaluator.</span></span><span class="sig-name descname"><span class="pre">reattach</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pending</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.SerialEvaluator.reattach" title="Link to this definition">#</a></dt>
+<dd><p>Restore a pending request or raise when unsupported.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pending</strong> (<em>PendingEvaluation</em>)</p></li>
+<li><p><strong>problem</strong> (<a class="reference internal" href="saealib.Problem.html#saealib.Problem" title="saealib.Problem"><em>Problem</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>EvaluationHandle</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.SerialEvaluator.submit">
+<span class="sig-prename descclassname"><span class="pre">SerialEvaluator.</span></span><span class="sig-name descname"><span class="pre">submit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.SerialEvaluator.submit" title="Link to this definition">#</a></dt>
+<dd><p>Submit a request through the synchronous adapter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>EvaluationRequest</em>)</p></li>
+<li><p><strong>problem</strong> (<a class="reference internal" href="saealib.Problem.html#saealib.Problem" title="saealib.Problem"><em>Problem</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>EvaluationHandle</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.SerialEvaluator.supports_batch_rollback">
+<span class="sig-prename descclassname"><span class="pre">SerialEvaluator.</span></span><span class="sig-name descname"><span class="pre">supports_batch_rollback</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#saealib.SerialEvaluator.supports_batch_rollback" title="Link to this definition">#</a></dt>
+<dd><p>Return whether failed batch submission can be rolled back.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -882,7 +1069,17 @@ and Initializer.</p>
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SerialEvaluator"><code class="docutils literal notranslate"><span class="pre">SerialEvaluator</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SerialEvaluator.__init__"><code class="docutils literal notranslate"><span class="pre">SerialEvaluator.__init__()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SerialEvaluator.acknowledge"><code class="docutils literal notranslate"><span class="pre">SerialEvaluator.acknowledge()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SerialEvaluator.can_reattach"><code class="docutils literal notranslate"><span class="pre">SerialEvaluator.can_reattach()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SerialEvaluator.cancel"><code class="docutils literal notranslate"><span class="pre">SerialEvaluator.cancel()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SerialEvaluator.collect"><code class="docutils literal notranslate"><span class="pre">SerialEvaluator.collect()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SerialEvaluator.detach"><code class="docutils literal notranslate"><span class="pre">SerialEvaluator.detach()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SerialEvaluator.evaluate_batch"><code class="docutils literal notranslate"><span class="pre">SerialEvaluator.evaluate_batch()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SerialEvaluator.evaluate_request"><code class="docutils literal notranslate"><span class="pre">SerialEvaluator.evaluate_request()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SerialEvaluator.has_partial_lifecycle_override"><code class="docutils literal notranslate"><span class="pre">SerialEvaluator.has_partial_lifecycle_override()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SerialEvaluator.reattach"><code class="docutils literal notranslate"><span class="pre">SerialEvaluator.reattach()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SerialEvaluator.submit"><code class="docutils literal notranslate"><span class="pre">SerialEvaluator.submit()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.SerialEvaluator.supports_batch_rollback"><code class="docutils literal notranslate"><span class="pre">SerialEvaluator.supports_batch_rollback()</span></code></a></li>
 </ul>
   </nav></div>
 

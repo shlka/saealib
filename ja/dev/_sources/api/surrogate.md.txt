@@ -93,19 +93,6 @@
    saealib.TopKBipartitionSet
 ```
 
-## Archive-Based Managers
-
-```{eval-rst}
-.. autosummary::
-   :toctree: _autosummary
-   :nosignatures:
-
-   saealib.ArchiveBasedManager
-   saealib.DensityManager
-   saealib.NichingManager
-   saealib.NoveltyManager
-```
-
 ## Surrogate Switching
 
 ```{eval-rst}

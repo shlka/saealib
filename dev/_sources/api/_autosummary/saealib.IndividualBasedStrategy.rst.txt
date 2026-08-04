@@ -16,6 +16,7 @@
 
 
    ~IndividualBasedStrategy.__init__
+   ~IndividualBasedStrategy.build_pipeline
    ~IndividualBasedStrategy.step
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.IndividualBasedStrategy.__init__
+
+
+.. automethod:: saealib.IndividualBasedStrategy.build_pipeline
 
 
 .. automethod:: saealib.IndividualBasedStrategy.step

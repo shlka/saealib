@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.comparators.nds &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>saealib.comparators.nds &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../../../_static/documentation_options.js?v=2243f322"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -948,7 +948,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.comparators.dominance</span><span class="w"> </span><span class="kn">import</span> <span class="n">_PARETO_DOMINATOR</span><span class="p">,</span> <span class="n">Dominator</span><span class="p">,</span> <span class="n">ParetoDominator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.comparators.dominance</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dominator</span><span class="p">,</span> <span class="n">ParetoDominator</span>
 
 
 <div class="viewcode-block" id="non_dominated_sort">
@@ -999,7 +999,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    NSGA-II. *IEEE Transactions on Evolutionary Computation*, 6(2),</span>
 <span class="sd">    182-197.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">_dom</span> <span class="o">=</span> <span class="n">dominator</span> <span class="k">if</span> <span class="n">dominator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_PARETO_DOMINATOR</span>
+    <span class="n">use_default_pareto</span> <span class="o">=</span> <span class="n">dominator</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="n">_dom</span> <span class="o">=</span> <span class="n">dominator</span> <span class="k">if</span> <span class="n">dominator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">ParetoDominator</span><span class="p">()</span>
 
     <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
     <span class="n">nan_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -1011,7 +1012,18 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="c1"># Feed only direction-untransformed valid rows to the dominator; the</span>
         <span class="c1"># dominator is responsible for applying the direction transform.</span>
-        <span class="n">g</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">valid</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="n">valid</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">use_default_pareto</span> <span class="ow">and</span> <span class="n">g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">local_ranks</span> <span class="o">=</span> <span class="n">_two_objective_ranks</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span>
+            <span class="n">ranks</span><span class="p">[</span><span class="n">valid</span><span class="p">]</span> <span class="o">=</span> <span class="n">local_ranks</span>
+            <span class="k">for</span> <span class="n">rank</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">local_ranks</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">fronts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">valid</span><span class="p">[</span><span class="n">local_ranks</span> <span class="o">==</span> <span class="n">rank</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+            <span class="n">last_rank</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">fronts</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">nan_mask</span><span class="p">)[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="n">ranks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">last_rank</span>
+                <span class="n">fronts</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)])</span>
+            <span class="k">return</span> <span class="n">ranks</span><span class="p">,</span> <span class="n">fronts</span>
 
         <span class="c1"># Build the full dominance matrix for valid individuals.</span>
         <span class="n">dom</span> <span class="o">=</span> <span class="n">_dom</span><span class="o">.</span><span class="n">dominance_matrix</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span>
@@ -1040,6 +1052,44 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">return</span> <span class="n">ranks</span><span class="p">,</span> <span class="n">fronts</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_two_objective_ranks</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">f</span> <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">f</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">direction</span><span class="p">))</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lexsort</span><span class="p">((</span><span class="n">values</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">values</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]))</span>
+    <span class="n">second</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="n">order</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">second</span><span class="p">)</span>
+    <span class="n">coord_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">value</span><span class="p">:</span> <span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="mi">1</span><span class="p">)}</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">query</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">index</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">tree</span><span class="p">[</span><span class="n">index</span><span class="p">]))</span>
+            <span class="n">index</span> <span class="o">-=</span> <span class="n">index</span> <span class="o">&amp;</span> <span class="o">-</span><span class="n">index</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">while</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+            <span class="n">tree</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">tree</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
+            <span class="n">index</span> <span class="o">+=</span> <span class="n">index</span> <span class="o">&amp;</span> <span class="o">-</span><span class="n">index</span>
+
+    <span class="n">local_ranks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">start</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">order</span><span class="p">):</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">stop</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">order</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">values</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="n">start</span><span class="p">],</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">values</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="n">stop</span><span class="p">],</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="ow">and</span> <span class="n">values</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="n">start</span><span class="p">],</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">values</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="n">stop</span><span class="p">],</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="p">):</span>
+            <span class="n">stop</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">coord_index</span><span class="p">[</span><span class="n">second</span><span class="p">[</span><span class="n">start</span><span class="p">]]</span>
+        <span class="n">rank</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">query</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">):</span>
+            <span class="n">local_ranks</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="n">position</span><span class="p">]]</span> <span class="o">=</span> <span class="n">rank</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">update</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">rank</span><span class="p">)</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">stop</span>
+    <span class="k">return</span> <span class="n">local_ranks</span>
 
 
 <div class="viewcode-block" id="dda_non_dominated_sort">
@@ -1093,7 +1143,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    fronts : list[list[int]]</span>
 <span class="sd">        ``fronts[i]`` contains the global indices of individuals in front i.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">_dom</span> <span class="o">=</span> <span class="n">dominator</span> <span class="k">if</span> <span class="n">dominator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_PARETO_DOMINATOR</span>
+    <span class="n">_dom</span> <span class="o">=</span> <span class="n">dominator</span> <span class="k">if</span> <span class="n">dominator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">ParetoDominator</span><span class="p">()</span>
 
     <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
     <span class="n">nan_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>

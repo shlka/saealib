@@ -33,6 +33,7 @@
    ~Population.set_cache
    ~Population.truncate
    ~Population.update_array
+   ~Population.update_rows
 
 
 
@@ -94,6 +95,9 @@
 
 
 .. automethod:: saealib.Population.update_array
+
+
+.. automethod:: saealib.Population.update_rows
 
 
 

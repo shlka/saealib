@@ -1,0 +1,35 @@
+﻿saealib.FidelityPromotion
+=========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: FidelityPromotion
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~FidelityPromotion.__init__
+   ~FidelityPromotion.plan
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.FidelityPromotion.__init__
+
+
+.. automethod:: saealib.FidelityPromotion.plan
+
+
+

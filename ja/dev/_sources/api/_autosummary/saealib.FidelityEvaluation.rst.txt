@@ -1,0 +1,35 @@
+﻿saealib.FidelityEvaluation
+==========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: FidelityEvaluation
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~FidelityEvaluation.__init__
+   ~FidelityEvaluation.plan
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.FidelityEvaluation.__init__
+
+
+.. automethod:: saealib.FidelityEvaluation.plan
+
+
+

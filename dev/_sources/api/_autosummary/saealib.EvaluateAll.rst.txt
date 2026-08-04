@@ -1,0 +1,35 @@
+﻿saealib.EvaluateAll
+===================
+
+.. currentmodule:: saealib
+
+.. autoclass:: EvaluateAll
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~EvaluateAll.__init__
+   ~EvaluateAll.plan
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.EvaluateAll.__init__
+
+
+.. automethod:: saealib.EvaluateAll.plan
+
+
+

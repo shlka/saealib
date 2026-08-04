@@ -42,7 +42,7 @@
    saealib.ParentSelection
    saealib.TournamentSelection
    saealib.SequentialSelection
-   saealib.RouletteWheelSelection
+   saealib.LinearRankSelection
    saealib.SurvivorSelection
    saealib.TruncationSelection
 ```

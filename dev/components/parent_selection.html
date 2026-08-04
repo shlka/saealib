@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>ParentSelection &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>ParentSelection &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../_static/documentation_options.js?v=2243f322"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -581,9 +581,9 @@ It returns the indices of <code class="docutils literal notranslate"><span class
 <td><p>None</p></td>
 <td><p>Performs no comparison; simply assigns population indices in order</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">RouletteWheelSelection</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LinearRankSelection</span></code></p></td>
 <td><p>None</p></td>
-<td><p>Roulette-wheel selection with a linear rank-based probability derived from rank</p></td>
+<td><p>Selection with a linear rank-based probability derived from rank</p></td>
 </tr>
 </tbody>
 </table>
@@ -592,11 +592,11 @@ It returns the indices of <code class="docutils literal notranslate"><span class
 Because <code class="docutils literal notranslate"><span class="pre">compare_population</span></code> is also defined on Comparators that can’t use a direct two-point comparison (<code class="docutils literal notranslate"><span class="pre">compare()</span></code>), such as <a class="reference internal" href="comparators.html"><span class="std std-doc">SPEA2Comparator</span></a> or <a class="reference internal" href="comparators.html"><span class="std std-doc">HypervolumeComparator</span></a>, it works correctly regardless of which <code class="docutils literal notranslate"><span class="pre">Comparator</span></code> it’s paired with.</p>
 <p><code class="docutils literal notranslate"><span class="pre">SequentialSelection</span></code> performs no comparison at all, making it the simplest selection scheme, with no notion of selection pressure.
 It can be paired with any <code class="docutils literal notranslate"><span class="pre">Comparator</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">RouletteWheelSelection</span></code> converts the rank returned by <code class="docutils literal notranslate"><span class="pre">ctx.comparator.sort_population</span></code> into probabilities, rather than using raw fitness.
+<p><code class="docutils literal notranslate"><span class="pre">LinearRankSelection</span></code> converts the rank returned by <code class="docutils literal notranslate"><span class="pre">ctx.comparator.sort_population</span></code> into probabilities, rather than using raw fitness.
 This lets it compute selection probabilities without numerical issues, even for problems where objective values can be negative or vary wildly in scale.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Only <code class="docutils literal notranslate"><span class="pre">SequentialSelection</span></code> is currently <code class="docutils literal notranslate"><span class="pre">&#64;register()</span></code>ed; <code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>/<code class="docutils literal notranslate"><span class="pre">RouletteWheelSelection</span></code> are not yet registered with the Registry.
+<p>Only <code class="docutils literal notranslate"><span class="pre">SequentialSelection</span></code> is currently <code class="docutils literal notranslate"><span class="pre">&#64;register()</span></code>ed; <code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>/<code class="docutils literal notranslate"><span class="pre">LinearRankSelection</span></code> are not yet registered with the Registry.
 Keep this difference in mind if you resolve classes from strings via the Registry.</p>
 </div>
 </section>
@@ -623,7 +623,7 @@ The following example is a selection scheme that chooses parents completely at r
 <ul class="simple">
 <li><p><a class="reference internal" href="algorithm.html"><span class="std std-doc">Algorithm</span></a>: How <code class="docutils literal notranslate"><span class="pre">GA</span></code> combines <code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code></p></li>
 <li><p><a class="reference internal" href="crossover.html"><span class="std std-doc">Crossover</span></a>: The operator that receives the parents chosen by <code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code></p></li>
-<li><p><a class="reference internal" href="comparators.html"><span class="std std-doc">Comparator</span></a>: Used by <code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>/<code class="docutils literal notranslate"><span class="pre">RouletteWheelSelection</span></code> to compare individuals</p></li>
+<li><p><a class="reference internal" href="comparators.html"><span class="std std-doc">Comparator</span></a>: Used by <code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>/<code class="docutils literal notranslate"><span class="pre">LinearRankSelection</span></code> to compare individuals</p></li>
 </ul>
 </section>
 <section id="references">
@@ -632,7 +632,7 @@ The following example is a selection scheme that chooses parents completely at r
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.ParentSelection.html#saealib.ParentSelection" title="saealib.ParentSelection"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ParentSelection</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.TournamentSelection.html#saealib.TournamentSelection" title="saealib.TournamentSelection"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.TournamentSelection</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.SequentialSelection.html#saealib.SequentialSelection" title="saealib.SequentialSelection"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SequentialSelection</span></code></a></p></li>
-<li><p><a class="reference internal" href="../api/_autosummary/saealib.RouletteWheelSelection.html#saealib.RouletteWheelSelection" title="saealib.RouletteWheelSelection"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.RouletteWheelSelection</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/_autosummary/saealib.LinearRankSelection.html#saealib.LinearRankSelection" title="saealib.LinearRankSelection"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.LinearRankSelection</span></code></a></p></li>
 </ul>
 </section>
 </section>

@@ -16,6 +16,7 @@
 
 
    ~OptimizationStrategy.__init__
+   ~OptimizationStrategy.build_pipeline
    ~OptimizationStrategy.step
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.OptimizationStrategy.__init__
+
+
+.. automethod:: saealib.OptimizationStrategy.build_pipeline
 
 
 .. automethod:: saealib.OptimizationStrategy.step

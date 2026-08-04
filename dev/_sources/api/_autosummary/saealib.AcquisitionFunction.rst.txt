@@ -16,8 +16,8 @@
 
 
    ~AcquisitionFunction.__init__
-   ~AcquisitionFunction.compute_reference
-   ~AcquisitionFunction.score
+   ~AcquisitionFunction.evaluate
+   ~AcquisitionFunction.prepare
 
 
 
@@ -30,10 +30,10 @@
 .. automethod:: saealib.AcquisitionFunction.__init__
 
 
-.. automethod:: saealib.AcquisitionFunction.compute_reference
+.. automethod:: saealib.AcquisitionFunction.evaluate
 
 
-.. automethod:: saealib.AcquisitionFunction.score
+.. automethod:: saealib.AcquisitionFunction.prepare
 
 
 

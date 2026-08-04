@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Evaluation &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>Evaluation &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../_static/documentation_options.js?v=2243f322"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -568,7 +568,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ParentSelection.html">saealib.ParentSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TournamentSelection.html">saealib.TournamentSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SequentialSelection.html">saealib.SequentialSelection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.RouletteWheelSelection.html">saealib.RouletteWheelSelection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.LinearRankSelection.html">saealib.LinearRankSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurvivorSelection.html">saealib.SurvivorSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TruncationSelection.html">saealib.TruncationSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.DuplicateElimination.html">saealib.DuplicateElimination</a></li>
@@ -612,10 +612,6 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PairwiseComparisonSet.html">saealib.PairwiseComparisonSet</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ReferencePointComparisonSet.html">saealib.ReferencePointComparisonSet</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TopKBipartitionSet.html">saealib.TopKBipartitionSet</a></li>
-<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ArchiveBasedManager.html">saealib.ArchiveBasedManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.DensityManager.html">saealib.DensityManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.NichingManager.html">saealib.NichingManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.NoveltyManager.html">saealib.NoveltyManager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AccuracyBasedSurrogateSwitcher.html">saealib.AccuracyBasedSurrogateSwitcher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GenCtrlSwitcher.html">saealib.GenCtrlSwitcher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ManagerSwitcher.html">saealib.ManagerSwitcher</a></li>
@@ -634,6 +630,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="acquisition.html">Acquisition Functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AcquisitionFunction.html">saealib.AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ExpectedImprovement.html">saealib.ExpectedImprovement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.BatchExpectedImprovement.html">saealib.BatchExpectedImprovement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.LowerConfidenceBound.html">saealib.LowerConfidenceBound</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.MaxUncertainty.html">saealib.MaxUncertainty</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.MeanPrediction.html">saealib.MeanPrediction</a></li>
@@ -650,6 +647,8 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.IndividualBasedStrategy.html">saealib.IndividualBasedStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PreSelectionStrategy.html">saealib.PreSelectionStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.DirectStrategy.html">saealib.DirectStrategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SteadyStateStrategy.html">saealib.SteadyStateStrategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.IslandModel.html">saealib.IslandModel</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="initialization.html">Initialization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -664,6 +663,16 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SerialEvaluator.html">saealib.SerialEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.JoblibEvaluator.html">saealib.JoblibEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationPlanner.html">saealib.EvaluationPlanner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationPlan.html">saealib.EvaluationPlan</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluateAll.html">saealib.EvaluateAll</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TopKEvaluation.html">saealib.TopKEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.RatioEvaluation.html">saealib.RatioEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.RepeatedEvaluation.html">saealib.RepeatedEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.FidelityEvaluation.html">saealib.FidelityEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.FidelityPromotion.html">saealib.FidelityPromotion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ReplicateSummary.html">saealib.ReplicateSummary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.aggregate_replicates.html">saealib.aggregate_replicates</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="termination.html">Termination</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -698,11 +707,10 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="stages.html">Stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CountGenerationStage.html">saealib.CountGenerationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AskStage.html">saealib.AskStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogateScoreStage.html">saealib.SurrogateScoreStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AcquisitionStage.html">saealib.AcquisitionStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogatePredictStage.html">saealib.SurrogatePredictStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationPlanStage.html">saealib.EvaluationPlanStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogateFitStage.html">saealib.SurrogateFitStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TopKSelectionStage.html">saealib.TopKSelectionStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SortByScoreStage.html">saealib.SortByScoreStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TrueEvaluationStage.html">saealib.TrueEvaluationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ArchiveUpdateStage.html">saealib.ArchiveUpdateStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TellStage.html">saealib.TellStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogateOnlyLoopStage.html">saealib.SurrogateOnlyLoopStage</a></li>
@@ -784,11 +792,49 @@
 <td><p>Parallel evaluator backed by <a class="reference external" href="https://joblib.readthedocs.io">joblib</a>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.EvaluationResult.html#saealib.EvaluationResult" title="saealib.EvaluationResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.EvaluationResult</span></code></a></p></td>
-<td><p>Batched result of evaluating a set of design vectors.</p></td>
+<td><p>Validated numeric result for a batch of candidates.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
+<section id="planners">
+<h2>Planners<a class="headerlink" href="#planners" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.EvaluationPlanner.html#saealib.EvaluationPlanner" title="saealib.EvaluationPlanner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.EvaluationPlanner</span></code></a></p></td>
+<td><p>Public contract for planners that may produce multiple requests.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.EvaluationPlan.html#saealib.EvaluationPlan" title="saealib.EvaluationPlan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.EvaluationPlan</span></code></a></p></td>
+<td><p>Composable evaluation work returned by a planner.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.EvaluateAll.html#saealib.EvaluateAll" title="saealib.EvaluateAll"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.EvaluateAll</span></code></a></p></td>
+<td><p>Evaluate every candidate.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.TopKEvaluation.html#saealib.TopKEvaluation" title="saealib.TopKEvaluation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.TopKEvaluation</span></code></a></p></td>
+<td><p>Evaluate the stable top-k acquisition scores.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.RatioEvaluation.html#saealib.RatioEvaluation" title="saealib.RatioEvaluation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.RatioEvaluation</span></code></a></p></td>
+<td><p>Evaluate the stable prefix selected by a ratio.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.RepeatedEvaluation.html#saealib.RepeatedEvaluation" title="saealib.RepeatedEvaluation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.RepeatedEvaluation</span></code></a></p></td>
+<td><p>Request candidates with an explicit replicate number.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.FidelityEvaluation.html#saealib.FidelityEvaluation" title="saealib.FidelityEvaluation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.FidelityEvaluation</span></code></a></p></td>
+<td><p>Attach an explicit fidelity level to an evaluation request.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.FidelityPromotion.html#saealib.FidelityPromotion" title="saealib.FidelityPromotion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.FidelityPromotion</span></code></a></p></td>
+<td><p>Represent an explicit promotion from one fidelity level to another.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.ReplicateSummary.html#saealib.ReplicateSummary" title="saealib.ReplicateSummary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ReplicateSummary</span></code></a></p></td>
+<td><p>Aggregated observations for one candidate batch.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.aggregate_replicates.html#saealib.aggregate_replicates" title="saealib.aggregate_replicates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.aggregate_replicates</span></code></a></p></td>
+<td><p>Aggregate repeated objective observations by stable candidate ID.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
 </section>
 
 
@@ -829,6 +875,18 @@
                 <dialog id="pst-secondary-sidebar-modal"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#planners">Planners</a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
 

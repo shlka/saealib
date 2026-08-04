@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.algorithms.pso &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>saealib.algorithms.pso &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../../../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1197,6 +1197,9 @@ window.runMermaid = runMermaid;</script>
         <span class="n">pbest_x</span> <span class="o">=</span> <span class="n">offspring</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;pbest_x&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">pbest_f</span> <span class="o">=</span> <span class="n">offspring</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;pbest_f&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">pbest_cv</span> <span class="o">=</span> <span class="n">offspring</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;pbest_cv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">has_id</span> <span class="o">=</span> <span class="s2">&quot;id&quot;</span> <span class="ow">in</span> <span class="n">offspring</span><span class="o">.</span><span class="n">schema</span>
+        <span class="k">if</span> <span class="n">has_id</span><span class="p">:</span>
+            <span class="n">id_new</span> <span class="o">=</span> <span class="n">offspring</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span>
 
         <span class="n">popsize</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">offspring</span><span class="p">)</span>
         <span class="n">cmp</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">comparator</span>
@@ -1211,19 +1214,21 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">pbest_f</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_new</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
                 <span class="n">pbest_cv</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">cv_new</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
 
+        <span class="n">new_pop_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">x_new</span><span class="p">,</span>
+            <span class="s2">&quot;f&quot;</span><span class="p">:</span> <span class="n">f_new</span><span class="p">,</span>
+            <span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="n">g_new</span><span class="p">,</span>
+            <span class="s2">&quot;cv&quot;</span><span class="p">:</span> <span class="n">cv_new</span><span class="p">,</span>
+            <span class="s2">&quot;velocity&quot;</span><span class="p">:</span> <span class="n">v_new</span><span class="p">,</span>
+            <span class="s2">&quot;pbest_x&quot;</span><span class="p">:</span> <span class="n">pbest_x</span><span class="p">,</span>
+            <span class="s2">&quot;pbest_f&quot;</span><span class="p">:</span> <span class="n">pbest_f</span><span class="p">,</span>
+            <span class="s2">&quot;pbest_cv&quot;</span><span class="p">:</span> <span class="n">pbest_cv</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">has_id</span><span class="p">:</span>
+            <span class="n">new_pop_data</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">id_new</span>
+
         <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-            <span class="p">{</span>
-                <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">x_new</span><span class="p">,</span>
-                <span class="s2">&quot;f&quot;</span><span class="p">:</span> <span class="n">f_new</span><span class="p">,</span>
-                <span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="n">g_new</span><span class="p">,</span>
-                <span class="s2">&quot;cv&quot;</span><span class="p">:</span> <span class="n">cv_new</span><span class="p">,</span>
-                <span class="s2">&quot;velocity&quot;</span><span class="p">:</span> <span class="n">v_new</span><span class="p">,</span>
-                <span class="s2">&quot;pbest_x&quot;</span><span class="p">:</span> <span class="n">pbest_x</span><span class="p">,</span>
-                <span class="s2">&quot;pbest_f&quot;</span><span class="p">:</span> <span class="n">pbest_f</span><span class="p">,</span>
-                <span class="s2">&quot;pbest_cv&quot;</span><span class="p">:</span> <span class="n">pbest_cv</span><span class="p">,</span>
-            <span class="p">}</span>
-        <span class="p">)</span></div>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span><span class="n">new_pop_data</span><span class="p">,</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
     <span class="c1"># ------------------------------------------------------------------</span>

@@ -31,7 +31,6 @@ There are two quantization modes.
 [EpsilonDominanceComparator](comparators.md) is a thin wrapper that simply passes `EpsilonDominator(eps, mode)` to `ParetoComparator`'s `dominator` argument.
 
 ```{note}
-The functions `_pareto_dominates`/`_dominance_matrix` remaining in the module are deprecated backward-compatibility wrappers.
 For new code, use `ParetoDominator().dominates(...)`/`ParetoDominator().dominance_matrix(...)` directly.
 ```
 

@@ -1,0 +1,6 @@
+﻿saealib.aggregate\_replicates
+=============================
+
+.. currentmodule:: saealib
+
+.. autofunction:: aggregate_replicates

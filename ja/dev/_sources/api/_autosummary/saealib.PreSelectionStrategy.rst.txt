@@ -16,6 +16,7 @@
 
 
    ~PreSelectionStrategy.__init__
+   ~PreSelectionStrategy.build_pipeline
    ~PreSelectionStrategy.step
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.PreSelectionStrategy.__init__
+
+
+.. automethod:: saealib.PreSelectionStrategy.build_pipeline
 
 
 .. automethod:: saealib.PreSelectionStrategy.step

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>AcquisitionFunction &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>AcquisitionFunction &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../_static/documentation_options.js?v=2243f322"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -556,14 +556,15 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="acquisitionfunction">
 <h1>AcquisitionFunction<a class="headerlink" href="#acquisitionfunction" title="Link to this heading">#</a></h1>
-<p><a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a> delegates the conversion of a <a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>’s predictions into a scalar score to <code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>, a swappable component.
+<p><code class="docutils literal notranslate"><span class="pre">SurrogatePredictStage</span></code> passes a <a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>’s predictions to <code class="docutils literal notranslate"><span class="pre">AcquisitionStage</span></code>, which delegates scalar scoring to <code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>.
 <code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code> only receives <code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>’s prediction results, and knows nothing about the model’s internals (what algorithm produced the prediction).</p>
 <section id="acquisitionfunction-s-role">
 <h2>AcquisitionFunction’s role<a class="headerlink" href="#acquisitionfunction-s-role" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code> requires two methods to be implemented.</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">compute_reference(archive,</span> <span class="pre">rng=None)</span> <span class="pre">-&gt;</span> <span class="pre">Any</span></code></strong>: Computes a reference value used for scoring (such as the current best value) from the archive.
+<p><code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code> requires <code class="docutils literal notranslate"><span class="pre">evaluate(candidates_x,</span> <span class="pre">prediction,</span> <span class="pre">archive,</span> <span class="pre">ctx=None,</span> <span class="pre">*,</span> <span class="pre">prepared=...)</span> <span class="pre">-&gt;</span> <span class="pre">AcquisitionResult</span></code>.
+For pointwise criteria, the <code class="docutils literal notranslate"><span class="pre">PointwiseAcquisition</span></code> convenience base class splits this into two methods.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">compute_reference(archive,</span> <span class="pre">rng=None)</span> <span class="pre">-&gt;</span> <span class="pre">Any</span></code></strong>: On <code class="docutils literal notranslate"><span class="pre">PointwiseAcquisition</span></code>, computes a reference value used for scoring (such as the current best value) from the archive.
 An acquisition function that doesn’t use a reference value may return <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">score(prediction,</span> <span class="pre">reference,</span> <span class="pre">rng=None)</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code></strong>: Computes a score from <code class="docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code> and the reference value.
+<p><strong><code class="docutils literal notranslate"><span class="pre">score(prediction,</span> <span class="pre">reference,</span> <span class="pre">rng=None)</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code></strong>: On <code class="docutils literal notranslate"><span class="pre">PointwiseAcquisition</span></code>, computes a score from <code class="docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code> and the reference value.
 As with saealib’s overall convention, a higher score is better.</p>
 <p>The class attribute <code class="docutils literal notranslate"><span class="pre">requires_uncertainty:</span> <span class="pre">bool</span></code> indicates whether this acquisition function needs <code class="docutils literal notranslate"><span class="pre">SurrogatePrediction.std</span></code> (uncertainty).
 <code class="docutils literal notranslate"><span class="pre">direction_sensitive:</span> <span class="pre">bool</span></code> (default <code class="docutils literal notranslate"><span class="pre">True</span></code>) indicates whether <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> automatically injects <code class="docutils literal notranslate"><span class="pre">problem.direction</span></code> into this acquisition function at the start of a run.
@@ -587,55 +588,75 @@ Acquisition functions with no notion of objective direction, such as feasibility
 <td><p>Expected Improvement (EI) <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id8" title="Donald R. Jones, Matthias Schonlau, and William J. Welch. Efficient global optimization of expensive black-box functions. Journal of Global Optimization, 13(4):455–492, 1998. doi:10.1023/A:1008306431147.">24</a>]</span></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BatchExpectedImprovement</span></code></p></td>
+<td><p>Joint EI with batch diversity for qEI-style selection</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code></p></td>
 <td><p>Lower Confidence Bound (LCB) <span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id43" title="Niranjan Srinivas, Andreas Krause, Sham M. Kakade, and Matthias W. Seeger. Information-theoretic regret bounds for gaussian process optimization in the bandit setting. IEEE Transactions on Information Theory, 58(5):3250–3265, 2012. doi:10.1109/TIT.2011.2182033.">25</a>]</span></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">MaxUncertainty</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MaxUncertainty</span></code></p></td>
 <td><p>The larger the predictive uncertainty, the better (exploration-leaning)</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">EHVIAcquisition</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">EHVIAcquisition</span></code></p></td>
 <td><p>Expected Hypervolume Improvement <span class="bibtex-citation" id="id3">[<a class="reference internal" href="../references.html#id50" title="Michael T. M. Emmerich, Kyriakos C. Giannakoglou, and Boris Naujoks. Single- and multiobjective evolutionary optimization assisted by gaussian random field metamodels. IEEE Transactions on Evolutionary Computation, 10(4):421–439, 2006. doi:10.1109/TEVC.2005.859463.">26</a>, <a class="reference internal" href="../references.html#id51" title="Iris Hupkens, Andre H. Deutz, Kaifeng Yang, and Michael Emmerich. Faster exact algorithms for computing expected hypervolume improvement. In Evolutionary Multi-Criterion Optimization (EMO 2015), volume 9018 of LNCS, 65–79. 2015. doi:10.1007/978-3-319-15892-1_5.">27</a>, <a class="reference internal" href="../references.html#id52" title="Samuel Daulton, Maximilian Balandat, and Eytan Bakshy. Differentiable expected hypervolume improvement for parallel multi-objective bayesian optimization. Advances in Neural Information Processing Systems, 33:9851–9864, 2020.">28</a>]</span>. For multi-objective use</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SMSEGOAcquisition</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SMSEGOAcquisition</span></code></p></td>
 <td><p>An SMS-EMOA-style hypervolume indicator (SMS-EGO, proposed by Ponweiser et al., 2008). For multi-objective use</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ParEGOAcquisition</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ParEGOAcquisition</span></code></p></td>
 <td><p>ParEGO via random scalarization <span class="bibtex-citation" id="id4">[<a class="reference internal" href="../references.html#id47" title="Joshua Knowles. Parego: a hybrid algorithm with on-line landscape approximation for expensive multiobjective optimization problems. IEEE Transactions on Evolutionary Computation, 10(1):50–66, 2006. doi:10.1109/TEVC.2005.851274.">29</a>, <a class="reference internal" href="../references.html#id48" title="Tinkle Chugh. Scalarizing functions in bayesian multiobjective optimization. In 2020 IEEE Congress on Evolutionary Computation (CEC), 1–8. 2020. doi:10.1109/CEC48606.2020.9185706.">30</a>]</span>. For multi-objective use</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ProbabilityOfFeasibility</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ProbabilityOfFeasibility</span></code></p></td>
 <td><p>Feasibility probability for a single constraint <span class="bibtex-citation" id="id5">[<a class="reference internal" href="../references.html#id45" title="Matthias Schonlau. Computer Experiments and Global Optimization. PhD thesis, University of Waterloo, 1997.">31</a>, <a class="reference internal" href="../references.html#id44" title="Michael A. Gelbart, Jasper Snoek, and Ryan P. Adams. Bayesian optimization with unknown constraints. In Proceedings of the 30th Conference on Uncertainty in Artificial Intelligence (UAI). 2014.">32</a>]</span></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ProductOfFeasibility</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ProductOfFeasibility</span></code></p></td>
 <td><p>Product of feasibility probabilities across multiple constraints <span class="bibtex-citation" id="id6">[<a class="reference internal" href="../references.html#id44" title="Michael A. Gelbart, Jasper Snoek, and Ryan P. Adams. Bayesian optimization with unknown constraints. In Proceedings of the 30th Conference on Uncertainty in Artificial Intelligence (UAI). 2014.">32</a>]</span></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NoveltyAcquisition</span></code></p></td>
+<td><p>Mean distance to the nearest archive points</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">InverseDensityAcquisition</span></code></p></td>
+<td><p>Inverse archive neighborhood density</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MaximinDistanceAcquisition</span></code></p></td>
+<td><p>Candidate and archive diversity criterion</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>All 8 classes other than <code class="docutils literal notranslate"><span class="pre">MeanPrediction</span></code> have <code class="docutils literal notranslate"><span class="pre">requires_uncertainty=True</span></code>.
-To use an uncertainty-based acquisition function, the <code class="docutils literal notranslate"><span class="pre">Surrogate</span></code> it’s paired with must return <code class="docutils literal notranslate"><span class="pre">std</span></code> (<code class="docutils literal notranslate"><span class="pre">provides_uncertainty=True</span></code>).
+<p>The uncertainty-based acquisitions in the table have <code class="docutils literal notranslate"><span class="pre">requires_uncertainty=True</span></code>.
+Archive-based acquisitions (<code class="docutils literal notranslate"><span class="pre">NoveltyAcquisition</span></code>, <code class="docutils literal notranslate"><span class="pre">InverseDensityAcquisition</span></code>, and <code class="docutils literal notranslate"><span class="pre">MaximinDistanceAcquisition</span></code>) do not require predictive uncertainty.
+To use an uncertainty-based acquisition function, the <code class="docutils literal notranslate"><span class="pre">Surrogate</span></code> it’s paired with must return <code class="docutils literal notranslate"><span class="pre">std</span></code> (<code class="docutils literal notranslate"><span class="pre">provides_uncertainty=True</span></code>). Joint batch acquisitions additionally require a candidate covariance or another explicit joint posterior representation; see the examples for a deterministic implementation of that contract.
 Among the built-in surrogates, only <code class="docutils literal notranslate"><span class="pre">SklearnGPRSurrogate</span></code> satisfies this.
 See the uncertainty-support table in <a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a> for details.</p>
 <p><code class="docutils literal notranslate"><span class="pre">MaxUncertainty</span></code>/<code class="docutils literal notranslate"><span class="pre">ProbabilityOfFeasibility</span></code>/<code class="docutils literal notranslate"><span class="pre">ProductOfFeasibility</span></code> have <code class="docutils literal notranslate"><span class="pre">direction_sensitive</span> <span class="pre">=</span> <span class="pre">False</span></code>.
 This is because the magnitude of uncertainty or a feasibility probability has no notion of maximizing vs. minimizing direction.</p>
 <p><code class="docutils literal notranslate"><span class="pre">ProbabilityOfFeasibility</span></code>/<code class="docutils literal notranslate"><span class="pre">ProductOfFeasibility</span></code> are used paired with a classification or regression surrogate that predicts a constraint value <code class="docutils literal notranslate"><span class="pre">g</span></code>.
-The typical usage is to extract training data with <a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>’s <code class="docutils literal notranslate"><span class="pre">ConstraintObjectiveSet</span></code>, and combine it with the objective-side acquisition function (e.g. EI) via <code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager</span></code>’s <code class="docutils literal notranslate"><span class="pre">product_combine</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ei_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span>
-    <span class="n">gp_surrogate</span><span class="p">,</span> <span class="n">ExpectedImprovement</span><span class="p">(),</span> <span class="n">ArchiveObjectiveSet</span><span class="p">()</span>
-<span class="p">)</span>
+The typical usage is to extract training data with <a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>’s <code class="docutils literal notranslate"><span class="pre">ConstraintObjectiveSet</span></code>, and combine it with the objective-side acquisition function (e.g. EI) via <code class="docutils literal notranslate"><span class="pre">CompositeAcquisition</span></code>’s <code class="docutils literal notranslate"><span class="pre">product_combine</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ei_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">gp_surrogate</span><span class="p">,</span> <span class="n">ArchiveObjectiveSet</span><span class="p">())</span>
 <span class="n">pof_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span>
     <span class="n">PerObjectiveSurrogate</span><span class="p">([</span><span class="n">gp_g1</span><span class="p">,</span> <span class="n">gp_g2</span><span class="p">]),</span>
-    <span class="n">ProductOfFeasibility</span><span class="p">(),</span>
     <span class="n">ConstraintObjectiveSet</span><span class="p">(),</span>
 <span class="p">)</span>
 <span class="n">optimizer</span><span class="o">.</span><span class="n">set_surrogate_manager</span><span class="p">(</span>
-    <span class="n">CompositeSurrogateManager</span><span class="p">([</span><span class="n">ei_manager</span><span class="p">,</span> <span class="n">pof_manager</span><span class="p">],</span> <span class="n">product_combine</span><span class="p">)</span>
+    <span class="n">CompositeSurrogateManager</span><span class="p">({</span><span class="s2">&quot;objective&quot;</span><span class="p">:</span> <span class="n">ei_manager</span><span class="p">,</span> <span class="s2">&quot;feasibility&quot;</span><span class="p">:</span> <span class="n">pof_manager</span><span class="p">})</span>
+<span class="p">)</span>
+<span class="n">optimizer</span><span class="o">.</span><span class="n">set_acquisition</span><span class="p">(</span>
+    <span class="n">CompositeAcquisition</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">&quot;objective&quot;</span><span class="p">:</span> <span class="n">ExpectedImprovement</span><span class="p">(),</span> <span class="s2">&quot;feasibility&quot;</span><span class="p">:</span> <span class="n">ProductOfFeasibility</span><span class="p">()},</span>
+        <span class="n">product_combine</span><span class="p">,</span>
+    <span class="p">)</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -649,12 +670,12 @@ If <code class="docutils literal notranslate"><span class="pre">direction</span>
 </section>
 <section id="implementing-a-custom-acquisitionfunction">
 <h2>Implementing a custom AcquisitionFunction<a class="headerlink" href="#implementing-a-custom-acquisitionfunction" title="Link to this heading">#</a></h2>
-<p>If you need a custom scoring scheme, subclass <code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code> and implement <code class="docutils literal notranslate"><span class="pre">compute_reference()</span></code>/<code class="docutils literal notranslate"><span class="pre">score()</span></code>.
+<p>If you need a custom pointwise scoring scheme, subclass <code class="docutils literal notranslate"><span class="pre">PointwiseAcquisition</span></code> and implement <code class="docutils literal notranslate"><span class="pre">compute_reference()</span></code>/<code class="docutils literal notranslate"><span class="pre">score()</span></code>.
 The following example is a simple acquisition function that gives a higher score to candidates whose predictive mean falls further below a threshold.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">PointwiseAcquisition</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">ThresholdAcquisition</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ThresholdAcquisition</span><span class="p">(</span><span class="n">PointwiseAcquisition</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Gives a higher score to candidates whose predictive mean falls further below a threshold (assumes minimization).&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
@@ -668,7 +689,7 @@ The following example is a simple acquisition function that gives a higher score
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">-</span> <span class="n">m</span>
 </pre></div>
 </div>
-<p>Combine it by passing it to <code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>’s constructor, e.g. <code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager(surrogate,</span> <span class="pre">acquisition,</span> <span class="pre">...)</span></code>.</p>
+<p>Combine it by passing it to <code class="docutils literal notranslate"><span class="pre">Optimizer.set_acquisition()</span></code>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><code class="docutils literal notranslate"><span class="pre">Optimizer.validate()</span></code> detects and warns about a mismatch between the acquisition function’s <code class="docutils literal notranslate"><span class="pre">requires_uncertainty</span></code> and the surrogate’s <code class="docutils literal notranslate"><span class="pre">provides_uncertainty</span></code>.
@@ -679,7 +700,7 @@ This warning will catch you if you pair an acquisition function with <code class
 <h2>Related components<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>: The source of <code class="docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code>. See here also for the uncertainty-support table</p></li>
-<li><p><a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>: Combines <code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code> with <code class="docutils literal notranslate"><span class="pre">Surrogate</span></code></p></li>
+<li><p><a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>: Provides predictions to <code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></p></li>
 <li><p><a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>: Constraint data extraction paired with <code class="docutils literal notranslate"><span class="pre">ProbabilityOfFeasibility</span></code>/<code class="docutils literal notranslate"><span class="pre">ProductOfFeasibility</span></code></p></li>
 </ul>
 </section>
@@ -689,6 +710,7 @@ This warning will catch you if you pair an acquisition function with <code class
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.AcquisitionFunction.html#saealib.AcquisitionFunction" title="saealib.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.AcquisitionFunction</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.MeanPrediction.html#saealib.MeanPrediction" title="saealib.MeanPrediction"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MeanPrediction</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.ExpectedImprovement.html#saealib.ExpectedImprovement" title="saealib.ExpectedImprovement"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ExpectedImprovement</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/_autosummary/saealib.BatchExpectedImprovement.html#saealib.BatchExpectedImprovement" title="saealib.BatchExpectedImprovement"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.BatchExpectedImprovement</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.LowerConfidenceBound.html#saealib.LowerConfidenceBound" title="saealib.LowerConfidenceBound"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.LowerConfidenceBound</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.MaxUncertainty.html#saealib.MaxUncertainty" title="saealib.MaxUncertainty"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MaxUncertainty</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.EHVIAcquisition.html#saealib.EHVIAcquisition" title="saealib.EHVIAcquisition"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.EHVIAcquisition</span></code></a></p></li>

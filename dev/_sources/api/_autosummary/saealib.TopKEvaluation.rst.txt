@@ -1,0 +1,35 @@
+﻿saealib.TopKEvaluation
+======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: TopKEvaluation
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~TopKEvaluation.__init__
+   ~TopKEvaluation.plan
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.TopKEvaluation.__init__
+
+
+.. automethod:: saealib.TopKEvaluation.plan
+
+
+

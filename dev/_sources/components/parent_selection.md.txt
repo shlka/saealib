@@ -14,7 +14,7 @@ It returns the indices of `n_pair` groups of parents, each consisting of `n_pare
 |---|---|---|
 | `TournamentSelection` | `tournament_size` | Randomly draws `tournament_size` individuals and picks the best, repeated `n_pair * n_parents` times {cite}`miller1995tournament` |
 | `SequentialSelection` | None | Performs no comparison; simply assigns population indices in order |
-| `RouletteWheelSelection` | None | Roulette-wheel selection with a linear rank-based probability derived from rank |
+| `LinearRankSelection` | None | Selection with a linear rank-based probability derived from rank |
 
 `TournamentSelection` selects the best individual within each tournament by repeating 1-vs-1 comparisons via `ctx.comparator.compare_population` {cite}`blickle1996selection`.
 Because `compare_population` is also defined on Comparators that can't use a direct two-point comparison (`compare()`), such as [SPEA2Comparator](comparators.md) or [HypervolumeComparator](comparators.md), it works correctly regardless of which `Comparator` it's paired with.
@@ -22,11 +22,11 @@ Because `compare_population` is also defined on Comparators that can't use a dir
 `SequentialSelection` performs no comparison at all, making it the simplest selection scheme, with no notion of selection pressure.
 It can be paired with any `Comparator`.
 
-`RouletteWheelSelection` converts the rank returned by `ctx.comparator.sort_population` into probabilities, rather than using raw fitness.
+`LinearRankSelection` converts the rank returned by `ctx.comparator.sort_population` into probabilities, rather than using raw fitness.
 This lets it compute selection probabilities without numerical issues, even for problems where objective values can be negative or vary wildly in scale.
 
 ```{note}
-Only `SequentialSelection` is currently `@register()`ed; `TournamentSelection`/`RouletteWheelSelection` are not yet registered with the Registry.
+Only `SequentialSelection` is currently `@register()`ed; `TournamentSelection`/`LinearRankSelection` are not yet registered with the Registry.
 Keep this difference in mind if you resolve classes from strings via the Registry.
 ```
 
@@ -54,11 +54,11 @@ Implementing it to reference `ctx.comparator` lets you build a custom scheme wit
 
 - [Algorithm](algorithm.md): How `GA` combines `ParentSelection`
 - [Crossover](crossover.md): The operator that receives the parents chosen by `ParentSelection`
-- [Comparator](comparators.md): Used by `TournamentSelection`/`RouletteWheelSelection` to compare individuals
+- [Comparator](comparators.md): Used by `TournamentSelection`/`LinearRankSelection` to compare individuals
 
 ## References
 
 - {py:class}`saealib.ParentSelection`
 - {py:class}`saealib.TournamentSelection`
 - {py:class}`saealib.SequentialSelection`
-- {py:class}`saealib.RouletteWheelSelection`
+- {py:class}`saealib.LinearRankSelection`

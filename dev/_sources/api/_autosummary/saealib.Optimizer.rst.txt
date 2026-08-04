@@ -25,8 +25,12 @@
    ~Optimizer.run_from
    ~Optimizer.save_pickle
    ~Optimizer.save_preset
+   ~Optimizer.set_acquisition
    ~Optimizer.set_algorithm
+   ~Optimizer.set_async_evaluation_scheduler
+   ~Optimizer.set_evaluation_planner
    ~Optimizer.set_evaluator
+   ~Optimizer.set_feedback_builder
    ~Optimizer.set_initializer
    ~Optimizer.set_instance_name
    ~Optimizer.set_preset
@@ -75,10 +79,22 @@
 .. automethod:: saealib.Optimizer.save_preset
 
 
+.. automethod:: saealib.Optimizer.set_acquisition
+
+
 .. automethod:: saealib.Optimizer.set_algorithm
 
 
+.. automethod:: saealib.Optimizer.set_async_evaluation_scheduler
+
+
+.. automethod:: saealib.Optimizer.set_evaluation_planner
+
+
 .. automethod:: saealib.Optimizer.set_evaluator
+
+
+.. automethod:: saealib.Optimizer.set_feedback_builder
 
 
 .. automethod:: saealib.Optimizer.set_initializer

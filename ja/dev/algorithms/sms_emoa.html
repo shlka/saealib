@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>SMS-EMOA（S metric selection EMOA） &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>SMS-EMOA（S metric selection EMOA） &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1060,45 +1060,27 @@ window.runMermaid = runMermaid;</script>
 <td><p>L4-6</p></td>
 </tr>
 <tr class="row-even"><td><p>評価戦略</p></td>
-<td><p>独自の<code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code>（<code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code>の1世代1個体版。後述）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code>に<code class="docutils literal notranslate"><span class="pre">AsyncEvaluationScheduler</span></code>を組み合わせて定常状態で完了させる</p></td>
 <td><p>2, 6-7（世代内の評価）</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code>は<code class="docutils literal notranslate"><span class="pre">AskStage</span></code>に<code class="docutils literal notranslate"><span class="pre">n_offspring</span></code>を渡さず、既定で個体群サイズと同数の子個体を生成する<span class="math notranslate nohighlight">\((\mu+\lambda)\)</span>世代交代を組みます。 SMS-EMOAは1世代につき新個体を1体だけ生成する定常状態のアルゴリズムであるため、<code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code>をそのまま使うと擬似コードのステップ2と食い違います。 <a class="reference internal" href="../components/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>の「独自Strategyの実装方法」で示されている手順に従い、<code class="docutils literal notranslate"><span class="pre">AskStage(n_offspring=1)</span></code>を指定した<code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code>相当のパイプラインを組んで対応します。</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">GA</span><span class="p">,</span> <span class="n">HypervolumeComparator</span><span class="p">,</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">OptimizationStrategy</span><span class="p">,</span> <span class="n">Pipeline</span>
+<p><code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code>は各ステップで候補を1つ要求し、評価完了時間が異なる場合は<code class="docutils literal notranslate"><span class="pre">AsyncEvaluationScheduler</span></code>と組み合わせられます。スケジューラは保留中のリクエストを管理し、完了した各結果を逐次適用します。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AsyncEvaluator</span><span class="p">,</span>
+    <span class="n">AsyncEvaluationScheduler</span><span class="p">,</span>
+    <span class="n">GA</span><span class="p">,</span>
+    <span class="n">HypervolumeComparator</span><span class="p">,</span>
+    <span class="n">Optimizer</span><span class="p">,</span>
+    <span class="n">SerialEvaluator</span><span class="p">,</span>
+    <span class="n">SteadyStateStrategy</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.benchmarks</span><span class="w"> </span><span class="kn">import</span> <span class="n">zdt1</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.crossover</span><span class="w"> </span><span class="kn">import</span> <span class="n">CrossoverSBX</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.mutation</span><span class="w"> </span><span class="kn">import</span> <span class="n">MutationPolynomial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">TournamentSelection</span><span class="p">,</span> <span class="n">TruncationSelection</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.stages</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">ArchiveUpdateStage</span><span class="p">,</span>
-    <span class="n">AskStage</span><span class="p">,</span>
-    <span class="n">CountGenerationStage</span><span class="p">,</span>
-    <span class="n">TellStage</span><span class="p">,</span>
-    <span class="n">TrueEvaluationStage</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">Termination</span><span class="p">,</span> <span class="n">max_fe</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">SteadyStateStrategy</span><span class="p">(</span><span class="n">OptimizationStrategy</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A one-individual-per-generation version of DirectStrategy (SMS-EMOA&#39;s steady-state selection).&quot;&quot;&quot;</span>
-
-    <span class="n">requires_surrogate</span> <span class="o">=</span> <span class="kc">False</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">provider</span><span class="p">):</span>
-        <span class="n">cbmanager</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;cbmanager&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">pipeline</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">CountGenerationStage</span><span class="p">(),</span>
-                <span class="n">AskStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="n">n_offspring</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">),</span>
-                <span class="n">TrueEvaluationStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">,</span> <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">),</span>
-                <span class="n">ArchiveUpdateStage</span><span class="p">(),</span>
-                <span class="n">TellStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">),</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
 
 
 <span class="n">problem</span> <span class="o">=</span> <span class="n">zdt1</span><span class="p">(</span><span class="n">n_var</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
@@ -1110,11 +1092,15 @@ window.runMermaid = runMermaid;</script>
     <span class="n">TournamentSelection</span><span class="p">(</span><span class="n">tournament_size</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
     <span class="n">TruncationSelection</span><span class="p">(),</span>
 <span class="p">)</span>
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">AsyncEvaluator</span><span class="p">(</span><span class="n">SerialEvaluator</span><span class="p">(),</span> <span class="n">max_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">schedule</span> <span class="o">=</span> <span class="n">AsyncEvaluationScheduler</span><span class="p">(</span><span class="n">evaluator</span><span class="p">,</span> <span class="n">max_pending</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
 <span class="n">opt</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">SteadyStateStrategy</span><span class="p">())</span>
+    <span class="o">.</span><span class="n">set_evaluator</span><span class="p">(</span><span class="n">evaluator</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_async_evaluation_scheduler</span><span class="p">(</span><span class="n">schedule</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">2000</span><span class="p">)))</span>
 <span class="p">)</span>
 <span class="n">ctx</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>

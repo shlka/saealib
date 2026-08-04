@@ -16,6 +16,8 @@
 
 
    ~SurrogatePrediction.__init__
+   ~SurrogatePrediction.objective
+   ~SurrogatePrediction.select_channel
 
 
 
@@ -26,6 +28,12 @@
 
 
 .. automethod:: saealib.SurrogatePrediction.__init__
+
+
+.. automethod:: saealib.SurrogatePrediction.objective
+
+
+.. automethod:: saealib.SurrogatePrediction.select_channel
 
 
 

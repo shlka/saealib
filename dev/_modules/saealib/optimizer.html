@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.optimizer &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>saealib.optimizer &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../../_static/documentation_options.js?v=2243f322"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -953,11 +953,13 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Protocol</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">CompositeAcquisition</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.mean</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanPrediction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.winrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">WinRateAcquisition</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CallbackManager</span><span class="p">,</span>
     <span class="n">Event</span><span class="p">,</span>
@@ -968,7 +970,14 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigurationError</span><span class="p">,</span> <span class="n">ValidationError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.evaluator</span><span class="w"> </span><span class="kn">import</span> <span class="n">Evaluator</span><span class="p">,</span> <span class="n">SerialEvaluator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">Runner</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalSurrogateManager</span><span class="p">,</span> <span class="n">SurrogateManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncEvaluationScheduler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.policies.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluationPlanner</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.policies.feedback</span><span class="w"> </span><span class="kn">import</span> <span class="n">FeedbackBuilder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.manager</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LocalSurrogateManager</span><span class="p">,</span>
+    <span class="n">PairwiseSurrogateManager</span><span class="p">,</span>
+    <span class="n">SurrogateManager</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.rbf</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_kernel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">Termination</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">max_fe</span> <span class="k">as</span> <span class="n">max_fe_cond</span>
@@ -1013,6 +1022,31 @@ window.runMermaid = runMermaid;</script>
         <span class="o">...</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">acquisition</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AcquisitionFunction</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Acquisition function owned by the provider, not the manager.&quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluation_planner</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EvaluationPlanner</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the evaluation planner.&quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">feedback_builder</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FeedbackBuilder</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the configured feedback builder.&quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">async_evaluation_scheduler</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncEvaluationScheduler</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the optional asynchronous evaluation scheduler.&quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">feedback_builder_explicit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether the feedback builder was explicitly configured.&quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">evaluator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Evaluator</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the evaluator instance.&quot;&quot;&quot;</span>
         <span class="o">...</span>
@@ -1032,7 +1066,6 @@ window.runMermaid = runMermaid;</script>
         <span class="o">...</span>
 
 
-<span class="c1"># class Optimizer(ComponentProvider):</span>
 <div class="viewcode-block" id="Optimizer">
 <a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Optimizer</span><span class="p">:</span>
@@ -1090,6 +1123,11 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">cbmanager</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">GenerationStartEvent</span><span class="p">,</span> <span class="n">logging_generation</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initializer</span><span class="p">:</span> <span class="n">Initializer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">evaluator</span><span class="p">:</span> <span class="n">Evaluator</span> <span class="o">=</span> <span class="n">SerialEvaluator</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span><span class="p">:</span> <span class="n">AcquisitionFunction</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_evaluation_planner</span><span class="p">:</span> <span class="n">EvaluationPlanner</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder</span><span class="p">:</span> <span class="n">FeedbackBuilder</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder_explicit</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">async_evaluation_scheduler</span><span class="p">:</span> <span class="n">AsyncEvaluationScheduler</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">instance_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_preset</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
@@ -1125,6 +1163,44 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_surrogate_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">:</span> <span class="n">SurrogateManager</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the surrogate manager. Returns self.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">manager</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">manager</span><span class="p">,</span> <span class="n">PairwiseSurrogateManager</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="o">=</span> <span class="n">WinRateAcquisition</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="Optimizer.set_acquisition">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_acquisition">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_acquisition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acquisition</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the independent acquisition component.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="o">=</span> <span class="n">acquisition</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluation_planner</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EvaluationPlanner</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the configured evaluation planner.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluation_planner</span>
+
+    <span class="nd">@evaluation_planner</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluation_planner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">planner</span><span class="p">:</span> <span class="n">EvaluationPlanner</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_evaluation_planner</span> <span class="o">=</span> <span class="n">planner</span>
+
+<div class="viewcode-block" id="Optimizer.set_evaluation_planner">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_evaluation_planner">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_evaluation_planner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">planner</span><span class="p">:</span> <span class="n">EvaluationPlanner</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the evaluation planner.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_planner</span> <span class="o">=</span> <span class="n">planner</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="Optimizer.set_feedback_builder">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_feedback_builder">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_feedback_builder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">builder</span><span class="p">:</span> <span class="n">FeedbackBuilder</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the feedback builder.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder</span> <span class="o">=</span> <span class="n">builder</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder_explicit</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_evaluation_scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">async_evaluation_scheduler</span><span class="o">.</span><span class="n">feedback_builder</span> <span class="o">=</span> <span class="n">builder</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
@@ -1135,15 +1211,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Wrap a raw Surrogate in a LocalSurrogateManager. Returns self.</span>
 
 <span class="sd">        Equivalent to ``set_surrogate_manager(LocalSurrogateManager(surrogate, ...))``.</span>
-<span class="sd">        Provided for backward compatibility.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.training_set</span><span class="w"> </span><span class="kn">import</span> <span class="n">KNNObjectiveSet</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">LocalSurrogateManager</span><span class="p">(</span>
             <span class="n">surrogate</span><span class="p">,</span>
-            <span class="n">MeanPrediction</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span><span class="p">),</span>
             <span class="n">training_set</span><span class="o">=</span><span class="n">KNNObjectiveSet</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="n">n_neighbors</span><span class="p">),</span>
         <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="o">=</span> <span class="n">MeanPrediction</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
@@ -1159,7 +1234,25 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_evaluator">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_evaluator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evaluator</span><span class="p">:</span> <span class="n">Evaluator</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the evaluator. Returns self.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">has_partial_lifecycle_override</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span>
+                <span class="s2">&quot;submit(), collect(), and acknowledge() must be overridden together&quot;</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">evaluator</span> <span class="o">=</span> <span class="n">evaluator</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="Optimizer.set_async_evaluation_scheduler">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_async_evaluation_scheduler">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_async_evaluation_scheduler</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">scheduler</span><span class="p">:</span> <span class="n">AsyncEvaluationScheduler</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Configure asynchronous evaluation for built-in strategies.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">async_evaluation_scheduler</span> <span class="o">=</span> <span class="n">scheduler</span>
+        <span class="k">if</span> <span class="n">scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">scheduler</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;algorithm&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">scheduler</span><span class="o">.</span><span class="n">callback_manager</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cbmanager</span>
+            <span class="n">scheduler</span><span class="o">.</span><span class="n">feedback_builder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
@@ -1229,7 +1322,14 @@ window.runMermaid = runMermaid;</script>
         <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">_strip_params</span><span class="p">,</span> <span class="n">to_spec</span>
 
         <span class="n">preset</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;algorithm&quot;</span><span class="p">,</span> <span class="s2">&quot;surrogate_manager&quot;</span><span class="p">,</span> <span class="s2">&quot;strategy&quot;</span><span class="p">,</span> <span class="s2">&quot;termination&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="s2">&quot;algorithm&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;surrogate_manager&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;strategy&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;evaluation_planner&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;feedback_builder&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;termination&quot;</span><span class="p">,</span>
+        <span class="p">):</span>
             <span class="n">component</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">component</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">continue</span>
@@ -1275,11 +1375,40 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">issues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_evaluator_lifecycle</span><span class="p">(</span><span class="n">issues</span><span class="p">)</span>
+
         <span class="n">algorithm</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;algorithm&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">strategy</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;strategy&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">termination</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;termination&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">surrogate_manager</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;surrogate_manager&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_required_components</span><span class="p">(</span>
+            <span class="n">issues</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">,</span> <span class="n">strategy</span><span class="p">,</span> <span class="n">termination</span><span class="p">,</span> <span class="n">require_initializer</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_component_protocols</span><span class="p">(</span><span class="n">issues</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_strategy_requirements</span><span class="p">(</span><span class="n">issues</span><span class="p">,</span> <span class="n">strategy</span><span class="p">,</span> <span class="n">surrogate_manager</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_comparator_direction</span><span class="p">(</span><span class="n">issues</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">surrogate_manager</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_surrogate_compatibility</span><span class="p">(</span><span class="n">issues</span><span class="p">,</span> <span class="n">surrogate_manager</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">issues</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_evaluator_lifecycle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">issues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">has_partial_lifecycle_override</span><span class="p">():</span>
+            <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="s2">&quot;submit(), collect(), and acknowledge() must be overridden together&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_required_components</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">issues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">algorithm</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+        <span class="n">strategy</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+        <span class="n">termination</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+        <span class="n">require_initializer</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;algorithm is not set; call set_algorithm()&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">strategy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1289,6 +1418,22 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="n">termination</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;termination is not set; call set_termination()&quot;</span><span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_component_protocols</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">issues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_planner</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_planner</span><span class="p">,</span> <span class="n">EvaluationPlanner</span>
+        <span class="p">):</span>
+            <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;evaluation_planner must be an EvaluationPlanner&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder</span><span class="p">,</span> <span class="n">FeedbackBuilder</span>
+        <span class="p">):</span>
+            <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;feedback_builder must be a FeedbackBuilder&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_strategy_requirements</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">issues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">strategy</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+        <span class="n">surrogate_manager</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">strategy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="s2">&quot;requires_surrogate&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
@@ -1298,7 +1443,16 @@ window.runMermaid = runMermaid;</script>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">strategy</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> requires a surrogate_manager; &quot;</span>
                 <span class="s2">&quot;call set_surrogate_manager() or set_surrogate()&quot;</span>
             <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">strategy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="s2">&quot;requires_surrogate&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="s2">&quot;a provider-owned acquisition is required; call set_acquisition()&quot;</span>
+            <span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_comparator_direction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">issues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">_dim</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">comparator</span><span class="p">,</span> <span class="s2">&quot;direction&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -1311,36 +1465,35 @@ window.runMermaid = runMermaid;</script>
                 <span class="sa">f</span><span class="s2">&quot;problem.n_obj (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_obj</span><span class="si">}</span><span class="s2">)&quot;</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">surrogate_manager</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">acq</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">surrogate_manager</span><span class="p">,</span> <span class="s2">&quot;acquisition&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="n">surr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">surrogate_manager</span><span class="p">,</span> <span class="s2">&quot;surrogate&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_surrogate_compatibility</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">issues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">surrogate_manager</span><span class="p">:</span> <span class="nb">object</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">acq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span>
+        <span class="n">surr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">surrogate_manager</span><span class="p">,</span> <span class="s2">&quot;surrogate&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">acq</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">surr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">acq</span><span class="p">,</span> <span class="s2">&quot;requires_uncertainty&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">surr</span><span class="p">,</span> <span class="s2">&quot;provides_uncertainty&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">acq</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> requires uncertainty estimates but &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">surr</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not provide them &quot;</span>
+                <span class="s2">&quot;(provides_uncertainty=False)&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">acq</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_acquisitions</span><span class="p">():</span>
+            <span class="n">_adir</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">acq</span><span class="p">,</span> <span class="s2">&quot;direction&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="n">acq</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="ow">and</span> <span class="n">surr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">acq</span><span class="p">,</span> <span class="s2">&quot;requires_uncertainty&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-                <span class="ow">and</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">surr</span><span class="p">,</span> <span class="s2">&quot;provides_uncertainty&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+                <span class="n">_adir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">_adir</span><span class="p">,</span> <span class="s2">&quot;__len__&quot;</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">_adir</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+                <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">_adir</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_obj</span>
             <span class="p">):</span>
                 <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">acq</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> requires uncertainty estimates but &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">surr</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not provide them &quot;</span>
-                    <span class="s2">&quot;(provides_uncertainty=False)&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">acq</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> direction length (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">_adir</span><span class="p">)</span><span class="si">}</span><span class="s2">) does &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;not match problem.n_obj (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_obj</span><span class="si">}</span><span class="s2">)&quot;</span>
                 <span class="p">)</span>
-
-            <span class="k">for</span> <span class="n">acq</span> <span class="ow">in</span> <span class="n">surrogate_manager</span><span class="o">.</span><span class="n">iter_acquisitions</span><span class="p">():</span>
-                <span class="n">_adir</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">acq</span><span class="p">,</span> <span class="s2">&quot;direction&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-                <span class="k">if</span> <span class="p">(</span>
-                    <span class="n">_adir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                    <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">_adir</span><span class="p">,</span> <span class="s2">&quot;__len__&quot;</span><span class="p">)</span>
-                    <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">_adir</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
-                    <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">_adir</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_obj</span>
-                <span class="p">):</span>
-                    <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">acq</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> direction length (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">_adir</span><span class="p">)</span><span class="si">}</span><span class="s2">) does &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;not match problem.n_obj (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_obj</span><span class="si">}</span><span class="s2">)&quot;</span>
-                    <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">issues</span></div>
-
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Fill unset components with library defaults (Registry + presets file).</span>
@@ -1373,10 +1526,12 @@ window.runMermaid = runMermaid;</script>
                 <span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="n">algorithm</span>
             <span class="k">if</span> <span class="n">surrogate_manager</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;surrogate_manager&quot;</span> <span class="ow">in</span> <span class="n">user_preset</span><span class="p">:</span>
-                <span class="n">surrogate_manager</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_surrogate_manager</span><span class="p">(</span>
+                <span class="n">surrogate_manager</span><span class="p">,</span> <span class="n">acquisition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_components_from_spec</span><span class="p">(</span>
                     <span class="n">user_preset</span><span class="p">[</span><span class="s2">&quot;surrogate_manager&quot;</span><span class="p">]</span>
                 <span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">surrogate_manager</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="o">=</span> <span class="n">acquisition</span>
             <span class="k">if</span> <span class="n">strategy</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;strategy&quot;</span> <span class="ow">in</span> <span class="n">user_preset</span><span class="p">:</span>
                 <span class="n">strategy</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span>
                     <span class="n">_inject_params</span><span class="p">(</span>
@@ -1384,6 +1539,13 @@ window.runMermaid = runMermaid;</script>
                     <span class="p">)</span>
                 <span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">strategy</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_planner</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">spec</span> <span class="o">=</span> <span class="n">user_preset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;evaluation_planner&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_planner</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;feedback_builder&quot;</span> <span class="ow">in</span> <span class="n">user_preset</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span><span class="n">user_preset</span><span class="p">[</span><span class="s2">&quot;feedback_builder&quot;</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder_explicit</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">if</span> <span class="p">(</span>
                 <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;termination&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span>
                 <span class="ow">and</span> <span class="s2">&quot;termination&quot;</span> <span class="ow">in</span> <span class="n">user_preset</span>
@@ -1394,17 +1556,39 @@ window.runMermaid = runMermaid;</script>
                     <span class="p">)</span>
                 <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">strategy</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">surrogate_manager</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">use_bundled_policies</span> <span class="o">=</span> <span class="n">strategy</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">algorithm</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="n">strategy</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="n">surrogate_manager</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_planner</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
             <span class="n">defaults</span> <span class="o">=</span> <span class="n">load_defaults</span><span class="p">()</span>
             <span class="n">preset</span> <span class="o">=</span> <span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;presets&quot;</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">_select_preset_name</span><span class="p">(</span><span class="n">defaults</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">)]</span>
             <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;algorithm&quot;</span> <span class="ow">in</span> <span class="n">preset</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span><span class="n">preset</span><span class="p">[</span><span class="s2">&quot;algorithm&quot;</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">surrogate_manager</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;surrogate_manager&quot;</span> <span class="ow">in</span> <span class="n">preset</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">surrogate_manager</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_surrogate_manager</span><span class="p">(</span>
+                <span class="n">manager</span><span class="p">,</span> <span class="n">acquisition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_components_from_spec</span><span class="p">(</span>
                     <span class="n">preset</span><span class="p">[</span><span class="s2">&quot;surrogate_manager&quot;</span><span class="p">]</span>
                 <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">manager</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="o">=</span> <span class="n">acquisition</span>
             <span class="k">if</span> <span class="n">strategy</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;strategy&quot;</span> <span class="ow">in</span> <span class="n">preset</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span><span class="n">preset</span><span class="p">[</span><span class="s2">&quot;strategy&quot;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">use_bundled_policies</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_planner</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="s2">&quot;evaluation_planner&quot;</span> <span class="ow">in</span> <span class="n">preset</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_planner</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span><span class="n">preset</span><span class="p">[</span><span class="s2">&quot;evaluation_planner&quot;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">use_bundled_policies</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="s2">&quot;feedback_builder&quot;</span> <span class="ow">in</span> <span class="n">preset</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span><span class="n">preset</span><span class="p">[</span><span class="s2">&quot;feedback_builder&quot;</span><span class="p">])</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">initializer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.initializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">LHSInitializer</span>
@@ -1425,15 +1609,22 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        an acquisition function that already has an explicit ``direction`` (or</span>
 <span class="sd">        opts out via ``direction_sensitive = False``) is left untouched.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">surrogate_manager</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;surrogate_manager&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">surrogate_manager</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span>
-        <span class="k">for</span> <span class="n">acq</span> <span class="ow">in</span> <span class="n">surrogate_manager</span><span class="o">.</span><span class="n">iter_acquisitions</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">acq</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_acquisitions</span><span class="p">():</span>
             <span class="k">if</span> <span class="p">(</span>
                 <span class="nb">getattr</span><span class="p">(</span><span class="n">acq</span><span class="p">,</span> <span class="s2">&quot;direction_sensitive&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">acq</span><span class="p">,</span> <span class="s2">&quot;direction&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="p">):</span>
                 <span class="n">acq</span><span class="o">.</span><span class="n">direction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_iter_acquisitions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield provider-owned acquisitions, including composite children.&quot;&quot;&quot;</span>
+        <span class="n">acquisition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span>
+        <span class="k">if</span> <span class="n">acquisition</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">acquisition</span><span class="p">,</span> <span class="n">CompositeAcquisition</span><span class="p">):</span>
+            <span class="k">yield from</span> <span class="n">acquisition</span><span class="o">.</span><span class="n">acquisitions</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">acquisition</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_select_preset_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">defaults</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">:</span> <span class="n">Algorithm</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1449,9 +1640,40 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;fallback&quot;</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_build_surrogate_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurrogateManager</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_surrogate_manager_from_spec</span><span class="p">(</span>
+        <span class="n">manager</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_components_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">manager</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_components_from_spec</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SurrogateManager</span><span class="p">,</span> <span class="n">AcquisitionFunction</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_components_from_spec_static</span><span class="p">(</span>
             <span class="n">spec</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span>
         <span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_components_from_spec_static</span><span class="p">(</span>
+        <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">direction</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SurrogateManager</span><span class="p">,</span> <span class="n">AcquisitionFunction</span><span class="p">]:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">_inject_params</span><span class="p">,</span> <span class="n">build</span>
+
+        <span class="n">manager_spec</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">manager_spec</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;params&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+            <span class="s2">&quot;surrogate&quot;</span><span class="p">,</span>
+            <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;RBFSurrogate&quot;</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;kernel&quot;</span><span class="p">:</span> <span class="n">gaussian_kernel</span><span class="p">,</span> <span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="n">dim</span><span class="p">}},</span>
+        <span class="p">)</span>
+        <span class="n">acquisition_spec</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;acquisition&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">acquisition_spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">acquisition_spec</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;WinRateAcquisition&quot;</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{}}</span>
+                <span class="k">if</span> <span class="n">manager_spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;PairwiseSurrogateManager&quot;</span>
+                <span class="k">else</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;MeanPrediction&quot;</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;direction&quot;</span><span class="p">:</span> <span class="n">direction</span><span class="p">}}</span>
+            <span class="p">)</span>
+        <span class="n">manager_spec</span> <span class="o">=</span> <span class="n">_inject_params</span><span class="p">(</span><span class="n">manager_spec</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">direction</span><span class="p">)</span>
+        <span class="n">acquisition_spec</span> <span class="o">=</span> <span class="n">_inject_params</span><span class="p">(</span>
+            <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">acquisition_spec</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">direction</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">build</span><span class="p">(</span><span class="n">manager_spec</span><span class="p">),</span> <span class="n">build</span><span class="p">(</span><span class="n">acquisition_spec</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_build_surrogate_manager_from_spec</span><span class="p">(</span>
@@ -1470,10 +1692,7 @@ window.runMermaid = runMermaid;</script>
             <span class="s2">&quot;surrogate&quot;</span><span class="p">,</span>
             <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;RBFSurrogate&quot;</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;kernel&quot;</span><span class="p">:</span> <span class="n">gaussian_kernel</span><span class="p">,</span> <span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="n">dim</span><span class="p">}},</span>
         <span class="p">)</span>
-        <span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
-            <span class="s2">&quot;acquisition&quot;</span><span class="p">,</span>
-            <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;MeanPrediction&quot;</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;direction&quot;</span><span class="p">:</span> <span class="n">direction</span><span class="p">}},</span>
-        <span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;acquisition&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">spec</span> <span class="o">=</span> <span class="n">_inject_params</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">direction</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">build</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
 
@@ -1805,6 +2024,8 @@ window.runMermaid = runMermaid;</script>
             <span class="p">(</span><span class="s2">&quot;algorithm&quot;</span><span class="p">,</span> <span class="n">opt</span><span class="o">.</span><span class="n">set_algorithm</span><span class="p">,</span> <span class="n">Algorithm</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">&quot;strategy&quot;</span><span class="p">,</span> <span class="n">opt</span><span class="o">.</span><span class="n">set_strategy</span><span class="p">,</span> <span class="n">OptimizationStrategy</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">&quot;surrogate_manager&quot;</span><span class="p">,</span> <span class="n">opt</span><span class="o">.</span><span class="n">set_surrogate_manager</span><span class="p">,</span> <span class="n">SurrogateManager</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;evaluation_planner&quot;</span><span class="p">,</span> <span class="n">opt</span><span class="o">.</span><span class="n">set_evaluation_planner</span><span class="p">,</span> <span class="n">EvaluationPlanner</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;feedback_builder&quot;</span><span class="p">,</span> <span class="n">opt</span><span class="o">.</span><span class="n">set_feedback_builder</span><span class="p">,</span> <span class="n">FeedbackBuilder</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">&quot;termination&quot;</span><span class="p">,</span> <span class="n">opt</span><span class="o">.</span><span class="n">set_termination</span><span class="p">,</span> <span class="n">Termination</span><span class="p">),</span>
         <span class="p">):</span>
             <span class="n">component</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>

@@ -17,6 +17,8 @@
 
    ~ProductOfFeasibility.__init__
    ~ProductOfFeasibility.compute_reference
+   ~ProductOfFeasibility.evaluate
+   ~ProductOfFeasibility.prepare
    ~ProductOfFeasibility.score
 
 
@@ -31,6 +33,12 @@
 
 
 .. automethod:: saealib.ProductOfFeasibility.compute_reference
+
+
+.. automethod:: saealib.ProductOfFeasibility.evaluate
+
+
+.. automethod:: saealib.ProductOfFeasibility.prepare
 
 
 .. automethod:: saealib.ProductOfFeasibility.score

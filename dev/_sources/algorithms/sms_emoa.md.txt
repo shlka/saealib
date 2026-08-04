@@ -72,45 +72,27 @@ Because the paper's reduction procedure applies this only to the lowest front (s
 | Mutation | `MutationPolynomial(eta=20.0)` | L2 |
 | Non-dominated sorting + in-front HV contribution | `HypervolumeComparator` (`sort_population` internally calls non-dominated sorting and `hypervolume_contributions`) | L3-5 |
 | Survivor selection | `TruncationSelection()` (culls the last individual in `comparator.sort_population`'s order — i.e. the one with the smallest contribution in the lowest front) | L4-6 |
-| Evaluation strategy | A custom `SteadyStateStrategy` (a one-individual-per-generation version of `DirectStrategy`; described below) | 2, 6-7 (in-generation evaluation) |
+| Evaluation strategy | `SteadyStateStrategy` with `AsyncEvaluationScheduler` for steady-state completion | 2, 6-7 (in-generation evaluation) |
 
-`DirectStrategy` doesn't pass `n_offspring` to `AskStage`, defaulting to $(\mu+\lambda)$ generational replacement that generates as many offspring as the population size.
-Since SMS-EMOA is a steady-state algorithm generating only one new individual per generation, using `DirectStrategy` as-is would diverge from step 2 of the pseudocode.
-Following the procedure shown in "Implementing a custom Strategy" in [OptimizationStrategy](../components/strategies.md), we assemble a `DirectStrategy`-equivalent pipeline with `AskStage(n_offspring=1)` specified instead.
+`SteadyStateStrategy` asks for one candidate per step and can be paired with
+`AsyncEvaluationScheduler` when evaluations have different completion times. The
+scheduler manages pending requests and applies each completed result serially.
 
 ```python
-from saealib import GA, HypervolumeComparator, Optimizer, OptimizationStrategy, Pipeline
+from saealib import (
+    AsyncEvaluator,
+    AsyncEvaluationScheduler,
+    GA,
+    HypervolumeComparator,
+    Optimizer,
+    SerialEvaluator,
+    SteadyStateStrategy,
+)
 from saealib.benchmarks import zdt1
 from saealib.operators.crossover import CrossoverSBX
 from saealib.operators.mutation import MutationPolynomial
 from saealib.operators.selection import TournamentSelection, TruncationSelection
-from saealib.stages import (
-    ArchiveUpdateStage,
-    AskStage,
-    CountGenerationStage,
-    TellStage,
-    TrueEvaluationStage,
-)
 from saealib.termination import Termination, max_fe
-
-
-class SteadyStateStrategy(OptimizationStrategy):
-    """A one-individual-per-generation version of DirectStrategy (SMS-EMOA's steady-state selection)."""
-
-    requires_surrogate = False
-
-    def step(self, ctx, provider):
-        cbmanager = getattr(provider, "cbmanager", None)
-        pipeline = Pipeline(
-            [
-                CountGenerationStage(),
-                AskStage(provider.algorithm, n_offspring=1, cbmanager=cbmanager),
-                TrueEvaluationStage(provider.evaluator, cbmanager=cbmanager),
-                ArchiveUpdateStage(),
-                TellStage(provider.algorithm),
-            ]
-        )
-        return pipeline.execute(ctx)
 
 
 problem = zdt1(n_var=10)
@@ -122,11 +104,15 @@ algorithm = GA(
     TournamentSelection(tournament_size=1),
     TruncationSelection(),
 )
+evaluator = AsyncEvaluator(SerialEvaluator(), max_workers=2)
+schedule = AsyncEvaluationScheduler(evaluator, max_pending=2)
 
 opt = (
     Optimizer(problem)
     .set_algorithm(algorithm)
     .set_strategy(SteadyStateStrategy())
+    .set_evaluator(evaluator)
+    .set_async_evaluation_scheduler(schedule)
     .set_termination(Termination(max_fe(2000)))
 )
 ctx = opt.run()

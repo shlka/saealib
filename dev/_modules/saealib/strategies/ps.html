@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.strategies.ps &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>saealib.strategies.ps &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../../../_static/documentation_options.js?v=2243f322"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -950,24 +950,35 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.policies.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">TopKEvaluation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.policies.feedback</span><span class="w"> </span><span class="kn">import</span> <span class="n">FeedbackBuilder</span><span class="p">,</span> <span class="n">TrueOnlyFeedback</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.stages</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AcquisitionStage</span><span class="p">,</span>
     <span class="n">ArchiveUpdateStage</span><span class="p">,</span>
     <span class="n">AskStage</span><span class="p">,</span>
+    <span class="n">AsyncEvaluationSubmitStage</span><span class="p">,</span>
     <span class="n">CountGenerationStage</span><span class="p">,</span>
-    <span class="n">SurrogateScoreStage</span><span class="p">,</span>
+    <span class="n">EvaluationAcknowledgeStage</span><span class="p">,</span>
+    <span class="n">EvaluationApplyStage</span><span class="p">,</span>
+    <span class="n">EvaluationCollectStage</span><span class="p">,</span>
+    <span class="n">EvaluationPlanStage</span><span class="p">,</span>
+    <span class="n">EvaluationSubmitStage</span><span class="p">,</span>
+    <span class="n">FeedbackStage</span><span class="p">,</span>
+    <span class="n">PendingEvaluationContextStage</span><span class="p">,</span>
+    <span class="n">SurrogatePredictStage</span><span class="p">,</span>
     <span class="n">TellStage</span><span class="p">,</span>
-    <span class="n">TopKSelectionStage</span><span class="p">,</span>
-    <span class="n">TrueEvaluationStage</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationStrategy</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComponentProvider</span>
+
+<span class="n">_MISSING</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="PreSelectionStrategy">
@@ -1009,23 +1020,77 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="p">:</span> <span class="n">Pipeline</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_build_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provider</span><span class="p">:</span> <span class="n">ComponentProvider</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pipeline</span><span class="p">:</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluation_planner</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the current top-k planner.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">TopKEvaluation</span><span class="p">(</span>
+            <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_select</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_candidates</span><span class="p">),</span> <span class="n">sanitize_nonfinite</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+    <span class="n">feedback_builder</span> <span class="o">=</span> <span class="n">TrueOnlyFeedback</span><span class="p">()</span>
+
+<div class="viewcode-block" id="PreSelectionStrategy.build_pipeline">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.PreSelectionStrategy.html#saealib.PreSelectionStrategy.build_pipeline">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provider</span><span class="p">:</span> <span class="n">ComponentProvider</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pipeline</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the current pre-selection pipeline.&quot;&quot;&quot;</span>
         <span class="n">cbmanager</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;cbmanager&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">scheduler</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;async_evaluation_scheduler&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">evaluation_planner</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;evaluation_planner&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_planner</span>
+        <span class="p">)</span>
+        <span class="n">feedback_builder</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="n">FeedbackBuilder</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;feedback_builder&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">feedback_builder</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">feedback_builder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder</span>
+        <span class="k">if</span> <span class="n">scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">evaluation_tail</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">AsyncEvaluationSubmitStage</span><span class="p">(</span>
+                    <span class="n">scheduler</span><span class="p">,</span>
+                    <span class="n">evaluation_planner</span><span class="p">,</span>
+                    <span class="n">feedback_builder</span><span class="p">,</span>
+                    <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span>
+                    <span class="n">cbmanager</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">evaluation_tail</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">EvaluationPlanStage</span><span class="p">(</span><span class="n">evaluation_planner</span><span class="p">),</span>
+                <span class="n">EvaluationSubmitStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">),</span>
+                <span class="n">EvaluationCollectStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">),</span>
+                <span class="n">EvaluationApplyStage</span><span class="p">(),</span>
+                <span class="n">ArchiveUpdateStage</span><span class="p">(),</span>
+                <span class="n">FeedbackStage</span><span class="p">(</span><span class="n">feedback_builder</span><span class="p">),</span>
+                <span class="n">TellStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">),</span>
+                <span class="n">EvaluationAcknowledgeStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">,</span> <span class="n">cbmanager</span><span class="p">),</span>
+            <span class="p">]</span>
         <span class="k">return</span> <span class="n">Pipeline</span><span class="p">(</span>
             <span class="p">[</span>
                 <span class="n">CountGenerationStage</span><span class="p">(),</span>
+                <span class="o">*</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">PendingEvaluationContextStage</span><span class="p">(</span><span class="n">scheduler</span><span class="p">)]</span>
+                    <span class="k">if</span> <span class="n">scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="p">[]</span>
+                <span class="p">),</span>
                 <span class="n">AskStage</span><span class="p">(</span>
                     <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span>
                     <span class="n">n_offspring</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_candidates</span><span class="p">,</span>
                     <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">,</span>
                 <span class="p">),</span>
-                <span class="n">SurrogateScoreStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">surrogate_manager</span><span class="p">,</span> <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">),</span>
-                <span class="n">TopKSelectionStage</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_select</span><span class="p">),</span>
-                <span class="n">TrueEvaluationStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">,</span> <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">),</span>
-                <span class="n">ArchiveUpdateStage</span><span class="p">(),</span>
-                <span class="n">TellStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">),</span>
+                <span class="n">SurrogatePredictStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">surrogate_manager</span><span class="p">,</span> <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">),</span>
+                <span class="o">*</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">PendingEvaluationContextStage</span><span class="p">(</span><span class="n">scheduler</span><span class="p">)]</span>
+                    <span class="k">if</span> <span class="n">scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="p">[]</span>
+                <span class="p">),</span>
+                <span class="n">AcquisitionStage</span><span class="p">(</span>
+                    <span class="n">provider</span><span class="o">.</span><span class="n">acquisition</span><span class="p">,</span>
+                    <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="o">*</span><span class="n">evaluation_tail</span><span class="p">,</span>
             <span class="p">]</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="PreSelectionStrategy.step">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.PreSelectionStrategy.html#saealib.PreSelectionStrategy.step">[docs]</a>
@@ -1050,7 +1115,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        OptimizationState</span>
 <span class="sd">            Updated state after one generation step.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_pipeline</span><span class="p">(</span><span class="n">provider</span><span class="p">)</span>
+        <span class="n">scheduler</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;async_evaluation_scheduler&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">pending_evaluations</span><span class="p">:</span>
+            <span class="n">ctx</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">pending_evaluations</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ctx</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">pending_evaluations</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">max_pending</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ctx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_pipeline</span><span class="p">(</span><span class="n">provider</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span></div>
 </div>
 

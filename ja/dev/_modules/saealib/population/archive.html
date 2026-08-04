@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.population.archive &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>saealib.population.archive &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../../../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -953,7 +953,68 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.spatial</span><span class="w"> </span><span class="kn">import</span> <span class="n">cKDTree</span>  <span class="c1"># type: ignore  # cKDTree has no bundled type stubs</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.comparators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dominator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Individual</span><span class="p">,</span> <span class="n">Population</span><span class="p">,</span> <span class="n">PopulationAttribute</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_extract_id_value</span><span class="p">(</span>
+    <span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">PopulationAttribute</span><span class="p">],</span> <span class="n">element</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the effective ``id`` implied by an ``add()``/``append()`` call.</span>
+
+<span class="sd">    Returns ``None`` when the schema has no ``id`` column.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;id&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">schema</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">id_val</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">id_val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">id_val</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">):</span>
+            <span class="n">id_val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">id_val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">id_val</span> <span class="o">=</span> <span class="n">schema</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">id_val</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_collect_data</span><span class="p">(</span>
+    <span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">PopulationAttribute</span><span class="p">],</span> <span class="n">element</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">element</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">schema</span><span class="p">})</span>
+    <span class="k">elif</span> <span class="n">element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">schema</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+                <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">schema</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_data</span><span class="p">(</span>
+    <span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">PopulationAttribute</span><span class="p">],</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="n">schema</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span> <span class="ow">or</span> <span class="n">array</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">attr</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;invalid dtype for archive column </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">attr</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;invalid shape for archive column </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_observation_schema</span><span class="p">(</span>
+    <span class="n">attrs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PopulationAttribute</span><span class="p">],</span> <span class="n">duplicate_policy</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">duplicate_policy</span> <span class="o">!=</span> <span class="s2">&quot;append&quot;</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">schema</span> <span class="o">=</span> <span class="p">{</span><span class="n">attr</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">attr</span> <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;request_id&quot;</span><span class="p">}</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">schema</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;append archives require id and request_id columns&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;request_id&quot;</span><span class="p">):</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="n">schema</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">attr</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span> <span class="ow">or</span> <span class="n">attr</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">():</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;append archive </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be an int64 scalar&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ArchiveMixin">
@@ -990,13 +1051,19 @@ window.runMermaid = runMermaid;</script>
         <span class="n">key_attr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span>
         <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
         <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">duplicate_policy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;keep_first&quot;</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
+        <span class="k">if</span> <span class="n">duplicate_policy</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;keep_first&quot;</span><span class="p">,</span> <span class="s2">&quot;replace&quot;</span><span class="p">,</span> <span class="s2">&quot;append&quot;</span><span class="p">}:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;duplicate_policy must be &#39;keep_first&#39;, &#39;replace&#39;, or &#39;append&#39;&quot;</span>
+            <span class="p">)</span>
+        <span class="n">_validate_observation_schema</span><span class="p">(</span><span class="n">attrs</span><span class="p">,</span> <span class="n">duplicate_policy</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="n">init_capacity</span><span class="p">)</span>  <span class="c1"># ty: ignore[unknown-argument]</span>
 
         <span class="k">if</span> <span class="n">key_attr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">:</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;key_attr &#39;</span><span class="si">{</span><span class="n">key_attr</span><span class="si">}</span><span class="s2">&#39; is not defined in attrs&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_duplicate_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_policy</span> <span class="o">=</span> <span class="n">duplicate_policy</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span> <span class="o">=</span> <span class="n">key_attr</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">atol</span> <span class="o">=</span> <span class="n">atol</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rtol</span> <span class="o">=</span> <span class="n">rtol</span>
@@ -1005,7 +1072,9 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="ArchiveMixin.add">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.add">[ドキュメント]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">Individual</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">Individual</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a new solution to the archive. Duplicate solutions are ignored.</span>
 
@@ -1029,26 +1098,79 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        &gt;&gt;&gt; arcv.add(x=x_val, f=0.1)</span>
 <span class="sd">        &gt;&gt;&gt; arcv.add(ind, f=0.1)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">key_attr_val</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">key_attr_val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                <span class="n">key_attr_val</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span><span class="p">):</span>
-                <span class="n">key_attr_val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">_collect_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[unresolved-attribute]</span>
+        <span class="n">key_attr_val</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">key_attr_val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Solution must have </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span><span class="si">}</span><span class="s2"> attribute&quot;</span><span class="p">)</span>
 
+        <span class="n">_validate_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>  <span class="c1"># type: ignore[unresolved-attribute]</span>
+        <span class="n">incoming_id</span> <span class="o">=</span> <span class="n">_extract_id_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[unresolved-attribute]</span>
+        <span class="k">if</span> <span class="n">incoming_id</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Archive.add() requires a real candidate id when the &quot;</span>
+                <span class="s2">&quot;schema declares an &#39;id&#39; column (got the -1 sentinel)&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_policy</span> <span class="o">==</span> <span class="s2">&quot;append&quot;</span><span class="p">:</span>
+            <span class="n">request_id</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;request_id&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">request_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;append observations require request_id&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_size</span>
+                <span class="ow">and</span> <span class="s2">&quot;id&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span>
+                <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span>
+                    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;request_id&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">request_id</span><span class="p">)</span>
+                    <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">incoming_id</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Duplicate (request_id, candidate_id) pair&quot;</span><span class="p">)</span>
+
         <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_idx</span><span class="p">(</span><span class="n">key_attr_val</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_duplicate_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">idx</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_policy</span> <span class="o">!=</span> <span class="s2">&quot;append&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_policy</span> <span class="o">==</span> <span class="s2">&quot;keep_first&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">idx</span>
+
+            <span class="c1"># A retry of the same candidate is a value-only update.  A spatial</span>
+            <span class="c1"># duplicate from another candidate must replace the whole row so</span>
+            <span class="c1"># that the ID remains provenance-correct.</span>
+            <span class="n">existing_id</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)[</span><span class="n">idx</span><span class="p">])</span> <span class="k">if</span> <span class="s2">&quot;id&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="k">else</span> <span class="n">incoming_id</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">incoming_id</span> <span class="o">==</span> <span class="n">existing_id</span> <span class="ow">and</span> <span class="s2">&quot;id&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">:</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">key</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                        <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="o">!=</span> <span class="s2">&quot;id&quot;</span>
+                <span class="p">}</span>
+                <span class="k">if</span> <span class="n">values</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">update_rows</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">idx</span><span class="p">]),</span> <span class="n">values</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">return</span> <span class="n">idx</span>
+
+            <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;id&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="s2">&quot;id&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span>
+                <span class="ow">and</span> <span class="n">incoming_id</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span>
+                <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">ids</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span> <span class="o">!=</span> <span class="n">idx</span><span class="p">]</span> <span class="o">==</span> <span class="n">incoming_id</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duplicate candidate id </span><span class="si">{</span><span class="n">incoming_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+            <span class="c1"># Delete compacts rows; append the incoming observation below.</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">new_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
-            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_duplicate_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_idx</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">return</span> <span class="n">new_idx</span></div>
+            <span class="k">pass</span>
+
+        <span class="n">new_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_append_internal</span><span class="p">(</span>
+            <span class="n">element</span><span class="p">,</span>
+            <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">allow_duplicate_ids</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">duplicate_policy</span> <span class="o">==</span> <span class="s2">&quot;append&quot;</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">new_idx</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_find_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -1067,7 +1189,6 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="c1"># TODO: Handling cases where the element is not a np.ndarray</span>
         <span class="n">key_attr_arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span><span class="p">)</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
         <span class="n">element</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
         <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -1082,35 +1203,20 @@ window.runMermaid = runMermaid;</script>
             <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="ArchiveMixin.get_duplicated_population">
-<a class="viewcode-back" href="../../../api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.get_duplicated_population">[ドキュメント]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_duplicated_population</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Population</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return a Population object without removing duplicates.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        Population without removing duplicates.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">all_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_duplicate_indices</span><span class="p">)</span>
-        <span class="n">dup_pop</span> <span class="o">=</span> <span class="n">Population</span><span class="p">(</span>
-            <span class="n">attrs</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
-            <span class="n">init_capacity</span><span class="o">=</span><span class="n">all_length</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_duplicate_indices</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
-            <span class="n">dup_pop</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">k</span><span class="p">][:</span><span class="n">all_length</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
-        <span class="n">dup_pop</span><span class="o">.</span><span class="n">_size</span> <span class="o">=</span> <span class="n">all_length</span>
-        <span class="n">dup_pop</span><span class="o">.</span><span class="n">_structure_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_structure_version</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
-        <span class="k">return</span> <span class="n">dup_pop</span></div>
-
-
 <div class="viewcode-block" id="ArchiveMixin.delete">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.delete">[ドキュメント]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Delete element(s) and invalidate the kNN cache.&quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="ArchiveMixin.mod_value">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.mod_value">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mod_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Invalidate the kNN cache on every value-only mutation, too.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">mod_value</span><span class="p">()</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_kdtree</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1199,9 +1305,19 @@ window.runMermaid = runMermaid;</script>
         <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">dominator</span><span class="p">:</span> <span class="n">Dominator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">eps_cv</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">key_attr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span>
+        <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">duplicate_policy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;keep_first&quot;</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="n">init_capacity</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># ty: ignore[unknown-argument]</span>
+        <span class="k">if</span> <span class="n">duplicate_policy</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;keep_first&quot;</span><span class="p">,</span> <span class="s2">&quot;replace&quot;</span><span class="p">,</span> <span class="s2">&quot;append&quot;</span><span class="p">}:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid duplicate_policy&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">duplicate_policy</span> <span class="o">==</span> <span class="s2">&quot;append&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;ParetoArchive does not support append policy&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="n">init_capacity</span><span class="p">)</span>  <span class="c1"># ty: ignore[unknown-argument]</span>
+        <span class="k">if</span> <span class="n">key_attr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_schema&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;key_attr &#39;</span><span class="si">{</span><span class="n">key_attr</span><span class="si">}</span><span class="s2">&#39; is not defined in attrs&quot;</span><span class="p">)</span>
 
         <span class="c1"># Import here to avoid circular imports at module load time.</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.comparators</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParetoDominator</span>
@@ -1210,7 +1326,11 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">dominator</span><span class="p">:</span> <span class="n">Dominator</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">dominator</span> <span class="k">if</span> <span class="n">dominator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">ParetoDominator</span><span class="p">()</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">eps_cv</span> <span class="o">=</span> <span class="n">eps_cv</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eps_cv</span> <span class="o">=</span> <span class="n">eps_cv</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span> <span class="o">=</span> <span class="n">key_attr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atol</span> <span class="o">=</span> <span class="n">atol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rtol</span> <span class="o">=</span> <span class="n">rtol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_policy</span> <span class="o">=</span> <span class="n">duplicate_policy</span></div>
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -1327,6 +1447,20 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">f_new</span><span class="p">,</span> <span class="n">cv_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_fv</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
 
+        <span class="n">id_val</span> <span class="o">=</span> <span class="n">_extract_id_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
+        <span class="k">if</span> <span class="n">id_val</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;ParetoArchive.add() requires a real candidate id when the &quot;</span>
+                <span class="s2">&quot;schema declares an &#39;id&#39; column (got the -1 sentinel)&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">id_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">id_val</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">&gt;</span> <span class="mi">0</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
+            <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">id_val</span><span class="p">)</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duplicate candidate id </span><span class="si">{</span><span class="n">id_val</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
         <span class="c1"># Check whether any existing solution dominates the new one.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
             <span class="n">f_arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;f&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span> <span class="k">else</span> <span class="kc">None</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
@@ -1399,7 +1533,7 @@ window.runMermaid = runMermaid;</script>
 
         <span class="c1"># Append the new solution and return its index.</span>
         <span class="n">new_idx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[misc]  # ty: ignore[unresolved-attribute]</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_append_internal</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[misc]  # ty: ignore[unresolved-attribute]</span>
         <span class="k">return</span> <span class="n">new_idx</span></div>
 </div>
 

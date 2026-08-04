@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.callback.events &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>saealib.callback.events &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../../../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -953,7 +953,9 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionResult</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.evaluator</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluationStatus</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">Population</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Surrogate</span>
 
@@ -1032,6 +1034,42 @@ window.runMermaid = runMermaid;</script>
 
     <span class="n">offspring</span><span class="p">:</span> <span class="n">Population</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
+
+
+<span class="c1"># --- Acquisition events ---</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AcquisitionStartEvent</span><span class="p">(</span><span class="n">Event</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fired before acquisition scoring, inside ``AcquisitionStage``.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    offspring : Population or None</span>
+<span class="sd">        Candidates about to be scored. Mirrors ``SurrogateStartEvent``&#39;s</span>
+<span class="sd">        shape for consistency; carries candidate ids indirectly via</span>
+<span class="sd">        ``offspring.get_array(&quot;id&quot;)`` when the offspring schema has one.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">offspring</span><span class="p">:</span> <span class="n">Population</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AcquisitionEndEvent</span><span class="p">(</span><span class="n">Event</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fired after acquisition scoring succeeds, inside ``AcquisitionStage``.</span>
+
+<span class="sd">    Not dispatched if ``AcquisitionFunction.evaluate()`` raises.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    offspring : Population or None</span>
+<span class="sd">        Candidates that were scored.</span>
+<span class="sd">    result : AcquisitionResult or None</span>
+<span class="sd">        The validated acquisition result.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">offspring</span><span class="p">:</span> <span class="n">Population</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">AcquisitionResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <span class="c1"># --- Algorithm.ask events ---</span>
@@ -1129,7 +1167,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        All individuals in this population have true objective values assigned.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">offspring</span><span class="p">:</span> <span class="n">Population</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+    <span class="n">offspring</span><span class="p">:</span> <span class="n">Population</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">request_id</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">candidate_ids</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">EvaluationStatus</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 

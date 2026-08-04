@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.operators.selection &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>saealib.operators.selection &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../../../_static/documentation_options.js?v=2243f322"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -997,7 +997,6 @@ window.runMermaid = runMermaid;</script>
 
 
 
-<span class="c1"># TODO: check required</span>
 <div class="viewcode-block" id="TournamentSelection">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.TournamentSelection.html#saealib.TournamentSelection">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TournamentSelection</span><span class="p">(</span><span class="n">ParentSelection</span><span class="p">):</span>
@@ -1135,11 +1134,11 @@ window.runMermaid = runMermaid;</script>
 
 
 
-<div class="viewcode-block" id="RouletteWheelSelection">
-<a class="viewcode-back" href="../../../api/_autosummary/saealib.RouletteWheelSelection.html#saealib.RouletteWheelSelection">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">RouletteWheelSelection</span><span class="p">(</span><span class="n">ParentSelection</span><span class="p">):</span>
+<div class="viewcode-block" id="LinearRankSelection">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.LinearRankSelection.html#saealib.LinearRankSelection">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LinearRankSelection</span><span class="p">(</span><span class="n">ParentSelection</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Roulette wheel selection operator using linear rank-based probabilities.</span>
+<span class="sd">    Parent selection using linear rank-based probabilities.</span>
 
 <span class="sd">    Selection probability is proportional to rank: the best individual has</span>
 <span class="sd">    the highest probability and the worst has the lowest. This avoids</span>
@@ -1147,15 +1146,15 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    sensitivity) while preserving a fitness-proportionate behaviour.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="RouletteWheelSelection.__init__">
-<a class="viewcode-back" href="../../../api/_autosummary/saealib.RouletteWheelSelection.html#saealib.RouletteWheelSelection.__init__">[docs]</a>
+<div class="viewcode-block" id="LinearRankSelection.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.LinearRankSelection.html#saealib.LinearRankSelection.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize roulette wheel selection operator.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize linear rank selection.&quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="RouletteWheelSelection.select">
-<a class="viewcode-back" href="../../../api/_autosummary/saealib.RouletteWheelSelection.html#saealib.RouletteWheelSelection.select">[docs]</a>
+<div class="viewcode-block" id="LinearRankSelection.select">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.LinearRankSelection.html#saealib.LinearRankSelection.select">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">select</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
@@ -1165,7 +1164,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(),</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Execute roulette wheel selection.</span>
+<span class="sd">        Execute linear rank selection.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>

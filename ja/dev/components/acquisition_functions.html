@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>AcquisitionFunction &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>AcquisitionFunction &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -557,12 +557,12 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="acquisitionfunction">
 <h1>AcquisitionFunction<a class="headerlink" href="#acquisitionfunction" title="Link to this heading">#</a></h1>
-<p><a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>は、<a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>の予測結果をスカラースコアへ変換する処理を、<code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>という差し替え可能なコンポーネントに委ねています。 <code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>は<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>の予測結果だけを受け取り、モデルの内部（どんなアルゴリズムで予測したか）を一切知りません。</p>
+<p><code class="docutils literal notranslate"><span class="pre">SurrogatePredictStage</span></code>は<a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>の予測を<code class="docutils literal notranslate"><span class="pre">AcquisitionStage</span></code>へ渡し、<code class="docutils literal notranslate"><span class="pre">AcquisitionStage</span></code>がスカラー化を<code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>へ委譲します。 <code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>は<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>の予測結果だけを受け取り、モデル内部（予測に使ったアルゴリズム）を知りません。</p>
 <section id="acquisitionfunction-s-role">
 <h2>AcquisitionFunctionの役割<a class="headerlink" href="#acquisitionfunction-s-role" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>が実装を要求するメソッドは2つあります。</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">compute_reference(archive,</span> <span class="pre">rng=None)</span> <span class="pre">-&gt;</span> <span class="pre">Any</span></code></strong>：スコアリングに使う参照値（現在の最良値など）をアーカイブから計算します。 参照値を使わない獲得関数は<code class="docutils literal notranslate"><span class="pre">None</span></code>を返してよいです。</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">score(prediction,</span> <span class="pre">reference,</span> <span class="pre">rng=None)</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code>と参照値からスコアを計算します。 <code class="docutils literal notranslate"><span class="pre">saealib</span></code>全体の規約どおり、スコアは高いほど良いです。</p>
+<p><code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>が実装するメソッドは<code class="docutils literal notranslate"><span class="pre">evaluate(candidates_x,</span> <span class="pre">prediction,</span> <span class="pre">archive,</span> <span class="pre">ctx=None,</span> <span class="pre">*,</span> <span class="pre">prepared=...)</span> <span class="pre">-&gt;</span> <span class="pre">AcquisitionResult</span></code>です。 点ごとの基準には、便利な基底クラス<code class="docutils literal notranslate"><span class="pre">PointwiseAcquisition</span></code>がこの処理を2つのメソッドに分けます。</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">compute_reference(archive,</span> <span class="pre">rng=None)</span> <span class="pre">-&gt;</span> <span class="pre">Any</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">PointwiseAcquisition</span></code>で、スコアリングに使う参照値（現在の最良値など）をアーカイブから計算します。 参照値を使わない獲得関数は<code class="docutils literal notranslate"><span class="pre">None</span></code>を返してよいです。</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">score(prediction,</span> <span class="pre">reference,</span> <span class="pre">rng=None)</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">PointwiseAcquisition</span></code>で、<code class="docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code>と参照値からスコアを計算します。 <code class="docutils literal notranslate"><span class="pre">saealib</span></code>全体の規約どおり、スコアは高いほど良いです。</p>
 <p>クラス属性<code class="docutils literal notranslate"><span class="pre">requires_uncertainty:</span> <span class="pre">bool</span></code>は、この獲得関数が<code class="docutils literal notranslate"><span class="pre">SurrogatePrediction.std</span></code>（不確実性）を必要とするかを示します。 <code class="docutils literal notranslate"><span class="pre">direction_sensitive:</span> <span class="pre">bool</span></code>（既定<code class="docutils literal notranslate"><span class="pre">True</span></code>）は、<code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>が実行開始時に<code class="docutils literal notranslate"><span class="pre">problem.direction</span></code>をこの獲得関数へ自動注入する対象かどうかを示します。 実行可能性確率のように目的の方向という概念を持たない獲得関数は、<code class="docutils literal notranslate"><span class="pre">direction_sensitive</span> <span class="pre">=</span> <span class="pre">False</span></code>にしてこの自動注入を無効化します。</p>
 </section>
 <section id="built-in-acquisitionfunctions">
@@ -583,50 +583,69 @@
 <td><p>期待改善量（EI）<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id8" title="Donald R. Jones, Matthias Schonlau, and William J. Welch. Efficient global optimization of expensive black-box functions. Journal of Global Optimization, 13(4):455–492, 1998. doi:10.1023/A:1008306431147.">24</a>]</span></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BatchExpectedImprovement</span></code></p></td>
+<td><p>バッチの多様性を考慮したqEI風選択用の同時EI</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code></p></td>
 <td><p>信頼下限（LCB）<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id43" title="Niranjan Srinivas, Andreas Krause, Sham M. Kakade, and Matthias W. Seeger. Information-theoretic regret bounds for gaussian process optimization in the bandit setting. IEEE Transactions on Information Theory, 58(5):3250–3265, 2012. doi:10.1109/TIT.2011.2182033.">25</a>]</span></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">MaxUncertainty</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MaxUncertainty</span></code></p></td>
 <td><p>予測の不確実性が大きいほど良い（探索寄り）</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">EHVIAcquisition</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">EHVIAcquisition</span></code></p></td>
 <td><p>期待ハイパーボリューム改善量<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../references.html#id50" title="Michael T. M. Emmerich, Kyriakos C. Giannakoglou, and Boris Naujoks. Single- and multiobjective evolutionary optimization assisted by gaussian random field metamodels. IEEE Transactions on Evolutionary Computation, 10(4):421–439, 2006. doi:10.1109/TEVC.2005.859463.">26</a>, <a class="reference internal" href="../references.html#id51" title="Iris Hupkens, Andre H. Deutz, Kaifeng Yang, and Michael Emmerich. Faster exact algorithms for computing expected hypervolume improvement. In Evolutionary Multi-Criterion Optimization (EMO 2015), volume 9018 of LNCS, 65–79. 2015. doi:10.1007/978-3-319-15892-1_5.">27</a>, <a class="reference internal" href="../references.html#id52" title="Samuel Daulton, Maximilian Balandat, and Eytan Bakshy. Differentiable expected hypervolume improvement for parallel multi-objective bayesian optimization. Advances in Neural Information Processing Systems, 33:9851–9864, 2020.">28</a>]</span>。多目的向け</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SMSEGOAcquisition</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SMSEGOAcquisition</span></code></p></td>
 <td><p>SMS-EMOA風のハイパーボリューム指標（Ponweiser et al., 2008が提案するSMS-EGO）。多目的向け</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ParEGOAcquisition</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ParEGOAcquisition</span></code></p></td>
 <td><p>ランダムスカラー化によるParEGO<span class="bibtex-citation" id="id4">[<a class="reference internal" href="../references.html#id47" title="Joshua Knowles. Parego: a hybrid algorithm with on-line landscape approximation for expensive multiobjective optimization problems. IEEE Transactions on Evolutionary Computation, 10(1):50–66, 2006. doi:10.1109/TEVC.2005.851274.">29</a>, <a class="reference internal" href="../references.html#id48" title="Tinkle Chugh. Scalarizing functions in bayesian multiobjective optimization. In 2020 IEEE Congress on Evolutionary Computation (CEC), 1–8. 2020. doi:10.1109/CEC48606.2020.9185706.">30</a>]</span>。多目的向け</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ProbabilityOfFeasibility</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ProbabilityOfFeasibility</span></code></p></td>
 <td><p>単一制約の実行可能性確率<span class="bibtex-citation" id="id5">[<a class="reference internal" href="../references.html#id45" title="Matthias Schonlau. Computer Experiments and Global Optimization. PhD thesis, University of Waterloo, 1997.">31</a>, <a class="reference internal" href="../references.html#id44" title="Michael A. Gelbart, Jasper Snoek, and Ryan P. Adams. Bayesian optimization with unknown constraints. In Proceedings of the 30th Conference on Uncertainty in Artificial Intelligence (UAI). 2014.">32</a>]</span></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ProductOfFeasibility</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ProductOfFeasibility</span></code></p></td>
 <td><p>複数制約の実行可能性確率の積<span class="bibtex-citation" id="id6">[<a class="reference internal" href="../references.html#id44" title="Michael A. Gelbart, Jasper Snoek, and Ryan P. Adams. Bayesian optimization with unknown constraints. In Proceedings of the 30th Conference on Uncertainty in Artificial Intelligence (UAI). 2014.">32</a>]</span></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NoveltyAcquisition</span></code></p></td>
+<td><p>アーカイブの最近傍点までの平均距離</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">InverseDensityAcquisition</span></code></p></td>
+<td><p>アーカイブ近傍密度の逆数</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MaximinDistanceAcquisition</span></code></p></td>
+<td><p>候補とアーカイブの多様性基準</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">MeanPrediction</span></code>以外の8クラス全てが<code class="docutils literal notranslate"><span class="pre">requires_uncertainty=True</span></code>です。 不確実性ベースの獲得関数を使うには、組み合わせる<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>が<code class="docutils literal notranslate"><span class="pre">std</span></code>を返す（<code class="docutils literal notranslate"><span class="pre">provides_uncertainty=True</span></code>）必要があります。 組み込みSurrogateでは<code class="docutils literal notranslate"><span class="pre">SklearnGPRSurrogate</span></code>だけがこれを満たします。 詳細は<a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>の不確実性対応表を参照してください。</p>
+<p>表の不確実性ベースの獲得関数は<code class="docutils literal notranslate"><span class="pre">requires_uncertainty=True</span></code>です。 アーカイブベースの獲得関数（<code class="docutils literal notranslate"><span class="pre">NoveltyAcquisition</span></code>、<code class="docutils literal notranslate"><span class="pre">InverseDensityAcquisition</span></code>、<code class="docutils literal notranslate"><span class="pre">MaximinDistanceAcquisition</span></code>）は予測の不確実性を必要としません。 不確実性ベースの獲得関数を使うには、組み合わせる<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>が<code class="docutils literal notranslate"><span class="pre">std</span></code>を返す（<code class="docutils literal notranslate"><span class="pre">provides_uncertainty=True</span></code>）必要があります。 バッチ獲得関数には、候補の共分散など明示的な同時事後分布の表現も必要です。 この契約の決定論的な実装例はサンプルを参照してください。 組み込みSurrogateでは<code class="docutils literal notranslate"><span class="pre">SklearnGPRSurrogate</span></code>だけがこれを満たします。 詳細は<a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>の不確実性対応表を参照してください。</p>
 <p><code class="docutils literal notranslate"><span class="pre">MaxUncertainty</span></code>/<code class="docutils literal notranslate"><span class="pre">ProbabilityOfFeasibility</span></code>/<code class="docutils literal notranslate"><span class="pre">ProductOfFeasibility</span></code>は<code class="docutils literal notranslate"><span class="pre">direction_sensitive</span> <span class="pre">=</span> <span class="pre">False</span></code>です。 不確実性の大きさや実行可能性確率は、目的の最大化と最小化という方向の概念を持たないためです。</p>
-<p><code class="docutils literal notranslate"><span class="pre">ProbabilityOfFeasibility</span></code>/<code class="docutils literal notranslate"><span class="pre">ProductOfFeasibility</span></code>は、制約値<code class="docutils literal notranslate"><span class="pre">g</span></code>を予測する分類サロゲートや回帰サロゲートと組み合わせて使います。 <a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>の<code class="docutils literal notranslate"><span class="pre">ConstraintObjectiveSet</span></code>で学習データを抽出し、目的側の獲得関数（EIなど）と<code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager</span></code>の<code class="docutils literal notranslate"><span class="pre">product_combine</span></code>で組み合わせるのが典型的な使い方です。</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ei_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span>
-    <span class="n">gp_surrogate</span><span class="p">,</span> <span class="n">ExpectedImprovement</span><span class="p">(),</span> <span class="n">ArchiveObjectiveSet</span><span class="p">()</span>
-<span class="p">)</span>
+<p><code class="docutils literal notranslate"><span class="pre">ProbabilityOfFeasibility</span></code>/<code class="docutils literal notranslate"><span class="pre">ProductOfFeasibility</span></code>は、制約値<code class="docutils literal notranslate"><span class="pre">g</span></code>を予測する分類サロゲートや回帰サロゲートと組み合わせて使います。 <a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>の<code class="docutils literal notranslate"><span class="pre">ConstraintObjectiveSet</span></code>で学習データを抽出し、目的側の獲得関数（EIなど）と<code class="docutils literal notranslate"><span class="pre">CompositeAcquisition</span></code>の<code class="docutils literal notranslate"><span class="pre">product_combine</span></code>で組み合わせるのが典型的な使い方です。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ei_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">gp_surrogate</span><span class="p">,</span> <span class="n">ArchiveObjectiveSet</span><span class="p">())</span>
 <span class="n">pof_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span>
     <span class="n">PerObjectiveSurrogate</span><span class="p">([</span><span class="n">gp_g1</span><span class="p">,</span> <span class="n">gp_g2</span><span class="p">]),</span>
-    <span class="n">ProductOfFeasibility</span><span class="p">(),</span>
     <span class="n">ConstraintObjectiveSet</span><span class="p">(),</span>
 <span class="p">)</span>
 <span class="n">optimizer</span><span class="o">.</span><span class="n">set_surrogate_manager</span><span class="p">(</span>
-    <span class="n">CompositeSurrogateManager</span><span class="p">([</span><span class="n">ei_manager</span><span class="p">,</span> <span class="n">pof_manager</span><span class="p">],</span> <span class="n">product_combine</span><span class="p">)</span>
+    <span class="n">CompositeSurrogateManager</span><span class="p">({</span><span class="s2">&quot;objective&quot;</span><span class="p">:</span> <span class="n">ei_manager</span><span class="p">,</span> <span class="s2">&quot;feasibility&quot;</span><span class="p">:</span> <span class="n">pof_manager</span><span class="p">})</span>
+<span class="p">)</span>
+<span class="n">optimizer</span><span class="o">.</span><span class="n">set_acquisition</span><span class="p">(</span>
+    <span class="n">CompositeAcquisition</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">&quot;objective&quot;</span><span class="p">:</span> <span class="n">ExpectedImprovement</span><span class="p">(),</span> <span class="s2">&quot;feasibility&quot;</span><span class="p">:</span> <span class="n">ProductOfFeasibility</span><span class="p">()},</span>
+        <span class="n">product_combine</span><span class="p">,</span>
+    <span class="p">)</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -638,11 +657,11 @@
 </section>
 <section id="implementing-a-custom-acquisitionfunction">
 <h2>独自AcquisitionFunctionの実装方法<a class="headerlink" href="#implementing-a-custom-acquisitionfunction" title="Link to this heading">#</a></h2>
-<p>独自のスコアリング方式が必要な場合は、<code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>を継承して<code class="docutils literal notranslate"><span class="pre">compute_reference()</span></code>/<code class="docutils literal notranslate"><span class="pre">score()</span></code>を実装します。 次の例は、予測平均が閾値を下回る候補ほど高いスコアを与える単純な獲得関数です。</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<p>独自の点ごとのスコアリング方式が必要な場合は、<code class="docutils literal notranslate"><span class="pre">PointwiseAcquisition</span></code>を継承して<code class="docutils literal notranslate"><span class="pre">compute_reference()</span></code>/<code class="docutils literal notranslate"><span class="pre">score()</span></code>を実装します。 次の例は、予測平均が閾値を下回る候補ほど高いスコアを与える単純な獲得関数です。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">PointwiseAcquisition</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">ThresholdAcquisition</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ThresholdAcquisition</span><span class="p">(</span><span class="n">PointwiseAcquisition</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Gives a higher score to candidates whose predictive mean falls further below a threshold (assumes minimization).&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
@@ -656,7 +675,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">-</span> <span class="n">m</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager(surrogate,</span> <span class="pre">acquisition,</span> <span class="pre">...)</span></code>のように、<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>のコンストラクタへ渡して組み合わせます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">Optimizer.set_acquisition()</span></code>へ渡して組み込みます。</p>
 <div class="admonition note">
 <p class="admonition-title">注釈</p>
 <p><code class="docutils literal notranslate"><span class="pre">Optimizer.validate()</span></code>は、獲得関数の<code class="docutils literal notranslate"><span class="pre">requires_uncertainty</span></code>とサロゲートの<code class="docutils literal notranslate"><span class="pre">provides_uncertainty</span></code>の不整合を検出して警告します。 <code class="docutils literal notranslate"><span class="pre">requires_uncertainty=True</span></code>の獲得関数を<code class="docutils literal notranslate"><span class="pre">std</span></code>を返さないサロゲートと組み合わせた場合、この警告で気付けます。</p>
@@ -666,7 +685,7 @@
 <h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>：<code class="docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code>の提供元。不確実性対応表もこちらを参照する</p></li>
-<li><p><a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>：<code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>を<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>と組み合わせる</p></li>
+<li><p><a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>：<code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>へ予測を提供する</p></li>
 <li><p><a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>：<code class="docutils literal notranslate"><span class="pre">ProbabilityOfFeasibility</span></code>/<code class="docutils literal notranslate"><span class="pre">ProductOfFeasibility</span></code>と組み合わせる制約用データ抽出</p></li>
 </ul>
 </section>
@@ -676,6 +695,7 @@
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.AcquisitionFunction.html#saealib.AcquisitionFunction" title="saealib.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.AcquisitionFunction</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.MeanPrediction.html#saealib.MeanPrediction" title="saealib.MeanPrediction"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MeanPrediction</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.ExpectedImprovement.html#saealib.ExpectedImprovement" title="saealib.ExpectedImprovement"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ExpectedImprovement</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/_autosummary/saealib.BatchExpectedImprovement.html#saealib.BatchExpectedImprovement" title="saealib.BatchExpectedImprovement"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.BatchExpectedImprovement</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.LowerConfidenceBound.html#saealib.LowerConfidenceBound" title="saealib.LowerConfidenceBound"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.LowerConfidenceBound</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.MaxUncertainty.html#saealib.MaxUncertainty" title="saealib.MaxUncertainty"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MaxUncertainty</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.EHVIAcquisition.html#saealib.EHVIAcquisition" title="saealib.EHVIAcquisition"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.EHVIAcquisition</span></code></a></p></li>

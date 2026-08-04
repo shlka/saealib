@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.execution.evaluator &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>saealib.execution.evaluator &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../../../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -955,39 +955,234 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">ThreadPoolExecutor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluationProtocolError</span><span class="p">,</span> <span class="n">ValidationError</span>
+
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationStatus</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of a submitted evaluation.&quot;&quot;&quot;</span>
+
+    <span class="n">PENDING</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">RUNNING</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">PARTIAL</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">COMPLETED</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">FAILED</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">CANCELLED</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_owned_array</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">ndim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">arr</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">dtype</span> <span class="ow">or</span> <span class="n">arr</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="n">ndim</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must have dtype </span><span class="si">{</span><span class="n">dtype</span><span class="si">}</span><span class="s2"> and ndim </span><span class="si">{</span><span class="n">ndim</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">result</span>
 
 
 <div class="viewcode-block" id="EvaluationResult">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.EvaluationResult.html#saealib.EvaluationResult">[ドキュメント]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">EvaluationResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Batched result of evaluating a set of design vectors.</span>
-
-<span class="sd">    Attributes</span>
-<span class="sd">    ----------</span>
-<span class="sd">    f : np.ndarray</span>
-<span class="sd">        Objective values. shape = (n, n_obj)</span>
-<span class="sd">    g : np.ndarray</span>
-<span class="sd">        Raw constraint values. shape = (n, n_constraints).</span>
-<span class="sd">        Has shape (n, 0) when the problem defines no constraints.</span>
-<span class="sd">    cv : np.ndarray</span>
-<span class="sd">        Aggregate constraint violation per candidate. shape = (n, )</span>
-<span class="sd">        All zeros when the problem defines no constraints.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validated numeric result for a batch of candidates.&quot;&quot;&quot;</span>
 
     <span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-    <span class="n">cv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span></div>
+    <span class="n">cv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">candidate_ids</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">cost</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">noise</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">outputs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate and own all numeric channels.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">_owned_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="n">_owned_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;g&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cv</span> <span class="o">=</span> <span class="n">_owned_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cv</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;cv&quot;</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cv</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;EvaluationResult channel lengths must match&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">candidate_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">candidate_ids</span> <span class="o">=</span> <span class="n">_owned_array</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">candidate_ids</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+                <span class="n">ndim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;candidate_ids&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">candidate_ids</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;candidate_ids length must match result rows&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">candidate_ids</span><span class="p">))</span> <span class="o">!=</span> <span class="n">n</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;candidate_ids must be unique&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cost</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cost</span> <span class="o">=</span> <span class="n">_owned_array</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cost</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;cost&quot;</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cost</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;cost length must match result rows&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">noise</span> <span class="o">=</span> <span class="n">_owned_array</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">noise</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">n</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;noise must have shape (n, n_obj)&quot;</span><span class="p">)</span>
+        <span class="n">normalized</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">arr</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span> <span class="ow">or</span> <span class="n">arr</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">n</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;outputs[</span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">] must be float64 with leading size </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">arr</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">normalized</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span>
+        <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">normalized</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span> <span class="o">=</span> <span class="n">normalized</span></div>
+
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationErrorInfo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Serializable error information for a failed evaluation.&quot;&quot;&quot;</span>
+
+    <span class="n">error_type</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">details</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate error details are serializable.&quot;&quot;&quot;</span>
+        <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">details</span><span class="p">))</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationRequest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Owned input snapshot for one evaluation request.&quot;&quot;&quot;</span>
+
+    <span class="n">request_id</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span>
+    <span class="n">candidate_ids</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">outputs</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="s2">&quot;cv&quot;</span><span class="p">)</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate and own request arrays.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request_id</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">():</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;request_id must be scalar&quot;</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;request_id&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request_id</span><span class="p">))</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">_owned_array</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">candidate_ids</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;candidate_ids&quot;</span>
+        <span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">_owned_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">ids</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;request candidate_ids must be unique and match x&quot;</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;candidate_ids&quot;</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationHandle</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Runtime reference to submitted evaluation work.&quot;&quot;&quot;</span>
+
+    <span class="n">request_id</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">EvaluationStatus</span>
+    <span class="n">backend_token</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_sync_result</span><span class="p">:</span> <span class="n">EvaluationResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_sync_error</span><span class="p">:</span> <span class="n">EvaluationErrorInfo</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_delivered_sequence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">_acknowledged_sequence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">_submitted_at</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_candidate_ids</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_detached</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_completed_at</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_completion_key</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationUpdate</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One delivered evaluation update.&quot;&quot;&quot;</span>
+
+    <span class="n">request_id</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">EvaluationStatus</span>
+    <span class="n">candidate_ids</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">EvaluationResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">error</span><span class="p">:</span> <span class="n">EvaluationErrorInfo</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">sequence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate update row identity.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequence</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">EvaluationProtocolError</span><span class="p">(</span><span class="s2">&quot;update sequence must be non-negative&quot;</span><span class="p">)</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">_owned_array</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">candidate_ids</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;candidate_ids&quot;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">ids</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="n">EvaluationProtocolError</span><span class="p">(</span><span class="s2">&quot;update candidate_ids must be unique&quot;</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;candidate_ids&quot;</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">candidate_ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">EvaluationProtocolError</span><span class="p">(</span><span class="s2">&quot;lifecycle result requires candidate_ids&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PendingEvaluation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Serializable record for submitted work.&quot;&quot;&quot;</span>
+
+    <span class="n">request</span><span class="p">:</span> <span class="n">EvaluationRequest</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">EvaluationStatus</span>
+    <span class="n">applied_candidate_ids</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">last_delivered_sequence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">last_acknowledged_sequence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">processing</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">buffered_updates</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">EvaluationUpdate</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">reserved_cost</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">retry_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">checkpointable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">original_candidate_ids</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">feedback_result</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">fatal_error</span><span class="p">:</span> <span class="n">EvaluationErrorInfo</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">prediction</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate and own applied candidate IDs.&quot;&quot;&quot;</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">_owned_array</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">applied_candidate_ids</span><span class="p">,</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+            <span class="n">ndim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;applied_candidate_ids&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;applied_candidate_ids&quot;</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;processing&quot;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processing</span><span class="p">))</span>
+        <span class="n">original</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">candidate_ids</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_candidate_ids</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_candidate_ids</span>
+        <span class="p">)</span>
+        <span class="n">original</span> <span class="o">=</span> <span class="n">_owned_array</span><span class="p">(</span>
+            <span class="n">original</span><span class="p">,</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+            <span class="n">ndim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;original_candidate_ids&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">original</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">original</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;original_candidate_ids must be unique&quot;</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;original_candidate_ids&quot;</span><span class="p">,</span> <span class="n">original</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reserved_cost</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reserved_cost</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;reserved_cost must be finite and non-negative&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">retry_count</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;retry_count must be non-negative&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="Evaluator">
@@ -1015,8 +1210,254 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            Batched objective values, raw constraint values, and violations.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="Evaluator.submit">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Evaluator.html#saealib.Evaluator.submit">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">EvaluationRequest</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EvaluationHandle</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Submit a request through the synchronous adapter.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_request</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">problem</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">EvaluationErrorInfo</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">EvaluationHandle</span><span class="p">(</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">request_id</span><span class="p">,</span> <span class="n">EvaluationStatus</span><span class="o">.</span><span class="n">FAILED</span><span class="p">,</span> <span class="n">_sync_error</span><span class="o">=</span><span class="n">error</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">candidate_ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">candidate_ids</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">candidate_ids</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">candidate_ids</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">candidate_ids</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">EvaluationProtocolError</span><span class="p">(</span><span class="s2">&quot;result candidate_ids do not match request&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">EvaluationHandle</span><span class="p">(</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">request_id</span><span class="p">,</span> <span class="n">EvaluationStatus</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">,</span> <span class="n">_sync_result</span><span class="o">=</span><span class="n">result</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Evaluator.evaluate_request">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Evaluator.html#saealib.Evaluator.evaluate_request">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_request</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">EvaluationRequest</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EvaluationResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate a request, including its public metadata boundary.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_batch</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">problem</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Evaluator.has_partial_lifecycle_override">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Evaluator.html#saealib.Evaluator.has_partial_lifecycle_override">[ドキュメント]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_partial_lifecycle_override</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether lifecycle adapter methods are only partly overridden.&quot;&quot;&quot;</span>
+        <span class="n">methods</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;submit&quot;</span><span class="p">,</span> <span class="s2">&quot;collect&quot;</span><span class="p">,</span> <span class="s2">&quot;acknowledge&quot;</span><span class="p">)</span>
+        <span class="n">overridden</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Evaluator</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">methods</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">overridden</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">overridden</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Evaluator.supports_batch_rollback">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Evaluator.html#saealib.Evaluator.supports_batch_rollback">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">supports_batch_rollback</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether failed batch submission can be rolled back.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="Evaluator.collect">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Evaluator.html#saealib.Evaluator.collect">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">collect</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">:</span> <span class="n">EvaluationHandle</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">wait</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EvaluationUpdate</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return unacknowledged updates for a handle.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">handle</span><span class="o">.</span><span class="n">_detached</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">handle</span><span class="o">.</span><span class="n">_sync_result</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">handle</span><span class="o">.</span><span class="n">_sync_error</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">handle</span><span class="o">.</span><span class="n">_acknowledged_sequence</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">_sync_result</span><span class="o">.</span><span class="n">candidate_ids</span>
+            <span class="k">if</span> <span class="n">handle</span><span class="o">.</span><span class="n">_sync_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">handle</span><span class="o">.</span><span class="n">_sync_result</span><span class="o">.</span><span class="n">candidate_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">update</span> <span class="o">=</span> <span class="n">EvaluationUpdate</span><span class="p">(</span>
+            <span class="n">request_id</span><span class="o">=</span><span class="n">handle</span><span class="o">.</span><span class="n">request_id</span><span class="p">,</span>
+            <span class="n">status</span><span class="o">=</span><span class="n">handle</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+            <span class="n">candidate_ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">=</span><span class="n">handle</span><span class="o">.</span><span class="n">_sync_result</span><span class="p">,</span>
+            <span class="n">error</span><span class="o">=</span><span class="n">handle</span><span class="o">.</span><span class="n">_sync_error</span><span class="p">,</span>
+            <span class="n">sequence</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">handle</span><span class="o">.</span><span class="n">_delivered_sequence</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">update</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Evaluator.acknowledge">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Evaluator.html#saealib.Evaluator.acknowledge">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">acknowledge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">:</span> <span class="n">EvaluationHandle</span><span class="p">,</span> <span class="n">sequence</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Acknowledge one contiguous update sequence.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">sequence</span> <span class="o">!=</span> <span class="n">handle</span><span class="o">.</span><span class="n">_acknowledged_sequence</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="ow">or</span> <span class="n">sequence</span> <span class="o">&gt;</span> <span class="n">handle</span><span class="o">.</span><span class="n">_delivered_sequence</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">EvaluationProtocolError</span><span class="p">(</span><span class="s2">&quot;evaluation sequences must be contiguous&quot;</span><span class="p">)</span>
+        <span class="n">handle</span><span class="o">.</span><span class="n">_acknowledged_sequence</span> <span class="o">=</span> <span class="n">sequence</span></div>
+
+
+<div class="viewcode-block" id="Evaluator.cancel">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Evaluator.html#saealib.Evaluator.cancel">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cancel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">:</span> <span class="n">EvaluationHandle</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cancel submitted work when the backend supports cancellation.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="Evaluator.detach">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Evaluator.html#saealib.Evaluator.detach">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">detach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">:</span> <span class="n">EvaluationHandle</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Detach work whose result must no longer be delivered.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="Evaluator.can_reattach">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Evaluator.html#saealib.Evaluator.can_reattach">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">can_reattach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pending</span><span class="p">:</span> <span class="n">PendingEvaluation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether pending work can be restored after checkpoint load.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="Evaluator.reattach">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Evaluator.html#saealib.Evaluator.reattach">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reattach</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">pending</span><span class="p">:</span> <span class="n">PendingEvaluation</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EvaluationHandle</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Restore a pending request or raise when unsupported.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="n">EvaluationProtocolError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;evaluator cannot reattach request </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">pending</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">request_id</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
 </div>
 
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">AsyncEvaluator</span><span class="p">(</span><span class="n">Evaluator</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Thread-backed asynchronous evaluator.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">evaluator</span><span class="p">:</span> <span class="n">Evaluator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">max_workers</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;max_workers must be positive&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_evaluator</span> <span class="o">=</span> <span class="n">evaluator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span> <span class="o">=</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EvaluationResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate one batch on the wrapped evaluator.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">EvaluationProtocolError</span><span class="p">(</span><span class="s2">&quot;AsyncEvaluator requires a batch evaluator&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluator</span><span class="o">.</span><span class="n">evaluate_batch</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">problem</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">supports_batch_rollback</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether submitted futures can be detached.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">EvaluationRequest</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EvaluationHandle</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Submit work without blocking the caller.&quot;&quot;&quot;</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">EvaluationResult</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluator</span><span class="o">.</span><span class="n">evaluate_request</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">problem</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_request</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">problem</span><span class="p">)</span>
+
+        <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>
+        <span class="n">handle</span> <span class="o">=</span> <span class="n">EvaluationHandle</span><span class="p">(</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">request_id</span><span class="p">,</span>
+            <span class="n">EvaluationStatus</span><span class="o">.</span><span class="n">PENDING</span><span class="p">,</span>
+            <span class="n">backend_token</span><span class="o">=</span><span class="n">future</span><span class="p">,</span>
+            <span class="n">_candidate_ids</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">candidate_ids</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">future</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="nb">setattr</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="s2">&quot;_completed_at&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">())</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">handle</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">collect</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">:</span> <span class="n">EvaluationHandle</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">wait</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EvaluationUpdate</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Collect one completed update, optionally without waiting.&quot;&quot;&quot;</span>
+        <span class="n">future</span> <span class="o">=</span> <span class="n">handle</span><span class="o">.</span><span class="n">backend_token</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">EvaluationProtocolError</span><span class="p">(</span><span class="s2">&quot;async handle has no Future backend token&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">wait</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">future</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">handle</span><span class="o">.</span><span class="n">_sync_result</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">handle</span><span class="o">.</span><span class="n">_sync_error</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">handle</span><span class="o">.</span><span class="n">_completed_at</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">handle</span><span class="o">.</span><span class="n">_completed_at</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">candidate_ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">candidate_ids</span> <span class="o">=</span> <span class="n">handle</span><span class="o">.</span><span class="n">_candidate_ids</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="n">handle</span><span class="o">.</span><span class="n">_candidate_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">candidate_ids</span><span class="p">,</span> <span class="n">handle</span><span class="o">.</span><span class="n">_candidate_ids</span>
+                <span class="p">):</span>
+                    <span class="k">raise</span> <span class="n">EvaluationProtocolError</span><span class="p">(</span><span class="s2">&quot;async result candidate_ids mismatch&quot;</span><span class="p">)</span>
+                <span class="n">handle</span><span class="o">.</span><span class="n">_sync_result</span> <span class="o">=</span> <span class="n">result</span>
+                <span class="n">handle</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">EvaluationStatus</span><span class="o">.</span><span class="n">COMPLETED</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">handle</span><span class="o">.</span><span class="n">_completed_at</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">handle</span><span class="o">.</span><span class="n">_completed_at</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
+                <span class="n">handle</span><span class="o">.</span><span class="n">_sync_error</span> <span class="o">=</span> <span class="n">EvaluationErrorInfo</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+                <span class="n">handle</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">EvaluationStatus</span><span class="o">.</span><span class="n">FAILED</span>
+        <span class="k">if</span> <span class="n">handle</span><span class="o">.</span><span class="n">_acknowledged_sequence</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">_sync_result</span><span class="o">.</span><span class="n">candidate_ids</span>
+            <span class="k">if</span> <span class="n">handle</span><span class="o">.</span><span class="n">_sync_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">handle</span><span class="o">.</span><span class="n">_sync_result</span><span class="o">.</span><span class="n">candidate_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">handle</span><span class="o">.</span><span class="n">_delivered_sequence</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">EvaluationUpdate</span><span class="p">(</span>
+                <span class="n">handle</span><span class="o">.</span><span class="n">request_id</span><span class="p">,</span>
+                <span class="n">handle</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+                <span class="n">ids</span><span class="p">,</span>
+                <span class="n">handle</span><span class="o">.</span><span class="n">_sync_result</span><span class="p">,</span>
+                <span class="n">handle</span><span class="o">.</span><span class="n">_sync_error</span><span class="p">,</span>
+                <span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">cancel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">:</span> <span class="n">EvaluationHandle</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cancel work that has not started.&quot;&quot;&quot;</span>
+        <span class="n">future</span> <span class="o">=</span> <span class="n">handle</span><span class="o">.</span><span class="n">backend_token</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">cancelled</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">cancelled</span><span class="p">:</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">EvaluationStatus</span><span class="o">.</span><span class="n">CANCELLED</span>
+        <span class="k">return</span> <span class="n">cancelled</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">detach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">:</span> <span class="n">EvaluationHandle</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Detach a running future and discard its eventual result.&quot;&quot;&quot;</span>
+        <span class="n">future</span> <span class="o">=</span> <span class="n">handle</span><span class="o">.</span><span class="n">backend_token</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">handle</span><span class="o">.</span><span class="n">_detached</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">handle</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">EvaluationStatus</span><span class="o">.</span><span class="n">CANCELLED</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">acknowledge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">:</span> <span class="n">EvaluationHandle</span><span class="p">,</span> <span class="n">sequence</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Acknowledge one asynchronous update.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">acknowledge</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">sequence</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Release worker resources.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span><span class="o">.</span><span class="n">shutdown</span><span class="p">(</span><span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="n">ThreadPoolEvaluator</span> <span class="o">=</span> <span class="n">AsyncEvaluator</span>
 
 
 <div class="viewcode-block" id="SerialEvaluator">

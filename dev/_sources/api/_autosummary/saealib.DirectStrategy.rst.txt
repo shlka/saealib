@@ -16,6 +16,7 @@
 
 
    ~DirectStrategy.__init__
+   ~DirectStrategy.build_pipeline
    ~DirectStrategy.step
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.DirectStrategy.__init__
+
+
+.. automethod:: saealib.DirectStrategy.build_pipeline
 
 
 .. automethod:: saealib.DirectStrategy.step

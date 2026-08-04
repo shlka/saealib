@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OptimizationState &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>OptimizationState &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -578,25 +578,22 @@
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">problem</span></code></p></td>
 <td><p>解いている<a class="reference internal" href="problem.html"><span class="std std-doc">Problem</span></a></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">population</span></code></p></td>
-<td><p>現世代の<a class="reference internal" href="population.html"><span class="std std-doc">Population</span></a></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">populations</span></code></p></td>
+<td><p>名前付きの<a class="reference internal" href="population.html"><span class="std std-doc">Population</span></a>コレクション。<code class="docutils literal notranslate"><span class="pre">populations[&quot;main&quot;]</span></code>が現在の世代を表します。</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">archive</span></code></p></td>
-<td><p>評価済み解を蓄積する<a class="reference internal" href="population.html"><span class="std std-doc">Archive</span></a></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">archives</span></code></p></td>
+<td><p>名前付きの<a class="reference internal" href="population.html"><span class="std std-doc">Archive</span></a>コレクション。<code class="docutils literal notranslate"><span class="pre">archives[&quot;main&quot;]</span></code>が評価済み解を蓄積し、<code class="docutils literal notranslate"><span class="pre">archives[&quot;pareto&quot;]</span></code>が非支配集合を保持します。</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pareto_archive</span></code></p></td>
-<td><p>非優越解集合を維持する<a class="reference internal" href="population.html"><span class="std std-doc">ParetoArchive</span></a></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rng</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rng</span></code></p></td>
 <td><p>乱数生成器</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fe</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fe</span></code></p></td>
 <td><p>評価回数</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">gen</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">gen</span></code></p></td>
 <td><p>世代数</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">data</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">data</span></code></p></td>
 <td><p>ユーザー拡張用の自由形式の辞書</p></td>
 </tr>
 </tbody>
@@ -616,17 +613,18 @@
 <td><p>後続の各Stage</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">evaluated_offspring</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">TrueEvaluationStage</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">EvaluationApplyStage</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">ArchiveUpdateStage</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">scores</span></code> / <code class="docutils literal notranslate"><span class="pre">predictions</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">SurrogateScoreStage</span></code></p></td>
-<td><p>後続の各Stage</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">scores</span></code> / <code class="docutils literal notranslate"><span class="pre">predictions</span></code> / <code class="docutils literal notranslate"><span class="pre">acquisition_result</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SurrogatePredictStage</span></code> / <code class="docutils literal notranslate"><span class="pre">AcquisitionStage</span></code></p></td>
+<td><p>評価計画</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">data</span></code>はユーザー拡張用の辞書で、独自の<code class="docutils literal notranslate"><span class="pre">Stage</span></code>や<code class="docutils literal notranslate"><span class="pre">Callback</span></code>が任意の値を追加する場所として使います。 <code class="docutils literal notranslate"><span class="pre">state.data[&quot;key&quot;]</span> <span class="pre">=</span> <span class="pre">value</span></code>という直接変更ではなく、<code class="docutils literal notranslate"><span class="pre">state.replace(data={**state.data,</span> <span class="pre">&quot;key&quot;:</span> <span class="pre">value})</span></code>という形で新しい辞書を作って渡します。</p>
+<p>便利プロパティ<code class="docutils literal notranslate"><span class="pre">population</span></code>、<code class="docutils literal notranslate"><span class="pre">archive</span></code>、<code class="docutils literal notranslate"><span class="pre">pareto_archive</span></code>は、対応する<code class="docutils literal notranslate"><span class="pre">&quot;main&quot;</span></code>または<code class="docutils literal notranslate"><span class="pre">&quot;pareto&quot;</span></code>のエントリを返します。<code class="docutils literal notranslate"><span class="pre">add_population(name,</span> <span class="pre">value)</span></code>と<code class="docutils literal notranslate"><span class="pre">add_archive(name,</span> <span class="pre">value)</span></code>で追加のコレクションを登録できます。</p>
 </section>
 <section id="convenience-properties">
 <h2>便利プロパティ<a class="headerlink" href="#convenience-properties" title="Link to this heading">#</a></h2>
@@ -635,11 +633,11 @@
 <section id="updating-via-replace">
 <h2>replaceによる更新<a class="headerlink" href="#updating-via-replace" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">replace(**kwargs)</span> <span class="pre">-&gt;</span> <span class="pre">OptimizationState</span></code>は<code class="docutils literal notranslate"><span class="pre">dataclasses.replace</span></code>のラッパーで、パイプライン中で最も頻繁に使われる更新方法です。 たとえば世代数を進める<code class="docutils literal notranslate"><span class="pre">CountGenerationStage</span></code>は、<code class="docutils literal notranslate"><span class="pre">state.replace(gen=state.gen</span> <span class="pre">+</span> <span class="pre">1)</span></code>という形でフィールドを更新します。</p>
-<p><code class="docutils literal notranslate"><span class="pre">OptimizationState</span></code>には<code class="docutils literal notranslate"><span class="pre">fe</span></code>/<code class="docutils literal notranslate"><span class="pre">gen</span></code>をインクリメントする<code class="docutils literal notranslate"><span class="pre">count_fe(count=1)</span></code>/<code class="docutils literal notranslate"><span class="pre">count_generation()</span></code>という補助メソッドも用意されていますが、これらは<code class="docutils literal notranslate"><span class="pre">replace()</span></code>を経由しないその場限りのミューテーションです。 組み込みパイプラインの中でこの2つが実際に呼ばれるのは、<a class="reference internal" href="initialization.html"><span class="std std-doc">Initializer</span></a>が初期評価件数を<code class="docutils literal notranslate"><span class="pre">fe</span></code>へ加算する箇所だけであり、世代ごとの<code class="docutils literal notranslate"><span class="pre">gen</span></code>/<code class="docutils literal notranslate"><span class="pre">fe</span></code>の更新（<code class="docutils literal notranslate"><span class="pre">CountGenerationStage</span></code>/<code class="docutils literal notranslate"><span class="pre">TrueEvaluationStage</span></code>）はいずれも<code class="docutils literal notranslate"><span class="pre">replace()</span></code>を使う経路に統一されています。 独自の<code class="docutils literal notranslate"><span class="pre">Stage</span></code>を書く場合も、<code class="docutils literal notranslate"><span class="pre">replace()</span></code>を使う経路に揃えたほうが一貫性を保ちやすいです。</p>
+<p><code class="docutils literal notranslate"><span class="pre">OptimizationState</span></code>には<code class="docutils literal notranslate"><span class="pre">fe</span></code>/<code class="docutils literal notranslate"><span class="pre">gen</span></code>をインクリメントする<code class="docutils literal notranslate"><span class="pre">count_fe(count=1)</span></code>/<code class="docutils literal notranslate"><span class="pre">count_generation()</span></code>という補助メソッドも用意されていますが、これらは<code class="docutils literal notranslate"><span class="pre">replace()</span></code>を経由しないその場限りのミューテーションです。 非同期の世代境界は<code class="docutils literal notranslate"><span class="pre">Runner</span></code>が管理し、世代が開いている間の補充処理は<code class="docutils literal notranslate"><span class="pre">gen</span></code>を増やしません。 独自の<code class="docutils literal notranslate"><span class="pre">Stage</span></code>を書く場合も、<code class="docutils literal notranslate"><span class="pre">replace()</span></code>を使う経路に揃えると一貫性を保ちやすくなります。</p>
 </section>
 <section id="checkpointing">
 <h2>チェックポイント<a class="headerlink" href="#checkpointing" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">save(path)</span></code>/<code class="docutils literal notranslate"><span class="pre">load(path,</span> <span class="pre">problem)</span></code>（後者はクラスメソッド）は、<code class="docutils literal notranslate"><span class="pre">OptimizationState</span></code>をnpz形式で保存し復元します。 保存対象は<code class="docutils literal notranslate"><span class="pre">archive</span></code>/<code class="docutils literal notranslate"><span class="pre">population</span></code>/<code class="docutils literal notranslate"><span class="pre">pareto_archive</span></code>の配列と<code class="docutils literal notranslate"><span class="pre">rng</span></code>の完全なbit-generator状態のみで、再現性は可能な限りの保証にとどまります（同一NumPyバージョン、同一環境内でのビット完全な再開を意図しているが、バージョンをまたぐ再現は保証しない）。</p>
+<p><code class="docutils literal notranslate"><span class="pre">save(path)</span></code>/<code class="docutils literal notranslate"><span class="pre">load(path,</span> <span class="pre">problem)</span></code>（後者はクラスメソッド）は、<code class="docutils literal notranslate"><span class="pre">OptimizationState</span></code>をnpz形式で保存し復元します。 名前付きの個体群とアーカイブ、割り当て器の状態、メタデータ、<code class="docutils literal notranslate"><span class="pre">rng</span></code>の完全なbit-generator状態を保存します。 チェックポイントは評価完了境界でのみ書き込まれ、保留中の評価がある場合は拒否されます。 再現性は可能な範囲でのみ保証され、同一NumPyバージョンと環境内ではビット完全な再開を意図しますが、バージョンをまたぐ再現は保証しません。</p>
 <p><a class="reference internal" href="comparators.html"><span class="std std-doc">NSGA3Comparator</span></a>が持つような、コンポーネント固有の内部rng（<code class="docutils literal notranslate"><span class="pre">state.rng</span></code>からspawnされたもの）は保存対象に含まれません。 再開時はそのような内部rngを<code class="docutils literal notranslate"><span class="pre">state.rng</span></code>から新しくspawnし直します。</p>
 <p>自動的なチェックポイント保存の使い方は<a class="reference internal" href="../tutorials/checkpoint.html"><span class="std std-doc">チェックポイント</span></a>を参照してください。 ここで説明した<code class="docutils literal notranslate"><span class="pre">save</span></code>/<code class="docutils literal notranslate"><span class="pre">load</span></code>は、その内部で使われている<code class="docutils literal notranslate"><span class="pre">OptimizationState</span></code>自体の契約です。</p>
 </section>

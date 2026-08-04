@@ -18,8 +18,8 @@
    ~ArchiveMixin.__init__
    ~ArchiveMixin.add
    ~ArchiveMixin.delete
-   ~ArchiveMixin.get_duplicated_population
    ~ArchiveMixin.get_knn
+   ~ArchiveMixin.mod_value
 
 
 
@@ -38,10 +38,10 @@
 .. automethod:: saealib.ArchiveMixin.delete
 
 
-.. automethod:: saealib.ArchiveMixin.get_duplicated_population
-
-
 .. automethod:: saealib.ArchiveMixin.get_knn
+
+
+.. automethod:: saealib.ArchiveMixin.mod_value
 
 
 

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.ParetoArchive &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>saealib.ParetoArchive &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -569,7 +569,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.ParentSelection.html">saealib.ParentSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TournamentSelection.html">saealib.TournamentSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SequentialSelection.html">saealib.SequentialSelection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.RouletteWheelSelection.html">saealib.RouletteWheelSelection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.LinearRankSelection.html">saealib.LinearRankSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurvivorSelection.html">saealib.SurvivorSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TruncationSelection.html">saealib.TruncationSelection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.DuplicateElimination.html">saealib.DuplicateElimination</a></li>
@@ -613,10 +613,6 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.PairwiseComparisonSet.html">saealib.PairwiseComparisonSet</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ReferencePointComparisonSet.html">saealib.ReferencePointComparisonSet</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TopKBipartitionSet.html">saealib.TopKBipartitionSet</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.ArchiveBasedManager.html">saealib.ArchiveBasedManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.DensityManager.html">saealib.DensityManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.NichingManager.html">saealib.NichingManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.NoveltyManager.html">saealib.NoveltyManager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AccuracyBasedSurrogateSwitcher.html">saealib.AccuracyBasedSurrogateSwitcher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.GenCtrlSwitcher.html">saealib.GenCtrlSwitcher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ManagerSwitcher.html">saealib.ManagerSwitcher</a></li>
@@ -635,6 +631,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../acquisition.html">Acquisition Functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionFunction.html">saealib.AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ExpectedImprovement.html">saealib.ExpectedImprovement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.BatchExpectedImprovement.html">saealib.BatchExpectedImprovement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.LowerConfidenceBound.html">saealib.LowerConfidenceBound</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.MaxUncertainty.html">saealib.MaxUncertainty</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.MeanPrediction.html">saealib.MeanPrediction</a></li>
@@ -651,6 +648,8 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.IndividualBasedStrategy.html">saealib.IndividualBasedStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PreSelectionStrategy.html">saealib.PreSelectionStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.DirectStrategy.html">saealib.DirectStrategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.SteadyStateStrategy.html">saealib.SteadyStateStrategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.IslandModel.html">saealib.IslandModel</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../initialization.html">Initialization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -665,6 +664,16 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.SerialEvaluator.html">saealib.SerialEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.JoblibEvaluator.html">saealib.JoblibEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanner.html">saealib.EvaluationPlanner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlan.html">saealib.EvaluationPlan</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluateAll.html">saealib.EvaluateAll</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.TopKEvaluation.html">saealib.TopKEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.RatioEvaluation.html">saealib.RatioEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.RepeatedEvaluation.html">saealib.RepeatedEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FidelityEvaluation.html">saealib.FidelityEvaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FidelityPromotion.html">saealib.FidelityPromotion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.ReplicateSummary.html">saealib.ReplicateSummary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.aggregate_replicates.html">saealib.aggregate_replicates</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../termination.html">Termination</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -699,11 +708,10 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../stages.html">Stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CountGenerationStage.html">saealib.CountGenerationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AskStage.html">saealib.AskStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateScoreStage.html">saealib.SurrogateScoreStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionStage.html">saealib.AcquisitionStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.SurrogatePredictStage.html">saealib.SurrogatePredictStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanStage.html">saealib.EvaluationPlanStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateFitStage.html">saealib.SurrogateFitStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.TopKSelectionStage.html">saealib.TopKSelectionStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.SortByScoreStage.html">saealib.SortByScoreStage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.TrueEvaluationStage.html">saealib.TrueEvaluationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ArchiveUpdateStage.html">saealib.ArchiveUpdateStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TellStage.html">saealib.TellStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateOnlyLoopStage.html">saealib.SurrogateOnlyLoopStage</a></li>
@@ -778,7 +786,7 @@
 <h1>saealib.ParetoArchive<a class="headerlink" href="#saealib-paretoarchive" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.ParetoArchive">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">ParetoArchive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_capacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dominator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_cv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/population/archive.html#ParetoArchive"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.ParetoArchive" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">ParetoArchive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_capacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dominator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_cv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_attr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_policy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'keep_first'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/population/archive.html#ParetoArchive"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.ParetoArchive" title="Link to this definition">#</a></dt>
 <dd><p>ベースクラス: <a class="reference internal" href="saealib.ParetoMixin.html#saealib.ParetoMixin" title="saealib.population.archive.ParetoMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParetoMixin</span></code></a>, <a class="reference internal" href="saealib.Population.html#saealib.Population" title="saealib.population.population.Population"><code class="xref py py-class docutils literal notranslate"><span class="pre">Population</span></code></a></p>
 <p>Concrete Pareto archive: <code class="docutils literal notranslate"><span class="pre">ParetoMixin</span></code> mixed into <code class="docutils literal notranslate"><span class="pre">Population</span></code>.</p>
 <dl class="field-list simple">
@@ -789,6 +797,10 @@
 <li><p><strong>direction</strong> (<em>np.ndarray</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>dominator</strong> (<a class="reference internal" href="saealib.Dominator.html#saealib.Dominator" title="saealib.Dominator"><em>Dominator</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>eps_cv</strong> (<em>float</em>)</p></li>
+<li><p><strong>key_attr</strong> (<em>str</em>)</p></li>
+<li><p><strong>atol</strong> (<em>float</em>)</p></li>
+<li><p><strong>rtol</strong> (<em>float</em>)</p></li>
+<li><p><strong>duplicate_policy</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -854,13 +866,16 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.ParetoArchive.update_array" title="saealib.ParetoArchive.update_array"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_array</span></code></a></p></td>
 <td><p>Update array in place and bump the value version.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.ParetoArchive.update_rows" title="saealib.ParetoArchive.update_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_rows</span></code></a></p></td>
+<td><p>Atomically update multiple columns for the given rows.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
 <p class="rubric">Method Details</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.ParetoArchive.__init__">
-<span class="sig-prename descclassname"><span class="pre">ParetoArchive.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_capacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dominator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_cv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.ParetoArchive.__init__" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ParetoArchive.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_capacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dominator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_cv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_attr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_policy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'keep_first'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.ParetoArchive.__init__" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a Population.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
@@ -871,6 +886,10 @@ Each attribute defines a column in the population.</p></li>
 <li><p><strong>direction</strong> (<em>ndarray</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>dominator</strong> (<a class="reference internal" href="saealib.Dominator.html#saealib.Dominator" title="saealib.comparators.dominance.Dominator"><em>Dominator</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>eps_cv</strong> (<em>float</em>)</p></li>
+<li><p><strong>key_attr</strong> (<em>str</em>)</p></li>
+<li><p><strong>atol</strong> (<em>float</em>)</p></li>
+<li><p><strong>rtol</strong> (<em>float</em>)</p></li>
+<li><p><strong>duplicate_policy</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1035,6 +1054,9 @@ Alternatively, overwrite based on the element's value and add it.</p></li>
 <dt class="sig sig-object py" id="saealib.ParetoArchive.get_array">
 <span class="sig-prename descclassname"><span class="pre">ParetoArchive.</span></span><span class="sig-name descname"><span class="pre">get_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.ParetoArchive.get_array" title="Link to this definition">#</a></dt>
 <dd><p>Get the array of a specific attribute.</p>
+<p>Returns a read-only view; mutating the returned array raises
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>. Use <code class="docutils literal notranslate"><span class="pre">update_array()</span></code> or <code class="docutils literal notranslate"><span class="pre">update_rows()</span></code> to
+mutate, so structure/value versions and caches stay in sync.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>key</strong> (<em>str</em>) -- The attribute name to get the array for.</p>
@@ -1163,6 +1185,37 @@ Alternatively, overwrite based on the element's value and add it.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.ParetoArchive.update_rows">
+<span class="sig-prename descclassname"><span class="pre">ParetoArchive.</span></span><span class="sig-name descname"><span class="pre">update_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.ParetoArchive.update_rows" title="Link to this definition">#</a></dt>
+<dd><p>Atomically update multiple columns for the given rows.</p>
+<p>Validates every index and value before mutating any backing storage,
+so a validation failure never leaves a partial update applied. Bumps
+the value version exactly once for a non-empty update; an update with
+empty <code class="docutils literal notranslate"><span class="pre">indices</span></code> or an empty <code class="docutils literal notranslate"><span class="pre">values</span></code> mapping is a no-op and does
+NOT bump the version.</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>indices</strong> (<em>np.ndarray</em><em> | </em><em>list</em><em>[</em><em>int</em><em>]</em>) -- Row indices to update. Must be 1-D, integer dtype, within
+<code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">len(self))</span></code>, and free of duplicates.</p></li>
+<li><p><strong>values</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>np.ndarray</em><em>]</em>) -- Mapping of column name to the new values for those rows. Each
+value array must match shape <code class="docutils literal notranslate"><span class="pre">(len(indices),</span> <span class="pre">*schema[key].shape)</span></code>
+and dtype <code class="docutils literal notranslate"><span class="pre">schema[key].dtype</span></code> exactly.</p></li>
+</ul>
+</dd>
+<dt class="field-even">例外<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="saealib.ValidationError.html#saealib.ValidationError" title="saealib.ValidationError"><strong>ValidationError</strong></a> -- If <code class="docutils literal notranslate"><span class="pre">indices</span></code> is invalid (wrong dtype/ndim, out of range, or
+    contains duplicates), if a key in <code class="docutils literal notranslate"><span class="pre">values</span></code> is unknown (or is
+    <code class="docutils literal notranslate"><span class="pre">&quot;id&quot;</span></code>), or if a value array's shape/dtype does not match the
+    schema exactly.</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
 
@@ -1232,6 +1285,7 @@ Alternatively, overwrite based on the element's value and add it.</p></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ParetoArchive.set_cache"><code class="docutils literal notranslate"><span class="pre">ParetoArchive.set_cache()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ParetoArchive.truncate"><code class="docutils literal notranslate"><span class="pre">ParetoArchive.truncate()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ParetoArchive.update_array"><code class="docutils literal notranslate"><span class="pre">ParetoArchive.update_array()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.ParetoArchive.update_rows"><code class="docutils literal notranslate"><span class="pre">ParetoArchive.update_rows()</span></code></a></li>
 </ul>
   </nav></div>
 

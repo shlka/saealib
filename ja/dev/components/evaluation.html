@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Evaluator &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>Evaluator &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -557,7 +557,7 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="evaluator">
 <h1>Evaluator<a class="headerlink" href="#evaluator" title="Link to this heading">#</a></h1>
-<p><code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code>や<code class="docutils literal notranslate"><span class="pre">Initializer</span></code>は、設計変数の候補群を目的関数値、生の制約値、制約違反へ変換する処理を、<code class="docutils literal notranslate"><span class="pre">Evaluator</span></code>という差し替え可能な実行バックエンドに委ねています。 評価を逐次実行するか並列実行するかは、パイプライン側のコードを変えずに<code class="docutils literal notranslate"><span class="pre">Evaluator</span></code>だけを差し替えれば切り替えられます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code>は<code class="docutils literal notranslate"><span class="pre">EvaluationPlan</span></code>を構築し、そのリクエストを同期Evaluatorまたは非同期Schedulerが送信します。 各リクエストは設計変数の候補バッチを目的関数値、生の制約値、制約違反へ変換します。 評価を逐次実行するか並列実行するかは、パイプライン側のコードを変えずに<code class="docutils literal notranslate"><span class="pre">Evaluator</span></code>だけを差し替えて切り替えられます。</p>
 <section id="evaluator-s-role">
 <h2>Evaluatorの役割<a class="headerlink" href="#evaluator-s-role" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Evaluator</span></code>が実装を要求するメソッドは<code class="docutils literal notranslate"><span class="pre">evaluate_batch(x,</span> <span class="pre">problem)</span> <span class="pre">-&gt;</span> <span class="pre">EvaluationResult</span></code>の1つだけです。 <code class="docutils literal notranslate"><span class="pre">x</span></code>には評価対象の設計変数群が<code class="docutils literal notranslate"><span class="pre">shape</span> <span class="pre">(n,</span> <span class="pre">dim)</span></code>で渡され、<a class="reference internal" href="problem.html"><span class="std std-doc">Problem</span></a>の目的関数と制約関数を使って<code class="docutils literal notranslate"><span class="pre">EvaluationResult</span></code>を構築して返します。</p>
@@ -589,8 +589,9 @@
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">JoblibEvaluator</span></code>を使うには<code class="docutils literal notranslate"><span class="pre">parallel</span></code> extra（<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">saealib[parallel]</span></code>）が必要で、未インストールの場合は構築時に<code class="docutils literal notranslate"><span class="pre">ImportError</span></code>になります。 <code class="docutils literal notranslate"><span class="pre">backend</span></code>は<code class="docutils literal notranslate"><span class="pre">&quot;loky&quot;</span></code>（既定、cloudpickleでシリアライズするプロセスプール）のほか、<code class="docutils literal notranslate"><span class="pre">&quot;dask&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;ray&quot;</span></code>のようなサードパーティバックエンドにも1パラメータの変更で切り替えられます（対応するパッケージとクラスタが別途必要）。 Islandモデルのように複数の<code class="docutils literal notranslate"><span class="pre">JoblibEvaluator</span></code>を同時に使う構成では、CPUコアの多重予約が起こりえます。 各island側の<code class="docutils literal notranslate"><span class="pre">n_jobs</span></code>を<code class="docutils literal notranslate"><span class="pre">1</span></code>に絞り、island間の並列度で全体の同時実行数を制御するか、<code class="docutils literal notranslate"><span class="pre">joblib.parallel_backend</span></code>をコンテキストマネージャとして使って内側のワーカー数を制限します。 非同期な評価（候補ごとに独立したタイミングで結果を受け取る方式）は、現状<code class="docutils literal notranslate"><span class="pre">Evaluator</span></code>のスコープ外です。</p>
+<p><code class="docutils literal notranslate"><span class="pre">JoblibEvaluator</span></code>を使うには<code class="docutils literal notranslate"><span class="pre">parallel</span></code> extra（<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">saealib[parallel]</span></code>）が必要で、未インストールの場合は構築時に<code class="docutils literal notranslate"><span class="pre">ImportError</span></code>になります。 <code class="docutils literal notranslate"><span class="pre">backend</span></code>は<code class="docutils literal notranslate"><span class="pre">&quot;loky&quot;</span></code>（既定、cloudpickleでシリアライズするプロセスプール）のほか、<code class="docutils literal notranslate"><span class="pre">&quot;dask&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;ray&quot;</span></code>のようなサードパーティバックエンドにも1パラメータの変更で切り替えられます（対応するパッケージとクラスタが別途必要です）。 Islandモデルのように複数の<code class="docutils literal notranslate"><span class="pre">JoblibEvaluator</span></code>を同時に使う構成では、CPUコアの多重予約が起こりえます。 各island側の<code class="docutils literal notranslate"><span class="pre">n_jobs</span></code>を<code class="docutils literal notranslate"><span class="pre">1</span></code>に絞ってisland間の並列度で全体の同時実行数を制御するか、<code class="docutils literal notranslate"><span class="pre">joblib.parallel_backend</span></code>をコンテキストマネージャとして使って内側のワーカー数を制限します。 評価完了時刻が独立している場合は、<code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code>、<code class="docutils literal notranslate"><span class="pre">AsyncEvaluationScheduler</span></code>、<code class="docutils literal notranslate"><span class="pre">Optimizer.set_async_evaluation_scheduler()</span></code>と<code class="docutils literal notranslate"><span class="pre">AsyncEvaluator</span></code>を組み合わせます。 定常状態の各候補は個別の保留リクエストを占有でき、Schedulerがリクエストを管理し、<code class="docutils literal notranslate"><span class="pre">collect(wait=False)</span></code>の非ブロッキング性を保ちながら個体群とアーカイブの更新を直列化します。</p>
 <p><code class="docutils literal notranslate"><span class="pre">Optimizer.set_evaluator(evaluator)</span></code>で差し替えます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">EvaluationRequest.metadata</span></code>は、明示的な実行プランナーを公開するEvaluatorが消費します。 <code class="docutils literal notranslate"><span class="pre">RepeatedEvaluation</span></code>は、安定した候補IDを持つリクエストを複製ごとに1つずつ含む<code class="docutils literal notranslate"><span class="pre">EvaluationPlan</span></code>を返します。 Schedulerが容量、予算、リクエストのライフサイクルを管理します。</p>
 </section>
 <section id="implementing-a-custom-evaluator">
 <h2>独自Evaluatorの実装方法<a class="headerlink" href="#implementing-a-custom-evaluator" title="Link to this heading">#</a></h2>
@@ -633,6 +634,8 @@
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Evaluator.html#saealib.Evaluator" title="saealib.Evaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Evaluator</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.SerialEvaluator.html#saealib.SerialEvaluator" title="saealib.SerialEvaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SerialEvaluator</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.JoblibEvaluator.html#saealib.JoblibEvaluator" title="saealib.JoblibEvaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.JoblibEvaluator</span></code></a></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.AsyncEvaluator</span></code></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.AsyncEvaluationScheduler</span></code></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.EvaluationResult.html#saealib.EvaluationResult" title="saealib.EvaluationResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.EvaluationResult</span></code></a></p></li>
 </ul>
 </section>

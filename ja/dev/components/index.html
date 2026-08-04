@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>コンポーネント &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>コンポーネント &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -993,13 +993,14 @@ window.runMermaid = runMermaid;</script>
 <p>各コンポーネントの詳しい使い方と拡張ガイドラインです。 まず全体のパイプラインでコンポーネント同士がどう組み合わさるかを示し、そのあとページ単位の詳細に入ります。</p>
 <section id="overall-pipeline-structure">
 <h2>パイプライン全体の構成<a class="headerlink" href="#overall-pipeline-structure" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>は以下のコンポーネントを束ね、<code class="docutils literal notranslate"><span class="pre">Termination</span></code>が終了と判定するまで世代ループを駆動します。 1世代分の処理は<code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code>が統括します。 <code class="docutils literal notranslate"><span class="pre">Algorithm</span></code>が候補解を生成し（ask）、<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>がそれを安価にスコアリングし、戦略がどの候補解に高コストな真の評価を割り当てるかを決め、結果は<code class="docutils literal notranslate"><span class="pre">Algorithm</span></code>側の個体群（tell）と<code class="docutils literal notranslate"><span class="pre">Archive</span></code>の両方に反映されます。 <code class="docutils literal notranslate"><span class="pre">Archive</span></code>はサロゲートの学習データも兼ねています。</p>
+<p><code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>は以下のコンポーネントを束ね、<code class="docutils literal notranslate"><span class="pre">Termination</span></code>が終了と判定するまで世代ループを駆動します。 1世代分の処理は<code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code>が統括します。 <code class="docutils literal notranslate"><span class="pre">Algorithm</span></code>が候補解を生成し（ask）、<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>が予測し、<code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>がその予測をスコアリングします。 戦略は高コストな真の評価を割り当てる候補を決め、結果を<code class="docutils literal notranslate"><span class="pre">Algorithm</span></code>側の個体群（tell）と<code class="docutils literal notranslate"><span class="pre">Archive</span></code>の両方へ反映します。 <code class="docutils literal notranslate"><span class="pre">Archive</span></code>はサロゲートの学習データも兼ねています。</p>
 <pre  class="mermaid">
         flowchart TD
     INIT[&quot;Initializer&lt;br/&gt;(generates the initial population)&quot;] --&gt; STEP
     subgraph STEP[&quot;OptimizationStrategy.step() (one generation)&quot;]
         direction TB
-        ASK[&quot;Algorithm.ask()&lt;br/&gt;Generate candidates&quot;] --&gt; SCORE[&quot;SurrogateManager&lt;br/&gt;score_candidates()&quot;]
+        ASK[&quot;Algorithm.ask()&lt;br/&gt;Generate candidates&quot;] --&gt; PREDICT[&quot;SurrogatePredictStage&lt;br/&gt;SurrogateManager.predict()&quot;]
+        PREDICT --&gt; SCORE[&quot;AcquisitionStage&lt;br/&gt;AcquisitionFunction&quot;]
         SCORE --&gt; SEL[&quot;Select candidates&lt;br/&gt;for true evaluation&quot;]
         SEL --&gt; EVAL[&quot;Evaluator →&lt;br/&gt;Problem (expensive)&quot;]
         EVAL --&gt; TELL[&quot;Algorithm.tell()&lt;br/&gt;Update population&quot;]
@@ -1036,7 +1037,7 @@ window.runMermaid = runMermaid;</script>
 <td><p>1世代分のパイプラインを統括し、どの候補解が真の評価を受けるかを決める</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a></p></td>
-<td><p>サロゲートのフィットとスコアリングを橋渡しし、<code class="docutils literal notranslate"><span class="pre">score_candidates()</span></code>を公開する</p></td>
+<td><p>フィットと<code class="docutils literal notranslate"><span class="pre">predict()</span></code>を協調させる</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a></p></td>
 <td><p>アーカイブのデータでフィットし予測する。スコアリングの方法は関知しない</p></td>
@@ -1084,9 +1085,8 @@ window.runMermaid = runMermaid;</script>
             <span class="n">TruncationSelection</span><span class="p">(),</span>
         <span class="p">)</span>
     <span class="p">)</span>
-    <span class="o">.</span><span class="n">set_surrogate_manager</span><span class="p">(</span>
-        <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span> <span class="n">MeanPrediction</span><span class="p">())</span>
-    <span class="p">)</span>
+    <span class="o">.</span><span class="n">set_surrogate_manager</span><span class="p">(</span><span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">5</span><span class="p">)))</span>
+    <span class="o">.</span><span class="n">set_acquisition</span><span class="p">(</span><span class="n">MeanPrediction</span><span class="p">())</span>
     <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">IndividualBasedStrategy</span><span class="p">(</span><span class="n">evaluation_ratio</span><span class="o">=</span><span class="mf">0.1</span><span class="p">))</span>
     <span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">100</span><span class="p">)))</span>
 <span class="p">)</span>

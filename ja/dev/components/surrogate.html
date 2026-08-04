@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Surrogate &#8212; saealib 0.1.0b5.dev71+gbc091f747 ドキュメント</title>
+    <title>Surrogate &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=0bb4a1f3"></script>
+    <script src="../_static/documentation_options.js?v=bb59488c"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -587,17 +587,13 @@
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">label</span></code></p></td>
 <td><p>分類モデルのみが持つクラスラベル</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tell_f</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">algorithm.tell()</span></code>を呼ぶ前に子個体の<code class="docutils literal notranslate"><span class="pre">f</span></code>へ代入する値（プロパティ）</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">metadata</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">metadata</span></code></p></td>
 <td><p>SHAP値など実装固有の付加情報を格納する<code class="docutils literal notranslate"><span class="pre">dict</span></code></p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">tell_f</span></code>は、コンストラクタ引数<code class="docutils literal notranslate"><span class="pre">_tell_f</span></code>が未設定なら<code class="docutils literal notranslate"><span class="pre">value</span></code>にフォールバックするプロパティです。 <code class="docutils literal notranslate"><span class="pre">has_uncertainty</span></code>/<code class="docutils literal notranslate"><span class="pre">has_label</span></code>/<code class="docutils literal notranslate"><span class="pre">has_tell_f</span></code>という3つの真偽値プロパティで、それぞれの値が設定されているかを確認できます。</p>
-<p><code class="docutils literal notranslate"><span class="pre">_tell_f</span></code>にNaN配列を明示的に渡すと、<code class="docutils literal notranslate"><span class="pre">value</span></code>をそのまま<code class="docutils literal notranslate"><span class="pre">tell_f</span></code>として使わせないようにできます。 サロゲートの予測値が目的関数値ではない量（novelty scoreなど）を表す場合、この仕組みでpbestなどの汚染を防ぎます。 <a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>の<code class="docutils literal notranslate"><span class="pre">ArchiveBasedManager</span></code>系がこの手法を使います。</p>
+<p><code class="docutils literal notranslate"><span class="pre">value</span></code>と<code class="docutils literal notranslate"><span class="pre">std</span></code>は目的関数チャンネル向けの便利なプロパティです。サロゲートの予測が目的関数値ではない量（新規性スコアなど）を表す場合、この仕組みによってpbestのような値が汚染されるのを防ぎます。<code class="docutils literal notranslate"><span class="pre">NoveltyAcquisition</span></code>などのアーカイブベースの基準は、候補とアーカイブの設計点を直接受け取ります。</p>
 </section>
 <section id="built-in-surrogates">
 <h2>組み込みSurrogate<a class="headerlink" href="#built-in-surrogates" title="Link to this heading">#</a></h2>
@@ -733,7 +729,7 @@
 <section id="related-components">
 <h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p><a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>：<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>のfit/predictを協調させ、スコアリングと組み合わせる</p></li>
+<li><p><a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>：<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>のfit/predictを協調させる</p></li>
 <li><p><a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>：<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>に渡す学習データの抽出方法</p></li>
 <li><p><a class="reference internal" href="acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>：<code class="docutils literal notranslate"><span class="pre">predict()</span></code>の結果をスコアへ変換する</p></li>
 <li><p><a class="reference internal" href="surrogate_switching.html"><span class="std std-doc">サロゲート精度評価と動的切り替え</span></a>：サロゲートの汎化性能の評価</p></li>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OptimizationStrategy &#8212; saealib 0.1.0b5.dev71+gbc091f747 documentation</title>
+    <title>OptimizationStrategy &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=92ae1a5d"></script>
+    <script src="../_static/documentation_options.js?v=2243f322"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -560,8 +560,8 @@
 <code class="docutils literal notranslate"><span class="pre">step()</span></code> executes one generation’s “generate, score, evaluate, update.”</p>
 <section id="optimizationstrategy-s-role">
 <h2>OptimizationStrategy’s role<a class="headerlink" href="#optimizationstrategy-s-role" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code> requires only one method, <code class="docutils literal notranslate"><span class="pre">step(ctx,</span> <span class="pre">provider)</span> <span class="pre">-&gt;</span> <span class="pre">OptimizationState</span> <span class="pre">|</span> <span class="pre">None</span></code>, to be implemented.
-Returning <code class="docutils literal notranslate"><span class="pre">None</span></code> is a convention for legacy-style implementations that update <code class="docutils literal notranslate"><span class="pre">ctx</span></code> in-place; all 4 built-in strategies return an updated <code class="docutils literal notranslate"><span class="pre">OptimizationState</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code> requires <code class="docutils literal notranslate"><span class="pre">build_pipeline(provider)</span> <span class="pre">-&gt;</span> <span class="pre">Pipeline</span></code> to be implemented.
+Its <code class="docutils literal notranslate"><span class="pre">step(ctx,</span> <span class="pre">provider)</span> <span class="pre">-&gt;</span> <span class="pre">OptimizationState</span></code> method executes that pipeline and returns the updated state.</p>
 <p>The class attribute <code class="docutils literal notranslate"><span class="pre">requires_surrogate:</span> <span class="pre">bool</span></code> indicates whether this strategy needs a <code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>.
 <code class="docutils literal notranslate"><span class="pre">Optimizer.validate()</span></code> checks this attribute to confirm you aren’t trying to use a strategy with <code class="docutils literal notranslate"><span class="pre">requires_surrogate=True</span></code> while <code class="docutils literal notranslate"><span class="pre">surrogate_manager</span></code> is unset.</p>
 </section>
@@ -579,15 +579,19 @@ Returning <code class="docutils literal notranslate"><span class="pre">None</spa
 <td><p>None</p></td>
 <td><p>Uses no surrogate; truly evaluates every generated candidate</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code></p></td>
+<td><p>None</p></td>
+<td><p>Generates one candidate per step and supports asynchronous refill</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">evaluation_ratio:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.1</span></code></p></td>
 <td><p>Scores every candidate with the surrogate, and truly evaluates only the top <code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code> fraction</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">n_candidates:</span> <span class="pre">int,</span> <span class="pre">n_select:</span> <span class="pre">int</span></code> (both required)</p></td>
 <td><p>Generates <code class="docutils literal notranslate"><span class="pre">n_candidates</span></code>, scores them, and truly evaluates only the top <code class="docutils literal notranslate"><span class="pre">n_select</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GenerationBasedStrategy</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GenerationBasedStrategy</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">gen_ctrl:</span> <span class="pre">int</span></code> (required)</p></td>
 <td><p>Advances <code class="docutils literal notranslate"><span class="pre">gen_ctrl</span></code> generations using only the surrogate, then truly evaluates a single generation</p></td>
 </tr>
@@ -597,6 +601,9 @@ Returning <code class="docutils literal notranslate"><span class="pre">None</spa
 <p><code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code> selects by fraction of individuals, while <code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy</span></code> selects by count of individuals.
 <code class="docutils literal notranslate"><span class="pre">GenerationBasedStrategy</span></code> switches between surrogate and true evaluation by generation, not by individual.
 <code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code> is the comparison baseline that uses no surrogate at all, with <code class="docutils literal notranslate"><span class="pre">requires_surrogate=False</span></code>.</p>
+<p>For steady-state execution, combine <code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code> with an
+<code class="docutils literal notranslate"><span class="pre">AsyncEvaluationScheduler</span></code>. The scheduler fills available worker slots, polls without
+blocking, and commits each completed update in the lifecycle order.</p>
 <section id="each-strategy-s-pipeline-structure">
 <h3>Each Strategy’s pipeline structure<a class="headerlink" href="#each-strategy-s-pipeline-structure" title="Link to this heading">#</a></h3>
 <div class="pst-scrollable-table-container"><table class="table">
@@ -610,10 +617,10 @@ Returning <code class="docutils literal notranslate"><span class="pre">None</spa
 <td><p>CountGeneration → Ask → TrueEvaluation → ArchiveUpdate → Tell</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code></p></td>
-<td><p>CountGeneration → Ask → SurrogateScore → SortByScore → TrueEvaluation (ratio-based) → ArchiveUpdate → Tell</p></td>
+<td><p>CountGeneration → Ask → SurrogatePredictStage → AcquisitionStage → SortByScore → TrueEvaluation (ratio-based) → ArchiveUpdate → Tell</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy</span></code></p></td>
-<td><p>CountGeneration → Ask (n_candidates) → SurrogateScore → TopKSelection(k=n_select) → TrueEvaluation → ArchiveUpdate → Tell</p></td>
+<td><p>CountGeneration → Ask (n_candidates) → SurrogatePredictStage → AcquisitionStage → TopKSelection(k=n_select) → TrueEvaluation → ArchiveUpdate → Tell</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GenerationBasedStrategy</span></code></p></td>
 <td><p>SurrogateOnlyLoop (gen_ctrl times) → CountGeneration → Ask → TrueEvaluation → ArchiveUpdate → Tell</p></td>
@@ -633,20 +640,27 @@ For problems where the surrogate’s approximation error itself is unacceptable,
 </section>
 <section id="behavior-of-runtime-swapping">
 <h2>Behavior of runtime swapping<a class="headerlink" href="#behavior-of-runtime-swapping" title="Link to this heading">#</a></h2>
-<p>Every Strategy’s <code class="docutils literal notranslate"><span class="pre">step()</span></code> unconditionally executes <code class="docutils literal notranslate"><span class="pre">self.pipeline</span> <span class="pre">=</span> <span class="pre">self._build_pipeline(provider)</span></code> before running the pipeline, every time it’s called.
+<p>Every Strategy’s <code class="docutils literal notranslate"><span class="pre">step()</span></code> builds the current pipeline from <code class="docutils literal notranslate"><span class="pre">provider</span></code> before running it.
 Because the pipeline isn’t cached, swapping <code class="docutils literal notranslate"><span class="pre">provider.algorithm</span></code> or <code class="docutils literal notranslate"><span class="pre">provider.surrogate_manager</span></code> mid-run is reliably reflected from the next generation onward.</p>
 </section>
 <section id="implementing-a-custom-strategy">
 <h2>Implementing a custom Strategy<a class="headerlink" href="#implementing-a-custom-strategy" title="Link to this heading">#</a></h2>
 <p>If you need a custom candidate-selection scheme, there are two approaches.</p>
-<p><strong>Subclass <code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code> directly</strong>: Implement <code class="docutils literal notranslate"><span class="pre">step()</span></code> yourself.
+<p><strong>Subclass <code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code> directly</strong>: Implement <code class="docutils literal notranslate"><span class="pre">build_pipeline()</span></code>.
 This is also the form you’d use when building a new pipeline by combining <a class="reference internal" href="extension_guidelines.html"><span class="std std-doc">Pipeline/Stage</span></a>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationStrategy</span><span class="p">,</span> <span class="n">Pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.policies.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluateAll</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.policies.feedback</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrueOnlyFeedback</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.stages</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">CountGenerationStage</span><span class="p">,</span>
     <span class="n">AskStage</span><span class="p">,</span>
-    <span class="n">TrueEvaluationStage</span><span class="p">,</span>
     <span class="n">ArchiveUpdateStage</span><span class="p">,</span>
+    <span class="n">CountGenerationStage</span><span class="p">,</span>
+    <span class="n">EvaluationAcknowledgeStage</span><span class="p">,</span>
+    <span class="n">EvaluationApplyStage</span><span class="p">,</span>
+    <span class="n">EvaluationCollectStage</span><span class="p">,</span>
+    <span class="n">EvaluationPlanStage</span><span class="p">,</span>
+    <span class="n">EvaluationSubmitStage</span><span class="p">,</span>
+    <span class="n">FeedbackStage</span><span class="p">,</span>
     <span class="n">TellStage</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -656,18 +670,23 @@ This is also the form you’d use when building a new pipeline by combining <a c
 
     <span class="n">requires_surrogate</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">provider</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provider</span><span class="p">):</span>
         <span class="n">cbmanager</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;cbmanager&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">pipeline</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
             <span class="p">[</span>
                 <span class="n">CountGenerationStage</span><span class="p">(),</span>
                 <span class="n">AskStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">),</span>
-                <span class="n">TrueEvaluationStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">,</span> <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">),</span>
+                <span class="n">EvaluationPlanStage</span><span class="p">(</span><span class="n">EvaluateAll</span><span class="p">()),</span>
+                <span class="n">EvaluationSubmitStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">),</span>
+                <span class="n">EvaluationCollectStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">),</span>
+                <span class="n">EvaluationApplyStage</span><span class="p">(),</span>
                 <span class="n">ArchiveUpdateStage</span><span class="p">(),</span>
+                <span class="n">FeedbackStage</span><span class="p">(</span><span class="n">TrueOnlyFeedback</span><span class="p">()),</span>
                 <span class="n">TellStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">),</span>
+                <span class="n">EvaluationAcknowledgeStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">,</span> <span class="n">cbmanager</span><span class="p">),</span>
             <span class="p">]</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pipeline</span>
 </pre></div>
 </div>
 <p>If you just want to fine-tune an existing strategy’s pipeline, it’s lighter-weight to swap out only part of the built-in pipeline via <a class="reference internal" href="extension_guidelines.html"><span class="std std-doc">Pipeline.replace/find</span></a>, rather than writing a new <code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code>.</p>
@@ -676,7 +695,7 @@ This is also the form you’d use when building a new pipeline by combining <a c
 <h2>Related components<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="stage.html"><span class="std std-doc">Stage</span></a>: The contract of each individual pipeline stage a Strategy combines</p></li>
-<li><p><a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>: The scoring mechanism used by strategies with <code class="docutils literal notranslate"><span class="pre">requires_surrogate=True</span></code></p></li>
+<li><p><a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>: The prediction mechanism used by strategies with <code class="docutils literal notranslate"><span class="pre">requires_surrogate=True</span></code></p></li>
 <li><p><a class="reference internal" href="extension_guidelines.html"><span class="std std-doc">Extension guidelines</span></a>: Rearranging stages via <code class="docutils literal notranslate"><span class="pre">Pipeline.replace</span></code>/<code class="docutils literal notranslate"><span class="pre">find</span></code></p></li>
 <li><p><a class="reference internal" href="index.html"><span class="std std-doc">Components overview</span></a>: The diagram of the overall pipeline structure</p></li>
 </ul>
@@ -689,6 +708,7 @@ This is also the form you’d use when building a new pipeline by combining <a c
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.GenerationBasedStrategy.html#saealib.GenerationBasedStrategy" title="saealib.GenerationBasedStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.GenerationBasedStrategy</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.PreSelectionStrategy.html#saealib.PreSelectionStrategy" title="saealib.PreSelectionStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PreSelectionStrategy</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.DirectStrategy.html#saealib.DirectStrategy" title="saealib.DirectStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.DirectStrategy</span></code></a></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.AsyncEvaluationScheduler</span></code></p></li>
 </ul>
 </section>
 </section>
