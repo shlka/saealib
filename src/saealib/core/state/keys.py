@@ -16,6 +16,7 @@ __all__ = [
     "EVALUATIONS_COUNT",
     "PENDING_EVALUATIONS",
     "POPULATIONS_MAIN",
+    "RUNTIME_ASYNC_FATAL",
     "RUNTIME_GENERATION",
     "RUNTIME_RNG",
     "STATE_NAMESPACES",
@@ -81,6 +82,9 @@ PENDING_EVALUATIONS = StateKey[object](
 RUNTIME_RNG = StateKey[object](namespace="runtime", name="rng", schema_version=1)
 RUNTIME_GENERATION = StateKey[object](
     namespace="runtime", name="generation", schema_version=1
+)
+RUNTIME_ASYNC_FATAL = StateKey[object](
+    namespace="runtime", name="async_fatal", schema_version=1
 )
 SURROGATES_DEFAULT = StateKey[object](
     namespace="surrogates", name="default", schema_version=1

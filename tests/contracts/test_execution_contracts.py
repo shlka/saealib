@@ -15,6 +15,7 @@ from saealib.core.state import (
     EVALUATIONS_COUNT,
     PENDING_EVALUATIONS,
     POPULATIONS_MAIN,
+    RUNTIME_ASYNC_FATAL,
     RUNTIME_GENERATION,
     RUNTIME_RNG,
 )
@@ -136,6 +137,7 @@ def test_evaluator_and_scheduler_contracts_declare_lifecycle_boundary() -> None:
 
     scheduler_contract = AsyncEvaluationScheduler(evaluator).contract()
     assert scheduler_contract.state == StateContract(
-        reads=(PENDING_EVALUATIONS,), writes=(PENDING_EVALUATIONS,)
+        reads=(PENDING_EVALUATIONS,),
+        writes=(PENDING_EVALUATIONS, RUNTIME_ASYNC_FATAL),
     )
     assert tuple(part.name for part in scheduler_contract.parts) == ("evaluator",)

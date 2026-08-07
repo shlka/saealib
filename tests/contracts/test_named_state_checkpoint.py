@@ -1,6 +1,7 @@
 import json
 import pickle
 import subprocess
+from types import SimpleNamespace
 from typing import Any
 
 import numpy as np
@@ -11,6 +12,7 @@ from saealib.exceptions import CheckpointError, ValidationError
 from saealib.identity import IDAllocator
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
+from saealib.stages import PendingEvaluationContextStage
 
 
 class _PendingGadget:
@@ -96,6 +98,24 @@ def test_named_aliases_and_collection_validation():
         ctx.add_population("other", object())
 
 
+def test_reservation_properties_are_derived_from_pending_evaluations():
+    ctx = _state().replace(
+        pending_evaluations={
+            1: SimpleNamespace(
+                request=SimpleNamespace(candidate_ids=np.array([8, 3], dtype=np.int64)),
+                reserved_cost=1.25,
+            ),
+            2: SimpleNamespace(
+                request=SimpleNamespace(candidate_ids=np.array([3, 9], dtype=np.int64)),
+                reserved_cost=2.75,
+            ),
+        }
+    )
+    np.testing.assert_array_equal(ctx.pending_candidate_ids, [3, 8, 9])
+    assert ctx.reserved_fe == 4
+    assert ctx.reserved_cost == 4.0
+
+
 def test_named_collections_checkpoint_roundtrip(tmp_path):
     ctx = _state()
     path = tmp_path / "named.npz"
@@ -124,6 +144,97 @@ def test_current_schema_and_allocator_continuity(tmp_path):
     loaded = OptimizationState.load(path, ctx.problem)
     assert loaded.candidate_id_allocator.allocate(1).tolist() == [20]
     assert loaded.request_id_allocator.allocate(1).tolist() == [30]
+
+
+def test_checkpoint_separates_async_fatal_and_derived_reservations(tmp_path):
+    ctx = _state().replace(
+        async_fatal={"request_id": 4, "reason": "backend stopped"},
+        data={
+            "async_fatal": {"user": True},
+            "pending_candidate_ids": [99],
+            "reserved_fe": 1,
+            "reserved_cost": 2.5,
+        },
+    )
+    path = tmp_path / "async-fatal.npz"
+    ctx.save(path)
+    loaded = OptimizationState.load(path, ctx.problem)
+    assert loaded.async_fatal == {"request_id": 4, "reason": "backend stopped"}
+    assert loaded.data["async_fatal"] == {"user": True}
+    assert loaded.data["pending_candidate_ids"] == [99]
+    assert loaded.data["reserved_fe"] == 1
+    assert loaded.data["reserved_cost"] == 2.5
+
+
+def test_pending_context_stage_does_not_checkpoint_derived_reservations(tmp_path):
+    ctx = _state().replace(data={"custom": "kept"})
+    ctx = PendingEvaluationContextStage(None).execute(ctx)
+    path = tmp_path / "derived-reservations.npz"
+    ctx.save(path)
+    loaded = OptimizationState.load(path, ctx.problem)
+    assert loaded.data == {"custom": "kept", "resumed": True}
+    assert (
+        not {
+            "pending_candidate_ids",
+            "reserved_fe",
+            "reserved_cost",
+        }
+        & loaded.data.keys()
+    )
+
+
+def test_v2_legacy_builtin_reservations_are_not_restored(tmp_path):
+    ctx = _state()
+    source = tmp_path / "source.npz"
+    ctx.save(source)
+    raw = dict(np.load(source, allow_pickle=False).items())
+    raw.pop("_async_fatal")
+    raw["_data"] = np.frombuffer(
+        json.dumps(
+            {
+                "pending_candidate_ids": [1],
+                "reserved_fe": 1,
+                "reserved_cost": 1.0,
+                "custom": "kept",
+            }
+        ).encode(),
+        dtype=np.uint8,
+    )
+    legacy = tmp_path / "legacy-v2-reservations.npz"
+    np.savez(legacy, **raw)
+    loaded = OptimizationState.load(legacy, ctx.problem)
+    assert loaded.data["custom"] == "kept"
+    assert (
+        not {
+            "pending_candidate_ids",
+            "reserved_fe",
+            "reserved_cost",
+        }
+        & loaded.data.keys()
+    )
+
+
+def test_v2_legacy_async_fatal_is_migrated_and_derived_keys_ignored(tmp_path):
+    ctx = _state()
+    source = tmp_path / "source.npz"
+    ctx.save(source)
+    raw = dict(np.load(source, allow_pickle=False).items())
+    raw.pop("_async_fatal")
+    raw["_data"] = np.frombuffer(
+        json.dumps(
+            {
+                "async_fatal": {"request_id": 7, "reason": "legacy"},
+                "custom": "kept",
+            }
+        ).encode(),
+        dtype=np.uint8,
+    )
+    legacy = tmp_path / "legacy-v2.npz"
+    np.savez(legacy, **raw)
+    loaded = OptimizationState.load(legacy, ctx.problem)
+    assert loaded.async_fatal == {"request_id": 7, "reason": "legacy"}
+    assert loaded.data["custom"] == "kept"
+    assert "async_fatal" not in loaded.data
 
 
 def test_pareto_none_direction_roundtrips(tmp_path):
@@ -164,6 +275,16 @@ def test_v1_checkpoint_is_migrated_without_mutating_payload(tmp_path):
         "_pending_evaluations": np.frombuffer(
             pickle.dumps({}, protocol=4), dtype=np.uint8
         ),
+        "_data": np.frombuffer(
+            json.dumps(
+                {
+                    "pending_candidate_ids": [7],
+                    "reserved_fe": 1,
+                    "reserved_cost": 0.5,
+                }
+            ).encode(),
+            dtype=np.uint8,
+        ),
         "_archive_size": np.array(len(ctx.archive)),
         "_pop_size": np.array(len(ctx.population)),
         "_pareto_size": np.array(len(ctx.pareto_archive)),
@@ -180,6 +301,7 @@ def test_v1_checkpoint_is_migrated_without_mutating_payload(tmp_path):
     before = {key: np.array(value, copy=True) for key, value in payload.items()}
     loaded = OptimizationState.load(path, ctx.problem)
     assert loaded.archive is loaded.archives["main"]
+    assert loaded.data == {"resumed": True}
     bad_payload = dict(payload)
     bad_payload["_next_candidate_id"] = np.array(-1)
     bad_path = tmp_path / "legacy-bad-allocator.npz"

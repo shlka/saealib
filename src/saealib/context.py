@@ -250,6 +250,14 @@ class OptimizationState:
     predictions : SurrogatePrediction or None
         Batched surrogate prediction covering every row of ``offspring``.
         Set by :class:`~saealib.stages.SurrogatePredictStage`.
+    pending_candidate_ids : np.ndarray
+        Unique candidate IDs derived from ``pending_evaluations``.
+    reserved_fe : int
+        Number of candidates represented by ``pending_evaluations``.
+    reserved_cost : float
+        Total estimated cost represented by ``pending_evaluations``.
+    async_fatal : dict[str, Any] or None
+        Cross-node asynchronous evaluation failure signal.
     data : dict[str, Any]
         User-extensible key-value store.  Custom stages and callbacks may
         store arbitrary values here.  Use ``state.replace(data={**state.data,
@@ -288,6 +296,7 @@ class OptimizationState:
     evaluation_owners: dict[int, Population] = field(default_factory=dict)
     pending_evaluations: dict[int, PendingEvaluation] = field(default_factory=dict)
     feedback_result: FeedbackResult | None = None
+    async_fatal: dict[str, Any] | None = None
 
     # User-extensible data
     data: dict[str, Any] = field(default_factory=dict)
@@ -322,6 +331,7 @@ class OptimizationState:
         evaluation_owners: dict[int, Population] | None = None,
         pending_evaluations: dict[int, PendingEvaluation] | None = None,
         feedback_result: FeedbackResult | None = None,
+        async_fatal: dict[str, Any] | None = None,
         data: dict[str, Any] | None = None,
     ) -> None:
         if populations is None:
@@ -393,6 +403,7 @@ class OptimizationState:
             {} if pending_evaluations is None else pending_evaluations
         )
         self.feedback_result = feedback_result
+        self.async_fatal = async_fatal
         self.data = {} if data is None else data
 
     @property
@@ -421,6 +432,36 @@ class OptimizationState:
     @pareto_archive.setter
     def pareto_archive(self, value: ParetoArchive) -> None:
         self.archives["pareto"] = value
+
+    @property
+    def pending_candidate_ids(self) -> np.ndarray:
+        """Return unique candidate IDs reserved by pending evaluations."""
+        values = [
+            pending.request.candidate_ids
+            for pending in self.pending_evaluations.values()
+        ]
+        return (
+            np.unique(np.concatenate(values)).astype(np.int64, copy=False)
+            if values
+            else np.empty(0, dtype=np.int64)
+        )
+
+    @property
+    def reserved_fe(self) -> int:
+        """Return the number of candidates reserved by pending evaluations."""
+        return sum(
+            len(pending.request.candidate_ids)
+            for pending in self.pending_evaluations.values()
+        )
+
+    @property
+    def reserved_cost(self) -> float:
+        """Return the total estimated cost reserved by pending evaluations."""
+        from math import fsum
+
+        return fsum(
+            pending.reserved_cost for pending in self.pending_evaluations.values()
+        )
 
     def __getstate__(self) -> dict[str, Any]:
         """Exclude runtime evaluation handles from serialized state."""
@@ -698,6 +739,7 @@ class OptimizationState:
                 for request_id, updates in self.evaluation_plan_updates.items()
             }
         )
+        save_dict["_async_fatal"] = _json_array(_json_safe(self.async_fatal))
         save_dict["_data"] = _json_array(_json_safe(self.data))
         np.savez(p, **cast(Any, save_dict))
 
@@ -1435,6 +1477,16 @@ def _load_v2(
     state_data = _read_json(data, "_data") if "_data" in data.files else {}
     if not isinstance(state_data, dict):
         raise CheckpointError("checkpoint data metadata must be a mapping")
+    if "_async_fatal" in data.files:
+        async_fatal = _read_json(data, "_async_fatal")
+        if async_fatal is not None and not isinstance(async_fatal, dict):
+            raise CheckpointError("checkpoint async fatal state is malformed")
+    else:
+        for key in ("pending_candidate_ids", "reserved_fe", "reserved_cost"):
+            state_data.pop(key, None)
+        async_fatal = state_data.pop("async_fatal", None)
+        if async_fatal is not None and not isinstance(async_fatal, dict):
+            raise CheckpointError("checkpoint legacy async fatal state is malformed")
     state_data.pop("evaluation_plan", None)
     state_data.pop("evaluation_updates", None)
     feedback_result = (
@@ -1531,6 +1583,7 @@ def _load_v2(
         evaluation_plan=evaluation_plan,
         evaluation_plan_state=evaluation_plan_state,
         evaluation_plan_updates=evaluation_plan_updates,
+        async_fatal=async_fatal,
         data={**state_data, "resumed": True},
     )
 

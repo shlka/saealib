@@ -1658,4 +1658,5 @@ def test_timeout_without_runtime_termination_keeps_fatal_tombstone():
     state = scheduler.poll(state, wait=False)
     assert state.pending_evaluations[0].fatal_error is not None
     assert scheduler.pending_candidate_ids(state).tolist() == [10]
-    assert state.data["async_fatal"]["request_id"] == 0
+    assert state.async_fatal is not None
+    assert state.async_fatal["request_id"] == 0

@@ -12,7 +12,7 @@ import numpy as np
 from saealib.callback import PostEvaluationEvent
 from saealib.context import EvaluationPlanState
 from saealib.core.contracts import ComponentContract, PartSpec, StateContract
-from saealib.core.state import PENDING_EVALUATIONS
+from saealib.core.state import PENDING_EVALUATIONS, RUNTIME_ASYNC_FATAL
 from saealib.exceptions import (
     CheckpointError,
     EvaluationFatalError,
@@ -48,7 +48,7 @@ class AsyncEvaluationScheduler:
             parts=(PartSpec(name="evaluator", contract=self.evaluator.contract()),),
             state=StateContract(
                 reads=(PENDING_EVALUATIONS,),
-                writes=(PENDING_EVALUATIONS,),
+                writes=(PENDING_EVALUATIONS, RUNTIME_ASYNC_FATAL),
             ),
         )
 
@@ -93,28 +93,15 @@ class AsyncEvaluationScheduler:
 
     def pending_candidate_ids(self, state: OptimizationState) -> np.ndarray:
         """Return candidate IDs reserved by pending requests."""
-        values = [
-            pending.request.candidate_ids
-            for pending in state.pending_evaluations.values()
-        ]
-        return (
-            np.unique(np.concatenate(values)).astype(np.int64, copy=False)
-            if values
-            else np.empty(0, dtype=np.int64)
-        )
+        return state.pending_candidate_ids
 
     def reserved_fe(self, state: OptimizationState) -> int:
         """Return reserved candidate count."""
-        return sum(
-            len(pending.request.candidate_ids)
-            for pending in state.pending_evaluations.values()
-        )
+        return state.reserved_fe
 
     def reserved_cost(self, state: OptimizationState) -> float:
         """Return reserved estimated cost."""
-        return fsum(
-            pending.reserved_cost for pending in state.pending_evaluations.values()
-        )
+        return state.reserved_cost
 
     def submit(
         self, state: OptimizationState, requests: Iterable[EvaluationRequest]
@@ -327,13 +314,12 @@ class AsyncEvaluationScheduler:
                             error,
                             pending.prediction,
                         )
-                        data = dict(current.data)
-                        data["async_fatal"] = {
+                        async_fatal = {
                             "request_id": request_id,
                             "reason": error.message,
                         }
                         current = current.replace(
-                            data=data,
+                            async_fatal=async_fatal,
                             pending_evaluations=pending_map,
                         )
                         progress = True

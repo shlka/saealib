@@ -278,14 +278,7 @@ class PendingEvaluationContextStage(Stage):
         self._scheduler = scheduler
 
     def execute(self, state: OptimizationState) -> OptimizationState:
-        return state.replace(
-            data={
-                **state.data,
-                "pending_candidate_ids": self._scheduler.pending_candidate_ids(state),
-                "reserved_fe": self._scheduler.reserved_fe(state),
-                "reserved_cost": self._scheduler.reserved_cost(state),
-            }
-        )
+        return state
 
 
 class AcquisitionStage(Stage):
@@ -604,13 +597,6 @@ class AsyncEvaluationSubmitStage(Stage):
         self._scheduler.feedback_builder = self._feedback_builder
         self._scheduler.algorithm = self._algorithm
         self._scheduler.callback_manager = self._callback_manager
-        hook_data = {
-            **state.data,
-            "pending_candidate_ids": self._scheduler.pending_candidate_ids(state),
-            "reserved_fe": self._scheduler.reserved_fe(state),
-            "reserved_cost": self._scheduler.reserved_cost(state),
-        }
-        state = state.replace(data=hook_data)
         acquisition = state.acquisition_result
         if acquisition is None and state.scores is not None:
             acquisition = AcquisitionResult(scores=state.scores)

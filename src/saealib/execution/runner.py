@@ -93,9 +93,9 @@ class Runner:
         generation_open = bool(ctx.pending_evaluations)
         while True:
             scheduler = getattr(opt, "async_evaluation_scheduler", None)
-            if ctx.data.get("async_fatal"):
+            if ctx.async_fatal:
                 raise EvaluationFatalError(
-                    str(ctx.data["async_fatal"].get("reason", "async fatal")), ctx
+                    str(ctx.async_fatal.get("reason", "async fatal")), ctx
                 )
             if ctx.pending_evaluations:
                 (
