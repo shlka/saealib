@@ -13,6 +13,23 @@ from urllib.parse import quote, unquote
 
 import numpy as np
 
+from saealib.core.state import (
+    EVALUATIONS_COUNT,
+    EVALUATIONS_OWNERS,
+    EVALUATIONS_PLAN,
+    EVALUATIONS_PLAN_STATE,
+    EVALUATIONS_PLAN_UPDATES,
+    PENDING_EVALUATIONS,
+    RUNTIME_ASYNC_FATAL,
+    RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    RUNTIME_GENERATION,
+    RUNTIME_REQUEST_ID_ALLOCATOR,
+    RUNTIME_RNG,
+    USER_DATA,
+    StateKey,
+    StatePatch,
+    StateStore,
+)
 from saealib.exceptions import CheckpointError, ValidationError
 from saealib.identity import IDAllocator
 
@@ -41,16 +58,51 @@ _SAFE_EMPTY_PENDING = frozenset(
 _NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 _MISSING = object()
 
+_STORE_FIELDS = {
+    "rng": RUNTIME_RNG,
+    "candidate_id_allocator": RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    "request_id_allocator": RUNTIME_REQUEST_ID_ALLOCATOR,
+    "fe": EVALUATIONS_COUNT,
+    "gen": RUNTIME_GENERATION,
+    "evaluation_plan": EVALUATIONS_PLAN,
+    "evaluation_plan_state": EVALUATIONS_PLAN_STATE,
+    "evaluation_plan_updates": EVALUATIONS_PLAN_UPDATES,
+    "evaluation_owners": EVALUATIONS_OWNERS,
+    "pending_evaluations": PENDING_EVALUATIONS,
+    "async_fatal": RUNTIME_ASYNC_FATAL,
+    "data": USER_DATA,
+}
+
+
+def _collection_key(kind: str, name: str) -> StateKey[object]:
+    return StateKey(namespace=kind, name=name, schema_version=1)
+
 
 class _NamedCollection(dict[str, Any]):
     def __init__(self, kind: str, values: dict[str, Any]) -> None:
         self._kind = kind
+        self._on_change: Any = None
         super().__init__()
         for name, value in values.items():
             self[name] = value
 
+    def _bind(self, on_change: Any) -> None:
+        self._on_change = on_change
+
+    def _commit(self, values: dict[str, Any]) -> None:
+        if self._on_change is not None:
+            self._on_change(values)
+
+    def _replace_local(self, values: dict[str, Any]) -> None:
+        dict.clear(self)
+        for name, value in values.items():
+            dict.__setitem__(self, name, value)
+
     def __setitem__(self, name: str, value: Any) -> None:
         self._validate_entry(name, value)
+        values = dict(self)
+        values[name] = value
+        self._commit(values)
         super().__setitem__(name, value)
 
     def _validate_entry(self, name: str, value: Any) -> None:
@@ -74,13 +126,16 @@ class _NamedCollection(dict[str, Any]):
             self._kind == "archives" and name in {"main", "pareto"}
         ):
             raise ValidationError(f"cannot remove required {self._kind} entry {name!r}")
+        values = dict(self)
+        del values[name]
+        self._commit(values)
         super().__delitem__(name)
 
     def clear(self) -> None:
         required = {"main"} if self._kind == "populations" else {"main", "pareto"}
-        for name in list(self):
-            if name not in required:
-                super().__delitem__(name)
+        values = {name: value for name, value in self.items() if name in required}
+        self._commit(values)
+        self._replace_local(values)
 
     def pop(self, name: object, default: Any = _MISSING) -> Any:
         if not isinstance(name, str):
@@ -89,15 +144,27 @@ class _NamedCollection(dict[str, Any]):
         required = {"main"} if self._kind == "populations" else {"main", "pareto"}
         if name in required:
             raise ValidationError(f"cannot remove required {self._kind} entry {name!r}")
-        if default is _MISSING:
-            return super().pop(name)
-        return super().pop(name, default)
+        if name not in self:
+            if default is _MISSING:
+                raise KeyError(name)
+            return default
+        value = self[name]
+        values = dict(self)
+        del values[name]
+        self._commit(values)
+        super().__delitem__(name)
+        return value
 
     def popitem(self) -> tuple[str, Any]:
         required = {"main"} if self._kind == "populations" else {"main", "pareto"}
         for name in reversed(list(self)):
             if name not in required:
-                return name, super().pop(name)
+                value = self[name]
+                values = dict(self)
+                del values[name]
+                self._commit(values)
+                super().__delitem__(name)
+                return name, value
         raise ValidationError(f"cannot remove required {self._kind} entries")
 
     def setdefault(self, name: str, default: Any = None) -> Any:
@@ -112,6 +179,9 @@ class _NamedCollection(dict[str, Any]):
         values = dict(other, **kwargs)
         for name, value in values.items():
             self._validate_entry(name, value)
+        merged = dict(self)
+        merged.update(values)
+        self._commit(merged)
         for name, value in values.items():
             super().__setitem__(name, value)
 
@@ -301,6 +371,122 @@ class OptimizationState:
     # User-extensible data
     data: dict[str, Any] = field(default_factory=dict)
 
+    _custom_state: dict[StateKey, object] = field(
+        default_factory=dict, repr=False, compare=False
+    )
+
+    def __getattr__(self, name: str) -> Any:
+        """Read store-backed fields only when ordinary lookup misses."""
+        if name == "populations":
+            try:
+                return object.__getattribute__(self, "_population_collection")
+            except AttributeError as exc:
+                raise AttributeError(name) from exc
+        if name == "archives":
+            try:
+                return object.__getattribute__(self, "_archive_collection")
+            except AttributeError as exc:
+                raise AttributeError(name) from exc
+
+        key = _STORE_FIELDS.get(name)
+        if key is None:
+            raise AttributeError(name)
+
+        try:
+            store = object.__getattribute__(self, "_store")
+        except AttributeError:
+            try:
+                return object.__getattribute__(self, "_pending_" + name)
+            except AttributeError as exc:
+                raise AttributeError(name) from exc
+        return store.get(key)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Patch store-backed fields instead of exposing store moves."""
+        if name in {"populations", "archives"}:
+            try:
+                object.__getattribute__(self, "_store")
+            except AttributeError:
+                object.__setattr__(self, "_pending_" + name, value)
+                return
+            self._replace_collection(name, value)
+            return
+        key = _STORE_FIELDS.get(name)
+        if key is not None:
+            try:
+                object.__getattribute__(self, "_store")
+            except AttributeError:
+                object.__setattr__(self, "_pending_" + name, value)
+                return
+            self._write_store(key, value)
+            return
+        object.__setattr__(self, name, value)
+
+    def _write_store(self, key: StateKey, value: object) -> None:
+        self._store = self._store.apply_patch(StatePatch(writes={key: value}))
+
+    def _replace_collection(self, kind: str, values: dict[str, Any]) -> None:
+        collection = _NamedCollection(kind, dict(values))
+        required = {"main"} if kind == "populations" else {"main", "pareto"}
+        if not required <= set(collection):
+            raise ValidationError(f"{kind} must contain {sorted(required)!r}")
+        writes = {
+            _collection_key(kind, name): value for name, value in collection.items()
+        }
+        deletes = frozenset(
+            key for key in self._store_keys(kind) if key.name not in collection
+        )
+        self._store = self._store.apply_patch(
+            StatePatch(writes=writes, deletes=deletes)
+        )
+        collection._bind(lambda new: self._commit_collection(kind, new))
+        object.__setattr__(
+            self,
+            "_"
+            + ("population" if kind == "populations" else "archive")
+            + "_collection",
+            collection,
+        )
+
+    def _store_keys(self, namespace: str) -> tuple[StateKey, ...]:
+        return tuple(key for key in self._store._values if key.namespace == namespace)
+
+    def _commit_collection(self, kind: str, values: dict[str, Any]) -> None:
+        collection = _NamedCollection(kind, values)
+        required = {"main"} if kind == "populations" else {"main", "pareto"}
+        if not required <= set(collection):
+            raise ValidationError(f"{kind} must contain {sorted(required)!r}")
+        current = {key.name: key for key in self._store_keys(kind)}
+        writes = {
+            current.get(name, _collection_key(kind, name)): value
+            for name, value in collection.items()
+        }
+        deletes = frozenset(
+            key for name, key in current.items() if name not in collection
+        )
+        self._store = self._store.apply_patch(
+            StatePatch(writes=writes, deletes=deletes)
+        )
+
+    def get_state(self, key: StateKey[Any]) -> Any:
+        """Return a custom or built-in value held by this state's store.
+
+        ``key`` is validated by :class:`StateStore`; user components may use
+        ``namespace="user"`` keys without adding a core constant.
+        """
+        return self._store.get(key)
+
+    def set_state(self, key: StateKey[Any], value: Any) -> None:
+        """Replace one custom or built-in value through the state store."""
+        self._write_store(key, value)
+        if key not in _STORE_FIELDS.values() and key.namespace not in {
+            "populations",
+            "archives",
+        }:
+            object.__setattr__(
+                self, "_custom_state", {**self._custom_state, key: value}
+            )
+
     def __init__(
         self,
         problem: Problem,
@@ -333,6 +519,7 @@ class OptimizationState:
         feedback_result: FeedbackResult | None = None,
         async_fatal: dict[str, Any] | None = None,
         data: dict[str, Any] | None = None,
+        _custom_state: dict[StateKey, object] | None = None,
     ) -> None:
         if populations is None:
             if population is None:
@@ -352,8 +539,12 @@ class OptimizationState:
                 and archives.get("pareto") is not pareto_archive
             ):
                 raise ValidationError("pareto_archive must alias archives['pareto']")
-        self.populations = _NamedCollection("populations", populations)
-        self.archives = _NamedCollection("archives", archives)
+        object.__setattr__(
+            self, "_population_collection", _NamedCollection("populations", populations)
+        )
+        object.__setattr__(
+            self, "_archive_collection", _NamedCollection("archives", archives)
+        )
         if "main" not in self.populations:
             raise ValidationError("populations must contain 'main'")
         if "main" not in self.archives or "pareto" not in self.archives:
@@ -372,11 +563,9 @@ class OptimizationState:
         self.evaluation_request = evaluation_request
         self.evaluation_plan = evaluation_plan
         self.evaluation_plan_state = evaluation_plan_state
-        _validate_plan_state(self.evaluation_plan, self.evaluation_plan_state)
-        if self.evaluation_plan is not None and evaluation_plan_updates is not None:
-            plan_ids = {
-                int(request.request_id) for request in self.evaluation_plan.requests
-            }
+        _validate_plan_state(evaluation_plan, evaluation_plan_state)
+        if evaluation_plan is not None and evaluation_plan_updates is not None:
+            plan_ids = {int(request.request_id) for request in evaluation_plan.requests}
             if not set(map(int, evaluation_plan_updates)) <= plan_ids:
                 raise ValidationError(
                     "evaluation plan updates reference an unknown request"
@@ -405,6 +594,30 @@ class OptimizationState:
         self.feedback_result = feedback_result
         self.async_fatal = async_fatal
         self.data = {} if data is None else data
+        initial_store: dict[StateKey, object] = {
+            _collection_key("populations", name): value
+            for name, value in populations.items()
+        }
+        initial_store.update(
+            {
+                _collection_key("archives", name): value
+                for name, value in archives.items()
+            }
+        )
+        for name, key in _STORE_FIELDS.items():
+            initial_store[key] = object.__getattribute__(self, "_pending_" + name)
+        custom_state = {} if _custom_state is None else dict(_custom_state)
+        initial_store.update(custom_state)
+        object.__setattr__(self, "_store", StateStore(initial_store))
+        object.__setattr__(self, "_custom_state", custom_state)
+        self._population_collection._bind(
+            lambda values: self._commit_collection("populations", values)
+        )
+        self._archive_collection._bind(
+            lambda values: self._commit_collection("archives", values)
+        )
+        for name in (*_STORE_FIELDS, "populations", "archives"):
+            self.__dict__.pop("_pending_" + name, None)
 
     @property
     def population(self) -> Population:
@@ -465,7 +678,11 @@ class OptimizationState:
 
     def __getstate__(self) -> dict[str, Any]:
         """Exclude runtime evaluation handles from serialized state."""
-        state = self.__dict__.copy()
+        state = {
+            item.name: getattr(self, item.name)
+            for item in dataclasses.fields(self)
+            if item.init
+        }
         state["evaluation_handles"] = {}
         state["evaluation_request"] = None
         state["evaluation_updates"] = []
@@ -785,6 +1002,14 @@ class OptimizationState:
             raise
         except (KeyError, TypeError, ValueError, json.JSONDecodeError, OSError) as exc:
             raise CheckpointError(f"Invalid checkpoint: {exc}") from exc
+
+
+# Keep dataclass field metadata and generated replacement/pickle behavior while
+# forcing store-backed fields through __getattr__. A class attribute left behind
+# by a field default would satisfy ordinary lookup and silently shadow the store.
+for _store_field_name in _STORE_FIELDS:
+    if _store_field_name in vars(OptimizationState):
+        delattr(OptimizationState, _store_field_name)
 
 
 def _json_safe(value: Any) -> Any:
