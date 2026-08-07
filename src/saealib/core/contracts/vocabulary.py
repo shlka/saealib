@@ -11,6 +11,7 @@ __all__ = [
     "Vocabulary",
     "VocabularyDescriptor",
     "is_valid_name",
+    "validate_identifier",
     "validate_name",
 ]
 
@@ -28,6 +29,13 @@ def validate_name(name: str) -> str:
         raise ValidationError(
             "Vocabulary names must be an identifier or two identifiers separated by ':'"
         )
+    return name
+
+
+def validate_identifier(name: str) -> str:
+    """Validate and return a plain identifier."""
+    if not isinstance(name, str) or _NAME_PART.fullmatch(name) is None:
+        raise ValidationError("Names must be plain identifiers")
     return name
 
 

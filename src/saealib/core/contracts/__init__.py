@@ -64,6 +64,7 @@ from saealib.core.contracts.vocabulary import (
     Vocabulary,
     VocabularyDescriptor,
     is_valid_name,
+    validate_identifier,
     validate_name,
 )
 
@@ -119,6 +120,7 @@ __all__ = [
     "unify_bindings",
     "unify_data_specs",
     "validate_assumption_name",
+    "validate_identifier",
     "validate_name",
     "validate_port_contract_directions",
 ]

@@ -10,7 +10,7 @@ from saealib.core.contracts.lifecycle import LifecycleContract
 from saealib.core.contracts.ports import PortContract
 from saealib.core.contracts.roles import RoleName
 from saealib.core.contracts.state import StateContract
-from saealib.core.contracts.vocabulary import validate_name
+from saealib.core.contracts.vocabulary import validate_identifier, validate_name
 from saealib.exceptions import ValidationError
 
 __all__ = ["ComponentContract", "PartSpec"]
@@ -26,7 +26,7 @@ class PartSpec:
 
     def __post_init__(self) -> None:
         """Validate the part declaration."""
-        validate_name(self.name)
+        validate_identifier(self.name)
         if not isinstance(self.contract, ComponentContract):
             raise ValidationError("Part contracts must be ComponentContract values")
         if not isinstance(self.optional, bool):

@@ -62,3 +62,8 @@ def test_parts_hold_nested_contracts_without_merging_declarations() -> None:
 def test_component_contract_rejects_invalid_role_shape() -> None:
     with pytest.raises(ValidationError):
         ComponentContract(ports={"invalid role": PortContract()})
+
+
+def test_part_spec_rejects_namespace_name() -> None:
+    with pytest.raises(ValidationError):
+        PartSpec(name="child:part", contract=ComponentContract())
