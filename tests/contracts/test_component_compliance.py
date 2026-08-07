@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import importlib
 import inspect
+import pkgutil
 from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from typing import Any
@@ -36,6 +38,83 @@ from saealib.surrogate.rbf import gaussian_kernel
 
 _REGISTRY = saealib.registry._REGISTRY
 _NON_CLASS_REGISTRY_NAMES = frozenset({"max_fe", "max_gen", "f_target", "stalled"})
+_OPTIONAL_IMPORT_MODULES = frozenset(
+    {
+        "saealib.algorithms.pymoo_algorithm",
+        "saealib.operators.pymoo_crossover",
+        "saealib.operators.pymoo_mutation",
+        "saealib.problem.pymoo_problem",
+        "saealib.surrogate.sklearn_surrogate",
+        "saealib.surrogate.torch_surrogate",
+    }
+)
+
+
+class _PymooVariableStub:
+    value = 0.5
+
+
+class _PymooCrossoverStub:
+    n_parents = 3
+    n_offsprings = 4
+    prob = _PymooVariableStub()
+
+    def _do(
+        self,
+        problem: object,
+        x: np.ndarray,
+        *args: object,
+        random_state: object = None,
+        **kwargs: object,
+    ) -> np.ndarray:
+        return x
+
+
+class _PymooMutationStub:
+    def _do(
+        self,
+        problem: object,
+        x: np.ndarray,
+        *args: object,
+        random_state: object = None,
+        **kwargs: object,
+    ) -> np.ndarray:
+        return x
+
+
+_IMPORT_FAILURES: dict[str, str] = {}
+
+
+def _qualified_name(cls: type[Any]) -> str:
+    return f"{cls.__module__}.{cls.__qualname__}"
+
+
+def _discover_contract_classes() -> tuple[type[Any], ...]:
+    discovered: dict[type[Any], None] = {}
+    for module_info in pkgutil.walk_packages(saealib.__path__, saealib.__name__ + "."):
+        try:
+            module = importlib.import_module(module_info.name)
+        except ImportError as error:
+            _IMPORT_FAILURES[module_info.name] = str(error)
+            continue
+        for obj in vars(module).values():
+            if (
+                inspect.isclass(obj)
+                and obj.__module__.startswith("saealib.")
+                and callable(getattr(obj, "contract", None))
+                and obj.contract is not Component.contract
+            ):
+                discovered[obj] = None
+    return tuple(sorted(discovered, key=_qualified_name))
+
+
+_DISCOVERED_CONTRACT_CLASSES = _discover_contract_classes()
+_CONTRACT_ABCS = tuple(
+    cls for cls in _DISCOVERED_CONTRACT_CLASSES if inspect.isabstract(cls)
+)
+_DISCOVERED_CONCRETE_CLASSES = tuple(
+    cls for cls in _DISCOVERED_CONTRACT_CLASSES if not inspect.isabstract(cls)
+)
 
 
 def _recipe_local_surrogate_manager() -> Any:
@@ -91,30 +170,75 @@ def _recipe_termination() -> Any:
     return Termination(max_fe(100))
 
 
+def _build_qualified(path: str, **params: Any) -> Any:
+    return build({"type": path, "params": params})
+
+
 _RECIPES: dict[str, Callable[[], Any]] = {
-    "LocalSurrogateManager": _recipe_local_surrogate_manager,
-    "RBFSurrogate": _recipe_rbf_surrogate,
-    "CORSDistance": lambda: build({"type": "CORSDistance", "params": {"delta": 10.0}}),
-    "CrossoverBLXAlpha": lambda: build(
+    _qualified_name(
+        _REGISTRY["LocalSurrogateManager"]
+    ): _recipe_local_surrogate_manager,
+    _qualified_name(_REGISTRY["RBFSurrogate"]): _recipe_rbf_surrogate,
+    _qualified_name(_REGISTRY["CORSDistance"]): lambda: build(
+        {"type": "CORSDistance", "params": {"delta": 10.0}}
+    ),
+    _qualified_name(_REGISTRY["CrossoverBLXAlpha"]): lambda: build(
         {
             "type": "CrossoverBLXAlpha",
             "params": {"prob": 0.7, "alpha": 0.4},
         }
     ),
-    "GA": _recipe_ga,
-    "TopKEvaluation": lambda: build({"type": "TopKEvaluation", "params": {"k": 1}}),
-    "RatioEvaluation": lambda: build(
+    _qualified_name(_REGISTRY["GA"]): _recipe_ga,
+    _qualified_name(_REGISTRY["TopKEvaluation"]): lambda: build(
+        {"type": "TopKEvaluation", "params": {"k": 1}}
+    ),
+    _qualified_name(_REGISTRY["RatioEvaluation"]): lambda: build(
         {"type": "RatioEvaluation", "params": {"ratio": 0.5}}
     ),
-    "Termination": _recipe_termination,
-    "GenerationBasedStrategy": lambda: build(
+    _qualified_name(_REGISTRY["Termination"]): _recipe_termination,
+    _qualified_name(_REGISTRY["GenerationBasedStrategy"]): lambda: build(
         {"type": "GenerationBasedStrategy", "params": {"gen_ctrl": 5}}
     ),
-    "PreSelectionStrategy": lambda: build(
+    _qualified_name(_REGISTRY["PreSelectionStrategy"]): lambda: build(
         {
             "type": "PreSelectionStrategy",
             "params": {"n_candidates": 40, "n_select": 4},
         }
+    ),
+    "saealib.operators.crossover.CrossoverCategorical": lambda: _build_qualified(
+        "saealib.operators.crossover.CrossoverCategorical", prob=1.0
+    ),
+    "saealib.operators.crossover.CrossoverIntegerSBX": lambda: _build_qualified(
+        "saealib.operators.crossover.CrossoverIntegerSBX", prob=1.0, eta=20.0
+    ),
+    "saealib.operators.crossover.CrossoverOnePoint": lambda: _build_qualified(
+        "saealib.operators.crossover.CrossoverOnePoint", prob=1.0
+    ),
+    "saealib.operators.crossover.CrossoverSBX": lambda: _build_qualified(
+        "saealib.operators.crossover.CrossoverSBX", prob=1.0, eta=20.0
+    ),
+    "saealib.operators.crossover.CrossoverTwoPoint": lambda: _build_qualified(
+        "saealib.operators.crossover.CrossoverTwoPoint", prob=1.0
+    ),
+    "saealib.operators.crossover.CrossoverUniform": lambda: _build_qualified(
+        "saealib.operators.crossover.CrossoverUniform", prob=1.0
+    ),
+    "saealib.operators.mutation.MutationGaussian": lambda: _build_qualified(
+        "saealib.operators.mutation.MutationGaussian", sigma=1.0
+    ),
+    "saealib.operators.mutation.MutationPolynomial": lambda: _build_qualified(
+        "saealib.operators.mutation.MutationPolynomial", eta=20.0
+    ),
+    "saealib.operators.pymoo_crossover.PymooCrossover": lambda: _build_qualified(
+        "saealib.operators.pymoo_crossover.PymooCrossover",
+        operator=_PymooCrossoverStub(),
+    ),
+    "saealib.operators.pymoo_mutation.PymooMutation": lambda: _build_qualified(
+        "saealib.operators.pymoo_mutation.PymooMutation",
+        operator=_PymooMutationStub(),
+    ),
+    "saealib.operators.selection.TournamentSelection": lambda: _build_qualified(
+        "saealib.operators.selection.TournamentSelection", tournament_size=2
     ),
 }
 
@@ -128,20 +252,46 @@ def _builtin_classes() -> dict[str, type[Any]]:
 
 
 _BUILTIN_CLASSES = _builtin_classes()
-_CONSTRUCTION_FAILURES: dict[str, type[BaseException]] = {}
+_BUILTIN_CONSTRUCTION_FAILURES: dict[str, type[BaseException]] = {}
+_REACHED_RECIPE_PATHS: set[str] = set()
+
+
+def _run_recipe(path: str) -> Any | None:
+    recipe = _RECIPES.get(path)
+    if recipe is None:
+        return None
+    _REACHED_RECIPE_PATHS.add(path)
+    return recipe()
 
 
 def _construct_builtin(name: str) -> Any | None:
     try:
         return build(name)
     except (TypeError, ValueError) as error:
-        _CONSTRUCTION_FAILURES[name] = type(error)
-        recipe = _RECIPES.get(name)
-        return None if recipe is None else recipe()
+        cls = _BUILTIN_CLASSES[name]
+        path = _qualified_name(cls)
+        _BUILTIN_CONSTRUCTION_FAILURES[path] = type(error)
+        return _run_recipe(path)
 
 
 _BUILTIN_INSTANCES = tuple(
     (name, _construct_builtin(name)) for name in _BUILTIN_CLASSES
+)
+
+_DISCOVERY_CONSTRUCTION_FAILURES: dict[str, type[BaseException]] = {}
+
+
+def _construct_discovered(cls: type[Any]) -> Any | None:
+    path = _qualified_name(cls)
+    try:
+        return cls()
+    except (TypeError, ValueError) as error:
+        _DISCOVERY_CONSTRUCTION_FAILURES[path] = type(error)
+        return _run_recipe(path)
+
+
+_DISCOVERED_INSTANCES = tuple(
+    (cls, _construct_discovered(cls)) for cls in _DISCOVERED_CONCRETE_CLASSES
 )
 
 
@@ -150,9 +300,15 @@ def _implements_contract(instance: Any) -> bool:
     return callable(method) and method is not Component.contract
 
 
-_IMPLEMENTED_COMPONENTS = tuple(
+_BUILTIN_COMPONENTS = tuple(
     (name, instance)
     for name, instance in _BUILTIN_INSTANCES
+    if instance is not None and _implements_contract(instance)
+)
+
+_IMPLEMENTED_COMPONENTS = tuple(
+    (_qualified_name(cls), instance)
+    for cls, instance in _DISCOVERED_INSTANCES
     if instance is not None and _implements_contract(instance)
 )
 
@@ -240,6 +396,24 @@ def _poisoned_generators(root: Any) -> Iterator[None]:
 def _check_state_free(instance: Any) -> None:
     with _poisoned_generators(instance):
         instance.contract()
+
+
+@contextmanager
+def _record_abc_contract_calls(
+    abc: type[Any],
+) -> Iterator[set[type[Any]]]:
+    original = abc.contract
+    called_by: set[type[Any]] = set()
+
+    def recording_contract(instance: Any, *args: Any, **kwargs: Any) -> Any:
+        called_by.add(type(instance))
+        return original(instance, *args, **kwargs)
+
+    setattr(abc, "contract", recording_contract)
+    try:
+        yield called_by
+    finally:
+        setattr(abc, "contract", original)
 
 
 def _check_port_names(instance: Any) -> None:
@@ -498,7 +672,47 @@ class _PartsMissingDummy:
 
 
 def test_builtin_contract_implementation_set_is_not_empty() -> None:
+    assert _BUILTIN_COMPONENTS
+
+
+def test_discovered_contract_implementation_set_is_not_empty() -> None:
     assert _IMPLEMENTED_COMPONENTS
+
+
+def test_discovered_contract_classes_are_unique_by_identity() -> None:
+    assert len(_DISCOVERED_CONTRACT_CLASSES) == len(
+        {id(cls) for cls in _DISCOVERED_CONTRACT_CLASSES}
+    )
+
+
+def test_import_failures_are_allowlisted_optional_modules() -> None:
+    assert set(_IMPORT_FAILURES) <= _OPTIONAL_IMPORT_MODULES
+
+
+def test_abstract_contract_classes_are_excluded_from_instance_checks() -> None:
+    assert all(
+        not inspect.isabstract(type(instance))
+        for _, instance in _IMPLEMENTED_COMPONENTS
+    )
+
+
+@pytest.mark.parametrize(
+    "abc",
+    _CONTRACT_ABCS,
+    ids=[_qualified_name(cls) for cls in _CONTRACT_ABCS],
+)
+def test_each_contract_abc_is_exercised_by_discovered_subclasses(
+    abc: type[Any],
+) -> None:
+    instances = tuple(
+        instance
+        for cls, instance in _DISCOVERED_INSTANCES
+        if issubclass(cls, abc) and instance is not None
+    )
+    with _record_abc_contract_calls(abc) as called_by:
+        for instance in instances:
+            instance.contract()
+    assert called_by
 
 
 def test_non_class_registry_entries_are_explicitly_allowed() -> None:
@@ -515,9 +729,26 @@ def test_every_builtin_class_has_a_construction_path() -> None:
     constructed = {
         name for name, instance in _BUILTIN_INSTANCES if instance is not None
     }
-    assert set(_CONSTRUCTION_FAILURES) <= set(_RECIPES)
-    assert set(_RECIPES) <= set(_BUILTIN_CLASSES)
+    builtin_paths = {_qualified_name(cls) for cls in _BUILTIN_CLASSES.values()}
+    discovered_paths = {_qualified_name(cls) for cls in _DISCOVERED_CONTRACT_CLASSES}
+    assert set(_BUILTIN_CONSTRUCTION_FAILURES) <= set(_RECIPES)
+    assert set(_RECIPES) <= builtin_paths | discovered_paths
     assert constructed == set(_BUILTIN_CLASSES)
+
+
+def test_every_discovered_contract_class_has_a_construction_path() -> None:
+    constructed = {
+        _qualified_name(cls)
+        for cls, instance in _DISCOVERED_INSTANCES
+        if instance is not None
+    }
+    expected = {_qualified_name(cls) for cls in _DISCOVERED_CONCRETE_CLASSES}
+    assert set(_DISCOVERY_CONSTRUCTION_FAILURES) <= set(_RECIPES)
+    assert constructed == expected
+
+
+def test_every_recipe_is_reached_after_no_arg_construction_attempt() -> None:
+    assert set(_RECIPES) == _REACHED_RECIPE_PATHS
 
 
 @pytest.mark.parametrize(
@@ -525,7 +756,7 @@ def test_every_builtin_class_has_a_construction_path() -> None:
     _IMPLEMENTED_COMPONENTS,
     ids=[name for name, _ in _IMPLEMENTED_COMPONENTS],
 )
-def test_builtin_contract_is_state_free(name: str, instance: Any) -> None:
+def test_discovered_contract_is_state_free(name: str, instance: Any) -> None:
     del name
     _check_state_free(instance)
 
@@ -535,7 +766,7 @@ def test_builtin_contract_is_state_free(name: str, instance: Any) -> None:
     _IMPLEMENTED_COMPONENTS,
     ids=[name for name, _ in _IMPLEMENTED_COMPONENTS],
 )
-def test_builtin_contract_is_pure(name: str, instance: Any) -> None:
+def test_discovered_contract_is_pure(name: str, instance: Any) -> None:
     del name
     _check_purity(instance)
 
@@ -545,7 +776,7 @@ def test_builtin_contract_is_pure(name: str, instance: Any) -> None:
     _IMPLEMENTED_COMPONENTS,
     ids=[name for name, _ in _IMPLEMENTED_COMPONENTS],
 )
-def test_builtin_port_names_are_valid(name: str, instance: Any) -> None:
+def test_discovered_port_names_are_valid(name: str, instance: Any) -> None:
     del name
     _check_port_names(instance)
 
@@ -555,7 +786,7 @@ def test_builtin_port_names_are_valid(name: str, instance: Any) -> None:
     _IMPLEMENTED_COMPONENTS,
     ids=[name for name, _ in _IMPLEMENTED_COMPONENTS],
 )
-def test_builtin_contract_vocabulary_references_are_registered(
+def test_discovered_contract_vocabulary_references_are_registered(
     name: str, instance: Any
 ) -> None:
     del name
@@ -567,7 +798,7 @@ def test_builtin_contract_vocabulary_references_are_registered(
     _IMPLEMENTED_COMPONENTS,
     ids=[name for name, _ in _IMPLEMENTED_COMPONENTS],
 )
-def test_builtin_parts_match_held_components(name: str, instance: Any) -> None:
+def test_discovered_parts_match_held_components(name: str, instance: Any) -> None:
     del name
     _check_parts(instance)
 
