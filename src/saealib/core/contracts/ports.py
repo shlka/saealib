@@ -84,6 +84,7 @@ for _name, _description in (
     ),
     ("BoundsService", "per-variable bounds, where they exist"),
     ("DistanceService", "distance between genomes"),
+    ("ComparisonService", "order candidates by their objective values"),
 ):
     SERVICE_VOCABULARY.register(
         _name,

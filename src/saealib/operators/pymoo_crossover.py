@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any, Protocol
 
 import numpy as np
 
+from saealib.core.contracts import ComponentContract, ServiceRequirement
 from saealib.operators.crossover import Crossover
 
 
@@ -99,6 +101,27 @@ class PymooCrossover(Crossover):
         self.prob = float(prob if prob is not None else operator.prob.value)
         self._problem: object | None = None
         self._problem_key: tuple[int, bytes, bytes] | None = None
+
+    def contract(self) -> ComponentContract:
+        """Return the wrapped crossover contract."""
+        base = super().contract()
+        role = base.ports["crossover"]
+        return replace(
+            base,
+            ports={
+                "crossover": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            required_services=(
+                                ServiceRequirement(name="BoundsService"),
+                            ),
+                        ),
+                    ),
+                )
+            },
+        )
 
     def _pymoo_problem(
         self, dim: int, bounds: tuple[np.ndarray, np.ndarray] | None

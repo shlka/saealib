@@ -14,7 +14,13 @@ for _name, _description in (
     ("SurrogatePrediction", "model outputs, per channel"),
     (
         "Ordering",
-        "a permutation of row indices, with the criterion that produced it",
+        "a reference to some of the producer's rows, with the criterion "
+        "that produced it",
+    ),
+    (
+        "RowPredicate",
+        "a per-row answer over all of the producer's rows, with the criterion "
+        "that produced it",
     ),
     (
         "ArchiveUpdate",

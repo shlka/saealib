@@ -6,6 +6,16 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    Var,
+)
+
 
 @dataclass
 class DuplicateElimination:
@@ -29,6 +39,44 @@ class DuplicateElimination:
     atol: float = 1e-16
     rtol: float = 0.0
     max_retries: int = 100
+
+    def contract(self) -> ComponentContract:
+        """Return the duplicate-filter contract."""
+        representation = Var(name="R")
+        return ComponentContract(
+            ports={
+                "duplicate_filter": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="offspring",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(
+                                kind="GenomeBatch",
+                                bindings={"representation": representation},
+                            ),
+                            cardinality=MANY,
+                        ),
+                        PortSpec(
+                            name="population",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(
+                                kind="GenomeBatch",
+                                bindings={"representation": representation},
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="duplicates",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(kind="RowPredicate"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                )
+            }
+        )
 
     def find_duplicates(self, off_x: np.ndarray, pop_x: np.ndarray) -> np.ndarray:
         """Return a boolean mask of offspring that duplicate the population.

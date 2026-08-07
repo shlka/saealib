@@ -21,6 +21,7 @@ for _name, _description in (
     ("mutation", "Mutates candidate genomes."),
     ("parent_selection", "Selects parent indices for reproduction."),
     ("survivor_selection", "Selects survivor indices from a population."),
+    ("duplicate_filter", "Filters offspring rows that duplicate a population."),
 ):
     ROLES.register(
         _name,

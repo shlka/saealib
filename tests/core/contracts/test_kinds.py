@@ -14,7 +14,12 @@ def test_initial_data_spec_kinds_are_registered_with_carries_descriptions() -> N
         "FeatureBatch": "surrogate model inputs",
         "SurrogatePrediction": "model outputs, per channel",
         "Ordering": (
-            "a permutation of row indices, with the criterion that produced it"
+            "a reference to some of the producer's rows, with the criterion "
+            "that produced it"
+        ),
+        "RowPredicate": (
+            "a per-row answer over all of the producer's rows, with the criterion "
+            "that produced it"
         ),
         "ArchiveUpdate": (
             "rows offered to an archive, before its duplicate policy applies"

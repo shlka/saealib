@@ -14,6 +14,7 @@ def test_roles_are_registered_name_only_descriptors() -> None:
         "mutation",
         "parent_selection",
         "survivor_selection",
+        "duplicate_filter",
     )
     descriptor = ROLES.get("proposer")
     assert descriptor is not None

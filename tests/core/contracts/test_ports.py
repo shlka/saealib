@@ -59,6 +59,7 @@ def test_service_names_are_registered() -> None:
         "DenseNumericView",
         "BoundsService",
         "DistanceService",
+        "ComparisonService",
     )
     descriptor = SERVICE_VOCABULARY.get("DistanceService")
     assert descriptor is not None

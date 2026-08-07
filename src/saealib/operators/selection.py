@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import replace
 
 import numpy as np
 
@@ -14,8 +15,11 @@ from saealib.core.contracts import (
     PortContract,
     PortDirection,
     PortSpec,
+    ServiceRequirement,
+    StateContract,
     Var,
 )
+from saealib.core.state import RUNTIME_RNG
 from saealib.population import Population
 from saealib.registry import register
 
@@ -104,6 +108,27 @@ class TournamentSelection(ParentSelection):
     def __init__(self, tournament_size: int):
         super().__init__()
         self.tournament_size = tournament_size
+
+    def contract(self) -> ComponentContract:
+        """Return the tournament-selection contract."""
+        base = super().contract()
+        role = base.ports["parent_selection"]
+        return replace(
+            base,
+            ports={
+                "parent_selection": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            required_services=(
+                                ServiceRequirement(name="ComparisonService"),
+                            ),
+                        ),
+                    ),
+                )
+            },
+        )
 
     def select(
         self,
@@ -217,6 +242,27 @@ class LinearRankSelection(ParentSelection):
     def __init__(self):
         """Initialize linear rank selection."""
         super().__init__()
+
+    def contract(self) -> ComponentContract:
+        """Return the linear-rank-selection contract."""
+        base = super().contract()
+        role = base.ports["parent_selection"]
+        return replace(
+            base,
+            ports={
+                "parent_selection": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            required_services=(
+                                ServiceRequirement(name="ComparisonService"),
+                            ),
+                        ),
+                    ),
+                )
+            },
+        )
 
     def select(
         self,
@@ -342,6 +388,33 @@ class TruncationSelection(SurvivorSelection):
             boundary, by default False.
         """
         self.randomize_ties = randomize_ties
+
+    def contract(self) -> ComponentContract:
+        """Return the truncation-selection contract."""
+        base = super().contract()
+        role = base.ports["survivor_selection"]
+        state = (
+            StateContract(reads=(RUNTIME_RNG,), writes=(RUNTIME_RNG,))
+            if self.randomize_ties
+            else StateContract()
+        )
+        return replace(
+            base,
+            state=state,
+            ports={
+                "survivor_selection": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            required_services=(
+                                ServiceRequirement(name="ComparisonService"),
+                            ),
+                        ),
+                    ),
+                )
+            },
+        )
 
     def select(
         self,
