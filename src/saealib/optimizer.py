@@ -7,7 +7,7 @@ import dataclasses
 import importlib.util
 import pickle
 import warnings
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, cast
 
@@ -23,6 +23,14 @@ from saealib.callback import (
     logging_generation,
 )
 from saealib.context import OptimizationState
+from saealib.core.compiler import (
+    ContractPath,
+    Diagnostic,
+    DiagnosticBag,
+    Severity,
+    check_component_contract,
+)
+from saealib.core.contracts import ComponentContract
 from saealib.exceptions import ConfigurationError, ValidationError
 from saealib.execution.evaluator import Evaluator, SerialEvaluator
 from saealib.execution.runner import Runner
@@ -184,6 +192,109 @@ class Optimizer:
         self._preset: dict | None = None
 
     # --- setters (all return self for chaining) ---
+
+    def contract_diagnostics(self) -> DiagnosticBag:
+        """Return advisory diagnostics for currently configured components."""
+        diagnostics = DiagnosticBag()
+        component_names = (
+            "initializer",
+            "algorithm",
+            "surrogate_manager",
+            "termination",
+            "evaluator",
+            "evaluation_planner",
+            "feedback_builder",
+            "acquisition",
+            "async_evaluation_scheduler",
+            "strategy",
+        )
+        for name in component_names:
+            component = getattr(self, name, None)
+            if component is None:
+                continue
+            missing = object()
+            try:
+                contract_method = getattr(component, "contract", missing)
+            except Exception as error:
+                diagnostics.append(
+                    Diagnostic(
+                        severity=Severity.ERROR,
+                        code="contract_unavailable",
+                        message=(
+                            f"{name}.contract attribute could not be read: "
+                            f"{type(error).__name__}: {error}."
+                        ),
+                        path=ContractPath(components=(name,)),
+                        resolutions=(
+                            "Make the component's contract attribute readable and "
+                            "provide a callable contract() method.",
+                        ),
+                    )
+                )
+                continue
+            if contract_method is missing:
+                continue
+            if not callable(contract_method):
+                diagnostics.append(
+                    Diagnostic(
+                        severity=Severity.ERROR,
+                        code="contract_unavailable",
+                        message=(
+                            f"{name}.contract exists on {type(component).__name__} "
+                            "but is not callable."
+                        ),
+                        path=ContractPath(components=(name,)),
+                        resolutions=(
+                            "Provide a callable contract() method returning "
+                            "ComponentContract.",
+                        ),
+                    )
+                )
+                continue
+            try:
+                contract = cast(Callable[[], object], contract_method)()
+            except Exception as error:
+                diagnostics.append(
+                    Diagnostic(
+                        severity=Severity.ERROR,
+                        code="contract_unavailable",
+                        message=(
+                            f"{name}.contract() on {type(component).__name__} "
+                            f"raised {type(error).__name__}: {error}."
+                        ),
+                        path=ContractPath(components=(name,)),
+                        resolutions=(
+                            "Make contract() return a ComponentContract without "
+                            "raising.",
+                        ),
+                    )
+                )
+                continue
+            if not isinstance(contract, ComponentContract):
+                diagnostics.append(
+                    Diagnostic(
+                        severity=Severity.ERROR,
+                        code="contract_unavailable",
+                        message=(
+                            f"{name}.contract() on {type(component).__name__} "
+                            f"returned {type(contract).__name__}, not "
+                            "ComponentContract."
+                        ),
+                        path=ContractPath(components=(name,)),
+                        resolutions=(
+                            "Make contract() return a ComponentContract instance.",
+                        ),
+                    )
+                )
+                continue
+            diagnostics.extend(
+                check_component_contract(
+                    contract,
+                    component=component,
+                    path=ContractPath(components=(name,)),
+                )
+            )
+        return diagnostics
 
     def set_seed(self, seed: int | None) -> Self:
         """Set the master random seed. Returns self."""

@@ -65,6 +65,31 @@ DIAGNOSTIC_CODES.register(
         description="A data specification kind has not been registered.",
     ),
 )
+for _name, _description in (
+    ("unknown_role", "A component contract role has not been registered."),
+    ("unknown_schema_variable", "A data binding key has not been registered."),
+    ("unknown_cardinality", "A port cardinality has not been registered."),
+    ("unknown_service", "A port service requirement has not been registered."),
+    ("unknown_state_namespace", "A state-key namespace has not been registered."),
+    (
+        "unknown_runtime_capability",
+        "A required runtime capability has not been registered.",
+    ),
+    ("unknown_assumption_key", "An assumption key has not been registered."),
+    (
+        "contract_unavailable",
+        "A component contract exists but cannot be called or has the wrong type.",
+    ),
+    (
+        "part_contract_mismatch",
+        "A declared part is missing, has no callable contract, or disagrees "
+        "with its held component.",
+    ),
+):
+    DIAGNOSTIC_CODES.register(
+        _name,
+        VocabularyDescriptor(name=_name, description=_description),
+    )
 DIAGNOSTIC_CODES.register(
     "schema_variable_unbound",
     VocabularyDescriptor(
