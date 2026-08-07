@@ -15,6 +15,13 @@ __all__ = ["RUNTIME_CAPABILITIES", "ExecutionContract", "RuntimeCapability"]
 
 RuntimeCapability: TypeAlias = str
 RUNTIME_CAPABILITIES: Vocabulary[VocabularyDescriptor] = Vocabulary()
+RUNTIME_CAPABILITIES.register(
+    "partial_feedback",
+    VocabularyDescriptor(
+        name="partial_feedback",
+        description="accept feedback for only part of a previously proposed batch",
+    ),
+)
 
 
 @dataclass(frozen=True, kw_only=True)

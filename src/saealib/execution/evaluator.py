@@ -21,6 +21,15 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    Var,
+)
 from saealib.exceptions import EvaluationProtocolError, ValidationError
 
 if TYPE_CHECKING:
@@ -239,6 +248,40 @@ class PendingEvaluation:
 
 class Evaluator(ABC):
     """Base class for batch evaluators."""
+
+    def contract(self) -> ComponentContract:
+        """Return the evaluator family contract."""
+        return ComponentContract(
+            ports={
+                "evaluator": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="genomes",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(
+                                kind="GenomeBatch",
+                                bindings={"representation": Var(name="R")},
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="observations",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(
+                                kind="ObservationBatch",
+                                bindings={
+                                    "objective_schema": Var(name="O"),
+                                    "constraint_schema": Var(name="C"),
+                                },
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                )
+            }
+        )
 
     @abstractmethod
     def evaluate_batch(self, x: np.ndarray, problem: Problem) -> EvaluationResult:

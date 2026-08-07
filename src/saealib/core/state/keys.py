@@ -11,8 +11,12 @@ from saealib.core.contracts.vocabulary import (
 from saealib.exceptions import ValidationError
 
 __all__ = [
+    "ARCHIVES_MAIN",
+    "ARCHIVES_PARETO",
+    "EVALUATIONS_COUNT",
     "PENDING_EVALUATIONS",
     "POPULATIONS_MAIN",
+    "RUNTIME_GENERATION",
     "RUNTIME_RNG",
     "STATE_NAMESPACES",
     "SURROGATES_DEFAULT",
@@ -64,10 +68,20 @@ class StateKey(Generic[ValueT]):
 POPULATIONS_MAIN = StateKey[object](
     namespace="populations", name="main", schema_version=1
 )
+ARCHIVES_MAIN = StateKey[object](namespace="archives", name="main", schema_version=1)
+ARCHIVES_PARETO = StateKey[object](
+    namespace="archives", name="pareto", schema_version=1
+)
+EVALUATIONS_COUNT = StateKey[object](
+    namespace="evaluations", name="count", schema_version=1
+)
 PENDING_EVALUATIONS = StateKey[object](
     namespace="evaluations", name="pending", schema_version=1
 )
 RUNTIME_RNG = StateKey[object](namespace="runtime", name="rng", schema_version=1)
+RUNTIME_GENERATION = StateKey[object](
+    namespace="runtime", name="generation", schema_version=1
+)
 SURROGATES_DEFAULT = StateKey[object](
     namespace="surrogates", name="default", schema_version=1
 )

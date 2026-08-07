@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import replace
 
 import numpy as np
 import scipy.stats
@@ -10,6 +11,25 @@ import scipy.stats
 from saealib.callback import InitialEvaluationEndEvent, InitialEvaluationStartEvent
 from saealib.comparators import NSGA3Comparator
 from saealib.context import OptimizationState
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    Fixed,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    StateContract,
+    Var,
+)
+from saealib.core.state import (
+    ARCHIVES_MAIN,
+    ARCHIVES_PARETO,
+    EVALUATIONS_COUNT,
+    POPULATIONS_MAIN,
+    RUNTIME_GENERATION,
+    RUNTIME_RNG,
+)
 from saealib.optimizer import ComponentProvider
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
@@ -17,6 +37,38 @@ from saealib.problem import Problem
 
 class Initializer(ABC):
     """Abstract base for classes that set up the initial optimization context."""
+
+    def contract(self) -> ComponentContract:
+        """Return the initializer contract."""
+        candidate_count = Var(name="N")
+        return ComponentContract(
+            ports={
+                "initializer": PortContract(
+                    outputs=(
+                        PortSpec(
+                            name="population",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(
+                                kind="Population",
+                                bindings={"candidate_count": candidate_count},
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                ),
+            },
+            state=StateContract(
+                reads=(RUNTIME_RNG,),
+                writes=(
+                    POPULATIONS_MAIN,
+                    ARCHIVES_MAIN,
+                    EVALUATIONS_COUNT,
+                    ARCHIVES_PARETO,
+                    RUNTIME_GENERATION,
+                    RUNTIME_RNG,
+                ),
+            ),
+        )
 
     def _create_attrs(
         self, problem: Problem, provider: ComponentProvider
@@ -141,6 +193,34 @@ class LHSInitializer(Initializer):
         self.n_init_population = n_init_population
         self.seed = seed
 
+    def contract(self) -> ComponentContract:
+        """Return the LHS initializer contract."""
+        contract = super().contract()
+        role = contract.ports["initializer"]
+        output = role.outputs[0]
+        return replace(
+            contract,
+            ports={
+                **contract.ports,
+                "initializer": replace(
+                    role,
+                    outputs=(
+                        replace(
+                            output,
+                            data=replace(
+                                output.data,
+                                bindings={
+                                    "candidate_count": Fixed(
+                                        value=self.n_init_population
+                                    )
+                                },
+                            ),
+                        ),
+                    ),
+                ),
+            },
+        )
+
     def initialize(
         self, provider: ComponentProvider, problem: Problem
     ) -> OptimizationState:
@@ -235,6 +315,34 @@ class RandomInitializer(Initializer):
         self.n_init_population = n_init_population
         self.seed = seed
 
+    def contract(self) -> ComponentContract:
+        """Return the random initializer contract."""
+        contract = super().contract()
+        role = contract.ports["initializer"]
+        output = role.outputs[0]
+        return replace(
+            contract,
+            ports={
+                **contract.ports,
+                "initializer": replace(
+                    role,
+                    outputs=(
+                        replace(
+                            output,
+                            data=replace(
+                                output.data,
+                                bindings={
+                                    "candidate_count": Fixed(
+                                        value=self.n_init_population
+                                    )
+                                },
+                            ),
+                        ),
+                    ),
+                ),
+            },
+        )
+
     def initialize(
         self, provider: ComponentProvider, problem: Problem
     ) -> OptimizationState:
@@ -327,6 +435,34 @@ class SobolInitializer(Initializer):
         self.n_init_archive = n_init_archive
         self.n_init_population = n_init_population
         self.seed = seed
+
+    def contract(self) -> ComponentContract:
+        """Return the Sobol initializer contract."""
+        contract = super().contract()
+        role = contract.ports["initializer"]
+        output = role.outputs[0]
+        return replace(
+            contract,
+            ports={
+                **contract.ports,
+                "initializer": replace(
+                    role,
+                    outputs=(
+                        replace(
+                            output,
+                            data=replace(
+                                output.data,
+                                bindings={
+                                    "candidate_count": Fixed(
+                                        value=self.n_init_population
+                                    )
+                                },
+                            ),
+                        ),
+                    ),
+                ),
+            },
+        )
 
     def initialize(
         self, provider: ComponentProvider, problem: Problem

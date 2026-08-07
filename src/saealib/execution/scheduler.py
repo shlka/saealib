@@ -11,6 +11,8 @@ import numpy as np
 
 from saealib.callback import PostEvaluationEvent
 from saealib.context import EvaluationPlanState
+from saealib.core.contracts import ComponentContract, PartSpec, StateContract
+from saealib.core.state import PENDING_EVALUATIONS
 from saealib.exceptions import (
     CheckpointError,
     EvaluationFatalError,
@@ -39,6 +41,16 @@ if TYPE_CHECKING:
 
 class AsyncEvaluationScheduler:
     """Coordinate asynchronous requests and serialized state mutation."""
+
+    def contract(self) -> ComponentContract:
+        """Return the scheduler contract and its evaluator part."""
+        return ComponentContract(
+            parts=(PartSpec(name="evaluator", contract=self.evaluator.contract()),),
+            state=StateContract(
+                reads=(PENDING_EVALUATIONS,),
+                writes=(PENDING_EVALUATIONS,),
+            ),
+        )
 
     def __init__(
         self,

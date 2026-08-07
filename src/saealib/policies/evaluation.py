@@ -9,6 +9,15 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from saealib.acquisition.base import AcquisitionResult
+from saealib.core.contracts import (
+    MANY,
+    OPTIONAL,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+)
 from saealib.exceptions import ValidationError
 from saealib.execution.evaluator import (
     EvaluationRequest,
@@ -52,6 +61,38 @@ class EvaluationPlan:
 
 class EvaluationPlanner(ABC):
     """Public contract for planners that may produce multiple requests."""
+
+    def contract(self) -> ComponentContract:
+        """Return the evaluation-planner family contract."""
+        return ComponentContract(
+            ports={
+                "evaluation_planner": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="candidates",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                        ),
+                        PortSpec(
+                            name="acquisition",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="RowPredicate"),
+                            cardinality=OPTIONAL,
+                            optional=True,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="evaluation_requests",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(kind="EvaluationRequestBatch"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                ),
+            }
+        )
 
     @abstractmethod
     def plan(

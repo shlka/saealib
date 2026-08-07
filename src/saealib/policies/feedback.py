@@ -1,11 +1,21 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING
 
 import numpy as np
 
+from saealib.core.contracts import (
+    MANY,
+    OPTIONAL,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    ServiceRequirement,
+)
 from saealib.exceptions import ValidationError
 from saealib.execution.evaluator import EvaluationResult
 from saealib.registry import register
@@ -112,6 +122,45 @@ def _empty(n_obj: int) -> FeedbackResult:
 class FeedbackBuilder(ABC):
     """Build algorithm feedback from true and predicted values."""
 
+    def contract(self) -> ComponentContract:
+        """Return the feedback-builder family contract."""
+        return ComponentContract(
+            ports={
+                "feedback_builder": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="candidates",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                        ),
+                        PortSpec(
+                            name="prediction",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="SurrogatePrediction"),
+                            cardinality=OPTIONAL,
+                            optional=True,
+                        ),
+                        PortSpec(
+                            name="evaluation",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="ObservationBatch"),
+                            cardinality=OPTIONAL,
+                            optional=True,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="feedback",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(kind="FeedbackBatch"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                ),
+            }
+        )
+
     @abstractmethod
     def build(self, candidates, prediction, evaluation, evaluated_indices, ctx):
         """Return feedback aligned to candidate IDs."""
@@ -215,6 +264,24 @@ class ComparatorWorstFallback(FeedbackBuilder):
 
     def __init__(self, inner: FeedbackBuilder | None = None) -> None:
         self.inner = inner or MixedFeedback()
+
+    def contract(self) -> ComponentContract:
+        """Return the feedback contract requiring population comparison."""
+        family = super().contract()
+        builder = family.ports["feedback_builder"]
+        candidates = replace(
+            builder.inputs[0],
+            required_services=(ServiceRequirement(name="ComparisonService"),),
+        )
+        return replace(
+            family,
+            ports={
+                **family.ports,
+                "feedback_builder": replace(
+                    builder, inputs=(candidates, *builder.inputs[1:])
+                ),
+            },
+        )
 
     def build(self, candidates, prediction, evaluation, evaluated_indices, ctx):
         """Build feedback and replace missing rows."""

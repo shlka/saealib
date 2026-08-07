@@ -6,6 +6,17 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 from saealib.context import OptimizationState
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    ServiceRequirement,
+    StateContract,
+)
+from saealib.core.state import POPULATIONS_MAIN, RUNTIME_RNG
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -15,6 +26,40 @@ if TYPE_CHECKING:
 
 class Algorithm(ABC):
     """Base class for evolutionary algorithms."""
+
+    def contract(self) -> ComponentContract:
+        """Return the evolutionary-algorithm family contract."""
+        return ComponentContract(
+            ports={
+                "proposer": PortContract(
+                    outputs=(
+                        PortSpec(
+                            name="genomes",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                            required_services=(
+                                ServiceRequirement(name="BoundsService"),
+                            ),
+                        ),
+                    ),
+                ),
+                "feedback_consumer": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="offspring",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                ),
+            },
+            state=StateContract(
+                reads=(POPULATIONS_MAIN, RUNTIME_RNG),
+                writes=(POPULATIONS_MAIN, RUNTIME_RNG),
+            ),
+        )
 
     @abstractmethod
     def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:

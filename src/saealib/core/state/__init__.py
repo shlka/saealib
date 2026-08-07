@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 from saealib.core.state.keys import (
+    ARCHIVES_MAIN,
+    ARCHIVES_PARETO,
+    EVALUATIONS_COUNT,
     PENDING_EVALUATIONS,
     POPULATIONS_MAIN,
+    RUNTIME_GENERATION,
     RUNTIME_RNG,
     STATE_NAMESPACES,
     SURROGATES_DEFAULT,
@@ -10,8 +14,12 @@ from saealib.core.state.keys import (
 )
 
 __all__ = [
+    "ARCHIVES_MAIN",
+    "ARCHIVES_PARETO",
+    "EVALUATIONS_COUNT",
     "PENDING_EVALUATIONS",
     "POPULATIONS_MAIN",
+    "RUNTIME_GENERATION",
     "RUNTIME_RNG",
     "STATE_NAMESPACES",
     "SURROGATES_DEFAULT",

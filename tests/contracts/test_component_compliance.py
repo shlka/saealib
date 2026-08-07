@@ -249,6 +249,39 @@ def _recipe_termination() -> Any:
     return Termination(max_fe(100))
 
 
+def _recipe_lhs_initializer() -> Any:
+    from saealib.execution.initializer import LHSInitializer
+
+    return LHSInitializer(1, 1)
+
+
+def _recipe_random_initializer() -> Any:
+    from saealib.execution.initializer import RandomInitializer
+
+    return RandomInitializer(1, 1)
+
+
+def _recipe_sobol_initializer() -> Any:
+    from saealib.execution.initializer import SobolInitializer
+
+    return SobolInitializer(1, 1)
+
+
+def _recipe_async_evaluation_scheduler() -> Any:
+    from saealib.execution.evaluator import SerialEvaluator
+    from saealib.execution.scheduler import AsyncEvaluationScheduler
+
+    return AsyncEvaluationScheduler(SerialEvaluator())
+
+
+def _recipe_pymoo_algorithm() -> Any:
+    from saealib.algorithms.pymoo_algorithm import PymooAlgorithm
+
+    instance = PymooAlgorithm.__new__(PymooAlgorithm)
+    instance.allow_partial_tell = False
+    return instance
+
+
 def _build_qualified(path: str, **params: Any) -> Any:
     return build({"type": path, "params": params})
 
@@ -295,6 +328,13 @@ _RECIPES: dict[str, Callable[[], Any]] = {
         {"type": "RatioEvaluation", "params": {"ratio": 0.5}}
     ),
     _qualified_name(_REGISTRY["Termination"]): _recipe_termination,
+    "saealib.execution.initializer.LHSInitializer": _recipe_lhs_initializer,
+    "saealib.execution.initializer.RandomInitializer": _recipe_random_initializer,
+    "saealib.execution.initializer.SobolInitializer": _recipe_sobol_initializer,
+    (
+        "saealib.execution.scheduler.AsyncEvaluationScheduler"
+    ): _recipe_async_evaluation_scheduler,
+    "saealib.algorithms.pymoo_algorithm.PymooAlgorithm": _recipe_pymoo_algorithm,
     _qualified_name(_REGISTRY["GenerationBasedStrategy"]): lambda: build(
         {"type": "GenerationBasedStrategy", "params": {"gen_ctrl": 5}}
     ),

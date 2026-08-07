@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
@@ -11,17 +12,9 @@ from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent, PostCrossoverEvent, PostMutationEvent
 from saealib.context import OptimizationState
 from saealib.core.contracts import (
-    MANY,
     ComponentContract,
-    DataSpec,
     PartSpec,
-    PortContract,
-    PortDirection,
-    PortSpec,
-    ServiceRequirement,
-    StateContract,
 )
-from saealib.core.state import POPULATIONS_MAIN, RUNTIME_RNG
 from saealib.exceptions import ConfigurationError
 from saealib.operators.crossover import (
     Crossover,
@@ -301,32 +294,8 @@ class GA(Algorithm):
 
     def contract(self) -> ComponentContract:
         """Return the genetic-algorithm contract."""
-        return ComponentContract(
-            ports={
-                "proposer": PortContract(
-                    outputs=(
-                        PortSpec(
-                            name="genomes",
-                            direction=PortDirection.OUTPUT,
-                            data=DataSpec(kind="Population"),
-                            cardinality=MANY,
-                            required_services=(
-                                ServiceRequirement(name="BoundsService"),
-                            ),
-                        ),
-                    ),
-                ),
-                "feedback_consumer": PortContract(
-                    inputs=(
-                        PortSpec(
-                            name="offspring",
-                            direction=PortDirection.INPUT,
-                            data=DataSpec(kind="Population"),
-                            cardinality=MANY,
-                        ),
-                    ),
-                ),
-            },
+        return replace(
+            super().contract(),
             parts=(
                 PartSpec(name="crossover", contract=self.crossover.contract()),
                 PartSpec(name="mutation", contract=self.mutation.contract()),
@@ -337,10 +306,6 @@ class GA(Algorithm):
                     name="survivor_selection",
                     contract=self.survivor_selection.contract(),
                 ),
-            ),
-            state=StateContract(
-                reads=(POPULATIONS_MAIN, RUNTIME_RNG),
-                writes=(POPULATIONS_MAIN, RUNTIME_RNG),
             ),
         )
 

@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import TYPE_CHECKING, Protocol
 
 import numpy as np
 
 from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent
+from saealib.core.contracts import ComponentContract, ExecutionContract
 from saealib.exceptions import ConfigurationError
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem.constraint import EqualityConstraint
@@ -125,6 +127,18 @@ class PymooAlgorithm(Algorithm):
         self._ieq_idx: np.ndarray = np.empty(0, dtype=np.int64)
         self._eq_idx: np.ndarray = np.empty(0, dtype=np.int64)
         self._infills: _PymooPopulationLike | None = None
+
+    def contract(self) -> ComponentContract:
+        """Return the family contract with optional partial-feedback capability."""
+        family = super().contract()
+        if not self.allow_partial_tell:
+            return family
+        return replace(
+            family,
+            execution=ExecutionContract(
+                required_runtime_capabilities=("partial_feedback",),
+            ),
+        )
 
     _candidate_id_attr = "saealib_candidate_id"
 

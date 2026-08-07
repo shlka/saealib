@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -9,6 +10,7 @@ import numpy as np
 from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent
 from saealib.context import OptimizationState
+from saealib.core.contracts import ComponentContract, ServiceRequirement
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.registry import register
@@ -78,6 +80,22 @@ class PSO(Algorithm):
         self.c1 = c1
         self.c2 = c2
         self.v_max = v_max
+
+    def contract(self) -> ComponentContract:
+        """Return the PSO contract with comparator-backed feedback."""
+        family = super().contract()
+        feedback = family.ports["feedback_consumer"]
+        offspring = replace(
+            feedback.inputs[0],
+            required_services=(ServiceRequirement(name="ComparisonService"),),
+        )
+        return replace(
+            family,
+            ports={
+                **family.ports,
+                "feedback_consumer": replace(feedback, inputs=(offspring,)),
+            },
+        )
 
     def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
         """
