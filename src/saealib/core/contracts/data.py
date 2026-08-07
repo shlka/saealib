@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Hashable, Mapping
+from collections.abc import Hashable, Iterable, Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import TypeAlias
@@ -14,13 +14,16 @@ from saealib.exceptions import ValidationError
 
 __all__ = [
     "DATA_SPEC_KINDS",
+    "Contained",
     "DataSpec",
     "DataSpecKind",
     "Fixed",
+    "Product",
     "SchemaBinding",
     "Var",
     "data_spec_kind",
     "is_data_spec_compatible",
+    "is_set_like",
     "register_data_spec",
 ]
 
@@ -100,7 +103,54 @@ class Fixed:
             raise ValidationError("Fixed schema values must be hashable") from error
 
 
-SchemaBinding: TypeAlias = Var | Fixed
+def is_set_like(value: object) -> bool:
+    """Return whether a value supports collection-style containment."""
+    return isinstance(value, Iterable) and not isinstance(value, (str, bytes))
+
+
+@dataclass(frozen=True, kw_only=True)
+class Contained:
+    """A consumer-side requirement for a set of schema values."""
+
+    values: frozenset[Hashable]
+
+    def __post_init__(self) -> None:
+        """Validate and normalize the required values."""
+        if isinstance(self.values, (str, bytes)) or not isinstance(
+            self.values, Iterable
+        ):
+            raise ValidationError("Contained values must be a non-string iterable")
+        try:
+            values = frozenset(self.values)
+        except TypeError as error:
+            raise ValidationError("Contained values must be hashable") from error
+        object.__setattr__(self, "values", values)
+
+
+@dataclass(frozen=True, kw_only=True)
+class Product:
+    """A positional product of schema bindings."""
+
+    elements: tuple[SchemaBinding, ...]
+
+    def __post_init__(self) -> None:
+        """Validate and normalize product elements."""
+        try:
+            elements = tuple(self.elements)
+        except TypeError as error:
+            raise ValidationError("Product elements must be iterable") from error
+        if not elements:
+            raise ValidationError("Product elements must not be empty")
+        if any(not _is_schema_binding(element) for element in elements):
+            raise ValidationError("Product elements must contain schema bindings")
+        object.__setattr__(self, "elements", elements)
+
+
+def _is_schema_binding(value: object) -> bool:
+    return isinstance(value, (Var, Fixed, Contained, Product))
+
+
+SchemaBinding: TypeAlias = Var | Fixed | Contained | Product
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -118,7 +168,7 @@ class DataSpec:
             raise ValidationError("DataSpec bindings must be a mapping")
         bindings = dict(self.bindings)
         if any(
-            not isinstance(name, str) or not isinstance(value, (Var, Fixed))
+            not isinstance(name, str) or not _is_schema_binding(value)
             for name, value in bindings.items()
         ):
             raise ValidationError("DataSpec bindings must contain schema bindings")

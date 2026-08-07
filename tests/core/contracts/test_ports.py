@@ -100,8 +100,9 @@ def test_kind_and_cardinality_connection_rules_are_partial() -> None:
     assert result.kind_ok
     assert result.cardinality_ok
     assert result.direction_ok
+    assert result.schema_ok
     assert result.compatible
-    assert result.unchecked == ("schema_variables", "services")
+    assert result.unchecked == ("services",)
 
 
 def test_port_compatibility_surfaces_unknown_values() -> None:

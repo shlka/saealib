@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import saealib.core.contracts.kinds
 from saealib.core.contracts.assumptions import (
     ASSUMPTION_KEYS,
     AssumptionDescriptor,
@@ -10,13 +11,16 @@ from saealib.core.contracts.assumptions import (
 from saealib.core.contracts.contract import ComponentContract, PartSpec
 from saealib.core.contracts.data import (
     DATA_SPEC_KINDS,
+    Contained,
     DataSpec,
     DataSpecKind,
     Fixed,
+    Product,
     SchemaBinding,
     Var,
     data_spec_kind,
     is_data_spec_compatible,
+    is_set_like,
     register_data_spec,
 )
 from saealib.core.contracts.execution import (
@@ -46,6 +50,15 @@ from saealib.core.contracts.ports import (
     validate_port_contract_directions,
 )
 from saealib.core.contracts.roles import ROLES, RoleName
+from saealib.core.contracts.schema import (
+    SCHEMA_CONFLICT_REASONS,
+    SCHEMA_VARIABLES,
+    SchemaConstraint,
+    Substitution,
+    UnificationResult,
+    unify_bindings,
+    unify_data_specs,
+)
 from saealib.core.contracts.state import StateContract
 from saealib.core.contracts.vocabulary import (
     Vocabulary,
@@ -64,11 +77,14 @@ __all__ = [
     "OPTIONAL",
     "ROLES",
     "RUNTIME_CAPABILITIES",
+    "SCHEMA_CONFLICT_REASONS",
+    "SCHEMA_VARIABLES",
     "SERVICE_VOCABULARY",
     "AssumptionDescriptor",
     "AssumptionSet",
     "Cardinality",
     "ComponentContract",
+    "Contained",
     "DataSpec",
     "DataSpecKind",
     "EventSubscription",
@@ -80,11 +96,15 @@ __all__ = [
     "PortContract",
     "PortDirection",
     "PortSpec",
+    "Product",
     "RoleName",
     "RuntimeCapability",
     "SchemaBinding",
+    "SchemaConstraint",
     "ServiceRequirement",
     "StateContract",
+    "Substitution",
+    "UnificationResult",
     "Var",
     "Vocabulary",
     "VocabularyDescriptor",
@@ -92,9 +112,12 @@ __all__ = [
     "check_port_compatibility",
     "data_spec_kind",
     "is_data_spec_compatible",
+    "is_set_like",
     "is_valid_name",
     "register_assumption",
     "register_data_spec",
+    "unify_bindings",
+    "unify_data_specs",
     "validate_assumption_name",
     "validate_name",
     "validate_port_contract_directions",

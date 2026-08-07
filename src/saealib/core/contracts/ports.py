@@ -10,6 +10,11 @@ from saealib.core.contracts.data import (
     DataSpecKind,
     is_data_spec_compatible,
 )
+from saealib.core.contracts.schema import (
+    Substitution,
+    UnificationResult,
+    unify_data_specs,
+)
 from saealib.core.contracts.vocabulary import (
     Vocabulary,
     VocabularyDescriptor,
@@ -178,14 +183,25 @@ class PortCompatibility:
     kind_ok: bool
     cardinality_ok: bool
     direction_ok: bool
+    schema: UnificationResult
     unknown_kinds: tuple[str, ...] = ()
     unknown_cardinalities: tuple[str, ...] = ()
     unchecked: tuple[str, ...] = ()
 
     @property
+    def schema_ok(self) -> bool:
+        """Return whether schema bindings unified without unknown variables."""
+        return self.schema.unified
+
+    @property
     def compatible(self) -> bool:
         """Return whether every performed compatibility check passed."""
-        return self.kind_ok and self.cardinality_ok and self.direction_ok
+        return (
+            self.kind_ok
+            and self.cardinality_ok
+            and self.direction_ok
+            and self.schema_ok
+        )
 
 
 def check_port_compatibility(
@@ -193,12 +209,9 @@ def check_port_compatibility(
     consumer: PortSpec,
     *,
     data_registry: Vocabulary[DataSpecKind] | None = None,
+    substitution: Substitution | None = None,
 ) -> PortCompatibility:
-    """Check port kinds and cardinalities, exposing deferred checks.
-
-    Schema-variable unification and required-service resolution remain separate
-    compiler operations and are reported as unchecked here.
-    """
+    """Check port kinds, schema bindings, and cardinalities."""
     registry = DATA_SPEC_KINDS if data_registry is None else data_registry
     kind_names = (producer.data.kind, consumer.data.kind)
     unknown_kinds = tuple(
@@ -211,6 +224,11 @@ def check_port_compatibility(
             for cardinality in cardinality_names
             if cardinality not in CARDINALITIES
         )
+    )
+    schema = unify_data_specs(
+        producer.data,
+        consumer.data,
+        substitution=substitution,
     )
     return PortCompatibility(
         kind_ok=not unknown_kinds
@@ -225,7 +243,8 @@ def check_port_compatibility(
             producer.direction is PortDirection.OUTPUT
             and consumer.direction is PortDirection.INPUT
         ),
+        schema=schema,
         unknown_kinds=unknown_kinds,
         unknown_cardinalities=unknown_cardinalities,
-        unchecked=("schema_variables", "services"),
+        unchecked=("services",),
     )
