@@ -1,5 +1,33 @@
 from __future__ import annotations
 
+from saealib.core.contracts.data import (
+    DATA_SPEC_KINDS,
+    DataSpec,
+    DataSpecKind,
+    Fixed,
+    SchemaBinding,
+    Var,
+    data_spec_kind,
+    is_data_spec_compatible,
+    register_data_spec,
+)
+from saealib.core.contracts.ports import (
+    CARDINALITIES,
+    MANY,
+    ONE,
+    OPTIONAL,
+    SERVICE_VOCABULARY,
+    Cardinality,
+    PortCompatibility,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    ServiceRequirement,
+    cardinality_satisfies,
+    check_port_compatibility,
+    validate_port_contract_directions,
+)
+from saealib.core.contracts.roles import ROLES, RoleName
 from saealib.core.contracts.vocabulary import (
     Vocabulary,
     VocabularyDescriptor,
@@ -8,8 +36,33 @@ from saealib.core.contracts.vocabulary import (
 )
 
 __all__ = [
+    "CARDINALITIES",
+    "DATA_SPEC_KINDS",
+    "MANY",
+    "ONE",
+    "OPTIONAL",
+    "ROLES",
+    "SERVICE_VOCABULARY",
+    "Cardinality",
+    "DataSpec",
+    "DataSpecKind",
+    "Fixed",
+    "PortCompatibility",
+    "PortContract",
+    "PortDirection",
+    "PortSpec",
+    "RoleName",
+    "SchemaBinding",
+    "ServiceRequirement",
+    "Var",
     "Vocabulary",
     "VocabularyDescriptor",
+    "cardinality_satisfies",
+    "check_port_compatibility",
+    "data_spec_kind",
+    "is_data_spec_compatible",
     "is_valid_name",
+    "register_data_spec",
     "validate_name",
+    "validate_port_contract_directions",
 ]
