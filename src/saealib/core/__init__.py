@@ -1,3 +1,5 @@
 from __future__ import annotations
 
-__all__: tuple[str, ...] = ()
+from saealib.core.component import Component
+
+__all__ = ["Component"]

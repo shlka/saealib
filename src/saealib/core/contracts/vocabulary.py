@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
@@ -40,7 +40,6 @@ class VocabularyDescriptor:
 
     def __post_init__(self) -> None:
         """Validate descriptor metadata."""
-        validate_name(self.name)
         if not isinstance(self.description, str):
             raise ValidationError("Vocabulary descriptions must be strings")
 
@@ -48,13 +47,17 @@ class VocabularyDescriptor:
 class Vocabulary(Generic[DescriptorT]):
     """Registry of explicitly named vocabulary descriptors."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        name_validator: Callable[[str], str] = validate_name,
+    ) -> None:
+        self._name_validator = name_validator
         self._entries: dict[str, DescriptorT] = {}
         self._deprecation_reasons: dict[str, str] = {}
 
     def register(self, name: str, descriptor: DescriptorT) -> None:
         """Register a descriptor under a stable name."""
-        validate_name(name)
+        self._name_validator(name)
         if name in self._entries:
             raise ConfigurationError(f"Vocabulary name is already registered: {name!r}")
         descriptor_name = getattr(descriptor, "name", None)
@@ -66,7 +69,9 @@ class Vocabulary(Generic[DescriptorT]):
 
     def get(self, name: str) -> DescriptorT | None:
         """Return the descriptor for a name, or ``None`` when it is unknown."""
-        if not is_valid_name(name):
+        try:
+            self._name_validator(name)
+        except ValidationError:
             return None
         return self._entries.get(name)
 
@@ -80,7 +85,7 @@ class Vocabulary(Generic[DescriptorT]):
 
     def deprecate(self, name: str, reason: str) -> None:
         """Mark a registered name deprecated without removing it."""
-        validate_name(name)
+        self._name_validator(name)
         if name not in self._entries:
             raise ValidationError(f"Cannot deprecate unknown vocabulary name: {name!r}")
         if not isinstance(reason, str) or not reason:
@@ -89,13 +94,13 @@ class Vocabulary(Generic[DescriptorT]):
 
     def is_deprecated(self, name: str) -> bool:
         """Return whether a registered name is deprecated."""
-        if not is_valid_name(name):
+        if self.get(name) is None:
             return False
         return name in self._deprecation_reasons
 
     def deprecation_reason(self, name: str) -> str | None:
         """Return a deprecation reason, or ``None`` when none is recorded."""
-        if not is_valid_name(name):
+        if self.get(name) is None:
             return None
         return self._deprecation_reasons.get(name)
 

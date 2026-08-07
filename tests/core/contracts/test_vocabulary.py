@@ -1,7 +1,12 @@
 from dataclasses import dataclass
+from typing import Any, cast
 
 import pytest
 
+from saealib.core.contracts.assumptions import (
+    AssumptionDescriptor,
+    validate_assumption_name,
+)
 from saealib.core.contracts.vocabulary import (
     Vocabulary,
     VocabularyDescriptor,
@@ -65,6 +70,36 @@ def test_vocabulary_lookup_miss_does_not_raise() -> None:
     assert not is_valid_name("not valid")
     assert not vocabulary.is_deprecated("not valid")
     assert vocabulary.deprecation_reason("not valid") is None
+
+
+def test_custom_name_validator_handles_dotted_names_and_invalid_lookup() -> None:
+    vocabulary: Vocabulary[AssumptionDescriptor] = Vocabulary(
+        name_validator=validate_assumption_name
+    )
+    descriptor = AssumptionDescriptor(
+        name="extension.future_flag",
+        description="An extension assumption.",
+        unaware_default=False,
+    )
+
+    vocabulary.register("extension.future_flag", descriptor)
+
+    assert vocabulary.get("extension.future_flag") is descriptor
+    assert vocabulary.get("invalid name") is None
+    vocabulary.deprecate("extension.future_flag", "Replaced")
+    assert vocabulary.is_deprecated("extension.future_flag")
+    assert vocabulary.deprecation_reason("extension.future_flag") == "Replaced"
+
+
+def test_descriptor_name_validation_belongs_to_registration() -> None:
+    descriptor = VocabularyDescriptor(name="not valid", description="Value")
+
+    assert descriptor.name == "not valid"
+    with pytest.raises(ValidationError):
+        Vocabulary[VocabularyDescriptor]().register("not valid", descriptor)
+
+    with pytest.raises(ValidationError):
+        VocabularyDescriptor(name="valid_name", description=cast(Any, 1))
 
 
 def test_deprecated_name_cannot_be_reregistered() -> None:
