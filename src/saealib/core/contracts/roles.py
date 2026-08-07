@@ -15,6 +15,8 @@ for _name, _description in (
     ("fitter", "Fits a surrogate model."),
     ("predictor", "Predicts with a fitted surrogate."),
     ("acquisition", "Evaluates acquisition values."),
+    ("strategy", "Advances an optimization state by one step."),
+    ("training_set", "Builds training features and targets."),
     ("population_comparator", "Compares populations."),
     ("pairwise_comparator", "Compares pairs of candidates."),
     ("crossover", "Combines parent genomes into offspring genomes."),

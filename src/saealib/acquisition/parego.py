@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from scipy.stats import norm
 
 from saealib.acquisition.base import PointwiseAcquisition, direction_to_minimize_sign
+from saealib.core.contracts import ComponentContract, StateContract
+from saealib.core.state import RUNTIME_RNG
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
@@ -79,6 +82,13 @@ class ParEGOAcquisition(PointwiseAcquisition):
         self.alpha = alpha
         self._rng = rng if rng is not None else np.random.default_rng()
         self.direction = direction
+
+    def contract(self) -> ComponentContract:
+        """Return the ParEGO acquisition contract."""
+        return replace(
+            super().contract(),
+            state=StateContract(reads=(RUNTIME_RNG,), writes=(RUNTIME_RNG,)),
+        )
 
     def _scalarize(
         self,

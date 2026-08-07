@@ -8,6 +8,8 @@ def test_roles_are_registered_name_only_descriptors() -> None:
         "fitter",
         "predictor",
         "acquisition",
+        "strategy",
+        "training_set",
         "population_comparator",
         "pairwise_comparator",
         "crossover",

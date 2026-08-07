@@ -32,11 +32,22 @@ Literature patterns covered by this module:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 import numpy as np
 
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    StateContract,
+    Var,
+)
+from saealib.core.state import RUNTIME_RNG
 from saealib.registry import register
 
 if TYPE_CHECKING:
@@ -68,6 +79,52 @@ class TrainingSet(ABC):
     Inject an instance into ``LocalSurrogateManager`` or
     ``GlobalSurrogateManager`` via their ``training_set`` constructor argument.
     """
+
+    def contract(self) -> ComponentContract:
+        """Return the training-set contract."""
+        feature_schema = Var(name="F")
+        objective_schema = Var(name="O")
+        return ComponentContract(
+            ports={
+                "training_set": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="archive",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                        ),
+                        PortSpec(
+                            name="population",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                            optional=True,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="features",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(
+                                kind="FeatureBatch",
+                                bindings={"feature_schema": feature_schema},
+                            ),
+                            cardinality=MANY,
+                        ),
+                        PortSpec(
+                            name="targets",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(
+                                kind="FeatureBatch",
+                                bindings={"objective_schema": objective_schema},
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                )
+            }
+        )
 
     @abstractmethod
     def build(
@@ -440,6 +497,15 @@ class PairwiseComparisonSet(TrainingSet):
         self.source = source
         self.n_pairs = n_pairs
         self.rng = rng
+
+    def contract(self) -> ComponentContract:
+        """Return the pairwise-training contract."""
+        state = (
+            StateContract(reads=(RUNTIME_RNG,), writes=(RUNTIME_RNG,))
+            if self.n_pairs is not None and self.rng is None
+            else StateContract()
+        )
+        return replace(super().contract(), state=state)
 
     def build(
         self,

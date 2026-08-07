@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -11,6 +12,7 @@ from saealib.acquisition.base import (
     AcquisitionFunction,
     AcquisitionResult,
 )
+from saealib.core.contracts import ComponentContract
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
@@ -39,6 +41,21 @@ class WinRateAcquisition(AcquisitionFunction):
 
     # Win rate is not an objective-space quantity; it has no direction.
     direction_sensitive: bool = False
+
+    def contract(self) -> ComponentContract:
+        """Return the win-rate acquisition contract."""
+        contract = super().contract()
+        role = contract.ports["acquisition"]
+        return replace(
+            contract,
+            ports={
+                **contract.ports,
+                "acquisition": replace(
+                    role,
+                    inputs=tuple(replace(port, optional=False) for port in role.inputs),
+                ),
+            },
+        )
 
     def evaluate(
         self,

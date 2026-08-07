@@ -9,6 +9,17 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    StateContract,
+    Var,
+)
+from saealib.core.state import SURROGATES_DEFAULT
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
@@ -20,6 +31,62 @@ class Surrogate(ABC):
 
     # GP implementation will override this with True.
     provides_uncertainty: bool = False
+
+    def contract(self) -> ComponentContract:
+        """Return the surrogate model contract."""
+        feature_schema = Var(name="F")
+        objective_schema = Var(name="O")
+        return ComponentContract(
+            ports={
+                "fitter": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="train_features",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(
+                                kind="FeatureBatch",
+                                bindings={"feature_schema": feature_schema},
+                            ),
+                            cardinality=MANY,
+                        ),
+                        PortSpec(
+                            name="train_targets",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(
+                                kind="FeatureBatch",
+                                bindings={"objective_schema": objective_schema},
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                ),
+                "predictor": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="test_features",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(
+                                kind="FeatureBatch",
+                                bindings={"feature_schema": feature_schema},
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="prediction",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(
+                                kind="SurrogatePrediction",
+                                bindings={"objective_schema": objective_schema},
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                ),
+            },
+            state=StateContract(exports=(SURROGATES_DEFAULT,)),
+        )
 
     @abstractmethod
     def fit(self, train_x: np.ndarray, train_y: np.ndarray) -> None:

@@ -5,6 +5,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 from saealib.context import OptimizationState
+from saealib.core.contracts import ComponentContract, PortContract, StateContract
+from saealib.core.state import PENDING_EVALUATIONS
 from saealib.optimizer import ComponentProvider
 from saealib.policies.evaluation import EvaluateAll, EvaluationPlanner
 from saealib.policies.feedback import FeedbackBuilder, MixedFeedback
@@ -25,6 +27,16 @@ class OptimizationStrategy(ABC):
     evaluation_planner: EvaluationPlanner = EvaluateAll()
 
     feedback_builder: FeedbackBuilder = MixedFeedback()
+
+    def contract(self) -> ComponentContract:
+        """Return the strategy contract."""
+        return ComponentContract(
+            ports={"strategy": PortContract()},
+            state=StateContract(
+                reads=(PENDING_EVALUATIONS,),
+                writes=(PENDING_EVALUATIONS,),
+            ),
+        )
 
     @abstractmethod
     def build_pipeline(self, provider: ComponentProvider):

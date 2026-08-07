@@ -31,8 +31,10 @@ from saealib.core.contracts import (
     PortSpec,
     Product,
     ServiceRequirement,
+    StateContract,
     Var,
 )
+from saealib.core.state import SURROGATES_DEFAULT
 from saealib.registry import build, to_spec
 from saealib.surrogate.rbf import gaussian_kernel
 
@@ -144,6 +146,83 @@ def _recipe_rbf_surrogate() -> Any:
     )
 
 
+def _recipe_global_surrogate_manager() -> Any:
+    from saealib.surrogate.manager import GlobalSurrogateManager
+
+    return GlobalSurrogateManager(_recipe_rbf_surrogate())
+
+
+def _recipe_composite_surrogate_manager() -> Any:
+    from saealib.surrogate.manager import CompositeSurrogateManager
+
+    return CompositeSurrogateManager({"default": _recipe_global_surrogate_manager()})
+
+
+def _recipe_pairwise_surrogate_manager() -> Any:
+    from sklearn.svm import SVC
+
+    from saealib.surrogate.manager import PairwiseSurrogateManager
+    from saealib.surrogate.sklearn_surrogate import SklearnClassificationSurrogate
+
+    return PairwiseSurrogateManager(
+        SklearnClassificationSurrogate(SVC(probability=True))
+    )
+
+
+def _recipe_per_objective_surrogate() -> Any:
+    from saealib.surrogate.per_objective import PerObjectiveSurrogate
+
+    return PerObjectiveSurrogate([_recipe_rbf_surrogate()])
+
+
+def _recipe_sklearn_surrogate() -> Any:
+    from sklearn.svm import SVR
+
+    from saealib.surrogate.sklearn_surrogate import SklearnSurrogate
+
+    return SklearnSurrogate(SVR())
+
+
+def _recipe_sklearn_classification_surrogate() -> Any:
+    from sklearn.svm import SVC
+
+    from saealib.surrogate.sklearn_surrogate import SklearnClassificationSurrogate
+
+    return SklearnClassificationSurrogate(SVC(probability=True))
+
+
+def _recipe_torch_surrogate() -> Any:
+    import torch
+
+    from saealib.surrogate.torch_surrogate import TorchSurrogate
+
+    return TorchSurrogate(torch.nn.Linear(5, 1))
+
+
+def _recipe_composite_acquisition() -> Any:
+    from saealib.acquisition.base import CompositeAcquisition
+    from saealib.acquisition.mean import MeanPrediction
+
+    return CompositeAcquisition(
+        {"objective": MeanPrediction()}, lambda scores: scores[0]
+    )
+
+
+def _recipe_manager_switcher() -> Any:
+    from saealib.surrogate.switching import ManagerSwitcher
+
+    manager = _recipe_global_surrogate_manager()
+    return ManagerSwitcher(manager, manager)
+
+
+def _recipe_strategy_switcher() -> Any:
+    from saealib.strategies.ib import IndividualBasedStrategy
+    from saealib.surrogate.switching import StrategySwitcher
+
+    strategy = IndividualBasedStrategy()
+    return StrategySwitcher(strategy, strategy)
+
+
 def _recipe_ga() -> Any:
     return build(
         {
@@ -179,6 +258,26 @@ _RECIPES: dict[str, Callable[[], Any]] = {
         _REGISTRY["LocalSurrogateManager"]
     ): _recipe_local_surrogate_manager,
     _qualified_name(_REGISTRY["RBFSurrogate"]): _recipe_rbf_surrogate,
+    "saealib.acquisition.base.CompositeAcquisition": _recipe_composite_acquisition,
+    (
+        "saealib.surrogate.manager.CompositeSurrogateManager"
+    ): _recipe_composite_surrogate_manager,
+    (
+        "saealib.surrogate.manager.GlobalSurrogateManager"
+    ): _recipe_global_surrogate_manager,
+    (
+        "saealib.surrogate.manager.PairwiseSurrogateManager"
+    ): _recipe_pairwise_surrogate_manager,
+    (
+        "saealib.surrogate.per_objective.PerObjectiveSurrogate"
+    ): _recipe_per_objective_surrogate,
+    (
+        "saealib.surrogate.sklearn_surrogate.SklearnClassificationSurrogate"
+    ): _recipe_sklearn_classification_surrogate,
+    ("saealib.surrogate.sklearn_surrogate.SklearnSurrogate"): _recipe_sklearn_surrogate,
+    "saealib.surrogate.switching.ManagerSwitcher": _recipe_manager_switcher,
+    "saealib.surrogate.switching.StrategySwitcher": _recipe_strategy_switcher,
+    "saealib.surrogate.torch_surrogate.TorchSurrogate": _recipe_torch_surrogate,
     _qualified_name(_REGISTRY["CORSDistance"]): lambda: build(
         {"type": "CORSDistance", "params": {"delta": 10.0}}
     ),
@@ -403,6 +502,7 @@ def _record_abc_contract_calls(
     abc: type[Any],
 ) -> Iterator[set[type[Any]]]:
     original = abc.contract
+    had_local_contract = "contract" in abc.__dict__
     called_by: set[type[Any]] = set()
 
     def recording_contract(instance: Any, *args: Any, **kwargs: Any) -> Any:
@@ -413,7 +513,10 @@ def _record_abc_contract_calls(
     try:
         yield called_by
     finally:
-        setattr(abc, "contract", original)
+        if had_local_contract:
+            setattr(abc, "contract", original)
+        else:
+            delattr(abc, "contract")
 
 
 def _check_port_names(instance: Any) -> None:
@@ -759,6 +862,11 @@ def test_every_recipe_is_reached_after_no_arg_construction_attempt() -> None:
 def test_discovered_contract_is_state_free(name: str, instance: Any) -> None:
     del name
     _check_state_free(instance)
+
+
+def test_surrogate_contract_exports_model_state_only() -> None:
+    contract = _recipe_rbf_surrogate().contract()
+    assert contract.state == StateContract(exports=(SURROGATES_DEFAULT,))
 
 
 @pytest.mark.parametrize(

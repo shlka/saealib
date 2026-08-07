@@ -18,6 +18,8 @@ import math
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Generic, TypeVar
 
+from saealib.core.contracts import ComponentContract, PartSpec
+
 if TYPE_CHECKING:
     from saealib.strategies.base import OptimizationStrategy
     from saealib.surrogate.accuracy import SurrogateAccuracy
@@ -37,7 +39,7 @@ class AccuracyBasedSurrogateSwitcher(ABC, Generic[T]):
         for ctx in optimizer.iterate():
             optimizer.set_strategy(
                 switcher.switch(optimizer.surrogate_manager.last_accuracy)
-            )
+        )
     """
 
     @abstractmethod
@@ -90,6 +92,15 @@ class ManagerSwitcher(AccuracyBasedSurrogateSwitcher["SurrogateManager"]):
         self.fallback = fallback
         self.metric = metric
         self.threshold = threshold
+
+    def contract(self) -> ComponentContract:
+        """Return the manager-switcher contract."""
+        return ComponentContract(
+            parts=(
+                PartSpec(name="primary", contract=self.primary.contract()),
+                PartSpec(name="fallback", contract=self.fallback.contract()),
+            ),
+        )
 
     def switch(self, accuracy: SurrogateAccuracy | None) -> SurrogateManager:
         """Return primary or fallback based on the metric threshold."""
@@ -196,6 +207,18 @@ class StrategySwitcher(AccuracyBasedSurrogateSwitcher["OptimizationStrategy"]):
         self.threshold = threshold
         self.mid = mid
         self.mid_threshold = mid_threshold
+
+    def contract(self) -> ComponentContract:
+        """Return the strategy-switcher contract."""
+        parts = [
+            PartSpec(name="primary", contract=self.primary.contract()),
+            PartSpec(name="fallback", contract=self.fallback.contract()),
+        ]
+        if self.mid is not None:
+            parts.append(
+                PartSpec(name="mid", contract=self.mid.contract(), optional=True)
+            )
+        return ComponentContract(parts=tuple(parts))
 
     def switch(self, accuracy: SurrogateAccuracy | None) -> OptimizationStrategy:
         """Return primary, mid (if configured), or fallback based on the metric."""
