@@ -7,12 +7,50 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from saealib.context import OptimizationState
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    Var,
+)
 from saealib.population import Population
 from saealib.registry import register
 
 
 class ParentSelection(ABC):
     """Base class for parent selection operators."""
+
+    def contract(self) -> ComponentContract:
+        """Return the parent-selection contract."""
+        parents = DataSpec(
+            kind="Ordering",
+            bindings={"parent_count": Var(name="P")},
+        )
+        return ComponentContract(
+            ports={
+                "parent_selection": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="population",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="parents",
+                            direction=PortDirection.OUTPUT,
+                            data=parents,
+                            cardinality=MANY,
+                        ),
+                    ),
+                )
+            }
+        )
 
     @abstractmethod
     def select(
@@ -221,6 +259,31 @@ class LinearRankSelection(ParentSelection):
 
 class SurvivorSelection(ABC):
     """Base class for survivor selection operators."""
+
+    def contract(self) -> ComponentContract:
+        """Return the survivor-selection contract."""
+        return ComponentContract(
+            ports={
+                "survivor_selection": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="pool",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="survivors",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(kind="Ordering"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                )
+            }
+        )
 
     @abstractmethod
     def select(

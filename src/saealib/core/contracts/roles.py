@@ -17,6 +17,10 @@ for _name, _description in (
     ("acquisition", "Evaluates acquisition values."),
     ("population_comparator", "Compares populations."),
     ("pairwise_comparator", "Compares pairs of candidates."),
+    ("crossover", "Combines parent genomes into offspring genomes."),
+    ("mutation", "Mutates candidate genomes."),
+    ("parent_selection", "Selects parent indices for reproduction."),
+    ("survivor_selection", "Selects survivor indices from a population."),
 ):
     ROLES.register(
         _name,

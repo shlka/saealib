@@ -10,6 +10,10 @@ def test_roles_are_registered_name_only_descriptors() -> None:
         "acquisition",
         "population_comparator",
         "pairwise_comparator",
+        "crossover",
+        "mutation",
+        "parent_selection",
+        "survivor_selection",
     )
     descriptor = ROLES.get("proposer")
     assert descriptor is not None

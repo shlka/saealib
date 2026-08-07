@@ -10,7 +10,7 @@ from saealib.core.contracts.vocabulary import (
 )
 from saealib.exceptions import ValidationError
 
-__all__ = ["STATE_NAMESPACES", "StateKey"]
+__all__ = ["POPULATIONS_MAIN", "RUNTIME_RNG", "STATE_NAMESPACES", "StateKey"]
 
 
 ValueT = TypeVar("ValueT")
@@ -52,3 +52,9 @@ class StateKey(Generic[ValueT]):
             or self.schema_version < 1
         ):
             raise ValidationError("State schema_version must be a positive integer")
+
+
+POPULATIONS_MAIN = StateKey[object](
+    namespace="populations", name="main", schema_version=1
+)
+RUNTIME_RNG = StateKey[object](namespace="runtime", name="rng", schema_version=1)

@@ -10,6 +10,16 @@ from typing import TYPE_CHECKING
 import numpy as np
 from typing_extensions import Self
 
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    ServiceRequirement,
+    Var,
+)
 from saealib.registry import register
 
 if TYPE_CHECKING:
@@ -31,6 +41,42 @@ class Mutation(ABC):
 
     prob: float = 1.0
     prob_var: float | None = None
+
+    def contract(self) -> ComponentContract:
+        """Return the mutation contract."""
+        representation = Var(name="R")
+        candidate_count = Var(name="N")
+        data = DataSpec(
+            kind="GenomeBatch",
+            bindings={
+                "representation": representation,
+                "candidate_count": candidate_count,
+            },
+        )
+        bounds = (ServiceRequirement(name="BoundsService"),)
+        return ComponentContract(
+            ports={
+                "mutation": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="candidates",
+                            direction=PortDirection.INPUT,
+                            data=data,
+                            cardinality=MANY,
+                            required_services=bounds,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="mutants",
+                            direction=PortDirection.OUTPUT,
+                            data=data,
+                            cardinality=MANY,
+                        ),
+                    ),
+                )
+            }
+        )
 
     def mutate(
         self,

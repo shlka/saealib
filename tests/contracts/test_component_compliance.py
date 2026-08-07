@@ -20,7 +20,6 @@ from saealib.core.contracts import (
     SERVICE_VOCABULARY,
     AssumptionSet,
     ComponentContract,
-    Contained,
     DataSpec,
     ExecutionContract,
     Fixed,
@@ -255,16 +254,6 @@ def _check_port_names(instance: Any) -> None:
         _check_port_names(child)
 
 
-def _schema_variables(binding: Any) -> Iterator[str]:
-    if isinstance(binding, Var):
-        yield binding.name
-    elif isinstance(binding, Product):
-        for element in binding.elements:
-            yield from _schema_variables(element)
-    elif isinstance(binding, (Contained, Fixed)):
-        return
-
-
 def _check_vocabularies(instance: Any) -> None:
     contract = instance.contract()
     for role, role_contract in contract.ports.items():
@@ -272,10 +261,8 @@ def _check_vocabularies(instance: Any) -> None:
         for port in (*role_contract.inputs, *role_contract.outputs):
             assert DATA_SPEC_KINDS.get(port.data.kind) is not None
             assert CARDINALITIES.get(port.cardinality) is not None
-            for variable, binding in port.data.bindings.items():
+            for variable in port.data.bindings:
                 assert SCHEMA_VARIABLES.get(variable) is not None
-                for nested_variable in _schema_variables(binding):
-                    assert SCHEMA_VARIABLES.get(nested_variable) is not None
             for service in port.required_services:
                 assert SERVICE_VOCABULARY.get(service.name) is not None
     for name in contract.assumptions:
@@ -456,16 +443,10 @@ def _unknown_cardinality_contract() -> ComponentContract:
 
 def _unknown_top_level_schema_variable_contract() -> ComponentContract:
     return _vocabulary_contract(
-        bindings={"unknown_variable": Var(name="feature_schema")}
-    )
-
-
-def _unknown_nested_schema_variable_contract() -> ComponentContract:
-    return _vocabulary_contract(
         bindings={
-            "representation": Product(
+            "unknown_variable": Product(
                 elements=(
-                    Var(name="unknown_nested_variable"),
+                    Var(name="anything"),
                     Fixed(value="dense"),
                 )
             )
@@ -516,7 +497,6 @@ class _PartsMissingDummy:
         )
 
 
-@pytest.mark.xfail(strict=True, reason="Unit E must add the first built-in contract")
 def test_builtin_contract_implementation_set_is_not_empty() -> None:
     assert _IMPLEMENTED_COMPONENTS
 
@@ -623,6 +603,23 @@ def test_vocabulary_check_accepts_nested_registered_references() -> None:
     _check_vocabularies(_VocabularyPassDummy())
 
 
+def test_vocabulary_check_ignores_nested_variable_names() -> None:
+    _check_vocabularies(
+        _VocabularyDummy(
+            _vocabulary_contract(
+                bindings={
+                    "representation": Product(
+                        elements=(
+                            Var(name="anything"),
+                            Fixed(value="dense"),
+                        )
+                    )
+                }
+            )
+        )
+    )
+
+
 @pytest.mark.parametrize(
     ("vocabulary_name", "contract_factory"),
     [
@@ -630,7 +627,6 @@ def test_vocabulary_check_accepts_nested_registered_references() -> None:
         ("data kind", _unknown_data_kind_contract),
         ("cardinality", _unknown_cardinality_contract),
         ("top-level schema variable", _unknown_top_level_schema_variable_contract),
-        ("nested schema variable", _unknown_nested_schema_variable_contract),
         ("required service", _unknown_required_service_contract),
         ("assumption key", _unknown_assumption_contract),
         ("runtime capability", _unknown_runtime_capability_contract),

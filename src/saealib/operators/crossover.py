@@ -5,11 +5,23 @@ from __future__ import annotations
 import copy
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from dataclasses import replace
 from typing import TYPE_CHECKING
 
 import numpy as np
 from typing_extensions import Self
 
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    Fixed,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    ServiceRequirement,
+    Var,
+)
 from saealib.registry import register
 
 if TYPE_CHECKING:
@@ -36,6 +48,44 @@ class Crossover(ABC):
     n_parents: int = 2
     n_children: int = 2
     prob: float = 1.0
+
+    def contract(self) -> ComponentContract:
+        """Return the crossover contract."""
+        representation = Var(name="R")
+        return ComponentContract(
+            ports={
+                "crossover": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="parents",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(
+                                kind="GenomeBatch",
+                                bindings={
+                                    "representation": representation,
+                                    "parent_count": Fixed(value=self.n_parents),
+                                },
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="offspring",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(
+                                kind="GenomeBatch",
+                                bindings={
+                                    "representation": representation,
+                                    "candidate_count": Fixed(value=self.n_children),
+                                },
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                )
+            }
+        )
 
     def crossover(
         self,
@@ -341,6 +391,40 @@ class CrossoverSBX(Crossover):
         self.prob = prob
         self.eta = eta
         self.prob_var = prob_var
+
+    def contract(self) -> ComponentContract:
+        """Return the bounded real-valued crossover contract."""
+        base = super().contract()
+        role = base.ports["crossover"]
+        parent_data = role.inputs[0].data
+        offspring_data = role.outputs[0].data
+        parent_bindings = dict(parent_data.bindings)
+        offspring_bindings = dict(offspring_data.bindings)
+        parent_bindings["representation"] = Fixed(value="real")
+        offspring_bindings["representation"] = Fixed(value="real")
+        return replace(
+            base,
+            ports={
+                "crossover": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            data=replace(parent_data, bindings=parent_bindings),
+                            required_services=(
+                                ServiceRequirement(name="BoundsService"),
+                            ),
+                        ),
+                    ),
+                    outputs=(
+                        replace(
+                            role.outputs[0],
+                            data=replace(offspring_data, bindings=offspring_bindings),
+                        ),
+                    ),
+                )
+            },
+        )
 
     def crossover_batch(
         self,
