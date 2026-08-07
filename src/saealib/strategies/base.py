@@ -34,7 +34,6 @@ class OptimizationStrategy(ABC):
             ports={"strategy": PortContract()},
             state=StateContract(
                 reads=(PENDING_EVALUATIONS,),
-                writes=(PENDING_EVALUATIONS,),
             ),
         )
 

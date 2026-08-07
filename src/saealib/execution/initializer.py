@@ -27,6 +27,7 @@ from saealib.core.state import (
     ARCHIVES_PARETO,
     EVALUATIONS_COUNT,
     POPULATIONS_MAIN,
+    RUNTIME_CANDIDATE_ID_ALLOCATOR,
     RUNTIME_GENERATION,
     RUNTIME_RNG,
 )
@@ -200,6 +201,15 @@ class LHSInitializer(Initializer):
         output = role.outputs[0]
         return replace(
             contract,
+            state=replace(
+                contract.state,
+                reads=(
+                    *contract.state.reads,
+                    RUNTIME_CANDIDATE_ID_ALLOCATOR,
+                    EVALUATIONS_COUNT,
+                ),
+                writes=(*contract.state.writes, RUNTIME_CANDIDATE_ID_ALLOCATOR),
+            ),
             ports={
                 **contract.ports,
                 "initializer": replace(
@@ -322,6 +332,15 @@ class RandomInitializer(Initializer):
         output = role.outputs[0]
         return replace(
             contract,
+            state=replace(
+                contract.state,
+                reads=(
+                    *contract.state.reads,
+                    RUNTIME_CANDIDATE_ID_ALLOCATOR,
+                    EVALUATIONS_COUNT,
+                ),
+                writes=(*contract.state.writes, RUNTIME_CANDIDATE_ID_ALLOCATOR),
+            ),
             ports={
                 **contract.ports,
                 "initializer": replace(
@@ -443,6 +462,15 @@ class SobolInitializer(Initializer):
         output = role.outputs[0]
         return replace(
             contract,
+            state=replace(
+                contract.state,
+                reads=(
+                    *contract.state.reads,
+                    RUNTIME_CANDIDATE_ID_ALLOCATOR,
+                    EVALUATIONS_COUNT,
+                ),
+                writes=(*contract.state.writes, RUNTIME_CANDIDATE_ID_ALLOCATOR),
+            ),
             ports={
                 **contract.ports,
                 "initializer": replace(

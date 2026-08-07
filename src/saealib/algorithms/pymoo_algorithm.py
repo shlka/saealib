@@ -10,6 +10,7 @@ import numpy as np
 from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent
 from saealib.core.contracts import ComponentContract, ExecutionContract
+from saealib.core.state import RUNTIME_CANDIDATE_ID_ALLOCATOR
 from saealib.exceptions import ConfigurationError
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem.constraint import EqualityConstraint
@@ -131,6 +132,14 @@ class PymooAlgorithm(Algorithm):
     def contract(self) -> ComponentContract:
         """Return the family contract with optional partial-feedback capability."""
         family = super().contract()
+        family = replace(
+            family,
+            state=replace(
+                family.state,
+                reads=(*family.state.reads, RUNTIME_CANDIDATE_ID_ALLOCATOR),
+                writes=(*family.state.writes, RUNTIME_CANDIDATE_ID_ALLOCATOR),
+            ),
+        )
         if not self.allow_partial_tell:
             return family
         return replace(

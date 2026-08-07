@@ -19,12 +19,16 @@ from saealib.core.state import (
     EVALUATIONS_PLAN,
     EVALUATIONS_PLAN_STATE,
     EVALUATIONS_PLAN_UPDATES,
+    FEEDBACK_RESULT,
     PENDING_EVALUATIONS,
+    PROPOSALS_OFFSPRING,
     RUNTIME_ASYNC_FATAL,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
     RUNTIME_GENERATION,
     RUNTIME_REQUEST_ID_ALLOCATOR,
     RUNTIME_RNG,
+    STATE_MIGRATORS,
+    SURROGATES_PREDICTIONS,
     USER_DATA,
     StateKey,
     StatePatch,
@@ -49,8 +53,8 @@ if TYPE_CHECKING:
     from saealib.surrogate.prediction import SurrogatePrediction
 
 
-CURRENT_CHECKPOINT_SCHEMA_VERSION = 2
-SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS = frozenset({1, 2})
+CURRENT_CHECKPOINT_SCHEMA_VERSION = 3
+SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS = frozenset({1, 2, 3})
 _SAFE_EMPTY_PENDING = frozenset(
     pickle.dumps({}, protocol=protocol)
     for protocol in range(pickle.HIGHEST_PROTOCOL + 1)
@@ -71,6 +75,9 @@ _STORE_FIELDS = {
     "pending_evaluations": PENDING_EVALUATIONS,
     "async_fatal": RUNTIME_ASYNC_FATAL,
     "data": USER_DATA,
+    "predictions": SURROGATES_PREDICTIONS,
+    "feedback_result": FEEDBACK_RESULT,
+    "offspring": PROPOSALS_OFFSPRING,
 }
 
 
@@ -687,6 +694,8 @@ class OptimizationState:
         state["evaluation_request"] = None
         state["evaluation_updates"] = []
         state["evaluation_update_new_ids"] = []
+        state.pop("evaluation_new_ids", None)
+        state.pop("evaluation_update_new_ids", None)
         return state
 
     def replace(self, **kwargs: Any) -> OptimizationState:
@@ -806,7 +815,74 @@ class OptimizationState:
     # Checkpoint: npz (best-effort reproducibility)
     # ------------------------------------------------------------------
 
+    def _save_v3(self, path: str | Path) -> None:
+        """Save every live store entry in the v3 per-key envelope."""
+        if any(
+            not pending.checkpointable and pending.fatal_error is None
+            for pending in self.pending_evaluations.values()
+        ):
+            raise ValidationError(
+                "cannot checkpoint while synchronous evaluations are pending"
+            )
+        p = Path(path)
+        if not p.suffix:
+            p = p.with_suffix(".npz")
+        arrays: dict[str, np.ndarray] = {}
+        entries: list[dict[str, Any]] = []
+        for index, (key, value) in enumerate(self._store._values.items()):
+            if key == EVALUATIONS_OWNERS:
+                encoded = {
+                    "codec": "owners",
+                    "value": [
+                        {
+                            "request_id": int(request_id),
+                            **(
+                                {"alias": "offspring"}
+                                if owner is self.offspring
+                                else next(
+                                    (
+                                        {"alias": f"population:{name}"}
+                                        for name, population in self.populations.items()
+                                        if owner is population
+                                    ),
+                                    {
+                                        "entry": _encode_v3_value(
+                                            StateKey(
+                                                namespace="evaluations",
+                                                name="owner",
+                                                schema_version=1,
+                                            ),
+                                            owner,
+                                            arrays,
+                                            f"_entry_{index}__owner_{request_id}",
+                                        )
+                                    },
+                                )
+                            ),
+                        }
+                        for request_id, owner in value.items()
+                    ],
+                }
+            else:
+                encoded = _encode_v3_value(key, value, arrays, f"_entry_{index}")
+            entries.append(
+                {
+                    "key": _state_key_to_json(key),
+                    "target_schema_version": key.schema_version,
+                    "value": encoded,
+                }
+            )
+        arrays["_checkpoint_schema_version"] = np.array(
+            CURRENT_CHECKPOINT_SCHEMA_VERSION, dtype=np.int64
+        )
+        arrays["_state_entries"] = _json_array(entries)
+        np.savez(p, **cast(Any, arrays))
+
     def save(self, path: str | Path) -> None:
+        """Save a portable schema-v3 checkpoint."""
+        self._save_v3(path)
+
+    def _save_v2(self, path: str | Path) -> None:
         """
         Save optimization state to an npz file.
 
@@ -839,7 +915,7 @@ class OptimizationState:
 
         save_dict: dict[str, np.ndarray] = {}
         manifest: dict[str, Any] = {
-            "schema_version": CURRENT_CHECKPOINT_SCHEMA_VERSION,
+            "schema_version": 2,
             "populations": [],
             "archives": [],
             "offspring": None,
@@ -920,9 +996,7 @@ class OptimizationState:
         save_dict["_rng_state"] = _json_array(self.rng.bit_generator.state)
         save_dict["_fe"] = np.array(self.fe, dtype=np.int64)
         save_dict["_gen"] = np.array(self.gen, dtype=np.int64)
-        save_dict["_checkpoint_schema_version"] = np.array(
-            CURRENT_CHECKPOINT_SCHEMA_VERSION, dtype=np.int64
-        )
+        save_dict["_checkpoint_schema_version"] = np.array(2, dtype=np.int64)
         save_dict["_next_candidate_id"] = np.array(
             self.candidate_id_allocator.next_value, dtype=np.int64
         )
@@ -997,6 +1071,8 @@ class OptimizationState:
                 )
             if schema_version == 1:
                 return _load_v1(cls, data, problem)
+            if schema_version == 3:
+                return _load_v3(cls, data, problem)
             return _load_v2(cls, data, problem)
         except CheckpointError:
             raise
@@ -1010,6 +1086,163 @@ class OptimizationState:
 for _store_field_name in _STORE_FIELDS:
     if _store_field_name in vars(OptimizationState):
         delattr(OptimizationState, _store_field_name)
+
+
+def _state_key_to_json(key: StateKey[Any]) -> dict[str, Any]:
+    return {
+        "namespace": key.namespace,
+        "name": key.name,
+        "schema_version": key.schema_version,
+    }
+
+
+def _state_key_from_json(value: Any) -> StateKey[Any]:
+    if not isinstance(value, dict):
+        raise CheckpointError("state entry key is malformed")
+    try:
+        return StateKey(
+            namespace=value["namespace"],
+            name=value["name"],
+            schema_version=value["schema_version"],
+        )
+    except (KeyError, TypeError, ValidationError) as exc:
+        raise CheckpointError("state entry key is malformed") from exc
+
+
+def _encode_v3_value(
+    key: StateKey[Any], value: Any, arrays: dict[str, np.ndarray], prefix: str
+) -> Any:
+    from saealib.population import Archive, ParetoArchive, Population
+
+    if isinstance(value, Population):
+        kind = (
+            "archive" if isinstance(value, (Archive, ParetoArchive)) else "population"
+        )
+        descriptor = _collection_descriptor(kind, key.name, value)
+        for attr_name, array in value._data.items():
+            if array.dtype == object:
+                raise CheckpointError(
+                    f"object dtype is not checkpointable: {key.name!r}"
+                )
+            arrays[f"{prefix}__{_encoded_name(attr_name)}"] = np.array(
+                array[: len(value)], copy=True
+            )
+        return {"codec": "collection", "kind": kind, "descriptor": descriptor}
+    if key == RUNTIME_RNG:
+        return {"codec": "json", "value": _json_safe(value.bit_generator.state)}
+    if key in {RUNTIME_CANDIDATE_ID_ALLOCATOR, RUNTIME_REQUEST_ID_ALLOCATOR}:
+        return {"codec": "scalar", "value": value.next_value}
+    if key == FEEDBACK_RESULT:
+        return {
+            "codec": "feedback",
+            "value": None if value is None else _feedback_to_json(value),
+        }
+    if key == SURROGATES_PREDICTIONS:
+        return {
+            "codec": "prediction",
+            "value": None if value is None else _prediction_to_json(value),
+        }
+    if key == EVALUATIONS_PLAN:
+        return {
+            "codec": "plan",
+            "value": None if value is None else _plan_to_json(value),
+        }
+    if key == EVALUATIONS_PLAN_STATE:
+        return {
+            "codec": "plan_state",
+            "value": None if value is None else _plan_state_to_json(value),
+        }
+    if key == EVALUATIONS_PLAN_UPDATES:
+        return {
+            "codec": "updates",
+            "value": {
+                str(k): [_update_to_json(item) for item in v] for k, v in value.items()
+            },
+        }
+    if key == PENDING_EVALUATIONS:
+        return {
+            "codec": "pending",
+            "value": {str(k): _pending_to_json(item) for k, item in value.items()},
+        }
+    if key == EVALUATIONS_OWNERS:
+        return {
+            "codec": "owners",
+            "value": [
+                {
+                    "request_id": int(k),
+                    "entry": _encode_v3_value(
+                        StateKey(
+                            namespace="evaluations", name="owner", schema_version=1
+                        ),
+                        owner,
+                        arrays,
+                        f"{prefix}__owner_{k}",
+                    ),
+                }
+                for k, owner in value.items()
+            ],
+        }
+    return {"codec": "json", "value": _json_safe(value)}
+
+
+def _decode_v3_value(key: StateKey[Any], encoded: Any, data: Any, prefix: str) -> Any:
+    if not isinstance(encoded, dict) or not isinstance(encoded.get("codec"), str):
+        raise CheckpointError(
+            f"state entry {key.namespace}/{key.name} has malformed value"
+        )
+    codec = encoded["codec"]
+    value = encoded.get("value")
+    if codec == "collection":
+        if not isinstance(encoded.get("descriptor"), dict):
+            raise CheckpointError("state collection descriptor is malformed")
+        return _restore_collection(encoded["kind"], encoded["descriptor"], data, prefix)
+    if codec == "json":
+        return value
+    if codec == "alias":
+        return value
+    if codec == "scalar":
+        return _allocator_scalar(np.array(value), key.name)
+    if codec == "feedback":
+        return None if value is None else _feedback_from_json(value)
+    if codec == "prediction":
+        return None if value is None else _prediction_from_json(value)
+    if codec == "plan":
+        return None if value is None else _plan_from_json(value)
+    if codec == "plan_state":
+        return None if value is None else _plan_state_from_json(value)
+    if codec == "updates":
+        if not isinstance(value, dict):
+            raise CheckpointError("state evaluation plan updates are malformed")
+        return {
+            int(k): [_update_from_json(item) for item in v] for k, v in value.items()
+        }
+    if codec == "pending":
+        if not isinstance(value, dict):
+            raise CheckpointError("state pending evaluations are malformed")
+        result = {}
+        for request_id, item in value.items():
+            restored = _pending_from_json(item)
+            if not restored.checkpointable and restored.fatal_error is None:
+                raise CheckpointError("non-checkpointable pending evaluation")
+            result[int(request_id)] = restored
+        return result
+    if codec == "owners":
+        if not isinstance(value, list):
+            raise CheckpointError("state evaluation owners are malformed")
+        result = {}
+        for item in value:
+            request_id = int(item["request_id"])
+            if "alias" in item:
+                result[request_id] = {"__state_alias__": item["alias"]}
+            else:
+                result[request_id] = _decode_v3_value(
+                    StateKey(namespace="evaluations", name="owner", schema_version=1),
+                    item["entry"],
+                    data,
+                    f"{prefix}__owner_{request_id}",
+                )
+        return result
+    raise CheckpointError(f"unknown state value codec {codec!r}")
 
 
 def _json_safe(value: Any) -> Any:
@@ -1811,6 +2044,107 @@ def _load_v2(
         async_fatal=async_fatal,
         data={**state_data, "resumed": True},
     )
+
+
+def _load_v3(
+    cls: type[OptimizationState], data: Any, problem: Problem
+) -> OptimizationState:
+    entries = _read_json(data, "_state_entries")
+    if not isinstance(entries, list):
+        raise CheckpointError("state entries are malformed")
+    restored: dict[StateKey[Any], Any] = {}
+    for index, item in enumerate(entries):
+        if not isinstance(item, dict):
+            raise CheckpointError("state entry is malformed")
+        key = _state_key_from_json(item.get("key"))
+        target = item.get("target_schema_version")
+        if isinstance(target, bool) or not isinstance(target, int) or target < 1:
+            raise CheckpointError(
+                f"state entry {key.namespace}/{key.name} target version is malformed"
+            )
+        if key.schema_version > target:
+            raise CheckpointError(
+                f"State key {key.namespace}/{key.name} has future schema version "
+                f"v{key.schema_version}; target is v{target}."
+            )
+        if key.schema_version < target:
+            key, value = STATE_MIGRATORS.migrate(
+                key,
+                _decode_v3_value(key, item.get("value"), data, f"_entry_{index}"),
+                target_version=target,
+            )
+        else:
+            value = _decode_v3_value(key, item.get("value"), data, f"_entry_{index}")
+        if key in restored:
+            raise CheckpointError(f"duplicate state entry {key.namespace}/{key.name}")
+        restored[key] = value
+
+    populations = {
+        key.name: value
+        for key, value in restored.items()
+        if key.namespace == "populations"
+    }
+    archives = {
+        key.name: value
+        for key, value in restored.items()
+        if key.namespace == "archives"
+    }
+    if "main" not in populations or not {"main", "pareto"} <= set(archives):
+        raise CheckpointError(
+            "state entries are missing required main/pareto collections"
+        )
+    values = {
+        name: restored[key] for name, key in _STORE_FIELDS.items() if key in restored
+    }
+    if "rng" not in values or not isinstance(values["rng"], dict):
+        raise CheckpointError("runtime/rng state is missing or malformed")
+    rng = np.random.default_rng()
+    rng.bit_generator.state = values.pop("rng")
+    candidate_allocator = IDAllocator(values.pop("candidate_id_allocator"))
+    request_allocator = IDAllocator(values.pop("request_id_allocator"))
+    offspring = values.pop("offspring", None)
+    owners = values.get("evaluation_owners", {})
+    if isinstance(owners, dict):
+        values["evaluation_owners"] = {
+            request_id: (
+                offspring
+                if isinstance(owner, dict)
+                and owner.get("__state_alias__") == "offspring"
+                else next(
+                    (
+                        population
+                        for name, population in populations.items()
+                        if isinstance(owner, dict)
+                        and owner.get("__state_alias__") == f"population:{name}"
+                    ),
+                    owner,
+                )
+            )
+            for request_id, owner in owners.items()
+        }
+    custom = {
+        key: value
+        for key, value in restored.items()
+        if key not in _STORE_FIELDS.values()
+        and key.namespace not in {"populations", "archives"}
+    }
+    kwargs: dict[str, Any] = {
+        "problem": problem,
+        "populations": populations,
+        "archives": archives,
+        "rng": rng,
+        "candidate_id_allocator": candidate_allocator,
+        "request_id_allocator": request_allocator,
+        "offspring": offspring,
+        "_custom_state": custom,
+        "data": values.pop("data", {}),
+    }
+    kwargs.update(values)
+    kwargs["fe"] = int(kwargs.get("fe", 0))
+    kwargs["gen"] = int(kwargs.get("gen", 0))
+    state = cls(**kwargs)
+    state.data = {**state.data, "resumed": True}
+    return state
 
 
 def _load_v1(

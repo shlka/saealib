@@ -163,7 +163,7 @@ def _rewrite_payload(path, destination, key, value):
 def test_checkpoint_rejects_malformed_evaluation_plan_payload(tmp_path):
     state = _planned_state()
     source = tmp_path / "valid.npz"
-    state.save(source)
+    state._save_v2(source)
     bad = tmp_path / "bad-plan.npz"
     _rewrite_payload(source, bad, "_evaluation_plan", {"requests": [{}]})
 
@@ -174,7 +174,7 @@ def test_checkpoint_rejects_malformed_evaluation_plan_payload(tmp_path):
 def test_checkpoint_rejects_plan_state_referencing_unknown_request(tmp_path):
     state = _planned_state()
     source = tmp_path / "valid.npz"
-    state.save(source)
+    state._save_v2(source)
     bad = tmp_path / "bad-state.npz"
     _rewrite_payload(
         source,
@@ -190,7 +190,7 @@ def test_checkpoint_rejects_plan_state_referencing_unknown_request(tmp_path):
 def test_checkpoint_rejects_updates_for_unknown_request(tmp_path):
     state = _planned_state()
     source = tmp_path / "valid.npz"
-    state.save(source)
+    state._save_v2(source)
     bad = tmp_path / "bad-updates.npz"
     _rewrite_payload(source, bad, "_evaluation_plan_updates", {"99": []})
 

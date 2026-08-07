@@ -45,7 +45,7 @@ from saealib.core.contracts import (
     StateContract,
     Var,
 )
-from saealib.core.state import RUNTIME_RNG
+from saealib.core.state import POPULATIONS_MAIN, RUNTIME_RNG
 from saealib.exceptions import ValidationError
 from saealib.registry import register
 from saealib.surrogate.accuracy import AccuracyEvaluator, SurrogateAccuracy
@@ -702,7 +702,10 @@ class PairwiseSurrogateManager(SurrogateManager):
                 PartSpec(name="surrogate", contract=self.surrogate.contract()),
                 PartSpec(name="training_set", contract=self.training_set.contract()),
             ),
-            state=StateContract(reads=(RUNTIME_RNG,), writes=(RUNTIME_RNG,)),
+            state=StateContract(
+                reads=(POPULATIONS_MAIN, RUNTIME_RNG),
+                writes=(RUNTIME_RNG,),
+            ),
         )
 
     def fit(

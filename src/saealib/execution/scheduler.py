@@ -12,7 +12,19 @@ import numpy as np
 from saealib.callback import PostEvaluationEvent
 from saealib.context import EvaluationPlanState
 from saealib.core.contracts import ComponentContract, PartSpec, StateContract
-from saealib.core.state import PENDING_EVALUATIONS, RUNTIME_ASYNC_FATAL
+from saealib.core.state import (
+    ARCHIVES_MAIN,
+    ARCHIVES_PARETO,
+    EVALUATIONS_COUNT,
+    EVALUATIONS_OWNERS,
+    EVALUATIONS_PLAN,
+    EVALUATIONS_PLAN_STATE,
+    EVALUATIONS_PLAN_UPDATES,
+    PENDING_EVALUATIONS,
+    POPULATIONS_MAIN,
+    RUNTIME_ASYNC_FATAL,
+    RUNTIME_RNG,
+)
 from saealib.exceptions import (
     CheckpointError,
     EvaluationFatalError,
@@ -44,11 +56,35 @@ class AsyncEvaluationScheduler:
 
     def contract(self) -> ComponentContract:
         """Return the scheduler contract and its evaluator part."""
+        reads = (
+            PENDING_EVALUATIONS,
+            EVALUATIONS_OWNERS,
+            EVALUATIONS_PLAN,
+            EVALUATIONS_PLAN_STATE,
+            EVALUATIONS_PLAN_UPDATES,
+            EVALUATIONS_COUNT,
+            ARCHIVES_MAIN,
+            ARCHIVES_PARETO,
+        )
+        writes = (
+            PENDING_EVALUATIONS,
+            EVALUATIONS_OWNERS,
+            EVALUATIONS_PLAN,
+            EVALUATIONS_PLAN_STATE,
+            EVALUATIONS_PLAN_UPDATES,
+            EVALUATIONS_COUNT,
+            ARCHIVES_MAIN,
+            ARCHIVES_PARETO,
+            RUNTIME_ASYNC_FATAL,
+        )
+        if self.algorithm is not None:
+            reads += (POPULATIONS_MAIN, RUNTIME_RNG)
+            writes += (POPULATIONS_MAIN, RUNTIME_RNG)
         return ComponentContract(
             parts=(PartSpec(name="evaluator", contract=self.evaluator.contract()),),
             state=StateContract(
-                reads=(PENDING_EVALUATIONS,),
-                writes=(PENDING_EVALUATIONS, RUNTIME_ASYNC_FATAL),
+                reads=reads,
+                writes=writes,
             ),
         )
 

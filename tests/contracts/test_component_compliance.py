@@ -1033,13 +1033,6 @@ def test_parts_check_rejects_missing_child_attribute() -> None:
         _check_parts(_PartsMissingDummy())
 
 
-@pytest.mark.skip(
-    reason="ADR-0006 instrumented state store is not implemented until Phase 2"
-)
-def test_declared_writes_match_instrumented_state_store() -> None:
-    pass
-
-
-@pytest.mark.skip(reason="CompilationRule is not implemented until Phase 2")
+@pytest.mark.skip(reason="CompilationRule is not implemented until Phase 5")
 def test_custom_diagnostics_have_paths_and_registered_codes() -> None:
     pass

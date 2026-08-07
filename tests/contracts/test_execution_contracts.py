@@ -13,9 +13,14 @@ from saealib.core.state import (
     ARCHIVES_MAIN,
     ARCHIVES_PARETO,
     EVALUATIONS_COUNT,
+    EVALUATIONS_OWNERS,
+    EVALUATIONS_PLAN,
+    EVALUATIONS_PLAN_STATE,
+    EVALUATIONS_PLAN_UPDATES,
     PENDING_EVALUATIONS,
     POPULATIONS_MAIN,
     RUNTIME_ASYNC_FATAL,
+    RUNTIME_CANDIDATE_ID_ALLOCATOR,
     RUNTIME_GENERATION,
     RUNTIME_RNG,
 )
@@ -62,7 +67,7 @@ def test_initializer_contract_declares_population_and_rng_effects() -> None:
     assert output.data.kind == "Population"
     assert output.data.bindings["candidate_count"] == Fixed(value=5)
     assert contract.state == StateContract(
-        reads=(RUNTIME_RNG,),
+        reads=(RUNTIME_RNG, RUNTIME_CANDIDATE_ID_ALLOCATOR, EVALUATIONS_COUNT),
         writes=(
             POPULATIONS_MAIN,
             ARCHIVES_MAIN,
@@ -70,8 +75,14 @@ def test_initializer_contract_declares_population_and_rng_effects() -> None:
             ARCHIVES_PARETO,
             RUNTIME_GENERATION,
             RUNTIME_RNG,
+            RUNTIME_CANDIDATE_ID_ALLOCATOR,
         ),
     )
+    for initializer in (
+        RandomInitializer(3, 5),
+        SobolInitializer(3, 5),
+    ):
+        assert initializer.contract().state == contract.state
     base_contract = Initializer.contract(LHSInitializer(3, 5))
     assert base_contract.ports["initializer"].outputs[0].data.bindings[
         "candidate_count"
@@ -137,7 +148,54 @@ def test_evaluator_and_scheduler_contracts_declare_lifecycle_boundary() -> None:
 
     scheduler_contract = AsyncEvaluationScheduler(evaluator).contract()
     assert scheduler_contract.state == StateContract(
-        reads=(PENDING_EVALUATIONS,),
-        writes=(PENDING_EVALUATIONS, RUNTIME_ASYNC_FATAL),
+        reads=(
+            PENDING_EVALUATIONS,
+            EVALUATIONS_OWNERS,
+            EVALUATIONS_PLAN,
+            EVALUATIONS_PLAN_STATE,
+            EVALUATIONS_PLAN_UPDATES,
+            EVALUATIONS_COUNT,
+            ARCHIVES_MAIN,
+            ARCHIVES_PARETO,
+        ),
+        writes=(
+            PENDING_EVALUATIONS,
+            EVALUATIONS_OWNERS,
+            EVALUATIONS_PLAN,
+            EVALUATIONS_PLAN_STATE,
+            EVALUATIONS_PLAN_UPDATES,
+            EVALUATIONS_COUNT,
+            ARCHIVES_MAIN,
+            ARCHIVES_PARETO,
+            RUNTIME_ASYNC_FATAL,
+        ),
+    )
+    algorithm_scheduler = AsyncEvaluationScheduler(evaluator, algorithm=object())
+    assert algorithm_scheduler.contract().state == StateContract(
+        reads=(
+            PENDING_EVALUATIONS,
+            EVALUATIONS_OWNERS,
+            EVALUATIONS_PLAN,
+            EVALUATIONS_PLAN_STATE,
+            EVALUATIONS_PLAN_UPDATES,
+            EVALUATIONS_COUNT,
+            ARCHIVES_MAIN,
+            ARCHIVES_PARETO,
+            POPULATIONS_MAIN,
+            RUNTIME_RNG,
+        ),
+        writes=(
+            PENDING_EVALUATIONS,
+            EVALUATIONS_OWNERS,
+            EVALUATIONS_PLAN,
+            EVALUATIONS_PLAN_STATE,
+            EVALUATIONS_PLAN_UPDATES,
+            EVALUATIONS_COUNT,
+            ARCHIVES_MAIN,
+            ARCHIVES_PARETO,
+            RUNTIME_ASYNC_FATAL,
+            POPULATIONS_MAIN,
+            RUNTIME_RNG,
+        ),
     )
     assert tuple(part.name for part in scheduler_contract.parts) == ("evaluator",)

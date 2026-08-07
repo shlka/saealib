@@ -2,12 +2,13 @@ import json
 import pickle
 import subprocess
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pytest
 
 from saealib.context import CURRENT_CHECKPOINT_SCHEMA_VERSION, OptimizationState
+from saealib.core.state import STATE_MIGRATORS, StateKey
 from saealib.exceptions import CheckpointError, ValidationError
 from saealib.identity import IDAllocator
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
@@ -146,6 +147,127 @@ def test_current_schema_and_allocator_continuity(tmp_path):
     assert loaded.request_id_allocator.allocate(1).tolist() == [30]
 
 
+def test_v2_helper_writes_a_self_consistent_v2_checkpoint(tmp_path):
+    ctx = _state()
+    path = tmp_path / "helper-v2.npz"
+    ctx._save_v2(path)
+    raw = np.load(path, allow_pickle=False)
+    assert int(raw["_checkpoint_schema_version"]) == 2
+    assert json.loads(bytes(raw["_manifest"]).decode())["schema_version"] == 2
+    loaded = OptimizationState.load(path, ctx.problem)
+    assert loaded.fe == ctx.fe
+    assert loaded.gen == ctx.gen
+    assert loaded.candidate_id_allocator.next_value == 20
+    np.testing.assert_array_equal(loaded.population.x, ctx.population.x)
+    assert loaded.data == {"resumed": True}
+
+
+def test_v3_round_trips_every_store_entry_and_custom_state(tmp_path):
+    ctx = _state()
+    ctx.offspring = ctx.population
+    custom_key = StateKey(namespace="user", name="g5b_custom", schema_version=1)
+    ctx.set_state(custom_key, {"answer": 42})
+    path = tmp_path / "v3-store.npz"
+    ctx.save(path)
+
+    raw = np.load(path, allow_pickle=False)
+    entries = json.loads(bytes(raw["_state_entries"]).decode())
+    saved_keys = {(item["key"]["namespace"], item["key"]["name"]) for item in entries}
+    assert saved_keys == {(key.namespace, key.name) for key in ctx._store._values}
+    loaded = OptimizationState.load(path, ctx.problem)
+    assert loaded.offspring is not None
+    np.testing.assert_array_equal(loaded.offspring.x, loaded.population.x)
+    assert loaded.get_state(custom_key) == {"answer": 42}
+    assert loaded._store._values.keys() == ctx._store._values.keys()
+
+
+def test_store_fields_have_no_class_attribute_residue():
+    for name in (
+        "predictions",
+        "feedback_result",
+        "offspring",
+    ):
+        assert name not in vars(OptimizationState)
+    ctx = _state()
+    marker = object()
+    ctx.predictions = marker
+    assert ctx.predictions is marker
+
+
+def test_getstate_excludes_derived_evaluation_ids():
+    ctx = _state().replace(
+        evaluation_new_ids=np.array([1, 2], dtype=np.int64),
+        evaluation_update_new_ids=[np.array([3], dtype=np.int64)],
+    )
+    serialized = ctx.__getstate__()
+    assert "evaluation_new_ids" not in serialized
+    assert "evaluation_update_new_ids" not in serialized
+
+
+def test_v3_registered_entry_migrator_is_used_at_load_time(tmp_path):
+    key = StateKey(namespace="user", name="g5b_migrated", schema_version=1)
+    STATE_MIGRATORS.register(
+        key.namespace,
+        key.name,
+        1,
+        lambda value: {**cast(dict[str, Any], value), "migrated": True},
+    )
+    ctx = _state()
+    ctx.set_state(key, {"answer": 42})
+    path = tmp_path / "migrated.npz"
+    ctx.save(path)
+    raw = dict(np.load(path, allow_pickle=False).items())
+    entries = json.loads(bytes(raw["_state_entries"]).decode())
+    for item in entries:
+        if item["key"]["name"] == key.name:
+            item["key"]["schema_version"] = 1
+            item["target_schema_version"] = 2
+    raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
+    np.savez(path, **raw)
+    loaded = OptimizationState.load(path, ctx.problem)
+    migrated_key = StateKey(namespace=key.namespace, name=key.name, schema_version=2)
+    assert loaded.get_state(migrated_key) == {"answer": 42, "migrated": True}
+
+
+def test_v3_missing_migrator_is_a_load_time_checkpoint_error(tmp_path):
+    key = StateKey(namespace="user", name="g5b_no_migrator", schema_version=1)
+    ctx = _state()
+    ctx.set_state(key, "payload")
+    path = tmp_path / "missing-migrator.npz"
+    ctx.save(path)
+    raw = dict(np.load(path, allow_pickle=False).items())
+    entries = json.loads(bytes(raw["_state_entries"]).decode())
+    for item in entries:
+        if item["key"]["name"] == key.name:
+            item["target_schema_version"] = 2
+    raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
+    np.savez(path, **raw)
+    with pytest.raises(CheckpointError) as error:
+        OptimizationState.load(path, ctx.problem)
+    message = str(error.value)
+    assert "user/g5b_no_migrator" in message
+    assert "v1" in message and "v2" in message
+    assert "Registered migrators" in message
+
+
+def test_v3_future_entry_schema_version_is_rejected(tmp_path):
+    key = StateKey(namespace="user", name="g5b_future", schema_version=1)
+    ctx = _state()
+    ctx.set_state(key, "payload")
+    path = tmp_path / "future-entry.npz"
+    ctx.save(path)
+    raw = dict(np.load(path, allow_pickle=False).items())
+    entries = json.loads(bytes(raw["_state_entries"]).decode())
+    for item in entries:
+        if item["key"]["name"] == key.name:
+            item["key"]["schema_version"] = 4
+            item["target_schema_version"] = 3
+    raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
+    np.savez(path, **raw)
+    with pytest.raises(CheckpointError, match=r"g5b_future.*v4.*v3"):
+        OptimizationState.load(path, ctx.problem)
+
+
 def test_checkpoint_separates_async_fatal_and_derived_reservations(tmp_path):
     ctx = _state().replace(
         async_fatal={"request_id": 4, "reason": "backend stopped"},
@@ -186,7 +308,7 @@ def test_pending_context_stage_does_not_checkpoint_derived_reservations(tmp_path
 def test_v2_legacy_builtin_reservations_are_not_restored(tmp_path):
     ctx = _state()
     source = tmp_path / "source.npz"
-    ctx.save(source)
+    ctx._save_v2(source)
     raw = dict(np.load(source, allow_pickle=False).items())
     raw.pop("_async_fatal")
     raw["_data"] = np.frombuffer(
@@ -217,7 +339,7 @@ def test_v2_legacy_builtin_reservations_are_not_restored(tmp_path):
 def test_v2_legacy_async_fatal_is_migrated_and_derived_keys_ignored(tmp_path):
     ctx = _state()
     source = tmp_path / "source.npz"
-    ctx.save(source)
+    ctx._save_v2(source)
     raw = dict(np.load(source, allow_pickle=False).items())
     raw.pop("_async_fatal")
     raw["_data"] = np.frombuffer(
@@ -315,7 +437,7 @@ def test_v1_checkpoint_is_migrated_without_mutating_payload(tmp_path):
 def test_invalid_manifest_fails_atomically(tmp_path):
     ctx = _state()
     path = tmp_path / "valid.npz"
-    ctx.save(path)
+    ctx._save_v2(path)
     raw = np.load(path, allow_pickle=False)
     payload = dict(raw.items())
     manifest = json.loads(bytes(payload["_manifest"]).decode())
@@ -394,7 +516,7 @@ def test_named_collection_mutations_and_legacy_replace():
 def test_checkpoint_rejects_corrupt_allocator_values(tmp_path, value):
     ctx = _state()
     path = tmp_path / "valid.npz"
-    ctx.save(path)
+    ctx._save_v2(path)
     raw = dict(np.load(path, allow_pickle=False).items())
     raw["_next_candidate_id"] = value
     bad = tmp_path / "bad.npz"

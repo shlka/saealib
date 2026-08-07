@@ -19,8 +19,10 @@ __all__ = [
     "EVALUATIONS_PLAN",
     "EVALUATIONS_PLAN_STATE",
     "EVALUATIONS_PLAN_UPDATES",
+    "FEEDBACK_RESULT",
     "PENDING_EVALUATIONS",
     "POPULATIONS_MAIN",
+    "PROPOSALS_OFFSPRING",
     "RUNTIME_ASYNC_FATAL",
     "RUNTIME_CANDIDATE_ID_ALLOCATOR",
     "RUNTIME_GENERATION",
@@ -28,6 +30,7 @@ __all__ = [
     "RUNTIME_RNG",
     "STATE_NAMESPACES",
     "SURROGATES_DEFAULT",
+    "SURROGATES_PREDICTIONS",
     "USER_DATA",
     "StateKey",
 ]
@@ -115,5 +118,14 @@ RUNTIME_REQUEST_ID_ALLOCATOR = StateKey[object](
 )
 SURROGATES_DEFAULT = StateKey[object](
     namespace="surrogates", name="default", schema_version=1
+)
+SURROGATES_PREDICTIONS = StateKey[object](
+    namespace="surrogates", name="predictions", schema_version=1
+)
+FEEDBACK_RESULT = StateKey[object](
+    namespace="feedback", name="result", schema_version=1
+)
+PROPOSALS_OFFSPRING = StateKey[object](
+    namespace="proposals", name="offspring", schema_version=1
 )
 USER_DATA = StateKey[object](namespace="user", name="data", schema_version=1)
