@@ -8,12 +8,39 @@ from saealib.core.compiler.diagnostics import (
     DiagnosticBag,
     Severity,
 )
+from saealib.exceptions import ValidationError
 
 
-def test_contract_path_renders_components_and_port() -> None:
-    path = ContractPath(components=("algorithm", "surrogate"), port="predictions")
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        (
+            ContractPath(components=("algorithm", "integer_crossover")),
+            "algorithm.integer_crossover",
+        ),
+        (
+            ContractPath(components=("algorithm",), role="proposer"),
+            "algorithm[proposer]",
+        ),
+        (
+            ContractPath(components=("algorithm", "crossover"), port="offspring"),
+            "algorithm.crossover.offspring",
+        ),
+        (
+            ContractPath(components=("algorithm",), role="proposer", port="genomes"),
+            "algorithm[proposer].genomes",
+        ),
+    ],
+)
+def test_contract_path_renders_components_role_and_port(
+    path: ContractPath, expected: str
+) -> None:
+    assert str(path) == expected
 
-    assert str(path) == "algorithm.surrogate.predictions"
+
+def test_contract_path_rejects_an_empty_role() -> None:
+    with pytest.raises(ValidationError, match="role must be a non-empty string"):
+        ContractPath(components=("algorithm",), role="")
 
 
 def test_diagnostic_requires_a_contract_path() -> None:

@@ -27,9 +27,10 @@ class Severity(str, Enum):
 
 @dataclass(frozen=True, kw_only=True)
 class ContractPath:
-    """An ordered component path with an optional port."""
+    """An ordered component path with an optional role and port."""
 
     components: tuple[str, ...]
+    role: str | None = None
     port: str | None = None
 
     def __post_init__(self) -> None:
@@ -39,14 +40,20 @@ class ContractPath:
             not isinstance(component, str) or not component for component in components
         ):
             raise ValidationError("A contract path must contain a component id")
+        if self.role is not None and (not isinstance(self.role, str) or not self.role):
+            raise ValidationError("A contract path role must be a non-empty string")
         if self.port is not None and (not isinstance(self.port, str) or not self.port):
             raise ValidationError("A contract path port must be a non-empty string")
         object.__setattr__(self, "components", components)
 
     def __str__(self) -> str:
-        """Render the path as a dotted name."""
-        parts = self.components + ((self.port,) if self.port is not None else ())
-        return ".".join(parts)
+        """Render the path as a dotted name with an optional role."""
+        rendered = ".".join(self.components)
+        if self.role is not None:
+            rendered += f"[{self.role}]"
+        if self.port is not None:
+            rendered += f".{self.port}"
+        return rendered
 
 
 DiagnosticCodeVocabulary = Vocabulary[VocabularyDescriptor]
