@@ -4,6 +4,7 @@ from typing import Any, cast
 import pytest
 
 from saealib.core.compiler import (
+    CompileContext,
     ComponentBindings,
     ComponentGraph,
     ComponentNode,
@@ -13,8 +14,10 @@ from saealib.core.compiler import (
     IdentityRule,
     NodeRef,
     ReachabilityRule,
+    RuleContext,
     StateBinding,
 )
+from saealib.core.compiler.diagnostics import DiagnosticBag
 from saealib.core.contracts import ComponentContract
 from saealib.core.state.keys import USER_DATA
 from saealib.exceptions import ValidationError
@@ -107,7 +110,7 @@ def test_component_graph_rejects_invalid_structure_types(kwargs):
         ComponentGraph(**kwargs)
 
 
-def test_identity_and_reachability_rules_are_callable_and_data_control_are_separate():
+def test_identity_and_reachability_rules_apply_and_data_control_are_separate():
     graph = ComponentGraph(
         nodes=(node("start"), node("data"), node("control"), node("lost")),
         data_edges=(
@@ -126,8 +129,16 @@ def test_identity_and_reachability_rules_are_callable_and_data_control_are_separ
         ),
         entry_points=(NodeRef(component_id="start"),),
     )
-    assert len(IdentityRule()(graph)) == 0
-    findings = ReachabilityRule()(graph)
+
+    def context_for(graph):
+        return RuleContext(
+            graph=graph,
+            compile_context=CompileContext(),
+            diagnostics=DiagnosticBag(),
+        )
+
+    assert len(IdentityRule().apply(context_for(graph)).diagnostics) == 0
+    findings = ReachabilityRule().apply(context_for(graph)).diagnostics
     assert [finding.code for finding in findings] == ["unreachable_node"]
     assert (
         len(
@@ -146,7 +157,17 @@ def test_identity_rule_reports_duplicate_component_ids():
         entry_points=(NodeRef(component_id="duplicate"),),
     )
 
-    findings = IdentityRule()(graph)
+    findings = (
+        IdentityRule()
+        .apply(
+            RuleContext(
+                graph=graph,
+                compile_context=CompileContext(),
+                diagnostics=DiagnosticBag(),
+            )
+        )
+        .diagnostics
+    )
 
     assert [finding.code for finding in findings] == ["duplicate_component_id"]
 

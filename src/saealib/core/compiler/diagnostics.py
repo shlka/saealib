@@ -101,6 +101,15 @@ for _name, _description in (
         "unreachable_node",
         "A graph node cannot be reached from any declared entry point.",
     ),
+    ("conflicting_rewrite", "Two resolution rules claimed the same graph location."),
+    (
+        "unstable_compilation",
+        "Resolution did not reach a fixed point within the compilation limit.",
+    ),
+    (
+        "unclaimed_rewrite",
+        "A resolution rule changed a graph location without claiming it.",
+    ),
 ):
     DIAGNOSTIC_CODES.register(
         _name,

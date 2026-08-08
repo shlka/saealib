@@ -1,5 +1,21 @@
 from __future__ import annotations
 
+from saealib.core.compiler.compiler import (
+    DEFAULT_RULE_REGISTRY,
+    CompilationRule,
+    CompileContext,
+    Compiler,
+    ExecutablePlan,
+    ResolutionResult,
+    ResolutionRule,
+    RewriteClaim,
+    RuleContext,
+    RuleRegistration,
+    RuleRegistry,
+    RuleResult,
+    VerificationResult,
+    VerificationRule,
+)
 from saealib.core.compiler.contract_diagnostics import check_component_contract
 from saealib.core.compiler.diagnostics import (
     DIAGNOSTIC_CODES,
@@ -24,7 +40,11 @@ from saealib.core.compiler.graph import (
 )
 
 __all__ = [
+    "DEFAULT_RULE_REGISTRY",
     "DIAGNOSTIC_CODES",
+    "CompilationRule",
+    "CompileContext",
+    "Compiler",
     "ComponentBindings",
     "ComponentGraph",
     "ComponentId",
@@ -35,11 +55,21 @@ __all__ = [
     "Diagnostic",
     "DiagnosticBag",
     "DiagnosticCodeVocabulary",
+    "ExecutablePlan",
     "GraphTemplate",
     "IdentityRule",
     "NodeRef",
     "ReachabilityRule",
+    "ResolutionResult",
+    "ResolutionRule",
+    "RewriteClaim",
+    "RuleContext",
+    "RuleRegistration",
+    "RuleRegistry",
+    "RuleResult",
     "Severity",
     "StateBinding",
+    "VerificationResult",
+    "VerificationRule",
     "check_component_contract",
 ]

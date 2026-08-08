@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import TypeAlias
+from typing import TYPE_CHECKING, Literal, TypeAlias
 
 from saealib.core.compiler.diagnostics import (
     ContractPath,
@@ -18,6 +18,9 @@ from saealib.core.contracts.roles import RoleName
 from saealib.core.contracts.vocabulary import validate_name
 from saealib.core.state.keys import StateKey
 from saealib.exceptions import ValidationError
+
+if TYPE_CHECKING:
+    from saealib.core.compiler.compiler import RuleContext, VerificationResult
 
 __all__ = [
     "ComponentBindings",
@@ -251,9 +254,17 @@ class GraphTemplate:
 class IdentityRule:
     """Check graph-level component identity without inspecting concrete types."""
 
-    def __call__(self, graph: ComponentGraph) -> DiagnosticBag:
-        """Return diagnostics for duplicate component ids."""
-        return _identity_diagnostics(graph)
+    namespace = "core"
+    name = "identity"
+    phase: Literal["verification"] = "verification"
+
+    def apply(self, context: RuleContext) -> VerificationResult:
+        """Apply through the compiler rule protocol."""
+        from saealib.core.compiler.compiler import VerificationResult
+
+        return VerificationResult(
+            diagnostics=tuple(_identity_diagnostics(context.graph))
+        )
 
 
 def _identity_diagnostics(graph: ComponentGraph) -> DiagnosticBag:
@@ -275,36 +286,47 @@ def _identity_diagnostics(graph: ComponentGraph) -> DiagnosticBag:
 class ReachabilityRule:
     """Check reachability over both data and control edges."""
 
-    def __call__(self, graph: ComponentGraph) -> DiagnosticBag:
-        """Return diagnostics for nodes outside the entry-point closure."""
-        bag = DiagnosticBag()
-        known = {node.component_id for node in graph.nodes}
-        reachable = {
-            entry.component_id
-            for entry in graph.entry_points
-            if entry.component_id in known
-        }
-        edges = (*graph.data_edges, *graph.control_edges)
-        changed = True
-        while changed:
-            changed = False
-            for edge in edges:
-                if (
-                    edge.source.component_id in reachable
-                    and edge.target.component_id in known
-                    and edge.target.component_id not in reachable
-                ):
-                    reachable.add(edge.target.component_id)
-                    changed = True
-        for node in graph.nodes:
-            if node.component_id not in reachable:
-                bag.append(
-                    _diagnostic(
-                        "unreachable_node",
-                        node.component_id,
-                        f"Node {node.component_id!r} is unreachable from the "
-                        "entry points.",
-                        "Connect the node to an entry point or remove it.",
-                    )
+    namespace = "core"
+    name = "reachability"
+    phase: Literal["verification"] = "verification"
+
+    def apply(self, context: RuleContext) -> VerificationResult:
+        """Apply through the compiler rule protocol."""
+        from saealib.core.compiler.compiler import VerificationResult
+
+        return VerificationResult(
+            diagnostics=tuple(_reachability_diagnostics(context.graph))
+        )
+
+
+def _reachability_diagnostics(graph: ComponentGraph) -> DiagnosticBag:
+    bag = DiagnosticBag()
+    known = {node.component_id for node in graph.nodes}
+    reachable = {
+        entry.component_id
+        for entry in graph.entry_points
+        if entry.component_id in known
+    }
+    edges = (*graph.data_edges, *graph.control_edges)
+    changed = True
+    while changed:
+        changed = False
+        for edge in edges:
+            if (
+                edge.source.component_id in reachable
+                and edge.target.component_id in known
+                and edge.target.component_id not in reachable
+            ):
+                reachable.add(edge.target.component_id)
+                changed = True
+    for node in graph.nodes:
+        if node.component_id not in reachable:
+            bag.append(
+                _diagnostic(
+                    "unreachable_node",
+                    node.component_id,
+                    f"Node {node.component_id!r} is unreachable from the entry points.",
+                    "Connect the node to an entry point or remove it.",
                 )
-        return bag
+            )
+    return bag
