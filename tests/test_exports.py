@@ -56,6 +56,7 @@ NAMESPACE_ONLY: dict[str, set[str]] = {
         "zdt6",
     },
     "saealib.defaults": {"dump_preset", "load_defaults", "load_preset"},
+    "saealib.population": {"DenseVectorBatch", "GenomeBatch", "ObjectBatch"},
 }
 
 REMOVED_EXPERIMENTAL_EXPORTS = {

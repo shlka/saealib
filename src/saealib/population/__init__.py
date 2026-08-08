@@ -4,6 +4,11 @@ from saealib.population.archive import (
     ParetoArchive,
     ParetoMixin,
 )
+from saealib.population.genome import (
+    DenseVectorBatch,
+    GenomeBatch,
+    ObjectBatch,
+)
 from saealib.population.population import (
     Individual,
     Population,
@@ -15,7 +20,10 @@ from saealib.population.population import (
 __all__ = [
     "Archive",
     "ArchiveMixin",
+    "DenseVectorBatch",
+    "GenomeBatch",
     "Individual",
+    "ObjectBatch",
     "ParetoArchive",
     "ParetoMixin",
     "Population",
