@@ -811,8 +811,16 @@ class ObservationRecords:
                     if isinstance(expected, str)
                     else expected
                 )
+            column = self._columns[name]
+            if (
+                not callable(expected)
+                and column.dtype != object
+                and np.asarray(expected).ndim == 0
+            ):
+                mask &= column == expected
+                continue
             mask &= np.fromiter(
-                (self._matches(value, expected) for value in self._columns[name]),
+                (self._matches(value, expected) for value in column),
                 dtype=bool,
                 count=len(self),
             )
@@ -821,9 +829,9 @@ class ObservationRecords:
     def _select_mask(self, mask: np.ndarray) -> Self:
         if mask.shape != (len(self),):
             raise ValidationError("selection mask must match observation row count")
-        selected = np.flatnonzero(mask)
-        if len(selected) == len(self):
+        if np.all(mask):
             return self
+        selected = np.flatnonzero(mask)
         if len(selected) == 0:
             selector: slice | np.ndarray = slice(0, 0)
         elif len(selected) == 1 or np.all(np.diff(selected) == 1):
