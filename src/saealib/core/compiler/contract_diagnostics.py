@@ -12,6 +12,7 @@ from saealib.core.compiler.diagnostics import (
 from saealib.core.contracts import (
     ASSUMPTION_KEYS,
     CARDINALITIES,
+    COMPLETE_BATCH,
     DATA_SPEC_KINDS,
     ROLES,
     RUNTIME_CAPABILITIES,
@@ -21,7 +22,7 @@ from saealib.core.contracts import (
 )
 from saealib.core.state import STATE_NAMESPACES
 
-__all__ = ["check_component_contract"]
+__all__ = ["check_component_contract", "check_pymoo_feedback_compatibility"]
 
 
 def check_component_contract(
@@ -41,6 +42,41 @@ def check_component_contract(
     _check_vocabularies(contract, root, diagnostics)
     if component is not None:
         _check_parts(contract, component, root, diagnostics)
+    return diagnostics
+
+
+def check_pymoo_feedback_compatibility(
+    consumer_contract: ComponentContract,
+    *,
+    consumer_path: ContractPath,
+    runtime_path: ContractPath,
+) -> DiagnosticBag:
+    """Diagnose a complete-batch consumer paired with a partial runtime.
+
+    The caller is responsible for restricting this check to the Pymoo
+    ``allow_partial_tell=False`` and asynchronous-runtime combination.
+    """
+    diagnostics = DiagnosticBag()
+    feedback = consumer_contract.lifecycle.feedback
+    if feedback is None or feedback.completion != COMPLETE_BATCH:
+        return diagnostics
+    diagnostics.append(
+        Diagnostic(
+            severity=Severity.ERROR,
+            code="pymoo_partial_feedback_unsupported",
+            message=(
+                f"Feedback consumer at {consumer_path} requires a complete "
+                f"batch, but the partial runtime at {runtime_path} may deliver "
+                "partial feedback."
+            ),
+            path=consumer_path,
+            related=(runtime_path,),
+            resolutions=(
+                "Configure the feedback consumer to accept partial feedback, "
+                "or disable partial delivery in the runtime.",
+            ),
+        )
+    )
     return diagnostics
 
 

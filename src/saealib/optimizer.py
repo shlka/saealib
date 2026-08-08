@@ -30,6 +30,9 @@ from saealib.core.compiler import (
     Severity,
     check_component_contract,
 )
+from saealib.core.compiler.contract_diagnostics import (
+    check_pymoo_feedback_compatibility,
+)
 from saealib.core.contracts import ComponentContract
 from saealib.exceptions import ConfigurationError, ValidationError
 from saealib.execution.evaluator import Evaluator, SerialEvaluator
@@ -190,12 +193,14 @@ class Optimizer:
         self.async_evaluation_scheduler: AsyncEvaluationScheduler | None = None
         self.instance_name: str = ""
         self._preset: dict | None = None
+        self._last_contract_diagnostics: tuple[Diagnostic, ...] = ()
 
     # --- setters (all return self for chaining) ---
 
     def contract_diagnostics(self) -> DiagnosticBag:
-        """Return advisory diagnostics for currently configured components."""
+        """Return diagnostics for the currently configured component graph."""
         diagnostics = DiagnosticBag()
+        contracts: dict[str, ComponentContract] = {}
         component_names = (
             "initializer",
             "algorithm",
@@ -287,6 +292,7 @@ class Optimizer:
                     )
                 )
                 continue
+            contracts[name] = contract
             diagnostics.extend(
                 check_component_contract(
                     contract,
@@ -294,7 +300,32 @@ class Optimizer:
                     path=ContractPath(components=(name,)),
                 )
             )
+        algorithm = getattr(self, "algorithm", None)
+        scheduler = self.async_evaluation_scheduler
+        from saealib.algorithms.pymoo_algorithm import PymooAlgorithm
+
+        if (
+            isinstance(algorithm, PymooAlgorithm)
+            and not getattr(algorithm, "allow_partial_tell", False)
+            and scheduler is not None
+        ):
+            algorithm_contract = contracts.get("algorithm")
+            if algorithm_contract is not None:
+                diagnostics.extend(
+                    check_pymoo_feedback_compatibility(
+                        algorithm_contract,
+                        consumer_path=ContractPath(components=("algorithm",)),
+                        runtime_path=ContractPath(
+                            components=("async_evaluation_scheduler",)
+                        ),
+                    )
+                )
         return diagnostics
+
+    @property
+    def last_contract_diagnostics(self) -> tuple[Diagnostic, ...]:
+        """Return the diagnostics collected by the most recent ``validate``."""
+        return self._last_contract_diagnostics
 
     def set_seed(self, seed: int | None) -> Self:
         """Set the master random seed. Returns self."""
@@ -503,6 +534,13 @@ class Optimizer:
 
         if surrogate_manager is not None:
             self._validate_surrogate_compatibility(issues, surrogate_manager)
+
+        self._last_contract_diagnostics = tuple(self.contract_diagnostics())
+        issues.extend(
+            str(diagnostic)
+            for diagnostic in self._last_contract_diagnostics
+            if diagnostic.severity is Severity.ERROR
+        )
 
         return issues
 

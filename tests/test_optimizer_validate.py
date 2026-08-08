@@ -13,6 +13,7 @@ from saealib.acquisition.mean import MeanPrediction
 from saealib.acquisition.pof import ProbabilityOfFeasibility, ProductOfFeasibility
 from saealib.acquisition.uncertainty import MaxUncertainty
 from saealib.comparators import SingleObjectiveComparator
+from saealib.core.contracts import ComponentContract
 from saealib.execution.initializer import LHSInitializer
 from saealib.optimizer import Optimizer
 from saealib.problem import Problem
@@ -41,15 +42,22 @@ def _make_problem(n_obj: int = N_OBJ) -> Problem:
 def _stub_strategy(requires_surrogate: bool = False) -> OptimizationStrategy:
     m = MagicMock(spec=OptimizationStrategy)
     m.requires_surrogate = requires_surrogate
+    m.contract.return_value = ComponentContract()
     return m
+
+
+def _contract_mock() -> MagicMock:
+    component = MagicMock()
+    component.contract.return_value = ComponentContract()
+    return component
 
 
 def _fully_configured() -> Optimizer:
     opt = Optimizer(_make_problem())
-    opt.set_algorithm(MagicMock())
+    opt.set_algorithm(_contract_mock())
     opt.set_strategy(_stub_strategy(requires_surrogate=False))
-    opt.initializer = MagicMock()
-    opt.set_termination(MagicMock())
+    opt.initializer = _contract_mock()
+    opt.set_termination(_contract_mock())
     return opt
 
 

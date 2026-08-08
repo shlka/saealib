@@ -109,6 +109,16 @@ DIAGNOSTIC_CODES.register(
     ),
 )
 DIAGNOSTIC_CODES.register(
+    "pymoo_partial_feedback_unsupported",
+    VocabularyDescriptor(
+        name="pymoo_partial_feedback_unsupported",
+        description=(
+            "A Pymoo feedback consumer requires complete batches but the "
+            "runtime may deliver partial feedback."
+        ),
+    ),
+)
+DIAGNOSTIC_CODES.register(
     "unregistered_diagnostic_code",
     VocabularyDescriptor(
         name="unregistered_diagnostic_code",
