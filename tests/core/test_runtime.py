@@ -1,6 +1,7 @@
 """Contract tests for the Phase 6 L1 plan/runtime vocabulary."""
 
 from dataclasses import FrozenInstanceError
+from typing import cast
 
 import pytest
 
@@ -74,6 +75,16 @@ def test_runtime_command_refusal_is_a_normal_step_outcome() -> None:
     command = RequestTermination(reason="policy")
     step = RuntimeStep(state=_state(), refused_commands=(command,))
     assert step.refused_commands == (command,)
+
+
+def test_runtime_step_trace_is_immutable_vocabulary() -> None:
+    step = RuntimeStep(state=_state(), executed_node_ids=("a", "b"))
+    assert step.executed_node_ids == ("a", "b")
+    with pytest.raises(ValidationError, match="executed_node_ids"):
+        RuntimeStep(
+            state=_state(),
+            executed_node_ids=cast(tuple[str, ...], ("a", 1)),
+        )
 
 
 def test_core_command_variants_do_not_carry_evaluation_payloads() -> None:

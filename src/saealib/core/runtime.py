@@ -153,6 +153,114 @@ class SequentialPlan:
             )
         object.__setattr__(self, "nodes", nodes)
 
+    @classmethod
+    def from_executable_plan(cls, plan: ExecutablePlan) -> SequentialPlan:
+        """Build the ordered top-level Stage view consumed by sync runtime."""
+        if not isinstance(plan, ExecutablePlan):
+            raise ValidationError("SequentialPlan requires an ExecutablePlan")
+
+        # Import locally: graph_builder owns the legacy Stage bridge and also
+        # imports compiler vocabulary used while constructing the graph.
+        from saealib.core.graph_builder import StageNodeAdapter
+
+        graph = plan.graph
+        nodes_by_id = {node.component_id: node for node in graph.nodes}
+        stage_ids = {
+            node.component_id
+            for node in graph.nodes
+            if isinstance(node.component, StageNodeAdapter)
+        }
+        if not stage_ids:
+            return cls(plan=plan, nodes=())
+        if not graph.entry_points:
+            raise ValidationError("SequentialPlan requires a graph entry point")
+
+        control_successors: dict[str, set[str]] = {
+            node_id: set() for node_id in nodes_by_id
+        }
+        for edge in graph.control_edges:
+            source = edge.source.component_id
+            target = edge.target.component_id
+            if source not in nodes_by_id or target not in nodes_by_id:
+                raise ValidationError("SequentialPlan control edge has an unknown node")
+            control_successors[source].add(target)
+
+        reachable: set[str] = set()
+        pending = [entry.component_id for entry in graph.entry_points]
+        while pending:
+            node_id = pending.pop()
+            if node_id not in nodes_by_id:
+                raise ValidationError(
+                    f"SequentialPlan entry point {node_id!r} is not in the graph"
+                )
+            if node_id in reachable:
+                continue
+            reachable.add(node_id)
+            pending.extend(control_successors[node_id])
+
+        reachable_stages = stage_ids & reachable
+        if not reachable_stages:
+            raise ValidationError(
+                "SequentialPlan entry points do not reach a StageNodeAdapter"
+            )
+        if reachable_stages != stage_ids:
+            missing = ", ".join(sorted(stage_ids - reachable_stages))
+            raise ValidationError(
+                f"SequentialPlan has unreachable stage nodes: {missing}"
+            )
+
+        def stage_successors(source: str) -> set[str]:
+            """Collapse control-only compile nodes between two Stage nodes."""
+            result: set[str] = set()
+            pending_nodes = list(control_successors[source])
+            visited_non_stages: set[str] = set()
+            while pending_nodes:
+                target = pending_nodes.pop()
+                if target in reachable_stages:
+                    result.add(target)
+                    continue
+                if target in visited_non_stages:
+                    raise ValidationError(
+                        "SequentialPlan control order contains a cycle"
+                    )
+                visited_non_stages.add(target)
+                pending_nodes.extend(control_successors[target])
+            return result
+
+        successors = {
+            node_id: stage_successors(node_id) for node_id in reachable_stages
+        }
+        predecessors = {node_id: set() for node_id in reachable_stages}
+        for source, targets in successors.items():
+            for target in targets:
+                predecessors[target].add(source)
+
+        # A deterministic order is valid only when there is exactly one
+        # currently available node at every point.  No id-based tie breaking.
+        available = [
+            node_id for node_id, parents in predecessors.items() if not parents
+        ]
+        if len(available) != 1:
+            raise ValidationError(
+                "SequentialPlan control order has no unique entry or is cyclic"
+            )
+        ordered_ids: list[str] = []
+        remaining = {node_id: set(parents) for node_id, parents in predecessors.items()}
+        while available:
+            if len(available) != 1:
+                raise ValidationError("SequentialPlan control order is ambiguous")
+            current = available.pop()
+            ordered_ids.append(current)
+            for target in successors[current]:
+                remaining[target].remove(current)
+                if not remaining[target]:
+                    available.append(target)
+        if len(ordered_ids) != len(reachable_stages):
+            raise ValidationError("SequentialPlan control order contains a cycle")
+        return cls(
+            plan=plan, nodes=tuple(nodes_by_id[node_id] for node_id in ordered_ids)
+        )
+
     @property
     def required_runtime_capabilities(self) -> frozenset[RuntimeCapability]:
         """Return the capabilities required by the compiled plan."""
@@ -199,6 +307,7 @@ class RuntimeStep:
 
     state: OptimizationState
     node_results: tuple[NodeResult, ...] = ()
+    executed_node_ids: tuple[str, ...] = ()
     observable: bool = False
     finished: bool = False
     refused_commands: tuple[RuntimeCommand, ...] = ()
@@ -209,6 +318,7 @@ class RuntimeStep:
         if not isinstance(self.state, OptimizationState):
             raise ValidationError("RuntimeStep state must be an OptimizationState")
         results = tuple(self.node_results)
+        executed_node_ids = tuple(self.executed_node_ids)
         refused = tuple(self.refused_commands)
         if any(not isinstance(result, NodeResult) for result in results):
             raise ValidationError(
@@ -225,6 +335,8 @@ class RuntimeStep:
             raise ValidationError(
                 "RuntimeStep refused_commands must contain RuntimeCommand values"
             )
+        if any(not isinstance(node_id, str) for node_id in executed_node_ids):
+            raise ValidationError("RuntimeStep executed_node_ids must contain strings")
         if not isinstance(self.observable, bool) or not isinstance(self.finished, bool):
             raise ValidationError(
                 "RuntimeStep observable and finished must be booleans"
@@ -234,6 +346,7 @@ class RuntimeStep:
                 "RuntimeStep session must be a RuntimeSession or None"
             )
         object.__setattr__(self, "node_results", results)
+        object.__setattr__(self, "executed_node_ids", executed_node_ids)
         object.__setattr__(self, "refused_commands", refused)
 
 
