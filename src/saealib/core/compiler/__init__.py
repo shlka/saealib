@@ -78,9 +78,20 @@ __all__ = [
     "check_component_contract",
 ]
 
+from saealib.core.compiler.lifecycle_rules import (
+    FeedbackAccumulatorRule,
+    LifecycleCompatibilityRule,
+)
 from saealib.core.compiler.persistence_runtime_rules import (
     PersistenceRule,
     RuntimeCompatibilityRule,
 )
 
-__all__.extend(("PersistenceRule", "RuntimeCompatibilityRule"))
+__all__.extend(
+    (
+        "FeedbackAccumulatorRule",
+        "LifecycleCompatibilityRule",
+        "PersistenceRule",
+        "RuntimeCompatibilityRule",
+    )
+)

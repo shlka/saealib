@@ -46,7 +46,7 @@ class _Component:
 
 
 class _SchedulerHolder:
-    """Hold a real scheduler so the provisional graph offer is observable."""
+    """Hold a scheduler contract whose runtime offer is observable."""
 
     def __init__(self, contract: ComponentContract) -> None:
         self.scheduler = AsyncEvaluationScheduler(SerialEvaluator())
@@ -189,9 +189,11 @@ def test_runtime_capability_requires_set_containment() -> None:
     assert "offers [none]" in findings[0].message
 
 
-def test_scheduler_provisionally_offers_partial_feedback() -> None:
+def test_scheduler_declares_partial_feedback_offer() -> None:
     contract = ComponentContract(
-        execution=ExecutionContract(required_runtime_capabilities=("partial_feedback",))
+        execution=ExecutionContract(
+            offered_runtime_capabilities=("partial_feedback",),
+        )
     )
     graph = ComponentGraph(
         nodes=(

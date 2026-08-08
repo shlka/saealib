@@ -17,7 +17,12 @@ from saealib.algorithms.base import (
 )
 from saealib.callback import PostEvaluationEvent
 from saealib.context import EvaluationPlanState
-from saealib.core.contracts import ComponentContract, PartSpec, StateContract
+from saealib.core.contracts import (
+    ComponentContract,
+    ExecutionContract,
+    PartSpec,
+    StateContract,
+)
 from saealib.core.state import (
     ARCHIVES_MAIN,
     ARCHIVES_PARETO,
@@ -97,6 +102,9 @@ class AsyncEvaluationScheduler:
             state=StateContract(
                 reads=reads,
                 writes=writes,
+            ),
+            execution=ExecutionContract(
+                offered_runtime_capabilities=("partial_feedback",),
             ),
         )
 

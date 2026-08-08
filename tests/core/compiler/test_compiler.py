@@ -438,12 +438,6 @@ def test_third_party_rule_activation_differs_by_phase() -> None:
 
 def test_compiler_package_does_not_import_concrete_component_packages() -> None:
     compiler_root = Path(__file__).parents[3] / "src" / "saealib" / "core" / "compiler"
-    forbidden = (
-        "saealib.algorithms",
-        "saealib.surrogate",
-        "saealib.operators",
-        "saealib.strategies",
-    )
     imports: list[str] = []
     for path in compiler_root.glob("*.py"):
         tree = ast.parse(path.read_text(encoding="utf-8"))
@@ -453,10 +447,25 @@ def test_compiler_package_does_not_import_concrete_component_packages() -> None:
             elif isinstance(node, ast.ImportFrom) and node.module is not None:
                 imports.append(node.module)
 
-    assert not any(
-        imported == package or imported.startswith(f"{package}.")
+    saealib_imports = tuple(
+        imported
         for imported in imports
-        for package in forbidden
+        if imported == "saealib" or imported.startswith("saealib.")
+    )
+    allowed = (
+        "saealib.core",
+        "saealib.exceptions",
+    )
+    unexpected = tuple(
+        imported
+        for imported in saealib_imports
+        if not any(
+            imported == package or imported.startswith(f"{package}.")
+            for package in allowed
+        )
+    )
+    assert not unexpected, (
+        f"compiler package crossed the contract boundary: {unexpected}"
     )
 
 

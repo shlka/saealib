@@ -162,6 +162,7 @@ def _compose_contracts(held: Sequence[_HeldComponent]) -> ComponentContract:
     events = []
     feedback = None
     capabilities: list[str] = []
+    offered_capabilities: list[str] = []
     assumptions: dict[str, bool] = {}
 
     for index, item in enumerate(held, start=1):
@@ -196,6 +197,8 @@ def _compose_contracts(held: Sequence[_HeldComponent]) -> ComponentContract:
                 feedback = None
         for capability in contract.execution.required_runtime_capabilities:
             _append_unique(capabilities, capability)
+        for capability in contract.execution.offered_runtime_capabilities:
+            _append_unique(offered_capabilities, capability)
         for name, value in contract.assumptions.items():
             if name not in assumptions:
                 assumptions[name] = value
@@ -210,7 +213,10 @@ def _compose_contracts(held: Sequence[_HeldComponent]) -> ComponentContract:
         state=StateContract(
             reads=tuple(reads), writes=tuple(writes), exports=tuple(exports)
         ),
-        execution=ExecutionContract(required_runtime_capabilities=tuple(capabilities)),
+        execution=ExecutionContract(
+            required_runtime_capabilities=tuple(capabilities),
+            offered_runtime_capabilities=tuple(offered_capabilities),
+        ),
         assumptions=AssumptionSet(assumptions),
     )
 

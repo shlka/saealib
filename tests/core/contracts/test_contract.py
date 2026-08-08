@@ -26,6 +26,7 @@ def test_empty_component_contract_has_all_defaults() -> None:
     assert contract.lifecycle.events == ()
     assert contract.state.reads == ()
     assert contract.execution.required_runtime_capabilities == ()
+    assert contract.execution.offered_runtime_capabilities == ()
     assert contract.assumptions["observation_schema.fixed"] is True
 
 

@@ -619,7 +619,10 @@ def _check_vocabularies(instance: Any) -> None:
                 assert SERVICE_VOCABULARY.get(service.name) is not None
     for name in contract.assumptions:
         assert ASSUMPTION_KEYS.get(name) is not None
-    for capability in contract.execution.required_runtime_capabilities:
+    for capability in (
+        *contract.execution.required_runtime_capabilities,
+        *contract.execution.offered_runtime_capabilities,
+    ):
         assert RUNTIME_CAPABILITIES.get(capability) is not None
     for part in contract.parts:
         child = getattr(instance, part.name)

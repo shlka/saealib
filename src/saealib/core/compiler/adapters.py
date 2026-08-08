@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from saealib.core.compiler.diagnostics import ContractPath, Diagnostic, Severity
-from saealib.core.compiler.graph import ComponentNode, DataEdge, NodeRef
+from saealib.core.compiler.graph import ComponentGraph, ComponentNode, DataEdge, NodeRef
 from saealib.core.contracts import (
     DATA_SPEC_KINDS,
     MANY,
@@ -147,6 +147,7 @@ class AdapterMatchContext:
     source_port: PortSpec
     target_port: PortSpec
     compile_context: object
+    graph: ComponentGraph | None = None
 
 
 class AdapterRegistry:
@@ -184,6 +185,7 @@ class AdapterRegistry:
         target_node: ComponentNode | None = None,
         source_port: PortSpec | None = None,
         target_port: PortSpec | None = None,
+        graph: ComponentGraph | None = None,
     ) -> tuple[Adapter, ...]:
         """Return deterministic adapters compatible with both endpoints."""
         enabled = getattr(compile_context, "enabled_rule_namespaces", frozenset())
@@ -221,6 +223,7 @@ class AdapterRegistry:
                     source_port=source_port,
                     target_port=target_port,
                     compile_context=compile_context,
+                    graph=graph,
                 )
                 if not adapter.matcher(context):
                     continue
@@ -318,11 +321,61 @@ def _space_has_dense_view(context: object) -> bool:
     ).unified
 
 
+def _partial_feedback_is_offered(
+    compile_context: object,
+    *,
+    graph: ComponentGraph | None = None,
+    nodes: tuple[ComponentNode | None, ...] = (),
+) -> bool:
+    """Use K7's declared scheduler offer for adapter matching.
+
+    The scheduler offer is intentionally centralized in the K7 rule.  The
+    adapter matcher may also be called for one virtual edge before the rule
+    has a graph-wide context, so the same helper is applied to the endpoint
+    components as a narrow fallback.
+    """
+    offered = set(getattr(compile_context, "offered_runtime_capabilities", frozenset()))
+    if "partial_feedback" in offered:
+        return True
+    from saealib.core.compiler.persistence_runtime_rules import (
+        _contains_async_scheduler,
+        _scheduler_runtime_offer,
+    )
+
+    if graph is not None and "partial_feedback" in _scheduler_runtime_offer(graph):
+        return True
+    return any(
+        node is not None and _contains_async_scheduler(node.contract) for node in nodes
+    )
+
+
 def _legacy_feedback_match(match: AdapterMatchContext) -> bool:
-    feedback = getattr(match.target_node.contract.lifecycle, "feedback", None)
+    return not _partial_complete_feedback_pair(
+        match
+    ) and _target_requires_complete_batch(match.target_node)
+
+
+def _target_requires_complete_batch(node: ComponentNode) -> bool:
+    feedback = getattr(node.contract.lifecycle, "feedback", None)
     return (
         feedback is not None and getattr(feedback, "completion", None) == COMPLETE_BATCH
     )
+
+
+def _partial_complete_feedback_pair(match: AdapterMatchContext) -> bool:
+    """Return whether partial runtime meets a complete-batch consumer."""
+    return _target_requires_complete_batch(
+        match.target_node
+    ) and _partial_feedback_is_offered(
+        match.compile_context,
+        graph=match.graph,
+        nodes=(match.source_node, match.target_node),
+    )
+
+
+def _feedback_accumulator_match(match: AdapterMatchContext) -> bool:
+    """Match the runtime/consumer pair that K6b can buffer losslessly."""
+    return _partial_complete_feedback_pair(match)
 
 
 def _dense_match(match: AdapterMatchContext) -> bool:
@@ -339,6 +392,18 @@ DEFAULT_ADAPTER_REGISTRY = AdapterRegistry(
             auto_insertable=True,
             category="lossless_view",
             matcher=_dense_match,
+        ),
+        Adapter(
+            name="feedback_accumulator",
+            source=DataSpec(kind="FeedbackBatch"),
+            # The current graph boundary is the legacy Population consumer;
+            # the compile-only synthetic component represents accumulation at
+            # that boundary.  Phase 6 will expose FeedbackBatch end-to-end.
+            target=DataSpec(kind="Population"),
+            lossless=True,
+            auto_insertable=True,
+            category="partial_feedback_accumulation",
+            matcher=_feedback_accumulator_match,
         ),
         # The runtime counterpart is LegacyPopulationAlgorithmAdapter in TellStage.
         Adapter(
@@ -395,6 +460,24 @@ class LosslessAdapterRule:
             ):
                 edges.append(edge)
                 continue
+            if (
+                source_port.data.kind == "FeedbackBatch"
+                and _partial_complete_feedback_pair(
+                    AdapterMatchContext(
+                        source_node=source,
+                        target_node=target,
+                        source_port=source_port,
+                        target_port=target_port,
+                        compile_context=context.compile_context,
+                        graph=graph,
+                    )
+                )
+            ):
+                # FeedbackAccumulatorRule owns this lifecycle rewrite.  Leaving
+                # the edge untouched here prevents the legacy Population view
+                # from racing it for the same claim.
+                edges.append(edge)
+                continue
             candidates = registry.candidates(
                 source_port.data,
                 target_port.data,
@@ -403,6 +486,7 @@ class LosslessAdapterRule:
                 target_node=target,
                 source_port=source_port,
                 target_port=target_port,
+                graph=graph,
             )
             source_path = ContractPath(
                 components=(source.component_id,),

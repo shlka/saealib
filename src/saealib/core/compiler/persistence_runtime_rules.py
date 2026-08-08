@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import TYPE_CHECKING, Literal
 
 from saealib.core.compiler.diagnostics import ContractPath, Diagnostic, Severity
@@ -110,10 +109,12 @@ class PersistenceRule:
 
 
 def _contains_async_scheduler(value: object, seen: set[int] | None = None) -> bool:
-    """Find an AsyncEvaluationScheduler in a node or its held objects.
+    """Find a declared partial-feedback offer in a component contract.
 
-    This deliberately supplies only the temporary scheduler offer.  It is a
-    Phase 6 replacement target once runtime capability offers become explicit.
+    The name is retained for the K6b compatibility boundary, but the compiler
+    never identifies a scheduler by concrete type.  A runtime component
+    declares its offer in ``ExecutionContract`` and nested declarations are
+    followed through ``PartSpec.contract``.
     """
     if value is None:
         return False
@@ -123,36 +124,25 @@ def _contains_async_scheduler(value: object, seen: set[int] | None = None) -> bo
         return False
     seen.add(identity)
 
-    from saealib.execution.scheduler import AsyncEvaluationScheduler
-
-    if isinstance(value, AsyncEvaluationScheduler):
-        return True
-    if isinstance(value, Mapping):
-        return any(_contains_async_scheduler(item, seen) for item in value.values())
-    if isinstance(value, (tuple, list, set, frozenset)):
-        return any(_contains_async_scheduler(item, seen) for item in value)
-
-    contract_method = getattr(value, "contract", None)
-    if callable(contract_method):
+    contract = value if isinstance(value, ComponentContract) else None
+    contract_method = getattr(value, "contract", None) if contract is None else None
+    if contract is None and callable(contract_method):
         try:
             contract = contract_method()
         except Exception:  # pragma: no cover - defensive boundary inspection
             contract = None
-        if contract is not None:
-            for part in getattr(contract, "parts", ()):
-                if _contains_async_scheduler(getattr(value, part.name, None), seen):
-                    return True
-
-    try:
-        held = vars(value).values()
-    except TypeError:
+    if not isinstance(contract, ComponentContract):
         return False
-    return any(_contains_async_scheduler(item, seen) for item in held)
+    if "partial_feedback" in contract.execution.offered_runtime_capabilities:
+        return True
+    return any(
+        _contains_async_scheduler(part.contract, seen) for part in contract.parts
+    )
 
 
 def _scheduler_runtime_offer(graph: ComponentGraph) -> frozenset[str]:
-    """Return the provisional offer contributed by a graph scheduler."""
-    if any(_contains_async_scheduler(node.component) for node in graph.nodes):
+    """Return the partial-feedback offer declared by graph node contracts."""
+    if any(_contains_async_scheduler(node.contract) for node in graph.nodes):
         return frozenset({"partial_feedback"})
     return frozenset()
 
@@ -187,7 +177,7 @@ class RuntimeCompatibilityRule:
                         code="missing_runtime_capability",
                         message=(
                             f"Node {path} requires runtime capability "
-                            f"{capability!r}; the provisional runtime offers "
+                            f"{capability!r}; the effective runtime offers "
                             f"[{offered_rendered}]."
                         ),
                         path=path,

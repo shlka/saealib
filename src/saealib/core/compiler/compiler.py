@@ -1077,6 +1077,10 @@ from saealib.core.compiler.adapters import (  # noqa: E402  # registration bound
     DEFAULT_ADAPTER_REGISTRY,
     LosslessAdapterRule,
 )
+from saealib.core.compiler.lifecycle_rules import (  # noqa: E402
+    FeedbackAccumulatorRule,
+    LifecycleCompatibilityRule,
+)
 from saealib.core.compiler.persistence_runtime_rules import (  # noqa: E402
     PersistenceRule,
     RuntimeCompatibilityRule,
@@ -1084,9 +1088,11 @@ from saealib.core.compiler.persistence_runtime_rules import (  # noqa: E402
 from saealib.core.compiler.schema_rules import SchemaBindingRule  # noqa: E402
 
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, SchemaBindingRule()))
+DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, FeedbackAccumulatorRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, LosslessAdapterRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, PersistenceRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, RuntimeCompatibilityRule()))
+DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, LifecycleCompatibilityRule()))
 
 __all__ = [
     "DEFAULT_ADAPTER_REGISTRY",
@@ -1095,6 +1101,8 @@ __all__ = [
     "CompileContext",
     "Compiler",
     "ExecutablePlan",
+    "FeedbackAccumulatorRule",
+    "LifecycleCompatibilityRule",
     "LosslessAdapterRule",
     "PersistenceRule",
     "PortCompatibilityRule",

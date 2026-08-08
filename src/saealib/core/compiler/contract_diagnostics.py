@@ -198,7 +198,10 @@ def _check_vocabularies(
                         "a registered namespace."
                     ),
                 )
-    for capability in contract.execution.required_runtime_capabilities:
+    for capability in (
+        *contract.execution.required_runtime_capabilities,
+        *contract.execution.offered_runtime_capabilities,
+    ):
         if RUNTIME_CAPABILITIES.get(capability) is None:
             _finding(
                 diagnostics,

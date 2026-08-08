@@ -26,15 +26,20 @@ RUNTIME_CAPABILITIES.register(
 
 @dataclass(frozen=True, kw_only=True)
 class ExecutionContract:
-    """Declare runtime capabilities required by a component."""
+    """Declare runtime capabilities required or offered by a component."""
 
     required_runtime_capabilities: tuple[RuntimeCapability, ...] = ()
+    offered_runtime_capabilities: tuple[RuntimeCapability, ...] = ()
 
     def __post_init__(self) -> None:
-        """Validate and normalize required capability names."""
-        capabilities = tuple(self.required_runtime_capabilities)
-        if any(not isinstance(capability, str) for capability in capabilities):
-            raise ValidationError("Runtime capabilities must be strings")
-        for capability in capabilities:
-            validate_name(capability)
-        object.__setattr__(self, "required_runtime_capabilities", capabilities)
+        """Validate and normalize required and offered capability names."""
+        for field_name in (
+            "required_runtime_capabilities",
+            "offered_runtime_capabilities",
+        ):
+            capabilities = tuple(getattr(self, field_name))
+            if any(not isinstance(capability, str) for capability in capabilities):
+                raise ValidationError("Runtime capabilities must be strings")
+            for capability in capabilities:
+                validate_name(capability)
+            object.__setattr__(self, field_name, capabilities)

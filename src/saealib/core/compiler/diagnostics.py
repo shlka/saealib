@@ -257,3 +257,13 @@ DIAGNOSTIC_CODES.register(
         ),
     ),
 )
+DIAGNOSTIC_CODES.register(
+    "incompatible_feedback_lifecycle",
+    VocabularyDescriptor(
+        name="incompatible_feedback_lifecycle",
+        description=(
+            "A feedback producer's delivery lifecycle does not satisfy the "
+            "consumer's declared FeedbackContract."
+        ),
+    ),
+)
