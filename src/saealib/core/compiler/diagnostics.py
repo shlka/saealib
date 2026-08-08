@@ -70,6 +70,11 @@ for _name, _description in (
     ("unknown_schema_variable", "A data binding key has not been registered."),
     ("unknown_cardinality", "A port cardinality has not been registered."),
     ("unknown_service", "A port service requirement has not been registered."),
+    (
+        "unresolved_service",
+        "A declared port service is registered but is not provided by "
+        "the bound context.",
+    ),
     ("unknown_state_namespace", "A state-key namespace has not been registered."),
     (
         "unknown_runtime_capability",
@@ -109,6 +114,19 @@ for _name, _description in (
     (
         "unclaimed_rewrite",
         "A resolution rule changed a graph location without claiming it.",
+    ),
+    (
+        "incompatible_port",
+        "A data connection does not satisfy its producer and consumer port contracts.",
+    ),
+    (
+        "unknown_port",
+        "A data connection names a port that is not declared at its graph endpoint.",
+    ),
+    (
+        "ambiguous_port",
+        "A data connection names a port shared by multiple roles without "
+        "selecting one.",
     ),
 ):
     DIAGNOSTIC_CODES.register(

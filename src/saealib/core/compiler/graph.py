@@ -81,6 +81,7 @@ class ComponentNode:
     component_id: ComponentId
     component: object
     role: RoleName | None = None
+    resolved_services: Mapping[str, object] = field(default_factory=dict)
     contract: ComponentContract = field(init=False)
 
     def __post_init__(self) -> None:
@@ -88,6 +89,14 @@ class ComponentNode:
         _name(self.component_id, "ComponentNode component_id")
         if self.role is not None:
             _name(self.role, "ComponentNode role")
+        resolved_services = dict(self.resolved_services)
+        for service_name in resolved_services:
+            _name(service_name, "ComponentNode resolved service name")
+        object.__setattr__(
+            self,
+            "resolved_services",
+            MappingProxyType(resolved_services),
+        )
         contract_method = getattr(self.component, "contract", None)
         if not callable(contract_method):
             raise ValidationError("ComponentNode component must provide contract()")

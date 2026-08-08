@@ -203,6 +203,61 @@ def test_disjoint_resolution_claims_are_order_independent() -> None:
 
 
 @dataclass
+class _AddingRule:
+    name: str
+    target: str
+    namespace: str = "test"
+    phase: Literal["resolution"] = "resolution"
+
+    def apply(self, context: RuleContext) -> ResolutionResult:
+        if any(node.component_id == self.target for node in context.graph.nodes):
+            return ResolutionResult(
+                graph=context.graph,
+                claims=frozenset(
+                    {
+                        context.claim("node", self.target),
+                        context.claim("entry_point", self.target),
+                    }
+                ),
+            )
+        node = ComponentNode(component_id=self.target, component=_Component())
+        return ResolutionResult(
+            graph=replace(
+                context.graph,
+                nodes=(*context.graph.nodes, node),
+                entry_points=(
+                    *context.graph.entry_points,
+                    NodeRef(component_id=self.target),
+                ),
+            ),
+            claims=frozenset(
+                {
+                    context.claim("node", self.target),
+                    context.claim("entry_point", self.target),
+                }
+            ),
+        )
+
+
+def test_disjoint_resolution_additions_are_order_independent() -> None:
+    graph = _graph()
+    rules = [_AddingRule("add_b", "b"), _AddingRule("add_a", "a")]
+    expected = None
+    for seed in range(8):
+        shuffled = list(rules)
+        random.Random(seed).shuffle(shuffled)
+        plan = Compiler(RuleRegistry(shuffled)).compile(
+            graph, CompileContext(enabled_rule_namespaces=frozenset({"test"}))
+        )
+        signature = tuple(node.component_id for node in plan.graph.nodes)
+        if expected is None:
+            expected = signature
+        else:
+            assert signature == expected
+    assert expected == ("start", "a", "b")
+
+
+@dataclass
 class _OneShotRule:
     name: str = "one_shot"
     namespace: str = "test"

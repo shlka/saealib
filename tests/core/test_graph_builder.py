@@ -14,7 +14,15 @@ from saealib import (
 from saealib.core.compiler import CompileContext, RuleContext
 from saealib.core.compiler.diagnostics import DiagnosticBag
 from saealib.core.compiler.graph import IdentityRule, ReachabilityRule
-from saealib.core.contracts import ComponentContract, StateContract
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    StateContract,
+)
 from saealib.core.graph_builder import StageNodeAdapter, build_component_graph
 from saealib.core.state import SURROGATES_DEFAULT
 from saealib.execution.evaluator import SerialEvaluator
@@ -29,11 +37,22 @@ from saealib.strategies.ps import PreSelectionStrategy
 class _ContractComponent:
     """A no-op component sufficient for graph construction."""
 
-    def __init__(self, *, exports: tuple = ()) -> None:
-        self._contract = ComponentContract(state=StateContract(exports=exports))
+    def __init__(self, *, exports: tuple = (), ports: dict | None = None) -> None:
+        self._contract = ComponentContract(
+            ports=ports or {}, state=StateContract(exports=exports)
+        )
 
     def contract(self) -> ComponentContract:
         return self._contract
+
+
+def _port(name: str, direction: PortDirection) -> PortSpec:
+    return PortSpec(
+        name=name,
+        direction=direction,
+        data=DataSpec(kind="Population"),
+        cardinality=MANY,
+    )
 
 
 class _Provider:
@@ -45,8 +64,23 @@ class _Provider:
             survivor_selection=TruncationSelection(),
         )
         self.evaluator = SerialEvaluator()
-        self.surrogate_manager = _ContractComponent(exports=(SURROGATES_DEFAULT,))
-        self.acquisition = _ContractComponent()
+        self.surrogate_manager = _ContractComponent(
+            exports=(SURROGATES_DEFAULT,),
+            ports={
+                "predictor": PortContract(
+                    inputs=(_port("candidates", PortDirection.INPUT),),
+                    outputs=(_port("prediction", PortDirection.OUTPUT),),
+                )
+            },
+        )
+        self.acquisition = _ContractComponent(
+            ports={
+                "acquisition": PortContract(
+                    inputs=(_port("prediction", PortDirection.INPUT),),
+                    outputs=(_port("scores", PortDirection.OUTPUT),),
+                )
+            }
+        )
         self.cbmanager = None
         self.async_evaluation_scheduler = None
         self.evaluation_planner = None
@@ -115,6 +149,109 @@ def test_data_and_control_edges_are_distinct_and_archive_feedback_is_control_onl
         and edge.target.component_id == "feedback"
         for edge in graph.data_edges
     )
+
+
+def _resolve_edge_port(graph, endpoint, port_name, direction):
+    node = graph.node_by_id(endpoint.component_id)
+    contracts = (
+        ((endpoint.role, node.contract.ports[endpoint.role]),)
+        if endpoint.role is not None and endpoint.role in node.contract.ports
+        else ()
+        if endpoint.role is not None
+        else tuple(node.contract.ports.items())
+    )
+    matches = [
+        port
+        for _, contract in contracts
+        for port in (*contract.inputs, *contract.outputs)
+        if port.name == port_name and port.direction is direction
+    ]
+    assert len(matches) == 1
+    return matches[0]
+
+
+def test_all_strategy_data_edges_resolve_to_declared_directional_ports():
+    provider: Any = _Provider()
+
+    common = {
+        (
+            "ask",
+            "proposer",
+            "genomes",
+            "evaluation_plan",
+            "evaluation_planner",
+            "candidates",
+        ),
+        (
+            "feedback",
+            "feedback_builder",
+            "feedback",
+            "tell",
+            "feedback_consumer",
+            "offspring",
+        ),
+    }
+    surrogate = {
+        ("ask", "proposer", "genomes", "surrogate_predict", "predictor", "candidates"),
+        (
+            "surrogate_predict",
+            "predictor",
+            "prediction",
+            "acquisition",
+            "acquisition",
+            "prediction",
+        ),
+        (
+            "acquisition",
+            "acquisition",
+            "scores",
+            "evaluation_plan",
+            "evaluation_planner",
+            "acquisition",
+        ),
+    }
+
+    for strategy in _strategies():
+        graph = strategy.build_graph(provider)
+        expected = common | (
+            surrogate
+            if isinstance(strategy, (IndividualBasedStrategy, PreSelectionStrategy))
+            else set()
+        )
+        assert {
+            (
+                edge.source.component_id,
+                edge.source.role,
+                edge.source_port,
+                edge.target.component_id,
+                edge.target.role,
+                edge.target_port,
+            )
+            for edge in graph.data_edges
+        } == expected
+        for edge in graph.data_edges:
+            assert edge.source.role is not None
+            assert edge.target.role is not None
+            _resolve_edge_port(
+                graph, edge.source, edge.source_port, PortDirection.OUTPUT
+            )
+            _resolve_edge_port(
+                graph, edge.target, edge.target_port, PortDirection.INPUT
+            )
+
+
+def test_control_edges_preserve_reachability_without_data_edges():
+    provider: Any = _Provider()
+
+    for strategy in _strategies():
+        graph = strategy.build_graph(provider)
+        control_only = graph.__class__(
+            nodes=graph.nodes,
+            control_edges=graph.control_edges,
+            state_bindings=graph.state_bindings,
+            entry_points=graph.entry_points,
+        )
+        assert len(_rule_diagnostics(ReachabilityRule(), control_only)) == 0
 
 
 def test_adapter_composes_held_contract_without_declaring_stage_state():

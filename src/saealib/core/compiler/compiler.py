@@ -18,6 +18,7 @@ from saealib.core.compiler.diagnostics import (
 )
 from saealib.core.compiler.graph import (
     ComponentGraph,
+    ComponentNode,
     ControlEdge,
     DataEdge,
     IdentityRule,
@@ -25,7 +26,15 @@ from saealib.core.compiler.graph import (
     ReachabilityRule,
     StateBinding,
 )
+from saealib.core.contracts.contract import ComponentContract
 from saealib.core.contracts.execution import RuntimeCapability
+from saealib.core.contracts.ports import (
+    SERVICE_VOCABULARY,
+    PortCompatibility,
+    PortDirection,
+    PortSpec,
+    check_port_compatibility,
+)
 from saealib.core.contracts.vocabulary import validate_name
 from saealib.exceptions import ConfigurationError, ValidationError
 
@@ -255,6 +264,345 @@ def _rule_namespaces(graph: ComponentGraph) -> frozenset[str]:
     return frozenset(values)
 
 
+def _iter_port_specs(
+    contract: ComponentContract,
+    part_path: tuple[str, ...] = (),
+) -> Iterable[tuple[tuple[str, ...], str, PortSpec]]:
+    """Yield every port in a contract, including recursively declared parts."""
+    for role, role_contract in contract.ports.items():
+        for port in (*role_contract.inputs, *role_contract.outputs):
+            yield part_path, role, port
+    for part in contract.parts:
+        yield from _iter_port_specs(part.contract, (*part_path, part.name))
+
+
+def _service_path(
+    node: ComponentNode,
+    part_path: tuple[str, ...],
+    role: str,
+    port: PortSpec,
+) -> ContractPath:
+    """Build the contract path for one required service declaration."""
+    return ContractPath(
+        components=(node.component_id, *part_path),
+        role=role,
+        port=port.name,
+    )
+
+
+def _service_registry(provider: object) -> object | None:
+    """Return a service registry from either a registry or an owning object."""
+    if provider is None:
+        return None
+    services = getattr(provider, "services", None)
+    return provider if services is None else services
+
+
+def _lookup_service(
+    compile_context: CompileContext,
+    provider_name: str,
+    service_name: str,
+) -> object | None:
+    """Resolve one service from its declared provider without registry mutation."""
+    provider = (
+        compile_context.space if provider_name == "space" else compile_context.problem
+    )
+    registry = _service_registry(provider)
+    getter = getattr(registry, "get", None)
+    if callable(getter):
+        service = getter(service_name)
+        if service is not None:
+            return service
+    # Problem owns ComparisonService in ADR-0003.  Problem currently exposes
+    # its comparator directly; the compiler keeps that object as the bound
+    # direct reference and does not add a runtime registry lookup.
+    if provider_name == "problem" and service_name == "ComparisonService":
+        return getattr(provider, "comparator", None)
+    return None
+
+
+def _service_diagnostic(
+    *,
+    code: str,
+    path: ContractPath,
+    service_name: str,
+    message: str,
+    resolution: str,
+) -> Diagnostic:
+    """Create a consistent diagnostic for a service declaration."""
+    return Diagnostic(
+        severity=Severity.ERROR,
+        code=code,
+        message=(f"{path} requires service {service_name!r}. {message}"),
+        path=path,
+        resolutions=(resolution,),
+    )
+
+
+class ServiceResolutionRule:
+    """Bind declared port services to compile-time provider references."""
+
+    namespace = "core"
+    name = "service_resolution"
+    phase: Literal["resolution"] = "resolution"
+
+    def apply(self, context: RuleContext) -> ResolutionResult:
+        """Resolve service requirements and claim changed component nodes."""
+        findings: list[Diagnostic] = []
+        updated_nodes: list[ComponentNode] = []
+        claims: set[RewriteClaim] = set()
+        for node in context.graph.nodes:
+            resolved: dict[str, object] = {}
+            for part_path, role, port in _iter_port_specs(node.contract):
+                path = _service_path(node, part_path, role, port)
+                for requirement in port.required_services:
+                    descriptor = SERVICE_VOCABULARY.get(requirement.name)
+                    if descriptor is None:
+                        findings.append(
+                            _service_diagnostic(
+                                code="unknown_service",
+                                path=path,
+                                service_name=requirement.name,
+                                message=(
+                                    "The service is not in the core service vocabulary."
+                                ),
+                                resolution=(
+                                    f"Register {requirement.name!r} in "
+                                    "SERVICE_VOCABULARY before requiring it."
+                                ),
+                            )
+                        )
+                        continue
+                    provider_name = getattr(descriptor, "provider", None)
+                    if provider_name not in {"space", "problem"}:
+                        findings.append(
+                            _service_diagnostic(
+                                code="unresolved_service",
+                                path=path,
+                                service_name=requirement.name,
+                                message=(
+                                    "Its provider descriptor is invalid or missing."
+                                ),
+                                resolution=(
+                                    "Give the service descriptor a valid provider "
+                                    "identity (space or problem)."
+                                ),
+                            )
+                        )
+                        continue
+                    provider_name = cast(str, provider_name)
+                    service = _lookup_service(
+                        context.compile_context,
+                        provider_name,
+                        requirement.name,
+                    )
+                    if service is None:
+                        findings.append(
+                            _service_diagnostic(
+                                code="unresolved_service",
+                                path=path,
+                                service_name=requirement.name,
+                                message=(
+                                    f"No {provider_name} provider is available in "
+                                    "the compile context."
+                                ),
+                                resolution=(
+                                    f"Provide {requirement.name!r} through the "
+                                    f"bound {provider_name}, or choose a component "
+                                    "whose port does not require it."
+                                ),
+                            )
+                        )
+                        continue
+                    resolved.setdefault(requirement.name, service)
+            if resolved != dict(node.resolved_services):
+                updated_nodes.append(replace(node, resolved_services=resolved))
+                claims.add(context.claim("node", node.component_id))
+            else:
+                updated_nodes.append(node)
+        return ResolutionResult(
+            graph=replace(context.graph, nodes=tuple(updated_nodes)),
+            claims=frozenset(claims),
+            diagnostics=tuple(findings),
+        )
+
+
+def _endpoint_path(reference: NodeRef, role: str | None, port: str) -> ContractPath:
+    """Build a path for one side of a data connection."""
+    return ContractPath(components=(reference.component_id,), role=role, port=port)
+
+
+@dataclass(frozen=True, kw_only=True)
+class _PortResolution:
+    """Result of resolving one graph edge endpoint to a declared port."""
+
+    status: Literal["resolved", "missing", "ambiguous"]
+    role: str | None = None
+    spec: PortSpec | None = None
+
+
+def _resolve_port(
+    node: ComponentNode,
+    reference: NodeRef,
+    port_name: str,
+    direction: PortDirection,
+) -> _PortResolution:
+    """Resolve one endpoint by role, direction, and unique port name."""
+    selected_role = reference.role
+    if selected_role is not None:
+        role_contract = node.contract.ports.get(selected_role)
+        role_items = () if role_contract is None else ((selected_role, role_contract),)
+    else:
+        role_items = tuple(sorted(node.contract.ports.items()))
+    candidates: list[tuple[str, PortSpec]] = []
+    for role, role_contract in role_items:
+        ports = (
+            role_contract.outputs
+            if direction is PortDirection.OUTPUT
+            else role_contract.inputs
+        )
+        candidates.extend((role, port) for port in ports if port.name == port_name)
+    if not candidates:
+        return _PortResolution(status="missing")
+    if len(candidates) > 1:
+        return _PortResolution(status="ambiguous")
+    role, spec = candidates[0]
+    return _PortResolution(status="resolved", role=role, spec=spec)
+
+
+def _compatibility_details(compatibility: PortCompatibility) -> str:
+    """Describe the failed checks exposed by PortCompatibility."""
+    details: list[str] = []
+    if not compatibility.kind_ok:
+        details.append("data kinds are incompatible")
+    if not compatibility.cardinality_ok:
+        details.append("cardinalities are incompatible")
+    if not compatibility.direction_ok:
+        details.append("port directions are incompatible")
+    if not compatibility.schema_ok:
+        details.append("schema bindings do not unify")
+    if compatibility.unknown_kinds:
+        details.append("unknown data kinds: " + ", ".join(compatibility.unknown_kinds))
+    if compatibility.unknown_cardinalities:
+        details.append(
+            "unknown cardinalities: " + ", ".join(compatibility.unknown_cardinalities)
+        )
+    return "; ".join(details) or "the port compatibility check failed"
+
+
+class PortCompatibilityRule:
+    """Verify every graph data edge against its producer and consumer ports."""
+
+    namespace = "core"
+    name = "port_compatibility"
+    phase: Literal["verification"] = "verification"
+
+    def apply(self, context: RuleContext) -> VerificationResult:
+        """Collect connection diagnostics without rewriting the graph."""
+        findings: list[Diagnostic] = []
+        for edge in context.graph.data_edges:
+            try:
+                producer = context.graph.node_by_id(edge.source.component_id)
+                consumer = context.graph.node_by_id(edge.target.component_id)
+            except KeyError:
+                # ComponentGraph.well_formedness already reports missing nodes.
+                continue
+            producer_port = _resolve_port(
+                producer, edge.source, edge.source_port, PortDirection.OUTPUT
+            )
+            consumer_port = _resolve_port(
+                consumer, edge.target, edge.target_port, PortDirection.INPUT
+            )
+            source_role = edge.source.role or producer.role or producer_port.role
+            target_role = edge.target.role or consumer.role or consumer_port.role
+            source_path = _endpoint_path(edge.source, source_role, edge.source_port)
+            target_path = _endpoint_path(edge.target, target_role, edge.target_port)
+            connection = f"{source_path} -> {target_path}"
+            unresolved = (
+                ("source", producer_port)
+                if producer_port.status != "resolved"
+                else (
+                    ("target", consumer_port)
+                    if consumer_port.status != "resolved"
+                    else None
+                )
+            )
+            if unresolved is not None:
+                endpoint_name, resolution = unresolved
+                if resolution.status == "ambiguous":
+                    code = "ambiguous_port"
+                    port_name = (
+                        edge.source_port
+                        if endpoint_name == "source"
+                        else edge.target_port
+                    )
+                    message = (
+                        f"Connection {connection} names {endpoint_name} port "
+                        f"{port_name!r}, "
+                        "but multiple roles declare that directional port."
+                    )
+                    resolution_advice = (
+                        "Specify the NodeRef role for the ambiguous endpoint."
+                    )
+                else:
+                    code = "unknown_port"
+                    port_name = (
+                        edge.source_port
+                        if endpoint_name == "source"
+                        else edge.target_port
+                    )
+                    message = (
+                        f"Connection {connection} names an undeclared "
+                        f"{endpoint_name} port {port_name!r}."
+                    )
+                    resolution_advice = (
+                        "Correct the edge port name or declare that directional "
+                        "port in the endpoint contract."
+                    )
+                findings.append(
+                    Diagnostic(
+                        severity=Severity.ERROR,
+                        code=code,
+                        message=message,
+                        path=source_path,
+                        related=(target_path,),
+                        resolutions=(resolution_advice,),
+                    )
+                )
+                continue
+            assert producer_port.spec is not None
+            assert consumer_port.spec is not None
+            producer_spec = producer_port.spec
+            consumer_spec = consumer_port.spec
+            compatibility = check_port_compatibility(producer_spec, consumer_spec)
+            if compatibility.compatible:
+                continue
+            source_path = _endpoint_path(
+                edge.source, edge.source.role or producer_port.role, producer_spec.name
+            )
+            target_path = _endpoint_path(
+                edge.target, edge.target.role or consumer_port.role, consumer_spec.name
+            )
+            connection = f"{source_path} -> {target_path}"
+            findings.append(
+                Diagnostic(
+                    severity=Severity.ERROR,
+                    code="incompatible_port",
+                    message=(
+                        f"Connection {connection} is incompatible: "
+                        f"{_compatibility_details(compatibility)}."
+                    ),
+                    path=source_path,
+                    related=(target_path,),
+                    resolutions=(
+                        "Connect compatible producer and consumer ports, or "
+                        "change the component contract declarations.",
+                    ),
+                )
+            )
+        return VerificationResult(diagnostics=tuple(findings))
+
+
 def _diagnostic_sort_key(diagnostic: Diagnostic) -> tuple[str, ...]:
     return (
         diagnostic.severity.value,
@@ -384,6 +732,14 @@ def _merge_graphs(
                 return getattr(left, "component_id") == getattr(right, "component_id")
             return left == right
 
+        def stable_value_key(value: _ValueT) -> tuple[str, str, str]:
+            """Order newly added values without consulting rule enumeration."""
+            return (
+                type(value).__name__,
+                str(getattr(value, "component_id", "")),
+                repr(value),
+            )
+
         matched: dict[int, int] = {}
         used_candidates: set[int] = set()
         for original_index, original_value in enumerate(original):
@@ -419,7 +775,17 @@ def _merge_graphs(
                 continue
             if not any(same_slot(candidate_value, value) for value in merged):
                 merged.append(candidate_value)
-        return tuple(merged)
+        existing = [
+            value
+            for value in merged
+            if any(same_slot(value, original_value) for original_value in original)
+        ]
+        added = [
+            value
+            for value in merged
+            if not any(same_slot(value, original_value) for original_value in original)
+        ]
+        return tuple((*existing, *sorted(added, key=stable_value_key)))
 
     for result in proposals:
         candidate = result.graph
@@ -648,6 +1014,8 @@ class Compiler:
 DEFAULT_RULE_REGISTRY = RuleRegistry()
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, IdentityRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, ReachabilityRule()))
+DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, ServiceResolutionRule()))
+DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, PortCompatibilityRule()))
 
 __all__ = [
     "DEFAULT_RULE_REGISTRY",
@@ -655,6 +1023,7 @@ __all__ = [
     "CompileContext",
     "Compiler",
     "ExecutablePlan",
+    "PortCompatibilityRule",
     "ResolutionResult",
     "ResolutionRule",
     "RewriteClaim",
@@ -662,6 +1031,7 @@ __all__ = [
     "RuleRegistration",
     "RuleRegistry",
     "RuleResult",
+    "ServiceResolutionRule",
     "VerificationResult",
     "VerificationRule",
 ]

@@ -125,12 +125,12 @@ def test_pymoo_mutation_inherits_generic_contract() -> None:
     assert _service_names(outputs) == ()
 
 
-def test_comparison_service_is_registered_without_provider_metadata() -> None:
+def test_comparison_service_is_registered_with_problem_provider() -> None:
     descriptor = SERVICE_VOCABULARY.get("ComparisonService")
 
     assert descriptor is not None
     assert descriptor.description == "order candidates by their objective values"
-    assert not hasattr(descriptor, "provider")
+    assert descriptor.provider == "problem"
 
 
 @pytest.mark.parametrize("operator", [TournamentSelection(2), LinearRankSelection()])

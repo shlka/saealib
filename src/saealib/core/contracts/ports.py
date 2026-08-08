@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import TypeAlias
+from typing import Literal, TypeAlias
 
 from saealib.core.contracts.data import (
     DATA_SPEC_KINDS,
@@ -33,6 +33,8 @@ __all__ = [
     "PortContract",
     "PortDirection",
     "PortSpec",
+    "ServiceDescriptor",
+    "ServiceProvider",
     "ServiceRequirement",
     "cardinality_satisfies",
     "check_port_compatibility",
@@ -52,6 +54,24 @@ class PortDirection(str, Enum):
     OUTPUT = "output"
 
 
+ServiceProvider: TypeAlias = Literal["space", "problem"]
+
+
+@dataclass(frozen=True, kw_only=True)
+class ServiceDescriptor(VocabularyDescriptor):
+    """Metadata for a named service and the object that provides it."""
+
+    provider: ServiceProvider
+
+    def __post_init__(self) -> None:
+        """Validate service descriptor metadata."""
+        super().__post_init__()
+        if self.provider not in {"space", "problem"}:
+            raise ValidationError(
+                "Service providers must be either 'space' or 'problem'"
+            )
+
+
 CARDINALITIES: Vocabulary[VocabularyDescriptor] = Vocabulary()
 for _name, _description in (
     (ONE, "Exactly one item per activation."),
@@ -64,7 +84,7 @@ for _name, _description in (
     )
 
 
-SERVICE_VOCABULARY: Vocabulary[VocabularyDescriptor] = Vocabulary()
+SERVICE_VOCABULARY: Vocabulary[ServiceDescriptor] = Vocabulary()
 for _name, _description in (
     (
         "SamplingService",
@@ -88,7 +108,11 @@ for _name, _description in (
 ):
     SERVICE_VOCABULARY.register(
         _name,
-        VocabularyDescriptor(name=_name, description=_description),
+        ServiceDescriptor(
+            name=_name,
+            description=_description,
+            provider="problem" if _name == "ComparisonService" else "space",
+        ),
     )
 
 

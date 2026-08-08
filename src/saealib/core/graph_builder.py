@@ -25,6 +25,7 @@ from saealib.core.contracts import (
     ExecutionContract,
     LifecycleContract,
     PortContract,
+    PortDirection,
     StateContract,
 )
 from saealib.core.state import StateKey
@@ -279,45 +280,75 @@ class StageNodeAdapter:
         return tuple(bindings)
 
 
-_DATA_PORTS: dict[tuple[str, str], tuple[str, str]] = {
-    ("ask", "surrogate_predict"): ("offspring", "offspring"),
-    ("ask", "evaluation_plan"): ("offspring", "offspring"),
-    ("ask", "async_evaluation_submit"): ("offspring", "offspring"),
-    ("surrogate_predict", "acquisition"): ("predictions", "predictions"),
-    ("acquisition", "evaluation_plan"): (
-        "acquisition_result",
-        "acquisition_result",
+_DATA_PORTS: tuple[tuple[str, str, str, str, str, str], ...] = (
+    ("ask", "proposer", "genomes", "surrogate_predict", "predictor", "candidates"),
+    (
+        "ask",
+        "proposer",
+        "genomes",
+        "evaluation_plan",
+        "evaluation_planner",
+        "candidates",
     ),
-    ("acquisition", "async_evaluation_submit"): (
-        "acquisition_result",
-        "acquisition_result",
+    (
+        "ask",
+        "proposer",
+        "genomes",
+        "async_evaluation_submit",
+        "evaluation_planner",
+        "candidates",
     ),
-    ("evaluation_plan", "evaluation_submit"): (
-        "evaluation_request",
-        "evaluation_request",
+    (
+        "surrogate_predict",
+        "predictor",
+        "prediction",
+        "acquisition",
+        "acquisition",
+        "prediction",
     ),
-    ("evaluation_submit", "evaluation_collect"): (
-        "evaluation_handles",
-        "evaluation_handles",
+    (
+        "acquisition",
+        "acquisition",
+        "scores",
+        "evaluation_plan",
+        "evaluation_planner",
+        "acquisition",
     ),
-    ("evaluation_collect", "evaluation_apply"): (
-        "evaluation_updates",
-        "evaluation_updates",
+    (
+        "acquisition",
+        "acquisition",
+        "scores",
+        "async_evaluation_submit",
+        "evaluation_planner",
+        "acquisition",
     ),
-    ("evaluation_apply", "archive_update"): (
-        "evaluated_offspring",
-        "evaluated_offspring",
+    (
+        "feedback",
+        "feedback_builder",
+        "feedback",
+        "tell",
+        "feedback_consumer",
+        "offspring",
     ),
-    ("evaluation_apply", "feedback"): (
-        "evaluated_offspring",
-        "evaluated_offspring",
-    ),
-    ("evaluation_apply", "evaluation_acknowledge"): (
-        "evaluation_updates",
-        "evaluation_updates",
-    ),
-    ("feedback", "tell"): ("feedback", "feedback"),
-}
+)
+
+
+def _has_port(
+    contract: ComponentContract,
+    role: str,
+    name: str,
+    direction: PortDirection,
+) -> bool:
+    """Return whether a composed role has exactly one matching port."""
+    port_contract = contract.ports.get(role)
+    if port_contract is None:
+        return False
+    matches = tuple(
+        port
+        for port in (*port_contract.inputs, *port_contract.outputs)
+        if port.name == name and port.direction is direction
+    )
+    return len(matches) == 1
 
 
 def _unique_node_ids(stages: Sequence[Stage]) -> tuple[str, ...]:
@@ -335,9 +366,8 @@ def _unique_node_ids(stages: Sequence[Stage]) -> tuple[str, ...]:
 def build_component_graph(pipeline: Pipeline) -> ComponentGraph:
     """Build a graph with the same top-level stages as *pipeline*.
 
-    Adjacent stages always receive a control edge.  Additional data edges are
-    added only for the concrete transports documented by the stage inventory;
-    in particular ArchiveUpdate → Feedback remains control-only.
+    Adjacent stages always receive a control edge. Data edges are emitted only
+    when both endpoints expose the declared role, name, and direction.
     """
     if not isinstance(pipeline, Pipeline):
         raise ValidationError("build_component_graph requires a Pipeline")
@@ -360,7 +390,14 @@ def build_component_graph(pipeline: Pipeline) -> ComponentGraph:
     )
 
     data_edges: list[DataEdge] = []
-    for (source_name, target_name), (source_port, target_port) in _DATA_PORTS.items():
+    for (
+        source_name,
+        source_role,
+        source_port,
+        target_name,
+        target_role,
+        target_port,
+    ) in _DATA_PORTS:
         source_indices = [
             index for index, stage in enumerate(stages) if stage.name == source_name
         ]
@@ -370,10 +407,31 @@ def build_component_graph(pipeline: Pipeline) -> ComponentGraph:
         for source_index in source_indices:
             for target_index in target_indices:
                 if source_index < target_index:
+                    source_node = nodes[source_index]
+                    target_node = nodes[target_index]
+                    if not (
+                        _has_port(
+                            source_node.contract,
+                            source_role,
+                            source_port,
+                            PortDirection.OUTPUT,
+                        )
+                        and _has_port(
+                            target_node.contract,
+                            target_role,
+                            target_port,
+                            PortDirection.INPUT,
+                        )
+                    ):
+                        continue
                     data_edges.append(
                         DataEdge(
-                            source=NodeRef(component_id=node_ids[source_index]),
-                            target=NodeRef(component_id=node_ids[target_index]),
+                            source=NodeRef(
+                                component_id=node_ids[source_index], role=source_role
+                            ),
+                            target=NodeRef(
+                                component_id=node_ids[target_index], role=target_role
+                            ),
                             source_port=source_port,
                             target_port=target_port,
                         )
