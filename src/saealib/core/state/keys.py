@@ -22,6 +22,7 @@ __all__ = [
     "FEEDBACK_RESULT",
     "PENDING_EVALUATIONS",
     "POPULATIONS_MAIN",
+    "PROPOSALS_CURRENT",
     "PROPOSALS_OFFSPRING",
     "RUNTIME_ASYNC_FATAL",
     "RUNTIME_CANDIDATE_ID_ALLOCATOR",
@@ -127,5 +128,10 @@ FEEDBACK_RESULT = StateKey[object](
 )
 PROPOSALS_OFFSPRING = StateKey[object](
     namespace="proposals", name="offspring", schema_version=1
+)
+# The current proposal ID is transport state: AskStage writes it and the
+# feedback delivery path reads it until the proposal's tell has completed.
+PROPOSALS_CURRENT = StateKey[object](
+    namespace="proposals", name="current", schema_version=1
 )
 USER_DATA = StateKey[object](namespace="user", name="data", schema_version=1)

@@ -13,6 +13,7 @@ from saealib.core.contracts import (
     OPTIONAL,
     ComponentContract,
     DataSpec,
+    FeedbackBatch,
     PortContract,
     PortDirection,
     PortSpec,
@@ -238,16 +239,14 @@ def _legacy_batch(evaluation: EvaluationResult) -> ObservationBatch:
         constraint_count=evaluation.g.shape[1],
         quantities={CV: (0,)},
     )
-    return ObservationBatch(
-        schema=schema,
-        records=ObservationRecords.from_dense(
-            evaluation.candidate_ids,
-            evaluation.f,
-            evaluation.g,
-            evaluation.cv,
-            source=TRUE,
-            status=OK,
-        ),
+    return ObservationBatch.from_dense(
+        schema,
+        evaluation.candidate_ids,
+        evaluation.f,
+        evaluation.g,
+        evaluation.cv,
+        source=TRUE,
+        status=OK,
     )
 
 
@@ -308,6 +307,99 @@ def _metadata_numbers(
 
 
 LEGACY_SOURCE_CODES = {TRUE: 0, SURROGATE: 1, IMPUTED: 2}
+
+
+def _feedback_batch_from_result(
+    result: FeedbackResult,
+    *,
+    proposal_id: int,
+    channel: str,
+    final: bool,
+    sequence: int,
+) -> FeedbackBatch:
+    """Wrap a materialized legacy result in the columnar feedback contract.
+
+    ``FeedbackResult.source`` is row-level provenance, while ``channel`` is
+    the delivery path.  Dense groups are built through ``from_dense`` so the
+    common-source fast path remains vectorized; mixed provenance groups are
+    concatenated and restored to the original candidate order.
+    """
+    candidate_ids = np.asarray(result.candidate_ids, dtype=np.int64)
+    f = np.asarray(result.f, dtype=np.float64)
+    g = (
+        np.empty((len(candidate_ids), 0), dtype=np.float64)
+        if result.g is None
+        else np.asarray(result.g, dtype=np.float64)
+    )
+    cv = None if result.cv is None else np.asarray(result.cv, dtype=np.float64)
+    if f.ndim != 2 or f.shape[0] != len(candidate_ids):
+        raise ValidationError("feedback objective values are not row-aligned")
+    if g.ndim != 2 or g.shape[0] != len(candidate_ids):
+        raise ValidationError("feedback constraint values are not row-aligned")
+    if cv is not None and (cv.ndim != 1 or len(cv) != len(candidate_ids)):
+        raise ValidationError("feedback cv values are not row-aligned")
+    source_codes = np.asarray(result.source, dtype=np.uint8)
+    if source_codes.shape != (len(candidate_ids),):
+        raise ValidationError("feedback source values are not row-aligned")
+    schema = ObservationSchema(
+        objective_count=f.shape[1],
+        constraint_count=g.shape[1],
+        quantities={CV: (0,)} if cv is not None else {},
+    )
+    source_names = {0: TRUE, 1: SURROGATE, 2: IMPUTED}
+    parts: list[ObservationBatch] = []
+    part_positions: list[np.ndarray] = []
+    for code, source in source_names.items():
+        positions = np.flatnonzero(source_codes == code)
+        if len(positions) == 0:
+            continue
+        parts.append(
+            ObservationBatch.from_dense(
+                schema,
+                candidate_ids[positions],
+                f[positions],
+                g[positions],
+                None if cv is None else cv[positions],
+                source=source,
+                status=OK,
+            )
+        )
+        part_positions.append(positions)
+    if sum(len(positions) for positions in part_positions) != len(candidate_ids):
+        raise ValidationError("feedback contains an unknown legacy source code")
+    if not parts:
+        empty = ObservationBatch.from_dense(
+            schema,
+            candidate_ids,
+            f,
+            g,
+            cv,
+            source=TRUE,
+            status=OK,
+        )
+        return FeedbackBatch(
+            proposal_id=proposal_id,
+            observations=empty,
+            channel=channel,
+            final=final,
+            sequence=sequence,
+        )
+    if len(parts) == 1:
+        observations = parts[0]
+    else:
+        quantity_count = f.shape[1] + g.shape[1] + (cv is not None)
+        records = ObservationRecords.concat([part.records for part in parts])
+        original_positions = np.concatenate(part_positions)
+        record_positions = np.repeat(original_positions, quantity_count)
+        records = records.take(np.argsort(record_positions, kind="stable"))
+        observations = ObservationBatch(schema=schema, records=records)
+    return FeedbackBatch(
+        proposal_id=proposal_id,
+        observations=observations,
+        channel=channel,
+        final=final,
+        sequence=sequence,
+    )
 
 
 @cache
@@ -382,15 +474,13 @@ def _materialize_legacy_mixed(
         # This is the legacy-to-observation adapter.  The select/column calls
         # are the same boundary used by the general ObservationBatch path.
         assert evaluation.candidate_ids is not None
-        true_batch = ObservationBatch(
-            schema=_objective_schema(n_obj),
-            records=ObservationRecords.from_dense(
-                evaluation.candidate_ids,
-                evaluation.f,
-                np.empty((len(evaluation.f), 0), dtype=np.float64),
-                source=TRUE,
-                status=OK,
-            ),
+        true_batch = ObservationBatch.from_dense(
+            _objective_schema(n_obj),
+            evaluation.candidate_ids,
+            evaluation.f,
+            np.empty((len(evaluation.f), 0), dtype=np.float64),
+            source=TRUE,
+            status=OK,
         )
         true_records = true_batch.records.select(quantity_kind=OBJECTIVE)
         true_ids = _record_candidate_ids(true_records)
@@ -477,15 +567,13 @@ def _materialize_feedback(
         if values.shape[0] != len(ids):
             raise ValidationError("prediction rows do not match candidates")
         batches.append(
-            ObservationBatch(
-                schema=ObservationSchema(objective_count=values.shape[1]),
-                records=ObservationRecords.from_dense(
-                    ids,
-                    values,
-                    np.empty((len(ids), 0), dtype=np.float64),
-                    source=SURROGATE,
-                    status=OK,
-                ),
+            ObservationBatch.from_dense(
+                ObservationSchema(objective_count=values.shape[1]),
+                ids,
+                values,
+                np.empty((len(ids), 0), dtype=np.float64),
+                source=SURROGATE,
+                status=OK,
             )
         )
     if not batches:

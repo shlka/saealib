@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import time
 from collections.abc import Iterable
 from math import fsum
@@ -9,6 +10,11 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from saealib.algorithms.base import (
+    Algorithm,
+    LegacyPopulationAlgorithmAdapter,
+    _NoOpDispatchProvider,
+)
 from saealib.callback import PostEvaluationEvent
 from saealib.context import EvaluationPlanState
 from saealib.core.contracts import ComponentContract, PartSpec, StateContract
@@ -22,8 +28,10 @@ from saealib.core.state import (
     EVALUATIONS_PLAN_UPDATES,
     PENDING_EVALUATIONS,
     POPULATIONS_MAIN,
+    PROPOSALS_CURRENT,
     RUNTIME_ASYNC_FATAL,
     RUNTIME_RNG,
+    LegacyAlgorithmStateView,
 )
 from saealib.exceptions import (
     CheckpointError,
@@ -45,7 +53,11 @@ from saealib.policies.evaluation import (
     _combine_plan_updates,
     _continue_fidelity_plan,
 )
-from saealib.policies.feedback import FeedbackBuilder, FeedbackResult
+from saealib.policies.feedback import (
+    FeedbackBuilder,
+    FeedbackResult,
+    _feedback_batch_from_result,
+)
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
@@ -1222,6 +1234,56 @@ class AsyncEvaluationScheduler:
             owner.update_rows(rows, values)
         return state.replace(feedback_result=result)
 
+    @staticmethod
+    def _is_legacy_algorithm(component: object) -> bool:
+        """Recognize old ask/tell objects, excluding tell-only consumers."""
+        if isinstance(component, Algorithm):
+            return True
+        ask = getattr(component, "ask", None)
+        if not callable(ask):
+            return False
+        try:
+            parameters = tuple(inspect.signature(ask).parameters.values())
+        except (TypeError, ValueError):
+            return True
+        if any(
+            parameter.kind is inspect.Parameter.VAR_POSITIONAL
+            for parameter in parameters
+        ):
+            return True
+        positional = tuple(
+            parameter
+            for parameter in parameters
+            if parameter.kind
+            in (
+                inspect.Parameter.POSITIONAL_ONLY,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            )
+        )
+        return len(positional) >= 3
+
+    def _feedback_consumer(self) -> tuple[Any, bool]:
+        """Return a per-delivery consumer and whether it needs the legacy seam."""
+        if isinstance(self.algorithm, LegacyPopulationAlgorithmAdapter):
+            return self.algorithm, True
+        if self._is_legacy_algorithm(self.algorithm):
+            provider = self.callback_manager or _NoOpDispatchProvider()
+            return (
+                LegacyPopulationAlgorithmAdapter.for_stage(self.algorithm, provider),
+                True,
+            )
+        return self.algorithm, False
+
+    @staticmethod
+    def _apply_feedback_patch(state: OptimizationState, patch: Any) -> None:
+        """Apply a non-empty new consumer patch while preserving empty legacy moves."""
+        from saealib.core.state import StatePatch
+
+        if not isinstance(patch, StatePatch):
+            raise ValidationError("feedback consumer must return a StatePatch")
+        if patch.writes or patch.deletes:
+            state._store = state._store.apply_patch(patch)
+
     def _apply_tell(
         self, state: OptimizationState, update: EvaluationUpdate
     ) -> OptimizationState:
@@ -1232,8 +1294,42 @@ class AsyncEvaluationScheduler:
         ):
             return state
         owner = self._owner(state, int(update.request_id))
-        rows = self._rows(
-            state, state.feedback_result.candidate_ids, int(update.request_id)
+        try:
+            proposal_id = int(state.get_state(PROPOSALS_CURRENT))
+        except KeyError:
+            # Direct scheduler callers from before J7b have no AskStage
+            # transport key.  Preserve their old call shape; normal runner
+            # execution always takes the FeedbackBatch path below.
+            rows = self._rows(
+                state, state.feedback_result.candidate_ids, int(update.request_id)
+            )
+            self.algorithm.tell(state, self, owner.extract(rows))
+            return state
+        feedback = _feedback_batch_from_result(
+            state.feedback_result,
+            proposal_id=proposal_id,
+            channel="true",
+            final=update.status
+            in {
+                EvaluationStatus.COMPLETED,
+                EvaluationStatus.FAILED,
+                EvaluationStatus.CANCELLED,
+            },
+            sequence=int(update.sequence),
         )
-        self.algorithm.tell(state, self, owner.extract(rows))
+        consumer, legacy = self._feedback_consumer()
+        reads = getattr(consumer, "_state_reads", None)
+        if reads is None:
+            contract = getattr(consumer, "contract", None)
+            reads = (
+                contract().state
+                if callable(contract)
+                else (POPULATIONS_MAIN, RUNTIME_RNG)
+            )
+        if legacy:
+            state_view = LegacyAlgorithmStateView(state._store, reads, state)
+        else:
+            state_view = state._store.view(reads)
+        patch = consumer.tell(feedback, state_view)
+        self._apply_feedback_patch(state, patch)
         return state

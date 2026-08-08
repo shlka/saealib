@@ -11,7 +11,10 @@ import numpy as np
 
 from saealib.context import OptimizationState
 from saealib.core.contracts import (
+    CONSTRAINT,
+    CV,
     MANY,
+    OBJECTIVE,
     TRUE,
     ComponentContract,
     DataSpec,
@@ -19,6 +22,7 @@ from saealib.core.contracts import (
     FeedbackContract,
     FeedbackRequirement,
     LifecycleContract,
+    ObservationBatch,
     PortContract,
     PortDirection,
     PortSpec,
@@ -298,6 +302,7 @@ class LegacyPopulationAlgorithmAdapter:
             if _derived is not None
             else _derive_legacy_adapter_values(algorithm, requirements)
         )
+        self._state_reads = derived.contract.state
         self.requirements = derived.requirements
 
     @classmethod
@@ -324,7 +329,12 @@ class LegacyPopulationAlgorithmAdapter:
     @property
     def ask_notation(self) -> list[str] | None:
         """Preserve the wrapped algorithm's pseudocode notation."""
-        return self.algorithm.ask_notation
+        return getattr(self.algorithm, "ask_notation", None)
+
+    @property
+    def tell_notation(self) -> list[str] | None:
+        """Preserve the wrapped algorithm's tell pseudocode notation."""
+        return getattr(self.algorithm, "tell_notation", None)
 
     def ask(self, request: ProposalRequest, state: StateView) -> ProposalBatch:
         """Call old ask once, using the named legacy OptimizationState seam."""
@@ -343,7 +353,124 @@ class LegacyPopulationAlgorithmAdapter:
             requirements=self.requirements,
         )
 
+    def tell(self, feedback: FeedbackBatch, state: StateView) -> StatePatch:
+        """Call old ``tell`` and deliberately return an empty state patch.
+
+        The old ``tell(ctx, provider, offspring)`` mutates ``ctx.population``
+        in place.  Returning an empty patch is intentional: routing that
+        mutation through ``StatePatch`` would change the established behavior.
+        Whether state threading becomes patch-only is the Phase 6 question
+        recorded as ADR-index D-6; the migration adapter must not decide it.
+        """
+        if not isinstance(feedback, FeedbackBatch):
+            raise ValidationError("legacy consumer requires a FeedbackBatch")
+        if not isinstance(state, LegacyAlgorithmStateView):
+            raise ValidationError("legacy consumer requires a LegacyAlgorithmStateView")
+        context = state.legacy_optimization_state
+        offspring = _legacy_population_from_observations(context, feedback.observations)
+        self.algorithm.tell(context, self.provider, offspring)
+        return StatePatch(writes={})
+
 
 _LEGACY_ADAPTER_DERIVED_CACHE: WeakKeyDictionary[Any, _LegacyAdapterDerived] = (
     WeakKeyDictionary()
 )
+
+
+def _legacy_population_from_observations(
+    context: OptimizationState,
+    observations: ObservationBatch,
+) -> Population:
+    """Build the old Population input from columnar observations."""
+    owner = context.offspring
+    if owner is None:
+        raise ValidationError("legacy consumer requires an offspring population")
+    records = observations.records
+    payload = np.asarray(records.column("subject_payload"))
+    if payload.ndim == 1:
+        record_ids = np.asarray(payload, dtype=np.int64)
+    elif payload.ndim == 2 and payload.shape[1] == 1:
+        record_ids = np.asarray(payload[:, 0], dtype=np.int64)
+    else:
+        raise ValidationError(
+            "legacy consumer requires one candidate ID per observation subject"
+        )
+    if len(record_ids):
+        _, first = np.unique(record_ids, return_index=True)
+        candidate_ids = record_ids[np.sort(first)]
+    else:
+        candidate_ids = np.empty(0, dtype=np.int64)
+    quantity_kinds = np.asarray(records.column("quantity_kind"))
+    quantity_indices = np.asarray(records.column("quantity_index"), dtype=np.intp)
+    values = np.asarray(records.column("value"), dtype=np.float64)
+    if len(values) != len(record_ids):
+        raise ValidationError("observation columns are not row-aligned")
+    if len(candidate_ids):
+        order = np.argsort(candidate_ids, kind="stable")
+        sorted_ids = candidate_ids[order]
+        positions = np.searchsorted(sorted_ids, record_ids)
+        valid = (positions < len(sorted_ids)) & (
+            sorted_ids[np.minimum(positions, len(sorted_ids) - 1)] == record_ids
+        )
+        if not np.all(valid):
+            raise ValidationError("observation subject IDs are inconsistent")
+        record_positions = order[positions]
+    else:
+        record_positions = np.empty(0, dtype=np.intp)
+
+    objective_count = len(observations.schema.indices(OBJECTIVE))
+    constraint_count = len(observations.schema.indices(CONSTRAINT))
+    f = np.full((len(candidate_ids), objective_count), np.nan, dtype=np.float64)
+    g = np.full((len(candidate_ids), constraint_count), np.nan, dtype=np.float64)
+    cv_mask = quantity_kinds == CV
+    cv = None if not np.any(cv_mask) else np.full(len(candidate_ids), np.nan)
+
+    def fill(kind: str, width: int, target: np.ndarray) -> None:
+        mask = quantity_kinds == kind
+        if not np.any(mask):
+            return
+        indices = quantity_indices[mask]
+        if np.any(indices >= width):
+            raise ValidationError(f"observation {kind} index exceeds its schema")
+        keys = record_positions[mask] * max(width, 1) + indices
+        if len(np.unique(keys)) != len(keys):
+            raise ValidationError(f"observation {kind} has duplicate values")
+        target[record_positions[mask], indices] = values[mask]
+
+    fill(OBJECTIVE, objective_count, f)
+    fill(CONSTRAINT, constraint_count, g)
+    if cv is not None:
+        indices = quantity_indices[cv_mask]
+        if np.any(indices != 0) or len(indices) != len(candidate_ids):
+            raise ValidationError("observation cv must have one value per candidate")
+        if len(np.unique(record_positions[cv_mask])) != len(candidate_ids):
+            raise ValidationError("observation cv has duplicate values")
+        cv[record_positions[cv_mask]] = values[cv_mask]
+
+    if "id" in owner.schema:
+        owner_ids = np.asarray(owner.get_array("id"), dtype=np.int64)
+        owner_order = np.argsort(owner_ids, kind="stable")
+        sorted_owner_ids = owner_ids[owner_order]
+        owner_positions = np.searchsorted(sorted_owner_ids, candidate_ids)
+        valid = np.zeros(len(candidate_ids), dtype=bool)
+        if len(sorted_owner_ids):
+            valid = (owner_positions < len(sorted_owner_ids)) & (
+                sorted_owner_ids[np.minimum(owner_positions, len(sorted_owner_ids) - 1)]
+                == candidate_ids
+            )
+        if not np.all(valid):
+            raise ValidationError("feedback candidate ID is not in offspring")
+        rows = owner_order[owner_positions[valid]]
+    else:
+        rows = np.asarray(candidate_ids, dtype=np.intp)
+        if np.any(rows < 0) or np.any(rows >= len(owner)):
+            raise ValidationError("feedback candidate row is not in offspring")
+    result = owner.extract(rows)
+    updates: dict[str, np.ndarray] = {"f": f}
+    if "g" in result.schema and g.shape[1] == result.get_array("g").shape[1]:
+        updates["g"] = g
+    if cv is not None and "cv" in result.schema:
+        updates["cv"] = cv
+    if len(result):
+        result.update_rows(np.arange(len(result), dtype=np.intp), updates)
+    return result

@@ -141,11 +141,11 @@ class _DispatchingLegacyAlgorithm(_LegacyAlgorithm):
         return candidates
 
 
-def test_j7a_protocols_are_split_and_legacy_adapter_is_proposer_only():
+def test_j7a_protocols_are_split_and_legacy_adapter_is_both_roles():
     adapter = LegacyPopulationAlgorithmAdapter(_LegacyAlgorithm())
     assert isinstance(adapter, Proposer)
-    assert not hasattr(adapter, "tell")
-    assert not isinstance(adapter, FeedbackConsumer)
+    assert isinstance(adapter, FeedbackConsumer)
+    assert hasattr(adapter, "tell")
 
 
 def test_j7a_migration_types_are_namespace_only():
