@@ -380,6 +380,8 @@ class Optimizer:
     def set_algorithm(self, algorithm: Algorithm) -> Self:
         """Set the evolutionary algorithm. Returns self."""
         self.algorithm = algorithm
+        if self.async_evaluation_scheduler is not None:
+            self.async_evaluation_scheduler.algorithm = algorithm
         return self
 
     def set_surrogate_manager(self, manager: SurrogateManager) -> Self:
@@ -794,6 +796,8 @@ class Optimizer:
 
         if getattr(self, "termination", None) is None:
             self.termination = Termination(max_fe_cond(200 * self.problem.dim))
+        if self.async_evaluation_scheduler is not None:
+            self.async_evaluation_scheduler.algorithm = self.algorithm
 
     def _inject_acquisition_directions(self) -> None:
         """Auto-inject ``problem.direction`` into unset acquisition directions.

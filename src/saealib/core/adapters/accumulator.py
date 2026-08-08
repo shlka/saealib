@@ -262,6 +262,25 @@ class FeedbackAccumulator:
         self._buffers.pop(batch.proposal_id, None)
         self._ready.append(completed)
 
+    def finalize(self, proposal_id: int) -> None:
+        """Complete a proposal after its terminal scheduler update arrives."""
+        state = self._buffers.get(proposal_id)
+        if state is None:
+            raise ValidationError(
+                f"proposal {proposal_id} is not registered or is finalized"
+            )
+        try:
+            completed = self._finalize(state)
+        except ValidationError:
+            self._buffers.pop(proposal_id, None)
+            raise
+        self._buffers.pop(proposal_id, None)
+        self._ready.append(completed)
+
+    def discard(self, proposal_id: int) -> None:
+        """Drop an incomplete proposal after a terminal non-retryable failure."""
+        self._buffers.pop(proposal_id, None)
+
     def pop_ready(self) -> FeedbackBatch | None:
         """Remove and return the oldest completed batch, if one is ready."""
         if not self._ready:

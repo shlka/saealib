@@ -1,13 +1,17 @@
 from typing import ClassVar, cast
 
 import numpy as np
+import pytest
 
 from saealib.algorithms import LegacyPopulationAlgorithmAdapter, ProposalRequest
 from saealib.algorithms.base import Algorithm
 from saealib.context import OptimizationState
 from saealib.core.contracts import (
+    ComponentContract,
     FeedbackBatch,
+    FeedbackContract,
     FeedbackRequirement,
+    LifecycleContract,
     ObservationBatch,
     ObservationSchema,
     ProposalBatch,
@@ -22,6 +26,7 @@ from saealib.core.state import (
     StatePatch,
     StateView,
 )
+from saealib.exceptions import EvaluationFatalError
 from saealib.execution import (
     AsyncEvaluationScheduler,
     EvaluationHandle,
@@ -153,6 +158,13 @@ class _RecordingConsumer:
         self.feedback.append(feedback)
         return StatePatch(writes={})
 
+    def contract(self):
+        return ComponentContract(
+            lifecycle=LifecycleContract(
+                feedback=FeedbackContract(accepted_channels=frozenset({"true"}))
+            )
+        )
+
 
 class _PartialEvaluator(Evaluator):
     def evaluate_batch(self, x, problem):
@@ -204,6 +216,11 @@ class _PartialEvaluator(Evaluator):
         return []
 
 
+class _CancellablePartialEvaluator(_PartialEvaluator):
+    def cancel(self, handle):
+        return True
+
+
 def test_j7b_async_tells_each_partial_and_marks_only_final_terminal():
     state = _state(proposal_id=55)
     consumer = _RecordingConsumer()
@@ -222,6 +239,110 @@ def test_j7b_async_tells_each_partial_and_marks_only_final_terminal():
 
     assert [batch.final for batch in consumer.feedback] == [False, True]
     assert [batch.sequence for batch in consumer.feedback] == [0, 1]
+
+
+def test_j7b_async_accumulator_preserves_proposal_and_tells_once():
+    state = _state(proposal_id=55)
+    consumer = _RecordingConsumer()
+    offspring = state.offspring
+    assert offspring is not None
+    request = EvaluationRequest(
+        np.int64(0), np.array([10, 11], dtype=np.int64), offspring.x
+    )
+    scheduler = AsyncEvaluationScheduler(
+        _PartialEvaluator(),
+        algorithm=consumer,
+        feedback_builder=TrueOnlyFeedback(),
+    )
+    scheduler.enable_feedback_accumulator()
+
+    current = scheduler.submit(state, [request])
+    current = scheduler.poll(current, wait=True)
+    scheduler.poll(current, wait=False)
+
+    assert len(consumer.feedback) == 1
+    assert consumer.feedback[0].final is True
+    assert consumer.feedback[0].proposal_id == 55
+    subjects = consumer.feedback[0].observations.records.column("subject_payload")
+    assert set(np.asarray(subjects, dtype=np.int64).reshape(-1)) == {10, 11}
+
+
+def test_j7b_accumulator_ignores_unrequested_offspring_rows():
+    state = _state(proposal_id=56)
+    assert state.offspring is not None
+    state.offspring._extend_internal(
+        {
+            "id": np.array([12], dtype=np.int64),
+            "x": np.array([[0.3]], dtype=np.float64),
+            "f": np.full((1, 1), np.nan),
+            "g": np.empty((1, 0)),
+            "cv": np.zeros(1),
+        },
+        preserve_ids=True,
+    )
+    consumer = _RecordingConsumer()
+    scheduler = AsyncEvaluationScheduler(
+        _PartialEvaluator(),
+        algorithm=consumer,
+        feedback_builder=TrueOnlyFeedback(),
+    )
+    scheduler.enable_feedback_accumulator()
+    request = EvaluationRequest(
+        np.int64(0),
+        np.array([10, 11], dtype=np.int64),
+        np.array([[0.1], [0.2]], dtype=np.float64),
+    )
+    current = scheduler.submit(state, [request])
+    current = scheduler.poll(current, wait=True)
+
+    assert len(consumer.feedback) == 1
+    assert consumer.feedback[0].proposal_id == 56
+    subjects = consumer.feedback[0].observations.records.column("subject_payload")
+    assert set(np.asarray(subjects, dtype=np.int64).reshape(-1)) == {10, 11}
+
+
+def test_j7b_accumulator_cancel_after_partial_discards_without_fatal():
+    state = _state(proposal_id=59)
+    consumer = _RecordingConsumer()
+    scheduler = AsyncEvaluationScheduler(
+        _CancellablePartialEvaluator(),
+        algorithm=consumer,
+        feedback_builder=TrueOnlyFeedback(),
+    )
+    scheduler.enable_feedback_accumulator()
+    offspring = state.offspring
+    assert offspring is not None
+    request = EvaluationRequest(
+        np.int64(0), np.array([10, 11], dtype=np.int64), offspring.x
+    )
+    state = scheduler.submit(state, [request])
+    state = scheduler.poll(state, wait=False)
+    state = scheduler.cancel(state, 0)
+
+    assert state.pending_evaluations == {}
+    assert len(consumer.feedback) == 0
+
+
+def test_j7b_accumulator_preserves_fatal_tell_boundary():
+    class FailingConsumer(_RecordingConsumer):
+        def tell(self, feedback: FeedbackBatch, state: StateView) -> StatePatch:
+            raise RuntimeError("tell failed")
+
+    state = _state(proposal_id=60)
+    scheduler = AsyncEvaluationScheduler(
+        _PartialEvaluator(),
+        algorithm=FailingConsumer(),
+        feedback_builder=TrueOnlyFeedback(),
+    )
+    scheduler.enable_feedback_accumulator()
+    offspring = state.offspring
+    assert offspring is not None
+    request = EvaluationRequest(
+        np.int64(0), np.array([10, 11], dtype=np.int64), offspring.x
+    )
+
+    with pytest.raises(EvaluationFatalError):
+        scheduler.poll(scheduler.submit(state, [request]), wait=True)
 
 
 class _Proposer:

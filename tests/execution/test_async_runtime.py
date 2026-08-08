@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from types import SimpleNamespace
 
 import pytest
@@ -108,6 +109,30 @@ def test_optimizer_environment_polls_scheduler_without_waiting() -> None:
     environment.poll(_state())
 
     assert calls == [False]
+
+
+def test_optimizer_environment_reaches_inserted_feedback_accumulator_seam():
+    # The adapter is intentionally represented by insertion metadata here:
+    # StageNodeAdapter self-loop execution is deferred to Phase 7.
+    enabled: list[bool] = []
+
+    class Scheduler:
+        def enable_feedback_accumulator(self):
+            enabled.append(True)
+
+    compiled = replace(
+        _plan().plan,
+        inserted_adapters=(SimpleNamespace(adapter_name="feedback_accumulator"),),
+    )
+    optimizer = SimpleNamespace(
+        async_evaluation_scheduler=Scheduler(),
+        algorithm=SimpleNamespace(allow_partial_tell=False),
+        strategy=SimpleNamespace(),
+    )
+
+    _OptimizerEnvironment(optimizer, SequentialPlan.from_executable_plan(compiled))
+
+    assert enabled == [True]
 
 
 def test_async_environment_executes_compiled_plan_without_strategy_step() -> None:

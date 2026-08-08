@@ -7,6 +7,13 @@ import pytest
 
 from saealib.callback import CallbackManager, GenerationEndEvent, PostEvaluationEvent
 from saealib.context import EvaluationPlanState, OptimizationState
+from saealib.core.contracts import (
+    ComponentContract,
+    FeedbackBatch,
+    FeedbackContract,
+    LifecycleContract,
+)
+from saealib.core.state import PROPOSALS_CURRENT, StatePatch, StateView
 from saealib.exceptions import (
     CheckpointError,
     EvaluationFatalError,
@@ -1020,6 +1027,75 @@ def test_partial_failure_retries_only_unapplied_candidates():
     np.testing.assert_array_equal(np.sort(state.archive.id), [10, 11])
 
 
+class _RecordingConsumer:
+    """Complete-batch consumer used by the accumulator retry regression."""
+
+    def __init__(self):
+        self.feedback: list[FeedbackBatch] = []
+
+    def contract(self):
+        return ComponentContract(
+            lifecycle=LifecycleContract(
+                feedback=FeedbackContract(accepted_channels=frozenset({"true"}))
+            )
+        )
+
+    def tell(self, feedback: FeedbackBatch, state: StateView) -> StatePatch:
+        self.feedback.append(feedback)
+        return StatePatch(writes={})
+
+
+def test_accumulator_partial_retry_tells_once_with_both_proposal_ids():
+    state = make_state()
+    state.set_state(PROPOSALS_CURRENT, 701)
+    consumer = _RecordingConsumer()
+    scheduler = AsyncEvaluationScheduler(
+        PartialRetryEvaluator(),
+        retry_limit=1,
+        feedback_builder=TrueOnlyFeedback(),
+        algorithm=consumer,
+    )
+    scheduler.enable_feedback_accumulator()
+    request = EvaluationRequest(
+        np.int64(0),
+        np.array([10, 11], dtype=np.int64),
+        np.array([[0.2], [0.1]], dtype=np.float64),
+    )
+
+    state = scheduler.poll(scheduler.submit(state, [request]), wait=True)
+
+    assert state.pending_evaluations == {}
+    assert len(consumer.feedback) == 1
+    final = consumer.feedback[0]
+    assert final.final is True
+    assert final.proposal_id == 701
+    subjects = final.observations.records.column("subject_payload")
+    assert set(np.asarray(subjects, dtype=np.int64).reshape(-1)) == {10, 11}
+
+
+def test_accumulator_exhausted_partial_failure_does_not_tell_incomplete_batch():
+    state = make_state()
+    state.set_state(PROPOSALS_CURRENT, 702)
+    consumer = _RecordingConsumer()
+    scheduler = AsyncEvaluationScheduler(
+        PartialRetryEvaluator(),
+        retry_limit=0,
+        feedback_builder=TrueOnlyFeedback(),
+        algorithm=consumer,
+    )
+    scheduler.enable_feedback_accumulator()
+    request = EvaluationRequest(
+        np.int64(0),
+        np.array([10, 11], dtype=np.int64),
+        np.array([[0.2], [0.1]], dtype=np.float64),
+    )
+
+    state = scheduler.poll(scheduler.submit(state, [request]), wait=True)
+
+    assert state.pending_evaluations == {}
+    assert len(consumer.feedback) == 0
+
+
 def test_partial_retry_with_callback_keeps_applied_ids():
     class Algorithm:
         def __init__(self):
@@ -1420,6 +1496,105 @@ def test_partial_callback_checkpoint_reattaches_and_finishes(tmp_path):
     assert sorted(algorithm.told) == [10, 11]
     assert sorted(resumed.archive.id.tolist()) == [10, 11]
     assert resumed.fe == 2
+
+
+def test_accumulator_checkpoint_reattach_rebuilds_partial_without_duplicate_tell(
+    tmp_path,
+):
+    class PartialCheckpointEvaluator(Evaluator):
+        def evaluate_batch(self, x, problem):
+            return SerialEvaluator().evaluate_batch(x, problem)
+
+        def submit(self, request, problem):
+            return EvaluationHandle(
+                request.request_id,
+                EvaluationStatus.PENDING,
+                backend_token=(request, problem, "initial"),
+            )
+
+        def collect(self, handle, *, wait=True):
+            request, problem, phase = handle.backend_token
+            if handle._acknowledged_sequence >= 0 and phase == "initial":
+                return []
+            if phase == "initial":
+                result = SerialEvaluator().evaluate_batch(request.x[:1], problem)
+                result.candidate_ids = request.candidate_ids[:1]
+                result.__post_init__()
+                handle._delivered_sequence = 0
+                return [
+                    EvaluationUpdate(
+                        request.request_id,
+                        EvaluationStatus.PARTIAL,
+                        request.candidate_ids[:1],
+                        result,
+                        sequence=0,
+                    )
+                ]
+            result = SerialEvaluator().evaluate_batch(request.x[1:], problem)
+            result.candidate_ids = request.candidate_ids[1:]
+            result.__post_init__()
+            handle._delivered_sequence = 1
+            return [
+                EvaluationUpdate(
+                    request.request_id,
+                    EvaluationStatus.COMPLETED,
+                    request.candidate_ids[1:],
+                    result,
+                    sequence=1,
+                )
+            ]
+
+        def acknowledge(self, handle, sequence):
+            handle._acknowledged_sequence = sequence
+
+        def can_reattach(self, pending):
+            return True
+
+        def reattach(self, pending, problem):
+            return EvaluationHandle(
+                pending.request.request_id,
+                EvaluationStatus.PENDING,
+                backend_token=(pending.request, problem, "restored"),
+            )
+
+    state = make_state()
+    state.set_state(PROPOSALS_CURRENT, 703)
+    consumer = _RecordingConsumer()
+    evaluator = PartialCheckpointEvaluator()
+    scheduler = AsyncEvaluationScheduler(
+        evaluator,
+        feedback_builder=TrueOnlyFeedback(),
+        algorithm=consumer,
+    )
+    scheduler.enable_feedback_accumulator()
+    request = EvaluationRequest(
+        np.int64(0),
+        np.array([10, 11], dtype=np.int64),
+        np.array([[0.2], [0.1]], dtype=np.float64),
+    )
+    state = scheduler.poll(scheduler.submit(state, [request]), wait=False)
+    assert state.pending_evaluations[0].processing[0] == "committed"
+    assert consumer.feedback == []
+
+    path = tmp_path / "accumulator-partial.npz"
+    scheduler.checkpoint(state, path)
+    restored = OptimizationState.load(path, state.problem)
+    resumed_scheduler = AsyncEvaluationScheduler(
+        evaluator,
+        feedback_builder=TrueOnlyFeedback(),
+        algorithm=consumer,
+    )
+    resumed_scheduler.enable_feedback_accumulator()
+    restored = resumed_scheduler.reattach(restored)
+    restored = resumed_scheduler.poll(restored, wait=True)
+
+    assert restored.pending_evaluations == {}
+    assert len(consumer.feedback) == 1
+    assert consumer.feedback[0].final is True
+    subjects = consumer.feedback[0].observations.records.column("subject_payload")
+    assert set(np.asarray(subjects, dtype=np.int64).reshape(-1)) == {10, 11}
+    assert resumed_scheduler._feedback_accumulator is not None
+    assert resumed_scheduler._feedback_accumulator.ready_count == 0
 
 
 def test_fatal_tombstone_roundtrip_raises_typed_error(tmp_path):

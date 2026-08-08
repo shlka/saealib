@@ -95,6 +95,16 @@ class _OptimizerEnvironment:
             )
             else set()
         )
+        scheduler = getattr(optimizer, "async_evaluation_scheduler", None)
+        if scheduler is not None and any(
+            getattr(insertion, "adapter_name", None) == "feedback_accumulator"
+            for insertion in plan.plan.inserted_adapters
+        ):
+            # The Phase 6 compiler insertion is a self-loop inside the coarse
+            # StageNodeAdapter.  Phase 7 Stage decomposition will make it an
+            # executable graph node; until then this scheduler seam is the
+            # only real delivery point for the inserted accumulator.
+            scheduler.enable_feedback_accumulator()
 
     def execute(
         self, plan: SequentialPlan, state: OptimizationState

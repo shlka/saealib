@@ -17,10 +17,17 @@ from saealib.algorithms.base import (
 )
 from saealib.callback import PostEvaluationEvent
 from saealib.context import EvaluationPlanState
+from saealib.core.adapters import FeedbackAccumulator
 from saealib.core.contracts import (
     ComponentContract,
     ExecutionContract,
+    FeedbackBatch,
+    FeedbackRequirement,
     PartSpec,
+    ProposalBatch,
+    ProposalRelations,
+    QuantityRef,
+    QuantityRequirement,
     StateContract,
 )
 from saealib.core.state import (
@@ -146,6 +153,22 @@ class AsyncEvaluationScheduler:
         self.algorithm = algorithm
         self.callback_manager = callback_manager
         self._fatal_states: dict[int, tuple[OptimizationState, OptimizationState]] = {}
+        self._feedback_accumulator: FeedbackAccumulator | None = None
+        self._feedback_sequences: dict[int, int] = {}
+        self._feedback_proposal_candidates: dict[int, frozenset[int]] = {}
+
+    def enable_feedback_accumulator(self) -> None:
+        """Enable delivery through a compiler-inserted accumulator."""
+        consumer, _ = self._feedback_consumer()
+        contract_factory = getattr(consumer, "contract", None)
+        contract = (
+            contract_factory().lifecycle.feedback
+            if callable(contract_factory)
+            else None
+        )
+        if contract is None:
+            return
+        self._feedback_accumulator = FeedbackAccumulator(contract)
 
     def pending_candidate_ids(self, state: OptimizationState) -> np.ndarray:
         """Return candidate IDs reserved by pending requests."""
@@ -454,6 +477,11 @@ class AsyncEvaluationScheduler:
                 raise CheckpointError(f"evaluator cannot reattach request {request_id}")
             handles[request_id] = self.evaluator.reattach(pending, state.problem)
         current = state.replace(evaluation_handles=handles)
+        if self._feedback_accumulator is not None:
+            self._feedback_accumulator.drain_ready()
+            for pending in current.pending_evaluations.values():
+                self._restore_accumulated_feedback(current, pending)
+            self._feedback_accumulator.drain_ready()
         for request_id, pending in tuple(current.pending_evaluations.items()):
             handle = current.evaluation_handles.get(request_id)
             for update in pending.buffered_updates:
@@ -868,6 +896,18 @@ class AsyncEvaluationScheduler:
                     request_id: current_pending,
                 }
             )
+        if (
+            self._feedback_accumulator is not None
+            and terminal
+            and not retried
+            and update.result is None
+        ):
+            try:
+                proposal_id = int(current.get_state(PROPOSALS_CURRENT))
+            except KeyError:
+                proposal_id = None
+            if proposal_id is not None:
+                self._feedback_accumulator.discard(proposal_id)
         if (
             plan_effect_update is not None
             and len(plan_effect_update.candidate_ids)
@@ -1293,7 +1333,9 @@ class AsyncEvaluationScheduler:
             state._store = state._store.apply_patch(patch)
 
     def _apply_tell(
-        self, state: OptimizationState, update: EvaluationUpdate
+        self,
+        state: OptimizationState,
+        update: EvaluationUpdate,
     ) -> OptimizationState:
         if (
             self.algorithm is None
@@ -1325,6 +1367,18 @@ class AsyncEvaluationScheduler:
             },
             sequence=int(update.sequence),
         )
+        if self._feedback_accumulator is not None:
+            use_accumulator = self._deliver_accumulated_feedback(
+                state, update, feedback
+            )
+            if not use_accumulator:
+                self._feedback_accumulator.discard(feedback.proposal_id)
+                return state
+            else:
+                ready = self._feedback_accumulator.pop_ready()
+                if ready is None:
+                    return state
+                feedback = ready
         consumer, legacy = self._feedback_consumer()
         reads = getattr(consumer, "_state_reads", None)
         if reads is None:
@@ -1341,3 +1395,156 @@ class AsyncEvaluationScheduler:
         patch = consumer.tell(feedback, state_view)
         self._apply_feedback_patch(state, patch)
         return state
+
+    def _deliver_accumulated_feedback(
+        self,
+        state: OptimizationState,
+        update: EvaluationUpdate,
+        feedback: FeedbackBatch,
+    ) -> bool:
+        """Route one scheduler delivery through the inserted accumulator."""
+        accumulator = self._feedback_accumulator
+        if accumulator is None or state.offspring is None:
+            return False
+        proposal_ids = self._proposal_candidate_ids(state, update, feedback.proposal_id)
+        if not proposal_ids:
+            return False
+        offspring_ids = (
+            np.asarray(state.offspring.get_array("id"), dtype=np.int64)
+            if "id" in state.offspring.schema
+            else np.arange(len(state.offspring), dtype=np.int64)
+        )
+        rows = np.flatnonzero(np.isin(offspring_ids, tuple(proposal_ids)))
+        candidates = state.offspring.extract(rows)
+        schema = feedback.observations.schema
+        quantities = tuple(
+            QuantityRequirement(
+                quantity=QuantityRef(kind=kind, index=index),
+                sources=accumulator.contract.accepted_sources,
+            )
+            for kind in schema.quantity_kinds
+            for index in schema.indices(kind)
+        )
+        proposal = ProposalBatch(
+            proposal_id=feedback.proposal_id,
+            candidates=candidates,
+            relations=ProposalRelations(row_count=len(candidates)),
+            requirements=FeedbackRequirement(quantities=quantities),
+        )
+        accumulator.register(proposal)
+        sequence = self._next_feedback_sequence(feedback.proposal_id, feedback.sequence)
+        accumulator.add(
+            FeedbackBatch(
+                proposal_id=feedback.proposal_id,
+                observations=feedback.observations,
+                channel=feedback.channel,
+                final=False,
+                sequence=sequence,
+            )
+        )
+        if update.status is EvaluationStatus.FAILED and self._retryable_remaining(
+            state, update
+        ):
+            return True
+        if update.status not in {
+            EvaluationStatus.COMPLETED,
+            EvaluationStatus.FAILED,
+            EvaluationStatus.CANCELLED,
+        }:
+            return True
+        request_id = int(update.request_id)
+        other_ids: set[int] = set()
+        for other_id, pending in state.pending_evaluations.items():
+            if (
+                int(other_id) != request_id
+                and pending.original_candidate_ids is not None
+            ):
+                other_ids.update(map(int, pending.original_candidate_ids))
+        if proposal_ids.intersection(other_ids):
+            return True
+        try:
+            accumulator.finalize(feedback.proposal_id)
+        except ValidationError:
+            accumulator.discard(feedback.proposal_id)
+            return False
+        return True
+
+    def _proposal_candidate_ids(
+        self,
+        state: OptimizationState,
+        update: EvaluationUpdate,
+        proposal_id: int,
+    ) -> frozenset[int]:
+        """Return the stable evaluated-candidate universe for one proposal."""
+        candidate_ids = set(self._feedback_proposal_candidates.get(proposal_id, ()))
+        pending = state.pending_evaluations.get(int(update.request_id))
+        if pending is not None and pending.original_candidate_ids is not None:
+            candidate_ids.update(map(int, pending.original_candidate_ids))
+        for other in state.pending_evaluations.values():
+            if other.original_candidate_ids is not None:
+                candidate_ids.update(map(int, other.original_candidate_ids))
+        plan = state.evaluation_plan
+        if plan is not None:
+            for request in plan.requests:
+                candidate_ids.update(map(int, request.candidate_ids))
+        result = frozenset(candidate_ids)
+        self._feedback_proposal_candidates[proposal_id] = result
+        return result
+
+    def _next_feedback_sequence(self, proposal_id: int, requested: int) -> int:
+        """Make evaluator retry sequence resets unique within one proposal."""
+        sequence = max(requested, self._feedback_sequences.get(proposal_id, -1) + 1)
+        self._feedback_sequences[proposal_id] = sequence
+        return sequence
+
+    def _retryable_remaining(
+        self, state: OptimizationState, update: EvaluationUpdate
+    ) -> bool:
+        """Mirror the scheduler retry predicate for accumulator finalization."""
+        if update.status is not EvaluationStatus.FAILED:
+            return False
+        pending = state.pending_evaluations.get(int(update.request_id))
+        if pending is None or pending.original_candidate_ids is None:
+            return False
+        applied = np.unique(
+            np.concatenate([pending.applied_candidate_ids, update.candidate_ids])
+        )
+        remaining = np.setdiff1d(pending.original_candidate_ids, applied)
+        return bool(remaining.size and pending.retry_count < self.retry_limit)
+
+    def _restore_accumulated_feedback(
+        self, state: OptimizationState, pending: PendingEvaluation
+    ) -> None:
+        """Replay persisted result deliveries into a newly created accumulator."""
+        if self._feedback_accumulator is None or self.feedback_builder is None:
+            return
+        for update in pending.buffered_updates:
+            if update.result is None or update.status in {
+                EvaluationStatus.COMPLETED,
+                EvaluationStatus.FAILED,
+                EvaluationStatus.CANCELLED,
+            }:
+                continue
+            feedback_result = self.feedback_builder.build(
+                self._owner(state, int(update.request_id)),
+                pending.prediction or state.predictions,
+                update.result,
+                update.candidate_ids,
+                state,
+            )
+            try:
+                proposal_id = int(state.get_state(PROPOSALS_CURRENT))
+            except KeyError:
+                return
+            feedback = _feedback_batch_from_result(
+                feedback_result,
+                proposal_id=proposal_id,
+                channel="true",
+                final=False,
+                sequence=int(update.sequence),
+            )
+            self._deliver_accumulated_feedback(
+                state,
+                update,
+                feedback,
+            )
