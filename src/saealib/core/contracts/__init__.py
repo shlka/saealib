@@ -114,6 +114,14 @@ from saealib.core.contracts.ports import (
     check_port_compatibility,
     validate_port_contract_directions,
 )
+from saealib.core.contracts.proposals import (
+    FeedbackRequirement,
+    FidelityRef,
+    ProposalBatch,
+    ProposalId,
+    ProposalRelations,
+    QuantityRequirement,
+)
 from saealib.core.contracts.relations import (
     CANDIDATE_ID,
     GROUP,
@@ -222,6 +230,8 @@ __all__ = [
     "ExecutionContract",
     "FeedbackChannel",
     "FeedbackGrouping",
+    "FeedbackRequirement",
+    "FidelityRef",
     "Fixed",
     "LifecycleContract",
     "MultiplicityMode",
@@ -245,8 +255,12 @@ __all__ = [
     "PortSpec",
     "PortableValue",
     "Product",
+    "ProposalBatch",
+    "ProposalId",
+    "ProposalRelations",
     "QuantityKind",
     "QuantityRef",
+    "QuantityRequirement",
     "RelationArity",
     "RelationKind",
     "RelationTarget",
