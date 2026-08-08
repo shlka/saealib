@@ -11,7 +11,6 @@ import numpy as np
 from saealib.acquisition.base import AcquisitionResult
 from saealib.core.contracts import (
     MANY,
-    OPTIONAL,
     ComponentContract,
     DataSpec,
     PortContract,
@@ -79,7 +78,7 @@ class EvaluationPlanner(ABC):
                             name="acquisition",
                             direction=PortDirection.INPUT,
                             data=DataSpec(kind="RowPredicate"),
-                            cardinality=OPTIONAL,
+                            cardinality=MANY,
                             optional=True,
                         ),
                     ),

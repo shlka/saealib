@@ -10,7 +10,6 @@ import numpy as np
 
 from saealib.core.contracts import (
     MANY,
-    OPTIONAL,
     ComponentContract,
     DataSpec,
     FeedbackBatch,
@@ -764,14 +763,14 @@ class FeedbackBuilder(ABC):
                             name="prediction",
                             direction=PortDirection.INPUT,
                             data=DataSpec(kind="SurrogatePrediction"),
-                            cardinality=OPTIONAL,
+                            cardinality=MANY,
                             optional=True,
                         ),
                         PortSpec(
                             name="evaluation",
                             direction=PortDirection.INPUT,
                             data=DataSpec(kind="ObservationBatch"),
-                            cardinality=OPTIONAL,
+                            cardinality=MANY,
                             optional=True,
                         ),
                     ),
