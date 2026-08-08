@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from saealib.core.contracts.feedbacks import FeedbackContract
 from saealib.core.contracts.vocabulary import (
     Vocabulary,
     VocabularyDescriptor,
@@ -33,6 +34,7 @@ class LifecycleContract:
     """Declare events consumed by a component."""
 
     events: tuple[EventSubscription, ...] = ()
+    feedback: FeedbackContract | None = None
 
     def __post_init__(self) -> None:
         """Validate and normalize event subscriptions."""
@@ -42,3 +44,9 @@ class LifecycleContract:
                 "Lifecycle events must contain EventSubscription values"
             )
         object.__setattr__(self, "events", events)
+        if self.feedback is not None and not isinstance(
+            self.feedback, FeedbackContract
+        ):
+            raise ValidationError(
+                "Lifecycle feedback must be a FeedbackContract or None"
+            )

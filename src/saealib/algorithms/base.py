@@ -8,8 +8,11 @@ from typing import TYPE_CHECKING
 from saealib.context import OptimizationState
 from saealib.core.contracts import (
     MANY,
+    TRUE,
     ComponentContract,
     DataSpec,
+    FeedbackContract,
+    LifecycleContract,
     PortContract,
     PortDirection,
     PortSpec,
@@ -58,6 +61,9 @@ class Algorithm(ABC):
             state=StateContract(
                 reads=(POPULATIONS_MAIN, RUNTIME_RNG),
                 writes=(POPULATIONS_MAIN, RUNTIME_RNG),
+            ),
+            lifecycle=LifecycleContract(
+                feedback=FeedbackContract(accepted_channels=frozenset({TRUE}))
             ),
         )
 

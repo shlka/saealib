@@ -52,6 +52,7 @@ from saealib.core.contracts.feedback import (
     MultiplicityMode,
     OrderingMode,
 )
+from saealib.core.contracts.feedbacks import FeedbackBatch, FeedbackContract
 from saealib.core.contracts.lifecycle import (
     EVENT_VOCABULARY,
     EventSubscription,
@@ -228,7 +229,9 @@ __all__ = [
     "DataSpecKind",
     "EventSubscription",
     "ExecutionContract",
+    "FeedbackBatch",
     "FeedbackChannel",
+    "FeedbackContract",
     "FeedbackGrouping",
     "FeedbackRequirement",
     "FidelityRef",

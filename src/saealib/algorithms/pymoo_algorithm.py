@@ -9,7 +9,11 @@ import numpy as np
 
 from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent
-from saealib.core.contracts import ComponentContract, ExecutionContract
+from saealib.core.contracts import (
+    PARTIAL_ALLOWED,
+    ComponentContract,
+    ExecutionContract,
+)
 from saealib.core.state import RUNTIME_CANDIDATE_ID_ALLOCATOR
 from saealib.exceptions import ConfigurationError
 from saealib.population import Archive, Population, PopulationAttribute
@@ -144,8 +148,14 @@ class PymooAlgorithm(Algorithm):
         )
         if not self.allow_partial_tell:
             return family
+        feedback = family.lifecycle.feedback
+        assert feedback is not None
         return replace(
             family,
+            lifecycle=replace(
+                family.lifecycle,
+                feedback=replace(feedback, completion=PARTIAL_ALLOWED),
+            ),
             execution=ExecutionContract(
                 required_runtime_capabilities=("partial_feedback",),
             ),
