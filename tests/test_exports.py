@@ -29,6 +29,7 @@ SCANNED_SUBPACKAGES = [
     "saealib.operators",
     "saealib.population",
     "saealib.problem",
+    "saealib.space",
     "saealib.strategies",
     "saealib.surrogate",
     "saealib.utils",
@@ -57,6 +58,25 @@ NAMESPACE_ONLY: dict[str, set[str]] = {
     },
     "saealib.defaults": {"dump_preset", "load_defaults", "load_preset"},
     "saealib.population": {"DenseVectorBatch", "GenomeBatch", "ObjectBatch"},
+    "saealib.space": {
+        "BoundsService",
+        "CloneService",
+        "ComparisonService",
+        "DenseNumericView",
+        "DerivedSamplingService",
+        "DerivedValidationService",
+        "DistanceService",
+        "EquivalenceService",
+        "FingerprintService",
+        "GenomeCodec",
+        "ObjectSpace",
+        "SamplingService",
+        "SearchSpace",
+        "ServiceRegistry",
+        "ValidationResult",
+        "ValidationService",
+        "VectorSpace",
+    },
 }
 
 REMOVED_EXPERIMENTAL_EXPORTS = {
