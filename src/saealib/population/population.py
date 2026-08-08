@@ -169,7 +169,7 @@ class Population(Generic[T_Individual]):
             else:
                 if self._dense_numeric_view is None:
                     self._dense_numeric_view = _LegacyDenseNumericView()
-                self._genome_batch = DenseVectorBatch(self._data["x"][:0])
+                self._genome_batch = DenseVectorBatch(self._data["x"])
         else:
             self._genome_items = []
             self._genome_batch = ObjectBatch()
@@ -447,9 +447,7 @@ class Population(Generic[T_Individual]):
             self._replace_genome_rows(np.array([idx], dtype=np.intp), genome_value)
 
         self._size += 1
-        if isinstance(self._genome_batch, DenseVectorBatch):
-            self._genome_batch = DenseVectorBatch(self._data["x"])
-        elif self._genome_items is not None:
+        if self._genome_items is not None:
             self._genome_batch = ObjectBatch(self._genome_items)
         self.mod_structure()
 
@@ -549,8 +547,6 @@ class Population(Generic[T_Individual]):
         elif self._genome_items is not None:
             self._genome_items.extend([None] * other_size)
             self._genome_batch = ObjectBatch(self._genome_items)
-        elif isinstance(self._genome_batch, DenseVectorBatch):
-            self._genome_batch = DenseVectorBatch(self._data["x"])
         self.mod_structure()
 
     def extract(self, indices: np.ndarray | list[int] | slice) -> Self:
@@ -601,8 +597,6 @@ class Population(Generic[T_Individual]):
             if self._genome_items is not None:
                 del self._genome_items[new_size:]
                 self._genome_batch = ObjectBatch(self._genome_items)
-            elif isinstance(self._genome_batch, DenseVectorBatch):
-                self._genome_batch = DenseVectorBatch(self._data["x"])
             self.mod_structure()
 
     def delete(self, index: int | slice | list[int] | np.ndarray) -> None:
@@ -667,8 +661,6 @@ class Population(Generic[T_Individual]):
         if self._genome_items is not None:
             self._genome_items.clear()
             self._genome_batch = ObjectBatch()
-        elif isinstance(self._genome_batch, DenseVectorBatch):
-            self._genome_batch = DenseVectorBatch(self._data["x"])
         self.mod_structure()
 
     def empty_like(self, capacity: int | None = None):
@@ -780,7 +772,6 @@ class Population(Generic[T_Individual]):
         if isinstance(self._genome_batch, DenseVectorBatch):
             values = np.asarray(self._require_dense_view().get_view(genomes))
             self._data["x"][indices] = values
-            self._genome_batch = DenseVectorBatch(self._data["x"])
         else:
             if not isinstance(genomes, ObjectBatch) or self._genome_items is None:
                 raise ValidationError(
@@ -794,7 +785,6 @@ class Population(Generic[T_Individual]):
         if isinstance(self._genome_batch, DenseVectorBatch):
             values = np.asarray(self._require_dense_view().get_view(genomes))
             self._data["x"][self._size - len(genomes) : self._size] = values
-            self._genome_batch = DenseVectorBatch(self._data["x"])
         elif isinstance(genomes, ObjectBatch) and self._genome_items is not None:
             self._genome_items.extend(genomes.items)
             self._genome_batch = ObjectBatch(self._genome_items)
@@ -806,7 +796,6 @@ class Population(Generic[T_Individual]):
         if isinstance(self._genome_batch, DenseVectorBatch):
             values = np.asarray(self._require_dense_view().get_view(selected))
             self._data["x"][: len(selected)] = values
-            self._genome_batch = DenseVectorBatch(self._data["x"])
         else:
             if not isinstance(selected, ObjectBatch) or self._genome_items is None:
                 raise ValidationError("incompatible genome batch representation")
@@ -818,8 +807,6 @@ class Population(Generic[T_Individual]):
             values = self._genome_items
             self._genome_items = list(np.asarray(values, dtype=object)[order])
             self._genome_batch = ObjectBatch(self._genome_items)
-        elif isinstance(self._genome_batch, DenseVectorBatch):
-            self._genome_batch = DenseVectorBatch(self._data["x"])
 
     @property
     def genomes(self) -> GenomeBatch:
