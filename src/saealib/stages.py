@@ -20,15 +20,17 @@ dict) via ``state.replace(data={**state.data, "key": value})``.
 
 from __future__ import annotations
 
+import inspect
 from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import replace
 from math import fsum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 
 from saealib.acquisition.base import AcquisitionResult
+from saealib.algorithms.base import ProposalRequest
 from saealib.callback import (
     AcquisitionEndEvent,
     AcquisitionStartEvent,
@@ -38,6 +40,12 @@ from saealib.callback import (
     SurrogateStartEvent,
 )
 from saealib.context import EvaluationPlanState
+from saealib.core.contracts.proposals import ProposalBatch
+from saealib.core.state import (
+    POPULATIONS_MAIN,
+    RUNTIME_RNG,
+    LegacyAlgorithmStateView,
+)
 from saealib.exceptions import EvaluationProtocolError, ValidationError
 from saealib.execution.evaluator import (
     EvaluationRequest,
@@ -58,7 +66,7 @@ from saealib.policies.feedback import FeedbackBuilder, MixedFeedback, TrueOnlyFe
 
 if TYPE_CHECKING:
     from saealib.acquisition.base import AcquisitionFunction
-    from saealib.algorithms.base import Algorithm
+    from saealib.algorithms.base import Algorithm, Proposer
     from saealib.callback import CallbackManager, Event
     from saealib.context import OptimizationState
     from saealib.execution.evaluator import Evaluator
@@ -105,6 +113,32 @@ class _DispatchProxy:
     @property
     def seed(self) -> None:
         return None
+
+
+def _is_legacy_algorithm(component: object) -> bool:
+    """Recognize old ask signatures, including lightweight test/user doubles."""
+    from saealib.algorithms.base import Algorithm
+
+    if isinstance(component, Algorithm):
+        return True
+    ask = getattr(component, "ask", None)
+    if not callable(ask):
+        return True
+    try:
+        parameters = tuple(inspect.signature(ask).parameters.values())
+    except (TypeError, ValueError):
+        return True
+    if any(
+        parameter.kind is inspect.Parameter.VAR_POSITIONAL for parameter in parameters
+    ):
+        return True
+    positional = tuple(
+        parameter
+        for parameter in parameters
+        if parameter.kind
+        in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    )
+    return len(positional) >= 3
 
 
 def _plan_complete(state: OptimizationState) -> bool:
@@ -167,14 +201,28 @@ class AskStage(Stage):
 
     def __init__(
         self,
-        algorithm: Algorithm,
+        algorithm: Algorithm | Proposer,
         n_offspring: int | None = None,
         cbmanager: CallbackManager | None = None,
     ) -> None:
         super().__init__()
-        self._algorithm = algorithm
+        from saealib.algorithms.base import LegacyPopulationAlgorithmAdapter, Proposer
+
         self._n_offspring = n_offspring
         self._proxy = _DispatchProxy(cbmanager)
+        legacy = _is_legacy_algorithm(algorithm)
+        self._legacy_adapter = legacy
+        self._algorithm: Proposer = (
+            LegacyPopulationAlgorithmAdapter.for_stage(algorithm, self._proxy)
+            if legacy
+            else cast(Proposer, algorithm)
+        )
+        contract = getattr(self._algorithm, "contract", None)
+        self._state_reads = (
+            contract().state
+            if contract is not None
+            else (POPULATIONS_MAIN, RUNTIME_RNG)
+        )
 
     def to_pseudocode(self, *, expand: bool = False, indent: int = 0) -> str:
         r"""Expand into per-operator lines via ``Algorithm.ask_notation``."""
@@ -189,7 +237,18 @@ class AskStage(Stage):
     def execute(self, state: OptimizationState) -> OptimizationState:
         if _plan_incomplete(state):
             return state
-        candidates = self._algorithm.ask(state, self._proxy, self._n_offspring)
+        if self._legacy_adapter:
+            state_view = LegacyAlgorithmStateView(
+                state._store, self._state_reads, state
+            )
+        else:
+            state_view = state._store.view(self._state_reads)
+        proposal = self._algorithm.ask(
+            ProposalRequest(n_offspring=self._n_offspring), state_view
+        )
+        if not isinstance(proposal, ProposalBatch):
+            raise ValidationError("proposer ask() must return a ProposalBatch")
+        candidates = proposal.candidates
         if "id" in candidates.schema:
             id_arr = candidates.get_array("id")
             unassigned = np.where(id_arr == -1)[0]

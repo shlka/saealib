@@ -37,6 +37,12 @@ SCANNED_SUBPACKAGES = [
 ]
 
 NAMESPACE_ONLY: dict[str, set[str]] = {
+    "saealib.algorithms": {
+        "FeedbackConsumer",
+        "LegacyPopulationAlgorithmAdapter",
+        "ProposalRequest",
+        "Proposer",
+    },
     "saealib.benchmarks": {
         "ackley",
         "dtlz1",

@@ -18,9 +18,10 @@ from saealib.exceptions import ValidationError
 from saealib.population import Population
 
 if TYPE_CHECKING:
+    from saealib.context import OptimizationState
     from saealib.core.contracts.state import StateContract
 
-__all__ = ["StateStore", "StateView"]
+__all__ = ["LegacyAlgorithmStateView", "StateStore", "StateView"]
 
 ValueT = TypeVar("ValueT")
 
@@ -197,3 +198,27 @@ class StateView:
             self._store._check_live()
         except RuntimeError as exc:
             raise RuntimeError("StateView is stale after a state patch") from exc
+
+
+class LegacyAlgorithmStateView(StateView):
+    """Temporary Phase 4-10 seam carrying an OptimizationState to old Algorithm.
+
+    This named bridge exists only for ``LegacyPopulationAlgorithmAdapter`` and
+    must be removed together with that adapter in Phase 11.  It keeps the
+    original OptimizationState object intact while the proposer boundary is
+    being migrated.
+    """
+
+    def __init__(
+        self,
+        store: StateStore,
+        reads: Iterable[StateKey] | StateContract,
+        legacy_optimization_state: OptimizationState,
+    ) -> None:
+        super().__init__(store, reads)
+        self._legacy_optimization_state = legacy_optimization_state
+
+    @property
+    def legacy_optimization_state(self) -> OptimizationState:
+        """Return the OptimizationState passed to the old Algorithm.ask()."""
+        return self._legacy_optimization_state
