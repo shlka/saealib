@@ -282,6 +282,17 @@ def _recipe_pymoo_algorithm() -> Any:
     return instance
 
 
+def _recipe_stage_node_adapter() -> Any:
+    from saealib.core.graph_builder import StageNodeAdapter
+    from saealib.pipeline import Stage
+
+    class _RecipeStage(Stage):
+        def execute(self, state: Any) -> Any:
+            return state
+
+    return StageNodeAdapter(_RecipeStage(name="recipe_stage"))
+
+
 def _build_qualified(path: str, **params: Any) -> Any:
     return build({"type": path, "params": params})
 
@@ -335,6 +346,7 @@ _RECIPES: dict[str, Callable[[], Any]] = {
         "saealib.execution.scheduler.AsyncEvaluationScheduler"
     ): _recipe_async_evaluation_scheduler,
     "saealib.algorithms.pymoo_algorithm.PymooAlgorithm": _recipe_pymoo_algorithm,
+    "saealib.core.graph_builder.StageNodeAdapter": _recipe_stage_node_adapter,
     _qualified_name(_REGISTRY["GenerationBasedStrategy"]): lambda: build(
         {"type": "GenerationBasedStrategy", "params": {"gen_ctrl": 5}}
     ),

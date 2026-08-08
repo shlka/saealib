@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
+from saealib.core.compiler.graph import ComponentGraph
+from saealib.core.graph_builder import build_component_graph
 from saealib.pipeline import Pipeline
 from saealib.policies.evaluation import RatioEvaluation
 from saealib.policies.feedback import FeedbackBuilder, MixedFeedback
@@ -123,6 +125,10 @@ class IndividualBasedStrategy(OptimizationStrategy):
                 *evaluation_tail,
             ]
         )
+
+    def build_graph(self, provider: ComponentProvider) -> ComponentGraph:
+        """Build the graph view of the current individual pipeline."""
+        return build_component_graph(self.build_pipeline(provider))
 
     def step(
         self, ctx: OptimizationState, provider: ComponentProvider
