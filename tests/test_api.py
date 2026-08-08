@@ -42,19 +42,22 @@ class TestMinimizePreset:
 
     def test_preset_strategy_is_actually_used(self, monkeypatch):
         calls = {"gb": 0, "ps": 0}
-        orig_gb_step = GenerationBasedStrategy.step
-        orig_ps_step = PreSelectionStrategy.step
+        orig_gb_graph = GenerationBasedStrategy.build_graph
+        orig_ps_graph = PreSelectionStrategy.build_graph
 
-        def gb_step(self, ctx, provider):
+        def gb_graph(self, provider):
             calls["gb"] += 1
-            return orig_gb_step(self, ctx, provider)
+            return orig_gb_graph(self, provider)
 
-        def ps_step(self, ctx, provider):
+        def ps_graph(self, provider):
             calls["ps"] += 1
-            return orig_ps_step(self, ctx, provider)
+            return orig_ps_graph(self, provider)
 
-        monkeypatch.setattr(GenerationBasedStrategy, "step", gb_step)
-        monkeypatch.setattr(PreSelectionStrategy, "step", ps_step)
+        # Observe the selected strategy at the graph/plan boundary, rather
+        # than strategy.step(), which sync runtime execution intentionally
+        # does not call.
+        monkeypatch.setattr(GenerationBasedStrategy, "build_graph", gb_graph)
+        monkeypatch.setattr(PreSelectionStrategy, "build_graph", ps_graph)
 
         preset = {
             "strategy": {
@@ -80,19 +83,19 @@ class TestMinimizePreset:
 
     def test_explicit_strategy_overrides_preset(self, monkeypatch):
         calls = {"gb": 0, "ps": 0}
-        orig_gb_step = GenerationBasedStrategy.step
-        orig_ps_step = PreSelectionStrategy.step
+        orig_gb_graph = GenerationBasedStrategy.build_graph
+        orig_ps_graph = PreSelectionStrategy.build_graph
 
-        def gb_step(self, ctx, provider):
+        def gb_graph(self, provider):
             calls["gb"] += 1
-            return orig_gb_step(self, ctx, provider)
+            return orig_gb_graph(self, provider)
 
-        def ps_step(self, ctx, provider):
+        def ps_graph(self, provider):
             calls["ps"] += 1
-            return orig_ps_step(self, ctx, provider)
+            return orig_ps_graph(self, provider)
 
-        monkeypatch.setattr(GenerationBasedStrategy, "step", gb_step)
-        monkeypatch.setattr(PreSelectionStrategy, "step", ps_step)
+        monkeypatch.setattr(GenerationBasedStrategy, "build_graph", gb_graph)
+        monkeypatch.setattr(PreSelectionStrategy, "build_graph", ps_graph)
 
         # preset requests PreSelectionStrategy, but the explicit strategy="gb"
         # argument must take precedence.

@@ -23,7 +23,7 @@ from saealib.core.graph_builder import StageNodeAdapter, build_component_graph
 from saealib.core.runtime import NodeStatus, SequentialPlan
 from saealib.exceptions import ValidationError
 from saealib.execution.evaluator import SerialEvaluator
-from saealib.execution.runtime import PipelineRuntime
+from saealib.execution.runtime import PipelineRuntime, _OptimizerEnvironment
 from saealib.optimizer import ComponentProvider
 from saealib.pipeline import Pipeline, Stage
 from saealib.strategies.direct import DirectStrategy
@@ -79,6 +79,18 @@ def test_real_default_strategy_graph_compiles_to_stage_order() -> None:
     assert len(ordered.nodes) == sum(
         isinstance(node.component, StageNodeAdapter) for node in plan.graph.nodes
     )
+    assert [node.component_id for node in ordered.execution_nodes] == [
+        "count_generation",
+        "ask",
+        "evaluation_plan",
+        "evaluation_submit",
+        "evaluation_collect",
+        "evaluation_apply",
+        "archive_update",
+        "feedback",
+        "tell",
+        "evaluation_acknowledge",
+    ]
 
 
 def test_runtime_threads_stage_return_values_and_reports_order_without_events() -> None:
@@ -96,6 +108,33 @@ def test_runtime_threads_stage_return_values_and_reports_order_without_events() 
     assert stages[1].seen[0].marker == "a(start)"
     assert stages[2].seen[0].marker == "b(a(start))"
     assert step.session is not None and step.session.state is step.state
+
+
+def test_sync_environment_executes_compiled_plan_without_strategy_step() -> None:
+    stages = [_Stage("a"), _Stage("b")]
+    plan = _compiled(stages)
+
+    class PoisonStrategy:
+        def step(self, state: OptimizationState, provider: object) -> OptimizationState:
+            raise AssertionError("sync runtime must not call strategy.step")
+
+    class Optimizer:
+        strategy = PoisonStrategy()
+        async_evaluation_scheduler = None
+
+    environment = _OptimizerEnvironment(
+        Optimizer(), SequentialPlan.from_executable_plan(plan)
+    )
+    result = environment.execute(SequentialPlan.from_executable_plan(plan), _state())
+
+    assert result.marker == "b(a(start))"
+
+    def poison(_: OptimizationState) -> OptimizationState:
+        raise AssertionError("compiled Stage execution was bypassed")
+
+    setattr(stages[0], "execute", poison)
+    with pytest.raises(AssertionError, match="compiled Stage execution"):
+        environment.execute(SequentialPlan.from_executable_plan(plan), _state())
 
 
 def test_order_view_ignores_data_only_synthetic_node_and_stage_self_loop() -> None:

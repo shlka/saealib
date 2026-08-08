@@ -122,6 +122,33 @@ class NodeResult:
         object.__setattr__(self, "commands", commands)
 
 
+def _unique_control_order(
+    node_ids: set[str], successors: dict[str, set[str]], label: str
+) -> tuple[str, ...]:
+    """Return a control order only when every position is unique."""
+    predecessors = {node_id: set() for node_id in node_ids}
+    for source in node_ids:
+        for target in successors[source]:
+            predecessors[target].add(source)
+    available = [node_id for node_id, parents in predecessors.items() if not parents]
+    if len(available) != 1:
+        raise ValidationError(f"SequentialPlan {label} has no unique entry")
+    ordered: list[str] = []
+    remaining = predecessors
+    while available:
+        if len(available) != 1:
+            raise ValidationError(f"SequentialPlan {label} is ambiguous")
+        current = available.pop()
+        ordered.append(current)
+        for target in successors[current]:
+            remaining[target].remove(current)
+            if not remaining[target]:
+                available.append(target)
+    if len(ordered) != len(node_ids):
+        raise ValidationError(f"SequentialPlan {label} contains a cycle")
+    return tuple(ordered)
+
+
 @dataclass(frozen=True, kw_only=True)
 class SequentialPlan:
     """An immutable ordered view over an :class:`ExecutablePlan`.
@@ -133,6 +160,7 @@ class SequentialPlan:
 
     plan: ExecutablePlan
     nodes: tuple[ComponentNode, ...]
+    execution_nodes: tuple[ComponentNode, ...] = ()
 
     def __post_init__(self) -> None:
         """Validate the immutable ordered view against its compiled plan."""
@@ -151,7 +179,22 @@ class SequentialPlan:
             raise ValidationError(
                 "SequentialPlan nodes must belong to the executable plan"
             )
+        execution_nodes = tuple(self.execution_nodes) or nodes
+        execution_ids = tuple(node.component_id for node in execution_nodes)
+        if any(not isinstance(node, ComponentNode) for node in execution_nodes):
+            raise ValidationError(
+                "SequentialPlan execution_nodes must contain ComponentNode values"
+            )
+        if len(set(execution_ids)) != len(execution_ids):
+            raise ValidationError(
+                "SequentialPlan execution_nodes must have unique component IDs"
+            )
+        if any(node_id not in graph_ids for node_id in execution_ids):
+            raise ValidationError(
+                "SequentialPlan execution_nodes must belong to the executable plan"
+            )
         object.__setattr__(self, "nodes", nodes)
+        object.__setattr__(self, "execution_nodes", execution_nodes)
 
     @classmethod
     def from_executable_plan(cls, plan: ExecutablePlan) -> SequentialPlan:
@@ -230,35 +273,39 @@ class SequentialPlan:
         successors = {
             node_id: stage_successors(node_id) for node_id in reachable_stages
         }
-        predecessors = {node_id: set() for node_id in reachable_stages}
-        for source, targets in successors.items():
-            for target in targets:
-                predecessors[target].add(source)
+        ordered_ids = _unique_control_order(
+            reachable_stages, successors, "control order"
+        )
 
-        # A deterministic order is valid only when there is exactly one
-        # currently available node at every point.  No id-based tie breaking.
-        available = [
-            node_id for node_id, parents in predecessors.items() if not parents
-        ]
-        if len(available) != 1:
-            raise ValidationError(
-                "SequentialPlan control order has no unique entry or is cyclic"
-            )
-        ordered_ids: list[str] = []
-        remaining = {node_id: set(parents) for node_id, parents in predecessors.items()}
-        while available:
-            if len(available) != 1:
-                raise ValidationError("SequentialPlan control order is ambiguous")
-            current = available.pop()
-            ordered_ids.append(current)
-            for target in successors[current]:
-                remaining[target].remove(current)
-                if not remaining[target]:
-                    available.append(target)
-        if len(ordered_ids) != len(reachable_stages):
-            raise ValidationError("SequentialPlan control order contains a cycle")
+        executable_ids = {
+            node_id
+            for node_id in reachable
+            if callable(getattr(nodes_by_id[node_id].component, "execute", None))
+        }
+        executable_successors: dict[str, set[str]] = {
+            node_id: set() for node_id in executable_ids
+        }
+        for source in executable_ids:
+            pending_nodes = list(control_successors[source])
+            visited_non_executables: set[str] = set()
+            while pending_nodes:
+                target = pending_nodes.pop()
+                if target in executable_ids:
+                    executable_successors[source].add(target)
+                    continue
+                if target in visited_non_executables:
+                    raise ValidationError(
+                        "SequentialPlan executable control order contains a cycle"
+                    )
+                visited_non_executables.add(target)
+                pending_nodes.extend(control_successors[target])
+        execution_ids = _unique_control_order(
+            executable_ids, executable_successors, "executable control order"
+        )
         return cls(
-            plan=plan, nodes=tuple(nodes_by_id[node_id] for node_id in ordered_ids)
+            plan=plan,
+            nodes=tuple(nodes_by_id[node_id] for node_id in ordered_ids),
+            execution_nodes=tuple(nodes_by_id[node_id] for node_id in execution_ids),
         )
 
     @property
@@ -281,6 +328,7 @@ class RuntimeSession:
     finished: bool = False
     observable: bool = False
     step_index: int = 0
+    generation_open: bool = False
 
     def __post_init__(self) -> None:
         """Validate the immutable session snapshot."""
@@ -299,6 +347,8 @@ class RuntimeSession:
             raise ValidationError("RuntimeSession step_index must be an integer")
         if self.step_index < 0:
             raise ValidationError("RuntimeSession step_index must not be negative")
+        if not isinstance(self.generation_open, bool):
+            raise ValidationError("RuntimeSession generation_open must be a boolean")
 
 
 @dataclass(frozen=True, kw_only=True)
