@@ -24,9 +24,12 @@ from saealib.callback import (
 )
 from saealib.context import OptimizationState
 from saealib.core.compiler import (
+    CompileContext,
+    Compiler,
     ContractPath,
     Diagnostic,
     DiagnosticBag,
+    ExecutablePlan,
     Severity,
     check_component_contract,
 )
@@ -194,6 +197,7 @@ class Optimizer:
         self.instance_name: str = ""
         self._preset: dict | None = None
         self._last_contract_diagnostics: tuple[Diagnostic, ...] = ()
+        self._executable_plan: ExecutablePlan | None = None
 
     # --- setters (all return self for chaining) ---
 
@@ -326,6 +330,42 @@ class Optimizer:
     def last_contract_diagnostics(self) -> tuple[Diagnostic, ...]:
         """Return the diagnostics collected by the most recent ``validate``."""
         return self._last_contract_diagnostics
+
+    @property
+    def executable_plan(self) -> ExecutablePlan | None:
+        """Return the plan produced by the most recent execution preparation."""
+        return self._executable_plan
+
+    def describe(self) -> str:
+        """Describe the most recently compiled plan, if one exists."""
+        if self._executable_plan is None:
+            return "Optimizer(uncompiled)"
+        return self._executable_plan.describe()
+
+    def _compile_plan(self) -> ExecutablePlan | None:
+        """Build and compile the configured strategy graph once per run."""
+        strategy = getattr(self, "strategy", None)
+        build_graph = getattr(strategy, "build_graph", None)
+        if not callable(build_graph):
+            self._executable_plan = None
+            return None
+
+        graph = build_graph(self)
+        offered_runtime_capabilities = frozenset(
+            {"partial_feedback"}
+            if getattr(getattr(self, "algorithm", None), "allow_partial_tell", False)
+            else set()
+        )
+        plan = Compiler().compile(
+            graph,
+            CompileContext(
+                space=self.problem.space,
+                problem=self.problem,
+                offered_runtime_capabilities=offered_runtime_capabilities,
+            ),
+        )
+        self._executable_plan = plan
+        return plan
 
     def set_seed(self, seed: int | None) -> Self:
         """Set the master random seed. Returns self."""
@@ -535,7 +575,12 @@ class Optimizer:
         if surrogate_manager is not None:
             self._validate_surrogate_compatibility(issues, surrogate_manager)
 
-        self._last_contract_diagnostics = tuple(self.contract_diagnostics())
+        diagnostics = tuple(self.contract_diagnostics())
+        if self._executable_plan is not None:
+            diagnostics = tuple(
+                dict.fromkeys((*diagnostics, *self._executable_plan.diagnostics))
+            )
+        self._last_contract_diagnostics = diagnostics
         issues.extend(
             str(diagnostic)
             for diagnostic in self._last_contract_diagnostics
@@ -891,6 +936,7 @@ class Optimizer:
             Generator of OptimizationState.
         """
         self._resolve_defaults()
+        self._compile_plan()
         issues = self.validate()
         if issues:
             raise ConfigurationError(
@@ -934,6 +980,7 @@ class Optimizer:
             The optimization context.
         """
         self._resolve_defaults()
+        self._compile_plan()
         issues = self.validate()
         if issues:
             raise ConfigurationError(
@@ -966,6 +1013,7 @@ class Optimizer:
         -------
         Generator[OptimizationState, None, None]
         """
+        self._compile_plan()
         issues = self.validate(require_initializer=False)
         if issues:
             raise ConfigurationError(
@@ -988,6 +1036,7 @@ class Optimizer:
         OptimizationState
             The final optimization context.
         """
+        self._compile_plan()
         issues = self.validate(require_initializer=False)
         if issues:
             raise ConfigurationError(
@@ -1005,6 +1054,17 @@ class Optimizer:
         "Reproducibility is only guaranteed within the same Python "
         "and library versions."
     )
+
+    def __getstate__(self) -> dict[str, object]:
+        """Exclude the compiled graph plan from legacy pickle checkpoints."""
+        state = self.__dict__.copy()
+        state["_executable_plan"] = None
+        return state
+
+    def __setstate__(self, state: dict[str, object]) -> None:
+        """Restore an optimizer without a stale compiled execution plan."""
+        self.__dict__.update(state)
+        self.__dict__.setdefault("_executable_plan", None)
 
     def save_pickle(self, ctx: OptimizationState, path: str | Path) -> None:
         """

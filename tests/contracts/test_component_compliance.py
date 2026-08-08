@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+import ast
 import importlib
 import inspect
 import pkgutil
 from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pytest
 
 import saealib
+from saealib.core.compiler.diagnostics import DIAGNOSTIC_CODES
 from saealib.core.component import Component
 from saealib.core.contracts import (
     ASSUMPTION_KEYS,
@@ -1071,6 +1074,39 @@ def test_parts_check_rejects_missing_child_attribute() -> None:
         _check_parts(_PartsMissingDummy())
 
 
-@pytest.mark.skip(reason="CompilationRule is not implemented until Phase 5")
 def test_custom_diagnostics_have_paths_and_registered_codes() -> None:
-    pass
+    """Every compiler diagnostic declares a location, resolution, and code."""
+    compiler_root = Path(saealib.__file__).parent / "core" / "compiler"
+    literal_codes: set[str] = set()
+    diagnostic_calls = 0
+
+    for source_path in compiler_root.glob("*.py"):
+        tree = ast.parse(source_path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            function = node.func
+            if not (
+                (isinstance(function, ast.Name) and function.id == "Diagnostic")
+                or (
+                    isinstance(function, ast.Attribute)
+                    and function.attr == "Diagnostic"
+                )
+            ):
+                continue
+            diagnostic_calls += 1
+            keywords = {keyword.arg for keyword in node.keywords}
+            assert "path" in keywords, f"missing path in {source_path}:{node.lineno}"
+            assert "resolutions" in keywords, (
+                f"missing resolutions in {source_path}:{node.lineno}"
+            )
+            for keyword in node.keywords:
+                if (
+                    keyword.arg == "code"
+                    and isinstance(keyword.value, ast.Constant)
+                    and isinstance(keyword.value.value, str)
+                ):
+                    literal_codes.add(keyword.value.value)
+
+    assert diagnostic_calls > 0
+    assert all(DIAGNOSTIC_CODES.get(code) is not None for code in literal_codes)

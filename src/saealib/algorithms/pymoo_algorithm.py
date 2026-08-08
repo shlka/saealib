@@ -11,6 +11,7 @@ from saealib.algorithms.base import Algorithm
 from saealib.callback import PostAskEvent
 from saealib.core.contracts import (
     PARTIAL_ALLOWED,
+    REPEATED_ALLOWED,
     ComponentContract,
     ExecutionContract,
 )
@@ -154,7 +155,11 @@ class PymooAlgorithm(Algorithm):
             family,
             lifecycle=replace(
                 family.lifecycle,
-                feedback=replace(feedback, completion=PARTIAL_ALLOWED),
+                feedback=replace(
+                    feedback,
+                    completion=PARTIAL_ALLOWED,
+                    multiplicity=REPEATED_ALLOWED,
+                ),
             ),
             execution=ExecutionContract(
                 required_runtime_capabilities=("partial_feedback",),

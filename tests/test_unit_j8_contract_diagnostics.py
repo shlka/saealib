@@ -8,6 +8,7 @@ from pymoo.algorithms.soo.nonconvex.ga import GA as PymooGA  # noqa: N811
 
 from saealib.algorithms.pymoo_algorithm import PymooAlgorithm
 from saealib.core.compiler import (
+    Compiler,
     ContractPath,
     Diagnostic,
     DiagnosticBag,
@@ -165,3 +166,23 @@ def test_contract_diagnostics_are_not_called_per_generation(monkeypatch) -> None
     optimizer.run()
 
     assert calls == 1
+
+
+def test_optimizer_compiles_once_per_run_and_retains_plan(monkeypatch) -> None:
+    optimizer = _default_optimizer()
+    optimizer.set_termination(Termination(max_fe(1)))
+    calls = 0
+    original_compile = Compiler.compile
+
+    def count_compile(self, graph, context=None):
+        nonlocal calls
+        calls += 1
+        return original_compile(self, graph, context)
+
+    monkeypatch.setattr(Compiler, "compile", count_compile)
+
+    optimizer.run()
+
+    assert calls == 1
+    assert optimizer.executable_plan is not None
+    assert optimizer.describe() == optimizer.executable_plan.describe()

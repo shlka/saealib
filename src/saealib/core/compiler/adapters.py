@@ -18,7 +18,11 @@ from saealib.core.contracts import (
     PortSpec,
     is_data_spec_compatible,
 )
-from saealib.core.contracts.feedback import COMPLETE_BATCH
+from saealib.core.contracts.feedback import (
+    COMPLETE_BATCH,
+    PARTIAL_ALLOWED,
+    REPEATED_ALLOWED,
+)
 from saealib.core.contracts.representation import (
     RepresentationSpec,
     unify_representation_specs,
@@ -350,9 +354,18 @@ def _partial_feedback_is_offered(
 
 
 def _legacy_feedback_match(match: AdapterMatchContext) -> bool:
-    return not _partial_complete_feedback_pair(
-        match
-    ) and _target_requires_complete_batch(match.target_node)
+    feedback = match.target_node.contract.lifecycle.feedback
+    repeated_partial_consumer = (
+        feedback is not None
+        and feedback.completion == PARTIAL_ALLOWED
+        and feedback.multiplicity == REPEATED_ALLOWED
+        and "partial_feedback"
+        in match.target_node.contract.execution.required_runtime_capabilities
+    )
+    return repeated_partial_consumer or (
+        not _partial_complete_feedback_pair(match)
+        and _target_requires_complete_batch(match.target_node)
+    )
 
 
 def _target_requires_complete_batch(node: ComponentNode) -> bool:
