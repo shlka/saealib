@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from saealib.callback import (
     Event,
@@ -26,7 +26,7 @@ from saealib.core.runtime import (
 from saealib.core.state.patch import StatePatch
 from saealib.exceptions import EvaluationFatalError, ValidationError
 
-__all__ = ["PipelineRuntime", "create_runtime", "resolve_plan"]
+__all__ = ["AsyncPipelineRuntime", "PipelineRuntime", "create_runtime", "resolve_plan"]
 
 
 class RuntimeEnvironment(Protocol):
@@ -36,10 +36,6 @@ class RuntimeEnvironment(Protocol):
         self, plan: SequentialPlan, state: OptimizationState
     ) -> OptimizationState: ...
 
-    def process_pending(
-        self, state: OptimizationState, generation_open: bool
-    ) -> tuple[OptimizationState, bool, bool, bool]: ...
-
     def is_terminated(self, state: OptimizationState) -> bool: ...
 
     def dispatch(self, event: Event) -> None: ...
@@ -47,6 +43,20 @@ class RuntimeEnvironment(Protocol):
     def finish_generation(self, state: OptimizationState) -> None: ...
 
     def fatal(self, state: OptimizationState) -> None: ...
+
+
+class AsyncRuntimeEnvironment(RuntimeEnvironment, Protocol):
+    """Provider seam used by :class:`AsyncPipelineRuntime`."""
+
+    def execute_async(
+        self, plan: SequentialPlan, state: OptimizationState
+    ) -> OptimizationState: ...
+
+    def reattach(self, state: OptimizationState) -> OptimizationState: ...
+
+    def poll(self, state: OptimizationState) -> OptimizationState: ...
+
+    def can_refill(self, state: OptimizationState) -> bool: ...
 
 
 def _execute_sequential_plan(
@@ -89,20 +99,15 @@ class _OptimizerEnvironment:
     def execute(
         self, plan: SequentialPlan, state: OptimizationState
     ) -> OptimizationState:
-        if getattr(self.optimizer, "async_evaluation_scheduler", None) is None:
-            current_fingerprint = self._fingerprint()
-            if current_fingerprint != self._execution_fingerprint:
-                # Runtime extension seam: provider changes refresh execution
-                # stages without recompiling the immutable plan or re-entering
-                # strategy.step(). The unchanged path executes the plan.
-                pipeline = self.optimizer.strategy.build_pipeline(self.optimizer)
-                self._execution_fingerprint = current_fingerprint
-                return pipeline.execute(state)
-            return _execute_sequential_plan(plan, state)
-        # Temporary L4 bridge: async still uses strategy.step() because its
-        # scheduler polling/reattach semantics are not yet a PipelineRuntime.
-        result = self.optimizer.strategy.step(state, self.optimizer)
-        return state if result is None else result
+        current_fingerprint = self._fingerprint()
+        if current_fingerprint != self._execution_fingerprint:
+            # Runtime extension seam: provider changes refresh execution
+            # stages without recompiling the immutable plan or re-entering
+            # strategy.step(). The unchanged path executes the plan.
+            pipeline = self.optimizer.strategy.build_pipeline(self.optimizer)
+            self._execution_fingerprint = current_fingerprint
+            return pipeline.execute(state)
+        return _execute_sequential_plan(plan, state)
 
     def _fingerprint(self) -> tuple[object, ...]:
         strategy = self.optimizer.strategy
@@ -123,34 +128,30 @@ class _OptimizerEnvironment:
         )
         return strategy_values + provider_values
 
-    def process_pending(
-        self, state: OptimizationState, generation_open: bool
-    ) -> tuple[OptimizationState, bool, bool, bool]:
+    def execute_async(
+        self, plan: SequentialPlan, state: OptimizationState
+    ) -> OptimizationState:
+        # Temporary L5 bridge: scheduler poll/commit still owns direct
+        # feedback/tell delivery while execution follows the compiled plan.
+        return _execute_sequential_plan(plan, state)
+
+    def reattach(self, state: OptimizationState) -> OptimizationState:
         scheduler = getattr(self.optimizer, "async_evaluation_scheduler", None)
         if scheduler is None:
-            state = self.execute(self.plan, state)
-            if state.pending_evaluations:
-                return state, generation_open, False, True
-        else:
-            if set(state.pending_evaluations) != set(state.evaluation_handles):
-                state = scheduler.reattach(state)
-            before = state
-            state = scheduler.poll(state, wait=False)
-            if state.pending_evaluations:
-                if self.is_terminated(state):
-                    if state is before:
-                        time.sleep(0.001)
-                    return state, generation_open, False, True
-                state = self.execute(self.plan, state)
-                if state.pending_evaluations:
-                    if state is before:
-                        time.sleep(0.001)
-                    return state, generation_open, False, True
+            raise ValidationError("Async runtime requires an evaluation scheduler")
+        return scheduler.reattach(state)
 
-        if generation_open:
-            self.finish_generation(state)
-            return state, False, True, scheduler is None
-        return state, generation_open, False, scheduler is None
+    def poll(self, state: OptimizationState) -> OptimizationState:
+        scheduler = getattr(self.optimizer, "async_evaluation_scheduler", None)
+        if scheduler is None:
+            raise ValidationError("Async runtime requires an evaluation scheduler")
+        return scheduler.poll(state, wait=False)
+
+    def can_refill(self, state: OptimizationState) -> bool:
+        scheduler = getattr(self.optimizer, "async_evaluation_scheduler", None)
+        if scheduler is None:
+            raise ValidationError("Async runtime requires an evaluation scheduler")
+        return len(state.pending_evaluations) < scheduler.max_pending
 
     def is_terminated(self, state: OptimizationState) -> bool:
         return self.optimizer.termination.is_terminated(state)
@@ -251,13 +252,12 @@ class PipelineRuntime:
         state = session.state
         generation_open = session.generation_open
         if state.pending_evaluations:
-            state, generation_open, generation_finished, continue_loop = (
-                env.process_pending(state, generation_open)
-            )
-            if generation_finished:
-                return self._step(session, state, generation_open, observable=True)
-            if continue_loop:
-                return self._step(session, state, generation_open, observable=False)
+            state = env.execute(session.plan, state)
+            if state.pending_evaluations:
+                return self._step(session, state, generation_open)
+            if generation_open:
+                env.finish_generation(state)
+                return self._step(session, state, False, observable=True)
         if env.is_terminated(state):
             env.dispatch(RunEndEvent(ctx=state))
             return self._step(session, state, generation_open, finished=True)
@@ -312,12 +312,73 @@ class PipelineRuntime:
             state.comparator.rng = state.rng.spawn(1)[0]
 
 
+class AsyncPipelineRuntime(PipelineRuntime):
+    """Drive pending asynchronous evaluation lifecycle through a scheduler."""
+
+    def advance(self, session: RuntimeSession) -> RuntimeStep:
+        """Poll, refill, drain, and expose asynchronous generation boundaries."""
+        if not isinstance(session, RuntimeSession):
+            raise ValidationError(
+                "AsyncPipelineRuntime.advance requires a RuntimeSession"
+            )
+        if not isinstance(session.plan, SequentialPlan):
+            raise ValidationError(
+                "AsyncPipelineRuntime.advance requires a SequentialPlan session"
+            )
+        if self.environment is None:
+            raise ValidationError("AsyncPipelineRuntime requires a runtime environment")
+        env = cast(AsyncRuntimeEnvironment, self.environment)
+        env.fatal(session.state)
+        state = session.state
+        generation_open = session.generation_open
+
+        if state.pending_evaluations:
+            if set(state.pending_evaluations) != set(state.evaluation_handles):
+                state = env.reattach(state)
+            before = state
+            state = env.poll(state)
+            if state.pending_evaluations:
+                if env.is_terminated(state):
+                    if state is before:
+                        time.sleep(0.001)
+                    return self._step(session, state, generation_open)
+                if not env.can_refill(state):
+                    return self._step(session, state, generation_open)
+                state = env.execute_async(session.plan, state)
+                if state.pending_evaluations:
+                    if state is before:
+                        time.sleep(0.001)
+                    return self._step(session, state, generation_open)
+
+            if generation_open:
+                env.finish_generation(state)
+                return self._step(session, state, False, observable=True)
+
+        if env.is_terminated(state):
+            env.dispatch(RunEndEvent(ctx=state))
+            return self._step(session, state, generation_open, finished=True)
+        env.dispatch(GenerationStartEvent(ctx=state))
+        state = env.execute_async(session.plan, state)
+        generation_open = True
+        if not state.pending_evaluations:
+            env.finish_generation(state)
+            generation_open = False
+            return self._step(session, state, generation_open, observable=True)
+        return self._step(session, state, generation_open)
+
+
 def create_runtime(optimizer: object) -> ExecutionRuntime:
     """Create the default runtime without exposing a concrete type to Runner."""
     plan = resolve_plan(optimizer)
-    return PipelineRuntime(
-        _OptimizerEnvironment(optimizer, SequentialPlan.from_executable_plan(plan))
+    environment = _OptimizerEnvironment(
+        optimizer, SequentialPlan.from_executable_plan(plan)
     )
+    runtime_type = (
+        AsyncPipelineRuntime
+        if getattr(optimizer, "async_evaluation_scheduler", None) is not None
+        else PipelineRuntime
+    )
+    return runtime_type(environment)
 
 
 def resolve_plan(optimizer: object) -> ExecutablePlan:
