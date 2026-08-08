@@ -23,6 +23,16 @@ Migrator = Callable[[object], object]
 _MigrationId = tuple[str, str, int]
 
 
+def _population_entry_v1_to_v2(value: object) -> object:
+    """Keep the restored population value while advancing its entry version.
+
+    At the value level, population entries are identical in v1 and v2.  The
+    decoder absorbs the encoding difference between the legacy ``x`` column
+    and the v2 ``GenomeCodec`` payload before this migrator is called.
+    """
+    return value
+
+
 def _validate_version(version: int, *, field_name: str) -> int:
     """Validate and return a positive schema version."""
     if isinstance(version, bool) or not isinstance(version, int) or version < 1:

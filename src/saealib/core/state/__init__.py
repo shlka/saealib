@@ -28,9 +28,18 @@ from saealib.core.state.migration import (
     STATE_MIGRATORS,
     Migrator,
     StateMigrationRegistry,
+    _population_entry_v1_to_v2,
 )
 from saealib.core.state.patch import PopulationRowUpdate, StatePatch, StateUpdate
 from saealib.core.state.store import StateStore, StateView
+
+# Population entries moved to schema v2 when v3 checkpoints began carrying
+# genomes through the space-provided GenomeCodec.  ``main`` is the one
+# statically known named population, so its migrator is registered once while
+# this module is imported.  Additional names are resolved from checkpoint
+# entries by the v3 loader, not by constructing a StateKey.
+if ("populations", "main", 1) not in STATE_MIGRATORS.registered():
+    STATE_MIGRATORS.register("populations", "main", 1, _population_entry_v1_to_v2)
 
 __all__ = [
     "ARCHIVES_MAIN",

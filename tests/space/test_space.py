@@ -19,6 +19,7 @@ from saealib.space import (
     DenseNumericView,
     EquivalenceService,
     FingerprintService,
+    GenomeCodec,
     ObjectSpace,
     SearchSpace,
     ServiceRegistry,
@@ -51,6 +52,19 @@ def test_spaces_satisfy_search_space_protocol() -> None:
 
     assert isinstance(vec_space, SearchSpace)
     assert isinstance(obj_space, SearchSpace)
+
+
+def test_vector_space_genome_codec_round_trips_dense_batch() -> None:
+    space = VectorSpace(dim=2, lb=[-1.0, -1.0], ub=[1.0, 1.0])
+    codec = space.services.require("GenomeCodec")
+    assert isinstance(codec, GenomeCodec)
+    batch = DenseVectorBatch([[0.25, -0.5], [0.75, 0.125]])
+
+    restored = codec.decode(codec.encode(batch))
+    assert isinstance(restored, DenseVectorBatch)
+
+    np.testing.assert_array_equal(restored.array, batch.array)
+    assert restored.array is not batch.array
 
 
 # ---------------------------------------------------------------------------
@@ -96,6 +110,7 @@ def test_object_space_without_services_can_sample_and_validate() -> None:
     space = ObjectSpace(representation=rep)
 
     assert len(space.services.names()) == 0
+    assert "GenomeCodec" not in space.services
 
     batch = space.sample(5)
     assert isinstance(batch, ObjectBatch)

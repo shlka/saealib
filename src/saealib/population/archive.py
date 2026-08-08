@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Hashable
 from typing import Any, cast
 
 import numpy as np
@@ -9,9 +10,16 @@ from scipy.spatial import cKDTree  # type: ignore  # cKDTree has no bundled type
 
 from saealib.comparators import Dominator
 from saealib.exceptions import ValidationError
-from saealib.population.genome import GenomeBatch
+from saealib.population.genome import DenseVectorBatch, GenomeBatch, ObjectBatch
 from saealib.population.population import Individual, Population, PopulationAttribute
-from saealib.space.services import DenseNumericView
+from saealib.space.services import (
+    DenseNumericView,
+    DistanceService,
+    EquivalenceService,
+    FingerprintService,
+)
+
+_UNSET = object()
 
 
 def _extract_id_value(
@@ -74,14 +82,87 @@ def _validate_observation_schema(
             raise ValidationError(f"append archive {name} must be an int64 scalar")
 
 
+def _service_from_registry(registry: Any, name: str) -> object | None:
+    """Return a named service from either a registry or a search space.
+
+    ``Archive`` receives resolved services in the compiled/runtime design, but
+    the public constructor still needs a small compatibility seam while that
+    wiring is being introduced.  Accepting either ``space`` or its registry
+    keeps the seam independent of the concrete registry implementation.
+    """
+    if registry is None:
+        return None
+    provider = getattr(registry, "services", registry)
+    get = getattr(provider, "get", None)
+    if callable(get):
+        return get(name)
+    return None
+
+
+def _service_tolerance(service: object | None, name: str) -> float:
+    """Read a service-owned tolerance without copying it into the archive."""
+    if service is None:
+        return 0.0
+    value = getattr(service, name, _UNSET)
+    if value is _UNSET:
+        value = getattr(service, f"_{name}", 0.0)
+    return float(cast(Any, value))
+
+
+def _as_single_genome_batch(value: Any) -> GenomeBatch | None:
+    """Normalize one supplied genome to a one-row ``GenomeBatch``."""
+    if value is None:
+        return None
+    if isinstance(value, np.ndarray):
+        array = np.asarray(value)
+        if array.ndim == 1:
+            array = array.reshape(1, -1)
+        elif array.ndim != 2 or array.shape[0] != 1:
+            raise ValidationError("Archive.add() expects one genome")
+        return DenseVectorBatch(array)
+    if isinstance(value, (DenseVectorBatch, ObjectBatch)):
+        if len(value) != 1:
+            raise ValidationError("Archive.add() expects one genome")
+        return value
+    if isinstance(value, GenomeBatch):
+        if len(value) != 1:
+            raise ValidationError("Archive.add() expects one genome")
+        return value
+    # A raw Python object is a valid one-row object genome.  A custom batch
+    # still takes the branch above through the runtime-checkable protocol.
+    return ObjectBatch([value])
+
+
+def _extract_genome(
+    element: Any, kwargs: dict[str, Any], population: Population
+) -> GenomeBatch | None:
+    """Extract an explicit or population-backed genome from an add call."""
+    genome_value = kwargs.get("genome", kwargs.get("genomes"))
+    if genome_value is None and isinstance(element, dict):
+        genome_value = element.get("genome", element.get("genomes"))
+    if genome_value is None and isinstance(element, Individual):
+        # Individual predates the opaque-genome API and exposes columns only;
+        # use its live population view for service-backed archive calls.
+        genome_value = element.pop.genomes.take([element._index])
+    if genome_value is None and element is not None and hasattr(element, "genome"):
+        genome_value = getattr(element, "genome")
+    if genome_value is None and "x" in population.schema:
+        # ``x`` is accepted only as the legacy dense compatibility input.  The
+        # service-backed path does not use it as an identity key after this
+        # one-row batch has been formed.
+        return None
+    return _as_single_genome_batch(genome_value)
+
+
 class ArchiveMixin:
     """
     A mixin class for using Population as an Archive.
 
     Must be subclassed via multiple inheritance as a subclass of the Population class.
     Handle archive of evaluated solutions.
-    (self.data must have at least key_attr (default is "x").)
-    Duplicate removal and range queries can be performed.
+    Duplicate identity is supplied by the search-space services.  The legacy
+    ``key_attr``/``atol``/``rtol`` path remains only for source compatibility
+    with the pre-service constructor.
 
     Attributes
     ----------
@@ -90,11 +171,11 @@ class ArchiveMixin:
     duplicate_log : list[dict]
         List to store duplicate solutions information.
     key_attr : str
-        Key for duplicate checking
+        Legacy key for duplicate checking.
     atol : float
-        Absolute tolerance for duplicate check.
+        Compatibility view of the configured absolute tolerance.
     rtol : float
-        Relative tolerance for duplicate check.
+        Compatibility view of the configured relative tolerance.
     """
 
     def __init__(
@@ -102,12 +183,17 @@ class ArchiveMixin:
         attrs: list[PopulationAttribute],
         init_capacity: int = 100,
         key_attr: str = "x",
-        atol: float = 0.0,
-        rtol: float = 0.0,
+        atol: float | object = _UNSET,
+        rtol: float | object = _UNSET,
         duplicate_policy: str = "keep_first",
         genomes: GenomeBatch | None = None,
         dense_numeric_view: DenseNumericView | None = None,
         dense_view: DenseNumericView | None = None,
+        services: Any | None = None,
+        space: Any | None = None,
+        fingerprint_service: FingerprintService | None = None,
+        equivalence_service: EquivalenceService | None = None,
+        distance_service: DistanceService | None = None,
         **kwargs,
     ):
         if duplicate_policy not in {"keep_first", "replace", "append"}:
@@ -123,13 +209,119 @@ class ArchiveMixin:
             dense_view=dense_view,
         )
 
-        if key_attr not in self.schema:  # ty: ignore[unresolved-attribute]
-            raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
         self.duplicate_policy = duplicate_policy
         self.key_attr = key_attr
-        self.atol = atol
-        self.rtol = rtol
+        self._atol_override = None if atol is _UNSET else float(cast(float, atol))
+        self._rtol_override = None if rtol is _UNSET else float(cast(float, rtol))
+
+        service_provider = space if space is not None else services
+        self._service_provider = getattr(service_provider, "services", service_provider)
+        self._fingerprint_service = (
+            fingerprint_service
+            if fingerprint_service is not None
+            else cast(
+                FingerprintService | None,
+                _service_from_registry(self._service_provider, "FingerprintService"),
+            )
+        )
+        self._equivalence_service = (
+            equivalence_service
+            if equivalence_service is not None
+            else cast(
+                EquivalenceService | None,
+                _service_from_registry(self._service_provider, "EquivalenceService"),
+            )
+        )
+        self._distance_service = (
+            distance_service
+            if distance_service is not None
+            else cast(
+                DistanceService | None,
+                _service_from_registry(self._service_provider, "DistanceService"),
+            )
+        )
+        self._identity_mode = "unresolved"
+        self._service_configuration_supplied = service_provider is not None or any(
+            service is not None
+            for service in (
+                fingerprint_service,
+                equivalence_service,
+                distance_service,
+            )
+        )
+
+        # A direct, legacy Archive(attrs=[..., "x", ...]) remains usable until
+        # the public construction paths pass resolved services.  A population
+        # with an opaque genome, or an explicitly supplied service registry,
+        # always takes the service path and therefore fails early if its
+        # required identity service is missing.
+        legacy_dense = isinstance(
+            getattr(self, "_genome_batch", None), DenseVectorBatch
+        )
+        self._legacy_identity = (
+            not self._service_configuration_supplied
+            and "x" in self.schema  # ty: ignore[unresolved-attribute]
+            and (genomes is None or legacy_dense)
+        )
+        if duplicate_policy == "append":
+            self._identity_mode = "none"
+        else:
+            effective_atol = self.atol
+            effective_rtol = self.rtol
+            if effective_atol == 0.0 and effective_rtol == 0.0:
+                if self._fingerprint_service is None and not self._legacy_identity:
+                    raise ValidationError(
+                        "Archive duplicate detection requires FingerprintService"
+                    )
+                self._identity_mode = (
+                    "legacy" if self._legacy_identity else "fingerprint"
+                )
+            else:
+                if self._equivalence_service is None and not self._legacy_identity:
+                    raise ValidationError(
+                        "Archive duplicate detection requires EquivalenceService"
+                    )
+                self._identity_mode = (
+                    "legacy" if self._legacy_identity else "equivalence"
+                )
+
+        if self._legacy_identity and key_attr not in self.schema:  # ty: ignore[unresolved-attribute]
+            raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
+
         self._kdtree: cKDTree | None = None
+        self._fingerprint_index: dict[Hashable, int] | None = None
+
+    @property
+    def atol(self) -> float:
+        """Return an explicit or service-owned absolute tolerance."""
+        if self._atol_override is not None:
+            return self._atol_override
+        if getattr(self, "_identity_mode", "legacy") == "equivalence" or (
+            getattr(self, "_identity_mode", "legacy") == "unresolved"
+            and getattr(self, "_service_configuration_supplied", False)
+        ):
+            return _service_tolerance(self._equivalence_service, "atol")
+        return 0.0
+
+    @atol.setter
+    def atol(self, value: float) -> None:
+        self._atol_override = float(value)
+
+    @property
+    def rtol(self) -> float:
+        """Return an explicit or service-owned relative tolerance."""
+        if self._rtol_override is not None:
+            return self._rtol_override
+        if getattr(self, "_identity_mode", "legacy") == "equivalence" or (
+            getattr(self, "_identity_mode", "legacy") == "unresolved"
+            and getattr(self, "_service_configuration_supplied", False)
+        ):
+            return _service_tolerance(self._equivalence_service, "rtol")
+        return 0.0
+
+    @rtol.setter
+    def rtol(self, value: float) -> None:
+        self._rtol_override = float(value)
 
     def add(
         self: Any, element: Individual | dict[str, Any] | None = None, **kwargs
@@ -159,10 +351,26 @@ class ArchiveMixin:
         """
         data = _collect_data(self._schema, element, kwargs)  # type: ignore[unresolved-attribute]
         key_attr_val = data.get(self.key_attr)
-        if key_attr_val is None:
+        if self._legacy_identity and key_attr_val is None:
             raise ValueError(f"Solution must have {self.key_attr} attribute")
 
         _validate_data(self._schema, data)  # type: ignore[unresolved-attribute]
+        incoming_genome = _extract_genome(element, kwargs, self)
+        if (
+            incoming_genome is None
+            and key_attr_val is not None
+            and self._identity_mode in {"fingerprint", "equivalence"}
+            and self.key_attr == "x"
+        ):
+            incoming_genome = _as_single_genome_batch(np.asarray(key_attr_val))
+        if (
+            self._identity_mode in {"fingerprint", "equivalence"}
+            and incoming_genome is None
+        ):
+            raise ValidationError(
+                "Archive.add() requires a genome for duplicate detection"
+            )
+
         incoming_id = _extract_id_value(self._schema, element, kwargs)  # type: ignore[unresolved-attribute]
         if incoming_id == -1:
             raise ValidationError(
@@ -183,7 +391,7 @@ class ArchiveMixin:
             ):
                 raise ValidationError("Duplicate (request_id, candidate_id) pair")
 
-        idx = self._find_idx(key_attr_val)
+        idx = self._find_idx(key_attr_val, incoming_genome)
 
         if idx is not None and self.duplicate_policy != "append":
             if self.duplicate_policy == "keep_first":
@@ -202,9 +410,20 @@ class ArchiveMixin:
                     )
                     for key, value in data.items()
                     if key != "id"
+                    and not (
+                        key == "x"
+                        and self._identity_mode in {"fingerprint", "equivalence"}
+                    )
                 }
-                if values:
-                    self.update_rows(np.array([idx]), values)
+                self.update_rows(
+                    np.array([idx]),
+                    values,
+                    genome=(
+                        incoming_genome
+                        if self._identity_mode in {"fingerprint", "equivalence"}
+                        else None
+                    ),
+                )
                 self._kdtree = None
                 return idx
 
@@ -222,16 +441,30 @@ class ArchiveMixin:
             pass
 
         new_idx = self._size
+        append_kwargs = dict(kwargs)
+        append_kwargs.pop("genome", None)
+        append_kwargs.pop("genomes", None)
+        if incoming_genome is not None and (
+            self._identity_mode in {"fingerprint", "equivalence", "none"}
+            or "x" not in self.schema
+            or self._service_configuration_supplied
+        ):
+            append_kwargs["genome"] = incoming_genome
         super()._append_internal(
             element,
             preserve_ids=True,
             allow_duplicate_ids=self.duplicate_policy == "append",
-            **kwargs,
+            **append_kwargs,
         )
         self._kdtree = None
+        self._fingerprint_index = None
         return new_idx
 
-    def _find_idx(self, element: np.ndarray | np.floating) -> int | None:
+    def _find_idx(
+        self,
+        element: np.ndarray | np.floating | None,
+        genome: GenomeBatch | None = None,
+    ) -> int | None:
         """
         Search for duplicate indexes and return them if found.
 
@@ -245,6 +478,17 @@ class ArchiveMixin:
         int | None
             Duplicate index. Return None if it does not exist.
         """
+        if self._identity_mode == "none":
+            return None
+        if self._identity_mode == "fingerprint":
+            if genome is None:
+                raise ValidationError("Archive duplicate detection requires a genome")
+            return self._find_fingerprint_idx(genome)
+        if self._identity_mode == "equivalence":
+            if genome is None:
+                raise ValidationError("Archive duplicate detection requires a genome")
+            return self._find_equivalence_idx(genome)
+
         if self._size == 0:  # ty: ignore[unresolved-attribute]
             return None
         key_attr_arr = self.get_array(self.key_attr)  # ty: ignore[unresolved-attribute]
@@ -261,19 +505,117 @@ class ArchiveMixin:
             return int(indices[0])
         return None
 
+    def _ensure_fingerprint_index(self: Any) -> None:
+        if self._fingerprint_index is not None:
+            return
+        if self._fingerprint_service is None:
+            raise ValidationError(
+                "Archive duplicate detection requires FingerprintService"
+            )
+        fingerprints = self._fingerprint_service.fingerprint(self.genomes)
+        if len(fingerprints) != self._size:
+            raise ValidationError(
+                "FingerprintService returned an invalid number of fingerprints"
+            )
+        index: dict[Hashable, int] = {}
+        for row, fingerprint in enumerate(fingerprints):
+            index.setdefault(fingerprint, row)
+        self._fingerprint_index = index
+
+    def _find_fingerprint_idx(self: Any, genome: GenomeBatch) -> int | None:
+        if self._fingerprint_service is None:
+            raise ValidationError(
+                "Archive duplicate detection requires FingerprintService"
+            )
+        fingerprints = self._fingerprint_service.fingerprint(genome)
+        if len(fingerprints) != 1:
+            raise ValidationError(
+                "FingerprintService must return one fingerprint per genome"
+            )
+        self._ensure_fingerprint_index()
+        index = cast(dict[Hashable, int], self._fingerprint_index)
+        return index.get(fingerprints[0])
+
+    def _find_equivalence_idx(self: Any, genome: GenomeBatch) -> int | None:
+        """Find the first equivalent stored genome through the service.
+
+        H4's service contract returns a duplicate mask for a batch rather than
+        an index into an existing collection.  Querying one existing row plus
+        the incoming row preserves that contract and the archive's first-match
+        insertion semantics without reimplementing the representation's
+        equivalence relation here.
+        """
+        if self._equivalence_service is None:
+            raise ValidationError(
+                "Archive duplicate detection requires EquivalenceService"
+            )
+        existing = self.genomes
+        for index in range(self._size):
+            pair = type(existing).concat((existing.take([index]), genome))
+            duplicate_mask = np.asarray(
+                self._equivalence_service.find_duplicates(pair), dtype=bool
+            )
+            if duplicate_mask.shape != (2,):
+                raise ValidationError(
+                    "EquivalenceService returned an invalid duplicate mask"
+                )
+            if duplicate_mask[1]:
+                return index
+        return None
+
     def delete(self, index):
         """Delete element(s) and invalidate the kNN cache."""
         super().delete(index)  # ty: ignore[unresolved-attribute]
         self._kdtree = None
+        self._fingerprint_index = None
+
+    def extend(self, other: Any) -> None:
+        """Extend the archive and invalidate identity/neighbor caches."""
+        super().extend(other)  # ty: ignore[unresolved-attribute]
+        self._kdtree = None
+        self._fingerprint_index = None
+
+    def reorder(self, order: np.ndarray) -> None:
+        """Reorder rows and invalidate caches whose values are row-indexed."""
+        super().reorder(order)  # ty: ignore[unresolved-attribute]
+        self._kdtree = None
+        self._fingerprint_index = None
+
+    def truncate(self, new_size: int) -> None:
+        """Truncate rows and invalidate identity/neighbor caches."""
+        super().truncate(new_size)  # ty: ignore[unresolved-attribute]
+        self._kdtree = None
+        self._fingerprint_index = None
+
+    def clear(self) -> None:
+        """Clear rows and invalidate identity/neighbor caches."""
+        super().clear()  # ty: ignore[unresolved-attribute]
+        self._kdtree = None
+        self._fingerprint_index = None
 
     def mod_value(self) -> None:
         """Invalidate the kNN cache on every value-only mutation, too."""
         self._kdtree = None
+        self._fingerprint_index = None
         super().mod_value()  # ty: ignore[unresolved-attribute]
+
+    def _dense_archive_array(self: Any) -> np.ndarray:
+        """Return dense genome coordinates for the intentionally dense kNN API."""
+        if self._identity_mode == "legacy":
+            return self.get_array(self.key_attr)
+        genomes = self.genomes
+        if isinstance(genomes, DenseVectorBatch):
+            return genomes.array
+        dense_view = getattr(self, "_dense_numeric_view", None)
+        if dense_view is None:
+            raise ValidationError(
+                "Archive.get_knn requires the DenseNumericView service"
+            )
+        return np.asarray(dense_view.get_view(genomes))
 
     def _ensure_kdtree(self) -> None:
         if self._kdtree is None:
-            self._kdtree = cKDTree(self.get_array(self.key_attr))  # ty: ignore[unresolved-attribute]
+            self._kdtree = cKDTree(self._dense_archive_array())
 
     def get_knn(self, x: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
         """
@@ -297,6 +639,33 @@ class ArchiveMixin:
         k = min(k, self._size)  # ty: ignore[unresolved-attribute]
         dist, idx = self._kdtree.query(x, k=k)  # ty: ignore[unresolved-attribute]
         return np.atleast_1d(idx), np.atleast_1d(dist)
+
+    def empty_like(self: Any, capacity: int | None = None):
+        """Create an empty archive while retaining resolved identity services."""
+        if capacity is None:
+            capacity = self._capacity
+        if isinstance(getattr(self, "_genome_batch", None), DenseVectorBatch):
+            genome_template = None
+        else:
+            genome_template = self.genomes.take([])
+
+        kwargs: dict[str, Any] = {
+            "key_attr": self.key_attr,
+            "duplicate_policy": self.duplicate_policy,
+            "dense_numeric_view": getattr(self, "_dense_numeric_view", None),
+            "services": self._service_provider
+            if self._service_configuration_supplied
+            else None,
+            "fingerprint_service": self._fingerprint_service,
+            "equivalence_service": self._equivalence_service,
+            "distance_service": self._distance_service,
+            "genomes": genome_template,
+        }
+        if self._atol_override is not None:
+            kwargs["atol"] = self._atol_override
+        if self._rtol_override is not None:
+            kwargs["rtol"] = self._rtol_override
+        return self.__class__(self.attrs, capacity, **kwargs)
 
 
 class Archive(ArchiveMixin, Population):

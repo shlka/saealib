@@ -78,7 +78,7 @@ class StateKey(Generic[ValueT]):
 
 
 POPULATIONS_MAIN = StateKey[object](
-    namespace="populations", name="main", schema_version=1
+    namespace="populations", name="main", schema_version=2
 )
 ARCHIVES_MAIN = StateKey[object](namespace="archives", name="main", schema_version=1)
 ARCHIVES_PARETO = StateKey[object](

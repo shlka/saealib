@@ -8,11 +8,21 @@ import numpy as np
 import pytest
 
 from saealib.context import CURRENT_CHECKPOINT_SCHEMA_VERSION, OptimizationState
+from saealib.core.contracts.data import Fixed
+from saealib.core.contracts.representation import ParameterSpec, RepresentationSpec
 from saealib.core.state import STATE_MIGRATORS, StateKey
 from saealib.exceptions import CheckpointError, ValidationError
 from saealib.identity import IDAllocator
-from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
+from saealib.population import (
+    Archive,
+    DenseVectorBatch,
+    ObjectBatch,
+    ParetoArchive,
+    Population,
+    PopulationAttribute,
+)
 from saealib.problem import Problem
+from saealib.space import ObjectSpace
 from saealib.stages import PendingEvaluationContextStage
 
 
@@ -137,6 +147,7 @@ def test_named_collections_checkpoint_roundtrip(tmp_path):
 
 
 def test_current_schema_and_allocator_continuity(tmp_path):
+    assert CURRENT_CHECKPOINT_SCHEMA_VERSION == 3
     ctx = _state()
     path = tmp_path / "current.npz"
     ctx.save(path)
@@ -145,6 +156,177 @@ def test_current_schema_and_allocator_continuity(tmp_path):
     loaded = OptimizationState.load(path, ctx.problem)
     assert loaded.candidate_id_allocator.allocate(1).tolist() == [20]
     assert loaded.request_id_allocator.allocate(1).tolist() == [30]
+
+    entries = json.loads(bytes(raw["_state_entries"]).decode())
+    versions = {
+        (item["key"]["namespace"], item["key"]["name"]): item["key"]["schema_version"]
+        for item in entries
+    }
+    assert versions[("populations", "main")] == 2
+    assert versions[("populations", "backup")] == 2
+    assert versions[("archives", "main")] == 1
+
+
+def test_population_key_construction_does_not_register_migrators():
+    """Named key construction must not mutate the migration registry."""
+    before = STATE_MIGRATORS.registered()
+    _state()
+    assert STATE_MIGRATORS.registered() == before
+
+
+def _rewrite_population_entry_as_v1(path, population_name="main"):
+    """Rewrite one population entry to the pre-codec v1 shape."""
+    raw = dict(np.load(path, allow_pickle=False).items())
+    entries = json.loads(bytes(raw["_state_entries"]).decode())
+    for index, item in enumerate(entries):
+        key = item["key"]
+        if key["namespace"] != "populations" or key["name"] != population_name:
+            continue
+        genomes = item["value"].pop("genomes")
+        raw[f"_entry_{index}__x"] = raw.pop(genomes["array"])
+        key["schema_version"] = 1
+        item["target_schema_version"] = 2
+        break
+    else:
+        raise AssertionError(f"populations/{population_name} entry was not found")
+    raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
+    np.savez(path, **raw)
+
+
+def test_v3_population_genome_roundtrip_uses_codec(tmp_path):
+    ctx = _state()
+    space = ctx.problem.space
+    original = space.services.require("GenomeCodec")
+    calls = {"encode": 0, "decode": 0}
+
+    class SpyCodec:
+        def encode(self, genomes):
+            calls["encode"] += 1
+            return original.encode(genomes)
+
+        def decode(self, payload):
+            calls["decode"] += 1
+            return original.decode(payload)
+
+    space.services.register("GenomeCodec", SpyCodec())
+    path = tmp_path / "population-codec.npz"
+    ctx.save(path)
+    raw = np.load(path, allow_pickle=False)
+    entries = json.loads(bytes(raw["_state_entries"]).decode())
+    main_index, main = next(
+        (index, item)
+        for index, item in enumerate(entries)
+        if item["key"]
+        == {"namespace": "populations", "name": "main", "schema_version": 2}
+    )
+    assert "genomes" in main["value"]
+    assert f"_entry_{main_index}__x" not in raw.files
+
+    loaded = OptimizationState.load(path, ctx.problem)
+    assert calls == {"encode": 2, "decode": 2}
+    assert isinstance(loaded.population.genomes, DenseVectorBatch)
+    assert isinstance(ctx.population.genomes, DenseVectorBatch)
+    np.testing.assert_array_equal(
+        loaded.population.genomes.array, ctx.population.genomes.array
+    )
+
+
+def test_v3_population_v1_entry_uses_registered_real_key_migrator(tmp_path):
+    ctx = _state()
+    path = tmp_path / "population-v1-entry.npz"
+    ctx.save(path)
+    _rewrite_population_entry_as_v1(path)
+
+    loaded = OptimizationState.load(path, ctx.problem)
+    migrated_key = StateKey(namespace="populations", name="main", schema_version=2)
+    assert loaded.get_state(migrated_key) is loaded.population
+    np.testing.assert_array_equal(loaded.population.x, ctx.population.x)
+
+
+def test_v3_population_v1_entry_without_migrator_names_key_and_versions(tmp_path):
+    ctx = _state()
+    path = tmp_path / "population-missing-migrator.npz"
+    ctx.save(path)
+    _rewrite_population_entry_as_v1(path)
+
+    migration_id = ("populations", "main", 1)
+    original_migrators = STATE_MIGRATORS._migrators
+    STATE_MIGRATORS._migrators = {
+        key: value for key, value in original_migrators.items() if key != migration_id
+    }
+    try:
+        with pytest.raises(CheckpointError) as error:
+            OptimizationState.load(path, ctx.problem)
+    finally:
+        STATE_MIGRATORS._migrators = original_migrators
+
+    message = str(error.value)
+    assert "populations/main" in message
+    assert "v1" in message and "v2" in message
+    assert "v1 -> v2" in message
+
+
+def test_v3_population_v1_arbitrary_name_resolves_at_load(tmp_path):
+    """A legacy named population loads without prior StateKey construction."""
+    ctx = _state()
+    path = tmp_path / "population-arbitrary-v1-entry.npz"
+    ctx.save(path)
+    _rewrite_population_entry_as_v1(path, "backup")
+
+    migration_id = ("populations", "backup", 1)
+    original_migrators = STATE_MIGRATORS._migrators
+    STATE_MIGRATORS._migrators = {
+        key: value for key, value in original_migrators.items() if key != migration_id
+    }
+    try:
+        loaded = OptimizationState.load(path, ctx.problem)
+    finally:
+        STATE_MIGRATORS._migrators = original_migrators
+
+    migrated_key = StateKey(namespace="populations", name="backup", schema_version=2)
+    assert loaded.get_state(migrated_key) is loaded.populations["backup"]
+    np.testing.assert_array_equal(
+        loaded.populations["backup"].x, ctx.populations["backup"].x
+    )
+
+
+def test_object_space_population_save_requires_genome_codec(tmp_path):
+    ctx = _state()
+    object_population = Population(
+        [PopulationAttribute("f", np.float64, (1,), default=np.nan)],
+        genomes=ObjectBatch(["genome"]),
+    )
+    ctx.problem._space = _object_space()
+    ctx = ctx.replace(population=object_population)
+
+    with pytest.raises(
+        CheckpointError,
+        match=r"GenomeCodec is required to save population populations/main",
+    ):
+        ctx.save(tmp_path / "object-space.npz")
+
+
+def _object_space():
+    """Build an ObjectSpace with a registered representation kind."""
+    representation = RepresentationSpec(
+        kind="sequence",
+        parameters=(
+            ParameterSpec(name="alphabet", value=Fixed(value=frozenset({"a"}))),
+            ParameterSpec(name="min_length", value=Fixed(value=1)),
+            ParameterSpec(name="max_length", value=Fixed(value=10)),
+        ),
+    )
+    return ObjectSpace(representation)
+
+
+def test_object_space_population_load_requires_genome_codec(tmp_path):
+    ctx = _state()
+    path = tmp_path / "vector-space.npz"
+    ctx.save(path)
+    ctx.problem._space = _object_space()
+
+    with pytest.raises(CheckpointError, match=r"GenomeCodec.*populations/main"):
+        OptimizationState.load(path, ctx.problem)
 
 
 def test_v2_helper_writes_a_self_consistent_v2_checkpoint(tmp_path):

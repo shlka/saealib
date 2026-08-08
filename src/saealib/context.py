@@ -34,6 +34,7 @@ from saealib.core.state import (
     StatePatch,
     StateStore,
 )
+from saealib.core.state.migration import _population_entry_v1_to_v2
 from saealib.exceptions import CheckpointError, ValidationError
 from saealib.identity import IDAllocator
 
@@ -83,7 +84,37 @@ _STORE_FIELDS = {
 
 
 def _collection_key(kind: str, name: str) -> StateKey[object]:
+    if kind == "populations":
+        return StateKey(namespace=kind, name=name, schema_version=2)
     return StateKey(namespace=kind, name=name, schema_version=1)
+
+
+def _resolve_checkpoint_population_migrator(
+    key: StateKey[Any], target_version: int
+) -> None:
+    """Resolve a legacy named population migration from the checkpoint.
+
+    ``StateMigrationRegistry`` intentionally has exact name semantics.  The
+    package can register the built-in ``main`` path at import time, but an
+    arbitrary population name is only known when it appears in a checkpoint.
+    Resolve that one path at load time so reading a file does not depend on
+    which named keys were constructed earlier in the process.
+    """
+    if (
+        key.namespace != "populations"
+        or key.name == "main"
+        or key.schema_version > 1
+        or target_version <= 1
+    ):
+        return
+    migration_id = (key.namespace, key.name, 1)
+    if migration_id not in STATE_MIGRATORS.registered():
+        STATE_MIGRATORS.register(
+            key.namespace,
+            key.name,
+            1,
+            _population_entry_v1_to_v2,
+        )
 
 
 class _NamedCollection(dict[str, Any]):
@@ -836,6 +867,7 @@ class OptimizationState:
             p = p.with_suffix(".npz")
         arrays: dict[str, np.ndarray] = {}
         entries: list[dict[str, Any]] = []
+        genome_codec = self.problem.space.services.get("GenomeCodec")
         for index, (key, value) in enumerate(self._store._values.items()):
             if key == EVALUATIONS_OWNERS:
                 encoded = {
@@ -862,6 +894,7 @@ class OptimizationState:
                                             owner,
                                             arrays,
                                             f"_entry_{index}__owner_{request_id}",
+                                            genome_codec=genome_codec,
                                         )
                                     },
                                 )
@@ -871,7 +904,9 @@ class OptimizationState:
                     ],
                 }
             else:
-                encoded = _encode_v3_value(key, value, arrays, f"_entry_{index}")
+                encoded = _encode_v3_value(
+                    key, value, arrays, f"_entry_{index}", genome_codec=genome_codec
+                )
             entries.append(
                 {
                     "key": _state_key_to_json(key),
@@ -1117,7 +1152,12 @@ def _state_key_from_json(value: Any) -> StateKey[Any]:
 
 
 def _encode_v3_value(
-    key: StateKey[Any], value: Any, arrays: dict[str, np.ndarray], prefix: str
+    key: StateKey[Any],
+    value: Any,
+    arrays: dict[str, np.ndarray],
+    prefix: str,
+    *,
+    genome_codec: Any = None,
 ) -> Any:
     from saealib.population import Archive, ParetoArchive, Population
 
@@ -1126,7 +1166,38 @@ def _encode_v3_value(
             "archive" if isinstance(value, (Archive, ParetoArchive)) else "population"
         )
         descriptor = _collection_descriptor(kind, key.name, value)
+        encoded_genomes = None
+        if kind == "population":
+            if genome_codec is None or not hasattr(genome_codec, "encode"):
+                raise CheckpointError(
+                    "GenomeCodec is required to save population "
+                    f"{key.namespace}/{key.name}"
+                )
+            try:
+                payload = genome_codec.encode(value.genomes)
+            except Exception as exc:
+                raise CheckpointError(
+                    "GenomeCodec failed to encode population "
+                    f"{key.namespace}/{key.name}: {exc}"
+                ) from exc
+            if not isinstance(payload, dict):
+                raise CheckpointError(
+                    "GenomeCodec returned an invalid payload for population "
+                    f"{key.namespace}/{key.name}"
+                )
+            payload_meta = dict(payload)
+            genome_array = payload_meta.pop("array", None)
+            if not isinstance(genome_array, np.ndarray):
+                raise CheckpointError(
+                    f"GenomeCodec payload for population {key.namespace}/{key.name} "
+                    "must contain a NumPy array"
+                )
+            array_key = f"{prefix}__genomes"
+            arrays[array_key] = np.array(genome_array, copy=True)
+            encoded_genomes = {"payload": _json_safe(payload_meta), "array": array_key}
         for attr_name, array in value._data.items():
+            if kind == "population" and attr_name == "x":
+                continue
             if array.dtype == object:
                 raise CheckpointError(
                     f"object dtype is not checkpointable: {key.name!r}"
@@ -1134,7 +1205,10 @@ def _encode_v3_value(
             arrays[f"{prefix}__{_encoded_name(attr_name)}"] = np.array(
                 array[: len(value)], copy=True
             )
-        return {"codec": "collection", "kind": kind, "descriptor": descriptor}
+        result = {"codec": "collection", "kind": kind, "descriptor": descriptor}
+        if encoded_genomes is not None:
+            result["genomes"] = encoded_genomes
+        return result
     if key == RUNTIME_RNG:
         return {"codec": "json", "value": _json_safe(value.bit_generator.state)}
     if key in {RUNTIME_CANDIDATE_ID_ALLOCATOR, RUNTIME_REQUEST_ID_ALLOCATOR}:
@@ -1184,6 +1258,7 @@ def _encode_v3_value(
                         owner,
                         arrays,
                         f"{prefix}__owner_{k}",
+                        genome_codec=genome_codec,
                     ),
                 }
                 for k, owner in value.items()
@@ -1192,7 +1267,15 @@ def _encode_v3_value(
     return {"codec": "json", "value": _json_safe(value)}
 
 
-def _decode_v3_value(key: StateKey[Any], encoded: Any, data: Any, prefix: str) -> Any:
+def _decode_v3_value(
+    key: StateKey[Any],
+    encoded: Any,
+    data: Any,
+    prefix: str,
+    *,
+    genome_codec: Any = None,
+    dense_numeric_view: Any = None,
+) -> Any:
     if not isinstance(encoded, dict) or not isinstance(encoded.get("codec"), str):
         raise CheckpointError(
             f"state entry {key.namespace}/{key.name} has malformed value"
@@ -1202,7 +1285,16 @@ def _decode_v3_value(key: StateKey[Any], encoded: Any, data: Any, prefix: str) -
     if codec == "collection":
         if not isinstance(encoded.get("descriptor"), dict):
             raise CheckpointError("state collection descriptor is malformed")
-        return _restore_collection(encoded["kind"], encoded["descriptor"], data, prefix)
+        genome_payload = encoded.get("genomes")
+        return _restore_collection(
+            encoded["kind"],
+            encoded["descriptor"],
+            data,
+            prefix,
+            genome_codec=genome_codec,
+            dense_numeric_view=dense_numeric_view,
+            genome_payload=genome_payload,
+        )
     if codec == "json":
         return value
     if codec == "alias":
@@ -1247,6 +1339,8 @@ def _decode_v3_value(key: StateKey[Any], encoded: Any, data: Any, prefix: str) -
                     item["entry"],
                     data,
                     f"{prefix}__owner_{request_id}",
+                    genome_codec=genome_codec,
+                    dense_numeric_view=dense_numeric_view,
                 )
         return result
     raise CheckpointError(f"unknown state value codec {codec!r}")
@@ -1766,7 +1860,14 @@ def _attrs_from_descriptor(descriptor: dict[str, Any]) -> list[Any]:
 
 
 def _restore_collection(
-    kind: str, descriptor: dict[str, Any], data: Any, storage_prefix: str | None = None
+    kind: str,
+    descriptor: dict[str, Any],
+    data: Any,
+    storage_prefix: str | None = None,
+    *,
+    genome_codec: Any = None,
+    dense_numeric_view: Any = None,
+    genome_payload: Any = None,
 ) -> Any:
     from saealib.population import Archive, ParetoArchive, Population
     from saealib.population.archive import _validate_observation_schema
@@ -1824,7 +1925,17 @@ def _restore_collection(
             collection = Archive(attrs, capacity, **params)
     encoded = _encoded_name(name)
     values: dict[str, np.ndarray] = {}
+    if (
+        kind == "population"
+        and genome_payload is not None
+        and (genome_codec is None or not hasattr(genome_codec, "decode"))
+    ):
+        raise CheckpointError(
+            f"GenomeCodec is required to load population populations/{name}"
+        )
     for attr in attrs:
+        if kind == "population" and genome_payload is not None and attr.name == "x":
+            continue
         if storage_prefix is None:
             key = f"{kind}__{encoded}__{_encoded_name(attr.name)}"
         else:
@@ -1848,6 +1959,39 @@ def _restore_collection(
             pairs = np.column_stack((values["request_id"], values["id"]))
             if len(np.unique(pairs, axis=0)) != len(pairs):
                 raise CheckpointError("duplicate (request_id, candidate_id) pair")
+    genomes = None
+    if kind == "population" and genome_payload is not None:
+        if not isinstance(genome_payload, dict):
+            raise CheckpointError("population GenomeCodec payload is malformed")
+        array_key = genome_payload.get("array")
+        payload_meta = genome_payload.get("payload")
+        if (
+            not isinstance(array_key, str)
+            or not isinstance(payload_meta, dict)
+            or array_key not in data.files
+        ):
+            raise CheckpointError(
+                f"GenomeCodec payload for population {name!r} is missing its array"
+            )
+        payload = {**payload_meta, "array": np.asarray(data[array_key])}
+        try:
+            genomes = genome_codec.decode(payload)
+        except Exception as exc:
+            raise CheckpointError(
+                f"GenomeCodec failed to decode population populations/{name}: {exc}"
+            ) from exc
+        if len(genomes) != size:
+            raise CheckpointError(
+                f"GenomeCodec decoded population populations/{name} with invalid size"
+            )
+        if "x" in schema and hasattr(genomes, "array"):
+            values["x"] = np.asarray(genomes.array)
+        collection = Population(
+            attrs,
+            capacity,
+            genomes=genomes.take([]),
+            dense_numeric_view=dense_numeric_view,
+        )
     if size:
         collection._extend_internal(
             values,
@@ -2056,6 +2200,8 @@ def _load_v2(
 def _load_v3(
     cls: type[OptimizationState], data: Any, problem: Problem
 ) -> OptimizationState:
+    genome_codec = problem.space.services.get("GenomeCodec")
+    dense_numeric_view = problem.space.services.get("DenseNumericView")
     entries = _read_json(data, "_state_entries")
     if not isinstance(entries, list):
         raise CheckpointError("state entries are malformed")
@@ -2075,13 +2221,25 @@ def _load_v3(
                 f"v{key.schema_version}; target is v{target}."
             )
         if key.schema_version < target:
-            key, value = STATE_MIGRATORS.migrate(
+            value = _decode_v3_value(
                 key,
-                _decode_v3_value(key, item.get("value"), data, f"_entry_{index}"),
-                target_version=target,
+                item.get("value"),
+                data,
+                f"_entry_{index}",
+                genome_codec=genome_codec,
+                dense_numeric_view=dense_numeric_view,
             )
+            _resolve_checkpoint_population_migrator(key, target)
+            key, value = STATE_MIGRATORS.migrate(key, value, target_version=target)
         else:
-            value = _decode_v3_value(key, item.get("value"), data, f"_entry_{index}")
+            value = _decode_v3_value(
+                key,
+                item.get("value"),
+                data,
+                f"_entry_{index}",
+                genome_codec=genome_codec,
+                dense_numeric_view=dense_numeric_view,
+            )
         if key in restored:
             raise CheckpointError(f"duplicate state entry {key.namespace}/{key.name}")
         restored[key] = value

@@ -71,6 +71,25 @@ class _VectorCloneService:
         return DenseVectorBatch(genomes.array.copy())
 
 
+class _VectorGenomeCodec:
+    """Checkpoint codec for dense vector genome batches."""
+
+    def encode(self, genomes: GenomeBatch) -> dict[str, object]:
+        if not isinstance(genomes, DenseVectorBatch):
+            raise ValidationError(
+                f"GenomeCodec requires DenseVectorBatch, got {type(genomes).__name__}"
+            )
+        return {"array": np.array(genomes.array, dtype=np.float64, copy=True)}
+
+    def decode(self, payload: dict[str, object]) -> GenomeBatch:
+        array = payload.get("array")
+        if not isinstance(array, np.ndarray):
+            raise ValidationError("dense GenomeCodec payload is missing its array")
+        if array.dtype != np.float64 or array.ndim != 2:
+            raise ValidationError("dense GenomeCodec payload has invalid array")
+        return DenseVectorBatch(array)
+
+
 class _VectorDistanceService:
     def pairwise_distance(
         self, batch1: GenomeBatch, batch2: GenomeBatch | None = None
@@ -201,6 +220,7 @@ class VectorSpace:
             "BoundsService", _VectorBoundsService(self._lb, self._ub)
         )
         self._services.register("DenseNumericView", _VectorDenseNumericView())
+        self._services.register("GenomeCodec", _VectorGenomeCodec())
         self._services.register("CloneService", _VectorCloneService())
         self._services.register("DistanceService", _VectorDistanceService())
         self._services.register("FingerprintService", _VectorFingerprintService())
