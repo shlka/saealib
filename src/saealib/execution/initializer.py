@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from abc import ABC, abstractmethod
 from dataclasses import replace
 from typing import cast
@@ -35,7 +36,43 @@ from saealib.core.state import (
 from saealib.optimizer import ComponentProvider
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
-from saealib.space import BoundsService
+from saealib.space import BoundsService, DenseNumericView
+
+
+def _make_population(factory, attrs, capacity, problem):
+    """Construct populations with the resolved dense service when supported.
+
+    User supplied population factories from the legacy API commonly accept
+    only ``attrs`` and ``init_capacity``; signature inspection keeps those
+    factories source-compatible.
+    """
+    dense_view = problem.space.services.get("DenseNumericView")
+    try:
+        signature = inspect.signature(factory)
+        accepts = "dense_numeric_view" in signature.parameters or any(
+            parameter.kind == inspect.Parameter.VAR_KEYWORD
+            for parameter in signature.parameters.values()
+        )
+    except (TypeError, ValueError):
+        accepts = True
+    kwargs = {"attrs": attrs, "init_capacity": capacity}
+    if accepts:
+        kwargs["dense_numeric_view"] = dense_view
+    population = factory(**kwargs)
+    if isinstance(population, Population):
+        # ``create_pareto_archive`` and legacy custom factories have their own
+        # signatures, so wire the already-resolved service after construction
+        # as well.  This is a direct reference, never a hot-path registry lookup.
+        population._dense_numeric_view = dense_view
+    return population
+
+
+def _resolved_dense_view(problem: Problem) -> DenseNumericView | None:
+    """Return the already-resolved dense view for a population constructor."""
+    return cast(
+        DenseNumericView | None,
+        problem.space.services.get("DenseNumericView"),
+    )
 
 
 class Initializer(ABC):
@@ -256,15 +293,22 @@ class LHSInitializer(Initializer):
         )
         attrs = self._create_attrs(problem, provider)
 
-        population = provider.algorithm.population_class(
-            attrs=attrs, init_capacity=self.n_init_population
+        population = _make_population(
+            provider.algorithm.population_class,
+            attrs,
+            self.n_init_population,
+            problem,
         )
-        archive = provider.algorithm.archive_class(
-            attrs=attrs, init_capacity=self.n_init_archive
+        archive = _make_population(
+            provider.algorithm.archive_class,
+            attrs,
+            self.n_init_archive,
+            problem,
         )
         pareto_archive = provider.algorithm.create_pareto_archive(
             attrs=attrs, init_capacity=self.n_init_archive, problem=problem
         )
+        pareto_archive._dense_numeric_view = _resolved_dense_view(problem)
 
         ctx = self._create_context(problem, archive, pareto_archive, population, rng)
 
@@ -391,15 +435,22 @@ class RandomInitializer(Initializer):
         )
         attrs = self._create_attrs(problem, provider)
 
-        population = provider.algorithm.population_class(
-            attrs=attrs, init_capacity=self.n_init_population
+        population = _make_population(
+            provider.algorithm.population_class,
+            attrs,
+            self.n_init_population,
+            problem,
         )
-        archive = provider.algorithm.archive_class(
-            attrs=attrs, init_capacity=self.n_init_archive
+        archive = _make_population(
+            provider.algorithm.archive_class,
+            attrs,
+            self.n_init_archive,
+            problem,
         )
         pareto_archive = provider.algorithm.create_pareto_archive(
             attrs=attrs, init_capacity=self.n_init_archive, problem=problem
         )
+        pareto_archive._dense_numeric_view = _resolved_dense_view(problem)
 
         ctx = self._create_context(problem, archive, pareto_archive, population, rng)
 
@@ -523,15 +574,22 @@ class SobolInitializer(Initializer):
         )
         attrs = self._create_attrs(problem, provider)
 
-        population = provider.algorithm.population_class(
-            attrs=attrs, init_capacity=self.n_init_population
+        population = _make_population(
+            provider.algorithm.population_class,
+            attrs,
+            self.n_init_population,
+            problem,
         )
-        archive = provider.algorithm.archive_class(
-            attrs=attrs, init_capacity=self.n_init_archive
+        archive = _make_population(
+            provider.algorithm.archive_class,
+            attrs,
+            self.n_init_archive,
+            problem,
         )
         pareto_archive = provider.algorithm.create_pareto_archive(
             attrs=attrs, init_capacity=self.n_init_archive, problem=problem
         )
+        pareto_archive._dense_numeric_view = _resolved_dense_view(problem)
 
         ctx = self._create_context(problem, archive, pareto_archive, population, rng)
 

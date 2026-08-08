@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from saealib.core.state.keys import StateKey
+from saealib.population.genome import GenomeBatch
 
 __all__ = ["PopulationRowUpdate", "StatePatch", "StateUpdate"]
 
@@ -23,6 +24,7 @@ class PopulationRowUpdate(StateUpdate):
 
     indices: np.ndarray
     values: Mapping[str, np.ndarray]
+    genome: GenomeBatch | np.ndarray | None = None
 
 
 @dataclass(frozen=True, kw_only=True)

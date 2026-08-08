@@ -10,6 +10,8 @@ from saealib.population.genome import (
     ObjectBatch,
 )
 from saealib.population.population import (
+    CandidateIds,
+    ColumnStore,
     Individual,
     Population,
     PopulationAttribute,

@@ -100,7 +100,9 @@ class StateStore:
                 current = values[key]
                 if isinstance(update, PopulationRowUpdate):
                     cast(Population, current).update_rows(
-                        update.indices, dict(update.values)
+                        update.indices,
+                        dict(update.values),
+                        genome=update.genome,
                     )
             else:
                 values[key] = update

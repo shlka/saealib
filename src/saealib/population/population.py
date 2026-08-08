@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import warnings
 import weakref
-from collections.abc import Hashable
+from collections.abc import Hashable, Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
@@ -13,6 +13,8 @@ import numpy as np
 from typing_extensions import Self
 
 from saealib.exceptions import ValidationError
+from saealib.population.genome import DenseVectorBatch, GenomeBatch, ObjectBatch
+from saealib.space.services import DenseNumericView
 
 if TYPE_CHECKING:
     pass
@@ -20,6 +22,9 @@ if TYPE_CHECKING:
 T_Population = TypeVar("T_Population", bound="Population")
 T_Individual = TypeVar("T_Individual", bound="Individual")
 _T_Default = TypeVar("_T_Default")
+
+CandidateIds = np.ndarray
+ColumnStore = Mapping[str, np.ndarray]
 
 
 @dataclass(frozen=True)
@@ -49,6 +54,15 @@ class _ConflictBypassProperty(property):
     """Mark bound properties as exempt from population-name conflict warnings."""
 
     pass
+
+
+class _LegacyDenseNumericView:
+    """Dense view used only by the pre-genome Population constructor path."""
+
+    def get_view(self, genomes: GenomeBatch) -> np.ndarray:
+        if not isinstance(genomes, DenseVectorBatch):
+            raise ValidationError("DenseNumericView requires DenseVectorBatch")
+        return genomes.array
 
 
 def bind_property(key: str, doc: str = "") -> Any:
@@ -107,7 +121,13 @@ class Population(Generic[T_Individual]):
     cv: np.ndarray = bind_property_array("cv", doc="Constraint violation")
 
     def __init__(
-        self, attrs: list[PopulationAttribute], init_capacity: int = 100
+        self,
+        attrs: list[PopulationAttribute],
+        init_capacity: int = 100,
+        *,
+        genomes: GenomeBatch | None = None,
+        dense_numeric_view: DenseNumericView | None = None,
+        dense_view: DenseNumericView | None = None,
     ) -> None:
         """
         Initialize a Population.
@@ -120,6 +140,8 @@ class Population(Generic[T_Individual]):
         init_capacity : int, optional
             Initial capacity of the population, by default 100.
         """
+        if genomes is not None:
+            init_capacity = max(init_capacity, len(genomes))
         self._capacity = init_capacity
         self._size = 0
         self._structure_version = 0
@@ -129,7 +151,73 @@ class Population(Generic[T_Individual]):
         for attr in attrs:
             self._init_column(attr, self._capacity)
         self._schema = {attr.name: attr for attr in attrs}
+        self._dense_numeric_view = (
+            dense_numeric_view if dense_numeric_view is not None else dense_view
+        )
+        self._genome_items: list[object] | None = None
+        self._legacy_scalar_x = False
+        if genomes is not None:
+            self._initialize_genomes(genomes)
+        elif "x" in self._schema:
+            # The legacy attrs=[..., PopulationAttribute("x", ...)] API is
+            # still used by archives and older user factories.  Its x array
+            # remains the compatibility backing store and is dense by nature.
+            if self._schema["x"].shape == ():
+                self._legacy_scalar_x = True
+                self._genome_items = []
+                self._genome_batch = ObjectBatch()
+            else:
+                if self._dense_numeric_view is None:
+                    self._dense_numeric_view = _LegacyDenseNumericView()
+                self._genome_batch = DenseVectorBatch(self._data["x"][:0])
+        else:
+            self._genome_items = []
+            self._genome_batch = ObjectBatch()
         self._check_name_conflicts()
+
+    def _initialize_genomes(self, genomes: GenomeBatch) -> None:
+        """Install an independent, population-owned genome backing store."""
+        if len(genomes) > self._capacity:
+            self._capacity = len(genomes)
+        if isinstance(genomes, DenseVectorBatch):
+            if self._dense_numeric_view is None:
+                raise ValidationError(
+                    "DenseVectorBatch genomes require a resolved DenseNumericView"
+                )
+            view = np.asarray(self._dense_numeric_view.get_view(genomes))
+            if view.ndim != 2 or view.dtype != np.float64:
+                raise ValidationError(
+                    "DenseNumericView must return a 2-D float64 array"
+                )
+            storage = np.array(view, dtype=np.float64, order="C", copy=True)
+            if "x" in self._schema:
+                attr = self._schema["x"]
+                if tuple(attr.shape) != (storage.shape[1],):
+                    raise ValidationError("genome dimension does not match x column")
+                self._data["x"][: len(storage)] = storage
+                self._genome_batch = DenseVectorBatch(self._data["x"])
+            else:
+                self._data["x"] = np.full(
+                    (self._capacity, storage.shape[1]), np.nan, dtype=np.float64
+                )
+                self._data["x"][: len(storage)] = storage
+                self._genome_batch = DenseVectorBatch(self._data["x"])
+                self._schema.setdefault(
+                    "x",
+                    PopulationAttribute(
+                        name="x", dtype=np.float64, shape=(storage.shape[1],)
+                    ),
+                )
+            self._size = len(storage)
+        elif isinstance(genomes, ObjectBatch):
+            self._genome_items = list(genomes.items)
+            self._size = len(self._genome_items)
+            self._genome_batch = ObjectBatch(self._genome_items)
+        else:
+            # Custom GenomeBatch values are retained as values.  Dense x
+            # compatibility is intentionally unavailable for them.
+            self._genome_batch = genomes
+            self._size = len(genomes)
 
     def _check_name_conflicts(self):
         """
@@ -188,7 +276,13 @@ class Population(Generic[T_Individual]):
             The new capacity of the population.
         """
         for k, v in self._data.items():
-            attr = self._schema[k]
+            attr = self._schema.get(k)
+            if attr is None and k == "x":
+                attr = PopulationAttribute(
+                    name="x", dtype=v.dtype, shape=v.shape[1:], default=np.nan
+                )
+            if attr is None:
+                raise RuntimeError(f"Missing schema for population storage '{k}'")
             shape = (new_capacity, *attr.shape)
             new_arr = np.full(
                 shape=shape, fill_value=attr.default, dtype=attr.dtype, order="C"
@@ -198,6 +292,8 @@ class Population(Generic[T_Individual]):
             new_arr[: self._size] = v[: self._size]
             self._data[k] = new_arr
         self._capacity = new_capacity
+        if isinstance(self._genome_batch, DenseVectorBatch):
+            self._genome_batch = DenseVectorBatch(self._data["x"])
 
     def mod_value(self) -> None:
         """Public method to call when the value changes."""
@@ -302,6 +398,8 @@ class Population(Generic[T_Individual]):
                         data[key] = getattr(element, key)
         data.update(kwargs)
 
+        genome_value = data.pop("genome", data.pop("genomes", None))
+
         if "id" in self._schema:
             id_val = int(data.get("id", self._schema["id"].default))
             if not preserve_ids and id_val != -1:
@@ -334,7 +432,25 @@ class Population(Generic[T_Individual]):
                 else:
                     data_self[idx] = 0
 
+        if "x" not in self._schema and self._genome_items is not None:
+            if genome_value is None:
+                self._genome_items.append(None)
+            else:
+                if not isinstance(genome_value, ObjectBatch) or len(genome_value) != 1:
+                    raise ValidationError("append() expects one genome")
+                self._genome_items.append(genome_value.items[0])
+        elif self._legacy_scalar_x:
+            if self._genome_items is None:
+                raise RuntimeError("Legacy scalar genome storage is not initialized")
+            self._genome_items.append(data.get("x", self._schema["x"].default))
+        elif genome_value is not None:
+            self._replace_genome_rows(np.array([idx], dtype=np.intp), genome_value)
+
         self._size += 1
+        if isinstance(self._genome_batch, DenseVectorBatch):
+            self._genome_batch = DenseVectorBatch(self._data["x"])
+        elif self._genome_items is not None:
+            self._genome_batch = ObjectBatch(self._genome_items)
         self.mod_structure()
 
     def extend(self, other: Self | dict) -> None:
@@ -372,9 +488,11 @@ class Population(Generic[T_Individual]):
         if isinstance(other, Population):
             other_size = len(other)
             other_data = {k: other.get_array(k) for k in other.schema}
+            other_genomes = other.genomes
         elif isinstance(other, dict):
             other_size = np.asarray(next(iter(other.values()))).shape[0]
             other_data = other
+            other_genomes = other.get("genomes", other.get("genome"))
 
         if other_size == 0:
             return
@@ -426,6 +544,13 @@ class Population(Generic[T_Individual]):
                     val_self[start : start + other_size] = 0
 
         self._size += other_size
+        if other_genomes is not None:
+            self._append_genomes(other_genomes)
+        elif self._genome_items is not None:
+            self._genome_items.extend([None] * other_size)
+            self._genome_batch = ObjectBatch(self._genome_items)
+        elif isinstance(self._genome_batch, DenseVectorBatch):
+            self._genome_batch = DenseVectorBatch(self._data["x"])
         self.mod_structure()
 
     def extract(self, indices: np.ndarray | list[int] | slice) -> Self:
@@ -450,6 +575,12 @@ class Population(Generic[T_Individual]):
         for key, val in self._data.items():
             new_pop._data[key][:n_extract] = val[: self._size][indices_arr]
 
+        # Dense genomes are backed by the x column copied above.  The helper
+        # is needed only for representations whose genome storage is not in
+        # _data (or for legacy scalar x, whose object mirror must be synced).
+        if not isinstance(self._genome_batch, DenseVectorBatch):
+            new_pop._copy_genomes_from(self, indices_arr)
+
         new_pop._size = n_extract
         new_pop.mod_structure()
         return new_pop
@@ -467,6 +598,11 @@ class Population(Generic[T_Individual]):
             raise ValueError("new_size must be non-negative")
         if new_size < self._size:
             self._size = new_size
+            if self._genome_items is not None:
+                del self._genome_items[new_size:]
+                self._genome_batch = ObjectBatch(self._genome_items)
+            elif isinstance(self._genome_batch, DenseVectorBatch):
+                self._genome_batch = DenseVectorBatch(self._data["x"])
             self.mod_structure()
 
     def delete(self, index: int | slice | list[int] | np.ndarray) -> None:
@@ -484,6 +620,7 @@ class Population(Generic[T_Individual]):
         for k, v in self._data.items():
             valid_data = v[: self._size]
             v[:new_size] = valid_data[bool_mask]
+        self._reorder_genomes(bool_mask)
         self._size = new_size
         self.mod_structure()
 
@@ -503,6 +640,7 @@ class Population(Generic[T_Individual]):
         for k, v in self._data.items():
             valid_data = v[: self._size]
             v[: self._size] = valid_data[order]
+        self._reorder_genomes(order)
         self.mod_structure()
 
     def argsort(self, name: str, reverse: bool = False) -> np.ndarray:
@@ -526,6 +664,11 @@ class Population(Generic[T_Individual]):
     def clear(self) -> None:
         """Clear the population."""
         self._size = 0
+        if self._genome_items is not None:
+            self._genome_items.clear()
+            self._genome_batch = ObjectBatch()
+        elif isinstance(self._genome_batch, DenseVectorBatch):
+            self._genome_batch = DenseVectorBatch(self._data["x"])
         self.mod_structure()
 
     def empty_like(self, capacity: int | None = None):
@@ -539,7 +682,20 @@ class Population(Generic[T_Individual]):
         """
         if capacity is None:
             capacity = self._capacity
-        return self.__class__(self.attrs, capacity)
+        # Dense populations can reconstruct their empty x-backed genome view
+        # from the schema; creating an empty batch here is redundant.  Other
+        # representations still need an empty batch to preserve their type.
+        genome_template = (
+            None
+            if self._legacy_scalar_x or isinstance(self._genome_batch, DenseVectorBatch)
+            else self.genomes.take([])
+        )
+        return self.__class__(
+            self.attrs,
+            capacity,
+            genomes=genome_template,
+            dense_numeric_view=self._dense_numeric_view,
+        )
 
     @overload
     def get(self, key: str) -> np.ndarray | None: ...
@@ -584,6 +740,112 @@ class Population(Generic[T_Individual]):
         """
         return self._data[key][: self._size]
 
+    def _validate_genomes(
+        self, genomes: GenomeBatch | np.ndarray | None, count: int
+    ) -> GenomeBatch | None:
+        if genomes is None:
+            return None
+        candidate: GenomeBatch
+        if isinstance(genomes, np.ndarray):
+            candidate = DenseVectorBatch(genomes)
+        else:
+            candidate = genomes
+        if len(candidate) != count:
+            raise ValidationError(
+                f"genome batch length must be {count}, got {len(candidate)}"
+            )
+        if isinstance(self._genome_batch, DenseVectorBatch):
+            if self._dense_numeric_view is None:
+                raise ValidationError(
+                    "Dense genome updates require the DenseNumericView service"
+                )
+            view = np.asarray(self._dense_numeric_view.get_view(candidate))
+            target = self._data["x"][: self._size]
+            if view.shape != (count, target.shape[1]) or view.dtype != np.float64:
+                raise ValidationError(
+                    "genome batch shape/dtype does not match DenseNumericView"
+                )
+        elif not isinstance(candidate, ObjectBatch):
+            raise ValidationError("Object populations require an ObjectBatch genome")
+        return candidate
+
+    def _require_dense_view(self) -> DenseNumericView:
+        if self._dense_numeric_view is None:
+            raise AttributeError(
+                "Population genome access requires the DenseNumericView service"
+            )
+        return self._dense_numeric_view
+
+    def _replace_genome_rows(self, indices: np.ndarray, genomes: GenomeBatch) -> None:
+        if isinstance(self._genome_batch, DenseVectorBatch):
+            values = np.asarray(self._require_dense_view().get_view(genomes))
+            self._data["x"][indices] = values
+            self._genome_batch = DenseVectorBatch(self._data["x"])
+        else:
+            if not isinstance(genomes, ObjectBatch) or self._genome_items is None:
+                raise ValidationError(
+                    "Object populations require an ObjectBatch genome"
+                )
+            for index, item in zip(indices, genomes.items):
+                self._genome_items[int(index)] = item
+            self._genome_batch = ObjectBatch(self._genome_items)
+
+    def _append_genomes(self, genomes: GenomeBatch) -> None:
+        if isinstance(self._genome_batch, DenseVectorBatch):
+            values = np.asarray(self._require_dense_view().get_view(genomes))
+            self._data["x"][self._size - len(genomes) : self._size] = values
+            self._genome_batch = DenseVectorBatch(self._data["x"])
+        elif isinstance(genomes, ObjectBatch) and self._genome_items is not None:
+            self._genome_items.extend(genomes.items)
+            self._genome_batch = ObjectBatch(self._genome_items)
+
+    def _copy_genomes_from(self, source: Population, indices: Any) -> None:
+        if isinstance(indices, slice):
+            indices = np.arange(len(source), dtype=np.intp)[indices]
+        selected = source.genomes.take(indices)
+        if isinstance(self._genome_batch, DenseVectorBatch):
+            values = np.asarray(self._require_dense_view().get_view(selected))
+            self._data["x"][: len(selected)] = values
+            self._genome_batch = DenseVectorBatch(self._data["x"])
+        else:
+            if not isinstance(selected, ObjectBatch) or self._genome_items is None:
+                raise ValidationError("incompatible genome batch representation")
+            self._genome_items = list(selected.items)
+            self._genome_batch = ObjectBatch(self._genome_items)
+
+    def _reorder_genomes(self, order: Any) -> None:
+        if self._genome_items is not None:
+            values = self._genome_items
+            self._genome_items = list(np.asarray(values, dtype=object)[order])
+            self._genome_batch = ObjectBatch(self._genome_items)
+        elif isinstance(self._genome_batch, DenseVectorBatch):
+            self._genome_batch = DenseVectorBatch(self._data["x"])
+
+    @property
+    def genomes(self) -> GenomeBatch:
+        """Return the current genomes as a read-only batch value."""
+        if isinstance(self._genome_batch, DenseVectorBatch):
+            return DenseVectorBatch(self._data["x"][: self._size])
+        if self._genome_items is not None:
+            return ObjectBatch(self._genome_items)
+        return self._genome_batch.take(np.arange(self._size, dtype=np.intp))
+
+    @property
+    def candidate_ids(self) -> CandidateIds:
+        """Return candidate IDs as a read-only row-aligned array."""
+        if "id" in self._data:
+            return self.get_array("id")
+        ids = np.full(len(self), -1, dtype=np.int64)
+        ids.setflags(write=False)
+        return ids
+
+    @property
+    def columns(self) -> ColumnStore:
+        """Return read-only row-aligned column arrays, excluding genome and IDs."""
+        return MappingProxyType(
+            {key: self.get_array(key) for key in self._schema if key not in {"x", "id"}}
+        )
+
     def get_array(self, key: str) -> np.ndarray:
         """
         Get the array of a specific attribute.
@@ -597,6 +859,25 @@ class Population(Generic[T_Individual]):
         key : str
             The attribute name to get the array for.
         """
+        if key == "x":
+            if self._legacy_scalar_x:
+                view = self._get_mutable_array(key).view()
+                view.flags.writeable = False
+                return view
+            if self._dense_numeric_view is None:
+                raise AttributeError(
+                    "Population.x requires the DenseNumericView service"
+                )
+            try:
+                view = np.asarray(
+                    self._dense_numeric_view.get_view(self.genomes)
+                ).view()
+            except KeyError as exc:
+                raise AttributeError(
+                    "Population.x requires the DenseNumericView service"
+                ) from exc
+            view.flags.writeable = False
+            return view
         view = self._get_mutable_array(key).view()
         view.flags.writeable = False
         return view
@@ -609,6 +890,22 @@ class Population(Generic[T_Individual]):
 
     def update_array(self, key: str, value: Any) -> None:
         """Update array in place and bump the value version."""
+        if key == "x":
+            if self._legacy_scalar_x:
+                self._get_mutable_array(key)[:] = value
+                self.mod_value()
+                return
+            if self._dense_numeric_view is None:
+                raise AttributeError(
+                    "Population.update_array('x') requires the DenseNumericView service"
+                )
+            arr = self._data["x"][: self._size]
+            normalized = self._copy_validated_array(
+                value, arr.shape, np.dtype(arr.dtype)
+            )
+            arr[:] = normalized
+            self.mod_value()
+            return
         if key == "id":
             raise ValidationError(
                 "Cannot update the reserved 'id' column via update_array()"
@@ -649,7 +946,10 @@ class Population(Generic[T_Individual]):
         return np.array(arr, dtype=expected_dtype, order="C", copy=True)
 
     def update_rows(
-        self, indices: np.ndarray | list[int], values: dict[str, np.ndarray]
+        self,
+        indices: np.ndarray | list[int],
+        values: dict[str, np.ndarray],
+        genome: GenomeBatch | np.ndarray | None = None,
     ) -> None:
         """Atomically update multiple columns for the given rows.
 
@@ -677,7 +977,18 @@ class Population(Generic[T_Individual]):
             ``"id"``), or if a value array's shape/dtype does not match the
             schema exactly.
         """
-        if len(values) == 0:
+        genome_value = genome
+        # Keep the old x mapping working for legacy callers, but the explicit
+        # genome argument is the canonical route after the column split.
+        if "x" in values and genome_value is not None:
+            raise ValidationError(
+                "'x' is not a column; pass the genome through the explicit "
+                "genome argument"
+            )
+        if genome_value is None and "x" in values and not self._legacy_scalar_x:
+            genome_value = values["x"]
+            values = {key: value for key, value in values.items() if key != "x"}
+        if len(values) == 0 and genome_value is None:
             return
 
         indices_arr = np.asarray(indices)
@@ -716,8 +1027,14 @@ class Population(Generic[T_Individual]):
                 value, expected_shape, np.dtype(attr.dtype)
             )
 
+        normalized_genome = self._validate_genomes(
+            genome_value, len(normalized_indices)
+        )
+
         for key, arr in normalized_values.items():
             self._data[key][normalized_indices] = arr
+        if normalized_genome is not None:
+            self._replace_genome_rows(normalized_indices, normalized_genome)
 
         self.mod_value()
 
@@ -766,6 +1083,8 @@ class Population(Generic[T_Individual]):
 
     def __getattr__(self, name: str) -> np.ndarray:
         """Support dot access (ex: pop.x)."""
+        if name == "x" and "_dense_numeric_view" in self.__dict__:
+            raise AttributeError("Population.x requires the DenseNumericView service")
         if "_data" in self.__dict__ and name in self.__dict__["_data"]:
             return self.get_readonly_array(name)
 

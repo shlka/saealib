@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 from scipy.spatial import cKDTree  # type: ignore  # cKDTree has no bundled type stubs
 
 from saealib.comparators import Dominator
 from saealib.exceptions import ValidationError
+from saealib.population.genome import GenomeBatch
 from saealib.population.population import Individual, Population, PopulationAttribute
+from saealib.space.services import DenseNumericView
 
 
 def _extract_id_value(
@@ -103,6 +105,9 @@ class ArchiveMixin:
         atol: float = 0.0,
         rtol: float = 0.0,
         duplicate_policy: str = "keep_first",
+        genomes: GenomeBatch | None = None,
+        dense_numeric_view: DenseNumericView | None = None,
+        dense_view: DenseNumericView | None = None,
         **kwargs,
     ):
         if duplicate_policy not in {"keep_first", "replace", "append"}:
@@ -110,7 +115,13 @@ class ArchiveMixin:
                 "duplicate_policy must be 'keep_first', 'replace', or 'append'"
             )
         _validate_observation_schema(attrs, duplicate_policy)
-        super().__init__(attrs=attrs, init_capacity=init_capacity)  # ty: ignore[unknown-argument]
+        cast(Any, super().__init__)(
+            attrs=attrs,
+            init_capacity=init_capacity,
+            genomes=genomes,
+            dense_numeric_view=dense_numeric_view,
+            dense_view=dense_view,
+        )
 
         if key_attr not in self.schema:  # ty: ignore[unresolved-attribute]
             raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
@@ -339,13 +350,22 @@ class ParetoMixin:
         atol: float = 0.0,
         rtol: float = 0.0,
         duplicate_policy: str = "keep_first",
+        genomes: GenomeBatch | None = None,
+        dense_numeric_view: DenseNumericView | None = None,
+        dense_view: DenseNumericView | None = None,
         **kwargs,
     ):
         if duplicate_policy not in {"keep_first", "replace", "append"}:
             raise ValueError("invalid duplicate_policy")
         if duplicate_policy == "append":
             raise ValidationError("ParetoArchive does not support append policy")
-        super().__init__(attrs=attrs, init_capacity=init_capacity)  # ty: ignore[unknown-argument]
+        cast(Any, super().__init__)(
+            attrs=attrs,
+            init_capacity=init_capacity,
+            genomes=genomes,
+            dense_numeric_view=dense_numeric_view,
+            dense_view=dense_view,
+        )
         if key_attr not in getattr(self, "_schema"):
             raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
 
