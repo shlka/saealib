@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import replace
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, cast
 
 import numpy as np
 
@@ -30,6 +30,7 @@ from saealib.operators.mutation import (
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.registry import register
+from saealib.space import BoundsService
 
 if TYPE_CHECKING:
     from saealib.operators.selection import ParentSelection, SurvivorSelection
@@ -389,8 +390,10 @@ class GA(Algorithm):
         pop = ctx.population.get_array("x")
         popsize = len(pop)
         target = n_offspring if n_offspring is not None else popsize
-        lb = ctx.problem.lb
-        ub = ctx.problem.ub
+        bounds_srv = cast(
+            BoundsService, ctx.problem.space.services.require("BoundsService")
+        )
+        lb, ub = bounds_srv.bounds
         n_children = self.crossover.n_children
         n_pair = math.ceil(target / n_children)
         parent_idx_m = (

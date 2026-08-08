@@ -50,6 +50,7 @@ if TYPE_CHECKING:
     from saealib.policies.feedback import FeedbackResult
     from saealib.population import Archive, ParetoArchive, Population
     from saealib.problem import Problem
+    from saealib.space import BoundsService
     from saealib.surrogate.prediction import SurrogatePrediction
 
 
@@ -778,13 +779,19 @@ class OptimizationState:
 
     @property
     def lb(self) -> np.ndarray:
-        """Return the lower bounds of the problem."""
-        return self.problem.lb
+        """Return the lower bounds of the problem via BoundsService."""
+        bounds_srv = cast(
+            BoundsService, self.problem.space.services.require("BoundsService")
+        )
+        return bounds_srv.bounds[0]
 
     @property
     def ub(self) -> np.ndarray:
-        """Return the upper bounds of the problem."""
-        return self.problem.ub
+        """Return the upper bounds of the problem via BoundsService."""
+        bounds_srv = cast(
+            BoundsService, self.problem.space.services.require("BoundsService")
+        )
+        return bounds_srv.bounds[1]
 
     @property
     def direction(self) -> np.ndarray:

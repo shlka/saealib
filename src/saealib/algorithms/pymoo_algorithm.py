@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, cast
 
 import numpy as np
 
@@ -14,6 +14,8 @@ from saealib.core.state import RUNTIME_CANDIDATE_ID_ALLOCATOR
 from saealib.exceptions import ConfigurationError
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem.constraint import EqualityConstraint
+from saealib.problem.problem import Problem
+from saealib.space import BoundsService
 
 if TYPE_CHECKING:
     from pymoo.core.problem import Problem as PymooCoreProblem
@@ -189,13 +191,18 @@ class PymooAlgorithm(Algorithm):
         self._ieq_idx = np.where(~eq_mask)[0]
         self._eq_idx = np.where(eq_mask)[0]
 
+        bounds_srv = cast(
+            BoundsService, problem.space.services.require("BoundsService")
+        )
+        lb, ub = bounds_srv.bounds
+
         return PymooProblem(
             n_var=problem.dim,
             n_obj=problem.n_obj,
             n_ieq_constr=len(self._ieq_idx),
             n_eq_constr=len(self._eq_idx),
-            xl=np.asarray(problem.lb, dtype=float),
-            xu=np.asarray(problem.ub, dtype=float),
+            xl=np.asarray(lb, dtype=float),
+            xu=np.asarray(ub, dtype=float),
         )
 
     def _assign_objectives(

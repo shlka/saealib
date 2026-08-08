@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from saealib.space import VectorSpace
 
 from saealib.comparators import (
     Comparator,
@@ -130,19 +133,23 @@ class Problem:
                     f"len(variables)={len(variables)} does not match dim={dim}"
                 )
             self.variables: list[Variable] = list(variables)
-            self.lb = np.array([v.lb for v in self.variables], dtype=float)
-            self.ub = np.array([v.ub for v in self.variables], dtype=float)
+            raw_lb = np.array([v.lb for v in self.variables], dtype=float)
+            raw_ub = np.array([v.ub for v in self.variables], dtype=float)
         else:
             if lb is None or ub is None:
                 raise ValidationError(
                     "lb and ub are required when variables is not provided"
                 )
-            self.lb = np.asarray(lb, dtype=float)
-            self.ub = np.asarray(ub, dtype=float)
+            raw_lb = np.asarray(lb, dtype=float)
+            raw_ub = np.asarray(ub, dtype=float)
             self.variables = [
-                ContinuousVariable(float(self.lb[i]), float(self.ub[i]))
+                ContinuousVariable(float(raw_lb[i]), float(raw_ub[i]))
                 for i in range(dim)
             ]
+
+        from saealib.space import VectorSpace
+
+        self._space = VectorSpace(dim=dim, lb=raw_lb, ub=raw_ub)
 
         # Cache type masks (computed once).
         self._integer_mask = np.array(
@@ -160,7 +167,6 @@ class Problem:
             dtype=int,
         )
 
-        self.dim = dim
         self.n_obj = n_obj
         self.direction = direction
         self.eps_cv = eps_cv
@@ -183,6 +189,26 @@ class Problem:
             self.comparator = NSGA2Comparator(
                 direction=direction, eps_cv=eps_cv, eps_obj=eps_obj
             )
+
+    @property
+    def space(self) -> VectorSpace:
+        """Return the SearchSpace owned by this problem."""
+        return self._space
+
+    @property
+    def dim(self) -> int:
+        """Dimension of design variables (derived from space)."""
+        return self._space.dim
+
+    @property
+    def lb(self) -> np.ndarray:
+        """Lower bounds of design variables (derived from space)."""
+        return self._space.lb
+
+    @property
+    def ub(self) -> np.ndarray:
+        """Upper bounds of design variables (derived from space)."""
+        return self._space.ub
 
     @property
     def n_constraints(self) -> int:

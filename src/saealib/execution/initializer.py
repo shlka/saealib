@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import replace
+from typing import cast
 
 import numpy as np
 import scipy.stats
@@ -34,6 +35,7 @@ from saealib.core.state import (
 from saealib.optimizer import ComponentProvider
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
+from saealib.space import BoundsService
 
 
 class Initializer(ABC):
@@ -266,10 +268,14 @@ class LHSInitializer(Initializer):
 
         ctx = self._create_context(problem, archive, pareto_archive, population, rng)
 
+        bounds_srv = cast(
+            BoundsService, problem.space.services.require("BoundsService")
+        )
+        lb, ub = bounds_srv.bounds
         archive_x = scipy.stats.qmc.LatinHypercube(d=problem.dim, rng=rng).random(
             self.n_init_archive
         )
-        archive_x = scipy.stats.qmc.scale(archive_x, problem.lb, problem.ub)
+        archive_x = scipy.stats.qmc.scale(archive_x, lb, ub)
 
         provider.dispatch(InitialEvaluationStartEvent(ctx=ctx, candidates_x=archive_x))
 
@@ -397,9 +403,11 @@ class RandomInitializer(Initializer):
 
         ctx = self._create_context(problem, archive, pareto_archive, population, rng)
 
-        archive_x = rng.uniform(
-            problem.lb, problem.ub, size=(self.n_init_archive, problem.dim)
+        bounds_srv = cast(
+            BoundsService, problem.space.services.require("BoundsService")
         )
+        lb, ub = bounds_srv.bounds
+        archive_x = rng.uniform(lb, ub, size=(self.n_init_archive, problem.dim))
 
         provider.dispatch(InitialEvaluationStartEvent(ctx=ctx, candidates_x=archive_x))
 
@@ -527,10 +535,14 @@ class SobolInitializer(Initializer):
 
         ctx = self._create_context(problem, archive, pareto_archive, population, rng)
 
+        bounds_srv = cast(
+            BoundsService, problem.space.services.require("BoundsService")
+        )
+        lb, ub = bounds_srv.bounds
         archive_x = scipy.stats.qmc.Sobol(
             d=problem.dim, scramble=True, seed=rng
         ).random(self.n_init_archive)
-        archive_x = scipy.stats.qmc.scale(archive_x, problem.lb, problem.ub)
+        archive_x = scipy.stats.qmc.scale(archive_x, lb, ub)
 
         provider.dispatch(InitialEvaluationStartEvent(ctx=ctx, candidates_x=archive_x))
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 
@@ -14,6 +14,7 @@ from saealib.core.contracts import ComponentContract, ServiceRequirement
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.registry import register
+from saealib.space import BoundsService
 
 if TYPE_CHECKING:
     from saealib.optimizer import Dispatchable
@@ -179,8 +180,10 @@ class PSO(Algorithm):
         """
         pop = ctx.population
         popsize = len(pop)
-        lb = ctx.problem.lb
-        ub = ctx.problem.ub
+        bounds_srv = cast(
+            BoundsService, ctx.problem.space.services.require("BoundsService")
+        )
+        lb, ub = bounds_srv.bounds
 
         x = pop.get_array("x").copy()
         f = pop.get_array("f").copy()
