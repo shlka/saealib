@@ -90,6 +90,14 @@ from saealib.core.contracts.observation import (
     QuantityKind,
     StateCodec,
 )
+from saealib.core.contracts.observations import (
+    ObservationBatch,
+    ObservationRecord,
+    ObservationRecords,
+    ObservationSchema,
+    ObservationSubject,
+    QuantityRef,
+)
 from saealib.core.contracts.ports import (
     CARDINALITIES,
     MANY,
@@ -217,8 +225,13 @@ __all__ = [
     "Fixed",
     "LifecycleContract",
     "MultiplicityMode",
+    "ObservationBatch",
+    "ObservationRecord",
+    "ObservationRecords",
+    "ObservationSchema",
     "ObservationSource",
     "ObservationStatus",
+    "ObservationSubject",
     "ObservationSubjectArity",
     "ObservationSubjectKind",
     "ObservationSubjectPayload",
@@ -233,6 +246,7 @@ __all__ = [
     "PortableValue",
     "Product",
     "QuantityKind",
+    "QuantityRef",
     "RelationArity",
     "RelationKind",
     "RelationTarget",
