@@ -62,6 +62,18 @@ class FingerprintService(Protocol):
         """Return a tuple of exact, hashable identity fingerprints."""
         ...
 
+    def create_index(self) -> object:
+        """Create an opaque collection index."""
+        ...
+
+    def add_to_index(self, index: object, genomes: GenomeBatch) -> None:
+        """Append genomes to an existing index."""
+        ...
+
+    def find_matches(self, index: object, genomes: GenomeBatch) -> np.ndarray:
+        """Return the first stored position matching each input genome."""
+        ...
+
 
 @runtime_checkable
 class EquivalenceService(Protocol):
@@ -69,6 +81,10 @@ class EquivalenceService(Protocol):
 
     def find_duplicates(self, genomes: GenomeBatch) -> np.ndarray:
         """Return a boolean array marking duplicate rows within a batch."""
+        ...
+
+    def find_matches(self, collection: GenomeBatch, genomes: GenomeBatch) -> np.ndarray:
+        """Return the first collection position matching each input genome."""
         ...
 
 
@@ -112,6 +128,16 @@ class DistanceService(Protocol):
         self, batch1: GenomeBatch, batch2: GenomeBatch | None = None
     ) -> np.ndarray:
         """Compute pairwise distance matrix between batch1 and batch2."""
+        ...
+
+    def create_index(self, genomes: GenomeBatch) -> object:
+        """Create a lazy k-nearest-neighbor index for a collection."""
+        ...
+
+    def query_knn(
+        self, index: object, genomes: GenomeBatch | np.ndarray, k: int
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Return nearest-neighbor indices and distances."""
         ...
 
 

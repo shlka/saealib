@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import math
 from collections.abc import Hashable, Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
+from scipy.spatial import cKDTree  # type: ignore
 
 from saealib.core.contracts.data import Fixed
 from saealib.core.contracts.representation import ParameterSpec, RepresentationSpec
@@ -25,19 +25,15 @@ if TYPE_CHECKING:
 __all__ = ["VectorSpace"]
 
 
-def _canonical_float(val: float) -> float | str:
-    """Normalize floats to a canonical representation for fingerprinting.
+_CANONICAL_NAN = np.uint64(0x7FF8000000000000)
 
-    -0.0 is normalized to 0.0 (+0.0).
-    NaN is normalized to the canonical string "__nan__" so that NaN == NaN
-    and hash(NaN) == hash(NaN) holds for fingerprints.
-    """
-    fval = float(val)
-    if math.isnan(fval):
-        return "__nan__"
-    if fval == 0.0:
-        return 0.0
-    return fval
+
+def _canonical_rows(array: np.ndarray) -> np.ndarray:
+    bits = np.array(array, dtype=np.float64, copy=True).view(np.uint64)
+    bits[bits == np.uint64(0x8000000000000000)] = 0
+    nan = np.isnan(array)
+    bits[nan] = _CANONICAL_NAN
+    return bits
 
 
 class _VectorBoundsService:
@@ -117,6 +113,27 @@ class _VectorDistanceService:
         diff = x1[:, np.newaxis, :] - x2[np.newaxis, :, :]
         return np.sqrt(np.sum(diff**2, axis=-1))
 
+    def create_index(self, genomes: GenomeBatch) -> object:
+        return _VectorDistanceIndex(_dense_array(genomes))
+
+    def query_knn(
+        self, index: object, genomes: GenomeBatch | np.ndarray, k: int
+    ) -> tuple[np.ndarray, np.ndarray]:
+        if not isinstance(index, _VectorDistanceIndex):
+            raise ValidationError("DistanceService received an invalid index")
+        if k < 1 or index.size == 0:
+            return np.array([], dtype=np.intp), np.array([], dtype=np.float64)
+        query = (
+            genomes.array
+            if isinstance(genomes, DenseVectorBatch)
+            else np.asarray(genomes)
+        )
+        if query.ndim == 1:
+            query = query.reshape(1, -1)
+        if query.ndim != 2 or len(query) == 0:
+            return np.array([], dtype=np.intp), np.array([], dtype=np.float64)
+        return index.query(query[0], k)
+
 
 class _VectorFingerprintService:
     def fingerprint(self, genomes: GenomeBatch) -> tuple[Hashable, ...]:
@@ -125,10 +142,25 @@ class _VectorFingerprintService:
                 "FingerprintService requires DenseVectorBatch, got "
                 f"{type(genomes).__name__}"
             )
-        # Exact canonical hashable identity:
-        # tuple of canonical float values for each row
-        return tuple(
-            tuple(_canonical_float(val) for val in row) for row in genomes.array
+        canonical = _canonical_rows(genomes.array)
+        return tuple(row.tobytes() for row in canonical)
+
+    def create_index(self) -> object:
+        return _FingerprintIndex()
+
+    def add_to_index(self, index: object, genomes: GenomeBatch) -> None:
+        if not isinstance(index, _FingerprintIndex):
+            raise ValidationError("FingerprintService received an invalid index")
+        for fingerprint in self.fingerprint(genomes):
+            index.values.setdefault(cast(bytes, fingerprint), index.size)
+            index.size += 1
+
+    def find_matches(self, index: object, genomes: GenomeBatch) -> np.ndarray:
+        if not isinstance(index, _FingerprintIndex):
+            raise ValidationError("FingerprintService received an invalid index")
+        return np.asarray(
+            [index.values.get(key, -1) for key in self.fingerprint(genomes)],
+            dtype=np.intp,
         )
 
 
@@ -155,6 +187,68 @@ class _VectorEquivalenceService:
                 ):
                     is_dup[j] = True
         return is_dup
+
+    def find_matches(self, collection: GenomeBatch, genomes: GenomeBatch) -> np.ndarray:
+        stored = _dense_array(collection)
+        query = _dense_array(genomes)
+        result = np.full(len(query), -1, dtype=np.intp)
+        if len(stored) == 0:
+            return result
+        for position, row in enumerate(query):
+            matches = np.all(
+                np.isclose(stored, row, atol=self._atol, rtol=self._rtol), axis=1
+            )
+            found = np.flatnonzero(matches)
+            if found.size:
+                result[position] = found[0]
+        return result
+
+
+def _dense_array(genomes: GenomeBatch) -> np.ndarray:
+    if not isinstance(genomes, DenseVectorBatch):
+        raise ValidationError("Vector service requires DenseVectorBatch")
+    return genomes.array
+
+
+class _VectorDistanceIndex:
+    """Lazy cKDTree handle owned by the vector DistanceService."""
+
+    def __init__(self, genomes: np.ndarray) -> None:
+        if genomes.ndim != 2:
+            raise ValidationError("Distance index genomes must be a 2-D array")
+        self.rows = np.array(genomes, dtype=np.float64, copy=True)
+        self.tree: cKDTree | None = None
+        self._finite_indices = np.empty(0, dtype=np.intp)
+
+    @property
+    def size(self) -> int:
+        return len(self.rows)
+
+    def query(self, point: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
+        if self.tree is None:
+            finite = np.all(np.isfinite(self.rows), axis=1)
+            self.tree = cKDTree(self.rows[finite]) if np.any(finite) else None
+            self._finite_indices = np.flatnonzero(finite).astype(np.intp)
+        if self.tree is None:
+            return np.array([], dtype=np.intp), np.array([], dtype=np.float64)
+        count = min(k, len(self.tree.data))
+        distances, indices = self.tree.query(point, k=count)
+        indices = np.atleast_1d(indices)
+        distances = np.atleast_1d(distances)
+        if indices.dtype != np.intp:
+            indices = indices.astype(np.intp)
+        if distances.dtype != np.float64:
+            distances = distances.astype(np.float64)
+        return (
+            self._finite_indices[indices],
+            distances,
+        )
+
+
+class _FingerprintIndex:
+    def __init__(self) -> None:
+        self.values: dict[bytes, int] = {}
+        self.size = 0
 
 
 class VectorSpace:

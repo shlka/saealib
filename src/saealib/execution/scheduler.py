@@ -1190,6 +1190,12 @@ class AsyncEvaluationScheduler:
             archive._cache = cache
             if hasattr(archive, "_kdtree"):
                 archive._kdtree = kdtree
+            # Service-owned indexes are opaque and may have been incrementally
+            # extended before the transaction failed.  Rebuild lazily from
+            # the restored rows rather than restoring a possibly stale handle.
+            invalidate = getattr(archive, "_invalidate_service_indexes", None)
+            if callable(invalidate):
+                invalidate()
 
     def _apply_feedback(
         self, state: OptimizationState, update: EvaluationUpdate

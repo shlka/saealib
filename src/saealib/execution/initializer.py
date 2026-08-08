@@ -55,9 +55,19 @@ def _make_population(factory, attrs, capacity, problem):
         )
     except (TypeError, ValueError):
         accepts = True
+        signature = None
     kwargs = {"attrs": attrs, "init_capacity": capacity}
     if accepts:
         kwargs["dense_numeric_view"] = dense_view
+        if (
+            signature is None
+            or "space" in signature.parameters
+            or any(
+                parameter.kind == inspect.Parameter.VAR_KEYWORD
+                for parameter in signature.parameters.values()
+            )
+        ):
+            kwargs["space"] = problem.space
     population = factory(**kwargs)
     if isinstance(population, Population):
         # ``create_pareto_archive`` and legacy custom factories have their own

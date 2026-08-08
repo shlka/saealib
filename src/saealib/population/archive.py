@@ -289,7 +289,16 @@ class ArchiveMixin:
             raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")
 
         self._kdtree: cKDTree | None = None
-        self._fingerprint_index: dict[Hashable, int] | None = None
+        self._fingerprint_index: object | None = None
+        self._distance_index: object | None = None
+
+    @staticmethod
+    def _has_index_api(service: object | None, method: str) -> bool:
+        return service is not None and callable(getattr(service, method, None))
+
+    def _invalidate_service_indexes(self) -> None:
+        self._fingerprint_index = None
+        self._distance_index = None
 
     @property
     def atol(self) -> float:
@@ -425,6 +434,7 @@ class ArchiveMixin:
                     ),
                 )
                 self._kdtree = None
+                self._invalidate_service_indexes()
                 return idx
 
             ids = self.get_array("id") if "id" in self.schema else np.empty(0)
@@ -445,19 +455,32 @@ class ArchiveMixin:
         append_kwargs.pop("genome", None)
         append_kwargs.pop("genomes", None)
         if incoming_genome is not None and (
-            self._identity_mode in {"fingerprint", "equivalence", "none"}
-            or "x" not in self.schema
-            or self._service_configuration_supplied
+            "x" not in self.schema or key_attr_val is None
         ):
             append_kwargs["genome"] = incoming_genome
+        # Population._append_internal() calls mod_structure(), which reaches
+        # ArchiveMixin.mod_value() and invalidates the exact-match index. Keep
+        # that handle across the expected append mutation so the fingerprint
+        # service can append just the new row instead of rebuilding it.
+        fingerprint_index = (
+            self._fingerprint_index
+            if self._has_index_api(self._fingerprint_service, "add_to_index")
+            else None
+        )
         super()._append_internal(
             element,
             preserve_ids=True,
             allow_duplicate_ids=self.duplicate_policy == "append",
             **append_kwargs,
         )
+        if incoming_genome is not None and fingerprint_index is not None:
+            self._fingerprint_service.add_to_index(fingerprint_index, incoming_genome)
+            self._fingerprint_index = fingerprint_index
         self._kdtree = None
-        self._fingerprint_index = None
+        # The fingerprint index is incrementally updated above; legacy caches
+        # remain invalidated as before.
+        if not self._has_index_api(self._fingerprint_service, "find_matches"):
+            self._fingerprint_index = None
         return new_idx
 
     def _find_idx(
@@ -512,6 +535,12 @@ class ArchiveMixin:
             raise ValidationError(
                 "Archive duplicate detection requires FingerprintService"
             )
+        if self._has_index_api(self._fingerprint_service, "create_index"):
+            self._fingerprint_index = self._fingerprint_service.create_index()
+            self._fingerprint_service.add_to_index(
+                self._fingerprint_index, self.genomes
+            )
+            return
         fingerprints = self._fingerprint_service.fingerprint(self.genomes)
         if len(fingerprints) != self._size:
             raise ValidationError(
@@ -527,6 +556,23 @@ class ArchiveMixin:
             raise ValidationError(
                 "Archive duplicate detection requires FingerprintService"
             )
+        if self._has_index_api(
+            self._fingerprint_service, "create_index"
+        ) and self._has_index_api(self._fingerprint_service, "find_matches"):
+            if self._fingerprint_index is None:
+                self._fingerprint_index = self._fingerprint_service.create_index()
+                self._fingerprint_service.add_to_index(
+                    self._fingerprint_index, self.genomes
+                )
+            matches = np.asarray(
+                self._fingerprint_service.find_matches(self._fingerprint_index, genome),
+                dtype=np.intp,
+            )
+            if matches.shape != (1,):
+                raise ValidationError(
+                    "FingerprintService returned an invalid match array"
+                )
+            return None if matches[0] < 0 else int(matches[0])
         fingerprints = self._fingerprint_service.fingerprint(genome)
         if len(fingerprints) != 1:
             raise ValidationError(
@@ -537,18 +583,22 @@ class ArchiveMixin:
         return index.get(fingerprints[0])
 
     def _find_equivalence_idx(self: Any, genome: GenomeBatch) -> int | None:
-        """Find the first equivalent stored genome through the service.
-
-        H4's service contract returns a duplicate mask for a batch rather than
-        an index into an existing collection.  Querying one existing row plus
-        the incoming row preserves that contract and the archive's first-match
-        insertion semantics without reimplementing the representation's
-        equivalence relation here.
-        """
+        """Find the first equivalent stored genome through the service."""
         if self._equivalence_service is None:
             raise ValidationError(
                 "Archive duplicate detection requires EquivalenceService"
             )
+        find_matches = getattr(self._equivalence_service, "find_matches", None)
+        if callable(find_matches):
+            matches = np.asarray(
+                find_matches(self.genomes, genome),
+                dtype=np.intp,
+            )
+            if matches.shape != (1,):
+                raise ValidationError(
+                    "EquivalenceService returned an invalid match array"
+                )
+            return None if matches[0] < 0 else int(matches[0])
         existing = self.genomes
         for index in range(self._size):
             pair = type(existing).concat((existing.take([index]), genome))
@@ -567,36 +617,36 @@ class ArchiveMixin:
         """Delete element(s) and invalidate the kNN cache."""
         super().delete(index)  # ty: ignore[unresolved-attribute]
         self._kdtree = None
-        self._fingerprint_index = None
+        self._invalidate_service_indexes()
 
     def extend(self, other: Any) -> None:
         """Extend the archive and invalidate identity/neighbor caches."""
         super().extend(other)  # ty: ignore[unresolved-attribute]
         self._kdtree = None
-        self._fingerprint_index = None
+        self._invalidate_service_indexes()
 
     def reorder(self, order: np.ndarray) -> None:
         """Reorder rows and invalidate caches whose values are row-indexed."""
         super().reorder(order)  # ty: ignore[unresolved-attribute]
         self._kdtree = None
-        self._fingerprint_index = None
+        self._invalidate_service_indexes()
 
     def truncate(self, new_size: int) -> None:
         """Truncate rows and invalidate identity/neighbor caches."""
         super().truncate(new_size)  # ty: ignore[unresolved-attribute]
         self._kdtree = None
-        self._fingerprint_index = None
+        self._invalidate_service_indexes()
 
     def clear(self) -> None:
         """Clear rows and invalidate identity/neighbor caches."""
         super().clear()  # ty: ignore[unresolved-attribute]
         self._kdtree = None
-        self._fingerprint_index = None
+        self._invalidate_service_indexes()
 
     def mod_value(self) -> None:
         """Invalidate the kNN cache on every value-only mutation, too."""
         self._kdtree = None
-        self._fingerprint_index = None
+        self._invalidate_service_indexes()
         super().mod_value()  # ty: ignore[unresolved-attribute]
 
     def _dense_archive_array(self: Any) -> np.ndarray:
@@ -635,6 +685,15 @@ class ArchiveMixin:
         """
         if self._size == 0:  # ty: ignore[unresolved-attribute]
             return np.array([]), np.array([])
+        create_index = getattr(self._distance_service, "create_index", None)
+        query_knn = getattr(self._distance_service, "query_knn", None)
+        if callable(create_index) and callable(query_knn):
+            distance_service = cast(DistanceService, self._distance_service)
+            if self._distance_index is None:
+                self._distance_index = distance_service.create_index(
+                    cast(Any, self).genomes
+                )
+            return distance_service.query_knn(self._distance_index, x, k)
         self._ensure_kdtree()
         k = min(k, self._size)  # ty: ignore[unresolved-attribute]
         dist, idx = self._kdtree.query(x, k=k)  # ty: ignore[unresolved-attribute]
