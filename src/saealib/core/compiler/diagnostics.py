@@ -168,6 +168,15 @@ DIAGNOSTIC_CODES.register(
         description="A diagnostic was emitted with an unregistered code.",
     ),
 )
+DIAGNOSTIC_CODES.register(
+    "ambiguous_adapter",
+    VocabularyDescriptor(
+        name="ambiguous_adapter",
+        description=(
+            "More than one lossless adapter can be inserted for one connection."
+        ),
+    ),
+)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -226,3 +235,25 @@ class DiagnosticBag:
     def __len__(self) -> int:
         """Return the number of collected diagnostics."""
         return len(self._diagnostics)
+
+
+DIAGNOSTIC_CODES.register(
+    "missing_genome_codec",
+    VocabularyDescriptor(
+        name="missing_genome_codec",
+        description=(
+            "Portable population state requires a GenomeCodec offered by the "
+            "configured search space."
+        ),
+    ),
+)
+DIAGNOSTIC_CODES.register(
+    "missing_runtime_capability",
+    VocabularyDescriptor(
+        name="missing_runtime_capability",
+        description=(
+            "A graph node requires a runtime capability absent from the "
+            "configured runtime offer."
+        ),
+    ),
+)

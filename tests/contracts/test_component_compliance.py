@@ -293,6 +293,25 @@ def _recipe_stage_node_adapter() -> Any:
     return StageNodeAdapter(_RecipeStage(name="recipe_stage"))
 
 
+def _recipe_freshened_component() -> Any:
+    from saealib.core.compiler.schema_rules import _FreshenedComponent
+
+    return _FreshenedComponent(object(), ComponentContract())
+
+
+def _recipe_adapter_component() -> Any:
+    from saealib.core.compiler.adapters import Adapter, AdapterComponent
+
+    adapter = Adapter(
+        name="recipe_adapter",
+        source=DataSpec(kind="Population"),
+        target=DataSpec(kind="Population"),
+        lossless=True,
+        auto_insertable=True,
+    )
+    return AdapterComponent(adapter=adapter)
+
+
 def _build_qualified(path: str, **params: Any) -> Any:
     return build({"type": path, "params": params})
 
@@ -347,6 +366,10 @@ _RECIPES: dict[str, Callable[[], Any]] = {
     ): _recipe_async_evaluation_scheduler,
     "saealib.algorithms.pymoo_algorithm.PymooAlgorithm": _recipe_pymoo_algorithm,
     "saealib.core.graph_builder.StageNodeAdapter": _recipe_stage_node_adapter,
+    "saealib.core.compiler.schema_rules._FreshenedComponent": (
+        _recipe_freshened_component
+    ),
+    "saealib.core.compiler.adapters.AdapterComponent": _recipe_adapter_component,
     _qualified_name(_REGISTRY["GenerationBasedStrategy"]): lambda: build(
         {"type": "GenerationBasedStrategy", "params": {"gen_ctrl": 5}}
     ),

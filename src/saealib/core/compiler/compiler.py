@@ -51,6 +51,7 @@ class CompileContext:
     problem: object | None = None
     offered_runtime_capabilities: frozenset[RuntimeCapability] = frozenset()
     portability_required: bool = False
+    adapter_registry: object | None = None
 
     def __post_init__(self) -> None:
         """Normalize caller-provided collections."""
@@ -60,6 +61,10 @@ class CompileContext:
             validate_name(value)
         if not isinstance(self.portability_required, bool):
             raise ValidationError("portability_required must be a boolean")
+        if self.adapter_registry is not None and not callable(
+            getattr(self.adapter_registry, "candidates", None)
+        ):
+            raise ValidationError("adapter_registry must provide candidates()")
         object.__setattr__(self, "enabled_rule_namespaces", namespaces)
         object.__setattr__(self, "offered_runtime_capabilities", capabilities)
 
@@ -577,6 +582,15 @@ class PortCompatibilityRule:
             compatibility = check_port_compatibility(producer_spec, consumer_spec)
             if compatibility.compatible:
                 continue
+            if (
+                not compatibility.schema_ok
+                and compatibility.kind_ok
+                and compatibility.cardinality_ok
+                and compatibility.direction_ok
+            ):
+                # SchemaBindingRule owns graph-wide schema substitution and
+                # reports its conflicts/deferred variables with their causes.
+                continue
             source_path = _endpoint_path(
                 edge.source, edge.source.role or producer_port.role, producer_spec.name
             )
@@ -584,6 +598,15 @@ class PortCompatibilityRule:
                 edge.target, edge.target.role or consumer_port.role, consumer_spec.name
             )
             connection = f"{source_path} -> {target_path}"
+            if any(
+                diagnostic.code in {"ambiguous_adapter", "incompatible_representation"}
+                and diagnostic.path == source_path
+                and target_path in diagnostic.related
+                for diagnostic in context.diagnostics
+            ):
+                # A resolution diagnostic already identifies the actionable
+                # cause; do not add a generic incompatible-port shadow.
+                continue
             findings.append(
                 Diagnostic(
                     severity=Severity.ERROR,
@@ -817,16 +840,19 @@ class ExecutablePlan:
     required_runtime_capabilities: frozenset[RuntimeCapability]
     active_rule_namespaces: frozenset[str]
     active_rule_names: tuple[str, ...]
+    inserted_adapters: tuple[object, ...] = ()
 
     def describe(self) -> str:
         """Return a concise human-readable plan summary."""
         codes = ", ".join(d.code for d in self.diagnostics) or "none"
         namespaces = ", ".join(sorted(self.active_rule_namespaces)) or "none"
         capabilities = ", ".join(sorted(self.required_runtime_capabilities)) or "none"
+        insertions = ", ".join(map(str, self.inserted_adapters)) or "none"
         return (
             f"ExecutablePlan(nodes={len(self.graph.nodes)}, "
             f"active_rule_namespaces=[{namespaces}], "
-            f"required_runtime_capabilities=[{capabilities}], diagnostics=[{codes}])"
+            f"required_runtime_capabilities=[{capabilities}], "
+            f"diagnostics=[{codes}], inserted_adapters=[{insertions}])"
         )
 
 
@@ -835,7 +861,12 @@ class Compiler:
 
     MAX_RESOLUTION_ITERATIONS = 32
 
-    def __init__(self, registry: RuleRegistry | None = None) -> None:
+    def __init__(
+        self,
+        registry: RuleRegistry | None = None,
+        *,
+        adapter_registry: object | None = None,
+    ) -> None:
         registrations_by_key = {
             (registration.namespace, registration.name): registration
             for registration in DEFAULT_RULE_REGISTRY.registrations()
@@ -850,6 +881,7 @@ class Compiler:
                     )
                 registrations_by_key[key] = registration
         self.registry = RuleRegistry(registrations_by_key.values())
+        self.adapter_registry = adapter_registry
 
     def compile(
         self, graph: ComponentGraph, context: CompileContext | None = None
@@ -857,7 +889,18 @@ class Compiler:
         """Resolve and verify a graph, returning an execution-free plan."""
         if not isinstance(graph, ComponentGraph):
             raise ValidationError("Compiler.compile graph must be a ComponentGraph")
-        compile_context = CompileContext() if context is None else context
+        compile_context = (
+            CompileContext(adapter_registry=self.adapter_registry)
+            if context is None
+            else context
+        )
+        if (
+            self.adapter_registry is not None
+            and compile_context.adapter_registry is None
+        ):
+            compile_context = replace(
+                compile_context, adapter_registry=self.adapter_registry
+            )
         structural = list(graph.well_formedness())
         registrations = self.registry.registrations()
         resolution = tuple(
@@ -1002,12 +1045,26 @@ class Compiler:
             for node in current.nodes
             for capability in node.contract.execution.required_runtime_capabilities
         )
+        inserted_adapters = tuple(
+            sorted(
+                (
+                    insertion
+                    for node in current.nodes
+                    if (insertion := getattr(node.component, "insertion", None))
+                    is not None
+                ),
+                key=str,
+            )
+        )
         return ExecutablePlan(
             graph=current,
-            diagnostics=tuple(sorted(diagnostics, key=_diagnostic_sort_key)),
+            diagnostics=tuple(
+                sorted(dict.fromkeys(diagnostics), key=_diagnostic_sort_key)
+            ),
             required_runtime_capabilities=required,
             active_rule_namespaces=frozenset(item.namespace for item in active),
             active_rule_names=active_names,
+            inserted_adapters=inserted_adapters,
         )
 
 
@@ -1016,13 +1073,30 @@ DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, IdentityRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, ReachabilityRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, ServiceResolutionRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, PortCompatibilityRule()))
+from saealib.core.compiler.adapters import (  # noqa: E402  # registration boundary
+    DEFAULT_ADAPTER_REGISTRY,
+    LosslessAdapterRule,
+)
+from saealib.core.compiler.persistence_runtime_rules import (  # noqa: E402
+    PersistenceRule,
+    RuntimeCompatibilityRule,
+)
+from saealib.core.compiler.schema_rules import SchemaBindingRule  # noqa: E402
+
+DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, SchemaBindingRule()))
+DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, LosslessAdapterRule()))
+DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, PersistenceRule()))
+DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, RuntimeCompatibilityRule()))
 
 __all__ = [
+    "DEFAULT_ADAPTER_REGISTRY",
     "DEFAULT_RULE_REGISTRY",
     "CompilationRule",
     "CompileContext",
     "Compiler",
     "ExecutablePlan",
+    "LosslessAdapterRule",
+    "PersistenceRule",
     "PortCompatibilityRule",
     "ResolutionResult",
     "ResolutionRule",
@@ -1031,6 +1105,8 @@ __all__ = [
     "RuleRegistration",
     "RuleRegistry",
     "RuleResult",
+    "RuntimeCompatibilityRule",
+    "SchemaBindingRule",
     "ServiceResolutionRule",
     "VerificationResult",
     "VerificationRule",

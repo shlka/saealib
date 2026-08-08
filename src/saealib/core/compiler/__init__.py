@@ -77,3 +77,10 @@ __all__ = [
     "VerificationRule",
     "check_component_contract",
 ]
+
+from saealib.core.compiler.persistence_runtime_rules import (
+    PersistenceRule,
+    RuntimeCompatibilityRule,
+)
+
+__all__.extend(("PersistenceRule", "RuntimeCompatibilityRule"))
