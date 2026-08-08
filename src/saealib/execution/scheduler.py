@@ -749,7 +749,7 @@ class AsyncEvaluationScheduler:
             request = EvaluationRequest(
                 current_pending.request.request_id,
                 remaining,
-                current_pending.request.x[rows],
+                current_pending.request.payload.take(rows),
                 current_pending.request.outputs,
                 current_pending.request.metadata,
             )

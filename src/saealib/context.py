@@ -1223,24 +1223,36 @@ def _encode_v3_value(
             "codec": "prediction",
             "value": None if value is None else _prediction_to_json(value),
         }
-    if key == EVALUATIONS_PLAN:
+    if (
+        key.namespace == EVALUATIONS_PLAN.namespace
+        and key.name == EVALUATIONS_PLAN.name
+    ):
         return {
             "codec": "plan",
             "value": None if value is None else _plan_to_json(value),
         }
-    if key == EVALUATIONS_PLAN_STATE:
+    if (
+        key.namespace == EVALUATIONS_PLAN_STATE.namespace
+        and key.name == EVALUATIONS_PLAN_STATE.name
+    ):
         return {
             "codec": "plan_state",
             "value": None if value is None else _plan_state_to_json(value),
         }
-    if key == EVALUATIONS_PLAN_UPDATES:
+    if (
+        key.namespace == EVALUATIONS_PLAN_UPDATES.namespace
+        and key.name == EVALUATIONS_PLAN_UPDATES.name
+    ):
         return {
             "codec": "updates",
             "value": {
                 str(k): [_update_to_json(item) for item in v] for k, v in value.items()
             },
         }
-    if key == PENDING_EVALUATIONS:
+    if (
+        key.namespace == PENDING_EVALUATIONS.namespace
+        and key.name == PENDING_EVALUATIONS.name
+    ):
         return {
             "codec": "pending",
             "value": {str(k): _pending_to_json(item) for k, item in value.items()},
@@ -1449,11 +1461,39 @@ def _feedback_from_json(value: Any) -> Any:
     )
 
 
+def _payload_to_json(payload: Any) -> dict[str, Any]:
+    from saealib.population.genome import DenseVectorBatch, ObjectBatch
+
+    if isinstance(payload, DenseVectorBatch):
+        return {"kind": "dense_vector", "items": _json_safe(payload.array)}
+    if isinstance(payload, ObjectBatch):
+        return {"kind": "object", "items": _json_safe(payload.items)}
+    raise CheckpointError(
+        "evaluation request payload is not JSON-checkpointable: "
+        f"{type(payload).__name__}"
+    )
+
+
+def _payload_from_json(value: Any) -> Any:
+    from saealib.population.genome import DenseVectorBatch, ObjectBatch
+
+    if not isinstance(value, dict) or not isinstance(value.get("kind"), str):
+        raise CheckpointError("evaluation request payload is malformed")
+    try:
+        if value["kind"] == "dense_vector":
+            return DenseVectorBatch(np.asarray(value["items"], dtype=np.float64))
+        if value["kind"] == "object":
+            return ObjectBatch(value["items"])
+    except (KeyError, TypeError, ValueError, ValidationError) as exc:
+        raise CheckpointError("evaluation request payload is malformed") from exc
+    raise CheckpointError(f"unknown evaluation request payload kind {value['kind']!r}")
+
+
 def _request_to_json(request: Any) -> dict[str, Any]:
     return {
         "request_id": int(request.request_id),
         "candidate_ids": _json_safe(request.candidate_ids),
-        "x": _json_safe(request.x),
+        "payload": _payload_to_json(request.payload),
         "outputs": list(request.outputs),
         "metadata": _json_safe(dict(request.metadata)),
     }
@@ -1465,10 +1505,15 @@ def _request_from_json(value: Any) -> Any:
     if not isinstance(value, dict):
         raise CheckpointError("evaluation request is malformed")
     try:
+        payload = (
+            _payload_from_json(value["payload"])
+            if "payload" in value
+            else np.asarray(value["x"], dtype=np.float64)
+        )
         return EvaluationRequest(
             np.int64(value["request_id"]),
             np.asarray(value["candidate_ids"], dtype=np.int64),
-            np.asarray(value["x"], dtype=np.float64),
+            payload,
             tuple(value.get("outputs", ("f", "g", "cv"))),
             value.get("metadata", {}),
         )
@@ -1625,7 +1670,7 @@ def _pending_to_json(pending: Any) -> dict[str, Any]:
     return {
         "request_id": int(request.request_id),
         "candidate_ids": _json_safe(request.candidate_ids),
-        "x": _json_safe(request.x),
+        "payload": _payload_to_json(request.payload),
         "outputs": list(request.outputs),
         "metadata": _json_safe(dict(request.metadata)),
         "status": pending.status.name,
@@ -1684,10 +1729,15 @@ def _pending_from_json(value: Any) -> Any:
     if not isinstance(value, dict):
         raise CheckpointError("pending evaluation is malformed")
     try:
+        payload = (
+            _payload_from_json(value["payload"])
+            if "payload" in value
+            else np.asarray(value["x"], dtype=np.float64)
+        )
         request = EvaluationRequest(
             np.int64(value["request_id"]),
             np.asarray(value["candidate_ids"], dtype=np.int64),
-            np.asarray(value["x"], dtype=np.float64),
+            payload,
             tuple(value.get("outputs", ("f", "g", "cv"))),
             value.get("metadata", {}),
         )
@@ -2215,6 +2265,15 @@ def _load_v3(
             raise CheckpointError(
                 f"state entry {key.namespace}/{key.name} target version is malformed"
             )
+        expected_target = target
+        for expected_key in _STORE_FIELDS.values():
+            if (
+                expected_key.namespace == key.namespace
+                and expected_key.name == key.name
+            ):
+                expected_target = max(expected_target, expected_key.schema_version)
+                break
+        target = max(target, expected_target)
         if key.schema_version > target:
             raise CheckpointError(
                 f"State key {key.namespace}/{key.name} has future schema version "

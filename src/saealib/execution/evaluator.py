@@ -31,6 +31,7 @@ from saealib.core.contracts import (
     Var,
 )
 from saealib.exceptions import EvaluationProtocolError, ValidationError
+from saealib.population.genome import DenseVectorBatch, GenomeBatch
 
 if TYPE_CHECKING:
     from saealib.problem import Problem
@@ -126,32 +127,73 @@ class EvaluationErrorInfo:
         pickle.dumps(dict(self.details))
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, init=False)
 class EvaluationRequest:
     """Owned input snapshot for one evaluation request."""
 
     request_id: np.int64
     candidate_ids: np.ndarray
-    x: np.ndarray
+    payload: GenomeBatch
     outputs: tuple[str, ...] = ("f", "g", "cv")
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self) -> None:
-        """Validate and own request arrays."""
-        if np.asarray(self.request_id).shape != ():
+    def __init__(
+        self,
+        request_id: np.int64,
+        candidate_ids: np.ndarray,
+        payload: GenomeBatch | np.ndarray | None = None,
+        outputs: tuple[str, ...] = ("f", "g", "cv"),
+        metadata: Mapping[str, Any] | None = None,
+        *,
+        x: np.ndarray | None = None,
+    ) -> None:
+        """Validate an opaque genome payload, retaining the legacy ``x`` API."""
+        if np.asarray(request_id).shape != ():
             raise ValidationError("request_id must be scalar")
-        object.__setattr__(self, "request_id", np.int64(self.request_id))
+        if x is not None:
+            if payload is not None:
+                raise ValidationError("EvaluationRequest accepts either payload or x")
+            payload = x
+        if payload is None:
+            raise ValidationError("EvaluationRequest requires a payload")
+        if isinstance(payload, np.ndarray):
+            payload = DenseVectorBatch(
+                _owned_array(
+                    payload,
+                    dtype=np.dtype(np.float64),
+                    ndim=2,
+                    name="x",
+                )
+            )
+        if not isinstance(payload, GenomeBatch):
+            raise ValidationError(
+                "EvaluationRequest payload must implement the GenomeBatch protocol"
+            )
+        object.__setattr__(self, "request_id", np.int64(request_id))
         ids = _owned_array(
-            self.candidate_ids, dtype=np.dtype(np.int64), ndim=1, name="candidate_ids"
+            candidate_ids, dtype=np.dtype(np.int64), ndim=1, name="candidate_ids"
         )
-        x = _owned_array(self.x, dtype=np.dtype(np.float64), ndim=2, name="x")
-        if len(ids) != len(x) or len(ids) != len(np.unique(ids)):
-            raise ValidationError("request candidate_ids must be unique and match x")
+        if len(ids) != len(payload) or len(ids) != len(np.unique(ids)):
+            raise ValidationError(
+                "request candidate_ids must be unique and match payload"
+            )
         object.__setattr__(self, "candidate_ids", ids)
-        object.__setattr__(self, "x", x)
-        metadata = dict(self.metadata)
+        object.__setattr__(self, "payload", payload)
+        object.__setattr__(self, "outputs", tuple(outputs))
+        metadata = {} if metadata is None else dict(metadata)
         pickle.dumps(metadata)
         object.__setattr__(self, "metadata", metadata)
+
+    @property
+    def x(self) -> np.ndarray:
+        """Return the dense compatibility view when the payload is numeric."""
+        if isinstance(self.payload, DenseVectorBatch):
+            return self.payload.array
+        raise ValidationError(
+            "EvaluationRequest.x requires a DenseNumericView-compatible "
+            "DenseVectorBatch payload; this request carries a non-dense "
+            f"{type(self.payload).__name__} payload"
+        )
 
 
 @dataclass

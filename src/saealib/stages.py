@@ -672,7 +672,7 @@ class AsyncEvaluationSubmitStage(Stage):
                     EvaluationRequest(
                         request_id,
                         ids,
-                        request.x[rows],
+                        request.payload.take(rows),
                         request.outputs,
                         {
                             **request.metadata,

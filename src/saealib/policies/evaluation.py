@@ -25,6 +25,7 @@ from saealib.execution.evaluator import (
     EvaluationStatus,
     EvaluationUpdate,
 )
+from saealib.population.genome import DenseVectorBatch
 from saealib.registry import register
 
 if TYPE_CHECKING:
@@ -166,10 +167,14 @@ class _RequestPlanner(EvaluationPlanner):
         if len(ids) != len(np.unique(ids)) or np.any(ids < 0):
             raise ValidationError("candidate IDs must be unique and assigned")
         request_id = ctx.request_id_allocator.allocate(1)[0]
-        x = np.array(candidates.x[indices], dtype=np.float64, order="C", copy=True)
-        x.flags.writeable = False
+        payload = DenseVectorBatch(
+            np.array(candidates.x[indices], dtype=np.float64, order="C", copy=True)
+        )
         return EvaluationRequest(
-            np.int64(request_id), ids, x, metadata={"row_indices": indices.tolist()}
+            np.int64(request_id),
+            ids,
+            payload,
+            metadata={"row_indices": indices.tolist()},
         )
 
 
@@ -244,7 +249,7 @@ class RepeatedEvaluation(_RequestPlanner):
             EvaluationRequest(
                 request.request_id,
                 request.candidate_ids,
-                request.x,
+                request.payload,
                 request.outputs,
                 {**request.metadata, "plan_id": plan_id},
             )
@@ -268,7 +273,7 @@ class RepeatedEvaluation(_RequestPlanner):
                 EvaluationRequest(
                     request_id,
                     first.candidate_ids,
-                    first.x,
+                    first.payload,
                     first.outputs,
                     {**first.metadata, "replicate": replicate},
                 )
@@ -462,7 +467,7 @@ def _continue_fidelity_plan(
     high_request = EvaluationRequest(
         request_id,
         selected_ids,
-        low_request.x[low_rows],
+        low_request.payload.take(low_rows),
         low_request.outputs,
         {
             **low_request.metadata,
@@ -501,7 +506,7 @@ class FidelityEvaluation(_RequestPlanner):
                 EvaluationRequest(
                     request.request_id,
                     request.candidate_ids,
-                    request.x,
+                    request.payload,
                     request.outputs,
                     metadata,
                 ),

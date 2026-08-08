@@ -33,6 +33,11 @@ def _population_entry_v1_to_v2(value: object) -> object:
     return value
 
 
+def _evaluation_entry_v1_to_v2(value: object) -> object:
+    """Normalize legacy evaluation entries after their request codec decode."""
+    return value
+
+
 def _validate_version(version: int, *, field_name: str) -> int:
     """Validate and return a positive schema version."""
     if isinstance(version, bool) or not isinstance(version, int) or version < 1:

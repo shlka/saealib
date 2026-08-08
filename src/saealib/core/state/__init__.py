@@ -28,6 +28,7 @@ from saealib.core.state.migration import (
     STATE_MIGRATORS,
     Migrator,
     StateMigrationRegistry,
+    _evaluation_entry_v1_to_v2,
     _population_entry_v1_to_v2,
 )
 from saealib.core.state.patch import PopulationRowUpdate, StatePatch, StateUpdate
@@ -40,6 +41,11 @@ from saealib.core.state.store import StateStore, StateView
 # entries by the v3 loader, not by constructing a StateKey.
 if ("populations", "main", 1) not in STATE_MIGRATORS.registered():
     STATE_MIGRATORS.register("populations", "main", 1, _population_entry_v1_to_v2)
+for _evaluation_name in ("plan", "pending"):
+    if ("evaluations", _evaluation_name, 1) not in STATE_MIGRATORS.registered():
+        STATE_MIGRATORS.register(
+            "evaluations", _evaluation_name, 1, _evaluation_entry_v1_to_v2
+        )
 
 __all__ = [
     "ARCHIVES_MAIN",
