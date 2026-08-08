@@ -85,6 +85,22 @@ for _name, _description in (
         "A declared part is missing, has no callable contract, or disagrees "
         "with its held component.",
     ),
+    (
+        "duplicate_component_id",
+        "A component id occurs more than once in a component graph.",
+    ),
+    (
+        "invalid_graph_edge",
+        "A graph edge refers to a node that is not present in the graph.",
+    ),
+    (
+        "invalid_entry_point",
+        "A graph entry point is empty or refers to a missing node.",
+    ),
+    (
+        "unreachable_node",
+        "A graph node cannot be reached from any declared entry point.",
+    ),
 ):
     DIAGNOSTIC_CODES.register(
         _name,
