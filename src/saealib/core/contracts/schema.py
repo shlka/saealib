@@ -90,6 +90,13 @@ for _name, _description in (
         "product_arity_mismatch",
         "Two product bindings compose a different arity.",
     ),
+    (
+        "representation_kind_mismatch",
+        (
+            "The two representation specs declare different kind names "
+            "with no subtype relation."
+        ),
+    ),
 ):
     SCHEMA_CONFLICT_REASONS.register(
         _name,

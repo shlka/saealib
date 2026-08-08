@@ -49,6 +49,13 @@ from saealib.core.contracts.ports import (
     check_port_compatibility,
     validate_port_contract_directions,
 )
+from saealib.core.contracts.representation import (
+    REPRESENTATION_KINDS,
+    ParameterSpec,
+    RepresentationKind,
+    RepresentationSpec,
+    unify_representation_specs,
+)
 from saealib.core.contracts.roles import ROLES, RoleName
 from saealib.core.contracts.schema import (
     SCHEMA_CONFLICT_REASONS,
@@ -76,6 +83,7 @@ __all__ = [
     "MANY",
     "ONE",
     "OPTIONAL",
+    "REPRESENTATION_KINDS",
     "ROLES",
     "RUNTIME_CAPABILITIES",
     "SCHEMA_CONFLICT_REASONS",
@@ -92,12 +100,15 @@ __all__ = [
     "ExecutionContract",
     "Fixed",
     "LifecycleContract",
+    "ParameterSpec",
     "PartSpec",
     "PortCompatibility",
     "PortContract",
     "PortDirection",
     "PortSpec",
     "Product",
+    "RepresentationKind",
+    "RepresentationSpec",
     "RoleName",
     "RuntimeCapability",
     "SchemaBinding",
@@ -119,6 +130,7 @@ __all__ = [
     "register_data_spec",
     "unify_bindings",
     "unify_data_specs",
+    "unify_representation_specs",
     "validate_assumption_name",
     "validate_identifier",
     "validate_name",

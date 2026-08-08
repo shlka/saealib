@@ -98,6 +98,17 @@ DIAGNOSTIC_CODES.register(
     ),
 )
 DIAGNOSTIC_CODES.register(
+    "incompatible_representation",
+    VocabularyDescriptor(
+        name="incompatible_representation",
+        description=(
+            "A component requires a representation kind the provided "
+            "space does not offer. The diagnostic names both the "
+            "provided and the required kind."
+        ),
+    ),
+)
+DIAGNOSTIC_CODES.register(
     "unregistered_diagnostic_code",
     VocabularyDescriptor(
         name="unregistered_diagnostic_code",

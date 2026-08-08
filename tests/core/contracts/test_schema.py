@@ -45,6 +45,7 @@ def test_schema_vocabularies_register_the_initial_names() -> None:
         "containment_unsatisfied",
         "containment_undecided",
         "product_arity_mismatch",
+        "representation_kind_mismatch",
     )
 
 
