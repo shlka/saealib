@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import dataclasses
+import functools
 import json
 import pickle
 import re
@@ -86,6 +87,7 @@ _STORE_FIELDS = {
 }
 
 
+@functools.lru_cache(maxsize=1024)
 def _collection_key(kind: str, name: str) -> StateKey[object]:
     if kind == "populations":
         return StateKey(namespace=kind, name=name, schema_version=2)
@@ -250,6 +252,7 @@ class _NamedCollection(dict[str, Any]):
         return (type(self), (self._kind, dict(self)))
 
 
+@functools.lru_cache(maxsize=1024)
 def _validate_collection_name(name: str) -> None:
     if (
         not isinstance(name, str)

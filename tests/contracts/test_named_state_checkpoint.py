@@ -7,7 +7,12 @@ from typing import Any, cast
 import numpy as np
 import pytest
 
-from saealib.context import CURRENT_CHECKPOINT_SCHEMA_VERSION, OptimizationState
+from saealib.context import (
+    CURRENT_CHECKPOINT_SCHEMA_VERSION,
+    OptimizationState,
+    _collection_key,
+    _validate_collection_name,
+)
 from saealib.core.contracts.data import Fixed
 from saealib.core.contracts.representation import ParameterSpec, RepresentationSpec
 from saealib.core.state import (
@@ -116,6 +121,18 @@ def test_named_aliases_and_collection_validation():
         ctx.add_archive("bad//name", Archive(_attrs()))
     with pytest.raises(ValidationError):
         ctx.add_population("other", object())
+
+
+def test_collection_name_validation_rejects_same_invalid_name_twice():
+    for _ in range(2):
+        with pytest.raises(ValidationError, match="invalid collection name"):
+            _validate_collection_name("bad//name")
+
+
+def test_collection_key_cache_returns_same_key_identity():
+    assert _collection_key("populations", "cached") is _collection_key(
+        "populations", "cached"
+    )
 
 
 def test_reservation_properties_are_derived_from_pending_evaluations():
