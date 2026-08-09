@@ -1,14 +1,20 @@
 """Phase 10 external plugin foundation and U10-1 boundaries."""
 
+from dataclasses import replace
+
 import numpy as np
 from phase10_plugin import (
+    CMAES_CANDIDATE_IDS,
     COMPLETE_BATCH,
     DE_TARGET_IDS,
     DE_TRIAL_IDS,
     MF_CANDIDATE_IDS,
     MF_HIGH_FIDELITY,
+    MOEAD_CANDIDATE_IDS,
     PARTIAL_ALLOWED,
+    CMAESPlugin,
     DifferentialEvolutionPlugin,
+    MOEADPlugin,
     MultiFidelityPlugin,
     Phase10PluginFixture,
     build_plugin_graph,
@@ -16,6 +22,7 @@ from phase10_plugin import (
 
 from saealib.core.compiler import Compiler
 from saealib.core.compiler.diagnostics import Severity
+from saealib.core.contracts import ObservationBatch
 
 
 def test_u10_0_external_plugin_proposes_evaluates_and_delivers_feedback() -> None:
@@ -83,3 +90,58 @@ def test_u10_1_multifidelity_accepts_sparse_low_and_selects_high_promotion() -> 
     assert record.cost == 1.0
     assert dict(record.provenance) == {"plugin": "phase10", "stage": "high"}
     assert plugin.feedback_state["high"] is high_feedback
+
+
+def test_u10_2_cmaes_updates_only_on_complete_generation_feedback() -> None:
+    plugin = CMAESPlugin()
+    proposal = plugin.propose()
+    feedback = plugin.evaluate(proposal)
+    before = plugin.snapshot()
+    restored = CMAESPlugin()
+    restored.restore(before)
+    restored_snapshot = restored.snapshot()
+    assert np.array_equal(restored_snapshot["mean"], before["mean"])
+    assert np.array_equal(restored_snapshot["covariance"], before["covariance"])
+    assert restored_snapshot["step_size"] == before["step_size"]
+    assert restored_snapshot["generation"] == before["generation"]
+
+    partial_observations = ObservationBatch(
+        schema=feedback.observations.schema,
+        records=feedback.observations.records.take(np.array([0, 1], dtype=np.intp)),
+    )
+    partial_feedback = replace(feedback, observations=partial_observations, final=False)
+    assert len(partial_feedback.observations.records) == 2
+    assert len(feedback.observations.records) == 4
+    assert partial_feedback.observations.candidate_ids.tolist() == [8601, 8602]
+    plugin.apply_feedback(proposal, partial_feedback)
+    unchanged = plugin.snapshot()
+    assert np.array_equal(unchanged["mean"], before["mean"])
+    assert np.array_equal(unchanged["covariance"], before["covariance"])
+    assert unchanged["step_size"] == before["step_size"]
+    assert unchanged["generation"] == before["generation"]
+
+    plugin.apply_feedback(proposal, feedback)
+    assert plugin.generation == before["generation"] + 1
+    assert plugin.step_size != before["step_size"]
+    assert not np.array_equal(plugin.covariance, before["covariance"])
+    assert feedback.observations.candidate_ids.tolist() == CMAES_CANDIDATE_IDS.tolist()
+
+
+def test_u10_2_moead_updates_only_the_child_subproblem_neighborhood() -> None:
+    plugin = MOEADPlugin()
+    proposal = plugin.propose()
+    assert proposal.candidates.get_array("subproblem_id").tolist() == [0, 1, 2]
+    assert np.array_equal(plugin.weights[0], [1.0, 0.0])
+    assert plugin.neighbors[0] == (0, 1)
+    before = {
+        subproblem: state[0].copy()
+        for subproblem, state in plugin.subproblem_state.items()
+    }
+
+    feedback = plugin.evaluate(proposal)
+    assert feedback.observations.candidate_ids.tolist() == MOEAD_CANDIDATE_IDS.tolist()
+    plugin.apply_feedback(proposal, feedback)
+
+    assert np.array_equal(plugin.subproblem_state[0][0], proposal.candidates.x[0])
+    assert np.array_equal(plugin.subproblem_state[1][0], proposal.candidates.x[0])
+    assert np.array_equal(plugin.subproblem_state[2][0], before[2])

@@ -56,6 +56,8 @@ DE_TRIAL_IDS = np.array([8301, 8302, 8303], dtype=np.int64)
 MF_CANDIDATE_IDS = np.array([0, 1, 2], dtype=np.int64)
 MF_LOW_FIDELITY = 1
 MF_HIGH_FIDELITY = 2
+CMAES_CANDIDATE_IDS = np.array([8601, 8602, 8603, 8604], dtype=np.int64)
+MOEAD_CANDIDATE_IDS = np.array([8701, 8702, 8703], dtype=np.int64)
 
 
 class PluginEvaluationAdapter(EvaluationAdapter):
@@ -152,14 +154,19 @@ class Phase10PluginFixture:
         return proposal, PLUGIN_CANDIDATE_IDS.copy()
 
     def observations_from_result(
-        self, candidate_ids: np.ndarray, result: Any
+        self,
+        candidate_ids: np.ndarray,
+        result: Any,
+        *,
+        objective_count: int = 1,
+        include_cv: bool = True,
     ) -> ObservationBatch:
         return ObservationBatch.from_dense(
-            ObservationSchema(objective_count=1, constraint_count=0),
+            ObservationSchema(objective_count=objective_count, constraint_count=0),
             candidate_ids,
             result.f,
             result.g,
-            result.cv,
+            result.cv if include_cv else None,
             source=TRUE,
         )
 
@@ -186,6 +193,180 @@ class Phase10PluginFixture:
         )
         self.feedback_state[proposal.proposal_id] = batch
         return batch
+
+
+@dataclass
+class CMAESPlugin:
+    """Deterministic CMA-ES-shaped plugin with plugin-owned algorithm state."""
+
+    mean: np.ndarray = field(
+        default_factory=lambda: np.array([0.25, -0.25], dtype=np.float64)
+    )
+    covariance: np.ndarray = field(default_factory=lambda: np.eye(2, dtype=np.float64))
+    step_size: float = 0.2
+    generation: int = 0
+
+    def problem(self) -> Problem:
+        return Phase10PluginFixture().problem()
+
+    def evaluator(self) -> SerialEvaluator:
+        return SerialEvaluator()
+
+    def snapshot(self) -> dict[str, Any]:
+        return {
+            "mean": self.mean.copy(),
+            "covariance": self.covariance.copy(),
+            "step_size": self.step_size,
+            "generation": self.generation,
+        }
+
+    def restore(self, snapshot: dict[str, Any]) -> None:
+        self.mean = np.asarray(snapshot["mean"], dtype=np.float64).copy()
+        self.covariance = np.asarray(snapshot["covariance"], dtype=np.float64).copy()
+        self.step_size = float(snapshot["step_size"])
+        self.generation = int(snapshot["generation"])
+
+    def propose(self) -> ProposalBatch:
+        offsets = np.array(
+            [[-1.0, 0.0], [0.0, 1.0], [1.0, 0.0], [0.0, 0.0]],
+            dtype=np.float64,
+        )
+        genomes = self.mean + self.step_size * offsets
+        candidates = Population(
+            attrs=[PopulationAttribute(name="x", dtype=np.float64, shape=(2,))],
+            init_capacity=len(genomes),
+        )
+        for genome in genomes:
+            candidates.append(x=genome)
+        return ProposalBatch(
+            proposal_id=PLUGIN_PROPOSAL_ID + 4 + self.generation,
+            candidates=candidates,
+            relations=ProposalRelations(row_count=len(genomes)),
+            requirements=objective_requirement(),
+        )
+
+    def evaluate(self, proposal: ProposalBatch) -> FeedbackBatch:
+        request = EvaluationRequest(
+            request_id=np.int64(3),
+            candidate_ids=CMAES_CANDIDATE_IDS,
+            payload=proposal.candidates.genomes,
+        )
+        result = self.evaluator().evaluate_request(request, self.problem())
+        observations = Phase10PluginFixture().observations_from_result(
+            CMAES_CANDIDATE_IDS, result, include_cv=False
+        )
+        return FeedbackBatch(
+            proposal_id=proposal.proposal_id,
+            observations=observations,
+            channel=TRUE,
+            final=True,
+            sequence=0,
+        )
+
+    def apply_feedback(self, proposal: ProposalBatch, feedback: FeedbackBatch) -> None:
+        if not feedback.final or not np.array_equal(
+            feedback.observations.candidate_ids, CMAES_CANDIDATE_IDS
+        ):
+            return
+        samples = proposal.candidates.x
+        self.mean = np.mean(samples, axis=0)
+        centered = samples - self.mean
+        self.covariance = centered.T @ centered / len(samples)
+        self.step_size *= 0.9
+        self.generation += 1
+
+
+@dataclass
+class MOEADPlugin:
+    """Minimal MOEA/D plugin with explicit subproblem-local replacement."""
+
+    weights: np.ndarray = field(
+        default_factory=lambda: np.array(
+            [[1.0, 0.0], [0.5, 0.5], [0.0, 1.0]], dtype=np.float64
+        )
+    )
+    neighbors: dict[int, tuple[int, ...]] = field(
+        default_factory=lambda: {0: (0, 1), 1: (1,), 2: (2,)}
+    )
+    subproblem_state: dict[int, tuple[np.ndarray, float]] = field(default_factory=dict)
+
+    def problem(self) -> Problem:
+        return Problem(
+            func=lambda x: np.asarray(
+                [
+                    float(np.asarray(x, dtype=float)[0] ** 2),
+                    float(np.asarray(x, dtype=float)[1] ** 2),
+                ]
+            ),
+            dim=2,
+            n_obj=2,
+            direction=np.array([-1.0, -1.0]),
+            lb=[-1.0, -1.0],
+            ub=[1.0, 1.0],
+            evaluation_adapter=PluginEvaluationAdapter(),
+        )
+
+    def evaluator(self) -> SerialEvaluator:
+        return SerialEvaluator()
+
+    def initial_genomes(self) -> np.ndarray:
+        return np.array([[0.8, 0.8], [0.6, 0.6], [0.2, 0.2]], dtype=np.float64)
+
+    def propose(self) -> ProposalBatch:
+        initial = self.initial_genomes()
+        self.subproblem_state = {
+            index: (genome.copy(), float(np.dot(self.weights[index], genome**2)))
+            for index, genome in enumerate(initial)
+        }
+        children = np.array([[0.1, 0.1], [0.9, 0.9], [0.5, 0.5]], dtype=np.float64)
+        candidates = Population(
+            attrs=[
+                PopulationAttribute(name="x", dtype=np.float64, shape=(2,)),
+                PopulationAttribute(name="subproblem_id", dtype=np.int64, default=-1),
+            ],
+            init_capacity=len(children),
+        )
+        for subproblem_id, genome in enumerate(children):
+            candidates.append(x=genome, subproblem_id=subproblem_id)
+        return ProposalBatch(
+            proposal_id=PLUGIN_PROPOSAL_ID + 5,
+            candidates=candidates,
+            relations=ProposalRelations(row_count=len(children)),
+            requirements=objective_requirement(),
+        )
+
+    def evaluate(self, proposal: ProposalBatch) -> FeedbackBatch:
+        request = EvaluationRequest(
+            request_id=np.int64(4),
+            candidate_ids=MOEAD_CANDIDATE_IDS,
+            payload=proposal.candidates.genomes,
+        )
+        result = self.evaluator().evaluate_request(request, self.problem())
+        observations = Phase10PluginFixture().observations_from_result(
+            MOEAD_CANDIDATE_IDS, result, objective_count=2
+        )
+        return FeedbackBatch(
+            proposal_id=proposal.proposal_id,
+            observations=observations,
+            channel=TRUE,
+            final=True,
+            sequence=0,
+        )
+
+    def apply_feedback(self, proposal: ProposalBatch, feedback: FeedbackBatch) -> None:
+        if not feedback.final:
+            return
+        subproblem_ids = proposal.candidates.get_array("subproblem_id")
+        objectives = feedback.observations.f
+        for row, subproblem_id in enumerate(subproblem_ids):
+            child_score = float(
+                np.dot(self.weights[int(subproblem_id)], objectives[row])
+            )
+            child = proposal.candidates.x[row].copy()
+            for neighbor in self.neighbors[int(subproblem_id)]:
+                _, current_score = self.subproblem_state[neighbor]
+                if child_score < current_score:
+                    self.subproblem_state[neighbor] = (child.copy(), child_score)
 
 
 @dataclass
