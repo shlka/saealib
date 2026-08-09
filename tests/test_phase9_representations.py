@@ -35,6 +35,7 @@ from saealib.space import (
     ServiceRegistry,
     ValidationResult,
 )
+from saealib.space.space import encode_features
 from saealib.strategies.direct import DirectStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.surrogate.base import RegressionSurrogate
@@ -123,16 +124,9 @@ def test_phase9_five_real_graphs_compile_without_diagnostics() -> None:
         SequentialSelection(),
         TruncationSelection(),
     )
-    _compile(_vector_problem(), vector_ga, DirectStrategy())
-    _compile(_vector_problem(), _vector_ga(), IndividualBasedStrategy(0.5))
     permutation = PermutationSpace(3)
     genome_ga = GenomeGA(
         OrderCrossover(), SwapMutation(), SequentialSelection(), TruncationSelection()
-    )
-    _compile(
-        _genome_problem(permutation, lambda x: np.asarray([sum(x)])),
-        genome_ga,
-        DirectStrategy(),
     )
     sequence = SequenceSpace((0, 1), 1, 3)
     sequence_ga = GenomeGA(
@@ -141,18 +135,30 @@ def test_phase9_five_real_graphs_compile_without_diagnostics() -> None:
         SequentialSelection(),
         TruncationSelection(),
     )
-    _compile(
-        _genome_problem(sequence, lambda x: np.asarray([len(x)])),
-        sequence_ga,
-        DirectStrategy(),
-    )
     _register_custom_kind()
     custom = _CustomSpace()
-    _compile(
-        _genome_problem(custom, lambda x: np.asarray([float(x)])),
-        _custom_ga(),
-        DirectStrategy(),
+    profiles = (
+        (_vector_problem(), vector_ga, DirectStrategy()),
+        (_vector_problem(), _vector_ga(), IndividualBasedStrategy(0.5)),
+        (
+            _genome_problem(permutation, lambda x: np.asarray([sum(x)])),
+            genome_ga,
+            DirectStrategy(),
+        ),
+        (
+            _genome_problem(sequence, lambda x: np.asarray([len(x)])),
+            sequence_ga,
+            DirectStrategy(),
+        ),
+        (
+            _genome_problem(custom, lambda x: np.asarray([float(x)])),
+            _custom_ga(),
+            DirectStrategy(),
+        ),
     )
+    assert len(profiles) == 5
+    for problem, algorithm, strategy in profiles:
+        _compile(problem, algorithm, strategy)
 
 
 class _CustomBatch:
@@ -257,16 +263,6 @@ class _CustomSpace:
         self._services = ServiceRegistry()
         self._services.register("GenomeCodec", _CustomCodec())
         self._services.register("FeatureEncoder", _CustomFeatureEncoder())
-        self._services.register(
-            "DenseNumericView",
-            type(
-                "View",
-                (),
-                {
-                    "get_view": lambda _, g: _CustomFeatureEncoder().encode(g),
-                },
-            )(),
-        )
         self._services.register(
             "BoundsService",
             type(
@@ -397,6 +393,16 @@ def test_external_representation_runs_archive_checkpoint_async_and_global_surrog
 ) -> None:
     _register_custom_kind()
     space = _CustomSpace()
+    space.services.register(
+        "DenseNumericView",
+        type(
+            "View",
+            (),
+            {
+                "get_view": lambda _, g: _CustomFeatureEncoder().encode(g),
+            },
+        )(),
+    )
     problem = _genome_problem(
         space,
         lambda x: np.asarray([float(x)]),
@@ -447,6 +453,31 @@ def test_external_representation_runs_archive_checkpoint_async_and_global_surrog
         assert async_adapter.calls > 0
     finally:
         async_evaluator.close()
+
+
+def test_external_representation_requires_explicit_feature_encoder() -> None:
+    _register_custom_kind()
+    space = _CustomSpace()
+    genomes = space.sample(3, np.random.default_rng(3))
+    features = encode_features(cast(Any, space), cast(Any, genomes))
+    assert features.shape == (3, 1)
+    codec = cast(Any, space.services.require("GenomeCodec"))
+    assert codec.decode(codec.encode(_CustomBatch([1, 2]))).values == (1, 2)
+
+
+def test_external_representation_rejects_missing_feature_encoder() -> None:
+    _register_custom_kind()
+    space = _CustomSpace()
+    services = cast(Any, space.services)
+    feature_encoder = services._services.pop("FeatureEncoder")
+    try:
+        with pytest.raises(
+            ValidationError,
+            match="explicit FeatureEncoder or DenseNumericView",
+        ):
+            encode_features(cast(Any, space), cast(Any, space.sample(3)))
+    finally:
+        services.register("FeatureEncoder", feature_encoder)
 
 
 def test_compiler_has_no_builtin_representation_batch_branches() -> None:
