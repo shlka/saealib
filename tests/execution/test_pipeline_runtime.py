@@ -21,7 +21,7 @@ from saealib.core.compiler.graph import NodeRef
 from saealib.core.contracts import DataSpec
 from saealib.core.graph_builder import StageNodeAdapter, build_component_graph
 from saealib.core.runtime import NodeStatus, SequentialPlan
-from saealib.exceptions import ConfigurationError, ValidationError
+from saealib.exceptions import ValidationError
 from saealib.execution.evaluator import SerialEvaluator
 from saealib.execution.runtime import PipelineRuntime, _OptimizerEnvironment
 from saealib.optimizer import ComponentProvider
@@ -140,7 +140,7 @@ def test_sync_environment_executes_compiled_plan_without_strategy_step() -> None
         environment.execute(SequentialPlan.from_executable_plan(plan), _state())
 
 
-def test_mismatched_sync_async_strategy_tails_raise_configuration_error() -> None:
+def test_graph_builder_uses_one_pipeline_without_sync_async_tail_comparison() -> None:
     class MismatchedStrategy(OptimizationStrategy):
         def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
             if getattr(provider, "async_evaluation_scheduler", None) is None:
@@ -156,13 +156,14 @@ def test_mismatched_sync_async_strategy_tails_raise_configuration_error() -> Non
     class Provider:
         async_evaluation_scheduler = object()
 
-    with pytest.raises(
-        ConfigurationError,
-        match=r"MismatchedStrategy.*sync stage count=2.*async stage count=3",
-    ):
-        build_runtime_neutral_graph(
-            MismatchedStrategy(), cast(ComponentProvider, Provider())
-        )
+    graph = build_runtime_neutral_graph(
+        MismatchedStrategy(), cast(ComponentProvider, Provider())
+    )
+    assert tuple(node.component_id for node in graph.nodes[:3]) == (
+        "prefix",
+        "async_only",
+        "async_evaluation_submit",
+    )
 
 
 def test_order_view_ignores_data_only_synthetic_node_and_stage_self_loop() -> None:

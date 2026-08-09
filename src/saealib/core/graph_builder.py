@@ -516,12 +516,18 @@ def _decomposed_role_node(
     port: str,
 ) -> NodeRef | None:
     """Find the independently owned node for one declared data role."""
-    matches: list[NodeRef] = []
-    for part_node, node in part_nodes.values():
+    declared_matches: list[NodeRef] = []
+    held_matches: list[NodeRef] = []
+    for part_name, (part_node, node) in part_nodes.items():
         if _has_port(node.contract, role, port, direction):
-            matches.append(NodeRef(component_id=part_node, role=role))
-    if matches:
-        return matches[0] if len(matches) == 1 else None
+            target = (
+                declared_matches if not part_name.startswith("held_") else held_matches
+            )
+            target.append(NodeRef(component_id=part_node, role=role))
+    if declared_matches:
+        return declared_matches[0] if len(declared_matches) == 1 else None
+    if held_matches:
+        return held_matches[0] if len(held_matches) == 1 else None
     if _has_port(stage.contract, role, port, direction):
         return NodeRef(component_id=stage_node, role=role)
     return None

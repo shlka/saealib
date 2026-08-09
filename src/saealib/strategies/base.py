@@ -3,99 +3,53 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import cast
 
 from saealib.context import OptimizationState
 from saealib.core.compiler.graph import ComponentGraph
 from saealib.core.contracts import ComponentContract, PortContract, StateContract
-from saealib.core.graph_builder import build_component_graph
+from saealib.core.graph_builder import (
+    StageNodeAdapter,
+    build_decomposed_component_graph,
+)
 from saealib.core.state import PENDING_EVALUATIONS
-from saealib.exceptions import ConfigurationError
 from saealib.optimizer import ComponentProvider
-from saealib.pipeline import Pipeline, Stage
+from saealib.pipeline import Pipeline
 from saealib.policies.evaluation import EvaluateAll, EvaluationPlanner
 from saealib.policies.feedback import FeedbackBuilder, MixedFeedback
-from saealib.stages import (
-    AsyncEvaluationSubmitStage,
-    EvaluationPlanStage,
-    PendingEvaluationContextStage,
-    RuntimeNoOpStage,
-    RuntimeStage,
-)
-
-
-class _SyncGraphProvider:
-    """Forward a provider while disabling its async scheduler for graph shape."""
-
-    def __init__(self, provider: ComponentProvider) -> None:
-        self._provider = provider
-
-    @property
-    def async_evaluation_scheduler(self) -> None:
-        return None
-
-    def __getattr__(self, name: str) -> object:
-        return getattr(self._provider, name)
-
-
-def _graph_stages(pipeline: Pipeline) -> tuple[Stage, ...]:
-    """Remove typed pending-context stages from one graph-only pipeline."""
-    return tuple(
-        stage
-        for stage in pipeline.stages
-        if not isinstance(stage, PendingEvaluationContextStage)
-    )
 
 
 def build_runtime_neutral_graph(
     strategy: OptimizationStrategy, provider: ComponentProvider
 ) -> ComponentGraph:
-    """Build a canonical graph while retaining runtime-specific execution."""
-    scheduler = getattr(provider, "async_evaluation_scheduler", None)
-    sync_provider = _SyncGraphProvider(provider) if scheduler is not None else provider
-    sync_stages = _graph_stages(
-        strategy.build_pipeline(cast(ComponentProvider, sync_provider))
-    )
-    if scheduler is None:
-        return build_component_graph(Pipeline(list(sync_stages)))
+    """Build the strategy's one canonical graph topology.
 
-    async_stages = _graph_stages(strategy.build_pipeline(provider))
-    sync_tail = next(
-        index
-        for index, stage in enumerate(sync_stages)
-        if isinstance(stage, EvaluationPlanStage)
-    )
-    async_tail = next(
-        index
-        for index, stage in enumerate(async_stages)
-        if isinstance(stage, AsyncEvaluationSubmitStage)
-    )
-    if sync_tail != async_tail:
-        raise ConfigurationError(
-            f"{type(strategy).__name__} has mismatched sync/async strategy graph "
-            f"tails: sync stage count={len(sync_stages)}, "
-            f"async stage count={len(async_stages)}"
-        )
+    Runtime selection changes execution policy, never graph construction.
+    Built-in strategies supply one canonical Stage sequence; ``build_pipeline``
+    is reconstructed from this graph only for compatibility callers.
+    """
+    build_stages = getattr(strategy, "_build_stages", None)
+    if callable(build_stages):
+        pipeline = Pipeline(list(build_stages(provider)))
+    else:
+        pipeline = strategy.build_pipeline(provider)
+    return build_decomposed_component_graph(pipeline)
 
-    bridged: list[Stage] = []
-    for index, sync_stage in enumerate(sync_stages):
-        if index < sync_tail:
-            async_stage = async_stages[index]
-        elif index == sync_tail:
-            async_stage = async_stages[async_tail]
-        else:
-            async_stage = RuntimeNoOpStage()
-        bridged.append(RuntimeStage(sync_stage, async_stage, async_mode=True))
-    return build_component_graph(Pipeline(bridged))
+
+def build_pipeline_from_graph(graph: ComponentGraph) -> Pipeline:
+    """Recover the legacy Stage facade from a canonical strategy graph."""
+    stages = [
+        node.component.stage
+        for node in graph.nodes
+        if isinstance(node.component, StageNodeAdapter)
+    ]
+    return Pipeline(stages)
 
 
 class OptimizationStrategy(ABC):
     """Base class for optimization strategies.
 
-    Strategies compose their generation logic from a pipeline built for each
-    step.  ``build_pipeline`` is the public extension contract, so provider
-    replacements and strategy parameter changes are observed on the next
-    execution.
+    Strategies compose their generation logic from one canonical pipeline.
+    ``build_pipeline`` remains the public compatibility facade.
     """
 
     # Optimizer.validate() checks this to ensure surrogate_manager is configured.
@@ -119,6 +73,10 @@ class OptimizationStrategy(ABC):
         """Build the next pipeline from the current component provider."""
         ...
 
+    def build_graph(self, provider: ComponentProvider) -> ComponentGraph:
+        """Build the canonical graph, retaining the legacy pipeline hook."""
+        return build_runtime_neutral_graph(self, provider)
+
     def step(
         self, ctx: OptimizationState, provider: ComponentProvider
     ) -> OptimizationState:
@@ -137,4 +95,6 @@ class OptimizationStrategy(ABC):
         OptimizationState
             Updated state returned by the pipeline.
         """
-        return self.build_pipeline(provider).execute(ctx)
+        from saealib.execution.runtime import execute_strategy_step
+
+        return execute_strategy_step(self, ctx, provider)

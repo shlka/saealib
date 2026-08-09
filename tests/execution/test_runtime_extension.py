@@ -11,7 +11,7 @@ from pymoo.algorithms.soo.nonconvex.ga import GA as PymooGA  # noqa: N811
 
 from saealib.algorithms.pymoo_algorithm import PymooAlgorithm
 from saealib.context import OptimizationState
-from saealib.core.compiler.compiler import ExecutablePlan
+from saealib.core.compiler.compiler import CompileContext, Compiler, ExecutablePlan
 from saealib.core.compiler.graph import ComponentGraph, ComponentNode
 from saealib.core.contracts import ComponentContract, ExecutionContract
 from saealib.core.runtime import (
@@ -20,6 +20,7 @@ from saealib.core.runtime import (
     RequestRecompile,
     RuntimeStep,
 )
+from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
 from saealib.core.state.patch import StatePatch
 from saealib.exceptions import ConfigurationError, StalePlanError, ValidationError
 from saealib.execution import AsyncEvaluationScheduler, SerialEvaluator
@@ -33,7 +34,7 @@ from saealib.execution.runtime import (
 from saealib.islands import IslandModel
 from saealib.optimizer import Optimizer
 from saealib.problem import Problem
-from saealib.stages import AsyncEvaluationSubmitStage, EvaluationPlanStage, RuntimeStage
+from saealib.stages import EvaluationPlanStage
 from saealib.strategies.direct import DirectStrategy, SteadyStateStrategy
 from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
@@ -221,7 +222,7 @@ def test_real_strategy_graphs_compile_and_initialize_selected_runtimes() -> None
             .set_strategy(DirectStrategy(n_offspring=4))
         ],
     }
-    expected_plan_shapes = {"island": (11, 3), "pymoo": (11, 3)}
+    expected_plan_shapes = {"island": (34, 3), "pymoo": (18, 3)}
 
     for name, optimizers in configurations.items():
         for optimizer in optimizers:
@@ -293,29 +294,66 @@ def test_strategy_graph_signatures_are_runtime_neutral() -> None:
         assert _graph_signature(sync) == _graph_signature(async_optimizer)
 
 
-def test_async_runtime_stage_dispatches_submit_callable_with_sync_graph_contract() -> (
-    None
-):
+def test_five_strategy_graphs_compile_with_runtime_neutral_topology() -> None:
+    strategy_factories = (
+        lambda: DirectStrategy(n_offspring=4),
+        SteadyStateStrategy,
+        lambda: GenerationBasedStrategy(gen_ctrl=2),
+        lambda: IndividualBasedStrategy(evaluation_ratio=0.5),
+        lambda: PreSelectionStrategy(n_candidates=8, n_select=2),
+    )
+
+    for make_strategy in strategy_factories:
+        sync = Optimizer(_problem()).set_strategy(make_strategy())
+        asynchronous = Optimizer(_problem()).set_strategy(make_strategy())
+        asynchronous.set_async_evaluation_scheduler(
+            AsyncEvaluationScheduler(SerialEvaluator())
+        )
+        sync._resolve_defaults()
+        asynchronous._resolve_defaults()
+        sync_graph = cast(Any, sync.strategy).build_graph(sync)
+        async_graph = cast(Any, asynchronous.strategy).build_graph(asynchronous)
+
+        assert _graph_signature(sync) == _graph_signature(asynchronous)
+        for optimizer, graph in ((sync, sync_graph), (asynchronous, async_graph)):
+            plan = Compiler().compile(
+                graph,
+                CompileContext(
+                    space=optimizer.problem.space,
+                    problem=optimizer.problem,
+                    offered_runtime_capabilities=(
+                        frozenset({"partial_feedback"})
+                        if optimizer.async_evaluation_scheduler is not None
+                        else frozenset()
+                    ),
+                    initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
+                ),
+            )
+            assert [
+                diagnostic
+                for diagnostic in plan.diagnostics
+                if diagnostic.severity.name == "ERROR"
+            ] == []
+
+
+def test_async_runtime_uses_canonical_sync_graph_contract() -> None:
     optimizer = Optimizer(_problem()).set_async_evaluation_scheduler(
         AsyncEvaluationScheduler(SerialEvaluator())
     )
     optimizer._resolve_defaults()
     graph = cast(Any, optimizer.strategy).build_graph(optimizer)
     node = graph.node_by_id("evaluation_plan")
-    bridge = node.component.stage
-
-    assert isinstance(bridge, RuntimeStage)
-    assert isinstance(bridge.sync_stage, EvaluationPlanStage)
-    assert bridge.async_mode
-    assert bridge._async_execute is not None
-    assert isinstance(bridge._async_execute.__self__, AsyncEvaluationSubmitStage)
-    assert (
-        tuple(item.component_id for item in graph.nodes)[-1] == "evaluation_acknowledge"
+    stage = node.component.stage
+    assert isinstance(stage, EvaluationPlanStage)
+    assert all(
+        "runtime" not in type(item.component.stage).__name__.lower()
+        for item in graph.nodes
+        if hasattr(item.component, "stage")
     )
-    assert any(
-        edge.source.component_id == "feedback" and edge.target.component_id == "tell"
-        for edge in graph.data_edges
-    )
+    stage_ids = [
+        item.component_id for item in graph.nodes if hasattr(item.component, "stage")
+    ]
+    assert stage_ids[-1] == "evaluation_acknowledge"
 
 
 def test_replaced_default_registration_is_selected() -> None:

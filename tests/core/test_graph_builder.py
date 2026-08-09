@@ -139,13 +139,16 @@ def test_graph_nodes_match_actual_pipeline_and_preselection_has_no_top_k_stage()
     for strategy in _strategies():
         pipeline = strategy.build_pipeline(provider)
         graph = strategy.build_graph(provider)
+        stage_nodes = [
+            node for node in graph.nodes if isinstance(node.component, StageNodeAdapter)
+        ]
 
-        assert [node.component.stage.name for node in graph.nodes] == [
+        assert [node.component.stage.name for node in stage_nodes] == [
             stage.name for stage in pipeline.stages
         ]
         assert all(
             node.component.stage.__class__.__name__ != "TopKSelectionStage"
-            for node in graph.nodes
+            for node in stage_nodes
         )
 
 
@@ -225,6 +228,10 @@ def test_all_strategy_data_edges_resolve_to_declared_directional_ports():
 
     for strategy in _strategies():
         graph = strategy.build_graph(provider)
+
+        def stage_id(component_id: str) -> str:
+            return component_id.split("__", 1)[0]
+
         expected = common | (
             surrogate
             if isinstance(strategy, (IndividualBasedStrategy, PreSelectionStrategy))
@@ -232,10 +239,10 @@ def test_all_strategy_data_edges_resolve_to_declared_directional_ports():
         )
         assert {
             (
-                edge.source.component_id,
+                stage_id(edge.source.component_id),
                 edge.source.role,
                 edge.source_port,
-                edge.target.component_id,
+                stage_id(edge.target.component_id),
                 edge.target.role,
                 edge.target_port,
             )

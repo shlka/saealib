@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from saealib.core.compiler.graph import ComponentGraph
-from saealib.pipeline import Pipeline
+from saealib.pipeline import Pipeline, Stage
 from saealib.policies.evaluation import TopKEvaluation
 from saealib.policies.feedback import FeedbackBuilder, TrueOnlyFeedback
 from saealib.registry import register
@@ -17,7 +17,6 @@ from saealib.stages import (
     AcquisitionStage,
     ArchiveUpdateStage,
     AskStage,
-    AsyncEvaluationSubmitStage,
     CountGenerationStage,
     EvaluationAcknowledgeStage,
     EvaluationApplyStage,
@@ -25,12 +24,12 @@ from saealib.stages import (
     EvaluationPlanStage,
     EvaluationSubmitStage,
     FeedbackStage,
-    PendingEvaluationContextStage,
     SurrogatePredictStage,
     TellStage,
 )
 from saealib.strategies.base import (
     OptimizationStrategy,
+    build_pipeline_from_graph,
     build_runtime_neutral_graph,
 )
 
@@ -84,10 +83,9 @@ class PreSelectionStrategy(OptimizationStrategy):
 
     feedback_builder = TrueOnlyFeedback()
 
-    def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
-        """Build the current pre-selection pipeline."""
+    def _build_stages(self, provider: ComponentProvider) -> tuple[Stage, ...]:
+        """Build the canonical pre-selection Stage sequence."""
         cbmanager = getattr(provider, "cbmanager", None)
-        scheduler = getattr(provider, "async_evaluation_scheduler", None)
         evaluation_planner = (
             getattr(provider, "evaluation_planner", None) or self.evaluation_planner
         )
@@ -96,53 +94,34 @@ class PreSelectionStrategy(OptimizationStrategy):
         )
         if feedback_builder is None:
             feedback_builder = self.feedback_builder
-        if scheduler is not None:
-            evaluation_tail = [
-                AsyncEvaluationSubmitStage(
-                    scheduler,
-                    evaluation_planner,
-                    feedback_builder,
-                    provider.algorithm,
-                    cbmanager,
-                )
-            ]
-        else:
-            evaluation_tail = [
-                EvaluationPlanStage(evaluation_planner),
-                EvaluationSubmitStage(provider.evaluator),
-                EvaluationCollectStage(provider.evaluator),
-                EvaluationApplyStage(),
-                ArchiveUpdateStage(),
-                FeedbackStage(feedback_builder),
-                TellStage(provider.algorithm),
-                EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
-            ]
-        return Pipeline(
-            [
-                CountGenerationStage(),
-                *(
-                    [PendingEvaluationContextStage(scheduler)]
-                    if scheduler is not None
-                    else []
-                ),
-                AskStage(
-                    provider.algorithm,
-                    n_offspring=self.n_candidates,
-                    cbmanager=cbmanager,
-                ),
-                SurrogatePredictStage(provider.surrogate_manager, cbmanager=cbmanager),
-                *(
-                    [PendingEvaluationContextStage(scheduler)]
-                    if scheduler is not None
-                    else []
-                ),
-                AcquisitionStage(
-                    provider.acquisition,
-                    cbmanager=cbmanager,
-                ),
-                *evaluation_tail,
-            ]
+        evaluation_tail = [
+            EvaluationPlanStage(evaluation_planner),
+            EvaluationSubmitStage(provider.evaluator),
+            EvaluationCollectStage(provider.evaluator),
+            EvaluationApplyStage(),
+            ArchiveUpdateStage(),
+            FeedbackStage(feedback_builder),
+            TellStage(provider.algorithm),
+            EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
+        ]
+        return (
+            CountGenerationStage(),
+            AskStage(
+                provider.algorithm,
+                n_offspring=self.n_candidates,
+                cbmanager=cbmanager,
+            ),
+            SurrogatePredictStage(provider.surrogate_manager, cbmanager=cbmanager),
+            AcquisitionStage(
+                provider.acquisition,
+                cbmanager=cbmanager,
+            ),
+            *evaluation_tail,
         )
+
+    def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
+        """Return the legacy pipeline facade for the canonical graph."""
+        return build_pipeline_from_graph(self.build_graph(provider))
 
     def build_graph(self, provider: ComponentProvider) -> ComponentGraph:
         """Build the graph view of the current pre-selection pipeline."""
@@ -169,12 +148,4 @@ class PreSelectionStrategy(OptimizationStrategy):
         OptimizationState
             Updated state after one generation step.
         """
-        scheduler = getattr(provider, "async_evaluation_scheduler", None)
-        if scheduler is not None and ctx.pending_evaluations:
-            ctx = scheduler.poll(ctx, wait=False)
-            if not ctx.pending_evaluations:
-                return ctx
-            if len(ctx.pending_evaluations) >= scheduler.max_pending:
-                return ctx
-        self.pipeline = self.build_pipeline(provider)
-        return self.pipeline.execute(ctx)
+        return super().step(ctx, provider)

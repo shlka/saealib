@@ -36,6 +36,7 @@ from saealib.core.compiler import (
 from saealib.core.compiler.contract_diagnostics import (
     check_pymoo_feedback_compatibility,
 )
+from saealib.core.compiler.graph import ComponentGraph
 from saealib.core.contracts import ComponentContract
 from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
 from saealib.exceptions import ConfigurationError, ValidationError
@@ -353,6 +354,9 @@ class Optimizer:
             return None
 
         graph = build_graph(self)
+        if not isinstance(graph, ComponentGraph):
+            self._executable_plan = None
+            return None
         plan = Compiler().compile(
             graph,
             CompileContext(

@@ -5,14 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from saealib.core.compiler.graph import ComponentGraph
-from saealib.pipeline import Pipeline
+from saealib.pipeline import Pipeline, Stage
 from saealib.policies.evaluation import EvaluateAll
 from saealib.policies.feedback import FeedbackBuilder, TrueOnlyFeedback
 from saealib.registry import register
 from saealib.stages import (
     ArchiveUpdateStage,
     AskStage,
-    AsyncEvaluationSubmitStage,
     CountGenerationStage,
     EvaluationAcknowledgeStage,
     EvaluationApplyStage,
@@ -20,16 +19,15 @@ from saealib.stages import (
     EvaluationPlanStage,
     EvaluationSubmitStage,
     FeedbackStage,
-    PendingEvaluationContextStage,
     TellStage,
 )
 from saealib.strategies.base import (
     OptimizationStrategy,
+    build_pipeline_from_graph,
     build_runtime_neutral_graph,
 )
 
 if TYPE_CHECKING:
-    from saealib.context import OptimizationState
     from saealib.optimizer import ComponentProvider
 
 
@@ -52,10 +50,9 @@ class DirectStrategy(OptimizationStrategy):
         self.n_offspring = n_offspring
         self.pipeline: Pipeline | None = None
 
-    def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
-        """Build the current direct evaluation pipeline."""
+    def _build_stages(self, provider: ComponentProvider) -> tuple[Stage, ...]:
+        """Build the canonical direct Stage sequence."""
         cbmanager = getattr(provider, "cbmanager", None)
-        scheduler = getattr(provider, "async_evaluation_scheduler", None)
         evaluation_planner = (
             getattr(provider, "evaluation_planner", None) or self.evaluation_planner
         )
@@ -64,72 +61,33 @@ class DirectStrategy(OptimizationStrategy):
         )
         if feedback_builder is None:
             feedback_builder = self.feedback_builder
-        if scheduler is not None:
-            evaluation_tail = [
-                AsyncEvaluationSubmitStage(
-                    scheduler,
-                    evaluation_planner,
-                    feedback_builder,
-                    provider.algorithm,
-                    cbmanager,
-                )
-            ]
-        else:
-            evaluation_tail = [
-                EvaluationPlanStage(evaluation_planner),
-                EvaluationSubmitStage(provider.evaluator),
-                EvaluationCollectStage(provider.evaluator),
-                EvaluationApplyStage(),
-                ArchiveUpdateStage(),
-                FeedbackStage(feedback_builder),
-                TellStage(provider.algorithm),
-                EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
-            ]
-        return Pipeline(
-            [
-                CountGenerationStage(),
-                *(
-                    [PendingEvaluationContextStage(scheduler)]
-                    if scheduler is not None
-                    else []
-                ),
-                AskStage(
-                    provider.algorithm,
-                    n_offspring=self.n_offspring,
-                    cbmanager=cbmanager,
-                ),
-                *evaluation_tail,
-            ]
+        evaluation_tail = [
+            EvaluationPlanStage(evaluation_planner),
+            EvaluationSubmitStage(provider.evaluator),
+            EvaluationCollectStage(provider.evaluator),
+            EvaluationApplyStage(),
+            ArchiveUpdateStage(),
+            FeedbackStage(feedback_builder),
+            TellStage(provider.algorithm),
+            EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
+        ]
+        return (
+            CountGenerationStage(),
+            AskStage(
+                provider.algorithm,
+                n_offspring=self.n_offspring,
+                cbmanager=cbmanager,
+            ),
+            *evaluation_tail,
         )
 
+    def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
+        """Return the legacy pipeline facade for the canonical graph."""
+        return build_pipeline_from_graph(self.build_graph(provider))
+
     def build_graph(self, provider: ComponentProvider) -> ComponentGraph:
-        """Build the graph view of the current pipeline configuration."""
+        """Build the canonical direct strategy graph."""
         return build_runtime_neutral_graph(self, provider)
-
-    def step(
-        self, ctx: OptimizationState, provider: ComponentProvider
-    ) -> OptimizationState:
-        """Evaluate all offspring with the true objective function.
-
-        Rebuilds the pipeline each call so component/parameter changes take
-        effect immediately.
-
-        Parameters
-        ----------
-        ctx : OptimizationState
-            Current optimization context.
-        provider : ComponentProvider
-            Component provider.
-        """
-        scheduler = getattr(provider, "async_evaluation_scheduler", None)
-        if scheduler is not None and ctx.pending_evaluations:
-            ctx = scheduler.poll(ctx, wait=False)
-            if not ctx.pending_evaluations:
-                return ctx
-            if len(ctx.pending_evaluations) >= scheduler.max_pending:
-                return ctx
-        self.pipeline = self.build_pipeline(provider)
-        return self.pipeline.execute(ctx)
 
 
 @register()

@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from types import SimpleNamespace
 from typing import Any, Protocol, cast
 
 from saealib.callback import (
@@ -19,6 +20,7 @@ from saealib.context import OptimizationState
 from saealib.core.compiler.compiler import CompileContext, Compiler, ExecutablePlan
 from saealib.core.contracts.execution import RuntimeCapability
 from saealib.core.contracts.vocabulary import validate_name
+from saealib.core.graph_builder import build_decomposed_component_graph
 from saealib.core.runtime import (
     ExecutionRuntime,
     NodeResult,
@@ -31,6 +33,7 @@ from saealib.core.runtime import (
 from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
 from saealib.core.state.patch import StatePatch
 from saealib.exceptions import ConfigurationError, EvaluationFatalError, ValidationError
+from saealib.stages import AsyncEvaluationSubmitStage
 
 __all__ = [
     "AsyncPipelineRuntime",
@@ -40,6 +43,7 @@ __all__ = [
     "RuntimeRegistry",
     "create_runtime",
     "default_runtime_registry",
+    "execute_strategy_step",
     "resolve_plan",
 ]
 
@@ -107,7 +111,7 @@ def _algorithm_runtime_capabilities(
 
 
 class _OptimizerEnvironment:
-    """Temporary adapter for the pre-L4 optimizer/scheduler workflow.
+    """Runtime environment adapter for optimizer-owned services.
 
     This is intentionally outside Runner.  L4 can replace this adapter with an
     async environment without changing the runtime protocol or facade.
@@ -132,22 +136,20 @@ class _OptimizerEnvironment:
     def execute(
         self, plan: SequentialPlan, state: OptimizationState
     ) -> OptimizationState:
-        current_fingerprint = self._fingerprint()
-        if current_fingerprint != self._execution_fingerprint:
-            # Runtime extension seam: provider changes refresh execution
-            # stages without recompiling the immutable plan or re-entering
-            # strategy.step(). The unchanged path executes the plan.
-            pipeline = self.optimizer.strategy.build_pipeline(self.optimizer)
-            self._execution_fingerprint = current_fingerprint
-            return pipeline.execute(state)
-        return _execute_sequential_plan(plan, state)
+        self._refresh_plan_if_needed()
+        return _execute_sequential_plan(self.plan, state)
 
     def _fingerprint(self) -> tuple[object, ...]:
-        strategy = self.optimizer.strategy
-        strategy_values = tuple(
-            (name, repr(value))
-            for name, value in vars(strategy).items()
-            if name != "pipeline"
+        """Capture provider and strategy inputs that shape the executable graph."""
+        strategy = getattr(self.optimizer, "strategy", None)
+        strategy_values = (
+            tuple(
+                (name, repr(value))
+                for name, value in vars(strategy).items()
+                if name != "pipeline"
+            )
+            if strategy is not None
+            else ()
         )
         provider_values = tuple(
             (name, id(getattr(self.optimizer, name, None)))
@@ -161,12 +163,102 @@ class _OptimizerEnvironment:
         )
         return strategy_values + provider_values
 
+    def _refresh_plan_if_needed(self) -> None:
+        """Recompile through the runtime when graph-shaping inputs changed."""
+        current_fingerprint = self._fingerprint()
+        if current_fingerprint == self._execution_fingerprint:
+            return
+        strategy = getattr(self.optimizer, "strategy", None)
+        build_graph = getattr(strategy, "build_graph", None)
+        problem = getattr(self.optimizer, "problem", None)
+        if not callable(build_graph) or problem is None:
+            raise ValidationError(
+                "runtime plan refresh requires strategy.build_graph and problem"
+            )
+        graph = build_graph(self.optimizer)
+        executable = Compiler().compile(
+            graph,
+            CompileContext(
+                space=problem.space,
+                problem=problem,
+                offered_runtime_capabilities=default_runtime_registry.offered_capabilities(
+                    self.optimizer
+                ),
+                initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
+            ),
+        )
+        validate_plan_contracts(executable)
+        self.plan = SequentialPlan.from_executable_plan(executable)
+        if hasattr(self.optimizer, "_executable_plan"):
+            self.optimizer._executable_plan = executable
+        self._execution_fingerprint = current_fingerprint
+
     def execute_async(
         self, plan: SequentialPlan, state: OptimizationState
     ) -> OptimizationState:
-        # Temporary L5 bridge: scheduler poll/commit still owns direct
-        # feedback/tell delivery while execution follows the compiled plan.
-        return _execute_sequential_plan(plan, state)
+        """Execute the canonical graph through the async runtime dispatcher.
+
+        The graph contains the synchronous evaluation contract for both
+        modes.  Async runtime owns submission and scheduler feedback delivery;
+        the graph's synchronous submit/collect/apply/feedback/tell tail is not
+        executed, preventing a second tell for the same proposal.
+        """
+        scheduler = getattr(self.optimizer, "async_evaluation_scheduler", None)
+        if scheduler is None:
+            raise ValidationError("Async runtime requires an evaluation scheduler")
+        self._refresh_plan_if_needed()
+        nodes = self.plan.execution_nodes
+        plan_index = next(
+            (
+                index
+                for index, node in enumerate(nodes)
+                if getattr(getattr(node.component, "stage", None), "name", None)
+                == "evaluation_plan"
+            ),
+            None,
+        )
+        if plan_index is None:
+            # Keep the runtime seam useful for small custom plans that do not
+            # contain the optimization evaluation protocol.
+            return _execute_sequential_plan(self.plan, state)
+
+        current = state
+        plan_state = current.evaluation_plan_state
+        plan_is_terminal = (
+            current.evaluation_plan is not None
+            and plan_state is not None
+            and all(
+                int(item.request_id)
+                in set(plan_state.completed) | set(plan_state.acknowledged)
+                for item in current.evaluation_plan.requests
+            )
+        )
+        if current.evaluation_plan is None or plan_is_terminal:
+            for node in nodes[:plan_index]:
+                execute = getattr(node.component, "execute", None)
+                if not callable(execute):
+                    raise ValidationError(
+                        f"SequentialPlan node {node.component_id!r} is not executable"
+                    )
+                current = execute(current)
+
+        plan_stage = getattr(nodes[plan_index].component, "stage", None)
+        planner = getattr(plan_stage, "_planner", None)
+        if planner is None:
+            raise ValidationError("evaluation_plan node has no planner")
+        strategy = self.optimizer.strategy
+        builder = getattr(self.optimizer, "feedback_builder", None)
+        if builder is None:
+            builder = getattr(strategy, "feedback_builder", None)
+        cbmanager = getattr(self.optimizer, "cbmanager", None)
+        async_submit = AsyncEvaluationSubmitStage(
+            scheduler,
+            planner,
+            builder,
+            getattr(self.optimizer, "algorithm", None),
+            cbmanager,
+        )
+        return async_submit.execute(current)
 
     def reattach(self, state: OptimizationState) -> OptimizationState:
         scheduler = getattr(self.optimizer, "async_evaluation_scheduler", None)
@@ -208,6 +300,57 @@ class _OptimizerEnvironment:
             raise EvaluationFatalError(
                 str(state.async_fatal.get("reason", "async fatal")), state
             )
+
+
+def execute_strategy_step(
+    strategy: object, state: OptimizationState, provider: object
+) -> OptimizationState:
+    """Compatibility step facade with async lifecycle owned by Runtime.
+
+    This supports callers that still invoke ``strategy.step`` directly.  The
+    strategy contributes only its canonical pipeline; scheduler polling,
+    capacity checks, and async submission remain runtime responsibilities.
+    """
+    scheduler = getattr(provider, "async_evaluation_scheduler", None)
+    build_pipeline = cast(Any, getattr(strategy, "build_pipeline", None))
+    if not callable(build_pipeline):
+        raise ValidationError("strategy requires a callable build_pipeline")
+    if scheduler is None:
+        pipeline = build_pipeline(provider)
+        setattr(strategy, "pipeline", pipeline)
+        return pipeline.execute(state)
+    if state.pending_evaluations:
+        state = scheduler.poll(state, wait=False)
+        if (
+            not state.pending_evaluations
+            or len(state.pending_evaluations) >= scheduler.max_pending
+        ):
+            return state
+    pipeline = build_pipeline(provider)
+    graph = build_decomposed_component_graph(pipeline)
+    plan = Compiler().compile(
+        graph,
+        CompileContext(
+            space=state.problem.space,
+            problem=state.problem,
+            offered_runtime_capabilities=frozenset({"partial_feedback"}),
+            initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
+        ),
+    )
+    optimizer = SimpleNamespace(
+        strategy=strategy,
+        problem=state.problem,
+        algorithm=getattr(provider, "algorithm", None),
+        evaluator=getattr(provider, "evaluator", None),
+        feedback_builder=getattr(provider, "feedback_builder", None),
+        cbmanager=getattr(provider, "cbmanager", None),
+        async_evaluation_scheduler=scheduler,
+    )
+    setattr(strategy, "pipeline", pipeline)
+    environment = _OptimizerEnvironment(
+        optimizer, SequentialPlan.from_executable_plan(plan)
+    )
+    return environment.execute_async(environment.plan, state)
 
 
 class PipelineRuntime:

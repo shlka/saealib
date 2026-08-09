@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from saealib.core.compiler.graph import ComponentGraph
-from saealib.pipeline import Pipeline
+from saealib.pipeline import Pipeline, Stage
 from saealib.policies.feedback import (
     FeedbackBuilder,
     MixedFeedback,
@@ -21,7 +21,6 @@ from saealib.registry import register
 from saealib.stages import (
     ArchiveUpdateStage,
     AskStage,
-    AsyncEvaluationSubmitStage,
     CountGenerationStage,
     EvaluationAcknowledgeStage,
     EvaluationApplyStage,
@@ -29,12 +28,12 @@ from saealib.stages import (
     EvaluationPlanStage,
     EvaluationSubmitStage,
     FeedbackStage,
-    PendingEvaluationContextStage,
     SurrogateOnlyLoopStage,
     TellStage,
 )
 from saealib.strategies.base import (
     OptimizationStrategy,
+    build_pipeline_from_graph,
     build_runtime_neutral_graph,
 )
 
@@ -64,10 +63,9 @@ class GenerationBasedStrategy(OptimizationStrategy):
         self.gen_ctrl = gen_ctrl
         self.pipeline: Pipeline | None = None
 
-    def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
-        """Build the current generation-based pipeline."""
+    def _build_stages(self, provider: ComponentProvider) -> tuple[Stage, ...]:
+        """Build the canonical generation-based Stage sequence."""
         cbmanager = getattr(provider, "cbmanager", None)
-        scheduler = getattr(provider, "async_evaluation_scheduler", None)
         evaluation_planner = (
             getattr(provider, "evaluation_planner", None) or self.evaluation_planner
         )
@@ -78,50 +76,36 @@ class GenerationBasedStrategy(OptimizationStrategy):
             feedback_builder = cast(FeedbackBuilder | None, configured_builder)
         if feedback_builder is None:
             feedback_builder = self.true_feedback_builder
-        if scheduler is not None:
-            evaluation_tail = [
-                AsyncEvaluationSubmitStage(
-                    scheduler,
-                    evaluation_planner,
-                    feedback_builder,
-                    provider.algorithm,
-                    cbmanager,
-                )
-            ]
-        else:
-            evaluation_tail = [
-                EvaluationPlanStage(evaluation_planner),
-                EvaluationSubmitStage(provider.evaluator),
-                EvaluationCollectStage(provider.evaluator),
-                EvaluationApplyStage(),
-                ArchiveUpdateStage(),
-                FeedbackStage(feedback_builder),
-                TellStage(provider.algorithm),
-                EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
-            ]
-        return Pipeline(
-            [
-                SurrogateOnlyLoopStage(
-                    provider.algorithm,
-                    provider.surrogate_manager,
-                    self.gen_ctrl,
-                    cbmanager,
-                    acquisition=provider.acquisition,
-                    feedback_builder=PredictedFeedback(),
-                ),
-                CountGenerationStage(),
-                *(
-                    [PendingEvaluationContextStage(scheduler)]
-                    if scheduler is not None
-                    else []
-                ),
-                AskStage(provider.algorithm, cbmanager=cbmanager),
-                *evaluation_tail,
-            ]
+        evaluation_tail = [
+            EvaluationPlanStage(evaluation_planner),
+            EvaluationSubmitStage(provider.evaluator),
+            EvaluationCollectStage(provider.evaluator),
+            EvaluationApplyStage(),
+            ArchiveUpdateStage(),
+            FeedbackStage(feedback_builder),
+            TellStage(provider.algorithm),
+            EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
+        ]
+        return (
+            SurrogateOnlyLoopStage(
+                provider.algorithm,
+                provider.surrogate_manager,
+                self.gen_ctrl,
+                cbmanager,
+                acquisition=provider.acquisition,
+                feedback_builder=PredictedFeedback(),
+            ),
+            CountGenerationStage(),
+            AskStage(provider.algorithm, cbmanager=cbmanager),
+            *evaluation_tail,
         )
 
+    def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
+        """Return the legacy pipeline facade for the canonical graph."""
+        return build_pipeline_from_graph(self.build_graph(provider))
+
     def build_graph(self, provider: ComponentProvider) -> ComponentGraph:
-        """Build the graph view of the current generation pipeline."""
+        """Build the canonical generation-based strategy graph."""
         return build_runtime_neutral_graph(self, provider)
 
     def step(
@@ -139,12 +123,4 @@ class GenerationBasedStrategy(OptimizationStrategy):
         provider : ComponentProvider
             Component provider.
         """
-        scheduler = getattr(provider, "async_evaluation_scheduler", None)
-        if scheduler is not None and ctx.pending_evaluations:
-            ctx = scheduler.poll(ctx, wait=False)
-            if not ctx.pending_evaluations:
-                return ctx
-            if len(ctx.pending_evaluations) >= scheduler.max_pending:
-                return ctx
-        self.pipeline = self.build_pipeline(provider)
-        return self.pipeline.execute(ctx)
+        return super().step(ctx, provider)

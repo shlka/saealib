@@ -354,11 +354,8 @@ def test_held_component_contract_is_a_part_not_the_stage_state_contract() -> Non
     assert ask.parts[0].contract.state != ask.state
 
 
-def test_bridge_stages_are_explicitly_outside_the_operational_inventory() -> None:
-    from saealib.stages import RuntimeNoOpStage, RuntimeStage
-
-    assert RuntimeNoOpStage not in OPERATIONAL_STAGES
-    assert RuntimeStage not in OPERATIONAL_STAGES
+def test_operational_inventory_contains_only_real_stage_types() -> None:
+    assert all(issubclass(stage_type, Stage) for stage_type in OPERATIONAL_STAGES)
 
 
 def test_existing_pseudocode_remains_name_and_notation_stable() -> None:

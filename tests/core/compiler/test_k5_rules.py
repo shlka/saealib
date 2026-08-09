@@ -167,7 +167,7 @@ def test_object_space_rbf_without_encoder_is_rejected() -> None:
     ]
     assert len(findings) == 1
     finding = findings[0]
-    assert "surrogate_predict[predictor].candidates" in str(finding.related[0])
+    assert "surrogate_predict___sm[predictor].candidates" in str(finding.related[0])
     assert "FeatureEncoder" in finding.message
     assert "DenseNumericView" in finding.message
     assert finding.resolutions
