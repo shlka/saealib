@@ -40,7 +40,12 @@ from saealib.callback import (
     SurrogateStartEvent,
 )
 from saealib.context import EvaluationPlanState
-from saealib.core.contracts import ComponentContract, PartSpec, StateContract
+from saealib.core.contracts import (
+    ComponentContract,
+    FeedbackBatch,
+    PartSpec,
+    StateContract,
+)
 from saealib.core.contracts.execution import ExecutionContract
 from saealib.core.contracts.feedback import FeedbackChannel
 from saealib.core.contracts.observation import SURROGATE, TRUE
@@ -218,6 +223,38 @@ def _apply_component_patch(state: OptimizationState, patch: StatePatch) -> None:
         raise ValidationError("feedback consumer must return a StatePatch")
     if patch.writes or patch.deletes:
         state._store = state._store.apply_patch(patch)
+
+
+def deliver_feedback(
+    consumer: Any,
+    feedback: FeedbackBatch,
+    state: OptimizationState,
+    *,
+    legacy: bool = False,
+) -> None:
+    """Deliver one final feedback batch through the canonical tell boundary."""
+    reads = getattr(consumer, "_state_reads", None)
+    if reads is None:
+        contract = getattr(consumer, "contract", None)
+        reads = (
+            contract().state if callable(contract) else (POPULATIONS_MAIN, RUNTIME_RNG)
+        )
+    if legacy:
+        state_view = LegacyAlgorithmStateView(state._store, reads, state)
+    else:
+        state_view = state._store.view(reads)
+    patch = consumer.tell(feedback, state_view)
+    _apply_component_patch(state, patch)
+
+
+def deliver_legacy_population_feedback(
+    algorithm: Any,
+    state: OptimizationState,
+    provider: Any,
+    offspring: Any,
+) -> None:
+    """Keep the pre-J7b population tell signature at one compatibility seam."""
+    algorithm.tell(state, provider, offspring)
 
 
 def _sync_feedback_metadata(
@@ -2012,14 +2049,12 @@ class TellStage(Stage):
             final=final,
             sequence=sequence,
         )
-        if self._legacy_adapter:
-            state_view = LegacyAlgorithmStateView(
-                state._store, self._state_reads, state
-            )
-        else:
-            state_view = state._store.view(self._state_reads)
-        patch = self._algorithm.tell(feedback, state_view)
-        _apply_component_patch(state, patch)
+        deliver_feedback(
+            self._algorithm,
+            feedback,
+            state,
+            legacy=self._legacy_adapter,
+        )
         return state
 
 

@@ -127,10 +127,8 @@ class _OptimizerEnvironment:
             getattr(insertion, "adapter_name", None) == "feedback_accumulator"
             for insertion in plan.plan.inserted_adapters
         ):
-            # The Phase 6 compiler insertion is a self-loop inside the coarse
-            # StageNodeAdapter.  Phase 7 Stage decomposition will make it an
-            # executable graph node; until then this scheduler seam is the
-            # only real delivery point for the inserted accumulator.
+            # The Phase 7 graph contains the accumulator delivery boundary;
+            # this seam only enables its stateful async runtime service.
             scheduler.enable_feedback_accumulator()
 
     def execute(

@@ -27,6 +27,7 @@ from saealib.core.contracts.observations import (
     ObservationRecord,
     ObservationRecords,
     ObservationSchema,
+    ObservationSubject,
     QuantityRef,
 )
 from saealib.core.contracts.proposals import (
@@ -351,3 +352,97 @@ def test_selection_policy_call_count_is_constant_across_candidate_counts() -> No
         assert accumulator.pop_ready() is not None
 
     assert call_counts == [1, 1]
+
+
+def test_partial_out_of_order_retry_snapshot_restores_continuation() -> None:
+    """The codec retains sequence, duplicate identity, and accepted records."""
+    contract = _contract(ordering=OUT_OF_ORDER_ALLOWED)
+    continuous = FeedbackAccumulator(contract)
+    resumed = FeedbackAccumulator(contract)
+    proposal = _proposal(91, (910, 911))
+    for accumulator in (continuous, resumed):
+        accumulator.register(proposal)
+    first = _batch(91, 10, (_record(911, 2.0),))
+    second = _batch(91, 2, (_record(910, 1.0),), final=True)
+    continuous.add(first)
+    continuous.add(second)
+    resumed.add(first)
+    restored = FeedbackAccumulator.from_state(contract, resumed.to_state())
+    restored.add(first)  # retry after restore is idempotent
+    restored.add(second)
+    expected = continuous.pop_ready()
+    actual = restored.pop_ready()
+    assert expected is not None and actual is not None
+    assert _records_equal_for_test(
+        actual.observations.records, expected.observations.records
+    )
+
+
+def test_accumulator_snapshot_preserves_ready_queue_and_terminal_records() -> None:
+    accumulator = FeedbackAccumulator(_contract())
+    accumulator.register(_proposal(92, (920,)))
+    accumulator.add(_batch(92, 0, (_record(920, 0.0, status=FAILED),), final=True))
+    restored = FeedbackAccumulator.from_state(_contract(), accumulator.to_state())
+    ready = restored.pop_ready()
+    assert ready is not None
+    assert ready.observations.records[0].status == FAILED
+    assert restored.buffered_proposal_count == 0
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda payload: payload["buffers"][0].pop("schema"),
+        lambda payload: payload["buffers"][0].pop("channel"),
+        lambda payload: payload["buffers"][0].pop("last_sequence"),
+        lambda payload: payload["buffers"][0].pop("seen"),
+    ],
+)
+def test_accumulator_codec_rejects_missing_resume_evidence(mutation) -> None:
+    """Dropping codec evidence must fail instead of silently resuming."""
+    accumulator = FeedbackAccumulator(_contract())
+    accumulator.register(_proposal(93, (930, 931)))
+    accumulator.add(_batch(93, 0, (_record(930, 1.0),)))
+    payload = accumulator.to_state()
+    mutation(payload)
+    with pytest.raises(ValidationError):
+        FeedbackAccumulator.from_state(_contract(), payload)
+
+
+def test_accumulator_codec_rejects_pickle_only_bypass() -> None:
+    with pytest.raises(ValidationError):
+        FeedbackAccumulator.from_state(_contract(), {"pickle": b"payload"})
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda payload: payload["buffers"][0]["deliveries"][0].pop("sequence"),
+        lambda payload: payload["buffers"][0]["seen"]["0"].__setitem__("sequence", 1),
+        lambda payload: payload["buffers"][0]["schema"].__setitem__(
+            "schema_version", 2
+        ),
+        lambda payload: payload["buffers"][0].__setitem__("channel", "surrogate"),
+    ],
+)
+def test_accumulator_codec_rejects_delivery_identity_mutations(mutate) -> None:
+    """Sequence, schema, and channel evidence are resume invariants."""
+    accumulator = FeedbackAccumulator(_contract())
+    accumulator.register(_proposal(94, (940, 941)))
+    accumulator.add(_batch(94, 0, (_record(940, 1.0),)))
+    payload = accumulator.to_state()
+    mutate(payload)
+    with pytest.raises(ValidationError):
+        FeedbackAccumulator.from_state(_contract(), payload)
+
+
+def _records_equal_for_test(
+    left: ObservationRecords, right: ObservationRecords
+) -> bool:
+    return len(left) == len(right) and all(
+        left[index].value == right[index].value
+        and ObservationSubject.from_value(left[index].subject).payload.tolist()
+        == ObservationSubject.from_value(right[index].subject).payload.tolist()
+        and left[index].status == right[index].status
+        for index in range(len(left))
+    )

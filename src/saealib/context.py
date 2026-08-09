@@ -21,6 +21,7 @@ from saealib.core.state import (
     EVALUATIONS_PLAN,
     EVALUATIONS_PLAN_STATE,
     EVALUATIONS_PLAN_UPDATES,
+    FEEDBACK_ACCUMULATOR,
     FEEDBACK_RESULT,
     PENDING_EVALUATIONS,
     PROPOSALS_ID_ALLOCATOR,
@@ -83,6 +84,7 @@ _STORE_FIELDS = {
     "data": USER_DATA,
     "predictions": SURROGATES_PREDICTIONS,
     "feedback_result": FEEDBACK_RESULT,
+    "feedback_accumulator": FEEDBACK_ACCUMULATOR,
     "offspring": PROPOSALS_OFFSPRING,
 }
 
@@ -431,6 +433,7 @@ class OptimizationState:
     evaluation_owners: dict[int, Population] = field(default_factory=dict)
     pending_evaluations: dict[int, PendingEvaluation] = field(default_factory=dict)
     feedback_result: FeedbackResult | None = None
+    feedback_accumulator: dict[str, Any] | None = None
     async_fatal: dict[str, Any] | None = None
 
     # User-extensible data
@@ -605,6 +608,7 @@ class OptimizationState:
         evaluation_owners: dict[int, Population] | None = None,
         pending_evaluations: dict[int, PendingEvaluation] | None = None,
         feedback_result: FeedbackResult | None = None,
+        feedback_accumulator: dict[str, Any] | None = None,
         async_fatal: dict[str, Any] | None = None,
         data: dict[str, Any] | None = None,
         _custom_state: dict[StateKey, object] | None = None,
@@ -691,6 +695,7 @@ class OptimizationState:
             {} if pending_evaluations is None else pending_evaluations
         )
         self.feedback_result = feedback_result
+        self.feedback_accumulator = feedback_accumulator
         self.async_fatal = async_fatal
         self.data = {} if data is None else data
         initial_store: dict[StateKey, object] = {
@@ -1386,6 +1391,8 @@ def _encode_v3_value(
             "codec": "feedback",
             "value": None if value is None else _feedback_to_json(value),
         }
+    if key == FEEDBACK_ACCUMULATOR:
+        return {"codec": "feedback_accumulator", "value": value}
     if key == SURROGATES_PREDICTIONS:
         return {
             "codec": "prediction",
@@ -1483,6 +1490,12 @@ def _decode_v3_value(
         return _allocator_scalar(np.array(value), key.name)
     if codec == "feedback":
         return None if value is None else _feedback_from_json(value)
+    if codec == "feedback_accumulator":
+        from saealib.core.adapters.accumulator import _validate_state
+
+        if value is not None:
+            _validate_state(value)
+        return value
     if codec == "prediction":
         return None if value is None else _prediction_from_json(value)
     if codec == "plan":

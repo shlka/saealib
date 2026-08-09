@@ -26,6 +26,7 @@ __all__ = [
     "EVALUATION_REQUEST",
     "EVALUATION_UPDATES",
     "EVALUATION_UPDATE_NEW_IDS",
+    "FEEDBACK_ACCUMULATOR",
     "FEEDBACK_RESULT",
     "OPTIMIZATION_STATE_INITIAL_KEYS",
     "PENDING_EVALUATIONS",
@@ -161,6 +162,9 @@ SURROGATES_PREDICTIONS = StateKey[object](
 FEEDBACK_RESULT = StateKey[object](
     namespace="feedback", name="result", schema_version=1
 )
+FEEDBACK_ACCUMULATOR = StateKey[object](
+    namespace="feedback", name="accumulator", schema_version=1
+)
 PROPOSALS_OFFSPRING = StateKey[object](
     namespace="proposals", name="offspring", schema_version=1
 )
@@ -194,6 +198,7 @@ OPTIMIZATION_STATE_INITIAL_KEYS = frozenset(
         EVALUATIONS_PLAN_STATE,
         EVALUATIONS_PLAN_UPDATES,
         RUNTIME_ASYNC_FATAL,
+        FEEDBACK_ACCUMULATOR,
         USER_DATA,
         PROPOSALS_OFFSPRING,
         EVALUATED_OFFSPRING,

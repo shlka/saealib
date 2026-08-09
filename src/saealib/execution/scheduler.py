@@ -38,12 +38,12 @@ from saealib.core.state import (
     EVALUATIONS_PLAN,
     EVALUATIONS_PLAN_STATE,
     EVALUATIONS_PLAN_UPDATES,
+    FEEDBACK_ACCUMULATOR,
     PENDING_EVALUATIONS,
     POPULATIONS_MAIN,
     PROPOSALS_CURRENT,
     RUNTIME_ASYNC_FATAL,
     RUNTIME_RNG,
-    LegacyAlgorithmStateView,
 )
 from saealib.exceptions import (
     CheckpointError,
@@ -70,6 +70,7 @@ from saealib.policies.feedback import (
     FeedbackResult,
     _feedback_batch_from_result,
 )
+from saealib.stages import deliver_feedback, deliver_legacy_population_feedback
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
@@ -167,6 +168,11 @@ class AsyncEvaluationScheduler:
         if contract is None:
             return
         self._feedback_accumulator = FeedbackAccumulator(contract)
+
+    def _sync_feedback_accumulator(self, state: OptimizationState) -> None:
+        """Persist the live accumulator snapshot in the keyed state store."""
+        if self._feedback_accumulator is not None:
+            state.set_state(FEEDBACK_ACCUMULATOR, self._feedback_accumulator.to_state())
 
     def pending_candidate_ids(self, state: OptimizationState) -> np.ndarray:
         """Return candidate IDs reserved by pending requests."""
@@ -453,6 +459,10 @@ class AsyncEvaluationScheduler:
             for pending in state.pending_evaluations.values()
         ):
             raise CheckpointError("evaluator cannot reattach asynchronous pending work")
+        if self._feedback_accumulator is not None:
+            state = state.replace(
+                feedback_accumulator=self._feedback_accumulator.to_state()
+            )
         state.save(path)
 
     def reattach(self, state: OptimizationState) -> OptimizationState:
@@ -476,10 +486,36 @@ class AsyncEvaluationScheduler:
             handles[request_id] = self.evaluator.reattach(pending, state.problem)
         current = state.replace(evaluation_handles=handles)
         if self._feedback_accumulator is not None:
-            self._feedback_accumulator.drain_ready()
-            for pending in current.pending_evaluations.values():
-                self._restore_accumulated_feedback(current, pending)
-            self._feedback_accumulator.drain_ready()
+            has_partial_feedback = any(
+                update.result is not None and update.status is EvaluationStatus.PARTIAL
+                for pending in current.pending_evaluations.values()
+                for update in pending.buffered_updates
+            )
+            try:
+                snapshot = current.get_state(FEEDBACK_ACCUMULATOR)
+            except KeyError:
+                snapshot = None
+            if snapshot is not None:
+                self._feedback_accumulator.restore_state(snapshot)
+                if has_partial_feedback and (
+                    self._feedback_accumulator.buffered_proposal_count == 0
+                    and self._feedback_accumulator.ready_count == 0
+                ):
+                    raise CheckpointError(
+                        "checkpoint has partial feedback updates but no "
+                        "FeedbackAccumulator buffer"
+                    )
+            else:
+                # Checkpoints written before U5 have no keyed accumulator
+                # snapshot.  Keep the legacy reconstruction path only for
+                # those files; a U5 checkpoint's snapshot is authoritative.
+                if has_partial_feedback:
+                    raise CheckpointError(
+                        "checkpoint is missing FeedbackAccumulator state for "
+                        "partial feedback"
+                    )
+                for pending in current.pending_evaluations.values():
+                    self._restore_accumulated_feedback(current, pending)
         for request_id, pending in tuple(current.pending_evaluations.items()):
             handle = current.evaluation_handles.get(request_id)
             for update in pending.buffered_updates:
@@ -744,7 +780,7 @@ class AsyncEvaluationScheduler:
                 ),
             )
             try:
-                current = self._apply_tell(current, plan_effect_update)
+                current = self._apply_feedback_delivery(current, plan_effect_update)
             except Exception as exc:
                 raise EvaluationFatalError(
                     "algorithm tell failed after side effects; update is fatal",
@@ -906,6 +942,7 @@ class AsyncEvaluationScheduler:
                 proposal_id = None
             if proposal_id is not None:
                 self._feedback_accumulator.discard(proposal_id)
+                self._sync_feedback_accumulator(current)
         if (
             plan_effect_update is not None
             and len(plan_effect_update.candidate_ids)
@@ -1320,17 +1357,7 @@ class AsyncEvaluationScheduler:
             )
         return self.algorithm, False
 
-    @staticmethod
-    def _apply_feedback_patch(state: OptimizationState, patch: Any) -> None:
-        """Apply a non-empty new consumer patch while preserving empty legacy moves."""
-        from saealib.core.state import StatePatch
-
-        if not isinstance(patch, StatePatch):
-            raise ValidationError("feedback consumer must return a StatePatch")
-        if patch.writes or patch.deletes:
-            state._store = state._store.apply_patch(patch)
-
-    def _apply_tell(
+    def _apply_feedback_delivery(
         self,
         state: OptimizationState,
         update: EvaluationUpdate,
@@ -1351,7 +1378,9 @@ class AsyncEvaluationScheduler:
             rows = self._rows(
                 state, state.feedback_result.candidate_ids, int(update.request_id)
             )
-            self.algorithm.tell(state, self, owner.extract(rows))
+            deliver_legacy_population_feedback(
+                self.algorithm, state, self, owner.extract(rows)
+            )
             return state
         feedback = _feedback_batch_from_result(
             state.feedback_result,
@@ -1371,27 +1400,16 @@ class AsyncEvaluationScheduler:
             )
             if not use_accumulator:
                 self._feedback_accumulator.discard(feedback.proposal_id)
+                self._sync_feedback_accumulator(state)
                 return state
             else:
                 ready = self._feedback_accumulator.pop_ready()
+                self._sync_feedback_accumulator(state)
                 if ready is None:
                     return state
                 feedback = ready
         consumer, legacy = self._feedback_consumer()
-        reads = getattr(consumer, "_state_reads", None)
-        if reads is None:
-            contract = getattr(consumer, "contract", None)
-            reads = (
-                contract().state
-                if callable(contract)
-                else (POPULATIONS_MAIN, RUNTIME_RNG)
-            )
-        if legacy:
-            state_view = LegacyAlgorithmStateView(state._store, reads, state)
-        else:
-            state_view = state._store.view(reads)
-        patch = consumer.tell(feedback, state_view)
-        self._apply_feedback_patch(state, patch)
+        deliver_feedback(consumer, feedback, state, legacy=legacy)
         return state
 
     def _deliver_accumulated_feedback(
@@ -1440,6 +1458,7 @@ class AsyncEvaluationScheduler:
                 sequence=sequence,
             )
         )
+        self._sync_feedback_accumulator(state)
         if update.status is EvaluationStatus.FAILED and self._retryable_remaining(
             state, update
         ):
@@ -1464,7 +1483,9 @@ class AsyncEvaluationScheduler:
             accumulator.finalize(feedback.proposal_id)
         except ValidationError:
             accumulator.discard(feedback.proposal_id)
+            self._sync_feedback_accumulator(state)
             return False
+        self._sync_feedback_accumulator(state)
         return True
 
     def _proposal_candidate_ids(
@@ -1541,8 +1562,15 @@ class AsyncEvaluationScheduler:
                 final=False,
                 sequence=int(update.sequence),
             )
+            # The accumulator snapshot is authoritative for deliveries already
+            # committed before the checkpoint.  PendingEvaluation.buffered_updates
+            # remains a separate transport replay log; do not compare a rebuilt
+            # record object against the already persisted duplicate envelope.
+            if self._feedback_accumulator.has_delivery(proposal_id, feedback.sequence):
+                continue
             self._deliver_accumulated_feedback(
                 state,
                 update,
                 feedback,
             )
+        self._sync_feedback_accumulator(state)
