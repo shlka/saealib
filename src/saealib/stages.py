@@ -40,13 +40,37 @@ from saealib.callback import (
     SurrogateStartEvent,
 )
 from saealib.context import EvaluationPlanState
+from saealib.core.contracts import ComponentContract, PartSpec, StateContract
+from saealib.core.contracts.execution import ExecutionContract
 from saealib.core.contracts.feedback import FeedbackChannel
 from saealib.core.contracts.observation import SURROGATE, TRUE
 from saealib.core.contracts.proposals import ProposalBatch
 from saealib.core.state import (
+    ACQUISITION_RESULT,
+    ARCHIVES_MAIN,
+    ARCHIVES_PARETO,
+    EVALUATED_OFFSPRING,
+    EVALUATION_HANDLES,
+    EVALUATION_NEW_IDS,
+    EVALUATION_REQUEST,
+    EVALUATION_UPDATE_NEW_IDS,
+    EVALUATION_UPDATES,
+    EVALUATIONS_COUNT,
+    EVALUATIONS_OWNERS,
+    EVALUATIONS_PENDING,
+    EVALUATIONS_PLAN,
+    EVALUATIONS_PLAN_STATE,
+    EVALUATIONS_PLAN_UPDATES,
+    FEEDBACK_RESULT,
     POPULATIONS_MAIN,
     PROPOSALS_CURRENT,
+    PROPOSALS_OFFSPRING,
+    RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    RUNTIME_GENERATION,
+    RUNTIME_REQUEST_ID_ALLOCATOR,
     RUNTIME_RNG,
+    SCORES,
+    SURROGATES_PREDICTIONS,
     LegacyAlgorithmStateView,
     StatePatch,
 )
@@ -219,12 +243,43 @@ def _sync_feedback_metadata(
 # ---------------------------------------------------------------------------
 
 
+def _stage_contract(
+    *,
+    reads: tuple[Any, ...] = (),
+    writes: tuple[Any, ...] = (),
+    exports: tuple[Any, ...] = (),
+    components: tuple[tuple[str, Any], ...] = (),
+    required_runtime_capabilities: tuple[str, ...] = (),
+    offered_runtime_capabilities: tuple[str, ...] = (),
+) -> ComponentContract:
+    """Build a Stage contract while keeping held contracts as named parts."""
+    parts: list[PartSpec] = []
+    for name, component in components:
+        contract = getattr(component, "contract", None)
+        if callable(contract):
+            parts.append(PartSpec(name=name, contract=contract()))
+    return ComponentContract(
+        parts=tuple(parts),
+        state=StateContract(reads=reads, writes=writes, exports=exports),
+        execution=ExecutionContract(
+            required_runtime_capabilities=required_runtime_capabilities,
+            offered_runtime_capabilities=offered_runtime_capabilities,
+        ),
+    )
+
+
 class CountGenerationStage(Stage):
     """Increment the generation counter by one."""
 
     name = "count_generation"
     label = "Count generation"
     notation = r"$gen \leftarrow gen + 1$"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(RUNTIME_GENERATION, EVALUATIONS_PENDING),
+            writes=(RUNTIME_GENERATION,),
+        )
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         # Async steady-state refill calls strategy.step() while an earlier
@@ -255,6 +310,21 @@ class AskStage(Stage):
     name = "ask"
     label = "Generate offspring"
     notation = r"$\mathcal{Q} \leftarrow \text{ask}(P, n)$"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                RUNTIME_CANDIDATE_ID_ALLOCATOR,
+            ),
+            writes=(
+                PROPOSALS_OFFSPRING,
+                PROPOSALS_CURRENT,
+                RUNTIME_CANDIDATE_ID_ALLOCATOR,
+            ),
+            components=(("_algorithm", self._algorithm),),
+        )
 
     def __init__(
         self,
@@ -350,6 +420,13 @@ class SurrogatePredictStage(Stage):
     label = "Surrogate prediction"
     notation = r"$\hat{y} \leftarrow \text{predict}(\mathcal{Q}, \mathcal{A})$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(PROPOSALS_OFFSPRING, ARCHIVES_MAIN),
+            writes=(PROPOSALS_OFFSPRING, SURROGATES_PREDICTIONS),
+            components=(("_sm", self._sm),),
+        )
+
     def __init__(
         self,
         surrogate_manager: SurrogateManager,
@@ -394,6 +471,9 @@ class PendingEvaluationContextStage(Stage):
     label = "Pending evaluation context"
     notation = r"$C \leftarrow \text{pending}(C)$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract()
+
     def __init__(self, scheduler: Any) -> None:
         super().__init__()
         self._scheduler = scheduler
@@ -404,6 +484,10 @@ class PendingEvaluationContextStage(Stage):
 
 class RuntimeNoOpStage(Stage):
     """Graph/runtime bridge stage for work owned by another runtime stage."""
+
+    def contract(self) -> ComponentContract:
+        """Return an empty bridge contract; this is not an operational stage."""
+        return _stage_contract()
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         return state
@@ -444,6 +528,10 @@ class RuntimeStage(Stage):
             return self._async_execute(state)
         return self.sync_stage.execute(state)
 
+    def contract(self) -> ComponentContract:
+        """Expose the canonical sync contract for this Phase 6 bridge."""
+        return self.sync_stage.contract()
+
 
 class AcquisitionStage(Stage):
     """Score offspring via an independent AcquisitionFunction.
@@ -478,6 +566,18 @@ class AcquisitionStage(Stage):
     notation = (
         r"$\mathbf{s} \leftarrow \text{acquire}(\mathcal{Q}, \hat{y}, \mathcal{A})$"
     )
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                PROPOSALS_OFFSPRING,
+                SURROGATES_PREDICTIONS,
+                ARCHIVES_MAIN,
+                RUNTIME_GENERATION,
+            ),
+            writes=(SCORES, ACQUISITION_RESULT),
+            components=(("_acquisition", self._acquisition),),
+        )
 
     def __init__(
         self,
@@ -569,6 +669,13 @@ class SurrogateFitStage(Stage):
     label = "Fit surrogate"
     notation = r"$\hat{f} \leftarrow \text{fit}(\mathcal{A})$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(ARCHIVES_MAIN,),
+            writes=(),
+            components=(("_sm", self._sm),),
+        )
+
     def __init__(
         self,
         surrogate_manager: SurrogateManager,
@@ -605,6 +712,11 @@ class TopKSelectionStage(Stage):
     label = "Top-k pre-selection"
     notation = r"$\mathcal{Q} \leftarrow \text{top-}k(\mathcal{Q}, \mathbf{s})$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(PROPOSALS_OFFSPRING, SCORES), writes=(PROPOSALS_OFFSPRING,)
+        )
+
     def __init__(self, k: int) -> None:
         super().__init__()
         self._k = k
@@ -632,6 +744,12 @@ class SortByScoreStage(Stage):
     label = "Sort offspring by score"
     notation = r"$\mathcal{Q} \leftarrow \text{sort\_desc}(\mathcal{Q},\,\mathbf{s})$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(PROPOSALS_OFFSPRING, SCORES),
+            writes=(PROPOSALS_OFFSPRING, SCORES),
+        )
+
     def execute(self, state: OptimizationState) -> OptimizationState:
         assert state.offspring is not None
         assert state.scores is not None
@@ -648,6 +766,32 @@ class EvaluationPlanStage(Stage):
     name = "evaluation_plan"
     label = "Plan evaluation"
     notation = r"$R \leftarrow \text{plan}(Q)$"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                PROPOSALS_OFFSPRING,
+                EVALUATIONS_PENDING,
+                EVALUATION_REQUEST,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATION_HANDLES,
+                EVALUATIONS_OWNERS,
+                ACQUISITION_RESULT,
+                SCORES,
+            ),
+            writes=(
+                EVALUATION_REQUEST,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PLAN_UPDATES,
+                EVALUATIONS_PENDING,
+                EVALUATION_UPDATES,
+                EVALUATION_UPDATE_NEW_IDS,
+                EVALUATION_NEW_IDS,
+            ),
+            components=(("_planner", self._planner),),
+        )
 
     def __init__(
         self,
@@ -738,6 +882,33 @@ class AsyncEvaluationSubmitStage(Stage):
 
     name = "async_evaluation_submit"
     label = "Submit asynchronous evaluation"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                PROPOSALS_OFFSPRING,
+                ACQUISITION_RESULT,
+                SCORES,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PENDING,
+                EVALUATION_HANDLES,
+                RUNTIME_REQUEST_ID_ALLOCATOR,
+            ),
+            writes=(
+                EVALUATION_REQUEST,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PLAN_UPDATES,
+                EVALUATIONS_PENDING,
+                RUNTIME_REQUEST_ID_ALLOCATOR,
+            ),
+            components=(
+                ("_planner", self._planner),
+                ("_scheduler", self._scheduler),
+            ),
+            required_runtime_capabilities=("partial_feedback",),
+        )
 
     def __init__(
         self,
@@ -903,6 +1074,19 @@ class EvaluationSubmitStage(Stage):
     label = "Submit evaluation"
     notation = r"$H \leftarrow \text{submit}(R)$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                EVALUATION_REQUEST,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PENDING,
+                EVALUATION_HANDLES,
+            ),
+            writes=(EVALUATIONS_PENDING, EVALUATION_HANDLES, EVALUATIONS_PLAN_STATE),
+            components=(("_evaluator", self._evaluator),),
+        )
+
     def __init__(self, evaluator: Evaluator) -> None:
         super().__init__()
         self._evaluator = evaluator
@@ -999,6 +1183,29 @@ class EvaluationCollectStage(Stage):
     name = "evaluation_collect"
     label = "Collect evaluation"
     notation = r"$U \leftarrow \text{collect}(H)$"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PENDING,
+                EVALUATION_HANDLES,
+                EVALUATIONS_PLAN_UPDATES,
+                EVALUATION_REQUEST,
+            ),
+            writes=(
+                EVALUATION_UPDATES,
+                EVALUATION_REQUEST,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PLAN_UPDATES,
+                EVALUATIONS_PENDING,
+                EVALUATION_UPDATE_NEW_IDS,
+                EVALUATION_NEW_IDS,
+            ),
+            components=(("_evaluator", self._evaluator),),
+        )
 
     def __init__(self, evaluator: Evaluator) -> None:
         super().__init__()
@@ -1153,6 +1360,26 @@ class EvaluationApplyStage(Stage):
     name = "evaluation_apply"
     label = "Apply evaluation"
     notation = r"$Q \leftarrow \text{apply}(U)$"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                PROPOSALS_OFFSPRING,
+                EVALUATION_REQUEST,
+                EVALUATION_UPDATES,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PLAN_UPDATES,
+                EVALUATIONS_PENDING,
+            ),
+            writes=(
+                PROPOSALS_OFFSPRING,
+                EVALUATED_OFFSPRING,
+                EVALUATION_NEW_IDS,
+                EVALUATION_UPDATE_NEW_IDS,
+                EVALUATIONS_PENDING,
+            ),
+        )
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         if _plan_incomplete(state):
@@ -1369,6 +1596,30 @@ class EvaluationAcknowledgeStage(Stage):
     label = "Acknowledge evaluation"
     notation = r"$H \leftarrow \text{ack}(U)$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                PROPOSALS_OFFSPRING,
+                EVALUATION_REQUEST,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PENDING,
+                EVALUATION_HANDLES,
+                EVALUATION_UPDATES,
+                EVALUATION_UPDATE_NEW_IDS,
+                EVALUATIONS_PLAN_UPDATES,
+            ),
+            writes=(
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PLAN_UPDATES,
+                EVALUATIONS_PENDING,
+                EVALUATION_HANDLES,
+                EVALUATIONS_COUNT,
+            ),
+            components=(("_evaluator", self._evaluator),),
+        )
+
     def __init__(
         self, evaluator: Evaluator, cbmanager: CallbackManager | None = None
     ) -> None:
@@ -1518,6 +1769,13 @@ class TrueEvaluationStage(Stage):
     label = "True objective evaluation"
     notation = r"$\mathcal{Q}_{eval} \leftarrow \text{eval}(\mathcal{Q})$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(PROPOSALS_OFFSPRING,),
+            writes=(PROPOSALS_OFFSPRING, EVALUATED_OFFSPRING, EVALUATIONS_COUNT),
+            components=(("_evaluator", self._evaluator),),
+        )
+
     def __init__(
         self,
         evaluator: Evaluator,
@@ -1571,6 +1829,16 @@ class ArchiveUpdateStage(Stage):
     label = "Archive update"
     notation = r"$\mathcal{A} \leftarrow \mathcal{A} \cup \mathcal{Q}_{eval}$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                EVALUATED_OFFSPRING,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+            ),
+            writes=(ARCHIVES_MAIN, ARCHIVES_PARETO, EVALUATED_OFFSPRING),
+        )
+
     def execute(self, state: OptimizationState) -> OptimizationState:
         if _plan_incomplete(state):
             return state
@@ -1600,6 +1868,20 @@ class FeedbackStage(Stage):
     name = "feedback"
     label = "Apply feedback"
     notation = r"$\mathcal{Q} \leftarrow \mathrm{feedback}(\mathcal{Q})$"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                PROPOSALS_OFFSPRING,
+                EVALUATED_OFFSPRING,
+                EVALUATION_NEW_IDS,
+                SURROGATES_PREDICTIONS,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+            ),
+            writes=(PROPOSALS_OFFSPRING, FEEDBACK_RESULT),
+            components=(("_builder", self._builder),),
+        )
 
     def __init__(
         self,
@@ -1669,6 +1951,19 @@ class TellStage(Stage):
     name = "tell"
     label = "Update population"
     notation = r"$P \leftarrow \text{tell}(P, \mathcal{Q})$"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                PROPOSALS_OFFSPRING,
+                PROPOSALS_CURRENT,
+                FEEDBACK_RESULT,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+            ),
+            writes=(),
+            components=(("_algorithm", self._algorithm),),
+        )
 
     def __init__(
         self,
@@ -1808,6 +2103,14 @@ class SurrogateOnlyLoopStage(Stage):
         r"\mathrm{acquire}(\mathrm{predict}(\mathrm{ask}(P))))$"
     )
 
+    def contract(self) -> ComponentContract:
+        # The nested stages are separate graph units.  This declaration covers
+        # only the loop's direct fit/read access and avoids double counting.
+        return _stage_contract(
+            reads=(ARCHIVES_MAIN,),
+            components=(("_sm", self._sm),),
+        )
+
     def __init__(
         self,
         algorithm: Algorithm,
@@ -1894,6 +2197,12 @@ class InitializationStage(Stage):
     name = "initialization"
     label = "Initialize population"
     notation = r"$\mathcal{A}_0,\,P_0 \leftarrow \mathrm{init}(n_{\mathrm{init}})$"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            writes=(),
+            components=(("_initializer", self._initializer),),
+        )
 
     def __init__(
         self,

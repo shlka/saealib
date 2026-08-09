@@ -11,14 +11,21 @@ from saealib.core.contracts.vocabulary import (
 from saealib.exceptions import ValidationError
 
 __all__ = [
+    "ACQUISITION_RESULT",
     "ARCHIVES_MAIN",
     "ARCHIVES_PARETO",
+    "EVALUATED_OFFSPRING",
     "EVALUATIONS_COUNT",
     "EVALUATIONS_OWNERS",
     "EVALUATIONS_PENDING",
     "EVALUATIONS_PLAN",
     "EVALUATIONS_PLAN_STATE",
     "EVALUATIONS_PLAN_UPDATES",
+    "EVALUATION_HANDLES",
+    "EVALUATION_NEW_IDS",
+    "EVALUATION_REQUEST",
+    "EVALUATION_UPDATES",
+    "EVALUATION_UPDATE_NEW_IDS",
     "FEEDBACK_RESULT",
     "PENDING_EVALUATIONS",
     "POPULATIONS_MAIN",
@@ -30,6 +37,7 @@ __all__ = [
     "RUNTIME_GENERATION",
     "RUNTIME_REQUEST_ID_ALLOCATOR",
     "RUNTIME_RNG",
+    "SCORES",
     "STATE_NAMESPACES",
     "SURROGATES_DEFAULT",
     "SURROGATES_PREDICTIONS",
@@ -88,6 +96,28 @@ ARCHIVES_PARETO = StateKey[object](
 )
 EVALUATIONS_COUNT = StateKey[object](
     namespace="evaluations", name="count", schema_version=1
+)
+ACQUISITION_RESULT = StateKey[object](
+    namespace="evaluations", name="acquisition_result", schema_version=1
+)
+SCORES = StateKey[object](namespace="evaluations", name="scores", schema_version=1)
+EVALUATED_OFFSPRING = StateKey[object](
+    namespace="evaluations", name="evaluated_offspring", schema_version=1
+)
+EVALUATION_REQUEST = StateKey[object](
+    namespace="evaluations", name="request", schema_version=1
+)
+EVALUATION_UPDATES = StateKey[object](
+    namespace="evaluations", name="updates", schema_version=1
+)
+EVALUATION_UPDATE_NEW_IDS = StateKey[object](
+    namespace="evaluations", name="update_new_ids", schema_version=1
+)
+EVALUATION_NEW_IDS = StateKey[object](
+    namespace="evaluations", name="new_ids", schema_version=1
+)
+EVALUATION_HANDLES = StateKey[object](
+    namespace="evaluations", name="handles", schema_version=1
 )
 EVALUATIONS_OWNERS = StateKey[object](
     namespace="evaluations", name="owners", schema_version=1

@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 from functools import reduce
 from typing import TYPE_CHECKING
 
+from saealib.core.contracts import ComponentContract
+
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
 
@@ -104,6 +106,10 @@ class Stage(ABC):
             return f"{prefix}\\Comment{{{label}}}\n{inner}"
         notation = self.notation or self.label or self.name or type(self).__name__
         return f"{prefix}\\State {notation}"
+
+    def contract(self) -> ComponentContract:
+        """Return this stage's structural and direct state-access contract."""
+        return ComponentContract()
 
 
 def _find_recursive(stages: list[Stage], name: str) -> Stage | None:

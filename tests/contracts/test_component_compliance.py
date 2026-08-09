@@ -38,6 +38,7 @@ from saealib.core.contracts import (
     Var,
 )
 from saealib.core.state import SURROGATES_DEFAULT
+from saealib.pipeline import Stage
 from saealib.registry import build, to_spec
 from saealib.surrogate.rbf import gaussian_kernel
 
@@ -106,6 +107,11 @@ def _discover_contract_classes() -> tuple[type[Any], ...]:
             if (
                 inspect.isclass(obj)
                 and obj.__module__.startswith("saealib.")
+                # Stage contracts are audited by the Phase 7 U1 inventory
+                # tests.  They are a separate execution-boundary protocol,
+                # not registry-built components; their constructors require
+                # runtime services and must not enter this recipe discovery.
+                and not issubclass(obj, Stage)
                 and callable(getattr(obj, "contract", None))
                 and obj.contract is not Component.contract
             ):
