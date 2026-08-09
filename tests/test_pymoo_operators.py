@@ -552,6 +552,7 @@ class TestGABatchDispatch:
             pool._extend_internal(ctx.population, preserve_ids=True)
             pool._extend_internal(offspring, preserve_ids=True)
 
+        assert set(fast.__dict__) == set(reference.__dict__)
         assert len(fast) == len(reference) == 20
         for key in reference.schema:
             np.testing.assert_array_equal(fast.get_array(key), reference.get_array(key))
