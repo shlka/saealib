@@ -21,7 +21,7 @@ from saealib.core.runtime import (
     RuntimeStep,
 )
 from saealib.core.state.patch import StatePatch
-from saealib.exceptions import StalePlanError, ValidationError
+from saealib.exceptions import ConfigurationError, StalePlanError, ValidationError
 from saealib.execution import AsyncEvaluationScheduler, SerialEvaluator
 from saealib.execution.runtime import (
     AsyncPipelineRuntime,
@@ -95,8 +95,61 @@ def test_runtime_registry_selects_an_added_provider_without_consumer_changes() -
     )
 
     assert registry.create("test", cast(Any, object())) is selected
-    with pytest.raises(ValidationError, match="no registered runtime"):
+    with pytest.raises(
+        ConfigurationError, match=r"no registered runtime.*registered runtime names"
+    ):
         registry.create("other", cast(Any, object()))
+
+
+def test_runtime_registry_rejects_multiple_matching_providers() -> None:
+    registry = RuntimeRegistry(
+        (
+            RuntimeRegistration(
+                name="first",
+                matches=lambda provider: provider == "shared",
+                factory=cast(Any, lambda provider, plan: object()),
+            ),
+            RuntimeRegistration(
+                name="second",
+                matches=lambda provider: provider == "shared",
+                factory=cast(Any, lambda provider, plan: object()),
+            ),
+        )
+    )
+
+    with pytest.raises(
+        ConfigurationError,
+        match=r"multiple registered runtimes.*'first'.*'second'",
+    ):
+        registry.create("shared", cast(Any, object()))
+
+
+def test_runtime_registry_replace_leaves_exactly_one_match() -> None:
+    remaining = object()
+    registry = RuntimeRegistry(
+        (
+            RuntimeRegistration(
+                name="first",
+                matches=lambda provider: provider == "shared",
+                factory=cast(Any, lambda provider, plan: remaining),
+            ),
+            RuntimeRegistration(
+                name="second",
+                matches=lambda provider: provider == "shared",
+                factory=cast(Any, lambda provider, plan: object()),
+            ),
+        )
+    )
+    registry.replace(
+        "second",
+        RuntimeRegistration(
+            name="second",
+            matches=lambda provider: False,
+            factory=cast(Any, lambda provider, plan: object()),
+        ),
+    )
+
+    assert registry.create("shared", cast(Any, object())) is remaining
 
 
 def test_default_runtime_capability_offers_are_owned_by_runtime_providers() -> None:
@@ -265,17 +318,18 @@ def test_async_runtime_stage_dispatches_submit_callable_with_sync_graph_contract
     )
 
 
-def test_added_provider_overrides_default_registrations_deterministically() -> None:
+def test_replaced_default_registration_is_selected() -> None:
     from saealib.execution.runtime import default_runtime_registry
 
     selected = object()
     registry = RuntimeRegistry(default_runtime_registry.registrations())
-    registry.register(
+    registry.replace(
+        "sync",
         RuntimeRegistration(
-            name="custom",
+            name="sync",
             matches=lambda provider: provider == "sync",
             factory=cast(Any, lambda provider, plan: selected),
-        )
+        ),
     )
 
     assert registry.create("sync", cast(Any, object())) is selected

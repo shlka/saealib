@@ -29,7 +29,7 @@ from saealib.core.runtime import (
     validate_plan_contracts,
 )
 from saealib.core.state.patch import StatePatch
-from saealib.exceptions import EvaluationFatalError, ValidationError
+from saealib.exceptions import ConfigurationError, EvaluationFatalError, ValidationError
 
 __all__ = [
     "AsyncPipelineRuntime",
@@ -451,7 +451,7 @@ class RuntimeRegistration:
 
 
 class RuntimeRegistry:
-    """Runtime provider registry with deterministic newest-first selection."""
+    """Runtime selection errors on conflict; compiler rules do not select a runtime."""
 
     def __init__(self, registrations: tuple[RuntimeRegistration, ...] = ()) -> None:
         self._registrations: dict[str, RuntimeRegistration] = {}
@@ -470,19 +470,55 @@ class RuntimeRegistry:
             )
         self._registrations[registration.name] = registration
 
+    def unregister(self, name: str) -> None:
+        """Remove the runtime provider registered under ``name``."""
+        if name not in self._registrations:
+            raise ValidationError(f"runtime registration {name!r} is not registered")
+        del self._registrations[name]
+
+    def replace(self, name: str, registration: RuntimeRegistration) -> None:
+        """Replace the uniquely named runtime provider under ``name``."""
+        if name not in self._registrations:
+            raise ValidationError(f"runtime registration {name!r} is not registered")
+        if not callable(registration.matches) or not callable(registration.factory):
+            raise ValidationError(
+                "runtime registration requires callable matches and factory"
+            )
+        if registration.name != name and registration.name in self._registrations:
+            raise ValidationError(
+                f"runtime registration {registration.name!r} already exists"
+            )
+        del self._registrations[name]
+        self._registrations[registration.name] = registration
+
+    def _resolve(self, optimizer: object) -> RuntimeRegistration:
+        matches = tuple(
+            registration
+            for registration in self._registrations.values()
+            if registration.matches(optimizer)
+        )
+        registered_names = ", ".join(repr(name) for name in self._registrations)
+        if not matches:
+            names = registered_names or "(none)"
+            raise ConfigurationError(
+                "no registered runtime matches the optimizer; "
+                f"registered runtime names: {names}"
+            )
+        if len(matches) > 1:
+            names = ", ".join(repr(registration.name) for registration in matches)
+            raise ConfigurationError(
+                "multiple registered runtimes match the optimizer; "
+                f"conflicting registration names: {names}"
+            )
+        return matches[0]
+
     def create(self, optimizer: object, plan: ExecutablePlan) -> ExecutionRuntime:
-        """Select and instantiate the newest matching provider."""
-        for registration in reversed(tuple(self._registrations.values())):
-            if registration.matches(optimizer):
-                return registration.factory(optimizer, plan)
-        raise ValidationError("no registered runtime accepts the optimizer")
+        """Select and instantiate the unique matching provider."""
+        return self._resolve(optimizer).factory(optimizer, plan)
 
     def offered_capabilities(self, optimizer: object) -> frozenset[RuntimeCapability]:
         """Return the effective offer from the selected runtime provider."""
-        for registration in reversed(tuple(self._registrations.values())):
-            if registration.matches(optimizer):
-                return registration.offered_capabilities(optimizer)
-        raise ValidationError("no registered runtime accepts the optimizer")
+        return self._resolve(optimizer).offered_capabilities(optimizer)
 
     def registrations(self) -> tuple[RuntimeRegistration, ...]:
         """Return registered providers in registration order."""
