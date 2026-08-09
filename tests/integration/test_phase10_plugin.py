@@ -8,12 +8,15 @@ from phase10_plugin import (
     COMPLETE_BATCH,
     DE_TARGET_IDS,
     DE_TRIAL_IDS,
+    MAPELITES_CANDIDATE_IDS,
     MF_CANDIDATE_IDS,
     MF_HIGH_FIDELITY,
     MOEAD_CANDIDATE_IDS,
     PARTIAL_ALLOWED,
     CMAESPlugin,
+    CooperativeCoevolutionPlugin,
     DifferentialEvolutionPlugin,
+    MAPElitesPlugin,
     MOEADPlugin,
     MultiFidelityPlugin,
     Phase10PluginFixture,
@@ -145,3 +148,40 @@ def test_u10_2_moead_updates_only_the_child_subproblem_neighborhood() -> None:
     assert np.array_equal(plugin.subproblem_state[0][0], proposal.candidates.x[0])
     assert np.array_equal(plugin.subproblem_state[1][0], proposal.candidates.x[0])
     assert np.array_equal(plugin.subproblem_state[2][0], before[2])
+
+
+def test_u10_3_map_elites_uses_behavior_cells_and_quality_replacement() -> None:
+    plugin = MAPElitesPlugin()
+    proposal = plugin.propose()
+    assert plugin.emitter_calls == 1
+    feedback = plugin.evaluate(proposal)
+    assert (
+        feedback.observations.candidate_ids.tolist() == MAPELITES_CANDIDATE_IDS.tolist()
+    )
+    assert len(feedback.observations.records) == 6
+    plugin.apply_feedback(feedback)
+
+    assert set(plugin.archive) == {(0,), (1,)}
+    assert np.isclose(plugin.archive[(0,)][1], 0.02)
+    assert np.array_equal(plugin.archive[(0,)][0], proposal.candidates.x[1])
+    assert np.isclose(plugin.archive[(1,)][1], 1.28)
+
+
+def test_u10_3_coevolution_joins_named_blocks_and_updates_one_block() -> None:
+    plugin = CooperativeCoevolutionPlugin()
+    plugin.named_populations["block_a"].update_rows(
+        [1], {"x": np.array([[0.3]], dtype=np.float64)}
+    )
+    proposal = plugin.coordinator_join()
+    assert set(plugin.named_populations) == {"block_a", "block_b"}
+    assert proposal.candidates.x.shape == (1, 2)
+    assert np.array_equal(proposal.candidates.x[0], [0.3, 0.2])
+    feedback = plugin.evaluate(proposal)
+    assert feedback.observations.f.shape == (1, 1)
+    assert np.isclose(feedback.observations.f[0, 0], 0.13)
+
+    plugin.apply_feedback(feedback)
+    assert np.array_equal(plugin.named_populations["block_a"].x[0], [0.3])
+    assert np.array_equal(plugin.named_populations["block_b"].x[0], [0.2])
+    next_proposal = plugin.coordinator_join()
+    assert np.array_equal(next_proposal.candidates.x[0], [0.3, 0.2])

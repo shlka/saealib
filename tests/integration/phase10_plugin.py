@@ -16,6 +16,7 @@ from saealib.core.compiler import (
     NodeRef,
 )
 from saealib.core.contracts import (
+    BEHAVIOR,
     COMPLETE_BATCH,
     MANY,
     OBJECTIVE,
@@ -30,6 +31,7 @@ from saealib.core.contracts import (
     ObservationRecord,
     ObservationRecords,
     ObservationSchema,
+    ObservationSubject,
     PortContract,
     PortDirection,
     PortSpec,
@@ -58,6 +60,8 @@ MF_LOW_FIDELITY = 1
 MF_HIGH_FIDELITY = 2
 CMAES_CANDIDATE_IDS = np.array([8601, 8602, 8603, 8604], dtype=np.int64)
 MOEAD_CANDIDATE_IDS = np.array([8701, 8702, 8703], dtype=np.int64)
+MAPELITES_CANDIDATE_IDS = np.array([8801, 8802, 8803], dtype=np.int64)
+COEVOLUTION_CANDIDATE_ID = np.int64(8901)
 
 
 class PluginEvaluationAdapter(EvaluationAdapter):
@@ -456,6 +460,184 @@ class DifferentialEvolutionPlugin:
             _, current_score = self.target_state[target_key]
             if score < current_score:
                 self.target_state[target_key] = (trials[row].copy(), score)
+
+
+@dataclass
+class MAPElitesPlugin:
+    """Minimal MAP-Elites emitter and behavior-indexed archive."""
+
+    archive: dict[tuple[int, ...], tuple[np.ndarray, float]] = field(
+        default_factory=dict
+    )
+    emitter_calls: int = 0
+    pending_genomes: dict[int, np.ndarray] = field(default_factory=dict)
+
+    def emitter(self) -> Population:
+        self.emitter_calls += 1
+        genomes = np.array([[0.4, 0.4], [0.1, 0.1], [0.8, 0.8]], dtype=np.float64)
+        population = Population(
+            attrs=[PopulationAttribute(name="x", dtype=np.float64, shape=(2,))],
+            init_capacity=len(genomes),
+        )
+        for genome in genomes:
+            population.append(x=genome)
+        return population
+
+    def propose(self) -> ProposalBatch:
+        candidates = self.emitter()
+        self.pending_genomes = {
+            int(candidate_id): candidates.x[row].copy()
+            for row, candidate_id in enumerate(MAPELITES_CANDIDATE_IDS)
+        }
+        return ProposalBatch(
+            proposal_id=PLUGIN_PROPOSAL_ID + 6,
+            candidates=candidates,
+            relations=ProposalRelations(row_count=len(candidates)),
+            requirements=objective_requirement(),
+        )
+
+    def behavior(self, row: int) -> np.ndarray:
+        return np.array([0.25, 0.25, 0.75][row], dtype=np.float64)
+
+    def evaluate(self, proposal: ProposalBatch) -> FeedbackBatch:
+        records: list[ObservationRecord] = []
+        for row, candidate_id in enumerate(MAPELITES_CANDIDATE_IDS):
+            genome = proposal.candidates.x[row]
+            records.append(
+                ObservationRecord(
+                    subject=("candidate", np.array([candidate_id], dtype=np.int64)),
+                    quantity=(OBJECTIVE, 0),
+                    value=float(np.sum(genome**2)),
+                    status=OK,
+                    source=TRUE,
+                )
+            )
+            records.append(
+                ObservationRecord(
+                    subject=("candidate", np.array([candidate_id], dtype=np.int64)),
+                    quantity=(BEHAVIOR, 0),
+                    value=self.behavior(row),
+                    status=OK,
+                    source=TRUE,
+                )
+            )
+        return FeedbackBatch(
+            proposal_id=proposal.proposal_id,
+            observations=ObservationBatch(
+                schema=ObservationSchema(objective_count=1, quantities={BEHAVIOR: 1}),
+                records=ObservationRecords.from_records(records),
+            ),
+            channel=TRUE,
+            final=True,
+            sequence=0,
+        )
+
+    def cell_key(self, behavior: np.ndarray) -> tuple[int, ...]:
+        values = np.floor(np.asarray(behavior, dtype=float) * 2).astype(int).reshape(-1)
+        return tuple(values)
+
+    def apply_feedback(self, feedback: FeedbackBatch) -> None:
+        records = feedback.observations.records
+        candidate_ids = feedback.observations.candidate_ids
+        values = records.column("value")
+        record_ids = np.asarray(
+            [
+                int(ObservationSubject.from_value(records[index].subject).payload[0])
+                for index in range(len(records))
+            ],
+            dtype=np.int64,
+        )
+        for candidate_id in candidate_ids:
+            rows = np.flatnonzero(record_ids == int(candidate_id))
+            objective_row, behavior_row = rows[:2]
+            score = float(values[objective_row])
+            cell = self.cell_key(np.asarray(values[behavior_row], dtype=float))
+            current = self.archive.get(cell)
+            if current is None or score < current[1]:
+                self.archive[cell] = (
+                    self.pending_genomes[int(candidate_id)].copy(),
+                    score,
+                )
+
+
+@dataclass
+class CooperativeCoevolutionPlugin:
+    """Two named populations joined into one evaluated cooperative vector."""
+
+    named_populations: dict[str, Population] = field(default_factory=dict)
+    pending_blocks: dict[str, np.ndarray] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        self.named_populations = {
+            "block_a": self._population(0.8, 0.1),
+            "block_b": self._population(0.2),
+        }
+
+    def _population(self, *values: float) -> Population:
+        population = Population(
+            attrs=[PopulationAttribute(name="x", dtype=np.float64, shape=(1,))],
+            init_capacity=len(values),
+        )
+        for value in values:
+            population.append(x=np.array([value], dtype=np.float64))
+        return population
+
+    def coordinator_join(self) -> ProposalBatch:
+        self.pending_blocks = {
+            "block_a": self.named_populations["block_a"].x[1].copy(),
+            "block_b": self.named_populations["block_b"].x[0].copy(),
+        }
+        joint = np.concatenate(
+            (self.pending_blocks["block_a"], self.pending_blocks["block_b"])
+        )
+        candidates = Population(
+            attrs=[PopulationAttribute(name="x", dtype=np.float64, shape=(2,))],
+            init_capacity=1,
+        )
+        candidates.append(x=joint)
+        return ProposalBatch(
+            proposal_id=PLUGIN_PROPOSAL_ID + 7,
+            candidates=candidates,
+            relations=ProposalRelations(row_count=1),
+            requirements=objective_requirement(),
+        )
+
+    def problem(self) -> Problem:
+        return Phase10PluginFixture().problem()
+
+    def evaluator(self) -> SerialEvaluator:
+        return SerialEvaluator()
+
+    def evaluate(self, proposal: ProposalBatch) -> FeedbackBatch:
+        request = EvaluationRequest(
+            request_id=np.int64(5),
+            candidate_ids=np.array([COEVOLUTION_CANDIDATE_ID], dtype=np.int64),
+            payload=proposal.candidates.genomes,
+        )
+        result = self.evaluator().evaluate_request(request, self.problem())
+        observations = Phase10PluginFixture().observations_from_result(
+            np.array([COEVOLUTION_CANDIDATE_ID], dtype=np.int64), result
+        )
+        return FeedbackBatch(
+            proposal_id=proposal.proposal_id,
+            observations=observations,
+            channel=TRUE,
+            final=True,
+            sequence=0,
+        )
+
+    def apply_feedback(self, feedback: FeedbackBatch) -> None:
+        score = float(feedback.observations.f[0, 0])
+        current = self.named_populations["block_a"].x[0]
+        baseline = float(
+            np.sum(
+                np.concatenate((current, self.named_populations["block_b"].x[0])) ** 2
+            )
+        )
+        if score < baseline:
+            self.named_populations["block_a"].update_rows(
+                [0], {"x": self.pending_blocks["block_a"].reshape(1, 1)}
+            )
 
 
 def objective_requirement(
