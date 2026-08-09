@@ -21,6 +21,12 @@ class ValidationError(SaealibError, ValueError):
     """Raised when user-supplied arguments fail validation at a public boundary."""
 
 
+class StalePlanError(ValidationError):
+    """Raised when a compiled plan no longer matches its node contracts."""
+
+    code = "stale_plan"
+
+
 class ConfigurationError(SaealibError, ValueError):
     """Raised when an :class:`~saealib.Optimizer` is misconfigured at run time."""
 

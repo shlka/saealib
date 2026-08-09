@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any, Protocol, cast
 
 from saealib.callback import (
@@ -22,11 +24,21 @@ from saealib.core.runtime import (
     RuntimeSession,
     RuntimeStep,
     SequentialPlan,
+    validate_plan_contracts,
 )
 from saealib.core.state.patch import StatePatch
 from saealib.exceptions import EvaluationFatalError, ValidationError
 
-__all__ = ["AsyncPipelineRuntime", "PipelineRuntime", "create_runtime", "resolve_plan"]
+__all__ = [
+    "AsyncPipelineRuntime",
+    "PipelineRuntime",
+    "RuntimeFactory",
+    "RuntimeRegistration",
+    "RuntimeRegistry",
+    "create_runtime",
+    "default_runtime_registry",
+    "resolve_plan",
+]
 
 
 class RuntimeEnvironment(Protocol):
@@ -207,8 +219,11 @@ class PipelineRuntime:
             raise ValidationError(
                 "PipelineRuntime.initialize requires an OptimizationState"
             )
+        validate_plan_contracts(plan)
         sequential = SequentialPlan.from_executable_plan(plan)
-        capabilities = getattr(self.environment, "capabilities", self.capabilities)
+        capabilities = self.capabilities | frozenset(
+            getattr(self.environment, "capabilities", ())
+        )
         if not sequential.accepts(capabilities):
             missing = sequential.required_runtime_capabilities - capabilities
             names = ", ".join(sorted(missing))
@@ -377,18 +392,93 @@ class AsyncPipelineRuntime(PipelineRuntime):
         return self._step(session, state, generation_open)
 
 
+class RuntimeFactory(Protocol):
+    """Factory protocol for runtimes selected by a provider registry."""
+
+    def __call__(self, optimizer: object, plan: ExecutablePlan) -> ExecutionRuntime:
+        """Create a runtime for an already resolved plan."""
+        ...
+
+
+@dataclass(frozen=True, kw_only=True)
+class RuntimeRegistration:
+    """One explicit runtime selection rule."""
+
+    name: str
+    matches: Callable[[object], bool]
+    factory: RuntimeFactory
+
+
+class RuntimeRegistry:
+    """Runtime provider registry with deterministic newest-first selection."""
+
+    def __init__(self, registrations: tuple[RuntimeRegistration, ...] = ()) -> None:
+        self._registrations: dict[str, RuntimeRegistration] = {}
+        for registration in registrations:
+            self.register(registration)
+
+    def register(self, registration: RuntimeRegistration) -> None:
+        """Add a uniquely named runtime provider."""
+        if registration.name in self._registrations:
+            raise ValidationError(
+                f"runtime registration {registration.name!r} already exists"
+            )
+        if not callable(registration.matches) or not callable(registration.factory):
+            raise ValidationError(
+                "runtime registration requires callable matches and factory"
+            )
+        self._registrations[registration.name] = registration
+
+    def create(self, optimizer: object, plan: ExecutablePlan) -> ExecutionRuntime:
+        """Select and instantiate the newest matching provider."""
+        for registration in reversed(tuple(self._registrations.values())):
+            if registration.matches(optimizer):
+                return registration.factory(optimizer, plan)
+        raise ValidationError("no registered runtime accepts the optimizer")
+
+    def registrations(self) -> tuple[RuntimeRegistration, ...]:
+        """Return registered providers in registration order."""
+        return tuple(self._registrations.values())
+
+
+def _sync_runtime_factory(optimizer: object, plan: ExecutablePlan) -> ExecutionRuntime:
+    return PipelineRuntime(
+        _OptimizerEnvironment(optimizer, SequentialPlan.from_executable_plan(plan))
+    )
+
+
+def _async_runtime_factory(optimizer: object, plan: ExecutablePlan) -> ExecutionRuntime:
+    return AsyncPipelineRuntime(
+        _OptimizerEnvironment(optimizer, SequentialPlan.from_executable_plan(plan))
+    )
+
+
+default_runtime_registry = RuntimeRegistry(
+    (
+        RuntimeRegistration(
+            name="async",
+            matches=lambda optimizer: getattr(
+                optimizer, "async_evaluation_scheduler", None
+            )
+            is not None,
+            factory=_async_runtime_factory,
+        ),
+        RuntimeRegistration(
+            name="sync",
+            matches=lambda optimizer: getattr(
+                optimizer, "async_evaluation_scheduler", None
+            )
+            is None,
+            factory=_sync_runtime_factory,
+        ),
+    )
+)
+
+
 def create_runtime(optimizer: object) -> ExecutionRuntime:
-    """Create the default runtime without exposing a concrete type to Runner."""
+    """Create a runtime through the replaceable default provider registry."""
     plan = resolve_plan(optimizer)
-    environment = _OptimizerEnvironment(
-        optimizer, SequentialPlan.from_executable_plan(plan)
-    )
-    runtime_type = (
-        AsyncPipelineRuntime
-        if getattr(optimizer, "async_evaluation_scheduler", None) is not None
-        else PipelineRuntime
-    )
-    return runtime_type(environment)
+    return default_runtime_registry.create(optimizer, plan)
 
 
 def resolve_plan(optimizer: object) -> ExecutablePlan:

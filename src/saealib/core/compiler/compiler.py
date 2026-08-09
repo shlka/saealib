@@ -841,6 +841,7 @@ class ExecutablePlan:
     active_rule_namespaces: frozenset[str]
     active_rule_names: tuple[str, ...]
     inserted_adapters: tuple[object, ...] = ()
+    contract_snapshots: tuple[tuple[str, ComponentContract], ...] = ()
 
     def describe(self) -> str:
         """Return a concise human-readable plan summary."""
@@ -1065,6 +1066,9 @@ class Compiler:
             active_rule_namespaces=frozenset(item.namespace for item in active),
             active_rule_names=active_names,
             inserted_adapters=inserted_adapters,
+            contract_snapshots=tuple(
+                (node.component_id, node.contract) for node in current.nodes
+            ),
         )
 
 

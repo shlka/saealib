@@ -17,7 +17,7 @@ from saealib.core.compiler.compiler import ExecutablePlan
 from saealib.core.compiler.graph import ComponentNode
 from saealib.core.contracts.execution import RuntimeCapability
 from saealib.core.state.patch import StatePatch
-from saealib.exceptions import ValidationError
+from saealib.exceptions import StalePlanError, ValidationError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -399,6 +399,14 @@ class RuntimeStep:
         object.__setattr__(self, "executed_node_ids", executed_node_ids)
         object.__setattr__(self, "refused_commands", refused)
 
+    @property
+    def recompile_required(self) -> bool:
+        """Whether this step requests the next step-boundary recompile."""
+        return any(
+            result.status is NodeStatus.RECOMPILE_REQUIRED
+            for result in self.node_results
+        )
+
 
 class ExecutionRuntime(Protocol):
     """Protocol consumed by a runner; concrete execution is a later unit."""
@@ -414,3 +422,22 @@ class ExecutionRuntime(Protocol):
     def advance(self, session: RuntimeSession) -> RuntimeStep:
         """Advance exactly one runtime step."""
         ...
+
+
+def validate_plan_contracts(plan: ExecutablePlan) -> None:
+    """Read each compiled node contract once and reject a stale plan."""
+    snapshots = dict(plan.contract_snapshots)
+    if not snapshots:
+        return
+    stale_node: str | None = None
+    for node in plan.graph.nodes:
+        contract_method = getattr(node.component, "contract", None)
+        if not callable(contract_method):
+            stale_node = stale_node or node.component_id
+            continue
+        current = contract_method()
+        expected = snapshots.get(node.component_id)
+        if current != expected:
+            stale_node = stale_node or node.component_id
+    if stale_node is not None:
+        raise StalePlanError(f"stale_plan: node {stale_node!r} contract changed")
