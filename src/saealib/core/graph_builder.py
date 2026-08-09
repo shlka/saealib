@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any
+from itertools import pairwise
+from typing import Any, cast
 
 from saealib.core.compiler.graph import (
     ComponentGraph,
@@ -32,7 +33,13 @@ from saealib.core.state import StateKey
 from saealib.exceptions import ValidationError
 from saealib.pipeline import Pipeline, Stage
 
-__all__ = ["StageNodeAdapter", "build_component_graph"]
+__all__ = [
+    "StageContractNodeAdapter",
+    "StageNodeAdapter",
+    "StagePartNodeAdapter",
+    "build_component_graph",
+    "build_decomposed_component_graph",
+]
 
 
 @dataclass(frozen=True)
@@ -257,6 +264,10 @@ class StageNodeAdapter:
         self.stage = stage
         self.node_path = node_path or stage.name or type(stage).__name__
 
+    def __getattr__(self, name: str) -> object:
+        """Expose the wrapped Stage's declared part attributes."""
+        return getattr(self.stage, name)
+
     def execute(self, state: Any) -> Any:
         """Delegate execution to the existing Stage implementation."""
         return self.stage.execute(state)
@@ -284,6 +295,38 @@ class StageNodeAdapter:
                 seen.add(qualified)
                 bindings.append(StateBinding(node=node_ref, state_key=qualified))
         return tuple(bindings)
+
+
+class StageContractNodeAdapter(StageNodeAdapter):
+    """U2 executable Stage node carrying the Stage's direct U1 contract."""
+
+    def contract(self) -> ComponentContract:
+        """Return the direct Stage contract, excluding held parts."""
+        return self.stage.contract()
+
+
+class StagePartNodeAdapter:
+    """Expose one U1-declared Stage part as an independently discoverable node.
+
+    Parts deliberately do not implement ``execute``.  The legacy Stage remains
+    the executable owner until the runtime migration unit; these nodes provide
+    the contract and data-dependency identity without executing a component a
+    second time.
+    """
+
+    def __init__(self, component: object, contract: ComponentContract) -> None:
+        self.component = component
+        self._contract = contract
+
+    def __getattr__(self, name: str) -> object:
+        """Expose nested contract parts without making the part executable."""
+        if name == "execute":
+            raise AttributeError(name)
+        return getattr(self.component, name)
+
+    def contract(self) -> ComponentContract:
+        """Return the held part's captured U1 contract."""
+        return self._contract
 
 
 _DATA_PORTS: tuple[tuple[str, str, str, str, str, str], ...] = (
@@ -453,4 +496,185 @@ def build_component_graph(pipeline: Pipeline) -> ComponentGraph:
         control_edges=control_edges,
         state_bindings=tuple(bindings),
         entry_points=(NodeRef(component_id=node_ids[0]),) if node_ids else (),
+    )
+
+
+def _declared_part_component(stage: Stage, name: str) -> object | None:
+    """Resolve a named U1 part from the conventional private attribute."""
+    for candidate in (f"_{name}", name):
+        if hasattr(stage, candidate):
+            return getattr(stage, candidate)
+    return None
+
+
+def _decomposed_role_node(
+    stage_node: str,
+    role: str,
+    part_nodes: Mapping[str, tuple[str, ComponentNode]],
+    stage: ComponentNode,
+    direction: PortDirection,
+    port: str,
+) -> NodeRef | None:
+    """Find the independently owned node for one declared data role."""
+    matches: list[NodeRef] = []
+    for part_node, node in part_nodes.values():
+        if _has_port(node.contract, role, port, direction):
+            matches.append(NodeRef(component_id=part_node, role=role))
+    if matches:
+        return matches[0] if len(matches) == 1 else None
+    if _has_port(stage.contract, role, port, direction):
+        return NodeRef(component_id=stage_node, role=role)
+    return None
+
+
+def build_decomposed_component_graph(pipeline: Pipeline) -> ComponentGraph:
+    """Build the explicit U2 Stage/part graph.
+
+    ``build_component_graph`` remains the Phase 6 bridge.  This function is an
+    opt-in U2 path: each Stage is retained as the sole executable node, while
+    every U1-declared part gets its own contract-bearing node.  Part nodes are
+    connected into the Stage control chain so ordering remains unique; data
+    edges target the part that owns the declared port and never encode control
+    side effects.
+    """
+    if not isinstance(pipeline, Pipeline):
+        raise ValidationError("build_decomposed_component_graph requires a Pipeline")
+    stages = tuple(pipeline.stages)
+    stage_ids = _unique_node_ids(stages)
+    stage_nodes = tuple(
+        ComponentNode(
+            component_id=stage_id,
+            component=StageContractNodeAdapter(stage, node_path=stage_id),
+        )
+        for stage_id, stage in zip(stage_ids, stages)
+    )
+    nodes: list[ComponentNode] = list(stage_nodes)
+    part_nodes_by_stage: list[dict[str, tuple[str, ComponentNode]]] = []
+    for stage_id, stage, stage_node in zip(stage_ids, stages, stage_nodes):
+        declared = stage.contract()
+        stage_parts: dict[str, tuple[str, ComponentNode]] = {}
+        declared_components: set[int] = set()
+        for part in declared.parts:
+            component = _declared_part_component(stage, part.name)
+            if component is None:
+                if part.optional:
+                    continue
+                raise ValidationError(
+                    f"{type(stage).__name__} declares missing part {part.name!r}"
+                )
+            part_id = f"{stage_id}__{part.name}"
+            part_node = ComponentNode(
+                component_id=part_id,
+                component=StagePartNodeAdapter(component, part.contract),
+            )
+            nodes.append(part_node)
+            stage_parts[part.name] = (part_id, part_node)
+            declared_components.add(id(component))
+        # U1 declarations are authoritative for direct Stage state, but the
+        # legacy held objects still own ports on a few compatibility stages.
+        # Discover those objects as additional part nodes so no existing port
+        # disappears merely because its Stage contract has not migrated yet.
+        for item_index, item in enumerate(_held_components(stage), start=1):
+            if id(item.component) in declared_components:
+                continue
+            part_name = f"held_{item_index}"
+            while part_name in stage_parts:
+                part_name = f"{part_name}_1"
+            part_id = f"{stage_id}__{part_name}"
+            part_node = ComponentNode(
+                component_id=part_id,
+                component=StagePartNodeAdapter(item.component, item.contract),
+            )
+            nodes.append(part_node)
+            stage_parts[part_name] = (part_id, part_node)
+        part_nodes_by_stage.append(stage_parts)
+
+    control_edges: list[ControlEdge] = []
+    for index, stage_id in enumerate(stage_ids):
+        owned = tuple(part_nodes_by_stage[index].values())
+        chain = [stage_id, *(part_id for part_id, _ in owned)]
+        if index + 1 < len(stage_ids):
+            chain.append(stage_ids[index + 1])
+        control_edges.extend(
+            ControlEdge(
+                source=NodeRef(component_id=source),
+                target=NodeRef(component_id=target),
+            )
+            for source, target in pairwise(chain)
+        )
+
+    data_edges: list[DataEdge] = []
+    for (
+        source_name,
+        source_role,
+        source_port,
+        target_name,
+        target_role,
+        target_port,
+    ) in _DATA_PORTS:
+        for source_index, source_stage in enumerate(stages):
+            if source_stage.name != source_name:
+                continue
+            for target_index, target_stage in enumerate(stages):
+                if target_stage.name != target_name or source_index >= target_index:
+                    continue
+                source_ref = _decomposed_role_node(
+                    stage_ids[source_index],
+                    source_role,
+                    part_nodes_by_stage[source_index],
+                    stage_nodes[source_index],
+                    PortDirection.OUTPUT,
+                    source_port,
+                )
+                target_ref = _decomposed_role_node(
+                    stage_ids[target_index],
+                    target_role,
+                    part_nodes_by_stage[target_index],
+                    stage_nodes[target_index],
+                    PortDirection.INPUT,
+                    target_port,
+                )
+                if source_ref is not None and target_ref is not None:
+                    data_edges.append(
+                        DataEdge(
+                            source=source_ref,
+                            target=target_ref,
+                            source_port=source_port,
+                            target_port=target_port,
+                        )
+                    )
+
+    bindings: list[StateBinding] = []
+    seen_bindings: set[tuple[str, StateKey[object]]] = set()
+    for index, stage in enumerate(stages):
+        for part_id, part_node in part_nodes_by_stage[index].values():
+            part_adapter = cast(StagePartNodeAdapter, part_node.component)
+            component = part_adapter.component
+            for item in _held_components(stage):
+                if item.component is not component:
+                    continue
+                for key in item.contract.state.exports:
+                    if key.namespace == "surrogates":
+                        qualified = StateKey[object](
+                            namespace=key.namespace,
+                            name=_surrogate_key_name(stage_ids[index], item),
+                            schema_version=key.schema_version,
+                        )
+                        marker = (part_id, qualified)
+                        if marker in seen_bindings:
+                            continue
+                        seen_bindings.add(marker)
+                        bindings.append(
+                            StateBinding(
+                                node=NodeRef(component_id=part_id),
+                                state_key=qualified,
+                            )
+                        )
+
+    return ComponentGraph(
+        nodes=tuple(nodes),
+        data_edges=tuple(data_edges),
+        control_edges=tuple(control_edges),
+        state_bindings=tuple(bindings),
+        entry_points=(NodeRef(component_id=stage_ids[0]),) if stage_ids else (),
     )

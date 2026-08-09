@@ -168,20 +168,6 @@ def _edge_targets_feedback_consumer(edge: DataEdge, node: ComponentNode) -> bool
     return edge.target.role == role and edge.target_port == port.name
 
 
-def _has_feedback_input_edge(
-    graph: ComponentGraph,
-    node: ComponentNode,
-    input_role: str,
-    input_port: str,
-) -> bool:
-    """Return whether a feedback consumer already has a graph input edge."""
-    return any(
-        edge.target == NodeRef(component_id=node.component_id, role=input_role)
-        and edge.target_port == input_port
-        for edge in graph.data_edges
-    )
-
-
 def _adapter_registration(
     context: RuleContext,
     graph: ComponentGraph,
@@ -247,37 +233,6 @@ class FeedbackAccumulatorRule:
             return ResolutionResult(graph=graph, claims=context.claims)
 
         candidates: list[DataEdge] = list(graph.data_edges)
-        for node in graph.nodes:
-            feedback = _feedback_consumer(node)
-            ports = _feedback_ports(node.contract)
-            if (
-                feedback is None
-                or feedback.completion != COMPLETE_BATCH
-                or ports is None
-            ):
-                continue
-            (output_role, output_port), (input_role, input_port) = ports
-            if _has_feedback_input_edge(graph, node, input_role, input_port.name):
-                continue
-            # This is a self-loop: the legacy StageNodeAdapter keeps the
-            # scheduler, feedback builder, and consumer in one node.  It is a
-            # Phase 6 bridge only; SequentialPlan cannot order a self-loop.
-            # Once Phase 7 makes Stage components their own nodes, this becomes
-            # an ordinary node-to-node edge and no synthetic edge is needed.
-            candidates.append(
-                DataEdge(
-                    source=NodeRef(
-                        component_id=node.component_id,
-                        role=output_role,
-                    ),
-                    target=NodeRef(
-                        component_id=node.component_id,
-                        role=input_role,
-                    ),
-                    source_port=output_port.name,
-                    target_port=input_port.name,
-                )
-            )
 
         nodes = list(graph.nodes)
         rewritten_edges: list[DataEdge] = []

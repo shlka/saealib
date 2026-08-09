@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, cast
 
+import numpy as np
+
 from saealib import (
     GA,
     CrossoverBLXAlpha,
@@ -11,22 +13,29 @@ from saealib import (
     SequentialSelection,
     TruncationSelection,
 )
-from saealib.core.compiler import CompileContext, RuleContext
+from saealib.core.compiler import CompileContext, Compiler, RuleContext
 from saealib.core.compiler.diagnostics import DiagnosticBag
 from saealib.core.compiler.graph import IdentityRule, ReachabilityRule
 from saealib.core.contracts import (
     MANY,
     ComponentContract,
     DataSpec,
+    PartSpec,
     PortContract,
     PortDirection,
     PortSpec,
     StateContract,
 )
-from saealib.core.graph_builder import StageNodeAdapter, build_component_graph
+from saealib.core.graph_builder import (
+    StageNodeAdapter,
+    build_component_graph,
+    build_decomposed_component_graph,
+)
 from saealib.core.state import SURROGATES_DEFAULT
 from saealib.execution.evaluator import SerialEvaluator
+from saealib.optimizer import Optimizer
 from saealib.pipeline import Pipeline, Stage
+from saealib.problem import Problem
 from saealib.stages import SurrogatePredictStage
 from saealib.strategies.direct import DirectStrategy, SteadyStateStrategy
 from saealib.strategies.gb import GenerationBasedStrategy
@@ -311,3 +320,135 @@ def test_multiple_surrogate_attributes_also_get_distinct_bindings():
         "surrogate_predict:cheap_surrogate",
         "surrogate_predict:rich_surrogate",
     }
+
+
+def test_decomposed_surrogate_bindings_remain_node_qualified():
+    class _NamedManager:
+        def __init__(self) -> None:
+            self.managers = {
+                "cheap": _ContractComponent(exports=(SURROGATES_DEFAULT,)),
+                "rich": _ContractComponent(exports=(SURROGATES_DEFAULT,)),
+            }
+
+        def contract(self) -> ComponentContract:
+            return ComponentContract()
+
+    graph = build_decomposed_component_graph(
+        Pipeline([SurrogatePredictStage(cast(Any, _NamedManager()))])
+    )
+
+    assert {binding.state_key.name for binding in graph.state_bindings} == {
+        "surrogate_predict:cheap",
+        "surrogate_predict:rich",
+    }
+    assert all(
+        binding.node.component_id != "surrogate_predict"
+        for binding in graph.state_bindings
+    )
+
+
+def test_u2_decomposition_exposes_stage_contract_and_held_parts():
+    class _Stage(Stage):
+        name = "u2_stage"
+
+        def __init__(self) -> None:
+            super().__init__()
+            self._component = _ContractComponent(exports=(SURROGATES_DEFAULT,))
+
+        def contract(self) -> ComponentContract:
+            return ComponentContract(
+                state=StateContract(reads=(SURROGATES_DEFAULT,)),
+                parts=(
+                    # This is intentionally a direct Stage contract assertion;
+                    # the part is still independently represented below.
+                    PartSpec(name="component", contract=self._component.contract()),
+                ),
+            )
+
+        def execute(self, state):
+            return state
+
+    graph = build_decomposed_component_graph(Pipeline([_Stage()]))
+    stage = graph.node_by_id("u2_stage")
+    part = graph.node_by_id("u2_stage__component")
+
+    assert stage.contract.state.reads == (SURROGATES_DEFAULT,)
+    assert part.contract.state.exports == (SURROGATES_DEFAULT,)
+    assert type(stage.component).__name__ == "StageContractNodeAdapter"
+    assert type(part.component).__name__ == "StagePartNodeAdapter"
+    assert stage.component_id != part.component_id
+
+
+def test_u2_feedback_is_cross_node_and_control_is_not_data():
+    graph = build_decomposed_component_graph(
+        Pipeline(list(DirectStrategy().build_pipeline(cast(Any, _Provider())).stages))
+    )
+
+    feedback_edges = [
+        edge
+        for edge in graph.data_edges
+        if edge.source_port == "feedback" and edge.target_port == "offspring"
+    ]
+    assert len(feedback_edges) == 1
+    edge = feedback_edges[0]
+    assert edge.source.component_id != edge.target.component_id
+    assert not any(
+        item.source.component_id == item.target.component_id
+        for item in graph.data_edges
+    )
+
+    control_only = graph.__class__(
+        nodes=graph.nodes,
+        control_edges=graph.control_edges,
+        state_bindings=graph.state_bindings,
+        entry_points=graph.entry_points,
+    )
+    assert len(_rule_diagnostics(ReachabilityRule(), control_only)) == 0
+
+    partial_plan = Compiler().compile(
+        graph,
+        CompileContext(offered_runtime_capabilities=frozenset({"partial_feedback"})),
+    )
+    accumulator_edges = [
+        item
+        for item in partial_plan.graph.data_edges
+        if item.source.component_id.startswith("__adapter_feedback_accumulator_")
+        or item.target.component_id.startswith("__adapter_feedback_accumulator_")
+    ]
+    assert len(accumulator_edges) == 2
+    assert (
+        accumulator_edges[0].source.component_id
+        != accumulator_edges[0].target.component_id
+    )
+    assert (
+        accumulator_edges[1].source.component_id
+        != accumulator_edges[1].target.component_id
+    )
+    assert {item.source.component_id for item in accumulator_edges} != {
+        item.target.component_id for item in accumulator_edges
+    }
+
+
+def test_u2_five_strategy_graphs_compile_without_errors_or_self_loops():
+    problem = Problem(
+        func=lambda x: float(np.sum(np.asarray(x) ** 2)),
+        dim=2,
+        n_obj=1,
+        direction=np.array([-1.0]),
+        lb=[-1.0, -1.0],
+        ub=[1.0, 1.0],
+    )
+
+    for strategy in _strategies():
+        optimizer = Optimizer(problem).set_strategy(strategy)
+        optimizer._resolve_defaults()
+        graph = build_decomposed_component_graph(strategy.build_pipeline(optimizer))
+        plan = Compiler().compile(
+            graph, CompileContext(space=problem.space, problem=problem)
+        )
+        errors = [item for item in plan.diagnostics if item.severity.value == "error"]
+        assert errors == []
+        assert all(
+            edge.source.component_id != edge.target.component_id
+            for edge in plan.graph.data_edges
+        )

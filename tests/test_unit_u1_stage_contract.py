@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from saealib.core.contracts import ComponentContract
 from saealib.core.state import (
     ACQUISITION_RESULT,
@@ -59,6 +61,14 @@ class _ContractComponent:
     def contract(self) -> ComponentContract:
         return ComponentContract()
 
+    def ask(self, request: object, state: object) -> object:
+        del request, state
+        return None
+
+    def tell(self, feedback: object, state: object) -> object:
+        del feedback, state
+        return None
+
 
 OPERATIONAL_STAGES = (
     CountGenerationStage,
@@ -84,27 +94,40 @@ OPERATIONAL_STAGES = (
 )
 
 
-def _uninitialized_stage(stage_type: type[Stage]) -> Stage:
-    """Exercise declarations independently of runtime service construction."""
-    stage = object.__new__(stage_type)
-    component = _ContractComponent()
-    for attr in (
-        "_algorithm",
-        "_sm",
-        "_acquisition",
-        "_planner",
-        "_scheduler",
-        "_evaluator",
-        "_builder",
-        "_initializer",
-    ):
-        setattr(stage, attr, component)
-    return stage
+def _operational_stage_instances() -> tuple[Stage, ...]:
+    def held() -> Any:
+        return _ContractComponent()
+
+    return (
+        CountGenerationStage(),
+        AskStage(held()),
+        SurrogatePredictStage(held()),
+        PendingEvaluationContextStage(held()),
+        AcquisitionStage(held()),
+        SurrogateFitStage(held()),
+        TopKSelectionStage(k=1),
+        SortByScoreStage(),
+        EvaluationPlanStage(),
+        AsyncEvaluationSubmitStage(held(), held()),
+        EvaluationSubmitStage(held()),
+        EvaluationCollectStage(held()),
+        EvaluationApplyStage(),
+        EvaluationAcknowledgeStage(held()),
+        TrueEvaluationStage(held()),
+        ArchiveUpdateStage(),
+        FeedbackStage(held()),
+        TellStage(held()),
+        SurrogateOnlyLoopStage(held(), held(), 0, acquisition=held()),
+        InitializationStage(held(), held(), held()),
+    )
+
+
+OPERATIONAL_STAGE_INSTANCES = _operational_stage_instances()
 
 
 def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
     """Every operational Stage exposes the state it directly touches."""
-    expected = {
+    expected: dict[type[Stage], tuple[set[Any], set[Any]]] = {
         CountGenerationStage: (
             {RUNTIME_GENERATION, EVALUATIONS_PENDING},
             {RUNTIME_GENERATION},
@@ -289,9 +312,9 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
         SurrogateOnlyLoopStage: ({ARCHIVES_MAIN}, set()),
         InitializationStage: (set(), set()),
     }
-    for stage_type in OPERATIONAL_STAGES:
+    for stage in OPERATIONAL_STAGE_INSTANCES:
+        stage_type = type(stage)
         assert "contract" in stage_type.__dict__, stage_type.__name__
-        stage = _uninitialized_stage(stage_type)
         contract = stage.contract()
         assert isinstance(contract, ComponentContract)
         expected_reads, expected_writes = expected[stage_type]
@@ -303,15 +326,10 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
 
 def test_real_stage_instances_expose_the_same_contract_seam() -> None:
     """At least the constructor path, not only synthetic objects, is covered."""
-    stages = (
-        CountGenerationStage(),
-        TopKSelectionStage(k=1),
-        SortByScoreStage(),
-        EvaluationPlanStage(),
-        EvaluationApplyStage(),
-        FeedbackStage(),
+    assert all(
+        isinstance(stage.contract(), ComponentContract)
+        for stage in OPERATIONAL_STAGE_INSTANCES
     )
-    assert all(isinstance(stage.contract(), ComponentContract) for stage in stages)
 
 
 def test_transient_contract_keys_are_boundary_vocabulary_only() -> None:
@@ -325,7 +343,9 @@ def test_transient_contract_keys_are_boundary_vocabulary_only() -> None:
 
 
 def test_held_component_contract_is_a_part_not_the_stage_state_contract() -> None:
-    stage = _uninitialized_stage(AskStage)
+    stage = next(
+        stage for stage in OPERATIONAL_STAGE_INSTANCES if isinstance(stage, AskStage)
+    )
     ask = stage.contract()
     assert ask.parts
     assert ask.parts[0].name == "_algorithm"

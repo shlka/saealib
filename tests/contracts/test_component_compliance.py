@@ -40,6 +40,28 @@ from saealib.core.contracts import (
 from saealib.core.state import SURROGATES_DEFAULT
 from saealib.pipeline import Stage
 from saealib.registry import build, to_spec
+from saealib.stages import (
+    AcquisitionStage,
+    ArchiveUpdateStage,
+    AskStage,
+    AsyncEvaluationSubmitStage,
+    CountGenerationStage,
+    EvaluationAcknowledgeStage,
+    EvaluationApplyStage,
+    EvaluationCollectStage,
+    EvaluationPlanStage,
+    EvaluationSubmitStage,
+    FeedbackStage,
+    InitializationStage,
+    PendingEvaluationContextStage,
+    SortByScoreStage,
+    SurrogateFitStage,
+    SurrogateOnlyLoopStage,
+    SurrogatePredictStage,
+    TellStage,
+    TopKSelectionStage,
+    TrueEvaluationStage,
+)
 from saealib.surrogate.rbf import gaussian_kernel
 
 _REGISTRY = saealib.registry._REGISTRY
@@ -86,6 +108,50 @@ class _PymooMutationStub:
         **kwargs: object,
     ) -> np.ndarray:
         return x
+
+
+class _StageHeldComponent:
+    def contract(self) -> ComponentContract:
+        return ComponentContract()
+
+    def ask(self, request: Any, state: Any) -> Any:
+        del request, state
+        return None
+
+    def tell(self, feedback: Any, state: Any) -> Any:
+        del feedback, state
+        return None
+
+
+def _operational_stage_instances() -> tuple[Stage, ...]:
+    def held() -> Any:
+        return _StageHeldComponent()
+
+    return (
+        CountGenerationStage(),
+        AskStage(held()),
+        SurrogatePredictStage(held()),
+        PendingEvaluationContextStage(held()),
+        AcquisitionStage(held()),
+        SurrogateFitStage(held()),
+        TopKSelectionStage(k=1),
+        SortByScoreStage(),
+        EvaluationPlanStage(),
+        AsyncEvaluationSubmitStage(held(), held()),
+        EvaluationSubmitStage(held()),
+        EvaluationCollectStage(held()),
+        EvaluationApplyStage(),
+        EvaluationAcknowledgeStage(held()),
+        TrueEvaluationStage(held()),
+        ArchiveUpdateStage(),
+        FeedbackStage(held()),
+        TellStage(held()),
+        SurrogateOnlyLoopStage(held(), held(), 0, acquisition=held()),
+        InitializationStage(held(), held(), held()),
+    )
+
+
+_OPERATIONAL_STAGE_INSTANCES = _operational_stage_instances()
 
 
 _IMPORT_FAILURES: dict[str, str] = {}
@@ -302,6 +368,18 @@ def _recipe_stage_node_adapter() -> Any:
     return StageNodeAdapter(_RecipeStage(name="recipe_stage"))
 
 
+def _recipe_stage_contract_node_adapter() -> Any:
+    from saealib.core.graph_builder import StageContractNodeAdapter
+
+    return StageContractNodeAdapter(_operational_stage_instances()[1])
+
+
+def _recipe_stage_part_node_adapter() -> Any:
+    from saealib.core.graph_builder import StagePartNodeAdapter
+
+    return StagePartNodeAdapter(_StageHeldComponent(), ComponentContract())
+
+
 def _recipe_freshened_component() -> Any:
     from saealib.core.compiler.schema_rules import _FreshenedComponent
 
@@ -375,6 +453,12 @@ _RECIPES: dict[str, Callable[[], Any]] = {
     ): _recipe_async_evaluation_scheduler,
     "saealib.algorithms.pymoo_algorithm.PymooAlgorithm": _recipe_pymoo_algorithm,
     "saealib.core.graph_builder.StageNodeAdapter": _recipe_stage_node_adapter,
+    (
+        "saealib.core.graph_builder.StageContractNodeAdapter"
+    ): _recipe_stage_contract_node_adapter,
+    "saealib.core.graph_builder.StagePartNodeAdapter": (
+        _recipe_stage_part_node_adapter
+    ),
     "saealib.core.compiler.schema_rules._FreshenedComponent": (
         _recipe_freshened_component
     ),
@@ -493,6 +577,14 @@ _IMPLEMENTED_COMPONENTS = tuple(
     (_qualified_name(cls), instance)
     for cls, instance in _DISCOVERED_INSTANCES
     if instance is not None and _implements_contract(instance)
+)
+
+_CONTRACT_INVARIANT_INSTANCES = _IMPLEMENTED_COMPONENTS + tuple(
+    (
+        f"{type(stage).__module__}.{type(stage).__qualname__}",
+        stage,
+    )
+    for stage in _OPERATIONAL_STAGE_INSTANCES
 )
 
 
@@ -943,8 +1035,8 @@ def test_every_recipe_is_reached_after_no_arg_construction_attempt() -> None:
 
 @pytest.mark.parametrize(
     ("name", "instance"),
-    _IMPLEMENTED_COMPONENTS,
-    ids=[name for name, _ in _IMPLEMENTED_COMPONENTS],
+    _CONTRACT_INVARIANT_INSTANCES,
+    ids=[name for name, _ in _CONTRACT_INVARIANT_INSTANCES],
 )
 def test_discovered_contract_is_state_free(name: str, instance: Any) -> None:
     del name
@@ -958,8 +1050,8 @@ def test_surrogate_contract_exports_model_state_only() -> None:
 
 @pytest.mark.parametrize(
     ("name", "instance"),
-    _IMPLEMENTED_COMPONENTS,
-    ids=[name for name, _ in _IMPLEMENTED_COMPONENTS],
+    _CONTRACT_INVARIANT_INSTANCES,
+    ids=[name for name, _ in _CONTRACT_INVARIANT_INSTANCES],
 )
 def test_discovered_contract_is_pure(name: str, instance: Any) -> None:
     del name
@@ -968,8 +1060,8 @@ def test_discovered_contract_is_pure(name: str, instance: Any) -> None:
 
 @pytest.mark.parametrize(
     ("name", "instance"),
-    _IMPLEMENTED_COMPONENTS,
-    ids=[name for name, _ in _IMPLEMENTED_COMPONENTS],
+    _CONTRACT_INVARIANT_INSTANCES,
+    ids=[name for name, _ in _CONTRACT_INVARIANT_INSTANCES],
 )
 def test_discovered_port_names_are_valid(name: str, instance: Any) -> None:
     del name
@@ -978,8 +1070,8 @@ def test_discovered_port_names_are_valid(name: str, instance: Any) -> None:
 
 @pytest.mark.parametrize(
     ("name", "instance"),
-    _IMPLEMENTED_COMPONENTS,
-    ids=[name for name, _ in _IMPLEMENTED_COMPONENTS],
+    _CONTRACT_INVARIANT_INSTANCES,
+    ids=[name for name, _ in _CONTRACT_INVARIANT_INSTANCES],
 )
 def test_discovered_contract_vocabulary_references_are_registered(
     name: str, instance: Any
@@ -990,8 +1082,8 @@ def test_discovered_contract_vocabulary_references_are_registered(
 
 @pytest.mark.parametrize(
     ("name", "instance"),
-    _IMPLEMENTED_COMPONENTS,
-    ids=[name for name, _ in _IMPLEMENTED_COMPONENTS],
+    _CONTRACT_INVARIANT_INSTANCES,
+    ids=[name for name, _ in _CONTRACT_INVARIANT_INSTANCES],
 )
 def test_discovered_parts_match_held_components(name: str, instance: Any) -> None:
     del name
