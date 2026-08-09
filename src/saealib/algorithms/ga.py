@@ -390,9 +390,7 @@ class GA(Algorithm):
         pop = ctx.population.get_array("x")
         popsize = len(pop)
         target = n_offspring if n_offspring is not None else popsize
-        bounds_srv = cast(
-            BoundsService, ctx.problem.space.services.require("BoundsService")
-        )
+        bounds_srv = cast(BoundsService, ctx.compiled_service("BoundsService"))
         lb, ub = bounds_srv.bounds
         n_children = self.crossover.n_children
         n_pair = math.ceil(target / n_children)

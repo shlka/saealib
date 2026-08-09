@@ -547,6 +547,40 @@ class OptimizationState:
         """
         return self._store.get(key)
 
+    def bind_compiled_services(self, services: dict[str, object]) -> None:
+        """Bind compiler-resolved services for use outside the registry hot path.
+
+        Bindings are deliberately transient runtime state: they are not
+        dataclass fields and therefore are neither part of checkpoints nor the
+        public state schema.  A service name may not be rebound to another
+        object, since that would make a state use a stale compiled plan.
+        """
+        current = self.__dict__.setdefault("_compiled_services", {})
+        for name, service in services.items():
+            previous = current.get(name, _MISSING)
+            if previous is not _MISSING and previous is not service:
+                # ``replace(problem=...)`` may carry a binding from the old
+                # problem.  A new problem starts a new binding generation.
+                if self.__dict__.get("problem") is not self.__dict__.get(
+                    "_compiled_problem"
+                ):
+                    current[name] = service
+                    continue
+                raise ValidationError(
+                    f"compiled service {name!r} is bound to conflicting objects"
+                )
+        current.update(services)
+        self.__dict__["_compiled_problem"] = self.__dict__.get("problem")
+
+    def compiled_service(self, name: str) -> object:
+        """Return a runtime-bound compiler service without registry fallback."""
+        service = self.__dict__.get("_compiled_services", {}).get(name, _MISSING)
+        if service is _MISSING:
+            raise ValidationError(
+                f"compiled service {name!r} is not bound to this OptimizationState"
+            )
+        return service
+
     def set_state(self, key: StateKey[Any], value: Any) -> None:
         """Replace one custom or built-in value through the state store."""
         if key.namespace in {"populations", "archives"}:
@@ -714,6 +748,16 @@ class OptimizationState:
         initial_store.update(custom_state)
         object.__setattr__(self, "_store", StateStore(initial_store))
         object.__setattr__(self, "_custom_state", custom_state)
+        # State construction is the formal setup seam used by direct
+        # algorithm callers.  PipelineRuntime later verifies/rebinds this
+        # object against the compiler's resolved reference.
+        bounds_service = self.problem.space.services.get("BoundsService")
+        object.__setattr__(
+            self,
+            "_compiled_services",
+            {} if bounds_service is None else {"BoundsService": bounds_service},
+        )
+        object.__setattr__(self, "_compiled_problem", self.problem)
         self._population_collection._bind(
             lambda values: self._commit_collection("populations", values)
         )
@@ -909,6 +953,17 @@ class OptimizationState:
         # fields for pickle.
         result = object.__new__(type(self))
         object.__setattr__(result, "__dict__", self.__dict__.copy())
+        if "problem" in kwargs and kwargs["problem"] is not self.problem:
+            # A state can be continued with a different problem (the dynamic
+            # archive workflow does this).  The old plan bindings must not be
+            # mistaken for bindings of the new problem's service objects.
+            replacement_problem = kwargs["problem"]
+            bounds_service = replacement_problem.space.services.get("BoundsService")
+            object.__setattr__(
+                result,
+                "_compiled_services",
+                {} if bounds_service is None else {"BoundsService": bounds_service},
+            )
         for name, value in kwargs.items():
             if name not in _STORE_FIELDS and name not in {"populations", "archives"}:
                 object.__setattr__(result, name, value)
@@ -977,17 +1032,13 @@ class OptimizationState:
     @property
     def lb(self) -> np.ndarray:
         """Return the lower bounds of the problem via BoundsService."""
-        bounds_srv = cast(
-            BoundsService, self.problem.space.services.require("BoundsService")
-        )
+        bounds_srv = cast(BoundsService, self.compiled_service("BoundsService"))
         return bounds_srv.bounds[0]
 
     @property
     def ub(self) -> np.ndarray:
         """Return the upper bounds of the problem via BoundsService."""
-        bounds_srv = cast(
-            BoundsService, self.problem.space.services.require("BoundsService")
-        )
+        bounds_srv = cast(BoundsService, self.compiled_service("BoundsService"))
         return bounds_srv.bounds[1]
 
     @property

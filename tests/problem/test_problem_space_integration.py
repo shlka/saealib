@@ -188,11 +188,11 @@ def test_ga_and_pso_determinism_with_bounds_service() -> None:
 
 
 def test_bounds_service_not_required_in_inner_loops() -> None:
-    """services.require is called at most once per ask call, not in inner loops.
+    """GA.ask uses the compiled bounds reference without registry lookup.
 
     Implementation mutation that would break this test:
-        Move `ctx.problem.space.services.require("BoundsService")` inside
-        a loop over popsize. The call count would be popsize (20) instead of 1.
+        Reintroduce `ctx.problem.space.services.require("BoundsService")` in
+        GA.ask. The post-initialization spy would observe a non-zero call.
     """
     prob = Problem(
         func=dummy_func,
@@ -219,5 +219,6 @@ def test_bounds_service_not_required_in_inner_loops() -> None:
     bounds_calls = [
         call for call in require_mock.call_args_list if call.args[0] == "BoundsService"
     ]
-    # It must be resolved exactly once per ask call, NOT popsize times (20)
-    assert len(bounds_calls) == 1
+    # The compiled reference is bound during state setup; ask must not resolve
+    # the service through the registry.
+    assert len(bounds_calls) == 0

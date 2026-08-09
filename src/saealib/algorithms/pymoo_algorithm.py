@@ -195,9 +195,11 @@ class PymooAlgorithm(Algorithm):
             r"$P \leftarrow \text{pymoo\_algorithm.pop}$",
         ]
 
-    def _build_pymoo_problem(self, problem: Problem) -> PymooCoreProblem:
+    def _build_pymoo_problem(self, ctx: OptimizationState) -> PymooCoreProblem:
         """Synthesize a minimal pymoo Problem shim; never evaluated by pymoo itself."""
         from pymoo.core.problem import Problem as PymooProblem
+
+        problem = ctx.problem
 
         eq_mask = np.array(
             [isinstance(c, EqualityConstraint) for c in problem.constraints],
@@ -206,9 +208,7 @@ class PymooAlgorithm(Algorithm):
         self._ieq_idx = np.where(~eq_mask)[0]
         self._eq_idx = np.where(eq_mask)[0]
 
-        bounds_srv = cast(
-            BoundsService, problem.space.services.require("BoundsService")
-        )
+        bounds_srv = cast(BoundsService, ctx.compiled_service("BoundsService"))
         lb, ub = bounds_srv.bounds
 
         return PymooProblem(
@@ -289,7 +289,7 @@ class PymooAlgorithm(Algorithm):
             return
         from pymoo.core.termination import NoTermination
 
-        pymoo_problem = self._build_pymoo_problem(ctx.problem)
+        pymoo_problem = self._build_pymoo_problem(ctx)
         self.pymoo_algorithm.setup(
             pymoo_problem,
             termination=NoTermination(),

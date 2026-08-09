@@ -180,9 +180,7 @@ class PSO(Algorithm):
         """
         pop = ctx.population
         popsize = len(pop)
-        bounds_srv = cast(
-            BoundsService, ctx.problem.space.services.require("BoundsService")
-        )
+        bounds_srv = cast(BoundsService, ctx.compiled_service("BoundsService"))
         lb, ub = bounds_srv.bounds
 
         x = pop.get_array("x").copy()

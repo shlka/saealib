@@ -372,6 +372,29 @@ class PipelineRuntime:
                 "PipelineRuntime.initialize requires an OptimizationState"
             )
         validate_plan_contracts(plan)
+        services: dict[str, object] = {}
+        for node in plan.graph.nodes:
+            required = {
+                requirement.name
+                for port in node.contract.ports.values()
+                for spec in (port.inputs + port.outputs)
+                for requirement in spec.required_services
+            }
+            if not required <= set(node.resolved_services):
+                missing = ", ".join(sorted(required - set(node.resolved_services)))
+                raise ValidationError(
+                    f"compiled plan node {node.component_id!r} is missing resolved "
+                    f"services: {missing}"
+                )
+            for name, service in node.resolved_services.items():
+                previous = services.get(name)
+                if previous is not None and previous is not service:
+                    raise ValidationError(
+                        f"compiled plan resolves service {name!r} to "
+                        "conflicting objects"
+                    )
+                services[name] = service
+        state.bind_compiled_services(services)
         sequential = SequentialPlan.from_executable_plan(plan)
         capabilities = self.capabilities | frozenset(
             getattr(self.environment, "capabilities", ())
