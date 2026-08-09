@@ -10,7 +10,15 @@ import pytest
 from saealib.context import CURRENT_CHECKPOINT_SCHEMA_VERSION, OptimizationState
 from saealib.core.contracts.data import Fixed
 from saealib.core.contracts.representation import ParameterSpec, RepresentationSpec
-from saealib.core.state import STATE_MIGRATORS, StateKey
+from saealib.core.state import (
+    ARCHIVES_MAIN,
+    ARCHIVES_PARETO,
+    EVALUATIONS_COUNT,
+    POPULATIONS_MAIN,
+    STATE_MIGRATORS,
+    StateKey,
+    StateStore,
+)
 from saealib.exceptions import CheckpointError, ValidationError
 from saealib.identity import IDAllocator
 from saealib.population import (
@@ -87,6 +95,7 @@ def _state():
         archives={"main": archive, "pareto": pareto},
         rng=np.random.default_rng(3),
         candidate_id_allocator=IDAllocator(20),
+        proposal_id_allocator=IDAllocator(40),
         request_id_allocator=IDAllocator(30),
         fe=2,
         gen=4,
@@ -142,6 +151,7 @@ def test_named_collections_checkpoint_roundtrip(tmp_path):
     assert loaded.pareto_archive.eps_cv == 0.25
     np.testing.assert_array_equal(loaded.archives["history"].id, [7, 8])
     assert loaded.candidate_id_allocator.next_value == 20
+    assert loaded.proposal_id_allocator.next_value == 40
     assert loaded.request_id_allocator.next_value == 30
     assert loaded.data["resumed"] is True
 
@@ -155,6 +165,7 @@ def test_current_schema_and_allocator_continuity(tmp_path):
     assert int(raw["_checkpoint_schema_version"]) == CURRENT_CHECKPOINT_SCHEMA_VERSION
     loaded = OptimizationState.load(path, ctx.problem)
     assert loaded.candidate_id_allocator.allocate(1).tolist() == [20]
+    assert loaded.proposal_id_allocator.allocate(1).tolist() == [40]
     assert loaded.request_id_allocator.allocate(1).tolist() == [30]
 
     entries = json.loads(bytes(raw["_state_entries"]).decode())
@@ -340,8 +351,53 @@ def test_v2_helper_writes_a_self_consistent_v2_checkpoint(tmp_path):
     assert loaded.fe == ctx.fe
     assert loaded.gen == ctx.gen
     assert loaded.candidate_id_allocator.next_value == 20
+    assert loaded.proposal_id_allocator.next_value == 40
     np.testing.assert_array_equal(loaded.population.x, ctx.population.x)
     assert loaded.data == {"resumed": True}
+
+
+def test_v2_without_proposal_allocator_falls_back_without_advancing_request(
+    tmp_path,
+):
+    ctx = _state()
+    source = tmp_path / "source-v2.npz"
+    ctx._save_v2(source)
+    raw = dict(np.load(source, allow_pickle=False).items())
+    raw.pop("_next_proposal_id")
+    legacy = tmp_path / "legacy-v2-no-proposal.npz"
+    np.savez(legacy, **raw)
+
+    loaded = OptimizationState.load(legacy, ctx.problem)
+    assert loaded.proposal_id_allocator.next_value == 30
+    assert loaded.request_id_allocator.next_value == 30
+    assert loaded.proposal_id_allocator.allocate(1).tolist() == [30]
+    assert loaded.request_id_allocator.next_value == 30
+
+
+def test_old_v3_without_proposal_allocator_falls_back_without_advancing_request(
+    tmp_path,
+):
+    ctx = _state()
+    source = tmp_path / "source-v3.npz"
+    ctx.save(source)
+    raw = dict(np.load(source, allow_pickle=False).items())
+    entries = json.loads(bytes(raw["_state_entries"]).decode())
+    for item in entries:
+        if item["key"]["name"] == "proposal_id_allocator":
+            item["key"] = {
+                "namespace": "user",
+                "name": "legacy_proposal_id_allocator",
+                "schema_version": 1,
+            }
+    raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
+    legacy = tmp_path / "legacy-v3-no-proposal.npz"
+    np.savez(legacy, **raw)
+
+    loaded = OptimizationState.load(legacy, ctx.problem)
+    assert loaded.proposal_id_allocator.next_value == 30
+    assert loaded.request_id_allocator.next_value == 30
+    assert loaded.proposal_id_allocator.allocate(1).tolist() == [30]
+    assert loaded.request_id_allocator.next_value == 30
 
 
 def test_v3_round_trips_every_store_entry_and_custom_state(tmp_path):
@@ -361,6 +417,102 @@ def test_v3_round_trips_every_store_entry_and_custom_state(tmp_path):
     np.testing.assert_array_equal(loaded.offspring.x, loaded.population.x)
     assert loaded.get_state(custom_key) == {"answer": 42}
     assert loaded._store._values.keys() == ctx._store._values.keys()
+
+
+def test_replace_threads_state_changes_through_state_store_patch():
+    patches = []
+
+    class RecordingStore(StateStore):
+        def apply_patch(self, patch):
+            patches.append(patch)
+            return super().apply_patch(patch)
+
+    ctx = _state()
+    object.__setattr__(
+        ctx,
+        "_store",
+        RecordingStore(ctx._store._values, generation=ctx._store.generation),
+    )
+    updated = ctx.replace(fe=ctx.fe + 1)
+
+    assert updated.fe == ctx.fe + 1
+    assert updated._store is not ctx._store
+    assert any(EVALUATIONS_COUNT in patch.writes for patch in patches)
+
+
+def test_named_collection_compatibility_reads_use_state_store(monkeypatch):
+    reads = []
+
+    class RecordingStore(StateStore):
+        def get(self, key):
+            reads.append(key)
+            return super().get(key)
+
+    ctx = _state()
+    store = RecordingStore(ctx._store._values, generation=ctx._store.generation)
+    object.__setattr__(ctx, "_store", store)
+
+    assert ctx.population is ctx.populations["main"]
+    assert ctx.archive is ctx.archives["main"]
+    assert ctx.pareto_archive is ctx.archives["pareto"]
+    assert ctx.get_population("backup") is ctx.populations["backup"]
+    assert ctx.get_archive("history") is ctx.archives["history"]
+    assert {
+        POPULATIONS_MAIN,
+        ARCHIVES_MAIN,
+        ARCHIVES_PARETO,
+        StateKey(namespace="populations", name="backup", schema_version=2),
+        StateKey(namespace="archives", name="history", schema_version=1),
+    } <= set(reads)
+
+
+def test_named_collection_mapping_reads_are_not_stale_after_store_patch():
+    ctx = _state()
+    replacement = Population(list(ctx.population.schema.values()), init_capacity=1)
+    archive_replacement = Archive(
+        list(ctx.archive.schema.values()), init_capacity=1, duplicate_policy="append"
+    )
+    ctx.set_state(POPULATIONS_MAIN, replacement)
+    ctx.set_state(ARCHIVES_MAIN, archive_replacement)
+
+    assert ctx.populations["main"] is replacement
+    assert ctx.population is replacement
+    assert dict(ctx.populations)["main"] is replacement
+    assert dict(ctx.populations.items())["main"] is replacement
+    assert ctx.archives["main"] is archive_replacement
+    assert dict(ctx.archives.items())["main"] is archive_replacement
+
+
+def test_set_state_rejects_collection_key_with_wrong_schema_version():
+    ctx = _state()
+    original = ctx.population
+    wrong_key = StateKey(namespace="populations", name="main", schema_version=1)
+
+    with pytest.raises(ValidationError, match="collection key"):
+        ctx.set_state(
+            wrong_key, Population(list(original.schema.values()), init_capacity=1)
+        )
+
+    assert ctx.population is original
+    assert ctx.get_state(POPULATIONS_MAIN) is original
+
+
+def test_replace_preserves_state_store_subclass_and_observer():
+    calls = []
+
+    class RecordingStore(StateStore):
+        def apply_patch(self, patch):
+            calls.append(patch)
+            return super().apply_patch(patch)
+
+    ctx = _state()
+    original = RecordingStore(ctx._store._values, generation=ctx._store.generation)
+    object.__setattr__(ctx, "_store", original)
+    updated = ctx.replace(fe=ctx.fe + 1)
+
+    assert isinstance(updated._store, RecordingStore)
+    assert calls
+    assert updated.fe == ctx.fe + 1
 
 
 def test_store_fields_have_no_class_attribute_residue():
@@ -606,6 +758,10 @@ def test_v1_checkpoint_is_migrated_without_mutating_payload(tmp_path):
     loaded = OptimizationState.load(path, ctx.problem)
     assert loaded.archive is loaded.archives["main"]
     assert loaded.data == {"resumed": True}
+    assert loaded.proposal_id_allocator.next_value == 30
+    assert loaded.request_id_allocator.next_value == 30
+    assert loaded.proposal_id_allocator.allocate(1).tolist() == [30]
+    assert loaded.request_id_allocator.next_value == 30
     bad_payload = dict(payload)
     bad_payload["_next_candidate_id"] = np.array(-1)
     bad_path = tmp_path / "legacy-bad-allocator.npz"

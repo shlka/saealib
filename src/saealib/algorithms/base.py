@@ -347,7 +347,7 @@ class LegacyPopulationAlgorithmAdapter:
         if not isinstance(candidates, Population):
             raise ValidationError("legacy algorithm ask() must return a Population")
         return ProposalBatch.from_allocator(
-            context.request_id_allocator,
+            context.proposal_id_allocator,
             candidates=candidates,
             relations=ProposalRelations({}, row_count=len(candidates)),
             requirements=self.requirements,

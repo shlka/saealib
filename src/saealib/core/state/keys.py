@@ -23,6 +23,7 @@ __all__ = [
     "PENDING_EVALUATIONS",
     "POPULATIONS_MAIN",
     "PROPOSALS_CURRENT",
+    "PROPOSALS_ID_ALLOCATOR",
     "PROPOSALS_OFFSPRING",
     "RUNTIME_ASYNC_FATAL",
     "RUNTIME_CANDIDATE_ID_ALLOCATOR",
@@ -113,6 +114,9 @@ RUNTIME_ASYNC_FATAL = StateKey[object](
 )
 RUNTIME_CANDIDATE_ID_ALLOCATOR = StateKey[object](
     namespace="runtime", name="candidate_id_allocator", schema_version=1
+)
+PROPOSALS_ID_ALLOCATOR = StateKey[object](
+    namespace="proposals", name="proposal_id_allocator", schema_version=1
 )
 RUNTIME_REQUEST_ID_ALLOCATOR = StateKey[object](
     namespace="runtime", name="request_id_allocator", schema_version=1

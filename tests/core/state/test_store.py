@@ -45,6 +45,25 @@ def test_patch_replaces_deletes_and_distinguishes_schema_versions() -> None:
     assert not next_store.contains(remove)
 
 
+def test_subclass_clone_hook_preserves_custom_constructor_state() -> None:
+    state_key = key("value")
+
+    class CustomStore(StateStore):
+        def __init__(self, initial=None, *, generation=0, token="token"):
+            super().__init__(initial, generation=generation)
+            self.token = token
+
+        def _clone(self, values, *, generation):
+            return type(self)(values, generation=generation, token=self.token)
+
+    store = CustomStore({state_key: 1}, token="observer")
+    updated = store.apply_patch(StatePatch(writes={state_key: 2}))
+
+    assert isinstance(updated, CustomStore)
+    assert updated.token == "observer"
+    assert updated.get(state_key) == 2
+
+
 def test_old_store_raises_after_successful_patch() -> None:
     state_key = key("value")
     store = StateStore({state_key: 1})

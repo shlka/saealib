@@ -213,9 +213,26 @@ def test_j7a_proposal_id_and_relations_match_the_legacy_candidates():
     proposal = adapter.ask(ProposalRequest(n_offspring=2), state_view)
 
     assert proposal.proposal_id == 200
-    assert state.request_id_allocator.next_value == 201
+    assert state.request_id_allocator.next_value == 200
+    assert state.proposal_id_allocator.next_value == 201
     np.testing.assert_array_equal(proposal.candidates.get_array("id"), [40, 41])
     assert proposal.relations.row_count == len(proposal.candidates)
+
+
+def test_j7a_explicit_proposal_allocator_is_independent_from_requests():
+    state = _state()
+    state.proposal_id_allocator = IDAllocator(500)
+    legacy = _LegacyAlgorithm()
+    adapter = LegacyPopulationAlgorithmAdapter(legacy)
+    state_view = LegacyAlgorithmStateView(
+        state._store, (POPULATIONS_MAIN, RUNTIME_RNG), state
+    )
+
+    proposal = adapter.ask(ProposalRequest(n_offspring=2), state_view)
+
+    assert proposal.proposal_id == 500
+    assert state.proposal_id_allocator.next_value == 501
+    assert state.request_id_allocator.next_value == 200
 
 
 def test_j7a_new_proposer_receives_only_request_and_state_view():

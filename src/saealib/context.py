@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import dataclasses
 import json
 import pickle
@@ -21,6 +22,7 @@ from saealib.core.state import (
     EVALUATIONS_PLAN_UPDATES,
     FEEDBACK_RESULT,
     PENDING_EVALUATIONS,
+    PROPOSALS_ID_ALLOCATOR,
     PROPOSALS_OFFSPRING,
     RUNTIME_ASYNC_FATAL,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
@@ -67,6 +69,7 @@ _MISSING = object()
 _STORE_FIELDS = {
     "rng": RUNTIME_RNG,
     "candidate_id_allocator": RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    "proposal_id_allocator": PROPOSALS_ID_ALLOCATOR,
     "request_id_allocator": RUNTIME_REQUEST_ID_ALLOCATOR,
     "fe": EVALUATIONS_COUNT,
     "gen": RUNTIME_GENERATION,
@@ -121,12 +124,27 @@ class _NamedCollection(dict[str, Any]):
     def __init__(self, kind: str, values: dict[str, Any]) -> None:
         self._kind = kind
         self._on_change: Any = None
+        self._on_read: Any = None
         super().__init__()
         for name, value in values.items():
             self[name] = value
 
     def _bind(self, on_change: Any) -> None:
         self._on_change = on_change
+
+    def _bind_read(self, on_read: Any) -> None:
+        self._on_read = on_read
+
+    def __getitem__(self, name: str) -> Any:
+        value = dict.__getitem__(self, name)
+        if self._on_read is not None:
+            return self._on_read(name, value)
+        return value
+
+    def get(self, name: object, default: Any = None) -> Any:
+        if not isinstance(name, str) or name not in self:
+            return default
+        return self[name]
 
     def _commit(self, values: dict[str, Any]) -> None:
         if self._on_change is not None:
@@ -318,7 +336,8 @@ class OptimizationState:
     - ``archive`` is append-only; copying on every evaluation would incur
       O(FE²) cost, so in-place appends are permitted.
     - ``rng`` advances its internal state as a controlled side effect.
-    - ``candidate_id_allocator`` / ``request_id_allocator`` advance their
+    - ``candidate_id_allocator`` / ``proposal_id_allocator`` /
+      ``request_id_allocator`` advance their
       internal counters as a controlled side effect, identically to ``rng``.
 
     Attributes
@@ -339,6 +358,9 @@ class OptimizationState:
     request_id_allocator : IDAllocator
         Allocates stable, unique int64 evaluation request IDs.  Advances its
         state as a side effect.
+    proposal_id_allocator : IDAllocator
+        Allocates stable, unique int64 proposal IDs.  When omitted, it starts
+        at the current request allocator value for legacy compatibility.
     fe : int
         Number of function evaluations.
     gen : int
@@ -379,6 +401,7 @@ class OptimizationState:
     archives: dict[str, Archive | ParetoArchive]
     rng: np.random.Generator
     candidate_id_allocator: IDAllocator = field(default_factory=IDAllocator)
+    proposal_id_allocator: IDAllocator = field(default_factory=IDAllocator)
     request_id_allocator: IDAllocator = field(default_factory=IDAllocator)
 
     fe: int = 0
@@ -479,6 +502,9 @@ class OptimizationState:
             StatePatch(writes=writes, deletes=deletes)
         )
         collection._bind(lambda new: self._commit_collection(kind, new))
+        collection._bind_read(
+            lambda name, value: self._store.get(_collection_key(kind, name))
+        )
         object.__setattr__(
             self,
             "_"
@@ -517,6 +543,25 @@ class OptimizationState:
 
     def set_state(self, key: StateKey[Any], value: Any) -> None:
         """Replace one custom or built-in value through the state store."""
+        if key.namespace in {"populations", "archives"}:
+            expected_key = _collection_key(key.namespace, key.name)
+            if key != expected_key:
+                raise ValidationError(
+                    f"collection key must be {expected_key!r}, got {key!r}"
+                )
+            collection = (
+                self._population_collection
+                if key.namespace == "populations"
+                else self._archive_collection
+            )
+            if key.name not in collection:
+                raise ValidationError(
+                    f"cannot set unknown {key.namespace} entry {key.name!r}"
+                )
+            collection._validate_entry(key.name, value)
+            self._write_store(key, value)
+            dict.__setitem__(collection, key.name, value)
+            return
         self._write_store(key, value)
         if key not in _STORE_FIELDS.values() and key.namespace not in {
             "populations",
@@ -537,6 +582,7 @@ class OptimizationState:
         populations: dict[str, Population] | None = None,
         archives: dict[str, Archive | ParetoArchive] | None = None,
         candidate_id_allocator: IDAllocator | None = None,
+        proposal_id_allocator: IDAllocator | None = None,
         request_id_allocator: IDAllocator | None = None,
         fe: int = 0,
         gen: int = 0,
@@ -590,8 +636,19 @@ class OptimizationState:
             raise ValidationError("archives must contain 'main' and 'pareto'")
         self.problem = problem
         self.rng = rng if rng is not None else np.random.default_rng()
-        self.candidate_id_allocator = candidate_id_allocator or IDAllocator()
-        self.request_id_allocator = request_id_allocator or IDAllocator()
+        self.candidate_id_allocator = (
+            candidate_id_allocator
+            if candidate_id_allocator is not None
+            else IDAllocator()
+        )
+        self.request_id_allocator = (
+            request_id_allocator if request_id_allocator is not None else IDAllocator()
+        )
+        self.proposal_id_allocator = (
+            proposal_id_allocator
+            if proposal_id_allocator is not None
+            else IDAllocator(self.request_id_allocator.next_value)
+        )
         self.fe = fe
         self.gen = gen
         self.offspring = offspring
@@ -652,8 +709,14 @@ class OptimizationState:
         self._population_collection._bind(
             lambda values: self._commit_collection("populations", values)
         )
+        self._population_collection._bind_read(
+            lambda name, value: self._store.get(_collection_key("populations", name))
+        )
         self._archive_collection._bind(
             lambda values: self._commit_collection("archives", values)
+        )
+        self._archive_collection._bind_read(
+            lambda name, value: self._store.get(_collection_key("archives", name))
         )
         for name in (*_STORE_FIELDS, "populations", "archives"):
             self.__dict__.pop("_pending_" + name, None)
@@ -661,7 +724,7 @@ class OptimizationState:
     @property
     def population(self) -> Population:
         """Return the main population."""
-        return self.populations["main"]
+        return self.get_population()
 
     @population.setter
     def population(self, value: Population) -> None:
@@ -670,7 +733,7 @@ class OptimizationState:
     @property
     def archive(self) -> Archive:
         """Return the main archive."""
-        return cast(Any, self.archives["main"])
+        return self.get_archive()
 
     @archive.setter
     def archive(self, value: Archive) -> None:
@@ -679,7 +742,7 @@ class OptimizationState:
     @property
     def pareto_archive(self) -> ParetoArchive:
         """Return the Pareto archive."""
-        return cast(Any, self.archives["pareto"])
+        return cast(Any, self.get_archive("pareto"))
 
     @pareto_archive.setter
     def pareto_archive(self, value: ParetoArchive) -> None:
@@ -765,7 +828,100 @@ class OptimizationState:
                     archives["pareto"] = kwargs.pop("pareto_archive")
             kwargs["populations"] = populations
             kwargs["archives"] = archives
-        return dataclasses.replace(self, **kwargs)
+
+        field_names = {item.name for item in dataclasses.fields(self)}
+        unknown = set(kwargs) - field_names
+        if unknown:
+            name = sorted(unknown)[0]
+            raise TypeError(
+                "OptimizationState.__init__() got an unexpected keyword argument "
+                f"{name!r}"
+            )
+
+        populations = dict(kwargs.get("populations", self.populations))
+        archives = dict(kwargs.get("archives", self.archives))
+        population_collection = _NamedCollection("populations", populations)
+        archive_collection = _NamedCollection("archives", archives)
+        if "main" not in population_collection:
+            raise ValidationError("populations must contain 'main'")
+        if not {"main", "pareto"} <= set(archive_collection):
+            raise ValidationError("archives must contain 'main' and 'pareto'")
+        evaluation_plan = kwargs.get("evaluation_plan", self.evaluation_plan)
+        evaluation_plan_state = kwargs.get(
+            "evaluation_plan_state", self.evaluation_plan_state
+        )
+        _validate_plan_state(evaluation_plan, evaluation_plan_state)
+        evaluation_plan_updates = kwargs.get(
+            "evaluation_plan_updates", self.evaluation_plan_updates
+        )
+        if evaluation_plan is not None and evaluation_plan_updates is not None:
+            plan_ids = {int(request.request_id) for request in evaluation_plan.requests}
+            if not set(map(int, evaluation_plan_updates)) <= plan_ids:
+                raise ValidationError(
+                    "evaluation plan updates reference an unknown request"
+                )
+
+        writes: dict[StateKey, object] = {}
+        deletes: set[StateKey] = set()
+        current_values = self._store._values
+        for kind, collection in (
+            ("populations", population_collection),
+            ("archives", archive_collection),
+        ):
+            current = {
+                key.name: value
+                for key, value in current_values.items()
+                if key.namespace == kind
+            }
+            requested = kind in kwargs
+            for name, value in collection.items():
+                key = _collection_key(kind, name)
+                if requested and current.get(name, _MISSING) is not value:
+                    writes[key] = value
+            if requested:
+                deletes.update(
+                    _collection_key(kind, name)
+                    for name in current
+                    if name not in collection
+                )
+
+        for name, value in kwargs.items():
+            key = _STORE_FIELDS.get(name)
+            if key is not None:
+                writes[key] = value
+
+        replacement_store = copy.copy(self._store)
+        if writes or deletes:
+            replacement_store = replacement_store.apply_patch(
+                StatePatch(writes=writes, deletes=frozenset(deletes))
+            )
+
+        # Do not shallow-copy the OptimizationState itself: its reduction path
+        # invokes __getstate__, which intentionally strips transient evaluation
+        # fields for pickle.
+        result = object.__new__(type(self))
+        object.__setattr__(result, "__dict__", self.__dict__.copy())
+        for name, value in kwargs.items():
+            if name not in _STORE_FIELDS and name not in {"populations", "archives"}:
+                object.__setattr__(result, name, value)
+        for name in _STORE_FIELDS:
+            result.__dict__.pop(name, None)
+        object.__setattr__(result, "_store", replacement_store)
+        object.__setattr__(result, "_population_collection", population_collection)
+        object.__setattr__(result, "_archive_collection", archive_collection)
+        population_collection._bind(
+            lambda values: result._commit_collection("populations", values)
+        )
+        population_collection._bind_read(
+            lambda name, value: result._store.get(_collection_key("populations", name))
+        )
+        archive_collection._bind(
+            lambda values: result._commit_collection("archives", values)
+        )
+        archive_collection._bind_read(
+            lambda name, value: result._store.get(_collection_key("archives", name))
+        )
+        return result
 
     def add_population(self, name: str, population: Population) -> None:
         """Add a named population."""
@@ -777,11 +933,13 @@ class OptimizationState:
 
     def get_population(self, name: str = "main") -> Population:
         """Return a named population."""
-        return self.populations[name]
+        _validate_collection_name(name)
+        return cast(Any, self._store.get(_collection_key("populations", name)))
 
     def get_archive(self, name: str = "main") -> Archive:
         """Return a named archive."""
-        return cast(Any, self.archives[name])
+        _validate_collection_name(name)
+        return cast(Any, self._store.get(_collection_key("archives", name)))
 
     def __setstate__(self, state: dict[str, Any]) -> None:
         """Restore canonical collections from current or legacy pickle state."""
@@ -1042,6 +1200,9 @@ class OptimizationState:
         save_dict["_next_candidate_id"] = np.array(
             self.candidate_id_allocator.next_value, dtype=np.int64
         )
+        save_dict["_next_proposal_id"] = np.array(
+            self.proposal_id_allocator.next_value, dtype=np.int64
+        )
         save_dict["_next_request_id"] = np.array(
             self.request_id_allocator.next_value, dtype=np.int64
         )
@@ -1211,7 +1372,11 @@ def _encode_v3_value(
         return result
     if key == RUNTIME_RNG:
         return {"codec": "json", "value": _json_safe(value.bit_generator.state)}
-    if key in {RUNTIME_CANDIDATE_ID_ALLOCATOR, RUNTIME_REQUEST_ID_ALLOCATOR}:
+    if key in {
+        RUNTIME_CANDIDATE_ID_ALLOCATOR,
+        PROPOSALS_ID_ALLOCATOR,
+        RUNTIME_REQUEST_ID_ALLOCATOR,
+    }:
         return {"codec": "scalar", "value": value.next_value}
     if key == FEEDBACK_RESULT:
         return {
@@ -2221,6 +2386,14 @@ def _load_v2(
             )
     rng = np.random.default_rng()
     rng.bit_generator.state = _read_json(data, "_rng_state")
+    request_allocator = IDAllocator(
+        _allocator_scalar(data["_next_request_id"], "_next_request_id")
+    )
+    proposal_allocator = IDAllocator(
+        _allocator_scalar(data["_next_proposal_id"], "_next_proposal_id")
+        if "_next_proposal_id" in data.files
+        else request_allocator.next_value
+    )
     return cls(
         problem=problem,
         populations=restored_populations,
@@ -2229,9 +2402,8 @@ def _load_v2(
         candidate_id_allocator=IDAllocator(
             _allocator_scalar(data["_next_candidate_id"], "_next_candidate_id")
         ),
-        request_id_allocator=IDAllocator(
-            _allocator_scalar(data["_next_request_id"], "_next_request_id")
-        ),
+        proposal_id_allocator=proposal_allocator,
+        request_id_allocator=request_allocator,
         fe=_scalar_int(data["_fe"]),
         gen=_scalar_int(data["_gen"]),
         offspring=offspring,
@@ -2326,6 +2498,9 @@ def _load_v3(
     rng.bit_generator.state = values.pop("rng")
     candidate_allocator = IDAllocator(values.pop("candidate_id_allocator"))
     request_allocator = IDAllocator(values.pop("request_id_allocator"))
+    proposal_allocator = IDAllocator(
+        values.pop("proposal_id_allocator", request_allocator.next_value)
+    )
     offspring = values.pop("offspring", None)
     owners = values.get("evaluation_owners", {})
     if isinstance(owners, dict):
@@ -2358,6 +2533,7 @@ def _load_v3(
         "archives": archives,
         "rng": rng,
         "candidate_id_allocator": candidate_allocator,
+        "proposal_id_allocator": proposal_allocator,
         "request_id_allocator": request_allocator,
         "offspring": offspring,
         "_custom_state": custom,
@@ -2422,6 +2598,9 @@ def _load_v1(
             raise CheckpointError("legacy pending state is not a safe empty value")
     rng = np.random.default_rng()
     rng.bit_generator.state = _read_json(data, "_rng_state")
+    request_allocator = IDAllocator(
+        _allocator_scalar(data["_next_request_id"], "_next_request_id")
+    )
     return cls(
         problem=problem,
         population=population,
@@ -2431,9 +2610,8 @@ def _load_v1(
         candidate_id_allocator=IDAllocator(
             _allocator_scalar(data["_next_candidate_id"], "_next_candidate_id")
         ),
-        request_id_allocator=IDAllocator(
-            _allocator_scalar(data["_next_request_id"], "_next_request_id")
-        ),
+        proposal_id_allocator=IDAllocator(request_allocator.next_value),
+        request_id_allocator=request_allocator,
         fe=_scalar_int(data["_fe"]),
         gen=_scalar_int(data["_gen"]),
         data={"resumed": True},

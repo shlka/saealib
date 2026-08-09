@@ -111,7 +111,13 @@ class StateStore:
             values.pop(key, None)
 
         self._moved = True
-        return StateStore(values, generation=self._generation + 1)
+        return self._clone(values, generation=self._generation + 1)
+
+    def _clone(
+        self, values: Mapping[StateKey, object], *, generation: int
+    ) -> StateStore:
+        """Create the next store, preserving subclass-specific state via override."""
+        return type(self)(values, generation=generation)
 
     @staticmethod
     def _preflight_update_kinds(
