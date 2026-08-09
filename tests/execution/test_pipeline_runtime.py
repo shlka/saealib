@@ -21,11 +21,14 @@ from saealib.core.compiler.graph import NodeRef
 from saealib.core.contracts import DataSpec
 from saealib.core.graph_builder import StageNodeAdapter, build_component_graph
 from saealib.core.runtime import NodeStatus, SequentialPlan
-from saealib.exceptions import ValidationError
+from saealib.exceptions import ConfigurationError, ValidationError
 from saealib.execution.evaluator import SerialEvaluator
 from saealib.execution.runtime import PipelineRuntime, _OptimizerEnvironment
 from saealib.optimizer import ComponentProvider
 from saealib.pipeline import Pipeline, Stage
+from saealib.policies.evaluation import EvaluateAll
+from saealib.stages import AsyncEvaluationSubmitStage, EvaluationPlanStage
+from saealib.strategies.base import OptimizationStrategy, build_runtime_neutral_graph
 from saealib.strategies.direct import DirectStrategy
 
 
@@ -135,6 +138,31 @@ def test_sync_environment_executes_compiled_plan_without_strategy_step() -> None
     setattr(stages[0], "execute", poison)
     with pytest.raises(AssertionError, match="compiled Stage execution"):
         environment.execute(SequentialPlan.from_executable_plan(plan), _state())
+
+
+def test_mismatched_sync_async_strategy_tails_raise_configuration_error() -> None:
+    class MismatchedStrategy(OptimizationStrategy):
+        def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
+            if getattr(provider, "async_evaluation_scheduler", None) is None:
+                stages: list[Stage] = [_Stage("prefix"), EvaluationPlanStage()]
+            else:
+                stages = [
+                    _Stage("prefix"),
+                    _Stage("async_only"),
+                    AsyncEvaluationSubmitStage(object(), EvaluateAll()),
+                ]
+            return Pipeline(stages)
+
+    class Provider:
+        async_evaluation_scheduler = object()
+
+    with pytest.raises(
+        ConfigurationError,
+        match=r"MismatchedStrategy.*sync stage count=2.*async stage count=3",
+    ):
+        build_runtime_neutral_graph(
+            MismatchedStrategy(), cast(ComponentProvider, Provider())
+        )
 
 
 def test_order_view_ignores_data_only_synthetic_node_and_stage_self_loop() -> None:

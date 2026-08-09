@@ -10,6 +10,7 @@ from saealib.core.compiler.graph import ComponentGraph
 from saealib.core.contracts import ComponentContract, PortContract, StateContract
 from saealib.core.graph_builder import build_component_graph
 from saealib.core.state import PENDING_EVALUATIONS
+from saealib.exceptions import ConfigurationError
 from saealib.optimizer import ComponentProvider
 from saealib.pipeline import Pipeline, Stage
 from saealib.policies.evaluation import EvaluateAll, EvaluationPlanner
@@ -70,7 +71,11 @@ def build_runtime_neutral_graph(
         if isinstance(stage, AsyncEvaluationSubmitStage)
     )
     if sync_tail != async_tail:
-        raise TypeError("sync and async strategy graph prefixes must have equal shape")
+        raise ConfigurationError(
+            f"{type(strategy).__name__} has mismatched sync/async strategy graph "
+            f"tails: sync stage count={len(sync_stages)}, "
+            f"async stage count={len(async_stages)}"
+        )
 
     bridged: list[Stage] = []
     for index, sync_stage in enumerate(sync_stages):
