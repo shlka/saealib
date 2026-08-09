@@ -1,23 +1,31 @@
 """GenomeBatch protocol and concrete implementations.
 
 This module defines the ``GenomeBatch`` protocol — the minimal contract that a
-batch of solution genomes must satisfy — along with two concrete implementations:
+batch of solution genomes must satisfy — along with concrete implementations:
 
 - ``DenseVectorBatch``: wraps a 2D float64 NumPy array for dense numeric vector spaces.
+- ``PermutationBatch``: wraps validated fixed-length integer permutations.
+- ``VariableLengthBatch``: wraps arbitrary finite sequences.
 - ``ObjectBatch``: wraps arbitrary Python objects with no structural assumptions.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 import numpy as np
 from typing_extensions import Self
 
 from saealib.exceptions import ValidationError
 
-__all__ = ["DenseVectorBatch", "GenomeBatch", "ObjectBatch"]
+__all__ = [
+    "DenseVectorBatch",
+    "GenomeBatch",
+    "ObjectBatch",
+    "PermutationBatch",
+    "VariableLengthBatch",
+]
 
 
 @runtime_checkable
@@ -55,6 +63,22 @@ class GenomeBatch(Protocol):
         ...
 
 
+def genome_value(batch: GenomeBatch, index: int) -> object:
+    """Return a scalar genome value when the batch exposes one structurally.
+
+    The generic batch contract intentionally has no row-value method.  The
+    standard built-in batches expose their values through ``array``,
+    ``sequences``, or ``items``; opaque third-party batches remain a one-row
+    ``GenomeBatch`` so their owner can interpret them explicitly.
+    """
+    selected = batch.take([index])
+    for name in ("array", "sequences", "items"):
+        values = getattr(selected, name, None)
+        if values is not None:
+            return values[0]
+    return selected
+
+
 class DenseVectorBatch:
     """GenomeBatch implementation wrapping a 2D float64 NumPy matrix (n, dim).
 
@@ -83,6 +107,10 @@ class DenseVectorBatch:
     def array(self) -> np.ndarray:
         """Return the read-only 2D float64 array of shape (n, dim)."""
         return self._data
+
+    def __getitem__(self, index: Any) -> Any:
+        """Provide read-only ndarray-style indexing for legacy evaluators."""
+        return self._data[index]
 
     def __len__(self) -> int:
         """Return the number of genomes in the batch."""
@@ -182,3 +210,144 @@ class ObjectBatch:
                 )
             combined.extend(b._items)
         return cls(combined)
+
+
+class PermutationBatch:
+    """GenomeBatch implementation for fixed-length permutations.
+
+    Rows contain every integer in ``[0, length)`` exactly once.  The backing
+    array is owned by the batch and exposed read-only, matching
+    :class:`DenseVectorBatch` while keeping permutation validation local to
+    this representation profile.
+    """
+
+    def __init__(
+        self, data: Sequence[Sequence[int]] | np.ndarray, *, length: int | None = None
+    ) -> None:
+        arr = np.asarray(data)
+        if arr.ndim != 2:
+            raise ValidationError(
+                f"PermutationBatch requires a 2D array, got shape {arr.shape}"
+            )
+        if arr.dtype.kind not in "iu":
+            raise ValidationError("PermutationBatch values must be integers")
+        arr = np.asarray(arr, dtype=np.int64, order="C")
+        resolved_length = arr.shape[1] if length is None else length
+        if not isinstance(resolved_length, int) or resolved_length < 0:
+            raise ValidationError(
+                "PermutationBatch length must be a non-negative integer"
+            )
+        if arr.shape[1] != resolved_length:
+            raise ValidationError(
+                f"PermutationBatch dimension {arr.shape[1]} does not match "
+                f"length {resolved_length}"
+            )
+        expected = np.arange(resolved_length, dtype=np.int64)
+        if len(arr) and not np.all(np.sort(arr, axis=1) == expected):
+            raise ValidationError(
+                "PermutationBatch rows must contain each integer in [0, length) once"
+            )
+        view = arr.view()
+        view.setflags(write=False)
+        self._data = view
+        self._length = resolved_length
+
+    @property
+    def array(self) -> np.ndarray:
+        """Return the read-only ``(n, length)`` integer array."""
+        return self._data
+
+    @property
+    def length(self) -> int:
+        """Return the permutation length."""
+        return self._length
+
+    def __len__(self) -> int:
+        """Return the number of permutations."""
+        return len(self._data)
+
+    def take(self, indices: Sequence[int] | np.ndarray) -> Self:
+        """Return selected permutation rows."""
+        idx = np.asarray(indices, dtype=np.intp)
+        try:
+            selected = self._data[idx]
+        except IndexError as exc:
+            raise ValidationError(f"Index out of bounds: {exc}") from exc
+        return type(self)(selected, length=self._length)
+
+    @classmethod
+    def concat(cls, batches: Sequence[Self]) -> Self:
+        """Concatenate permutation batches with one common length."""
+        values = tuple(batches)
+        if not values:
+            raise ValidationError("Cannot concat an empty sequence of PermutationBatch")
+        if any(not isinstance(batch, PermutationBatch) for batch in values):
+            raise ValidationError(
+                "PermutationBatch.concat received an incompatible batch"
+            )
+        lengths = {batch.length for batch in values}
+        if len(lengths) != 1:
+            raise ValidationError("Cannot concat permutations with different lengths")
+        return cls(
+            np.concatenate([batch.array for batch in values], axis=0),
+            length=values[0].length,
+        )
+
+
+class VariableLengthBatch:
+    """GenomeBatch implementation for arbitrary finite sequences.
+
+    The batch owns an immutable tuple of tuple rows.  Elements are deliberately
+    left opaque; :class:`~saealib.space.sequence.SequenceSpace` supplies the
+    alphabet and validation policy.
+    """
+
+    def __init__(self, sequences: Sequence[Sequence[object]] = ()) -> None:
+        try:
+            rows = tuple(tuple(sequence) for sequence in sequences)
+        except TypeError as exc:
+            raise ValidationError("VariableLengthBatch requires sequences") from exc
+        self._sequences = rows
+
+    @property
+    def sequences(self) -> tuple[tuple[object, ...], ...]:
+        """Return the immutable sequence rows."""
+        return self._sequences
+
+    @property
+    def items(self) -> tuple[tuple[object, ...], ...]:
+        """Alias for the generic object-batch inspection convention."""
+        return self._sequences
+
+    def __len__(self) -> int:
+        """Return the number of sequence genomes."""
+        return len(self._sequences)
+
+    def take(self, indices: Sequence[int] | np.ndarray) -> Self:
+        """Return selected sequence rows."""
+        idx = np.asarray(indices, dtype=np.intp)
+        n = len(self._sequences)
+        selected: list[tuple[object, ...]] = []
+        for raw_index in idx:
+            index = int(raw_index)
+            if index < -n or index >= n:
+                raise ValidationError(
+                    f"Index out of bounds for VariableLengthBatch of length {n}: "
+                    f"{index}"
+                )
+            selected.append(self._sequences[index])
+        return type(self)(selected)
+
+    @classmethod
+    def concat(cls, batches: Sequence[Self]) -> Self:
+        """Concatenate variable-length sequence batches."""
+        values = tuple(batches)
+        if not values:
+            raise ValidationError(
+                "Cannot concat an empty sequence of VariableLengthBatch"
+            )
+        if any(not isinstance(batch, VariableLengthBatch) for batch in values):
+            raise ValidationError(
+                "VariableLengthBatch.concat received an incompatible batch"
+            )
+        return cls(tuple(row for batch in values for row in batch.sequences))

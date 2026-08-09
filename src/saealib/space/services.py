@@ -1,6 +1,6 @@
 """Service protocols for SearchSpace requirements.
 
-This module defines the Protocol interfaces for the 10 core services declared in
+This module defines the Protocol interfaces for the core services declared in
 SERVICE_VOCABULARY (src/saealib/core/contracts/ports.py).
 """
 
@@ -20,6 +20,7 @@ __all__ = [
     "DenseNumericView",
     "DistanceService",
     "EquivalenceService",
+    "FeatureEncoder",
     "FingerprintService",
     "GenomeCodec",
     "SamplingService",
@@ -107,6 +108,15 @@ class DenseNumericView(Protocol):
 
     def get_view(self, genomes: GenomeBatch) -> np.ndarray:
         """Return a zero-copy 2D float64 NumPy array view of the genomes."""
+        ...
+
+
+@runtime_checkable
+class FeatureEncoder(Protocol):
+    """Service that maps opaque genomes to surrogate feature rows."""
+
+    def encode(self, genomes: GenomeBatch) -> np.ndarray:
+        """Return a numeric ``(n, features)`` representation of genomes."""
         ...
 
 

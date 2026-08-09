@@ -57,6 +57,7 @@ def test_service_names_are_registered() -> None:
         "EquivalenceService",
         "GenomeCodec",
         "DenseNumericView",
+        "FeatureEncoder",
         "BoundsService",
         "DistanceService",
         "ComparisonService",

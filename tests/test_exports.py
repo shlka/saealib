@@ -63,7 +63,13 @@ NAMESPACE_ONLY: dict[str, set[str]] = {
         "zdt6",
     },
     "saealib.defaults": {"dump_preset", "load_defaults", "load_preset"},
-    "saealib.population": {"DenseVectorBatch", "GenomeBatch", "ObjectBatch"},
+    "saealib.population": {
+        "DenseVectorBatch",
+        "GenomeBatch",
+        "ObjectBatch",
+        "PermutationBatch",
+        "VariableLengthBatch",
+    },
     "saealib.space": {
         "BoundsService",
         "CloneService",
@@ -73,15 +79,18 @@ NAMESPACE_ONLY: dict[str, set[str]] = {
         "DerivedValidationService",
         "DistanceService",
         "EquivalenceService",
+        "FeatureEncoder",
         "FingerprintService",
         "GenomeCodec",
         "ObjectSpace",
+        "PermutationSpace",
         "SamplingService",
         "SearchSpace",
         "ServiceRegistry",
         "ValidationResult",
         "ValidationService",
         "VectorSpace",
+        "SequenceSpace",
     },
 }
 

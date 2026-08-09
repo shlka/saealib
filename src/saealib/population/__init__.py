@@ -8,6 +8,8 @@ from saealib.population.genome import (
     DenseVectorBatch,
     GenomeBatch,
     ObjectBatch,
+    PermutationBatch,
+    VariableLengthBatch,
 )
 from saealib.population.population import (
     CandidateIds,
@@ -28,6 +30,8 @@ __all__ = [
     "ObjectBatch",
     "ParetoArchive",
     "ParetoMixin",
+    "PermutationBatch",
     "Population",
     "PopulationAttribute",
+    "VariableLengthBatch",
 ]

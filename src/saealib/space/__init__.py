@@ -1,6 +1,8 @@
 """SearchSpace protocol, ServiceRegistry, VectorSpace, and ObjectSpace."""
 
 from saealib.space.object_space import ObjectSpace
+from saealib.space.permutation import PermutationSpace
+from saealib.space.sequence import SequenceSpace
 from saealib.space.services import (
     BoundsService,
     CloneService,
@@ -8,6 +10,7 @@ from saealib.space.services import (
     DenseNumericView,
     DistanceService,
     EquivalenceService,
+    FeatureEncoder,
     FingerprintService,
     GenomeCodec,
     SamplingService,
@@ -31,11 +34,14 @@ __all__ = [
     "DerivedValidationService",
     "DistanceService",
     "EquivalenceService",
+    "FeatureEncoder",
     "FingerprintService",
     "GenomeCodec",
     "ObjectSpace",
+    "PermutationSpace",
     "SamplingService",
     "SearchSpace",
+    "SequenceSpace",
     "ServiceRegistry",
     "ValidationResult",
     "ValidationService",

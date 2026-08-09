@@ -21,7 +21,7 @@ from saealib.core.contracts.representation import RepresentationSpec
 from saealib.exceptions import ValidationError
 from saealib.population.genome import GenomeBatch
 
-__all__ = ["SearchSpace", "ServiceRegistry", "ValidationResult"]
+__all__ = ["SearchSpace", "ServiceRegistry", "ValidationResult", "encode_features"]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -94,6 +94,23 @@ class ServiceRegistry:
     def names(self) -> tuple[str, ...]:
         """Return names of all registered services."""
         return tuple(self._services)
+
+
+def encode_features(space: SearchSpace, genomes: GenomeBatch) -> np.ndarray:
+    """Encode genomes for a surrogate through an explicit space service."""
+    feature_encoder = space.services.get("FeatureEncoder")
+    if feature_encoder is not None:
+        encode = getattr(feature_encoder, "encode", None)
+        if callable(encode):
+            return np.asarray(encode(genomes), dtype=np.float64)
+    dense_view = space.services.get("DenseNumericView")
+    if dense_view is not None:
+        get_view = getattr(dense_view, "get_view", None)
+        if callable(get_view):
+            return np.asarray(get_view(genomes), dtype=np.float64)
+    raise ValidationError(
+        "surrogate features require an explicit FeatureEncoder or DenseNumericView"
+    )
 
 
 @runtime_checkable

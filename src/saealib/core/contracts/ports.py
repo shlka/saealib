@@ -102,6 +102,10 @@ for _name, _description in (
         "DenseNumericView",
         "zero-copy dense numeric access, where it exists",
     ),
+    (
+        "FeatureEncoder",
+        "explicit genome-to-feature conversion for surrogate consumers",
+    ),
     ("BoundsService", "per-variable bounds, where they exist"),
     ("DistanceService", "distance between genomes"),
     ("ComparisonService", "order candidates by their objective values"),
