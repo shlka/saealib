@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Any, Protocol, cast
 
@@ -17,6 +17,8 @@ from saealib.callback import (
 from saealib.comparators import NSGA3Comparator
 from saealib.context import OptimizationState
 from saealib.core.compiler.compiler import CompileContext, Compiler, ExecutablePlan
+from saealib.core.contracts.execution import RuntimeCapability
+from saealib.core.contracts.vocabulary import validate_name
 from saealib.core.runtime import (
     ExecutionRuntime,
     NodeResult,
@@ -89,6 +91,20 @@ def _execute_sequential_plan(
     return state
 
 
+def _algorithm_runtime_capabilities(
+    optimizer: object,
+) -> frozenset[RuntimeCapability]:
+    """Return capabilities explicitly required by the configured algorithm."""
+    algorithm = getattr(optimizer, "algorithm", None)
+    contract_method = getattr(algorithm, "contract", None)
+    contract = contract_method() if callable(contract_method) else None
+    execution = getattr(contract, "execution", None)
+    required = getattr(execution, "required_runtime_capabilities", ())
+    if "partial_feedback" in required:
+        return frozenset({"partial_feedback"})
+    return frozenset()
+
+
 class _OptimizerEnvironment:
     """Temporary adapter for the pre-L4 optimizer/scheduler workflow.
 
@@ -100,13 +116,7 @@ class _OptimizerEnvironment:
         self.optimizer = optimizer
         self.plan = plan
         self._execution_fingerprint = self._fingerprint()
-        self.capabilities = frozenset(
-            {"partial_feedback"}
-            if getattr(
-                getattr(optimizer, "algorithm", None), "allow_partial_tell", False
-            )
-            else set()
-        )
+        self.capabilities = _algorithm_runtime_capabilities(optimizer)
         scheduler = getattr(optimizer, "async_evaluation_scheduler", None)
         if scheduler is not None and any(
             getattr(insertion, "adapter_name", None) == "feedback_accumulator"
@@ -340,6 +350,8 @@ class PipelineRuntime:
 class AsyncPipelineRuntime(PipelineRuntime):
     """Drive pending asynchronous evaluation lifecycle through a scheduler."""
 
+    capabilities = frozenset({"partial_feedback"})
+
     def advance(self, session: RuntimeSession) -> RuntimeStep:
         """Poll, refill, drain, and expose asynchronous generation boundaries."""
         if not isinstance(session, RuntimeSession):
@@ -407,6 +419,35 @@ class RuntimeRegistration:
     name: str
     matches: Callable[[object], bool]
     factory: RuntimeFactory
+    offered_runtime_capabilities: frozenset[RuntimeCapability] = frozenset()
+    capability_provider: Callable[[object], Iterable[RuntimeCapability]] | None = None
+
+    def __post_init__(self) -> None:
+        """Normalize the provider's effective runtime offer."""
+        if self.capability_provider is not None and not callable(
+            self.capability_provider
+        ):
+            raise ValidationError("capability_provider must be callable")
+        capabilities = frozenset(self.offered_runtime_capabilities)
+        for capability in capabilities:
+            validate_name(capability)
+        object.__setattr__(
+            self,
+            "offered_runtime_capabilities",
+            capabilities,
+        )
+
+    def offered_capabilities(self, optimizer: object) -> frozenset[RuntimeCapability]:
+        """Resolve this provider's static or optimizer-dependent offer."""
+        values = (
+            self.capability_provider(optimizer)
+            if self.capability_provider is not None
+            else self.offered_runtime_capabilities
+        )
+        capabilities = frozenset(values)
+        for capability in capabilities:
+            validate_name(capability)
+        return capabilities
 
 
 class RuntimeRegistry:
@@ -436,6 +477,13 @@ class RuntimeRegistry:
                 return registration.factory(optimizer, plan)
         raise ValidationError("no registered runtime accepts the optimizer")
 
+    def offered_capabilities(self, optimizer: object) -> frozenset[RuntimeCapability]:
+        """Return the effective offer from the selected runtime provider."""
+        for registration in reversed(tuple(self._registrations.values())):
+            if registration.matches(optimizer):
+                return registration.offered_capabilities(optimizer)
+        raise ValidationError("no registered runtime accepts the optimizer")
+
     def registrations(self) -> tuple[RuntimeRegistration, ...]:
         """Return registered providers in registration order."""
         return tuple(self._registrations.values())
@@ -453,6 +501,13 @@ def _async_runtime_factory(optimizer: object, plan: ExecutablePlan) -> Execution
     )
 
 
+def _sync_runtime_capability_provider(
+    optimizer: object,
+) -> frozenset[RuntimeCapability]:
+    """Offer partial feedback only when the algorithm contract requires it."""
+    return _algorithm_runtime_capabilities(optimizer)
+
+
 default_runtime_registry = RuntimeRegistry(
     (
         RuntimeRegistration(
@@ -462,6 +517,7 @@ default_runtime_registry = RuntimeRegistry(
             )
             is not None,
             factory=_async_runtime_factory,
+            offered_runtime_capabilities=AsyncPipelineRuntime.capabilities,
         ),
         RuntimeRegistration(
             name="sync",
@@ -470,6 +526,8 @@ default_runtime_registry = RuntimeRegistry(
             )
             is None,
             factory=_sync_runtime_factory,
+            offered_runtime_capabilities=PipelineRuntime.capabilities,
+            capability_provider=_sync_runtime_capability_provider,
         ),
     )
 )
@@ -497,6 +555,8 @@ def resolve_plan(optimizer: object) -> ExecutablePlan:
         context = CompileContext(
             space=problem.space,
             problem=problem,
-            offered_runtime_capabilities=frozenset(),
+            offered_runtime_capabilities=default_runtime_registry.offered_capabilities(
+                optimizer
+            ),
         )
     return Compiler().compile(graph, context)

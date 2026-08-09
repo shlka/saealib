@@ -331,25 +331,9 @@ def _partial_feedback_is_offered(
     graph: ComponentGraph | None = None,
     nodes: tuple[ComponentNode | None, ...] = (),
 ) -> bool:
-    """Use K7's declared scheduler offer for adapter matching.
-
-    The scheduler offer is intentionally centralized in the K7 rule.  The
-    adapter matcher may also be called for one virtual edge before the rule
-    has a graph-wide context, so the same helper is applied to the endpoint
-    components as a narrow fallback.
-    """
-    offered = set(getattr(compile_context, "offered_runtime_capabilities", frozenset()))
-    if "partial_feedback" in offered:
-        return True
-    from saealib.core.compiler.persistence_runtime_rules import (
-        _contains_async_scheduler,
-        _scheduler_runtime_offer,
-    )
-
-    if graph is not None and "partial_feedback" in _scheduler_runtime_offer(graph):
-        return True
-    return any(
-        node is not None and _contains_async_scheduler(node.contract) for node in nodes
+    """Use only the effective runtime offer supplied by compilation."""
+    return "partial_feedback" in getattr(
+        compile_context, "offered_runtime_capabilities", frozenset()
     )
 
 

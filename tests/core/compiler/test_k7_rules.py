@@ -29,6 +29,7 @@ from saealib.core.contracts import (
 from saealib.core.state import POPULATIONS_MAIN
 from saealib.exceptions import CheckpointError
 from saealib.execution.evaluator import SerialEvaluator
+from saealib.execution.runtime import default_runtime_registry
 from saealib.execution.scheduler import AsyncEvaluationScheduler
 from saealib.optimizer import Optimizer
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
@@ -46,7 +47,7 @@ class _Component:
 
 
 class _SchedulerHolder:
-    """Hold a scheduler contract whose runtime offer is observable."""
+    """Hold a scheduler without making it a runtime capability provider."""
 
     def __init__(self, contract: ComponentContract) -> None:
         self.scheduler = AsyncEvaluationScheduler(SerialEvaluator())
@@ -189,11 +190,9 @@ def test_runtime_capability_requires_set_containment() -> None:
     assert "offers [none]" in findings[0].message
 
 
-def test_scheduler_declares_partial_feedback_offer() -> None:
+def test_scheduler_contract_does_not_declare_partial_feedback_offer() -> None:
     contract = ComponentContract(
-        execution=ExecutionContract(
-            offered_runtime_capabilities=("partial_feedback",),
-        )
+        execution=ExecutionContract(required_runtime_capabilities=("partial_feedback",))
     )
     graph = ComponentGraph(
         nodes=(
@@ -207,7 +206,7 @@ def test_scheduler_declares_partial_feedback_offer() -> None:
 
     findings = _diagnostics(RuntimeCompatibilityRule(), graph, CompileContext())
 
-    assert findings == ()
+    assert [finding.code for finding in findings] == ["missing_runtime_capability"]
 
 
 def test_explicit_runtime_offer_satisfies_requirement() -> None:
@@ -313,7 +312,13 @@ def test_actual_strategy_graphs_have_no_k7_errors(kind: str) -> None:
         graph = cast(Any, optimizer.strategy).build_graph(optimizer)
         plan = Compiler().compile(
             graph,
-            CompileContext(space=optimizer.problem.space, problem=optimizer.problem),
+            CompileContext(
+                space=optimizer.problem.space,
+                problem=optimizer.problem,
+                offered_runtime_capabilities=default_runtime_registry.offered_capabilities(
+                    optimizer
+                ),
+            ),
         )
         assert graph.nodes
         own_errors = [

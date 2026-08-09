@@ -106,24 +106,8 @@ def _feedback_consumer(node: ComponentNode):
 
 
 def _partial_feedback_offered(context: RuleContext, graph: ComponentGraph) -> bool:
-    """Use the declared runtime offer used by K7's runtime rule."""
-    offered = set(context.compile_context.offered_runtime_capabilities)
-    if _PARTIAL_FEEDBACK in offered:
-        return True
-    from saealib.core.compiler.persistence_runtime_rules import (
-        _scheduler_runtime_offer,
-    )
-
-    return _PARTIAL_FEEDBACK in _scheduler_runtime_offer(graph)
-
-
-def _has_async_scheduler(node: ComponentNode) -> bool:
-    """Return whether a node declares K7's scheduler offer."""
-    from saealib.core.compiler.persistence_runtime_rules import (
-        _contains_async_scheduler,
-    )
-
-    return _contains_async_scheduler(node.contract)
+    """Use only the effective runtime offer supplied by compilation."""
+    return _PARTIAL_FEEDBACK in context.compile_context.offered_runtime_capabilities
 
 
 def _inserted_adapter_name(node: ComponentNode) -> str | None:
@@ -269,7 +253,6 @@ class FeedbackAccumulatorRule:
             if (
                 feedback is None
                 or feedback.completion != COMPLETE_BATCH
-                or not _has_async_scheduler(node)
                 or ports is None
             ):
                 continue
@@ -538,7 +521,6 @@ class LifecycleCompatibilityRule:
                     consumer is None
                     or consumer.completion != COMPLETE_BATCH
                     or ports is None
-                    or not _has_async_scheduler(node)
                 ):
                     continue
                 (output_role, output_port), (input_role, input_port) = ports

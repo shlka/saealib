@@ -402,6 +402,49 @@ class PendingEvaluationContextStage(Stage):
         return state
 
 
+class RuntimeNoOpStage(Stage):
+    """Graph/runtime bridge stage for work owned by another runtime stage."""
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        return state
+
+
+class RuntimeStage(Stage):
+    """Select a sync or async legacy stage behind one graph-stage identity.
+
+    The canonical sync stage is retained as a Stage for graph composition.  An
+    alternate runtime stage contributes only its bound execution callable, so
+    it cannot alter the graph contract or topology discovered by the bridge.
+    """
+
+    def __init__(
+        self,
+        sync_stage: Stage,
+        async_stage: Stage | None,
+        *,
+        async_mode: bool,
+    ) -> None:
+        if not isinstance(sync_stage, Stage):
+            raise ValidationError("RuntimeStage requires a sync Stage")
+        if async_stage is not None and not isinstance(async_stage, Stage):
+            raise ValidationError("RuntimeStage async stage must be a Stage or None")
+        super().__init__(
+            name=sync_stage.name,
+            label=sync_stage.label,
+            notation=sync_stage.notation,
+        )
+        self.sync_stage = sync_stage
+        self._async_execute = async_stage.execute if async_stage is not None else None
+        self.async_mode = async_mode
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        if self.async_mode:
+            if self._async_execute is None:
+                raise ValidationError("RuntimeStage is missing async execution")
+            return self._async_execute(state)
+        return self.sync_stage.execute(state)
+
+
 class AcquisitionStage(Stage):
     """Score offspring via an independent AcquisitionFunction.
 

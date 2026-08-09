@@ -38,6 +38,7 @@ from saealib.core.contracts import (
 )
 from saealib.core.contracts.feedback import COMPLETE_BATCH, PARTIAL_ALLOWED
 from saealib.execution.evaluator import SerialEvaluator
+from saealib.execution.runtime import default_runtime_registry
 from saealib.execution.scheduler import AsyncEvaluationScheduler
 from saealib.islands import IslandModel
 from saealib.optimizer import Optimizer
@@ -125,7 +126,13 @@ def _compile_actual(optimizer: Optimizer):
     graph = cast(Any, optimizer.strategy).build_graph(optimizer)
     plan = Compiler().compile(
         graph,
-        CompileContext(space=optimizer.problem.space, problem=optimizer.problem),
+        CompileContext(
+            space=optimizer.problem.space,
+            problem=optimizer.problem,
+            offered_runtime_capabilities=default_runtime_registry.offered_capabilities(
+                optimizer
+            ),
+        ),
     )
     return graph, plan
 
@@ -137,11 +144,7 @@ def test_async_graph_inserts_accumulator_and_describes_it() -> None:
 
     graph, plan = _compile_actual(optimizer)
 
-    assert len(graph.data_edges) == 4
-    assert any(
-        "partial_feedback" in node.contract.execution.offered_runtime_capabilities
-        for node in graph.nodes
-    )
+    assert len(graph.data_edges) == 5
     assert not [
         diagnostic
         for diagnostic in plan.diagnostics
@@ -170,6 +173,7 @@ def test_stage_internal_feedback_edges_are_claimed() -> None:
             compile_context=CompileContext(
                 space=optimizer.problem.space,
                 problem=optimizer.problem,
+                offered_runtime_capabilities=frozenset({"partial_feedback"}),
             ),
             diagnostics=DiagnosticBag(),
         )

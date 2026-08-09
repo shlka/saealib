@@ -55,10 +55,10 @@ def test_pymoo_partial_tell_capability_is_configuration_dependent() -> None:
     assert partial.state == baseline.state
 
 
-def test_async_scheduler_declares_partial_feedback_offer() -> None:
+def test_async_scheduler_does_not_declare_partial_feedback_offer() -> None:
     contract = AsyncEvaluationScheduler(SerialEvaluator()).contract()
 
-    assert contract.execution.offered_runtime_capabilities == ("partial_feedback",)
+    assert contract.execution.offered_runtime_capabilities == ()
 
 
 def test_only_partial_feedback_runtime_capability_is_registered() -> None:
@@ -205,3 +205,4 @@ def test_evaluator_and_scheduler_contracts_declare_lifecycle_boundary() -> None:
         ),
     )
     assert tuple(part.name for part in scheduler_contract.parts) == ("evaluator",)
+    assert scheduler_contract.execution.offered_runtime_capabilities == ()

@@ -110,9 +110,7 @@ class AsyncEvaluationScheduler:
                 reads=reads,
                 writes=writes,
             ),
-            execution=ExecutionContract(
-                offered_runtime_capabilities=("partial_feedback",),
-            ),
+            execution=ExecutionContract(),
         )
 
     def __init__(

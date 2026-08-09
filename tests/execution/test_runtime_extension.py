@@ -33,7 +33,11 @@ from saealib.execution.runtime import (
 from saealib.islands import IslandModel
 from saealib.optimizer import Optimizer
 from saealib.problem import Problem
-from saealib.strategies.direct import DirectStrategy
+from saealib.stages import AsyncEvaluationSubmitStage, EvaluationPlanStage, RuntimeStage
+from saealib.strategies.direct import DirectStrategy, SteadyStateStrategy
+from saealib.strategies.gb import GenerationBasedStrategy
+from saealib.strategies.ib import IndividualBasedStrategy
+from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
 
 
@@ -95,6 +99,48 @@ def test_runtime_registry_selects_an_added_provider_without_consumer_changes() -
         registry.create("other", cast(Any, object()))
 
 
+def test_default_runtime_capability_offers_are_owned_by_runtime_providers() -> None:
+    from saealib.execution.runtime import default_runtime_registry
+
+    async_optimizer = Optimizer(_problem()).set_async_evaluation_scheduler(
+        AsyncEvaluationScheduler(SerialEvaluator())
+    )
+    sync_optimizer = Optimizer(_problem())
+
+    assert AsyncPipelineRuntime.capabilities == frozenset({"partial_feedback"})
+    assert PipelineRuntime.capabilities == frozenset()
+    assert default_runtime_registry.offered_capabilities(async_optimizer) == frozenset(
+        {"partial_feedback"}
+    )
+    assert default_runtime_registry.offered_capabilities(sync_optimizer) == frozenset()
+
+    partial_sync = Optimizer(_problem()).set_algorithm(
+        PymooAlgorithm(PymooGA(pop_size=4), allow_partial_tell=True)
+    )
+    assert default_runtime_registry.offered_capabilities(partial_sync) == frozenset(
+        {"partial_feedback"}
+    )
+    partial_sync.set_strategy(DirectStrategy(n_offspring=4))
+    partial_sync._resolve_defaults()
+    plan = partial_sync._compile_plan()
+    assert plan is not None
+    runtime = create_runtime(partial_sync)
+    initializer = partial_sync.initializer
+    assert initializer is not None
+    state = initializer.initialize(partial_sync, partial_sync.problem)
+    runtime.initialize(plan, state)
+
+
+def test_runtime_registration_rejects_non_callable_capability_provider() -> None:
+    with pytest.raises(ValidationError, match="capability_provider"):
+        RuntimeRegistration(
+            name="invalid",
+            matches=lambda optimizer: True,
+            factory=cast(Any, lambda optimizer, plan: object()),
+            capability_provider=cast(Any, object()),
+        )
+
+
 def test_real_strategy_graphs_compile_and_initialize_selected_runtimes() -> None:
     island_optimizers = [
         Optimizer(_problem()).set_strategy(DirectStrategy(n_offspring=4)),
@@ -149,6 +195,74 @@ def test_real_strategy_graphs_compile_and_initialize_selected_runtimes() -> None
                 assert isinstance(runtime, AsyncPipelineRuntime)
             else:
                 assert isinstance(runtime, PipelineRuntime)
+
+
+def _graph_signature(optimizer: Optimizer) -> tuple[object, ...]:
+    graph = cast(Any, optimizer.strategy).build_graph(optimizer)
+    return (
+        tuple(node.component_id for node in graph.nodes),
+        tuple(
+            (
+                edge.source.component_id,
+                edge.source.role,
+                edge.source_port,
+                edge.target.component_id,
+                edge.target.role,
+                edge.target_port,
+            )
+            for edge in graph.data_edges
+        ),
+        tuple(
+            (edge.source.component_id, edge.target.component_id)
+            for edge in graph.control_edges
+        ),
+    )
+
+
+def test_strategy_graph_signatures_are_runtime_neutral() -> None:
+    strategy_factories = (
+        lambda: DirectStrategy(n_offspring=4),
+        SteadyStateStrategy,
+        lambda: GenerationBasedStrategy(gen_ctrl=2),
+        lambda: IndividualBasedStrategy(evaluation_ratio=0.5),
+        lambda: PreSelectionStrategy(n_candidates=8, n_select=2),
+    )
+
+    for make_strategy in strategy_factories:
+        sync = Optimizer(_problem()).set_strategy(make_strategy())
+        async_optimizer = Optimizer(_problem()).set_strategy(make_strategy())
+        async_optimizer.set_async_evaluation_scheduler(
+            AsyncEvaluationScheduler(SerialEvaluator())
+        )
+        sync._resolve_defaults()
+        async_optimizer._resolve_defaults()
+
+        assert _graph_signature(sync) == _graph_signature(async_optimizer)
+
+
+def test_async_runtime_stage_dispatches_submit_callable_with_sync_graph_contract() -> (
+    None
+):
+    optimizer = Optimizer(_problem()).set_async_evaluation_scheduler(
+        AsyncEvaluationScheduler(SerialEvaluator())
+    )
+    optimizer._resolve_defaults()
+    graph = cast(Any, optimizer.strategy).build_graph(optimizer)
+    node = graph.node_by_id("evaluation_plan")
+    bridge = node.component.stage
+
+    assert isinstance(bridge, RuntimeStage)
+    assert isinstance(bridge.sync_stage, EvaluationPlanStage)
+    assert bridge.async_mode
+    assert bridge._async_execute is not None
+    assert isinstance(bridge._async_execute.__self__, AsyncEvaluationSubmitStage)
+    assert (
+        tuple(item.component_id for item in graph.nodes)[-1] == "evaluation_acknowledge"
+    )
+    assert any(
+        edge.source.component_id == "feedback" and edge.target.component_id == "tell"
+        for edge in graph.data_edges
+    )
 
 
 def test_added_provider_overrides_default_registrations_deterministically() -> None:

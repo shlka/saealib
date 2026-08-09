@@ -40,6 +40,7 @@ from saealib.core.contracts import ComponentContract
 from saealib.exceptions import ConfigurationError, ValidationError
 from saealib.execution.evaluator import Evaluator, SerialEvaluator
 from saealib.execution.runner import Runner
+from saealib.execution.runtime import default_runtime_registry
 from saealib.execution.scheduler import AsyncEvaluationScheduler
 from saealib.policies.evaluation import EvaluationPlanner
 from saealib.policies.feedback import FeedbackBuilder
@@ -351,17 +352,14 @@ class Optimizer:
             return None
 
         graph = build_graph(self)
-        offered_runtime_capabilities = frozenset(
-            {"partial_feedback"}
-            if getattr(getattr(self, "algorithm", None), "allow_partial_tell", False)
-            else set()
-        )
         plan = Compiler().compile(
             graph,
             CompileContext(
                 space=self.problem.space,
                 problem=self.problem,
-                offered_runtime_capabilities=offered_runtime_capabilities,
+                offered_runtime_capabilities=default_runtime_registry.offered_capabilities(
+                    self
+                ),
             ),
         )
         self._executable_plan = plan

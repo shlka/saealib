@@ -108,45 +108,6 @@ class PersistenceRule:
         return VerificationResult(diagnostics=tuple(findings))
 
 
-def _contains_async_scheduler(value: object, seen: set[int] | None = None) -> bool:
-    """Find a declared partial-feedback offer in a component contract.
-
-    The name is retained for the K6b compatibility boundary, but the compiler
-    never identifies a scheduler by concrete type.  A runtime component
-    declares its offer in ``ExecutionContract`` and nested declarations are
-    followed through ``PartSpec.contract``.
-    """
-    if value is None:
-        return False
-    seen = set() if seen is None else seen
-    identity = id(value)
-    if identity in seen:
-        return False
-    seen.add(identity)
-
-    contract = value if isinstance(value, ComponentContract) else None
-    contract_method = getattr(value, "contract", None) if contract is None else None
-    if contract is None and callable(contract_method):
-        try:
-            contract = contract_method()
-        except Exception:  # pragma: no cover - defensive boundary inspection
-            contract = None
-    if not isinstance(contract, ComponentContract):
-        return False
-    if "partial_feedback" in contract.execution.offered_runtime_capabilities:
-        return True
-    return any(
-        _contains_async_scheduler(part.contract, seen) for part in contract.parts
-    )
-
-
-def _scheduler_runtime_offer(graph: ComponentGraph) -> frozenset[str]:
-    """Return the partial-feedback offer declared by graph node contracts."""
-    if any(_contains_async_scheduler(node.contract) for node in graph.nodes):
-        return frozenset({"partial_feedback"})
-    return frozenset()
-
-
 class RuntimeCompatibilityRule:
     """Verify required runtime capabilities by set containment only."""
 
@@ -159,7 +120,6 @@ class RuntimeCompatibilityRule:
         from saealib.core.compiler.compiler import VerificationResult
 
         offered = set(context.compile_context.offered_runtime_capabilities)
-        offered.update(_scheduler_runtime_offer(context.graph))
         offered_rendered = ", ".join(sorted(offered)) or "none"
         findings: list[Diagnostic] = []
         emitted: set[tuple[ContractPath, str]] = set()
