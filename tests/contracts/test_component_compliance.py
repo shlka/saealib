@@ -318,6 +318,19 @@ def _recipe_ga() -> Any:
     )
 
 
+def _recipe_genome_ga() -> Any:
+    from saealib.algorithms import GenomeGA
+    from saealib.operators import OrderCrossover, SwapMutation
+    from saealib.operators.selection import SequentialSelection, TruncationSelection
+
+    return GenomeGA(
+        OrderCrossover(),
+        SwapMutation(),
+        SequentialSelection(),
+        TruncationSelection(),
+    )
+
+
 def _recipe_termination() -> Any:
     from saealib.termination import Termination, max_fe
 
@@ -334,6 +347,12 @@ def _recipe_random_initializer() -> Any:
     from saealib.execution.initializer import RandomInitializer
 
     return RandomInitializer(1, 1)
+
+
+def _recipe_genome_initializer() -> Any:
+    from saealib.execution.initializer import GenomeInitializer
+
+    return GenomeInitializer(0, 0)
 
 
 def _recipe_sobol_initializer() -> Any:
@@ -438,6 +457,7 @@ _RECIPES: dict[str, Callable[[], Any]] = {
         }
     ),
     _qualified_name(_REGISTRY["GA"]): _recipe_ga,
+    "saealib.algorithms.genome_ga.GenomeGA": _recipe_genome_ga,
     _qualified_name(_REGISTRY["TopKEvaluation"]): lambda: build(
         {"type": "TopKEvaluation", "params": {"k": 1}}
     ),
@@ -447,6 +467,7 @@ _RECIPES: dict[str, Callable[[], Any]] = {
     _qualified_name(_REGISTRY["Termination"]): _recipe_termination,
     "saealib.execution.initializer.LHSInitializer": _recipe_lhs_initializer,
     "saealib.execution.initializer.RandomInitializer": _recipe_random_initializer,
+    "saealib.execution.initializer.GenomeInitializer": _recipe_genome_initializer,
     "saealib.execution.initializer.SobolInitializer": _recipe_sobol_initializer,
     (
         "saealib.execution.scheduler.AsyncEvaluationScheduler"
