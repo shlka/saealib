@@ -133,7 +133,7 @@ def test_u10_2_cmaes_updates_only_on_complete_generation_feedback() -> None:
 def test_u10_2_moead_updates_only_the_child_subproblem_neighborhood() -> None:
     plugin = MOEADPlugin()
     proposal = plugin.propose()
-    assert proposal.candidates.get_array("subproblem_id").tolist() == [0, 1, 2]
+    assert np.asarray(proposal.relations["subproblem_ids"]).tolist() == [0, 1, 2]
     assert np.array_equal(plugin.weights[0], [1.0, 0.0])
     assert plugin.neighbors[0] == (0, 1)
     before = {
@@ -160,6 +160,28 @@ def test_u10_3_map_elites_uses_behavior_cells_and_quality_replacement() -> None:
     )
     assert len(feedback.observations.records) == 6
     plugin.apply_feedback(feedback)
+
+    assert set(plugin.archive) == {(0,), (1,)}
+    assert np.isclose(plugin.archive[(0,)][1], 0.02)
+    assert np.array_equal(plugin.archive[(0,)][0], proposal.candidates.x[1])
+    assert np.isclose(plugin.archive[(1,)][1], 1.28)
+
+
+def test_u10_3_map_elites_archive_is_independent_of_record_order() -> None:
+    plugin = MAPElitesPlugin()
+    proposal = plugin.propose()
+    feedback = plugin.evaluate(proposal)
+    shuffled = replace(
+        feedback,
+        observations=replace(
+            feedback.observations,
+            records=feedback.observations.records.take(
+                np.array([1, 0, 3, 2, 5, 4], dtype=np.intp)
+            ),
+        ),
+    )
+
+    plugin.apply_feedback(shuffled)
 
     assert set(plugin.archive) == {(0,), (1,)}
     assert np.isclose(plugin.archive[(0,)][1], 0.02)

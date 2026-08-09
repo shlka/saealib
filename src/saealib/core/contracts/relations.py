@@ -88,3 +88,18 @@ for _name in ("parent_ids", "target_ids"):
             reindex=_identity_reindex,
         ),
     )
+
+RELATION_KINDS.register(
+    "subproblem_ids",
+    RelationKind(
+        name="subproblem_ids",
+        description="Subproblem IDs associated with proposal rows.",
+        target=SUBPROBLEM,
+        arity=MANY,
+        codec=cast(StateCodec, GenomeCodec),
+        columns=(
+            PopulationAttribute(name="subproblem_ids", dtype=np.int64, default=-1),
+        ),
+        reindex=_identity_reindex,
+    ),
+)

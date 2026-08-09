@@ -152,7 +152,7 @@ def test_j1_descriptor_registries_are_exact() -> None:
     one of these exact tuple assertions fail.
     """
     assert OBSERVATION_SUBJECT_KINDS.names() == ("candidate",)
-    assert RELATION_KINDS.names() == ("parent_ids", "target_ids")
+    assert RELATION_KINDS.names() == ("parent_ids", "target_ids", "subproblem_ids")
     assert PORTABLE_CODECS.names() == ("float", "int", "bool", "str", "ndarray")
     assert not hasattr(observation_contracts, "VALUE_CODECS")
 

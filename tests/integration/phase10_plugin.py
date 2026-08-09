@@ -41,6 +41,7 @@ from saealib.core.contracts import (
     QuantityRequirement,
 )
 from saealib.core.contracts.observation import OK
+from saealib.exceptions import ValidationError
 from saealib.execution import SerialEvaluator
 from saealib.execution.evaluator import (
     EvaluationAdapter,
@@ -326,16 +327,17 @@ class MOEADPlugin:
         candidates = Population(
             attrs=[
                 PopulationAttribute(name="x", dtype=np.float64, shape=(2,)),
-                PopulationAttribute(name="subproblem_id", dtype=np.int64, default=-1),
             ],
             init_capacity=len(children),
         )
-        for subproblem_id, genome in enumerate(children):
-            candidates.append(x=genome, subproblem_id=subproblem_id)
+        for genome in children:
+            candidates.append(x=genome)
         return ProposalBatch(
             proposal_id=PLUGIN_PROPOSAL_ID + 5,
             candidates=candidates,
-            relations=ProposalRelations(row_count=len(children)),
+            relations=ProposalRelations(
+                {"subproblem_ids": np.arange(len(children), dtype=np.int64)}
+            ),
             requirements=objective_requirement(),
         )
 
@@ -360,7 +362,9 @@ class MOEADPlugin:
     def apply_feedback(self, proposal: ProposalBatch, feedback: FeedbackBatch) -> None:
         if not feedback.final:
             return
-        subproblem_ids = proposal.candidates.get_array("subproblem_id")
+        subproblem_ids = np.asarray(
+            proposal.relations["subproblem_ids"], dtype=np.int64
+        )
         objectives = feedback.observations.f
         for row, subproblem_id in enumerate(subproblem_ids):
             child_score = float(
@@ -539,19 +543,40 @@ class MAPElitesPlugin:
     def apply_feedback(self, feedback: FeedbackBatch) -> None:
         records = feedback.observations.records
         candidate_ids = feedback.observations.candidate_ids
-        values = records.column("value")
-        record_ids = np.asarray(
-            [
-                int(ObservationSubject.from_value(records[index].subject).payload[0])
-                for index in range(len(records))
-            ],
-            dtype=np.int64,
-        )
+        expected_candidate_ids = {int(value) for value in candidate_ids}
+        by_candidate: dict[int, dict[str, ObservationRecord]] = {}
+        for index in range(len(records)):
+            record = records[index]
+            subject = ObservationSubject.from_value(record.subject)
+            if subject.kind != "candidate" or len(subject.payload) != 1:
+                raise ValidationError(
+                    "MAP-Elites observations require candidate subjects"
+                )
+            candidate_id = int(subject.payload[0])
+            if candidate_id not in expected_candidate_ids:
+                raise ValidationError(
+                    f"unknown MAP-Elites candidate ID: {candidate_id}"
+                )
+            quantity = QuantityRef.from_value(record.quantity)
+            if quantity.index != 0 or quantity.kind not in {OBJECTIVE, BEHAVIOR}:
+                continue
+            candidate_values = by_candidate.setdefault(candidate_id, {})
+            if quantity.kind in candidate_values:
+                raise ValidationError(
+                    f"duplicate {quantity.kind}[0] for candidate {candidate_id}"
+                )
+            candidate_values[quantity.kind] = record
         for candidate_id in candidate_ids:
-            rows = np.flatnonzero(record_ids == int(candidate_id))
-            objective_row, behavior_row = rows[:2]
-            score = float(values[objective_row])
-            cell = self.cell_key(np.asarray(values[behavior_row], dtype=float))
+            values = by_candidate.get(int(candidate_id), {})
+            if OBJECTIVE not in values or BEHAVIOR not in values:
+                raise ValidationError(
+                    f"candidate {int(candidate_id)} must have one objective[0] "
+                    "and one behavior[0] record"
+                )
+            score = float(
+                np.asarray(values[OBJECTIVE].value, dtype=float).reshape(-1)[0]
+            )
+            cell = self.cell_key(np.asarray(values[BEHAVIOR].value, dtype=float))
             current = self.archive.get(cell)
             if current is None or score < current[1]:
                 self.archive[cell] = (
