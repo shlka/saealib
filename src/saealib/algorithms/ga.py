@@ -698,13 +698,14 @@ class GA(Algorithm):
         offspring : Population
             Offspring population.
         """
-        popsize = len(ctx.population)
+        population = ctx.population
+        popsize = len(population)
 
-        pool = ctx.population.empty_like(capacity=popsize + len(offspring))
-        pool._extend_internal(ctx.population, preserve_ids=True)
+        pool = population.empty_like(capacity=popsize + len(offspring))
+        pool._extend_internal(population, preserve_ids=True)
         pool._extend_internal(offspring, preserve_ids=True)
 
         survivor_idx = self.survivor_selection.select(ctx, pool, popsize)
 
-        ctx.population.clear()
-        ctx.population._extend_internal(pool.extract(survivor_idx), preserve_ids=True)
+        population.clear()
+        population._extend_internal(pool.extract(survivor_idx), preserve_ids=True)

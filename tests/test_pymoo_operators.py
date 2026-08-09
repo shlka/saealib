@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -496,6 +497,23 @@ class TestGABatchDispatch:
         assert len(offspring) == 13
         assert counted_cx.n_do_calls == 1
         assert counted_mut.n_do_calls == 1
+
+    def test_tell_resolves_main_population_once(self):
+        ga = GA(
+            crossover=PymooCrossover(SBX(eta=15)),
+            mutation=PymooMutation(PM(eta=20)),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        ctx = _make_continuous_ctx(n_pop=10)
+        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=10)
+
+        with patch.object(
+            ctx, "get_population", wraps=ctx.get_population
+        ) as get_population:
+            ga.tell(ctx, _NoopProvider(), offspring)
+
+        assert get_population.call_count == 1
 
     def test_sequential_mode_calls_do_once_per_unit(self):
         counted_cx = _CountedSBX(eta=15)
