@@ -213,14 +213,19 @@ class Termination:
         }
         conservative = (EVALUATIONS_COUNT, RUNTIME_GENERATION, ARCHIVES_MAIN)
         reads: list = []
+        reads_enumerable = True
         for condition in self.conditions:
             spec = condition._registry_spec
             condition_reads = (
                 state_keys.get(spec.get("type")) if isinstance(spec, dict) else None
             )
             reads.extend(conservative if condition_reads is None else condition_reads)
+            reads_enumerable = reads_enumerable and condition_reads is not None
         return ComponentContract(
-            state=StateContract(reads=tuple(dict.fromkeys(reads))),
+            state=StateContract(
+                reads=tuple(dict.fromkeys(reads)),
+                reads_enumerable=reads_enumerable,
+            ),
         )
 
     @classmethod

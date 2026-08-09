@@ -28,6 +28,7 @@ from saealib.core.runtime import (
     SequentialPlan,
     validate_plan_contracts,
 )
+from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
 from saealib.core.state.patch import StatePatch
 from saealib.exceptions import ConfigurationError, EvaluationFatalError, ValidationError
 
@@ -594,5 +595,6 @@ def resolve_plan(optimizer: object) -> ExecutablePlan:
             offered_runtime_capabilities=default_runtime_registry.offered_capabilities(
                 optimizer
             ),
+            initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
         )
     return Compiler().compile(graph, context)

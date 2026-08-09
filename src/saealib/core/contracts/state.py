@@ -15,6 +15,7 @@ class StateContract:
     reads: tuple[StateKey[object], ...] = ()
     writes: tuple[StateKey[object], ...] = ()
     exports: tuple[StateKey[object], ...] = ()
+    reads_enumerable: bool = True
 
     def __post_init__(self) -> None:
         """Validate and normalize state-key declarations."""
@@ -25,3 +26,5 @@ class StateContract:
                     f"StateContract {field_name} must contain StateKey values"
                 )
             object.__setattr__(self, field_name, keys)
+        if not isinstance(self.reads_enumerable, bool):
+            raise ValidationError("StateContract reads_enumerable must be a boolean")

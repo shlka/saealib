@@ -251,6 +251,7 @@ def _stage_contract(
     components: tuple[tuple[str, Any], ...] = (),
     required_runtime_capabilities: tuple[str, ...] = (),
     offered_runtime_capabilities: tuple[str, ...] = (),
+    reads_enumerable: bool = True,
 ) -> ComponentContract:
     """Build a Stage contract while keeping held contracts as named parts."""
     parts: list[PartSpec] = []
@@ -260,7 +261,12 @@ def _stage_contract(
             parts.append(PartSpec(name=name, contract=contract()))
     return ComponentContract(
         parts=tuple(parts),
-        state=StateContract(reads=reads, writes=writes, exports=exports),
+        state=StateContract(
+            reads=reads,
+            writes=writes,
+            exports=exports,
+            reads_enumerable=reads_enumerable,
+        ),
         execution=ExecutionContract(
             required_runtime_capabilities=required_runtime_capabilities,
             offered_runtime_capabilities=offered_runtime_capabilities,
@@ -791,6 +797,7 @@ class EvaluationPlanStage(Stage):
                 EVALUATION_NEW_IDS,
             ),
             components=(("_planner", self._planner),),
+            reads_enumerable=not callable(self._n_eval),
         )
 
     def __init__(

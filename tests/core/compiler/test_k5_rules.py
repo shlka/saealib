@@ -42,6 +42,7 @@ from saealib.core.contracts import (
     RepresentationSpec,
     Var,
 )
+from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
 from saealib.exceptions import ValidationError
 from saealib.execution.evaluator import SerialEvaluator
 from saealib.execution.scheduler import AsyncEvaluationScheduler
@@ -118,7 +119,11 @@ def _compile_actual_optimizer(optimizer: Optimizer):
     graph = cast(Any, optimizer.strategy).build_graph(optimizer)
     plan = Compiler().compile(
         graph,
-        CompileContext(space=optimizer.problem.space, problem=optimizer.problem),
+        CompileContext(
+            space=optimizer.problem.space,
+            problem=optimizer.problem,
+            initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
+        ),
     )
     return graph, plan
 

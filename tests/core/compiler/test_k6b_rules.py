@@ -37,6 +37,7 @@ from saealib.core.contracts import (
     PortSpec,
 )
 from saealib.core.contracts.feedback import COMPLETE_BATCH, PARTIAL_ALLOWED
+from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
 from saealib.execution.evaluator import SerialEvaluator
 from saealib.execution.runtime import default_runtime_registry
 from saealib.execution.scheduler import AsyncEvaluationScheduler
@@ -132,6 +133,7 @@ def _compile_actual(optimizer: Optimizer):
             offered_runtime_capabilities=default_runtime_registry.offered_capabilities(
                 optimizer
             ),
+            initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
         ),
     )
     return graph, plan
@@ -294,7 +296,11 @@ def test_resolution_rule_order_is_confluent_for_lifecycle_and_adapters() -> None
     )
     optimizer._resolve_defaults()
     graph = cast(Any, optimizer.strategy).build_graph(optimizer)
-    context = CompileContext(space=optimizer.problem.space, problem=optimizer.problem)
+    context = CompileContext(
+        space=optimizer.problem.space,
+        problem=optimizer.problem,
+        initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
+    )
 
     signatures: list[tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]] = []
     for seed in range(8):

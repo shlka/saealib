@@ -15,6 +15,7 @@ from saealib.core.compiler.compiler import (
     RuleRegistry,
     RuleResult,
     ServiceResolutionRule,
+    StateEffectRule,
     VerificationResult,
     VerificationRule,
 )
@@ -73,6 +74,7 @@ __all__ = [
     "ServiceResolutionRule",
     "Severity",
     "StateBinding",
+    "StateEffectRule",
     "VerificationResult",
     "VerificationRule",
     "check_component_contract",

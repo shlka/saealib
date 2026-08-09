@@ -31,7 +31,10 @@ from saealib.core.graph_builder import (
     build_component_graph,
     build_decomposed_component_graph,
 )
-from saealib.core.state import SURROGATES_DEFAULT
+from saealib.core.state import (
+    OPTIMIZATION_STATE_INITIAL_KEYS,
+    SURROGATES_DEFAULT,
+)
 from saealib.execution.evaluator import SerialEvaluator
 from saealib.optimizer import Optimizer
 from saealib.pipeline import Pipeline, Stage
@@ -444,7 +447,12 @@ def test_u2_five_strategy_graphs_compile_without_errors_or_self_loops():
         optimizer._resolve_defaults()
         graph = build_decomposed_component_graph(strategy.build_pipeline(optimizer))
         plan = Compiler().compile(
-            graph, CompileContext(space=problem.space, problem=problem)
+            graph,
+            CompileContext(
+                space=problem.space,
+                problem=problem,
+                initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
+            ),
         )
         errors = [item for item in plan.diagnostics if item.severity.value == "error"]
         assert errors == []

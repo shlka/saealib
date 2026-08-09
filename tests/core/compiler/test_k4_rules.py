@@ -36,7 +36,7 @@ from saealib.core.contracts import (
     RepresentationSpec,
     StateContract,
 )
-from saealib.core.state import SURROGATES_DEFAULT
+from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS, SURROGATES_DEFAULT
 from saealib.execution.evaluator import SerialEvaluator
 from saealib.operators.crossover import CrossoverBLXAlpha
 from saealib.operators.mutation import MutationUniform
@@ -150,7 +150,10 @@ def test_vector_space_and_normal_ga_have_no_k4_errors() -> None:
     space = VectorSpace(dim=1, lb=[0.0], ub=[1.0])
     plan = Compiler().compile(
         _ga_graph(),
-        CompileContext(space=space),
+        CompileContext(
+            space=space,
+            initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
+        ),
     )
 
     assert not [

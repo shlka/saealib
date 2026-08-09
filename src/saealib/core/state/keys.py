@@ -27,6 +27,7 @@ __all__ = [
     "EVALUATION_UPDATES",
     "EVALUATION_UPDATE_NEW_IDS",
     "FEEDBACK_RESULT",
+    "OPTIMIZATION_STATE_INITIAL_KEYS",
     "PENDING_EVALUATIONS",
     "POPULATIONS_MAIN",
     "PROPOSALS_CURRENT",
@@ -169,3 +170,41 @@ PROPOSALS_CURRENT = StateKey[object](
     namespace="proposals", name="current", schema_version=1
 )
 USER_DATA = StateKey[object](namespace="user", name="data", schema_version=1)
+
+# These keys exist before the strategy graph starts.  The transient
+# evaluation values are represented by ``OptimizationState`` fields rather
+# than by the current StateStore field map, but they are still initialized to
+# ``None``/an empty container and are therefore visible to the graph contract.
+# ``CompileContext.initial_state_keys`` accepts a caller-specific set so a
+# graph that starts from a different state can remain strict.
+OPTIMIZATION_STATE_INITIAL_KEYS = frozenset(
+    {
+        POPULATIONS_MAIN,
+        ARCHIVES_MAIN,
+        ARCHIVES_PARETO,
+        RUNTIME_RNG,
+        RUNTIME_GENERATION,
+        RUNTIME_CANDIDATE_ID_ALLOCATOR,
+        RUNTIME_REQUEST_ID_ALLOCATOR,
+        PROPOSALS_ID_ALLOCATOR,
+        EVALUATIONS_COUNT,
+        EVALUATIONS_OWNERS,
+        EVALUATIONS_PENDING,
+        EVALUATIONS_PLAN,
+        EVALUATIONS_PLAN_STATE,
+        EVALUATIONS_PLAN_UPDATES,
+        RUNTIME_ASYNC_FATAL,
+        USER_DATA,
+        PROPOSALS_OFFSPRING,
+        EVALUATED_OFFSPRING,
+        SCORES,
+        ACQUISITION_RESULT,
+        SURROGATES_PREDICTIONS,
+        EVALUATION_REQUEST,
+        EVALUATION_UPDATES,
+        EVALUATION_UPDATE_NEW_IDS,
+        EVALUATION_NEW_IDS,
+        EVALUATION_HANDLES,
+        FEEDBACK_RESULT,
+    }
+)

@@ -37,6 +37,7 @@ from saealib.core.compiler.contract_diagnostics import (
     check_pymoo_feedback_compatibility,
 )
 from saealib.core.contracts import ComponentContract
+from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
 from saealib.exceptions import ConfigurationError, ValidationError
 from saealib.execution.evaluator import Evaluator, SerialEvaluator
 from saealib.execution.runner import Runner
@@ -360,6 +361,7 @@ class Optimizer:
                 offered_runtime_capabilities=default_runtime_registry.offered_capabilities(
                     self
                 ),
+                initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
             ),
         )
         self._executable_plan = plan

@@ -36,6 +36,7 @@ from saealib.core.contracts.ports import (
     check_port_compatibility,
 )
 from saealib.core.contracts.vocabulary import validate_name
+from saealib.core.state.keys import StateKey
 from saealib.exceptions import ConfigurationError, ValidationError
 
 Phase = Literal["verification", "resolution"]
@@ -52,11 +53,15 @@ class CompileContext:
     offered_runtime_capabilities: frozenset[RuntimeCapability] = frozenset()
     portability_required: bool = False
     adapter_registry: object | None = None
+    initial_state_keys: frozenset[StateKey[object]] = frozenset()
 
     def __post_init__(self) -> None:
         """Normalize caller-provided collections."""
         namespaces = frozenset(self.enabled_rule_namespaces)
         capabilities = frozenset(self.offered_runtime_capabilities)
+        initial_state_keys = frozenset(self.initial_state_keys)
+        if any(not isinstance(key, StateKey) for key in initial_state_keys):
+            raise ValidationError("initial_state_keys must contain StateKey values")
         for value in (*namespaces, *capabilities):
             validate_name(value)
         if not isinstance(self.portability_required, bool):
@@ -67,6 +72,7 @@ class CompileContext:
             raise ValidationError("adapter_registry must provide candidates()")
         object.__setattr__(self, "enabled_rule_namespaces", namespaces)
         object.__setattr__(self, "offered_runtime_capabilities", capabilities)
+        object.__setattr__(self, "initial_state_keys", initial_state_keys)
 
 
 @dataclass(frozen=True, order=True, kw_only=True)
@@ -1090,6 +1096,7 @@ from saealib.core.compiler.persistence_runtime_rules import (  # noqa: E402
     RuntimeCompatibilityRule,
 )
 from saealib.core.compiler.schema_rules import SchemaBindingRule  # noqa: E402
+from saealib.core.compiler.state_effect_rules import StateEffectRule  # noqa: E402
 
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, SchemaBindingRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, FeedbackAccumulatorRule()))
@@ -1097,6 +1104,7 @@ DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, LosslessAdapterRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, PersistenceRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, RuntimeCompatibilityRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, LifecycleCompatibilityRule()))
+DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, StateEffectRule()))
 
 __all__ = [
     "DEFAULT_ADAPTER_REGISTRY",
@@ -1120,6 +1128,7 @@ __all__ = [
     "RuntimeCompatibilityRule",
     "SchemaBindingRule",
     "ServiceResolutionRule",
+    "StateEffectRule",
     "VerificationResult",
     "VerificationRule",
 ]

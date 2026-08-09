@@ -66,6 +66,10 @@ DIAGNOSTIC_CODES.register(
     ),
 )
 for _name, _description in (
+    ("uninitialized_state_write", "A state write has no initialized predecessor."),
+    ("concurrent_state_write", "Two state writes are not ordered."),
+    ("unreachable_state_read", "A state read has no reachable initialized writer."),
+    ("concurrent_state_read_write", "A state read and write are not ordered."),
     ("unknown_role", "A component contract role has not been registered."),
     ("unknown_schema_variable", "A data binding key has not been registered."),
     ("unknown_cardinality", "A port cardinality has not been registered."),

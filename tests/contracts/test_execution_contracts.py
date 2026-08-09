@@ -138,7 +138,8 @@ def test_termination_contract_is_conservative_for_unknown_callables() -> None:
         return False
 
     assert Termination(condition).contract().state == StateContract(
-        reads=(EVALUATIONS_COUNT, RUNTIME_GENERATION, ARCHIVES_MAIN)
+        reads=(EVALUATIONS_COUNT, RUNTIME_GENERATION, ARCHIVES_MAIN),
+        reads_enumerable=False,
     )
     assert not called
 
