@@ -105,12 +105,18 @@ def _contract_has_unresolved_service(
     node: ComponentNode,
 ) -> bool:
     """Return whether service resolution may still replace this node."""
-    declared = {
-        requirement.name
-        for role in node.contract.ports.values()
-        for port in (*role.inputs, *role.outputs)
-        for requirement in port.required_services
-    }
+    declared: set[str] = set()
+
+    def collect(contract: ComponentContract) -> None:
+        for role in contract.ports.values():
+            for port in (*role.inputs, *role.outputs):
+                declared.update(
+                    requirement.name for requirement in port.required_services
+                )
+        for part in contract.parts:
+            collect(part.contract)
+
+    collect(node.contract)
     return bool(declared - set(node.resolved_services))
 
 

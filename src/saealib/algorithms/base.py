@@ -122,10 +122,21 @@ class Algorithm(ABC):
         problem: Problem,
     ) -> ParetoArchive:
         """Create a ParetoArchive with the correct direction for the problem."""
+        kwargs: dict[str, Any] = {
+            "attrs": attrs,
+            "init_capacity": init_capacity,
+            "direction": problem.direction,
+        }
+        if not any(attr.name == "x" for attr in attrs):
+            kwargs.update(
+                {
+                    "key_attr": "id",
+                    "space": problem.space,
+                    "genomes": problem.space.sample(0),
+                }
+            )
         return self.pareto_archive_class(
-            attrs=attrs,
-            init_capacity=init_capacity,
-            direction=problem.direction,
+            **kwargs,
         )
 
     @property

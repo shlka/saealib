@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 
 if TYPE_CHECKING:
-    from saealib.space import VectorSpace
+    from saealib.execution.evaluator import EvaluationAdapter
+    from saealib.space import SearchSpace
 
 from saealib.comparators import (
     Comparator,
@@ -71,7 +72,7 @@ class Problem:
     def __init__(
         self,
         func: Callable[..., Any],
-        dim: int,
+        dim: int | None,
         n_obj: int,
         direction: np.ndarray,
         lb: list[float] | None = None,
@@ -83,6 +84,8 @@ class Problem:
         eps_obj: float = 1e-6,
         handler: ConstraintHandler | None = None,
         variables: list[Variable] | None = None,
+        space: SearchSpace | None = None,
+        evaluation_adapter: EvaluationAdapter | None = None,
     ):
         """
         Initialize Problem instance.
@@ -91,7 +94,7 @@ class Problem:
         ----------
         func : callable -> float
             Objective function to evaluate solutions.
-        dim : int
+        dim : int or None
             Dimension of the design variables.
         n_obj : int
             Number of objectives.
@@ -122,12 +125,26 @@ class Problem:
             Per-dimension variable definitions.  When provided, *lb* and *ub*
             are derived from the variable bounds.  ``len(variables)`` must equal
             *dim*.
+        space : SearchSpace, optional
+            Search space to use for non-vector representations.  When omitted,
+            a :class:`VectorSpace` is constructed from ``variables`` or bounds.
+        evaluation_adapter : EvaluationAdapter, optional
+            Adapter that transforms genome batches into evaluation payloads.
         """
         direction = np.asarray(direction, dtype=float)
         if not np.all(np.abs(direction) == 1):
             raise ValidationError("direction elements must be +1 or -1")
 
-        if variables is not None:
+        if dim is None:
+            dim = getattr(space, "dim", None)
+        if dim is None or not isinstance(dim, int) or dim < 0:
+            raise ValidationError("dim must be provided or exposed by space")
+
+        if space is not None and variables is None and lb is None and ub is None:
+            self.variables = []
+            raw_lb = None
+            raw_ub = None
+        elif variables is not None:
             if len(variables) != dim:
                 raise ValidationError(
                     f"len(variables)={len(variables)} does not match dim={dim}"
@@ -147,17 +164,24 @@ class Problem:
                 for i in range(dim)
             ]
 
-        from saealib.space import VectorSpace
+        if space is None:
+            from saealib.space import VectorSpace
 
-        self._space = VectorSpace(dim=dim, lb=raw_lb, ub=raw_ub)
+            assert raw_lb is not None and raw_ub is not None
+            self._space = VectorSpace(dim=dim, lb=raw_lb, ub=raw_ub)
+        else:
+            self._space = space
 
         # Cache type masks (computed once).
         self._integer_mask = np.array(
-            [isinstance(v, IntegerVariable) for v in self.variables]
+            [isinstance(v, IntegerVariable) for v in self.variables], dtype=bool
         )
         self._categorical_mask = np.array(
-            [isinstance(v, CategoricalVariable) for v in self.variables]
+            [isinstance(v, CategoricalVariable) for v in self.variables], dtype=bool
         )
+        if not self.variables:
+            self._integer_mask = np.zeros(dim, dtype=bool)
+            self._categorical_mask = np.zeros(dim, dtype=bool)
         self._continuous_mask = ~(self._integer_mask | self._categorical_mask)
         self._n_categories = np.array(
             [
@@ -173,6 +197,7 @@ class Problem:
         self.eps_obj = eps_obj
         self.func = func
         self.constraints = constraints if constraints is not None else []
+        self.evaluation_adapter = evaluation_adapter
         self.handler = (
             handler if handler is not None else StaticToleranceHandler(eps_cv=eps_cv)
         )
@@ -191,24 +216,28 @@ class Problem:
             )
 
     @property
-    def space(self) -> VectorSpace:
+    def space(self) -> SearchSpace:
         """Return the SearchSpace owned by this problem."""
         return self._space
 
     @property
     def dim(self) -> int:
         """Dimension of design variables (derived from space)."""
-        return self._space.dim
+        return cast(int, getattr(self._space, "dim"))
 
     @property
     def lb(self) -> np.ndarray:
         """Lower bounds of design variables (derived from space)."""
-        return self._space.lb
+        if not hasattr(self._space, "lb"):
+            raise ValidationError("lb is unavailable for this non-vector space")
+        return np.asarray(self._space.lb)
 
     @property
     def ub(self) -> np.ndarray:
         """Upper bounds of design variables (derived from space)."""
-        return self._space.ub
+        if not hasattr(self._space, "ub"):
+            raise ValidationError("ub is unavailable for this non-vector space")
+        return np.asarray(self._space.ub)
 
     @property
     def n_constraints(self) -> int:
@@ -252,6 +281,8 @@ class Problem:
         np.ndarray
             Repaired array, same shape as *x*.
         """
+        if not self.variables:
+            return x
         x = np.asarray(x, dtype=float)
         scalar = x.ndim == 1
         if scalar:
@@ -261,7 +292,7 @@ class Problem:
             result[:, i] = v.repair(result[:, i])
         return result[0] if scalar else result
 
-    def evaluate_constraints(self, x: np.ndarray) -> tuple[np.ndarray, float]:
+    def evaluate_constraints(self, x: Any) -> tuple[np.ndarray, float]:
         """
         Evaluate all constraint functions at x.
 
@@ -287,7 +318,7 @@ class Problem:
         cv = self.handler.compute_cv(self.constraints, x, g)
         return g, float(cv)
 
-    def evaluate_batch(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray] | None:
+    def evaluate_batch(self, x: Any) -> tuple[np.ndarray, np.ndarray] | None:
         """
         Evaluate the objective and constraint functions for a batch of solutions.
 
@@ -324,7 +355,7 @@ class Problem:
         """
         return None
 
-    def evaluate(self, x: np.ndarray, g: np.ndarray | None = None) -> np.ndarray:
+    def evaluate(self, x: Any, g: np.ndarray | None = None) -> np.ndarray:
         """
         Evaluate the objective function at given solution x.
 

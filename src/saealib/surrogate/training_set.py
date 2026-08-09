@@ -51,6 +51,7 @@ from saealib.core.state import RUNTIME_RNG
 from saealib.population.archive import Archive
 from saealib.population.genome import DenseVectorBatch
 from saealib.registry import register
+from saealib.space.space import encode_features
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
@@ -216,7 +217,12 @@ class ArchiveObjectiveSet(TrainingSet):
         candidate_x: np.ndarray | None = None,
     ) -> TrainingData:
         """Return all archive points with raw objective values."""
-        return TrainingData(train_x=archive.x, train_y=archive.f)
+        genomes = getattr(archive, "genomes", None)
+        if ctx is not None and genomes is not None:
+            train_x = encode_features(ctx.problem.space, genomes)
+        else:
+            train_x = archive.x
+        return TrainingData(train_x=train_x, train_y=archive.f)
 
 
 @register()

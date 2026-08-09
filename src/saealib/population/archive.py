@@ -207,6 +207,7 @@ class ArchiveMixin:
             genomes=genomes,
             dense_numeric_view=dense_numeric_view,
             dense_view=dense_view,
+            space=space,
         )
 
         self.duplicate_policy = duplicate_policy
@@ -719,6 +720,7 @@ class ArchiveMixin:
             "equivalence_service": self._equivalence_service,
             "distance_service": self._distance_service,
             "genomes": genome_template,
+            "space": getattr(self, "space", None),
         }
         if self._atol_override is not None:
             kwargs["atol"] = self._atol_override
@@ -793,6 +795,7 @@ class ParetoMixin:
             genomes=genomes,
             dense_numeric_view=dense_numeric_view,
             dense_view=dense_view,
+            space=kwargs.pop("space", None),
         )
         if key_attr not in getattr(self, "_schema"):
             raise ValueError(f"key_attr '{key_attr}' is not defined in attrs")

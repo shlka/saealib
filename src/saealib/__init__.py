@@ -32,7 +32,7 @@ from saealib.acquisition import (
     ExpectedImprovement,
     PointwiseAcquisition,
 )
-from saealib.algorithms import GA, PSO, Algorithm
+from saealib.algorithms import GA, PSO, Algorithm, GenomeGA
 from saealib.api import Result, maximize, minimize
 from saealib.callback import (
     CallbackManager,
@@ -70,6 +70,7 @@ from saealib.execution.evaluator import (
     ThreadPoolEvaluator,
 )
 from saealib.execution.initializer import (
+    GenomeInitializer,
     Initializer,
     LHSInitializer,
     RandomInitializer,
@@ -223,6 +224,8 @@ __all__ = [
     "GenerationBasedStrategy",
     "GenerationEndEvent",
     "GenerationStartEvent",
+    "GenomeGA",
+    "GenomeInitializer",
     "Individual",
     "IndividualBasedStrategy",
     "InequalityConstraint",
@@ -319,6 +322,9 @@ _TIER2_MAP: dict[str, str] = {
     "spea2_fitness": "saealib.comparators",
     # execution (parallel)
     "JoblibEvaluator": "saealib.execution.evaluator",
+    # execution (evaluation protocol)
+    "EvaluationAdapter": "saealib.execution.evaluator",
+    "EvaluationQuery": "saealib.execution.evaluator",
     # decomposition
     "Decomposition": "saealib.decomposition",
     "DecompositionComparator": "saealib.decomposition",
@@ -330,12 +336,15 @@ _TIER2_MAP: dict[str, str] = {
     "CrossoverCategorical": "saealib.operators",
     "CrossoverIntegerSBX": "saealib.operators",
     "CrossoverOnePoint": "saealib.operators",
+    "OrderCrossover": "saealib.operators",
     "CrossoverTwoPoint": "saealib.operators",
     "CrossoverUniform": "saealib.operators",
     "MutationCategorical": "saealib.operators",
     "MutationGaussian": "saealib.operators",
     "MutationIntegerUniform": "saealib.operators",
     "MutationUniform": "saealib.operators",
+    "SequenceMutation": "saealib.operators",
+    "SwapMutation": "saealib.operators",
     "PymooCrossover": "saealib.operators",
     "PymooMutation": "saealib.operators",
     "LinearRankSelection": "saealib.operators",

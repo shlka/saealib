@@ -33,13 +33,14 @@ from saealib.core.state import (
     RUNTIME_GENERATION,
     RUNTIME_RNG,
 )
+from saealib.exceptions import ValidationError
 from saealib.optimizer import ComponentProvider
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.space import BoundsService, DenseNumericView
 
 
-def _make_population(factory, attrs, capacity, problem):
+def _make_population(factory, attrs, capacity, problem, genomes=None):
     """Construct populations with the resolved dense service when supported.
 
     User supplied population factories from the legacy API commonly accept
@@ -49,7 +50,10 @@ def _make_population(factory, attrs, capacity, problem):
     dense_view = problem.space.services.get("DenseNumericView")
     try:
         signature = inspect.signature(factory)
-        accepts = "dense_numeric_view" in signature.parameters or any(
+        accepts = any(
+            name in signature.parameters
+            for name in ("dense_numeric_view", "space", "genomes")
+        ) or any(
             parameter.kind == inspect.Parameter.VAR_KEYWORD
             for parameter in signature.parameters.values()
         )
@@ -68,6 +72,15 @@ def _make_population(factory, attrs, capacity, problem):
             )
         ):
             kwargs["space"] = problem.space
+        if genomes is not None and (
+            signature is None
+            or "genomes" in signature.parameters
+            or any(
+                parameter.kind == inspect.Parameter.VAR_KEYWORD
+                for parameter in signature.parameters.values()
+            )
+        ):
+            kwargs["genomes"] = genomes
     population = factory(**kwargs)
     if isinstance(population, Population):
         # ``create_pareto_archive`` and legacy custom factories have their own
@@ -220,6 +233,98 @@ class Initializer(ABC):
             The optimization context.
         """
         pass
+
+
+class GenomeInitializer(Initializer):
+    """Initialize a population by sampling the problem's ``SearchSpace``."""
+
+    def __init__(
+        self, n_init_archive: int, n_init_population: int, seed: int | None = None
+    ) -> None:
+        if n_init_archive < 0 or n_init_population < 0:
+            raise ValueError("initial sizes must be non-negative")
+        if n_init_population > n_init_archive:
+            raise ValueError("n_init_population cannot exceed n_init_archive")
+        self.n_init_archive = n_init_archive
+        self.n_init_population = n_init_population
+        self.seed = seed
+
+    def _create_attrs(
+        self, problem: Problem, provider: ComponentProvider
+    ) -> list[PopulationAttribute]:
+        attrs = [
+            PopulationAttribute("f", float, (problem.n_obj,), default=np.nan),
+            PopulationAttribute("g", float, (problem.n_constraints,), default=0.0),
+            PopulationAttribute("cv", float, (), default=0.0),
+            PopulationAttribute("id", np.int64, (), default=-1),
+        ]
+        if provider.algorithm is not None:
+            required = provider.algorithm.get_required_attrs(problem)
+            names = {attr.name for attr in attrs}
+            attrs.extend(attr for attr in required if attr.name not in names)
+        return attrs
+
+    def initialize(
+        self, provider: ComponentProvider, problem: Problem
+    ) -> OptimizationState:
+        """Create the initial population and archive for a problem."""
+        provider_seed = getattr(provider, "seed", None)
+        rng = np.random.default_rng(
+            provider_seed if provider_seed is not None else self.seed
+        )
+        attrs = self._create_attrs(problem, provider)
+        empty_genomes = problem.space.sample(0, rng)
+        population = _make_population(
+            provider.algorithm.population_class,
+            attrs,
+            self.n_init_population,
+            problem,
+            empty_genomes,
+        )
+        archive = _make_population(
+            provider.algorithm.archive_class,
+            attrs,
+            self.n_init_archive,
+            problem,
+            empty_genomes,
+        )
+        pareto_archive = provider.algorithm.create_pareto_archive(
+            attrs=attrs, init_capacity=self.n_init_archive, problem=problem
+        )
+        ctx = self._create_context(problem, archive, pareto_archive, population, rng)
+
+        genomes = problem.space.sample(self.n_init_archive, rng)
+        validation = problem.space.validate(genomes)
+        if not validation.valid:
+            raise ValidationError(
+                "SearchSpace.sample returned invalid genomes: "
+                + "; ".join(validation.errors)
+            )
+        result = provider.evaluator.evaluate_batch(genomes, problem)
+        ids = ctx.candidate_id_allocator.allocate(self.n_init_archive)
+
+        for i in range(self.n_init_archive):
+            data = {
+                "genome": genomes.take([i]),
+                "f": result.f[i],
+                "g": result.g[i],
+                "cv": float(result.cv[i]),
+                "id": int(ids[i]),
+            }
+            archive.add(data)
+            pareto_archive.add(data)
+
+        ctx.count_fe(self.n_init_archive)
+        provider.dispatch(InitialEvaluationEndEvent(ctx=ctx, archive=archive))
+
+        sorted_idx = problem.comparator.sort_population(archive)
+        archive_sorted = archive.extract(sorted_idx)
+        archive.clear()
+        archive._extend_internal(archive_sorted, preserve_ids=True)
+        population._extend_internal(
+            archive[: self.n_init_population], preserve_ids=True
+        )
+        return ctx
 
 
 class LHSInitializer(Initializer):

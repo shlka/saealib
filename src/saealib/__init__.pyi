@@ -32,6 +32,7 @@ from saealib.acquisition import WinRateAcquisition as WinRateAcquisition
 from saealib.algorithms import GA as GA
 from saealib.algorithms import PSO as PSO
 from saealib.algorithms import Algorithm as Algorithm
+from saealib.algorithms import GenomeGA as GenomeGA
 
 # algorithms (less common)
 from saealib.algorithms import PymooAlgorithm as PymooAlgorithm
@@ -101,8 +102,10 @@ from saealib.exceptions import EvaluationSubmissionError as EvaluationSubmission
 from saealib.exceptions import SaealibError as SaealibError
 from saealib.exceptions import ValidationError as ValidationError
 from saealib.execution.evaluator import AsyncEvaluator as AsyncEvaluator
+from saealib.execution.evaluator import EvaluationAdapter as EvaluationAdapter
 from saealib.execution.evaluator import EvaluationErrorInfo as EvaluationErrorInfo
 from saealib.execution.evaluator import EvaluationHandle as EvaluationHandle
+from saealib.execution.evaluator import EvaluationQuery as EvaluationQuery
 from saealib.execution.evaluator import EvaluationRequest as EvaluationRequest
 from saealib.execution.evaluator import EvaluationResult as EvaluationResult
 from saealib.execution.evaluator import EvaluationStatus as EvaluationStatus
@@ -112,6 +115,7 @@ from saealib.execution.evaluator import JoblibEvaluator as JoblibEvaluator
 from saealib.execution.evaluator import PendingEvaluation as PendingEvaluation
 from saealib.execution.evaluator import SerialEvaluator as SerialEvaluator
 from saealib.execution.evaluator import ThreadPoolEvaluator as ThreadPoolEvaluator
+from saealib.execution.initializer import GenomeInitializer as GenomeInitializer
 from saealib.execution.initializer import Initializer as Initializer
 from saealib.execution.initializer import LHSInitializer as LHSInitializer
 from saealib.execution.initializer import RandomInitializer as RandomInitializer
@@ -138,11 +142,14 @@ from saealib.operators import MutationGaussian as MutationGaussian
 from saealib.operators import MutationIntegerUniform as MutationIntegerUniform
 from saealib.operators import MutationPolynomial as MutationPolynomial
 from saealib.operators import MutationUniform as MutationUniform
+from saealib.operators import OrderCrossover as OrderCrossover
 from saealib.operators import ParentSelection as ParentSelection
 from saealib.operators import PymooCrossover as PymooCrossover
 from saealib.operators import PymooMutation as PymooMutation
+from saealib.operators import SequenceMutation as SequenceMutation
 from saealib.operators import SequentialSelection as SequentialSelection
 from saealib.operators import SurvivorSelection as SurvivorSelection
+from saealib.operators import SwapMutation as SwapMutation
 from saealib.operators import TournamentSelection as TournamentSelection
 from saealib.operators import TruncationSelection as TruncationSelection
 from saealib.operators import repair_clipping as repair_clipping

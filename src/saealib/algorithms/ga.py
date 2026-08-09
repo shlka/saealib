@@ -107,6 +107,7 @@ def _canonical_merge_pool(
 
     pool = Population.__new__(Population)
     pool._capacity = capacity
+    pool.space = population.space
     pool._size = 0
     pool._structure_version = 0
     pool._value_version = 0

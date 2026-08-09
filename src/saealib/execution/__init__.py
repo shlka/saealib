@@ -1,7 +1,9 @@
 from saealib.execution.evaluator import (
     AsyncEvaluator,
+    EvaluationAdapter,
     EvaluationErrorInfo,
     EvaluationHandle,
+    EvaluationQuery,
     EvaluationRequest,
     EvaluationResult,
     EvaluationStatus,
@@ -13,6 +15,7 @@ from saealib.execution.evaluator import (
     ThreadPoolEvaluator,
 )
 from saealib.execution.initializer import (
+    GenomeInitializer,
     Initializer,
     LHSInitializer,
     RandomInitializer,
@@ -23,13 +26,16 @@ from saealib.execution.scheduler import AsyncEvaluationScheduler
 __all__ = [
     "AsyncEvaluationScheduler",
     "AsyncEvaluator",
+    "EvaluationAdapter",
     "EvaluationErrorInfo",
     "EvaluationHandle",
+    "EvaluationQuery",
     "EvaluationRequest",
     "EvaluationResult",
     "EvaluationStatus",
     "EvaluationUpdate",
     "Evaluator",
+    "GenomeInitializer",
     "Initializer",
     "JoblibEvaluator",
     "LHSInitializer",

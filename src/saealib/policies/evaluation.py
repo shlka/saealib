@@ -166,9 +166,18 @@ class _RequestPlanner(EvaluationPlanner):
         if len(ids) != len(np.unique(ids)) or np.any(ids < 0):
             raise ValidationError("candidate IDs must be unique and assigned")
         request_id = ctx.request_id_allocator.allocate(1)[0]
-        payload = DenseVectorBatch(
-            np.array(candidates.x[indices], dtype=np.float64, order="C", copy=True)
-        )
+        genomes = getattr(candidates, "genomes", None)
+        if genomes is not None:
+            payload = genomes.take(indices)
+        else:
+            # Keep compatibility with the pre-GenomeBatch candidate fixture
+            # while ensuring the public request payload remains a GenomeBatch.
+            try:
+                payload = DenseVectorBatch(np.asarray(candidates.x)[indices])
+            except AttributeError as exc:
+                raise ValidationError(
+                    "candidates must provide genomes or a legacy x array"
+                ) from exc
         return EvaluationRequest(
             np.int64(request_id),
             ids,

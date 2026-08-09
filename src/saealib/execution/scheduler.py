@@ -70,10 +70,40 @@ from saealib.policies.feedback import (
     FeedbackResult,
     _feedback_batch_from_result,
 )
+from saealib.population.genome import DenseVectorBatch
 from saealib.stages import deliver_feedback, deliver_legacy_population_feedback
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
+
+
+class _LegacyDenseVectorBatch(DenseVectorBatch):
+    """Dense batch retaining the pre-Phase9 NumPy indexing seam.
+
+    The evaluator protocol now receives ``GenomeBatch`` values.  A few
+    legacy evaluator implementations still index their input as a matrix;
+    keeping that compatibility at the scheduler boundary avoids changing the
+    evaluator contract or the state-machine lifecycle.
+    """
+
+    def __getitem__(self, index: Any) -> Any:
+        return self.array[index]
+
+
+def _scheduler_request(request: EvaluationRequest) -> EvaluationRequest:
+    """Adapt dense requests for evaluators written against the old input API."""
+    payload = request.payload
+    if not isinstance(payload, DenseVectorBatch) or isinstance(
+        payload, _LegacyDenseVectorBatch
+    ):
+        return request
+    return EvaluationRequest(
+        request.request_id,
+        request.candidate_ids,
+        _LegacyDenseVectorBatch(payload.array),
+        request.outputs,
+        request.metadata,
+    )
 
 
 class AsyncEvaluationScheduler:
@@ -275,6 +305,7 @@ class AsyncEvaluationScheduler:
         try:
             for request, estimated_cost in plans:
                 request_id = int(request.request_id)
+                request = _scheduler_request(request)
                 handle = self.evaluator.submit(request, state.problem)
                 started.append((request_id, handle))
                 pending = PendingEvaluation(

@@ -1457,36 +1457,36 @@ def _encode_v3_value(
         kind = (
             "archive" if isinstance(value, (Archive, ParetoArchive)) else "population"
         )
+        collection_label = f"{kind} {key.namespace}/{key.name}"
         descriptor = _collection_descriptor(kind, key.name, value)
         encoded_genomes = None
-        if kind == "population":
+        if "x" not in value.schema or kind == "population":
             if genome_codec is None or not hasattr(genome_codec, "encode"):
                 raise CheckpointError(
-                    "GenomeCodec is required to save population "
-                    f"{key.namespace}/{key.name}"
+                    f"GenomeCodec is required to save {collection_label}"
                 )
             try:
                 payload = genome_codec.encode(value.genomes)
             except Exception as exc:
                 raise CheckpointError(
-                    "GenomeCodec failed to encode population "
-                    f"{key.namespace}/{key.name}: {exc}"
+                    f"GenomeCodec failed to encode {collection_label}: {exc}"
                 ) from exc
             if not isinstance(payload, dict):
                 raise CheckpointError(
-                    "GenomeCodec returned an invalid payload for population "
-                    f"{key.namespace}/{key.name}"
+                    f"GenomeCodec returned an invalid payload for {collection_label}"
                 )
             payload_meta = dict(payload)
             genome_array = payload_meta.pop("array", None)
-            if not isinstance(genome_array, np.ndarray):
-                raise CheckpointError(
-                    f"GenomeCodec payload for population {key.namespace}/{key.name} "
-                    "must contain a NumPy array"
-                )
-            array_key = f"{prefix}__genomes"
-            arrays[array_key] = np.array(genome_array, copy=True)
-            encoded_genomes = {"payload": _json_safe(payload_meta), "array": array_key}
+            encoded_genomes = {"payload": _json_safe(payload_meta)}
+            if genome_array is not None:
+                if not isinstance(genome_array, np.ndarray):
+                    raise CheckpointError(
+                        f"GenomeCodec payload for {collection_label} "
+                        "has a non-NumPy array field"
+                    )
+                array_key = f"{prefix}__genomes"
+                arrays[array_key] = np.array(genome_array, copy=True)
+                encoded_genomes["array"] = array_key
         for attr_name, array in value._data.items():
             if kind == "population" and attr_name == "x":
                 continue
@@ -1585,6 +1585,7 @@ def _decode_v3_value(
     *,
     genome_codec: Any = None,
     dense_numeric_view: Any = None,
+    space: Any = None,
 ) -> Any:
     if not isinstance(encoded, dict) or not isinstance(encoded.get("codec"), str):
         raise CheckpointError(
@@ -1604,6 +1605,7 @@ def _decode_v3_value(
             genome_codec=genome_codec,
             dense_numeric_view=dense_numeric_view,
             genome_payload=genome_payload,
+            space=space,
         )
     if codec == "json":
         return value
@@ -1657,6 +1659,7 @@ def _decode_v3_value(
                     f"{prefix}__owner_{request_id}",
                     genome_codec=genome_codec,
                     dense_numeric_view=dense_numeric_view,
+                    space=space,
                 )
         return result
     raise CheckpointError(f"unknown state value codec {codec!r}")
@@ -1766,12 +1769,25 @@ def _feedback_from_json(value: Any) -> Any:
 
 
 def _payload_to_json(payload: Any) -> dict[str, Any]:
-    from saealib.population.genome import DenseVectorBatch, ObjectBatch
+    from saealib.population.genome import (
+        DenseVectorBatch,
+        ObjectBatch,
+        PermutationBatch,
+        VariableLengthBatch,
+    )
 
     if isinstance(payload, DenseVectorBatch):
         return {"kind": "dense_vector", "items": _json_safe(payload.array)}
     if isinstance(payload, ObjectBatch):
         return {"kind": "object", "items": _json_safe(payload.items)}
+    if isinstance(payload, PermutationBatch):
+        return {
+            "kind": "permutation",
+            "length": payload.length,
+            "items": _json_safe(payload.array),
+        }
+    if isinstance(payload, VariableLengthBatch):
+        return {"kind": "sequence", "items": _json_safe(payload.sequences)}
     raise CheckpointError(
         "evaluation request payload is not JSON-checkpointable: "
         f"{type(payload).__name__}"
@@ -1779,7 +1795,12 @@ def _payload_to_json(payload: Any) -> dict[str, Any]:
 
 
 def _payload_from_json(value: Any) -> Any:
-    from saealib.population.genome import DenseVectorBatch, ObjectBatch
+    from saealib.population.genome import (
+        DenseVectorBatch,
+        ObjectBatch,
+        PermutationBatch,
+        VariableLengthBatch,
+    )
 
     if not isinstance(value, dict) or not isinstance(value.get("kind"), str):
         raise CheckpointError("evaluation request payload is malformed")
@@ -1788,6 +1809,10 @@ def _payload_from_json(value: Any) -> Any:
             return DenseVectorBatch(np.asarray(value["items"], dtype=np.float64))
         if value["kind"] == "object":
             return ObjectBatch(value["items"])
+        if value["kind"] == "permutation":
+            return PermutationBatch(value["items"], length=int(value["length"]))
+        if value["kind"] == "sequence":
+            return VariableLengthBatch(value["items"])
     except (KeyError, TypeError, ValueError, ValidationError) as exc:
         raise CheckpointError("evaluation request payload is malformed") from exc
     raise CheckpointError(f"unknown evaluation request payload kind {value['kind']!r}")
@@ -2222,6 +2247,7 @@ def _restore_collection(
     genome_codec: Any = None,
     dense_numeric_view: Any = None,
     genome_payload: Any = None,
+    space: Any = None,
 ) -> Any:
     from saealib.population import Archive, ParetoArchive, Population
     from saealib.population.archive import _validate_observation_schema
@@ -2244,11 +2270,50 @@ def _restore_collection(
     for id_name in ("id", "request_id"):
         if id_name in schema and np.dtype(schema[id_name].dtype) != np.dtype(np.int64):
             raise CheckpointError(f"{id_name} column must use int64")
+    collection_label = (
+        f"{kind} {'populations' if kind == 'population' else 'archives'}/{name}"
+    )
+    genomes = None
+    if genome_payload is not None:
+        if genome_codec is None or not hasattr(genome_codec, "decode"):
+            raise CheckpointError(f"GenomeCodec is required to load {collection_label}")
+        if not isinstance(genome_payload, dict):
+            raise CheckpointError("collection GenomeCodec payload is malformed")
+        array_key = genome_payload.get("array")
+        payload_meta = genome_payload.get("payload")
+        if not isinstance(payload_meta, dict):
+            raise CheckpointError(
+                f"GenomeCodec payload for {collection_label} is malformed"
+            )
+        payload = dict(payload_meta)
+        if array_key is not None:
+            if not isinstance(array_key, str) or array_key not in data.files:
+                raise CheckpointError(
+                    f"GenomeCodec payload for {collection_label} is missing its array"
+                )
+            payload["array"] = np.asarray(data[array_key])
+        try:
+            genomes = genome_codec.decode(payload)
+        except Exception as exc:
+            raise CheckpointError(
+                f"GenomeCodec failed to decode {collection_label}: {exc}"
+            ) from exc
+        if len(genomes) != size:
+            raise CheckpointError(
+                f"GenomeCodec decoded {collection_label} with invalid size"
+            )
+
     subtype = descriptor.get("subtype")
     if kind == "population":
         if subtype != "Population":
             raise CheckpointError(f"unknown population subtype: {subtype!r}")
-        collection = Population(attrs, capacity)
+        collection = Population(
+            attrs,
+            capacity,
+            genomes=None if genomes is None else genomes.take([]),
+            dense_numeric_view=dense_numeric_view,
+            space=space,
+        )
     else:
         if subtype not in {"Archive", "ParetoArchive"}:
             raise CheckpointError(f"unknown archive subtype: {subtype!r}")
@@ -2264,6 +2329,14 @@ def _restore_collection(
             _validate_observation_schema(attrs, params["duplicate_policy"])
         if subtype == "ParetoArchive":
             direction_value = descriptor.get("direction")
+            archive_kwargs = (
+                {
+                    "genomes": genomes.take([]),
+                    "space": space,
+                }
+                if genomes is not None
+                else {}
+            )
             collection = ParetoArchive(
                 attrs,
                 capacity,
@@ -2274,19 +2347,30 @@ def _restore_collection(
                 ),
                 eps_cv=float(descriptor.get("eps_cv", 0.0)),
                 **params,
+                **archive_kwargs,
             )
         else:
-            collection = Archive(attrs, capacity, **params)
+            collection = Archive(
+                attrs,
+                capacity,
+                **params,
+                **(
+                    {
+                        "genomes": genomes.take([]),
+                        "space": space,
+                    }
+                    if genomes is not None
+                    else {}
+                ),
+            )
     encoded = _encoded_name(name)
     values: dict[str, np.ndarray] = {}
     if (
-        kind == "population"
+        kind in {"population", "archive"}
         and genome_payload is not None
         and (genome_codec is None or not hasattr(genome_codec, "decode"))
     ):
-        raise CheckpointError(
-            f"GenomeCodec is required to load population populations/{name}"
-        )
+        raise CheckpointError(f"GenomeCodec is required to load {collection_label}")
     for attr in attrs:
         if kind == "population" and genome_payload is not None and attr.name == "x":
             continue
@@ -2313,39 +2397,15 @@ def _restore_collection(
             pairs = np.column_stack((values["request_id"], values["id"]))
             if len(np.unique(pairs, axis=0)) != len(pairs):
                 raise CheckpointError("duplicate (request_id, candidate_id) pair")
-    genomes = None
-    if kind == "population" and genome_payload is not None:
-        if not isinstance(genome_payload, dict):
-            raise CheckpointError("population GenomeCodec payload is malformed")
-        array_key = genome_payload.get("array")
-        payload_meta = genome_payload.get("payload")
-        if (
-            not isinstance(array_key, str)
-            or not isinstance(payload_meta, dict)
-            or array_key not in data.files
-        ):
-            raise CheckpointError(
-                f"GenomeCodec payload for population {name!r} is missing its array"
-            )
-        payload = {**payload_meta, "array": np.asarray(data[array_key])}
-        try:
-            genomes = genome_codec.decode(payload)
-        except Exception as exc:
-            raise CheckpointError(
-                f"GenomeCodec failed to decode population populations/{name}: {exc}"
-            ) from exc
-        if len(genomes) != size:
-            raise CheckpointError(
-                f"GenomeCodec decoded population populations/{name} with invalid size"
-            )
-        if "x" in schema and hasattr(genomes, "array"):
-            values["x"] = np.asarray(genomes.array)
-        collection = Population(
-            attrs,
-            capacity,
-            genomes=genomes.take([]),
-            dense_numeric_view=dense_numeric_view,
-        )
+    if (
+        kind == "population"
+        and genomes is not None
+        and "x" in schema
+        and hasattr(genomes, "array")
+    ):
+        values["x"] = np.asarray(genomes.array)
+    if genomes is not None:
+        values["genomes"] = genomes
     if size:
         collection._extend_internal(
             values,
@@ -2598,6 +2658,7 @@ def _load_v3(
                 f"_entry_{index}",
                 genome_codec=genome_codec,
                 dense_numeric_view=dense_numeric_view,
+                space=problem.space,
             )
             _resolve_checkpoint_population_migrator(key, target)
             key, value = STATE_MIGRATORS.migrate(key, value, target_version=target)
@@ -2609,6 +2670,7 @@ def _load_v3(
                 f"_entry_{index}",
                 genome_codec=genome_codec,
                 dense_numeric_view=dense_numeric_view,
+                space=problem.space,
             )
         if key in restored:
             raise CheckpointError(f"duplicate state entry {key.namespace}/{key.name}")

@@ -102,6 +102,7 @@ from saealib.policies.feedback import (
     TrueOnlyFeedback,
     _feedback_batch_from_result,
 )
+from saealib.space.space import encode_features
 
 if TYPE_CHECKING:
     from saealib.acquisition.base import AcquisitionFunction
@@ -493,7 +494,10 @@ class SurrogatePredictStage(Stage):
             )
 
         prediction = self._sm.predict(
-            candidates.x, state.archive, state, refit=self._refit
+            encode_features(state.problem.space, candidates.genomes),
+            state.archive,
+            state,
+            refit=self._refit,
         )
         if self._refit and self._cbmanager is not None:
             self._cbmanager.dispatch(
@@ -613,7 +617,11 @@ class AcquisitionStage(Stage):
             prepared = self._prepared_cache_value
 
             raw = self._acquisition.evaluate(
-                candidates.x, state.predictions, archive, state, prepared=prepared
+                encode_features(state.problem.space, candidates.genomes),
+                state.predictions,
+                archive,
+                state,
+                prepared=prepared,
             )
             scores = (
                 None
@@ -1792,7 +1800,9 @@ class TrueEvaluationStage(Stage):
             n = self._n_eval(state)
         n = min(n, len(candidates))
 
-        result = self._evaluator.evaluate_batch(candidates.x[:n], state.problem)
+        result = self._evaluator.evaluate_batch(
+            candidates.genomes.take(np.arange(n)), state.problem
+        )
         candidates.update_rows(
             np.arange(n), {"f": result.f, "g": result.g, "cv": result.cv}
         )
@@ -1841,7 +1851,14 @@ class ArchiveUpdateStage(Stage):
         has_id = "id" in evaluated.schema
         for i in range(len(evaluated)):
             ind = evaluated[i]
-            entry = {"x": ind.x, "f": ind.f, "g": ind.g, "cv": float(ind.cv)}
+            entry = {
+                "genome": ind.genome,
+                "f": ind.f,
+                "g": ind.g,
+                "cv": float(ind.cv),
+            }
+            if "x" in evaluated.schema:
+                entry["x"] = ind.x
             if has_id:
                 entry["id"] = int(ind.id)
             state.archive.add(entry)

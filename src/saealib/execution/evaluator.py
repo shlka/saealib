@@ -17,7 +17,7 @@ from collections.abc import Mapping
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
 
@@ -31,7 +31,7 @@ from saealib.core.contracts import (
     Var,
 )
 from saealib.exceptions import EvaluationProtocolError, ValidationError
-from saealib.population.genome import DenseVectorBatch, GenomeBatch
+from saealib.population.genome import DenseVectorBatch, GenomeBatch, genome_value
 
 if TYPE_CHECKING:
     from saealib.problem import Problem
@@ -48,6 +48,23 @@ class EvaluationStatus(Enum):
     CANCELLED = auto()
 
 
+@dataclass(frozen=True)
+class EvaluationQuery:
+    """Request context supplied to an :class:`EvaluationAdapter`."""
+
+    request_id: np.int64
+    candidate_ids: np.ndarray
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+
+class EvaluationAdapter(Protocol):
+    """Transform genomes into the payload consumed by a problem evaluation."""
+
+    def transform(self, genomes: GenomeBatch, request: EvaluationQuery) -> Any:
+        """Return an evaluation payload batch for *genomes*."""
+        ...
+
+
 def _owned_array(value: Any, *, dtype: np.dtype, ndim: int, name: str) -> np.ndarray:
     arr = np.asarray(value)
     if arr.dtype != dtype or arr.ndim != ndim:
@@ -55,6 +72,13 @@ def _owned_array(value: Any, *, dtype: np.dtype, ndim: int, name: str) -> np.nda
     result = np.array(arr, dtype=dtype, order="C", copy=True)
     result.flags.writeable = False
     return result
+
+
+def _payload_value(payload: Any, index: int) -> object:
+    """Return one row from a standard or adapter-produced payload batch."""
+    if isinstance(payload, GenomeBatch):
+        return genome_value(payload, index)
+    return payload[index]
 
 
 @dataclass
@@ -326,7 +350,9 @@ class Evaluator(ABC):
         )
 
     @abstractmethod
-    def evaluate_batch(self, x: np.ndarray, problem: Problem) -> EvaluationResult:
+    def evaluate_batch(
+        self, x: GenomeBatch | np.ndarray, problem: Problem
+    ) -> EvaluationResult:
         """
         Evaluate a batch of design vectors.
 
@@ -366,7 +392,7 @@ class Evaluator(ABC):
         self, request: EvaluationRequest, problem: Problem
     ) -> EvaluationResult:
         """Evaluate a request, including its public metadata boundary."""
-        return self.evaluate_batch(request.x, problem)
+        return self.evaluate_batch(request.payload, problem)
 
     @classmethod
     def has_partial_lifecycle_override(cls) -> bool:
@@ -452,7 +478,9 @@ class AsyncEvaluator(Evaluator):
         self._evaluator = evaluator
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
 
-    def evaluate_batch(self, x: np.ndarray, problem: Problem) -> EvaluationResult:
+    def evaluate_batch(
+        self, x: GenomeBatch | np.ndarray, problem: Problem
+    ) -> EvaluationResult:
         """Evaluate one batch on the wrapped evaluator."""
         if self._evaluator is None:
             raise EvaluationProtocolError("AsyncEvaluator requires a batch evaluator")
@@ -564,7 +592,38 @@ ThreadPoolEvaluator = AsyncEvaluator
 class SerialEvaluator(Evaluator):
     """Default evaluator: evaluates each candidate sequentially."""
 
-    def evaluate_batch(self, x: np.ndarray, problem: Problem) -> EvaluationResult:
+    def evaluate_batch(
+        self, x: GenomeBatch | np.ndarray, problem: Problem
+    ) -> EvaluationResult:
+        """Evaluate a batch, using the problem's optional evaluation adapter."""
+        genomes = (
+            x
+            if isinstance(x, GenomeBatch)
+            else DenseVectorBatch(np.atleast_2d(np.asarray(x, dtype=float)))
+        )
+        query = EvaluationQuery(
+            request_id=np.int64(0),
+            candidate_ids=np.arange(len(genomes), dtype=np.int64),
+        )
+        return self._evaluate_batch(genomes, problem, query)
+
+    def evaluate_request(
+        self, request: EvaluationRequest, problem: Problem
+    ) -> EvaluationResult:
+        """Evaluate a request while exposing its context to the adapter."""
+        query = EvaluationQuery(
+            request_id=request.request_id,
+            candidate_ids=request.candidate_ids,
+            metadata=request.metadata,
+        )
+        return self._evaluate_batch(request.payload, problem, query)
+
+    def _evaluate_batch(
+        self,
+        x: GenomeBatch,
+        problem: Problem,
+        request: EvaluationQuery,
+    ) -> EvaluationResult:
         """
         Evaluate ``x``, preferring ``problem.evaluate_batch`` when available.
 
@@ -592,28 +651,35 @@ class SerialEvaluator(Evaluator):
         EvaluationResult
             Batched objective values, raw constraint values, and violations.
         """
-        x = np.atleast_2d(np.asarray(x, dtype=float))
-        n = len(x)
+        genomes = x
+        payload: Any = genomes
+        if problem.evaluation_adapter is not None:
+            payload = problem.evaluation_adapter.transform(genomes, request)
+        elif isinstance(genomes, DenseVectorBatch):
+            payload = genomes.array
+        n = len(genomes)
         n_constraints = problem.n_constraints
 
         f = np.empty((n, problem.n_obj), dtype=float)
         g = np.empty((n, n_constraints), dtype=float)
         cv = np.zeros(n, dtype=float)
 
-        raw = problem.evaluate_batch(x)
+        raw = problem.evaluate_batch(payload)
         if raw is not None:
             f_raw, g_raw = raw
             for i in range(n):
+                xi = cast(np.ndarray, _payload_value(payload, i))
                 cv[i] = float(
-                    problem.handler.compute_cv(problem.constraints, x[i], g_raw[i])
+                    problem.handler.compute_cv(problem.constraints, xi, g_raw[i])
                 )
                 f[i] = problem.handler.augment_objective(
-                    f_raw[i], problem.constraints, x[i], g_raw[i]
+                    f_raw[i], problem.constraints, xi, g_raw[i]
                 )
                 g[i] = g_raw[i]
             return EvaluationResult(f=f, g=g, cv=cv)
 
-        for i, xi in enumerate(x):
+        for i in range(n):
+            xi = _payload_value(payload, i)
             g_i, cv_i = problem.evaluate_constraints(xi)
             f[i] = problem.evaluate(xi, g_i)
             g[i] = g_i
@@ -702,7 +768,9 @@ class JoblibEvaluator(Evaluator):
         """Joblib backend name."""
         return self._backend
 
-    def evaluate_batch(self, x: np.ndarray, problem: Problem) -> EvaluationResult:
+    def evaluate_batch(
+        self, x: GenomeBatch | np.ndarray, problem: Problem
+    ) -> EvaluationResult:
         """
         Evaluate candidates in parallel using joblib.
 

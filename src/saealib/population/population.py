@@ -128,6 +128,7 @@ class Population(Generic[T_Individual]):
         init_capacity: int = 100,
         *,
         genomes: GenomeBatch | None = None,
+        space: Any | None = None,
         dense_numeric_view: DenseNumericView | None = None,
         dense_view: DenseNumericView | None = None,
     ) -> None:
@@ -145,6 +146,7 @@ class Population(Generic[T_Individual]):
         if genomes is not None:
             init_capacity = max(init_capacity, len(genomes))
         self._capacity = init_capacity
+        self.space = space
         self._size = 0
         self._structure_version = 0
         self._value_version = 0
@@ -402,6 +404,12 @@ class Population(Generic[T_Individual]):
         data.update(kwargs)
 
         genome_value = data.pop("genome", data.pop("genomes", None))
+        if (
+            genome_value is None
+            and self._genome_items is None
+            and not isinstance(self._genome_batch, DenseVectorBatch)
+        ):
+            raise ValidationError("custom GenomeBatch populations require a genome")
 
         if "id" in self._schema:
             id_val = int(data.get("id", self._schema["id"].default))
@@ -447,7 +455,12 @@ class Population(Generic[T_Individual]):
                 raise RuntimeError("Legacy scalar genome storage is not initialized")
             self._genome_items.append(data.get("x", self._schema["x"].default))
         elif genome_value is not None:
-            self._replace_genome_rows(np.array([idx], dtype=np.intp), genome_value)
+            if len(genome_value) != 1:
+                raise ValidationError("append() expects one genome")
+            if isinstance(self._genome_batch, DenseVectorBatch):
+                self._replace_genome_rows(np.array([idx], dtype=np.intp), genome_value)
+            elif self._genome_items is None:
+                self._append_genomes(genome_value)
 
         self._size += 1
         if self._genome_items is not None:
@@ -571,6 +584,13 @@ class Population(Generic[T_Individual]):
             other_data = other
             other_genomes = other.get("genomes", other.get("genome"))
 
+        if (
+            other_genomes is None
+            and self._genome_items is None
+            and not isinstance(self._genome_batch, DenseVectorBatch)
+        ):
+            raise ValidationError("custom GenomeBatch populations require genomes")
+
         if other_size == 0:
             return
 
@@ -607,6 +627,8 @@ class Population(Generic[T_Individual]):
         elif self._genome_items is not None:
             self._genome_items.extend([None] * other_size)
             self._genome_batch = ObjectBatch(self._genome_items)
+        elif not isinstance(self._genome_batch, DenseVectorBatch):
+            raise ValidationError("custom GenomeBatch populations require genomes")
         self.mod_structure()
 
     def _replace_from_population(
@@ -751,6 +773,10 @@ class Population(Generic[T_Individual]):
             if self._genome_items is not None:
                 del self._genome_items[new_size:]
                 self._genome_batch = ObjectBatch(self._genome_items)
+            elif not isinstance(self._genome_batch, DenseVectorBatch):
+                self._genome_batch = self.genomes.take(
+                    np.arange(new_size, dtype=np.intp)
+                )
             self.mod_structure()
 
     def delete(self, index: int | slice | list[int] | np.ndarray) -> None:
@@ -768,7 +794,7 @@ class Population(Generic[T_Individual]):
         for k, v in self._data.items():
             valid_data = v[: self._size]
             v[:new_size] = valid_data[bool_mask]
-        self._reorder_genomes(bool_mask)
+        self._reorder_genomes(np.flatnonzero(bool_mask))
         self._size = new_size
         self.mod_structure()
 
@@ -815,6 +841,8 @@ class Population(Generic[T_Individual]):
         if self._genome_items is not None:
             self._genome_items.clear()
             self._genome_batch = ObjectBatch()
+        elif not isinstance(self._genome_batch, DenseVectorBatch):
+            self._genome_batch = self.genomes.take([])
         self.mod_structure()
 
     def empty_like(self, capacity: int | None = None):
@@ -840,6 +868,7 @@ class Population(Generic[T_Individual]):
             self.attrs,
             capacity,
             genomes=genome_template,
+            space=self.space,
             dense_numeric_view=self._dense_numeric_view,
         )
 
@@ -911,7 +940,7 @@ class Population(Generic[T_Individual]):
                 raise ValidationError(
                     "genome batch shape/dtype does not match DenseNumericView"
                 )
-        elif not isinstance(candidate, ObjectBatch):
+        elif self._genome_items is not None and not isinstance(candidate, ObjectBatch):
             raise ValidationError("Object populations require an ObjectBatch genome")
         return candidate
 
@@ -926,14 +955,26 @@ class Population(Generic[T_Individual]):
         if isinstance(self._genome_batch, DenseVectorBatch):
             values = np.asarray(self._require_dense_view().get_view(genomes))
             self._data["x"][indices] = values
-        else:
-            if not isinstance(genomes, ObjectBatch) or self._genome_items is None:
+        elif self._genome_items is not None:
+            if not isinstance(genomes, ObjectBatch):
                 raise ValidationError(
                     "Object populations require an ObjectBatch genome"
                 )
             for index, item in zip(indices, genomes.items):
                 self._genome_items[int(index)] = item
             self._genome_batch = ObjectBatch(self._genome_items)
+        else:
+            current = self._genome_batch
+            replacements = {int(index): pos for pos, index in enumerate(indices)}
+            batches = []
+            for row in range(len(current)):
+                if row in replacements:
+                    batches.append(genomes.take([replacements[row]]))
+                else:
+                    batches.append(current.take([row]))
+            self._genome_batch = (
+                type(current).concat(batches) if batches else current.take([])
+            )
 
     def _append_genomes(self, genomes: GenomeBatch) -> None:
         if isinstance(self._genome_batch, DenseVectorBatch):
@@ -942,6 +983,10 @@ class Population(Generic[T_Individual]):
         elif isinstance(genomes, ObjectBatch) and self._genome_items is not None:
             self._genome_items.extend(genomes.items)
             self._genome_batch = ObjectBatch(self._genome_items)
+        elif self._genome_items is None:
+            self._genome_batch = type(self._genome_batch).concat(
+                [self._genome_batch, genomes]
+            )
 
     def _copy_genomes_from(self, source: Population, indices: Any) -> None:
         if isinstance(indices, slice):
@@ -951,16 +996,21 @@ class Population(Generic[T_Individual]):
             values = np.asarray(self._require_dense_view().get_view(selected))
             self._data["x"][: len(selected)] = values
         else:
-            if not isinstance(selected, ObjectBatch) or self._genome_items is None:
-                raise ValidationError("incompatible genome batch representation")
-            self._genome_items = list(selected.items)
-            self._genome_batch = ObjectBatch(self._genome_items)
+            if self._genome_items is not None:
+                if not isinstance(selected, ObjectBatch):
+                    raise ValidationError("incompatible genome batch representation")
+                self._genome_items = list(selected.items)
+                self._genome_batch = ObjectBatch(self._genome_items)
+            else:
+                self._genome_batch = selected
 
     def _reorder_genomes(self, order: Any) -> None:
         if self._genome_items is not None:
             values = self._genome_items
             self._genome_items = list(np.asarray(values, dtype=object)[order])
             self._genome_batch = ObjectBatch(self._genome_items)
+        elif not isinstance(self._genome_batch, DenseVectorBatch):
+            self._genome_batch = self.genomes.take(np.asarray(order, dtype=np.intp))
 
     @property
     def genomes(self) -> GenomeBatch:
@@ -1363,6 +1413,11 @@ class Individual(Generic[T_Population]):
         """Return the parent population."""
         pop = self._get_pop()
         return pop
+
+    @property
+    def genome(self) -> GenomeBatch:
+        """Return this individual's genome as a one-row batch."""
+        return self._get_pop().genomes.take([self._index])
 
 
 Population.individual_class = Individual
