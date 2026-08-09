@@ -44,6 +44,12 @@ class StateStore:
         self._generation = generation
         self._moved = False
 
+    def __copy__(self) -> StateStore:
+        """Copy store metadata without invoking a subclass constructor."""
+        result = type(self).__new__(type(self))
+        result.__dict__ = self.__dict__.copy()
+        return result
+
     @property
     def generation(self) -> int:
         """Return this store's generation while it is still usable."""
@@ -93,6 +99,20 @@ class StateStore:
         self._validate_keys({key: None for key in deletes})
         if writes.keys() & deletes:
             raise ValidationError("A StatePatch cannot write and delete the same key")
+
+        if (
+            type(self) is StateStore
+            and not deletes
+            and not any(isinstance(value, StateUpdate) for value in writes.values())
+        ):
+            values = dict(self._values)
+            values.update(writes)
+            self._moved = True
+            result = StateStore.__new__(StateStore)
+            result._values = MappingProxyType(values)
+            result._generation = self._generation + 1
+            result._moved = False
+            return result
 
         values = dict(self._values)
         self._preflight_update_kinds(writes, values)

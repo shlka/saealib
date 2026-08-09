@@ -6,6 +6,7 @@ from typing import Any, cast
 
 import numpy as np
 
+import saealib.core.graph_builder as graph_builder
 from saealib import (
     GA,
     CrossoverBLXAlpha,
@@ -27,6 +28,7 @@ from saealib.core.contracts import (
     StateContract,
 )
 from saealib.core.graph_builder import (
+    StageContractNodeAdapter,
     StageNodeAdapter,
     build_component_graph,
     build_decomposed_component_graph,
@@ -291,6 +293,55 @@ def test_adapter_composes_held_contract_without_declaring_stage_state():
     assert contract.state.exports == (SURROGATES_DEFAULT,)
 
 
+def test_stage_adapter_contract_is_a_construction_snapshot():
+    class _CountingComponent(_ContractComponent):
+        calls = 0
+
+        def contract(self) -> ComponentContract:
+            self.calls += 1
+            return super().contract()
+
+    class _Stage(Stage):
+        name = "snapshot"
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.component = _CountingComponent(exports=(SURROGATES_DEFAULT,))
+
+        def execute(self, state):
+            return state
+
+    stage = _Stage()
+    adapter = StageNodeAdapter(stage)
+    first = adapter.contract()
+    cast(Any, stage).component = _ContractComponent()
+
+    assert adapter.contract() is first
+    assert first.state.exports == (SURROGATES_DEFAULT,)
+    assert stage.component is not adapter._held[0].component
+    assert cast(_CountingComponent, adapter._held[0].component).calls == 1
+
+
+def test_stage_contract_adapter_captures_custom_stage_contract_once():
+    class _Stage(Stage):
+        name = "direct_snapshot"
+        calls = 0
+
+        def contract(self) -> ComponentContract:
+            self.calls += 1
+            return ComponentContract(state=StateContract(reads=(SURROGATES_DEFAULT,)))
+
+        def execute(self, state):
+            return state
+
+    stage = _Stage()
+    adapter = StageContractNodeAdapter(stage)
+    first = adapter.contract()
+
+    assert adapter.contract() is first
+    assert stage.calls == 1
+
+
 def test_named_surrogates_get_distinct_node_qualified_state_bindings():
     class _NamedManager:
         def __init__(self) -> None:
@@ -387,6 +438,23 @@ def test_u2_decomposition_exposes_stage_contract_and_held_parts():
     assert type(stage.component).__name__ == "StageContractNodeAdapter"
     assert type(part.component).__name__ == "StagePartNodeAdapter"
     assert stage.component_id != part.component_id
+
+
+def test_u2_decomposition_reuses_adapter_held_snapshots(monkeypatch):
+    pipeline = DirectStrategy().build_pipeline(cast(Any, _Provider()))
+    calls = 0
+    original = graph_builder._held_components
+
+    def count_held(stage):
+        nonlocal calls
+        calls += 1
+        return original(stage)
+
+    monkeypatch.setattr(graph_builder, "_held_components", count_held)
+    graph = build_decomposed_component_graph(pipeline)
+
+    assert calls == len(pipeline.stages)
+    assert graph.nodes
 
 
 def test_u2_feedback_is_cross_node_and_control_is_not_data():

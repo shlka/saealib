@@ -41,6 +41,9 @@ __all__ = [
     "build_decomposed_component_graph",
 ]
 
+_MAX_CACHED_EXECUTION_UNWRAPS = 8
+_MISSING = object()
+
 
 @dataclass(frozen=True)
 class _HeldComponent:
@@ -262,7 +265,12 @@ class StageNodeAdapter:
         if not isinstance(stage, Stage):
             raise ValidationError("StageNodeAdapter stage must be a Stage")
         self.stage = stage
+        self._execute_target = getattr(stage, "execute", None)
+        if not callable(self._execute_target):
+            raise ValidationError("StageNodeAdapter stage must be executable")
         self.node_path = node_path or stage.name or type(stage).__name__
+        self._held = _held_components(stage)
+        self._contract = _compose_contracts(self._held)
 
     def __getattr__(self, name: str) -> object:
         """Expose the wrapped Stage's declared part attributes."""
@@ -274,14 +282,14 @@ class StageNodeAdapter:
 
     def contract(self) -> ComponentContract:
         """Compose the held components' contracts for this adapter."""
-        return _compose_contracts(_held_components(self.stage))
+        return self._contract
 
     def state_bindings(self, node: NodeRef | str) -> tuple[StateBinding, ...]:
         """Return node-qualified bindings for exported surrogate state."""
         node_ref = NodeRef.from_value(node)
         bindings: list[StateBinding] = []
         seen: set[StateKey[object]] = set()
-        for item in _held_components(self.stage):
+        for item in self._held:
             for key in item.contract.state.exports:
                 if key.namespace != "surrogates":
                     continue
@@ -297,12 +305,49 @@ class StageNodeAdapter:
         return tuple(bindings)
 
 
+def cached_execution_target(component: object) -> object:
+    """Return the cached target for a Stage adapter hidden by freshening.
+
+    Schema freshening is deliberately transparent at the component boundary,
+    but its ``execute`` fallback would otherwise call the adapter wrapper on
+    every execution.  Only the known freshening wrapper is traversed; custom
+    components retain normal dynamic ``execute`` dispatch.  The bound is a
+    guard against malformed wrapper cycles or unexpectedly deep nesting.
+    """
+    current = component
+    for _ in range(_MAX_CACHED_EXECUTION_UNWRAPS):
+        if isinstance(current, StageNodeAdapter):
+            return current._execute_target
+        if not getattr(current, "_saealib_schema_freshened", False):
+            break
+        nested = getattr(current, "_component", _MISSING)
+        if nested is _MISSING:
+            break
+        current = nested
+    else:
+        raise ValidationError(
+            "Stage execution target wrapper nesting exceeds the supported bound"
+        )
+    return getattr(component, "execute", None)
+
+
 class StageContractNodeAdapter(StageNodeAdapter):
     """U2 executable Stage node carrying the Stage's direct U1 contract."""
 
+    def __init__(self, stage: Stage, *, node_path: str | None = None) -> None:
+        if not isinstance(stage, Stage):
+            raise ValidationError("StageNodeAdapter stage must be a Stage")
+        self.stage = stage
+        self._execute_target = getattr(stage, "execute", None)
+        if not callable(self._execute_target):
+            raise ValidationError("StageNodeAdapter stage must be executable")
+        self.node_path = node_path or stage.name or type(stage).__name__
+        self._held = _held_components(stage)
+        self._contract = stage.contract()
+
     def contract(self) -> ComponentContract:
         """Return the direct Stage contract, excluding held parts."""
-        return self.stage.contract()
+        return self._contract
 
 
 class StagePartNodeAdapter:
@@ -547,17 +592,21 @@ def build_decomposed_component_graph(pipeline: Pipeline) -> ComponentGraph:
         raise ValidationError("build_decomposed_component_graph requires a Pipeline")
     stages = tuple(pipeline.stages)
     stage_ids = _unique_node_ids(stages)
-    stage_nodes = tuple(
-        ComponentNode(
-            component_id=stage_id,
-            component=StageContractNodeAdapter(stage, node_path=stage_id),
-        )
+    stage_adapters = tuple(
+        StageContractNodeAdapter(stage, node_path=stage_id)
         for stage_id, stage in zip(stage_ids, stages)
+    )
+    held_by_stage = tuple(adapter._held for adapter in stage_adapters)
+    stage_nodes = tuple(
+        ComponentNode(component_id=stage_id, component=adapter)
+        for stage_id, adapter in zip(stage_ids, stage_adapters)
     )
     nodes: list[ComponentNode] = list(stage_nodes)
     part_nodes_by_stage: list[dict[str, tuple[str, ComponentNode]]] = []
-    for stage_id, stage, stage_node in zip(stage_ids, stages, stage_nodes):
-        declared = stage.contract()
+    for stage_id, stage, stage_node, held in zip(
+        stage_ids, stages, stage_nodes, held_by_stage
+    ):
+        declared = stage_node.contract
         stage_parts: dict[str, tuple[str, ComponentNode]] = {}
         declared_components: set[int] = set()
         for part in declared.parts:
@@ -580,7 +629,7 @@ def build_decomposed_component_graph(pipeline: Pipeline) -> ComponentGraph:
         # legacy held objects still own ports on a few compatibility stages.
         # Discover those objects as additional part nodes so no existing port
         # disappears merely because its Stage contract has not migrated yet.
-        for item_index, item in enumerate(_held_components(stage), start=1):
+        for item_index, item in enumerate(held, start=1):
             if id(item.component) in declared_components:
                 continue
             part_name = f"held_{item_index}"
@@ -652,11 +701,11 @@ def build_decomposed_component_graph(pipeline: Pipeline) -> ComponentGraph:
 
     bindings: list[StateBinding] = []
     seen_bindings: set[tuple[str, StateKey[object]]] = set()
-    for index, stage in enumerate(stages):
+    for index, held in enumerate(held_by_stage):
         for part_id, part_node in part_nodes_by_stage[index].values():
             part_adapter = cast(StagePartNodeAdapter, part_node.component)
             component = part_adapter.component
-            for item in _held_components(stage):
+            for item in held:
                 if item.component is not component:
                     continue
                 for key in item.contract.state.exports:

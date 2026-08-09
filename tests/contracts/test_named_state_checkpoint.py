@@ -859,6 +859,43 @@ def test_named_collection_mutations_and_legacy_replace():
         ctx.populations.popitem()
 
 
+def test_scalar_replace_skips_named_collection_reconstruction(monkeypatch):
+    ctx = _state()
+
+    def fail_collection_construction(*args, **kwargs):
+        raise AssertionError("scalar replacement reconstructed a collection")
+
+    monkeypatch.setattr(
+        "saealib.context._NamedCollection", fail_collection_construction
+    )
+    updated = ctx.replace(gen=ctx.gen + 1)
+
+    assert updated.gen == ctx.gen + 1
+    assert updated is not ctx
+    assert updated.populations is not ctx.populations
+    assert updated.archives is not ctx.archives
+    assert updated.population is ctx.population
+    assert updated.archive is ctx.archive
+
+    monkeypatch.undo()
+    replacement = ctx.population.extract([0])
+    updated.populations["extra"] = replacement
+    assert "extra" not in ctx.populations
+    assert updated.populations["extra"] is replacement
+
+
+def test_special_replace_paths_keep_collection_validation_and_alias_behavior():
+    ctx = _state()
+    replacement = ctx.population.extract([0])
+
+    updated = ctx.replace(population=replacement)
+    assert updated.population is replacement
+    with pytest.raises(ValidationError, match="cannot combine population"):
+        ctx.replace(population=replacement, populations=ctx.populations)
+    with pytest.raises(ValidationError, match="populations must contain"):
+        ctx.replace(populations={})
+
+
 @pytest.mark.parametrize(
     "value",
     [

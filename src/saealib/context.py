@@ -87,6 +87,19 @@ _STORE_FIELDS = {
     "feedback_accumulator": FEEDBACK_ACCUMULATOR,
     "offspring": PROPOSALS_OFFSPRING,
 }
+_REPLACE_FAST_EXCLUDED = frozenset(
+    {
+        "problem",
+        "populations",
+        "archives",
+        "evaluation_plan",
+    }
+)
+
+
+@functools.lru_cache(maxsize=32)
+def _dataclass_field_names(state_type: type[Any]) -> frozenset[str]:
+    return frozenset(item.name for item in dataclasses.fields(state_type))
 
 
 @functools.lru_cache(maxsize=1024)
@@ -252,6 +265,13 @@ class _NamedCollection(dict[str, Any]):
 
     def __reduce__(self):
         return (type(self), (self._kind, dict(self)))
+
+    def __copy__(self):
+        """Copy the mapping without invoking validation or callback setup."""
+        result = dict.__new__(type(self))
+        dict.update(result, self)
+        result.__dict__ = self.__dict__.copy()
+        return result
 
 
 @functools.lru_cache(maxsize=1024)
@@ -881,7 +901,7 @@ class OptimizationState:
             kwargs["populations"] = populations
             kwargs["archives"] = archives
 
-        field_names = {item.name for item in dataclasses.fields(self)}
+        field_names = _dataclass_field_names(type(self))
         unknown = set(kwargs) - field_names
         if unknown:
             name = sorted(unknown)[0]
@@ -889,6 +909,16 @@ class OptimizationState:
                 "OptimizationState.__init__() got an unexpected keyword argument "
                 f"{name!r}"
             )
+
+        plan_fields = {"evaluation_plan_state", "evaluation_plan_updates"}
+        # The common pipeline case replaces one store-backed value (usually
+        # ``gen``) or an ordinary dataclass field.  The collection wrappers
+        # still need to be distinct, but they do not need reconstruction when
+        # no collection or plan definition changed.
+        if all(name not in _REPLACE_FAST_EXCLUDED for name in kwargs):
+            if plan_fields.intersection(kwargs):
+                self._validate_plan_replacement(kwargs)
+            return self._replace_lightweight(kwargs)
 
         populations = dict(kwargs.get("populations", self.populations))
         archives = dict(kwargs.get("archives", self.archives))
@@ -898,20 +928,7 @@ class OptimizationState:
             raise ValidationError("populations must contain 'main'")
         if not {"main", "pareto"} <= set(archive_collection):
             raise ValidationError("archives must contain 'main' and 'pareto'")
-        evaluation_plan = kwargs.get("evaluation_plan", self.evaluation_plan)
-        evaluation_plan_state = kwargs.get(
-            "evaluation_plan_state", self.evaluation_plan_state
-        )
-        _validate_plan_state(evaluation_plan, evaluation_plan_state)
-        evaluation_plan_updates = kwargs.get(
-            "evaluation_plan_updates", self.evaluation_plan_updates
-        )
-        if evaluation_plan is not None and evaluation_plan_updates is not None:
-            plan_ids = {int(request.request_id) for request in evaluation_plan.requests}
-            if not set(map(int, evaluation_plan_updates)) <= plan_ids:
-                raise ValidationError(
-                    "evaluation plan updates reference an unknown request"
-                )
+        self._validate_plan_replacement(kwargs)
 
         writes: dict[StateKey, object] = {}
         deletes: set[StateKey] = set()
@@ -970,6 +987,61 @@ class OptimizationState:
         for name in _STORE_FIELDS:
             result.__dict__.pop(name, None)
         object.__setattr__(result, "_store", replacement_store)
+        object.__setattr__(result, "_population_collection", population_collection)
+        object.__setattr__(result, "_archive_collection", archive_collection)
+        population_collection._bind(
+            lambda values: result._commit_collection("populations", values)
+        )
+        population_collection._bind_read(
+            lambda name, value: result._store.get(_collection_key("populations", name))
+        )
+        archive_collection._bind(
+            lambda values: result._commit_collection("archives", values)
+        )
+        archive_collection._bind_read(
+            lambda name, value: result._store.get(_collection_key("archives", name))
+        )
+        return result
+
+    def _validate_plan_replacement(self, kwargs: dict[str, Any]) -> None:
+        """Validate plan-related replacement fields with normal state rules."""
+        evaluation_plan = kwargs.get("evaluation_plan", self.evaluation_plan)
+        evaluation_plan_state = kwargs.get(
+            "evaluation_plan_state", self.evaluation_plan_state
+        )
+        _validate_plan_state(evaluation_plan, evaluation_plan_state)
+        evaluation_plan_updates = kwargs.get(
+            "evaluation_plan_updates", self.evaluation_plan_updates
+        )
+        if evaluation_plan is not None and evaluation_plan_updates is not None:
+            plan_ids = {int(request.request_id) for request in evaluation_plan.requests}
+            if not set(map(int, evaluation_plan_updates)) <= plan_ids:
+                raise ValidationError(
+                    "evaluation plan updates reference an unknown request"
+                )
+
+    def _replace_lightweight(self, kwargs: dict[str, Any]) -> OptimizationState:
+        """Clone state and rebind collections without rebuilding them."""
+        writes = {
+            _STORE_FIELDS[name]: value
+            for name, value in kwargs.items()
+            if name in _STORE_FIELDS
+        }
+        replacement_store = copy.copy(self._store)
+        if writes:
+            replacement_store = replacement_store.apply_patch(StatePatch(writes=writes))
+
+        result = object.__new__(type(self))
+        object.__setattr__(result, "__dict__", self.__dict__.copy())
+        for name, value in kwargs.items():
+            if name not in _STORE_FIELDS:
+                object.__setattr__(result, name, value)
+        for name in _STORE_FIELDS:
+            result.__dict__.pop(name, None)
+        object.__setattr__(result, "_store", replacement_store)
+
+        population_collection = copy.copy(self._population_collection)
+        archive_collection = copy.copy(self._archive_collection)
         object.__setattr__(result, "_population_collection", population_collection)
         object.__setattr__(result, "_archive_collection", archive_collection)
         population_collection._bind(

@@ -186,6 +186,43 @@ class TestKNNObjectiveSet:
         data = ts.build(arc, None, None, candidate_x=cand)
         assert data.train_x.shape[0] <= 8
 
+    def test_dense_rows_are_read_only_and_match_archive(self) -> None:
+        arc = _make_archive(8)
+        data = KNNObjectiveSet(n_neighbors=4).build(
+            arc, None, None, candidate_x=np.zeros(DIM)
+        )
+        assert not data.train_x.flags.writeable
+        assert not data.train_y.flags.writeable
+        np.testing.assert_array_equal(
+            data.train_x, arc.x[arc.get_knn(np.zeros(DIM), 4)[0]]
+        )
+        np.testing.assert_array_equal(
+            data.train_y, arc.f[arc.get_knn(np.zeros(DIM), 4)[0]]
+        )
+
+    def test_custom_archive_subclass_uses_property_fallback(self) -> None:
+        class CustomArchive(Archive):
+            @property
+            def x(self):
+                return super().x
+
+            @property
+            def f(self):
+                return super().f
+
+        arc = CustomArchive(_ATTRS, init_capacity=8)
+        for i in range(4):
+            arc.add(
+                x=np.full(DIM, i, dtype=float), f=np.array([i], dtype=float), cv=0.0
+            )
+        data = KNNObjectiveSet(n_neighbors=2).build(
+            arc, None, None, candidate_x=np.zeros(DIM)
+        )
+        assert data.train_x.flags.writeable
+        np.testing.assert_array_equal(
+            data.train_x, arc.x[arc.get_knn(np.zeros(DIM), 2)[0]]
+        )
+
 
 # ===========================================================================
 # ConstraintObjectiveSet

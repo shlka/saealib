@@ -753,13 +753,35 @@ def _merge_graphs(
         candidate: tuple[_ValueT, ...],
     ) -> tuple[_ValueT, ...]:
         """Merge a full collection proposal while preserving replacement slots."""
-        merged = list(current)
 
-        def same_slot(left: _ValueT, right: _ValueT) -> bool:
-            """Match graph values by stable identity when their payload changes."""
-            if type(left) is type(right) and hasattr(left, "component_id"):
-                return getattr(left, "component_id") == getattr(right, "component_id")
-            return left == right
+        def slot_key(value: _ValueT) -> tuple[object, ...]:
+            """Return the key corresponding to the historical slot identity."""
+            if hasattr(value, "component_id"):
+                return ("component_id", type(value), getattr(value, "component_id"))
+            return ("value", value)
+
+        merged = list(current)
+        active = [True] * len(merged)
+        merged_index: dict[tuple[object, ...], list[int]] = {}
+
+        def add_index_entry(key: tuple[object, ...], index: int) -> None:
+            merged_index.setdefault(key, []).append(index)
+
+        for index, value in enumerate(merged):
+            add_index_entry(slot_key(value), index)
+
+        def first_current_index(key: tuple[object, ...]) -> int | None:
+            """Find the first active value for a slot, ignoring stale entries."""
+            for index in merged_index.get(key, ()):
+                if active[index] and slot_key(merged[index]) == key:
+                    return index
+            return None
+
+        candidate_slots: dict[tuple[object, ...], list[int]] = {}
+        for index, value in enumerate(candidate):
+            candidate_slots.setdefault(slot_key(value), []).append(index)
+        candidate_offsets: dict[tuple[object, ...], int] = {}
+        matched_candidate_indices: set[int] = set()
 
         def stable_value_key(value: _ValueT) -> tuple[str, str, str]:
             """Order newly added values without consulting rule enumeration."""
@@ -770,49 +792,50 @@ def _merge_graphs(
             )
 
         matched: dict[int, int] = {}
-        used_candidates: set[int] = set()
         for original_index, original_value in enumerate(original):
-            for candidate_index, candidate_value in enumerate(candidate):
-                if candidate_index in used_candidates:
-                    continue
-                if same_slot(original_value, candidate_value):
-                    matched[original_index] = candidate_index
-                    used_candidates.add(candidate_index)
-                    break
+            key = slot_key(original_value)
+            offset = candidate_offsets.get(key, 0)
+            candidates = candidate_slots.get(key, ())
+            if offset < len(candidates):
+                matched_candidate_index = candidates[offset]
+                candidate_offsets[key] = offset + 1
+                matched[original_index] = matched_candidate_index
+                matched_candidate_indices.add(matched_candidate_index)
 
         for original_index in reversed(range(len(original))):
             if original_index in matched:
                 continue
-            original_value = original[original_index]
-            for current_index, current_value in enumerate(merged):
-                if same_slot(original_value, current_value):
-                    del merged[current_index]
-                    break
+            current_index = first_current_index(slot_key(original[original_index]))
+            if current_index is not None:
+                active[current_index] = False
 
-        for original_index, candidate_index in matched.items():
+        for original_index, matched_candidate_index in matched.items():
             original_value = original[original_index]
-            candidate_value = candidate[candidate_index]
+            candidate_value = candidate[matched_candidate_index]
             if candidate_value == original_value:
                 continue
-            for current_index, current_value in enumerate(merged):
-                if same_slot(original_value, current_value):
-                    merged[current_index] = candidate_value
-                    break
+            current_index = first_current_index(slot_key(original_value))
+            if current_index is not None:
+                merged[current_index] = candidate_value
+                add_index_entry(slot_key(candidate_value), current_index)
 
         for candidate_index, candidate_value in enumerate(candidate):
-            if candidate_index in used_candidates:
+            if candidate_index in matched_candidate_indices:
                 continue
-            if not any(same_slot(candidate_value, value) for value in merged):
+            if first_current_index(slot_key(candidate_value)) is None:
+                active.append(True)
                 merged.append(candidate_value)
+                add_index_entry(slot_key(candidate_value), len(merged) - 1)
+        original_keys = {slot_key(value) for value in original}
         existing = [
             value
-            for value in merged
-            if any(same_slot(value, original_value) for original_value in original)
+            for index, value in enumerate(merged)
+            if active[index] and slot_key(value) in original_keys
         ]
         added = [
             value
-            for value in merged
-            if not any(same_slot(value, original_value) for original_value in original)
+            for index, value in enumerate(merged)
+            if active[index] and slot_key(value) not in original_keys
         ]
         return tuple((*existing, *sorted(added, key=stable_value_key)))
 

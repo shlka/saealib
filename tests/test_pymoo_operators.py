@@ -20,6 +20,7 @@ from saealib import (
     TruncationSelection,
     minimize,
 )
+from saealib.algorithms.ga import _canonical_merge_pool
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.operators import PymooCrossover, PymooMutation
@@ -514,6 +515,58 @@ class TestGABatchDispatch:
             ga.tell(ctx, _NoopProvider(), offspring)
 
         assert get_population.call_count == 1
+
+    def test_tell_dense_replacement_does_not_extract_survivors(self, monkeypatch):
+        ga = GA(
+            crossover=PymooCrossover(SBX(eta=15)),
+            mutation=PymooMutation(PM(eta=20)),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        ctx = _make_continuous_ctx(n_pop=10)
+        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=10)
+
+        def fail_extract(*args, **kwargs):
+            pytest.fail("dense GA.tell should not extract survivors")
+
+        monkeypatch.setattr(Population, "extract", fail_extract)
+        ga.tell(ctx, _NoopProvider(), offspring)
+
+    def test_private_merge_pool_matches_empty_like_after_both_extends(self):
+        ctx = _make_continuous_ctx(n_pop=10)
+        offspring = ctx.population.empty_like(capacity=10)
+        rng = np.random.default_rng(91)
+        offspring.extend(
+            {
+                "x": rng.uniform(-1.0, 1.0, size=(10, DIM)),
+                "f": np.arange(10, dtype=np.float64).reshape(10, 1),
+                "g": np.zeros((10, 0)),
+                "cv": np.zeros(10),
+            }
+        )
+
+        fast = _canonical_merge_pool(ctx.population, offspring, 20)
+        assert fast is not None
+        reference = ctx.population.empty_like(capacity=20)
+        for pool in (fast, reference):
+            pool._extend_internal(ctx.population, preserve_ids=True)
+            pool._extend_internal(offspring, preserve_ids=True)
+
+        assert len(fast) == len(reference) == 20
+        for key in reference.schema:
+            np.testing.assert_array_equal(fast.get_array(key), reference.get_array(key))
+        np.testing.assert_array_equal(fast.get_array("x"), reference.get_array("x"))
+        assert fast.structure_version == reference.structure_version == 2
+
+    def test_private_merge_pool_rejects_population_subclasses(self):
+        ctx = _make_continuous_ctx(n_pop=4)
+
+        class CustomPopulation(Population):
+            pass
+
+        custom = CustomPopulation(ctx.population.attrs, init_capacity=4)
+        custom.extend({"x": ctx.population.get_array("x")[:4]})
+        assert _canonical_merge_pool(ctx.population, custom, 8) is None
 
     def test_sequential_mode_calls_do_once_per_unit(self):
         counted_cx = _CountedSBX(eta=15)

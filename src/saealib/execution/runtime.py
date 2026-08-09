@@ -82,12 +82,7 @@ def _execute_sequential_plan(
     plan: SequentialPlan, state: OptimizationState
 ) -> OptimizationState:
     """Thread state through the compiled StageNodeAdapter sequence."""
-    for node in plan.execution_nodes:
-        execute = getattr(node.component, "execute", None)
-        if not callable(execute):
-            raise ValidationError(
-                f"SequentialPlan node {node.component_id!r} is not executable"
-            )
+    for node, execute in zip(plan.execution_nodes, plan._execute_targets):
         state = execute(state)
         if not isinstance(state, OptimizationState):
             raise ValidationError(
@@ -232,12 +227,7 @@ class _OptimizerEnvironment:
             )
         )
         if current.evaluation_plan is None or plan_is_terminal:
-            for node in nodes[:plan_index]:
-                execute = getattr(node.component, "execute", None)
-                if not callable(execute):
-                    raise ValidationError(
-                        f"SequentialPlan node {node.component_id!r} is not executable"
-                    )
+            for execute in self.plan._execute_targets[:plan_index]:
                 current = execute(current)
 
         plan_stage = getattr(nodes[plan_index].component, "stage", None)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import cast
+from typing import Any, cast
 
 import pytest
 
@@ -17,9 +17,15 @@ from saealib import (
 from saealib.context import OptimizationState
 from saealib.core.compiler import Compiler, ControlEdge, DataEdge
 from saealib.core.compiler.adapters import Adapter, AdapterComponent
-from saealib.core.compiler.graph import NodeRef
+from saealib.core.compiler.graph import ComponentNode, NodeRef
+from saealib.core.compiler.schema_rules import _FreshenedComponent
 from saealib.core.contracts import DataSpec
-from saealib.core.graph_builder import StageNodeAdapter, build_component_graph
+from saealib.core.graph_builder import (
+    StageContractNodeAdapter,
+    StageNodeAdapter,
+    build_component_graph,
+    cached_execution_target,
+)
 from saealib.core.runtime import NodeStatus, SequentialPlan
 from saealib.exceptions import ValidationError
 from saealib.execution.evaluator import SerialEvaluator
@@ -94,6 +100,13 @@ def test_real_default_strategy_graph_compiles_to_stage_order() -> None:
         "tell",
         "evaluation_acknowledge",
     ]
+    assert (
+        sum(
+            getattr(target, "__func__", None) is StageNodeAdapter.execute
+            for target in ordered._execute_targets
+        )
+        == 0
+    )
 
 
 def test_runtime_threads_stage_return_values_and_reports_order_without_events() -> None:
@@ -132,12 +145,83 @@ def test_sync_environment_executes_compiled_plan_without_strategy_step() -> None
 
     assert result.marker == "b(a(start))"
 
+    adapter = plan.graph.nodes[0].component
+
     def poison(_: OptimizationState) -> OptimizationState:
         raise AssertionError("compiled Stage execution was bypassed")
 
-    setattr(stages[0], "execute", poison)
-    with pytest.raises(AssertionError, match="compiled Stage execution"):
-        environment.execute(SequentialPlan.from_executable_plan(plan), _state())
+    setattr(adapter, "execute", poison)
+    assert environment.execute(
+        SequentialPlan.from_executable_plan(plan), _state()
+    ).marker == ("b(a(start))")
+
+
+def test_sequential_plan_caches_bound_execute_targets() -> None:
+    stages = [_Stage("a"), _Stage("b")]
+    plan = SequentialPlan.from_executable_plan(_compiled(stages))
+
+    assert [cast(Any, target).__self__ for target in plan._execute_targets] == [
+        cast(Any, node.component).stage for node in plan.execution_nodes
+    ]
+    assert [cast(Any, target).__func__ for target in plan._execute_targets] == [
+        type(stage).execute for stage in stages
+    ]
+
+
+def test_stage_adapter_binds_stage_execute_target_at_construction() -> None:
+    stage = _Stage("a")
+    adapter = StageNodeAdapter(stage)
+
+    target = cast(Any, adapter._execute_target)
+    assert target.__self__ is stage
+    assert target.__func__ is type(stage).execute
+
+    def poison(_: OptimizationState) -> OptimizationState:
+        raise AssertionError("adapter wrapper was called")
+
+    cast(Any, adapter).execute = poison
+    assert target(_state()).marker == "a(start)"
+
+
+def test_freshened_stage_adapter_uses_nested_cached_execute_target() -> None:
+    stage = _Stage("a")
+    adapter = StageContractNodeAdapter(stage)
+    freshened = _FreshenedComponent(adapter, adapter.contract())
+
+    target = cached_execution_target(freshened)
+    assert cast(Any, target).__self__ is stage
+    assert cast(Any, target).__func__ is type(stage).execute
+
+    def poison(_: OptimizationState) -> OptimizationState:
+        raise AssertionError("freshened adapter wrapper was called")
+
+    setattr(adapter, "execute", poison)
+    assert cast(Any, target)(_state()).marker == "a(start)"
+
+
+def test_stage_adapter_rejects_non_callable_execute_target() -> None:
+    class NonExecutableStage(Stage):
+        execute = None  # type: ignore[assignment]
+
+    with pytest.raises(ValidationError, match="stage must be executable"):
+        StageNodeAdapter(NonExecutableStage())
+
+
+def test_manually_constructed_plan_rejects_non_executable_node() -> None:
+    compiled = _compiled([_Stage("a")])
+
+    class NonExecutable:
+        def contract(self):
+            return compiled.graph.nodes[0].contract
+
+    node = ComponentNode(component_id="a", component=NonExecutable())
+    malformed = replace(
+        compiled,
+        graph=replace(compiled.graph, nodes=(node,)),
+    )
+
+    with pytest.raises(ValidationError, match="node 'a' is not executable"):
+        SequentialPlan(plan=malformed, nodes=(node,), execution_nodes=(node,))
 
 
 def test_graph_builder_uses_one_pipeline_without_sync_async_tail_comparison() -> None:

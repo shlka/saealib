@@ -16,9 +16,18 @@ from saealib.core.compiler import (
     RuleRegistry,
     VerificationResult,
 )
+from saealib.core.compiler.compiler import _merge_graphs
 from saealib.core.compiler.diagnostics import ContractPath, Diagnostic, Severity
-from saealib.core.compiler.graph import ComponentGraph, ComponentNode, NodeRef
+from saealib.core.compiler.graph import (
+    ComponentGraph,
+    ComponentNode,
+    ControlEdge,
+    DataEdge,
+    NodeRef,
+    StateBinding,
+)
 from saealib.core.contracts import ComponentContract, ExecutionContract
+from saealib.core.state.keys import StateKey
 from saealib.exceptions import ConfigurationError
 
 
@@ -32,6 +41,149 @@ def _graph() -> ComponentGraph:
         nodes=(ComponentNode(component_id="start", component=_Component()),),
         entry_points=(NodeRef(component_id="start"),),
     )
+
+
+def _reference_merge_graphs(
+    base: ComponentGraph, proposals: tuple[ResolutionResult, ...]
+) -> ComponentGraph:
+    """Reference implementation of the pre-indexed merge behavior."""
+
+    def merge_values(original, current, candidate):
+        merged = list(current)
+
+        def same_slot(left, right):
+            if type(left) is type(right) and hasattr(left, "component_id"):
+                return getattr(left, "component_id") == getattr(right, "component_id")
+            return left == right
+
+        matched = {}
+        used_candidates = set()
+        for original_index, original_value in enumerate(original):
+            for candidate_index, candidate_value in enumerate(candidate):
+                if candidate_index in used_candidates:
+                    continue
+                if same_slot(original_value, candidate_value):
+                    matched[original_index] = candidate_index
+                    used_candidates.add(candidate_index)
+                    break
+
+        for original_index in reversed(range(len(original))):
+            if original_index in matched:
+                continue
+            original_value = original[original_index]
+            for current_index, current_value in enumerate(merged):
+                if same_slot(original_value, current_value):
+                    del merged[current_index]
+                    break
+
+        for original_index, candidate_index in matched.items():
+            original_value = original[original_index]
+            candidate_value = candidate[candidate_index]
+            if candidate_value == original_value:
+                continue
+            for current_index, current_value in enumerate(merged):
+                if same_slot(original_value, current_value):
+                    merged[current_index] = candidate_value
+                    break
+
+        def stable_value_key(value):
+            return (
+                type(value).__name__,
+                str(getattr(value, "component_id", "")),
+                repr(value),
+            )
+
+        for candidate_index, candidate_value in enumerate(candidate):
+            if candidate_index in used_candidates:
+                continue
+            if not any(same_slot(candidate_value, value) for value in merged):
+                merged.append(candidate_value)
+        existing = [
+            value
+            for value in merged
+            if any(same_slot(value, original_value) for original_value in original)
+        ]
+        added = [
+            value
+            for value in merged
+            if not any(same_slot(value, original_value) for original_value in original)
+        ]
+        return tuple((*existing, *sorted(added, key=stable_value_key)))
+
+    graph = base
+    for proposal in proposals:
+        candidate = proposal.graph
+        graph = replace(
+            graph,
+            nodes=merge_values(base.nodes, graph.nodes, candidate.nodes),
+            data_edges=merge_values(
+                base.data_edges, graph.data_edges, candidate.data_edges
+            ),
+            control_edges=merge_values(
+                base.control_edges, graph.control_edges, candidate.control_edges
+            ),
+            state_bindings=merge_values(
+                base.state_bindings, graph.state_bindings, candidate.state_bindings
+            ),
+            entry_points=merge_values(
+                base.entry_points, graph.entry_points, candidate.entry_points
+            ),
+        )
+    return graph
+
+
+def test_merge_graphs_matches_reference_with_duplicates_and_adapters() -> None:
+    component = _Component()
+    start = ComponentNode(component_id="start", component=component)
+    duplicate = ComponentNode(component_id="duplicate", component=component)
+    adapter = ComponentNode(component_id="adapter", component=component)
+    base = ComponentGraph(
+        nodes=(start, duplicate, duplicate),
+        data_edges=(
+            DataEdge(
+                source=NodeRef(component_id="start"),
+                target=NodeRef(component_id="duplicate"),
+                source_port="x",
+                target_port="y",
+            ),
+        ),
+        control_edges=(
+            ControlEdge(
+                source=NodeRef(component_id="start"),
+                target=NodeRef(component_id="duplicate"),
+            ),
+        ),
+        state_bindings=(
+            StateBinding(
+                node=NodeRef(component_id="start"),
+                state_key=StateKey(namespace="user", name="value", schema_version=1),
+            ),
+        ),
+        entry_points=(NodeRef(component_id="start"), NodeRef(component_id="start")),
+    )
+    proposals = (
+        ResolutionResult(
+            graph=replace(
+                base,
+                nodes=(
+                    replace(start, role="producer"),
+                    duplicate,
+                    adapter,
+                    duplicate,
+                ),
+                entry_points=(NodeRef(component_id="start", role="producer"),),
+            )
+        ),
+        ResolutionResult(
+            graph=replace(
+                base,
+                nodes=(replace(start, role="consumer"), duplicate, adapter),
+                data_edges=(),
+            )
+        ),
+    )
+
+    assert _merge_graphs(base, proposals) == _reference_merge_graphs(base, proposals)
 
 
 def test_conflicting_claims_apply_neither_rewrite() -> None:

@@ -7,7 +7,8 @@ phase units.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Protocol
 
@@ -161,6 +162,9 @@ class SequentialPlan:
     plan: ExecutablePlan
     nodes: tuple[ComponentNode, ...]
     execution_nodes: tuple[ComponentNode, ...] = ()
+    _execute_targets: tuple[Callable[[OptimizationState], OptimizationState], ...] = (
+        field(init=False, repr=False, compare=False)
+    )
 
     def __post_init__(self) -> None:
         """Validate the immutable ordered view against its compiled plan."""
@@ -193,8 +197,23 @@ class SequentialPlan:
             raise ValidationError(
                 "SequentialPlan execution_nodes must belong to the executable plan"
             )
+        from saealib.core.graph_builder import cached_execution_target
+
+        execute_targets = tuple(
+            cached_execution_target(node.component) for node in execution_nodes
+        )
+        if any(not callable(execute) for execute in execute_targets):
+            invalid_node = next(
+                node
+                for node, execute in zip(execution_nodes, execute_targets)
+                if not callable(execute)
+            )
+            raise ValidationError(
+                f"SequentialPlan node {invalid_node.component_id!r} is not executable"
+            )
         object.__setattr__(self, "nodes", nodes)
         object.__setattr__(self, "execution_nodes", execution_nodes)
+        object.__setattr__(self, "_execute_targets", execute_targets)
 
     @classmethod
     def from_executable_plan(cls, plan: ExecutablePlan) -> SequentialPlan:

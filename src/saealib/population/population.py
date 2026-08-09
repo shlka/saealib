@@ -59,6 +59,8 @@ class _ConflictBypassProperty(property):
 class _LegacyDenseNumericView:
     """Dense view used only by the pre-genome Population constructor path."""
 
+    _canonical_identity_backing = True
+
     def get_view(self, genomes: GenomeBatch) -> np.ndarray:
         if not isinstance(genomes, DenseVectorBatch):
             raise ValidationError("DenseNumericView requires DenseVectorBatch")
@@ -151,6 +153,7 @@ class Population(Generic[T_Individual]):
         for attr in attrs:
             self._init_column(attr, self._capacity)
         self._schema = {attr.name: attr for attr in attrs}
+        self._dense_genomes_view_cache: tuple[int, int, DenseVectorBatch] | None = None
         self._dense_numeric_view = (
             dense_numeric_view if dense_numeric_view is not None else dense_view
         )
@@ -462,6 +465,47 @@ class Population(Generic[T_Individual]):
         """
         self._extend_internal(other, preserve_ids=False)
 
+    def _validate_incoming_ids(
+        self,
+        other_data: Mapping[str, Any],
+        other_size: int,
+        *,
+        preserve_ids: bool,
+        allow_duplicate_ids: bool,
+        check_existing: bool = True,
+    ) -> None:
+        """Validate IDs for an incoming row batch before it is appended."""
+        if "id" not in self._schema:
+            return
+
+        if "id" in other_data:
+            incoming_ids = np.asarray(other_data["id"]).astype(np.int64, copy=False)
+            if not preserve_ids and np.any(incoming_ids != -1):
+                raise ValidationError(
+                    "extend() does not accept explicit 'id' values other than the "
+                    "-1 sentinel; internal lifecycle code uses "
+                    "_extend_internal(preserve_ids=True)"
+                )
+        else:
+            incoming_ids = np.full(
+                other_size, self._schema["id"].default, dtype=np.int64
+            )
+        real_incoming = incoming_ids[incoming_ids != -1]
+        if not allow_duplicate_ids and len(real_incoming) != len(
+            np.unique(real_incoming)
+        ):
+            raise ValidationError("Duplicate candidate id within the extended batch")
+        if (
+            check_existing
+            and self._size > 0
+            and len(real_incoming) > 0
+            and not allow_duplicate_ids
+            and np.any(np.isin(self._get_mutable_array("id"), real_incoming))
+        ):
+            raise ValidationError(
+                "Duplicate candidate id already present in population"
+            )
+
     def _extend_internal(
         self,
         other: Any,
@@ -483,10 +527,45 @@ class Population(Generic[T_Individual]):
             ``True``, explicit real ``id`` values are accepted and validated
             for uniqueness — used only by internal lifecycle code.
         """
+        exact_dense_population = False
+        canonical_identity_backing = False
         if isinstance(other, Population):
             other_size = len(other)
-            other_data = {k: other.get_array(k) for k in other.schema}
-            other_genomes = other.genomes
+            exact_dense_population = (
+                type(other) is type(self)
+                and other._schema == self._schema
+                and type(other).get_array is Population.get_array
+                and type(self).get_array is Population.get_array
+                and isinstance(other._genome_batch, DenseVectorBatch)
+                and isinstance(self._genome_batch, DenseVectorBatch)
+            )
+            if exact_dense_population:
+                canonical_identity_backing = (
+                    getattr(
+                        other._dense_numeric_view,
+                        "_canonical_identity_backing",
+                        False,
+                    )
+                    is True
+                    and getattr(
+                        self._dense_numeric_view,
+                        "_canonical_identity_backing",
+                        False,
+                    )
+                    is True
+                )
+                # The canonical dense path copies the x backing column below;
+                # defer constructing the compatibility genome view until it is
+                # actually needed by a non-canonical fallback.
+                other_genomes = None
+                other_data = {
+                    k: other._data[k][:other_size] for k in other.schema if k != "x"
+                }
+                if not canonical_identity_backing:
+                    other_genomes = other.genomes
+            else:
+                other_genomes = other.genomes
+                other_data = {k: other.get_array(k) for k in other.schema}
         elif isinstance(other, dict):
             other_size = np.asarray(next(iter(other.values()))).shape[0]
             other_data = other
@@ -495,41 +574,20 @@ class Population(Generic[T_Individual]):
         if other_size == 0:
             return
 
-        if "id" in self._schema:
-            if "id" in other_data:
-                incoming_ids = np.asarray(other_data["id"]).astype(np.int64, copy=False)
-                if not preserve_ids and np.any(incoming_ids != -1):
-                    raise ValidationError(
-                        "extend() does not accept explicit 'id' values other than the "
-                        "-1 sentinel; internal lifecycle code uses "
-                        "_extend_internal(preserve_ids=True)"
-                    )
-            else:
-                incoming_ids = np.full(
-                    other_size, self._schema["id"].default, dtype=np.int64
-                )
-            real_incoming = incoming_ids[incoming_ids != -1]
-            if not allow_duplicate_ids and len(real_incoming) != len(
-                np.unique(real_incoming)
-            ):
-                raise ValidationError(
-                    "Duplicate candidate id within the extended batch"
-                )
-            if (
-                self._size > 0
-                and len(real_incoming) > 0
-                and not allow_duplicate_ids
-                and np.any(np.isin(self._get_mutable_array("id"), real_incoming))
-            ):
-                raise ValidationError(
-                    "Duplicate candidate id already present in population"
-                )
+        self._validate_incoming_ids(
+            other_data,
+            other_size,
+            preserve_ids=preserve_ids,
+            allow_duplicate_ids=allow_duplicate_ids,
+        )
 
         if self._size + other_size > self._capacity:
             self._resize(max(self._capacity * 2, self._size + other_size))
 
         start = self._size
         for key, attr in self._schema.items():
+            if key == "x" and exact_dense_population:
+                continue
             val_self = self._data[key]
             if key in other_data:
                 val_self[start : start + other_size] = other_data[key]
@@ -542,12 +600,108 @@ class Population(Generic[T_Individual]):
                     val_self[start : start + other_size] = 0
 
         self._size += other_size
-        if other_genomes is not None:
+        if canonical_identity_backing:
+            self._data["x"][start : start + other_size] = other._data["x"][:other_size]
+        elif other_genomes is not None:
             self._append_genomes(other_genomes)
         elif self._genome_items is not None:
             self._genome_items.extend([None] * other_size)
             self._genome_batch = ObjectBatch(self._genome_items)
         self.mod_structure()
+
+    def _replace_from_population(
+        self,
+        source: Population,
+        indices: np.ndarray | list[int] | slice,
+        *,
+        preserve_ids: bool,
+        allow_duplicate_ids: bool = False,
+    ) -> bool:
+        """Replace rows from a dense population without an intermediate copy.
+
+        Return ``False`` when the populations are not an exact dense match so
+        callers can use the general extract/extend path.
+        """
+        if (
+            source is self
+            or type(source) is not type(self)
+            or not isinstance(source, Population)
+            or not isinstance(source._genome_batch, DenseVectorBatch)
+            or not isinstance(self._genome_batch, DenseVectorBatch)
+            or source._schema != self._schema
+            or type(source).get_array is not Population.get_array
+            or type(self).get_array is not Population.get_array
+        ):
+            return False
+
+        if isinstance(indices, slice):
+            start, stop, step = indices.indices(source._size)
+            indices_arr: Any = slice(start, stop, step)
+            n_selected = len(range(start, stop, step))
+        else:
+            indices_arr = np.asarray(indices)
+            if indices_arr.ndim != 1 or indices_arr.dtype.kind not in "iu":
+                return False
+            n_selected = len(indices_arr)
+
+        # Match GA.tell's existing clear-then-extend state transition, including
+        # the empty-on-validation-error behavior of the old path.
+        self.clear()
+        # Validate IDs before writing any destination columns.  Only the ID
+        # column needs selection materialized for validation; materializing
+        # every selected column here used to create a full intermediate copy
+        # of the survivor payload.
+        selected_ids = None
+        if "id" in self._schema:
+            selected_ids = {"id": source._data["id"][: source._size][indices_arr]}
+        self._validate_incoming_ids(
+            selected_ids or {},
+            n_selected,
+            preserve_ids=preserve_ids,
+            allow_duplicate_ids=allow_duplicate_ids,
+            check_existing=False,
+        )
+        if n_selected == 0:
+            return True
+        if n_selected > self._capacity:
+            self._resize(max(self._capacity * 2, n_selected))
+        source_rows = source._size
+        for key in self._schema:
+            if key == "x":
+                continue
+            source_column = source._data[key][:source_rows]
+            destination_column = self._data[key][:n_selected]
+            if isinstance(indices_arr, slice):
+                destination_column[...] = source_column[indices_arr]
+            else:
+                # np.take(out=...) writes directly into the destination and
+                # avoids retaining a separate selected_data dictionary.
+                np.take(source_column, indices_arr, axis=0, out=destination_column)
+        source_view = source._dense_numeric_view
+        target_view = self._dense_numeric_view
+        canonical_identity_backing = (
+            getattr(source_view, "_canonical_identity_backing", False) is True
+            and getattr(target_view, "_canonical_identity_backing", False) is True
+        )
+        if canonical_identity_backing:
+            # Built-in identity views expose the population's canonical x
+            # backing directly, so no batch selection or service conversion is
+            # needed for this dense survivor tail.
+            source_x = source._data["x"][:source_rows]
+            destination_x = self._data["x"][:n_selected]
+            if isinstance(indices_arr, slice):
+                destination_x[...] = source_x[indices_arr]
+            else:
+                np.take(source_x, indices_arr, axis=0, out=destination_x)
+        else:
+            selected_indices = np.arange(source._size, dtype=np.intp)[indices_arr]
+            self._replace_genome_rows(
+                np.arange(n_selected, dtype=np.intp),
+                source.genomes.take(selected_indices),
+            )
+        self._size = n_selected
+        self.mod_structure()
+        return True
 
     def extract(self, indices: np.ndarray | list[int] | slice) -> Self:
         """
@@ -812,7 +966,21 @@ class Population(Generic[T_Individual]):
     def genomes(self) -> GenomeBatch:
         """Return the current genomes as a read-only batch value."""
         if isinstance(self._genome_batch, DenseVectorBatch):
-            return DenseVectorBatch(self._data["x"][: self._size])
+            batch_id = id(self._genome_batch)
+            cached = self._dense_genomes_view_cache
+            if (
+                cached is not None
+                and cached[0] == self._structure_version
+                and cached[1] == batch_id
+            ):
+                return cached[2]
+            view = DenseVectorBatch(self._data["x"][: self._size])
+            self._dense_genomes_view_cache = (
+                self._structure_version,
+                batch_id,
+                view,
+            )
+            return view
         if self._genome_items is not None:
             return ObjectBatch(self._genome_items)
         return self._genome_batch.take(np.arange(self._size, dtype=np.intp))

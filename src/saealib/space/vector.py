@@ -47,6 +47,8 @@ class _VectorBoundsService:
 
 
 class _VectorDenseNumericView:
+    _canonical_identity_backing = True
+
     def get_view(self, genomes: GenomeBatch) -> np.ndarray:
         if not isinstance(genomes, DenseVectorBatch):
             raise ValidationError(
@@ -198,9 +200,9 @@ class _VectorEquivalenceService:
             matches = np.all(
                 np.isclose(stored, row, atol=self._atol, rtol=self._rtol), axis=1
             )
-            found = np.flatnonzero(matches)
-            if found.size:
-                result[position] = found[0]
+            first = int(matches.argmax())
+            if matches[first]:
+                result[position] = first
         return result
 
 

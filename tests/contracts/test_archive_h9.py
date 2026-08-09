@@ -116,6 +116,25 @@ def test_equivalence_collection_query_is_one_pass_not_three_dimensional(
     assert all(left == collection.array.shape for left, _right in shapes)
 
 
+def test_equivalence_single_query_preserves_first_match_and_nan_behavior() -> None:
+    """Single-query lookup keeps first-match, tolerance, and NaN semantics."""
+    space = VectorSpace(2, [-10.0, -10.0], [10.0, 10.0], atol=1e-3)
+    service = cast(EquivalenceService, space.services.require("EquivalenceService"))
+    collection = DenseVectorBatch(
+        [[1.0, 1.0], [1.0005, 1.0005], [np.nan, 2.0], [3.0, 3.0]]
+    )
+
+    assert service.find_matches(
+        collection, DenseVectorBatch([[1.0004, 1.0004]])
+    ).tolist() == [0]
+    assert service.find_matches(
+        collection, DenseVectorBatch([[np.nan, 2.0]])
+    ).tolist() == [-1]
+    assert service.find_matches(
+        collection, DenseVectorBatch([[9.0, 9.0]])
+    ).tolist() == [-1]
+
+
 def test_distance_knn_uses_lazy_service_tree_without_pairwise_distance(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -139,6 +158,72 @@ def test_distance_knn_uses_lazy_service_tree_without_pairwise_distance(
     assert indices.tolist() == [0, 1]
     assert distances[0] == pytest.approx(0.0)
     assert getattr(index, "tree") is not None
+
+
+def test_archive_knn_uses_builtin_service_index() -> None:
+    """The built-in DistanceService owns the archive's lazy kNN index."""
+    points = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 2.0], [3.0, 3.0]])
+    space = VectorSpace(2, [-10.0, -10.0], [10.0, 10.0], atol=0.0, rtol=0.0)
+
+    archive = Archive(_attrs(), space=space)
+    for point in points:
+        archive.add(x=point, f=np.array([0.0]))
+    routed_indices, routed_distances = archive.get_knn(np.array([0.2, 0.1]), k=3)
+    assert archive._kdtree is None
+    assert archive._distance_index is not None
+    service = cast(Any, space.services.require("DistanceService"))
+    expected_index = service.create_index(archive.genomes)
+    expected_indices, expected_distances = service.query_knn(
+        expected_index, np.array([0.2, 0.1]), k=3
+    )
+    np.testing.assert_array_equal(expected_indices, routed_indices)
+    np.testing.assert_allclose(expected_distances, routed_distances)
+
+
+def test_archive_knn_keeps_unmarked_custom_distance_service() -> None:
+    """A custom indexed service remains the owner of its kNN result."""
+    calls: list[str] = []
+
+    class CustomDistanceService:
+        def create_index(self, genomes: DenseVectorBatch) -> object:
+            calls.append("create")
+            return genomes
+
+        def query_knn(
+            self, index: object, genomes: np.ndarray, k: int
+        ) -> tuple[np.ndarray, np.ndarray]:
+            calls.append("query")
+            return np.array([2], dtype=np.intp), np.array([42.0])
+
+    space = VectorSpace(2, [-10.0, -10.0], [10.0, 10.0], atol=0.0, rtol=0.0)
+    archive = Archive(
+        _attrs(), space=space, distance_service=cast(Any, CustomDistanceService())
+    )
+    archive.add(x=np.array([0.0, 0.0]), f=np.array([0.0]))
+    archive.add(x=np.array([1.0, 0.0]), f=np.array([1.0]))
+    archive.add(x=np.array([0.0, 1.0]), f=np.array([2.0]))
+
+    indices, distances = archive.get_knn(np.array([0.0, 0.0]), k=1)
+    assert calls == ["create", "query"]
+    np.testing.assert_array_equal(indices, [2])
+    np.testing.assert_array_equal(distances, [42.0])
+    assert archive._kdtree is None
+
+
+def test_archive_knn_falls_back_for_nonfinite_builtin_archive_rows() -> None:
+    """Built-in service filtering of non-finite rows survives the fast path."""
+    space = VectorSpace(2, [-10.0, -10.0], [10.0, 10.0], atol=0.0, rtol=0.0)
+    archive = Archive(_attrs(), space=space)
+    archive.add(x=np.array([np.nan, 0.0]), f=np.array([0.0]))
+    archive.add(x=np.array([1.0, 0.0]), f=np.array([1.0]))
+    archive.add(x=np.array([0.0, 2.0]), f=np.array([2.0]))
+
+    indices, distances = archive.get_knn(np.array([0.0, 0.0]), k=3)
+
+    np.testing.assert_array_equal(indices, [1, 2])
+    np.testing.assert_allclose(distances, [1.0, 2.0])
+    assert archive._kdtree is None
+    assert archive._distance_index is not None
 
 
 def test_append_archive_requires_no_identity_or_distance_service() -> None:

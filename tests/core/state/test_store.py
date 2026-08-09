@@ -1,6 +1,7 @@
 """Tests for the move-based state store."""
 
 from dataclasses import dataclass
+from types import MappingProxyType
 
 import numpy as np
 import pytest
@@ -61,6 +62,45 @@ def test_subclass_clone_hook_preserves_custom_constructor_state() -> None:
 
     assert isinstance(updated, CustomStore)
     assert updated.token == "observer"
+    assert updated.get(state_key) == 2
+
+
+def test_exact_store_plain_write_fast_path_preserves_store_semantics() -> None:
+    state_key = key("value")
+    other_key = key("other")
+    store = StateStore({state_key: 1}, generation=4)
+
+    updated = store.apply_patch(StatePatch(writes={state_key: 2, other_key: 3}))
+
+    assert type(updated) is StateStore
+    assert isinstance(updated._values, MappingProxyType)
+    assert updated.generation == 5
+    assert updated.get(state_key) == 2
+    assert updated.get(other_key) == 3
+    with pytest.raises(RuntimeError, match="moved"):
+        store.get(state_key)
+
+
+def test_subclass_plain_write_still_uses_clone_override() -> None:
+    state_key = key("value")
+
+    class RecordingStore(StateStore):
+        cloned: bool = False
+
+        def __init__(self, initial=None, *, generation=0):
+            self.constructor_calls = getattr(self, "constructor_calls", 0) + 1
+            super().__init__(initial, generation=generation)
+
+        def _clone(self, values, *, generation):
+            result = type(self)(values, generation=generation)
+            result.cloned = True
+            return result
+
+    store = RecordingStore({state_key: 1})
+    updated = store.apply_patch(StatePatch(writes={state_key: 2}))
+
+    assert isinstance(updated, RecordingStore)
+    assert updated.cloned
     assert updated.get(state_key) == 2
 
 

@@ -48,6 +48,8 @@ from saealib.core.contracts import (
     Var,
 )
 from saealib.core.state import RUNTIME_RNG
+from saealib.population.archive import Archive
+from saealib.population.genome import DenseVectorBatch
 from saealib.registry import register
 
 if TYPE_CHECKING:
@@ -71,6 +73,43 @@ class TrainingData:
 
     train_x: np.ndarray
     train_y: np.ndarray
+
+
+def _canonical_dense_archive_data(
+    archive: Archive,
+) -> dict[str, np.ndarray] | None:
+    """Return canonical dense archive storage, or ``None`` for custom paths.
+
+    This is deliberately limited to the exact built-in ``Archive`` and its
+    built-in dense genome storage.  Custom archives and subclasses retain the
+    public-property path, since their properties or storage may have different
+    semantics.
+    """
+    if type(archive) is not Archive:
+        return None
+    values = archive.__dict__
+    if not isinstance(values.get("_genome_batch"), DenseVectorBatch):
+        return None
+    data = values.get("_data")
+    if not isinstance(data, dict):
+        return None
+    return data
+
+
+def _dense_archive_rows(
+    archive: Archive, indices: np.ndarray, target: str
+) -> tuple[np.ndarray, np.ndarray] | None:
+    """Return dense genome and column rows without going through properties."""
+    data = _canonical_dense_archive_data(archive)
+    if data is None or "x" not in data or target not in data:
+        return None
+
+    size = len(archive)
+    x = data["x"][:size][indices]
+    y = data[target][:size][indices]
+    x.setflags(write=False)
+    y.setflags(write=False)
+    return x, y
 
 
 class TrainingSet(ABC):
@@ -207,6 +246,9 @@ class KNNObjectiveSet(TrainingSet):
         if candidate_x is None:
             raise ValueError("KNNObjectiveSet requires candidate_x.")
         idx, _ = archive.get_knn(candidate_x, self.n_neighbors)
+        rows = _dense_archive_rows(archive, idx, "f")
+        if rows is not None:
+            return TrainingData(train_x=rows[0], train_y=rows[1])
         return TrainingData(train_x=archive.x[idx], train_y=archive.f[idx])
 
 
@@ -277,13 +319,20 @@ class KNNConstraintObjectiveSet(TrainingSet):
         """Return k nearest-neighbour archive points with raw constraint values."""
         if candidate_x is None:
             raise ValueError("KNNConstraintObjectiveSet requires candidate_x.")
-        g = archive.g
+        dense_data = _canonical_dense_archive_data(archive)
+        if dense_data is not None and "g" in dense_data:
+            g = dense_data["g"][: len(archive)]
+        else:
+            g = archive.g
         if g.shape[1] == 0:
             raise ValueError(
                 "KNNConstraintObjectiveSet requires at least one constraint "
                 "(archive.g has 0 columns)."
             )
         idx, _ = archive.get_knn(candidate_x, self.n_neighbors)
+        rows = _dense_archive_rows(archive, idx, "g")
+        if rows is not None:
+            return TrainingData(train_x=rows[0], train_y=rows[1])
         return TrainingData(train_x=archive.x[idx], train_y=g[idx])
 
 

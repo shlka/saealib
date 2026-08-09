@@ -28,6 +28,7 @@ from saealib.operators.mutation import (
     MutationIntegerUniform,
 )
 from saealib.population import Archive, Population, PopulationAttribute
+from saealib.population.genome import DenseVectorBatch
 from saealib.problem import Problem
 from saealib.registry import register
 from saealib.space import BoundsService
@@ -71,6 +72,56 @@ def _resolve_variation_execution(
             "mapping 'crossover' and/or 'mutation' to one of those modes"
         )
     return variation_execution.get(kind, "batch")
+
+
+def _canonical_merge_pool(
+    population: Population, offspring: Population, capacity: int
+) -> Population | None:
+    """Allocate the private dense pool used only by :meth:`GA.tell`.
+
+    The two callers immediately append populations with the same schema, so
+    every live cell is overwritten before the pool is observed.  Keep this
+    deliberately narrower than ``Population.empty_like``: exact built-in
+    populations, the normal ``get_array`` implementation, and canonical
+    identity-backed dense genomes are required.  Any customisation returns
+    ``None`` and the caller uses the public-compatible factory.
+    """
+    if (
+        type(population) is not Population
+        or type(offspring) is not Population
+        or type(population).get_array is not Population.get_array
+        or type(offspring).get_array is not Population.get_array
+        or population._schema != offspring._schema
+        or not isinstance(population._genome_batch, DenseVectorBatch)
+        or not isinstance(offspring._genome_batch, DenseVectorBatch)
+        or getattr(population._dense_numeric_view, "_canonical_identity_backing", False)
+        is not True
+        or getattr(offspring._dense_numeric_view, "_canonical_identity_backing", False)
+        is not True
+        or population._legacy_scalar_x
+        or offspring._legacy_scalar_x
+        or population._genome_items is not None
+        or offspring._genome_items is not None
+    ):
+        return None
+
+    pool = Population.__new__(Population)
+    pool._capacity = capacity
+    pool._size = 0
+    pool._structure_version = 0
+    pool._value_version = 0
+    pool._data = {
+        attr.name: np.empty((capacity, *attr.shape), dtype=attr.dtype, order="C")
+        for attr in population.attrs
+    }
+    pool._schema = dict(population._schema)
+    pool._cache = {}
+    pool._dense_genomes_view_cache = None
+    pool._dense_numeric_view = population._dense_numeric_view
+    pool._genome_items = None
+    pool._legacy_scalar_x = False
+    pool._genome_batch = DenseVectorBatch(pool._data["x"])
+    return pool
 
 
 def _route_crossover(
@@ -699,11 +750,16 @@ class GA(Algorithm):
         population = ctx.population
         popsize = len(population)
 
-        pool = population.empty_like(capacity=popsize + len(offspring))
+        pool = _canonical_merge_pool(population, offspring, popsize + len(offspring))
+        if pool is None:
+            pool = population.empty_like(capacity=popsize + len(offspring))
         pool._extend_internal(population, preserve_ids=True)
         pool._extend_internal(offspring, preserve_ids=True)
 
         survivor_idx = self.survivor_selection.select(ctx, pool, popsize)
 
-        population.clear()
-        population._extend_internal(pool.extract(survivor_idx), preserve_ids=True)
+        if not population._replace_from_population(
+            pool, survivor_idx, preserve_ids=True
+        ):
+            population.clear()
+            population._extend_internal(pool.extract(survivor_idx), preserve_ids=True)

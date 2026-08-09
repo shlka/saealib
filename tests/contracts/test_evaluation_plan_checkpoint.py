@@ -154,6 +154,21 @@ def _planned_state():
     )
 
 
+def test_plan_state_replace_uses_lightweight_clone_and_retains_validation():
+    state = _planned_state()
+    updated = state.replace(
+        evaluation_plan_state=state.evaluation_plan_state,
+        evaluation_plan_updates=state.evaluation_plan_updates,
+        gen=state.gen + 1,
+    )
+
+    assert updated is not state
+    assert updated.evaluation_plan is state.evaluation_plan
+    assert updated.populations is not state.populations
+    with pytest.raises(ValidationError, match="unknown request"):
+        state.replace(evaluation_plan_updates={99: []})
+
+
 def _rewrite_payload(path, destination, key, value):
     payload = dict(np.load(path, allow_pickle=False).items())
     payload[key] = np.frombuffer(json.dumps(value).encode(), dtype=np.uint8)
