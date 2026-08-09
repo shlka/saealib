@@ -63,7 +63,7 @@ def main():
         func=zdt1,
         dim=dim,
         n_obj=2,
-        weight=np.array([-1.0, -1.0]),
+        direction=np.array([-1.0, -1.0]),
         lb=lb,
         ub=ub,
     )
@@ -73,8 +73,8 @@ def main():
         seed=seed,
     )
     algorithm = GA(
-        crossover=CrossoverBLXAlpha(crossover_rate=0.7, alpha=0.4),
-        mutation=MutationUniform(mutation_rate=0.3),
+        crossover=CrossoverBLXAlpha(prob=0.7, alpha=0.4),
+        mutation=MutationUniform(prob=0.3),
         parent_selection=SequentialSelection(),
         survivor_selection=TruncationSelection(),
     )
