@@ -2,7 +2,7 @@
 
 The built-in `OptimizationStrategy`s (IB/GB/PS/Direct) split a single generation's processing into units called `Stage`, executed in order via `Pipeline`.
 The "Pipeline/Stage" section of [Extension guidelines](extension_guidelines.md) covered how to rearrange stages via `pipeline.replace`/`find`.
-This page covers the contract each `Stage` satisfies, the details of the 11 built-in ones, and how to implement a custom `Stage`.
+This page covers the contract each `Stage` satisfies, the built-in operational stages, and how to implement a custom `Stage`.
 
 ## Stage's role
 
@@ -28,20 +28,43 @@ Because `Pipeline` itself is a `Stage` subclass, it can be nested inside another
 
 ## Built-in Stages
 
-The table shows how each Stage reads and writes `OptimizationState`'s standard fields: `offspring`/`scores`/`predictions`/`evaluated_offspring`.
+The following table is generated from each operational Stage's production
+`contract()` (`reads`, `writes`, and `exports`). It is refreshed with:
+`python scripts/generate_stage_docs.py`.
 
-| Class | Reads | Writes |
-|---|---|---|
-| `CountGenerationStage()` | — | `gen` |
-| `AskStage(algorithm, n_offspring=None, cbmanager=None)` | — | `offspring` |
-| `SurrogatePredictStage(surrogate_manager, cbmanager=None)` | `offspring` | `predictions` |
-| `SurrogateFitStage(surrogate_manager)` | `archive` | — |
-| `AcquisitionStage(acquisition, cbmanager=None)` | `offspring`, `predictions` | `scores`, `acquisition_result` |
-| `EvaluationPlanStage(planner)` | `offspring`, `acquisition_result` | `evaluation_plan`, `evaluation_request` |
-| `ArchiveUpdateStage()` | `evaluated_offspring` | `archive`, `pareto_archive` |
-| `TellStage(algorithm)` | `offspring` | `population` |
-| `SurrogateOnlyLoopStage(algorithm, surrogate_manager, gen_ctrl, cbmanager=None)` | — | The entire inner loop |
-| `InitializationStage(initializer, provider, problem)` | — | Rebuilds the entire state |
+<!-- BEGIN GENERATED STAGE CONTRACTS: do not edit -->
+
+| Class | Name | Label | Notation | Reads | Writes | Exports |
+|---|---|---|---|---|---|---|
+| CountGenerationStage | count_generation | Count generation | $gen \leftarrow gen + 1$ | `runtime.generation`, `evaluations.pending` | `runtime.generation` | — |
+| AskStage | ask | Generate offspring | $\mathcal{Q} \leftarrow \text{ask}(P, n)$ | `evaluations.plan`, `evaluations.plan_state`, `runtime.candidate_id_allocator` | `proposals.offspring`, `proposals.current`, `runtime.candidate_id_allocator` | — |
+| SurrogatePredictStage | surrogate_predict | Surrogate prediction | $\hat{y} \leftarrow \text{predict}(\mathcal{Q}, \mathcal{A})$ | `proposals.offspring`, `archives.main` | `proposals.offspring`, `surrogates.predictions` | — |
+| PendingEvaluationContextStage | pending_evaluation_context | Pending evaluation context | $C \leftarrow \text{pending}(C)$ | — | — | — |
+| AcquisitionStage | acquisition | Acquisition scoring | $\mathbf{s} \leftarrow \text{acquire}(\mathcal{Q}, \hat{y}, \mathcal{A})$ | `proposals.offspring`, `surrogates.predictions`, `archives.main`, `runtime.generation` | `evaluations.scores`, `evaluations.acquisition_result` | — |
+| SurrogateFitStage | surrogate_fit | Fit surrogate | $\hat{f} \leftarrow \text{fit}(\mathcal{A})$ | `archives.main` | — | — |
+| TopKSelectionStage | top_k_selection | Top-k pre-selection | $\mathcal{Q} \leftarrow \text{top-}k(\mathcal{Q}, \mathbf{s})$ | `proposals.offspring`, `evaluations.scores` | `proposals.offspring` | — |
+| SortByScoreStage | sort_by_score | Sort offspring by score | $\mathcal{Q} \leftarrow \text{sort\_desc}(\mathcal{Q},\,\mathbf{s})$ | `proposals.offspring`, `evaluations.scores` | `proposals.offspring`, `evaluations.scores` | — |
+| EvaluationPlanStage | evaluation_plan | Plan evaluation | $R \leftarrow \text{plan}(Q)$ | `proposals.offspring`, `evaluations.pending`, `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.handles`, `evaluations.owners`, `evaluations.acquisition_result`, `evaluations.scores` | `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.plan_updates`, `evaluations.pending`, `evaluations.updates`, `evaluations.update_new_ids`, `evaluations.new_ids` | — |
+| AsyncEvaluationSubmitStage | async_evaluation_submit | Submit asynchronous evaluation |  | `proposals.offspring`, `evaluations.acquisition_result`, `evaluations.scores`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.pending`, `evaluations.handles`, `runtime.request_id_allocator` | `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.plan_updates`, `evaluations.pending`, `runtime.request_id_allocator` | — |
+| EvaluationSubmitStage | evaluation_submit | Submit evaluation | $H \leftarrow \text{submit}(R)$ | `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.pending`, `evaluations.handles` | `evaluations.pending`, `evaluations.handles`, `evaluations.plan_state` | — |
+| EvaluationCollectStage | evaluation_collect | Collect evaluation | $U \leftarrow \text{collect}(H)$ | `evaluations.plan`, `evaluations.plan_state`, `evaluations.pending`, `evaluations.handles`, `evaluations.plan_updates`, `evaluations.request` | `evaluations.updates`, `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.plan_updates`, `evaluations.pending`, `evaluations.update_new_ids`, `evaluations.new_ids` | — |
+| EvaluationApplyStage | evaluation_apply | Apply evaluation | $Q \leftarrow \text{apply}(U)$ | `proposals.offspring`, `evaluations.request`, `evaluations.updates`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.plan_updates`, `evaluations.pending` | `proposals.offspring`, `evaluations.evaluated_offspring`, `evaluations.new_ids`, `evaluations.update_new_ids`, `evaluations.pending` | — |
+| EvaluationAcknowledgeStage | evaluation_acknowledge | Acknowledge evaluation | $H \leftarrow \text{ack}(U)$ | `proposals.offspring`, `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.pending`, `evaluations.handles`, `evaluations.updates`, `evaluations.update_new_ids`, `evaluations.plan_updates` | `evaluations.plan`, `evaluations.plan_state`, `evaluations.plan_updates`, `evaluations.pending`, `evaluations.handles`, `evaluations.count` | — |
+| TrueEvaluationStage | true_evaluation | True objective evaluation | $\mathcal{Q}_{eval} \leftarrow \text{eval}(\mathcal{Q})$ | `proposals.offspring` | `proposals.offspring`, `evaluations.evaluated_offspring`, `evaluations.count` | — |
+| ArchiveUpdateStage | archive_update | Archive update | $\mathcal{A} \leftarrow \mathcal{A} \cup \mathcal{Q}_{eval}$ | `evaluations.evaluated_offspring`, `evaluations.plan`, `evaluations.plan_state` | `archives.main`, `archives.pareto`, `evaluations.evaluated_offspring` | — |
+| FeedbackStage | feedback | Apply feedback | $\mathcal{Q} \leftarrow \mathrm{feedback}(\mathcal{Q})$ | `proposals.offspring`, `evaluations.evaluated_offspring`, `evaluations.new_ids`, `surrogates.predictions`, `evaluations.plan`, `evaluations.plan_state` | `proposals.offspring`, `feedback.result` | — |
+| TellStage | tell | Update population | $P \leftarrow \text{tell}(P, \mathcal{Q})$ | `proposals.offspring`, `proposals.current`, `feedback.result`, `evaluations.plan`, `evaluations.plan_state` | — | — |
+| SurrogateOnlyLoopStage | surrogate_only_loop | Surrogate-only generations | $\text{for}\;i=1\dots gen\_ctrl$: $P \leftarrow \mathrm{tell}(P,\,\mathrm{acquire}(\mathrm{predict}(\mathrm{ask}(P))))$ | `archives.main` | — | — |
+| InitializationStage | initialization | Initialize population | $\mathcal{A}_0,\,P_0 \leftarrow \mathrm{init}(n_{\mathrm{init}})$ | — | — | — |
+<!-- END GENERATED STAGE CONTRACTS -->
+
+`TellStage` declares `writes=()` because its state contract describes the
+Stage boundary. When a legacy algorithm is used, the legacy adapter can still
+mutate the algorithm's population during execution; that runtime behavior is
+not added to the Stage contract.
+
+The contract table includes all operational stages, including stages used by
+asynchronous evaluation and nested surrogate-only loops.
 
 `AskStage` calls `algorithm.ask()`, writes to `state.offspring`, and fires PostCrossover/PostMutation/PostAskEvent via `cbmanager`.
 

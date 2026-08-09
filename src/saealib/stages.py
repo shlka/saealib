@@ -21,6 +21,7 @@ dict) via ``state.replace(data={**state.data, "key": value})``.
 from __future__ import annotations
 
 import inspect
+import sys
 from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import replace
@@ -2208,3 +2209,59 @@ class InitializationStage(Stage):
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         return self._initializer.initialize(self._provider, self._problem)
+
+
+def discover_builtin_stages() -> tuple[type[Stage], ...]:
+    """Return the operational Stage classes shipped with SAEALib.
+
+    This is the single production inventory used by tooling that needs to
+    inspect all built-in stages.  It intentionally excludes ``Stage`` and
+    ``Pipeline`` themselves, as well as user-defined subclasses.
+    """
+    return tuple(
+        cls
+        for cls in vars(sys.modules[__name__]).values()
+        if isinstance(cls, type)
+        and cls is not Stage
+        and issubclass(cls, Stage)
+        and cls.__module__ == __name__
+        and "contract" in cls.__dict__
+    )
+
+
+class _ContractProbe:
+    """Side-effect-free held component used for contract introspection."""
+
+    def contract(self) -> ComponentContract:
+        return ComponentContract()
+
+    def ask(self, request: object, state: object) -> object:
+        del request, state
+        return None
+
+    def tell(self, feedback: object, state: object) -> object:
+        del feedback, state
+        return None
+
+
+def _builtin_stage_instances_for_contracts() -> tuple[Stage, ...]:
+    """Build minimal instances for tooling that calls each ``contract()``."""
+    instances: list[Stage] = []
+    for stage_type in discover_builtin_stages():
+        positional: list[object] = []
+        keyword: dict[str, object] = {}
+        for parameter in inspect.signature(stage_type).parameters.values():
+            if parameter.default is not inspect.Parameter.empty:
+                continue
+            value: object = _ContractProbe()
+            if parameter.name == "k":
+                value = 1
+            elif parameter.name == "gen_ctrl":
+                value = 0
+            if parameter.kind is inspect.Parameter.POSITIONAL_ONLY:
+                positional.append(value)
+            else:
+                keyword[parameter.name] = value
+        constructor = cast(Callable[..., Stage], stage_type)
+        instances.append(constructor(*positional, **keyword))
+    return tuple(instances)

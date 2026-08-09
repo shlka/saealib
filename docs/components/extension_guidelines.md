@@ -33,7 +33,7 @@ pipeline = Pipeline([CountGenerationStage(), ...])
 pipeline.replace("count_generation", DoubleCountStage())
 ```
 
-See [Stage](stage.md) for the contract each Stage satisfies, the list of 11 built-in stages, and how to implement a custom Stage.
+See [Stage](stage.md) for the contract each Stage satisfies, the built-in operational stages, and how to implement a custom Stage.
 This page covers the operation of "rearranging and replacing stages" itself.
 
 ## CallbackManager
