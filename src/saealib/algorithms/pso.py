@@ -265,6 +265,7 @@ class PSO(Algorithm):
             id_new = offspring.get_array("id")
 
         popsize = len(offspring)
+        population = ctx.population
         cmp = ctx.comparator
         for i in range(popsize):
             if np.any(np.isnan(f_new[i])):
@@ -290,8 +291,8 @@ class PSO(Algorithm):
         if has_id:
             new_pop_data["id"] = id_new
 
-        ctx.population.clear()
-        ctx.population._extend_internal(new_pop_data, preserve_ids=True)
+        population.clear()
+        population._extend_internal(new_pop_data, preserve_ids=True)
 
     # ------------------------------------------------------------------
     # Helpers

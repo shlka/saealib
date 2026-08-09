@@ -355,9 +355,10 @@ class PymooAlgorithm(Algorithm):
 
         provider.dispatch(PostAskEvent(ctx=ctx, candidates=x))
 
-        cand = ctx.population.empty_like(capacity=len(x))
+        population = ctx.population
+        cand = population.empty_like(capacity=len(x))
         data = {"x": x, "pymoo_idx": np.arange(len(x), dtype=np.int64)}
-        if "id" in ctx.population.schema:
+        if "id" in population.schema:
             candidate_ids = ctx.candidate_id_allocator.allocate(len(x))
             self._set_pymoo_candidate_ids(infills, candidate_ids)
             data["id"] = candidate_ids
@@ -476,10 +477,11 @@ class PymooAlgorithm(Algorithm):
         """Rebuild ctx.population in-place from the wrapped algorithm's own .pop."""
         alg_pop = self.pymoo_algorithm.pop
         assert alg_pop is not None  # setup()/tell() already ran by this point
-        if len(alg_pop) != len(ctx.population):
+        population = ctx.population
+        if len(alg_pop) != len(population):
             raise ConfigurationError(
                 f"Wrapped pymoo algorithm's internal population size ({len(alg_pop)}) "
-                f"no longer matches saealib's population size ({len(ctx.population)}). "
+                f"no longer matches saealib's population size ({len(population)}). "
                 "This can happen with archive-growing pymoo algorithms that are not "
                 "supported by this adapter."
             )
@@ -502,7 +504,7 @@ class PymooAlgorithm(Algorithm):
             "cv": cv,
             "pymoo_idx": np.full(n, -1, dtype=np.int64),
         }
-        if "id" in ctx.population.schema:
+        if "id" in population.schema:
             if survivor_ids is None:
                 raise ConfigurationError(
                     "pymoo survivor candidate provenance is missing; "
@@ -510,5 +512,5 @@ class PymooAlgorithm(Algorithm):
                 )
             new_pop_data["id"] = survivor_ids
 
-        ctx.population.clear()
-        ctx.population._extend_internal(new_pop_data, preserve_ids=True)
+        population.clear()
+        population._extend_internal(new_pop_data, preserve_ids=True)

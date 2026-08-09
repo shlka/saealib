@@ -29,6 +29,20 @@ class _DummyProvider:
         pass
 
 
+class _CountingContext:
+    def __init__(self, ctx: OptimizationState) -> None:
+        self._ctx = ctx
+        self.population_lookups = 0
+
+    @property
+    def population(self):
+        self.population_lookups += 1
+        return self._ctx.population
+
+    def __getattr__(self, name):
+        return getattr(self._ctx, name)
+
+
 def _make_problem(
     n_obj: int = 1, direction: float = -1.0, constrained: bool = False
 ) -> Problem:
@@ -122,6 +136,20 @@ class TestPymooAlgorithmAskTell:
         np.testing.assert_array_equal(
             np.sort(cand.get_array("pymoo_idx")), np.arange(N_POP)
         )
+
+    def test_ask_and_sync_resolve_population_once_each(self):
+        problem = _make_problem()
+        algo = PymooAlgorithm(PymooGA(pop_size=N_POP))
+        ctx = _make_ctx(algo, problem)
+        population = ctx.population
+        algo.ask(ctx, _DummyProvider())
+
+        counting_ctx = _CountingContext(ctx)
+        algo.ask(cast(OptimizationState, counting_ctx), _DummyProvider())
+        assert counting_ctx.population_lookups == 1
+        algo._sync_population(cast(OptimizationState, counting_ctx))
+        assert counting_ctx.population_lookups == 2
+        assert ctx.population is population
 
     def test_ask_tell_round_trip_updates_population(self):
         problem = _make_problem()

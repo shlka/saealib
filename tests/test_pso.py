@@ -10,6 +10,8 @@ Tests cover:
 - _select_leader: returns the best pbest position
 """
 
+from typing import cast
+
 import numpy as np
 import pytest
 
@@ -41,6 +43,20 @@ _PSO_ATTRS = [
 class _DummyProvider:
     def dispatch(self, event):
         pass
+
+
+class _CountingContext:
+    def __init__(self, ctx: OptimizationState) -> None:
+        self._ctx = ctx
+        self.population_lookups = 0
+
+    @property
+    def population(self):
+        self.population_lookups += 1
+        return self._ctx.population
+
+    def __getattr__(self, name):
+        return getattr(self._ctx, name)
 
 
 def _make_problem() -> Problem:
@@ -324,13 +340,17 @@ class TestPSOPbestUpdate:
     def test_population_x_updated_after_tell(self):
         pso = PSO()
         ctx = _make_pso_ctx(init_pbest=True)
+        population = ctx.population
         x_new = np.ones((N_POP, DIM)) * 0.5
         f_new = np.full((N_POP, 1), 1e9)  # worse, so pbest stays
         offspring = _make_offspring(
             ctx, f_new=f_new, pbest_f=ctx.population.get_array("pbest_f").copy()
         )
         offspring.update_array("x", x_new)
-        pso.tell(ctx, _DummyProvider(), offspring)
+        counting_ctx = _CountingContext(ctx)
+        pso.tell(cast(OptimizationState, counting_ctx), _DummyProvider(), offspring)
+        assert counting_ctx.population_lookups == 1
+        assert ctx.population is population
         np.testing.assert_array_equal(ctx.population.get_array("x"), x_new)
 
 
