@@ -477,8 +477,7 @@ class _StructuredNodeRewriteRule:
         return ResolutionResult(
             graph=replace(context.graph, nodes=nodes),
             claims=frozenset(
-                context.claim("node", node.component_id)
-                for node in context.graph.nodes
+                context.claim("node", node.component_id) for node in context.graph.nodes
             ),
         )
 
@@ -508,7 +507,8 @@ def test_structured_rewrite_rebinds_operations_and_alternate_regions() -> None:
 
     assert isinstance(plan.graph, StructuredGraph)
     assert all(
-        operation is next(
+        operation
+        is next(
             node
             for node in plan.graph.nodes
             if node.component_id == operation.component_id
@@ -518,7 +518,8 @@ def test_structured_rewrite_rebinds_operations_and_alternate_regions() -> None:
     )
     branch = plan.graph.region_nodes[0].region
     assert all(
-        operation is next(
+        operation
+        is next(
             node
             for node in plan.graph.nodes
             if node.component_id == operation.component_id
@@ -528,7 +529,8 @@ def test_structured_rewrite_rebinds_operations_and_alternate_regions() -> None:
     )
     assert branch.otherwise is not None
     assert all(
-        operation is next(
+        operation
+        is next(
             node
             for node in plan.graph.nodes
             if node.component_id == operation.component_id

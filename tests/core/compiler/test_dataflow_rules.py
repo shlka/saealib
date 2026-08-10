@@ -172,9 +172,7 @@ def test_repeat_zero_does_not_provide_data_to_the_following_region() -> None:
     )
 
     assert not plan.graph.data_edges
-    assert [diagnostic.code for diagnostic in plan.diagnostics] == [
-        "unresolved_input"
-    ]
+    assert [diagnostic.code for diagnostic in plan.diagnostics] == ["unresolved_input"]
 
 
 def test_dynamic_repeat_does_not_provide_data_to_the_following_region() -> None:
@@ -192,9 +190,7 @@ def test_dynamic_repeat_does_not_provide_data_to_the_following_region() -> None:
     )
 
     assert not plan.graph.data_edges
-    assert [diagnostic.code for diagnostic in plan.diagnostics] == [
-        "unresolved_input"
-    ]
+    assert [diagnostic.code for diagnostic in plan.diagnostics] == ["unresolved_input"]
 
 
 def test_loop_body_does_not_provide_data_to_the_following_region() -> None:
@@ -212,9 +208,7 @@ def test_loop_body_does_not_provide_data_to_the_following_region() -> None:
     )
 
     assert not plan.graph.data_edges
-    assert [diagnostic.code for diagnostic in plan.diagnostics] == [
-        "unresolved_input"
-    ]
+    assert [diagnostic.code for diagnostic in plan.diagnostics] == ["unresolved_input"]
 
 
 def test_branch_single_path_producer_does_not_provide_data_after_branch() -> None:
@@ -232,6 +226,4 @@ def test_branch_single_path_producer_does_not_provide_data_after_branch() -> Non
     )
 
     assert not plan.graph.data_edges
-    assert [diagnostic.code for diagnostic in plan.diagnostics] == [
-        "unresolved_input"
-    ]
+    assert [diagnostic.code for diagnostic in plan.diagnostics] == ["unresolved_input"]
