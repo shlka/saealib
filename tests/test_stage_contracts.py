@@ -179,6 +179,7 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 EVALUATIONS_OWNERS,
                 ACQUISITION_RESULT,
                 SCORES,
+                SURROGATES_PREDICTIONS,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
             },
             {
@@ -190,6 +191,8 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 EVALUATION_UPDATES,
                 EVALUATION_UPDATE_NEW_IDS,
                 EVALUATION_NEW_IDS,
+                EVALUATION_HANDLES,
+                EVALUATIONS_OWNERS,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
             },
         ),
