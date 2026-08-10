@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 from saealib.core.compiler import (
+    BranchRegion,
     Compiler,
     ComponentGraph,
     ComponentNode,
     ControlEdge,
     DataEdge,
+    LoopRegion,
     NodeRef,
+    RepeatRegion,
     StructuredGraph,
+    lower_structured,
 )
 from saealib.core.contracts import (
     MANY,
@@ -16,6 +20,7 @@ from saealib.core.contracts import (
     PortContract,
     PortDirection,
     PortSpec,
+    StateContract,
 )
 from saealib.pipeline import Pipeline
 
@@ -63,6 +68,14 @@ class _Component:
         return ComponentContract(
             ports={"main": PortContract(inputs=inputs, outputs=outputs)}
         )
+
+
+class _Condition:
+    def contract(self):
+        return StateContract()
+
+    def evaluate(self, view):
+        return True
 
 
 def _compile(*components: _Component):
@@ -142,3 +155,83 @@ def test_direct_component_graph_is_not_auto_resolved() -> None:
         entry_points=(NodeRef(component_id="producer"),),
     )
     assert not Compiler().compile(graph).graph.data_edges
+
+
+def test_repeat_zero_does_not_provide_data_to_the_following_region() -> None:
+    plan = Compiler().compile(
+        lower_structured(
+            [
+                RepeatRegion(
+                    region_id="repeat",
+                    count=0,
+                    body=[_Component("producer", output="Population")],
+                ),
+                _Component("consumer", input_kind="Population"),
+            ]
+        )
+    )
+
+    assert not plan.graph.data_edges
+    assert [diagnostic.code for diagnostic in plan.diagnostics] == [
+        "unresolved_input"
+    ]
+
+
+def test_dynamic_repeat_does_not_provide_data_to_the_following_region() -> None:
+    plan = Compiler().compile(
+        lower_structured(
+            [
+                RepeatRegion(
+                    region_id="repeat",
+                    count=lambda view: 1,
+                    body=[_Component("producer", output="Population")],
+                ),
+                _Component("consumer", input_kind="Population"),
+            ]
+        )
+    )
+
+    assert not plan.graph.data_edges
+    assert [diagnostic.code for diagnostic in plan.diagnostics] == [
+        "unresolved_input"
+    ]
+
+
+def test_loop_body_does_not_provide_data_to_the_following_region() -> None:
+    plan = Compiler().compile(
+        lower_structured(
+            [
+                LoopRegion(
+                    region_id="loop",
+                    condition=_Condition(),
+                    body=[_Component("producer", output="Population")],
+                ),
+                _Component("consumer", input_kind="Population"),
+            ]
+        )
+    )
+
+    assert not plan.graph.data_edges
+    assert [diagnostic.code for diagnostic in plan.diagnostics] == [
+        "unresolved_input"
+    ]
+
+
+def test_branch_single_path_producer_does_not_provide_data_after_branch() -> None:
+    plan = Compiler().compile(
+        lower_structured(
+            [
+                BranchRegion(
+                    region_id="branch",
+                    condition=_Condition(),
+                    body=[_Component("producer", output="Population")],
+                ),
+                _Component("consumer", input_kind="Population"),
+            ]
+        )
+    )
+
+    assert not plan.graph.data_edges
+    assert [diagnostic.code for diagnostic in plan.diagnostics] == [
+        "unresolved_input"
+    ]

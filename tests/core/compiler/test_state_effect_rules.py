@@ -235,6 +235,17 @@ def test_structured_loop_and_repeat_state_is_sequential():
         RepeatRegion(region_id="repeat", count=1, body=(writer,)),
         reader,
     )
-    assert "unreachable_state_read" not in _codes(loop)
+    assert "unreachable_state_read" in _codes(loop)
     assert "unreachable_state_read" in _codes(repeat_zero)
     assert "unreachable_state_read" not in _codes(repeat_once)
+
+
+def test_dynamic_repeat_does_not_guarantee_body_writes() -> None:
+    writer = _Component(ComponentContract(state=StateContract(writes=(USER_DATA,))))
+    reader = _Component(ComponentContract(state=StateContract(reads=(USER_DATA,))))
+    graph = _structured(
+        RepeatRegion(region_id="repeat", count=lambda view: 1, body=(writer,)),
+        reader,
+    )
+
+    assert "unreachable_state_read" in _codes(graph)

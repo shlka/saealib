@@ -282,9 +282,7 @@ def _structured_diagnostics(
                 continue
             if isinstance(region, LoopRegion):
                 check_condition(region, current_available)
-                body_available = sequence(body, current_available)
-                current_available.update(body_available)
-                current_available.update(region.effect.writes)
+                sequence(body, current_available)
                 continue
             if isinstance(region, BranchRegion):
                 check_condition(region, current_available)

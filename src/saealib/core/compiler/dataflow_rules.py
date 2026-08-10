@@ -10,6 +10,12 @@ from saealib.core.compiler.diagnostics import (
     Severity,
 )
 from saealib.core.compiler.graph import DataEdge, NodeRef
+from saealib.core.compiler.regions import (
+    BranchRegion,
+    LoopRegion,
+    RegionNode,
+    RepeatRegion,
+)
 from saealib.core.compiler.structured import StructuredGraph
 from saealib.core.contracts.ports import (
     PortDirection,
@@ -42,23 +48,6 @@ def _port_specs(node, direction: PortDirection) -> tuple[tuple[str, PortSpec], .
     return tuple(sorted(result, key=lambda item: (item[0], item[1].name)))
 
 
-def _reachable_upstream(graph: StructuredGraph, target: str) -> frozenset[str]:
-    predecessors: dict[str, set[str]] = {}
-    for edge in graph.control_edges:
-        predecessors.setdefault(edge.target.component_id, set()).add(
-            edge.source.component_id
-        )
-    reachable: set[str] = set()
-    pending = list(sorted(predecessors.get(target, ())))
-    while pending:
-        source = pending.pop(0)
-        if source in reachable:
-            continue
-        reachable.add(source)
-        pending.extend(sorted(predecessors.get(source, ())))
-    return frozenset(reachable)
-
-
 def _target_is_connected(
     edge: DataEdge, target_id: str, target_role: str, target_port: str
 ) -> bool:
@@ -86,8 +75,9 @@ class StructuredDataflowRule:
 
         added: list[DataEdge] = []
         findings: list[Diagnostic] = []
-        for target in sorted(graph.nodes, key=lambda node: node.component_id):
-            upstream = _reachable_upstream(graph, target.component_id)
+        nodes_by_id = {node.component_id: node for node in graph.nodes}
+
+        def resolve_target(target, available: set[str]) -> None:
             connected = graph.data_edges
             for target_role, target_port in _port_specs(target, PortDirection.INPUT):
                 if any(
@@ -99,7 +89,7 @@ class StructuredDataflowRule:
                     continue
                 candidates: list[DataEdge] = []
                 for source in sorted(
-                    (node for node in graph.nodes if node.component_id in upstream),
+                    (nodes_by_id[node_id] for node_id in available),
                     key=lambda node: node.component_id,
                 ):
                     for source_role, source_port in _port_specs(
@@ -171,6 +161,40 @@ class StructuredDataflowRule:
                             ),
                         )
                     )
+
+        def sequence(current: StructuredGraph, available: set[str]) -> set[str]:
+            current_available = set(available)
+            for operation in current.operations:
+                if not isinstance(operation, RegionNode):
+                    resolve_target(operation, current_available)
+                    current_available.add(operation.component_id)
+                    continue
+                region = operation.region
+                body = region.body
+                if not isinstance(body, StructuredGraph):
+                    continue
+                if isinstance(region, RepeatRegion):
+                    body_available = sequence(body, current_available)
+                    if isinstance(region.count, int) and region.count > 0:
+                        current_available.update(body_available)
+                    continue
+                if isinstance(region, LoopRegion):
+                    sequence(body, current_available)
+                    continue
+                if isinstance(region, BranchRegion):
+                    then_available = sequence(body, current_available)
+                    otherwise = getattr(region, "otherwise", None)
+                    else_available = (
+                        sequence(otherwise, current_available)
+                        if isinstance(otherwise, StructuredGraph)
+                        else set(current_available)
+                    )
+                    current_available.update(then_available & else_available)
+                    continue
+                current_available.update(sequence(body, current_available))
+            return current_available
+
+        sequence(graph, set())
         if not added:
             return ResolutionResult(graph=graph, diagnostics=tuple(findings))
         return ResolutionResult(
