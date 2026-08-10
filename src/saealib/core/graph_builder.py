@@ -34,11 +34,13 @@ from saealib.exceptions import ValidationError
 from saealib.pipeline import Pipeline, Stage
 
 __all__ = [
+    "NodeAdapterSpec",
     "StageContractNodeAdapter",
     "StageNodeAdapter",
     "StagePartNodeAdapter",
     "build_component_graph",
     "build_decomposed_component_graph",
+    "build_decomposed_component_graph_from_specs",
     "build_decomposed_component_graph_from_stages",
 ]
 
@@ -375,6 +377,26 @@ class StagePartNodeAdapter:
         return self._contract
 
 
+@dataclass(frozen=True, kw_only=True)
+class NodeAdapterSpec:
+    """Describe one executable graph node and its Stage adapter.
+
+    The canonical builder consumes these already-materialized node specs.  A
+    Stage is only an implementation detail of the compatibility adapter; it
+    is not an input to the canonical graph construction API.
+    """
+
+    component_id: str
+    adapter: StageContractNodeAdapter
+
+    def __post_init__(self) -> None:
+        """Validate the executable adapter contract."""
+        if not isinstance(self.adapter, StageContractNodeAdapter):
+            raise ValidationError(
+                "NodeAdapterSpec adapter must be a StageContractNodeAdapter"
+            )
+
+
 _DATA_PORTS: tuple[tuple[str, str, str, str, str, str], ...] = (
     ("ask", "proposer", "genomes", "surrogate_predict", "predictor", "candidates"),
     (
@@ -579,10 +601,10 @@ def _decomposed_role_node(
     return None
 
 
-def build_decomposed_component_graph_from_stages(
-    stages: Sequence[Stage],
+def build_decomposed_component_graph_from_specs(
+    specs: Sequence[NodeAdapterSpec],
 ) -> ComponentGraph:
-    """Build the canonical U2 graph from an ordered stage component sequence.
+    """Build the canonical graph from ordered component/adapter specs.
 
     ``build_component_graph`` remains the Phase 6 bridge.  This function is an
     opt-in U2 path: each Stage is retained as the sole executable node, while
@@ -591,14 +613,14 @@ def build_decomposed_component_graph_from_stages(
     edges target the part that owns the declared port and never encode control
     side effects.
     """
-    stages = tuple(stages)
-    if any(not isinstance(stage, Stage) for stage in stages):
-        raise ValidationError("graph stages must contain Stage values")
-    stage_ids = _unique_node_ids(stages)
-    stage_adapters = tuple(
-        StageContractNodeAdapter(stage, node_path=stage_id)
-        for stage_id, stage in zip(stage_ids, stages)
-    )
+    specs = tuple(specs)
+    if any(not isinstance(spec, NodeAdapterSpec) for spec in specs):
+        raise ValidationError("graph specs must contain NodeAdapterSpec values")
+    stage_ids = tuple(spec.component_id for spec in specs)
+    if len(set(stage_ids)) != len(stage_ids):
+        raise ValidationError("graph specs must have unique component_id values")
+    stage_adapters = tuple(spec.adapter for spec in specs)
+    stages = tuple(adapter.stage for adapter in stage_adapters)
     held_by_stage = tuple(adapter._held for adapter in stage_adapters)
     stage_nodes = tuple(
         ComponentNode(component_id=stage_id, component=adapter)
@@ -738,8 +760,36 @@ def build_decomposed_component_graph_from_stages(
     )
 
 
-def build_decomposed_component_graph(pipeline: Pipeline) -> ComponentGraph:
-    """Build a canonical graph from the retained Pipeline compatibility facade."""
-    if not isinstance(pipeline, Pipeline):
-        raise ValidationError("build_decomposed_component_graph requires a Pipeline")
-    return build_decomposed_component_graph_from_stages(pipeline.stages)
+def build_decomposed_component_graph_from_stages(
+    stages: Sequence[Stage],
+) -> ComponentGraph:
+    """Compatibility bridge from an ordered Stage sequence to node specs."""
+    stages = tuple(stages)
+    if any(not isinstance(stage, Stage) for stage in stages):
+        raise ValidationError("graph stages must contain Stage values")
+    stage_ids = _unique_node_ids(stages)
+    specs = tuple(
+        NodeAdapterSpec(
+            component_id=stage_id,
+            adapter=StageContractNodeAdapter(stage, node_path=stage_id),
+        )
+        for stage_id, stage in zip(stage_ids, stages)
+    )
+    return build_decomposed_component_graph_from_specs(specs)
+
+
+def build_decomposed_component_graph(
+    value: Pipeline | Sequence[NodeAdapterSpec],
+) -> ComponentGraph:
+    """Build a graph from node specs, retaining Pipeline compatibility.
+
+    New callers should pass ``NodeAdapterSpec`` values.  ``Pipeline`` is
+    accepted solely for the legacy graph-builder facade.
+    """
+    if isinstance(value, Pipeline):
+        return build_decomposed_component_graph_from_stages(value.stages)
+    if not isinstance(value, Sequence):
+        raise ValidationError(
+            "build_decomposed_component_graph requires node specs or a Pipeline"
+        )
+    return build_decomposed_component_graph_from_specs(value)

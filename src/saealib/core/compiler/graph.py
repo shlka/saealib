@@ -77,16 +77,18 @@ class NodeRef:
 
 @dataclass(frozen=True, kw_only=True)
 class ComponentNode:
-    """Hold a component instance and its immutable component contract."""
+    """Hold a component instance and its compilation-local contract snapshot."""
 
     component_id: ComponentId
     component: object
     role: RoleName | None = None
     resolved_services: Mapping[str, object] = field(default_factory=dict)
-    contract: ComponentContract = field(init=False)
+    _contract_snapshot: ComponentContract | None = field(
+        init=False, default=None, repr=False, compare=False
+    )
 
     def __post_init__(self) -> None:
-        """Validate the identity and capture ``component.contract()``."""
+        """Validate identity without reading the component contract."""
         _name(self.component_id, "ComponentNode component_id")
         if self.role is not None:
             _name(self.role, "ComponentNode role")
@@ -101,22 +103,54 @@ class ComponentNode:
         contract_method = getattr(self.component, "contract", None)
         if not callable(contract_method):
             raise ValidationError("ComponentNode component must provide contract()")
+
+    @property
+    def contract(self) -> ComponentContract:
+        """Return the cached contract, taking a compatibility snapshot on demand.
+
+        Compilation calls :meth:`with_contract_snapshot` before any compiler rule
+        can read this property.  The fallback keeps the graph vocabulary usable
+        by callers that inspect a node outside compilation, without doing work in
+        ``ComponentNode`` construction.
+        """
+        contract = self._contract_snapshot
+        if contract is None:
+            contract = self._read_contract()
+            object.__setattr__(self, "_contract_snapshot", contract)
+        return contract
+
+    def _read_contract(self) -> ComponentContract:
+        """Read and validate one component contract snapshot."""
+        contract_method = getattr(self.component, "contract", None)
+        if not callable(contract_method):
+            raise ValidationError("ComponentNode component must provide contract()")
         contract = contract_method()
         if not isinstance(contract, ComponentContract):
             raise ValidationError(
                 "ComponentNode contract() must return ComponentContract"
             )
-        object.__setattr__(self, "contract", contract)
+        return contract
+
+    def with_contract_snapshot(self, *, refresh: bool = False) -> ComponentNode:
+        """Return a node with one immutable compilation snapshot.
+
+        ``refresh`` is used only for the first pass of a new compilation.  A
+        subsequent resolution pass preserves the snapshot already attached to
+        the node, including when resolution only changes service bindings.
+        """
+        if not refresh and self._contract_snapshot is not None:
+            return self
+        result = copy(self)
+        object.__setattr__(result, "_contract_snapshot", self._read_contract())
+        return result
 
     def with_resolved_services(
         self, resolved_services: Mapping[str, object]
     ) -> ComponentNode:
         """Return a service-enriched node without re-reading its contract.
 
-        A node's contract is the snapshot captured when the graph is built.
         Resolution rules may add service bindings later, but rebuilding the
-        dataclass with ``dataclasses.replace`` would invoke
-        ``component.contract()`` a second time during the same compilation.
+        dataclass with ``dataclasses.replace`` must not invoke ``contract()``.
         """
         values = dict(resolved_services)
         for service_name in values:

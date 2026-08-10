@@ -9,7 +9,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from saealib.core.compiler.graph import ComponentGraph
-from saealib.pipeline import Pipeline, Stage
+from saealib.core.graph_builder import (
+    NodeAdapterSpec,
+    StageContractNodeAdapter,
+    build_decomposed_component_graph_from_specs,
+)
+from saealib.pipeline import Pipeline
 from saealib.policies.evaluation import TopKEvaluation
 from saealib.policies.feedback import FeedbackBuilder, TrueOnlyFeedback
 from saealib.registry import register
@@ -29,8 +34,6 @@ from saealib.stages import (
 )
 from saealib.strategies.base import (
     OptimizationStrategy,
-    build_pipeline_from_graph,
-    build_runtime_neutral_graph,
 )
 
 if TYPE_CHECKING:
@@ -83,8 +86,8 @@ class PreSelectionStrategy(OptimizationStrategy):
 
     feedback_builder = TrueOnlyFeedback()
 
-    def _build_stages(self, provider: ComponentProvider) -> tuple[Stage, ...]:
-        """Build the canonical pre-selection Stage sequence."""
+    def build_graph(self, provider: ComponentProvider) -> ComponentGraph:
+        """Build the canonical pre-selection strategy graph."""
         cbmanager = getattr(provider, "cbmanager", None)
         evaluation_planner = (
             getattr(provider, "evaluation_planner", None) or self.evaluation_planner
@@ -104,7 +107,7 @@ class PreSelectionStrategy(OptimizationStrategy):
             TellStage(provider.algorithm),
             EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
         ]
-        return (
+        stages = (
             CountGenerationStage(),
             AskStage(
                 provider.algorithm,
@@ -118,14 +121,14 @@ class PreSelectionStrategy(OptimizationStrategy):
             ),
             *evaluation_tail,
         )
-
-    def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
-        """Return the legacy pipeline facade for the canonical graph."""
-        return build_pipeline_from_graph(self.build_graph(provider))
-
-    def build_graph(self, provider: ComponentProvider) -> ComponentGraph:
-        """Build the graph view of the current pre-selection pipeline."""
-        return build_runtime_neutral_graph(self, provider)
+        specs = tuple(
+            NodeAdapterSpec(
+                component_id=stage.name,
+                adapter=StageContractNodeAdapter(stage, node_path=stage.name),
+            )
+            for stage in stages
+        )
+        return build_decomposed_component_graph_from_specs(specs)
 
     def step(
         self, ctx: OptimizationState, provider: ComponentProvider

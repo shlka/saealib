@@ -275,6 +275,16 @@ def _rule_namespaces(graph: ComponentGraph) -> frozenset[str]:
     return frozenset(values)
 
 
+def _snapshot_graph_contracts(
+    graph: ComponentGraph, *, refresh: bool = False
+) -> ComponentGraph:
+    """Freeze one contract snapshot for every node currently in the graph."""
+    nodes = tuple(node.with_contract_snapshot(refresh=refresh) for node in graph.nodes)
+    if not refresh and all(node._contract_snapshot is not None for node in graph.nodes):
+        return graph
+    return replace(graph, nodes=nodes)
+
+
 def _iter_port_specs(
     contract: ComponentContract,
     part_path: tuple[str, ...] = (),
@@ -931,6 +941,9 @@ class Compiler:
             compile_context = replace(
                 compile_context, adapter_registry=self.adapter_registry
             )
+        # Contract reads begin here, once per node for this compilation.  Every
+        # subsequent compiler phase operates on nodes carrying these snapshots.
+        graph = _snapshot_graph_contracts(graph, refresh=True)
         structural = list(graph.well_formedness())
         registrations = self.registry.registrations()
         resolution = tuple(
@@ -1020,6 +1033,7 @@ class Compiler:
                 if index not in conflicted
             ]
             next_graph = _merge_graphs(current, usable)
+            next_graph = _snapshot_graph_contracts(next_graph)
             changed = next_graph != current
             if changed:
                 unstable_names.update(

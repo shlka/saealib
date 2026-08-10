@@ -42,6 +42,7 @@ from saealib.optimizer import Optimizer
 from saealib.pipeline import Pipeline, Stage
 from saealib.problem import Problem
 from saealib.stages import SurrogatePredictStage
+from saealib.strategies.base import OptimizationStrategy
 from saealib.strategies.direct import DirectStrategy, SteadyStateStrategy
 from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
@@ -110,6 +111,51 @@ def _strategies():
         IndividualBasedStrategy(evaluation_ratio=0.5),
         PreSelectionStrategy(n_candidates=8, n_select=2),
     )
+
+
+def test_builtins_and_graph_only_strategies_share_graph_pipeline_facade(
+    monkeypatch,
+):
+    provider: Any = _Provider()
+    builtins = _strategies()
+
+    def fail_build_stages(*args, **kwargs):
+        raise AssertionError("canonical graph construction called _build_stages")
+
+    def fail_stage_materializer(*args, **kwargs):
+        raise AssertionError("built-in graph construction used the Stage materializer")
+
+    monkeypatch.setattr(
+        graph_builder,
+        "build_decomposed_component_graph_from_stages",
+        fail_stage_materializer,
+    )
+
+    for strategy in builtins:
+        monkeypatch.setattr(
+            type(strategy), "_build_stages", fail_build_stages, raising=False
+        )
+        graph = strategy.build_graph(provider)
+        pipeline = strategy.build_pipeline(provider)
+        assert [stage.name for stage in pipeline.stages] == [
+            node.component.stage.name
+            for node in graph.nodes
+            if isinstance(node.component, StageNodeAdapter)
+        ]
+
+    class GraphOnlyStrategy(OptimizationStrategy):
+        def build_graph(self, provider: Any):
+            del provider
+            return builtins[0].build_graph(_Provider())
+
+    strategy = GraphOnlyStrategy()
+    graph = strategy.build_graph(provider)
+    pipeline = strategy.build_pipeline(provider)
+    assert [stage.name for stage in pipeline.stages] == [
+        node.component.stage.name
+        for node in graph.nodes
+        if isinstance(node.component, StageNodeAdapter)
+    ]
 
 
 def _rule_diagnostics(rule, graph):

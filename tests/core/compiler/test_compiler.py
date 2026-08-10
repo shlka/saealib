@@ -201,7 +201,7 @@ def test_conflicting_claims_apply_neither_rewrite() -> None:
     assert any(
         diagnostic.code == "conflicting_rewrite" for diagnostic in plan.diagnostics
     )
-    assert plan.graph is graph
+    assert plan.graph is not graph
     assert graph.nodes[0].role is None
 
 
@@ -242,7 +242,7 @@ def test_unclaimed_graph_changes_are_rejected() -> None:
         for diagnostic in plan.diagnostics
         if diagnostic.code == "unclaimed_rewrite"
     ] == ["unclaimed_rewrite"]
-    assert plan.graph is graph
+    assert plan.graph is not graph
 
 
 @dataclass

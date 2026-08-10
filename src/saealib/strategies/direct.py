@@ -5,7 +5,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from saealib.core.compiler.graph import ComponentGraph
-from saealib.pipeline import Pipeline, Stage
+from saealib.core.graph_builder import (
+    NodeAdapterSpec,
+    StageContractNodeAdapter,
+    build_decomposed_component_graph_from_specs,
+)
+from saealib.pipeline import Pipeline
 from saealib.policies.evaluation import EvaluateAll
 from saealib.policies.feedback import FeedbackBuilder, TrueOnlyFeedback
 from saealib.registry import register
@@ -23,8 +28,6 @@ from saealib.stages import (
 )
 from saealib.strategies.base import (
     OptimizationStrategy,
-    build_pipeline_from_graph,
-    build_runtime_neutral_graph,
 )
 
 if TYPE_CHECKING:
@@ -50,8 +53,8 @@ class DirectStrategy(OptimizationStrategy):
         self.n_offspring = n_offspring
         self.pipeline: Pipeline | None = None
 
-    def _build_stages(self, provider: ComponentProvider) -> tuple[Stage, ...]:
-        """Build the canonical direct Stage sequence."""
+    def build_graph(self, provider: ComponentProvider) -> ComponentGraph:
+        """Build the canonical direct strategy graph."""
         cbmanager = getattr(provider, "cbmanager", None)
         evaluation_planner = (
             getattr(provider, "evaluation_planner", None) or self.evaluation_planner
@@ -71,7 +74,7 @@ class DirectStrategy(OptimizationStrategy):
             TellStage(provider.algorithm),
             EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
         ]
-        return (
+        stages = (
             CountGenerationStage(),
             AskStage(
                 provider.algorithm,
@@ -80,14 +83,15 @@ class DirectStrategy(OptimizationStrategy):
             ),
             *evaluation_tail,
         )
-
-    def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
-        """Return the legacy pipeline facade for the canonical graph."""
-        return build_pipeline_from_graph(self.build_graph(provider))
-
-    def build_graph(self, provider: ComponentProvider) -> ComponentGraph:
-        """Build the canonical direct strategy graph."""
-        return build_runtime_neutral_graph(self, provider)
+        stage_ids = tuple(stage.name for stage in stages)
+        specs = tuple(
+            NodeAdapterSpec(
+                component_id=stage_id,
+                adapter=StageContractNodeAdapter(stage, node_path=stage_id),
+            )
+            for stage_id, stage in zip(stage_ids, stages)
+        )
+        return build_decomposed_component_graph_from_specs(specs)
 
 
 @register()
@@ -101,4 +105,4 @@ class SteadyStateStrategy(DirectStrategy):
 
     def build_graph(self, provider: ComponentProvider) -> ComponentGraph:
         """Build the graph view of the steady-state pipeline."""
-        return build_runtime_neutral_graph(self, provider)
+        return super().build_graph(provider)

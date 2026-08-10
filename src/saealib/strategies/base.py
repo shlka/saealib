@@ -5,10 +5,6 @@ from __future__ import annotations
 from saealib.context import OptimizationState
 from saealib.core.compiler.graph import ComponentGraph
 from saealib.core.contracts import ComponentContract, PortContract, StateContract
-from saealib.core.graph_builder import (
-    StageNodeAdapter,
-    build_decomposed_component_graph_from_stages,
-)
 from saealib.core.state import PENDING_EVALUATIONS
 from saealib.optimizer import ComponentProvider
 from saealib.pipeline import Pipeline
@@ -26,17 +22,15 @@ def build_runtime_neutral_graph(
     ``build_pipeline`` is reconstructed from this graph only for compatibility
     callers.
     """
-    build_stages = getattr(strategy, "_build_stages", None)
-    if callable(build_stages):
-        return build_decomposed_component_graph_from_stages(build_stages(provider))
     if type(strategy).build_graph is not OptimizationStrategy.build_graph:
         return strategy.build_graph(provider)
-    else:
-        raise TypeError("strategy must implement build_graph or _build_stages")
+    raise TypeError("strategy must implement build_graph")
 
 
 def build_pipeline_from_graph(graph: ComponentGraph) -> Pipeline:
     """Recover the legacy Stage facade from a canonical strategy graph."""
+    from saealib.core.graph_builder import StageNodeAdapter
+
     stages = [
         node.component.stage
         for node in graph.nodes
@@ -81,9 +75,9 @@ class OptimizationStrategy:
     def build_graph(self, provider: ComponentProvider) -> ComponentGraph:
         """Build the strategy's canonical graph.
 
-        Built-in strategies use their private component materializer here;
-        graph-only extensions override this method and need not implement a
-        Pipeline builder.
+        Built-in strategies provide node/adapter specs to the canonical graph
+        builder; graph-only extensions override this method and need not
+        implement a Pipeline builder.
         """
         return build_runtime_neutral_graph(self, provider)
 
