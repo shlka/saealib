@@ -21,6 +21,13 @@ from saealib.execution.initializer import (
     RandomInitializer,
     SobolInitializer,
 )
+from saealib.execution.runtime import (
+    RuntimeFactory,
+    RuntimeRegistration,
+    RuntimeRegistry,
+    create_runtime,
+    default_runtime_registry,
+)
 from saealib.execution.scheduler import AsyncEvaluationScheduler
 
 __all__ = [
@@ -41,7 +48,12 @@ __all__ = [
     "LHSInitializer",
     "PendingEvaluation",
     "RandomInitializer",
+    "RuntimeFactory",
+    "RuntimeRegistration",
+    "RuntimeRegistry",
     "SerialEvaluator",
     "SobolInitializer",
     "ThreadPoolEvaluator",
+    "create_runtime",
+    "default_runtime_registry",
 ]

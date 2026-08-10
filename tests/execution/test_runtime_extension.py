@@ -23,13 +23,17 @@ from saealib.core.runtime import (
 from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
 from saealib.core.state.patch import StatePatch
 from saealib.exceptions import ConfigurationError, StalePlanError, ValidationError
-from saealib.execution import AsyncEvaluationScheduler, SerialEvaluator
+from saealib.execution import (
+    AsyncEvaluationScheduler,
+    RuntimeRegistration,
+    RuntimeRegistry,
+    SerialEvaluator,
+    create_runtime,
+    default_runtime_registry,
+)
 from saealib.execution.runtime import (
     AsyncPipelineRuntime,
     PipelineRuntime,
-    RuntimeRegistration,
-    RuntimeRegistry,
-    create_runtime,
 )
 from saealib.islands import IslandModel
 from saealib.optimizer import Optimizer
@@ -87,6 +91,23 @@ def _plan(*nodes: ComponentNode) -> ExecutablePlan:
         active_rule_names=(),
         contract_snapshots=tuple((node.component_id, node.contract) for node in nodes),
     )
+
+
+def test_runtime_extension_symbols_have_one_canonical_public_namespace() -> None:
+    import saealib.core as core
+    import saealib.execution as execution
+    import saealib.execution.runtime as runtime
+
+    names = (
+        "RuntimeRegistry",
+        "RuntimeRegistration",
+        "RuntimeFactory",
+        "create_runtime",
+        "default_runtime_registry",
+    )
+    assert all(name in execution.__all__ for name in names)
+    assert all(getattr(execution, name) is getattr(runtime, name) for name in names)
+    assert all(name not in core.__all__ and not hasattr(core, name) for name in names)
 
 
 def test_runtime_registry_selects_an_added_provider_without_consumer_changes() -> None:
@@ -159,8 +180,6 @@ def test_runtime_registry_replace_leaves_exactly_one_match() -> None:
 
 
 def test_default_runtime_capability_offers_are_owned_by_runtime_providers() -> None:
-    from saealib.execution.runtime import default_runtime_registry
-
     async_optimizer = Optimizer(_problem()).set_async_evaluation_scheduler(
         AsyncEvaluationScheduler(SerialEvaluator())
     )
@@ -362,8 +381,6 @@ def test_async_runtime_uses_canonical_sync_graph_contract() -> None:
 
 
 def test_replaced_default_registration_is_selected() -> None:
-    from saealib.execution.runtime import default_runtime_registry
-
     selected = object()
     registry = RuntimeRegistry(default_runtime_registry.registrations())
     registry.replace(
