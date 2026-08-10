@@ -6,7 +6,16 @@ from typing import TYPE_CHECKING, Literal
 
 from saealib.core.compiler.diagnostics import ContractPath, Diagnostic, Severity
 from saealib.core.compiler.graph import ComponentGraph, ComponentNode, NodeRef
+from saealib.core.compiler.regions import (
+    BranchRegion,
+    LoopRegion,
+    RegionNode,
+    RepeatRegion,
+    StructuredRegion,
+)
+from saealib.core.compiler.structured import StructuredGraph
 from saealib.core.state.keys import StateKey
+from saealib.exceptions import ValidationError
 
 if TYPE_CHECKING:
     from saealib.core.compiler.compiler import RuleContext, VerificationResult
@@ -81,6 +90,10 @@ class StateEffectRule:
         from saealib.core.compiler.compiler import VerificationResult
 
         graph = context.graph
+        if isinstance(graph, StructuredGraph):
+            return VerificationResult(
+                diagnostics=_structured_diagnostics(graph, context)
+            )
         order = _reachable(graph)
         refs = tuple(_node_ref(node) for node in graph.nodes)
         initial = set(context.compile_context.initial_state_keys)
@@ -153,3 +166,148 @@ class StateEffectRule:
                     ):
                         add("concurrent_state_write", left, key, (right,))
         return VerificationResult(diagnostics=tuple(findings))
+
+
+def _structured_diagnostics(
+    graph: StructuredGraph, context: RuleContext
+) -> tuple[Diagnostic, ...]:
+    """Check structured operations in execution order."""
+    initial = set(context.compile_context.initial_state_keys)
+    bindings_by_node: dict[NodeRef, tuple[StateKey[object], ...]] = {}
+    for node in graph.nodes:
+        ref = _node_ref(node)
+        bindings_by_node[ref] = tuple(
+            binding.state_key
+            for binding in graph.state_bindings
+            if _canonical_ref(graph, binding.node) == ref
+        )
+
+    universe = set(initial)
+    for node in graph.nodes:
+        bindings = bindings_by_node[_node_ref(node)]
+        state = node.contract.state
+        universe.update(_resolve_keys(bindings, state.reads))
+        universe.update(_resolve_keys(bindings, state.writes))
+        universe.update(_resolve_keys(bindings, state.exports))
+
+    def visit_regions(current: StructuredGraph) -> None:
+        for operation in current.operations:
+            if not isinstance(operation, RegionNode):
+                continue
+            region = operation.region
+            if isinstance(region, (LoopRegion, BranchRegion)):
+                universe.update(region.condition.contract().reads)
+            universe.update(region.effect.reads)
+            universe.update(region.effect.writes)
+            visit_regions(_structured_body(region))
+            otherwise = getattr(region, "otherwise", None)
+            if isinstance(otherwise, StructuredGraph):
+                visit_regions(otherwise)
+
+    visit_regions(graph)
+    reads: dict[NodeRef, set[StateKey[object]]] = {}
+    writes: dict[NodeRef, set[StateKey[object]]] = {}
+    for node in graph.nodes:
+        ref = _node_ref(node)
+        bindings = bindings_by_node[ref]
+        state = node.contract.state
+        reads[ref] = (
+            set(universe)
+            if not state.reads_enumerable
+            else _resolve_keys(bindings, state.reads)
+        )
+        writes[ref] = _resolve_keys(bindings, state.writes)
+
+    findings: list[Diagnostic] = []
+
+    def add(code: str, node: NodeRef, key: StateKey[object]) -> None:
+        findings.append(
+            Diagnostic(
+                severity=Severity.ERROR,
+                code=code,
+                message=(
+                    f"State key {key.namespace}:{key.name}:{key.schema_version} "
+                    f"at {_path(node)} has an invalid effect ordering."
+                ),
+                path=_path(node),
+                resolutions=(
+                    "Add an initial state key or an ordering edge, and keep "
+                    "the state declaration node-qualified.",
+                ),
+            )
+        )
+
+    def check_reads(node: NodeRef, available: set[StateKey[object]]) -> None:
+        for key in sorted(reads.get(node, ()), key=str):
+            if key not in available:
+                add(
+                    "uninitialized_state_write"
+                    if key in writes.get(node, ())
+                    else "unreachable_state_read",
+                    node,
+                    key,
+                )
+
+    def check_condition(
+        region: LoopRegion | BranchRegion, available: set[StateKey[object]]
+    ) -> None:
+        for key in sorted(region.condition.contract().reads, key=str):
+            if key not in available:
+                add(
+                    "unreachable_state_read",
+                    NodeRef(component_id=region.qualified_id),
+                    key,
+                )
+
+    def sequence(
+        current: StructuredGraph, available: set[StateKey[object]]
+    ) -> set[StateKey[object]]:
+        current_available = set(available)
+        for operation in current.operations:
+            if isinstance(operation, ComponentNode):
+                ref = _node_ref(operation)
+                check_reads(ref, current_available)
+                current_available.update(writes[ref])
+                continue
+            region = operation.region
+            body = _structured_body(region)
+            if isinstance(region, RepeatRegion):
+                if not isinstance(region.count, int):
+                    sequence(body, current_available)
+                    continue
+                if region.count > 0:
+                    body_available = sequence(body, current_available)
+                    current_available.update(body_available)
+                    current_available.update(region.effect.writes)
+                continue
+            if isinstance(region, LoopRegion):
+                check_condition(region, current_available)
+                body_available = sequence(body, current_available)
+                current_available.update(body_available)
+                current_available.update(region.effect.writes)
+                continue
+            if isinstance(region, BranchRegion):
+                check_condition(region, current_available)
+                then_available = sequence(body, current_available)
+                otherwise = region.otherwise
+                else_available = (
+                    sequence(otherwise, current_available)
+                    if isinstance(otherwise, StructuredGraph)
+                    else set(current_available)
+                )
+                current_available.update(then_available & else_available)
+                continue
+            current_available.update(sequence(body, current_available))
+        return current_available
+
+    sequence(graph, initial)
+    return tuple(findings)
+
+
+def _structured_body(region: StructuredRegion) -> StructuredGraph:
+    body = region.body
+    if not isinstance(body, StructuredGraph):
+        raise ValidationError(
+            f"Structured region {region.qualified_id!r} body must be lowered"
+        )
+    return body

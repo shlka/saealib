@@ -1,15 +1,19 @@
 from dataclasses import replace
 
 from saealib.core.compiler import (
+    BranchRegion,
     Compiler,
     ComponentGraph,
     ComponentNode,
     ControlEdge,
+    LoopRegion,
     NodeRef,
+    RepeatRegion,
     StateBinding,
+    lower_structured,
 )
 from saealib.core.contracts import ComponentContract, StateContract
-from saealib.core.state import SURROGATES_DEFAULT, USER_DATA, StateKey
+from saealib.core.state import SURROGATES_DEFAULT, USER_DATA, StateKey, StateView
 
 
 class _Component:
@@ -18,6 +22,17 @@ class _Component:
 
     def contract(self):
         return self._contract
+
+
+class _Condition:
+    def __init__(self, state=StateContract()):
+        self._state = state
+
+    def contract(self) -> StateContract:
+        return self._state
+
+    def evaluate(self, view: StateView) -> bool:
+        return True
 
 
 def _graph(*items, edges=(), bindings=()):
@@ -161,3 +176,65 @@ def test_endpoint_roles_still_order_state_effects_by_node():
         ),
     )
     assert "unreachable_state_read" not in _codes(graph)
+
+
+def _structured(*items):
+    return lower_structured(items)
+
+
+def test_structured_condition_reads_require_incoming_initialization():
+    graph = _structured(
+        LoopRegion(
+            region_id="loop",
+            condition=_Condition(StateContract(reads=(USER_DATA,))),
+            body=(),
+        )
+    )
+    assert "unreachable_state_read" in _codes(graph)
+
+
+def test_structured_branch_requires_writes_on_both_paths():
+    def writer():
+        return _Component(ComponentContract(state=StateContract(writes=(USER_DATA,))))
+
+    reader = _Component(ComponentContract(state=StateContract(reads=(USER_DATA,))))
+    both = _structured(
+        BranchRegion(
+            region_id="branch",
+            condition=_Condition(),
+            body=(writer(),),
+            otherwise=(writer(),),
+        ),
+        reader,
+    )
+    one = _structured(
+        BranchRegion(region_id="branch", condition=_Condition(), body=(writer(),)),
+        reader,
+    )
+    assert "unreachable_state_read" not in _codes(both)
+    assert "unreachable_state_read" in _codes(one)
+    assert "concurrent_state_write" not in _codes(both)
+
+
+def test_structured_loop_and_repeat_state_is_sequential():
+    writer = _Component(ComponentContract(state=StateContract(writes=(USER_DATA,))))
+    reader = _Component(ComponentContract(state=StateContract(reads=(USER_DATA,))))
+    loop = _structured(
+        LoopRegion(
+            region_id="loop",
+            condition=_Condition(),
+            body=(writer, reader),
+        ),
+        reader,
+    )
+    repeat_zero = _structured(
+        RepeatRegion(region_id="repeat", count=0, body=(writer,)),
+        reader,
+    )
+    repeat_once = _structured(
+        RepeatRegion(region_id="repeat", count=1, body=(writer,)),
+        reader,
+    )
+    assert "unreachable_state_read" not in _codes(loop)
+    assert "unreachable_state_read" in _codes(repeat_zero)
+    assert "unreachable_state_read" not in _codes(repeat_once)

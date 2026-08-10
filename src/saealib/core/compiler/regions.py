@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from dataclasses import dataclass, field, replace
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Protocol, TypeAlias
@@ -34,7 +34,8 @@ RegionEffect: TypeAlias = StateContract
 class Condition(Protocol):
     """A side-effect-free predicate used by a loop or branch region."""
 
-    contract: Callable[[], StateContract]
+    def contract(self) -> StateContract:
+        """Return the condition's declared state contract."""
 
     def evaluate(self, view: StateView) -> bool:
         """Evaluate the predicate against its declared state view."""
