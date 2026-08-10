@@ -33,7 +33,12 @@ from saealib.core.runtime import (
     SequentialPlan,
     validate_plan_contracts,
 )
-from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS, StateKey, StateView
+from saealib.core.state import (
+    OPTIMIZATION_STATE_INITIAL_KEYS,
+    RuntimeContext,
+    StateKey,
+    StateView,
+)
 from saealib.core.state.patch import StatePatch
 from saealib.exceptions import ConfigurationError, EvaluationFatalError, ValidationError
 
@@ -282,7 +287,7 @@ def _execute_with_metadata(
         aliases = _node_state_aliases(plan, node)
         view = current._store.view(
             tuple({aliases.get(key, key) for key in node.contract.state.reads}),
-            context=current,
+            context=RuntimeContext(current, dispatch=dispatch),
             dispatch=dispatch,
         )
         raw = execute(_BoundStateView(view, aliases))

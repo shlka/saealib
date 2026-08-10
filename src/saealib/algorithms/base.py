@@ -28,6 +28,7 @@ from saealib.core.state import (
     PROPOSALS_ID_ALLOCATOR,
     PROPOSALS_OFFSPRING,
     RUNTIME_RNG,
+    RuntimeContext,
     StatePatch,
     StateView,
 )
@@ -222,6 +223,6 @@ class AskTellAlgorithm(Algorithm):
     """Stable combined proposer and feedback-consumer API."""
 
 
-def algorithm_context(state: StateView) -> Any:
+def algorithm_context(state: StateView) -> RuntimeContext:
     """Return the execution context bound to a built-in algorithm call."""
     return state.context

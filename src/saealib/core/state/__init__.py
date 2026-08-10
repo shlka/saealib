@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from saealib.core.state.context import RuntimeContext
 from saealib.core.state.keys import (
     ACQUISITION_RESULT,
     ARCHIVES_MAIN,
@@ -96,6 +97,7 @@ __all__ = [
     "USER_DATA",
     "Migrator",
     "PopulationRowUpdate",
+    "RuntimeContext",
     "StateKey",
     "StateMigrationRegistry",
     "StatePatch",

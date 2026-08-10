@@ -18,5 +18,6 @@ from saealib.core.runtime import ExecutionRuntime as ExecutionRuntime
 from saealib.core.state.patch import StatePatch as StatePatch
 from saealib.core.state.store import StateStore as StateStore
 from saealib.core.state.store import StateView as StateView
+from saealib.core.state.context import RuntimeContext as RuntimeContext
 
 __all__: list[str]
