@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field, replace
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Protocol, TypeAlias
@@ -14,7 +13,7 @@ from saealib.exceptions import ValidationError
 
 if TYPE_CHECKING:
     from saealib.core.compiler.structured import StructuredGraph
-    from saealib.core.state.context import RuntimeContext
+    from saealib.core.state.store import StateView
 
 __all__ = [
     "BranchRegion",
@@ -32,22 +31,19 @@ __all__ = [
 RegionEffect: TypeAlias = StateContract
 
 
-class Condition(ABC):
+class Condition(Protocol):
     """A side-effect-free predicate used by a loop or branch region."""
 
-    @abstractmethod
-    def contract(self) -> StateContract:
-        """Declare state read by evaluating the predicate."""
+    contract: Callable[[], StateContract]
 
-    @abstractmethod
-    def evaluate(self, context: RuntimeContext) -> bool:
-        """Evaluate the predicate against a runtime context."""
+    def evaluate(self, view: StateView) -> bool:
+        """Evaluate the predicate against its declared state view."""
 
 
 class CountProvider(Protocol):
     """A runtime repeat-count provider."""
 
-    def __call__(self, context: RuntimeContext) -> int:
+    def __call__(self, view: StateView) -> int:
         """Return a non-negative integer repeat count."""
 
 

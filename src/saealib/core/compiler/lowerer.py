@@ -24,7 +24,6 @@ from saealib.core.compiler.structured import StructuredGraph
 from saealib.core.contracts.contract import ComponentContract
 from saealib.core.contracts.state import StateContract
 from saealib.exceptions import ValidationError
-from saealib.pipeline import Branch, Loop, Pipeline, Repeat
 
 __all__ = ["lower_pipeline", "lower_structured"]
 
@@ -32,7 +31,7 @@ __all__ = ["lower_pipeline", "lower_structured"]
 def _pipeline_items(value: object) -> tuple[object, ...] | None:
     if isinstance(value, (list, tuple)):
         return tuple(value)
-    if isinstance(value, Pipeline) or (
+    if type(value).__name__ == "Pipeline" or (
         hasattr(value, "stages") and not callable(getattr(value, "contract", None))
     ):
         return tuple(value.stages)
@@ -57,6 +56,7 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
     nodes: list[ComponentNode] = []
     edges: list[ControlEdge] = []
     region_nodes: list[RegionNode] = []
+    operations: list[ComponentNode | RegionNode] = []
     effects: list[StateContract] = []
     bindings: list[StateBinding] = []
     previous: ComponentNode | None = None
@@ -69,21 +69,22 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
         )
         child_namespace = f"{namespace}.{local_id}" if namespace else local_id
         nested_items = _pipeline_items(item)
-        if isinstance(item, Repeat):
+        structured_kind = getattr(item, "_structured_kind", None)
+        if structured_kind == "repeat":
             item = RepeatRegion(
                 region_id=local_id,
                 namespace=namespace,
                 body=item.body,
                 count=item.count,
             )
-        elif isinstance(item, Loop):
+        elif structured_kind == "loop":
             item = LoopRegion(
                 region_id=local_id,
                 namespace=namespace,
                 body=item.body,
                 condition=item.condition,
             )
-        elif isinstance(item, Branch):
+        elif structured_kind == "branch":
             item = BranchRegion(
                 region_id=local_id,
                 namespace=namespace,
@@ -101,6 +102,7 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
             region_nodes.append(
                 RegionNode(region=region, metadata={"kind": "sequence"})
             )
+            operations.append(region_nodes[-1])
             nodes.extend(body.nodes)
             edges.extend(body.control_edges)
             effects.append(body.effect)
@@ -154,6 +156,7 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
                     },
                 )
             )
+            operations.append(region_nodes[-1])
             nodes.extend(body.nodes)
             edges.extend(body.control_edges)
             if otherwise_graph is not None:
@@ -183,6 +186,7 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
                 )
             node = ComponentNode(component_id=child_namespace, component=item)
             nodes.append(node)
+            operations.append(node)
             bindings.extend(
                 StateBinding(node=NodeRef(component_id=child_namespace), state_key=key)
                 for key in (
@@ -209,6 +213,7 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
         state_bindings=tuple(bindings),
         entry_points=entry,
         region_nodes=tuple(region_nodes),
+        operations=tuple(operations),
         effect=compose_effects(effects),
     )
 

@@ -16,6 +16,8 @@ from saealib.callback.events import Event
 from saealib.context import OptimizationState
 from saealib.core.compiler.compiler import ExecutablePlan
 from saealib.core.compiler.graph import ComponentNode
+from saealib.core.compiler.regions import RegionNode
+from saealib.core.compiler.structured import StructuredGraph
 from saealib.core.contracts.execution import RuntimeCapability
 from saealib.core.state.patch import StatePatch
 from saealib.exceptions import StalePlanError, ValidationError
@@ -28,6 +30,7 @@ __all__ = [
     "IssueCandidateIds",
     "NodeResult",
     "NodeStatus",
+    "RegionFrame",
     "RequestCheckpoint",
     "RequestRecompile",
     "RequestTermination",
@@ -35,6 +38,7 @@ __all__ = [
     "RuntimeSession",
     "RuntimeStep",
     "SequentialPlan",
+    "StructuredPlan",
 ]
 
 
@@ -365,18 +369,111 @@ class SequentialPlan:
 
 
 @dataclass(frozen=True, kw_only=True)
+class RegionFrame:
+    """Immutable cursor for one structured graph or active region body.
+
+    ``operation_index`` is the next operation to visit.  A blocked or running
+    component leaves that index unchanged, so the next session resumes the
+    component rather than restarting its enclosing region.
+    """
+
+    graph: StructuredGraph
+    region_id: str | None = None
+    operation_index: int = 0
+    iteration: int = 0
+    count: int | None = None
+    branch: str | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.graph, StructuredGraph):
+            raise ValidationError("RegionFrame graph must be a StructuredGraph")
+        if self.region_id is not None and not isinstance(self.region_id, str):
+            raise ValidationError("RegionFrame region_id must be a string or None")
+        for name in ("operation_index", "iteration"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ValidationError(f"RegionFrame {name} must be non-negative")
+        if self.count is not None and (
+            isinstance(self.count, bool)
+            or not isinstance(self.count, int)
+            or self.count < 0
+        ):
+            raise ValidationError("RegionFrame count must be non-negative or None")
+        if self.branch not in (None, "then", "else"):
+            raise ValidationError("RegionFrame branch must be then, else, or None")
+
+
+@dataclass(frozen=True, kw_only=True)
+class StructuredPlan:
+    """Executable structured view retaining its original compiled plan."""
+
+    plan: ExecutablePlan
+    graph: StructuredGraph = field(init=False)
+    _execute_targets: dict[str, Callable[..., object]] = field(
+        init=False, repr=False, compare=False
+    )
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.plan, ExecutablePlan):
+            raise ValidationError("StructuredPlan plan must be an ExecutablePlan")
+        graph = self.plan.graph
+        if not isinstance(graph, StructuredGraph):
+            raise ValidationError("StructuredPlan requires a StructuredGraph")
+        graph.validate()
+        from saealib.core.graph_builder import cached_execution_target
+
+        targets: dict[str, Callable[..., object]] = {}
+
+        def visit(current: StructuredGraph) -> None:
+            for operation in current.operations:
+                if isinstance(operation, ComponentNode):
+                    execute = cached_execution_target(operation.component)
+                    if not callable(execute):
+                        raise ValidationError(
+                            f"StructuredPlan node {operation.component_id!r} must "
+                            "provide execute(StateView)"
+                        )
+                    targets[operation.component_id] = execute
+                elif isinstance(operation, RegionNode):
+                    if isinstance(operation.region.body, StructuredGraph):
+                        visit(operation.region.body)
+                    otherwise = getattr(operation.region, "otherwise", None)
+                    if isinstance(otherwise, StructuredGraph):
+                        visit(otherwise)
+
+        visit(graph)
+        object.__setattr__(self, "graph", graph)
+        object.__setattr__(self, "_execute_targets", targets)
+
+    @classmethod
+    def from_executable_plan(cls, plan: ExecutablePlan) -> StructuredPlan:
+        """Build a structured runtime view from a compiled plan."""
+        return cls(plan=plan)
+
+    @property
+    def required_runtime_capabilities(self) -> frozenset[RuntimeCapability]:
+        """Return capabilities required by the original executable plan."""
+        return self.plan.required_runtime_capabilities
+
+    def accepts(self, capabilities: Iterable[RuntimeCapability]) -> bool:
+        """Return whether the offered capabilities satisfy this plan."""
+        return self.required_runtime_capabilities <= frozenset(capabilities)
+
+
+@dataclass(frozen=True, kw_only=True)
 class RuntimeSession:
     """Immutable orchestration snapshot; ``OptimizationState`` is the state carrier."""
 
-    plan: ExecutablePlan | SequentialPlan
+    plan: ExecutablePlan | SequentialPlan | StructuredPlan
     state: OptimizationState
     finished: bool = False
     observable: bool = False
     step_index: int = 0
     generation_open: bool = False
+    frames: tuple[RegionFrame, ...] = ()
 
     def __post_init__(self) -> None:
-        if not isinstance(self.plan, (ExecutablePlan, SequentialPlan)):
+        if not isinstance(self.plan, (ExecutablePlan, SequentialPlan, StructuredPlan)):
             raise ValidationError("RuntimeSession plan must be an executable plan")
         if not isinstance(self.state, OptimizationState):
             raise ValidationError("RuntimeSession state must be an OptimizationState")
@@ -393,6 +490,12 @@ class RuntimeSession:
             raise ValidationError("RuntimeSession step_index must not be negative")
         if not isinstance(self.generation_open, bool):
             raise ValidationError("RuntimeSession generation_open must be a boolean")
+        frames = tuple(self.frames)
+        if any(not isinstance(frame, RegionFrame) for frame in frames):
+            raise ValidationError(
+                "RuntimeSession frames must contain RegionFrame values"
+            )
+        object.__setattr__(self, "frames", frames)
 
 
 @dataclass(frozen=True, kw_only=True)

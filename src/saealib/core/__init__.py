@@ -40,6 +40,8 @@ _LAZY_EXPORTS: Final[dict[str, str]] = {
     "RuntimeContext": "saealib.core.state.context",
     "StatePatch": "saealib.core.state.patch",
     "ExecutionRuntime": "saealib.core.runtime",
+    "RegionFrame": "saealib.core.runtime",
+    "StructuredPlan": "saealib.core.runtime",
 }
 
 __all__ = list(_LAZY_EXPORTS)

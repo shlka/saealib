@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
 
-from saealib.core.compiler.graph import ComponentGraph
+from saealib.core.compiler.graph import ComponentGraph, ComponentNode
 from saealib.core.compiler.regions import RegionNode, compose_effects
 from saealib.core.contracts.state import StateContract
 from saealib.exceptions import ValidationError
@@ -19,6 +19,8 @@ class StructuredGraph(ComponentGraph):
     """A frozen :class:`ComponentGraph` retaining structured control regions."""
 
     region_nodes: tuple[RegionNode, ...] = ()
+    # Source-order operations.  Region bodies carry their own operations.
+    operations: tuple[ComponentNode | RegionNode, ...] = ()
     metadata: Mapping[str, object] = field(default_factory=dict)
     effect: StateContract = field(default_factory=StateContract)
 
@@ -42,6 +44,15 @@ class StructuredGraph(ComponentGraph):
         if not isinstance(self.effect, StateContract):
             raise ValidationError("StructuredGraph effect must be a StateContract")
         object.__setattr__(self, "region_nodes", regions)
+        operations = tuple(self.operations) or (*self.nodes, *regions)
+        if any(
+            not isinstance(item, (ComponentNode, RegionNode)) for item in operations
+        ):
+            raise ValidationError(
+                "StructuredGraph operations must contain ComponentNode or "
+                "RegionNode values"
+            )
+        object.__setattr__(self, "operations", operations)
         object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
 
     @property
@@ -79,6 +90,7 @@ class StructuredGraph(ComponentGraph):
             state_bindings=graph.state_bindings,
             entry_points=graph.entry_points,
             region_nodes=region_nodes,
+            operations=tuple(graph.nodes) + tuple(region_nodes),
             metadata={} if metadata is None else metadata,
             effect=compose_effects((effect or StateContract(),)),
         )

@@ -5,7 +5,7 @@ from __future__ import annotations
 import inspect
 import time
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from types import SimpleNamespace
 from typing import Any, Protocol, cast
 
@@ -20,17 +20,26 @@ from saealib.comparators import NSGA3Comparator
 from saealib.context import OptimizationState
 from saealib.core.compiler.compiler import CompileContext, Compiler, ExecutablePlan
 from saealib.core.compiler.graph import ComponentNode
+from saealib.core.compiler.regions import (
+    BranchRegion,
+    LoopRegion,
+    RegionNode,
+    RepeatRegion,
+)
+from saealib.core.compiler.structured import StructuredGraph
 from saealib.core.contracts.execution import RuntimeCapability
 from saealib.core.contracts.vocabulary import validate_name
 from saealib.core.runtime import (
     ExecutionRuntime,
     NodeResult,
     NodeStatus,
+    RegionFrame,
     RequestTermination,
     RuntimeCommand,
     RuntimeSession,
     RuntimeStep,
     SequentialPlan,
+    StructuredPlan,
     validate_plan_contracts,
 )
 from saealib.core.state import (
@@ -92,6 +101,7 @@ class _ExecutionOutcome:
     executed_node_ids: tuple[str, ...] = ()
     refused_commands: tuple[RuntimeCommand, ...] = ()
     finished: bool = False
+    frames: tuple[RegionFrame, ...] = ()
 
     @property
     def recompile_required(self) -> bool:
@@ -207,7 +217,7 @@ def _resolve_state_key(key: StateKey, bindings: tuple[StateKey, ...]) -> StateKe
 
 
 def _node_state_aliases(
-    plan: SequentialPlan, node: ComponentNode
+    plan: SequentialPlan | StructuredPlan, node: ComponentNode
 ) -> dict[StateKey, StateKey]:
     bindings = tuple(
         binding.state_key
@@ -224,7 +234,7 @@ def _node_state_aliases(
 
 
 def _bound_patch(
-    plan: SequentialPlan, node: ComponentNode, patch: StatePatch
+    plan: SequentialPlan | StructuredPlan, node: ComponentNode, patch: StatePatch
 ) -> StatePatch:
     aliases = _node_state_aliases(plan, node)
     allowed = {aliases.get(key, key) for key in node.contract.state.writes}
@@ -247,6 +257,186 @@ def _bound_patch(
             )
         deletes.add(resolved)
     return StatePatch(writes=writes, deletes=frozenset(deletes))
+
+
+def _evaluate_condition(
+    condition: object,
+    state: OptimizationState,
+    *,
+    dispatch: Callable[[Event], None] | None,
+) -> bool:
+    contract = condition.contract()
+    view = state._store.view(
+        contract.reads,
+        context=RuntimeContext(state, dispatch=dispatch),
+        dispatch=dispatch,
+    )
+    return bool(condition.evaluate(view))
+
+
+def _execute_structured(
+    plan: StructuredPlan,
+    state: OptimizationState,
+    frames: tuple[RegionFrame, ...] = (),
+    *,
+    dispatch: Callable[[Event], None] | None = None,
+) -> _ExecutionOutcome:
+    """Execute structured operations until a node yields or the graph ends."""
+    current = state
+    stack = list(frames or (RegionFrame(graph=plan.graph),))
+    results: list[NodeResult] = []
+    executed: list[str] = []
+    refused: list[RuntimeCommand] = []
+
+    def finish_child() -> bool:
+        """Advance an enclosing region after its body reaches its end."""
+        nonlocal stack
+        if len(stack) == 1:
+            return True
+        child = stack[-1]
+        parent = stack[-2]
+        operation = parent.graph.operations[parent.operation_index]
+        if not isinstance(operation, RegionNode):
+            raise ValidationError("StructuredPlan frame does not point to a region")
+        region = operation.region
+        if isinstance(region, RepeatRegion):
+            count = child.count if child.count is not None else 0
+            if child.iteration + 1 < count:
+                stack[-1] = replace(
+                    child, operation_index=0, iteration=child.iteration + 1
+                )
+                return False
+        elif isinstance(region, LoopRegion):
+            if not _evaluate_condition(region.condition, current, dispatch=dispatch):
+                stack[-1] = replace(
+                    child, operation_index=0, iteration=child.iteration + 1
+                )
+                return False
+        stack.pop()
+        stack[-1] = replace(parent, operation_index=parent.operation_index + 1)
+        return False
+
+    while True:
+        frame = stack[-1]
+        if frame.operation_index >= len(frame.graph.operations):
+            if finish_child():
+                return _ExecutionOutcome(
+                    state=current,
+                    node_results=tuple(results),
+                    executed_node_ids=tuple(executed),
+                    refused_commands=tuple(refused),
+                    finished=True,
+                    frames=(),
+                )
+            continue
+
+        operation = frame.graph.operations[frame.operation_index]
+        if isinstance(operation, RegionNode):
+            region = operation.region
+            body = region.body
+            if not isinstance(body, StructuredGraph):
+                raise ValidationError(
+                    "StructuredPlan region bodies must be StructuredGraph values"
+                )
+            if isinstance(region, RepeatRegion):
+                context = RuntimeContext(current, dispatch=dispatch)
+                if callable(region.count):
+                    count = region.count(
+                        current._store.view(
+                            region.effect.reads,
+                            context=context,
+                            dispatch=dispatch,
+                        )
+                    )
+                else:
+                    count = region.count
+                if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+                    raise ValidationError(
+                        "Repeat count provider must return a non-negative integer"
+                    )
+                if count == 0:
+                    stack[-1] = replace(
+                        frame, operation_index=frame.operation_index + 1
+                    )
+                    continue
+                stack.append(
+                    RegionFrame(graph=body, region_id=region.qualified_id, count=count)
+                )
+                continue
+            if isinstance(region, LoopRegion):
+                if _evaluate_condition(region.condition, current, dispatch=dispatch):
+                    stack[-1] = replace(
+                        frame, operation_index=frame.operation_index + 1
+                    )
+                    continue
+                stack.append(RegionFrame(graph=body, region_id=region.qualified_id))
+                continue
+            if isinstance(region, BranchRegion):
+                selected = region.body
+                branch = "then"
+                if not _evaluate_condition(
+                    region.condition, current, dispatch=dispatch
+                ):
+                    selected = region.otherwise
+                    branch = "else"
+                if not isinstance(selected, StructuredGraph):
+                    stack[-1] = replace(
+                        frame, operation_index=frame.operation_index + 1
+                    )
+                    continue
+                stack.append(
+                    RegionFrame(
+                        graph=selected, region_id=region.qualified_id, branch=branch
+                    )
+                )
+                continue
+            # SequenceRegion and future region types use their body as one frame.
+            stack.append(RegionFrame(graph=body, region_id=region.qualified_id))
+            continue
+
+        node = operation
+        executed.append(node.component_id)
+        aliases = _node_state_aliases(plan, node)
+        view = current._store.view(
+            tuple({aliases.get(key, key) for key in node.contract.state.reads}),
+            context=RuntimeContext(current, dispatch=dispatch),
+            dispatch=dispatch,
+        )
+        raw = plan._execute_targets[node.component_id](_BoundStateView(view, aliases))
+        if isinstance(raw, StatePatch):
+            result = NodeResult(patch=raw)
+        elif isinstance(raw, NodeResult):
+            result = raw
+        else:
+            raise ValidationError(
+                f"Graph node {node.component_id!r} must return NodeResult or StatePatch"
+            )
+        patch = _bound_patch(plan, node, result.patch)
+        if result.status is not NodeStatus.FAILED and (patch.writes or patch.deletes):
+            current._store = current._store.apply_patch(patch)
+        if dispatch is not None:
+            for event in result.events:
+                dispatch(event)
+        results.append(result)
+        for command in result.commands:
+            if not isinstance(command, RequestTermination):
+                refused.append(command)
+        if result.status is NodeStatus.COMPLETED:
+            stack[-1] = replace(frame, operation_index=frame.operation_index + 1)
+        if result.status is not NodeStatus.COMPLETED or any(
+            isinstance(command, RequestTermination) for command in result.commands
+        ):
+            return _ExecutionOutcome(
+                state=current,
+                node_results=tuple(results),
+                executed_node_ids=tuple(executed),
+                refused_commands=tuple(refused),
+                finished=any(
+                    isinstance(command, RequestTermination)
+                    for command in result.commands
+                ),
+                frames=tuple(stack),
+            )
 
 
 def _execute_sequential_plan(
@@ -661,24 +851,34 @@ class PipelineRuntime:
                     )
                 services[name] = service
         state.bind_compiled_services(services)
-        sequential = SequentialPlan.from_executable_plan(plan)
+        structured = (
+            StructuredPlan.from_executable_plan(plan)
+            if isinstance(plan.graph, StructuredGraph)
+            else None
+        )
+        if structured is not None and self.environment is not None:
+            raise ValidationError(
+                "PipelineRuntime does not support StructuredGraph plans with "
+                "an external environment"
+            )
+        selected_plan = structured or SequentialPlan.from_executable_plan(plan)
         capabilities = self.capabilities | frozenset(
             getattr(self.environment, "capabilities", ())
         )
-        if not sequential.accepts(capabilities):
-            missing = sequential.required_runtime_capabilities - capabilities
+        if not selected_plan.accepts(capabilities):
+            missing = selected_plan.required_runtime_capabilities - capabilities
             names = ", ".join(sorted(missing))
             raise ValidationError(
                 f"PipelineRuntime lacks required capabilities: {names}"
             )
         if self.environment is None:
             return RuntimeSession(
-                plan=sequential, state=state, observable=True, generation_open=False
+                plan=selected_plan, state=state, observable=True, generation_open=False
             )
         self._prepare_state(state)
         self.environment.dispatch(RunStartEvent(ctx=state))
         return RuntimeSession(
-            plan=sequential,
+            plan=selected_plan,
             state=state,
             observable=True,
             generation_open=bool(state.pending_evaluations),
@@ -688,6 +888,39 @@ class PipelineRuntime:
         """Advance lifecycle state by one runtime-owned step."""
         if not isinstance(session, RuntimeSession):
             raise ValidationError("PipelineRuntime.advance requires a RuntimeSession")
+        if isinstance(session.plan, StructuredPlan):
+            if self.environment is not None:
+                raise ValidationError(
+                    "PipelineRuntime cannot execute StructuredGraph plans with "
+                    "an external environment"
+                )
+            metadata = _execute_structured(
+                session.plan,
+                session.state,
+                session.frames,
+            )
+            if metadata.recompile_required:
+                raise ValidationError(
+                    "PipelineRuntime cannot satisfy RECOMPILE_REQUIRED without "
+                    "a recompile provider"
+                )
+            next_session = RuntimeSession(
+                plan=session.plan,
+                state=metadata.state,
+                step_index=session.step_index + 1,
+                observable=True,
+                finished=metadata.finished,
+                frames=metadata.frames,
+            )
+            return RuntimeStep(
+                state=metadata.state,
+                node_results=metadata.node_results,
+                executed_node_ids=metadata.executed_node_ids,
+                observable=True,
+                finished=metadata.finished,
+                refused_commands=metadata.refused_commands,
+                session=next_session,
+            )
         if not isinstance(session.plan, SequentialPlan):
             raise ValidationError(
                 "PipelineRuntime.advance requires a SequentialPlan session"

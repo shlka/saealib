@@ -26,6 +26,8 @@ from saealib.core.contracts.ports import PortContract as PortContract
 from saealib.core.contracts.ports import PortSpec as PortSpec
 from saealib.core.contracts.state import StateContract as StateContract
 from saealib.core.runtime import ExecutionRuntime as ExecutionRuntime
+from saealib.core.runtime import RegionFrame as RegionFrame
+from saealib.core.runtime import StructuredPlan as StructuredPlan
 from saealib.core.state.context import RuntimeContext as RuntimeContext
 from saealib.core.state.patch import StatePatch as StatePatch
 from saealib.core.state.store import StateStore as StateStore
