@@ -240,11 +240,54 @@ class Population(Generic[T_Individual]):
         self.mod_value()
 
     def set_cache(self, key: Hashable, value: Any) -> None:
-        """Store a cached value until the population changes."""
+        """Store a value in the population cache without changing its version.
+
+        Parameters
+        ----------
+        key : Hashable
+            Cache key. An existing value for the key is replaced.
+        value : Any
+            Value to retain until the population is modified.
+
+        Raises
+        ------
+        TypeError
+            If ``key`` is not hashable.
+
+        Notes
+        -----
+        The cache is cleared by ``mod_value()`` and ``mod_structure()``.
+        Storing a value replaces only the entry for ``key``; it does not clear
+        other cached entries or bump the population's value or structure
+        version.
+        """
         self._cache[key] = value
 
     def get_cache(self, key: Hashable) -> Any | None:
-        """Return a cached value, or ``None`` when the key is absent."""
+        """Return a cached value without changing population state.
+
+        Parameters
+        ----------
+        key : Hashable
+            Cache key to look up.
+
+        Returns
+        -------
+        Any or None
+            The cached value, or ``None`` when no value is stored for
+            ``key``. A cached ``None`` is therefore indistinguishable from a
+            missing key through this method.
+
+        Raises
+        ------
+        TypeError
+            If ``key`` is not hashable.
+
+        Notes
+        -----
+        Cached values are removed when the population is modified through
+        ``mod_value()`` or ``mod_structure()``.
+        """
         return self._cache.get(key)
 
     def append(
@@ -655,9 +698,25 @@ class Population(Generic[T_Individual]):
         return new_pop
 
     def truncate(self, new_size: int) -> None:
-        """Keep the first ``new_size`` candidates and invalidate structure state.
+        """Keep the first ``new_size`` candidates in place.
 
-        Raises ``ValueError`` when ``new_size`` is negative.
+        Parameters
+        ----------
+        new_size : int
+            Number of leading active rows to retain. Values greater than or
+            equal to the current size leave the population unchanged.
+
+        Raises
+        ------
+        ValueError
+            If ``new_size`` is negative.
+
+        Notes
+        -----
+        When the population is reduced, trailing rows become inactive and
+        non-dense genome storage is reduced accordingly. Structure-dependent
+        state and cached values are invalidated. No version or cache change
+        occurs for a no-op truncation.
         """
         if new_size < 0:
             raise ValueError("new_size must be non-negative")
@@ -977,11 +1036,36 @@ class Population(Generic[T_Individual]):
         )
 
     def get_array(self, key: str) -> np.ndarray:
-        """Return a read-only view of a named column.
+        """Return a read-only view of the active rows in a named column.
 
-        Mutating the returned view raises ``ValueError``. Use
-        ``update_array()`` or ``update_rows()`` so cache and version state stay
-        synchronized.
+        Parameters
+        ----------
+        key : str
+            Column name. For ``"x"``, the value is obtained through the
+            configured ``DenseNumericView`` unless this is a legacy scalar-x
+            population.
+
+        Returns
+        -------
+        np.ndarray
+            A non-writeable view covering the active rows of the column. The
+            returned array for stored columns shares backing storage rather
+            than being an owned copy; ``"x"`` uses the service-provided view.
+
+        Raises
+        ------
+        KeyError
+            If ``key`` is not a stored non-genome column.
+        AttributeError
+            If ``key`` is ``"x"`` and the required ``DenseNumericView`` is
+            unavailable or reports that it cannot provide a view.
+
+        Notes
+        -----
+        The population is not modified by this method. Mutating the returned
+        view raises ``ValueError``; use ``update_array()`` or ``update_rows()``
+        so value versions and caches remain synchronized.
+
         """
         if key == "x":
             if self._legacy_scalar_x:
