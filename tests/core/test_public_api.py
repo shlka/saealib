@@ -11,8 +11,20 @@ import saealib.core as core
 PUBLIC_EXPORTS = {
     "Component": ("saealib.core.component", "Component"),
     "ComponentContract": ("saealib.core.contracts.contract", "ComponentContract"),
+    "PartSpec": ("saealib.core.contracts.contract", "PartSpec"),
     "DataSpec": ("saealib.core.contracts.data", "DataSpec"),
+    "PortContract": ("saealib.core.contracts.ports", "PortContract"),
     "PortSpec": ("saealib.core.contracts.ports", "PortSpec"),
+    "StateContract": ("saealib.core.contracts.state", "StateContract"),
+    "ExecutionContract": (
+        "saealib.core.contracts.execution",
+        "ExecutionContract",
+    ),
+    "LifecycleContract": (
+        "saealib.core.contracts.lifecycle",
+        "LifecycleContract",
+    ),
+    "AssumptionSet": ("saealib.core.contracts.assumptions", "AssumptionSet"),
     "ComponentGraph": ("saealib.core.compiler.graph", "ComponentGraph"),
     "GraphTemplate": ("saealib.core.compiler.graph", "GraphTemplate"),
     "CompilationRule": ("saealib.core.compiler.compiler", "CompilationRule"),
@@ -39,8 +51,14 @@ def test_representative_extension_uses_only_facade_names() -> None:
 from saealib.core import (
     Component,
     ComponentContract,
+    PartSpec,
     DataSpec,
+    PortContract,
     PortSpec,
+    StateContract,
+    ExecutionContract,
+    LifecycleContract,
+    AssumptionSet,
     ComponentGraph,
     GraphTemplate,
     CompilationRule,
@@ -58,15 +76,32 @@ class ExampleComponent:
 class ExampleTemplate(GraphTemplate):
     def build_graph(self, bindings):
         return ComponentGraph(nodes=())
+
+custom_contract = ComponentContract(
+    ports={"io": PortContract()},
+    parts=(PartSpec(name="child", contract=ComponentContract()),),
+    state=StateContract(),
+    execution=ExecutionContract(),
+    lifecycle=LifecycleContract(),
+    assumptions=AssumptionSet.empty(),
+)
         """,
         extension,
     )
 
     assert extension["ExampleComponent"]().contract() == core.ComponentContract()
+    assert extension["custom_contract"].parts[0].name == "child"
+    assert extension["custom_contract"].ports["io"] == core.PortContract()
     assert extension["ExampleTemplate"]().build_graph(None) == core.ComponentGraph(
         nodes=()
     )
     assert extension["Component"] is core.Component
+    assert extension["PartSpec"] is core.PartSpec
+    assert extension["PortContract"] is core.PortContract
+    assert extension["StateContract"] is core.StateContract
+    assert extension["ExecutionContract"] is core.ExecutionContract
+    assert extension["LifecycleContract"] is core.LifecycleContract
+    assert extension["AssumptionSet"] is core.AssumptionSet
     assert extension["StatePatch"] is core.StatePatch
     assert extension["ExecutionRuntime"] is core.ExecutionRuntime
 

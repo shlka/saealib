@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -72,6 +72,10 @@ class PluginEvaluationAdapter(EvaluationAdapter):
         values = np.asarray(genomes.array, dtype=np.float64)
         assert len(request.candidate_ids) == len(np.unique(request.candidate_ids))
         return values
+
+
+def _population_candidates(proposal: ProposalBatch) -> Population[Any]:
+    return cast(Population[Any], proposal.candidates)
 
 
 class PluginCandidateComponent:
@@ -181,7 +185,7 @@ class ExternalPluginFixture:
         request = EvaluationRequest(
             request_id=np.int64(1),
             candidate_ids=candidate_ids,
-            payload=proposal.candidates.genomes,
+            payload=_population_candidates(proposal).genomes,
         )
         result = self.evaluator().evaluate_request(request, self.problem())
         return self.observations_from_result(candidate_ids, result)
@@ -254,7 +258,7 @@ class CMAESPlugin:
         request = EvaluationRequest(
             request_id=np.int64(3),
             candidate_ids=CMAES_CANDIDATE_IDS,
-            payload=proposal.candidates.genomes,
+            payload=_population_candidates(proposal).genomes,
         )
         result = self.evaluator().evaluate_request(request, self.problem())
         observations = ExternalPluginFixture().observations_from_result(
@@ -273,7 +277,7 @@ class CMAESPlugin:
             feedback.observations.candidate_ids, CMAES_CANDIDATE_IDS
         ):
             return
-        samples = proposal.candidates.x
+        samples = _population_candidates(proposal).x
         self.mean = np.mean(samples, axis=0)
         centered = samples - self.mean
         self.covariance = centered.T @ centered / len(samples)
@@ -345,7 +349,7 @@ class MOEADPlugin:
         request = EvaluationRequest(
             request_id=np.int64(4),
             candidate_ids=MOEAD_CANDIDATE_IDS,
-            payload=proposal.candidates.genomes,
+            payload=_population_candidates(proposal).genomes,
         )
         result = self.evaluator().evaluate_request(request, self.problem())
         observations = ExternalPluginFixture().observations_from_result(
@@ -370,7 +374,7 @@ class MOEADPlugin:
             child_score = float(
                 np.dot(self.weights[int(subproblem_id)], objectives[row])
             )
-            child = proposal.candidates.x[row].copy()
+            child = _population_candidates(proposal).x[row].copy()
             for neighbor in self.neighbors[int(subproblem_id)]:
                 _, current_score = self.subproblem_state[neighbor]
                 if child_score < current_score:
@@ -435,7 +439,7 @@ class DifferentialEvolutionPlugin:
         request = EvaluationRequest(
             request_id=np.int64(2),
             candidate_ids=DE_TRIAL_IDS,
-            payload=proposal.candidates.genomes,
+            payload=_population_candidates(proposal).genomes,
         )
         result = self.evaluator().evaluate_request(request, self.problem())
         observations = ExternalPluginFixture().observations_from_result(
@@ -457,7 +461,7 @@ class DifferentialEvolutionPlugin:
             int(candidate_id): float(score)
             for candidate_id, score in zip(trial_ids, trial_scores)
         }
-        trials = proposal.candidates.x
+        trials = _population_candidates(proposal).x
         for row, target_id in enumerate(target_ids):
             target_key = int(target_id)
             score = trial_by_id[int(DE_TRIAL_IDS[row])]
@@ -506,7 +510,7 @@ class MAPElitesPlugin:
     def evaluate(self, proposal: ProposalBatch) -> FeedbackBatch:
         records: list[ObservationRecord] = []
         for row, candidate_id in enumerate(MAPELITES_CANDIDATE_IDS):
-            genome = proposal.candidates.x[row]
+            genome = _population_candidates(proposal).x[row]
             records.append(
                 ObservationRecord(
                     subject=("candidate", np.array([candidate_id], dtype=np.int64)),
@@ -637,7 +641,7 @@ class CooperativeCoevolutionPlugin:
         request = EvaluationRequest(
             request_id=np.int64(5),
             candidate_ids=np.array([COEVOLUTION_CANDIDATE_ID], dtype=np.int64),
-            payload=proposal.candidates.genomes,
+            payload=_population_candidates(proposal).genomes,
         )
         result = self.evaluator().evaluate_request(request, self.problem())
         observations = ExternalPluginFixture().observations_from_result(

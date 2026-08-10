@@ -119,6 +119,7 @@ from saealib.core.contracts.ports import (
     validate_port_contract_directions,
 )
 from saealib.core.contracts.proposals import (
+    CandidatePopulation,
     FeedbackRequirement,
     FidelityRef,
     ProposalBatch,
@@ -222,6 +223,7 @@ __all__ = [
     "AssumptionDescriptor",
     "AssumptionSet",
     "CandidateIds",
+    "CandidatePopulation",
     "Cardinality",
     "ColumnSpec",
     "CompletionMode",

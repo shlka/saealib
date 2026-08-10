@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import ast
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, cast
 
 import numpy as np
@@ -94,22 +96,50 @@ def _plan(*nodes: ComponentNode) -> ExecutablePlan:
     )
 
 
-def test_runtime_extension_symbols_have_one_canonical_public_namespace() -> None:
+def test_runtime_extension_public_surfaces_are_explicit_and_consistent() -> None:
     import saealib.core as core
     import saealib.execution as execution
     import saealib.execution.runtime as runtime
 
-    names = (
+    canonical = (
         "RuntimeRegistry",
         "RuntimeRegistration",
-        "RuntimeFactory",
         "create_runtime",
+    )
+    advanced_hooks = (
+        "RuntimeFactory",
         "default_runtime_registry",
     )
-    assert all(name in execution.__all__ for name in names)
-    assert all(getattr(execution, name) is getattr(runtime, name) for name in names)
+
+    assert len(canonical) == len(set(canonical)) == 3
+    assert all(name in execution.__all__ for name in canonical + advanced_hooks)
+    assert all(getattr(execution, name) is getattr(runtime, name) for name in canonical)
+    assert all(
+        getattr(execution, name) is getattr(runtime, name) for name in advanced_hooks
+    )
     assert RuntimeFactory is runtime.RuntimeFactory
-    assert all(name not in core.__all__ and not hasattr(core, name) for name in names)
+    assert all(
+        name not in core.__all__ and not hasattr(core, name)
+        for name in canonical + advanced_hooks
+    )
+
+    stub_path = Path(__file__).parents[2] / "src/saealib/execution/__init__.pyi"
+    stub_tree = ast.parse(stub_path.read_text(encoding="utf-8"))
+    stub_all = next(
+        node.value
+        for node in stub_tree.body
+        if isinstance(node, ast.AnnAssign)
+        and isinstance(node.target, ast.Name)
+        and node.target.id == "__all__"
+    )
+    if stub_all is None:
+        raise AssertionError("execution stub must define __all__")
+    assert ast.literal_eval(stub_all) == execution.__all__
+    assert all(hasattr(execution, name) for name in execution.__all__)
+    assert set(canonical + advanced_hooks).issubset(runtime.__all__)
+
+    assert runtime.__name__ == "saealib.execution.runtime"
+    assert runtime.__name__ != execution.__name__
 
 
 def test_runtime_registry_selects_an_added_provider_without_consumer_changes() -> None:

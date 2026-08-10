@@ -8,6 +8,7 @@ from types import MappingProxyType
 from typing import Any, Protocol, TypeAlias, cast, runtime_checkable
 
 import numpy as np
+from typing_extensions import Self
 
 from saealib.core.contracts.feedback import (
     COMPLETE_BATCH,
@@ -26,6 +27,7 @@ from saealib.exceptions import ValidationError
 from saealib.identity import IDAllocator
 
 __all__ = [
+    "CandidatePopulation",
     "FeedbackRequirement",
     "FidelityRef",
     "ProposalBatch",
@@ -40,10 +42,12 @@ _RelationStore: TypeAlias = np.ndarray | Mapping[str, np.ndarray]
 
 
 @runtime_checkable
-class _CandidatePopulation(Protocol):
+class CandidatePopulation(Protocol):
+    """Minimal candidate collection contract required by :class:`ProposalBatch`."""
+
     def __len__(self) -> int: ...
 
-    def extract(self, indices: Any) -> Any:
+    def extract(self, indices: np.ndarray | list[int] | slice) -> Self:
         """Return the selected candidate rows."""
         ...
 
@@ -277,7 +281,7 @@ class ProposalBatch:
     """A candidate population plus its relations and feedback requirement."""
 
     proposal_id: ProposalId
-    candidates: Any
+    candidates: CandidatePopulation
     relations: ProposalRelations
     requirements: FeedbackRequirement
     metadata: Mapping[str, PortableValue] = field(
@@ -286,8 +290,8 @@ class ProposalBatch:
 
     def __post_init__(self) -> None:
         proposal_id = _non_negative_int(self.proposal_id, "proposal_id")
-        if not isinstance(self.candidates, _CandidatePopulation):
-            raise ValidationError("candidates must be a Population")
+        if not isinstance(self.candidates, CandidatePopulation):
+            raise ValidationError("candidates must provide __len__ and extract")
         if not isinstance(self.relations, ProposalRelations):
             raise ValidationError("relations must be ProposalRelations")
         if not isinstance(self.requirements, FeedbackRequirement):

@@ -135,6 +135,11 @@ Asynchronous evaluation uses the same proposal and observation identities, so
 out-of-order updates and partial feedback are explicit capabilities rather than
 special cases in the main loop.
 
+`CandidatePopulation`, imported from `saealib.core.contracts`, is the minimal
+candidate collection contract used by `ProposalBatch`: it requires only length
+and row extraction, so the proposal contract does not name a concrete
+`Population` implementation.
+
 ## Representation/profile model
 
 Representation is a contract-level schema variable, not a dependency on one
@@ -159,6 +164,20 @@ components as `PartSpec` entries when they are part of composition, and return
 observation payloads so checkpointing and profile adapters can reason about the
 component.
 
+The standard contract-building vocabulary is available without deep imports:
+
+```python
+from saealib.core import (
+    AssumptionSet,
+    ComponentContract,
+    ExecutionContract,
+    LifecycleContract,
+    PartSpec,
+    PortContract,
+    StateContract,
+)
+```
+
 The library owns compiler rule registration and the compiler engine. Extension
 authors should express new behavior through component contracts, graph
 vocabulary, and the supported facade types; compiler internals such as
@@ -173,6 +192,12 @@ root/domain namespace imports, and use `saealib.execution` for evaluator or
 initializer services. Existing `Stage` subclasses and `Pipeline` composition
 remain valid; custom stages are discovered through the retained graph-builder
 bridge and may progressively expose richer contracts.
+
+For runtime providers, use the canonical surface
+`from saealib.execution import RuntimeRegistry, RuntimeRegistration,
+create_runtime`. The beta `RuntimeFactory` and `default_runtime_registry`
+exports remain available as compatibility and advanced customization hooks;
+`saealib.execution.runtime` is not the canonical import path.
 
 ## Compatibility/breaking changes
 

@@ -44,7 +44,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from itertools import pairwise
 from math import isnan
-from typing import Any, cast
+from typing import Any, Protocol, cast, runtime_checkable
 
 import numpy as np
 
@@ -81,6 +81,15 @@ __all__ = ["FeedbackAccumulator"]
 
 _ACCUMULATOR_CODEC = "feedback_accumulator"
 _ACCUMULATOR_CODEC_VERSION = 1
+
+
+@runtime_checkable
+class _IdentityColumnPopulation(Protocol):
+    """Optional candidate operations used to preserve explicit IDs."""
+
+    schema: Mapping[str, Any]
+
+    def get_array(self, key: str) -> np.ndarray: ...
 
 
 def _state_non_negative_int(value: Any, name: str) -> int:
@@ -1033,8 +1042,9 @@ def _validate_state(value: Any) -> None:
 
 
 def _proposal_candidate_ids(proposal: ProposalBatch) -> CandidateIds:
-    if "id" in proposal.candidates.schema:
-        values = proposal.candidates.get_array("id")
+    candidates = proposal.candidates
+    if isinstance(candidates, _IdentityColumnPopulation) and "id" in candidates.schema:
+        values = candidates.get_array("id")
     else:
         values = np.arange(len(proposal.candidates), dtype=np.int64)
     return np.array(values, dtype=np.int64, order="C", copy=True).reshape(-1)

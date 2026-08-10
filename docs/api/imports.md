@@ -38,21 +38,42 @@ Use `saealib.core` as the framework extension facade for contracts and
 composition primitives:
 
 ```python
-from saealib.core import Component, ComponentGraph, ComponentContract
+from saealib.core import (
+    AssumptionSet,
+    Component,
+    ComponentContract,
+    ComponentGraph,
+    DataSpec,
+    ExecutionContract,
+    LifecycleContract,
+    PartSpec,
+    PortContract,
+    PortSpec,
+    StateContract,
+)
 ```
 
-Use `saealib.execution` for runtime extension points. Its public runtime API
-includes `RuntimeRegistry`, `RuntimeRegistration`, `RuntimeFactory`, and
-`create_runtime`:
+The facade contains the contract vocabulary needed for an ordinary custom
+component. More specialized contract descriptors remain under
+`saealib.core.contracts`.
+
+Use `saealib.execution` for runtime extension points. The canonical
+provider-author surface consists of `RuntimeRegistry`, `RuntimeRegistration`,
+and `create_runtime`:
 
 ```python
 from saealib.execution import (
-    RuntimeFactory,
     RuntimeRegistration,
     RuntimeRegistry,
     create_runtime,
 )
 ```
+
+`RuntimeFactory` and `default_runtime_registry` remain beta compatibility and
+advanced customization hooks. They are available from `saealib.execution`,
+but are distinct from the canonical three-name provider-author surface. The
+deeper `saealib.execution.runtime` module is an implementation path, not a
+canonical import path.
 
 These facades are the supported starting points for framework and runtime
 extensions. Their detailed behavior may still change while saealib remains

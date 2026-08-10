@@ -1,6 +1,7 @@
 """External plugin foundation and boundary tests."""
 
 from dataclasses import replace
+from typing import Any, cast
 
 import numpy as np
 from external_plugin_fixture import (
@@ -26,6 +27,11 @@ from external_plugin_fixture import (
 from saealib.core.compiler import Compiler
 from saealib.core.compiler.diagnostics import Severity
 from saealib.core.contracts import ObservationBatch
+from saealib.population import Population
+
+
+def _population_candidates(proposal: Any) -> Population[Any]:
+    return cast(Population[Any], proposal.candidates)
 
 
 def test_external_plugin_proposes_evaluates_and_delivers_feedback() -> None:
@@ -64,7 +70,9 @@ def test_differential_evolution_preserves_targets_and_replaces_improvements() ->
     }
     plugin.apply_feedback(proposal, feedback)
 
-    assert np.array_equal(plugin.target_state[8201][0], proposal.candidates.x[0])
+    assert np.array_equal(
+        plugin.target_state[8201][0], _population_candidates(proposal).x[0]
+    )
     assert np.array_equal(plugin.target_state[8202][0], before[8202])
     assert np.array_equal(plugin.target_state[8203][0], before[8203])
 
@@ -143,8 +151,12 @@ def test_moead_updates_only_the_child_subproblem_neighborhood() -> None:
     assert feedback.observations.candidate_ids.tolist() == MOEAD_CANDIDATE_IDS.tolist()
     plugin.apply_feedback(proposal, feedback)
 
-    assert np.array_equal(plugin.subproblem_state[0][0], proposal.candidates.x[0])
-    assert np.array_equal(plugin.subproblem_state[1][0], proposal.candidates.x[0])
+    assert np.array_equal(
+        plugin.subproblem_state[0][0], _population_candidates(proposal).x[0]
+    )
+    assert np.array_equal(
+        plugin.subproblem_state[1][0], _population_candidates(proposal).x[0]
+    )
     assert np.array_equal(plugin.subproblem_state[2][0], before[2])
 
 
@@ -161,7 +173,9 @@ def test_map_elites_uses_behavior_cells_and_quality_replacement() -> None:
 
     assert set(plugin.archive) == {(0,), (1,)}
     assert np.isclose(plugin.archive[(0,)][1], 0.02)
-    assert np.array_equal(plugin.archive[(0,)][0], proposal.candidates.x[1])
+    assert np.array_equal(
+        plugin.archive[(0,)][0], _population_candidates(proposal).x[1]
+    )
     assert np.isclose(plugin.archive[(1,)][1], 1.28)
 
 
@@ -183,7 +197,9 @@ def test_u10_3_map_elites_archive_is_independent_of_record_order() -> None:
 
     assert set(plugin.archive) == {(0,), (1,)}
     assert np.isclose(plugin.archive[(0,)][1], 0.02)
-    assert np.array_equal(plugin.archive[(0,)][0], proposal.candidates.x[1])
+    assert np.array_equal(
+        plugin.archive[(0,)][0], _population_candidates(proposal).x[1]
+    )
     assert np.isclose(plugin.archive[(1,)][1], 1.28)
 
 
@@ -194,8 +210,8 @@ def test_coevolution_joins_named_blocks_and_updates_one_block() -> None:
     )
     proposal = plugin.coordinator_join()
     assert set(plugin.named_populations) == {"block_a", "block_b"}
-    assert proposal.candidates.x.shape == (1, 2)
-    assert np.array_equal(proposal.candidates.x[0], [0.3, 0.2])
+    assert _population_candidates(proposal).x.shape == (1, 2)
+    assert np.array_equal(_population_candidates(proposal).x[0], [0.3, 0.2])
     feedback = plugin.evaluate(proposal)
     assert feedback.observations.f.shape == (1, 1)
     assert np.isclose(feedback.observations.f[0, 0], 0.13)
@@ -204,4 +220,4 @@ def test_coevolution_joins_named_blocks_and_updates_one_block() -> None:
     assert np.array_equal(plugin.named_populations["block_a"].x[0], [0.3])
     assert np.array_equal(plugin.named_populations["block_b"].x[0], [0.2])
     next_proposal = plugin.coordinator_join()
-    assert np.array_equal(next_proposal.candidates.x[0], [0.3, 0.2])
+    assert np.array_equal(_population_candidates(next_proposal).x[0], [0.3, 0.2])

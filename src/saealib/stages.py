@@ -26,7 +26,7 @@ from collections.abc import Callable, Mapping
 from copy import deepcopy
 from dataclasses import replace
 from math import fsum
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast, runtime_checkable
 
 import numpy as np
 
@@ -113,6 +113,17 @@ if TYPE_CHECKING:
     from saealib.optimizer import ComponentProvider
     from saealib.problem import Problem
     from saealib.surrogate.manager import SurrogateManager
+
+
+@runtime_checkable
+class _AskCandidatePopulation(Protocol):
+    """Population operations needed only by the built-in ask stage."""
+
+    schema: Mapping[str, Any]
+
+    def get_array(self, key: str) -> np.ndarray: ...
+
+    def _assign_ids(self, indices: np.ndarray, ids: np.ndarray) -> None: ...
 
 
 class _DispatchProxy:
@@ -369,7 +380,10 @@ class AskStage(Stage):
         if not isinstance(proposal, ProposalBatch):
             raise ValidationError("proposer ask() must return a ProposalBatch")
         candidates = proposal.candidates
-        if "id" in candidates.schema:
+        if (
+            isinstance(candidates, _AskCandidatePopulation)
+            and "id" in candidates.schema
+        ):
             id_arr = candidates.get_array("id")
             unassigned = np.where(id_arr == -1)[0]
             if len(unassigned) > 0:

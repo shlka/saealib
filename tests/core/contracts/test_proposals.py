@@ -6,7 +6,9 @@ from typing import cast
 
 import numpy as np
 import pytest
+from typing_extensions import Self
 
+from saealib.core.contracts import CandidatePopulation
 from saealib.core.contracts.observations import QuantityRef
 from saealib.core.contracts.proposals import (
     FeedbackRequirement,
@@ -33,6 +35,26 @@ def _population(size: int) -> Population:
     return population
 
 
+class _MinimalCandidates:
+    def __init__(self, values: list[int]) -> None:
+        self.values = values
+
+    def __len__(self) -> int:
+        return len(self.values)
+
+    def extract(self, indices: np.ndarray | list[int] | slice) -> Self:
+        if isinstance(indices, slice):
+            values = self.values[indices]
+        else:
+            values = [self.values[int(index)] for index in indices]
+        return type(self)(values)
+
+
+class _IncompleteCandidates:
+    def __len__(self) -> int:
+        return 0
+
+
 def test_requirements_keep_sources_and_fidelity_per_quantity() -> None:
     """Each quantity keeps its own source set and fidelity floor.
 
@@ -55,6 +77,30 @@ def test_requirements_keep_sources_and_fidelity_per_quantity() -> None:
     assert requirement.quantities[0].fidelity == 0
     assert requirement.quantities[1].sources == frozenset({"true"})
     assert requirement.quantities[1].fidelity == 2
+
+
+def test_candidate_population_accepts_minimal_custom_candidate_type() -> None:
+    candidates = _MinimalCandidates([10, 20])
+    batch = ProposalBatch(
+        proposal_id=1,
+        candidates=candidates,
+        relations=ProposalRelations({}, row_count=2),
+        requirements=FeedbackRequirement(quantities=()),
+    )
+
+    assert isinstance(candidates, CandidatePopulation)
+    selected = cast(_MinimalCandidates, batch.take([1]).candidates)
+    assert selected.values == [20]
+
+
+def test_candidate_population_rejects_structurally_incomplete_type() -> None:
+    with pytest.raises(ValidationError, match=r"__len__.*extract"):
+        ProposalBatch(
+            proposal_id=1,
+            candidates=cast(CandidatePopulation, _IncompleteCandidates()),
+            relations=ProposalRelations({}),
+            requirements=FeedbackRequirement(quantities=()),
+        )
 
 
 def test_relations_reject_unknown_kinds_and_keep_empty_row_count() -> None:
