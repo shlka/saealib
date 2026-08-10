@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     from saealib.context import OptimizationState
     from saealib.optimizer import ComponentProvider
 
+
 @register()
 class GenerationBasedStrategy(OptimizationStrategy):
     """Generation-based strategy.
