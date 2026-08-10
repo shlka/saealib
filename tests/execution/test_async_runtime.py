@@ -10,7 +10,7 @@ import pytest
 from saealib.context import OptimizationState
 from saealib.core.compiler import Compiler
 from saealib.core.graph_builder import build_component_graph
-from saealib.core.runtime import RuntimeSession, SequentialPlan
+from saealib.core.runtime import PollResult, RuntimeSession, SequentialPlan
 from saealib.exceptions import EvaluationFatalError
 from saealib.execution.runtime import (
     AsyncPipelineRuntime,
@@ -71,7 +71,7 @@ class _Environment:
         self.calls.append("poll")
         if not self.keep_pending_after_poll:
             object.__setattr__(state, "pending_evaluations", {})
-        return state
+        return PollResult(state=state, progressed=not self.keep_pending_after_poll)
 
     def is_terminated(self, state):
         self.calls.append("termination")
@@ -95,9 +95,9 @@ def test_optimizer_environment_polls_scheduler_without_waiting() -> None:
     calls: list[bool] = []
 
     class Scheduler:
-        def poll(self, state, *, wait):
+        def poll_result(self, state, *, wait):
             calls.append(wait)
-            return state
+            return PollResult(state=state, progressed=False)
 
     optimizer = SimpleNamespace(
         async_evaluation_scheduler=Scheduler(),
@@ -106,9 +106,11 @@ def test_optimizer_environment_polls_scheduler_without_waiting() -> None:
     )
     environment = _OptimizerEnvironment(optimizer, _plan())
 
-    environment.poll(_state())
+    result = environment.poll(_state())
 
     assert calls == [False]
+    assert isinstance(result, PollResult)
+    assert not result.progressed
 
 
 def test_optimizer_environment_reaches_inserted_feedback_accumulator_seam():

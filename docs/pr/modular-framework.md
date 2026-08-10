@@ -229,6 +229,8 @@ For runtime providers, use the canonical surface
 create_runtime`. The beta `RuntimeFactory` and `default_runtime_registry`
 exports remain available as compatibility and advanced customization hooks;
 `saealib.execution.runtime` is not the canonical import path.
+Asynchronous provider boundaries report nonblocking poll progress through
+`saealib.execution.PollResult` rather than relying on state-object identity.
 
 ## Compatibility/breaking changes
 

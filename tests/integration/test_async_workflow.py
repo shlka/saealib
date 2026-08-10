@@ -374,8 +374,12 @@ def test_async_out_of_order_and_nonblocking_poll():
         AsyncEvaluator(SlowEvaluator(), max_workers=2), max_pending=2
     )
     state = scheduler.submit(state, requests())
-    assert scheduler.poll(state, wait=False) is state
-    state = scheduler.poll(state, wait=True)
+    pending_result = scheduler.poll_result(state, wait=False)
+    assert pending_result.state is state
+    assert not pending_result.progressed
+    completed_result = scheduler.poll_result(state, wait=True)
+    assert completed_result.progressed
+    state = completed_result.state
     assert state.pending_evaluations == {}
     np.testing.assert_array_equal(state.archive.id, [11, 10])
     assert state.fe == 2

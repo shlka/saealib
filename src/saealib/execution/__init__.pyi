@@ -1,5 +1,6 @@
 """Type stubs for the public execution facade."""
 
+from saealib.core.runtime import PollResult as PollResult
 from saealib.execution.evaluator import AsyncEvaluator as AsyncEvaluator
 from saealib.execution.evaluator import EvaluationAdapter as EvaluationAdapter
 from saealib.execution.evaluator import EvaluationErrorInfo as EvaluationErrorInfo
@@ -47,6 +48,7 @@ __all__: list[str] = [
     "JoblibEvaluator",
     "LHSInitializer",
     "PendingEvaluation",
+    "PollResult",
     "RandomInitializer",
     "RuntimeFactory",
     "RuntimeRegistration",

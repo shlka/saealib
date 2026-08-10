@@ -1,3 +1,4 @@
+from saealib.core.runtime import PollResult
 from saealib.execution.evaluator import (
     AsyncEvaluator,
     EvaluationAdapter,
@@ -47,6 +48,7 @@ __all__ = [
     "JoblibEvaluator",
     "LHSInitializer",
     "PendingEvaluation",
+    "PollResult",
     "RandomInitializer",
     "RuntimeFactory",
     "RuntimeRegistration",

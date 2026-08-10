@@ -31,6 +31,7 @@ __all__ = [
     "IssueCandidateIds",
     "NodeResult",
     "NodeStatus",
+    "PollResult",
     "RegionFrame",
     "RequestCheckpoint",
     "RequestRecompile",
@@ -51,6 +52,14 @@ class NodeStatus(str, Enum):
     RUNNING = "running"
     FAILED = "failed"
     RECOMPILE_REQUIRED = "recompile_required"
+
+
+@dataclass(frozen=True)
+class PollResult:
+    """The state and progress observed by one asynchronous poll."""
+
+    state: OptimizationState
+    progressed: bool
 
 
 @dataclass(frozen=True, kw_only=True)

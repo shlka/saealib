@@ -24,6 +24,7 @@ from saealib.core.contracts import (
     QuantityRequirement,
     StateContract,
 )
+from saealib.core.runtime import PollResult
 from saealib.core.state import (
     ARCHIVES_MAIN,
     ARCHIVES_PARETO,
@@ -354,8 +355,14 @@ class AsyncEvaluationScheduler:
         self, state: OptimizationState, *, wait: bool = False
     ) -> OptimizationState:
         """Collect completed work and commit updates serially."""
+        return self.poll_result(state, wait=wait).state
+
+    def poll_result(
+        self, state: OptimizationState, *, wait: bool = False
+    ) -> PollResult:
+        """Collect completed work and report whether this call made progress."""
         if not state.pending_evaluations:
-            return state
+            return PollResult(state=state, progressed=False)
         for pending in state.pending_evaluations.values():
             if pending.fatal_error is not None:
                 raise EvaluationFatalError(
@@ -369,6 +376,7 @@ class AsyncEvaluationScheduler:
                 "async update has a persistent fatal state", fatal_state
             )
         current = state
+        progressed = False
         while current.pending_evaluations:
             progress = False
             ready: list[tuple[float, int, Any, EvaluationUpdate]] = []
@@ -413,6 +421,7 @@ class AsyncEvaluationScheduler:
                             pending_evaluations=pending_map,
                         )
                         progress = True
+                        progressed = True
                         continue
                     update = EvaluationUpdate(
                         np.int64(request_id),
@@ -453,11 +462,12 @@ class AsyncEvaluationScheduler:
                     self._fatal_states[id(state)] = (state, exc.state)
                     raise
                 progress = True
+                progressed = True
             if not wait or not current.pending_evaluations:
                 break
             if not progress:
                 time.sleep(0.001)
-        return current
+        return PollResult(state=current, progressed=progressed)
 
     def checkpoint(self, state: OptimizationState, path: str) -> None:
         """Save pending state only when the evaluator can reattach it."""

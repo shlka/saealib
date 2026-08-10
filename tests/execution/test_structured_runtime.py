@@ -20,7 +20,7 @@ from saealib.core import (
     lower_pipeline,
 )
 from saealib.core.compiler import CompileContext, Compiler
-from saealib.core.runtime import NodeResult, NodeStatus
+from saealib.core.runtime import NodeResult, NodeStatus, PollResult
 from saealib.core.state import (
     EVALUATION_UPDATES,
     EVALUATIONS_PLAN_UPDATES,
@@ -146,12 +146,13 @@ class _StructuredEnvironment:
 
 
 class _StructuredAsyncPollingEnvironment(_StructuredEnvironment):
-    def __init__(self, terminated: bool) -> None:
+    def __init__(self, terminated: bool, progressed: bool = False) -> None:
         super().__init__()
         self.terminated = terminated
+        self.progressed = progressed
 
     def poll(self, state):
-        return state
+        return PollResult(state=state, progressed=self.progressed)
 
     def is_terminated(self, state) -> bool:
         del state
@@ -463,10 +464,14 @@ def test_async_runtime_accepts_structured_plan_at_initialization() -> None:
 
 
 @pytest.mark.parametrize("terminated", [False, True])
-def test_structured_async_polling_same_state_sleeps(
-    terminated: bool, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize("progressed, sleeps", [(False, True), (True, False)])
+def test_structured_async_polling_uses_explicit_progress(
+    terminated: bool,
+    progressed: bool,
+    sleeps: bool,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    environment = _StructuredAsyncPollingEnvironment(terminated)
+    environment = _StructuredAsyncPollingEnvironment(terminated, progressed)
     request = EvaluationRequest(np.int64(1), np.array([np.int64(1)]), np.empty((1, 1)))
     pending = PendingEvaluation(
         request=request,
@@ -483,7 +488,10 @@ def test_structured_async_polling_same_state_sleeps(
     )
 
     assert step.state is state
-    sleep.assert_called_once_with(0.001)
+    if sleeps:
+        sleep.assert_called_once_with(0.001)
+    else:
+        sleep.assert_not_called()
 
 
 class _LegacyStage(Stage):

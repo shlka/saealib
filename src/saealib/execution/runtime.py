@@ -37,6 +37,7 @@ from saealib.core.runtime import (
     ExecutionRuntime,
     NodeResult,
     NodeStatus,
+    PollResult,
     RegionFrame,
     RequestTermination,
     RuntimeCommand,
@@ -99,7 +100,7 @@ class AsyncRuntimeEnvironment(RuntimeEnvironment, Protocol):
 
     def reattach(self, state: OptimizationState) -> OptimizationState: ...
 
-    def poll(self, state: OptimizationState) -> OptimizationState: ...
+    def poll(self, state: OptimizationState) -> PollResult: ...
 
     def can_refill(self, state: OptimizationState) -> bool: ...
 
@@ -1043,11 +1044,11 @@ class _OptimizerEnvironment:
             raise ValidationError("Async runtime requires an evaluation scheduler")
         return scheduler.reattach(state)
 
-    def poll(self, state: OptimizationState) -> OptimizationState:
+    def poll(self, state: OptimizationState) -> PollResult:
         scheduler = getattr(self.optimizer, "async_evaluation_scheduler", None)
         if scheduler is None:
             raise ValidationError("Async runtime requires an evaluation scheduler")
-        return scheduler.poll(state, wait=False)
+        return scheduler.poll_result(state, wait=False)
 
     def can_refill(self, state: OptimizationState) -> bool:
         scheduler = getattr(self.optimizer, "async_evaluation_scheduler", None)
@@ -1619,16 +1620,17 @@ class AsyncPipelineRuntime(PipelineRuntime):
                 reattach = getattr(environment, "reattach", None)
                 if callable(reattach):
                     state = reattach(state)
-            before = state
             poll = getattr(environment, "poll", None)
+            result = PollResult(state=state, progressed=False)
             if callable(poll):
-                state = poll(state)
+                result = poll(state)
+                state = result.state
                 resume_async_driver = not state.pending_evaluations and not (
                     _structured_async_plan_complete(state)
                 )
             if state.pending_evaluations:
                 if environment.is_terminated(state):
-                    if state is before:
+                    if not result.progressed:
                         time.sleep(0.001)
                     return self._step(
                         session,
@@ -1636,7 +1638,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                         generation_open,
                         plan=plan,
                     )
-                if state is before:
+                if not result.progressed:
                     time.sleep(0.001)
                 return self._step(
                     session,
@@ -1756,11 +1758,11 @@ class AsyncPipelineRuntime(PipelineRuntime):
         if state.pending_evaluations:
             if set(state.pending_evaluations) != set(state.evaluation_handles):
                 state = env.reattach(state)
-            before = state
-            state = env.poll(state)
+            result = env.poll(state)
+            state = result.state
             if state.pending_evaluations:
                 if env.is_terminated(state):
-                    if state is before:
+                    if not result.progressed:
                         time.sleep(0.001)
                     return self._step(session, state, generation_open)
                 if not env.can_refill(state):
@@ -1787,7 +1789,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                         plan=plan,
                     )
                 if state.pending_evaluations:
-                    if state is before:
+                    if not result.progressed:
                         time.sleep(0.001)
                     return self._step(
                         session, state, generation_open, metadata=metadata

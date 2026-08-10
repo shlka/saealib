@@ -75,6 +75,14 @@ but are distinct from the canonical three-name provider-author surface. The
 deeper `saealib.execution.runtime` module is an implementation path, not a
 canonical import path.
 
+Asynchronous provider boundaries report nonblocking poll progress explicitly:
+
+```python
+from saealib.execution import PollResult
+
+return PollResult(state=state, progressed=False)
+```
+
 These facades are the supported starting points for framework and runtime
 extensions. Their detailed behavior may still change while saealib remains
 pre-1.0.
