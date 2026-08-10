@@ -37,6 +37,7 @@ appropriate public namespace or framework extension API.
 ```{toctree}
 :maxdepth: 2
 
+imports
 highlevel
 optimizer
 exceptions

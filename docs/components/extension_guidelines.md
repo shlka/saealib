@@ -1,6 +1,6 @@
 # Extension Guidelines
 
-For import-path conventions, see [API layers](../api/index.md#api-layers). In
+For import-path conventions, see [Canonical Imports](../api/imports.md). In
 particular, use `saealib.core` for framework extension contracts and treat
 implementation modules as unsupported.
 
