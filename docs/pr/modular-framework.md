@@ -25,7 +25,8 @@ An optimization run has four logical boundaries:
 1. Components provide a `ComponentContract` describing ports, held parts,
    lifecycle behavior, state access, runtime capabilities, and assumptions.
 2. A `ComponentGraph` connects component nodes with data edges, control edges,
-   state bindings, and entry points.
+   state bindings, and entry points. A `StructuredGraph` additionally retains
+   nested sequences, repeats, loops, and branches as explicit regions.
 3. The compiler verifies the graph and applies registered resolution rules to
    produce an `ExecutablePlan` with resolved services and inserted adapters.
 4. A runtime executes the plan, applies returned state patches, dispatches
@@ -67,7 +68,9 @@ implementations.
 `ComponentGraph` is a self-contained description of nodes and relationships.
 `DataEdge` connects a source port to a target port, `ControlEdge` expresses
 ordering, and `StateBinding` maps a node role to a typed `StateKey`. Entry
-points identify where execution may begin. Graph well-formedness checks catch
+points identify where execution may begin. `StructuredGraph` retains the
+source-order operation tree and composes each region's state effect without
+introducing graph cycles for repetition. Graph well-formedness checks catch
 unknown endpoints, duplicate identities, missing entry points, and other
 structural errors.
 
@@ -82,11 +85,19 @@ adapter insertions. Compilation is performed at the run boundary and the
 resulting plan is retained by the runtime until configuration requires a new
 one.
 
-The standard optimizer path is still assembled from stages. The graph builder
-walks a `Pipeline`, adapts each `Stage` and its held components into graph
-nodes, composes their contracts, and lets the same compiler validate the
-result. This retained bridge makes the graph architecture usable without
-forcing existing strategies or custom stages to be rewritten first.
+The compiler also exposes `Compiler.compile_pipeline()`. It lowers the
+structured DSL to a `StructuredGraph` and then applies the same resolution and
+verification rules as direct graph construction. The older graph builder still
+supports stage-based strategies during migration, but that compatibility path
+is not a structured runtime execution target.
+
+`Pipeline` is the high-level structured notation. `Pipeline` and nested
+pipelines lower to sequence regions; `Repeat`, `Loop`, and `Branch` lower to
+explicit region nodes. A loop condition is a component-like predicate with a
+declared state contract, and a region effect is the composition of the effects
+of its body and condition. Runtime region frames retain the next operation and
+iteration, allowing a blocked or running component to resume without restarting
+the enclosing region.
 
 ## State/runtime model
 
@@ -102,14 +113,22 @@ Graph-native components execute against a restricted `StateView` and return a
 `StatePatch` or a `NodeResult`. A `NodeResult` may also contain events,
 runtime commands, and a status such as completed, blocked, failed, or
 recompile-required. The runtime applies patches in order, dispatches events,
-and interprets commands. `saealib.core.ExecutionRuntime` defines this plan and
-result vocabulary; concrete lifecycle implementations and evaluator services
-are provided through `saealib.execution`.
+and interprets commands. The view's context is a read-only `RuntimeContext`
+facade; it does not expose the complete `OptimizationState` or arbitrary state
+mutation methods. `saealib.core.ExecutionRuntime` defines this plan and result
+vocabulary; concrete lifecycle implementations and evaluator services are
+provided through `saealib.execution`.
 
 The existing optimizer environment remains supported. Stage nodes execute with
-the established optimization state, while graph-native nodes use the restricted
-core view. This dual execution path is intentional during the compatibility
-period and is hidden behind the plan/runtime boundary.
+the established optimization state through the sequential compatibility plan,
+while structured graph-native nodes use the restricted core view. A
+`StructuredPlan` rejects stage adapters and `execute(OptimizationState)` nodes,
+so the two execution contracts cannot be mixed accidentally.
+
+The asynchronous provider does not flatten a structured plan into a sequential
+one. Until its scheduler seam is structured-region aware, it rejects such a
+plan explicitly; sequential stage graphs continue to use the existing async
+provider.
 
 ## Proposal/observation/feedback model
 
@@ -208,9 +227,9 @@ canonical boundary; concrete implementation modules are not interchangeable
 facades.
 
 Checkpoint support is retained through `CheckpointCallback` and the existing
-optimizer checkpoint/resume behavior. `Stage` and `Pipeline` are also retained
-as compatibility bridges and continue to be the convenient path for the
-standard profile.
+optimizer checkpoint/resume behavior. `Pipeline` is the structured DSL for new
+strategy descriptions; `Stage` remains available through the sequential
+compatibility bridge.
 
 The beta `OptimizationContext` name, `EvaluationRequest.x` view and `x=`
 constructor input, and legacy Population constructor/column mappings remain
@@ -237,8 +256,9 @@ unrun Python versions.
 
 ## Migration notes
 
-Existing users can continue to construct optimizers and pipelines through the
-root facade. For new integrations, move framework imports to `saealib.core`
+Existing users can continue to construct optimizers through the root facade.
+For new strategy descriptions, use `Pipeline` and compile it through
+`Compiler.compile_pipeline()`. Move framework imports to `saealib.core`
 (`Component`, contracts, graph/compiler and state vocabulary) and execution
 imports to `saealib.execution` (evaluators, initializers, schedulers, and
 runtime factories). Keep domain-specific imports in their `saealib` domain

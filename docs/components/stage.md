@@ -1,8 +1,16 @@
 # Stage
 
-The built-in `OptimizationStrategy`s (IB/GB/PS/Direct) split a single generation's processing into units called `Stage`, executed in order via `Pipeline`.
-The "Pipeline/Stage" section of [Extension guidelines](extension_guidelines.md) covered how to rearrange stages via `pipeline.replace`/`find`.
-This page covers the contract each `Stage` satisfies, the built-in operational stages, and how to implement a custom `Stage`.
+The built-in optimization strategies split generation processing into units
+called `Stage`.  Stage-based strategies remain a compatibility surface for
+existing algorithms and custom stage implementations.
+
+`Pipeline` is now a structured DSL.  It describes graph-native components,
+nested pipelines, and control values such as `Repeat`, `Loop`, and `Branch`;
+it does not execute an `OptimizationState`.  Use
+`Compiler.compile_pipeline()` to lower and compile it.
+
+This page covers the contract each `Stage` satisfies, the built-in operational
+stages, and how to implement a custom `Stage`.
 
 ## Stage's role
 
@@ -17,14 +25,16 @@ There are three class attributes.
 
 ## Pipeline
 
-`Pipeline(Stage)` is a composite class that runs a list of `Stage`s in sequence via `functools.reduce`.
-Because `Pipeline` itself is a `Stage` subclass, it can be nested inside another `Pipeline`.
+`Pipeline` is a structural sequence.  Its entries can be graph-native
+components, nested `Pipeline` values, or structured control values.  Lowering
+preserves nested names as graph regions and keeps repeat/loop progress
+resumable at runtime.
 
 | Operation | Description |
 |---|---|
-| `pipeline["name"]` | Looks up a stage by `name` |
-| `pipeline.replace(name, stage)` | Replaces the stage named `name` with a different `Stage` |
-| `pipeline.find(name, *, recursive=False)` | With `recursive=True`, also searches inside nested stages like `SurrogateOnlyLoopStage` |
+| `pipeline["name"]` | Looks up a structural entry by `name` |
+| `pipeline.replace(name, entry)` | Replaces a top-level structural entry |
+| `pipeline.find(name, *, recursive=False)` | With `recursive=True`, searches nested pipelines and control bodies |
 
 ## Built-in Stages
 
@@ -37,23 +47,23 @@ The following table is generated from each operational Stage's production
 | Class | Name | Label | Notation | Reads | Writes | Exports |
 |---|---|---|---|---|---|---|
 | CountGenerationStage | count_generation | Count generation | $gen \leftarrow gen + 1$ | `runtime.generation`, `evaluations.pending` | `runtime.generation` | — |
-| AskStage | ask | Generate offspring | $\mathcal{Q} \leftarrow \text{ask}(P, n)$ | `evaluations.plan`, `evaluations.plan_state`, `runtime.candidate_id_allocator` | `proposals.offspring`, `proposals.current`, `runtime.candidate_id_allocator` | — |
-| SurrogatePredictStage | surrogate_predict | Surrogate prediction | $\hat{y} \leftarrow \text{predict}(\mathcal{Q}, \mathcal{A})$ | `proposals.offspring`, `archives.main` | `proposals.offspring`, `surrogates.predictions` | — |
+| AskStage | ask | Generate offspring | $\mathcal{Q} \leftarrow \text{ask}(P, n)$ | `evaluations.plan`, `evaluations.plan_state`, `runtime.candidate_id_allocator` | `proposals.offspring`, `proposals.current`, `runtime.candidate_id_allocator`, `evaluations.evaluated_offspring` | — |
+| SurrogatePredictStage | surrogate_predict | Surrogate prediction | $\hat{y} \leftarrow \text{predict}(\mathcal{Q}, \mathcal{A})$ | `proposals.offspring`, `populations.main`, `archives.main` | `proposals.offspring`, `surrogates.predictions` | — |
 | PendingEvaluationContextStage | pending_evaluation_context | Pending evaluation context | $C \leftarrow \text{pending}(C)$ | — | — | — |
-| AcquisitionStage | acquisition | Acquisition scoring | $\mathbf{s} \leftarrow \text{acquire}(\mathcal{Q}, \hat{y}, \mathcal{A})$ | `proposals.offspring`, `surrogates.predictions`, `archives.main`, `runtime.generation` | `evaluations.scores`, `evaluations.acquisition_result` | — |
-| SurrogateFitStage | surrogate_fit | Fit surrogate | $\hat{f} \leftarrow \text{fit}(\mathcal{A})$ | `archives.main` | — | — |
+| AcquisitionStage | acquisition | Acquisition scoring | $\mathbf{s} \leftarrow \text{acquire}(\mathcal{Q}, \hat{y}, \mathcal{A})$ | `proposals.offspring`, `surrogates.predictions`, `archives.main`, `runtime.generation`, `runtime.rng` | `evaluations.scores`, `evaluations.acquisition_result` | — |
+| SurrogateFitStage | surrogate_fit | Fit surrogate | $\hat{f} \leftarrow \text{fit}(\mathcal{A})$ | `populations.main`, `archives.main` | — | — |
 | TopKSelectionStage | top_k_selection | Top-k pre-selection | $\mathcal{Q} \leftarrow \text{top-}k(\mathcal{Q}, \mathbf{s})$ | `proposals.offspring`, `evaluations.scores` | `proposals.offspring` | — |
 | SortByScoreStage | sort_by_score | Sort offspring by score | $\mathcal{Q} \leftarrow \text{sort\_desc}(\mathcal{Q},\,\mathbf{s})$ | `proposals.offspring`, `evaluations.scores` | `proposals.offspring`, `evaluations.scores` | — |
-| EvaluationPlanStage | evaluation_plan | Plan evaluation | $R \leftarrow \text{plan}(Q)$ | `proposals.offspring`, `evaluations.pending`, `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.handles`, `evaluations.owners`, `evaluations.acquisition_result`, `evaluations.scores` | `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.plan_updates`, `evaluations.pending`, `evaluations.updates`, `evaluations.update_new_ids`, `evaluations.new_ids` | — |
+| EvaluationPlanStage | evaluation_plan | Plan evaluation | $R \leftarrow \text{plan}(Q)$ | `proposals.offspring`, `evaluations.pending`, `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.handles`, `evaluations.owners`, `evaluations.acquisition_result`, `evaluations.scores`, `runtime.request_id_allocator` | `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.plan_updates`, `evaluations.pending`, `evaluations.updates`, `evaluations.update_new_ids`, `evaluations.new_ids`, `runtime.request_id_allocator` | — |
 | AsyncEvaluationSubmitStage | async_evaluation_submit | Submit asynchronous evaluation |  | `proposals.offspring`, `evaluations.acquisition_result`, `evaluations.scores`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.pending`, `evaluations.handles`, `runtime.request_id_allocator` | `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.plan_updates`, `evaluations.pending`, `runtime.request_id_allocator` | — |
-| EvaluationSubmitStage | evaluation_submit | Submit evaluation | $H \leftarrow \text{submit}(R)$ | `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.pending`, `evaluations.handles` | `evaluations.pending`, `evaluations.handles`, `evaluations.plan_state` | — |
+| EvaluationSubmitStage | evaluation_submit | Submit evaluation | $H \leftarrow \text{submit}(R)$ | `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.pending`, `evaluations.handles`, `evaluations.owners` | `evaluations.pending`, `evaluations.handles`, `evaluations.plan_state` | — |
 | EvaluationCollectStage | evaluation_collect | Collect evaluation | $U \leftarrow \text{collect}(H)$ | `evaluations.plan`, `evaluations.plan_state`, `evaluations.pending`, `evaluations.handles`, `evaluations.plan_updates`, `evaluations.request` | `evaluations.updates`, `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.plan_updates`, `evaluations.pending`, `evaluations.update_new_ids`, `evaluations.new_ids` | — |
 | EvaluationApplyStage | evaluation_apply | Apply evaluation | $Q \leftarrow \text{apply}(U)$ | `proposals.offspring`, `evaluations.request`, `evaluations.updates`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.plan_updates`, `evaluations.pending` | `proposals.offspring`, `evaluations.evaluated_offspring`, `evaluations.new_ids`, `evaluations.update_new_ids`, `evaluations.pending` | — |
-| EvaluationAcknowledgeStage | evaluation_acknowledge | Acknowledge evaluation | $H \leftarrow \text{ack}(U)$ | `proposals.offspring`, `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.pending`, `evaluations.handles`, `evaluations.updates`, `evaluations.update_new_ids`, `evaluations.plan_updates` | `evaluations.plan`, `evaluations.plan_state`, `evaluations.plan_updates`, `evaluations.pending`, `evaluations.handles`, `evaluations.count` | — |
+| EvaluationAcknowledgeStage | evaluation_acknowledge | Acknowledge evaluation | $H \leftarrow \text{ack}(U)$ | `proposals.offspring`, `evaluations.request`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.pending`, `evaluations.handles`, `evaluations.updates`, `evaluations.update_new_ids`, `evaluations.plan_updates`, `evaluations.count` | `evaluations.plan`, `evaluations.plan_state`, `evaluations.plan_updates`, `evaluations.pending`, `evaluations.handles`, `evaluations.count` | — |
 | TrueEvaluationStage | true_evaluation | True objective evaluation | $\mathcal{Q}_{eval} \leftarrow \text{eval}(\mathcal{Q})$ | `proposals.offspring` | `proposals.offspring`, `evaluations.evaluated_offspring`, `evaluations.count` | — |
-| ArchiveUpdateStage | archive_update | Archive update | $\mathcal{A} \leftarrow \mathcal{A} \cup \mathcal{Q}_{eval}$ | `evaluations.evaluated_offspring`, `evaluations.plan`, `evaluations.plan_state` | `archives.main`, `archives.pareto`, `evaluations.evaluated_offspring` | — |
+| ArchiveUpdateStage | archive_update | Archive update | $\mathcal{A} \leftarrow \mathcal{A} \cup \mathcal{Q}_{eval}$ | `evaluations.evaluated_offspring`, `archives.main`, `archives.pareto`, `evaluations.plan`, `evaluations.plan_state` | `archives.main`, `archives.pareto`, `evaluations.evaluated_offspring` | — |
 | FeedbackStage | feedback | Apply feedback | $\mathcal{Q} \leftarrow \mathrm{feedback}(\mathcal{Q})$ | `proposals.offspring`, `evaluations.evaluated_offspring`, `evaluations.new_ids`, `surrogates.predictions`, `evaluations.plan`, `evaluations.plan_state` | `proposals.offspring`, `feedback.result` | — |
-| TellStage | tell | Update population | $P \leftarrow \text{tell}(P, \mathcal{Q})$ | `proposals.offspring`, `proposals.current`, `feedback.result`, `evaluations.plan`, `evaluations.plan_state` | — | — |
+| TellStage | tell | Update population | $P \leftarrow \text{tell}(P, \mathcal{Q})$ | `proposals.offspring`, `proposals.current`, `feedback.result`, `evaluations.evaluated_offspring`, `evaluations.plan`, `evaluations.plan_state`, `evaluations.updates` | — | — |
 | SurrogateOnlyLoopStage | surrogate_only_loop | Surrogate-only generations | $\text{for}\;i=1\dots gen\_ctrl$: $P \leftarrow \mathrm{tell}(P,\,\mathrm{acquire}(\mathrm{predict}(\mathrm{ask}(P))))$ | `archives.main` | — | — |
 | InitializationStage | initialization | Initialize population | $\mathcal{A}_0,\,P_0 \leftarrow \mathrm{init}(n_{\mathrm{init}})$ | — | — | — |
 <!-- END GENERATED STAGE CONTRACTS -->
@@ -73,16 +83,16 @@ asynchronous evaluation and nested surrogate-only loops.
 `SurrogateFitStage` is used to pre-fit the surrogate once, ahead of an inner loop where the archive doesn't change.
 It is used before a surrogate prediction stage when an inner loop can reuse a fit.
 
-`SurrogateOnlyLoopStage` is a composite stage used by `GenerationBasedStrategy`.
-It repeats an inner loop of `CountGeneration → Ask → SurrogatePredictStage(refit=False) → AcquisitionStage → Tell` `gen_ctrl` times.
-It's a no-op when `gen_ctrl=0`.
+`SurrogateOnlyLoopStage` remains available to stage-based compatibility
+strategies.  `GenerationBasedStrategy` represents the same control flow with
+the structured `Repeat` region instead.
 
 ```{note}
 The `state` argument passed to `InitializationStage`'s `execute()` is ignored — it always builds a fresh state from initialization.
 Used at the head of a user-defined pipeline when you want initialization itself to be treated as part of the pipeline.
 ```
 
-See [strategies](strategies.md) and the pipeline diagram in [Components overview](index.md) for how the 4 built-in Strategies (IB/GB/PS/Direct) combine these Stages into a pipeline.
+See [strategies](strategies.md) and the pipeline diagram in [Components overview](index.md) for how the built-in strategies combine these stages and structured regions.
 This page covers the contract of each Stage in isolation.
 
 ## Implementing a custom Stage
