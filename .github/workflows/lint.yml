@@ -16,7 +16,7 @@ jobs:
       - name: Run Ruff (Format)
         run: uvx ruff format --check .
       - name: Run Ruff (Lint)
-        run: uvx ruff check --fix --output-format=github .
+        run: uvx ruff check --output-format=github .
 
   ty:
     runs-on: ubuntu-latest
