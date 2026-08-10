@@ -124,6 +124,95 @@ class _Legacy(Algorithm):
         offspring.update_rows(np.array([0]), {"f": np.array([[99.0]])})
 
 
+class _OldAskNativeTell(_Legacy):
+    def __init__(self):
+        super().__init__()
+        self.native_state = None
+
+
+class _NativeAskOldTell(_Legacy):
+    @staticmethod
+    def _population(state: StateView) -> Population:
+        return cast(Population, state.get(POPULATIONS_MAIN))
+
+
+def _native_tell(
+    self: _OldAskNativeTell, feedback: FeedbackBatch, state: StateView
+) -> StatePatch:
+    self.native_state = state
+    return StatePatch(writes={})
+
+
+def _native_ask(
+    self: _NativeAskOldTell, request: ProposalRequest, state: StateView
+) -> ProposalBatch:
+    candidates = self._population(state).extract(np.array([0, 1]))
+    return ProposalBatch(
+        proposal_id=778,
+        candidates=candidates,
+        relations=ProposalRelations({}, row_count=len(candidates)),
+        requirements=FeedbackRequirement(quantities=()),
+    )
+
+
+setattr(_OldAskNativeTell, "tell", _native_tell)
+setattr(_NativeAskOldTell, "ask", _native_ask)
+
+
+def _state_with_feedback() -> OptimizationState:
+    state = _state(proposal_id=1)
+    return state.replace(
+        feedback_result=TrueOnlyFeedback().build(
+            state.offspring,
+            None,
+            EvaluationResult(
+                np.array([[1.0]]),
+                np.empty((1, 0)),
+                np.zeros(1),
+                candidate_ids=np.array([10], dtype=np.int64),
+            ),
+            [10],
+            state,
+        )
+    )
+
+
+def test_u11_2a_ask_and_tell_legacy_detection_are_independent():
+    old_ask = _OldAskNativeTell()
+    native_ask = _NativeAskOldTell()
+
+    assert isinstance(AskStage(old_ask)._algorithm, LegacyPopulationAlgorithmAdapter)
+    assert TellStage(old_ask)._legacy_adapter is False
+    assert AskStage(native_ask)._legacy_adapter is False
+    assert isinstance(
+        TellStage(native_ask)._algorithm, LegacyPopulationAlgorithmAdapter
+    )
+
+
+def test_u11_2a_native_tell_does_not_receive_legacy_state_view():
+    algorithm = _OldAskNativeTell()
+
+    TellStage(algorithm).execute(_state_with_feedback())
+
+    assert isinstance(algorithm.native_state, StateView)
+    assert not isinstance(algorithm.native_state, LegacyAlgorithmStateView)
+
+
+def test_u11_2a_scheduler_adapts_only_old_tell():
+    evaluator = _PartialEvaluator()
+    old_ask = _OldAskNativeTell()
+    old_tell = _NativeAskOldTell()
+    old_tell_scheduler = AsyncEvaluationScheduler(evaluator, algorithm=old_tell)
+    native_tell_scheduler = AsyncEvaluationScheduler(evaluator, algorithm=old_ask)
+
+    consumer, legacy = old_tell_scheduler._feedback_consumer()
+    assert isinstance(consumer, LegacyPopulationAlgorithmAdapter)
+    assert legacy is True
+    consumer, legacy = native_tell_scheduler._feedback_consumer()
+    assert consumer is old_ask
+    assert legacy is False
+
+
 def test_j7b_sync_tell_passes_legacy_equivalent_population():
     state = _state(proposal_id=1)
     state = state.replace(

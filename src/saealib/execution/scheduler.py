@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from saealib.algorithms.base import (
-    Algorithm,
     LegacyPopulationAlgorithmAdapter,
     _NoOpDispatchProvider,
 )
@@ -1349,15 +1348,13 @@ class AsyncEvaluationScheduler:
         return state.replace(feedback_result=result)
 
     @staticmethod
-    def _is_legacy_algorithm(component: object) -> bool:
-        """Recognize old ask/tell objects, excluding tell-only consumers."""
-        if isinstance(component, Algorithm):
-            return True
-        ask = getattr(component, "ask", None)
-        if not callable(ask):
+    def _is_legacy_tell(component: object) -> bool:
+        """Recognize a tell method using the old population-based signature."""
+        tell = getattr(component, "tell", None)
+        if not callable(tell):
             return False
         try:
-            parameters = tuple(inspect.signature(ask).parameters.values())
+            parameters = tuple(inspect.signature(tell).parameters.values())
         except (TypeError, ValueError):
             return True
         if any(
@@ -1380,7 +1377,7 @@ class AsyncEvaluationScheduler:
         """Return a per-delivery consumer and whether it needs the legacy seam."""
         if isinstance(self.algorithm, LegacyPopulationAlgorithmAdapter):
             return self.algorithm, True
-        if self._is_legacy_algorithm(self.algorithm):
+        if self._is_legacy_tell(self.algorithm):
             provider = self.callback_manager or _NoOpDispatchProvider()
             return (
                 LegacyPopulationAlgorithmAdapter.for_stage(self.algorithm, provider),

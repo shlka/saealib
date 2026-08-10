@@ -155,12 +155,8 @@ class _DispatchProxy:
         return None
 
 
-def _is_legacy_algorithm(component: object) -> bool:
-    """Recognize old ask signatures, including lightweight test/user doubles."""
-    from saealib.algorithms.base import Algorithm
-
-    if isinstance(component, Algorithm):
-        return True
+def _is_legacy_ask(component: object) -> bool:
+    """Recognize an old ask signature, including lightweight user doubles."""
     ask = getattr(component, "ask", None)
     if not callable(ask):
         return True
@@ -382,7 +378,7 @@ class AskStage(Stage):
 
         self._n_offspring = n_offspring
         self._proxy = _DispatchProxy(cbmanager)
-        legacy = _is_legacy_algorithm(algorithm)
+        legacy = _is_legacy_ask(algorithm)
         self._legacy_adapter = legacy
         self._algorithm: Proposer = (
             LegacyPopulationAlgorithmAdapter.for_stage(algorithm, self._proxy)
@@ -1984,7 +1980,6 @@ class TellStage(Stage):
     ) -> None:
         super().__init__()
         from saealib.algorithms.base import (
-            Algorithm,
             FeedbackConsumer,
             LegacyPopulationAlgorithmAdapter,
         )
@@ -1992,7 +1987,7 @@ class TellStage(Stage):
         self._proxy = _DispatchProxy()
         self._channel = channel
         self._legacy_adapter = isinstance(
-            algorithm, (Algorithm, LegacyPopulationAlgorithmAdapter)
+            algorithm, LegacyPopulationAlgorithmAdapter
         ) or _is_legacy_tell(algorithm)
         self._legacy_source = (
             algorithm.algorithm
