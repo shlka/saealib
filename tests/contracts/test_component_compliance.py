@@ -173,7 +173,7 @@ def _discover_contract_classes() -> tuple[type[Any], ...]:
             if (
                 inspect.isclass(obj)
                 and obj.__module__.startswith("saealib.")
-                # Stage contracts are audited by the Phase 7 U1 inventory
+                # Stage contracts are audited by the component inventory
                 # tests.  They are a separate execution-boundary protocol,
                 # not registry-built components; their constructors require
                 # runtime services and must not enter this recipe discovery.

@@ -1,4 +1,4 @@
-"""Regression tests for Unit H10 genome-batch cache reuse."""
+"""Regression tests for genome-batch cache reuse."""
 
 from __future__ import annotations
 

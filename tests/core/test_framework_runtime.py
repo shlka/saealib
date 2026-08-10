@@ -1,4 +1,4 @@
-"""Contract tests for the Phase 6 L1 plan/runtime vocabulary."""
+"""Contract tests for the plan/runtime vocabulary."""
 
 from dataclasses import FrozenInstanceError
 from typing import cast

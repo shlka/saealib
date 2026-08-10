@@ -1,6 +1,6 @@
 """SearchSpace protocol, ValidationResult, and ServiceRegistry.
 
-SearchSpace owns exactly four things (ADR-0003 §1.1):
+SearchSpace owns exactly four things:
 1. representation identity (RepresentationSpec)
 2. offered services (ServiceRegistry)
 3. sampling genomes (sample)
@@ -141,7 +141,7 @@ class SearchSpace(Protocol):
 
 
 class DerivedSamplingService:
-    """SamplingService view derived from SearchSpace.sample (ADR-0003 §4.1.1)."""
+    """SamplingService view derived from SearchSpace.sample."""
 
     def __init__(self, space: SearchSpace) -> None:
         self._space = space
@@ -152,7 +152,7 @@ class DerivedSamplingService:
 
 
 class DerivedValidationService:
-    """ValidationService view derived from SearchSpace.validate (ADR-0003 §4.1.1)."""
+    """ValidationService view derived from SearchSpace.validate."""
 
     def __init__(self, space: SearchSpace) -> None:
         self._space = space

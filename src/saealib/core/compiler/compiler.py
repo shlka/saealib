@@ -334,7 +334,7 @@ def _lookup_service(
         service = getter(service_name)
         if service is not None:
             return service
-    # Problem owns ComparisonService in ADR-0003.  Problem currently exposes
+    # Problem owns ComparisonService.  Problem currently exposes
     # its comparator directly; the compiler keeps that object as the bound
     # direct reference and does not add a runtime registry lookup.
     if provider_name == "problem" and service_name == "ComparisonService":

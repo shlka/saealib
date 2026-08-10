@@ -116,7 +116,8 @@ class SelectionPolicy:
     """Named total ordering for records competing for one value."""
 
     name: str = "source-fidelity-sequence-status-batch-index"
-    # Measured evidence precedes model output; J1 orders human/simulator.
+    # Measured evidence precedes model output; human and simulator sources are
+    # ordered before surrogate output.
     source_priority: tuple[str, ...] = (
         TRUE,
         HUMAN,

@@ -1,4 +1,4 @@
-"""Tests for the K4 service-resolution and port-compatibility rules."""
+"""Tests for service resolution and port compatibility."""
 
 from __future__ import annotations
 

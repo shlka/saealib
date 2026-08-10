@@ -38,7 +38,7 @@ class _Imports(ast.NodeVisitor):
     """Collect every import statement, including local compatibility imports."""
 
     def __init__(self) -> None:
-        self.imports: list[tuple[ast.AST, str]] = []
+        self.imports: list[tuple[ast.Import | ast.ImportFrom, str]] = []
 
     def visit_Import(self, node: ast.Import) -> None:
         self.imports.extend((node, alias.name) for alias in node.names)

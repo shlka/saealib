@@ -1,4 +1,4 @@
-"""K6a tests for complete-batch feedback accumulation semantics."""
+"""Tests for complete-batch feedback accumulation semantics."""
 
 from __future__ import annotations
 
@@ -245,7 +245,7 @@ def test_final_incomplete_delivery_reports_and_releases_buffer() -> None:
 
 
 def test_mixed_channels_cannot_be_represented_by_one_final_envelope() -> None:
-    """ADR-0004 channel provenance is preserved by rejecting mixed delivery."""
+    """Channel provenance is preserved by rejecting mixed delivery."""
     accumulator = FeedbackAccumulator(
         _contract(accepted_channels=frozenset({TRUE, SURROGATE}))
     )
@@ -300,7 +300,7 @@ def test_completion_releases_each_proposal_buffer() -> None:
 def test_accumulator_rejects_partial_consumer_because_buffering_changes_timing() -> (
     None
 ):
-    """ADR-0007 makes this adapter applicable only to complete-batch consumers."""
+    """This adapter applies only to complete-batch consumers."""
     contract = FeedbackContract(
         accepted_channels=frozenset({TRUE}),
         completion=PARTIAL_ALLOWED,

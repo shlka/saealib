@@ -1,7 +1,7 @@
 """Tests for GenomeBatch protocol and implementations.
 
 Covers DenseVectorBatch and ObjectBatch guarantees.
-Each test covers specific requirements from Unit H3 and documents the
+Each test covers a specific genome-batch contract and documents the
 implementation-side mutation that would cause it to fail.
 """
 

@@ -155,7 +155,7 @@ class DistanceService(Protocol):
 class ComparisonService(Protocol):
     """Service for comparing objective vectors.
 
-    Note: Provider is Problem, not SearchSpace (ADR-0003 §4.1.0).
+    Note: the provider is Problem, not SearchSpace.
     """
 
     def compare(self, f1: np.ndarray, f2: np.ndarray) -> int:

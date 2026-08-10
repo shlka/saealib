@@ -1,4 +1,4 @@
-"""Tests for the K7 persistence and runtime compatibility rules."""
+"""Tests for persistence and runtime compatibility rules."""
 
 from __future__ import annotations
 

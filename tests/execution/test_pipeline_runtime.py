@@ -1,4 +1,4 @@
-"""Focused tests for the Phase 6 synchronous plan bridge."""
+"""Focused tests for the synchronous plan bridge."""
 
 from __future__ import annotations
 

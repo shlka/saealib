@@ -342,7 +342,7 @@ def unify_representation_specs(
        conflict.
 
     When the kind names differ the result carries a
-    ``representation_kind_mismatch`` finding (which Phase 5 compiler rules
+    ``representation_kind_mismatch`` finding (which compiler rules
     map to an ``incompatible_representation`` diagnostic) and unification
     fails immediately — there is no subtype lattice between kinds.
     """

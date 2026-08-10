@@ -1,4 +1,4 @@
-"""Focused Phase 8 P2 tests for compiler-resolved service bindings."""
+"""Focused tests for compiler-resolved service bindings."""
 
 from __future__ import annotations
 

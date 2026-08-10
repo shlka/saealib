@@ -1,4 +1,4 @@
-"""Focused acceptance checks for the Phase 7 U1 Stage contract inventory."""
+"""Focused acceptance checks for the Stage contract inventory."""
 
 from __future__ import annotations
 

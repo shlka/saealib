@@ -1,4 +1,4 @@
-"""J4 feedback batch and contract tests."""
+"""Feedback batch and contract tests."""
 
 from __future__ import annotations
 

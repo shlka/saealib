@@ -1,4 +1,4 @@
-"""J3 proposal contract tests."""
+"""Proposal contract tests."""
 
 from __future__ import annotations
 

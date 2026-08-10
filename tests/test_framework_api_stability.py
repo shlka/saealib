@@ -1,4 +1,4 @@
-"""Drift guards for the Phase 11 framework-extension freeze surface."""
+"""Drift guards for the framework-extension API surface."""
 
 from __future__ import annotations
 
@@ -226,7 +226,7 @@ def test_graph_only_strategy_uses_graph_and_recovers_only_a_compatibility_facade
     assert tuple(pipeline.stages) == ()
 
 
-def test_phase11_package_boundaries_match_the_adopted_tree() -> None:
+def test_public_package_boundaries_match_the_adopted_tree() -> None:
     # Public import paths are the compatibility boundary; physical module
     # layout is free to evolve behind these facades.
     public_paths = (

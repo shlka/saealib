@@ -1,5 +1,5 @@
 """
-Contract tests for stable int64 candidate IDs (ADR-0001 §2.1, §2.2).
+Contract tests for stable int64 candidate IDs.
 
 Covers ``IDAllocator`` in isolation, the public/internal ``append()``/
 ``extend()`` split on ``Population``, ID preservation through structural

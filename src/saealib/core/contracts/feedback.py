@@ -46,9 +46,9 @@ REPEATED_ALLOWED: MultiplicityMode = "repeated_allowed"
 BY_PROPOSAL: FeedbackGrouping = "by_proposal"
 BY_CANDIDATE: FeedbackGrouping = "by_candidate"
 
-# J4's FeedbackContract will consume these defaults.  Keeping them as named
+# FeedbackContract consumes these defaults.  Keeping them as named
 # constants makes the strongest-default rule explicit without creating that
-# contract in J1.
+# contract vocabulary.
 DEFAULT_COMPLETION_MODE: CompletionMode = COMPLETE_BATCH
 DEFAULT_ORDERING_MODE: OrderingMode = IN_ORDER
 DEFAULT_MULTIPLICITY_MODE: MultiplicityMode = SINGLE

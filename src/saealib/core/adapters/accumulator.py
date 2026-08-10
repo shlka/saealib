@@ -10,7 +10,7 @@ and takes completed batches from a ready queue::
     completed = accumulator.pop_ready()
 
 The implementation makes the following semantic choices, which are the
-runtime form of ADR-0007 section 1:
+runtime form of the feedback delivery contract:
 
 * exact duplicate ``(proposal_id, sequence)`` deliveries are idempotent while
   a proposal is buffered; a conflicting duplicate raises ``ValidationError``;
@@ -34,7 +34,7 @@ runtime form of ADR-0007 section 1:
 
 Only ``complete_batch`` contracts are accepted.  Buffering in front of a
 ``partial_allowed`` consumer would change a property that consumer explicitly
-declared, so it is not the lossless adapter described by ADR-0007.
+declared, so it is not a lossless adapter for that contract.
 """
 
 from __future__ import annotations

@@ -1,6 +1,6 @@
 """
-Contract tests for ``Population.update_rows()`` (ADR-0001 §2.3) and its
-interaction with ``ArchiveMixin``'s KD-tree cache (ADR-0001 §2.4).
+Contract tests for ``Population.update_rows()`` and its interaction with
+``ArchiveMixin``'s KD-tree cache.
 
 Covers the documented contract only: validation ordering,
 atomicity, version-bump semantics, and copy-not-alias behavior.
@@ -165,8 +165,7 @@ class TestUpdateRowsScalarAndObjectDtypeRejection:
     def test_empty_values_is_a_noop_even_with_invalid_indices(
         self, pop: Population
     ) -> None:
-        """An empty ``values`` mapping short-circuits before indices are
-        even inspected, per the ADR's "empty values mapping is a no-op"."""
+        """An empty ``values`` mapping is a no-op before indices are inspected."""
         version_before = pop._value_version
         pop.update_rows(np.array(0), {})
         assert pop._value_version == version_before

@@ -1,4 +1,4 @@
-"""K6b tests for lifecycle verification and compile-time accumulation."""
+"""Tests for lifecycle verification and compile-time accumulation."""
 
 from __future__ import annotations
 

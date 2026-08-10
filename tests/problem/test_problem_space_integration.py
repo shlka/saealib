@@ -1,4 +1,4 @@
-"""Tests for Problem and SearchSpace/BoundsService integration (Unit H5).
+"""Tests for Problem and SearchSpace/BoundsService integration.
 
 Validates that Problem owns VectorSpace as its single source of truth,
 BoundsService routes bounds accurately, algorithms remain deterministic,

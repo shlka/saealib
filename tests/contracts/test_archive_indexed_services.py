@@ -1,4 +1,4 @@
-"""Unit H9 contracts for indexed service query forms and hot-loop behavior."""
+"""Contracts for indexed service query forms and hot-loop behavior."""
 
 from __future__ import annotations
 
@@ -75,7 +75,7 @@ def test_exact_index_uses_numpy_canonicalization_and_no_archive_tree(
 
 
 def test_canonical_fingerprint_preserves_zero_and_nan_identity() -> None:
-    """The H4 -0.0 and NaN canonicalization properties remain unchanged."""
+    """The -0.0 and NaN canonicalization properties remain unchanged."""
     space = VectorSpace(2, [-10.0, -10.0], [10.0, 10.0])
     service = cast(FingerprintService, space.services.require("FingerprintService"))
     zeros = service.fingerprint(DenseVectorBatch([[0.0, -0.0], [-0.0, 0.0]]))
@@ -94,7 +94,7 @@ def test_equivalence_collection_query_is_one_pass_not_three_dimensional(
     Mutation check: broadcasting collection and query batches into an
     (n_query, n_collection, dim) tensor makes the recorded input three-
     dimensional and fails.  The service call also proves Archive has a
-    collection-query shape rather than the H7 pairwise bridge.
+    collection-query shape rather than the pairwise bridge.
     """
     vector_module = importlib.import_module("saealib.space.vector")
     original_isclose = vector_module.np.isclose

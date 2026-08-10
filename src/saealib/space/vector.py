@@ -1,4 +1,4 @@
-"""VectorSpace: search space for dense real-valued vectors (ADR-0003 §1.2)."""
+"""VectorSpace: search space for dense real-valued vectors."""
 
 from __future__ import annotations
 

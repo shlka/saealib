@@ -261,7 +261,7 @@ class StageNodeAdapter:
     The adapter delegates execution to the unchanged Stage and exposes only a
     composed contract for the components held by that Stage.  It intentionally
     does not declare the Stage's direct ``OptimizationState`` accesses; those
-    declarations belong to Phase 7's per-Stage contract work.
+    declarations belong to the Stage contract layer.
     """
 
     def __init__(self, stage: Stage, *, node_path: str | None = None) -> None:
@@ -335,7 +335,7 @@ def cached_execution_target(component: object) -> object:
 
 
 class StageContractNodeAdapter(StageNodeAdapter):
-    """U2 executable Stage node carrying the Stage's direct U1 contract."""
+    """Executable Stage node carrying the Stage's direct contract."""
 
     def __init__(self, stage: Stage, *, node_path: str | None = None) -> None:
         if not isinstance(stage, Stage):
@@ -354,7 +354,7 @@ class StageContractNodeAdapter(StageNodeAdapter):
 
 
 class StagePartNodeAdapter:
-    """Expose one U1-declared Stage part as an independently discoverable node.
+    """Expose one declared Stage part as an independently discoverable node.
 
     Parts deliberately do not implement ``execute``.  The legacy Stage remains
     the executable owner until the runtime migration unit; these nodes provide
@@ -373,7 +373,7 @@ class StagePartNodeAdapter:
         return getattr(self.component, name)
 
     def contract(self) -> ComponentContract:
-        """Return the held part's captured U1 contract."""
+        """Return the held part's captured contract."""
         return self._contract
 
 
@@ -568,7 +568,7 @@ def build_component_graph(pipeline: Pipeline) -> ComponentGraph:
 
 
 def _declared_part_component(stage: Stage, name: str) -> object | None:
-    """Resolve a named U1 part from the conventional private attribute."""
+    """Resolve a named part from the conventional private attribute."""
     for candidate in (f"_{name}", name):
         if hasattr(stage, candidate):
             return getattr(stage, candidate)
@@ -606,9 +606,9 @@ def build_decomposed_component_graph_from_specs(
 ) -> ComponentGraph:
     """Build the canonical graph from ordered component/adapter specs.
 
-    ``build_component_graph`` remains the Phase 6 bridge.  This function is an
-    opt-in U2 path: each Stage is retained as the sole executable node, while
-    every U1-declared part gets its own contract-bearing node.  Part nodes are
+    ``build_component_graph`` remains the Stage bridge.  This function is an
+    opt-in decomposed path: each Stage is retained as the sole executable node,
+    while every declared part gets its own contract-bearing node.  Part nodes are
     connected into the Stage control chain so ordering remains unique; data
     edges target the part that owns the declared port and never encode control
     side effects.
@@ -650,7 +650,7 @@ def build_decomposed_component_graph_from_specs(
             nodes.append(part_node)
             stage_parts[part.name] = (part_id, part_node)
             declared_components.add(id(component))
-        # U1 declarations are authoritative for direct Stage state, but the
+        # Declarations are authoritative for direct Stage state, but the
         # legacy held objects still own ports on a few compatibility stages.
         # Discover those objects as additional part nodes so no existing port
         # disappears merely because its Stage contract has not migrated yet.

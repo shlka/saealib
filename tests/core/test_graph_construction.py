@@ -1,4 +1,4 @@
-"""Tests for the Phase 5 stage-to-graph bridge."""
+"""Tests for the stage-to-graph bridge."""
 
 from __future__ import annotations
 

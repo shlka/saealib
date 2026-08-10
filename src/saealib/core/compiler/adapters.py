@@ -337,7 +337,7 @@ def _partial_complete_feedback_pair(match: AdapterMatchContext) -> bool:
 
 
 def _feedback_accumulator_match(match: AdapterMatchContext) -> bool:
-    """Match the runtime/consumer pair that K6b can buffer losslessly."""
+    """Match a runtime/consumer pair that can buffer feedback losslessly."""
     return _partial_complete_feedback_pair(match)
 
 

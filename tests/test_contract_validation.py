@@ -1,4 +1,4 @@
-"""Unit J8 tests for validation-time contract diagnostics."""
+"""Tests for validation-time contract diagnostics."""
 
 from __future__ import annotations
 

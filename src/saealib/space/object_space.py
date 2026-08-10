@@ -1,4 +1,4 @@
-"""ObjectSpace: search space for arbitrary Python objects (ADR-0003 §3.3)."""
+"""ObjectSpace: search space for arbitrary Python objects."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ __all__ = ["ObjectSpace"]
 
 
 class ObjectSpace:
-    """A search space for arbitrary Python objects (ADR-0003 §3.3).
+    """A search space for arbitrary Python objects.
 
     An ObjectSpace registers no services by default. It can be sampled,
     selected, and concatenated; components requiring richer operations

@@ -1,4 +1,4 @@
-"""Tests for K5 schema binding and lossless adapter resolution."""
+"""Tests for schema binding and lossless adapter resolution."""
 
 from __future__ import annotations
 

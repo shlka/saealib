@@ -1,9 +1,9 @@
-"""Tests for the Phase 4 observation and feedback vocabularies.
+"""Tests for the observation and feedback vocabularies.
 
 The exact-set assertions are intentional: adding a permanent name requires an
 explicit review of the registration decision.  The mutation notes document
 the implementation-side condition checked by each test; the corresponding
-mutations are exercised in the Unit J1 verification run.
+mutations are exercised by the tests below.
 """
 
 from __future__ import annotations
@@ -76,7 +76,7 @@ from saealib.space.space import ValidationResult
 
 
 def test_observation_value_vocabularies_are_exact() -> None:
-    """Source and status registries contain exactly the ADR values.
+    """Source and status registries contain the supported values.
 
     Mutating the implementation by dropping ``IMPUTED`` from the source loop,
     adding it to the status loop, or omitting one status makes this strict
@@ -117,10 +117,10 @@ def test_feedback_policy_vocabularies_are_exact() -> None:
 
 
 def test_feedback_defaults_are_the_strongest_values() -> None:
-    """The J4 contract defaults to the first, most restrictive policy value.
+    """The feedback contract defaults to the first, most restrictive policy value.
 
     Mutating any ``DEFAULT_*`` constant to the permissive value makes the
-    corresponding assertion fail; J1 deliberately does not create a contract.
+    corresponding assertion fail; the vocabulary layer does not create a contract.
     """
     assert DEFAULT_COMPLETION_MODE == COMPLETE_BATCH
     assert DEFAULT_ORDERING_MODE == IN_ORDER
@@ -129,9 +129,9 @@ def test_feedback_defaults_are_the_strongest_values() -> None:
 
 
 def test_quantity_kinds_are_exact() -> None:
-    """All six ADR quantity kinds are registered as name-only descriptors.
+    """All supported quantity kinds are registered as name-only descriptors.
 
-    Removing the ADR-prescribed unused ``behavior`` entry (or adding an
+    Removing the unused ``behavior`` entry (or adding an
     unreviewed quantity) makes the exact tuple assertion fail.
     """
     assert OBSERVATION_QUANTITY_KINDS is QUANTITY_KINDS
@@ -146,7 +146,7 @@ def test_quantity_kinds_are_exact() -> None:
 
 
 def test_j1_descriptor_registries_are_exact() -> None:
-    """J1 freezes only the reviewed candidate and candidate-ID relation leaves.
+    """The registry freezes only the reviewed candidate and ID relation leaves.
 
     Mutation note: adding any deferred relation/subject name or ValueRef makes
     one of these exact tuple assertions fail.
@@ -259,7 +259,7 @@ def test_relation_descriptor_requires_all_six_fields() -> None:
     """A relation descriptor cannot be constructed without ``reindex``.
 
     Removing the required ``reindex`` dataclass field or giving it a default
-    allows the exact failure mode that the ADR warns is costly to retrofit.
+    allows the exact failure mode that is costly to retrofit.
     """
     with pytest.raises(TypeError):
         RelationKind(  # ty: ignore[missing-argument]
@@ -317,7 +317,7 @@ def test_portable_value_annotation_is_loose_but_documented_as_recursive() -> Non
 
     Replacing the alias with ``object`` loses the portable carrier annotation.
     A future validator must still reject a non-portable object nested inside a
-    mapping or sequence; J1 intentionally does not implement that validator.
+    mapping or sequence; this layer intentionally does not implement that validator.
     """
     assert PortableValue is not object
     assert "Mapping" in repr(PortableValue)

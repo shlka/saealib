@@ -1,9 +1,9 @@
-"""Phase 10 external plugin foundation and U10-1 boundaries."""
+"""External plugin foundation and boundary tests."""
 
 from dataclasses import replace
 
 import numpy as np
-from phase10_plugin import (
+from external_plugin_fixture import (
     CMAES_CANDIDATE_IDS,
     COMPLETE_BATCH,
     DE_TARGET_IDS,
@@ -16,10 +16,10 @@ from phase10_plugin import (
     CMAESPlugin,
     CooperativeCoevolutionPlugin,
     DifferentialEvolutionPlugin,
+    ExternalPluginFixture,
     MAPElitesPlugin,
     MOEADPlugin,
     MultiFidelityPlugin,
-    Phase10PluginFixture,
     build_plugin_graph,
 )
 
@@ -28,8 +28,8 @@ from saealib.core.compiler.diagnostics import Severity
 from saealib.core.contracts import ObservationBatch
 
 
-def test_u10_0_external_plugin_proposes_evaluates_and_delivers_feedback() -> None:
-    fixture = Phase10PluginFixture()
+def test_external_plugin_proposes_evaluates_and_delivers_feedback() -> None:
+    fixture = ExternalPluginFixture()
     proposal, candidate_ids = fixture.propose()
     observations = fixture.evaluate(proposal, candidate_ids)
     feedback = fixture.feedback(proposal, observations)
@@ -40,7 +40,7 @@ def test_u10_0_external_plugin_proposes_evaluates_and_delivers_feedback() -> Non
     assert fixture.feedback_state[proposal.proposal_id] is feedback
 
 
-def test_u10_0_plugin_component_compiles_without_error_diagnostics() -> None:
+def test_external_plugin_component_compiles_without_error_diagnostics() -> None:
     plan = Compiler().compile(build_plugin_graph())
 
     assert not [
@@ -48,12 +48,10 @@ def test_u10_0_plugin_component_compiles_without_error_diagnostics() -> None:
         for diagnostic in plan.diagnostics
         if diagnostic.severity is Severity.ERROR
     ]
-    assert plan.graph.node_by_id("phase10_plugin").component is not None
+    assert plan.graph.node_by_id("external_plugin").component is not None
 
 
-def test_u10_1_differential_evolution_preserves_targets_and_replaces_improvements() -> (
-    None
-):
+def test_differential_evolution_preserves_targets_and_replaces_improvements() -> None:
     plugin = DifferentialEvolutionPlugin()
     proposal = plugin.propose()
     target_ids = np.asarray(proposal.relations["target_ids"], dtype=np.int64)
@@ -71,7 +69,7 @@ def test_u10_1_differential_evolution_preserves_targets_and_replaces_improvement
     assert np.array_equal(plugin.target_state[8203][0], before[8203])
 
 
-def test_u10_1_multifidelity_accepts_sparse_low_and_selects_high_promotion() -> None:
+def test_multifidelity_accepts_sparse_low_and_selects_high_promotion() -> None:
     plugin = MultiFidelityPlugin()
     low_proposal = plugin.low_proposal()
     low_feedback = plugin.low_feedback(low_proposal)
@@ -91,11 +89,11 @@ def test_u10_1_multifidelity_accepts_sparse_low_and_selects_high_promotion() -> 
     assert promoted_id == 0
     assert record.fidelity == MF_HIGH_FIDELITY
     assert record.cost == 1.0
-    assert dict(record.provenance) == {"plugin": "phase10", "stage": "high"}
+    assert dict(record.provenance) == {"plugin": "external_plugin", "stage": "high"}
     assert plugin.feedback_state["high"] is high_feedback
 
 
-def test_u10_2_cmaes_updates_only_on_complete_generation_feedback() -> None:
+def test_cmaes_updates_only_on_complete_generation_feedback() -> None:
     plugin = CMAESPlugin()
     proposal = plugin.propose()
     feedback = plugin.evaluate(proposal)
@@ -130,7 +128,7 @@ def test_u10_2_cmaes_updates_only_on_complete_generation_feedback() -> None:
     assert feedback.observations.candidate_ids.tolist() == CMAES_CANDIDATE_IDS.tolist()
 
 
-def test_u10_2_moead_updates_only_the_child_subproblem_neighborhood() -> None:
+def test_moead_updates_only_the_child_subproblem_neighborhood() -> None:
     plugin = MOEADPlugin()
     proposal = plugin.propose()
     assert np.asarray(proposal.relations["subproblem_ids"]).tolist() == [0, 1, 2]
@@ -150,7 +148,7 @@ def test_u10_2_moead_updates_only_the_child_subproblem_neighborhood() -> None:
     assert np.array_equal(plugin.subproblem_state[2][0], before[2])
 
 
-def test_u10_3_map_elites_uses_behavior_cells_and_quality_replacement() -> None:
+def test_map_elites_uses_behavior_cells_and_quality_replacement() -> None:
     plugin = MAPElitesPlugin()
     proposal = plugin.propose()
     assert plugin.emitter_calls == 1
@@ -189,7 +187,7 @@ def test_u10_3_map_elites_archive_is_independent_of_record_order() -> None:
     assert np.isclose(plugin.archive[(1,)][1], 1.28)
 
 
-def test_u10_3_coevolution_joins_named_blocks_and_updates_one_block() -> None:
+def test_coevolution_joins_named_blocks_and_updates_one_block() -> None:
     plugin = CooperativeCoevolutionPlugin()
     plugin.named_populations["block_a"].update_rows(
         [1], {"x": np.array([[0.3]], dtype=np.float64)}

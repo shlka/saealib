@@ -1,4 +1,4 @@
-"""Candidate/request ID allocation (ADR-0001 §2.2).
+"""Candidate and request ID allocation.
 
 Leaf module: its dependencies are limited to standard-library helpers,
 ``numpy``, and ``saealib.exceptions.ValidationError`` to avoid import-cycle

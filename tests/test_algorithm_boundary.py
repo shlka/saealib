@@ -1,4 +1,4 @@
-"""Phase 11 guards for the canonical ask/tell algorithm boundary."""
+"""Guards for the canonical ask/tell algorithm boundary."""
 
 from __future__ import annotations
 

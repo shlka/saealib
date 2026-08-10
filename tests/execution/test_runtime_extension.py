@@ -1,4 +1,4 @@
-"""Focused tests for the Phase 6 runtime extension boundary."""
+"""Focused tests for the runtime extension boundary."""
 
 from __future__ import annotations
 
@@ -415,8 +415,8 @@ def test_runtime_capabilities_are_checked_as_a_required_subset() -> None:
 
 
 def test_refusal_remains_a_step_outcome_and_recompile_is_step_boundary_data() -> None:
-    # L6 owns the protocol boundary only. Node dispatch and command execution
-    # remain Phase 7 work, so refusal is asserted as a normal RuntimeStep
+    # This test owns the protocol boundary only. Node dispatch and command
+    # execution are outside it, so refusal is asserted as a normal RuntimeStep
     # outcome and RECOMPILE_REQUIRED is exposed for the next step boundary.
     step = RuntimeStep(
         state=_state(),

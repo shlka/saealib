@@ -1,4 +1,4 @@
-"""Phase 9 longitudinal checks for representation-neutral execution."""
+"""Longitudinal checks for representation-neutral execution."""
 
 from __future__ import annotations
 
@@ -117,7 +117,7 @@ def _compile(problem: Problem, algorithm: Any, strategy: Any) -> Optimizer:
     return optimizer
 
 
-def test_phase9_five_real_graphs_compile_without_diagnostics() -> None:
+def test_five_real_graphs_compile_without_diagnostics() -> None:
     vector_ga = GA(
         CrossoverSBX(0.9, 15.0),
         MutationUniform(),
@@ -257,7 +257,7 @@ class _CustomSpace:
 
     def __init__(self) -> None:
         self._representation = RepresentationSpec(
-            kind="phase9_custom",
+            kind="external_custom",
             parameters=(ParameterSpec(name="width", value=Fixed(value=1)),),
         )
         self._services = ServiceRegistry()
@@ -301,11 +301,11 @@ class _CustomSpace:
 
 
 def _register_custom_kind() -> None:
-    if REPRESENTATION_KINDS.get("phase9_custom") is None:
+    if REPRESENTATION_KINDS.get("external_custom") is None:
         REPRESENTATION_KINDS.register(
-            "phase9_custom",
+            "external_custom",
             RepresentationKind(
-                name="phase9_custom",
+                name="external_custom",
                 description="test-only external representation",
                 parameters=(ParameterSpec(name="width", value=Fixed(value=1)),),
             ),
@@ -431,7 +431,7 @@ def test_external_representation_runs_archive_checkpoint_async_and_global_surrog
         ctx,
     )
     assert prediction.value.shape[0] == len(ctx.population)
-    checkpoint = tmp_path / "phase9.npz"
+    checkpoint = tmp_path / "external_representation.npz"
     ctx.save(checkpoint)
     loaded = type(ctx).load(checkpoint, problem)
     assert len(loaded.archive) == len(ctx.archive)

@@ -1,4 +1,4 @@
-"""Contract tests for Archive identity services (Unit H7)."""
+"""Contract tests for Archive identity services."""
 
 from __future__ import annotations
 

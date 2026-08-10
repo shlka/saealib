@@ -174,7 +174,7 @@ class _OptimizerEnvironment:
             getattr(insertion, "adapter_name", None) == "feedback_accumulator"
             for insertion in plan.plan.inserted_adapters
         ):
-            # The Phase 7 graph contains the accumulator delivery boundary;
+            # The graph contains the accumulator delivery boundary;
             # this seam only enables its stateful async runtime service.
             scheduler.enable_feedback_accumulator()
 

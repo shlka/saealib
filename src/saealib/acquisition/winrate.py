@@ -31,8 +31,8 @@ class WinRateAcquisition(AcquisitionFunction):
     ``predict_proba()`` + per-candidate win-rate-aggregation sequence and
     returns it as a ``"win_rate"`` prediction channel. This acquisition does
     not itself compute anything -- the win rate is a model prediction, not a
-    post-hoc acquisition score over an independent prediction (ADR-0001
-    Section 1.5): the ``(candidate, reference)`` pairs it would need to
+    post-hoc acquisition score over an independent prediction: the
+    ``(candidate, reference)`` pairs it would need to
     predict on are not known until the manager's own reference-sampling
     logic runs, and ``AcquisitionFunction`` deliberately has no
     ``Surrogate``/``SurrogateManager`` access to construct and predict on

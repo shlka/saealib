@@ -1,4 +1,4 @@
-"""Focused contracts for the Phase 6 asynchronous runtime boundary."""
+"""Focused contracts for the asynchronous runtime boundary."""
 
 from __future__ import annotations
 
@@ -113,7 +113,7 @@ def test_optimizer_environment_polls_scheduler_without_waiting() -> None:
 
 def test_optimizer_environment_reaches_inserted_feedback_accumulator_seam():
     # The adapter is intentionally represented by insertion metadata here:
-    # StageNodeAdapter self-loop execution is deferred to Phase 7.
+    # StageNodeAdapter self-loop execution is outside this boundary.
     enabled: list[bool] = []
 
     class Scheduler:

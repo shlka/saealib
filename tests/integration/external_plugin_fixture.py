@@ -1,4 +1,4 @@
-"""Small external-plugin-shaped fixture used by Phase 10 integration tests."""
+"""Small external-plugin-shaped fixture used by integration tests."""
 
 from __future__ import annotations
 
@@ -101,17 +101,17 @@ class PluginGraphTemplate(GraphTemplate):
         return ComponentGraph(
             nodes=(
                 ComponentNode(
-                    component_id="phase10_plugin",
-                    component=bindings.components["phase10_plugin"],
+                    component_id="external_plugin",
+                    component=bindings.components["external_plugin"],
                 ),
             ),
-            entry_points=(NodeRef(component_id="phase10_plugin"),),
+            entry_points=(NodeRef(component_id="external_plugin"),),
         )
 
 
 @dataclass
-class Phase10PluginFixture:
-    """Deterministic propose/evaluate/feedback flow for later Phase 10 units."""
+class ExternalPluginFixture:
+    """Deterministic propose/evaluate/feedback flow for integration tests."""
 
     rng: np.random.Generator = field(
         default_factory=lambda: np.random.default_rng(PLUGIN_SEED)
@@ -212,7 +212,7 @@ class CMAESPlugin:
     generation: int = 0
 
     def problem(self) -> Problem:
-        return Phase10PluginFixture().problem()
+        return ExternalPluginFixture().problem()
 
     def evaluator(self) -> SerialEvaluator:
         return SerialEvaluator()
@@ -257,7 +257,7 @@ class CMAESPlugin:
             payload=proposal.candidates.genomes,
         )
         result = self.evaluator().evaluate_request(request, self.problem())
-        observations = Phase10PluginFixture().observations_from_result(
+        observations = ExternalPluginFixture().observations_from_result(
             CMAES_CANDIDATE_IDS, result, include_cv=False
         )
         return FeedbackBatch(
@@ -348,7 +348,7 @@ class MOEADPlugin:
             payload=proposal.candidates.genomes,
         )
         result = self.evaluator().evaluate_request(request, self.problem())
-        observations = Phase10PluginFixture().observations_from_result(
+        observations = ExternalPluginFixture().observations_from_result(
             MOEAD_CANDIDATE_IDS, result, objective_count=2
         )
         return FeedbackBatch(
@@ -384,7 +384,7 @@ class DifferentialEvolutionPlugin:
     target_state: dict[int, tuple[np.ndarray, float]] = field(default_factory=dict)
 
     def problem(self) -> Problem:
-        return Phase10PluginFixture().problem()
+        return ExternalPluginFixture().problem()
 
     def evaluator(self) -> SerialEvaluator:
         return SerialEvaluator()
@@ -438,7 +438,7 @@ class DifferentialEvolutionPlugin:
             payload=proposal.candidates.genomes,
         )
         result = self.evaluator().evaluate_request(request, self.problem())
-        observations = Phase10PluginFixture().observations_from_result(
+        observations = ExternalPluginFixture().observations_from_result(
             DE_TRIAL_IDS, result
         )
         return FeedbackBatch(
@@ -628,7 +628,7 @@ class CooperativeCoevolutionPlugin:
         )
 
     def problem(self) -> Problem:
-        return Phase10PluginFixture().problem()
+        return ExternalPluginFixture().problem()
 
     def evaluator(self) -> SerialEvaluator:
         return SerialEvaluator()
@@ -640,7 +640,7 @@ class CooperativeCoevolutionPlugin:
             payload=proposal.candidates.genomes,
         )
         result = self.evaluator().evaluate_request(request, self.problem())
-        observations = Phase10PluginFixture().observations_from_result(
+        observations = ExternalPluginFixture().observations_from_result(
             np.array([COEVOLUTION_CANDIDATE_ID], dtype=np.int64), result
         )
         return FeedbackBatch(
@@ -721,7 +721,7 @@ class MultiFidelityPlugin:
             source=TRUE,
             fidelity=fidelity,
             cost=cost,
-            provenance={"plugin": "phase10", "stage": stage},
+            provenance={"plugin": "external_plugin", "stage": stage},
         )
 
     def feedback_from_records(
@@ -813,5 +813,5 @@ class MultiFidelityPlugin:
 def build_plugin_graph() -> ComponentGraph:
     """Build the graph used by the focused compiler assertion."""
     return PluginGraphTemplate().build_graph(
-        ComponentBindings(components={"phase10_plugin": PluginCandidateComponent()})
+        ComponentBindings(components={"external_plugin": PluginCandidateComponent()})
     )

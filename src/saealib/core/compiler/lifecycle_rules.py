@@ -343,7 +343,7 @@ class FeedbackAccumulatorRule:
 
 @dataclass(frozen=True)
 class _DeliveryProperties:
-    """The small producer-side lifecycle declaration available in Phase 5."""
+    """The small producer-side lifecycle declaration used by compilation."""
 
     channels: frozenset[str]
     sources: frozenset[str]

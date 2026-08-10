@@ -1,6 +1,6 @@
 """Tests for SearchSpace protocol, ServiceRegistry, VectorSpace, and ObjectSpace.
 
-Each test covers specific requirements from Unit H4 and documents the
+Each test covers a specific search-space contract and documents the
 implementation-side mutation that would cause it to fail.
 """
 

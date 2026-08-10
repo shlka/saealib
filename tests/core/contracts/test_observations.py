@@ -1,4 +1,4 @@
-"""Contract tests for the J2 observation column store."""
+"""Contract tests for the observation column store."""
 
 from typing import cast
 
