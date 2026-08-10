@@ -116,23 +116,25 @@ class GenerationBasedStrategy(OptimizationStrategy):
                 ),
             ],
         )
-        return Pipeline(
-            name="generation_based",
-            steps=[
-                stage_component(
-                    SurrogateFitStage(
-                        provider.surrogate_manager,
-                        cbmanager=cbmanager,
-                    )
-                ),
-                Repeat(
-                    surrogate_generation,
-                    count=self.gen_ctrl,
-                    name="surrogate_generations",
-                ),
-                true_generation,
-            ],
-        )
+        steps: list[object] = []
+        if self.gen_ctrl:
+            steps.extend(
+                (
+                    stage_component(
+                        SurrogateFitStage(
+                            provider.surrogate_manager,
+                            cbmanager=cbmanager,
+                        )
+                    ),
+                    Repeat(
+                        surrogate_generation,
+                        count=self.gen_ctrl,
+                        name="surrogate_generations",
+                    ),
+                )
+            )
+        steps.append(true_generation)
+        return Pipeline(name="generation_based", steps=steps)
 
     def build_graph(self, provider: ComponentProvider) -> ComponentGraph:
         """Lower the structured generation-based Pipeline to its graph."""

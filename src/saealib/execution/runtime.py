@@ -945,8 +945,8 @@ class PipelineRuntime:
                 )
                 if metadata.recompile_required:
                     raise ValidationError(
-                        "PipelineRuntime cannot satisfy RECOMPILE_REQUIRED without "
-                        "a recompile provider"
+                        "PipelineRuntime cannot recompile a structured plan "
+                        "while preserving its region frames"
                     )
                 if any(
                     result.status is NodeStatus.FAILED
@@ -1005,8 +1005,8 @@ class PipelineRuntime:
             )
             if metadata.recompile_required:
                 raise ValidationError(
-                    "PipelineRuntime cannot satisfy RECOMPILE_REQUIRED without "
-                    "a recompile provider"
+                    "PipelineRuntime cannot recompile a structured plan while "
+                    "preserving its region frames"
                 )
             failed = next(
                 (
@@ -1245,9 +1245,19 @@ class PipelineRuntime:
 
 
 class AsyncPipelineRuntime(PipelineRuntime):
-    """Drive pending asynchronous evaluation lifecycle through a scheduler."""
+    """Drive sequential asynchronous evaluation lifecycle through a scheduler."""
 
     capabilities = frozenset({"partial_feedback"})
+
+    def initialize(
+        self, plan: ExecutablePlan, state: OptimizationState
+    ) -> RuntimeSession:
+        """Create a session for a sequential plan only."""
+        if isinstance(plan, ExecutablePlan) and isinstance(plan.graph, StructuredGraph):
+            raise ValidationError(
+                "AsyncPipelineRuntime supports sequential graph plans only"
+            )
+        return super().initialize(plan, state)
 
     @staticmethod
     def _has_unfinished_async_work(

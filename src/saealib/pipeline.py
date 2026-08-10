@@ -42,6 +42,7 @@ class Stage(ABC):
     notation: str = ""
     stages: list[Stage]
     _execution_mode = "optimization_state"
+    _saealib_stage_boundary = True
 
     def __init__(
         self,

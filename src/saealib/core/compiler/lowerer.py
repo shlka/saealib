@@ -189,6 +189,12 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
                 for node in (graph.nodes[-1],)
             )
         else:
+            if getattr(item, "_saealib_stage_boundary", False):
+                raise ValidationError(
+                    "Structured lowering does not accept bare Stage "
+                    f"{type(item).__name__!r}; wrap it with stage_component(...) "
+                    "or use the sequential runtime"
+                )
             contract_method = getattr(item, "contract", None)
             if not callable(contract_method):
                 raise ValidationError(

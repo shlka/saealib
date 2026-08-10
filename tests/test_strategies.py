@@ -192,6 +192,20 @@ class TestGenerationBasedStrategy:
         assert ctx.gen == 1
         assert ctx.fe == len(ctx.population)
 
+    def test_gen_ctrl_zero_skips_surrogate_fit(self):
+        fit_count = [0]
+        ctx = _make_ctx()
+        surrogate = RBFSurrogate(gaussian_kernel, DIM).with_post_fit(
+            lambda tx, ty, c: operator.setitem(fit_count, 0, fit_count[0] + 1)
+        )
+        provider = _MockProvider(
+            _make_ga(),
+            GlobalSurrogateManager(surrogate),
+            MeanPrediction(),
+        )
+        GenerationBasedStrategy(gen_ctrl=0).step(ctx, cast(Any, provider))
+        assert fit_count[0] == 0
+
     def test_pipeline_rebuilt_on_every_step(self):
         ctx, provider, strategy = self._setup(gen_ctrl=3)
         ctx = strategy.step(ctx, provider)

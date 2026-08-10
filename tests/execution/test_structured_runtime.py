@@ -20,7 +20,7 @@ from saealib.core.compiler import CompileContext, Compiler
 from saealib.core.runtime import NodeResult, NodeStatus
 from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS, USER_DATA
 from saealib.exceptions import ValidationError
-from saealib.execution.runtime import PipelineRuntime
+from saealib.execution.runtime import AsyncPipelineRuntime, PipelineRuntime
 from saealib.pipeline import Branch, Loop, Pipeline, Repeat, Stage
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
@@ -256,6 +256,20 @@ def test_structured_external_environment_rejects_failed_node() -> None:
     assert environment.finished_generations == 0
 
 
+def test_structured_runtime_rejects_recompile_required() -> None:
+    plan = _compile(Pipeline([_StatusOnce(NodeStatus.RECOMPILE_REQUIRED)]))
+
+    with pytest.raises(ValidationError, match="structured plan"):
+        PipelineRuntime().advance(PipelineRuntime().initialize(plan, _state()))
+
+
+def test_async_runtime_rejects_structured_plan_at_initialization() -> None:
+    plan = _compile(Pipeline([_Increment()]))
+
+    with pytest.raises(ValidationError, match="sequential graph plans only"):
+        AsyncPipelineRuntime().initialize(plan, _state())
+
+
 class _LegacyStage(Stage):
     name = "legacy"
 
@@ -264,7 +278,5 @@ class _LegacyStage(Stage):
 
 
 def test_structured_plan_rejects_optimization_state_stage_boundary() -> None:
-    plan = _compile(Pipeline([_LegacyStage()]))
-
-    with pytest.raises(ValidationError, match="OptimizationState"):
-        PipelineRuntime().initialize(plan, _state())
+    with pytest.raises(ValidationError, match="stage_component"):
+        _compile(Pipeline([_LegacyStage()]))
