@@ -172,11 +172,12 @@ def test_population_row_update_is_atomic_and_bumps_once() -> None:
     assert updated.get(state_key) is pop
 
 
-def test_multiple_row_updates_are_not_atomic_across_the_patch() -> None:
+def test_multiple_row_updates_are_atomic_across_the_patch() -> None:
     first_key = key("first_population")
     second_key = key("second_population")
     first = population()
     second = population()
+    before_first = first.get_array("x").copy()
     before_second = second.get_array("x").copy()
     store = StateStore({first_key: first, second_key: second})
 
@@ -196,9 +197,10 @@ def test_multiple_row_updates_are_not_atomic_across_the_patch() -> None:
             )
         )
 
-    assert np.array_equal(first.get_array("x")[:1], [10.0])
+    assert np.array_equal(first.get_array("x"), before_first)
     assert np.array_equal(second.get_array("x"), before_second)
     assert store.get(first_key) is first
+    assert store.get(second_key) is second
 
 
 @dataclass(frozen=True, kw_only=True)

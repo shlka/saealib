@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from collections.abc import Callable, Iterable, Mapping
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, TypeVar, cast
@@ -83,12 +84,11 @@ class StateStore:
     def apply_patch(self, patch: StatePatch) -> StateStore:
         """Apply ``patch`` and return the new store, consuming this store.
 
-        Each individual ``StateUpdate`` inherits the atomicity of the
-        operation it delegates to, such as ``Population.update_rows``.  A
-        patch containing multiple ``StateUpdate`` values is not atomic across
-        those updates: if a later update fails, earlier updates remain applied
-        and this store remains live.  Keeping validation in the delegated
-        operation avoids duplicating its row-validation rules here.
+        All update kinds, targets, and ``PopulationRowUpdate`` operations are
+        validated against shadow populations before any owned value is
+        changed.  If preflight fails, this store remains live and its values
+        are unchanged.  After successful preflight, the operations are
+        committed in write order and this store is consumed.
         """
         self._check_live()
         if not isinstance(patch, StatePatch):
@@ -116,6 +116,20 @@ class StateStore:
 
         values = dict(self._values)
         self._preflight_update_kinds(writes, values)
+        shadows: dict[int, Population] = {}
+        for key, update in writes.items():
+            if isinstance(update, PopulationRowUpdate):
+                current = cast(Population, values[key])
+                shadow = shadows.get(id(current))
+                if shadow is None:
+                    shadow = copy.deepcopy(current)
+                    shadows[id(current)] = shadow
+                shadow.update_rows(
+                    update.indices,
+                    dict(update.values),
+                    genome=update.genome,
+                )
+
         for key, update in writes.items():
             if isinstance(update, StateUpdate):
                 current = values[key]
@@ -146,8 +160,9 @@ class StateStore:
         """Validate update dispatch before mutating any owned object.
 
         Row shape, dtype, and index validation deliberately remain in
-        ``Population.update_rows``.  That method is the single source of truth
-        for row-update semantics and atomicity.
+        ``Population.update_rows``.  Preflight applies those operations to
+        shadow populations, preserving the single source of truth for row
+        update semantics without mutating owned values.
         """
         for key, update in writes.items():
             if not isinstance(update, StateUpdate):
