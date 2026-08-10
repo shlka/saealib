@@ -50,6 +50,7 @@ exclude_patterns = [
     "Thumbs.db",
     ".DS_Store",
     "**/_page_template.md",
+    "pr/*",
 ]
 
 # -- MyST-Parser -------------------------------------------------------------
