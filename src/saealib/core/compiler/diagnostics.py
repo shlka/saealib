@@ -130,6 +130,8 @@ for _name, _description in (
         "A data connection names a port shared by multiple roles without "
         "selecting one.",
     ),
+    ("unresolved_input", "A required input has no compatible upstream producer."),
+    ("ambiguous_input", "An input has multiple compatible upstream producers."),
 ):
     DIAGNOSTIC_CODES.register(
         _name,

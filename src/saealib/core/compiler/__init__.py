@@ -92,6 +92,7 @@ __all__ = [
 
 # Implementation names remain importable for the package's own compatibility
 # tests and internal modules, but are intentionally absent from ``__all__``.
+from saealib.core.compiler.dataflow_rules import StructuredDataflowRule
 from saealib.core.compiler.lifecycle_rules import (
     FeedbackAccumulatorRule,
     LifecycleCompatibilityRule,
