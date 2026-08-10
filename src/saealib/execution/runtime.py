@@ -1619,6 +1619,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                 reattach = getattr(environment, "reattach", None)
                 if callable(reattach):
                     state = reattach(state)
+            before = state
             poll = getattr(environment, "poll", None)
             if callable(poll):
                 state = poll(state)
@@ -1627,12 +1628,16 @@ class AsyncPipelineRuntime(PipelineRuntime):
                 )
             if state.pending_evaluations:
                 if environment.is_terminated(state):
+                    if state is before:
+                        time.sleep(0.001)
                     return self._step(
                         session,
                         state,
                         generation_open,
                         plan=plan,
                     )
+                if state is before:
+                    time.sleep(0.001)
                 return self._step(
                     session,
                     state,

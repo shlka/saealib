@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from unittest.mock import Mock
+
 import numpy as np
 import pytest
 
+import saealib.execution.runtime as runtime_module
 from saealib.callback import GenerationEndEvent, GenerationStartEvent, RunStartEvent
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import EvaluationPlanState, OptimizationState
@@ -25,7 +28,11 @@ from saealib.core.state import (
     USER_DATA,
 )
 from saealib.exceptions import ValidationError
-from saealib.execution.evaluator import EvaluationRequest
+from saealib.execution.evaluator import (
+    EvaluationRequest,
+    EvaluationStatus,
+    PendingEvaluation,
+)
 from saealib.execution.runtime import AsyncPipelineRuntime, PipelineRuntime
 from saealib.pipeline import Branch, Loop, Pipeline, Repeat, Stage
 from saealib.policies.evaluation import EvaluationPlan
@@ -136,6 +143,19 @@ class _StructuredEnvironment:
 
     def fatal(self, state) -> None:
         del state
+
+
+class _StructuredAsyncPollingEnvironment(_StructuredEnvironment):
+    def __init__(self, terminated: bool) -> None:
+        super().__init__()
+        self.terminated = terminated
+
+    def poll(self, state):
+        return state
+
+    def is_terminated(self, state) -> bool:
+        del state
+        return self.terminated
 
 
 class _StatusOnce(_Increment):
@@ -440,6 +460,30 @@ def test_async_runtime_accepts_structured_plan_at_initialization() -> None:
 
     assert step.finished
     assert step.state.get_state(USER_DATA) == 1
+
+
+@pytest.mark.parametrize("terminated", [False, True])
+def test_structured_async_polling_same_state_sleeps(
+    terminated: bool, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    environment = _StructuredAsyncPollingEnvironment(terminated)
+    request = EvaluationRequest(np.int64(1), np.array([np.int64(1)]), np.empty((1, 1)))
+    pending = PendingEvaluation(
+        request=request,
+        status=EvaluationStatus.PENDING,
+        applied_candidate_ids=np.array([np.int64(1)]),
+    )
+    state = _state().replace(pending_evaluations={1: pending})
+    runtime = AsyncPipelineRuntime(environment=environment)
+    sleep = Mock()
+    monkeypatch.setattr(runtime_module.time, "sleep", sleep)
+
+    step = runtime.advance(
+        runtime.initialize(_compile(Pipeline([_Increment()])), state)
+    )
+
+    assert step.state is state
+    sleep.assert_called_once_with(0.001)
 
 
 class _LegacyStage(Stage):
