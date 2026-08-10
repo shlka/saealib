@@ -252,8 +252,26 @@ class Population(Generic[T_Individual]):
     ) -> None:
         """Append one candidate.
 
-        An explicit candidate ID other than the unassigned ``-1`` sentinel is
-        not accepted through this public method.
+        Parameters
+        ----------
+        element : Individual-like object, dict, or None
+            Candidate values read from an individual or mapping. Values passed
+            through ``kwargs`` take precedence over values from ``element``.
+        **kwargs : Any
+            Column values to assign. ``genome`` or ``genomes`` supplies the
+            single genome required by a non-dense genome representation.
+
+        Raises
+        ------
+        ValidationError
+            If an explicit candidate ID other than the unassigned ``-1``
+            sentinel is supplied, or if a custom genome representation does
+            not receive exactly one genome.
+
+        Notes
+        -----
+        The population grows its storage as needed. Appending invalidates
+        cached values and structure-dependent views.
         """
         self._append_internal(element, preserve_ids=False, **kwargs)
 
@@ -341,7 +359,26 @@ class Population(Generic[T_Individual]):
         self.mod_structure()
 
     def extend(self, other: Self | dict) -> None:
-        """Extend the population while rejecting assigned candidate IDs."""
+        """Extend the population with another candidate collection.
+
+        Parameters
+        ----------
+        other : Population or dict
+            Source population or column-data mapping. A mapping may provide
+            ``genome`` or ``genomes`` for an opaque genome representation.
+
+        Raises
+        ------
+        ValidationError
+            If the source supplies assigned candidate IDs through this public
+            method, or omits genomes required by a custom representation.
+
+        Notes
+        -----
+        An empty source is a no-op. Otherwise rows are copied, storage grows
+        as needed, and cached values and structure-dependent views are
+        invalidated.
+        """
         self._extend_internal(other, preserve_ids=False)
 
     def _validate_incoming_ids(
@@ -578,7 +615,21 @@ class Population(Generic[T_Individual]):
         return True
 
     def extract(self, indices: np.ndarray | list[int] | slice) -> Self:
-        """Return a new population containing rows selected by ``indices``."""
+        """Return a new population containing rows selected by ``indices``.
+
+        Parameters
+        ----------
+        indices : ndarray, list of int, or slice
+            Indices into the active rows. Rows appear in the requested order;
+            a slice follows normal Python slicing semantics.
+
+        Returns
+        -------
+        Population
+            A new population of the same concrete type, schema, and genome
+            representation. Row and genome data have independent storage, and
+            the source population is unchanged.
+        """
         if isinstance(indices, slice):
             start, stop, step = indices.indices(self._size)
             n_extract = len(range(start, stop, step))
@@ -622,7 +673,19 @@ class Population(Generic[T_Individual]):
             self.mod_structure()
 
     def delete(self, index: int | slice | list[int] | np.ndarray) -> None:
-        """Delete candidates selected by ``index`` and invalidate structure state."""
+        """Delete candidates selected by ``index`` in place.
+
+        Parameters
+        ----------
+        index : int, slice, list of int, or ndarray
+            Row index or indices to remove from the active population.
+
+        Notes
+        -----
+        Surviving rows retain their relative order. The operation mutates the
+        population and invalidates cached values and structure-dependent
+        views.
+        """
         bool_mask = np.ones(self._size, dtype=bool)
         bool_mask[index] = False
         new_size = np.sum(bool_mask)
@@ -634,7 +697,23 @@ class Population(Generic[T_Individual]):
         self.mod_structure()
 
     def reorder(self, order: np.ndarray) -> None:
-        """Reorder candidates according to a complete row permutation."""
+        """Reorder candidates according to a complete row permutation.
+
+        Parameters
+        ----------
+        order : ndarray of int
+            Permutation containing one row index for every active candidate.
+
+        Raises
+        ------
+        ValueError
+            If ``order`` does not contain one entry per active row.
+
+        Notes
+        -----
+        Reordering is in place and invalidates cached values and
+        structure-dependent views.
+        """
         if len(order) != self._size:
             raise ValueError(
                 f"Order length {len(order)} must match population size {self._size}"
@@ -646,7 +725,27 @@ class Population(Generic[T_Individual]):
         self.mod_structure()
 
     def argsort(self, name: str, reverse: bool = False) -> np.ndarray:
-        """Return row indices that order a named column."""
+        """Return row indices that order a named column.
+
+        Parameters
+        ----------
+        name : str
+            Name of a column in the population schema.
+        reverse : bool, optional
+            If true, return the indices in descending rather than ascending
+            column order.
+
+        Returns
+        -------
+        ndarray of int
+            Indices for the active rows in sorted order. The population is not
+            mutated.
+
+        Raises
+        ------
+        KeyError
+            If ``name`` is not present in the population schema.
+        """
         if name not in self._data:
             raise KeyError(f"Key '{name}' not found in population schema")
         sort_arg = np.argsort(self._data[name][: self._size])
@@ -665,7 +764,21 @@ class Population(Generic[T_Individual]):
         self.mod_structure()
 
     def empty_like(self, capacity: int | None = None):
-        """Create an empty population with the same schema and genome representation."""
+        """Create an empty population with the same schema and representation.
+
+        Parameters
+        ----------
+        capacity : int or None, optional
+            Storage capacity for the new population. If omitted, the current
+            capacity is reused.
+
+        Returns
+        -------
+        Population
+            An empty population of the same concrete type, schema, and genome
+            representation. It reuses the associated space and dense-view
+            service but has independent row storage.
+        """
         if capacity is None:
             capacity = self._capacity
         # Dense populations can reconstruct their empty x-backed genome view

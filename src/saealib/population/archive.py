@@ -157,6 +157,17 @@ class ArchiveMixin:
     Duplicate identity is normally supplied by search-space services. The
     ``key_attr``, ``atol``, and ``rtol`` arguments remain supported for direct
     schema-backed construction without those services.
+
+    Attributes
+    ----------
+    duplicate_policy : str
+        Duplicate handling policy selected at construction.
+    key_attr : str
+        Schema column used by compatibility identity handling.
+    atol : float
+        Effective absolute tolerance, including any service-owned value.
+    rtol : float
+        Effective relative tolerance, including any service-owned value.
     """
 
     def __init__(
@@ -177,6 +188,68 @@ class ArchiveMixin:
         distance_service: DistanceService | None = None,
         **kwargs,
     ):
+        """Initialize archive storage and duplicate-resolution services.
+
+        Parameters
+        ----------
+        attrs : list of PopulationAttribute
+            Column definitions for archive rows. With
+            ``duplicate_policy="append"``, the schema must contain scalar
+            ``int64`` columns named ``id`` and ``request_id``.
+        init_capacity : int, optional
+            Initial row-storage capacity passed to ``Population``.
+        key_attr : str, optional
+            Schema column used by compatibility duplicate detection. In a
+            service-backed archive, ``"x"`` may also provide the dense genome
+            used to resolve an incoming candidate.
+        atol : float, optional
+            Explicit absolute-tolerance override. When omitted, the archive
+            uses the equivalence service's tolerance when applicable, or zero
+            for exact matching.
+        rtol : float, optional
+            Explicit relative-tolerance override, with the same resolution
+            rules as ``atol``.
+        duplicate_policy : {"keep_first", "replace", "append"}, optional
+            Action for a duplicate candidate. ``"keep_first"`` leaves the
+            existing row unchanged, ``"replace"`` updates the existing row,
+            and ``"append"`` retains every observation while requiring the
+            observation schema described for ``attrs``.
+        genomes : GenomeBatch or None, optional
+            Initial opaque genome batch passed to ``Population``.
+        dense_numeric_view : DenseNumericView or None, optional
+            Service used when archive operations need dense coordinates for a
+            non-dense genome representation.
+        dense_view : DenseNumericView or None, optional
+            Compatibility alias for ``dense_numeric_view``.
+        services : object or None, optional
+            Service provider or registry used when ``space`` is not supplied.
+            Explicit service arguments take precedence over services resolved
+            from this provider.
+        space : object or None, optional
+            Search-space or service provider. When supplied, it takes
+            precedence over ``services`` and its ``services`` registry is
+            queried for omitted service arguments.
+        fingerprint_service : FingerprintService or None, optional
+            Explicit service for exact identity lookup of opaque genomes.
+        equivalence_service : EquivalenceService or None, optional
+            Explicit service for tolerance-based identity lookup of opaque
+            genomes.
+        distance_service : DistanceService or None, optional
+            Explicit service for nearest-neighbor queries on opaque genomes.
+        **kwargs : Any
+            Additional constructor keywords accepted for population
+            compatibility.
+
+        Raises
+        ------
+        ValueError
+            If ``duplicate_policy`` is unknown or a compatibility
+            ``key_attr`` is absent from the schema.
+        ValidationError
+            If an append archive has an invalid observation schema, or if
+            service-backed duplicate detection lacks its required identity
+            service.
+        """
         if duplicate_policy not in {"keep_first", "replace", "append"}:
             raise ValueError(
                 "duplicate_policy must be 'keep_first', 'replace', or 'append'"
@@ -316,7 +389,7 @@ class ArchiveMixin:
         self: Any, element: Individual | dict[str, Any] | None = None, **kwargs
     ) -> int:
         """
-        Add a new solution to the archive. Duplicate solutions are ignored.
+        Add a solution according to the configured duplicate policy.
 
         Parameters
         ----------
@@ -329,7 +402,13 @@ class ArchiveMixin:
         Returns
         -------
         idx : int
-            Destination Index
+            Index of the retained or newly added row.
+
+        Notes
+        -----
+        ``"keep_first"`` returns the existing row for a duplicate,
+        ``"replace"`` updates or replaces that row, and ``"append"`` retains
+        every observation subject to its ID and request-ID constraints.
 
         Examples
         --------
@@ -593,25 +672,80 @@ class ArchiveMixin:
         return None
 
     def delete(self, index):
-        """Delete element(s) and invalidate the kNN cache."""
+        """Delete candidates selected by ``index`` in place.
+
+        Parameters
+        ----------
+        index : int, slice, list of int, or ndarray
+            Row index or indices to remove from the active archive.
+
+        Notes
+        -----
+        Surviving rows retain their relative order. The operation invalidates
+        the archive's identity and nearest-neighbor caches.
+        """
         super().delete(index)  # ty: ignore[unresolved-attribute]
         self._kdtree = None
         self._invalidate_service_indexes()
 
     def extend(self, other: Any) -> None:
-        """Extend the archive and invalidate identity/neighbor caches."""
+        """Extend the archive with another candidate collection.
+
+        Parameters
+        ----------
+        other : Population or dict
+            Source population or column-data mapping accepted by
+            :meth:`Population.extend`.
+
+        Notes
+        -----
+        The operation invalidates the archive's identity and nearest-neighbor
+        caches after copying the source rows.
+        """
         super().extend(other)  # ty: ignore[unresolved-attribute]
         self._kdtree = None
         self._invalidate_service_indexes()
 
     def reorder(self, order: np.ndarray) -> None:
-        """Reorder rows and invalidate caches whose values are row-indexed."""
+        """Reorder rows according to a complete row permutation.
+
+        Parameters
+        ----------
+        order : ndarray of int
+            Permutation containing one row index for every active candidate.
+
+        Raises
+        ------
+        ValueError
+            If ``order`` does not contain one entry per active row.
+
+        Notes
+        -----
+        Reordering is in place and invalidates caches whose values are
+        row-indexed.
+        """
         super().reorder(order)  # ty: ignore[unresolved-attribute]
         self._kdtree = None
         self._invalidate_service_indexes()
 
     def truncate(self, new_size: int) -> None:
-        """Truncate rows and invalidate identity/neighbor caches."""
+        """Keep the first ``new_size`` rows in place.
+
+        Parameters
+        ----------
+        new_size : int
+            Number of rows to retain.
+
+        Raises
+        ------
+        ValueError
+            If ``new_size`` is negative.
+
+        Notes
+        -----
+        Truncation invalidates the archive's identity and nearest-neighbor
+        caches.
+        """
         super().truncate(new_size)  # ty: ignore[unresolved-attribute]
         self._kdtree = None
         self._invalidate_service_indexes()
@@ -679,7 +813,20 @@ class ArchiveMixin:
         return np.atleast_1d(idx), np.atleast_1d(dist)
 
     def empty_like(self: Any, capacity: int | None = None):
-        """Create an empty archive while retaining resolved identity services."""
+        """Create an empty archive while retaining resolved identity services.
+
+        Parameters
+        ----------
+        capacity : int or None, optional
+            Storage capacity for the new archive. If omitted, the current
+            capacity is reused.
+
+        Returns
+        -------
+        Archive
+            An empty archive of the same concrete type and schema with
+            independent row storage and the same identity services.
+        """
         if capacity is None:
             capacity = self._capacity
         if isinstance(getattr(self, "_genome_batch", None), DenseVectorBatch):
@@ -708,7 +855,10 @@ class ArchiveMixin:
 
 
 class Archive(ArchiveMixin, Population):
-    """Concrete archive: ``ArchiveMixin`` mixed into ``Population``."""
+    """Concrete archive combining ``ArchiveMixin`` with ``Population``.
+
+    Its constructor is inherited from ``ArchiveMixin``.
+    """
 
     pass
 
