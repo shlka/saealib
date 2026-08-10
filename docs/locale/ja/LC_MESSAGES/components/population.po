@@ -67,12 +67,12 @@ msgid "Role"
 msgstr "役割"
 
 #: ../../../components/population.md
-msgid "`get_array(key)` / `get_readonly_array(key)`"
-msgstr "`get_array(key)` / `get_readonly_array(key)`"
+msgid "`get_array(key)`"
+msgstr "`get_array(key)`"
 
 #: ../../../components/population.md
-msgid "Gets an attribute's raw array. The latter returns a write-protected view"
-msgstr "属性の生配列を取得する。後者は書き込み禁止のviewを返す"
+msgid "Gets an attribute's raw array as a write-protected view"
+msgstr "属性の生配列を取得する。書き込み禁止のviewを返す"
 
 #: ../../../components/population.md
 msgid "`update_array(key, value)`"
@@ -488,4 +488,3 @@ msgstr "{py:class}`saealib.ParetoMixin`"
 
 #~ msgid "参照"
 #~ msgstr ""
-

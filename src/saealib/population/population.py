@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 import numpy as np
 from typing_extensions import Self
 
-from saealib._deprecated import warn_deprecated
 from saealib.exceptions import ValidationError
 from saealib.identity import CandidateIds, PopulationAttribute
 from saealib.population.genome import DenseVectorBatch, GenomeBatch, ObjectBatch
@@ -1056,20 +1055,6 @@ class Population(Generic[T_Individual]):
         view = self._get_mutable_array(key).view()
         view.flags.writeable = False
         return view
-
-    def get_readonly_array(self, key: str) -> np.ndarray:
-        """Return a read-only view of the specified key.
-
-        This migration alias remains available for one minor release.  New
-        code should use :meth:`get_array`.
-        """
-        warn_deprecated(
-            "Population.get_readonly_array()",
-            "Population.get_array()",
-            "1.0",
-            stacklevel=2,
-        )
-        return self.get_array(key)
 
     def update_array(self, key: str, value: Any) -> None:
         """Update array in place and bump the value version."""

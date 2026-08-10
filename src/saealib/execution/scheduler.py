@@ -64,31 +64,10 @@ from saealib.policies.feedback import (
     FeedbackResult,
     _feedback_batch_from_result,
 )
-from saealib.population.genome import DenseVectorBatch
 from saealib.stages import deliver_feedback
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
-
-
-class _LegacyDenseVectorBatch(DenseVectorBatch):
-    def __getitem__(self, index: Any) -> Any:
-        return self.array[index]
-
-
-def _scheduler_request(request: EvaluationRequest) -> EvaluationRequest:
-    payload = request.payload
-    if not isinstance(payload, DenseVectorBatch) or isinstance(
-        payload, _LegacyDenseVectorBatch
-    ):
-        return request
-    return EvaluationRequest(
-        request.request_id,
-        request.candidate_ids,
-        _LegacyDenseVectorBatch(payload.array),
-        request.outputs,
-        request.metadata,
-    )
 
 
 class AsyncEvaluationScheduler:
@@ -303,7 +282,6 @@ class AsyncEvaluationScheduler:
                         request.outputs,
                         {**request.metadata, "proposal_id": proposal_id},
                     )
-                request = _scheduler_request(request)
                 handle = self.evaluator.submit(request, state.problem)
                 started.append((request_id, handle))
                 pending = PendingEvaluation(

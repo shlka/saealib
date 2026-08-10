@@ -15,7 +15,7 @@ On top of the standard attributes `x`/`f`/`g`/`cv`, algorithm-specific attribute
 
 | Method | Role |
 |---|---|
-| `get_array(key)` / `get_readonly_array(key)` | Gets an attribute's raw array. The latter returns a write-protected view |
+| `get_array(key)` | Gets an attribute's raw array as a write-protected view |
 | `update_array(key, value)` | Updates an attribute array in bulk |
 | `get(key, default=None)` | A safe getter that returns `default` if the attribute doesn't exist |
 | `append(element=None, **kwargs)` | Adds a single individual |
