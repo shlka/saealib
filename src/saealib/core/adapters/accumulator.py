@@ -55,6 +55,7 @@ from saealib.core.contracts.feedback import (
     OUT_OF_ORDER_ALLOWED,
 )
 from saealib.core.contracts.feedbacks import FeedbackBatch, FeedbackContract
+from saealib.core.contracts.identity import CandidateIds
 from saealib.core.contracts.observation import (
     OBSERVATION_SOURCES,
     OBSERVATION_SUBJECT_KINDS,
@@ -73,7 +74,6 @@ from saealib.core.contracts.proposals import (
     QuantityRequirement,
 )
 from saealib.exceptions import ValidationError
-from saealib.identity import CandidateIds
 from saealib.policies.feedback import DEFAULT_SELECTION_POLICY, SelectionPolicy
 
 __all__ = ["FeedbackAccumulator"]

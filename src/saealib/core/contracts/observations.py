@@ -10,6 +10,7 @@ from typing import Any, TypeAlias
 import numpy as np
 from typing_extensions import Self
 
+from saealib.core.contracts.identity import CandidateIds
 from saealib.core.contracts.observation import (
     CONSTRAINT,
     CV,
@@ -28,7 +29,6 @@ from saealib.core.contracts.observation import (
     QuantityKind,
 )
 from saealib.exceptions import ValidationError
-from saealib.identity import CandidateIds
 
 __all__ = [
     "ObservationBatch",

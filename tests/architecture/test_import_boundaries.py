@@ -85,10 +85,12 @@ def test_core_has_no_forbidden_module_level_imports() -> None:
 
 def test_candidate_ids_use_one_identity_across_compatibility_exports() -> None:
     from saealib.core.contracts import CandidateIds as CoreCandidateIds
+    from saealib.core.contracts.identity import CandidateIds as LeafCandidateIds
     from saealib.identity import CandidateIds as IdentityCandidateIds
     from saealib.population import CandidateIds as PopulationPackageCandidateIds
     from saealib.population.population import CandidateIds as PopulationCandidateIds
 
+    assert CoreCandidateIds is LeafCandidateIds
     assert CoreCandidateIds is IdentityCandidateIds
     assert PopulationCandidateIds is IdentityCandidateIds
     assert PopulationPackageCandidateIds is IdentityCandidateIds

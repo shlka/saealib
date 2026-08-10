@@ -53,6 +53,7 @@ from saealib.core.contracts.feedback import (
     OrderingMode,
 )
 from saealib.core.contracts.feedbacks import FeedbackBatch, FeedbackContract
+from saealib.core.contracts.identity import CandidateIds
 from saealib.core.contracts.lifecycle import (
     EVENT_VOCABULARY,
     EventSubscription,
@@ -160,7 +161,6 @@ from saealib.core.contracts.vocabulary import (
     validate_identifier,
     validate_name,
 )
-from saealib.identity import CandidateIds
 
 __all__ = [
     "ASSUMPTION_KEYS",

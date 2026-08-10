@@ -1,4 +1,5 @@
-from saealib.identity import CandidateIds, PopulationAttribute
+from saealib.core.contracts.identity import CandidateIds
+from saealib.identity import PopulationAttribute
 from saealib.population.archive import (
     Archive,
     ArchiveMixin,

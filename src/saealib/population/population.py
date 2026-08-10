@@ -11,8 +11,9 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 import numpy as np
 from typing_extensions import Self
 
+from saealib.core.contracts.identity import CandidateIds
 from saealib.exceptions import ValidationError
-from saealib.identity import CandidateIds, PopulationAttribute
+from saealib.identity import PopulationAttribute
 from saealib.population.genome import DenseVectorBatch, GenomeBatch, ObjectBatch
 from saealib.space.services import DenseNumericView
 

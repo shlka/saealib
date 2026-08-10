@@ -15,6 +15,10 @@ import numpy as np
 
 from saealib.exceptions import ValidationError
 
+__all__ = ["CandidateIds", "IDAllocator", "PopulationAttribute"]
+
+# Keep the legacy module importable without initializing the core package;
+# the canonical core alias resolves to this same ``numpy.ndarray`` object.
 CandidateIds = np.ndarray
 
 
