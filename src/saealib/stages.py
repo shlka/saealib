@@ -838,6 +838,73 @@ class EvaluationPlanStage(Stage):
             evaluation_new_ids=np.empty(0, dtype=np.int64),
         )
 
+    def execute_async(
+        self,
+        state: OptimizationState,
+        *,
+        scheduler: Any,
+        feedback_builder: FeedbackBuilder | None = None,
+        algorithm: Any = None,
+        callback_manager: Any = None,
+        prefix=None,
+        strategy: Any = None,
+    ) -> OptimizationState:
+        """Submit through the public async execution seam.
+
+        Runtime supplies lifecycle services and a prefix callback; planning and
+        refill decisions remain owned by this stage.
+        """
+        if scheduler is None:
+            raise ValidationError("Async evaluation requires a scheduler")
+        plan_state = state.evaluation_plan_state
+        terminal = (
+            state.evaluation_plan is not None
+            and plan_state is not None
+            and all(
+                int(item.request_id)
+                in set(plan_state.completed) | set(plan_state.acknowledged)
+                for item in state.evaluation_plan.requests
+            )
+        )
+        progressed = bool(
+            plan_state is not None and (plan_state.completed or plan_state.acknowledged)
+        )
+        refill = bool(
+            getattr(strategy, "supports_async_refill", False)
+            and state.evaluation_plan is not None
+            and not terminal
+            and progressed
+            and plan_state is not None
+            and not plan_state.deferred
+            and len(state.pending_evaluations) < scheduler.max_pending
+        )
+        current = state
+        if refill:
+            current = current.replace(
+                evaluation_plan=None,
+                evaluation_plan_state=None,
+                evaluation_plan_updates={},
+            )
+        if prefix is not None and (
+            current.evaluation_plan is None or terminal or refill
+        ):
+            current = prefix(current)
+        return AsyncEvaluationSubmitStage(
+            scheduler,
+            self._planner,
+            feedback_builder,
+            algorithm,
+            callback_manager,
+        ).execute(current)
+
+    def has_async_work(self, state: OptimizationState) -> bool:
+        plan = state.evaluation_plan
+        plan_state = state.evaluation_plan_state
+        if plan is None or plan_state is None:
+            return False
+        terminal = set(plan_state.completed) | set(plan_state.acknowledged)
+        return any(int(item.request_id) not in terminal for item in plan.requests)
+
 
 class AsyncEvaluationSubmitStage(Stage):
     """Plan and submit one request to an asynchronous scheduler."""

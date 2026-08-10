@@ -235,15 +235,18 @@ class SequentialPlan:
         if not graph.entry_points:
             raise ValidationError("SequentialPlan requires a graph entry point")
 
-        control_successors: dict[str, set[str]] = {
+        graph_successors: dict[str, set[str]] = {
             node_id: set() for node_id in nodes_by_id
         }
-        for edge in graph.control_edges:
+        for edge in (*graph.data_edges, *graph.control_edges):
             source = edge.source.component_id
             target = edge.target.component_id
             if source not in nodes_by_id or target not in nodes_by_id:
                 raise ValidationError("SequentialPlan control edge has an unknown node")
-            control_successors[source].add(target)
+            # A port may legally be wired back to itself (notably adapter
+            # bookkeeping); it does not impose an execution-order constraint.
+            if source != target:
+                graph_successors[source].add(target)
 
         reachable: set[str] = set()
         pending = [entry.component_id for entry in graph.entry_points]
@@ -256,7 +259,7 @@ class SequentialPlan:
             if node_id in reachable:
                 continue
             reachable.add(node_id)
-            pending.extend(control_successors[node_id])
+            pending.extend(graph_successors[node_id])
 
         reachable_stages = stage_ids & reachable
 
@@ -269,19 +272,22 @@ class SequentialPlan:
         def executable_successors_for(node_id: str) -> set[str]:
             """Collapse contract-only nodes between executable graph nodes."""
             result: set[str] = set()
-            pending_nodes = list(control_successors[node_id])
-            visited_non_executables: set[str] = set()
+            pending_nodes = [
+                (target, {node_id}) for target in graph_successors[node_id]
+            ]
             while pending_nodes:
-                target = pending_nodes.pop()
+                target, path = pending_nodes.pop()
                 if target in executable_ids:
                     result.add(target)
                     continue
-                if target in visited_non_executables:
+                if target in path:
                     raise ValidationError(
                         "SequentialPlan executable control order contains a cycle"
                     )
-                visited_non_executables.add(target)
-                pending_nodes.extend(control_successors[target])
+                pending_nodes.extend(
+                    (successor, path | {target})
+                    for successor in graph_successors[target]
+                )
             return result
 
         if not stage_ids:
@@ -314,19 +320,20 @@ class SequentialPlan:
         def stage_successors(source: str) -> set[str]:
             """Collapse control-only compile nodes between two Stage nodes."""
             result: set[str] = set()
-            pending_nodes = list(control_successors[source])
-            visited_non_stages: set[str] = set()
+            pending_nodes = [(target, {source}) for target in graph_successors[source]]
             while pending_nodes:
-                target = pending_nodes.pop()
+                target, path = pending_nodes.pop()
                 if target in reachable_stages:
                     result.add(target)
                     continue
-                if target in visited_non_stages:
+                if target in path:
                     raise ValidationError(
                         "SequentialPlan control order contains a cycle"
                     )
-                visited_non_stages.add(target)
-                pending_nodes.extend(control_successors[target])
+                pending_nodes.extend(
+                    (successor, path | {target})
+                    for successor in graph_successors[target]
+                )
             return result
 
         successors = {

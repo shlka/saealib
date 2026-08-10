@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import time
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
@@ -18,6 +19,7 @@ from saealib.callback import (
 from saealib.comparators import NSGA3Comparator
 from saealib.context import OptimizationState
 from saealib.core.compiler.compiler import CompileContext, Compiler, ExecutablePlan
+from saealib.core.compiler.graph import ComponentNode
 from saealib.core.contracts.execution import RuntimeCapability
 from saealib.core.contracts.vocabulary import validate_name
 from saealib.core.runtime import (
@@ -25,15 +27,15 @@ from saealib.core.runtime import (
     NodeResult,
     NodeStatus,
     RequestTermination,
+    RuntimeCommand,
     RuntimeSession,
     RuntimeStep,
     SequentialPlan,
     validate_plan_contracts,
 )
-from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
+from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS, StateKey, StateView
 from saealib.core.state.patch import StatePatch
 from saealib.exceptions import ConfigurationError, EvaluationFatalError, ValidationError
-from saealib.stages import AsyncEvaluationSubmitStage
 
 __all__ = [
     "AsyncPipelineRuntime",
@@ -78,67 +80,251 @@ class AsyncRuntimeEnvironment(RuntimeEnvironment, Protocol):
     def can_refill(self, state: OptimizationState) -> bool: ...
 
 
+@dataclass(frozen=True)
+class _ExecutionOutcome:
+    state: OptimizationState
+    node_results: tuple[NodeResult, ...] = ()
+    executed_node_ids: tuple[str, ...] = ()
+    refused_commands: tuple[RuntimeCommand, ...] = ()
+    finished: bool = False
+
+    @property
+    def recompile_required(self) -> bool:
+        return any(
+            result.status is NodeStatus.RECOMPILE_REQUIRED
+            for result in self.node_results
+        )
+
+
+class _ExecutionHaltError(Exception):
+    def __init__(self, outcome: _ExecutionOutcome) -> None:
+        self.outcome = outcome
+
+
+def _environment_execute(
+    environment: RuntimeEnvironment,
+    plan: SequentialPlan,
+    state: OptimizationState,
+) -> _ExecutionOutcome:
+    execute_step = getattr(environment, "execute_step", None)
+    if callable(execute_step):
+        outcome = execute_step(plan, state)
+        if isinstance(outcome, _ExecutionOutcome):
+            return outcome
+        if isinstance(outcome, RuntimeStep):
+            return _ExecutionOutcome(
+                state=outcome.state,
+                node_results=outcome.node_results,
+                executed_node_ids=outcome.executed_node_ids,
+                refused_commands=outcome.refused_commands,
+                finished=outcome.finished,
+            )
+        if isinstance(outcome, OptimizationState):
+            return _ExecutionOutcome(state=outcome)
+        raise ValidationError(
+            "runtime environment execute_step returned an invalid value"
+        )
+    return _ExecutionOutcome(state=environment.execute(plan, state))
+
+
+def _environment_execute_async(
+    environment: AsyncRuntimeEnvironment,
+    plan: SequentialPlan,
+    state: OptimizationState,
+) -> _ExecutionOutcome:
+    execute_step = getattr(environment, "execute_async_step", None)
+    if callable(execute_step):
+        outcome = execute_step(plan, state)
+        if isinstance(outcome, _ExecutionOutcome):
+            return outcome
+        if isinstance(outcome, RuntimeStep):
+            return _ExecutionOutcome(
+                state=outcome.state,
+                node_results=outcome.node_results,
+                executed_node_ids=outcome.executed_node_ids,
+                refused_commands=outcome.refused_commands,
+                finished=outcome.finished,
+            )
+        if isinstance(outcome, OptimizationState):
+            return _ExecutionOutcome(state=outcome)
+        raise ValidationError(
+            "runtime environment execute_async_step returned an invalid value"
+        )
+    return _ExecutionOutcome(state=environment.execute_async(plan, state))
+
+
+def _environment_recompile(
+    environment: RuntimeEnvironment, plan: SequentialPlan
+) -> SequentialPlan:
+    recompile = getattr(environment, "recompile", None)
+    if not callable(recompile):
+        raise ValidationError(
+            "runtime cannot satisfy RECOMPILE_REQUIRED: no recompile provider"
+        )
+    rebuilt = recompile(plan)
+    if not isinstance(rebuilt, SequentialPlan):
+        raise ValidationError("runtime recompile provider returned an invalid plan")
+    return rebuilt
+
+
+class _BoundStateView:
+    """StateView-compatible alias projection for a bound component contract."""
+
+    def __init__(self, view: StateView, aliases: dict[StateKey, StateKey]) -> None:
+        self._view = view
+        self._aliases = aliases
+
+    def _resolve(self, key: StateKey) -> StateKey:
+        return self._aliases.get(key, key)
+
+    def get(self, key: StateKey) -> object:
+        return self._view.get(self._resolve(key))
+
+    def contains(self, key: StateKey) -> bool:
+        return self._view.contains(self._resolve(key))
+
+    @property
+    def context(self) -> object:
+        return self._view.context
+
+    def dispatch(self, event: object) -> None:
+        self._view.dispatch(event)
+
+
+def _resolve_state_key(key: StateKey, bindings: tuple[StateKey, ...]) -> StateKey:
+    candidates = [item for item in bindings if item.namespace == key.namespace]
+    exact = [item for item in candidates if item.name == key.name]
+    if len(exact) == 1:
+        return exact[0]
+    if len(candidates) == 1:
+        return candidates[0]
+    return key
+
+
+def _node_state_aliases(
+    plan: SequentialPlan, node: ComponentNode
+) -> dict[StateKey, StateKey]:
+    bindings = tuple(
+        binding.state_key
+        for binding in plan.plan.graph.state_bindings
+        if binding.node.component_id == node.component_id
+    )
+    contract = node.contract.state
+    aliases: dict[StateKey, StateKey] = {}
+    for key in (*contract.reads, *contract.writes, *contract.exports):
+        resolved = _resolve_state_key(key, bindings)
+        if resolved != key:
+            aliases[key] = resolved
+    return aliases
+
+
+def _bound_patch(
+    plan: SequentialPlan, node: ComponentNode, patch: StatePatch
+) -> StatePatch:
+    aliases = _node_state_aliases(plan, node)
+    allowed = {aliases.get(key, key) for key in node.contract.state.writes}
+    writes = {}
+    for key, value in patch.writes.items():
+        resolved = aliases.get(key, key)
+        if resolved not in allowed:
+            raise ValidationError(
+                f"Graph node {node.component_id!r} attempted an undeclared "
+                f"state write: {key!r}"
+            )
+        writes[resolved] = value
+    deletes = set()
+    for key in patch.deletes:
+        resolved = aliases.get(key, key)
+        if resolved not in allowed:
+            raise ValidationError(
+                f"Graph node {node.component_id!r} attempted an undeclared "
+                f"state delete: {key!r}"
+            )
+        deletes.add(resolved)
+    return StatePatch(writes=writes, deletes=frozenset(deletes))
+
+
 def _execute_sequential_plan(
     plan: SequentialPlan,
     state: OptimizationState,
     *,
     dispatch: Callable[[Event], None] | None = None,
 ) -> OptimizationState:
-    state, _ = _execute_sequential_plan_with_results(plan, state, dispatch=dispatch)
-    return state
+    return _execute_with_metadata(plan, state, dispatch=dispatch).state
 
 
-def _execute_sequential_plan_with_results(
+def _execute_with_metadata(
     plan: SequentialPlan,
     state: OptimizationState,
     *,
     dispatch: Callable[[Event], None] | None = None,
-) -> tuple[OptimizationState, tuple[NodeResult, ...]]:
+) -> _ExecutionOutcome:
     from saealib.core.graph_builder import StageNodeAdapter
     from saealib.pipeline import Stage
 
     results: list[NodeResult] = []
+    executed: list[str] = []
+    refused: list[RuntimeCommand] = []
+    current = state
     for node, execute in zip(plan.execution_nodes, plan._execute_targets):
+        executed.append(node.component_id)
         stage = getattr(node.component, "stage", None)
         if isinstance(node.component, StageNodeAdapter) or isinstance(stage, Stage):
-            next_state = execute(state)
+            next_state = execute(current)
             if not isinstance(next_state, OptimizationState):
                 raise ValidationError(
                     f"Stage node {node.component_id!r} did not return an "
                     "OptimizationState"
                 )
-            state = next_state
-            result = NodeResult(patch=StatePatch(writes={}))
+            current = next_state
+            results.append(NodeResult(patch=StatePatch(writes={})))
+            continue
+        aliases = _node_state_aliases(plan, node)
+        view = current._store.view(
+            tuple({aliases.get(key, key) for key in node.contract.state.reads}),
+            context=current,
+            dispatch=dispatch,
+        )
+        raw = execute(_BoundStateView(view, aliases))
+        if isinstance(raw, StatePatch):
+            result = NodeResult(patch=raw)
+        elif isinstance(raw, NodeResult):
+            result = raw
         else:
-            view = state._store.view(
-                node.contract.state.reads,
-                context=state,
-                dispatch=dispatch,
+            raise ValidationError(
+                f"Graph node {node.component_id!r} must return NodeResult or StatePatch"
             )
-            raw_result = execute(view)
-            if isinstance(raw_result, StatePatch):
-                result = NodeResult(patch=raw_result)
-            elif isinstance(raw_result, NodeResult):
-                result = raw_result
-            else:
-                raise ValidationError(
-                    f"Graph node {node.component_id!r} must return NodeResult or "
-                    "StatePatch"
-                )
-            if result.patch.writes or result.patch.deletes:
-                state._store = state._store.apply_patch(result.patch)
-            if dispatch is not None:
-                for event in result.events:
-                    dispatch(event)
-            if result.status is NodeStatus.FAILED:
-                raise ValidationError(
-                    f"Graph node {node.component_id!r} returned FAILED"
-                )
-            if result.status is NodeStatus.BLOCKED:
-                results.append(result)
-                break
+        patch = _bound_patch(plan, node, result.patch)
+        if result.status is not NodeStatus.FAILED and (patch.writes or patch.deletes):
+            current._store = current._store.apply_patch(patch)
+        if dispatch is not None:
+            for event in result.events:
+                dispatch(event)
         results.append(result)
-    return state, tuple(results)
+        for command in result.commands:
+            if isinstance(command, RequestTermination):
+                continue
+            refused.append(command)
+        if result.status in {
+            NodeStatus.FAILED,
+            NodeStatus.BLOCKED,
+            NodeStatus.RUNNING,
+            NodeStatus.RECOMPILE_REQUIRED,
+        }:
+            break
+        if any(isinstance(command, RequestTermination) for command in result.commands):
+            break
+    return _ExecutionOutcome(
+        state=current,
+        node_results=tuple(results),
+        executed_node_ids=tuple(executed),
+        refused_commands=tuple(refused),
+        finished=any(
+            isinstance(command, RequestTermination)
+            for result in results
+            for command in result.commands
+        ),
+    )
 
 
 def _algorithm_runtime_capabilities(
@@ -172,7 +358,13 @@ class _OptimizerEnvironment:
         self, plan: SequentialPlan, state: OptimizationState
     ) -> OptimizationState:
         self._refresh_plan_if_needed()
-        return _execute_sequential_plan(self.plan, state, dispatch=self.dispatch)
+        return self.execute_step(plan, state).state
+
+    def execute_step(
+        self, plan: SequentialPlan, state: OptimizationState
+    ) -> _ExecutionOutcome:
+        self._refresh_plan_if_needed()
+        return _execute_with_metadata(self.plan, state, dispatch=self.dispatch)
 
     def _fingerprint(self) -> tuple[object, ...]:
         strategy = getattr(self.optimizer, "strategy", None)
@@ -201,6 +393,23 @@ class _OptimizerEnvironment:
         current_fingerprint = self._fingerprint()
         if current_fingerprint == self._execution_fingerprint:
             return
+        executable, sequential = self._compile_current_plan()
+        self.plan = sequential
+        if hasattr(self.optimizer, "_executable_plan"):
+            self.optimizer._executable_plan = executable
+        self._execution_fingerprint = current_fingerprint
+
+    def recompile(self, plan: SequentialPlan) -> SequentialPlan:
+        """Rebuild the graph at a completed step boundary."""
+        del plan
+        executable, sequential = self._compile_current_plan()
+        self.plan = sequential
+        if hasattr(self.optimizer, "_executable_plan"):
+            self.optimizer._executable_plan = executable
+        self._execution_fingerprint = self._fingerprint()
+        return sequential
+
+    def _compile_current_plan(self) -> tuple[ExecutablePlan, SequentialPlan]:
         strategy = getattr(self.optimizer, "strategy", None)
         build_graph = getattr(strategy, "build_graph", None)
         problem = getattr(self.optimizer, "problem", None)
@@ -221,14 +430,16 @@ class _OptimizerEnvironment:
             ),
         )
         validate_plan_contracts(executable)
-        self.plan = SequentialPlan.from_executable_plan(executable)
-        if hasattr(self.optimizer, "_executable_plan"):
-            self.optimizer._executable_plan = executable
-        self._execution_fingerprint = current_fingerprint
+        return executable, SequentialPlan.from_executable_plan(executable)
 
     def execute_async(
         self, plan: SequentialPlan, state: OptimizationState
     ) -> OptimizationState:
+        return self.execute_async_step(plan, state).state
+
+    def execute_async_step(
+        self, plan: SequentialPlan, state: OptimizationState
+    ) -> _ExecutionOutcome:
         """Execute the canonical graph through the async runtime dispatcher.
 
         The graph contains the synchronous evaluation contract for both
@@ -241,74 +452,67 @@ class _OptimizerEnvironment:
             raise ValidationError("Async runtime requires an evaluation scheduler")
         self._refresh_plan_if_needed()
         nodes = self.plan.execution_nodes
-        plan_index = next(
+        async_index = next(
             (
                 index
                 for index, node in enumerate(nodes)
-                if getattr(getattr(node.component, "stage", None), "name", None)
-                == "evaluation_plan"
+                if callable(getattr(node.component, "execute_async", None))
             ),
             None,
         )
-        if plan_index is None:
+        if async_index is None:
             # Custom plans without the evaluation protocol still run normally.
-            return _execute_sequential_plan(self.plan, state, dispatch=self.dispatch)
-
+            return _execute_with_metadata(self.plan, state, dispatch=self.dispatch)
         current = state
-        strategy = self.optimizer.strategy
-        plan_state = current.evaluation_plan_state
-        plan_is_terminal = (
-            current.evaluation_plan is not None
-            and plan_state is not None
-            and all(
-                int(item.request_id)
-                in set(plan_state.completed) | set(plan_state.acknowledged)
-                for item in current.evaluation_plan.requests
-            )
-        )
-        plan_has_progress = bool(
-            plan_state is not None and (plan_state.completed or plan_state.acknowledged)
-        )
-        refill_in_progress_plan = bool(
-            getattr(strategy, "supports_async_refill", False)
-            and current.evaluation_plan is not None
-            and not plan_is_terminal
-            and plan_has_progress
-            and plan_state is not None
-            and not plan_state.deferred
-            and len(current.pending_evaluations) < scheduler.max_pending
-        )
-        if refill_in_progress_plan:
-            # Pending requests retain ownership while the state plan is refilled.
-            current = current.replace(
-                evaluation_plan=None,
-                evaluation_plan_state=None,
-                evaluation_plan_updates={},
-            )
-        if (
-            current.evaluation_plan is None
-            or plan_is_terminal
-            or refill_in_progress_plan
-        ):
-            for execute in self.plan._execute_targets[:plan_index]:
-                current = cast(OptimizationState, execute(current))
+        prefix_outcome: _ExecutionOutcome | None = None
 
-        plan_stage = getattr(nodes[plan_index].component, "stage", None)
-        planner = getattr(plan_stage, "_planner", None)
-        if planner is None:
-            raise ValidationError("evaluation_plan node has no planner")
+        def prefix(value: OptimizationState) -> OptimizationState:
+            nonlocal prefix_outcome
+            prefix_plan = SequentialPlan(
+                plan=self.plan.plan,
+                nodes=self.plan.nodes,
+                execution_nodes=self.plan.execution_nodes[:async_index],
+            )
+            prefix_outcome = _execute_with_metadata(
+                prefix_plan, value, dispatch=self.dispatch
+            )
+            if prefix_outcome.finished or any(
+                result.status is not NodeStatus.COMPLETED
+                for result in prefix_outcome.node_results
+            ):
+                raise _ExecutionHaltError(prefix_outcome)
+            return prefix_outcome.state
+
+        seam = getattr(nodes[async_index].component, "execute_async")
         builder = getattr(self.optimizer, "feedback_builder", None)
         if builder is None:
-            builder = getattr(strategy, "feedback_builder", None)
-        cbmanager = getattr(self.optimizer, "cbmanager", None)
-        async_submit = AsyncEvaluationSubmitStage(
-            scheduler,
-            planner,
-            builder,
-            getattr(self.optimizer, "algorithm", None),
-            cbmanager,
+            builder = getattr(self.optimizer.strategy, "feedback_builder", None)
+        kwargs = {
+            "scheduler": scheduler,
+            "feedback_builder": builder,
+            "algorithm": getattr(self.optimizer, "algorithm", None),
+            "callback_manager": getattr(self.optimizer, "cbmanager", None),
+            "prefix": prefix,
+            "strategy": getattr(self.optimizer, "strategy", None),
+        }
+        parameters = inspect.signature(seam).parameters
+        try:
+            result = seam(
+                current,
+                **{key: value for key, value in kwargs.items() if key in parameters},
+            )
+        except _ExecutionHaltError as halt:
+            return halt.outcome
+        if prefix_outcome is not None:
+            return _ExecutionOutcome(
+                state=result,
+                node_results=prefix_outcome.node_results,
+                executed_node_ids=prefix_outcome.executed_node_ids,
+                refused_commands=prefix_outcome.refused_commands,
+            )
+        return _ExecutionOutcome(
+            state=result,
         )
-        return async_submit.execute(current)
 
     def reattach(self, state: OptimizationState) -> OptimizationState:
         scheduler = getattr(self.optimizer, "async_evaluation_scheduler", None)
@@ -484,14 +688,15 @@ class PipelineRuntime:
                 "PipelineRuntime.advance requires a SequentialPlan session"
             )
         if self.environment is None:
-            state, node_results = _execute_sequential_plan_with_results(
-                session.plan, session.state
-            )
-            finished = any(
-                isinstance(command, RequestTermination)
-                for result in node_results
-                for command in result.commands
-            )
+            metadata = _execute_with_metadata(session.plan, session.state)
+            if metadata.recompile_required:
+                raise ValidationError(
+                    "PipelineRuntime cannot satisfy RECOMPILE_REQUIRED without "
+                    "a recompile provider"
+                )
+            state = metadata.state
+            node_results = metadata.node_results
+            finished = metadata.finished
             next_session = RuntimeSession(
                 plan=session.plan,
                 state=state,
@@ -502,36 +707,99 @@ class PipelineRuntime:
             return RuntimeStep(
                 state=state,
                 node_results=node_results,
-                executed_node_ids=tuple(
-                    node.component_id for node in session.plan.execution_nodes
-                ),
+                executed_node_ids=metadata.executed_node_ids,
                 observable=True,
                 finished=finished,
+                refused_commands=metadata.refused_commands,
                 session=next_session,
             )
 
         env = self.environment
         env.fatal(session.state)
         state = session.state
+        metadata = _ExecutionOutcome(state=state)
+        plan = session.plan
         generation_open = session.generation_open
         if state.pending_evaluations:
-            state = env.execute(session.plan, state)
+            metadata = _environment_execute(env, plan, state)
+            state = metadata.state
+            if metadata.recompile_required:
+                plan = _environment_recompile(env, plan)
+                return self._step(
+                    session, state, generation_open, metadata=metadata, plan=plan
+                )
+            if metadata.finished:
+                env.dispatch(RunEndEvent(ctx=state))
+                return self._step(
+                    session,
+                    state,
+                    generation_open,
+                    finished=True,
+                    metadata=metadata,
+                    plan=plan,
+                )
             if state.pending_evaluations:
-                return self._step(session, state, generation_open)
+                return self._step(
+                    session, state, generation_open, metadata=metadata, plan=plan
+                )
             if generation_open:
                 env.finish_generation(state)
-                return self._step(session, state, False, observable=True)
+                return self._step(
+                    session,
+                    state,
+                    False,
+                    observable=True,
+                    metadata=metadata,
+                    plan=plan,
+                )
         if env.is_terminated(state):
             env.dispatch(RunEndEvent(ctx=state))
-            return self._step(session, state, generation_open, finished=True)
+            return self._step(
+                session,
+                state,
+                generation_open,
+                finished=True,
+                metadata=metadata,
+                plan=plan,
+            )
         env.dispatch(GenerationStartEvent(ctx=state))
         generation_open = True
-        state = env.execute(session.plan, state)
+        metadata = _environment_execute(env, plan, state)
+        state = metadata.state
+        if metadata.recompile_required:
+            plan = _environment_recompile(env, plan)
+            return self._step(
+                session, state, generation_open, metadata=metadata, plan=plan
+            )
+        if metadata.finished:
+            env.dispatch(RunEndEvent(ctx=state))
+            return self._step(
+                session,
+                state,
+                generation_open,
+                finished=True,
+                metadata=metadata,
+                plan=plan,
+            )
         if not state.pending_evaluations:
             env.finish_generation(state)
             generation_open = False
-            return self._step(session, state, generation_open, observable=True)
-        return self._step(session, state, generation_open, observable=False)
+            return self._step(
+                session,
+                state,
+                generation_open,
+                observable=True,
+                metadata=metadata,
+                plan=plan,
+            )
+        return self._step(
+            session,
+            state,
+            generation_open,
+            observable=False,
+            metadata=metadata,
+            plan=plan,
+        )
 
     def _step(
         self,
@@ -541,19 +809,24 @@ class PipelineRuntime:
         *,
         observable: bool = False,
         finished: bool = False,
+        metadata: _ExecutionOutcome | None = None,
+        plan: SequentialPlan | None = None,
     ) -> RuntimeStep:
         next_session = RuntimeSession(
-            plan=session.plan,
+            plan=plan or session.plan,
             state=state,
-            finished=finished,
+            finished=finished or bool(metadata and metadata.finished),
             observable=observable,
             step_index=session.step_index + 1,
             generation_open=generation_open,
         )
         return RuntimeStep(
             state=state,
+            node_results=metadata.node_results if metadata else (),
+            executed_node_ids=metadata.executed_node_ids if metadata else (),
+            refused_commands=metadata.refused_commands if metadata else (),
             observable=observable,
-            finished=finished,
+            finished=finished or bool(metadata and metadata.finished),
             session=next_session,
         )
 
@@ -581,13 +854,14 @@ class AsyncPipelineRuntime(PipelineRuntime):
     capabilities = frozenset({"partial_feedback"})
 
     @staticmethod
-    def _has_unfinished_evaluation_plan(state: OptimizationState) -> bool:
-        plan = getattr(state, "evaluation_plan", None)
-        plan_state = getattr(state, "evaluation_plan_state", None)
-        if plan is None or plan_state is None:
-            return False
-        terminal = set(plan_state.completed) | set(plan_state.acknowledged)
-        return any(int(request.request_id) not in terminal for request in plan.requests)
+    def _has_unfinished_async_work(
+        plan: SequentialPlan, state: OptimizationState
+    ) -> bool:
+        for node in plan.execution_nodes:
+            capability = getattr(node.component, "has_async_work", None)
+            if callable(capability) and capability(state):
+                return True
+        return False
 
     def advance(self, session: RuntimeSession) -> RuntimeStep:
         """Poll, refill, drain, and expose asynchronous generation boundaries."""
@@ -604,7 +878,9 @@ class AsyncPipelineRuntime(PipelineRuntime):
         env = cast(AsyncRuntimeEnvironment, self.environment)
         env.fatal(session.state)
         state = session.state
+        plan = session.plan
         generation_open = session.generation_open
+        metadata = _ExecutionOutcome(state=state)
 
         if state.pending_evaluations:
             if set(state.pending_evaluations) != set(state.evaluation_handles):
@@ -618,39 +894,139 @@ class AsyncPipelineRuntime(PipelineRuntime):
                     return self._step(session, state, generation_open)
                 if not env.can_refill(state):
                     return self._step(session, state, generation_open)
-                state = env.execute_async(session.plan, state)
+                metadata = _environment_execute_async(env, plan, state)
+                state = metadata.state
+                if metadata.recompile_required:
+                    plan = _environment_recompile(env, plan)
+                    return self._step(
+                        session,
+                        state,
+                        generation_open,
+                        metadata=metadata,
+                        plan=plan,
+                    )
+                if metadata.finished:
+                    env.dispatch(RunEndEvent(ctx=state))
+                    return self._step(
+                        session,
+                        state,
+                        generation_open,
+                        finished=True,
+                        metadata=metadata,
+                        plan=plan,
+                    )
                 if state.pending_evaluations:
                     if state is before:
                         time.sleep(0.001)
-                    return self._step(session, state, generation_open)
+                    return self._step(
+                        session, state, generation_open, metadata=metadata
+                    )
 
             # Drain capacity-split plans before closing the generation.
-            if self._has_unfinished_evaluation_plan(state):
-                state = env.execute_async(session.plan, state)
+            if self._has_unfinished_async_work(plan, state):
+                metadata = _environment_execute_async(env, plan, state)
+                state = metadata.state
+                if metadata.recompile_required:
+                    plan = _environment_recompile(env, plan)
+                    return self._step(
+                        session,
+                        state,
+                        generation_open,
+                        metadata=metadata,
+                        plan=plan,
+                    )
+                if metadata.finished:
+                    env.dispatch(RunEndEvent(ctx=state))
+                    return self._step(
+                        session,
+                        state,
+                        generation_open,
+                        finished=True,
+                        metadata=metadata,
+                        plan=plan,
+                    )
                 if state.pending_evaluations:
-                    return self._step(session, state, generation_open)
+                    return self._step(
+                        session, state, generation_open, metadata=metadata
+                    )
 
             if generation_open:
                 env.finish_generation(state)
-                return self._step(session, state, False, observable=True)
+                return self._step(
+                    session,
+                    state,
+                    False,
+                    observable=True,
+                    metadata=metadata,
+                    plan=plan,
+                )
 
-        elif self._has_unfinished_evaluation_plan(state):
+        elif self._has_unfinished_async_work(plan, state):
             # Checkpoints may retain deferred requests without active handles.
-            state = env.execute_async(session.plan, state)
+            metadata = _environment_execute_async(env, plan, state)
+            state = metadata.state
+            if metadata.recompile_required:
+                plan = _environment_recompile(env, plan)
+                return self._step(
+                    session,
+                    state,
+                    generation_open,
+                    metadata=metadata,
+                    plan=plan,
+                )
+            if metadata.finished:
+                env.dispatch(RunEndEvent(ctx=state))
+                return self._step(
+                    session,
+                    state,
+                    generation_open,
+                    finished=True,
+                    metadata=metadata,
+                    plan=plan,
+                )
             if state.pending_evaluations:
-                return self._step(session, state, generation_open)
+                return self._step(
+                    session, state, generation_open, metadata=metadata, plan=plan
+                )
 
         if env.is_terminated(state):
             env.dispatch(RunEndEvent(ctx=state))
-            return self._step(session, state, generation_open, finished=True)
+            return self._step(session, state, generation_open, finished=True, plan=plan)
         env.dispatch(GenerationStartEvent(ctx=state))
-        state = env.execute_async(session.plan, state)
+        metadata = _environment_execute_async(env, plan, state)
+        state = metadata.state
+        if metadata.recompile_required:
+            plan = _environment_recompile(env, plan)
+            return self._step(
+                session,
+                state,
+                generation_open,
+                metadata=metadata,
+                plan=plan,
+            )
+        if metadata.finished:
+            env.dispatch(RunEndEvent(ctx=state))
+            return self._step(
+                session,
+                state,
+                generation_open,
+                finished=True,
+                metadata=metadata,
+                plan=plan,
+            )
         generation_open = True
         if not state.pending_evaluations:
             env.finish_generation(state)
             generation_open = False
-            return self._step(session, state, generation_open, observable=True)
-        return self._step(session, state, generation_open)
+            return self._step(
+                session,
+                state,
+                generation_open,
+                observable=True,
+                metadata=metadata,
+                plan=plan,
+            )
+        return self._step(session, state, generation_open, metadata=metadata, plan=plan)
 
 
 class RuntimeFactory(Protocol):

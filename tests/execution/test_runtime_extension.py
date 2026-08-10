@@ -484,3 +484,14 @@ def test_refusal_remains_a_step_outcome_and_recompile_is_step_boundary_data() ->
     )
     assert boundary.recompile_required
     assert boundary.refused_commands == ()
+
+
+def test_async_runtime_uses_public_async_seam_without_stage_name_dependencies() -> None:
+    source = (Path(__file__).parents[2] / "src/saealib/execution/runtime.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert '== "evaluation_plan"' not in source
+    assert 'getattr(plan_stage, "_planner"' not in source
+    assert "AsyncEvaluationSubmitStage" not in source
+    assert 'getattr(node.component, "execute_async", None)' in source

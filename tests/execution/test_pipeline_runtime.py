@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import replace
 from typing import Any, cast
 
@@ -15,18 +16,33 @@ from saealib import (
     TruncationSelection,
 )
 from saealib.context import OptimizationState
-from saealib.core.compiler import Compiler, ControlEdge, DataEdge
+from saealib.core.compiler import (
+    Compiler,
+    ComponentGraph,
+    ComponentNode,
+    ControlEdge,
+    DataEdge,
+    ExecutablePlan,
+    StateBinding,
+)
 from saealib.core.compiler.adapters import Adapter, AdapterComponent
-from saealib.core.compiler.graph import ComponentNode, NodeRef
+from saealib.core.compiler.graph import NodeRef
 from saealib.core.compiler.schema_rules import _FreshenedComponent
-from saealib.core.contracts import DataSpec
+from saealib.core.contracts import ComponentContract, DataSpec, StateContract
 from saealib.core.graph_builder import (
     StageContractNodeAdapter,
     StageNodeAdapter,
     build_component_graph,
     cached_execution_target,
 )
-from saealib.core.runtime import NodeStatus, SequentialPlan
+from saealib.core.runtime import (
+    NodeResult,
+    NodeStatus,
+    RequestCheckpoint,
+    RequestTermination,
+    SequentialPlan,
+)
+from saealib.core.state import StateKey, StatePatch, StateStore
 from saealib.exceptions import ValidationError
 from saealib.execution.evaluator import SerialEvaluator
 from saealib.execution.runtime import PipelineRuntime, _OptimizerEnvironment
@@ -61,6 +77,56 @@ def _state() -> OptimizationState:
 def _compiled(stages: list[_Stage]):
     graph = build_component_graph(Pipeline(cast(list[Stage], stages)))
     return Compiler().compile(graph)
+
+
+class _GenericNode:
+    def __init__(
+        self,
+        contract: ComponentContract,
+        execute: Callable[[Any], NodeResult | StatePatch],
+    ) -> None:
+        self._contract = contract
+        self._execute = execute
+
+    def contract(self) -> ComponentContract:
+        return self._contract
+
+    def execute(self, view: Any) -> NodeResult | StatePatch:
+        return self._execute(view)
+
+
+def _generic_plan(
+    nodes: tuple[_GenericNode, ...],
+    *,
+    data_edges: tuple[DataEdge, ...] = (),
+    state_bindings: tuple[StateBinding, ...] = (),
+) -> ExecutablePlan:
+    component_nodes = tuple(
+        ComponentNode(component_id=f"node_{index}", component=node)
+        for index, node in enumerate(nodes)
+    )
+    graph = ComponentGraph(
+        nodes=component_nodes,
+        data_edges=data_edges,
+        state_bindings=state_bindings,
+        entry_points=(NodeRef(component_id=component_nodes[0].component_id),),
+    )
+    return ExecutablePlan(
+        graph=graph,
+        diagnostics=(),
+        required_runtime_capabilities=frozenset(),
+        active_rule_namespaces=frozenset(),
+        active_rule_names=(),
+        contract_snapshots=tuple(
+            (node.component_id, node.contract) for node in component_nodes
+        ),
+    )
+
+
+def _generic_state(values: dict[StateKey, object]) -> OptimizationState:
+    state = _state()
+    object.__setattr__(state, "_store", StateStore(values))
+    return state
 
 
 def test_real_default_strategy_graph_compiles_to_stage_order() -> None:
@@ -124,6 +190,158 @@ def test_runtime_threads_stage_return_values_and_reports_order_without_events() 
     assert stages[1].seen[0].marker == "a(start)"
     assert stages[2].seen[0].marker == "b(a(start))"
     assert step.session is not None and step.session.state is step.state
+
+
+def test_generic_node_result_uses_state_binding_and_executes_termination() -> None:
+    abstract = StateKey(namespace="user", name="value", schema_version=1)
+    bound = StateKey(namespace="user", name="value_for_node", schema_version=1)
+
+    def execute(view: Any) -> NodeResult:
+        assert view.get(abstract) == 1
+        return NodeResult(
+            patch=StatePatch(writes={abstract: 2}),
+            commands=(RequestTermination(reason="done"),),
+        )
+
+    node = _GenericNode(
+        ComponentContract(
+            state=StateContract(reads=(abstract,), writes=(abstract,)),
+        ),
+        execute,
+    )
+    plan = _generic_plan(
+        (node,),
+        state_bindings=(
+            StateBinding(node=NodeRef(component_id="node_0"), state_key=bound),
+        ),
+    )
+
+    step = PipelineRuntime().advance(
+        PipelineRuntime().initialize(plan, _generic_state({bound: 1}))
+    )
+
+    assert step.finished
+    assert step.executed_node_ids == ("node_0",)
+    assert step.node_results[0].commands == (RequestTermination(reason="done"),)
+    assert step.refused_commands == ()
+    assert step.state._store.get(bound) == 2
+
+
+def test_generic_node_rejects_undeclared_writes_and_does_not_mutate_state() -> None:
+    key = StateKey(namespace="user", name="value", schema_version=1)
+    node = _GenericNode(
+        ComponentContract(),
+        lambda view: NodeResult(patch=StatePatch(writes={key: 2})),
+    )
+    plan = _generic_plan((node,))
+    state = _generic_state({key: 1})
+
+    with pytest.raises(ValidationError, match="undeclared state write"):
+        PipelineRuntime().advance(PipelineRuntime().initialize(plan, state))
+
+    assert state._store.get(key) == 1
+
+
+def test_recompile_required_without_provider_fails_at_step_boundary() -> None:
+    node = _GenericNode(
+        ComponentContract(),
+        lambda view: NodeResult(
+            patch=StatePatch(writes={}),
+            status=NodeStatus.RECOMPILE_REQUIRED,
+        ),
+    )
+    plan = _generic_plan((node,))
+
+    with pytest.raises(ValidationError, match="cannot satisfy RECOMPILE_REQUIRED"):
+        PipelineRuntime().advance(
+            PipelineRuntime().initialize(plan, _generic_state({}))
+        )
+
+
+def test_async_generic_execution_preserves_node_outcome_metadata() -> None:
+    key = StateKey(namespace="user", name="value", schema_version=1)
+    node = _GenericNode(
+        ComponentContract(state=StateContract(writes=(key,))),
+        lambda view: NodeResult(
+            patch=StatePatch(writes={key: 3}),
+            commands=(RequestCheckpoint(reason="unsupported"),),
+        ),
+    )
+    executable = _generic_plan((node,))
+    sequential = SequentialPlan.from_executable_plan(executable)
+    optimizer = type(
+        "OptimizerStub",
+        (),
+        {
+            "async_evaluation_scheduler": object(),
+            "strategy": type("StrategyStub", (), {})(),
+            "dispatch": lambda self, event: None,
+        },
+    )()
+
+    outcome = _OptimizerEnvironment(optimizer, sequential).execute_async_step(
+        sequential, _generic_state({key: 1})
+    )
+
+    assert outcome.node_results[0].commands == (
+        RequestCheckpoint(reason="unsupported"),
+    )
+    assert outcome.refused_commands == (RequestCheckpoint(reason="unsupported"),)
+    assert outcome.state._store.get(key) == 3
+
+
+def test_failed_node_patch_is_not_committed_and_commands_are_refused() -> None:
+    key = StateKey(namespace="user", name="value", schema_version=1)
+    node = _GenericNode(
+        ComponentContract(state=StateContract(writes=(key,))),
+        lambda view: NodeResult(
+            patch=StatePatch(writes={key: 2}),
+            commands=(RequestCheckpoint(reason="unsupported"),),
+            status=NodeStatus.FAILED,
+        ),
+    )
+    plan = _generic_plan((node,))
+    state = _generic_state({key: 1})
+
+    step = PipelineRuntime().advance(PipelineRuntime().initialize(plan, state))
+
+    assert step.node_results[0].status is NodeStatus.FAILED
+    assert step.refused_commands == (RequestCheckpoint(reason="unsupported"),)
+    assert step.state._store.get(key) == 1
+
+
+def test_data_edge_alone_reaches_and_orders_generic_nodes() -> None:
+    key = StateKey(namespace="user", name="value", schema_version=1)
+    first = _GenericNode(
+        ComponentContract(state=StateContract(writes=(key,))),
+        lambda view: StatePatch(writes={key: 7}),
+    )
+
+    def read_second(view: Any) -> StatePatch:
+        assert view.get(key) == 7
+        return StatePatch(writes={})
+
+    second = _GenericNode(
+        ComponentContract(state=StateContract(reads=(key,))),
+        read_second,
+    )
+    plan = _generic_plan(
+        (first, second),
+        data_edges=(
+            DataEdge(
+                source=NodeRef(component_id="node_0"),
+                target=NodeRef(component_id="node_1"),
+                source_port="out",
+                target_port="in",
+            ),
+        ),
+    )
+
+    step = PipelineRuntime().advance(
+        PipelineRuntime().initialize(plan, _generic_state({}))
+    )
+
+    assert step.executed_node_ids == ("node_0", "node_1")
 
 
 def test_sync_environment_executes_compiled_plan_without_strategy_step() -> None:
