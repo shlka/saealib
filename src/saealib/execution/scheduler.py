@@ -1410,6 +1410,7 @@ class AsyncEvaluationScheduler:
                 self.algorithm, state, self, owner.extract(rows)
             )
             return state
+        sequence = self._next_feedback_sequence(proposal_id, int(update.sequence))
         feedback = _feedback_batch_from_result(
             state.feedback_result,
             proposal_id=proposal_id,
@@ -1420,7 +1421,7 @@ class AsyncEvaluationScheduler:
                 EvaluationStatus.FAILED,
                 EvaluationStatus.CANCELLED,
             },
-            sequence=int(update.sequence),
+            sequence=sequence,
         )
         if self._feedback_accumulator is not None:
             use_accumulator = self._deliver_accumulated_feedback(
@@ -1476,14 +1477,13 @@ class AsyncEvaluationScheduler:
             requirements=FeedbackRequirement(quantities=quantities),
         )
         accumulator.register(proposal)
-        sequence = self._next_feedback_sequence(feedback.proposal_id, feedback.sequence)
         accumulator.add(
             FeedbackBatch(
                 proposal_id=feedback.proposal_id,
                 observations=feedback.observations,
                 channel=feedback.channel,
                 final=False,
-                sequence=sequence,
+                sequence=feedback.sequence,
             )
         )
         self._sync_feedback_accumulator(state)

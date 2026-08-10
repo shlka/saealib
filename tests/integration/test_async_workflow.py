@@ -1134,7 +1134,7 @@ def test_partial_repeated_feedback_is_delivered_directly_by_async_scheduler():
     assert state.pending_evaluations == {}
     assert [
         (batch.proposal_id, batch.final, batch.sequence) for batch in consumer.feedback
-    ] == [(703, False, 0), (703, True, 0)]
+    ] == [(703, False, 0), (703, True, 1)]
     observed = [
         set(
             np.asarray(
