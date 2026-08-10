@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import ItemsView, Iterator, Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, TypeAlias, cast
+from typing import Any, Protocol, TypeAlias, cast, runtime_checkable
 
 import numpy as np
 
@@ -24,7 +24,6 @@ from saealib.core.contracts.observations import QuantityRef
 from saealib.core.contracts.relations import MANY, RELATION_KINDS, RelationKind
 from saealib.exceptions import ValidationError
 from saealib.identity import IDAllocator
-from saealib.population.population import Population
 
 __all__ = [
     "FeedbackRequirement",
@@ -38,6 +37,19 @@ __all__ = [
 ProposalId: TypeAlias = int
 FidelityRef: TypeAlias = int
 _RelationStore: TypeAlias = np.ndarray | Mapping[str, np.ndarray]
+
+
+@runtime_checkable
+class _CandidatePopulation(Protocol):
+    """Minimal population behavior required by a proposal contract."""
+
+    def __len__(self) -> int:
+        """Return the number of candidate rows."""
+        ...
+
+    def extract(self, indices: Any) -> Any:
+        """Return the selected candidate rows."""
+        ...
 
 
 def _non_negative_int(value: Any, name: str) -> int:
@@ -274,7 +286,7 @@ class ProposalBatch:
     """A candidate population plus its relations and feedback requirement."""
 
     proposal_id: ProposalId
-    candidates: Population
+    candidates: Any
     relations: ProposalRelations
     requirements: FeedbackRequirement
     metadata: Mapping[str, PortableValue] = field(
@@ -284,7 +296,7 @@ class ProposalBatch:
     def __post_init__(self) -> None:
         """Validate alignment and freeze the proposal metadata."""
         proposal_id = _non_negative_int(self.proposal_id, "proposal_id")
-        if not isinstance(self.candidates, Population):
+        if not isinstance(self.candidates, _CandidatePopulation):
             raise ValidationError("candidates must be a Population")
         if not isinstance(self.relations, ProposalRelations):
             raise ValidationError("relations must be ProposalRelations")

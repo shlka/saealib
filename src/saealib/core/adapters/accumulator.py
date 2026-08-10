@@ -73,8 +73,8 @@ from saealib.core.contracts.proposals import (
     QuantityRequirement,
 )
 from saealib.exceptions import ValidationError
+from saealib.identity import CandidateIds
 from saealib.policies.feedback import DEFAULT_SELECTION_POLICY, SelectionPolicy
-from saealib.population.population import CandidateIds
 
 __all__ = ["FeedbackAccumulator"]
 

@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import inspect
-from dataclasses import fields
-from pathlib import Path
+from importlib import import_module
 from typing import Any, cast, get_type_hints
 
 import saealib
@@ -37,19 +36,34 @@ from saealib.strategies.base import OptimizationStrategy
 
 
 def test_tier_three_shapes_and_compiler_surface_are_frozen() -> None:
-    assert tuple(field.name for field in fields(ComponentNode)) == (
+    # Freeze the public construction and behavior surface, not dataclass
+    # implementation fields such as ComponentNode's contract cache.
+    assert tuple(inspect.signature(ComponentNode).parameters) == (
         "component_id",
         "component",
         "role",
         "resolved_services",
-        "_contract_snapshot",
     )
-    assert tuple(field.name for field in fields(ComponentGraph)) == (
+    assert tuple(inspect.signature(ComponentGraph).parameters) == (
         "nodes",
         "data_edges",
         "control_edges",
         "state_bindings",
         "entry_points",
+    )
+    assert isinstance(ComponentNode.contract, property)
+    assert tuple(
+        inspect.signature(ComponentNode.with_contract_snapshot).parameters
+    ) == ("self", "refresh")
+    assert tuple(
+        inspect.signature(ComponentNode.with_resolved_services).parameters
+    ) == ("self", "resolved_services")
+    assert tuple(inspect.signature(ComponentGraph.node_by_id).parameters) == (
+        "self",
+        "component_id",
+    )
+    assert tuple(inspect.signature(ComponentGraph.well_formedness).parameters) == (
+        "self",
     )
     assert tuple(inspect.signature(GraphTemplate.build_graph).parameters) == (
         "self",
@@ -213,23 +227,22 @@ def test_graph_only_strategy_uses_graph_and_recovers_only_a_compatibility_facade
 
 
 def test_phase11_package_boundaries_match_the_adopted_tree() -> None:
-    package_root = Path(saealib.__file__).parent
-    for relative in (
-        "core/runtime.py",
-        "core/graph_builder.py",
-        "core/compiler/graph.py",
-        "profiles/vector/__init__.py",
-        "algorithms",
-        "operators",
-        "acquisition",
-        "surrogate",
-        "execution",
-        "space",
-        "strategies",
-    ):
-        assert (package_root / relative).exists(), relative
+    # Public import paths are the compatibility boundary; physical module
+    # layout is free to evolve behind these facades.
+    public_paths = (
+        ("saealib.core", "Component"),
+        ("saealib.core", "ComponentGraph"),
+        ("saealib.core", "ComponentContract"),
+        ("saealib.core.runtime", "ExecutionRuntime"),
+        ("saealib.core.graph_builder", "build_component_graph"),
+        ("saealib.core.compiler.graph", "GraphTemplate"),
+        ("saealib.core.compiler.compiler", "ExecutablePlan"),
+        ("saealib.profiles.vector", "activate"),
+    )
+    for module_name, symbol in public_paths:
+        module = import_module(module_name)
+        assert hasattr(module, symbol), f"{module_name}.{symbol}"
 
-    import saealib.profiles.vector as vector_profile
-
+    vector_profile = import_module("saealib.profiles.vector")
     assert vector_profile.__all__ == ["activate"]
     assert callable(vector_profile.activate)

@@ -1,18 +1,31 @@
 """Candidate/request ID allocation (ADR-0001 §2.2).
 
-Leaf module: imports only ``threading``, ``numpy``, and
-``saealib.exceptions.ValidationError`` to avoid any import-cycle risk, since
-``context.py`` needs a runtime top-level import of ``IDAllocator``, not a
-``TYPE_CHECKING``-only one.
+Leaf module: its dependencies are limited to standard-library helpers,
+``numpy``, and ``saealib.exceptions.ValidationError`` to avoid import-cycle
+risk, since ``context.py`` needs a runtime top-level import of ``IDAllocator``.
 """
 
 from __future__ import annotations
 
 import threading
+from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
 from saealib.exceptions import ValidationError
+
+CandidateIds = np.ndarray
+
+
+@dataclass(frozen=True)
+class PopulationAttribute:
+    """Definition of one named attribute in a population-like table."""
+
+    name: str
+    dtype: type | np.dtype
+    shape: tuple[int, ...] = ()
+    default: Any = np.nan
 
 
 class IDAllocator:

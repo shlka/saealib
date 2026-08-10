@@ -5,7 +5,6 @@ from __future__ import annotations
 import warnings
 import weakref
 from collections.abc import Hashable, Mapping
-from dataclasses import dataclass
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 
@@ -14,6 +13,7 @@ from typing_extensions import Self
 
 from saealib._deprecated import warn_deprecated
 from saealib.exceptions import ValidationError
+from saealib.identity import CandidateIds, PopulationAttribute
 from saealib.population.genome import DenseVectorBatch, GenomeBatch, ObjectBatch
 from saealib.space.services import DenseNumericView
 
@@ -24,31 +24,7 @@ T_Population = TypeVar("T_Population", bound="Population")
 T_Individual = TypeVar("T_Individual", bound="Individual")
 _T_Default = TypeVar("_T_Default")
 
-CandidateIds = np.ndarray
 ColumnStore = Mapping[str, np.ndarray]
-
-
-@dataclass(frozen=True)
-class PopulationAttribute:
-    """
-    Population attribute definition.
-
-    Attributes
-    ----------
-    name : str
-        Name of the attribute.
-    dtype : Type | np.dtype
-        Data type of the attribute.
-    shape : Tuple[int, ...]
-        Shape of the attribute.
-    default : Any
-        Default value for the attribute.
-    """
-
-    name: str
-    dtype: type | np.dtype
-    shape: tuple[int, ...] = ()
-    default: Any = np.nan
 
 
 class _ConflictBypassProperty(property):

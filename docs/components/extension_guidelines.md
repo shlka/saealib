@@ -1,5 +1,9 @@
 # Extension Guidelines
 
+For import-path conventions, see [API layers](../api/index.md#api-layers). In
+particular, use `saealib.core` for framework extension contracts and treat
+implementation modules as unsupported.
+
 `Algorithm`/`OptimizationStrategy`/`Surrogate`/`AcquisitionFunction`/`SurrogateManager` all have abstract bases, and can be swapped out wholesale via `Optimizer.set_*()`.
 This is the standard approach — use this path when you need a custom search algorithm or surrogate.
 On the other hand, four lightweight mechanisms are available for cases where a change doesn't warrant replacing an existing component entirely.

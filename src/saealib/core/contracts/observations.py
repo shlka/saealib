@@ -28,7 +28,7 @@ from saealib.core.contracts.observation import (
     QuantityKind,
 )
 from saealib.exceptions import ValidationError
-from saealib.population.population import CandidateIds
+from saealib.identity import CandidateIds
 
 __all__ = [
     "ObservationBatch",

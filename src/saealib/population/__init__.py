@@ -1,3 +1,4 @@
+from saealib.identity import CandidateIds, PopulationAttribute
 from saealib.population.archive import (
     Archive,
     ArchiveMixin,
@@ -12,11 +13,9 @@ from saealib.population.genome import (
     VariableLengthBatch,
 )
 from saealib.population.population import (
-    CandidateIds,
     ColumnStore,
     Individual,
     Population,
-    PopulationAttribute,
     bind_property,
     bind_property_array,
 )
@@ -24,6 +23,7 @@ from saealib.population.population import (
 __all__ = [
     "Archive",
     "ArchiveMixin",
+    "CandidateIds",
     "DenseVectorBatch",
     "GenomeBatch",
     "Individual",

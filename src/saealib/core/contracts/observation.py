@@ -14,7 +14,7 @@ import numpy as np
 
 from saealib.core.contracts.vocabulary import Vocabulary, VocabularyDescriptor
 from saealib.exceptions import ValidationError
-from saealib.population.population import PopulationAttribute
+from saealib.identity import PopulationAttribute
 from saealib.space.services import GenomeCodec
 from saealib.space.space import ValidationResult
 

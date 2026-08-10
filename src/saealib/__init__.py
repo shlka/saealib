@@ -15,14 +15,12 @@ __version__ = version("saealib")
 #   implementations per concept, and the Comparator/Evaluator/Initializer/
 #   Termination/Event bases with their common defaults.
 # Lazy surface (_LAZY_EXPORTS below, imported via __getattr__): every other public
-#   component. A name in a subpackage's __all__ belongs here unless it is
-#   namespace-only.
-# namespace-only (not listed at the top level at all): generic-named bulk
-#   sets or domain toolkits, e.g. saealib.benchmarks (sphere/zdt*/dtlz*/...),
-#   saealib.registry.get/build/to_spec, and saealib.defaults (internal).
-#   Access these via their subpackage directly. Tracked in
-#   tests/test_exports.py's NAMESPACE_ONLY allowlist so new subpackage
-#   exports can't silently drift out of this scheme.
+#   root convenience component. Namespace public APIs are defined by each
+#   subpackage independently; adding a name there does not require adding it
+#   to either root surface. Existing root names remain compatibility exports.
+#   Generic-named bulk sets and domain toolkits, e.g. saealib.benchmarks
+#   (sphere/zdt*/dtlz*/...), saealib.registry.get/build/to_spec, and
+#   saealib.defaults, are intentionally namespace-only.
 # ---------------------------------------------------------------------------
 
 from saealib.acquisition import (

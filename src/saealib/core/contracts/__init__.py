@@ -160,7 +160,7 @@ from saealib.core.contracts.vocabulary import (
     validate_identifier,
     validate_name,
 )
-from saealib.population.population import CandidateIds
+from saealib.identity import CandidateIds
 
 __all__ = [
     "ASSUMPTION_KEYS",
