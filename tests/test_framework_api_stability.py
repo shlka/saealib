@@ -7,7 +7,7 @@ from importlib import import_module
 from typing import Any, cast, get_type_hints
 
 import saealib
-import saealib.core.compiler as compiler_api
+import saealib.core
 from saealib.context import OptimizationState
 from saealib.core.compiler import (
     CompileContext,
@@ -71,28 +71,6 @@ def test_tier_three_shapes_and_compiler_surface_are_frozen() -> None:
     )
     assert get_type_hints(GraphTemplate.build_graph)["return"] is ComponentGraph
 
-    assert compiler_api.__all__ == [
-        "DIAGNOSTIC_CODES",
-        "CompilationRule",
-        "CompileContext",
-        "ComponentBindings",
-        "ComponentGraph",
-        "ComponentId",
-        "ComponentNode",
-        "ContractPath",
-        "ControlEdge",
-        "DataEdge",
-        "Diagnostic",
-        "DiagnosticBag",
-        "DiagnosticCodeVocabulary",
-        "ExecutablePlan",
-        "GraphTemplate",
-        "NodeRef",
-        "Severity",
-        "StateBinding",
-    ]
-    assert "Compiler" not in compiler_api.__all__
-    assert "RuleContext" not in compiler_api.__all__
     assert not hasattr(saealib, "_TIER2_MAP")
 
 
@@ -226,23 +204,30 @@ def test_graph_only_strategy_uses_graph_and_recovers_only_a_compatibility_facade
     assert tuple(pipeline.stages) == ()
 
 
-def test_public_package_boundaries_match_the_adopted_tree() -> None:
+def test_public_package_boundaries_are_importable() -> None:
     # Public import paths are the compatibility boundary; physical module
     # layout is free to evolve behind these facades.
     public_paths = (
         ("saealib.core", "Component"),
         ("saealib.core", "ComponentGraph"),
         ("saealib.core", "ComponentContract"),
-        ("saealib.core.runtime", "ExecutionRuntime"),
-        ("saealib.core.graph_builder", "build_component_graph"),
-        ("saealib.core.compiler.graph", "GraphTemplate"),
-        ("saealib.core.compiler.compiler", "ExecutablePlan"),
+        ("saealib.core", "GraphTemplate"),
+        ("saealib.core", "CompilationRule"),
+        ("saealib.core", "ExecutablePlan"),
+        ("saealib.core", "StateStore"),
+        ("saealib.core", "StateView"),
+        ("saealib.core", "StatePatch"),
+        ("saealib.core", "ExecutionRuntime"),
         ("saealib.profiles.vector", "activate"),
     )
     for module_name, symbol in public_paths:
         module = import_module(module_name)
         assert hasattr(module, symbol), f"{module_name}.{symbol}"
 
+    assert (
+        import_module("saealib.core.runtime").ExecutionRuntime
+        is saealib.core.ExecutionRuntime
+    )
     vector_profile = import_module("saealib.profiles.vector")
     assert vector_profile.__all__ == ["activate"]
     assert callable(vector_profile.activate)

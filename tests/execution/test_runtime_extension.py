@@ -25,6 +25,7 @@ from saealib.core.state.patch import StatePatch
 from saealib.exceptions import ConfigurationError, StalePlanError, ValidationError
 from saealib.execution import (
     AsyncEvaluationScheduler,
+    RuntimeFactory,
     RuntimeRegistration,
     RuntimeRegistry,
     SerialEvaluator,
@@ -107,6 +108,7 @@ def test_runtime_extension_symbols_have_one_canonical_public_namespace() -> None
     )
     assert all(name in execution.__all__ for name in names)
     assert all(getattr(execution, name) is getattr(runtime, name) for name in names)
+    assert RuntimeFactory is runtime.RuntimeFactory
     assert all(name not in core.__all__ and not hasattr(core, name) for name in names)
 
 
