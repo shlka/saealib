@@ -961,6 +961,8 @@ class EvaluationPlanStage(Stage):
     name = "evaluation_plan"
     label = "Plan evaluation"
     notation = r"$R \leftarrow \text{plan}(Q)$"
+    async_protocol = "evaluation"
+    async_protocol_role = "driver"
 
     def contract(self) -> ComponentContract:
         return _stage_contract(
@@ -1871,6 +1873,8 @@ class EvaluationAcknowledgeStage(Stage):
     name = "evaluation_acknowledge"
     label = "Acknowledge evaluation"
     notation = r"$H \leftarrow \text{ack}(U)$"
+    async_protocol = "evaluation"
+    async_protocol_role = "end"
 
     def contract(self) -> ComponentContract:
         return _stage_contract(

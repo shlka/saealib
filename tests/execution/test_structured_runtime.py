@@ -5,7 +5,7 @@ import pytest
 
 from saealib.callback import GenerationEndEvent, GenerationStartEvent, RunStartEvent
 from saealib.comparators import SingleObjectiveComparator
-from saealib.context import OptimizationState
+from saealib.context import EvaluationPlanState, OptimizationState
 from saealib.core import (
     BranchRegion,
     ComponentContract,
@@ -18,10 +18,17 @@ from saealib.core import (
 )
 from saealib.core.compiler import CompileContext, Compiler
 from saealib.core.runtime import NodeResult, NodeStatus
-from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS, USER_DATA
+from saealib.core.state import (
+    EVALUATION_UPDATES,
+    EVALUATIONS_PLAN_UPDATES,
+    OPTIMIZATION_STATE_INITIAL_KEYS,
+    USER_DATA,
+)
 from saealib.exceptions import ValidationError
+from saealib.execution.evaluator import EvaluationRequest
 from saealib.execution.runtime import AsyncPipelineRuntime, PipelineRuntime
 from saealib.pipeline import Branch, Loop, Pipeline, Repeat, Stage
+from saealib.policies.evaluation import EvaluationPlan
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -167,6 +174,59 @@ class _AsyncBranchLeaf(_Increment):
         return super().execute(view)
 
 
+class _AsyncProtocolDriver:
+    name = "async_protocol_driver"
+    async_protocol = "evaluation"
+    async_protocol_role = "driver"
+
+    def contract(self) -> ComponentContract:
+        return ComponentContract()
+
+    def execute(self, view):
+        del view
+        return StatePatch(writes={})
+
+    def execute_async(self, view):
+        return self.execute(view)
+
+
+class _AsyncProtocolWait:
+    name = "async_protocol_wait"
+
+    def contract(self) -> ComponentContract:
+        return ComponentContract(
+            state=StateContract(
+                reads=(EVALUATIONS_PLAN_UPDATES,), writes=(EVALUATION_UPDATES,)
+            )
+        )
+
+    def execute(self, view):
+        raise AssertionError("async protocol wait must be scheduler-owned")
+
+
+class _AsyncProtocolEnd:
+    name = "async_protocol_end"
+    async_protocol = "evaluation"
+    async_protocol_role = "end"
+
+    def contract(self) -> ComponentContract:
+        return ComponentContract()
+
+    def execute(self, view):
+        raise AssertionError("async protocol end must be scheduler-owned")
+
+
+class _AsyncProtocolTail(_Increment):
+    name = "async_protocol_tail"
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def execute(self, view):
+        self.calls += 1
+        return super().execute(view)
+
+
 def test_structured_plan_executes_repeat_loop_and_branch() -> None:
     state = _state()
     runtime = PipelineRuntime()
@@ -266,6 +326,34 @@ def test_async_structured_requires_a_driver_without_sync_fallback() -> None:
 
     with pytest.raises(ValidationError, match="async execution driver"):
         runtime.advance(session)
+
+
+def test_async_protocol_completion_resumes_after_protocol_end() -> None:
+    request = EvaluationRequest(
+        np.int64(1), np.empty(0, dtype=np.int64), np.empty((0, 1))
+    )
+    state = _state().replace(
+        evaluation_plan=EvaluationPlan((request,)),
+        evaluation_plan_state=EvaluationPlanState(submitted=(1,), completed=(1,)),
+    )
+    tail = _AsyncProtocolTail()
+    pipeline = Pipeline(
+        [
+            _AsyncProtocolDriver(),
+            _AsyncProtocolWait(),
+            _AsyncProtocolEnd(),
+            tail,
+        ]
+    )
+    runtime = AsyncPipelineRuntime()
+    step = runtime.advance(runtime.initialize(_compile(pipeline), state))
+
+    assert step.finished
+    assert step.executed_node_ids == (
+        "async_protocol_driver",
+        "async_protocol_tail",
+    )
+    assert tail.calls == 1
 
 
 def test_structured_external_environment_closes_generation_not_runtime_session() -> (

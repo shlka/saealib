@@ -110,7 +110,7 @@ class _ExecutionOutcome:
     node_results: tuple[NodeResult, ...] = ()
     executed_node_ids: tuple[str, ...] = ()
     refused_commands: tuple[RuntimeCommand, ...] = ()
-    finished: bool = False
+    plan_completed: bool = False
     terminated: bool = False
     frames: tuple[RegionFrame, ...] = ()
 
@@ -212,7 +212,7 @@ def _environment_execute(
                 node_results=outcome.node_results,
                 executed_node_ids=outcome.executed_node_ids,
                 refused_commands=outcome.refused_commands,
-                finished=outcome.finished,
+                terminated=outcome.finished,
             )
         if isinstance(outcome, OptimizationState):
             return _ExecutionOutcome(state=outcome)
@@ -238,7 +238,7 @@ def _environment_execute_async(
                 node_results=outcome.node_results,
                 executed_node_ids=outcome.executed_node_ids,
                 refused_commands=outcome.refused_commands,
-                finished=outcome.finished,
+                terminated=outcome.finished,
             )
         if isinstance(outcome, OptimizationState):
             return _ExecutionOutcome(state=outcome)
@@ -371,6 +371,18 @@ def _async_stage_driver(component: object) -> Callable[..., object] | None:
     return target if callable(target) else None
 
 
+def _async_protocol_marker(component: object) -> tuple[str, str] | None:
+    stage = getattr(component, "stage", None)
+    protocol = getattr(component, "async_protocol", None)
+    role = getattr(component, "async_protocol_role", None)
+    if stage is not None:
+        protocol = getattr(stage, "async_protocol", protocol)
+        role = getattr(stage, "async_protocol_role", role)
+    if not isinstance(protocol, str) or not isinstance(role, str):
+        return None
+    return protocol, role
+
+
 def _async_leaf_driver(component: object) -> Callable[..., object] | None:
     if getattr(component, "stage", None) is not None:
         return _async_stage_driver(component)
@@ -420,8 +432,11 @@ def _rewind_to_async_driver(
     driver_index = None
     for index in range(frame.operation_index - 1, -1, -1):
         operation = frame.graph.operations[index]
-        if isinstance(operation, ComponentNode) and _async_stage_driver(
-            operation.component
+        if (
+            isinstance(operation, ComponentNode)
+            and _async_leaf_driver(operation.component) is not None
+            and (marker := _async_protocol_marker(operation.component)) is not None
+            and marker[1] == "driver"
         ):
             driver_index = index
             break
@@ -488,6 +503,30 @@ def _structured_async_leaf_executor(
     return execute
 
 
+def _async_protocol_end_index(
+    graph: StructuredGraph, operation_index: int
+) -> int | None:
+    protocol: str | None = None
+    for index in range(operation_index, -1, -1):
+        operation = graph.operations[index]
+        if not isinstance(operation, ComponentNode):
+            continue
+        marker = _async_protocol_marker(operation.component)
+        if marker is not None and marker[1] == "driver":
+            protocol = marker[0]
+            break
+    if protocol is None:
+        return None
+    for index in range(operation_index, len(graph.operations)):
+        operation = graph.operations[index]
+        if not isinstance(operation, ComponentNode):
+            continue
+        marker = _async_protocol_marker(operation.component)
+        if marker == (protocol, "end"):
+            return index
+    return None
+
+
 def _execute_structured(
     plan: StructuredPlan,
     state: OptimizationState,
@@ -549,7 +588,7 @@ def _execute_structured(
                     node_results=tuple(results),
                     executed_node_ids=tuple(executed),
                     refused_commands=tuple(refused),
-                    finished=True,
+                    plan_completed=True,
                     frames=(),
                 )
             continue
@@ -622,8 +661,12 @@ def _execute_structured(
         node = operation
         if async_control and _structured_async_waiting(node, current):
             if _structured_async_plan_complete(current):
-                stack[-1] = replace(frame, operation_index=len(frame.graph.operations))
-                continue
+                end_index = _async_protocol_end_index(
+                    frame.graph, frame.operation_index
+                )
+                if end_index is not None:
+                    stack[-1] = replace(frame, operation_index=end_index + 1)
+                    continue
             executed.append(node.component_id)
             result = NodeResult(
                 patch=StatePatch(writes={}),
@@ -681,10 +724,7 @@ def _execute_structured(
                 node_results=tuple(results),
                 executed_node_ids=tuple(executed),
                 refused_commands=tuple(refused),
-                finished=any(
-                    isinstance(command, RequestTermination)
-                    for command in result.commands
-                ),
+                plan_completed=False,
                 terminated=any(
                     isinstance(command, RequestTermination)
                     for command in result.commands
@@ -770,10 +810,13 @@ def _execute_with_metadata(
         node_results=tuple(results),
         executed_node_ids=tuple(executed),
         refused_commands=tuple(refused),
-        finished=any(
-            isinstance(command, RequestTermination)
+        plan_completed=not results
+        or all(
+            result.status is NodeStatus.COMPLETED
+            and not any(
+                isinstance(command, RequestTermination) for command in result.commands
+            )
             for result in results
-            for command in result.commands
         ),
         terminated=any(
             isinstance(command, RequestTermination)
@@ -956,7 +999,7 @@ class _OptimizerEnvironment:
             prefix_outcome = _execute_with_metadata(
                 prefix_plan, value, dispatch=self.dispatch
             )
-            if prefix_outcome.finished or any(
+            if prefix_outcome.terminated or any(
                 result.status is not NodeStatus.COMPLETED
                 for result in prefix_outcome.node_results
             ):
@@ -1200,12 +1243,13 @@ class PipelineRuntime:
                     raise ValidationError(
                         "structured runtime node reported FAILED status"
                     )
+                run_finished = metadata.plan_completed or metadata.terminated
                 next_session = RuntimeSession(
                     plan=session.plan,
                     state=metadata.state,
                     step_index=session.step_index + 1,
                     observable=True,
-                    finished=metadata.finished,
+                    finished=run_finished,
                     frames=metadata.frames,
                 )
                 return RuntimeStep(
@@ -1213,7 +1257,7 @@ class PipelineRuntime:
                     node_results=metadata.node_results,
                     executed_node_ids=metadata.executed_node_ids,
                     observable=True,
-                    finished=metadata.finished,
+                    finished=run_finished,
                     refused_commands=metadata.refused_commands,
                     session=next_session,
                 )
@@ -1273,7 +1317,7 @@ class PipelineRuntime:
                     metadata=metadata,
                     plan=plan,
                 )
-            if metadata.finished:
+            if metadata.plan_completed:
                 env.finish_generation(metadata.state)
                 return self._step(
                     session,
@@ -1325,7 +1369,7 @@ class PipelineRuntime:
                 )
             state = metadata.state
             node_results = metadata.node_results
-            finished = metadata.finished
+            finished = metadata.terminated
             next_session = RuntimeSession(
                 plan=session.plan,
                 state=state,
@@ -1357,7 +1401,7 @@ class PipelineRuntime:
                 return self._step(
                     session, state, generation_open, metadata=metadata, plan=plan
                 )
-            if metadata.finished:
+            if metadata.terminated:
                 env.dispatch(RunEndEvent(ctx=state))
                 return self._step(
                     session,
@@ -1400,7 +1444,7 @@ class PipelineRuntime:
             return self._step(
                 session, state, generation_open, metadata=metadata, plan=plan
             )
-        if metadata.finished:
+        if metadata.terminated:
             env.dispatch(RunEndEvent(ctx=state))
             return self._step(
                 session,
@@ -1443,7 +1487,7 @@ class PipelineRuntime:
         frames: tuple[RegionFrame, ...] | None = None,
     ) -> RuntimeStep:
         step_finished = (
-            (metadata.finished if metadata is not None else False)
+            (metadata.terminated if metadata is not None else False)
             if finished is None
             else finished
         )
@@ -1537,12 +1581,13 @@ class AsyncPipelineRuntime(PipelineRuntime):
                 result.status is NodeStatus.FAILED for result in metadata.node_results
             ):
                 raise ValidationError("structured runtime node reported FAILED status")
+            run_finished = metadata.plan_completed or metadata.terminated
             next_session = RuntimeSession(
                 plan=session.plan,
                 state=metadata.state,
                 step_index=session.step_index + 1,
                 observable=True,
-                finished=metadata.finished,
+                finished=run_finished,
                 frames=metadata.frames,
             )
             return RuntimeStep(
@@ -1550,7 +1595,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                 node_results=metadata.node_results,
                 executed_node_ids=metadata.executed_node_ids,
                 observable=True,
-                finished=metadata.finished,
+                finished=run_finished,
                 refused_commands=metadata.refused_commands,
                 session=next_session,
             )
@@ -1645,7 +1690,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                 metadata=metadata,
                 plan=plan,
             )
-        if metadata.finished:
+        if metadata.plan_completed:
             if metadata.state.pending_evaluations:
                 return self._step(
                     session,
@@ -1726,7 +1771,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                         metadata=metadata,
                         plan=plan,
                     )
-                if metadata.finished:
+                if metadata.terminated:
                     env.dispatch(RunEndEvent(ctx=state))
                     return self._step(
                         session,
@@ -1756,7 +1801,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                         metadata=metadata,
                         plan=plan,
                     )
-                if metadata.finished:
+                if metadata.terminated:
                     env.dispatch(RunEndEvent(ctx=state))
                     return self._step(
                         session,
@@ -1795,7 +1840,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                     metadata=metadata,
                     plan=plan,
                 )
-            if metadata.finished:
+            if metadata.terminated:
                 env.dispatch(RunEndEvent(ctx=state))
                 return self._step(
                     session,
@@ -1825,7 +1870,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                 metadata=metadata,
                 plan=plan,
             )
-        if metadata.finished:
+        if metadata.terminated:
             env.dispatch(RunEndEvent(ctx=state))
             return self._step(
                 session,
