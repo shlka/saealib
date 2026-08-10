@@ -123,7 +123,6 @@ class _VectorDistanceService:
                 f"Dimension mismatch in DistanceService: {x1.shape[1]} vs {x2.shape[1]}"
             )
 
-        # Euclidean pairwise distance computation
         diff = x1[:, np.newaxis, :] - x2[np.newaxis, :, :]
         return np.sqrt(np.sum(diff**2, axis=-1))
 

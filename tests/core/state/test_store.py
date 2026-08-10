@@ -19,12 +19,10 @@ from saealib.population import Population, PopulationAttribute
 
 
 def key(name: str, version: int = 1) -> StateKey[object]:
-    """Build a test state key."""
     return StateKey(namespace="user", name=name, schema_version=version)
 
 
 def population() -> Population:
-    """Build a small population with one numeric column."""
     pop = Population([PopulationAttribute(name="x", dtype=np.float64)])
     pop.append({"x": 1.0})
     pop.append({"x": 2.0})

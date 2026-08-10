@@ -270,7 +270,6 @@ class SequentialPlan:
         }
 
         def executable_successors_for(node_id: str) -> set[str]:
-            """Collapse contract-only nodes between executable graph nodes."""
             result: set[str] = set()
             pending_nodes = [
                 (target, {node_id}) for target in graph_successors[node_id]
@@ -318,7 +317,6 @@ class SequentialPlan:
             )
 
         def stage_successors(source: str) -> set[str]:
-            """Collapse control-only compile nodes between two Stage nodes."""
             result: set[str] = set()
             pending_nodes = [(target, {source}) for target in graph_successors[source]]
             while pending_nodes:

@@ -77,7 +77,6 @@ class _FreshenedComponent:
         self._contract = contract
 
     def contract(self) -> ComponentContract:
-        """Return the captured contract."""
         return self._contract
 
     def __getattr__(self, name: str) -> object:

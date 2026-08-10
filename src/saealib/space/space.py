@@ -40,7 +40,6 @@ class ValidationResult:
     errors: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        """Coerce sequence attributes to immutable tuples."""
         object.__setattr__(self, "valid_mask", tuple(self.valid_mask))
         object.__setattr__(self, "errors", tuple(self.errors))
 
