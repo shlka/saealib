@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
@@ -17,8 +18,9 @@ from saealib.core import (
 from saealib.core.compiler import CompileContext, Compiler
 from saealib.core.runtime import NodeResult, NodeStatus
 from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS, USER_DATA
+from saealib.exceptions import ValidationError
 from saealib.execution.runtime import PipelineRuntime
-from saealib.pipeline import Branch, Loop, Pipeline, Repeat
+from saealib.pipeline import Branch, Loop, Pipeline, Repeat, Stage
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -54,9 +56,8 @@ def _state() -> OptimizationState:
 
 
 def _compile(pipeline: Pipeline):
-    graph = lower_pipeline(pipeline)
-    return Compiler().compile(
-        graph,
+    return Compiler().compile_pipeline(
+        pipeline,
         CompileContext(
             initial_state_keys=frozenset((*OPTIMIZATION_STATE_INITIAL_KEYS, USER_DATA))
         ),
@@ -151,3 +152,17 @@ def test_structured_plan_resumes_blocked_leaf_from_saved_frame() -> None:
     assert second.finished
     assert component.calls == 2
     assert second.state.get_state(USER_DATA) == 2
+
+
+class _LegacyStage(Stage):
+    name = "legacy"
+
+    def execute(self, state):
+        return state
+
+
+def test_structured_plan_rejects_optimization_state_stage_boundary() -> None:
+    plan = _compile(Pipeline([_LegacyStage()]))
+
+    with pytest.raises(ValidationError, match="OptimizationState"):
+        PipelineRuntime().initialize(plan, _state())

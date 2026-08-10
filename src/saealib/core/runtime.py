@@ -7,6 +7,7 @@ phase units.
 
 from __future__ import annotations
 
+import inspect
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
@@ -420,18 +421,53 @@ class StructuredPlan:
         if not isinstance(graph, StructuredGraph):
             raise ValidationError("StructuredPlan requires a StructuredGraph")
         graph.validate()
-        from saealib.core.graph_builder import cached_execution_target
+        from saealib.core.graph_builder import StageNodeAdapter
 
         targets: dict[str, Callable[..., object]] = {}
 
         def visit(current: StructuredGraph) -> None:
             for operation in current.operations:
                 if isinstance(operation, ComponentNode):
-                    execute = cached_execution_target(operation.component)
+                    if isinstance(operation.component, StageNodeAdapter) or getattr(
+                        operation.component, "_execution_mode", None
+                    ) == "optimization_state":
+                        raise ValidationError(
+                            f"StructuredPlan node {operation.component_id!r} cannot "
+                            "use the OptimizationState execution boundary"
+                        )
+                    execute = getattr(operation.component, "execute", None)
                     if not callable(execute):
                         raise ValidationError(
                             f"StructuredPlan node {operation.component_id!r} must "
                             "provide execute(StateView)"
+                        )
+                    try:
+                        parameters = tuple(
+                            inspect.signature(execute).parameters.values()
+                        )
+                    except (TypeError, ValueError) as exc:
+                        raise ValidationError(
+                            f"StructuredPlan node {operation.component_id!r} must "
+                            "provide inspectable execute(StateView)"
+                        ) from exc
+                    if len(parameters) != 1:
+                        raise ValidationError(
+                            f"StructuredPlan node {operation.component_id!r} must "
+                            "provide execute(StateView)"
+                        )
+                    annotation = parameters[0].annotation
+                    if annotation is OptimizationState or (
+                        isinstance(annotation, str)
+                        and annotation.rsplit(".", 1)[-1] == "OptimizationState"
+                    ):
+                        raise ValidationError(
+                            f"StructuredPlan node {operation.component_id!r} "
+                            "cannot use execute(OptimizationState); structured "
+                            "runtime requires execute(StateView)"
+                        )
+                    if operation.component_id in targets:
+                        raise ValidationError(
+                            "StructuredPlan operation component ids must be unique"
                         )
                     targets[operation.component_id] = execute
                 elif isinstance(operation, RegionNode):

@@ -257,6 +257,8 @@ class StageNodeAdapter:
     declarations belong to the Stage contract layer.
     """
 
+    _execution_mode = "optimization_state"
+
     def __init__(self, stage: Stage, *, node_path: str | None = None) -> None:
         if not isinstance(stage, Stage):
             raise ValidationError("StageNodeAdapter stage must be a Stage")

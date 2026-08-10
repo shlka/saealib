@@ -41,6 +41,7 @@ class Stage(ABC):
     label: str = ""
     notation: str = ""
     stages: list[Stage]
+    _execution_mode = "optimization_state"
 
     def __init__(
         self,

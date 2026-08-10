@@ -61,16 +61,68 @@ class StructuredGraph(ComponentGraph):
         return self.region_nodes
 
     def validate(self) -> None:
-        """Raise when this graph or one of its nested bodies is invalid."""
-        ids = {node.component_id for node in self.nodes}
-        if len(ids) != len(self.nodes):
+        """Raise when this graph or one of its nested bodies is invalid.
+
+        ``ComponentGraph`` deliberately keeps its structural checks diagnostic-
+        based.  Structured control, however, is consumed directly by the
+        structured runtime, so its operation tree must be complete and lowered
+        before a plan can be created.
+        """
+        ids = tuple(node.component_id for node in self.nodes)
+        if len(set(ids)) != len(ids):
             raise ValidationError("StructuredGraph component ids must be unique")
-        for region_node in self.region_nodes:
-            body = region_node.region.body
-            if isinstance(body, StructuredGraph):
-                body.validate()
-            otherwise = getattr(region_node.region, "otherwise", None)
-            if isinstance(otherwise, StructuredGraph):
+
+        regions = tuple(self.region_nodes)
+        region_ids = tuple(node.region.qualified_id for node in regions)
+        if len(set(region_ids)) != len(region_ids):
+            raise ValidationError("StructuredGraph region ids must be unique")
+        region_set = {id(region) for region in regions}
+        node_ids = set(ids)
+        operation_component_ids: set[str] = set()
+        operation_regions: set[int] = set()
+        for operation in self.operations:
+            if isinstance(operation, ComponentNode):
+                if operation.component_id not in node_ids:
+                    raise ValidationError(
+                        "StructuredGraph operation component must belong to graph"
+                    )
+                if operation.component_id in operation_component_ids:
+                    raise ValidationError(
+                        "StructuredGraph operations must not repeat components"
+                    )
+                operation_component_ids.add(operation.component_id)
+            elif isinstance(operation, RegionNode):
+                if id(operation) not in region_set:
+                    raise ValidationError(
+                        "StructuredGraph operation region must belong to graph"
+                    )
+                if id(operation) in operation_regions:
+                    raise ValidationError(
+                        "StructuredGraph operations must not repeat regions"
+                    )
+                operation_regions.add(id(operation))
+            else:
+                raise ValidationError(
+                    "StructuredGraph operations must contain ComponentNode or "
+                    "RegionNode values"
+                )
+
+        for region_node in regions:
+            region = region_node.region
+            body = region.body
+            if not isinstance(body, StructuredGraph):
+                raise ValidationError(
+                    f"StructuredGraph region {region.qualified_id!r} body must "
+                    "be a StructuredGraph"
+                )
+            body.validate()
+            otherwise = getattr(region, "otherwise", None)
+            if otherwise is not None:
+                if not isinstance(otherwise, StructuredGraph):
+                    raise ValidationError(
+                        f"StructuredGraph region {region.qualified_id!r} alternate "
+                        "body must be a StructuredGraph"
+                    )
                 otherwise.validate()
 
     @classmethod

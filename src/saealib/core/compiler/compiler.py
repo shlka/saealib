@@ -26,6 +26,7 @@ from saealib.core.compiler.graph import (
     ReachabilityRule,
     StateBinding,
 )
+from saealib.core.compiler.structured import StructuredGraph
 from saealib.core.contracts.contract import ComponentContract
 from saealib.core.contracts.execution import RuntimeCapability
 from saealib.core.contracts.ports import (
@@ -924,6 +925,11 @@ class Compiler:
         """Resolve and verify a graph, returning an execution-free plan."""
         if not isinstance(graph, ComponentGraph):
             raise ValidationError("Compiler.compile graph must be a ComponentGraph")
+        # Structured control is executed from its operation tree, not from the
+        # ordinary graph edges.  Validate it at the compiler boundary so a
+        # malformed region/body cannot survive into a StructuredPlan.
+        if isinstance(graph, StructuredGraph):
+            graph.validate()
         compile_context = (
             CompileContext(adapter_registry=self.adapter_registry)
             if context is None
@@ -1108,6 +1114,19 @@ class Compiler:
                 (node.component_id, node.contract) for node in current.nodes
             ),
         )
+
+    def compile_pipeline(
+        self, pipeline: object, context: CompileContext | None = None
+    ) -> ExecutablePlan:
+        """Lower a Pipeline/structured value and compile the resulting graph.
+
+        The local import keeps the compiler boundary independent of the
+        compatibility DSL module while making this the single explicit
+        Pipeline-to-lowering-to-compilation entry point.
+        """
+        from saealib.core.compiler.lowerer import lower_pipeline
+
+        return self.compile(lower_pipeline(pipeline), context)
 
 
 DEFAULT_RULE_REGISTRY = RuleRegistry()
