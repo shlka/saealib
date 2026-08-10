@@ -22,11 +22,13 @@ from saealib.core.state import (
     EVALUATIONS_PLAN_STATE,
     EVALUATIONS_PLAN_UPDATES,
     FEEDBACK_RESULT,
+    POPULATIONS_MAIN,
     PROPOSALS_CURRENT,
     PROPOSALS_OFFSPRING,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
     RUNTIME_GENERATION,
     RUNTIME_REQUEST_ID_ALLOCATOR,
+    RUNTIME_RNG,
     SCORES,
     SURROGATES_PREDICTIONS,
 )
@@ -142,10 +144,11 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 PROPOSALS_OFFSPRING,
                 PROPOSALS_CURRENT,
                 RUNTIME_CANDIDATE_ID_ALLOCATOR,
+                EVALUATED_OFFSPRING,
             },
         ),
         SurrogatePredictStage: (
-            {PROPOSALS_OFFSPRING, ARCHIVES_MAIN},
+            {PROPOSALS_OFFSPRING, POPULATIONS_MAIN, ARCHIVES_MAIN},
             {PROPOSALS_OFFSPRING, SURROGATES_PREDICTIONS},
         ),
         PendingEvaluationContextStage: (set(), set()),
@@ -155,10 +158,11 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 SURROGATES_PREDICTIONS,
                 ARCHIVES_MAIN,
                 RUNTIME_GENERATION,
+                RUNTIME_RNG,
             },
             {SCORES, ACQUISITION_RESULT},
         ),
-        SurrogateFitStage: ({ARCHIVES_MAIN}, set()),
+        SurrogateFitStage: ({POPULATIONS_MAIN, ARCHIVES_MAIN}, set()),
         TopKSelectionStage: ({PROPOSALS_OFFSPRING, SCORES}, {PROPOSALS_OFFSPRING}),
         SortByScoreStage: (
             {PROPOSALS_OFFSPRING, SCORES},
@@ -175,6 +179,7 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 EVALUATIONS_OWNERS,
                 ACQUISITION_RESULT,
                 SCORES,
+                RUNTIME_REQUEST_ID_ALLOCATOR,
             },
             {
                 EVALUATION_REQUEST,
@@ -185,6 +190,7 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 EVALUATION_UPDATES,
                 EVALUATION_UPDATE_NEW_IDS,
                 EVALUATION_NEW_IDS,
+                RUNTIME_REQUEST_ID_ALLOCATOR,
             },
         ),
         AsyncEvaluationSubmitStage: (
@@ -214,6 +220,7 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 EVALUATIONS_PLAN_STATE,
                 EVALUATIONS_PENDING,
                 EVALUATION_HANDLES,
+                EVALUATIONS_OWNERS,
             },
             {
                 EVALUATIONS_PENDING,
@@ -270,6 +277,7 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 EVALUATION_UPDATES,
                 EVALUATION_UPDATE_NEW_IDS,
                 EVALUATIONS_PLAN_UPDATES,
+                EVALUATIONS_COUNT,
             },
             {
                 EVALUATIONS_PLAN,
@@ -285,7 +293,13 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
             {PROPOSALS_OFFSPRING, EVALUATED_OFFSPRING, EVALUATIONS_COUNT},
         ),
         ArchiveUpdateStage: (
-            {EVALUATED_OFFSPRING, EVALUATIONS_PLAN, EVALUATIONS_PLAN_STATE},
+            {
+                EVALUATED_OFFSPRING,
+                ARCHIVES_MAIN,
+                ARCHIVES_PARETO,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+            },
             {ARCHIVES_MAIN, ARCHIVES_PARETO, EVALUATED_OFFSPRING},
         ),
         FeedbackStage: (
@@ -304,8 +318,10 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 PROPOSALS_OFFSPRING,
                 PROPOSALS_CURRENT,
                 FEEDBACK_RESULT,
+                EVALUATED_OFFSPRING,
                 EVALUATIONS_PLAN,
                 EVALUATIONS_PLAN_STATE,
+                EVALUATION_UPDATES,
             },
             set(),
         ),

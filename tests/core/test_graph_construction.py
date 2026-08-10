@@ -17,6 +17,7 @@ from saealib import (
 from saealib.core.compiler import CompileContext, Compiler, RuleContext
 from saealib.core.compiler.diagnostics import DiagnosticBag
 from saealib.core.compiler.graph import IdentityRule, ReachabilityRule
+from saealib.core.compiler.structured import StructuredGraph
 from saealib.core.contracts import (
     MANY,
     ComponentContract,
@@ -137,11 +138,24 @@ def test_builtins_and_graph_only_strategies_share_graph_pipeline_facade(
         )
         graph = strategy.build_graph(provider)
         pipeline = strategy.build_pipeline(provider)
-        assert [stage.name for stage in pipeline.stages] == [
-            node.component.stage.name
-            for node in graph.nodes
-            if isinstance(node.component, StageNodeAdapter)
-        ]
+        if isinstance(graph, StructuredGraph):
+            assert [
+                operation.region.qualified_id for operation in graph.operations[1:]
+            ] == [
+                "generation_based.surrogate_generations",
+                "generation_based.true_generation",
+            ]
+            assert pipeline.stages[0].name == "surrogate_fit"
+            assert len(pipeline.stages) == 3
+            assert not any(
+                isinstance(node.component, StageNodeAdapter) for node in graph.nodes
+            )
+        else:
+            assert [stage.name for stage in pipeline.stages] == [
+                node.component.stage.name
+                for node in graph.nodes
+                if isinstance(node.component, StageNodeAdapter)
+            ]
 
     class GraphOnlyStrategy(OptimizationStrategy):
         def build_graph(self, provider: Any):
@@ -191,13 +205,35 @@ def test_graph_nodes_match_actual_pipeline_and_preselection_has_no_top_k_stage()
             node for node in graph.nodes if isinstance(node.component, StageNodeAdapter)
         ]
 
-        assert [node.component.stage.name for node in stage_nodes] == [
-            stage.name for stage in pipeline.stages
-        ]
-        assert all(
-            node.component.stage.__class__.__name__ != "TopKSelectionStage"
-            for node in stage_nodes
-        )
+        if isinstance(graph, StructuredGraph):
+            assert [
+                operation.region.qualified_id for operation in graph.operations[1:]
+            ] == [
+                "generation_based.surrogate_generations",
+                "generation_based.true_generation",
+            ]
+            assert [
+                node.component_id
+                for node in graph.region_nodes[0].region.body.operations
+            ] == [
+                "generation_based.surrogate_generations.count_generation",
+                "generation_based.surrogate_generations.ask",
+                "generation_based.surrogate_generations.surrogate_predict",
+                "generation_based.surrogate_generations.acquisition",
+                "generation_based.surrogate_generations.feedback",
+                "generation_based.surrogate_generations.tell",
+            ]
+            assert all(
+                not isinstance(node.component, StageNodeAdapter) for node in graph.nodes
+            )
+        else:
+            assert [node.component.stage.name for node in stage_nodes] == [
+                stage.name for stage in pipeline.stages
+            ]
+            assert all(
+                node.component.stage.__class__.__name__ != "TopKSelectionStage"
+                for node in stage_nodes
+            )
 
 
 def test_data_and_control_edges_are_distinct_and_archive_feedback_is_control_only():
@@ -276,6 +312,13 @@ def test_all_strategy_data_edges_resolve_to_declared_directional_ports():
 
     for strategy in _strategies():
         graph = strategy.build_graph(provider)
+
+        if isinstance(graph, StructuredGraph):
+            assert graph.data_edges == ()
+            assert all(
+                not isinstance(node.component, StageNodeAdapter) for node in graph.nodes
+            )
+            continue
 
         def stage_id(component_id: str) -> str:
             return component_id.split("__", 1)[0]
@@ -454,7 +497,7 @@ def test_decomposed_surrogate_bindings_remain_node_qualified():
     )
 
 
-def test_u2_decomposition_exposes_stage_contract_and_held_parts():
+def test_structured_decomposition_exposes_stage_contract_and_held_parts():
     class _Stage(Stage):
         name = "u2_stage"
 
@@ -486,7 +529,7 @@ def test_u2_decomposition_exposes_stage_contract_and_held_parts():
     assert stage.component_id != part.component_id
 
 
-def test_u2_decomposition_reuses_adapter_held_snapshots(monkeypatch):
+def test_structured_decomposition_reuses_adapter_held_snapshots(monkeypatch):
     pipeline = DirectStrategy().build_pipeline(cast(Any, _Provider()))
     calls = 0
     original = graph_builder._held_components
@@ -503,7 +546,7 @@ def test_u2_decomposition_reuses_adapter_held_snapshots(monkeypatch):
     assert graph.nodes
 
 
-def test_u2_feedback_is_cross_node_and_control_is_not_data():
+def test_structured_feedback_is_cross_node_and_control_is_not_data():
     graph = build_decomposed_component_graph(
         Pipeline(list(DirectStrategy().build_pipeline(cast(Any, _Provider())).stages))
     )
@@ -553,7 +596,7 @@ def test_u2_feedback_is_cross_node_and_control_is_not_data():
     }
 
 
-def test_u2_five_strategy_graphs_compile_without_errors_or_self_loops():
+def test_five_strategy_graphs_compile_without_errors_or_self_loops():
     problem = Problem(
         func=lambda x: float(np.sum(np.asarray(x) ** 2)),
         dim=2,
@@ -566,7 +609,7 @@ def test_u2_five_strategy_graphs_compile_without_errors_or_self_loops():
     for strategy in _strategies():
         optimizer = Optimizer(problem).set_strategy(strategy)
         optimizer._resolve_defaults()
-        graph = build_decomposed_component_graph(strategy.build_pipeline(optimizer))
+        graph = strategy.build_graph(optimizer)
         plan = Compiler().compile(
             graph,
             CompileContext(

@@ -10,12 +10,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from saealib.core.compiler.graph import ComponentGraph
-from saealib.core.graph_builder import (
-    NodeAdapterSpec,
-    StageContractNodeAdapter,
-    build_decomposed_component_graph_from_specs,
-)
-from saealib.pipeline import Pipeline
+from saealib.core.compiler.lowerer import lower_pipeline
+from saealib.core.contracts.observation import SURROGATE
+from saealib.pipeline import Pipeline, Repeat
 from saealib.policies.feedback import (
     FeedbackBuilder,
     MixedFeedback,
@@ -24,6 +21,7 @@ from saealib.policies.feedback import (
 )
 from saealib.registry import register
 from saealib.stages import (
+    AcquisitionStage,
     ArchiveUpdateStage,
     AskStage,
     CountGenerationStage,
@@ -33,8 +31,10 @@ from saealib.stages import (
     EvaluationPlanStage,
     EvaluationSubmitStage,
     FeedbackStage,
-    SurrogateOnlyLoopStage,
+    SurrogateFitStage,
+    SurrogatePredictStage,
     TellStage,
+    stage_component,
 )
 from saealib.strategies.base import (
     OptimizationStrategy,
@@ -43,9 +43,6 @@ from saealib.strategies.base import (
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
     from saealib.optimizer import ComponentProvider
-
-_MISSING = object()
-
 
 @register()
 class GenerationBasedStrategy(OptimizationStrategy):
@@ -66,12 +63,7 @@ class GenerationBasedStrategy(OptimizationStrategy):
         self.gen_ctrl = gen_ctrl
         self.pipeline: Pipeline | None = None
 
-    def build_graph(self, provider: ComponentProvider) -> ComponentGraph:
-        """Build the canonical generation-based strategy graph."""
-        cbmanager = getattr(provider, "cbmanager", None)
-        evaluation_planner = (
-            getattr(provider, "evaluation_planner", None) or self.evaluation_planner
-        )
+    def _feedback_builder(self, provider: ComponentProvider) -> FeedbackBuilder:
         builder_explicit = getattr(provider, "feedback_builder_explicit", None)
         configured_builder = getattr(provider, "feedback_builder", None)
         feedback_builder: FeedbackBuilder | None = None
@@ -79,37 +71,71 @@ class GenerationBasedStrategy(OptimizationStrategy):
             feedback_builder = cast(FeedbackBuilder | None, configured_builder)
         if feedback_builder is None:
             feedback_builder = self.true_feedback_builder
-        evaluation_tail = [
-            EvaluationPlanStage(evaluation_planner),
-            EvaluationSubmitStage(provider.evaluator),
-            EvaluationCollectStage(provider.evaluator),
-            EvaluationApplyStage(),
-            ArchiveUpdateStage(),
-            FeedbackStage(feedback_builder),
-            TellStage(provider.algorithm),
-            EvaluationAcknowledgeStage(provider.evaluator, cbmanager),
-        ]
-        stages = (
-            SurrogateOnlyLoopStage(
-                provider.algorithm,
-                provider.surrogate_manager,
-                self.gen_ctrl,
-                cbmanager,
-                acquisition=provider.acquisition,
-                feedback_builder=PredictedFeedback(),
-            ),
-            CountGenerationStage(),
-            AskStage(provider.algorithm, cbmanager=cbmanager),
-            *evaluation_tail,
+        return feedback_builder
+
+    def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
+        """Describe the strategy as a structured Pipeline DSL."""
+        cbmanager = getattr(provider, "cbmanager", None)
+        evaluation_planner = (
+            getattr(provider, "evaluation_planner", None) or self.evaluation_planner
         )
-        specs = tuple(
-            NodeAdapterSpec(
-                component_id=stage.name,
-                adapter=StageContractNodeAdapter(stage, node_path=stage.name),
-            )
-            for stage in stages
+        feedback_builder = self._feedback_builder(provider)
+
+        surrogate_generation = Pipeline(
+            name="surrogate_generation",
+            steps=[
+                stage_component(CountGenerationStage()),
+                stage_component(AskStage(provider.algorithm, cbmanager=cbmanager)),
+                stage_component(
+                    SurrogatePredictStage(
+                        provider.surrogate_manager,
+                        cbmanager=cbmanager,
+                        refit=False,
+                    )
+                ),
+                stage_component(AcquisitionStage(provider.acquisition, cbmanager)),
+                stage_component(FeedbackStage(PredictedFeedback())),
+                stage_component(TellStage(provider.algorithm, channel=SURROGATE)),
+            ],
         )
-        return build_decomposed_component_graph_from_specs(specs)
+        true_generation = Pipeline(
+            name="true_generation",
+            steps=[
+                stage_component(CountGenerationStage()),
+                stage_component(AskStage(provider.algorithm, cbmanager=cbmanager)),
+                stage_component(EvaluationPlanStage(evaluation_planner)),
+                stage_component(EvaluationSubmitStage(provider.evaluator)),
+                stage_component(EvaluationCollectStage(provider.evaluator)),
+                stage_component(EvaluationApplyStage()),
+                stage_component(ArchiveUpdateStage()),
+                stage_component(FeedbackStage(feedback_builder)),
+                stage_component(TellStage(provider.algorithm)),
+                stage_component(
+                    EvaluationAcknowledgeStage(provider.evaluator, cbmanager)
+                ),
+            ],
+        )
+        return Pipeline(
+            name="generation_based",
+            steps=[
+                stage_component(
+                    SurrogateFitStage(
+                        provider.surrogate_manager,
+                        cbmanager=cbmanager,
+                    )
+                ),
+                Repeat(
+                    surrogate_generation,
+                    count=self.gen_ctrl,
+                    name="surrogate_generations",
+                ),
+                true_generation,
+            ],
+        )
+
+    def build_graph(self, provider: ComponentProvider) -> ComponentGraph:
+        """Lower the structured generation-based Pipeline to its graph."""
+        return lower_pipeline(self.build_pipeline(provider))
 
     def step(
         self, ctx: OptimizationState, provider: ComponentProvider

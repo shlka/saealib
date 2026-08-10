@@ -5,7 +5,7 @@ import pytest
 
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
-from saealib.core.state import RuntimeContext, StateStore
+from saealib.core.state import USER_DATA, RuntimeContext, StateStore
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -74,3 +74,12 @@ def test_runtime_context_restricts_graph_native_context_capabilities() -> None:
         runtime_context.fe = 2  # type: ignore[misc]
     with pytest.raises(TypeError):
         runtime_context.data["new"] = 2  # type: ignore[index]
+
+
+def test_runtime_context_state_capabilities_follow_declared_reads() -> None:
+    state = _state()
+    context = RuntimeContext(state, reads=(USER_DATA,))
+
+    assert context.data == state.data
+    with pytest.raises(AttributeError, match="population"):
+        context.population

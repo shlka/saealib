@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from saealib.callback import GenerationEndEvent, GenerationStartEvent, RunStartEvent
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.core import (
@@ -108,6 +109,40 @@ class _BlockOnce(_Increment):
         return patch
 
 
+class _StructuredEnvironment:
+    capabilities = frozenset()
+
+    def __init__(self) -> None:
+        self.dispatched: list[object] = []
+        self.finished_generations = 0
+
+    def dispatch(self, event) -> None:
+        self.dispatched.append(event)
+
+    def finish_generation(self, state) -> None:
+        self.finished_generations += 1
+        self.dispatch(GenerationEndEvent(ctx=state))
+
+    def is_terminated(self, state) -> bool:
+        del state
+        return False
+
+    def fatal(self, state) -> None:
+        del state
+
+
+class _StatusOnce(_Increment):
+    def __init__(self, status: NodeStatus) -> None:
+        self.status = status
+        self.calls = 0
+
+    def execute(self, view):
+        self.calls += 1
+        patch = super().execute(view)
+        status = self.status if self.calls == 1 else NodeStatus.COMPLETED
+        return NodeResult(patch=patch, status=status)
+
+
 def test_structured_plan_executes_repeat_loop_and_branch() -> None:
     state = _state()
     runtime = PipelineRuntime()
@@ -152,6 +187,73 @@ def test_structured_plan_resumes_blocked_leaf_from_saved_frame() -> None:
     assert second.finished
     assert component.calls == 2
     assert second.state.get_state(USER_DATA) == 2
+
+
+def test_structured_external_environment_closes_generation_not_runtime_session() -> (
+    None
+):
+    environment = _StructuredEnvironment()
+    runtime = PipelineRuntime(environment=environment)
+    session = runtime.initialize(_compile(Pipeline([_Increment()])), _state())
+
+    step = runtime.advance(session)
+
+    assert step.finished is False
+    assert step.observable is True
+    assert step.session is not None
+    assert step.session.finished is False
+    assert step.session.generation_open is False
+    assert environment.finished_generations == 1
+    assert [type(event) for event in environment.dispatched] == [
+        RunStartEvent,
+        GenerationStartEvent,
+        GenerationEndEvent,
+    ]
+
+
+@pytest.mark.parametrize("status", [NodeStatus.BLOCKED, NodeStatus.RUNNING])
+def test_structured_external_environment_keeps_generation_open_for_resume(
+    status: NodeStatus,
+) -> None:
+    component = _StatusOnce(status)
+    environment = _StructuredEnvironment()
+    runtime = PipelineRuntime(environment=environment)
+    session = runtime.initialize(_compile(Pipeline([component])), _state())
+
+    first = runtime.advance(session)
+
+    assert first.finished is False
+    assert first.observable is False
+    assert first.session is not None
+    assert first.session.finished is False
+    assert first.session.generation_open is True
+    assert environment.finished_generations == 0
+    assert first.node_results[0].status is status
+
+    second = runtime.advance(first.session)
+
+    assert second.finished is False
+    assert second.observable is True
+    assert second.session is not None
+    assert second.session.finished is False
+    assert second.session.generation_open is False
+    assert environment.finished_generations == 1
+    assert component.calls == 2
+
+
+def test_structured_external_environment_rejects_failed_node() -> None:
+    environment = _StructuredEnvironment()
+    runtime = PipelineRuntime(environment=environment)
+    session = runtime.initialize(
+        _compile(Pipeline([_StatusOnce(NodeStatus.FAILED)])), _state()
+    )
+
+    with pytest.raises(
+        ValidationError, match="structured runtime node reported FAILED"
+    ):
+        runtime.advance(session)
+
+    assert environment.finished_generations == 0
 
 
 class _LegacyStage(Stage):

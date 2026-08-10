@@ -428,9 +428,11 @@ class StructuredPlan:
         def visit(current: StructuredGraph) -> None:
             for operation in current.operations:
                 if isinstance(operation, ComponentNode):
-                    if isinstance(operation.component, StageNodeAdapter) or getattr(
-                        operation.component, "_execution_mode", None
-                    ) == "optimization_state":
+                    if (
+                        isinstance(operation.component, StageNodeAdapter)
+                        or getattr(operation.component, "_execution_mode", None)
+                        == "optimization_state"
+                    ):
                         raise ValidationError(
                             f"StructuredPlan node {operation.component_id!r} cannot "
                             "use the OptimizationState execution boundary"

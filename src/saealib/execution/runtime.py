@@ -22,6 +22,7 @@ from saealib.core.compiler.compiler import CompileContext, Compiler, ExecutableP
 from saealib.core.compiler.graph import ComponentNode
 from saealib.core.compiler.regions import (
     BranchRegion,
+    Condition,
     LoopRegion,
     RegionNode,
     RepeatRegion,
@@ -101,6 +102,7 @@ class _ExecutionOutcome:
     executed_node_ids: tuple[str, ...] = ()
     refused_commands: tuple[RuntimeCommand, ...] = ()
     finished: bool = False
+    terminated: bool = False
     frames: tuple[RegionFrame, ...] = ()
 
     @property
@@ -260,7 +262,7 @@ def _bound_patch(
 
 
 def _evaluate_condition(
-    condition: object,
+    condition: Condition,
     state: OptimizationState,
     *,
     dispatch: Callable[[Event], None] | None,
@@ -268,7 +270,7 @@ def _evaluate_condition(
     contract = condition.contract()
     view = state._store.view(
         contract.reads,
-        context=RuntimeContext(state, dispatch=dispatch),
+        context=RuntimeContext(state, reads=contract.reads, dispatch=dispatch),
         dispatch=dispatch,
     )
     return bool(condition.evaluate(view))
@@ -339,9 +341,11 @@ def _execute_structured(
                     "StructuredPlan region bodies must be StructuredGraph values"
                 )
             if isinstance(region, RepeatRegion):
-                context = RuntimeContext(current, dispatch=dispatch)
+                context = RuntimeContext(
+                    current, reads=region.effect.reads, dispatch=dispatch
+                )
                 if callable(region.count):
-                    count = region.count(
+                    count = cast(Any, region.count)(
                         current._store.view(
                             region.effect.reads,
                             context=context,
@@ -399,7 +403,9 @@ def _execute_structured(
         aliases = _node_state_aliases(plan, node)
         view = current._store.view(
             tuple({aliases.get(key, key) for key in node.contract.state.reads}),
-            context=RuntimeContext(current, dispatch=dispatch),
+            context=RuntimeContext(
+                current, reads=node.contract.state.reads, dispatch=dispatch
+            ),
             dispatch=dispatch,
         )
         raw = plan._execute_targets[node.component_id](_BoundStateView(view, aliases))
@@ -432,6 +438,10 @@ def _execute_structured(
                 executed_node_ids=tuple(executed),
                 refused_commands=tuple(refused),
                 finished=any(
+                    isinstance(command, RequestTermination)
+                    for command in result.commands
+                ),
+                terminated=any(
                     isinstance(command, RequestTermination)
                     for command in result.commands
                 ),
@@ -477,7 +487,9 @@ def _execute_with_metadata(
         aliases = _node_state_aliases(plan, node)
         view = current._store.view(
             tuple({aliases.get(key, key) for key in node.contract.state.reads}),
-            context=RuntimeContext(current, dispatch=dispatch),
+            context=RuntimeContext(
+                current, reads=node.contract.state.reads, dispatch=dispatch
+            ),
             dispatch=dispatch,
         )
         raw = execute(_BoundStateView(view, aliases))
@@ -519,6 +531,11 @@ def _execute_with_metadata(
             for result in results
             for command in result.commands
         ),
+        terminated=any(
+            isinstance(command, RequestTermination)
+            for result in results
+            for command in result.commands
+        ),
     )
 
 
@@ -536,7 +553,7 @@ def _algorithm_runtime_capabilities(
 
 
 class _OptimizerEnvironment:
-    def __init__(self, optimizer: Any, plan: SequentialPlan) -> None:
+    def __init__(self, optimizer: Any, plan: SequentialPlan | StructuredPlan) -> None:
         self.optimizer = optimizer
         self.plan = plan
         self._execution_fingerprint = self._fingerprint()
@@ -553,12 +570,20 @@ class _OptimizerEnvironment:
         self, plan: SequentialPlan, state: OptimizationState
     ) -> OptimizationState:
         self._refresh_plan_if_needed()
+        if not isinstance(self.plan, SequentialPlan):
+            raise ValidationError(
+                "sequential environment cannot execute a structured plan"
+            )
         return self.execute_step(plan, state).state
 
     def execute_step(
         self, plan: SequentialPlan, state: OptimizationState
     ) -> _ExecutionOutcome:
         self._refresh_plan_if_needed()
+        if not isinstance(self.plan, SequentialPlan):
+            raise ValidationError(
+                "sequential environment cannot execute a structured plan"
+            )
         return _execute_with_metadata(self.plan, state, dispatch=self.dispatch)
 
     def _fingerprint(self) -> tuple[object, ...]:
@@ -588,8 +613,8 @@ class _OptimizerEnvironment:
         current_fingerprint = self._fingerprint()
         if current_fingerprint == self._execution_fingerprint:
             return
-        executable, sequential = self._compile_current_plan()
-        self.plan = sequential
+        executable, rebuilt = self._compile_current_plan()
+        self.plan = rebuilt
         if hasattr(self.optimizer, "_executable_plan"):
             self.optimizer._executable_plan = executable
         self._execution_fingerprint = current_fingerprint
@@ -598,13 +623,19 @@ class _OptimizerEnvironment:
         """Rebuild the graph at a completed step boundary."""
         del plan
         executable, sequential = self._compile_current_plan()
+        if not isinstance(sequential, SequentialPlan):
+            raise ValidationError(
+                "sequential recompile provider cannot return a structured plan"
+            )
         self.plan = sequential
         if hasattr(self.optimizer, "_executable_plan"):
             self.optimizer._executable_plan = executable
         self._execution_fingerprint = self._fingerprint()
         return sequential
 
-    def _compile_current_plan(self) -> tuple[ExecutablePlan, SequentialPlan]:
+    def _compile_current_plan(
+        self,
+    ) -> tuple[ExecutablePlan, SequentialPlan | StructuredPlan]:
         strategy = getattr(self.optimizer, "strategy", None)
         build_graph = getattr(strategy, "build_graph", None)
         problem = getattr(self.optimizer, "problem", None)
@@ -625,7 +656,12 @@ class _OptimizerEnvironment:
             ),
         )
         validate_plan_contracts(executable)
-        return executable, SequentialPlan.from_executable_plan(executable)
+        rebuilt: SequentialPlan | StructuredPlan
+        if isinstance(graph, StructuredGraph):
+            rebuilt = StructuredPlan.from_executable_plan(executable)
+        else:
+            rebuilt = SequentialPlan.from_executable_plan(executable)
+        return executable, rebuilt
 
     def execute_async(
         self, plan: SequentialPlan, state: OptimizationState
@@ -646,7 +682,10 @@ class _OptimizerEnvironment:
         if scheduler is None:
             raise ValidationError("Async runtime requires an evaluation scheduler")
         self._refresh_plan_if_needed()
-        nodes = self.plan.execution_nodes
+        if not isinstance(self.plan, SequentialPlan):
+            raise ValidationError("async environment cannot execute a structured plan")
+        sequential_plan = self.plan
+        nodes = sequential_plan.execution_nodes
         async_index = next(
             (
                 index
@@ -657,16 +696,18 @@ class _OptimizerEnvironment:
         )
         if async_index is None:
             # Custom plans without the evaluation protocol still run normally.
-            return _execute_with_metadata(self.plan, state, dispatch=self.dispatch)
+            return _execute_with_metadata(
+                sequential_plan, state, dispatch=self.dispatch
+            )
         current = state
         prefix_outcome: _ExecutionOutcome | None = None
 
         def prefix(value: OptimizationState) -> OptimizationState:
             nonlocal prefix_outcome
             prefix_plan = SequentialPlan(
-                plan=self.plan.plan,
-                nodes=self.plan.nodes,
-                execution_nodes=self.plan.execution_nodes[:async_index],
+                plan=sequential_plan.plan,
+                nodes=sequential_plan.nodes,
+                execution_nodes=sequential_plan.execution_nodes[:async_index],
             )
             prefix_outcome = _execute_with_metadata(
                 prefix_plan, value, dispatch=self.dispatch
@@ -778,13 +819,25 @@ def execute_strategy_step(
             initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
         ),
     )
-    from saealib.strategies.base import build_pipeline_from_graph
+    if isinstance(graph, StructuredGraph):
+        build_pipeline = getattr(strategy, "build_pipeline", None)
+        if not callable(build_pipeline):
+            raise ValidationError(
+                "structured strategy graph requires build_pipeline(provider)"
+            )
+        setattr(strategy, "pipeline", build_pipeline(provider))
+    else:
+        from saealib.strategies.base import build_pipeline_from_graph
 
-    setattr(strategy, "pipeline", build_pipeline_from_graph(graph))
+        setattr(strategy, "pipeline", build_pipeline_from_graph(graph))
     if scheduler is None:
         runtime = PipelineRuntime()
         session = runtime.initialize(plan, state)
         return runtime.advance(session).state
+    if isinstance(graph, StructuredGraph):
+        raise ValidationError(
+            "async strategy steps require a sequential graph execution seam"
+        )
     if state.pending_evaluations:
         state = scheduler.poll(state, wait=False)
         if (
@@ -804,7 +857,8 @@ def execute_strategy_step(
     environment = _OptimizerEnvironment(
         optimizer, SequentialPlan.from_executable_plan(plan)
     )
-    return environment.execute_async(environment.plan, state)
+    sequential = SequentialPlan.from_executable_plan(plan)
+    return environment.execute_async(sequential, state)
 
 
 class PipelineRuntime:
@@ -856,11 +910,6 @@ class PipelineRuntime:
             if isinstance(plan.graph, StructuredGraph)
             else None
         )
-        if structured is not None and self.environment is not None:
-            raise ValidationError(
-                "PipelineRuntime does not support StructuredGraph plans with "
-                "an external environment"
-            )
         selected_plan = structured or SequentialPlan.from_executable_plan(plan)
         capabilities = self.capabilities | frozenset(
             getattr(self.environment, "capabilities", ())
@@ -889,37 +938,135 @@ class PipelineRuntime:
         if not isinstance(session, RuntimeSession):
             raise ValidationError("PipelineRuntime.advance requires a RuntimeSession")
         if isinstance(session.plan, StructuredPlan):
-            if self.environment is not None:
-                raise ValidationError(
-                    "PipelineRuntime cannot execute StructuredGraph plans with "
-                    "an external environment"
+            if self.environment is None:
+                metadata = _execute_structured(
+                    session.plan,
+                    session.state,
+                    session.frames,
                 )
+                if metadata.recompile_required:
+                    raise ValidationError(
+                        "PipelineRuntime cannot satisfy RECOMPILE_REQUIRED without "
+                        "a recompile provider"
+                    )
+                if any(
+                    result.status is NodeStatus.FAILED
+                    for result in metadata.node_results
+                ):
+                    raise ValidationError(
+                        "structured runtime node reported FAILED status"
+                    )
+                next_session = RuntimeSession(
+                    plan=session.plan,
+                    state=metadata.state,
+                    step_index=session.step_index + 1,
+                    observable=True,
+                    finished=metadata.finished,
+                    frames=metadata.frames,
+                )
+                return RuntimeStep(
+                    state=metadata.state,
+                    node_results=metadata.node_results,
+                    executed_node_ids=metadata.executed_node_ids,
+                    observable=True,
+                    finished=metadata.finished,
+                    refused_commands=metadata.refused_commands,
+                    session=next_session,
+                )
+
+            env = self.environment
+            env.fatal(session.state)
+            refresh = getattr(env, "_refresh_plan_if_needed", None)
+            if callable(refresh):
+                refresh()
+            plan = getattr(env, "plan", session.plan)
+            if not isinstance(plan, StructuredPlan):
+                raise ValidationError(
+                    "structured runtime environment returned a non-structured plan"
+                )
+            state = session.state
+            if env.is_terminated(state):
+                env.dispatch(RunEndEvent(ctx=state))
+                return self._step(
+                    session,
+                    state,
+                    session.generation_open,
+                    finished=True,
+                    plan=plan,
+                )
+            generation_open = session.generation_open
+            if not generation_open:
+                env.dispatch(GenerationStartEvent(ctx=state))
+                generation_open = True
             metadata = _execute_structured(
-                session.plan,
-                session.state,
+                plan,
+                state,
                 session.frames,
+                dispatch=env.dispatch,
             )
             if metadata.recompile_required:
                 raise ValidationError(
                     "PipelineRuntime cannot satisfy RECOMPILE_REQUIRED without "
                     "a recompile provider"
                 )
-            next_session = RuntimeSession(
-                plan=session.plan,
-                state=metadata.state,
-                step_index=session.step_index + 1,
-                observable=True,
-                finished=metadata.finished,
-                frames=metadata.frames,
+            failed = next(
+                (
+                    result
+                    for result in metadata.node_results
+                    if result.status is NodeStatus.FAILED
+                ),
+                None,
             )
-            return RuntimeStep(
-                state=metadata.state,
-                node_results=metadata.node_results,
-                executed_node_ids=metadata.executed_node_ids,
+            if failed is not None:
+                raise ValidationError("structured runtime node reported FAILED status")
+            if metadata.terminated:
+                env.dispatch(RunEndEvent(ctx=metadata.state))
+                return self._step(
+                    session,
+                    metadata.state,
+                    generation_open,
+                    finished=True,
+                    metadata=metadata,
+                    plan=plan,
+                )
+            if metadata.finished:
+                env.finish_generation(metadata.state)
+                return self._step(
+                    session,
+                    metadata.state,
+                    False,
+                    observable=True,
+                    finished=False,
+                    metadata=metadata,
+                    plan=plan,
+                )
+            if any(
+                result.status in {NodeStatus.BLOCKED, NodeStatus.RUNNING}
+                for result in metadata.node_results
+            ):
+                return self._step(
+                    session,
+                    metadata.state,
+                    generation_open,
+                    metadata=metadata,
+                    plan=plan,
+                )
+            if metadata.state.pending_evaluations:
+                return self._step(
+                    session,
+                    metadata.state,
+                    generation_open,
+                    metadata=metadata,
+                    plan=plan,
+                )
+            env.finish_generation(metadata.state)
+            return self._step(
+                session,
+                metadata.state,
+                False,
                 observable=True,
-                finished=metadata.finished,
-                refused_commands=metadata.refused_commands,
-                session=next_session,
+                metadata=metadata,
+                plan=plan,
             )
         if not isinstance(session.plan, SequentialPlan):
             raise ValidationError(
@@ -1046,17 +1193,29 @@ class PipelineRuntime:
         generation_open: bool,
         *,
         observable: bool = False,
-        finished: bool = False,
+        finished: bool | None = None,
         metadata: _ExecutionOutcome | None = None,
-        plan: SequentialPlan | None = None,
+        plan: SequentialPlan | StructuredPlan | None = None,
+        frames: tuple[RegionFrame, ...] | None = None,
     ) -> RuntimeStep:
+        step_finished = (
+            (metadata.finished if metadata is not None else False)
+            if finished is None
+            else finished
+        )
+        next_frames = (
+            metadata.frames
+            if metadata is not None
+            else (frames if frames is not None else session.frames)
+        )
         next_session = RuntimeSession(
             plan=plan or session.plan,
             state=state,
-            finished=finished or bool(metadata and metadata.finished),
+            finished=step_finished,
             observable=observable,
             step_index=session.step_index + 1,
             generation_open=generation_open,
+            frames=next_frames,
         )
         return RuntimeStep(
             state=state,
@@ -1064,7 +1223,7 @@ class PipelineRuntime:
             executed_node_ids=metadata.executed_node_ids if metadata else (),
             refused_commands=metadata.refused_commands if metadata else (),
             observable=observable,
-            finished=finished or bool(metadata and metadata.finished),
+            finished=step_finished,
             session=next_session,
         )
 
@@ -1388,12 +1547,19 @@ class RuntimeRegistry:
 
 
 def _sync_runtime_factory(optimizer: object, plan: ExecutablePlan) -> ExecutionRuntime:
-    return PipelineRuntime(
-        _OptimizerEnvironment(optimizer, SequentialPlan.from_executable_plan(plan))
-    )
+    runtime_plan: SequentialPlan | StructuredPlan
+    if isinstance(plan.graph, StructuredGraph):
+        runtime_plan = StructuredPlan.from_executable_plan(plan)
+    else:
+        runtime_plan = SequentialPlan.from_executable_plan(plan)
+    return PipelineRuntime(_OptimizerEnvironment(optimizer, runtime_plan))
 
 
 def _async_runtime_factory(optimizer: object, plan: ExecutablePlan) -> ExecutionRuntime:
+    if isinstance(plan.graph, StructuredGraph):
+        raise ValidationError(
+            "AsyncPipelineRuntime does not yet execute structured graph plans"
+        )
     return AsyncPipelineRuntime(
         _OptimizerEnvironment(optimizer, SequentialPlan.from_executable_plan(plan))
     )

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import replace
+from typing import Any, cast
 
 from saealib.core.compiler.graph import (
     ComponentNode,
@@ -34,7 +35,7 @@ def _pipeline_items(value: object) -> tuple[object, ...] | None:
     if type(value).__name__ == "Pipeline" or (
         hasattr(value, "stages") and not callable(getattr(value, "contract", None))
     ):
-        return tuple(value.stages)
+        return tuple(cast(Any, value).stages)
     return None
 
 
@@ -59,8 +60,10 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
     operations: list[ComponentNode | RegionNode] = []
     effects: list[StateContract] = []
     bindings: list[StateBinding] = []
-    previous: ComponentNode | None = None
+    previous: tuple[ComponentNode, ...] = ()
     for index, item in enumerate(items):
+        entries: tuple[ComponentNode, ...] = ()
+        exits: tuple[ComponentNode, ...] = ()
         item_name = getattr(item, "name", "")
         if isinstance(item, StructuredRegion):
             item_name = item.region_id
@@ -71,26 +74,29 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
         nested_items = _pipeline_items(item)
         structured_kind = getattr(item, "_structured_kind", None)
         if structured_kind == "repeat":
+            structured_item = cast(Any, item)
             item = RepeatRegion(
                 region_id=local_id,
                 namespace=namespace,
-                body=item.body,
-                count=item.count,
+                body=structured_item.body,
+                count=structured_item.count,
             )
         elif structured_kind == "loop":
+            structured_item = cast(Any, item)
             item = LoopRegion(
                 region_id=local_id,
                 namespace=namespace,
-                body=item.body,
-                condition=item.condition,
+                body=structured_item.body,
+                condition=structured_item.condition,
             )
         elif structured_kind == "branch":
+            structured_item = cast(Any, item)
             item = BranchRegion(
                 region_id=local_id,
                 namespace=namespace,
-                body=item.then,
-                condition=item.condition,
-                otherwise=item.else_,
+                body=structured_item.then,
+                condition=structured_item.condition,
+                otherwise=structured_item.else_,
             )
         if isinstance(item, (RepeatRegion, LoopRegion, BranchRegion)):
             nested_items = None
@@ -105,8 +111,11 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
             operations.append(region_nodes[-1])
             nodes.extend(body.nodes)
             edges.extend(body.control_edges)
+            bindings.extend(body.state_bindings)
             effects.append(body.effect)
-            current = body.nodes[-1] if body.nodes else None
+            if body.nodes:
+                entries = (body.nodes[0],)
+                exits = (body.nodes[-1],)
         elif isinstance(item, StructuredRegion):
             body_items = _body_items(item.body)
             if body_items is None:
@@ -159,18 +168,25 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
             operations.append(region_nodes[-1])
             nodes.extend(body.nodes)
             edges.extend(body.control_edges)
+            bindings.extend(body.state_bindings)
             if otherwise_graph is not None:
                 nodes.extend(otherwise_graph.nodes)
                 edges.extend(otherwise_graph.control_edges)
+                bindings.extend(otherwise_graph.state_bindings)
             effects.append(lowered.effect)
             if otherwise_graph is not None:
                 effects.append(otherwise_graph.effect)
-            current = (
-                otherwise_graph.nodes[-1]
-                if otherwise_graph is not None and otherwise_graph.nodes
-                else body.nodes[-1]
-                if body.nodes
-                else None
+            entries = tuple(
+                node
+                for graph in (body, otherwise_graph)
+                if graph is not None and graph.nodes
+                for node in (graph.nodes[0],)
+            )
+            exits = tuple(
+                node
+                for graph in (body, otherwise_graph)
+                if graph is not None and graph.nodes
+                for node in (graph.nodes[-1],)
             )
         else:
             contract_method = getattr(item, "contract", None)
@@ -196,16 +212,20 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
                 )
             )
             effects.append(contract.state)
-            current = node
-        if previous is not None and current is not None:
-            edges.append(
+            entries = (node,)
+            exits = (node,)
+        if previous and entries:
+            edges.extend(
                 ControlEdge(
-                    source=NodeRef(component_id=previous.component_id),
-                    target=NodeRef(component_id=current.component_id),
+                    source=NodeRef(component_id=source.component_id),
+                    target=NodeRef(component_id=target.component_id),
                 )
+                for source in previous
+                for target in entries
+                if source.component_id != target.component_id
             )
-        if current is not None:
-            previous = current
+        if entries:
+            previous = exits
     entry = (NodeRef(component_id=nodes[0].component_id),) if nodes else ()
     return StructuredGraph(
         nodes=tuple(nodes),

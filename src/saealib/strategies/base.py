@@ -28,7 +28,7 @@ def build_runtime_neutral_graph(
 
 
 def build_pipeline_from_graph(graph: ComponentGraph) -> Pipeline:
-    """Recover the Stage facade from a canonical strategy graph."""
+    """Recover a Pipeline facade from a stage-based strategy graph."""
     from saealib.core.graph_builder import StageNodeAdapter
 
     stages = [
@@ -42,9 +42,9 @@ def build_pipeline_from_graph(graph: ComponentGraph) -> Pipeline:
 class OptimizationStrategy:
     """Base class for optimization strategies.
 
-    Strategies expose one canonical :class:`ComponentGraph` topology.
-    ``build_pipeline`` remains the public compatibility facade recovered from
-    that graph.
+    Strategies expose one canonical :class:`ComponentGraph` topology.  A
+    strategy may describe it directly through ``build_pipeline``; the default
+    implementation recovers a facade for stage-based graphs.
     """
 
     # Optimizer.validate() checks this to ensure surrogate_manager is configured.
@@ -69,7 +69,7 @@ class OptimizationStrategy:
         )
 
     def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
-        """Recover the retained Pipeline facade from the canonical graph."""
+        """Return the strategy's high-level Pipeline description."""
         return build_pipeline_from_graph(self.build_graph(provider))
 
     def build_graph(self, provider: ComponentProvider) -> ComponentGraph:

@@ -55,6 +55,7 @@ from saealib.stages import (
     InitializationStage,
     PendingEvaluationContextStage,
     SortByScoreStage,
+    StageStateViewAdapter,
     SurrogateFitStage,
     SurrogateOnlyLoopStage,
     SurrogatePredictStage,
@@ -387,6 +388,16 @@ def _recipe_stage_node_adapter() -> Any:
     return StageNodeAdapter(_RecipeStage(name="recipe_stage"))
 
 
+def _recipe_stage_state_view_adapter() -> Any:
+    from saealib.pipeline import Stage
+
+    class _RecipeStage(Stage):
+        def execute(self, state: Any) -> Any:
+            return state
+
+    return StageStateViewAdapter(_RecipeStage(name="recipe_stage"))
+
+
 def _recipe_stage_contract_node_adapter() -> Any:
     from saealib.core.graph_builder import StageContractNodeAdapter
 
@@ -474,6 +485,7 @@ _RECIPES: dict[str, Callable[[], Any]] = {
     ): _recipe_async_evaluation_scheduler,
     "saealib.algorithms.pymoo_algorithm.PymooAlgorithm": _recipe_pymoo_algorithm,
     "saealib.core.graph_builder.StageNodeAdapter": _recipe_stage_node_adapter,
+    "saealib.stages.StageStateViewAdapter": _recipe_stage_state_view_adapter,
     (
         "saealib.core.graph_builder.StageContractNodeAdapter"
     ): _recipe_stage_contract_node_adapter,

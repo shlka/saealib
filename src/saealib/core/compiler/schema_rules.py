@@ -28,7 +28,8 @@ if TYPE_CHECKING:
 
 def _fresh_binding(binding: SchemaBinding, prefix: str) -> SchemaBinding:
     if isinstance(binding, Var):
-        return Var(name=f"{prefix}__{binding.name}")
+        safe_prefix = prefix.replace(".", "_")
+        return Var(name=f"{safe_prefix}__{binding.name}")
     if isinstance(binding, Product):
         return Product(
             elements=tuple(_fresh_binding(item, prefix) for item in binding.elements)

@@ -67,18 +67,25 @@ from saealib.core.state import (
     EVALUATIONS_PLAN,
     EVALUATIONS_PLAN_STATE,
     EVALUATIONS_PLAN_UPDATES,
+    FEEDBACK_ACCUMULATOR,
     FEEDBACK_RESULT,
     POPULATIONS_MAIN,
     PROPOSALS_CURRENT,
+    PROPOSALS_ID_ALLOCATOR,
     PROPOSALS_OFFSPRING,
+    RUNTIME_ASYNC_FATAL,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
     RUNTIME_GENERATION,
     RUNTIME_REQUEST_ID_ALLOCATOR,
     RUNTIME_RNG,
     SCORES,
     SURROGATES_PREDICTIONS,
+    USER_DATA,
     StatePatch,
+    StateStore,
+    StateView,
 )
+from saealib.core.state.context import RuntimeContext
 from saealib.exceptions import EvaluationProtocolError, ValidationError
 from saealib.execution.evaluator import (
     EvaluationRequest,
@@ -275,6 +282,212 @@ def _stage_contract(
     )
 
 
+_STATE_FIELD_KEYS: dict[str, Any] = {
+    "population": POPULATIONS_MAIN,
+    "archive": ARCHIVES_MAIN,
+    "pareto_archive": ARCHIVES_PARETO,
+    "offspring": PROPOSALS_OFFSPRING,
+    "evaluated_offspring": EVALUATED_OFFSPRING,
+    "scores": SCORES,
+    "acquisition_result": ACQUISITION_RESULT,
+    "predictions": SURROGATES_PREDICTIONS,
+    "evaluation_request": EVALUATION_REQUEST,
+    "evaluation_plan": EVALUATIONS_PLAN,
+    "evaluation_plan_state": EVALUATIONS_PLAN_STATE,
+    "evaluation_updates": EVALUATION_UPDATES,
+    "evaluation_plan_updates": EVALUATIONS_PLAN_UPDATES,
+    "evaluation_update_new_ids": EVALUATION_UPDATE_NEW_IDS,
+    "evaluation_new_ids": EVALUATION_NEW_IDS,
+    "evaluation_handles": EVALUATION_HANDLES,
+    "evaluation_owners": EVALUATIONS_OWNERS,
+    "pending_evaluations": EVALUATIONS_PENDING,
+    "feedback_result": FEEDBACK_RESULT,
+    "feedback_accumulator": FEEDBACK_ACCUMULATOR,
+    "rng": RUNTIME_RNG,
+    "candidate_id_allocator": RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    "proposal_id_allocator": PROPOSALS_ID_ALLOCATOR,
+    "request_id_allocator": RUNTIME_REQUEST_ID_ALLOCATOR,
+    "fe": EVALUATIONS_COUNT,
+    "gen": RUNTIME_GENERATION,
+    "async_fatal": RUNTIME_ASYNC_FATAL,
+    "data": USER_DATA,
+    "proposal_id": PROPOSALS_CURRENT,
+}
+
+
+class _StageTransactionStore:
+    """Store facade for the Stage transaction proxy."""
+
+    def __init__(self, owner: _StageStateProxy) -> None:
+        self._owner = owner
+
+    def view(self, reads: Any, *, context: object | None = None, dispatch=None):
+        declared = tuple(reads.reads if hasattr(reads, "reads") else reads)
+        values = {key: self._owner._value(key) for key in declared}
+        store = StateStore(values)
+        return store.view(
+            declared,
+            context=self._owner._context,
+            dispatch=dispatch,
+        )
+
+    def apply_patch(self, patch: StatePatch) -> _StageTransactionStore:
+        if not isinstance(patch, StatePatch):
+            raise ValidationError("apply_patch() expects a StatePatch")
+        self._owner._apply(patch)
+        return self
+
+
+class _StageStateProxy:
+    """OptimizationState-shaped transaction backed by a declared StateView."""
+
+    def __init__(
+        self,
+        view: StateView,
+        context: RuntimeContext,
+        *,
+        writes: Mapping[Any, object] | None = None,
+        deletes: frozenset[Any] = frozenset(),
+    ) -> None:
+        self._view = view
+        self._context = context
+        self._writes = dict(writes or {})
+        self._deletes = set(deletes)
+        self._store = _StageTransactionStore(self)
+
+    def _value(self, key: Any) -> object:
+        if key in self._writes:
+            return self._writes[key]
+        if key in self._deletes:
+            raise KeyError(key)
+        try:
+            present = self._view.contains(key)
+        except KeyError:
+            raise
+        if present:
+            return self._view.get(key)
+        name = next(
+            (name for name, candidate in _STATE_FIELD_KEYS.items() if candidate == key),
+            None,
+        )
+        if name is None:
+            raise KeyError(key)
+        try:
+            return getattr(self._context, name)
+        except AttributeError as exc:
+            raise KeyError(key) from exc
+
+    def _apply(self, patch: StatePatch) -> None:
+        self._writes.update(patch.writes)
+        self._deletes.update(patch.deletes)
+        for key in patch.writes:
+            self._deletes.discard(key)
+
+    def _patch(self) -> StatePatch:
+        return StatePatch(writes=self._writes, deletes=frozenset(self._deletes))
+
+    def get_state(self, key: Any) -> object:
+        return self._value(key)
+
+    def set_state(self, key: Any, value: object) -> None:
+        self._apply(StatePatch(writes={key: value}))
+
+    def replace(self, **kwargs: Any) -> _StageStateProxy:
+        writes = dict(self._writes)
+        deletes = frozenset(self._deletes)
+        for name, value in kwargs.items():
+            key = _STATE_FIELD_KEYS.get(name)
+            if key is None:
+                if name == "problem":
+                    raise ValidationError("graph-native Stage cannot replace problem")
+                raise TypeError(f"unknown state field {name!r}")
+            writes[key] = value
+            deletes = deletes - {key}
+        return _StageStateProxy(
+            self._view, self._context, writes=writes, deletes=deletes
+        )
+
+    def __getattr__(self, name: str) -> object:
+        key = _STATE_FIELD_KEYS.get(name)
+        if key is not None:
+            try:
+                return self._value(key)
+            except KeyError:
+                raise AttributeError(name)
+        # Problem, dimensions, archives, and services are runtime capabilities,
+        # not arbitrary state leakage.
+        try:
+            return getattr(self._context, name)
+        except AttributeError as exc:
+            raise AttributeError(name) from exc
+
+
+class StageStateViewAdapter:
+    """Expose a Stage through the graph-native StateView contract."""
+
+    _execution_mode = "graph-native"
+
+    def __init__(self, stage: Stage, *, node_path: str | None = None) -> None:
+        if not isinstance(stage, Stage):
+            raise ValidationError("StageStateViewAdapter stage must be a Stage")
+        self.stage = stage
+        self.node_path = node_path or stage.name or type(stage).__name__
+        self.name = stage.name
+        self.label = stage.label
+        self.notation = stage.notation
+        direct = stage.contract()
+        if not isinstance(direct, ComponentContract):
+            raise ValidationError("Stage.contract() must return ComponentContract")
+        from saealib.core.graph_builder import StageNodeAdapter
+
+        held = StageNodeAdapter(stage).contract().state
+        state = StateContract(
+            reads=tuple(dict.fromkeys((*direct.state.reads, *held.reads))),
+            writes=tuple(dict.fromkeys((*direct.state.writes, *held.writes))),
+            exports=tuple(dict.fromkeys((*direct.state.exports, *held.exports))),
+            reads_enumerable=direct.state.reads_enumerable and held.reads_enumerable,
+        )
+        self._contract = replace(direct, state=state)
+
+    def contract(self) -> ComponentContract:
+        return self._contract
+
+    def execute(self, state: StateView) -> StatePatch:
+        context = state.context
+        if not isinstance(context, RuntimeContext):
+            raise ValidationError("StageStateViewAdapter requires RuntimeContext")
+        proxy = _StageStateProxy(state, context)
+        result = cast(Any, self.stage).execute(proxy)
+        if isinstance(result, _StageStateProxy):
+            return result._patch()
+        if isinstance(result, StatePatch):
+            patch = proxy._patch()
+            return StatePatch(
+                writes={**patch.writes, **result.writes},
+                deletes=frozenset((*patch.deletes, *result.deletes)),
+            )
+        if result is proxy:
+            return proxy._patch()
+        # A no-op return leaves the proxy patch; a detached state cannot be
+        # converted without widening the declared boundary.
+        if result is not None and result is not self.stage:
+            raise ValidationError(
+                "graph-native Stage adapter requires the Stage to return its "
+                "transaction"
+            )
+        return proxy._patch()
+
+
+def stage_component(
+    stage: Stage, *, node_path: str | None = None
+) -> StageStateViewAdapter:
+    """Create a graph-native component from an existing Stage."""
+    return StageStateViewAdapter(stage, node_path=node_path)
+
+
+wrap_stage = stage_component
+
+
 class CountGenerationStage(Stage):
     """Increment the generation counter by one."""
 
@@ -329,6 +542,7 @@ class AskStage(Stage):
                 PROPOSALS_OFFSPRING,
                 PROPOSALS_CURRENT,
                 RUNTIME_CANDIDATE_ID_ALLOCATOR,
+                EVALUATED_OFFSPRING,
             ),
             components=(("_algorithm", self._algorithm),),
         )
@@ -427,7 +641,7 @@ class SurrogatePredictStage(Stage):
 
     def contract(self) -> ComponentContract:
         return _stage_contract(
-            reads=(PROPOSALS_OFFSPRING, ARCHIVES_MAIN),
+            reads=(PROPOSALS_OFFSPRING, POPULATIONS_MAIN, ARCHIVES_MAIN),
             writes=(PROPOSALS_OFFSPRING, SURROGATES_PREDICTIONS),
             components=(("_sm", self._sm),),
         )
@@ -531,6 +745,7 @@ class AcquisitionStage(Stage):
                 SURROGATES_PREDICTIONS,
                 ARCHIVES_MAIN,
                 RUNTIME_GENERATION,
+                RUNTIME_RNG,
             ),
             writes=(SCORES, ACQUISITION_RESULT),
             components=(("_acquisition", self._acquisition),),
@@ -632,7 +847,7 @@ class SurrogateFitStage(Stage):
 
     def contract(self) -> ComponentContract:
         return _stage_contract(
-            reads=(ARCHIVES_MAIN,),
+            reads=(POPULATIONS_MAIN, ARCHIVES_MAIN),
             writes=(),
             components=(("_sm", self._sm),),
         )
@@ -740,6 +955,7 @@ class EvaluationPlanStage(Stage):
                 EVALUATIONS_OWNERS,
                 ACQUISITION_RESULT,
                 SCORES,
+                RUNTIME_REQUEST_ID_ALLOCATOR,
             ),
             writes=(
                 EVALUATION_REQUEST,
@@ -750,6 +966,7 @@ class EvaluationPlanStage(Stage):
                 EVALUATION_UPDATES,
                 EVALUATION_UPDATE_NEW_IDS,
                 EVALUATION_NEW_IDS,
+                RUNTIME_REQUEST_ID_ALLOCATOR,
             ),
             components=(("_planner", self._planner),),
             reads_enumerable=not callable(self._n_eval),
@@ -1118,6 +1335,7 @@ class EvaluationSubmitStage(Stage):
                 EVALUATIONS_PLAN_STATE,
                 EVALUATIONS_PENDING,
                 EVALUATION_HANDLES,
+                EVALUATIONS_OWNERS,
             ),
             writes=(EVALUATIONS_PENDING, EVALUATION_HANDLES, EVALUATIONS_PLAN_STATE),
             components=(("_evaluator", self._evaluator),),
@@ -1644,6 +1862,7 @@ class EvaluationAcknowledgeStage(Stage):
                 EVALUATION_UPDATES,
                 EVALUATION_UPDATE_NEW_IDS,
                 EVALUATIONS_PLAN_UPDATES,
+                EVALUATIONS_COUNT,
             ),
             writes=(
                 EVALUATIONS_PLAN,
@@ -1871,6 +2090,8 @@ class ArchiveUpdateStage(Stage):
         return _stage_contract(
             reads=(
                 EVALUATED_OFFSPRING,
+                ARCHIVES_MAIN,
+                ARCHIVES_PARETO,
                 EVALUATIONS_PLAN,
                 EVALUATIONS_PLAN_STATE,
             ),
@@ -2003,8 +2224,10 @@ class TellStage(Stage):
                 PROPOSALS_OFFSPRING,
                 PROPOSALS_CURRENT,
                 FEEDBACK_RESULT,
+                EVALUATED_OFFSPRING,
                 EVALUATIONS_PLAN,
                 EVALUATIONS_PLAN_STATE,
+                EVALUATION_UPDATES,
             ),
             writes=(),
             components=(("_algorithm", self._algorithm),),

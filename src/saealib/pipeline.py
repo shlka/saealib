@@ -1,4 +1,4 @@
-"""Legacy executable stages and the structural pipeline DSL."""
+"""Stage compatibility surface and the structural pipeline DSL."""
 
 from __future__ import annotations
 
@@ -18,11 +18,11 @@ __all__ = ["Branch", "Condition", "Loop", "Pipeline", "Repeat", "Stage"]
 
 class Stage(ABC):
     """
-    Abstract base class for a single pipeline step.
+    Abstract base class for a compatibility execution step.
 
     A Stage receives an :class:`~saealib.context.OptimizationState`, performs
-    one well-defined operation, and returns a (possibly new) state.  Stages are
-    composed into a :class:`Pipeline` via sequential ``reduce``.
+    one well-defined operation, and returns a (possibly new) state.  Structured
+    graph execution does not accept this boundary.
 
     Attributes
     ----------
@@ -227,15 +227,17 @@ class Branch(_ControlValue):
 
 class Pipeline:
     """
-    An ordered structural DSL sequence.
+    An ordered structural DSL sequence lowered to a semantic graph.
 
-    Pipelines describe components for
-    lowering and have no state execution path.
+    A Pipeline has no state execution path. Its entries may be graph-native
+    components, nested pipelines, or structured control values such as
+    :class:`Repeat`, :class:`Loop`, and :class:`Branch`.
 
     Parameters
     ----------
-    stages : list[Stage]
-        Ordered list of stages to execute.
+    stages : sequence of object, optional
+        Ordered structural entries. ``steps`` is the keyword spelling for the
+        same value.
     name : str, optional
         Machine-readable identifier for this pipeline.
     label : str, optional
@@ -282,7 +284,7 @@ class Pipeline:
 
         Returns
         -------
-        Stage
+        structural value
 
         Raises
         ------
@@ -295,21 +297,21 @@ class Pipeline:
         raise KeyError(name)
 
     def replace(self, name: str, stage: object) -> None:
-        """Replace the stage named *name* in the top-level stages list.
+        """Replace the named entry in the top-level structural sequence.
 
         Parameters
         ----------
         name : str
             The ``name`` of the stage to replace.
-        stage : Stage
-            Replacement stage.
+        stage : object
+            Replacement structural value.
 
         Raises
         ------
         KeyError
             If no stage with the given name exists.
         TypeError
-            If *stage* is not a ``Stage`` instance.
+            If *stage* is not a structural value.
         """
         if not isinstance(
             stage, (Pipeline, Repeat, Loop, Branch, Stage)
@@ -325,21 +327,19 @@ class Pipeline:
         raise KeyError(name)
 
     def find(self, name: str, *, recursive: bool = False) -> object:
-        """Look up a stage by name, optionally descending into nested stages.
+        """Look up a named structural value, optionally recursively.
 
         Parameters
         ----------
         name : str
             The ``name`` of the stage to find.
         recursive : bool, optional
-            If ``True``, descend into stages that expose a ``stages`` attribute
-            (e.g., nested :class:`Pipeline` or
-            :class:`~saealib.stages.SurrogateOnlyLoopStage`).
+            If ``True``, descend into nested pipelines and control bodies.
             Defaults to ``False``.
 
         Returns
         -------
-        Stage
+        structural value
 
         Raises
         ------
