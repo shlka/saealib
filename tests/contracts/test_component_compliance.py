@@ -174,6 +174,7 @@ def _discover_contract_classes() -> tuple[type[Any], ...]:
             if (
                 inspect.isclass(obj)
                 and obj.__module__.startswith("saealib.")
+                and not getattr(obj, "_is_protocol", False)
                 # Stage contracts are audited by the component inventory
                 # tests.  They are a separate execution-boundary protocol,
                 # not registry-built components; their constructors require
