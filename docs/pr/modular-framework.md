@@ -99,6 +99,12 @@ of its body and condition. Runtime region frames retain the next operation and
 iteration, allowing a blocked or running component to resume without restarting
 the enclosing region.
 
+For structured pipelines, the compiler resolves each required input against
+compatible outputs on control-ordered upstream components. A unique match is
+materialized as a `DataEdge`; unresolved and ambiguous inputs are diagnostics.
+Explicit graph construction remains available when a connection needs a
+specific producer.
+
 ## State/runtime model
 
 `saealib.core.StateStore` owns versioned values keyed by typed `StateKey`
@@ -129,6 +135,10 @@ The asynchronous provider does not flatten a structured plan into a sequential
 one. Until its scheduler seam is structured-region aware, it rejects such a
 plan explicitly; sequential stage graphs continue to use the existing async
 provider.
+
+Structured plans also reject `RECOMPILE_REQUIRED` until a frame migration
+contract defines how an active region cursor maps to a rebuilt plan. Sequential
+plans retain their existing step-boundary recompilation path.
 
 ## Proposal/observation/feedback model
 

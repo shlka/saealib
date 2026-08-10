@@ -31,8 +31,19 @@ their state effects and preserve resumable region frames.
 
 Components placed in a structured pipeline must provide the graph-native
 `contract()` and `execute(StateView)` boundary.  The older `Stage` execution
-surface remains available only to the compatibility graph builder and is not
-accepted by a `StructuredPlan`.
+surface remains available only to the compatibility graph builder.  Lowering a
+bare `Stage` fails with guidance to wrap it in `stage_component(stage)`.
+
+During compilation, each required input port is matched against compatible
+outputs on control-ordered upstream components.  One match creates a
+`DataEdge`; no match or multiple matches produce a compiler diagnostic.  Use
+an explicit graph when a pipeline needs to disambiguate a connection.
+
+`stage_component(stage)` is a migration adapter.  State writes made through its
+transaction proxy become `StatePatch` values, while mutable objects exposed as
+services or context capabilities remain adapter-owned.  New graph-native
+components should keep persistent mutable state behind declared state keys and
+patches.
 
 ```{eval-rst}
 .. autosummary::
