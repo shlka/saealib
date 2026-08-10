@@ -13,6 +13,7 @@ from saealib.core.contracts import (
     FeedbackContract,
     LifecycleContract,
 )
+from saealib.core.contracts.feedback import IN_ORDER, PARTIAL_ALLOWED, REPEATED_ALLOWED
 from saealib.core.state import PROPOSALS_CURRENT, StatePatch, StateView
 from saealib.exceptions import (
     CheckpointError,
@@ -273,6 +274,38 @@ class PartialRetryEvaluator(Evaluator):
     def acknowledge(self, handle, sequence):
         self.acks.append((handle.backend_token[2], sequence))
         handle._acknowledged_sequence = sequence
+
+
+class OrderedPartialEvaluator(PartialRetryEvaluator):
+    """Deliver partial and final updates in one request with ordered sequences."""
+
+    def collect(self, handle, *, wait=True):
+        request, problem, attempt = handle.backend_token
+        if attempt != 0 or handle._acknowledged_sequence >= 0:
+            return super().collect(handle, wait=wait)
+        first = SerialEvaluator().evaluate_batch(request.x[:1], problem)
+        first.candidate_ids = request.candidate_ids[:1]
+        first.__post_init__()
+        final = SerialEvaluator().evaluate_batch(request.x[1:2], problem)
+        final.candidate_ids = request.candidate_ids[1:2]
+        final.__post_init__()
+        handle._delivered_sequence = 1
+        return [
+            EvaluationUpdate(
+                request.request_id,
+                EvaluationStatus.PARTIAL,
+                request.candidate_ids[:1],
+                first,
+                sequence=0,
+            ),
+            EvaluationUpdate(
+                request.request_id,
+                EvaluationStatus.COMPLETED,
+                request.candidate_ids[1:2],
+                final,
+                sequence=1,
+            ),
+        ]
 
 
 def make_state():
@@ -1043,6 +1076,114 @@ class _RecordingConsumer:
     def tell(self, feedback: FeedbackBatch, state: StateView) -> StatePatch:
         self.feedback.append(feedback)
         return StatePatch(writes={})
+
+
+class _PartialRecordingConsumer:
+    """Partial/repeated consumer for the real scheduler delivery path."""
+
+    def __init__(self):
+        self.feedback: list[FeedbackBatch] = []
+
+    def contract(self):
+        return ComponentContract(
+            lifecycle=LifecycleContract(
+                feedback=FeedbackContract(
+                    accepted_channels=frozenset({"true"}),
+                    completion=PARTIAL_ALLOWED,
+                    multiplicity=REPEATED_ALLOWED,
+                )
+            )
+        )
+
+    def tell(self, feedback: FeedbackBatch, state: StateView) -> StatePatch:
+        self.feedback.append(feedback)
+        return StatePatch(writes={})
+
+
+def test_partial_repeated_feedback_is_delivered_directly_by_async_scheduler():
+    state = make_state()
+    state.set_state(PROPOSALS_CURRENT, 703)
+    consumer = _PartialRecordingConsumer()
+    scheduler = AsyncEvaluationScheduler(
+        PartialRetryEvaluator(),
+        retry_limit=1,
+        feedback_builder=TrueOnlyFeedback(),
+        algorithm=consumer,
+    )
+    contract = consumer.contract().lifecycle.feedback
+    assert contract is not None
+    assert contract.completion == PARTIAL_ALLOWED
+    assert contract.ordering == IN_ORDER
+    assert contract.multiplicity == REPEATED_ALLOWED
+
+    state = scheduler.poll(
+        scheduler.submit(
+            state,
+            [
+                EvaluationRequest(
+                    np.int64(0),
+                    np.array([10, 11], dtype=np.int64),
+                    np.array([[0.2], [0.1]], dtype=np.float64),
+                )
+            ],
+        ),
+        wait=True,
+    )
+
+    assert scheduler._feedback_accumulator is None
+    assert state.pending_evaluations == {}
+    assert [
+        (batch.proposal_id, batch.final, batch.sequence) for batch in consumer.feedback
+    ] == [(703, False, 0), (703, True, 0)]
+    observed = [
+        set(
+            np.asarray(
+                batch.observations.records.column("subject_payload"), dtype=np.int64
+            ).reshape(-1)
+        )
+        for batch in consumer.feedback
+    ]
+    assert observed == [{10}, {11}]
+
+
+def test_ordered_partial_feedback_preserves_sequence_and_final_boundary():
+    state = make_state()
+    state.set_state(PROPOSALS_CURRENT, 704)
+    consumer = _PartialRecordingConsumer()
+    scheduler = AsyncEvaluationScheduler(
+        OrderedPartialEvaluator(),
+        feedback_builder=TrueOnlyFeedback(),
+        algorithm=consumer,
+    )
+
+    state = scheduler.poll(
+        scheduler.submit(
+            state,
+            [
+                EvaluationRequest(
+                    np.int64(0),
+                    np.array([10, 11], dtype=np.int64),
+                    np.array([[0.2], [0.1]], dtype=np.float64),
+                )
+            ],
+        ),
+        wait=True,
+    )
+
+    assert scheduler._feedback_accumulator is None
+    assert state.pending_evaluations == {}
+    assert [
+        (batch.proposal_id, batch.final, batch.sequence) for batch in consumer.feedback
+    ] == [(704, False, 0), (704, True, 1)]
+    observed = [
+        set(
+            np.asarray(
+                batch.observations.records.column("subject_payload"), dtype=np.int64
+            ).reshape(-1)
+        )
+        for batch in consumer.feedback
+    ]
+    assert observed == [{10}, {11}]
 
 
 def test_accumulator_partial_retry_tells_once_with_both_proposal_ids():
