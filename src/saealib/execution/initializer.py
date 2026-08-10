@@ -41,12 +41,6 @@ from saealib.space import BoundsService, DenseNumericView
 
 
 def _make_population(factory, attrs, capacity, problem, genomes=None):
-    """Construct populations with the resolved dense service when supported.
-
-    User supplied population factories from the legacy API commonly accept
-    only ``attrs`` and ``init_capacity``; signature inspection keeps those
-    factories source-compatible.
-    """
     dense_view = problem.space.services.get("DenseNumericView")
     try:
         signature = inspect.signature(factory)
@@ -83,15 +77,12 @@ def _make_population(factory, attrs, capacity, problem, genomes=None):
             kwargs["genomes"] = genomes
     population = factory(**kwargs)
     if isinstance(population, Population):
-        # ``create_pareto_archive`` and legacy custom factories have their own
-        # signatures, so wire the already-resolved service after construction
-        # as well.  This is a direct reference, never a hot-path registry lookup.
+        # Legacy factories may not accept the service as a constructor argument.
         population._dense_numeric_view = dense_view
     return population
 
 
 def _resolved_dense_view(problem: Problem) -> DenseNumericView | None:
-    """Return the already-resolved dense view for a population constructor."""
     return cast(
         DenseNumericView | None,
         problem.space.services.get("DenseNumericView"),
@@ -136,21 +127,6 @@ class Initializer(ABC):
     def _create_attrs(
         self, problem: Problem, provider: ComponentProvider
     ) -> list[PopulationAttribute]:
-        """
-        Create attributes for Population and Archive.
-
-        Parameters
-        ----------
-        problem : Problem
-            The problem instance.
-        provider : ComponentProvider
-            The component provider instance.
-
-        Returns
-        -------
-        list[PopulationAttribute]
-            The attributes for Population and Archive.
-        """
         attrs = [
             PopulationAttribute("x", float, (problem.dim,), default=np.nan),
             PopulationAttribute("f", float, (problem.n_obj,), default=np.nan),
@@ -174,27 +150,6 @@ class Initializer(ABC):
         population: Population,
         rng: np.random.Generator,
     ) -> OptimizationState:
-        """
-        Create an OptimizationState.
-
-        Parameters
-        ----------
-        problem : Problem
-            The problem instance.
-        archive : Archive
-            The archive instance.
-        pareto_archive : ParetoArchive
-            The Pareto archive instance.
-        population : Population
-            The population instance.
-        rng : np.random.Generator
-            The random number generator.
-
-        Returns
-        -------
-        OptimizationState
-            The optimization context.
-        """
         if (
             isinstance(problem.comparator, NSGA3Comparator)
             and problem.comparator._rng is None

@@ -197,11 +197,6 @@ class TrainingSet(ABC):
         ...
 
 
-# ---------------------------------------------------------------------------
-# Regression defaults (backward-compatible)
-# ---------------------------------------------------------------------------
-
-
 class ArchiveObjectiveSet(TrainingSet):
     """Use the entire archive as training data with raw objective values.
 
@@ -256,11 +251,6 @@ class KNNObjectiveSet(TrainingSet):
         if rows is not None:
             return TrainingData(train_x=rows[0], train_y=rows[1])
         return TrainingData(train_x=archive.x[idx], train_y=archive.f[idx])
-
-
-# ---------------------------------------------------------------------------
-# Constraint regression (raw g values)
-# ---------------------------------------------------------------------------
 
 
 class ConstraintObjectiveSet(TrainingSet):
@@ -342,11 +332,6 @@ class KNNConstraintObjectiveSet(TrainingSet):
         return TrainingData(train_x=archive.x[idx], train_y=g[idx])
 
 
-# ---------------------------------------------------------------------------
-# Constraint-based classification
-# ---------------------------------------------------------------------------
-
-
 class FeasibilityClassificationSet(TrainingSet):
     """Binary labels derived from constraint violation: 1 if feasible, 0 otherwise.
 
@@ -391,11 +376,6 @@ class FeasibilityClassificationSet(TrainingSet):
         eps = ctx.problem.eps_cv if ctx is not None else 1e-6
         labels = (src.get_array("cv") <= eps).astype(float)
         return TrainingData(train_x=src.get_array("x"), train_y=labels)
-
-
-# ---------------------------------------------------------------------------
-# Rank-based labelling
-# ---------------------------------------------------------------------------
 
 
 class TopKBipartitionSet(TrainingSet):
@@ -506,11 +486,6 @@ class LevelBasedSet(TrainingSet):
         return TrainingData(train_x=x, train_y=labels.astype(float))
 
 
-# ---------------------------------------------------------------------------
-# Pairwise comparison
-# ---------------------------------------------------------------------------
-
-
 class PairwiseComparisonSet(TrainingSet):
     """Pairwise labels: ``train_x`` is ``[x_a, x_b]``, label is 1 if *a* beats *b*.
 
@@ -606,11 +581,6 @@ class PairwiseComparisonSet(TrainingSet):
             ]
         )
         return TrainingData(train_x=train_x, train_y=train_y)
-
-
-# ---------------------------------------------------------------------------
-# Reference point comparison
-# ---------------------------------------------------------------------------
 
 
 class ReferencePointComparisonSet(TrainingSet):

@@ -51,7 +51,6 @@ class QuantityRef:
     index: int | str
 
     def __post_init__(self) -> None:
-        """Validate the stable parts of a quantity reference."""
         if not isinstance(self.kind, str) or not self.kind:
             raise ValidationError("quantity kind must be a non-empty string")
         if isinstance(self.index, bool) or not isinstance(self.index, (int, str)):
@@ -95,7 +94,6 @@ class ObservationSubject:
     payload: ObservationSubjectPayload
 
     def __post_init__(self) -> None:
-        """Validate the subject kind and its registered payload descriptor."""
         if not isinstance(self.kind, str) or not self.kind:
             raise ValidationError("observation subject kind must be a non-empty string")
         descriptor = OBSERVATION_SUBJECT_KINDS.get(self.kind)
@@ -149,7 +147,6 @@ class ObservationRecord:
     )
 
     def __post_init__(self) -> None:
-        """Normalize nested references and freeze provenance metadata."""
         object.__setattr__(self, "subject", ObservationSubject.from_value(self.subject))
         object.__setattr__(self, "quantity", QuantityRef.from_value(self.quantity))
         if not OBSERVATION_STATUSES.contains(self.status):
@@ -176,7 +173,6 @@ class ObservationSchema:
     schema_version: int = 1
 
     def __post_init__(self) -> None:
-        """Normalize and validate the registered quantity spaces."""
         for name, count in (
             ("objective_count", self.objective_count),
             ("constraint_count", self.constraint_count),
@@ -279,7 +275,6 @@ _PUBLIC_ALIASES = {"subject", "quantity"}
 
 
 def _vocabulary_code(vocabulary: Any, value: str) -> np.int8:
-    """Encode a registered vocabulary name as a compact column value."""
     try:
         return np.int8(vocabulary.names().index(value))
     except ValueError as exc:
@@ -296,7 +291,6 @@ def _vocabulary_names(vocabulary: Any, values: np.ndarray) -> np.ndarray:
 def _subject_payload_column(
     subjects: Sequence[ObservationSubject],
 ) -> np.ndarray:
-    """Pack fixed-shape subject payloads using their descriptor columns."""
     if not subjects:
         return np.empty(0, dtype=object)
     descriptors = [OBSERVATION_SUBJECT_KINDS.get(subject.kind) for subject in subjects]
@@ -327,7 +321,6 @@ def _subject_payload_column(
 
 
 def _object_column(values: Any) -> np.ndarray:
-    """Make a one-dimensional object column without unpacking nested arrays."""
     if isinstance(values, np.ndarray) and values.ndim == 1:
         return np.array(values, dtype=object, order="C", copy=True)
     if isinstance(values, np.ndarray) and values.ndim == 0:
@@ -341,7 +334,6 @@ def _object_column(values: Any) -> np.ndarray:
 
 
 def _typed_column(values: Any) -> np.ndarray:
-    """Use a native homogeneous dtype, falling back only for heterogeneous values."""
     if not isinstance(values, np.ndarray):
         values = tuple(values)
     array = np.asarray(values)
@@ -351,7 +343,6 @@ def _typed_column(values: Any) -> np.ndarray:
 
 
 def _quantity_parts(value: Any) -> tuple[str, int | str]:
-    """Extract quantity fields without allocating a reference object."""
     if isinstance(value, QuantityRef):
         return value.kind, value.index
     if isinstance(value, (tuple, list)) and len(value) == 2:
@@ -544,7 +535,6 @@ class ObservationRecords:
 
     @classmethod
     def _columns_from_mapping(cls, values: Mapping[str, Any]) -> dict[str, np.ndarray]:
-        """Normalize a column mapping while retaining columnar storage."""
         allowed = set(_COLUMNS) | _PUBLIC_ALIASES
         unknown = set(values) - allowed
         if unknown:
@@ -657,11 +647,9 @@ class ObservationRecords:
         return MappingProxyType(self._columns)
 
     def __len__(self) -> int:
-        """Return the number of stored observation rows."""
         return len(self._columns["value"])
 
     def __getitem__(self, index: int) -> ObservationRecord:
-        """Materialize one record from the parallel columns."""
         if isinstance(index, bool) or not isinstance(index, (int, np.integer)):
             raise TypeError("ObservationRecords indices must be integers")
         i = int(index)
@@ -950,7 +938,6 @@ class ObservationBatch:
         return batch
 
     def _candidate_data(self) -> tuple[CandidateIds, tuple[np.ndarray, ...]]:
-        """Extract candidate IDs through the registered subject callbacks once."""
         cached = getattr(self, "_candidate_cache", None)
         if cached is not None:
             return cached
@@ -994,7 +981,6 @@ class ObservationBatch:
         return self._candidate_data()[0]
 
     def _single_candidate_ids(self) -> tuple[np.ndarray, np.ndarray]:
-        """Return candidate order and one candidate ID for each record."""
         candidate_ids, subject_ids = self._candidate_data()
         positions = {int(value): index for index, value in enumerate(candidate_ids)}
         record_positions = np.empty(len(self.records), dtype=np.intp)
@@ -1012,7 +998,6 @@ class ObservationBatch:
         return candidate_ids, record_positions
 
     def _dense_arrays(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Validate complete dense form and materialize objective/constraint arrays."""
         cached = getattr(self, "_dense_cache", None)
         if cached is not None:
             return cached
@@ -1054,7 +1039,6 @@ class ObservationBatch:
     def _dense_input_arrays(
         self,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
-        """Use the vectorized dense input after checking its column layout."""
         inputs = getattr(self, "_dense_inputs", None)
         if inputs is None:
             return None
@@ -1163,7 +1147,6 @@ class ObservationBatch:
         quantity_indices: np.ndarray,
         values: np.ndarray,
     ) -> np.ndarray:
-        """Materialize one declared dense quantity from a validated column set."""
         index_space = self.schema.indices(kind)
         index_positions = {index: column for column, index in enumerate(index_space)}
         rows = np.flatnonzero(quantity_kinds == kind)

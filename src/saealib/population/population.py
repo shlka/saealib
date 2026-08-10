@@ -28,8 +28,6 @@ ColumnStore = Mapping[str, np.ndarray]
 
 
 class _ConflictBypassProperty(property):
-    """Mark bound properties as exempt from population-name conflict warnings."""
-
     pass
 
 
@@ -93,7 +91,6 @@ class Population(Generic[T_Individual]):
 
     individual_class = None
 
-    # Reserve standard expressions
     x: np.ndarray = bind_property_array("x", doc="Design variables")
     f: np.ndarray = bind_property_array("f", doc="Objective function values")
     g: np.ndarray = bind_property_array("g", doc="Constraint values")
@@ -158,7 +155,6 @@ class Population(Generic[T_Individual]):
         self._check_name_conflicts()
 
     def _initialize_genomes(self, genomes: GenomeBatch) -> None:
-        """Install an independent, population-owned genome backing store."""
         if len(genomes) > self._capacity:
             self._capacity = len(genomes)
         if isinstance(genomes, DenseVectorBatch):
@@ -213,8 +209,6 @@ class Population(Generic[T_Individual]):
             if hasattr(cls, name):
                 attr = getattr(cls, name)
                 if isinstance(attr, _ConflictBypassProperty):
-                    # No conflicts occur for properties added using the bind_property
-                    # function or the bind_property_array function.
                     continue
                 warnings.warn(
                     f"Attribute name '{name}' conflicts with a "
@@ -464,7 +458,6 @@ class Population(Generic[T_Individual]):
         allow_duplicate_ids: bool,
         check_existing: bool = True,
     ) -> None:
-        """Validate IDs for an incoming row batch before it is appended."""
         if "id" not in self._schema:
             return
 
@@ -1268,11 +1261,9 @@ class Population(Generic[T_Individual]):
         return self._structure_version
 
     def __len__(self) -> int:
-        """Return the size of the population."""
         return self._size
 
     def __getattr__(self, name: str) -> np.ndarray:
-        """Support dot access (ex: pop.x)."""
         if name == "x" and "_dense_numeric_view" in self.__dict__:
             raise AttributeError("Population.x requires the DenseNumericView service")
         if "_data" in self.__dict__ and name in self.__dict__["_data"]:
@@ -1283,7 +1274,6 @@ class Population(Generic[T_Individual]):
         )
 
     def __setattr__(self, name: str, value: Any) -> None:
-        """Support dot setter."""
         if "_data" in self.__dict__ and name in self.__dict__["_data"]:
             self.update_array(name, value)
         else:
@@ -1369,7 +1359,6 @@ class Individual(Generic[T_Population]):
         self._get_pop().mod_value()
 
     def __getattr__(self, name: str) -> Any:
-        """Access attribute from the population data."""
         pop = self._get_pop()
         if name in pop._data:
             return self.get_readonly_value(name)
@@ -1379,7 +1368,6 @@ class Individual(Generic[T_Population]):
             )
 
     def __setattr__(self, name: str, value: Any) -> None:
-        """Set attribute value."""
         if name in self.__slots__:
             super().__setattr__(name, value)
             return

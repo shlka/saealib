@@ -23,7 +23,6 @@ def _node_ref(node: ComponentNode) -> NodeRef:
 
 
 def _canonical_ref(graph: ComponentGraph, reference: NodeRef) -> NodeRef:
-    """Normalize an endpoint role to the owning graph node."""
     try:
         node = graph.node_by_id(reference.component_id)
     except KeyError:
@@ -32,7 +31,6 @@ def _canonical_ref(graph: ComponentGraph, reference: NodeRef) -> NodeRef:
 
 
 def _reachable(graph: ComponentGraph) -> dict[NodeRef, set[NodeRef]]:
-    """Return transitive successors using both data and control ordering."""
     successors: dict[NodeRef, set[NodeRef]] = {
         _node_ref(node): set() for node in graph.nodes
     }
@@ -56,7 +54,6 @@ def _resolve_keys(
     bindings: tuple[StateKey[object], ...],
     keys: tuple[StateKey[object], ...],
 ) -> set[StateKey[object]]:
-    """Resolve declarations to binding keys without manipulating key strings."""
     resolved: set[StateKey[object]] = set()
     for key in keys:
         candidates = [

@@ -34,7 +34,6 @@ class StateStore:
         *,
         generation: int = 0,
     ) -> None:
-        """Create a store from an optional mapping of state keys to values."""
         if generation < 0:
             raise ValidationError("StateStore generation must be non-negative")
         values = {} if initial is None else dict(initial)
@@ -44,7 +43,6 @@ class StateStore:
         self._moved = False
 
     def __copy__(self) -> StateStore:
-        """Copy store metadata without invoking a subclass constructor."""
         result = type(self).__new__(type(self))
         result.__dict__ = self.__dict__.copy()
         return result
@@ -138,7 +136,6 @@ class StateStore:
     def _clone(
         self, values: Mapping[StateKey, object], *, generation: int
     ) -> StateStore:
-        """Create the next store, preserving subclass-specific state via override."""
         return type(self)(values, generation=generation)
 
     @staticmethod

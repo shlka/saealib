@@ -103,7 +103,6 @@ class ObservationSubjectKind(VocabularyDescriptor):
     columns: tuple[ColumnSpec, ...]
 
     def __post_init__(self) -> None:
-        """Validate the descriptor fields whose shape is known to core."""
         super().__post_init__()
         if self.arity not in {OBSERVATION_SUBJECT_ONE, OBSERVATION_SUBJECT_MANY}:
             raise ValidationError("Observation subject arity must be 'ONE' or 'MANY'")
@@ -174,12 +173,10 @@ OBSERVATION_SUBJECT_KINDS: Vocabulary[ObservationSubjectKind] = Vocabulary()
 def _identity_candidate_ids(
     payload: ObservationSubjectPayload,
 ) -> ObservationSubjectPayload:
-    """Return the subject payload unchanged, regardless of subject kind."""
     return payload
 
 
 def _validate_candidate_ids(payload: ObservationSubjectPayload) -> ValidationResult:
-    """Validate the one non-negative ID carried by a candidate subject."""
     if not isinstance(payload, np.ndarray):
         return ValidationResult(errors=("candidate ids must be a NumPy array",))
     if payload.dtype != np.dtype(np.int64) or payload.ndim != 1:

@@ -50,8 +50,6 @@ _MISSING = object()
 
 @dataclass(frozen=True)
 class _HeldComponent:
-    """A component found on a stage and its path within that stage."""
-
     path: tuple[str, ...]
     installed_name: str | None
     component: object
@@ -59,7 +57,6 @@ class _HeldComponent:
 
 
 def _component_contract(value: object) -> ComponentContract | None:
-    """Return a component contract without treating a Stage as a component."""
     if isinstance(value, Stage):
         return None
     method = getattr(value, "contract", None)
@@ -74,7 +71,6 @@ def _component_contract(value: object) -> ComponentContract | None:
 
 
 def _path_piece(value: object) -> str:
-    """Make an attribute/container path useful in diagnostics and bindings."""
     if isinstance(value, str):
         return value.lstrip("_") or "component"
     return str(value)
@@ -149,13 +145,11 @@ def _held_components(stage: Stage) -> tuple[_HeldComponent, ...]:
 
 
 def _append_unique(values: list[Any], value: Any) -> None:
-    """Append a value once while preserving declaration order."""
     if value not in values:
         values.append(value)
 
 
 def _qualified_role(path: tuple[str, ...], role: str, index: int) -> str:
-    """Namespace a colliding role without inventing a new port schema."""
     owner = _path_piece(path[-1] if path else f"component_{index}")
     return f"{owner}:{role}"
 
@@ -235,7 +229,6 @@ def _compose_contracts(held: Sequence[_HeldComponent]) -> ComponentContract:
 
 
 def _surrogate_key_name(node_id: str, item: _HeldComponent) -> str:
-    """Qualify an installed surrogate name by its graph node path."""
     installed_name = item.installed_name
     if installed_name is None:
         ignored = {
@@ -276,7 +269,6 @@ class StageNodeAdapter:
         self._contract = _compose_contracts(self._held)
 
     def __getattr__(self, name: str) -> object:
-        """Expose the wrapped Stage's declared part attributes."""
         return getattr(self.stage, name)
 
     def execute(self, state: Any) -> Any:
@@ -367,7 +359,6 @@ class StagePartNodeAdapter:
         self._contract = contract
 
     def __getattr__(self, name: str) -> object:
-        """Expose nested contract parts without making the part executable."""
         if name == "execute":
             raise AttributeError(name)
         return getattr(self.component, name)
@@ -390,7 +381,6 @@ class NodeAdapterSpec:
     adapter: StageContractNodeAdapter
 
     def __post_init__(self) -> None:
-        """Validate the executable adapter contract."""
         if not isinstance(self.adapter, StageContractNodeAdapter):
             raise ValidationError(
                 "NodeAdapterSpec adapter must be a StageContractNodeAdapter"
@@ -456,7 +446,6 @@ def _has_port(
     name: str,
     direction: PortDirection,
 ) -> bool:
-    """Return whether a composed role has exactly one matching port."""
     port_contract = contract.ports.get(role)
     if port_contract is None:
         return False
@@ -469,7 +458,6 @@ def _has_port(
 
 
 def _unique_node_ids(stages: Sequence[Stage]) -> tuple[str, ...]:
-    """Give repeated stage names stable, valid graph identities."""
     counts: dict[str, int] = {}
     ids: list[str] = []
     for index, stage in enumerate(stages):
@@ -568,7 +556,6 @@ def build_component_graph(pipeline: Pipeline) -> ComponentGraph:
 
 
 def _declared_part_component(stage: Stage, name: str) -> object | None:
-    """Resolve a named part from the conventional private attribute."""
     for candidate in (f"_{name}", name):
         if hasattr(stage, candidate):
             return getattr(stage, candidate)
@@ -583,7 +570,6 @@ def _decomposed_role_node(
     direction: PortDirection,
     port: str,
 ) -> NodeRef | None:
-    """Find the independently owned node for one declared data role."""
     declared_matches: list[NodeRef] = []
     held_matches: list[NodeRef] = []
     for part_name, (part_node, node) in part_nodes.items():

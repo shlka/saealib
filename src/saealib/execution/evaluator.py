@@ -75,7 +75,6 @@ def _owned_array(value: Any, *, dtype: np.dtype, ndim: int, name: str) -> np.nda
 
 
 def _payload_value(payload: Any, index: int) -> object:
-    """Return one row from a standard or adapter-produced payload batch."""
     if isinstance(payload, GenomeBatch):
         return genome_value(payload, index)
     return payload[index]
@@ -94,7 +93,6 @@ class EvaluationResult:
     outputs: dict[str, np.ndarray] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Validate and own all numeric channels."""
         self.f = _owned_array(self.f, dtype=np.dtype(np.float64), ndim=2, name="f")
         self.g = _owned_array(self.g, dtype=np.dtype(np.float64), ndim=2, name="g")
         self.cv = _owned_array(self.cv, dtype=np.dtype(np.float64), ndim=1, name="cv")
@@ -147,7 +145,6 @@ class EvaluationErrorInfo:
     details: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Validate error details are serializable."""
         pickle.dumps(dict(self.details))
 
 
@@ -171,7 +168,6 @@ class EvaluationRequest:
         *,
         x: np.ndarray | None = None,
     ) -> None:
-        """Validate an opaque genome payload, retaining the legacy ``x`` API."""
         if np.asarray(request_id).shape != ():
             raise ValidationError("request_id must be scalar")
         if x is not None:
@@ -250,7 +246,6 @@ class EvaluationUpdate:
     sequence: int = 0
 
     def __post_init__(self) -> None:
-        """Validate update row identity."""
         if self.sequence < 0:
             raise EvaluationProtocolError("update sequence must be non-negative")
         ids = _owned_array(
@@ -283,7 +278,6 @@ class PendingEvaluation:
     prediction: Any = None
 
     def __post_init__(self) -> None:
-        """Validate and own applied candidate IDs."""
         ids = _owned_array(
             self.applied_candidate_ids,
             dtype=np.dtype(np.int64),
@@ -624,33 +618,6 @@ class SerialEvaluator(Evaluator):
         problem: Problem,
         request: EvaluationQuery,
     ) -> EvaluationResult:
-        """
-        Evaluate ``x``, preferring ``problem.evaluate_batch`` when available.
-
-        First tries ``problem.evaluate_batch(x)``: if the ``Problem`` overrides
-        it to return raw ``(f_batch, g_batch)`` for the whole batch in one
-        call, this skips ``problem.evaluate``/``problem.evaluate_constraints``
-        entirely and only runs the (cheap) per-row constraint-handler calls
-        (``handler.compute_cv`` / ``handler.augment_objective``) needed to turn
-        the raw batch into final ``f`` / ``cv`` values. Otherwise it falls back
-        to evaluating each row one at a time via
-        :meth:`~saealib.problem.Problem.evaluate` /
-        :meth:`~saealib.problem.Problem.evaluate_constraints`, reproducing the
-        per-candidate evaluation loops that previously lived in each Strategy
-        and Initializer.
-
-        Parameters
-        ----------
-        x : np.ndarray
-            Design vectors to evaluate. shape = (n, dim)
-        problem : Problem
-            The optimization problem providing the objective and constraints.
-
-        Returns
-        -------
-        EvaluationResult
-            Batched objective values, raw constraint values, and violations.
-        """
         genomes = x
         payload: Any = genomes
         if problem.evaluation_adapter is not None:

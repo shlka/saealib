@@ -54,7 +54,6 @@ class FeedbackBatch:
     sequence: int
 
     def __post_init__(self) -> None:
-        """Validate the delivery envelope without enforcing runtime ordering."""
         object.__setattr__(
             self, "proposal_id", _non_negative_int(self.proposal_id, "proposal_id")
         )
@@ -81,7 +80,6 @@ class FeedbackContract:
     grouping: FeedbackGrouping = BY_PROPOSAL
 
     def __post_init__(self) -> None:
-        """Normalize and validate every declared feedback policy axis."""
         try:
             channels = frozenset(self.accepted_channels)
         except TypeError as exc:

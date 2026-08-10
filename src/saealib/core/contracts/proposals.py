@@ -41,11 +41,7 @@ _RelationStore: TypeAlias = np.ndarray | Mapping[str, np.ndarray]
 
 @runtime_checkable
 class _CandidatePopulation(Protocol):
-    """Minimal population behavior required by a proposal contract."""
-
-    def __len__(self) -> int:
-        """Return the number of candidate rows."""
-        ...
+    def __len__(self) -> int: ...
 
     def extract(self, indices: Any) -> Any:
         """Return the selected candidate rows."""
@@ -70,7 +66,6 @@ class QuantityRequirement:
     fidelity: FidelityRef | None = None
 
     def __post_init__(self) -> None:
-        """Normalize and validate the per-quantity feedback constraints."""
         object.__setattr__(self, "quantity", QuantityRef.from_value(self.quantity))
         try:
             sources = frozenset(self.sources)
@@ -99,7 +94,6 @@ class FeedbackRequirement:
     completion: CompletionMode = COMPLETE_BATCH
 
     def __post_init__(self) -> None:
-        """Normalize quantity requirements and validate completion mode."""
         try:
             quantities = tuple(
                 item
@@ -237,15 +231,12 @@ class ProposalRelations(Mapping[str, _RelationStore]):
         return MappingProxyType(arrays), rows
 
     def __getitem__(self, name: str) -> _RelationStore:
-        """Return the immutable column store for a registered relation."""
         return self._stores[name]
 
     def __iter__(self) -> Iterator[str]:
-        """Iterate over registered relation names."""
         return iter(self._stores)
 
     def __len__(self) -> int:
-        """Return the number of registered relation kinds."""
         return len(self._stores)
 
     @property
@@ -294,7 +285,6 @@ class ProposalBatch:
     )
 
     def __post_init__(self) -> None:
-        """Validate alignment and freeze the proposal metadata."""
         proposal_id = _non_negative_int(self.proposal_id, "proposal_id")
         if not isinstance(self.candidates, _CandidatePopulation):
             raise ValidationError("candidates must be a Population")
@@ -334,7 +324,6 @@ class ProposalBatch:
 
 
 def _normalize_indices(indices: Any, row_count: int) -> np.ndarray:
-    """Normalize a row selector for Population and relation stores alike."""
     if isinstance(indices, slice):
         return np.arange(row_count, dtype=np.intp)[indices]
     raw = np.asarray(indices)

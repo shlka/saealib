@@ -84,7 +84,6 @@ _ACCUMULATOR_CODEC_VERSION = 1
 
 
 def _state_non_negative_int(value: Any, name: str) -> int:
-    """Read one integer field without coercing malformed checkpoint data."""
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, np.integer)):
         raise ValidationError(f"feedback accumulator {name} must be an integer")
     result = int(value)
@@ -96,7 +95,6 @@ def _state_non_negative_int(value: Any, name: str) -> int:
 
 
 def _state_sequence_key(value: Any) -> int:
-    """Decode the string key used for JSON sequence maps."""
     if not isinstance(value, str) or not value.isdecimal():
         raise ValidationError("feedback accumulator seen sequence is malformed")
     return _state_non_negative_int(int(value), "seen sequence")
@@ -104,16 +102,12 @@ def _state_sequence_key(value: Any) -> int:
 
 @dataclass(frozen=True)
 class _Delivery:
-    """The columnar records retained for one accepted delivery."""
-
     sequence: int
     records: ObservationRecords
 
 
 @dataclass
 class _ProposalBuffer:
-    """Mutable state for one registered proposal."""
-
     proposal_id: int
     candidate_ids: CandidateIds
     candidate_id_set: frozenset[int]
@@ -156,7 +150,6 @@ class FeedbackAccumulator:
         *,
         selection_policy: SelectionPolicy = DEFAULT_SELECTION_POLICY,
     ) -> None:
-        """Validate the consumer contract and initialize empty queues."""
         if not isinstance(contract, FeedbackContract):
             raise ValidationError("contract must be a FeedbackContract")
         if contract.completion != COMPLETE_BATCH:
@@ -448,7 +441,6 @@ class FeedbackAccumulator:
         self._ready = restored._ready
 
     def _finalize(self, state: _ProposalBuffer) -> FeedbackBatch:
-        """Resolve a complete proposal into exactly one final delivery."""
         if state.schema is None or state.channel is None or not state.deliveries:
             raise ValidationError(
                 f"proposal {state.proposal_id} has no feedback schema or delivery"
@@ -580,7 +572,6 @@ class FeedbackAccumulator:
 
 
 def _portable_to_state(value: Any) -> Any:
-    """Encode arrays and nested portable values without object-array pickle."""
     if isinstance(value, np.ndarray):
         return {
             "__ndarray__": [_portable_to_state(item) for item in value.tolist()],
@@ -1005,7 +996,6 @@ def _buffer_from_state(
 
 
 def _validate_state(value: Any) -> None:
-    """Validate a snapshot before it enters the generic checkpoint store."""
     if not isinstance(value, Mapping) or value.get("codec") != _ACCUMULATOR_CODEC:
         raise ValidationError("feedback accumulator state codec is malformed")
     if value.get("version") != _ACCUMULATOR_CODEC_VERSION:
@@ -1043,7 +1033,6 @@ def _validate_state(value: Any) -> None:
 
 
 def _proposal_candidate_ids(proposal: ProposalBatch) -> CandidateIds:
-    """Capture candidate IDs using the existing population ID convention."""
     if "id" in proposal.candidates.schema:
         values = proposal.candidates.get_array("id")
     else:
@@ -1054,7 +1043,6 @@ def _proposal_candidate_ids(proposal: ProposalBatch) -> CandidateIds:
 def _accepted_records(
     records: ObservationRecords, contract: FeedbackContract
 ) -> ObservationRecords:
-    """Drop observations whose provenance the consumer did not accept."""
     if len(records) == 0:
         return records
     sources = records.column("source")
@@ -1063,7 +1051,6 @@ def _accepted_records(
 
 
 def _record_candidate_ids(records: ObservationRecords) -> np.ndarray:
-    """Return one candidate ID per record through subject descriptors."""
     if len(records) == 0:
         return np.empty(0, dtype=np.int64)
     result = np.empty(len(records), dtype=np.int64)
@@ -1086,7 +1073,6 @@ def _record_candidate_ids(records: ObservationRecords) -> np.ndarray:
 
 
 def _quantity_index_type(index: Any) -> str:
-    """Return a type tag so integer index 1 differs from name ``"1"``."""
     if isinstance(index, (int, np.integer)) and not isinstance(index, (bool, np.bool_)):
         return "int"
     return "str"
@@ -1095,7 +1081,6 @@ def _quantity_index_type(index: Any) -> str:
 def _quantity_index_parts(
     indices: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Normalize heterogeneous quantity indices into vectorized key columns."""
     values = np.asarray(indices)
     if values.dtype.kind in "iu":
         return (
@@ -1125,7 +1110,6 @@ def _dense_record_groups(
     quantity_kinds: np.ndarray,
     quantity_indices: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Build dense record group IDs with one structured NumPy unique pass."""
     index_types, index_tokens = _quantity_index_parts(quantity_indices)
     kinds = np.asarray(quantity_kinds, dtype=str)
     kind_width = max((len(kind) for kind in kinds), default=1)
@@ -1150,7 +1134,6 @@ def _dense_record_groups(
 def _missing_slot_description(
     candidate_id: int, requirement: QuantityRequirement
 ) -> str:
-    """Describe one missing candidate/quantity slot for the final diagnostic."""
     return (
         f"candidate={candidate_id}, quantity={requirement.quantity.kind}["
         f"{requirement.quantity.index}]"
@@ -1158,7 +1141,6 @@ def _missing_slot_description(
 
 
 def _fidelity_values(records: ObservationRecords) -> np.ndarray:
-    """Materialize optional fidelity metadata for the policy and predicates."""
     try:
         values = records.column("fidelity")
     except KeyError:
@@ -1177,7 +1159,6 @@ def _fidelity_values(records: ObservationRecords) -> np.ndarray:
 
 
 def _schemas_equal(left: ObservationSchema, right: ObservationSchema) -> bool:
-    """Compare schema values without relying on MappingProxyType equality."""
     return (
         left.objective_count == right.objective_count
         and left.constraint_count == right.constraint_count
@@ -1188,7 +1169,6 @@ def _schemas_equal(left: ObservationSchema, right: ObservationSchema) -> bool:
 
 
 def _feedback_batches_equal(left: FeedbackBatch, right: FeedbackBatch) -> bool:
-    """Compare duplicate deliveries by payload, not object identity."""
     return (
         left.proposal_id == right.proposal_id
         and left.channel == right.channel
@@ -1200,7 +1180,6 @@ def _feedback_batches_equal(left: FeedbackBatch, right: FeedbackBatch) -> bool:
 
 
 def _records_equal(left: ObservationRecords, right: ObservationRecords) -> bool:
-    """Compare columnar records, including optional object-valued columns."""
     if len(left) != len(right):
         return False
     names = set(left.column_names) | set(right.column_names)
@@ -1213,7 +1192,6 @@ def _records_equal(left: ObservationRecords, right: ObservationRecords) -> bool:
 
 
 def _optional_column(records: ObservationRecords, name: str) -> np.ndarray:
-    """Read a column or represent an absent optional column as ``None``."""
     try:
         return records.column(name)
     except KeyError:
@@ -1223,7 +1201,6 @@ def _optional_column(records: ObservationRecords, name: str) -> np.ndarray:
 
 
 def _arrays_equal(left: np.ndarray, right: np.ndarray) -> bool:
-    """Compare arrays without assuming object columns contain scalars."""
     if left.shape != right.shape:
         return False
     try:
@@ -1235,7 +1212,6 @@ def _arrays_equal(left: np.ndarray, right: np.ndarray) -> bool:
 
 
 def _values_equal(left: Any, right: Any) -> bool:
-    """Recursively compare one possibly nested column value."""
     if isinstance(left, np.ndarray) or isinstance(right, np.ndarray):
         if not isinstance(left, np.ndarray) or not isinstance(right, np.ndarray):
             return False

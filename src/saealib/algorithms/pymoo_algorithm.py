@@ -43,8 +43,6 @@ if TYPE_CHECKING:
 
 
 class _PymooPopulationLike(Protocol):
-    """Structural interface of a ``pymoo.core.population.Population`` instance."""
-
     def get(self, *args: object, **kwargs: object) -> object:
         """Read one or more fields (e.g. "X", "F", "G", "H", "CV")."""
         ...
@@ -53,14 +51,10 @@ class _PymooPopulationLike(Protocol):
         """Write one or more fields (e.g. "X", "F", "G", "H")."""
         ...
 
-    def __len__(self) -> int:
-        """Return the number of individuals."""
-        ...
+    def __len__(self) -> int: ...
 
 
 class _PymooAlgorithmLike(Protocol):
-    """Structural interface of a ``pymoo.core.algorithm.Algorithm`` instance."""
-
     @property
     def pop(self) -> _PymooPopulationLike | None:
         """Internal population; None before setup(). Read-only from here."""
@@ -208,7 +202,6 @@ class PymooAlgorithm(AskTellAlgorithm):
         ]
 
     def _build_pymoo_problem(self, ctx: OptimizationState) -> PymooCoreProblem:
-        """Synthesize a minimal pymoo Problem shim; never evaluated by pymoo itself."""
         from pymoo.core.problem import Problem as PymooProblem
 
         problem = ctx.problem
@@ -296,7 +289,6 @@ class PymooAlgorithm(AskTellAlgorithm):
             pymoo_pop.set("H", g[:, self._eq_idx])
 
     def _ensure_initialized(self, ctx: OptimizationState) -> None:
-        """Bind the wrapped algorithm to the problem and seed it with saealib's DoE."""
         if self._initialized:
             return
         from pymoo.core.termination import NoTermination
@@ -467,7 +459,6 @@ class PymooAlgorithm(AskTellAlgorithm):
     def _set_pymoo_candidate_ids(
         cls, pymoo_pop: _PymooPopulationLike, candidate_ids: np.ndarray
     ) -> None:
-        """Attach stable saealib candidate IDs to pymoo individuals."""
         candidate_ids = np.asarray(candidate_ids, dtype=np.int64)
         if candidate_ids.ndim != 1 or len(candidate_ids) != len(pymoo_pop):
             raise ConfigurationError("pymoo candidate provenance has invalid shape")
@@ -478,7 +469,6 @@ class PymooAlgorithm(AskTellAlgorithm):
 
     @classmethod
     def _pymoo_candidate_ids(cls, pymoo_pop: _PymooPopulationLike) -> np.ndarray | None:
-        """Read survivor provenance retained by pymoo's population objects."""
         try:
             values = pymoo_pop.get(cls._candidate_id_attr)
         except (AttributeError, KeyError, TypeError):
@@ -499,7 +489,6 @@ class PymooAlgorithm(AskTellAlgorithm):
         return values
 
     def _sync_population(self, ctx: OptimizationState) -> None:
-        """Rebuild ctx.population in-place from the wrapped algorithm's own .pop."""
         alg_pop = self.pymoo_algorithm.pop
         assert alg_pop is not None  # setup()/tell() already ran by this point
         population = ctx.population

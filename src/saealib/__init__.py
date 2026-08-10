@@ -5,23 +5,8 @@ from importlib.metadata import version
 
 __version__ = version("saealib")
 
-# ---------------------------------------------------------------------------
-# Root export surfaces
-#
-# Eager surface (this section, eager import + __all__): entry points likely to be
-#   named in the first script or a subclass definition — the 5 root
-#   abstractions (Algorithm, OptimizationStrategy, Surrogate,
-#   AcquisitionFunction, SurrogateManager), one or two representative default
-#   implementations per concept, and the Comparator/Evaluator/Initializer/
-#   Termination/Event bases with their common defaults.
-# Lazy surface (_LAZY_EXPORTS below, imported via __getattr__): every other public
-#   root convenience component. Namespace public APIs are defined by each
-#   subpackage independently; adding a name there does not require adding it
-#   to either root surface. Existing root names remain compatibility exports.
-#   Generic-named bulk sets and domain toolkits, e.g. saealib.benchmarks
-#   (sphere/zdt*/dtlz*/...), saealib.registry.get/build/to_spec, and
-#   saealib.defaults, are intentionally namespace-only.
-# ---------------------------------------------------------------------------
+# Root exports are curated independently from each subpackage's namespace.
+# Names in ``_LAZY_EXPORTS`` are root conveniences, not an automatic mirror.
 
 from saealib.acquisition import (
     AcquisitionFunction,

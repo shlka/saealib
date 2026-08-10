@@ -16,7 +16,6 @@ __all__ = ["PersistenceRule", "RuntimeCompatibilityRule"]
 
 
 def _node_path(node: ComponentNode, part_path: tuple[str, ...] = ()) -> ContractPath:
-    """Build the canonical diagnostic path for a graph node."""
     return ContractPath(
         components=(node.component_id, *part_path),
         role=node.role,
@@ -24,7 +23,6 @@ def _node_path(node: ComponentNode, part_path: tuple[str, ...] = ()) -> Contract
 
 
 def _has_genome_codec(context: RuleContext) -> bool:
-    """Return whether the compile-time space exposes a GenomeCodec service."""
     space = context.compile_context.space
     services = getattr(space, "services", space)
     get = getattr(services, "get", None)
@@ -34,7 +32,6 @@ def _has_genome_codec(context: RuleContext) -> bool:
 def _exported_state_keys(
     contract: ComponentContract, part_path: tuple[str, ...] = ()
 ) -> tuple[tuple[tuple[str, ...], StateKey[object]], ...]:
-    """Collect direct and nested state exports without inspecting components."""
     exports: list[tuple[tuple[str, ...], StateKey[object]]] = []
     for key in contract.state.exports:
         exports.append((part_path, key))
@@ -49,7 +46,6 @@ def _exported_state_keys(
 
 
 def _population_state_names(graph: ComponentGraph) -> dict[ContractPath, set[str]]:
-    """Collect population exports, including nested parts and state bindings."""
     names: dict[ContractPath, set[str]] = {}
     for node in graph.nodes:
         for part_path, key in _exported_state_keys(node.contract):

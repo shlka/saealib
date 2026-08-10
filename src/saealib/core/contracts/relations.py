@@ -52,7 +52,6 @@ class RelationKind(VocabularyDescriptor):
     reindex: Callable[[RelationPayload, np.ndarray], RelationPayload]
 
     def __post_init__(self) -> None:
-        """Validate relation metadata with the currently fixed leaf shapes."""
         super().__post_init__()
         if self.target not in {CANDIDATE_ID, SUBPROBLEM, GROUP, OPAQUE}:
             raise ValidationError(
@@ -71,7 +70,6 @@ RELATION_KINDS: Vocabulary[RelationKind] = Vocabulary()
 
 
 def _identity_reindex(payload: RelationPayload, indices: np.ndarray) -> RelationPayload:
-    """Relations carry IDs, so row reindexing does not alter their payload."""
     return payload
 
 

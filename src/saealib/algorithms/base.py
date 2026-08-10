@@ -188,7 +188,6 @@ class ProposalRequest:
     n_offspring: int | None = None
 
     def __post_init__(self) -> None:
-        """Validate the one request parameter carried across the new boundary."""
         if self.n_offspring is None:
             return
         if isinstance(self.n_offspring, (bool, np.bool_)) or not isinstance(

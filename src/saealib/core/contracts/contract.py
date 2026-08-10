@@ -25,7 +25,6 @@ class PartSpec:
     optional: bool = False
 
     def __post_init__(self) -> None:
-        """Validate the part declaration."""
         validate_identifier(self.name)
         if not isinstance(self.contract, ComponentContract):
             raise ValidationError("Part contracts must be ComponentContract values")
@@ -45,7 +44,6 @@ class ComponentContract:
     assumptions: AssumptionSet = field(default_factory=AssumptionSet.empty)
 
     def __post_init__(self) -> None:
-        """Validate and protect component contract declarations."""
         if not isinstance(self.ports, Mapping):
             raise ValidationError("Component contract ports must be a mapping")
         ports = dict(self.ports)

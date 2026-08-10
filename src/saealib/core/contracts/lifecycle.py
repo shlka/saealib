@@ -23,7 +23,6 @@ class EventSubscription:
     event: str
 
     def __post_init__(self) -> None:
-        """Validate the event identity."""
         if not isinstance(self.event, str):
             raise ValidationError("Event identities must be strings")
         validate_name(self.event)
@@ -37,7 +36,6 @@ class LifecycleContract:
     feedback: FeedbackContract | None = None
 
     def __post_init__(self) -> None:
-        """Validate and normalize event subscriptions."""
         events = tuple(self.events)
         if any(not isinstance(event, EventSubscription) for event in events):
             raise ValidationError(

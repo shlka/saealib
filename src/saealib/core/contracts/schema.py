@@ -131,7 +131,6 @@ class SchemaConstraint:
     detail: str = ""
 
     def __post_init__(self) -> None:
-        """Validate the variable and registered conflict reason."""
         validate_name(self.variable)
         if SCHEMA_CONFLICT_REASONS.get(self.reason) is None:
             raise ValidationError(f"Unknown schema conflict reason: {self.reason!r}")
@@ -144,7 +143,6 @@ class SchemaConstraint:
         return self.reason == "containment_undecided"
 
     def __str__(self) -> str:
-        """Return a compact diagnostic representation."""
         message = f"{self.variable}: {self.reason}"
         return f"{message} ({self.detail})" if self.detail else message
 
@@ -156,7 +154,6 @@ class Substitution:
     assignments: Mapping[str, SchemaBinding] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Validate and detach the assignment mapping."""
         assignments = _copy_bindings(self.assignments)
         object.__setattr__(self, "assignments", MappingProxyType(assignments))
 
@@ -203,7 +200,6 @@ class UnificationResult:
     unknown_variables: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        """Validate and normalize the unification result."""
         if not isinstance(self.substitution, Substitution):
             raise ValidationError("Unification substitution must be a Substitution")
         findings = tuple(self.findings)

@@ -18,7 +18,6 @@ class StateContract:
     reads_enumerable: bool = True
 
     def __post_init__(self) -> None:
-        """Validate and normalize state-key declarations."""
         for field_name in ("reads", "writes", "exports"):
             keys = tuple(getattr(self, field_name))
             if any(not isinstance(key, StateKey) for key in keys):

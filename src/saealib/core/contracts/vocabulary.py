@@ -47,7 +47,6 @@ class VocabularyDescriptor:
     description: str
 
     def __post_init__(self) -> None:
-        """Validate descriptor metadata."""
         if not isinstance(self.description, str):
             raise ValidationError("Vocabulary descriptions must be strings")
 
@@ -113,15 +112,12 @@ class Vocabulary(Generic[DescriptorT]):
         return self._deprecation_reasons.get(name)
 
     def __contains__(self, name: object) -> bool:
-        """Return whether an object names a registered value."""
         return isinstance(name, str) and self.contains(name)
 
     def __iter__(self) -> Iterator[str]:
-        """Iterate over registered names."""
         return iter(self._entries)
 
     def __len__(self) -> int:
-        """Return the number of registered names."""
         return len(self._entries)
 
 

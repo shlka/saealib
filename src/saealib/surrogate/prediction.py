@@ -38,7 +38,6 @@ class PredictionChannel:
     metadata: dict[str, object] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Normalize owned arrays and validate channel-local fields."""
         self.value = _owned_matrix(self.value, "value")
         if self.std is not None:
             self.std = _owned_matrix(self.std, "std", self.value.shape)
@@ -96,7 +95,6 @@ class SurrogatePrediction:
     # as attributes rather than metadata.
 
     def __post_init__(self) -> None:
-        """Validate channel names, row alignment, and optional arrays."""
         if not isinstance(self.channels, dict):
             raise ValidationError("SurrogatePrediction.channels must be a dict")
         for name, channel in self.channels.items():

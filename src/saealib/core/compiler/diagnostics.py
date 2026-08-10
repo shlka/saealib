@@ -34,7 +34,6 @@ class ContractPath:
     port: str | None = None
 
     def __post_init__(self) -> None:
-        """Validate path components."""
         components = tuple(self.components)
         if not components or any(
             not isinstance(component, str) or not component for component in components
@@ -47,7 +46,6 @@ class ContractPath:
         object.__setattr__(self, "components", components)
 
     def __str__(self) -> str:
-        """Render the path as a dotted name with an optional role."""
         rendered = ".".join(self.components)
         if self.role is not None:
             rendered += f"[{self.role}]"
@@ -195,7 +193,6 @@ class Diagnostic:
     resolutions: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        """Validate and normalize diagnostic fields."""
         if not isinstance(self.path, ContractPath):
             raise ValidationError("Diagnostic paths must be ContractPath values")
         related = tuple(self.related)
@@ -207,7 +204,6 @@ class Diagnostic:
         object.__setattr__(self, "resolutions", tuple(self.resolutions))
 
     def __str__(self) -> str:
-        """Render the diagnostic with its path."""
         return f"{self.severity.value} [{self.code}] at {self.path}: {self.message}"
 
 
@@ -233,11 +229,9 @@ class DiagnosticBag:
         )
 
     def __iter__(self) -> Iterator[Diagnostic]:
-        """Iterate over collected diagnostics."""
         return iter(self._diagnostics)
 
     def __len__(self) -> int:
-        """Return the number of collected diagnostics."""
         return len(self._diagnostics)
 
 

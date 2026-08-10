@@ -56,7 +56,6 @@ class CompileContext:
     initial_state_keys: frozenset[StateKey[object]] = frozenset()
 
     def __post_init__(self) -> None:
-        """Normalize caller-provided collections."""
         namespaces = frozenset(self.enabled_rule_namespaces)
         capabilities = frozenset(self.offered_runtime_capabilities)
         initial_state_keys = frozenset(self.initial_state_keys)
@@ -90,13 +89,11 @@ class RewriteClaim:
     key: str
 
     def __post_init__(self) -> None:
-        """Validate the claim location."""
         validate_name(self.kind)
         if not isinstance(self.key, str) or not self.key:
             raise ValidationError("RewriteClaim key must be a non-empty string")
 
     def __str__(self) -> str:
-        """Render the canonical claim location."""
         return f"{self.kind}:{self.key}"
 
 
@@ -128,7 +125,6 @@ class VerificationResult:
     diagnostics: tuple[Diagnostic, ...] = ()
 
     def __post_init__(self) -> None:
-        """Normalize diagnostics to an immutable tuple."""
         object.__setattr__(self, "diagnostics", tuple(self.diagnostics))
 
 
@@ -141,7 +137,6 @@ class ResolutionResult:
     diagnostics: tuple[Diagnostic, ...] = ()
 
     def __post_init__(self) -> None:
-        """Validate and freeze the result collections."""
         if not isinstance(self.graph, ComponentGraph):
             raise ValidationError("ResolutionResult graph must be a ComponentGraph")
         object.__setattr__(self, "claims", frozenset(self.claims))
@@ -278,7 +273,6 @@ def _rule_namespaces(graph: ComponentGraph) -> frozenset[str]:
 def _snapshot_graph_contracts(
     graph: ComponentGraph, *, refresh: bool = False
 ) -> ComponentGraph:
-    """Freeze one contract snapshot for every node currently in the graph."""
     nodes = tuple(node.with_contract_snapshot(refresh=refresh) for node in graph.nodes)
     if not refresh and all(node._contract_snapshot is not None for node in graph.nodes):
         return graph
@@ -289,7 +283,6 @@ def _iter_port_specs(
     contract: ComponentContract,
     part_path: tuple[str, ...] = (),
 ) -> Iterable[tuple[tuple[str, ...], str, PortSpec]]:
-    """Yield every port in a contract, including recursively declared parts."""
     for role, role_contract in contract.ports.items():
         for port in (*role_contract.inputs, *role_contract.outputs):
             yield part_path, role, port
@@ -303,7 +296,6 @@ def _service_path(
     role: str,
     port: PortSpec,
 ) -> ContractPath:
-    """Build the contract path for one required service declaration."""
     return ContractPath(
         components=(node.component_id, *part_path),
         role=role,
@@ -312,7 +304,6 @@ def _service_path(
 
 
 def _service_registry(provider: object) -> object | None:
-    """Return a service registry from either a registry or an owning object."""
     if provider is None:
         return None
     services = getattr(provider, "services", None)
@@ -324,7 +315,6 @@ def _lookup_service(
     provider_name: str,
     service_name: str,
 ) -> object | None:
-    """Resolve one service from its declared provider without registry mutation."""
     provider = (
         compile_context.space if provider_name == "space" else compile_context.problem
     )
@@ -350,7 +340,6 @@ def _service_diagnostic(
     message: str,
     resolution: str,
 ) -> Diagnostic:
-    """Create a consistent diagnostic for a service declaration."""
     return Diagnostic(
         severity=Severity.ERROR,
         code=code,
@@ -449,14 +438,11 @@ class ServiceResolutionRule:
 
 
 def _endpoint_path(reference: NodeRef, role: str | None, port: str) -> ContractPath:
-    """Build a path for one side of a data connection."""
     return ContractPath(components=(reference.component_id,), role=role, port=port)
 
 
 @dataclass(frozen=True, kw_only=True)
 class _PortResolution:
-    """Result of resolving one graph edge endpoint to a declared port."""
-
     status: Literal["resolved", "missing", "ambiguous"]
     role: str | None = None
     spec: PortSpec | None = None
@@ -468,7 +454,6 @@ def _resolve_port(
     port_name: str,
     direction: PortDirection,
 ) -> _PortResolution:
-    """Resolve one endpoint by role, direction, and unique port name."""
     selected_role = reference.role
     if selected_role is not None:
         role_contract = node.contract.ports.get(selected_role)
@@ -492,7 +477,6 @@ def _resolve_port(
 
 
 def _compatibility_details(compatibility: PortCompatibility) -> str:
-    """Describe the failed checks exposed by PortCompatibility."""
     details: list[str] = []
     if not compatibility.kind_ok:
         details.append("data kinds are incompatible")
@@ -653,7 +637,6 @@ def _diagnostic_sort_key(diagnostic: Diagnostic) -> tuple[str, ...]:
 
 
 def _node_ref_key(reference: NodeRef) -> str:
-    """Render the stable identity used for edge and entry-point claims."""
     rendered = reference.component_id
     if reference.role is not None:
         rendered += f"[{reference.role}]"
@@ -661,7 +644,6 @@ def _node_ref_key(reference: NodeRef) -> str:
 
 
 def _data_edge_key(edge: DataEdge) -> str:
-    """Render a data-edge location for claim comparison."""
     return (
         f"{_node_ref_key(edge.source)}.{edge.source_port}->"
         f"{_node_ref_key(edge.target)}.{edge.target_port}"
@@ -669,12 +651,10 @@ def _data_edge_key(edge: DataEdge) -> str:
 
 
 def _control_edge_key(edge: ControlEdge) -> str:
-    """Render a control-edge location for claim comparison."""
     return f"{_node_ref_key(edge.source)}->{_node_ref_key(edge.target)}"
 
 
 def _state_binding_key(binding: StateBinding) -> str:
-    """Render a state-binding location for claim comparison."""
     state_key = binding.state_key
     return (
         f"{_node_ref_key(binding.node)}="
@@ -685,8 +665,6 @@ def _state_binding_key(binding: StateBinding) -> str:
 def _changed_locations(
     before: ComponentGraph, after: ComponentGraph
 ) -> frozenset[RewriteClaim]:
-    """Return graph locations whose values differ between two graph snapshots."""
-
     def compare(
         kind: str,
         before_values: Sequence[_ValueT],
@@ -754,7 +732,6 @@ def _changed_locations(
 def _merge_graphs(
     base: ComponentGraph, proposals: Sequence[ResolutionResult]
 ) -> ComponentGraph:
-    """Merge independent proposals by their graph collections deterministically."""
     graph = base
 
     def merge_values(

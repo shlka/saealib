@@ -104,7 +104,6 @@ def _contract_contains_var(contract: ComponentContract) -> bool:
 def _contract_has_unresolved_service(
     node: ComponentNode,
 ) -> bool:
-    """Return whether service resolution may still replace this node."""
     declared: set[str] = set()
 
     def collect(contract: ComponentContract) -> None:
@@ -123,7 +122,6 @@ def _contract_has_unresolved_service(
 def _binding_has_unresolved_var(
     binding: SchemaBinding, substitution: Substitution
 ) -> bool:
-    """Return whether a producer-side binding still contains an unbound Var."""
     resolved = substitution.resolve(binding)
     if isinstance(resolved, Var):
         return True
@@ -247,7 +245,6 @@ class SchemaBindingRule:
 
 
 def _freshen_node(node: ComponentNode) -> ComponentNode:
-    """Freshen one node unless a prior rule pass already wrapped it."""
     if getattr(node.component, "_saealib_schema_freshened", False):
         return node
     if not _contract_contains_var(node.contract):

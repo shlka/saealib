@@ -34,12 +34,10 @@ def _population_entry_v1_to_v2(value: object) -> object:
 
 
 def _evaluation_entry_v1_to_v2(value: object) -> object:
-    """Normalize legacy evaluation entries after their request codec decode."""
     return value
 
 
 def _validate_version(version: int, *, field_name: str) -> int:
-    """Validate and return a positive schema version."""
     if isinstance(version, bool) or not isinstance(version, int) or version < 1:
         raise ValidationError(f"{field_name} must be a positive integer")
     return version
@@ -54,7 +52,6 @@ class StateMigrationRegistry:
     """
 
     def __init__(self) -> None:
-        """Create an empty state migration registry."""
         self._migrators: dict[_MigrationId, Migrator] = {}
 
     def register(
@@ -152,7 +149,6 @@ class StateMigrationRegistry:
         name: str,
         from_version: int,
     ) -> _MigrationId:
-        """Validate a migration identifier and return its canonical tuple."""
         validate_name(namespace)
         validate_name(name)
         _validate_version(from_version, field_name="from_version")
@@ -160,17 +156,14 @@ class StateMigrationRegistry:
 
     @staticmethod
     def _format_key(key: StateKey[ValueT]) -> str:
-        """Format a state key without exposing its repr implementation."""
         return f"{key.namespace}/{key.name}"
 
     @staticmethod
     def _format_migration_id(migration_id: _MigrationId) -> str:
-        """Format a registered one-step migration identifier."""
         namespace, name, from_version = migration_id
         return f"{namespace}/{name}@v{from_version}->v{from_version + 1}"
 
     def _format_registered(self) -> str:
-        """Format all registered migrators for an actionable error."""
         if not self._migrators:
             return "(none)"
         return ", ".join(

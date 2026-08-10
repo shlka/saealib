@@ -42,13 +42,10 @@ def _node_path(
     role: str | None = None,
     port: str | None = None,
 ) -> ContractPath:
-    """Build a diagnostic path for a graph node endpoint."""
     return ContractPath(components=(node.component_id,), role=role, port=port)
 
 
 def _edge_key(edge: DataEdge) -> str:
-    """Render the canonical data-edge claim key."""
-
     def reference(value: NodeRef) -> str:
         return value.component_id + (f"[{value.role}]" if value.role else "")
 
@@ -59,8 +56,6 @@ def _edge_key(edge: DataEdge) -> str:
 
 
 def _edge_token(edge: DataEdge) -> str:
-    """Return a deterministic identifier fragment for one edge."""
-
     def token(value: str | None) -> str:
         return value or "default"
 
@@ -82,7 +77,6 @@ def _port(
     name: str,
     direction: PortDirection,
 ) -> PortSpec | None:
-    """Resolve one directional port without inspecting concrete components."""
     contracts = (
         ((reference.role, node.contract.ports.get(reference.role)),)
         if reference.role is not None
@@ -101,12 +95,10 @@ def _port(
 
 
 def _feedback_consumer(node: ComponentNode):
-    """Return a node's declared consumer contract, if it has one."""
     return getattr(node.contract.lifecycle, "feedback", None)
 
 
 def _partial_feedback_offered(context: RuleContext, graph: ComponentGraph) -> bool:
-    """Use only the effective runtime offer supplied by compilation."""
     return _PARTIAL_FEEDBACK in context.compile_context.offered_runtime_capabilities
 
 
@@ -174,7 +166,6 @@ def _adapter_registration(
     source_port: PortSpec,
     target_port: PortSpec,
 ) -> Adapter | None:
-    """Resolve the core accumulator registration for one lifecycle pair."""
     registry = getattr(context.compile_context, "adapter_registry", None)
     if registry is None:
         registry = DEFAULT_ADAPTER_REGISTRY
@@ -205,7 +196,6 @@ def _adapter_registration(
 
 
 def _accumulator_inserted_between(graph: ComponentGraph, edge: DataEdge) -> bool:
-    """Return whether an accumulator already owns this connection."""
     try:
         source = graph.node_by_id(edge.source.component_id)
     except KeyError:
@@ -343,8 +333,6 @@ class FeedbackAccumulatorRule:
 
 @dataclass(frozen=True)
 class _DeliveryProperties:
-    """The small producer-side lifecycle declaration used by compilation."""
-
     channels: frozenset[str]
     sources: frozenset[str]
     completion: str
@@ -354,7 +342,6 @@ class _DeliveryProperties:
 
 
 def _runtime_delivery_properties(partial: bool) -> _DeliveryProperties:
-    """Describe the current scheduler's provisional feedback offer."""
     return _DeliveryProperties(
         channels=frozenset({"true"}),
         sources=frozenset({TRUE}),
@@ -369,7 +356,6 @@ def _lifecycle_mismatches(
     producer: _DeliveryProperties,
     consumer,
 ) -> tuple[str, ...]:
-    """Compare all six declared feedback axes structurally."""
     mismatches: list[str] = []
     if not producer.channels <= consumer.accepted_channels:
         mismatches.append("accepted_channels")

@@ -54,7 +54,6 @@ class NodeRef:
     role: RoleName | None = None
 
     def __post_init__(self) -> None:
-        """Validate the node identity."""
         _name(self.component_id, "NodeRef component_id")
         if self.role is not None:
             _name(self.role, "NodeRef role")
@@ -88,7 +87,6 @@ class ComponentNode:
     )
 
     def __post_init__(self) -> None:
-        """Validate identity without reading the component contract."""
         _name(self.component_id, "ComponentNode component_id")
         if self.role is not None:
             _name(self.role, "ComponentNode role")
@@ -120,7 +118,6 @@ class ComponentNode:
         return contract
 
     def _read_contract(self) -> ComponentContract:
-        """Read and validate one component contract snapshot."""
         contract_method = getattr(self.component, "contract", None)
         if not callable(contract_method):
             raise ValidationError("ComponentNode component must provide contract()")
@@ -170,7 +167,6 @@ class DataEdge:
     target_port: str
 
     def __post_init__(self) -> None:
-        """Normalize endpoints and validate port names."""
         object.__setattr__(self, "source", NodeRef.from_value(self.source))
         object.__setattr__(self, "target", NodeRef.from_value(self.target))
         object.__setattr__(self, "source_port", _name(self.source_port, "source_port"))
@@ -185,7 +181,6 @@ class ControlEdge:
     target: NodeRef
 
     def __post_init__(self) -> None:
-        """Normalize both endpoints."""
         object.__setattr__(self, "source", NodeRef.from_value(self.source))
         object.__setattr__(self, "target", NodeRef.from_value(self.target))
 
@@ -198,7 +193,6 @@ class StateBinding:
     state_key: StateKey[object]
 
     def __post_init__(self) -> None:
-        """Normalize the node and validate the state key."""
         object.__setattr__(self, "node", NodeRef.from_value(self.node))
         if not isinstance(self.state_key, StateKey):
             raise ValidationError("StateBinding state_key must be a StateKey")
@@ -215,7 +209,6 @@ class ComponentGraph:
     entry_points: tuple[NodeRef, ...] = ()
 
     def __post_init__(self) -> None:
-        """Normalize collections while retaining duplicate node entries."""
         nodes = tuple(self.nodes)
         if any(not isinstance(node, ComponentNode) for node in nodes):
             raise ValidationError("ComponentGraph nodes must be ComponentNode values")
@@ -297,7 +290,6 @@ class ComponentBindings:
     components: Mapping[ComponentId, object]
 
     def __post_init__(self) -> None:
-        """Validate ids and freeze the mapping."""
         values = dict(self.components)
         for component_id in values:
             _name(component_id, "ComponentBindings component id")

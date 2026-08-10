@@ -32,7 +32,6 @@ class ExecutionContract:
     offered_runtime_capabilities: tuple[RuntimeCapability, ...] = ()
 
     def __post_init__(self) -> None:
-        """Validate and normalize required and offered capability names."""
         for field_name in (
             "required_runtime_capabilities",
             "offered_runtime_capabilities",

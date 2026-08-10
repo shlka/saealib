@@ -36,7 +36,6 @@ class DataSpecKind(VocabularyDescriptor):
     supertypes: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        """Validate kind metadata."""
         super().__post_init__()
         object.__setattr__(self, "variables", tuple(self.variables))
         supertypes = tuple(self.supertypes)
@@ -85,7 +84,6 @@ class Var:
     name: str
 
     def __post_init__(self) -> None:
-        """Validate the schema-variable name shape."""
         validate_name(self.name)
 
 
@@ -96,7 +94,6 @@ class Fixed:
     value: Hashable
 
     def __post_init__(self) -> None:
-        """Validate the fixed value."""
         try:
             hash(self.value)
         except TypeError as error:
@@ -115,7 +112,6 @@ class Contained:
     values: frozenset[Hashable]
 
     def __post_init__(self) -> None:
-        """Validate and normalize the required values."""
         if isinstance(self.values, (str, bytes)) or not isinstance(
             self.values, Iterable
         ):
@@ -134,7 +130,6 @@ class Product:
     elements: tuple[SchemaBinding, ...]
 
     def __post_init__(self) -> None:
-        """Validate and normalize product elements."""
         try:
             elements = tuple(self.elements)
         except TypeError as error:
@@ -161,7 +156,6 @@ class DataSpec:
     bindings: Mapping[str, SchemaBinding] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Validate the kind shape and detach the bindings mapping."""
         if not isinstance(self.kind, str):
             raise ValidationError("DataSpec kind must be a string")
         if not isinstance(self.bindings, Mapping):
@@ -177,7 +171,6 @@ class DataSpec:
         object.__setattr__(self, "bindings", MappingProxyType(bindings))
 
     def __hash__(self) -> int:
-        """Return a stable hash for the nominal kind and its bindings."""
         return hash((self.kind, frozenset(self.bindings.items())))
 
 

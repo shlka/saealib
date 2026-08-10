@@ -52,7 +52,6 @@ def _resolve_variation_execution(
     ),
     kind: Literal["crossover", "mutation"],
 ) -> Literal["batch", "sequential"]:
-    """Validate and resolve variation execution mode for one operator."""
     valid_modes = ("batch", "sequential")
     if isinstance(variation_execution, str):
         if variation_execution not in valid_modes:
@@ -143,7 +142,6 @@ def _route_crossover(
     int_op: Crossover,
     cat_op: Crossover,
 ) -> np.ndarray:
-    """Apply per-type crossover for the sequential path and reassemble offspring."""
     i_mask = problem.integer_mask
     cat_mask = problem.categorical_mask
     if not i_mask.any() and not cat_mask.any():
@@ -180,7 +178,6 @@ def _route_mutation(
     int_op: Mutation,
     cat_op: Mutation,
 ) -> np.ndarray:
-    """Apply per-type mutation for the sequential path and reassemble offspring."""
     i_mask = problem.integer_mask
     cat_mask = problem.categorical_mask
     if not i_mask.any() and not cat_mask.any():

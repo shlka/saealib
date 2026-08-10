@@ -28,7 +28,6 @@ __all__ = list(_LAZY_EXPORTS)
 
 
 def __getattr__(name: str) -> object:
-    """Resolve a public core symbol lazily and cache it on the facade."""
     module_name = _LAZY_EXPORTS.get(name)
     if module_name is None:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
@@ -39,5 +38,4 @@ def __getattr__(name: str) -> object:
 
 
 def __dir__() -> list[str]:
-    """Include lazy public symbols in interactive discovery."""
     return sorted(set(__all__) | set(_LAZY_EXPORTS))

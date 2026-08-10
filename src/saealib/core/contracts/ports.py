@@ -64,7 +64,6 @@ class ServiceDescriptor(VocabularyDescriptor):
     provider: ServiceProvider
 
     def __post_init__(self) -> None:
-        """Validate service descriptor metadata."""
         super().__post_init__()
         if self.provider not in {"space", "problem"}:
             raise ValidationError(
@@ -136,7 +135,6 @@ class ServiceRequirement:
     name: str
 
     def __post_init__(self) -> None:
-        """Validate the service-name shape."""
         validate_name(self.name)
 
 
@@ -152,7 +150,6 @@ class PortSpec:
     optional: bool = False
 
     def __post_init__(self) -> None:
-        """Validate and normalize port metadata."""
         validate_name(self.name)
         if not isinstance(self.direction, PortDirection):
             raise ValidationError("Port direction must be a PortDirection")
@@ -179,7 +176,6 @@ class PortContract:
     outputs: tuple[PortSpec, ...] = ()
 
     def __post_init__(self) -> None:
-        """Normalize ports and enforce per-direction name uniqueness."""
         inputs = tuple(self.inputs)
         outputs = tuple(self.outputs)
         for ports in (inputs, outputs):

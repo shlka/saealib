@@ -78,7 +78,6 @@ class StateKey(Generic[ValueT]):
     schema_version: int
 
     def __post_init__(self) -> None:
-        """Validate the state-key fields."""
         validate_name(self.namespace)
         validate_name(self.name)
         if (

@@ -72,20 +72,11 @@ if TYPE_CHECKING:
 
 
 class _LegacyDenseVectorBatch(DenseVectorBatch):
-    """Dense batch retaining the pre-Phase9 NumPy indexing seam.
-
-    The evaluator protocol now receives ``GenomeBatch`` values.  A few
-    legacy evaluator implementations still index their input as a matrix;
-    keeping that compatibility at the scheduler boundary avoids changing the
-    evaluator contract or the state-machine lifecycle.
-    """
-
     def __getitem__(self, index: Any) -> Any:
         return self.array[index]
 
 
 def _scheduler_request(request: EvaluationRequest) -> EvaluationRequest:
-    """Adapt dense requests for evaluators written against the old input API."""
     payload = request.payload
     if not isinstance(payload, DenseVectorBatch) or isinstance(
         payload, _LegacyDenseVectorBatch
@@ -196,7 +187,6 @@ class AsyncEvaluationScheduler:
         self._feedback_accumulator = FeedbackAccumulator(contract)
 
     def _sync_feedback_accumulator(self, state: OptimizationState) -> None:
-        """Persist the live accumulator snapshot in the keyed state store."""
         if self._feedback_accumulator is not None:
             state.set_state(FEEDBACK_ACCUMULATOR, self._feedback_accumulator.to_state())
 
@@ -545,9 +535,7 @@ class AsyncEvaluationScheduler:
                         "FeedbackAccumulator buffer"
                     )
             else:
-                # Checkpoints written before U5 have no keyed accumulator
-                # snapshot.  Keep the legacy reconstruction path only for
-                # those files; a U5 checkpoint's snapshot is authoritative.
+                # Older checkpoints lack the keyed accumulator snapshot.
                 if has_partial_feedback:
                     raise CheckpointError(
                         "checkpoint is missing FeedbackAccumulator state for "
@@ -795,11 +783,7 @@ class AsyncEvaluationScheduler:
                 )
             else:
                 plan_effect_update = None
-        # The compiler-inserted accumulator is the proposal-level completion
-        # boundary.  Feed it each request update as it arrives so an async
-        # refill cannot replace the plan before the earlier request has been
-        # delivered.  Without the adapter, multi-request plans retain their
-        # aggregate effect semantics below.
+        # Accumulator delivery preserves proposal completion across refills.
         accumulator_update = (
             update if self._feedback_accumulator is not None else plan_effect_update
         )
@@ -906,12 +890,8 @@ class AsyncEvaluationScheduler:
                 current_pending.request.outputs,
                 current_pending.request.metadata,
             )
-            # Reservation is per candidate, not per retry request.  Using
-            # current_pending.reserved_cost as the numerator compounds the
-            # previous proportional reduction and under-reserves on the
-            # second retry.  A scalar estimate cannot represent candidate-
-            # specific costs; retain proportional allocation until the
-            # request contract grows per-candidate estimates.
+            # Allocate from the original reservation; retry reservations are
+            # per candidate, and a scalar estimate cannot be candidate-specific.
             unit_cost = fsum((current_pending.reserved_cost,)) / len(
                 current_pending.request.candidate_ids
             )
@@ -1084,7 +1064,6 @@ class AsyncEvaluationScheduler:
 
     @staticmethod
     def _is_repeated_plan(plan: Any) -> bool:
-        """Return whether a plan must aggregate all replicate requests."""
         return bool(
             plan is not None
             and len(plan.requests) > 1
@@ -1094,7 +1073,6 @@ class AsyncEvaluationScheduler:
     def _aggregate_plan_update(
         self, state: OptimizationState, update: EvaluationUpdate
     ) -> EvaluationUpdate | None:
-        """Build one stable-ID result after all replicate requests finish."""
         plan = state.evaluation_plan
         if plan is None:
             return update
@@ -1238,7 +1216,6 @@ class AsyncEvaluationScheduler:
         return owner
 
     def _proposal_id(self, state: OptimizationState, request_id: int) -> int:
-        """Resolve the proposal that owns one request, even after a refill."""
         pending = state.pending_evaluations.get(int(request_id))
         if pending is not None:
             value = pending.request.metadata.get("proposal_id")
@@ -1255,7 +1232,6 @@ class AsyncEvaluationScheduler:
         proposal_id: int,
         candidate_ids: frozenset[int],
     ) -> Any:
-        """Retain the proposal population while asynchronous refills advance."""
         existing = self._feedback_proposal_owners.get(proposal_id)
         if existing is not None:
             return existing
@@ -1397,9 +1373,7 @@ class AsyncEvaluationScheduler:
             archive._cache = cache
             if hasattr(archive, "_kdtree"):
                 archive._kdtree = kdtree
-            # Service-owned indexes are opaque and may have been incrementally
-            # extended before the transaction failed.  Rebuild lazily from
-            # the restored rows rather than restoring a possibly stale handle.
+            # Rebuild opaque service indexes from restored rows after rollback.
             invalidate = getattr(archive, "_invalidate_service_indexes", None)
             if callable(invalidate):
                 invalidate()
@@ -1430,7 +1404,6 @@ class AsyncEvaluationScheduler:
         return state.replace(feedback_result=result)
 
     def _feedback_consumer(self) -> Any:
-        """Return the configured canonical feedback consumer."""
         return self.algorithm
 
     def _apply_feedback_delivery(
@@ -1498,7 +1471,6 @@ class AsyncEvaluationScheduler:
         update: EvaluationUpdate,
         feedback: FeedbackBatch,
     ) -> bool:
-        """Route one scheduler delivery through the inserted accumulator."""
         accumulator = self._feedback_accumulator
         if accumulator is None:
             return False
@@ -1554,10 +1526,7 @@ class AsyncEvaluationScheduler:
                 and pending.original_candidate_ids is not None
             ):
                 other_ids.update(map(int, pending.original_candidate_ids))
-        # Deferred requests are represented in the plan before they are
-        # materialized as PendingEvaluation records.  Include them in the
-        # completion boundary, otherwise a first chunk can be finalized and
-        # discarded before the scheduler gets capacity to submit the rest.
+        # Include deferred requests in the completion boundary before materialization.
         plan = state.evaluation_plan
         try:
             current_proposal = int(state.get_state(PROPOSALS_CURRENT))
@@ -1589,7 +1558,6 @@ class AsyncEvaluationScheduler:
         update: EvaluationUpdate,
         proposal_id: int,
     ) -> frozenset[int]:
-        """Return the stable evaluated-candidate universe for one proposal."""
         candidate_ids = set(self._feedback_proposal_candidates.get(proposal_id, ()))
         pending = state.pending_evaluations.get(int(update.request_id))
         if pending is not None and pending.original_candidate_ids is not None:
@@ -1613,7 +1581,6 @@ class AsyncEvaluationScheduler:
         return result
 
     def _next_feedback_sequence(self, proposal_id: int, requested: int) -> int:
-        """Make evaluator retry sequence resets unique within one proposal."""
         persisted = (
             self._feedback_accumulator.last_sequence(proposal_id)
             if self._feedback_accumulator is not None
@@ -1630,7 +1597,6 @@ class AsyncEvaluationScheduler:
     def _retryable_remaining(
         self, state: OptimizationState, update: EvaluationUpdate
     ) -> bool:
-        """Mirror the scheduler retry predicate for accumulator finalization."""
         if update.status is not EvaluationStatus.FAILED:
             return False
         pending = state.pending_evaluations.get(int(update.request_id))
@@ -1645,7 +1611,6 @@ class AsyncEvaluationScheduler:
     def _restore_accumulated_feedback(
         self, state: OptimizationState, pending: PendingEvaluation
     ) -> None:
-        """Replay persisted result deliveries into a newly created accumulator."""
         if self._feedback_accumulator is None or self.feedback_builder is None:
             return
         for update in pending.buffered_updates:
@@ -1670,10 +1635,7 @@ class AsyncEvaluationScheduler:
                 final=False,
                 sequence=int(update.sequence),
             )
-            # The accumulator snapshot is authoritative for deliveries already
-            # committed before the checkpoint.  PendingEvaluation.buffered_updates
-            # remains a separate transport replay log; do not compare a rebuilt
-            # record object against the already persisted duplicate envelope.
+            # The snapshot is authoritative; buffered updates are a transport log.
             if self._feedback_accumulator.has_delivery(proposal_id, feedback.sequence):
                 continue
             self._deliver_accumulated_feedback(

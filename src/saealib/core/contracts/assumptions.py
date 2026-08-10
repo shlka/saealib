@@ -40,7 +40,6 @@ class AssumptionDescriptor(VocabularyDescriptor):
     unaware_default: bool = False
 
     def __post_init__(self) -> None:
-        """Validate assumption descriptor metadata."""
         super().__post_init__()
         if not isinstance(self.unaware_default, bool):
             raise ValidationError("Assumption defaults must be booleans")
@@ -110,7 +109,6 @@ class AssumptionSet(Mapping[str, bool]):
         return cls()
 
     def __getitem__(self, name: str) -> bool:
-        """Return an explicit value or the registered unaware default."""
         if name in self._values:
             return self._values[name]
         descriptor = ASSUMPTION_KEYS.get(name)
@@ -119,15 +117,12 @@ class AssumptionSet(Mapping[str, bool]):
         return descriptor.unaware_default
 
     def __iter__(self) -> Iterator[str]:
-        """Iterate over explicitly declared keys."""
         return iter(self._values)
 
     def __len__(self) -> int:
-        """Return the number of explicitly declared keys."""
         return len(self._values)
 
     def __eq__(self, other: object) -> bool:
-        """Compare explicit assumption declarations."""
         if not isinstance(other, AssumptionSet):
             return NotImplemented
         return self._values == other._values

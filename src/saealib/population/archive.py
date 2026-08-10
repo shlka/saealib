@@ -110,7 +110,6 @@ def _service_tolerance(service: object | None, name: str) -> float:
 
 
 def _as_single_genome_batch(value: Any) -> GenomeBatch | None:
-    """Normalize one supplied genome to a one-row ``GenomeBatch``."""
     if value is None:
         return None
     if isinstance(value, np.ndarray):
@@ -136,7 +135,6 @@ def _as_single_genome_batch(value: Any) -> GenomeBatch | None:
 def _extract_genome(
     element: Any, kwargs: dict[str, Any], population: Population
 ) -> GenomeBatch | None:
-    """Extract an explicit or population-backed genome from an add call."""
     genome_value = kwargs.get("genome", kwargs.get("genomes"))
     if genome_value is None and isinstance(element, dict):
         genome_value = element.get("genome", element.get("genomes"))
@@ -584,7 +582,6 @@ class ArchiveMixin:
         return index.get(fingerprints[0])
 
     def _find_equivalence_idx(self: Any, genome: GenomeBatch) -> int | None:
-        """Find the first equivalent stored genome through the service."""
         if self._equivalence_service is None:
             raise ValidationError(
                 "Archive duplicate detection requires EquivalenceService"
@@ -813,10 +810,6 @@ class ParetoMixin:
         self.rtol = rtol
         self.duplicate_policy = duplicate_policy
 
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
-
     def _extract_fv(
         self, element: Individual | dict[str, Any] | None, kwargs: dict[str, Any]
     ) -> tuple[np.ndarray | None, float]:
@@ -830,7 +823,6 @@ class ParetoMixin:
         cv : float
             Constraint violation (0.0 when absent).
         """
-        # --- f ---
         f_val = kwargs.get("f")
         if f_val is None:
             if isinstance(element, dict):
@@ -845,7 +837,6 @@ class ParetoMixin:
             if np.all(np.isnan(f)):
                 f = None
 
-        # --- cv ---
         cv_val = kwargs.get("cv")
         if cv_val is None:
             if isinstance(element, dict):
@@ -864,7 +855,6 @@ class ParetoMixin:
         f_ex: np.ndarray | None,
         cv_ex: float,
     ) -> bool:
-        """Return True if the new solution dominates the existing one."""
         new_feasible = cv_new <= self.eps_cv
         ex_feasible = cv_ex <= self.eps_cv
 
@@ -890,12 +880,7 @@ class ParetoMixin:
         f_ex: np.ndarray | None,
         cv_ex: float,
     ) -> bool:
-        """Return True if an existing solution dominates the new one."""
         return self._new_dominates_existing(f_ex, cv_ex, f_new, cv_new)
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
 
     def add(self, element: Individual | dict[str, Any] | None = None, **kwargs) -> int:
         """

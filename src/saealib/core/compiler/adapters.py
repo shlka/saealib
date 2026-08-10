@@ -107,7 +107,6 @@ class Adapter:
     matcher: Matcher | None = None
 
     def __post_init__(self) -> None:
-        """Validate adapter metadata and conversion endpoints."""
         validate_name(self.name)
         validate_name(self.namespace)
         validate_name(self.category)
@@ -239,7 +238,6 @@ class AdapterComponent:
     output_cardinality: str = MANY
 
     def _build_contract(self) -> ComponentContract:
-        """Return the synthetic component's input and output contract."""
         return ComponentContract(
             ports={
                 "predictor": PortContract(
@@ -277,11 +275,9 @@ class AdapterInsertion:
     target_path: ContractPath
 
     def __str__(self) -> str:
-        """Render the insertion in plan-description form."""
         return f"{self.adapter_name}: {self.source_path} -> {self.target_path}"
 
     def __repr__(self) -> str:
-        """Render a useful debugging representation."""
         return f"AdapterInsertion({self})"
 
 
@@ -312,7 +308,6 @@ def _partial_feedback_is_offered(
     graph: ComponentGraph | None = None,
     nodes: tuple[ComponentNode | None, ...] = (),
 ) -> bool:
-    """Use only the effective runtime offer supplied by compilation."""
     return "partial_feedback" in getattr(
         compile_context, "offered_runtime_capabilities", frozenset()
     )
@@ -326,7 +321,6 @@ def _target_requires_complete_batch(node: ComponentNode) -> bool:
 
 
 def _partial_complete_feedback_pair(match: AdapterMatchContext) -> bool:
-    """Return whether partial runtime meets a complete-batch consumer."""
     return _target_requires_complete_batch(
         match.target_node
     ) and _partial_feedback_is_offered(
@@ -337,7 +331,6 @@ def _partial_complete_feedback_pair(match: AdapterMatchContext) -> bool:
 
 
 def _feedback_accumulator_match(match: AdapterMatchContext) -> bool:
-    """Match a runtime/consumer pair that can buffer feedback losslessly."""
     return _partial_complete_feedback_pair(match)
 
 
@@ -514,8 +507,6 @@ def _edge_key(edge: DataEdge) -> str:
 
 
 def _edge_token(edge: DataEdge) -> str:
-    """Return a valid, deterministic identifier fragment for one edge."""
-
     def token(value: str | None) -> str:
         return value or "default"
 

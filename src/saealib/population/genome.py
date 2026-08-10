@@ -45,9 +45,7 @@ class GenomeBatch(Protocol):
     this protocol; those are services provided by the SearchSpace.
     """
 
-    def __len__(self) -> int:
-        """Return the number of genomes in the batch."""
-        ...
+    def __len__(self) -> int: ...
 
     def take(self, indices: Sequence[int] | np.ndarray) -> Self:
         """Return a new batch containing genomes selected by row indices."""
@@ -113,7 +111,6 @@ class DenseVectorBatch:
         return self._data[index]
 
     def __len__(self) -> int:
-        """Return the number of genomes in the batch."""
         return len(self._data)
 
     def take(self, indices: Sequence[int] | np.ndarray) -> Self:
@@ -176,7 +173,6 @@ class ObjectBatch:
         return self._items
 
     def __len__(self) -> int:
-        """Return the number of items in the batch."""
         return len(self._items)
 
     def take(self, indices: Sequence[int] | np.ndarray) -> Self:
@@ -263,7 +259,6 @@ class PermutationBatch:
         return self._length
 
     def __len__(self) -> int:
-        """Return the number of permutations."""
         return len(self._data)
 
     def take(self, indices: Sequence[int] | np.ndarray) -> Self:
@@ -320,7 +315,6 @@ class VariableLengthBatch:
         return self._sequences
 
     def __len__(self) -> int:
-        """Return the number of sequence genomes."""
         return len(self._sequences)
 
     def take(self, indices: Sequence[int] | np.ndarray) -> Self:

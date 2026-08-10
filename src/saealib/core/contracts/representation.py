@@ -1,8 +1,7 @@
 """RepresentationSpec, RepresentationKind, and the REPRESENTATION_KINDS registry.
 
-``RepresentationSpec`` is the value that binds the ``representation`` schema
-variable of ``adr-0002`` §6.  A spec is a registered kind name plus its own
-named parameters.
+``RepresentationSpec`` binds the ``representation`` schema variable.  A spec
+is a registered kind name plus its own named parameters.
 
 ``RepresentationKind`` is the registry descriptor for one kind.  The ``unify``
 callable defaults to ``None``, meaning per-parameter equality.  Override it
@@ -15,19 +14,9 @@ from ``data.py``).  Using the same carrier types as ``DataSpec.bindings``
 means that per-parameter unification reuses the existing ``_unify_pair``
 machinery in ``schema.py`` and introduces no second vocabulary for values.
 
-Design note on ``ParameterSpec.value`` vs ``DataSpec.bindings`` carriers
------------------------------------------------------------------------
-``ParameterSpec.value`` is a ``SchemaBinding`` — exactly the same union
-(``Var`` / ``Fixed`` / ``Contained`` / ``Product``) as ``DataSpec.bindings``.
-This is intentional: we reuse the unification engine in ``schema.py`` without
-introducing a parallel carrier vocabulary.  The semantic difference is that
-``DataSpec.bindings`` binds *schema variables declared in* ``SCHEMA_VARIABLES``,
-whereas ``ParameterSpec.value`` binds *per-kind parameters* whose names are
-local to the kind and unknown to ``SCHEMA_VARIABLES``.  Concretely, ``dim`` in
-a vector spec is not a schema variable — it is a parameter name understood only
-by the ``vector`` kind's unification logic.  We therefore pass a per-kind
-parameter vocabulary (built from the kind's ``parameters`` tuple) when calling
-``unify_bindings``, so parameter names are not flagged as ``unknown_variables``.
+``ParameterSpec.value`` and ``DataSpec.bindings`` share the ``SchemaBinding``
+carriers.  Representation parameters use a per-kind vocabulary during
+unification, so names such as ``dim`` remain local to their representation.
 """
 
 from __future__ import annotations
@@ -56,10 +45,6 @@ __all__ = [
     "unify_representation_specs",
 ]
 
-
-# ---------------------------------------------------------------------------
-# ParameterSpec
-# ---------------------------------------------------------------------------
 
 _SCHEMA_BINDING_TYPES = (Var, Fixed, Contained, Product)
 
@@ -94,7 +79,6 @@ class ParameterSpec:
     value: SchemaBinding
 
     def __post_init__(self) -> None:
-        """Validate the parameter name and value carrier."""
         validate_identifier(self.name)
         if not isinstance(self.value, _SCHEMA_BINDING_TYPES):
             raise ValidationError(
@@ -106,7 +90,6 @@ class ParameterSpec:
 def _make_params_mapping(
     params: tuple[ParameterSpec, ...],
 ) -> MappingProxyType[str, SchemaBinding]:
-    """Convert a parameter tuple into a name → binding mapping."""
     result: dict[str, SchemaBinding] = {}
     for p in params:
         if p.name in result:
@@ -135,11 +118,6 @@ def _kind_param_registry(
     for p in kind_descriptor.parameters:
         reg.register(p.name, VocabularyDescriptor(name=p.name, description=""))
     return reg
-
-
-# ---------------------------------------------------------------------------
-# RepresentationKind
-# ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -172,7 +150,6 @@ class RepresentationKind(VocabularyDescriptor):
     unify: Callable[[Mapping, Mapping, Vocabulary], UnificationResult] | None = None
 
     def __post_init__(self) -> None:
-        """Validate descriptor fields."""
         super().__post_init__()
         try:
             params = tuple(self.parameters)
@@ -186,15 +163,9 @@ class RepresentationKind(VocabularyDescriptor):
                     "RepresentationKind.parameters must contain ParameterSpec values"
                 )
         object.__setattr__(self, "parameters", params)
-        # Validate that parameter names are unique
         _make_params_mapping(params)
         if self.unify is not None and not callable(self.unify):
             raise ValidationError("RepresentationKind.unify must be callable or None")
-
-
-# ---------------------------------------------------------------------------
-# REPRESENTATION_KINDS vocabulary
-# ---------------------------------------------------------------------------
 
 
 REPRESENTATION_KINDS: Vocabulary[RepresentationKind] = Vocabulary(
@@ -202,8 +173,8 @@ REPRESENTATION_KINDS: Vocabulary[RepresentationKind] = Vocabulary(
 )
 """Registry of representation kind descriptors.
 
-Registered names are permanent (``adr-0002`` §9 item 4).  Do not remove or
-rename existing entries.  The initial registrations are ``vector``,
+Registered names are persistent schema vocabulary.  Do not remove or rename
+existing entries.  The initial registrations are ``vector``,
 ``permutation``, and ``sequence``.
 """
 
@@ -271,11 +242,6 @@ REPRESENTATION_KINDS.register(
 )
 
 
-# ---------------------------------------------------------------------------
-# RepresentationSpec
-# ---------------------------------------------------------------------------
-
-
 @dataclass(frozen=True, kw_only=True)
 class RepresentationSpec:
     """A concrete representation: a registered kind name plus its parameters.
@@ -297,7 +263,6 @@ class RepresentationSpec:
     parameters: tuple[ParameterSpec, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
-        """Validate kind registration and parameter shapes."""
         validate_identifier(self.kind)
         if REPRESENTATION_KINDS.get(self.kind) is None:
             raise ConfigurationError(
@@ -319,13 +284,7 @@ class RepresentationSpec:
         _make_params_mapping(params)  # validates uniqueness
 
     def _as_bindings(self) -> dict[str, SchemaBinding]:
-        """Return the parameters as a name → binding mapping."""
         return dict(_make_params_mapping(self.parameters))
-
-
-# ---------------------------------------------------------------------------
-# Compatibility check
-# ---------------------------------------------------------------------------
 
 
 def unify_representation_specs(

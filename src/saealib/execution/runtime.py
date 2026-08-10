@@ -84,7 +84,6 @@ def _execute_sequential_plan(
     *,
     dispatch: Callable[[Event], None] | None = None,
 ) -> OptimizationState:
-    """Thread state through Stage and graph-component execution nodes."""
     state, _ = _execute_sequential_plan_with_results(plan, state, dispatch=dispatch)
     return state
 
@@ -95,7 +94,6 @@ def _execute_sequential_plan_with_results(
     *,
     dispatch: Callable[[Event], None] | None = None,
 ) -> tuple[OptimizationState, tuple[NodeResult, ...]]:
-    """Execute one sequential plan and retain each node's result envelope."""
     from saealib.core.graph_builder import StageNodeAdapter
     from saealib.pipeline import Stage
 
@@ -146,7 +144,6 @@ def _execute_sequential_plan_with_results(
 def _algorithm_runtime_capabilities(
     optimizer: object,
 ) -> frozenset[RuntimeCapability]:
-    """Return capabilities explicitly required by the configured algorithm."""
     algorithm = getattr(optimizer, "algorithm", None)
     contract_method = getattr(algorithm, "contract", None)
     contract = contract_method() if callable(contract_method) else None
@@ -158,12 +155,6 @@ def _algorithm_runtime_capabilities(
 
 
 class _OptimizerEnvironment:
-    """Runtime environment adapter for optimizer-owned services.
-
-    This is intentionally outside Runner.  L4 can replace this adapter with an
-    async environment without changing the runtime protocol or facade.
-    """
-
     def __init__(self, optimizer: Any, plan: SequentialPlan) -> None:
         self.optimizer = optimizer
         self.plan = plan
@@ -174,8 +165,7 @@ class _OptimizerEnvironment:
             getattr(insertion, "adapter_name", None) == "feedback_accumulator"
             for insertion in plan.plan.inserted_adapters
         ):
-            # The graph contains the accumulator delivery boundary;
-            # this seam only enables its stateful async runtime service.
+            # The graph owns delivery; the seam only enables scheduler state.
             scheduler.enable_feedback_accumulator()
 
     def execute(
@@ -185,7 +175,6 @@ class _OptimizerEnvironment:
         return _execute_sequential_plan(self.plan, state, dispatch=self.dispatch)
 
     def _fingerprint(self) -> tuple[object, ...]:
-        """Capture provider and strategy inputs that shape the executable graph."""
         strategy = getattr(self.optimizer, "strategy", None)
         strategy_values = (
             tuple(
@@ -209,7 +198,6 @@ class _OptimizerEnvironment:
         return strategy_values + provider_values
 
     def _refresh_plan_if_needed(self) -> None:
-        """Recompile through the runtime when graph-shaping inputs changed."""
         current_fingerprint = self._fingerprint()
         if current_fingerprint == self._execution_fingerprint:
             return
@@ -263,8 +251,7 @@ class _OptimizerEnvironment:
             None,
         )
         if plan_index is None:
-            # Keep the runtime seam useful for small custom plans that do not
-            # contain the optimization evaluation protocol.
+            # Custom plans without the evaluation protocol still run normally.
             return _execute_sequential_plan(self.plan, state, dispatch=self.dispatch)
 
         current = state
@@ -292,10 +279,7 @@ class _OptimizerEnvironment:
             and len(current.pending_evaluations) < scheduler.max_pending
         )
         if refill_in_progress_plan:
-            # Pending requests retain their owner and proposal identity in the
-            # scheduler.  The state-level plan now describes the refill
-            # proposal; old request completions are intentionally ignored by
-            # its bookkeeping while still being delivered to their owner.
+            # Pending requests retain ownership while the state plan is refilled.
             current = current.replace(
                 evaluation_plan=None,
                 evaluation_plan_state=None,
@@ -598,7 +582,6 @@ class AsyncPipelineRuntime(PipelineRuntime):
 
     @staticmethod
     def _has_unfinished_evaluation_plan(state: OptimizationState) -> bool:
-        """Return whether an existing plan still owns work to submit or drain."""
         plan = getattr(state, "evaluation_plan", None)
         plan_state = getattr(state, "evaluation_plan_state", None)
         if plan is None or plan_state is None:
@@ -641,10 +624,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                         time.sleep(0.001)
                     return self._step(session, state, generation_open)
 
-            # A plan may have been split by the scheduler because the
-            # pending-capacity limit allowed only part of it to be submitted.
-            # Drain that same plan before closing the generation or consulting
-            # termination.  This is not a refill: no new proposal is created.
+            # Drain capacity-split plans before closing the generation.
             if self._has_unfinished_evaluation_plan(state):
                 state = env.execute_async(session.plan, state)
                 if state.pending_evaluations:
@@ -655,8 +635,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                 return self._step(session, state, False, observable=True)
 
         elif self._has_unfinished_evaluation_plan(state):
-            # The same drain is needed after a checkpoint or a session step
-            # that observed no active handle but retained deferred requests.
+            # Checkpoints may retain deferred requests without active handles.
             state = env.execute_async(session.plan, state)
             if state.pending_evaluations:
                 return self._step(session, state, generation_open)
@@ -693,7 +672,6 @@ class RuntimeRegistration:
     capability_provider: Callable[[object], Iterable[RuntimeCapability]] | None = None
 
     def __post_init__(self) -> None:
-        """Normalize the provider's effective runtime offer."""
         if self.capability_provider is not None and not callable(
             self.capability_provider
         ):
@@ -810,7 +788,6 @@ def _async_runtime_factory(optimizer: object, plan: ExecutablePlan) -> Execution
 def _sync_runtime_capability_provider(
     optimizer: object,
 ) -> frozenset[RuntimeCapability]:
-    """Offer partial feedback only when the algorithm contract requires it."""
     return _algorithm_runtime_capabilities(optimizer)
 
 

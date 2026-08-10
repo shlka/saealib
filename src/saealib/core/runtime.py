@@ -55,7 +55,6 @@ class RuntimeCommand:
     reason: str | None = None
 
     def __post_init__(self) -> None:
-        """Validate the optional human-readable reason."""
         if self.reason is not None and not isinstance(self.reason, str):
             raise ValidationError("RuntimeCommand reason must be a string or None")
 
@@ -72,7 +71,6 @@ class IssueCandidateIds(RuntimeCommand):
     count: int
 
     def __post_init__(self) -> None:
-        """Validate that the request asks for a positive number of IDs."""
         super().__post_init__()
         if isinstance(self.count, bool) or not isinstance(self.count, int):
             raise ValidationError("IssueCandidateIds count must be an integer")
@@ -100,7 +98,6 @@ class NodeResult:
     status: NodeStatus = NodeStatus.COMPLETED
 
     def __post_init__(self) -> None:
-        """Normalize collections and enforce node result invariants."""
         if not isinstance(self.patch, StatePatch):
             raise ValidationError("NodeResult patch must be a StatePatch")
         events = tuple(self.events)
@@ -126,7 +123,6 @@ class NodeResult:
 def _unique_control_order(
     node_ids: set[str], successors: dict[str, set[str]], label: str
 ) -> tuple[str, ...]:
-    """Return a control order only when every position is unique."""
     predecessors = {node_id: set() for node_id in node_ids}
     for source in node_ids:
         for target in successors[source]:
@@ -167,7 +163,6 @@ class SequentialPlan:
     )
 
     def __post_init__(self) -> None:
-        """Validate the immutable ordered view against its compiled plan."""
         if not isinstance(self.plan, ExecutablePlan):
             raise ValidationError("SequentialPlan plan must be an ExecutablePlan")
         nodes = tuple(self.nodes)
@@ -376,7 +371,6 @@ class RuntimeSession:
     generation_open: bool = False
 
     def __post_init__(self) -> None:
-        """Validate the immutable session snapshot."""
         if not isinstance(self.plan, (ExecutablePlan, SequentialPlan)):
             raise ValidationError("RuntimeSession plan must be an executable plan")
         if not isinstance(self.state, OptimizationState):
@@ -409,7 +403,6 @@ class RuntimeStep:
     session: RuntimeSession | None = None
 
     def __post_init__(self) -> None:
-        """Normalize the outcome collections and validate its boundary."""
         if not isinstance(self.state, OptimizationState):
             raise ValidationError("RuntimeStep state must be an OptimizationState")
         results = tuple(self.node_results)
