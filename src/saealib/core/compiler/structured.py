@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from types import MappingProxyType
 
 from saealib.core.compiler.graph import ComponentGraph, ComponentNode
@@ -146,3 +146,59 @@ class StructuredGraph(ComponentGraph):
             metadata={} if metadata is None else metadata,
             effect=compose_effects((effect or StateContract(),)),
         )
+
+
+def _rebind_nodes(graph: StructuredGraph) -> StructuredGraph:
+    nodes_by_key: dict[tuple[str, object | None], ComponentNode] = {}
+
+    def collect(current: StructuredGraph) -> None:
+        for node in current.nodes:
+            nodes_by_key.setdefault((node.component_id, node.role), node)
+        for region_node in current.region_nodes:
+            if isinstance(region_node.region.body, StructuredGraph):
+                collect(region_node.region.body)
+            otherwise = getattr(region_node.region, "otherwise", None)
+            if isinstance(otherwise, StructuredGraph):
+                collect(otherwise)
+
+    collect(graph)
+
+    def rebind(current: StructuredGraph) -> StructuredGraph:
+        regions: list[RegionNode] = []
+        for region_node in current.region_nodes:
+            region = region_node.region
+            body = (
+                rebind(region.body)
+                if isinstance(region.body, StructuredGraph)
+                else region.body
+            )
+            otherwise = getattr(region, "otherwise", None)
+            if isinstance(otherwise, StructuredGraph):
+                otherwise = rebind(otherwise)
+            if otherwise is not None and hasattr(region, "otherwise"):
+                region = replace(region, body=body, otherwise=otherwise)
+            else:
+                region = replace(region, body=body)
+            regions.append(replace(region_node, region=region))
+        regions_by_id = {
+            region_node.region.qualified_id: region_node for region_node in regions
+        }
+        operations: list[ComponentNode | RegionNode] = []
+        for operation in current.operations:
+            if isinstance(operation, ComponentNode):
+                operations.append(
+                    nodes_by_key.get(
+                        (operation.component_id, operation.role), operation
+                    )
+                )
+            else:
+                operations.append(
+                    regions_by_id.get(operation.region.qualified_id, operation)
+                )
+        return replace(
+            current,
+            region_nodes=tuple(regions),
+            operations=tuple(operations),
+        )
+
+    return rebind(graph)

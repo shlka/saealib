@@ -9,12 +9,14 @@ from typing import Literal
 import pytest
 
 from saealib.core.compiler import (
+    BranchRegion,
     CompileContext,
     Compiler,
     ResolutionResult,
     RuleContext,
     RuleRegistry,
     VerificationResult,
+    lower_structured,
 )
 from saealib.core.compiler.compiler import _merge_graphs
 from saealib.core.compiler.diagnostics import ContractPath, Diagnostic, Severity
@@ -26,7 +28,8 @@ from saealib.core.compiler.graph import (
     NodeRef,
     StateBinding,
 )
-from saealib.core.contracts import ComponentContract, ExecutionContract
+from saealib.core.compiler.structured import StructuredGraph
+from saealib.core.contracts import ComponentContract, ExecutionContract, StateContract
 from saealib.core.state.keys import StateKey
 from saealib.exceptions import ConfigurationError
 
@@ -457,6 +460,81 @@ def test_resolution_reaches_fixed_point() -> None:
     assert {node.component_id for node in plan.graph.nodes} == {"start", "added"}
     assert not any(
         diagnostic.code == "unstable_compilation" for diagnostic in plan.diagnostics
+    )
+
+
+@dataclass
+class _StructuredNodeRewriteRule:
+    name: str = "structured_node_rewrite"
+    namespace: str = "test"
+    phase: Literal["resolution"] = "resolution"
+
+    def apply(self, context: RuleContext) -> ResolutionResult:
+        nodes = tuple(
+            node.with_resolved_services({"marker": self})
+            for node in context.graph.nodes
+        )
+        return ResolutionResult(
+            graph=replace(context.graph, nodes=nodes),
+            claims=frozenset(
+                context.claim("node", node.component_id)
+                for node in context.graph.nodes
+            ),
+        )
+
+
+def test_structured_rewrite_rebinds_operations_and_alternate_regions() -> None:
+    graph = lower_structured(
+        [
+            BranchRegion(
+                region_id="branch",
+                condition=type(
+                    "Condition",
+                    (),
+                    {
+                        "contract": lambda self: StateContract(),
+                        "evaluate": lambda self, view: True,
+                    },
+                )(),
+                body=[_Component()],
+                otherwise=[_Component()],
+            ),
+            _Component(),
+        ]
+    )
+    plan = Compiler(RuleRegistry([_StructuredNodeRewriteRule()])).compile(
+        graph, CompileContext(enabled_rule_namespaces=frozenset({"test"}))
+    )
+
+    assert isinstance(plan.graph, StructuredGraph)
+    assert all(
+        operation is next(
+            node
+            for node in plan.graph.nodes
+            if node.component_id == operation.component_id
+        )
+        for operation in plan.graph.operations
+        if isinstance(operation, ComponentNode)
+    )
+    branch = plan.graph.region_nodes[0].region
+    assert all(
+        operation is next(
+            node
+            for node in plan.graph.nodes
+            if node.component_id == operation.component_id
+        )
+        for operation in branch.body.operations
+        if isinstance(operation, ComponentNode)
+    )
+    assert branch.otherwise is not None
+    assert all(
+        operation is next(
+            node
+            for node in plan.graph.nodes
+            if node.component_id == operation.component_id
+        )
+        for operation in branch.otherwise.operations
+        if isinstance(operation, ComponentNode)
     )
 
 

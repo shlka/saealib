@@ -26,7 +26,7 @@ from saealib.core.compiler.graph import (
     ReachabilityRule,
     StateBinding,
 )
-from saealib.core.compiler.structured import StructuredGraph
+from saealib.core.compiler.structured import StructuredGraph, _rebind_nodes
 from saealib.core.contracts.contract import ComponentContract
 from saealib.core.contracts.execution import RuntimeCapability
 from saealib.core.contracts.ports import (
@@ -277,8 +277,11 @@ def _snapshot_graph_contracts(
 ) -> ComponentGraph:
     nodes = tuple(node.with_contract_snapshot(refresh=refresh) for node in graph.nodes)
     if not refresh and all(node._contract_snapshot is not None for node in graph.nodes):
-        return graph
-    return replace(graph, nodes=nodes)
+        return _rebind_nodes(graph) if isinstance(graph, StructuredGraph) else graph
+    snapshot = replace(graph, nodes=nodes)
+    return (
+        _rebind_nodes(snapshot) if isinstance(snapshot, StructuredGraph) else snapshot
+    )
 
 
 def _iter_port_specs(
