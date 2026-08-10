@@ -46,6 +46,18 @@ def _name(value: str, label: str) -> str:
     return validate_name(value)
 
 
+def _component_name(value: str, label: str) -> str:
+    """Validate plain or dot-qualified component identifiers."""
+    if not isinstance(value, str) or not value:
+        raise ValidationError(f"{label} must be a non-empty string")
+    parts = value.split(".")
+    if any(not part for part in parts):
+        raise ValidationError(f"{label} must contain non-empty identifiers")
+    for part in parts:
+        validate_name(part)
+    return value
+
+
 @dataclass(frozen=True, kw_only=True)
 class NodeRef:
     """Identify a graph node, optionally in one of its component roles."""
@@ -54,7 +66,7 @@ class NodeRef:
     role: RoleName | None = None
 
     def __post_init__(self) -> None:
-        _name(self.component_id, "NodeRef component_id")
+        _component_name(self.component_id, "NodeRef component_id")
         if self.role is not None:
             _name(self.role, "NodeRef role")
 
@@ -87,7 +99,7 @@ class ComponentNode:
     )
 
     def __post_init__(self) -> None:
-        _name(self.component_id, "ComponentNode component_id")
+        _component_name(self.component_id, "ComponentNode component_id")
         if self.role is not None:
             _name(self.role, "ComponentNode role")
         resolved_services = dict(self.resolved_services)

@@ -41,26 +41,53 @@ from saealib.core.compiler.graph import (
     ReachabilityRule,
     StateBinding,
 )
+from saealib.core.compiler.lowerer import lower_pipeline, lower_structured
+from saealib.core.compiler.regions import (
+    BranchRegion,
+    Condition,
+    CountProvider,
+    LoopRegion,
+    RegionEffect,
+    RegionNode,
+    RepeatRegion,
+    SequenceRegion,
+    StructuredRegion,
+    compose_effects,
+)
+from saealib.core.compiler.structured import StructuredGraph
 
 __all__ = [
     "DIAGNOSTIC_CODES",
+    "BranchRegion",
     "CompilationRule",
     "CompileContext",
     "ComponentBindings",
     "ComponentGraph",
     "ComponentId",
     "ComponentNode",
+    "Condition",
     "ContractPath",
     "ControlEdge",
+    "CountProvider",
     "DataEdge",
     "Diagnostic",
     "DiagnosticBag",
     "DiagnosticCodeVocabulary",
     "ExecutablePlan",
     "GraphTemplate",
+    "LoopRegion",
     "NodeRef",
+    "RegionEffect",
+    "RegionNode",
+    "RepeatRegion",
+    "SequenceRegion",
     "Severity",
     "StateBinding",
+    "StructuredGraph",
+    "StructuredRegion",
+    "compose_effects",
+    "lower_pipeline",
+    "lower_structured",
 ]
 
 # Implementation names remain importable for the package's own compatibility
