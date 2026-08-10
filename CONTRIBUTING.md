@@ -40,13 +40,23 @@ We adhere to strict coding standards to ensure maintainability.
 * **Type Hinting**: Type hints are strongly encouraged for all public APIs.
 * **Docstrings**: We follow the **NumPy style** docstrings.
 
-### 3. Compatibility Policy
+### 3. Pre-1.0 Compatibility Policy
 
-Before 1.0, compatibility is selective rather than universal. Retain a
-legacy API only when it protects an established, low-cost user-facing bridge;
-otherwise remove obsolete aliases and wrappers promptly. Document and test
-each retained bridge explicitly. Serialized checkpoint compatibility is
-evaluated separately from runtime API compatibility.
+Before 1.0, a beta release may introduce a breaking Python API change. Record
+the change and its migration path in the pull request and release notes; do
+not add a compatibility shim automatically. Keep a shim when it protects an
+established user-facing bridge at a proportionate maintenance cost, and add a
+test that describes the retained contract. Remove short-lived implementation
+aliases and migration scaffolding once the canonical API is in place.
+
+Checkpoint and other serialized-state compatibility are evaluated separately
+from Python API compatibility. Preserve readers and migrations when they
+protect resumability of existing experiments, even when the corresponding
+runtime name is no longer part of the public API.
+
+After 1.0, renaming or removing a stable public API normally requires a
+documented deprecation cycle. This policy does not make deep implementation
+imports stable.
 
 ### 4. Testing Policy
 
@@ -127,12 +137,15 @@ uv run --group docs sphinx-intl update -p docs/_build/gettext/gettext -l ja -d d
 uv run --group docs sphinx-build -b html -D language=ja docs docs/_build/html-ja
 ```
 
-### 7. Public API Export Tiers
+### 7. Public API Governance
 
-`src/saealib/__init__.py` exposes a curated eager root surface (`__all__`) and a curated lazy root surface (`_LAZY_EXPORTS`) (see the root export comment in that file):
+`src/saealib/__init__.py` exposes a curated eager root surface (`__all__`)
+and a curated lazy root surface (`_LAZY_EXPORTS`). A symbol added to a
+subpackage's `__all__` remains public at that namespace; it does not
+automatically become a root export. Root additions must be intentional,
+represented in `src/saealib/__init__.pyi`, and covered by the export tests.
 
-* **Tier 1** (eager import, listed in `__all__`): entry points likely to be named in the first script or a subclass definition — the 5 root abstractions (`Algorithm`, `OptimizationStrategy`, `Surrogate`, `AcquisitionFunction`, `SurrogateManager`), one or two representative default implementations per concept, and the `Comparator`/`Evaluator`/`Initializer`/`Termination`/`Event` bases with their common defaults.
-* **Tier 2** (`_LAZY_EXPORTS`, lazy import via `__getattr__`): selected less-common root conveniences. A name in a subpackage's `__all__` does not automatically belong here.
-* **namespace-only** (not listed at the top level at all): generic-named bulk sets or domain toolkits, e.g. `saealib.benchmarks` (`sphere`/`zdt*`/`dtlz*`/...), `saealib.registry.get`/`build`/`to_spec`, and `saealib.defaults` (internal). Access these via their subpackage directly.
-
-When you add a new public class or function to a subpackage's `__all__`, ensure its own namespace resolves and add it to the root only if it is intentionally part of that curated surface. Root additions must also be represented in `src/saealib/__init__.pyi`; `tests/test_exports.py` checks eager/lazy resolution, overlap, and canonical namespace ownership.
+Use `saealib.core` for framework extension contracts and graph/state
+vocabulary. Use `saealib.execution` for runtime provider registration. Modules
+such as `saealib.core.compiler.compiler` are implementation paths rather than
+canonical extension imports and carry no compatibility guarantee.
