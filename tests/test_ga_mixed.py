@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from _algorithm_boundary import ask as algorithm_ask
 
 # tests/ has no __init__.py, so pytest's default (prepend) import mode puts
 # tests/ itself on sys.path -- this makes test_operators.py importable as a
@@ -406,14 +407,14 @@ class TestGAMixedAsk:
         problem = _make_problem_mixed()
         ga = _make_ga()
         ctx = _make_ctx_for(problem)
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=4)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=4)
         assert offspring.get_array("x").shape == (4, 3)
 
     def test_ask_integer_dims_are_rounded(self):
         problem = _make_problem_mixed()
         ga = _make_ga()
         ctx = _make_ctx_for(problem, n_pop=8)
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=10)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=10)
         x = offspring.get_array("x")
         np.testing.assert_array_equal(x[:, 1], np.round(x[:, 1]))
 
@@ -421,7 +422,7 @@ class TestGAMixedAsk:
         problem = _make_problem_mixed()
         ga = _make_ga()
         ctx = _make_ctx_for(problem, n_pop=8)
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=10)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=10)
         x = offspring.get_array("x")
         assert np.all((x[:, 2] >= 0) & (x[:, 2] <= 2))
         np.testing.assert_array_equal(x[:, 2], np.round(x[:, 2]))
@@ -430,7 +431,7 @@ class TestGAMixedAsk:
         problem = _make_problem_mixed()
         ga = _make_ga()
         ctx = _make_ctx_for(problem, n_pop=8)
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=20)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=20)
         x = offspring.get_array("x")
         assert np.all(x >= problem.lb)
         assert np.all(x <= problem.ub)
@@ -447,12 +448,14 @@ class TestGAMixedAsk:
             )
 
         problem = _make_problem_mixed()
-        active = make_ga(1.0).ask(
+        active = algorithm_ask(
+            make_ga(1.0),
             _make_ctx_for(problem, n_pop=8, seed=21),
             _NoopProvider(),
             n_offspring=10,
         )
-        inactive = make_ga(0.0).ask(
+        inactive = algorithm_ask(
+            make_ga(0.0),
             _make_ctx_for(problem, n_pop=8, seed=21),
             _NoopProvider(),
             n_offspring=10,
@@ -465,12 +468,14 @@ class TestGAMixedAsk:
 
     def test_batch_mode_is_reproducible_for_mixed_problem(self):
         problem = _make_problem_mixed()
-        first = _make_ga().ask(
+        first = algorithm_ask(
+            _make_ga(),
             _make_ctx_for(problem, n_pop=8, seed=17),
             _NoopProvider(),
             n_offspring=10,
         )
-        second = _make_ga().ask(
+        second = algorithm_ask(
+            _make_ga(),
             _make_ctx_for(problem, n_pop=8, seed=17),
             _NoopProvider(),
             n_offspring=10,
@@ -482,7 +487,7 @@ class TestGAMixedAsk:
         problem = _make_problem_continuous()
         ga = _make_ga()
         ctx = _make_ctx_for(problem)
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=4)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=4)
         assert offspring.get_array("x").shape == (4, 3)
 
     def test_ask_raises_when_primary_n_children_mutated(self):
@@ -493,7 +498,7 @@ class TestGAMixedAsk:
         ga.crossover.n_children = 1
         ctx = _make_ctx_for(problem)
         with pytest.raises(ConfigurationError, match=r"integer_crossover\.n_children"):
-            ga.ask(ctx, _NoopProvider())
+            algorithm_ask(ga, ctx, _NoopProvider())
 
     def test_ask_raises_when_integer_crossover_replaced_with_mismatched(self):
         """Replacing integer_crossover with a different n_children must raise."""
@@ -503,7 +508,7 @@ class TestGAMixedAsk:
         ga.integer_crossover = _CrossoverN1C()
         ctx = _make_ctx_for(problem)
         with pytest.raises(ConfigurationError, match=r"integer_crossover\.n_children"):
-            ga.ask(ctx, _NoopProvider())
+            algorithm_ask(ga, ctx, _NoopProvider())
 
 
 # ---------------------------------------------------------------------------
@@ -653,7 +658,7 @@ class TestGASequentialDispatch:
         problem = _make_problem_continuous()
         ctx = _make_ctx_for(problem, n_pop=6)
         n_offspring = 8
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=n_offspring)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=n_offspring)
 
         assert custom_crossover.calls > 0
 
@@ -680,7 +685,7 @@ class TestGASequentialDispatch:
         problem = _make_problem_continuous()
         ctx = _make_ctx_for(problem, n_pop=6)
         n_offspring = 8
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=n_offspring)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=n_offspring)
 
         assert custom_mutation.calls > 0
 

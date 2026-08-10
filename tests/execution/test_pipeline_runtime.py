@@ -33,7 +33,7 @@ from saealib.execution.runtime import PipelineRuntime, _OptimizerEnvironment
 from saealib.optimizer import ComponentProvider
 from saealib.pipeline import Pipeline, Stage
 from saealib.policies.evaluation import EvaluateAll
-from saealib.stages import AsyncEvaluationSubmitStage, EvaluationPlanStage
+from saealib.stages import AsyncEvaluationSubmitStage
 from saealib.strategies.base import OptimizationStrategy, build_runtime_neutral_graph
 from saealib.strategies.direct import DirectStrategy
 
@@ -224,18 +224,18 @@ def test_manually_constructed_plan_rejects_non_executable_node() -> None:
         SequentialPlan(plan=malformed, nodes=(node,), execution_nodes=(node,))
 
 
-def test_graph_builder_uses_one_pipeline_without_sync_async_tail_comparison() -> None:
+def test_graph_only_strategy_is_the_runtime_neutral_source() -> None:
     class MismatchedStrategy(OptimizationStrategy):
-        def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
-            if getattr(provider, "async_evaluation_scheduler", None) is None:
-                stages: list[Stage] = [_Stage("prefix"), EvaluationPlanStage()]
-            else:
-                stages = [
-                    _Stage("prefix"),
-                    _Stage("async_only"),
-                    AsyncEvaluationSubmitStage(object(), EvaluateAll()),
-                ]
-            return Pipeline(stages)
+        def build_graph(self, provider: ComponentProvider):
+            return build_component_graph(
+                Pipeline(
+                    [
+                        _Stage("prefix"),
+                        _Stage("async_only"),
+                        AsyncEvaluationSubmitStage(object(), EvaluateAll()),
+                    ]
+                )
+            )
 
     class Provider:
         async_evaluation_scheduler = object()

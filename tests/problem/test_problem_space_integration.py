@@ -11,6 +11,7 @@ from unittest.mock import MagicMock
 
 import numpy as np
 
+from saealib.algorithms.base import ProposalRequest
 from saealib.algorithms.ga import GA
 from saealib.algorithms.pso import PSO
 from saealib.context import OptimizationState
@@ -21,6 +22,16 @@ from saealib.operators.selection import TournamentSelection, TruncationSelection
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem.problem import Problem
 from saealib.space import BoundsService, VectorSpace
+
+
+def algorithm_ask(algorithm, state, provider):
+    """Call a built-in proposer through the canonical boundary."""
+    view = state._store.view(
+        algorithm.contract().state,
+        context=state,
+        dispatch=provider.dispatch,
+    )
+    return algorithm.ask(ProposalRequest(), view).candidates
 
 
 def dummy_func(x: np.ndarray) -> float:
@@ -158,10 +169,10 @@ def test_ga_and_pso_determinism_with_bounds_service() -> None:
     provider = MagicMock()
     ga = _make_ga()
     ctx_ga1 = _setup_state(prob, popsize=20, seed=42)
-    pop_ga1 = ga.ask(ctx_ga1, provider)
+    pop_ga1 = algorithm_ask(ga, ctx_ga1, provider)
 
     ctx_ga2 = _setup_state(prob, popsize=20, seed=42)
-    pop_ga2 = ga.ask(ctx_ga2, provider)
+    pop_ga2 = algorithm_ask(ga, ctx_ga2, provider)
 
     np.testing.assert_array_equal(pop_ga1.get_array("x"), pop_ga2.get_array("x"))
 
@@ -176,8 +187,8 @@ def test_ga_and_pso_determinism_with_bounds_service() -> None:
     ctx_pso1 = _setup_state(prob, popsize=20, seed=123, extra_attrs=pso_attrs)
     ctx_pso2 = _setup_state(prob, popsize=20, seed=123, extra_attrs=pso_attrs)
 
-    pop_pso1 = pso.ask(ctx_pso1, provider)
-    pop_pso2 = pso.ask(ctx_pso2, provider)
+    pop_pso1 = algorithm_ask(pso, ctx_pso1, provider)
+    pop_pso2 = algorithm_ask(pso, ctx_pso2, provider)
 
     np.testing.assert_array_equal(pop_pso1.get_array("x"), pop_pso2.get_array("x"))
 
@@ -213,7 +224,7 @@ def test_bounds_service_not_required_in_inner_loops() -> None:
     ctx = _setup_state(prob, popsize=20, seed=42)
 
     require_mock.reset_mock()
-    ga.ask(ctx, provider)
+    algorithm_ask(ga, ctx, provider)
 
     # Count how many times BoundsService was resolved in ask()
     bounds_calls = [

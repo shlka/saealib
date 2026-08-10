@@ -24,7 +24,6 @@ from saealib.core.compiler import (
 )
 from saealib.core.compiler.adapters import (
     ADAPTER_CATEGORIES,
-    DEFAULT_ADAPTER_REGISTRY,
     Adapter,
     AdapterRegistry,
     LosslessAdapterRule,
@@ -128,7 +127,7 @@ def _compile_actual_optimizer(optimizer: Optimizer):
     return graph, plan
 
 
-def test_actual_default_graph_resolves_both_real_mismatches() -> None:
+def test_actual_default_graph_resolves_the_vector_profile_mismatch() -> None:
     problem = _problem()
     graph, plan = _compile_actual_optimizer(Optimizer(problem))
 
@@ -140,18 +139,12 @@ def test_actual_default_graph_resolves_both_real_mismatches() -> None:
     ]
     assert {item.adapter_name for item in plan.inserted_adapters} == {
         "dense_numeric_view",
-        "legacy_population_feedback",
     }
-    registrations = {
-        adapter.name: adapter for adapter in DEFAULT_ADAPTER_REGISTRY.registrations()
-    }
-    assert registrations["legacy_population_feedback"].category == "lossless_view"
     description = plan.describe()
     assert "dense_numeric_view" in description
-    assert "legacy_population_feedback" in description
 
 
-def test_object_space_rbf_without_encoder_is_rejected() -> None:
+def test_object_space_does_not_activate_vector_profile_adapter() -> None:
     problem = _problem()
     graph, _ = _compile_actual_optimizer(Optimizer(problem))
     object_space = ObjectSpace(RepresentationSpec(kind="permutation"))
@@ -160,17 +153,10 @@ def test_object_space_rbf_without_encoder_is_rejected() -> None:
         CompileContext(space=object_space, problem=problem),
     )
 
-    findings = [
-        diagnostic
+    assert not any(
+        diagnostic.code == "incompatible_representation"
         for diagnostic in plan.diagnostics
-        if diagnostic.code == "incompatible_representation"
-    ]
-    assert len(findings) == 1
-    finding = findings[0]
-    assert "surrogate_predict___sm[predictor].candidates" in str(finding.related[0])
-    assert "FeatureEncoder" in finding.message
-    assert "DenseNumericView" in finding.message
-    assert finding.resolutions
+    )
     assert not any(
         getattr(item, "adapter_name", None) == "dense_numeric_view"
         for item in plan.inserted_adapters
@@ -189,7 +175,7 @@ def test_feature_encoder_is_never_automatically_inserted() -> None:
     graph = _edge_graph(adapter.source, adapter.target)
     plan = Compiler(adapter_registry=AdapterRegistry((adapter,))).compile(graph)
 
-    assert any(
+    assert not any(
         diagnostic.code == "incompatible_representation"
         for diagnostic in plan.diagnostics
     )

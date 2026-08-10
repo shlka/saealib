@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 import numpy as np
 from typing_extensions import Self
 
+from saealib._deprecated import warn_deprecated
 from saealib.exceptions import ValidationError
 from saealib.population.genome import DenseVectorBatch, GenomeBatch, ObjectBatch
 from saealib.space.services import DenseNumericView
@@ -83,7 +84,7 @@ def bind_property_array(key: str, doc: str = "") -> Any:
     """Make property for Population attributes (helper function)."""
 
     def fget(self):
-        return self.get_readonly_array(key)
+        return self.get_array(key)
 
     def fset(self, value):
         self.update_array(key, value)
@@ -1088,10 +1089,18 @@ class Population(Generic[T_Individual]):
         return view
 
     def get_readonly_array(self, key: str) -> np.ndarray:
-        """Return a read only view of the specified key."""
-        view = self.get_array(key).view()
-        view.flags.writeable = False
-        return view
+        """Return a read-only view of the specified key.
+
+        This migration alias remains available for one minor release.  New
+        code should use :meth:`get_array`.
+        """
+        warn_deprecated(
+            "Population.get_readonly_array()",
+            "Population.get_array()",
+            "1.0",
+            stacklevel=2,
+        )
+        return self.get_array(key)
 
     def update_array(self, key: str, value: Any) -> None:
         """Update array in place and bump the value version."""
@@ -1291,7 +1300,7 @@ class Population(Generic[T_Individual]):
         if name == "x" and "_dense_numeric_view" in self.__dict__:
             raise AttributeError("Population.x requires the DenseNumericView service")
         if "_data" in self.__dict__ and name in self.__dict__["_data"]:
-            return self.get_readonly_array(name)
+            return self.get_array(name)
 
         raise AttributeError(
             f"'{type(self).__name__}' object has no attribute '{name}'"

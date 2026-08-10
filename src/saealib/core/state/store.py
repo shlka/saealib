@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from types import MappingProxyType
-from typing import TYPE_CHECKING, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 import numpy as np
 
@@ -18,10 +18,9 @@ from saealib.exceptions import ValidationError
 from saealib.population import Population
 
 if TYPE_CHECKING:
-    from saealib.context import OptimizationState
     from saealib.core.contracts.state import StateContract
 
-__all__ = ["LegacyAlgorithmStateView", "StateStore", "StateView"]
+__all__ = ["StateStore", "StateView"]
 
 ValueT = TypeVar("ValueT")
 
@@ -71,6 +70,9 @@ class StateStore:
     def view(
         self,
         reads: Iterable[StateKey] | StateContract,
+        *,
+        context: object | None = None,
+        dispatch: Callable[[object], None] | None = None,
     ) -> StateView:
         """Create a read-only view limited to the supplied declared keys."""
         self._check_live()
@@ -78,7 +80,7 @@ class StateStore:
             declared = tuple(cast(Iterable[StateKey], reads.reads))
         else:
             declared = tuple(reads)
-        return StateView(self, declared)
+        return StateView(self, declared, context=context, dispatch=dispatch)
 
     def apply_patch(self, patch: StatePatch) -> StateStore:
         """Apply ``patch`` and return the new store, consuming this store.
@@ -188,6 +190,9 @@ class StateView:
         self,
         store: StateStore,
         reads: Iterable[StateKey] | StateContract,
+        *,
+        context: object | None = None,
+        dispatch: Callable[[object], None] | None = None,
     ) -> None:
         if hasattr(reads, "reads"):
             declared = tuple(cast(Iterable[StateKey], reads.reads))
@@ -197,6 +202,8 @@ class StateView:
         self._store = store
         store._check_live()
         self._reads = frozenset(declared)
+        self._context = context
+        self._dispatch = dispatch
 
     def get(self, key: StateKey[ValueT]) -> ValueT:
         """Return a declared value, making arrays read-only for the caller."""
@@ -219,32 +226,22 @@ class StateView:
             raise KeyError(f"State key was not declared as a read: {key!r}")
         return self._store.contains(key)
 
+    @property
+    def context(self) -> Any:
+        """Return the runtime context bound by the execution owner."""
+        self._check_live()
+        if self._context is None:
+            raise ValidationError("StateView has no runtime context")
+        return self._context
+
+    def dispatch(self, event: object) -> None:
+        """Dispatch a component event through the bound runtime callback."""
+        self._check_live()
+        if self._dispatch is not None:
+            self._dispatch(event)
+
     def _check_live(self) -> None:
         try:
             self._store._check_live()
         except RuntimeError as exc:
             raise RuntimeError("StateView is stale after a state patch") from exc
-
-
-class LegacyAlgorithmStateView(StateView):
-    """Temporary Phase 4-10 seam carrying an OptimizationState to old Algorithm.
-
-    This named bridge exists only for ``LegacyPopulationAlgorithmAdapter`` and
-    must be removed together with that adapter in Phase 11.  It keeps the
-    original OptimizationState object intact while the proposer boundary is
-    being migrated.
-    """
-
-    def __init__(
-        self,
-        store: StateStore,
-        reads: Iterable[StateKey] | StateContract,
-        legacy_optimization_state: OptimizationState,
-    ) -> None:
-        super().__init__(store, reads)
-        self._legacy_optimization_state = legacy_optimization_state
-
-    @property
-    def legacy_optimization_state(self) -> OptimizationState:
-        """Return the OptimizationState passed to the old Algorithm.ask()."""
-        return self._legacy_optimization_state

@@ -180,6 +180,13 @@ class FeedbackAccumulator:
         """Return the number of completed batches waiting to be taken."""
         return len(self._ready)
 
+    def last_sequence(self, proposal_id: int) -> int:
+        """Return the greatest accepted sequence for a buffered proposal."""
+        buffer = self._buffers.get(int(proposal_id))
+        if buffer is None or not buffer.seen:
+            return -1
+        return max(buffer.seen)
+
     def register(self, proposal: ProposalBatch) -> None:
         """Register one proposal before adding its feedback deliveries.
 

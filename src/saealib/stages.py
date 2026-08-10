@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from copy import deepcopy
 from dataclasses import replace
 from math import fsum
@@ -77,7 +77,6 @@ from saealib.core.state import (
     RUNTIME_RNG,
     SCORES,
     SURROGATES_PREDICTIONS,
-    LegacyAlgorithmStateView,
     StatePatch,
 )
 from saealib.exceptions import EvaluationProtocolError, ValidationError
@@ -155,50 +154,6 @@ class _DispatchProxy:
         return None
 
 
-def _is_legacy_ask(component: object) -> bool:
-    """Recognize an old ask signature, including lightweight user doubles."""
-    ask = getattr(component, "ask", None)
-    if not callable(ask):
-        return True
-    try:
-        parameters = tuple(inspect.signature(ask).parameters.values())
-    except (TypeError, ValueError):
-        return True
-    if any(
-        parameter.kind is inspect.Parameter.VAR_POSITIONAL for parameter in parameters
-    ):
-        return True
-    positional = tuple(
-        parameter
-        for parameter in parameters
-        if parameter.kind
-        in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
-    )
-    return len(positional) >= 3
-
-
-def _is_legacy_tell(component: object) -> bool:
-    """Recognize the three-argument tell shape used by direct old callers."""
-    tell = getattr(component, "tell", None)
-    if not callable(tell):
-        return False
-    try:
-        parameters = tuple(inspect.signature(tell).parameters.values())
-    except (TypeError, ValueError):
-        return True
-    if any(
-        parameter.kind is inspect.Parameter.VAR_POSITIONAL for parameter in parameters
-    ):
-        return True
-    positional = tuple(
-        parameter
-        for parameter in parameters
-        if parameter.kind
-        in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
-    )
-    return len(positional) >= 3
-
-
 def _plan_complete(state: OptimizationState) -> bool:
     """Return whether every request in the active plan is terminal."""
     plan = state.evaluation_plan
@@ -216,7 +171,7 @@ def _plan_incomplete(state: OptimizationState) -> bool:
 
 
 def _apply_component_patch(state: OptimizationState, patch: StatePatch) -> None:
-    """Apply a non-empty new-boundary patch without moving empty legacy state."""
+    """Apply a non-empty component patch to the live state store."""
     if not isinstance(patch, StatePatch):
         raise ValidationError("feedback consumer must return a StatePatch")
     if patch.writes or patch.deletes:
@@ -228,31 +183,33 @@ def deliver_feedback(
     feedback: FeedbackBatch,
     state: OptimizationState,
     *,
-    legacy: bool = False,
+    reads: Any = None,
+    dispatch: Callable[[object], None] | None = None,
+    offspring: Any = None,
 ) -> None:
     """Deliver one final feedback batch through the canonical tell boundary."""
-    reads = getattr(consumer, "_state_reads", None)
     if reads is None:
         contract = getattr(consumer, "contract", None)
         reads = (
             contract().state if callable(contract) else (POPULATIONS_MAIN, RUNTIME_RNG)
         )
-    if legacy:
-        state_view = LegacyAlgorithmStateView(state._store, reads, state)
+    # ``evaluated_offspring`` is normally the feedback boundary's selected
+    # view of the proposal.  Algorithms that maintain row-wise state (such as
+    # PSO's particle population) can explicitly retain the full proposal.
+    if offspring is not None:
+        tell_state = state.replace(
+            offspring=offspring,
+            evaluated_offspring=offspring,
+        )
+    elif state.evaluated_offspring is not None and not getattr(
+        consumer, "tell_requires_full_proposal", False
+    ):
+        tell_state = state.replace(offspring=state.evaluated_offspring)
     else:
-        state_view = state._store.view(reads)
+        tell_state = state
+    state_view = tell_state._store.view(reads, context=tell_state, dispatch=dispatch)
     patch = consumer.tell(feedback, state_view)
     _apply_component_patch(state, patch)
-
-
-def deliver_legacy_population_feedback(
-    algorithm: Any,
-    state: OptimizationState,
-    provider: Any,
-    offspring: Any,
-) -> None:
-    """Keep the pre-J7b population tell signature at one compatibility seam."""
-    algorithm.tell(state, provider, offspring)
 
 
 def _sync_feedback_metadata(
@@ -374,17 +331,10 @@ class AskStage(Stage):
         cbmanager: CallbackManager | None = None,
     ) -> None:
         super().__init__()
-        from saealib.algorithms.base import LegacyPopulationAlgorithmAdapter, Proposer
 
         self._n_offspring = n_offspring
         self._proxy = _DispatchProxy(cbmanager)
-        legacy = _is_legacy_ask(algorithm)
-        self._legacy_adapter = legacy
-        self._algorithm: Proposer = (
-            LegacyPopulationAlgorithmAdapter.for_stage(algorithm, self._proxy)
-            if legacy
-            else cast(Proposer, algorithm)
-        )
+        self._algorithm: Proposer = algorithm
         state_reads = getattr(self._algorithm, "_state_reads", None)
         if state_reads is None:
             contract = getattr(self._algorithm, "contract", None)
@@ -408,12 +358,11 @@ class AskStage(Stage):
     def execute(self, state: OptimizationState) -> OptimizationState:
         if _plan_incomplete(state):
             return state
-        if self._legacy_adapter:
-            state_view = LegacyAlgorithmStateView(
-                state._store, self._state_reads, state
-            )
-        else:
-            state_view = state._store.view(self._state_reads)
+        state_view = state._store.view(
+            self._state_reads,
+            context=state,
+            dispatch=cast(Callable[[object], None], self._proxy.dispatch),
+        )
         proposal = self._algorithm.ask(
             ProposalRequest(n_offspring=self._n_offspring), state_view
         )
@@ -432,7 +381,10 @@ class AskStage(Stage):
                 raise ValidationError(
                     "AskStage received offspring with duplicate candidate ids"
                 )
-        state = state.replace(offspring=candidates)
+        # A new proposal invalidates the previous evaluated view.  Keeping it
+        # would make the canonical tell boundary bind stale rows to a later
+        # surrogate-only or true-evaluation delivery.
+        state = state.replace(offspring=candidates, evaluated_offspring=None)
         state.set_state(PROPOSALS_CURRENT, proposal.proposal_id)
         return state
 
@@ -972,13 +924,20 @@ class AsyncEvaluationSubmitStage(Stage):
         capacity = self._scheduler.max_pending - len(state.pending_evaluations)
         if (
             len(remaining_requests) == 1
-            and capacity > 1
+            and capacity >= 1
             and len(remaining_requests[0].candidate_ids) > 1
+            and not (
+                isinstance(plan.continuation, Mapping)
+                and plan.continuation.get("kind") == "fidelity_promotion"
+            )
         ):
             request = remaining_requests[0]
-            chunks = np.array_split(
-                request.candidate_ids, min(capacity, len(request.candidate_ids))
+            chunk_count = (
+                len(request.candidate_ids)
+                if capacity == 1
+                else min(capacity, len(request.candidate_ids))
             )
+            chunks = np.array_split(request.candidate_ids, chunk_count)
             requests = []
             total_cost = float(
                 request.metadata.get("estimated_cost", len(request.candidate_ids))
@@ -1979,31 +1938,11 @@ class TellStage(Stage):
         channel: FeedbackChannel = TRUE,
     ) -> None:
         super().__init__()
-        from saealib.algorithms.base import (
-            FeedbackConsumer,
-            LegacyPopulationAlgorithmAdapter,
-        )
+        from saealib.algorithms.base import FeedbackConsumer
 
         self._proxy = _DispatchProxy()
         self._channel = channel
-        self._legacy_adapter = isinstance(
-            algorithm, LegacyPopulationAlgorithmAdapter
-        ) or _is_legacy_tell(algorithm)
-        self._legacy_source = (
-            algorithm.algorithm
-            if isinstance(algorithm, LegacyPopulationAlgorithmAdapter)
-            else algorithm
-            if self._legacy_adapter
-            else None
-        )
-        if isinstance(algorithm, LegacyPopulationAlgorithmAdapter):
-            self._algorithm = algorithm
-        elif self._legacy_adapter:
-            self._algorithm = LegacyPopulationAlgorithmAdapter.for_stage(
-                algorithm, self._proxy
-            )
-        else:
-            self._algorithm = cast(FeedbackConsumer, algorithm)
+        self._algorithm = cast(FeedbackConsumer, algorithm)
         state_reads = getattr(self._algorithm, "_state_reads", None)
         if state_reads is None:
             contract = getattr(self._algorithm, "contract", None)
@@ -2035,25 +1974,7 @@ class TellStage(Stage):
         try:
             proposal_id = int(state.get_state(PROPOSALS_CURRENT))
         except KeyError:
-            # Keep direct callers of the pre-J7b stage working.  Normal
-            # AskStage execution always writes proposals/current first.
-            if self._legacy_source is None:
-                raise ValidationError("feedback proposal ID is missing")
-            if "id" in state.offspring.schema:
-                ids = state.offspring.get_array("id")
-                rows = []
-                for candidate_id in result.candidate_ids:
-                    matches = np.flatnonzero(ids == candidate_id)
-                    if len(matches) != 1:
-                        raise ValidationError(
-                            f"feedback candidate ID {candidate_id} is not in offspring"
-                        )
-                    rows.append(int(matches[0]))
-            else:
-                rows = [int(candidate_id) for candidate_id in result.candidate_ids]
-            offspring = state.offspring.extract(rows)
-            cast(Any, self._legacy_source).tell(state, self._proxy, offspring)
-            return state
+            raise ValidationError("feedback proposal ID is missing")
         sequence, final = _sync_feedback_metadata(state, self._channel)
         feedback = _feedback_batch_from_result(
             result,
@@ -2066,7 +1987,8 @@ class TellStage(Stage):
             self._algorithm,
             feedback,
             state,
-            legacy=self._legacy_adapter,
+            reads=self._state_reads,
+            dispatch=cast(Callable[[object], None], self._proxy.dispatch),
         )
         return state
 

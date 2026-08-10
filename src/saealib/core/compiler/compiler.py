@@ -427,7 +427,7 @@ class ServiceResolutionRule:
                         continue
                     resolved.setdefault(requirement.name, service)
             if resolved != dict(node.resolved_services):
-                updated_nodes.append(replace(node, resolved_services=resolved))
+                updated_nodes.append(node.with_resolved_services(resolved))
                 claims.add(context.claim("node", node.component_id))
             else:
                 updated_nodes.append(node)
@@ -1107,7 +1107,6 @@ DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, ReachabilityRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, ServiceResolutionRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, PortCompatibilityRule()))
 from saealib.core.compiler.adapters import (  # noqa: E402  # registration boundary
-    DEFAULT_ADAPTER_REGISTRY,
     LosslessAdapterRule,
 )
 from saealib.core.compiler.lifecycle_rules import (  # noqa: E402
@@ -1130,28 +1129,7 @@ DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, LifecycleCompatibilityRule(
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, StateEffectRule()))
 
 __all__ = [
-    "DEFAULT_ADAPTER_REGISTRY",
-    "DEFAULT_RULE_REGISTRY",
     "CompilationRule",
     "CompileContext",
-    "Compiler",
     "ExecutablePlan",
-    "FeedbackAccumulatorRule",
-    "LifecycleCompatibilityRule",
-    "LosslessAdapterRule",
-    "PersistenceRule",
-    "PortCompatibilityRule",
-    "ResolutionResult",
-    "ResolutionRule",
-    "RewriteClaim",
-    "RuleContext",
-    "RuleRegistration",
-    "RuleRegistry",
-    "RuleResult",
-    "RuntimeCompatibilityRule",
-    "SchemaBindingRule",
-    "ServiceResolutionRule",
-    "StateEffectRule",
-    "VerificationResult",
-    "VerificationRule",
 ]

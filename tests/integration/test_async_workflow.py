@@ -11,7 +11,10 @@ from saealib.core.contracts import (
     ComponentContract,
     FeedbackBatch,
     FeedbackContract,
+    FeedbackRequirement,
     LifecycleContract,
+    ProposalBatch,
+    ProposalRelations,
 )
 from saealib.core.contracts.feedback import IN_ORDER, PARTIAL_ALLOWED, REPEATED_ALLOWED
 from saealib.core.state import PROPOSALS_CURRENT, StatePatch, StateView
@@ -65,6 +68,20 @@ ATTRS = [
     PopulationAttribute("g", np.float64, (0,)),
     PopulationAttribute("cv", np.float64, (), 0.0),
 ]
+
+
+def _proposal_for_state(state: StateView) -> ProposalBatch:
+    """Return the current test population through the canonical ask boundary."""
+    context = state.context
+    candidates = context.offspring
+    if candidates is None:
+        raise AssertionError("test proposal state has no offspring")
+    return ProposalBatch.from_allocator(
+        context.proposal_id_allocator,
+        candidates=candidates,
+        relations=ProposalRelations(row_count=len(candidates)),
+        requirements=FeedbackRequirement(quantities=()),
+    )
 
 
 class SlowEvaluator(Evaluator):
@@ -328,7 +345,7 @@ def make_state():
         },
         preserve_ids=True,
     )
-    return OptimizationState(
+    state = OptimizationState(
         problem=problem,
         population=population,
         archive=Archive(ATTRS, 2),
@@ -336,6 +353,8 @@ def make_state():
         rng=np.random.default_rng(0),
         offspring=population,
     )
+    state.set_state(PROPOSALS_CURRENT, 0)
+    return state
 
 
 def requests():
@@ -367,8 +386,17 @@ def test_repeated_plan_waits_for_all_requests_before_tell():
         def __init__(self):
             self.told = []
 
-        def tell(self, state, provider, offspring):
-            self.told.extend(offspring.get_array("id").tolist())
+        def contract(self):
+            return ComponentContract(
+                lifecycle=LifecycleContract(
+                    feedback=FeedbackContract(accepted_channels=frozenset({"true"}))
+                )
+            )
+
+        def tell(self, feedback: FeedbackBatch, view: StateView) -> StatePatch:
+            del feedback
+            self.told.extend(view.context.offspring.get_array("id").tolist())
+            return StatePatch(writes={})
 
     state = make_state()
     evaluator = ControlledReplicateEvaluator()
@@ -408,8 +436,10 @@ def test_async_callback_runs_after_tell():
     order = []
 
     class Algorithm:
-        def tell(self, state, provider, offspring):
+        def tell(self, feedback: FeedbackBatch, view: StateView) -> StatePatch:
+            del feedback, view
             order.append("tell")
+            return StatePatch(writes={})
 
     class Callback:
         def dispatch(self, event):
@@ -433,8 +463,10 @@ def test_repeated_sync_plan_uses_the_same_terminal_lifecycle():
         def __init__(self):
             self.tell_count = 0
 
-        def tell(self, state, provider, offspring):
+        def tell(self, feedback: FeedbackBatch, view: StateView) -> StatePatch:
+            del feedback, view
             self.tell_count += 1
+            return StatePatch(writes={})
 
     state = make_state()
     algorithm = Algorithm()
@@ -458,8 +490,17 @@ def test_sync_fidelity_promotion_delays_feedback_until_final_request():
         def __init__(self):
             self.told = []
 
-        def tell(self, state, provider, offspring):
-            self.told.append(offspring.get_array("id").tolist())
+        def contract(self):
+            return ComponentContract(
+                lifecycle=LifecycleContract(
+                    feedback=FeedbackContract(accepted_channels=frozenset({"true"}))
+                )
+            )
+
+        def tell(self, feedback: FeedbackBatch, view: StateView) -> StatePatch:
+            del feedback
+            self.told.append(view.context.offspring.get_array("id").tolist())
+            return StatePatch(writes={})
 
     state = make_state()
     evaluator = FidelityValueEvaluator()
@@ -508,8 +549,10 @@ def test_async_fidelity_promotion_uses_plan_continuation_and_checkpoint(tmp_path
     order = []
 
     class Algorithm:
-        def tell(self, state, provider, offspring):
-            order.append(("tell", offspring.get_array("id").tolist()))
+        def tell(self, feedback: FeedbackBatch, view: StateView) -> StatePatch:
+            del feedback
+            order.append(("tell", view.context.offspring.get_array("id").tolist()))
+            return StatePatch(writes={})
 
     class Callback:
         def dispatch(self, event):
@@ -997,11 +1040,14 @@ def test_direct_strategy_uses_scheduler_for_submit_and_poll():
         def __init__(self):
             self.tell_ids = []
 
-        def ask(self, state, provider, n_offspring=None):
-            return state.offspring
+        def ask(self, request, view):
+            del request
+            return _proposal_for_state(view)
 
-        def tell(self, state, provider, offspring):
-            self.tell_ids.extend(offspring.get_array("id").tolist())
+        def tell(self, feedback: FeedbackBatch, view: StateView) -> StatePatch:
+            del feedback
+            self.tell_ids.extend(view.context.offspring.get_array("id").tolist())
+            return StatePatch(writes={})
 
     state = make_state()
     algorithm = Algorithm()
@@ -1033,8 +1079,17 @@ def test_partial_failure_retries_only_unapplied_candidates():
         def __init__(self):
             self.told = []
 
-        def tell(self, state, provider, offspring):
-            self.told.extend(offspring.get_array("id").tolist())
+        def contract(self):
+            return ComponentContract(
+                lifecycle=LifecycleContract(
+                    feedback=FeedbackContract(accepted_channels=frozenset({"true"}))
+                )
+            )
+
+        def tell(self, feedback: FeedbackBatch, view: StateView) -> StatePatch:
+            del feedback
+            self.told.extend(view.context.offspring.get_array("id").tolist())
+            return StatePatch(writes={})
 
     state = make_state()
     request = EvaluationRequest(
@@ -1050,6 +1105,7 @@ def test_partial_failure_retries_only_unapplied_candidates():
         feedback_builder=TrueOnlyFeedback(),
         algorithm=algorithm,
     )
+    scheduler.enable_feedback_accumulator()
     state = scheduler.submit(state, [request])
     state = scheduler.poll(state, wait=True)
     assert state.pending_evaluations == {}
@@ -1242,8 +1298,17 @@ def test_partial_retry_with_callback_keeps_applied_ids():
         def __init__(self):
             self.told = []
 
-        def tell(self, state, provider, offspring):
-            self.told.extend(offspring.get_array("id").tolist())
+        def contract(self):
+            return ComponentContract(
+                lifecycle=LifecycleContract(
+                    feedback=FeedbackContract(accepted_channels=frozenset({"true"}))
+                )
+            )
+
+        def tell(self, feedback: FeedbackBatch, view: StateView) -> StatePatch:
+            del feedback
+            self.told.extend(view.context.offspring.get_array("id").tolist())
+            return StatePatch(writes={})
 
     events = []
     callback = CallbackManager()
@@ -1258,6 +1323,7 @@ def test_partial_retry_with_callback_keeps_applied_ids():
         algorithm=algorithm,
         callback_manager=callback,
     )
+    scheduler.enable_feedback_accumulator()
     state = scheduler.submit(
         state,
         [
@@ -1277,11 +1343,13 @@ def test_partial_retry_with_callback_keeps_applied_ids():
 
 def test_runner_drains_after_generation_termination():
     class Algorithm:
-        def ask(self, state, provider, n_offspring=None):
-            return state.offspring
+        def ask(self, request, view):
+            del request
+            return _proposal_for_state(view)
 
-        def tell(self, state, provider, offspring):
-            pass
+        def tell(self, feedback: FeedbackBatch, view: StateView) -> StatePatch:
+            del feedback, view
+            return StatePatch(writes={})
 
     state = make_state()
     evaluator = AsyncEvaluator(SlowEvaluator(), max_workers=2)
@@ -1327,12 +1395,14 @@ def test_runner_does_not_refill_after_termination_threshold():
         def __init__(self):
             self.asks = 0
 
-        def ask(self, state, provider, n_offspring=None):
+        def ask(self, request, view):
+            del request
             self.asks += 1
-            return state.offspring
+            return _proposal_for_state(view)
 
-        def tell(self, state, provider, offspring):
-            pass
+        def tell(self, feedback: FeedbackBatch, view: StateView) -> StatePatch:
+            del feedback, view
+            return StatePatch(writes={})
 
     state = make_state()
     evaluator = CountingEvaluator()
@@ -1363,11 +1433,13 @@ def test_runner_does_not_refill_after_termination_threshold():
 
 def test_runner_reattaches_loaded_pending_state(tmp_path):
     class Algorithm:
-        def ask(self, state, provider, n_offspring=None):
-            return state.offspring
+        def ask(self, request, view):
+            del request
+            return _proposal_for_state(view)
 
-        def tell(self, state, provider, offspring):
-            pass
+        def tell(self, feedback: FeedbackBatch, view: StateView) -> StatePatch:
+            del feedback, view
+            return StatePatch(writes={})
 
     state = make_state()
     evaluator = ReattachEvaluator()
@@ -1579,8 +1651,17 @@ def test_partial_callback_checkpoint_reattaches_and_finishes(tmp_path):
         def __init__(self):
             self.told = []
 
-        def tell(self, state, provider, offspring):
-            self.told.extend(offspring.get_array("id").tolist())
+        def contract(self):
+            return ComponentContract(
+                lifecycle=LifecycleContract(
+                    feedback=FeedbackContract(accepted_channels=frozenset({"true"}))
+                )
+            )
+
+        def tell(self, feedback: FeedbackBatch, view: StateView) -> StatePatch:
+            del feedback
+            self.told.extend(view.context.offspring.get_array("id").tolist())
+            return StatePatch(writes={})
 
     callback = CallbackManager()
     callback_ids = []
@@ -1599,6 +1680,7 @@ def test_partial_callback_checkpoint_reattaches_and_finishes(tmp_path):
         algorithm=algorithm,
         callback_manager=callback,
     )
+    scheduler.enable_feedback_accumulator()
     request = EvaluationRequest(
         np.int64(0),
         np.array([10, 11], dtype=np.int64),
@@ -1614,20 +1696,16 @@ def test_partial_callback_checkpoint_reattaches_and_finishes(tmp_path):
     restored = OptimizationState.load(path, state.problem)
     assert restored.pending_evaluations[0].status is EvaluationStatus.PARTIAL
     assert restored.pending_evaluations[0].processing[0] == "callback-completed"
-    resumed = AsyncEvaluationScheduler(
+    resumed_scheduler = AsyncEvaluationScheduler(
         evaluator,
         retry_limit=1,
         feedback_builder=TrueOnlyFeedback(),
         algorithm=algorithm,
         callback_manager=callback,
-    ).reattach(restored)
-    resumed = AsyncEvaluationScheduler(
-        evaluator,
-        retry_limit=1,
-        feedback_builder=TrueOnlyFeedback(),
-        algorithm=algorithm,
-        callback_manager=callback,
-    ).poll(resumed, wait=True)
+    )
+    resumed_scheduler.enable_feedback_accumulator()
+    resumed = resumed_scheduler.reattach(restored)
+    resumed = resumed_scheduler.poll(resumed, wait=True)
     assert resumed.pending_evaluations == {}
     assert resumed.evaluation_handles == {}
     assert resumed.evaluation_owners == {}
@@ -1740,7 +1818,8 @@ def test_accumulator_checkpoint_reattach_rebuilds_partial_without_duplicate_tell
 
 def test_fatal_tombstone_roundtrip_raises_typed_error(tmp_path):
     class FailingAlgorithm:
-        def tell(self, state, provider, offspring):
+        def tell(self, feedback: FeedbackBatch, view: StateView) -> StatePatch:
+            del feedback, view
             raise RuntimeError("tell failed")
 
     state = make_state()
@@ -1769,7 +1848,8 @@ def test_fatal_tombstone_roundtrip_raises_typed_error(tmp_path):
 
 def test_scheduler_fatal_state_retains_the_keyed_state_reference():
     class FailingAlgorithm:
-        def tell(self, state, provider, offspring):
+        def tell(self, feedback: FeedbackBatch, view: StateView) -> StatePatch:
+            del feedback, view
             raise RuntimeError("tell failed")
 
     state = make_state()
@@ -1793,7 +1873,8 @@ def test_tell_failure_cannot_be_retried_after_tell_started():
         def __init__(self):
             self.calls = 0
 
-        def tell(self, state, provider, offspring):
+        def tell(self, feedback: FeedbackBatch, view: StateView) -> StatePatch:
+            del feedback, view
             self.calls += 1
             raise RuntimeError("tell failed")
 

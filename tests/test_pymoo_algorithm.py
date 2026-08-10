@@ -6,6 +6,8 @@ from typing import Any, cast
 
 import numpy as np
 import pytest
+from _algorithm_boundary import ask as algorithm_ask
+from _algorithm_boundary import tell as algorithm_tell
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.algorithms.soo.nonconvex.ga import GA as PymooGA  # noqa: N811
 
@@ -130,7 +132,7 @@ class TestPymooAlgorithmAskTell:
         problem = _make_problem()
         algo = PymooAlgorithm(PymooGA(pop_size=N_POP))
         ctx = _make_ctx(algo, problem)
-        cand = algo.ask(ctx, _DummyProvider())
+        cand = algorithm_ask(algo, ctx, _DummyProvider())
         assert len(cand) == N_POP
         assert np.all(cand.x >= problem.lb) and np.all(cand.x <= problem.ub)
         np.testing.assert_array_equal(
@@ -142,10 +144,10 @@ class TestPymooAlgorithmAskTell:
         algo = PymooAlgorithm(PymooGA(pop_size=N_POP))
         ctx = _make_ctx(algo, problem)
         population = ctx.population
-        algo.ask(ctx, _DummyProvider())
+        algorithm_ask(algo, ctx, _DummyProvider())
 
         counting_ctx = _CountingContext(ctx)
-        algo.ask(cast(OptimizationState, counting_ctx), _DummyProvider())
+        algorithm_ask(algo, cast(OptimizationState, counting_ctx), _DummyProvider())
         assert counting_ctx.population_lookups == 1
         algo._sync_population(cast(OptimizationState, counting_ctx))
         assert counting_ctx.population_lookups == 2
@@ -155,9 +157,9 @@ class TestPymooAlgorithmAskTell:
         problem = _make_problem()
         algo = PymooAlgorithm(PymooGA(pop_size=N_POP))
         ctx = _make_ctx(algo, problem)
-        cand = algo.ask(ctx, _DummyProvider())
+        cand = algorithm_ask(algo, ctx, _DummyProvider())
         cand.update_array("f", np.array([problem.func(x) for x in cand.x]))
-        algo.tell(ctx, _DummyProvider(), cand)
+        algorithm_tell(algo, ctx, cand, _DummyProvider())
         assert len(ctx.population) == N_POP
         assert np.isfinite(ctx.population.get_array("f")).all()
 
@@ -171,7 +173,7 @@ class TestPymooAlgorithmAskTell:
         problem = _make_problem()
         algo = PymooAlgorithm(PymooGA(pop_size=N_POP))
         ctx = _make_ctx(algo, problem)
-        cand = algo.ask(ctx, _DummyProvider())
+        cand = algorithm_ask(algo, ctx, _DummyProvider())
 
         f_correct = np.array([problem.func(x) for x in cand.x])
         cand.update_array("f", f_correct)
@@ -183,7 +185,7 @@ class TestPymooAlgorithmAskTell:
             reordered.get_array("pymoo_idx"), cand.get_array("pymoo_idx")
         )
 
-        algo.tell(ctx, _DummyProvider(), reordered)
+        algorithm_tell(algo, ctx, reordered, _DummyProvider())
 
         # every surviving x must match its own true f, not a mismatched one
         for x, f in zip(ctx.population.x, ctx.population.f, strict=True):
@@ -196,10 +198,10 @@ class TestPymooAlgorithmAskTell:
             problem = _make_problem(direction=direction)
             algo = PymooAlgorithm(PymooGA(pop_size=N_POP))
             ctx = _make_ctx(algo, problem)
-            cand = algo.ask(ctx, _DummyProvider())
+            cand = algorithm_ask(algo, ctx, _DummyProvider())
             f = np.array([problem.func(x) for x in cand.x])
             cand.update_array("f", f)
-            algo.tell(ctx, _DummyProvider(), cand)
+            algorithm_tell(algo, ctx, cand, _DummyProvider())
 
             alg_pop = algo.pymoo_algorithm.pop
             assert alg_pop is not None
@@ -217,11 +219,11 @@ class TestPymooAlgorithmAskTell:
         problem = _make_problem(n_obj=2)
         algo = PymooAlgorithm(NSGA2(pop_size=20))
         ctx = _make_ctx(algo, problem, n_pop=20)
-        cand = algo.ask(ctx, _DummyProvider())
+        cand = algorithm_ask(algo, ctx, _DummyProvider())
         assert len(cand) == 20
         f = np.array([problem.func(x) for x in cand.x])
         cand.update_array("f", f)
-        algo.tell(ctx, _DummyProvider(), cand)
+        algorithm_tell(algo, ctx, cand, _DummyProvider())
         assert len(ctx.population) == 20
         assert ctx.population.get_array("f").shape == (20, 2)
 
@@ -229,12 +231,12 @@ class TestPymooAlgorithmAskTell:
         problem = _make_problem(constrained=True)
         algo = PymooAlgorithm(PymooGA(pop_size=N_POP))
         ctx = _make_ctx(algo, problem)
-        cand = algo.ask(ctx, _DummyProvider())
+        cand = algorithm_ask(algo, ctx, _DummyProvider())
         g = np.array([problem.evaluate_constraints(x)[0] for x in cand.x])
         f = np.array([problem.func(x) for x in cand.x])
         cand.update_array("f", f)
         cand.update_array("g", g)
-        algo.tell(ctx, _DummyProvider(), cand)
+        algorithm_tell(algo, ctx, cand, _DummyProvider())
         assert ctx.population.get_array("g").shape == (N_POP, 1)
         assert np.isfinite(ctx.population.get_array("cv")).all()
 
@@ -243,26 +245,26 @@ class TestPymooAlgorithmAskTell:
         algo = PymooAlgorithm(PymooGA(pop_size=N_POP + 3))
         ctx = _make_ctx(algo, problem, n_pop=N_POP)
         with pytest.raises(ConfigurationError):
-            algo.ask(ctx, _DummyProvider())
+            algorithm_ask(algo, ctx, _DummyProvider())
 
     def test_partial_tell_default_raises(self):
         problem = _make_problem()
         algo = PymooAlgorithm(PymooGA(pop_size=N_POP))
         ctx = _make_ctx(algo, problem)
-        cand = algo.ask(ctx, _DummyProvider())
+        cand = algorithm_ask(algo, ctx, _DummyProvider())
         cand.update_array("f", np.array([problem.func(x) for x in cand.x]))
         truncated = cand.extract(np.arange(N_POP - 2))
         with pytest.raises(ConfigurationError):
-            algo.tell(ctx, _DummyProvider(), truncated)
+            algorithm_tell(algo, ctx, truncated, _DummyProvider())
 
     def test_partial_tell_opt_in_runs(self):
         problem = _make_problem()
         algo = PymooAlgorithm(PymooGA(pop_size=N_POP), allow_partial_tell=True)
         ctx = _make_ctx(algo, problem)
-        cand = algo.ask(ctx, _DummyProvider())
+        cand = algorithm_ask(algo, ctx, _DummyProvider())
         cand.update_array("f", np.array([problem.func(x) for x in cand.x]))
         truncated = cand.extract(np.arange(N_POP - 2))
-        algo.tell(ctx, _DummyProvider(), truncated)  # should not raise
+        algorithm_tell(algo, ctx, truncated, _DummyProvider())  # should not raise
         assert len(ctx.population) == N_POP
 
 
@@ -310,9 +312,9 @@ class TestPymooSyncPopulationIdContinuity:
         )
         ctx.candidate_id_allocator.allocate(N_POP)  # keep ahead of seeded ids
 
-        cand = algo.ask(ctx, _DummyProvider())
+        cand = algorithm_ask(algo, ctx, _DummyProvider())
         cand.update_array("f", np.array([problem.func(x) for x in cand.x]))
-        algo.tell(ctx, _DummyProvider(), cand)
+        algorithm_tell(algo, ctx, cand, _DummyProvider())
 
         ids_after_first_sync = ctx.population.get_array("id").copy()
         x_after_first_sync = ctx.population.get_array("x").copy()
@@ -335,9 +337,9 @@ class TestPymooSyncPopulationIdContinuity:
         ctx.population.update_array("x", np.zeros_like(ctx.population.x))
         ctx.candidate_id_allocator.allocate(N_POP)
 
-        cand = algo.ask(ctx, _DummyProvider())
+        cand = algorithm_ask(algo, ctx, _DummyProvider())
         cand.update_array("f", np.array([problem.func(x) for x in cand.x]))
-        algo.tell(ctx, _DummyProvider(), cand)
+        algorithm_tell(algo, ctx, cand, _DummyProvider())
 
         ids = ctx.population.get_array("id")
         xs = ctx.population.get_array("x")
@@ -356,13 +358,13 @@ class TestPymooSyncPopulationIdContinuity:
         ctx = _make_ctx(algo, problem, with_ids=True)
         ctx.candidate_id_allocator.allocate(N_POP)
         parent_ids = ctx.population.get_array("id").copy()
-        cand = algo.ask(ctx, _DummyProvider())
+        cand = algorithm_ask(algo, ctx, _DummyProvider())
         offspring_ids = cand.get_array("id").copy()
         cand.update_array(
             "f", np.full((len(cand), 1), offspring_objective, dtype=np.float64)
         )
 
-        algo.tell(ctx, _DummyProvider(), cand)
+        algorithm_tell(algo, ctx, cand, _DummyProvider())
 
         pymoo_ids = np.asarray(
             cast(Any, algo.pymoo_algorithm.pop).get("saealib_candidate_id"),
@@ -378,13 +380,13 @@ class TestPymooSyncPopulationIdContinuity:
         algo = PymooAlgorithm(NSGA2(pop_size=N_POP), allow_partial_tell=True)
         ctx = _make_ctx(algo, problem, with_ids=True)
         ctx.candidate_id_allocator.allocate(N_POP)
-        cand = algo.ask(ctx, _DummyProvider())
+        cand = algorithm_ask(algo, ctx, _DummyProvider())
         infill_ids = cand.get_array("id").copy()
         selected_idx = np.array([1, 3, 6, 9], dtype=np.intp)
         selected = cand.extract(selected_idx)
         selected.update_array("f", np.full((len(selected), 1), 0.0, dtype=np.float64))
 
-        algo.tell(ctx, _DummyProvider(), selected)
+        algorithm_tell(algo, ctx, selected, _DummyProvider())
 
         assert algo._infills is not None
         updated_ids = np.asarray(
@@ -403,7 +405,7 @@ class TestPymooSyncPopulationIdContinuity:
         algo = PymooAlgorithm(NSGA2(pop_size=N_POP))
         ctx = _make_ctx(algo, problem, with_ids=True)
         ctx.candidate_id_allocator.allocate(N_POP)
-        cand = algo.ask(ctx, _DummyProvider())
+        cand = algorithm_ask(algo, ctx, _DummyProvider())
         cand.update_array("f", np.zeros((len(cand), 1), dtype=np.float64))
         assert algo._infills is not None
         algo._infills.set(
@@ -411,7 +413,7 @@ class TestPymooSyncPopulationIdContinuity:
         )
 
         with pytest.raises(ConfigurationError, match="provenance"):
-            algo.tell(ctx, _DummyProvider(), cand)
+            algorithm_tell(algo, ctx, cand, _DummyProvider())
 
 
 # ---------------------------------------------------------------------------

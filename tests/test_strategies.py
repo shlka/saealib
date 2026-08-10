@@ -256,9 +256,9 @@ class TestPreSelectionStrategy:
         told = []
         tell = provider.algorithm.tell
 
-        def recording_tell(ctx_arg, dispatch, offspring):
-            told.append(offspring.x.copy())
-            tell(ctx_arg, dispatch, offspring)
+        def recording_tell(feedback, state):
+            told.append(state.context.offspring.x.copy())
+            return tell(feedback, state)
 
         provider.algorithm.tell = recording_tell
         ctx = strategy.step(ctx, provider)

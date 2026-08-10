@@ -17,6 +17,7 @@ from typing import cast
 
 import numpy as np
 import pytest
+from _algorithm_boundary import ask as algorithm_ask
 
 from saealib import GA, SequentialSelection, TruncationSelection, minimize
 from saealib.comparators import NSGA2Comparator, SingleObjectiveComparator
@@ -1035,7 +1036,7 @@ class TestGAHookInvocation:
         )
         provider = _DispatchOnlyProvider()
         ctx = _make_ctx()
-        ga.ask(ctx, provider)
+        algorithm_ask(ga, ctx, provider)
         assert call_count[0] > 0
 
     def test_post_mutation_called_once_per_offspring(self):
@@ -1054,7 +1055,7 @@ class TestGAHookInvocation:
         )
         provider = _DispatchOnlyProvider()
         ctx = _make_ctx()
-        candidates = ga.ask(ctx, provider)
+        candidates = algorithm_ask(ga, ctx, provider)
         assert call_count[0] == len(candidates)
 
 
@@ -2271,7 +2272,7 @@ class TestDuplicateElimination:
         )
         provider = _DispatchOnlyProvider()
         ctx = _make_ctx(n_pop=10)
-        candidates = ga.ask(ctx, provider)
+        candidates = algorithm_ask(ga, ctx, provider)
         assert len(candidates) == 10
 
     def test_ga_dedup_retries_when_offspring_are_copies(self):
@@ -2291,7 +2292,7 @@ class TestDuplicateElimination:
         )
         provider = _DispatchOnlyProvider()
         ctx = _make_ctx(n_pop=10)
-        candidates = ga.ask(ctx, provider)
+        candidates = algorithm_ask(ga, ctx, provider)
         assert len(candidates) == 10
 
     def test_ga_none_dedup_preserves_behavior(self):
@@ -2305,7 +2306,7 @@ class TestDuplicateElimination:
         )
         provider = _DispatchOnlyProvider()
         ctx = _make_ctx(n_pop=10)
-        candidates = ga.ask(ctx, provider)
+        candidates = algorithm_ask(ga, ctx, provider)
         assert len(candidates) == 10
 
 

@@ -8,13 +8,22 @@ from typing import TYPE_CHECKING, Literal, cast
 
 import numpy as np
 
-from saealib.algorithms.base import Algorithm
+from saealib.algorithms.base import (
+    AskTellAlgorithm,
+    ProposalRequest,
+    algorithm_context,
+)
 from saealib.callback import PostAskEvent, PostCrossoverEvent, PostMutationEvent
 from saealib.context import OptimizationState
 from saealib.core.contracts import (
     ComponentContract,
+    FeedbackBatch,
+    FeedbackRequirement,
     PartSpec,
+    ProposalBatch,
+    ProposalRelations,
 )
+from saealib.core.state import POPULATIONS_MAIN, StatePatch, StateView
 from saealib.exceptions import ConfigurationError
 from saealib.operators.crossover import (
     Crossover,
@@ -35,7 +44,6 @@ from saealib.space import BoundsService
 
 if TYPE_CHECKING:
     from saealib.operators.selection import ParentSelection, SurvivorSelection
-    from saealib.optimizer import Dispatchable
 
 
 def _resolve_variation_execution(
@@ -194,7 +202,7 @@ def _route_mutation(
 
 
 @register()
-class GA(Algorithm):
+class GA(AskTellAlgorithm):
     """
     Genetic Algorithm class.
 
@@ -395,26 +403,25 @@ class GA(Algorithm):
 
     def ask(
         self,
-        ctx: OptimizationState,
-        provider: Dispatchable,
-        n_offspring: int | None = None,
-    ) -> Population:
+        request: ProposalRequest,
+        state: StateView,
+    ) -> ProposalBatch:
         """
         Generate offspring via crossover and mutation.
 
         Parameters
         ----------
-        ctx : OptimizationState
-            Current optimization context.
-        provider : Dispatchable
-            Component provider.
-        n_offspring : int or None, optional
-            Number of offspring. Defaults to the current population size.
+        request : ProposalRequest
+            Request-specific offspring count.
+        state : StateView
+            Read-only algorithm state view.
 
         Returns
         -------
-        Population
+        ProposalBatch
         """
+        ctx = algorithm_context(state)
+        n_offspring = request.n_offspring
         # Re-validate per-type crossover consistency here because operators may be
         # replaced or mutated after __init__, bypassing constructor checks.
         if ctx.problem.integer_mask.any() or ctx.problem.categorical_mask.any():
@@ -462,11 +469,11 @@ class GA(Algorithm):
         parents_batch = pop[parent_idx_m]
         cand = self._crossover_pairs(ctx, parents_batch, lb, ub, mixed)
         cand = self._repair_batch(ctx, cand, handler, constraints, lb, ub)
-        provider.dispatch(PostCrossoverEvent(ctx=ctx, candidates=cand))
+        state.dispatch(PostCrossoverEvent(ctx=ctx, candidates=cand))
 
         cand = self._mutate_candidates(ctx, cand, lb, ub, mixed)
         cand = self._repair_batch(ctx, cand, handler, constraints, lb, ub)
-        provider.dispatch(PostMutationEvent(ctx=ctx, candidates=cand))
+        state.dispatch(PostMutationEvent(ctx=ctx, candidates=cand))
 
         if self.duplicate_elimination is not None:
             pop_x = ctx.population.get_array("x")
@@ -481,11 +488,16 @@ class GA(Algorithm):
                 )
                 cand[dup_idx] = repl[: len(dup_idx)]
 
-        provider.dispatch(PostAskEvent(ctx=ctx, candidates=cand))
+        state.dispatch(PostAskEvent(ctx=ctx, candidates=cand))
 
         cand_pop = ctx.population.empty_like(capacity=target)
         cand_pop.extend({"x": cand[:target]})
-        return cand_pop
+        return ProposalBatch.from_allocator(
+            ctx.proposal_id_allocator,
+            candidates=cand_pop,
+            relations=ProposalRelations(row_count=len(cand_pop)),
+            requirements=FeedbackRequirement(quantities=()),
+        )
 
     def _crossover_pairs(
         self,
@@ -732,22 +744,24 @@ class GA(Algorithm):
 
     def tell(
         self,
-        ctx: OptimizationState,
-        provider: Dispatchable,
-        offspring: Population,
-    ):
+        feedback: FeedbackBatch,
+        state: StateView,
+    ) -> StatePatch:
         """
         Update the population using (μ+λ) survivor selection.
 
         Parameters
         ----------
-        ctx : OptimizationState
-            Current optimization context.
-        provider : Dispatchable
-            Component provider.
-        offspring : Population
-            Offspring population.
+        feedback : FeedbackBatch
+            Feedback delivered for the current proposal.
+        state : StateView
+            Read-only algorithm state view.
         """
+        del feedback
+        ctx = algorithm_context(state)
+        offspring = ctx.offspring
+        if offspring is None:
+            raise ConfigurationError("GA.tell() requires an offspring population")
         population = ctx.population
         popsize = len(population)
 
@@ -764,3 +778,4 @@ class GA(Algorithm):
         ):
             population.clear()
             population._extend_internal(pool.extract(survivor_idx), preserve_ids=True)
+        return StatePatch(writes={POPULATIONS_MAIN: population})

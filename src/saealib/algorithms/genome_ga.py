@@ -8,16 +8,25 @@ from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 
-from saealib.algorithms.base import Algorithm
-from saealib.context import OptimizationState
-from saealib.core.contracts import PartSpec
+from saealib.algorithms.base import (
+    AskTellAlgorithm,
+    ProposalRequest,
+    algorithm_context,
+)
+from saealib.core.contracts import (
+    FeedbackBatch,
+    FeedbackRequirement,
+    PartSpec,
+    ProposalBatch,
+    ProposalRelations,
+)
+from saealib.core.state import POPULATIONS_MAIN, StatePatch, StateView
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.population.genome import GenomeBatch
 from saealib.problem import Problem
 
 if TYPE_CHECKING:
     from saealib.operators.selection import ParentSelection, SurvivorSelection
-    from saealib.optimizer import Dispatchable
 
 __all__ = ["GenomeGA"]
 
@@ -57,7 +66,7 @@ def _mutate_genomes(
     return method(candidates, rng=rng)
 
 
-class GenomeGA(Algorithm):
+class GenomeGA(AskTellAlgorithm):
     """A small ``ask``/``tell`` GA that only uses the GenomeBatch protocol."""
 
     def __init__(
@@ -121,17 +130,24 @@ class GenomeGA(Algorithm):
 
     def ask(
         self,
-        ctx: OptimizationState,
-        provider: Dispatchable,
-        n_offspring: int | None = None,
-    ) -> Population:
+        request: ProposalRequest,
+        state: StateView,
+    ) -> ProposalBatch:
         """Generate offspring from the current optimization state."""
+        ctx = algorithm_context(state)
+        n_offspring = request.n_offspring
         popsize = len(ctx.population)
         target = popsize if n_offspring is None else n_offspring
         if target < 0:
             raise ValueError("n_offspring must be non-negative")
         if target == 0:
-            return ctx.population.empty_like(capacity=0)
+            candidates = ctx.population.empty_like(capacity=0)
+            return ProposalBatch.from_allocator(
+                ctx.proposal_id_allocator,
+                candidates=candidates,
+                relations=ProposalRelations(row_count=0),
+                requirements=FeedbackRequirement(quantities=()),
+            )
         n_pair = math.ceil(target / self.n_children)
         parent_indices = self.parent_selection.select(
             ctx,
@@ -162,15 +178,24 @@ class GenomeGA(Algorithm):
         }
         columns["genome"] = offspring
         candidates.extend(columns)
-        return candidates
+        return ProposalBatch.from_allocator(
+            ctx.proposal_id_allocator,
+            candidates=candidates,
+            relations=ProposalRelations(row_count=len(candidates)),
+            requirements=FeedbackRequirement(quantities=()),
+        )
 
     def tell(
         self,
-        ctx: OptimizationState,
-        provider: Dispatchable,
-        offspring: Population,
-    ) -> None:
+        feedback: FeedbackBatch,
+        state: StateView,
+    ) -> StatePatch:
         """Update the population with evaluated offspring."""
+        del feedback
+        ctx = algorithm_context(state)
+        offspring = ctx.offspring
+        if offspring is None:
+            raise ValueError("GenomeGA.tell() requires an offspring population")
         population = ctx.population
         pool = population.empty_like(capacity=len(population) + len(offspring))
         pool._extend_internal(population, preserve_ids=True)
@@ -181,3 +206,4 @@ class GenomeGA(Algorithm):
         ):
             population.clear()
             population._extend_internal(pool.extract(survivor_idx), preserve_ids=True)
+        return StatePatch(writes={POPULATIONS_MAIN: population})

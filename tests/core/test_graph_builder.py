@@ -205,7 +205,7 @@ def test_all_strategy_data_edges_resolve_to_declared_directional_ports():
             "feedback",
             "tell",
             "feedback_consumer",
-            "offspring",
+            "feedback",
         ),
     }
     surrogate = {
@@ -465,7 +465,7 @@ def test_u2_feedback_is_cross_node_and_control_is_not_data():
     feedback_edges = [
         edge
         for edge in graph.data_edges
-        if edge.source_port == "feedback" and edge.target_port == "offspring"
+        if edge.source_port == "feedback" and edge.target_port == "feedback"
     ]
     assert len(feedback_edges) == 1
     edge = feedback_edges[0]

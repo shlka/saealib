@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import inspect
 import time
 from collections.abc import Iterable
 from math import fsum
@@ -10,10 +9,6 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from saealib.algorithms.base import (
-    LegacyPopulationAlgorithmAdapter,
-    _NoOpDispatchProvider,
-)
 from saealib.callback import PostEvaluationEvent
 from saealib.context import EvaluationPlanState
 from saealib.core.adapters import FeedbackAccumulator
@@ -70,7 +65,7 @@ from saealib.policies.feedback import (
     _feedback_batch_from_result,
 )
 from saealib.population.genome import DenseVectorBatch
-from saealib.stages import deliver_feedback, deliver_legacy_population_feedback
+from saealib.stages import deliver_feedback
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
@@ -119,6 +114,7 @@ class AsyncEvaluationScheduler:
             EVALUATIONS_COUNT,
             ARCHIVES_MAIN,
             ARCHIVES_PARETO,
+            PROPOSALS_CURRENT,
         )
         writes = (
             PENDING_EVALUATIONS,
@@ -184,10 +180,11 @@ class AsyncEvaluationScheduler:
         self._feedback_accumulator: FeedbackAccumulator | None = None
         self._feedback_sequences: dict[int, int] = {}
         self._feedback_proposal_candidates: dict[int, frozenset[int]] = {}
+        self._feedback_proposal_owners: dict[int, Any] = {}
 
     def enable_feedback_accumulator(self) -> None:
         """Enable delivery through a compiler-inserted accumulator."""
-        consumer, _ = self._feedback_consumer()
+        consumer = self._feedback_consumer()
         contract_factory = getattr(consumer, "contract", None)
         contract = (
             contract_factory().lifecycle.feedback
@@ -304,6 +301,18 @@ class AsyncEvaluationScheduler:
         try:
             for request, estimated_cost in plans:
                 request_id = int(request.request_id)
+                try:
+                    proposal_id = int(state.get_state(PROPOSALS_CURRENT))
+                except KeyError:
+                    proposal_id = None
+                if proposal_id is not None and "proposal_id" not in request.metadata:
+                    request = EvaluationRequest(
+                        request.request_id,
+                        request.candidate_ids,
+                        request.payload,
+                        request.outputs,
+                        {**request.metadata, "proposal_id": proposal_id},
+                    )
                 request = _scheduler_request(request)
                 handle = self.evaluator.submit(request, state.problem)
                 started.append((request_id, handle))
@@ -697,11 +706,13 @@ class AsyncEvaluationScheduler:
             )
         else:
             current = state
-        if (
-            not replay
-            and current.evaluation_plan is not None
-            and update.result is not None
-        ):
+        current_plan = current.evaluation_plan
+        current_plan_ids = (
+            {int(item.request_id) for item in current_plan.requests}
+            if current_plan is not None
+            else set()
+        )
+        if not replay and update.result is not None and request_id in current_plan_ids:
             plan_updates = {
                 request_id: list(updates)
                 for request_id, updates in current.evaluation_plan_updates.items()
@@ -712,11 +723,22 @@ class AsyncEvaluationScheduler:
         if current_pending.feedback_result is not None:
             current = current.replace(feedback_result=current_pending.feedback_result)
         current_plan = current.evaluation_plan
-        if current_plan is not None and update.status in {
-            EvaluationStatus.COMPLETED,
-            EvaluationStatus.FAILED,
-            EvaluationStatus.CANCELLED,
-        }:
+        current_plan_ids = (
+            {int(item.request_id) for item in current_plan.requests}
+            if current_plan is not None
+            else set()
+        )
+        active_plan_request = request_id in current_plan_ids
+        if (
+            active_plan_request
+            and current_plan is not None
+            and update.status
+            in {
+                EvaluationStatus.COMPLETED,
+                EvaluationStatus.FAILED,
+                EvaluationStatus.CANCELLED,
+            }
+        ):
             plan_state = current.evaluation_plan_state
             completed = set(plan_state.completed if plan_state else ())
             acknowledged = set(plan_state.acknowledged if plan_state else ())
@@ -744,20 +766,26 @@ class AsyncEvaluationScheduler:
                         ),
                     )
                     current_plan = continuation_plan
-        repeated_plan = self._is_repeated_plan(current_plan)
+                    current_plan_ids = {
+                        int(item.request_id) for item in continuation_plan.requests
+                    }
+        repeated_plan = active_plan_request and self._is_repeated_plan(current_plan)
         plan_effect_update = update
-        if current_plan is not None and len(current_plan.requests) > 1:
+        if (
+            active_plan_request
+            and current_plan is not None
+            and len(current_plan.requests) > 1
+        ):
             plan_state = current.evaluation_plan_state
             completed = set(plan_state.completed if plan_state else ())
             acknowledged = set(plan_state.acknowledged if plan_state else ())
-            plan_ids = {int(request.request_id) for request in current_plan.requests}
             if update.status in {
                 EvaluationStatus.COMPLETED,
                 EvaluationStatus.FAILED,
                 EvaluationStatus.CANCELLED,
             }:
                 completed.add(request_id)
-            if plan_ids <= completed | acknowledged:
+            if current_plan_ids <= completed | acknowledged:
                 plan_effect_update = (
                     self._aggregate_plan_update(current, update)
                     if repeated_plan
@@ -767,8 +795,21 @@ class AsyncEvaluationScheduler:
                 )
             else:
                 plan_effect_update = None
+        # The compiler-inserted accumulator is the proposal-level completion
+        # boundary.  Feed it each request update as it arrives so an async
+        # refill cannot replace the plan before the earlier request has been
+        # delivered.  Without the adapter, multi-request plans retain their
+        # aggregate effect semantics below.
+        accumulator_update = (
+            update if self._feedback_accumulator is not None else plan_effect_update
+        )
         population_update = update
-        if current_plan is not None and len(current_plan.requests) > 1:
+        if (
+            self._feedback_accumulator is None
+            and active_plan_request
+            and current_plan is not None
+            and len(current_plan.requests) > 1
+        ):
             population_update = plan_effect_update
         if population_update is None:
             has_rows = False
@@ -793,15 +834,15 @@ class AsyncEvaluationScheduler:
             current = self._apply_population(current, population_update)
             current = progress(current, "population-applied")
             stage_rank = 1
-        if plan_effect_update is not None and stage_rank < 2 and has_rows:
-            current = self._apply_archive(current, plan_effect_update)
+        if accumulator_update is not None and stage_rank < 2 and has_rows:
+            current = self._apply_archive(current, accumulator_update)
             current = progress(current, "archived")
             stage_rank = 2
-        if plan_effect_update is not None and stage_rank < 3 and has_rows:
-            current = self._apply_feedback(current, plan_effect_update)
+        if accumulator_update is not None and stage_rank < 3 and has_rows:
+            current = self._apply_feedback(current, accumulator_update)
             current = progress(current, "feedback-applied")
             stage_rank = 3
-        if plan_effect_update is not None and stage_rank < 4 and has_rows:
+        if accumulator_update is not None and stage_rank < 4 and has_rows:
             current = progress(
                 current,
                 "tell-started",
@@ -810,7 +851,7 @@ class AsyncEvaluationScheduler:
                 ),
             )
             try:
-                current = self._apply_feedback_delivery(current, plan_effect_update)
+                current = self._apply_feedback_delivery(current, accumulator_update)
             except Exception as exc:
                 raise EvaluationFatalError(
                     "algorithm tell failed after side effects; update is fatal",
@@ -966,16 +1007,16 @@ class AsyncEvaluationScheduler:
             and not retried
             and update.result is None
         ):
-            try:
-                proposal_id = int(current.get_state(PROPOSALS_CURRENT))
-            except KeyError:
-                proposal_id = None
-            if proposal_id is not None:
-                self._feedback_accumulator.discard(proposal_id)
-                self._sync_feedback_accumulator(current)
+            proposal_id = self._proposal_id(current, request_id)
+            self._feedback_accumulator.discard(proposal_id)
+            self._feedback_proposal_owners.pop(proposal_id, None)
+            self._sync_feedback_accumulator(current)
+        callback_update = (
+            update if self._feedback_accumulator is not None else plan_effect_update
+        )
         if (
-            plan_effect_update is not None
-            and len(plan_effect_update.candidate_ids)
+            callback_update is not None
+            and len(callback_update.candidate_ids)
             and self.callback_manager is not None
         ):
             current = progress(
@@ -989,16 +1030,16 @@ class AsyncEvaluationScheduler:
             offspring = None
             owner = self._owner(current, request_id)
             offspring = owner.extract(
-                self._rows(current, plan_effect_update.candidate_ids, request_id)
+                self._rows(current, callback_update.candidate_ids, request_id)
             )
             try:
                 self.callback_manager.dispatch(
                     PostEvaluationEvent(
                         ctx=current,
                         offspring=offspring,
-                        candidate_ids=plan_effect_update.candidate_ids,
-                        request_id=plan_effect_update.request_id,
-                        status=plan_effect_update.status,
+                        candidate_ids=callback_update.candidate_ids,
+                        request_id=callback_update.request_id,
+                        status=callback_update.status,
                     )
                 )
             except Exception as exc:
@@ -1019,7 +1060,7 @@ class AsyncEvaluationScheduler:
                 evaluation_owners=owners,
             )
             plan_state = current.evaluation_plan_state
-            if plan_state is not None:
+            if active_plan_request and plan_state is not None:
                 completed = tuple(sorted(set(plan_state.completed) | {request_id}))
                 acknowledged = tuple(
                     sorted(set(plan_state.acknowledged) | {request_id})
@@ -1196,6 +1237,47 @@ class AsyncEvaluationScheduler:
             raise EvaluationProtocolError("async evaluation owner is missing")
         return owner
 
+    def _proposal_id(self, state: OptimizationState, request_id: int) -> int:
+        """Resolve the proposal that owns one request, even after a refill."""
+        pending = state.pending_evaluations.get(int(request_id))
+        if pending is not None:
+            value = pending.request.metadata.get("proposal_id")
+            if value is not None:
+                return int(value)
+        try:
+            return int(state.get_state(PROPOSALS_CURRENT))
+        except KeyError as exc:
+            raise ValidationError("feedback proposal ID is missing") from exc
+
+    def _capture_proposal_owner(
+        self,
+        state: OptimizationState,
+        proposal_id: int,
+        candidate_ids: frozenset[int],
+    ) -> Any:
+        """Retain the proposal population while asynchronous refills advance."""
+        existing = self._feedback_proposal_owners.get(proposal_id)
+        if existing is not None:
+            return existing
+
+        candidates = tuple(int(value) for value in candidate_ids)
+        owners = tuple(state.evaluation_owners.values())
+        current = state.offspring
+        if current is not None:
+            owners = (current, *owners)
+        for owner in owners:
+            if "id" not in owner.schema:
+                continue
+            ids = np.asarray(owner.get_array("id"), dtype=np.int64)
+            rows = np.flatnonzero(np.isin(ids, candidates))
+            if len(rows) == len(candidates):
+                captured = owner.extract(rows)
+                self._feedback_proposal_owners[proposal_id] = captured
+                return captured
+        raise EvaluationProtocolError(
+            f"async proposal {proposal_id} owner is missing candidate rows"
+        )
+
     def _rows(
         self, state: OptimizationState, ids: np.ndarray, request_id: int
     ) -> np.ndarray:
@@ -1347,43 +1429,9 @@ class AsyncEvaluationScheduler:
             owner.update_rows(rows, values)
         return state.replace(feedback_result=result)
 
-    @staticmethod
-    def _is_legacy_tell(component: object) -> bool:
-        """Recognize a tell method using the old population-based signature."""
-        tell = getattr(component, "tell", None)
-        if not callable(tell):
-            return False
-        try:
-            parameters = tuple(inspect.signature(tell).parameters.values())
-        except (TypeError, ValueError):
-            return True
-        if any(
-            parameter.kind is inspect.Parameter.VAR_POSITIONAL
-            for parameter in parameters
-        ):
-            return True
-        positional = tuple(
-            parameter
-            for parameter in parameters
-            if parameter.kind
-            in (
-                inspect.Parameter.POSITIONAL_ONLY,
-                inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            )
-        )
-        return len(positional) >= 3
-
-    def _feedback_consumer(self) -> tuple[Any, bool]:
-        """Return a per-delivery consumer and whether it needs the legacy seam."""
-        if isinstance(self.algorithm, LegacyPopulationAlgorithmAdapter):
-            return self.algorithm, True
-        if self._is_legacy_tell(self.algorithm):
-            provider = self.callback_manager or _NoOpDispatchProvider()
-            return (
-                LegacyPopulationAlgorithmAdapter.for_stage(self.algorithm, provider),
-                True,
-            )
-        return self.algorithm, False
+    def _feedback_consumer(self) -> Any:
+        """Return the configured canonical feedback consumer."""
+        return self.algorithm
 
     def _apply_feedback_delivery(
         self,
@@ -1396,20 +1444,7 @@ class AsyncEvaluationScheduler:
             or len(state.feedback_result.candidate_ids) == 0
         ):
             return state
-        owner = self._owner(state, int(update.request_id))
-        try:
-            proposal_id = int(state.get_state(PROPOSALS_CURRENT))
-        except KeyError:
-            # Direct scheduler callers from before J7b have no AskStage
-            # transport key.  Preserve their old call shape; normal runner
-            # execution always takes the FeedbackBatch path below.
-            rows = self._rows(
-                state, state.feedback_result.candidate_ids, int(update.request_id)
-            )
-            deliver_legacy_population_feedback(
-                self.algorithm, state, self, owner.extract(rows)
-            )
-            return state
+        proposal_id = self._proposal_id(state, int(update.request_id))
         sequence = self._next_feedback_sequence(proposal_id, int(update.sequence))
         feedback = _feedback_batch_from_result(
             state.feedback_result,
@@ -1437,8 +1472,24 @@ class AsyncEvaluationScheduler:
                 if ready is None:
                     return state
                 feedback = ready
-        consumer, legacy = self._feedback_consumer()
-        deliver_feedback(consumer, feedback, state, legacy=legacy)
+        consumer = self._feedback_consumer()
+        tell_offspring = self._feedback_proposal_owners.get(feedback.proposal_id)
+        if tell_offspring is None and self._feedback_accumulator is None:
+            owner = self._owner(state, int(update.request_id))
+            rows = self._rows(state, update.candidate_ids, int(update.request_id))
+            tell_offspring = owner.extract(rows)
+        deliver_feedback(
+            consumer,
+            feedback,
+            state,
+            dispatch=(
+                self.callback_manager.dispatch
+                if self.callback_manager is not None
+                else None
+            ),
+            offspring=tell_offspring,
+        )
+        self._feedback_proposal_owners.pop(feedback.proposal_id, None)
         return state
 
     def _deliver_accumulated_feedback(
@@ -1449,18 +1500,16 @@ class AsyncEvaluationScheduler:
     ) -> bool:
         """Route one scheduler delivery through the inserted accumulator."""
         accumulator = self._feedback_accumulator
-        if accumulator is None or state.offspring is None:
+        if accumulator is None:
             return False
         proposal_ids = self._proposal_candidate_ids(state, update, feedback.proposal_id)
         if not proposal_ids:
             return False
-        offspring_ids = (
-            np.asarray(state.offspring.get_array("id"), dtype=np.int64)
-            if "id" in state.offspring.schema
-            else np.arange(len(state.offspring), dtype=np.int64)
+        candidates = self._capture_proposal_owner(
+            state,
+            feedback.proposal_id,
+            proposal_ids,
         )
-        rows = np.flatnonzero(np.isin(offspring_ids, tuple(proposal_ids)))
-        candidates = state.offspring.extract(rows)
         schema = feedback.observations.schema
         quantities = tuple(
             QuantityRequirement(
@@ -1505,6 +1554,24 @@ class AsyncEvaluationScheduler:
                 and pending.original_candidate_ids is not None
             ):
                 other_ids.update(map(int, pending.original_candidate_ids))
+        # Deferred requests are represented in the plan before they are
+        # materialized as PendingEvaluation records.  Include them in the
+        # completion boundary, otherwise a first chunk can be finalized and
+        # discarded before the scheduler gets capacity to submit the rest.
+        plan = state.evaluation_plan
+        try:
+            current_proposal = int(state.get_state(PROPOSALS_CURRENT))
+        except KeyError:
+            current_proposal = None
+        if plan is not None and current_proposal == feedback.proposal_id:
+            plan_state = state.evaluation_plan_state
+            terminal_plan_ids = set(plan_state.completed if plan_state else ()) | set(
+                plan_state.acknowledged if plan_state else ()
+            )
+            for planned in plan.requests:
+                planned_id = int(planned.request_id)
+                if planned_id != request_id and planned_id not in terminal_plan_ids:
+                    other_ids.update(map(int, planned.candidate_ids))
         if proposal_ids.intersection(other_ids):
             return True
         try:
@@ -1528,10 +1595,17 @@ class AsyncEvaluationScheduler:
         if pending is not None and pending.original_candidate_ids is not None:
             candidate_ids.update(map(int, pending.original_candidate_ids))
         for other in state.pending_evaluations.values():
-            if other.original_candidate_ids is not None:
+            if (
+                other.request.metadata.get("proposal_id") == proposal_id
+                and other.original_candidate_ids is not None
+            ):
                 candidate_ids.update(map(int, other.original_candidate_ids))
         plan = state.evaluation_plan
-        if plan is not None:
+        try:
+            current_proposal = int(state.get_state(PROPOSALS_CURRENT))
+        except KeyError:
+            current_proposal = None
+        if plan is not None and current_proposal == proposal_id:
             for request in plan.requests:
                 candidate_ids.update(map(int, request.candidate_ids))
         result = frozenset(candidate_ids)
@@ -1540,7 +1614,16 @@ class AsyncEvaluationScheduler:
 
     def _next_feedback_sequence(self, proposal_id: int, requested: int) -> int:
         """Make evaluator retry sequence resets unique within one proposal."""
-        sequence = max(requested, self._feedback_sequences.get(proposal_id, -1) + 1)
+        persisted = (
+            self._feedback_accumulator.last_sequence(proposal_id)
+            if self._feedback_accumulator is not None
+            else -1
+        )
+        sequence = max(
+            requested,
+            self._feedback_sequences.get(proposal_id, -1) + 1,
+            persisted + 1,
+        )
         self._feedback_sequences[proposal_id] = sequence
         return sequence
 
@@ -1579,10 +1662,7 @@ class AsyncEvaluationScheduler:
                 update.candidate_ids,
                 state,
             )
-            try:
-                proposal_id = int(state.get_state(PROPOSALS_CURRENT))
-            except KeyError:
-                return
+            proposal_id = self._proposal_id(state, int(update.request_id))
             feedback = _feedback_batch_from_result(
                 feedback_result,
                 proposal_id=proposal_id,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from copy import copy
 from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Literal, TypeAlias
@@ -106,6 +107,23 @@ class ComponentNode:
                 "ComponentNode contract() must return ComponentContract"
             )
         object.__setattr__(self, "contract", contract)
+
+    def with_resolved_services(
+        self, resolved_services: Mapping[str, object]
+    ) -> ComponentNode:
+        """Return a service-enriched node without re-reading its contract.
+
+        A node's contract is the snapshot captured when the graph is built.
+        Resolution rules may add service bindings later, but rebuilding the
+        dataclass with ``dataclasses.replace`` would invoke
+        ``component.contract()`` a second time during the same compilation.
+        """
+        values = dict(resolved_services)
+        for service_name in values:
+            _name(service_name, "ComponentNode resolved service name")
+        result = copy(self)
+        object.__setattr__(result, "resolved_services", MappingProxyType(values))
+        return result
 
 
 @dataclass(frozen=True, kw_only=True)

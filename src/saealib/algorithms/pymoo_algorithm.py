@@ -7,15 +7,28 @@ from typing import TYPE_CHECKING, Protocol, cast
 
 import numpy as np
 
-from saealib.algorithms.base import Algorithm
+from saealib.algorithms.base import (
+    AskTellAlgorithm,
+    ProposalRequest,
+    algorithm_context,
+)
 from saealib.callback import PostAskEvent
 from saealib.core.contracts import (
     PARTIAL_ALLOWED,
     REPEATED_ALLOWED,
     ComponentContract,
     ExecutionContract,
+    FeedbackBatch,
+    FeedbackRequirement,
+    ProposalBatch,
+    ProposalRelations,
 )
-from saealib.core.state import RUNTIME_CANDIDATE_ID_ALLOCATOR
+from saealib.core.state import (
+    POPULATIONS_MAIN,
+    RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    StatePatch,
+    StateView,
+)
 from saealib.exceptions import ConfigurationError
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem.constraint import EqualityConstraint
@@ -26,7 +39,6 @@ if TYPE_CHECKING:
     from pymoo.core.problem import Problem as PymooCoreProblem
 
     from saealib.context import OptimizationState
-    from saealib.optimizer import Dispatchable
     from saealib.problem import Problem
 
 
@@ -67,7 +79,7 @@ class _PymooAlgorithmLike(Protocol):
         ...
 
 
-class PymooAlgorithm(Algorithm):
+class PymooAlgorithm(AskTellAlgorithm):
     """
     Adapter wrapping a pymoo Algorithm (e.g. ``NSGA2()``) as saealib's ``Algorithm``.
 
@@ -314,10 +326,9 @@ class PymooAlgorithm(Algorithm):
 
     def ask(
         self,
-        ctx: OptimizationState,
-        provider: Dispatchable,
-        n_offspring: int | None = None,
-    ) -> Population:
+        request: ProposalRequest,
+        state: StateView,
+    ) -> ProposalBatch:
         """
         Generate offspring via the wrapped pymoo algorithm's own ``ask()``.
 
@@ -336,6 +347,8 @@ class PymooAlgorithm(Algorithm):
         Population
             Candidates with ``x`` and ``pymoo_idx`` set.
         """
+        del request
+        ctx = algorithm_context(state)
         self._ensure_initialized(ctx)
         infills = self.pymoo_algorithm.ask()
         if infills is None:
@@ -353,7 +366,7 @@ class PymooAlgorithm(Algorithm):
             x[i] = handler.repair(x[i], constraints, lb, ub)
             x[i] = ctx.problem.repair(x[i])
 
-        provider.dispatch(PostAskEvent(ctx=ctx, candidates=x))
+        state.dispatch(PostAskEvent(ctx=ctx, candidates=x))
 
         population = ctx.population
         cand = population.empty_like(capacity=len(x))
@@ -363,14 +376,18 @@ class PymooAlgorithm(Algorithm):
             self._set_pymoo_candidate_ids(infills, candidate_ids)
             data["id"] = candidate_ids
         cand._extend_internal(data, preserve_ids=True)
-        return cand
+        return ProposalBatch.from_allocator(
+            ctx.proposal_id_allocator,
+            candidates=cand,
+            relations=ProposalRelations(row_count=len(cand)),
+            requirements=FeedbackRequirement(quantities=()),
+        )
 
     def tell(
         self,
-        ctx: OptimizationState,
-        provider: Dispatchable,
-        offspring: Population,
-    ) -> None:
+        feedback: FeedbackBatch,
+        state: StateView,
+    ) -> StatePatch:
         """
         Update the wrapped pymoo algorithm, then mirror its population into ``ctx``.
 
@@ -384,6 +401,13 @@ class PymooAlgorithm(Algorithm):
             Offspring population, possibly reordered or truncated relative
             to what :meth:`ask` produced.
         """
+        del feedback
+        ctx = algorithm_context(state)
+        offspring = ctx.offspring
+        if offspring is None:
+            raise ConfigurationError(
+                "PymooAlgorithm.tell() requires an offspring population"
+            )
         assert self._infills is not None
         idx = offspring.get_array("pymoo_idx").astype(np.int64, copy=False)
         if idx.ndim != 1 or np.any(idx < 0) or np.any(idx >= len(self._infills)):
@@ -437,6 +461,7 @@ class PymooAlgorithm(Algorithm):
 
         self.pymoo_algorithm.tell(infills=infills)
         self._sync_population(ctx)
+        return StatePatch(writes={POPULATIONS_MAIN: ctx.population})
 
     @classmethod
     def _set_pymoo_candidate_ids(

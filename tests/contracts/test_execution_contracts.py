@@ -19,6 +19,7 @@ from saealib.core.state import (
     EVALUATIONS_PLAN_UPDATES,
     PENDING_EVALUATIONS,
     POPULATIONS_MAIN,
+    PROPOSALS_CURRENT,
     RUNTIME_ASYNC_FATAL,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
     RUNTIME_GENERATION,
@@ -164,6 +165,7 @@ def test_evaluator_and_scheduler_contracts_declare_lifecycle_boundary() -> None:
             EVALUATIONS_COUNT,
             ARCHIVES_MAIN,
             ARCHIVES_PARETO,
+            PROPOSALS_CURRENT,
         ),
         writes=(
             PENDING_EVALUATIONS,
@@ -188,6 +190,7 @@ def test_evaluator_and_scheduler_contracts_declare_lifecycle_boundary() -> None:
             EVALUATIONS_COUNT,
             ARCHIVES_MAIN,
             ARCHIVES_PARETO,
+            PROPOSALS_CURRENT,
             POPULATIONS_MAIN,
             RUNTIME_RNG,
         ),

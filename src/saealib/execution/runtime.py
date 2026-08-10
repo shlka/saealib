@@ -20,11 +20,11 @@ from saealib.context import OptimizationState
 from saealib.core.compiler.compiler import CompileContext, Compiler, ExecutablePlan
 from saealib.core.contracts.execution import RuntimeCapability
 from saealib.core.contracts.vocabulary import validate_name
-from saealib.core.graph_builder import build_decomposed_component_graph
 from saealib.core.runtime import (
     ExecutionRuntime,
     NodeResult,
     NodeStatus,
+    RequestTermination,
     RuntimeSession,
     RuntimeStep,
     SequentialPlan,
@@ -79,16 +79,68 @@ class AsyncRuntimeEnvironment(RuntimeEnvironment, Protocol):
 
 
 def _execute_sequential_plan(
-    plan: SequentialPlan, state: OptimizationState
+    plan: SequentialPlan,
+    state: OptimizationState,
+    *,
+    dispatch: Callable[[Event], None] | None = None,
 ) -> OptimizationState:
-    """Thread state through the compiled StageNodeAdapter sequence."""
-    for node, execute in zip(plan.execution_nodes, plan._execute_targets):
-        state = execute(state)
-        if not isinstance(state, OptimizationState):
-            raise ValidationError(
-                f"Stage node {node.component_id!r} did not return an OptimizationState"
-            )
+    """Thread state through Stage and graph-component execution nodes."""
+    state, _ = _execute_sequential_plan_with_results(plan, state, dispatch=dispatch)
     return state
+
+
+def _execute_sequential_plan_with_results(
+    plan: SequentialPlan,
+    state: OptimizationState,
+    *,
+    dispatch: Callable[[Event], None] | None = None,
+) -> tuple[OptimizationState, tuple[NodeResult, ...]]:
+    """Execute one sequential plan and retain each node's result envelope."""
+    from saealib.core.graph_builder import StageNodeAdapter
+    from saealib.pipeline import Stage
+
+    results: list[NodeResult] = []
+    for node, execute in zip(plan.execution_nodes, plan._execute_targets):
+        stage = getattr(node.component, "stage", None)
+        if isinstance(node.component, StageNodeAdapter) or isinstance(stage, Stage):
+            next_state = execute(state)
+            if not isinstance(next_state, OptimizationState):
+                raise ValidationError(
+                    f"Stage node {node.component_id!r} did not return an "
+                    "OptimizationState"
+                )
+            state = next_state
+            result = NodeResult(patch=StatePatch(writes={}))
+        else:
+            view = state._store.view(
+                node.contract.state.reads,
+                context=state,
+                dispatch=dispatch,
+            )
+            raw_result = execute(view)
+            if isinstance(raw_result, StatePatch):
+                result = NodeResult(patch=raw_result)
+            elif isinstance(raw_result, NodeResult):
+                result = raw_result
+            else:
+                raise ValidationError(
+                    f"Graph node {node.component_id!r} must return NodeResult or "
+                    "StatePatch"
+                )
+            if result.patch.writes or result.patch.deletes:
+                state._store = state._store.apply_patch(result.patch)
+            if dispatch is not None:
+                for event in result.events:
+                    dispatch(event)
+            if result.status is NodeStatus.FAILED:
+                raise ValidationError(
+                    f"Graph node {node.component_id!r} returned FAILED"
+                )
+            if result.status is NodeStatus.BLOCKED:
+                results.append(result)
+                break
+        results.append(result)
+    return state, tuple(results)
 
 
 def _algorithm_runtime_capabilities(
@@ -130,7 +182,7 @@ class _OptimizerEnvironment:
         self, plan: SequentialPlan, state: OptimizationState
     ) -> OptimizationState:
         self._refresh_plan_if_needed()
-        return _execute_sequential_plan(self.plan, state)
+        return _execute_sequential_plan(self.plan, state, dispatch=self.dispatch)
 
     def _fingerprint(self) -> tuple[object, ...]:
         """Capture provider and strategy inputs that shape the executable graph."""
@@ -213,9 +265,10 @@ class _OptimizerEnvironment:
         if plan_index is None:
             # Keep the runtime seam useful for small custom plans that do not
             # contain the optimization evaluation protocol.
-            return _execute_sequential_plan(self.plan, state)
+            return _execute_sequential_plan(self.plan, state, dispatch=self.dispatch)
 
         current = state
+        strategy = self.optimizer.strategy
         plan_state = current.evaluation_plan_state
         plan_is_terminal = (
             current.evaluation_plan is not None
@@ -226,15 +279,40 @@ class _OptimizerEnvironment:
                 for item in current.evaluation_plan.requests
             )
         )
-        if current.evaluation_plan is None or plan_is_terminal:
+        plan_has_progress = bool(
+            plan_state is not None and (plan_state.completed or plan_state.acknowledged)
+        )
+        refill_in_progress_plan = bool(
+            getattr(strategy, "supports_async_refill", False)
+            and current.evaluation_plan is not None
+            and not plan_is_terminal
+            and plan_has_progress
+            and plan_state is not None
+            and not plan_state.deferred
+            and len(current.pending_evaluations) < scheduler.max_pending
+        )
+        if refill_in_progress_plan:
+            # Pending requests retain their owner and proposal identity in the
+            # scheduler.  The state-level plan now describes the refill
+            # proposal; old request completions are intentionally ignored by
+            # its bookkeeping while still being delivered to their owner.
+            current = current.replace(
+                evaluation_plan=None,
+                evaluation_plan_state=None,
+                evaluation_plan_updates={},
+            )
+        if (
+            current.evaluation_plan is None
+            or plan_is_terminal
+            or refill_in_progress_plan
+        ):
             for execute in self.plan._execute_targets[:plan_index]:
-                current = execute(current)
+                current = cast(OptimizationState, execute(current))
 
         plan_stage = getattr(nodes[plan_index].component, "stage", None)
         planner = getattr(plan_stage, "_planner", None)
         if planner is None:
             raise ValidationError("evaluation_plan node has no planner")
-        strategy = self.optimizer.strategy
         builder = getattr(self.optimizer, "feedback_builder", None)
         if builder is None:
             builder = getattr(strategy, "feedback_builder", None)
@@ -300,13 +378,30 @@ def execute_strategy_step(
     capacity checks, and async submission remain runtime responsibilities.
     """
     scheduler = getattr(provider, "async_evaluation_scheduler", None)
-    build_pipeline = cast(Any, getattr(strategy, "build_pipeline", None))
-    if not callable(build_pipeline):
-        raise ValidationError("strategy requires a callable build_pipeline")
+    build_graph = cast(Any, getattr(strategy, "build_graph", None))
+    if not callable(build_graph):
+        raise ValidationError("strategy requires a callable build_graph")
+    graph = build_graph(provider)
+    plan = Compiler().compile(
+        graph,
+        CompileContext(
+            space=state.problem.space,
+            problem=state.problem,
+            offered_runtime_capabilities=(
+                frozenset({"partial_feedback"})
+                if scheduler is not None
+                else frozenset()
+            ),
+            initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
+        ),
+    )
+    from saealib.strategies.base import build_pipeline_from_graph
+
+    setattr(strategy, "pipeline", build_pipeline_from_graph(graph))
     if scheduler is None:
-        pipeline = build_pipeline(provider)
-        setattr(strategy, "pipeline", pipeline)
-        return pipeline.execute(state)
+        runtime = PipelineRuntime()
+        session = runtime.initialize(plan, state)
+        return runtime.advance(session).state
     if state.pending_evaluations:
         state = scheduler.poll(state, wait=False)
         if (
@@ -314,17 +409,6 @@ def execute_strategy_step(
             or len(state.pending_evaluations) >= scheduler.max_pending
         ):
             return state
-    pipeline = build_pipeline(provider)
-    graph = build_decomposed_component_graph(pipeline)
-    plan = Compiler().compile(
-        graph,
-        CompileContext(
-            space=state.problem.space,
-            problem=state.problem,
-            offered_runtime_capabilities=frozenset({"partial_feedback"}),
-            initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
-        ),
-    )
     optimizer = SimpleNamespace(
         strategy=strategy,
         problem=state.problem,
@@ -334,7 +418,6 @@ def execute_strategy_step(
         cbmanager=getattr(provider, "cbmanager", None),
         async_evaluation_scheduler=scheduler,
     )
-    setattr(strategy, "pipeline", pipeline)
     environment = _OptimizerEnvironment(
         optimizer, SequentialPlan.from_executable_plan(plan)
     )
@@ -417,23 +500,29 @@ class PipelineRuntime:
                 "PipelineRuntime.advance requires a SequentialPlan session"
             )
         if self.environment is None:
-            state = self._execute_plan(session.plan, session.state)
+            state, node_results = _execute_sequential_plan_with_results(
+                session.plan, session.state
+            )
+            finished = any(
+                isinstance(command, RequestTermination)
+                for result in node_results
+                for command in result.commands
+            )
             next_session = RuntimeSession(
                 plan=session.plan,
                 state=state,
                 step_index=session.step_index + 1,
                 observable=True,
+                finished=finished,
             )
             return RuntimeStep(
                 state=state,
-                node_results=tuple(
-                    NodeResult(patch=StatePatch(writes={}), status=NodeStatus.COMPLETED)
-                    for _ in session.plan.execution_nodes
-                ),
+                node_results=node_results,
                 executed_node_ids=tuple(
                     node.component_id for node in session.plan.execution_nodes
                 ),
                 observable=True,
+                finished=finished,
                 session=next_session,
             )
 
@@ -507,6 +596,16 @@ class AsyncPipelineRuntime(PipelineRuntime):
 
     capabilities = frozenset({"partial_feedback"})
 
+    @staticmethod
+    def _has_unfinished_evaluation_plan(state: OptimizationState) -> bool:
+        """Return whether an existing plan still owns work to submit or drain."""
+        plan = getattr(state, "evaluation_plan", None)
+        plan_state = getattr(state, "evaluation_plan_state", None)
+        if plan is None or plan_state is None:
+            return False
+        terminal = set(plan_state.completed) | set(plan_state.acknowledged)
+        return any(int(request.request_id) not in terminal for request in plan.requests)
+
     def advance(self, session: RuntimeSession) -> RuntimeStep:
         """Poll, refill, drain, and expose asynchronous generation boundaries."""
         if not isinstance(session, RuntimeSession):
@@ -542,9 +641,25 @@ class AsyncPipelineRuntime(PipelineRuntime):
                         time.sleep(0.001)
                     return self._step(session, state, generation_open)
 
+            # A plan may have been split by the scheduler because the
+            # pending-capacity limit allowed only part of it to be submitted.
+            # Drain that same plan before closing the generation or consulting
+            # termination.  This is not a refill: no new proposal is created.
+            if self._has_unfinished_evaluation_plan(state):
+                state = env.execute_async(session.plan, state)
+                if state.pending_evaluations:
+                    return self._step(session, state, generation_open)
+
             if generation_open:
                 env.finish_generation(state)
                 return self._step(session, state, False, observable=True)
+
+        elif self._has_unfinished_evaluation_plan(state):
+            # The same drain is needed after a checkpoint or a session step
+            # that observed no active handle but retained deferred requests.
+            state = env.execute_async(session.plan, state)
+            if state.pending_evaluations:
+                return self._step(session, state, generation_open)
 
         if env.is_terminated(state):
             env.dispatch(RunEndEvent(ctx=state))

@@ -25,6 +25,8 @@ from saealib import (
     aggregate_replicates,
     max_fe,
 )
+from saealib.core.contracts import FeedbackBatch
+from saealib.core.state import StatePatch, StateView
 from saealib.surrogate import ArchiveObjectiveSet
 
 
@@ -282,9 +284,9 @@ def test_async_optimizer_uses_single_candidate_refill_and_drains():
             super().__init__()
             self.told_ids = []
 
-        def tell(self, ctx, provider, offspring):
-            self.told_ids.extend(offspring.get_array("id").tolist())
-            return super().tell(ctx, provider, offspring)
+        def tell(self, feedback: FeedbackBatch, state: StateView) -> StatePatch:
+            self.told_ids.extend(state.context.offspring.get_array("id").tolist())
+            return super().tell(feedback, state)
 
     recorder = DelayedSerial()
     evaluator = AsyncEvaluator(recorder, max_workers=2)

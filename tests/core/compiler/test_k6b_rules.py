@@ -104,7 +104,7 @@ def _feedback_graph(completion: str) -> ComponentGraph:
             ComponentNode(
                 component_id="consumer",
                 component=_Endpoint(
-                    data=DataSpec(kind="Population"),
+                    data=DataSpec(kind="FeedbackBatch"),
                     direction=PortDirection.INPUT,
                     completion=completion,
                 ),

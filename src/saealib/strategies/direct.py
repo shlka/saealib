@@ -94,6 +94,8 @@ class DirectStrategy(OptimizationStrategy):
 class SteadyStateStrategy(DirectStrategy):
     """Evaluate one candidate per step and refill asynchronous worker slots."""
 
+    supports_async_refill: bool = True
+
     def __init__(self) -> None:
         super().__init__(n_offspring=1)
 

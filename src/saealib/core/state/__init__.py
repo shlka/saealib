@@ -44,7 +44,7 @@ from saealib.core.state.migration import (
     _population_entry_v1_to_v2,
 )
 from saealib.core.state.patch import PopulationRowUpdate, StatePatch, StateUpdate
-from saealib.core.state.store import LegacyAlgorithmStateView, StateStore, StateView
+from saealib.core.state.store import StateStore, StateView
 
 # Population entries moved to schema v2 when v3 checkpoints began carrying
 # genomes through the space-provided GenomeCodec.  ``main`` is the one
@@ -94,7 +94,6 @@ __all__ = [
     "SURROGATES_DEFAULT",
     "SURROGATES_PREDICTIONS",
     "USER_DATA",
-    "LegacyAlgorithmStateView",
     "Migrator",
     "PopulationRowUpdate",
     "StateKey",

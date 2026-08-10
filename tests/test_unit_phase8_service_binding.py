@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+from _algorithm_boundary import ask as algorithm_ask
 from pymoo.algorithms.soo.nonconvex.ga import GA as PymooGA  # noqa: N811
 
 from saealib import LHSInitializer, Optimizer, Termination, max_fe
@@ -17,7 +18,7 @@ from saealib.algorithms.pso import PSO
 from saealib.algorithms.pymoo_algorithm import PymooAlgorithm
 from saealib.context import OptimizationState
 from saealib.core.compiler.compiler import ExecutablePlan
-from saealib.core.compiler.graph import ComponentGraph, ComponentNode
+from saealib.core.compiler.graph import ComponentGraph, ComponentNode, NodeRef
 from saealib.core.contracts import ComponentContract
 from saealib.exceptions import ValidationError
 from saealib.execution.initializer import RandomInitializer
@@ -72,7 +73,10 @@ def _plan(*services: object) -> ExecutablePlan:
         for index, service in enumerate(services)
     )
     return ExecutablePlan(
-        graph=ComponentGraph(nodes=nodes),
+        graph=ComponentGraph(
+            nodes=nodes,
+            entry_points=(NodeRef(component_id="node0"),),
+        ),
         diagnostics=(),
         required_runtime_capabilities=frozenset(),
         active_rule_namespaces=frozenset(),
@@ -144,16 +148,25 @@ def test_registry_is_not_used_by_ga_pso_or_pymoo_bound_paths() -> None:
 
     state.compiled_service("BoundsService")
     require.reset_mock()
-    GA(
+    ga = GA(
         crossover=CrossoverSBX(eta=20.0, prob=0.9),
         mutation=MutationPolynomial(eta=20.0, prob=0.1),
         parent_selection=TournamentSelection(tournament_size=2),
         survivor_selection=TruncationSelection(),
-    ).ask(state, cast(Any, SimpleNamespace(dispatch=lambda event: None)))
+    )
+    algorithm_ask(
+        ga,
+        state,
+        cast(Any, SimpleNamespace(dispatch=lambda event: None)),
+    )
     assert not require.called
 
     require.reset_mock()
-    PSO().ask(state, cast(Any, SimpleNamespace(dispatch=lambda event: None)))
+    algorithm_ask(
+        PSO(),
+        state,
+        cast(Any, SimpleNamespace(dispatch=lambda event: None)),
+    )
     assert not require.called
 
     state = _state()

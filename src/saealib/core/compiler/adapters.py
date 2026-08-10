@@ -20,12 +20,6 @@ from saealib.core.contracts import (
 )
 from saealib.core.contracts.feedback import (
     COMPLETE_BATCH,
-    PARTIAL_ALLOWED,
-    REPEATED_ALLOWED,
-)
-from saealib.core.contracts.representation import (
-    RepresentationSpec,
-    unify_representation_specs,
 )
 from saealib.core.contracts.schema import unify_data_specs
 from saealib.core.contracts.vocabulary import (
@@ -312,19 +306,6 @@ def _port(
     return found[0] if len(found) == 1 else None
 
 
-def _space_has_dense_view(context: object) -> bool:
-    space = getattr(context, "space", None)
-    services = getattr(space, "services", space)
-    getter = getattr(services, "get", None)
-    service = getter("DenseNumericView") if callable(getter) else None
-    representation = getattr(space, "representation", None)
-    if service is None or not isinstance(representation, RepresentationSpec):
-        return False
-    return unify_representation_specs(
-        representation, RepresentationSpec(kind="vector")
-    ).unified
-
-
 def _partial_feedback_is_offered(
     compile_context: object,
     *,
@@ -334,21 +315,6 @@ def _partial_feedback_is_offered(
     """Use only the effective runtime offer supplied by compilation."""
     return "partial_feedback" in getattr(
         compile_context, "offered_runtime_capabilities", frozenset()
-    )
-
-
-def _legacy_feedback_match(match: AdapterMatchContext) -> bool:
-    feedback = match.target_node.contract.lifecycle.feedback
-    repeated_partial_consumer = (
-        feedback is not None
-        and feedback.completion == PARTIAL_ALLOWED
-        and feedback.multiplicity == REPEATED_ALLOWED
-        and "partial_feedback"
-        in match.target_node.contract.execution.required_runtime_capabilities
-    )
-    return repeated_partial_consumer or (
-        not _partial_complete_feedback_pair(match)
-        and _target_requires_complete_batch(match.target_node)
     )
 
 
@@ -375,42 +341,16 @@ def _feedback_accumulator_match(match: AdapterMatchContext) -> bool:
     return _partial_complete_feedback_pair(match)
 
 
-def _dense_match(match: AdapterMatchContext) -> bool:
-    return _space_has_dense_view(match.compile_context)
-
-
 DEFAULT_ADAPTER_REGISTRY = AdapterRegistry(
     (
         Adapter(
-            name="dense_numeric_view",
-            source=DataSpec(kind="Population"),
-            target=DataSpec(kind="FeatureBatch"),
-            lossless=True,
-            auto_insertable=True,
-            category="lossless_view",
-            matcher=_dense_match,
-        ),
-        Adapter(
             name="feedback_accumulator",
             source=DataSpec(kind="FeedbackBatch"),
-            # The current graph boundary is the legacy Population consumer;
-            # the compile-only synthetic component represents accumulation at
-            # that boundary.  Phase 6 will expose FeedbackBatch end-to-end.
-            target=DataSpec(kind="Population"),
+            target=DataSpec(kind="FeedbackBatch"),
             lossless=True,
             auto_insertable=True,
             category="partial_feedback_accumulation",
             matcher=_feedback_accumulator_match,
-        ),
-        # The runtime counterpart is LegacyPopulationAlgorithmAdapter in TellStage.
-        Adapter(
-            name="legacy_population_feedback",
-            source=DataSpec(kind="FeedbackBatch"),
-            target=DataSpec(kind="Population"),
-            lossless=True,
-            auto_insertable=True,
-            category="lossless_view",
-            matcher=_legacy_feedback_match,
         ),
     )
 )
@@ -470,9 +410,9 @@ class LosslessAdapterRule:
                     )
                 )
             ):
-                # FeedbackAccumulatorRule owns this lifecycle rewrite.  Leaving
-                # the edge untouched here prevents the legacy Population view
-                # from racing it for the same claim.
+                # FeedbackAccumulatorRule owns this lifecycle rewrite. Leaving
+                # the edge untouched here prevents two rules from claiming the
+                # same lifecycle connection.
                 edges.append(edge)
                 continue
             candidates = registry.candidates(
@@ -515,27 +455,6 @@ class LosslessAdapterRule:
                 edges.append(edge)
                 continue
             if not candidates:
-                if (
-                    source_port.data.kind == "Population"
-                    and target_port.data.kind == "FeatureBatch"
-                ):
-                    findings.append(
-                        Diagnostic(
-                            severity=Severity.ERROR,
-                            code="incompatible_representation",
-                            message=(
-                                f"Connection {source_path} -> {target_path} requires "
-                                "FeatureEncoder or DenseNumericView to convert "
-                                "Population to FeatureBatch."
-                            ),
-                            path=source_path,
-                            related=(target_path,),
-                            resolutions=(
-                                "Provide DenseNumericView for the space, explicitly "
-                                "name a FeatureEncoder, or connect compatible ports.",
-                            ),
-                        )
-                    )
                 edges.append(edge)
                 continue
             adapter = candidates[0]

@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-
 from saealib.context import OptimizationState
 from saealib.core.compiler.graph import ComponentGraph
 from saealib.core.contracts import ComponentContract, PortContract, StateContract
 from saealib.core.graph_builder import (
     StageNodeAdapter,
-    build_decomposed_component_graph,
+    build_decomposed_component_graph_from_stages,
 )
 from saealib.core.state import PENDING_EVALUATIONS
 from saealib.optimizer import ComponentProvider
@@ -24,15 +22,17 @@ def build_runtime_neutral_graph(
     """Build the strategy's one canonical graph topology.
 
     Runtime selection changes execution policy, never graph construction.
-    Built-in strategies supply one canonical Stage sequence; ``build_pipeline``
-    is reconstructed from this graph only for compatibility callers.
+    Built-in strategies materialize their graph directly at this boundary;
+    ``build_pipeline`` is reconstructed from this graph only for compatibility
+    callers.
     """
     build_stages = getattr(strategy, "_build_stages", None)
     if callable(build_stages):
-        pipeline = Pipeline(list(build_stages(provider)))
+        return build_decomposed_component_graph_from_stages(build_stages(provider))
+    if type(strategy).build_graph is not OptimizationStrategy.build_graph:
+        return strategy.build_graph(provider)
     else:
-        pipeline = strategy.build_pipeline(provider)
-    return build_decomposed_component_graph(pipeline)
+        raise TypeError("strategy must implement build_graph or _build_stages")
 
 
 def build_pipeline_from_graph(graph: ComponentGraph) -> Pipeline:
@@ -45,15 +45,21 @@ def build_pipeline_from_graph(graph: ComponentGraph) -> Pipeline:
     return Pipeline(stages)
 
 
-class OptimizationStrategy(ABC):
+class OptimizationStrategy:
     """Base class for optimization strategies.
 
-    Strategies compose their generation logic from one canonical pipeline.
-    ``build_pipeline`` remains the public compatibility facade.
+    Strategies expose one canonical :class:`ComponentGraph` topology.
+    ``build_pipeline`` remains the public compatibility facade recovered from
+    that graph.
     """
 
     # Optimizer.validate() checks this to ensure surrogate_manager is configured.
     requires_surrogate: bool = False
+
+    # Async runtimes may refill a strategy while an earlier proposal is still
+    # waiting for complete feedback.  Most strategies need a generation
+    # boundary first; steady-state strategies explicitly opt into overlap.
+    supports_async_refill: bool = False
 
     evaluation_planner: EvaluationPlanner = EvaluateAll()
 
@@ -68,13 +74,17 @@ class OptimizationStrategy(ABC):
             ),
         )
 
-    @abstractmethod
-    def build_pipeline(self, provider: ComponentProvider):
-        """Build the next pipeline from the current component provider."""
-        ...
+    def build_pipeline(self, provider: ComponentProvider) -> Pipeline:
+        """Recover the retained Pipeline facade from the canonical graph."""
+        return build_pipeline_from_graph(self.build_graph(provider))
 
     def build_graph(self, provider: ComponentProvider) -> ComponentGraph:
-        """Build the canonical graph, retaining the legacy pipeline hook."""
+        """Build the strategy's canonical graph.
+
+        Built-in strategies use their private component materializer here;
+        graph-only extensions override this method and need not implement a
+        Pipeline builder.
+        """
         return build_runtime_neutral_graph(self, provider)
 
     def step(

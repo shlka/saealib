@@ -1,7 +1,7 @@
 from saealib.algorithms.base import (
     Algorithm,
+    AskTellAlgorithm,
     FeedbackConsumer,
-    LegacyPopulationAlgorithmAdapter,
     ProposalRequest,
     Proposer,
 )
@@ -14,9 +14,9 @@ __all__ = [
     "GA",
     "PSO",
     "Algorithm",
+    "AskTellAlgorithm",
     "FeedbackConsumer",
     "GenomeGA",
-    "LegacyPopulationAlgorithmAdapter",
     "ProposalRequest",
     "Proposer",
     "PymooAlgorithm",

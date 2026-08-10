@@ -15,9 +15,12 @@ from typing import cast
 import numpy as np
 import pytest
 
+from saealib.algorithms.base import ProposalRequest
 from saealib.algorithms.pso import PSO
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
+from saealib.core.contracts import FeedbackBatch
+from saealib.core.state import StateView
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -43,6 +46,26 @@ _PSO_ATTRS = [
 class _DummyProvider:
     def dispatch(self, event):
         pass
+
+
+def _view(ctx: OptimizationState, algorithm: PSO) -> StateView:
+    return ctx._store.view(
+        algorithm.contract().state,
+        context=ctx,
+        dispatch=lambda event: None,
+    )
+
+
+def _ask(algorithm: PSO, ctx: OptimizationState):
+    return algorithm.ask(ProposalRequest(), _view(ctx, algorithm)).candidates
+
+
+def _tell(algorithm: PSO, ctx: OptimizationState, offspring: Population):
+    ctx.offspring = offspring
+    return algorithm.tell(
+        cast(FeedbackBatch, object()),
+        _view(ctx, algorithm),
+    )
 
 
 class _CountingContext:
@@ -205,13 +228,13 @@ class TestPSOAsk:
     def test_output_size(self):
         pso = PSO()
         ctx = _make_pso_ctx()
-        cand = pso.ask(ctx, _DummyProvider())
+        cand = _ask(pso, ctx)
         assert len(cand) == N_POP
 
     def test_candidates_within_bounds(self):
         pso = PSO()
         ctx = _make_pso_ctx()
-        cand = pso.ask(ctx, _DummyProvider())
+        cand = _ask(pso, ctx)
         x = cand.get_array("x")
         lb = np.array(ctx.problem.lb)
         ub = np.array(ctx.problem.ub)
@@ -221,14 +244,14 @@ class TestPSOAsk:
     def test_velocity_stored_in_candidates(self):
         pso = PSO()
         ctx = _make_pso_ctx()
-        cand = pso.ask(ctx, _DummyProvider())
+        cand = _ask(pso, ctx)
         assert cand.get_array("velocity").shape == (N_POP, DIM)
 
     def test_vmax_clamps_velocity(self):
         v_max = 0.5
         pso = PSO(v_max=v_max)
         ctx = _make_pso_ctx(init_velocity=True)
-        cand = pso.ask(ctx, _DummyProvider())
+        cand = _ask(pso, ctx)
         v = cand.get_array("velocity")
         assert np.all(np.abs(v) <= v_max + 1e-9)
 
@@ -236,7 +259,7 @@ class TestPSOAsk:
         # Large velocity: handler.repair (default = clip) keeps positions in bounds.
         pso = PSO(w=100.0, c1=0.0, c2=0.0)
         ctx = _make_pso_ctx(init_pbest=True, init_velocity=True)
-        cand = pso.ask(ctx, _DummyProvider())
+        cand = _ask(pso, ctx)
         x = cand.get_array("x")
         lb = np.array(ctx.problem.lb)
         ub = np.array(ctx.problem.ub)
@@ -252,28 +275,28 @@ class TestPSOPbestInit:
     def test_pbest_initialized_when_nan(self):
         pso = PSO()
         ctx = _make_pso_ctx(init_pbest=False)
-        cand = pso.ask(ctx, _DummyProvider())
+        cand = _ask(pso, ctx)
         assert not np.any(np.isnan(cand.get_array("pbest_f")))
 
     def test_pbest_initialized_from_current_f(self):
         pso = PSO()
         ctx = _make_pso_ctx(init_pbest=False)
         f_before = ctx.population.get_array("f").copy()
-        cand = pso.ask(ctx, _DummyProvider())
+        cand = _ask(pso, ctx)
         np.testing.assert_array_equal(cand.get_array("pbest_f"), f_before)
 
     def test_pbest_initialized_from_current_x(self):
         pso = PSO()
         ctx = _make_pso_ctx(init_pbest=False)
         x_before = ctx.population.get_array("x").copy()
-        cand = pso.ask(ctx, _DummyProvider())
+        cand = _ask(pso, ctx)
         np.testing.assert_array_equal(cand.get_array("pbest_x"), x_before)
 
     def test_already_initialized_pbest_not_overwritten(self):
         pso = PSO()
         ctx = _make_pso_ctx(init_pbest=True)
         pbest_f_before = ctx.population.get_array("pbest_f").copy()
-        cand = pso.ask(ctx, _DummyProvider())
+        cand = _ask(pso, ctx)
         np.testing.assert_array_equal(cand.get_array("pbest_f"), pbest_f_before)
 
 
@@ -288,7 +311,7 @@ class TestPSOVelocityUpdate:
         pso = PSO(w=1.0, c1=0.0, c2=0.0)
         ctx = _make_pso_ctx(init_pbest=True, init_velocity=True)
         v_before = ctx.population.get_array("velocity").copy()
-        cand = pso.ask(ctx, _DummyProvider())
+        cand = _ask(pso, ctx)
         np.testing.assert_allclose(cand.get_array("velocity"), v_before)
 
     def test_zero_velocity_when_at_pbest_no_social(self):
@@ -298,7 +321,7 @@ class TestPSOVelocityUpdate:
         # Force x == pbest_x so (pbest_x - x) = 0
         x = ctx.population.get_array("x")
         ctx.population.update_array("pbest_x", x)
-        cand = pso.ask(ctx, _DummyProvider())
+        cand = _ask(pso, ctx)
         np.testing.assert_allclose(cand.get_array("velocity"), 0.0, atol=1e-12)
 
 
@@ -315,7 +338,7 @@ class TestPSOPbestUpdate:
         # f=0 is strictly better than any positive pbest_f
         f_new = np.zeros((N_POP, 1))
         offspring = _make_offspring(ctx, f_new=f_new, pbest_f=old_pbest_f)
-        pso.tell(ctx, _DummyProvider(), offspring)
+        _tell(pso, ctx, offspring)
         np.testing.assert_allclose(ctx.population.get_array("pbest_f"), 0.0)
 
     def test_worse_solution_does_not_update_pbest(self):
@@ -325,7 +348,7 @@ class TestPSOPbestUpdate:
         # f=1e9 is worse than any reasonable pbest_f
         f_new = np.full((N_POP, 1), 1e9)
         offspring = _make_offspring(ctx, f_new=f_new, pbest_f=old_pbest_f)
-        pso.tell(ctx, _DummyProvider(), offspring)
+        _tell(pso, ctx, offspring)
         np.testing.assert_array_equal(ctx.population.get_array("pbest_f"), old_pbest_f)
 
     def test_nan_f_new_does_not_update_pbest(self):
@@ -334,7 +357,7 @@ class TestPSOPbestUpdate:
         old_pbest_f = ctx.population.get_array("pbest_f").copy()
         f_new = np.full((N_POP, 1), np.nan)
         offspring = _make_offspring(ctx, f_new=f_new, pbest_f=old_pbest_f)
-        pso.tell(ctx, _DummyProvider(), offspring)
+        _tell(pso, ctx, offspring)
         np.testing.assert_array_equal(ctx.population.get_array("pbest_f"), old_pbest_f)
 
     def test_population_x_updated_after_tell(self):
@@ -348,7 +371,7 @@ class TestPSOPbestUpdate:
         )
         offspring.update_array("x", x_new)
         counting_ctx = _CountingContext(ctx)
-        pso.tell(cast(OptimizationState, counting_ctx), _DummyProvider(), offspring)
+        _tell(pso, cast(OptimizationState, counting_ctx), offspring)
         assert counting_ctx.population_lookups == 1
         assert ctx.population is population
         np.testing.assert_array_equal(ctx.population.get_array("x"), x_new)

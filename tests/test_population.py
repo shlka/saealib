@@ -170,7 +170,8 @@ class TestPopulationInit:
         np.testing.assert_array_equal(populated_pop.x, arr)
 
     def test_get_readonly_array(self, pop: Population) -> None:
-        arr = pop.get_readonly_array("f")
+        with pytest.warns(DeprecationWarning, match="get_readonly_array"):
+            arr = pop.get_readonly_array("f")
         assert not arr.flags.writeable
 
     def test_mod_value_and_mod_structure(self, pop: Population) -> None:

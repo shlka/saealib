@@ -7,6 +7,8 @@ import pytest
 
 from saealib.callback import CallbackManager, PostEvaluationEvent
 from saealib.context import OptimizationState
+from saealib.core.contracts import FeedbackBatch
+from saealib.core.state import PROPOSALS_CURRENT, StatePatch, StateView
 from saealib.exceptions import (
     ConfigurationError,
     EvaluationProtocolError,
@@ -315,12 +317,15 @@ def test_multi_update_lifecycle_is_contiguous_and_exactly_once():
 
 def test_partial_collects_keep_unacknowledged_sequence_until_terminal():
     state = _state()
+    state.set_state(PROPOSALS_CURRENT, 0)
     evaluator = _SplitPartialEvaluator()
     algorithm_calls = []
 
     class Algorithm:
-        def tell(self, state, provider, offspring):
-            algorithm_calls.append(offspring.id.tolist())
+        def tell(self, feedback: FeedbackBatch, state: StateView) -> StatePatch:
+            del feedback
+            algorithm_calls.append(state.context.offspring.id.tolist())
+            return StatePatch(writes={})
 
     state = EvaluationPlanStage().execute(state)
     state = EvaluationSubmitStage(evaluator).execute(state)
@@ -359,12 +364,15 @@ def test_partial_collects_keep_unacknowledged_sequence_until_terminal():
 
 def test_repeated_partial_collects_keep_each_request_history():
     state = EvaluationPlanStage(RepeatedEvaluation(2)).execute(_state())
+    state.set_state(PROPOSALS_CURRENT, 0)
     evaluator = _SplitPartialEvaluator()
     algorithm_calls = []
 
     class Algorithm:
-        def tell(self, state, provider, offspring):
-            algorithm_calls.append(offspring.id.tolist())
+        def tell(self, feedback: FeedbackBatch, state: StateView) -> StatePatch:
+            del feedback
+            algorithm_calls.append(state.context.offspring.id.tolist())
+            return StatePatch(writes={})
 
     state = EvaluationSubmitStage(evaluator).execute(state)
     state = EvaluationCollectStage(evaluator).execute(state)

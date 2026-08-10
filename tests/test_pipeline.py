@@ -12,6 +12,13 @@ from saealib import (
 )
 from saealib.acquisition import MeanPrediction
 from saealib.algorithms.base import Algorithm
+from saealib.core.contracts import (
+    FeedbackBatch,
+    FeedbackRequirement,
+    ProposalBatch,
+    ProposalRelations,
+)
+from saealib.core.state import POPULATIONS_MAIN, StatePatch, StateView
 from saealib.execution.evaluator import SerialEvaluator
 from saealib.pipeline import Pipeline
 from saealib.population import Archive, Population
@@ -43,11 +50,19 @@ class _MinimalAlgo(Algorithm):
     def archive_class(self):
         return Archive
 
-    def ask(self, ctx, provider, n_offspring=None):
-        return ctx.population
+    def ask(self, request, state: StateView) -> ProposalBatch:
+        del request
+        population = state.context.population
+        return ProposalBatch.from_allocator(
+            state.context.proposal_id_allocator,
+            candidates=population,
+            relations=ProposalRelations(row_count=len(population)),
+            requirements=FeedbackRequirement(quantities=()),
+        )
 
-    def tell(self, ctx, provider, offspring):
-        pass
+    def tell(self, feedback: FeedbackBatch, state: StateView) -> StatePatch:
+        del feedback
+        return StatePatch(writes={POPULATIONS_MAIN: state.context.population})
 
 
 # ---------------------------------------------------------------------------

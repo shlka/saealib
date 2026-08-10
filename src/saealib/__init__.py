@@ -6,15 +6,15 @@ from importlib.metadata import version
 __version__ = version("saealib")
 
 # ---------------------------------------------------------------------------
-# Export tiers
+# Root export surfaces
 #
-# Tier 1 (this section, eager import + __all__): entry points likely to be
+# Eager surface (this section, eager import + __all__): entry points likely to be
 #   named in the first script or a subclass definition — the 5 root
 #   abstractions (Algorithm, OptimizationStrategy, Surrogate,
 #   AcquisitionFunction, SurrogateManager), one or two representative default
 #   implementations per concept, and the Comparator/Evaluator/Initializer/
 #   Termination/Event bases with their common defaults.
-# Tier 2 (_TIER2_MAP below, lazy import via __getattr__): every other public
+# Lazy surface (_LAZY_EXPORTS below, imported via __getattr__): every other public
 #   component. A name in a subpackage's __all__ belongs here unless it is
 #   namespace-only.
 # namespace-only (not listed at the top level at all): generic-named bulk
@@ -32,7 +32,7 @@ from saealib.acquisition import (
     ExpectedImprovement,
     PointwiseAcquisition,
 )
-from saealib.algorithms import GA, PSO, Algorithm, GenomeGA
+from saealib.algorithms import GA, PSO, Algorithm, AskTellAlgorithm, GenomeGA
 from saealib.api import Result, maximize, minimize
 from saealib.callback import (
     CallbackManager,
@@ -125,6 +125,10 @@ from saealib.problem import (
     Problem,
     StaticToleranceHandler,
 )
+
+# Activate the standard vector profile's adapters without making the
+# framework compiler import vector implementation modules.
+from saealib.profiles.vector import activate as _activate_vector_profile
 from saealib.registry import register
 from saealib.stages import (
     AcquisitionStage,
@@ -169,6 +173,8 @@ from saealib.variables import (
     Variable,
 )
 
+_activate_vector_profile()
+
 logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
@@ -181,6 +187,7 @@ __all__ = [
     "Archive",
     "ArchiveUpdateStage",
     "AskStage",
+    "AskTellAlgorithm",
     "AsyncEvaluationScheduler",
     "AsyncEvaluationSubmitStage",
     "AsyncEvaluator",
@@ -297,10 +304,10 @@ __all__ = [
 ]
 
 # ---------------------------------------------------------------------------
-# Tier 2 — lazy imports (accessible as saealib.<name>, shown in dir())
+# Lazy root surface — imported on first access and shown in dir()
 # ---------------------------------------------------------------------------
 
-_TIER2_MAP: dict[str, str] = {
+_LAZY_EXPORTS: dict[str, str] = {
     # algorithms (less common)
     "PymooAlgorithm": "saealib.algorithms",
     # comparators (less common)
@@ -442,10 +449,10 @@ _TIER2_MAP: dict[str, str] = {
 
 
 def __getattr__(name: str) -> object:
-    if name in _TIER2_MAP:
+    if name in _LAZY_EXPORTS:
         import importlib
 
-        mod = importlib.import_module(_TIER2_MAP[name])
+        mod = importlib.import_module(_LAZY_EXPORTS[name])
         obj = getattr(mod, name)
         globals()[name] = obj  # cache to avoid repeated lookup
         return obj
@@ -453,4 +460,4 @@ def __getattr__(name: str) -> object:
 
 
 def __dir__() -> list[str]:
-    return sorted(__all__ + list(_TIER2_MAP))
+    return sorted(__all__ + list(_LAZY_EXPORTS))

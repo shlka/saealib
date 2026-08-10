@@ -39,6 +39,7 @@ __all__ = [
     "StagePartNodeAdapter",
     "build_component_graph",
     "build_decomposed_component_graph",
+    "build_decomposed_component_graph_from_stages",
 ]
 
 _MAX_CACHED_EXECUTION_UNWRAPS = 8
@@ -422,7 +423,7 @@ _DATA_PORTS: tuple[tuple[str, str, str, str, str, str], ...] = (
         "feedback",
         "tell",
         "feedback_consumer",
-        "offspring",
+        "feedback",
     ),
 )
 
@@ -578,8 +579,10 @@ def _decomposed_role_node(
     return None
 
 
-def build_decomposed_component_graph(pipeline: Pipeline) -> ComponentGraph:
-    """Build the explicit U2 Stage/part graph.
+def build_decomposed_component_graph_from_stages(
+    stages: Sequence[Stage],
+) -> ComponentGraph:
+    """Build the canonical U2 graph from an ordered stage component sequence.
 
     ``build_component_graph`` remains the Phase 6 bridge.  This function is an
     opt-in U2 path: each Stage is retained as the sole executable node, while
@@ -588,9 +591,9 @@ def build_decomposed_component_graph(pipeline: Pipeline) -> ComponentGraph:
     edges target the part that owns the declared port and never encode control
     side effects.
     """
-    if not isinstance(pipeline, Pipeline):
-        raise ValidationError("build_decomposed_component_graph requires a Pipeline")
-    stages = tuple(pipeline.stages)
+    stages = tuple(stages)
+    if any(not isinstance(stage, Stage) for stage in stages):
+        raise ValidationError("graph stages must contain Stage values")
     stage_ids = _unique_node_ids(stages)
     stage_adapters = tuple(
         StageContractNodeAdapter(stage, node_path=stage_id)
@@ -733,3 +736,10 @@ def build_decomposed_component_graph(pipeline: Pipeline) -> ComponentGraph:
         state_bindings=tuple(bindings),
         entry_points=(NodeRef(component_id=stage_ids[0]),) if stage_ids else (),
     )
+
+
+def build_decomposed_component_graph(pipeline: Pipeline) -> ComponentGraph:
+    """Build a canonical graph from the retained Pipeline compatibility facade."""
+    if not isinstance(pipeline, Pipeline):
+        raise ValidationError("build_decomposed_component_graph requires a Pipeline")
+    return build_decomposed_component_graph_from_stages(pipeline.stages)

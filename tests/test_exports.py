@@ -1,7 +1,7 @@
-"""Drift-guard tests for saealib's top-level export tiers.
+"""Drift-guard tests for saealib's top-level export surfaces.
 
-See the "Export tiers" comment at the top of src/saealib/__init__.py for the
-Tier 1 / Tier 2 / namespace-only policy these tests enforce.
+See the root export-surface comment at the top of src/saealib/__init__.py for
+the eager/lazy/namespace-only policy enforced here.
 """
 
 import importlib
@@ -13,7 +13,7 @@ import pytest
 
 import saealib
 
-# Subpackages whose __all__ must be fully covered by (Tier 1 + Tier 2 + the
+# Subpackages whose __all__ must be fully covered by (eager + lazy + the
 # allowlist below). saealib.registry is deliberately excluded: it defines no
 # __all__, and its get/build/to_spec namespace-only status is covered by
 # tests/test_registry.py::TestTopLevelExport instead.
@@ -39,7 +39,6 @@ SCANNED_SUBPACKAGES = [
 NAMESPACE_ONLY: dict[str, set[str]] = {
     "saealib.algorithms": {
         "FeedbackConsumer",
-        "LegacyPopulationAlgorithmAdapter",
         "ProposalRequest",
         "Proposer",
     },
@@ -120,12 +119,12 @@ REMOVED_CANONICAL_ALIASES = {
 }
 
 
-def test_tier1_and_tier2_do_not_overlap():
-    assert set(saealib.__all__).isdisjoint(saealib._TIER2_MAP)
+def test_eager_and_lazy_exports_do_not_overlap():
+    assert set(saealib.__all__).isdisjoint(saealib._LAZY_EXPORTS)
 
 
-def test_tier1_and_tier2_names_resolve():
-    for name in list(saealib.__all__) + list(saealib._TIER2_MAP):
+def test_eager_and_lazy_exports_resolve():
+    for name in list(saealib.__all__) + list(saealib._LAZY_EXPORTS):
         assert hasattr(saealib, name), f"{name} listed but not resolvable"
 
 
@@ -168,7 +167,7 @@ def test_removed_parameter_names_fail_construction():
 
 
 def test_subpackage_exports_are_covered():
-    covered = set(saealib.__all__) | set(saealib._TIER2_MAP)
+    covered = set(saealib.__all__) | set(saealib._LAZY_EXPORTS)
     for modname in SCANNED_SUBPACKAGES:
         mod = importlib.import_module(modname)
         allowed_extra = NAMESPACE_ONLY.get(modname, set())

@@ -122,12 +122,11 @@ def _is_accumulator_node(node: ComponentNode) -> bool:
 def _feedback_ports(
     contract: ComponentContract,
 ) -> tuple[tuple[str, PortSpec], tuple[str, PortSpec]] | None:
-    """Find one FeedbackBatch output and one Population consumer input.
+    """Find one FeedbackBatch output and one feedback-consumer input.
 
-    These are data-shape descriptors rather than concrete component types.  A
-    StageNodeAdapter may compose the two ports under arbitrary role names, so
-    the rule chooses by registered DataSpec kind and keeps the role in the
-    resulting graph references.
+    A StageNodeAdapter may compose the two ports under arbitrary role names,
+    so the rule chooses by lifecycle role and registered data vocabulary.  The
+    consumer's representation is intentionally opaque to the core compiler.
     """
     outputs = tuple(
         (role, port)
@@ -139,7 +138,6 @@ def _feedback_ports(
         (role, port)
         for role, role_contract in sorted(contract.ports.items())
         for port in role_contract.inputs
-        if port.data.kind == "Population"
     )
     preferred_outputs = tuple(
         item
@@ -149,7 +147,7 @@ def _feedback_ports(
     preferred_inputs = tuple(
         item
         for item in inputs
-        if item[0] == "feedback_consumer" and item[1].name == "offspring"
+        if item[0] == "feedback_consumer" and item[1].name == "feedback"
     )
     if len(preferred_outputs) == 1 and len(preferred_inputs) == 1:
         return preferred_outputs[0], preferred_inputs[0]
@@ -200,12 +198,10 @@ def _adapter_registration(
     )
     if not _feedback_accumulator_match(match):
         return None
-    # Accumulation preserves FeedbackBatch.  A legacy consumer's boundary is
-    # still Population, so the compile-only synthetic node exposes that
-    # downstream shape while retaining the registered adapter identity.
-    if target_port.data.kind != adapter.target.kind:
-        adapter = replace(adapter, target=target_port.data)
-    return adapter
+    # The accumulator preserves the consumer's declared data shape.  The
+    # target is copied here so the framework never needs to name a profile's
+    # representation in its default adapter registry.
+    return replace(adapter, target=target_port.data)
 
 
 def _accumulator_inserted_between(graph: ComponentGraph, edge: DataEdge) -> bool:

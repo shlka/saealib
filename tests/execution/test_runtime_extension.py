@@ -12,7 +12,7 @@ from pymoo.algorithms.soo.nonconvex.ga import GA as PymooGA  # noqa: N811
 from saealib.algorithms.pymoo_algorithm import PymooAlgorithm
 from saealib.context import OptimizationState
 from saealib.core.compiler.compiler import CompileContext, Compiler, ExecutablePlan
-from saealib.core.compiler.graph import ComponentGraph, ComponentNode
+from saealib.core.compiler.graph import ComponentGraph, ComponentNode, NodeRef
 from saealib.core.contracts import ComponentContract, ExecutionContract
 from saealib.core.runtime import (
     NodeResult,
@@ -71,7 +71,12 @@ class _Node:
 
 def _plan(*nodes: ComponentNode) -> ExecutablePlan:
     return ExecutablePlan(
-        graph=ComponentGraph(nodes=nodes),
+        graph=ComponentGraph(
+            nodes=nodes,
+            entry_points=(NodeRef(component_id=nodes[0].component_id),)
+            if nodes
+            else (),
+        ),
         diagnostics=(),
         required_runtime_capabilities=frozenset(
             capability
@@ -222,7 +227,7 @@ def test_real_strategy_graphs_compile_and_initialize_selected_runtimes() -> None
             .set_strategy(DirectStrategy(n_offspring=4))
         ],
     }
-    expected_plan_shapes = {"island": (34, 3), "pymoo": (18, 3)}
+    expected_plan_shapes = {"island": (33, 2), "pymoo": (17, 2)}
 
     for name, optimizers in configurations.items():
         for optimizer in optimizers:

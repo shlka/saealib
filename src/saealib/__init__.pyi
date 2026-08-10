@@ -1,12 +1,12 @@
 """Type stubs for saealib top-level package.
 
-Covers both Tier 1 (eager imports) and Tier 2 (lazy-loaded via __getattr__).
+Covers both the eager root surface and the lazy-loaded root surface.
 """
 
 __all__: list[str]
 
 # ---------------------------------------------------------------------------
-# Tier 1
+# Eager root surface
 # ---------------------------------------------------------------------------
 
 from saealib.acquisition import AcquisitionFunction as AcquisitionFunction
@@ -32,6 +32,7 @@ from saealib.acquisition import WinRateAcquisition as WinRateAcquisition
 from saealib.algorithms import GA as GA
 from saealib.algorithms import PSO as PSO
 from saealib.algorithms import Algorithm as Algorithm
+from saealib.algorithms import AskTellAlgorithm as AskTellAlgorithm
 from saealib.algorithms import GenomeGA as GenomeGA
 
 # algorithms (less common)
@@ -77,7 +78,7 @@ from saealib.comparators import SPEA2Comparator as SPEA2Comparator
 from saealib.comparators import WeightedSumComparator as WeightedSumComparator
 
 # ---------------------------------------------------------------------------
-# Tier 2 (lazy-loaded at runtime via __getattr__)
+# Lazy root surface (lazy-loaded at runtime via __getattr__)
 # ---------------------------------------------------------------------------
 # comparators
 from saealib.comparators import crowding_distance as crowding_distance
@@ -307,4 +308,4 @@ from saealib.variables import ContinuousVariable as ContinuousVariable
 from saealib.variables import IntegerVariable as IntegerVariable
 from saealib.variables import Variable as Variable
 
-_TIER2_MAP: dict[str, str]
+_LAZY_EXPORTS: dict[str, str]

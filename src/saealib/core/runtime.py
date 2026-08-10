@@ -162,8 +162,8 @@ class SequentialPlan:
     plan: ExecutablePlan
     nodes: tuple[ComponentNode, ...]
     execution_nodes: tuple[ComponentNode, ...] = ()
-    _execute_targets: tuple[Callable[[OptimizationState], OptimizationState], ...] = (
-        field(init=False, repr=False, compare=False)
+    _execute_targets: tuple[Callable[..., object], ...] = field(
+        init=False, repr=False, compare=False
     )
 
     def __post_init__(self) -> None:
@@ -217,7 +217,12 @@ class SequentialPlan:
 
     @classmethod
     def from_executable_plan(cls, plan: ExecutablePlan) -> SequentialPlan:
-        """Build the ordered top-level Stage view consumed by sync runtime."""
+        """Build the ordered executable view consumed by sync runtime.
+
+        Stage adapters remain the convenience path for the standard profile.
+        A graph containing only framework components is also executable: its
+        ``execute(StateView)`` nodes are ordered by the graph's control edges.
+        """
         if not isinstance(plan, ExecutablePlan):
             raise ValidationError("SequentialPlan requires an ExecutablePlan")
 
@@ -232,8 +237,6 @@ class SequentialPlan:
             for node in graph.nodes
             if isinstance(node.component, StageNodeAdapter)
         }
-        if not stage_ids:
-            return cls(plan=plan, nodes=())
         if not graph.entry_points:
             raise ValidationError("SequentialPlan requires a graph entry point")
 
@@ -261,6 +264,48 @@ class SequentialPlan:
             pending.extend(control_successors[node_id])
 
         reachable_stages = stage_ids & reachable
+
+        executable_ids = {
+            node_id
+            for node_id in reachable
+            if callable(getattr(nodes_by_id[node_id].component, "execute", None))
+        }
+
+        def executable_successors_for(node_id: str) -> set[str]:
+            """Collapse contract-only nodes between executable graph nodes."""
+            result: set[str] = set()
+            pending_nodes = list(control_successors[node_id])
+            visited_non_executables: set[str] = set()
+            while pending_nodes:
+                target = pending_nodes.pop()
+                if target in executable_ids:
+                    result.add(target)
+                    continue
+                if target in visited_non_executables:
+                    raise ValidationError(
+                        "SequentialPlan executable control order contains a cycle"
+                    )
+                visited_non_executables.add(target)
+                pending_nodes.extend(control_successors[target])
+            return result
+
+        if not stage_ids:
+            if not executable_ids:
+                return cls(plan=plan, nodes=(), execution_nodes=())
+            executable_successors = {
+                node_id: executable_successors_for(node_id)
+                for node_id in executable_ids
+            }
+            ordered_ids = _unique_control_order(
+                executable_ids, executable_successors, "control order"
+            )
+            ordered_nodes = tuple(nodes_by_id[node_id] for node_id in ordered_ids)
+            return cls(
+                plan=plan,
+                nodes=ordered_nodes,
+                execution_nodes=ordered_nodes,
+            )
+
         if not reachable_stages:
             raise ValidationError(
                 "SequentialPlan entry points do not reach a StageNodeAdapter"
@@ -296,28 +341,9 @@ class SequentialPlan:
             reachable_stages, successors, "control order"
         )
 
-        executable_ids = {
-            node_id
-            for node_id in reachable
-            if callable(getattr(nodes_by_id[node_id].component, "execute", None))
+        executable_successors = {
+            node_id: executable_successors_for(node_id) for node_id in executable_ids
         }
-        executable_successors: dict[str, set[str]] = {
-            node_id: set() for node_id in executable_ids
-        }
-        for source in executable_ids:
-            pending_nodes = list(control_successors[source])
-            visited_non_executables: set[str] = set()
-            while pending_nodes:
-                target = pending_nodes.pop()
-                if target in executable_ids:
-                    executable_successors[source].add(target)
-                    continue
-                if target in visited_non_executables:
-                    raise ValidationError(
-                        "SequentialPlan executable control order contains a cycle"
-                    )
-                visited_non_executables.add(target)
-                pending_nodes.extend(control_successors[target])
         execution_ids = _unique_control_order(
             executable_ids, executable_successors, "executable control order"
         )
