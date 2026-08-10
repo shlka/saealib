@@ -17,6 +17,7 @@ from saealib import (
 )
 from saealib.context import OptimizationState
 from saealib.core.compiler import (
+    CompileContext,
     Compiler,
     ComponentGraph,
     ComponentNode,
@@ -224,6 +225,39 @@ def test_generic_node_result_uses_state_binding_and_executes_termination() -> No
     assert step.executed_node_ids == ("node_0",)
     assert step.node_results[0].commands == (RequestTermination(reason="done"),)
     assert step.refused_commands == ()
+    assert step.state._store.get(bound) == 2
+
+
+def test_compiler_to_runtime_executes_state_bound_component() -> None:
+    abstract = StateKey(namespace="user", name="value", schema_version=1)
+    bound = StateKey(namespace="user", name="value_for_node", schema_version=1)
+    node = _GenericNode(
+        ComponentContract(
+            state=StateContract(reads=(abstract,), writes=(abstract,)),
+        ),
+        lambda view: StatePatch(writes={abstract: view.get(abstract) + 1}),
+    )
+    graph = ComponentGraph(
+        nodes=(ComponentNode(component_id="node", component=node),),
+        state_bindings=(
+            StateBinding(node=NodeRef(component_id="node"), state_key=bound),
+        ),
+        entry_points=(NodeRef(component_id="node"),),
+    )
+    executable = Compiler().compile(
+        graph,
+        CompileContext(initial_state_keys=frozenset({bound})),
+    )
+
+    assert not [
+        diagnostic
+        for diagnostic in executable.diagnostics
+        if diagnostic.severity.name == "ERROR"
+    ]
+    step = PipelineRuntime().advance(
+        PipelineRuntime().initialize(executable, _generic_state({bound: 1}))
+    )
+
     assert step.state._store.get(bound) == 2
 
 
