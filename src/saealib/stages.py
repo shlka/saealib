@@ -447,12 +447,8 @@ class StageStateViewAdapter:
     def contract(self) -> ComponentContract:
         return self._contract
 
-    def execute(self, state: StateView) -> StatePatch:
-        context = state.context
-        if not isinstance(context, RuntimeContext):
-            raise ValidationError("StageStateViewAdapter requires RuntimeContext")
-        proxy = _StageStateProxy(state, context)
-        result = cast(Any, self.stage).execute(proxy)
+    @staticmethod
+    def _to_patch(proxy: _StageStateProxy, result: object, stage: object) -> StatePatch:
         if isinstance(result, _StageStateProxy):
             return result._patch()
         if isinstance(result, StatePatch):
@@ -461,16 +457,44 @@ class StageStateViewAdapter:
                 writes={**patch.writes, **result.writes},
                 deletes=frozenset((*patch.deletes, *result.deletes)),
             )
-        if result is proxy:
+        if result is proxy or result is None or result is stage:
             return proxy._patch()
-        # A no-op return leaves the proxy patch; a detached state cannot be
-        # converted without widening the declared boundary.
-        if result is not None and result is not self.stage:
+        raise ValidationError(
+            "graph-native Stage adapter requires the Stage to return its transaction"
+        )
+
+    def execute(self, state: StateView) -> StatePatch:
+        context = state.context
+        if not isinstance(context, RuntimeContext):
+            raise ValidationError("StageStateViewAdapter requires RuntimeContext")
+        proxy = _StageStateProxy(state, context)
+        result = cast(Any, self.stage).execute(proxy)
+        return self._to_patch(proxy, result, self.stage)
+
+    async def execute_async(self, state: StateView, **kwargs: Any) -> StatePatch:
+        context = state.context
+        if not isinstance(context, RuntimeContext):
+            raise ValidationError("StageStateViewAdapter requires RuntimeContext")
+        proxy = _StageStateProxy(state, context)
+        method = getattr(self.stage, "execute_async", None)
+        if not callable(method):
             raise ValidationError(
-                "graph-native Stage adapter requires the Stage to return its "
-                "transaction"
+                "StageStateViewAdapter stage does not provide execute_async"
             )
-        return proxy._patch()
+        parameters = inspect.signature(method).parameters
+        accepts_kwargs = any(
+            parameter.kind is inspect.Parameter.VAR_KEYWORD
+            for parameter in parameters.values()
+        )
+        selected = (
+            kwargs
+            if accepts_kwargs
+            else {key: value for key, value in kwargs.items() if key in parameters}
+        )
+        result = method(proxy, **selected)
+        if inspect.isawaitable(result):
+            result = await result
+        return self._to_patch(proxy, result, self.stage)
 
 
 def stage_component(

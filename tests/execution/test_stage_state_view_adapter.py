@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from types import SimpleNamespace
 from typing import get_type_hints
 
@@ -30,6 +31,42 @@ class _StatefulStage(Stage):
         value = state.get_state(USER_DATA)
         state.set_state(USER_DATA, value + 1)
         return state.replace(data={"value": value + 2})
+
+
+class _AsyncStatefulStage(Stage):
+    name = "async_stateful"
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.received = None
+
+    def contract(self) -> ComponentContract:
+        return ComponentContract(
+            state=StateContract(reads=(USER_DATA,), writes=(USER_DATA,))
+        )
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        return state
+
+    async def execute_async(
+        self,
+        state: OptimizationState,
+        *,
+        scheduler=None,
+        feedback_builder=None,
+        algorithm=None,
+        callback_manager=None,
+        strategy=None,
+    ) -> OptimizationState:
+        self.received = (
+            scheduler,
+            feedback_builder,
+            algorithm,
+            callback_manager,
+            strategy,
+        )
+        state.set_state(USER_DATA, state.get_state(USER_DATA) + 1)
+        return state
 
 
 def _view() -> tuple[StateView, SimpleNamespace]:
@@ -65,3 +102,24 @@ def test_factory_can_be_used_as_a_structured_pipeline_component() -> None:
     assert pipeline.stages == [adapter]
     assert adapter.contract().state.reads == (USER_DATA,)
     assert adapter.contract().state.writes == (USER_DATA,)
+
+
+def test_async_stage_adapter_converts_transaction_and_filters_kwargs() -> None:
+    stage = _AsyncStatefulStage()
+    adapter = stage_component(stage)
+    view, _ = _view()
+    services = {
+        "scheduler": object(),
+        "feedback_builder": object(),
+        "algorithm": object(),
+        "callback_manager": object(),
+        "strategy": object(),
+        "ignored": object(),
+    }
+
+    patch = asyncio.run(adapter.execute_async(view, **services))
+
+    assert patch.writes[USER_DATA] == 2
+    assert stage.received == tuple(
+        services[name] for name in services if name != "ignored"
+    )
