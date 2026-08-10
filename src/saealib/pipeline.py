@@ -166,6 +166,8 @@ class _ControlValue:
 class Repeat(_ControlValue):
     """Repeat a structural body a fixed number of times."""
 
+    _structured_kind = "repeat"
+
     def __init__(self, body: object, count: int, *, name: str = "") -> None:
         if isinstance(count, bool) or not isinstance(count, int) or count < 0:
             raise ValidationError("Repeat count must be a non-negative integer")
@@ -182,6 +184,8 @@ class Repeat(_ControlValue):
 class Loop(_ControlValue):
     """Repeat a structural body while a condition remains active."""
 
+    _structured_kind = "loop"
+
     def __init__(self, body: object, *, until: Condition, name: str = "") -> None:
         _validate_dsl_condition(until)
         super().__init__(name=name, label="Loop")
@@ -197,6 +201,8 @@ class Loop(_ControlValue):
 
 class Branch(_ControlValue):
     """Select one of two structural bodies using a condition."""
+
+    _structured_kind = "branch"
 
     def __init__(
         self,
