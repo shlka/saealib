@@ -1,6 +1,8 @@
-"""Type stubs for saealib top-level package.
+"""Type stubs for saealib's curated top-level package surface.
 
-Covers both the eager root surface and the lazy-loaded root surface.
+Covers both the eager root surface and the lazy-loaded root surface. A
+subpackage's ``__all__`` is its own namespace contract and is not mirrored
+here automatically.
 """
 
 __all__: list[str]

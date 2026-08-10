@@ -37,6 +37,15 @@ SCANNED_SUBPACKAGES = [
     "saealib.variables",
 ]
 
+# These are intentionally public only through their subpackage. Keeping a
+# small explicit set makes the independence contract visible and prevents
+# this test from passing only because one incidental symbol happens to differ.
+NAMESPACE_ONLY_EXPORTS = {
+    "saealib.benchmarks": {"sphere"},
+    "saealib.defaults": {"load_defaults"},
+    "saealib.space": {"SearchSpace"},
+}
+
 REMOVED_EXPERIMENTAL_EXPORTS = {
     "ArchiveSnapshot",
     "CooperativeCoevolution",
@@ -70,6 +79,12 @@ def test_eager_and_lazy_exports_do_not_overlap():
 def test_eager_and_lazy_exports_resolve():
     for name in list(saealib.__all__) + list(saealib._LAZY_EXPORTS):
         assert hasattr(saealib, name), f"{name} listed but not resolvable"
+
+
+def test_lazy_exports_resolve_from_their_canonical_modules():
+    for name, module_name in saealib._LAZY_EXPORTS.items():
+        module = importlib.import_module(module_name)
+        assert getattr(saealib, name) is getattr(module, name)
 
 
 def test_experimental_generality_code_is_not_a_library_export():
@@ -110,13 +125,15 @@ def test_removed_parameter_names_fail_construction():
         cast(Any, FeedbackStage)(policy=None)
 
 
-def test_namespace_exports_are_independent_from_root_surface():
+def test_namespace_exports_resolve_independently_from_root_surface():
     root_surface = set(saealib.__all__) | set(saealib._LAZY_EXPORTS)
     namespace_exports: list[tuple[str, str]] = []
     for modname in SCANNED_SUBPACKAGES:
         mod = importlib.import_module(modname)
         for name in getattr(mod, "__all__", []):
-            assert hasattr(mod, name), f"{modname}.{name} is listed but unresolved"
+            assert name in vars(mod) or hasattr(mod, name), (
+                f"{modname}.{name} is listed but unresolved"
+            )
             namespace_exports.append((modname, name))
 
     independent = [
@@ -128,3 +145,19 @@ def test_namespace_exports_are_independent_from_root_surface():
     for _, name in independent:
         assert name not in saealib.__all__
         assert name not in saealib._LAZY_EXPORTS
+
+    for modname, names in NAMESPACE_ONLY_EXPORTS.items():
+        mod = importlib.import_module(modname)
+        for name in names:
+            assert name in mod.__all__
+            assert name not in root_surface
+            assert getattr(mod, name) is not getattr(saealib, name, None)
+
+
+def test_root_overlap_uses_the_namespace_canonical_object():
+    root_surface = set(saealib.__all__) | set(saealib._LAZY_EXPORTS)
+    for modname in SCANNED_SUBPACKAGES:
+        mod = importlib.import_module(modname)
+        for name in getattr(mod, "__all__", []):
+            if name in root_surface:
+                assert getattr(saealib, name) is getattr(mod, name)

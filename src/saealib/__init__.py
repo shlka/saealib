@@ -6,7 +6,8 @@ from importlib.metadata import version
 __version__ = version("saealib")
 
 # Root exports are curated independently from each subpackage's namespace.
-# Names in ``_LAZY_EXPORTS`` are root conveniences, not an automatic mirror.
+# Names in ``_LAZY_EXPORTS`` are root conveniences, not an automatic mirror;
+# subpackage ``__all__`` entries remain valid public APIs at their own path.
 
 from saealib.acquisition import (
     AcquisitionFunction,

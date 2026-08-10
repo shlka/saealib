@@ -129,10 +129,10 @@ uv run --group docs sphinx-build -b html -D language=ja docs docs/_build/html-ja
 
 ### 7. Public API Export Tiers
 
-`src/saealib/__init__.py` exposes public components in three tiers (see the "Export tiers" comment at the top of that file for the authoritative version):
+`src/saealib/__init__.py` exposes a curated eager root surface (`__all__`) and a curated lazy root surface (`_LAZY_EXPORTS`) (see the root export comment in that file):
 
 * **Tier 1** (eager import, listed in `__all__`): entry points likely to be named in the first script or a subclass definition — the 5 root abstractions (`Algorithm`, `OptimizationStrategy`, `Surrogate`, `AcquisitionFunction`, `SurrogateManager`), one or two representative default implementations per concept, and the `Comparator`/`Evaluator`/`Initializer`/`Termination`/`Event` bases with their common defaults.
-* **Tier 2** (`_TIER2_MAP`, lazy import via `__getattr__`): every other public component. A name in a subpackage's `__all__` belongs here unless it is namespace-only.
+* **Tier 2** (`_LAZY_EXPORTS`, lazy import via `__getattr__`): selected less-common root conveniences. A name in a subpackage's `__all__` does not automatically belong here.
 * **namespace-only** (not listed at the top level at all): generic-named bulk sets or domain toolkits, e.g. `saealib.benchmarks` (`sphere`/`zdt*`/`dtlz*`/...), `saealib.registry.get`/`build`/`to_spec`, and `saealib.defaults` (internal). Access these via their subpackage directly.
 
-When you add a new public class or function to a subpackage's `__all__`, add it to `_TIER2_MAP` (or the `NAMESPACE_ONLY` allowlist in `tests/test_exports.py` if it's a namespace-only case) and to `src/saealib/__init__.pyi` in the same PR — `tests/test_exports.py` fails otherwise.
+When you add a new public class or function to a subpackage's `__all__`, ensure its own namespace resolves and add it to the root only if it is intentionally part of that curated surface. Root additions must also be represented in `src/saealib/__init__.pyi`; `tests/test_exports.py` checks eager/lazy resolution, overlap, and canonical namespace ownership.
