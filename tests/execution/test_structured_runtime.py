@@ -143,6 +143,30 @@ class _StatusOnce(_Increment):
         return NodeResult(patch=patch, status=status)
 
 
+class _AsyncBlockOnce(_Increment):
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def execute_async(self, view):
+        self.calls += 1
+        patch = super().execute(view)
+        status = NodeStatus.BLOCKED if self.calls == 1 else NodeStatus.COMPLETED
+        return NodeResult(patch=patch, status=status)
+
+
+class _AsyncRequiredWithoutDriver(_Increment):
+    requires_async_execution = True
+
+
+class _AsyncBranchLeaf(_Increment):
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def execute_async(self, view):
+        self.calls += 1
+        return super().execute(view)
+
+
 def test_structured_plan_executes_repeat_loop_and_branch() -> None:
     state = _state()
     runtime = PipelineRuntime()
@@ -187,6 +211,61 @@ def test_structured_plan_resumes_blocked_leaf_from_saved_frame() -> None:
     assert second.finished
     assert component.calls == 2
     assert second.state.get_state(USER_DATA) == 2
+
+
+def test_async_structured_repeat_resumes_the_same_iteration() -> None:
+    component = _AsyncBlockOnce()
+    runtime = AsyncPipelineRuntime()
+    session = runtime.initialize(
+        _compile(Pipeline([Repeat(component, count=2)])), _state()
+    )
+
+    first = runtime.advance(session)
+    assert first.node_results[0].status is NodeStatus.BLOCKED
+    assert first.session is not None
+    assert first.session.frames[-1].operation_index == 0
+
+    second = runtime.advance(first.session)
+
+    assert second.finished
+    assert component.calls == 3
+    assert second.state.get_state(USER_DATA) == 3
+
+
+def test_async_structured_branch_executes_only_the_selected_leaf() -> None:
+    selected = _AsyncBranchLeaf()
+    skipped = _AsyncBranchLeaf()
+    runtime = AsyncPipelineRuntime()
+    session = runtime.initialize(
+        _compile(
+            Pipeline(
+                [
+                    Branch(
+                        _StateCondition(True),
+                        then=selected,
+                        else_=skipped,
+                    )
+                ]
+            )
+        ),
+        _state(),
+    )
+
+    step = runtime.advance(session)
+
+    assert step.finished
+    assert selected.calls == 1
+    assert skipped.calls == 0
+
+
+def test_async_structured_requires_a_driver_without_sync_fallback() -> None:
+    runtime = AsyncPipelineRuntime()
+    session = runtime.initialize(
+        _compile(Pipeline([_AsyncRequiredWithoutDriver()])), _state()
+    )
+
+    with pytest.raises(ValidationError, match="async execution driver"):
+        runtime.advance(session)
 
 
 def test_structured_external_environment_closes_generation_not_runtime_session() -> (
@@ -263,11 +342,16 @@ def test_structured_runtime_rejects_recompile_required() -> None:
         PipelineRuntime().advance(PipelineRuntime().initialize(plan, _state()))
 
 
-def test_async_runtime_rejects_structured_plan_at_initialization() -> None:
+def test_async_runtime_accepts_structured_plan_at_initialization() -> None:
     plan = _compile(Pipeline([_Increment()]))
+    runtime = AsyncPipelineRuntime()
 
-    with pytest.raises(ValidationError, match="sequential graph plans only"):
-        AsyncPipelineRuntime().initialize(plan, _state())
+    session = runtime.initialize(plan, _state())
+
+    step = runtime.advance(session)
+
+    assert step.finished
+    assert step.state.get_state(USER_DATA) == 1
 
 
 class _LegacyStage(Stage):

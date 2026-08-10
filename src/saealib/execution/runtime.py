@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import asyncio
 import inspect
 import time
-from collections.abc import Callable, Iterable
+from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass, replace
 from types import SimpleNamespace
 from typing import Any, Protocol, cast
+
+import numpy as np
 
 from saealib.callback import (
     Event,
@@ -44,6 +47,12 @@ from saealib.core.runtime import (
     validate_plan_contracts,
 )
 from saealib.core.state import (
+    EVALUATION_HANDLES,
+    EVALUATION_NEW_IDS,
+    EVALUATION_REQUEST,
+    EVALUATION_UPDATE_NEW_IDS,
+    EVALUATION_UPDATES,
+    EVALUATIONS_PLAN_UPDATES,
     OPTIMIZATION_STATE_INITIAL_KEYS,
     RuntimeContext,
     StateKey,
@@ -116,6 +125,75 @@ class _ExecutionOutcome:
 class _ExecutionHaltError(Exception):
     def __init__(self, outcome: _ExecutionOutcome) -> None:
         self.outcome = outcome
+
+
+@dataclass(frozen=True)
+class _LeafExecution:
+    raw: object
+
+
+_TRANSIENT_STATE_FIELDS = (
+    ("evaluation_request", EVALUATION_REQUEST),
+    ("evaluation_updates", EVALUATION_UPDATES),
+    ("evaluation_update_new_ids", EVALUATION_UPDATE_NEW_IDS),
+    ("evaluation_new_ids", EVALUATION_NEW_IDS),
+    ("evaluation_handles", EVALUATION_HANDLES),
+)
+
+
+def _sync_transient_fields_from_store(state: OptimizationState) -> None:
+    for name, key in _TRANSIENT_STATE_FIELDS:
+        try:
+            value = state.get_state(key)
+        except KeyError:
+            continue
+        object.__setattr__(state, name, value)
+
+
+def _transient_field_for_key(key: StateKey) -> str | None:
+    return next(
+        (name for name, candidate in _TRANSIENT_STATE_FIELDS if candidate == key),
+        None,
+    )
+
+
+def _empty_transient_field(name: str) -> object:
+    if name == "evaluation_request":
+        return None
+    if name == "evaluation_new_ids":
+        return np.empty(0, dtype=np.int64)
+    if name in {"evaluation_updates", "evaluation_update_new_ids"}:
+        return []
+    return {}
+
+
+def _apply_structured_patch(state: OptimizationState, patch: StatePatch) -> None:
+    transient_writes: dict[str, object] = {}
+    transient_deletes: set[str] = set()
+    store_writes: dict[StateKey, object] = {}
+    store_deletes: set[StateKey] = set()
+    for key, value in patch.writes.items():
+        name = _transient_field_for_key(key)
+        if name is None:
+            store_writes[key] = value
+        else:
+            transient_writes[name] = value
+            store_deletes.add(key)
+    for key in patch.deletes:
+        name = _transient_field_for_key(key)
+        if name is None:
+            store_deletes.add(key)
+        elif key not in patch.writes:
+            transient_deletes.add(name)
+            store_deletes.add(key)
+    if store_writes or store_deletes:
+        state._store = state._store.apply_patch(
+            StatePatch(writes=store_writes, deletes=frozenset(store_deletes))
+        )
+    for name, value in transient_writes.items():
+        object.__setattr__(state, name, value)
+    for name in transient_deletes:
+        object.__setattr__(state, name, _empty_transient_field(name))
 
 
 def _environment_execute(
@@ -195,10 +273,19 @@ class _BoundStateView:
         return self._aliases.get(key, key)
 
     def get(self, key: StateKey) -> object:
-        return self._view.get(self._resolve(key))
+        resolved = self._resolve(key)
+        if self._view.contains(resolved):
+            return self._view.get(resolved)
+        name = _transient_field_for_key(resolved)
+        if name is not None:
+            return getattr(self._view.context, name)
+        return self._view.get(resolved)
 
     def contains(self, key: StateKey) -> bool:
-        return self._view.contains(self._resolve(key))
+        resolved = self._resolve(key)
+        if self._view.contains(resolved):
+            return True
+        return _transient_field_for_key(resolved) is not None
 
     @property
     def context(self) -> object:
@@ -276,16 +363,151 @@ def _evaluate_condition(
     return bool(condition.evaluate(view))
 
 
+def _async_stage_driver(component: object) -> Callable[..., object] | None:
+    stage = getattr(component, "stage", None)
+    if stage is None or not callable(getattr(stage, "execute_async", None)):
+        return None
+    target = getattr(component, "execute_async", None)
+    return target if callable(target) else None
+
+
+def _async_leaf_driver(component: object) -> Callable[..., object] | None:
+    if getattr(component, "stage", None) is not None:
+        return _async_stage_driver(component)
+    target = getattr(component, "execute_async", None)
+    return target if callable(target) else None
+
+
+def _async_driver_required(node: ComponentNode) -> bool:
+    return bool(
+        getattr(node.component, "requires_async_execution", False)
+        or getattr(node.component, "async_execution_required", False)
+        or "partial_feedback" in node.contract.execution.required_runtime_capabilities
+    )
+
+
+def _structured_async_plan_complete(state: OptimizationState) -> bool:
+    plan = getattr(state, "evaluation_plan", None)
+    plan_state = getattr(state, "evaluation_plan_state", None)
+    if plan is None or plan_state is None:
+        return False
+    if getattr(state, "pending_evaluations", {}) or getattr(
+        state, "evaluation_handles", {}
+    ):
+        return False
+    request_ids = {int(request.request_id) for request in plan.requests}
+    terminal = set(plan_state.completed) | set(plan_state.acknowledged)
+    return request_ids <= terminal
+
+
+def _structured_async_waiting(node: ComponentNode, state: OptimizationState) -> bool:
+    return bool(
+        EVALUATION_UPDATES in node.contract.state.writes
+        and EVALUATIONS_PLAN_UPDATES in node.contract.state.reads
+        and (
+            getattr(state, "pending_evaluations", {})
+            or _structured_async_plan_complete(state)
+        )
+    )
+
+
+def _rewind_to_async_driver(
+    frames: tuple[RegionFrame, ...],
+) -> tuple[RegionFrame, ...]:
+    if not frames:
+        return frames
+    frame = frames[-1]
+    driver_index = None
+    for index in range(frame.operation_index - 1, -1, -1):
+        operation = frame.graph.operations[index]
+        if isinstance(operation, ComponentNode) and _async_stage_driver(
+            operation.component
+        ):
+            driver_index = index
+            break
+    if driver_index is None:
+        return frames
+    return (*frames[:-1], replace(frame, operation_index=driver_index))
+
+
+def _invoke_async_leaf(
+    target: Callable[..., object],
+    view: _BoundStateView,
+    kwargs: dict[str, object],
+) -> object:
+    try:
+        parameters = inspect.signature(target).parameters
+    except (TypeError, ValueError) as exc:
+        raise ValidationError(
+            "async leaf execution target must be inspectable"
+        ) from exc
+    if any(
+        parameter.kind is inspect.Parameter.VAR_KEYWORD
+        for parameter in parameters.values()
+    ):
+        accepted = kwargs
+    else:
+        accepted = {name: value for name, value in kwargs.items() if name in parameters}
+    result = target(view, **accepted)
+    if not inspect.isawaitable(result):
+        return result
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(_await_async_result(result))
+    raise ValidationError(
+        "structured async runtime cannot await a leaf from a running event loop"
+    )
+
+
+async def _await_async_result(result: Awaitable[object]) -> object:
+    return await result
+
+
+def _structured_async_leaf_executor(
+    async_kwargs: dict[str, object],
+) -> Callable[
+    [StructuredPlan, ComponentNode, OptimizationState, _BoundStateView], _LeafExecution
+]:
+    def execute(
+        plan: StructuredPlan,
+        node: ComponentNode,
+        state: OptimizationState,
+        view: _BoundStateView,
+    ) -> _LeafExecution:
+        target = _async_leaf_driver(node.component)
+        if target is None:
+            if _async_driver_required(node):
+                raise ValidationError(
+                    f"Structured async node {node.component_id!r} requires an "
+                    "async execution driver"
+                )
+            return _LeafExecution(plan._execute_targets[node.component_id](view))
+        return _LeafExecution(_invoke_async_leaf(target, view, async_kwargs))
+
+    return execute
+
+
 def _execute_structured(
     plan: StructuredPlan,
     state: OptimizationState,
     frames: tuple[RegionFrame, ...] = (),
     *,
     dispatch: Callable[[Event], None] | None = None,
+    leaf_executor: Callable[
+        [StructuredPlan, ComponentNode, OptimizationState, _BoundStateView],
+        _LeafExecution,
+    ]
+    | None = None,
+    async_control: bool = False,
+    resume_async_driver: bool = False,
 ) -> _ExecutionOutcome:
     """Execute structured operations until a node yields or the graph ends."""
+    _sync_transient_fields_from_store(state)
     current = state
     stack = list(frames or (RegionFrame(graph=plan.graph),))
+    if async_control and resume_async_driver:
+        stack = list(_rewind_to_async_driver(tuple(stack)))
     results: list[NodeResult] = []
     executed: list[str] = []
     refused: list[RuntimeCommand] = []
@@ -398,6 +620,23 @@ def _execute_structured(
             continue
 
         node = operation
+        if async_control and _structured_async_waiting(node, current):
+            if _structured_async_plan_complete(current):
+                stack[-1] = replace(frame, operation_index=len(frame.graph.operations))
+                continue
+            executed.append(node.component_id)
+            result = NodeResult(
+                patch=StatePatch(writes={}),
+                status=NodeStatus.BLOCKED,
+            )
+            results.append(result)
+            return _ExecutionOutcome(
+                state=current,
+                node_results=tuple(results),
+                executed_node_ids=tuple(executed),
+                refused_commands=tuple(refused),
+                frames=tuple(stack),
+            )
         executed.append(node.component_id)
         aliases = _node_state_aliases(plan, node)
         view = current._store.view(
@@ -407,7 +646,13 @@ def _execute_structured(
             ),
             dispatch=dispatch,
         )
-        raw = plan._execute_targets[node.component_id](_BoundStateView(view, aliases))
+        bound_view = _BoundStateView(view, aliases)
+        leaf = (
+            leaf_executor(plan, node, current, bound_view)
+            if leaf_executor is not None
+            else _LeafExecution(plan._execute_targets[node.component_id](bound_view))
+        )
+        raw = leaf.raw
         if isinstance(raw, StatePatch):
             result = NodeResult(patch=raw)
         elif isinstance(raw, NodeResult):
@@ -418,7 +663,7 @@ def _execute_structured(
             )
         patch = _bound_patch(plan, node, result.patch)
         if result.status is not NodeStatus.FAILED and (patch.writes or patch.deletes):
-            current._store = current._store.apply_patch(patch)
+            _apply_structured_patch(current, patch)
         if dispatch is not None:
             for event in result.events:
                 dispatch(event)
@@ -1245,19 +1490,187 @@ class PipelineRuntime:
 
 
 class AsyncPipelineRuntime(PipelineRuntime):
-    """Drive sequential asynchronous evaluation lifecycle through a scheduler."""
+    """Drive structured or sequential asynchronous evaluation lifecycle."""
 
     capabilities = frozenset({"partial_feedback"})
 
     def initialize(
         self, plan: ExecutablePlan, state: OptimizationState
     ) -> RuntimeSession:
-        """Create a session for a sequential plan only."""
-        if isinstance(plan, ExecutablePlan) and isinstance(plan.graph, StructuredGraph):
-            raise ValidationError(
-                "AsyncPipelineRuntime supports sequential graph plans only"
-            )
+        """Create a session for a compiled graph plan."""
         return super().initialize(plan, state)
+
+    @staticmethod
+    def _async_leaf_kwargs(environment: object) -> dict[str, object]:
+        optimizer = getattr(environment, "optimizer", None)
+        scheduler = getattr(optimizer, "async_evaluation_scheduler", None)
+        if scheduler is None:
+            return {}
+        builder = getattr(optimizer, "feedback_builder", None)
+        if builder is None:
+            strategy = getattr(optimizer, "strategy", None)
+            builder = getattr(strategy, "feedback_builder", None)
+        return {
+            "scheduler": scheduler,
+            "feedback_builder": builder,
+            "algorithm": getattr(optimizer, "algorithm", None),
+            "callback_manager": getattr(optimizer, "cbmanager", None),
+            "strategy": getattr(optimizer, "strategy", None),
+        }
+
+    def _advance_structured_async(self, session: RuntimeSession) -> RuntimeStep:
+        structured_plan = cast(StructuredPlan, session.plan)
+        if self.environment is None:
+            metadata = _execute_structured(
+                structured_plan,
+                session.state,
+                session.frames,
+                leaf_executor=_structured_async_leaf_executor({}),
+                async_control=True,
+            )
+            if metadata.recompile_required:
+                raise ValidationError(
+                    "AsyncPipelineRuntime cannot recompile a structured plan "
+                    "while preserving its region frames"
+                )
+            if any(
+                result.status is NodeStatus.FAILED for result in metadata.node_results
+            ):
+                raise ValidationError("structured runtime node reported FAILED status")
+            next_session = RuntimeSession(
+                plan=session.plan,
+                state=metadata.state,
+                step_index=session.step_index + 1,
+                observable=True,
+                finished=metadata.finished,
+                frames=metadata.frames,
+            )
+            return RuntimeStep(
+                state=metadata.state,
+                node_results=metadata.node_results,
+                executed_node_ids=metadata.executed_node_ids,
+                observable=True,
+                finished=metadata.finished,
+                refused_commands=metadata.refused_commands,
+                session=next_session,
+            )
+
+        environment = self.environment
+        environment.fatal(session.state)
+        refresh = getattr(environment, "_refresh_plan_if_needed", None)
+        if callable(refresh):
+            refresh()
+        plan = getattr(environment, "plan", session.plan)
+        if not isinstance(plan, StructuredPlan):
+            raise ValidationError(
+                "structured async runtime environment returned a non-structured plan"
+            )
+        state = session.state
+        _sync_transient_fields_from_store(state)
+        generation_open = session.generation_open
+        resume_async_driver = False
+        if state.pending_evaluations:
+            if set(state.pending_evaluations) != set(state.evaluation_handles):
+                reattach = getattr(environment, "reattach", None)
+                if callable(reattach):
+                    state = reattach(state)
+            poll = getattr(environment, "poll", None)
+            if callable(poll):
+                state = poll(state)
+                resume_async_driver = not state.pending_evaluations and not (
+                    _structured_async_plan_complete(state)
+                )
+            if state.pending_evaluations:
+                if environment.is_terminated(state):
+                    return self._step(
+                        session,
+                        state,
+                        generation_open,
+                        plan=plan,
+                    )
+                return self._step(
+                    session,
+                    state,
+                    generation_open,
+                    plan=plan,
+                )
+        if environment.is_terminated(state):
+            environment.dispatch(RunEndEvent(ctx=state))
+            return self._step(
+                session,
+                state,
+                generation_open,
+                finished=True,
+                plan=plan,
+            )
+        if not generation_open:
+            environment.dispatch(GenerationStartEvent(ctx=state))
+            generation_open = True
+        metadata = _execute_structured(
+            plan,
+            state,
+            session.frames,
+            dispatch=environment.dispatch,
+            leaf_executor=_structured_async_leaf_executor(
+                self._async_leaf_kwargs(environment)
+            ),
+            async_control=True,
+            resume_async_driver=resume_async_driver,
+        )
+        if metadata.recompile_required:
+            raise ValidationError(
+                "AsyncPipelineRuntime cannot recompile a structured plan while "
+                "preserving its region frames"
+            )
+        if any(result.status is NodeStatus.FAILED for result in metadata.node_results):
+            raise ValidationError("structured runtime node reported FAILED status")
+        if metadata.terminated:
+            environment.dispatch(RunEndEvent(ctx=metadata.state))
+            return self._step(
+                session,
+                metadata.state,
+                generation_open,
+                finished=True,
+                metadata=metadata,
+                plan=plan,
+            )
+        if any(
+            result.status in {NodeStatus.BLOCKED, NodeStatus.RUNNING}
+            for result in metadata.node_results
+        ):
+            return self._step(
+                session,
+                metadata.state,
+                generation_open,
+                metadata=metadata,
+                plan=plan,
+            )
+        if metadata.finished:
+            if metadata.state.pending_evaluations:
+                return self._step(
+                    session,
+                    metadata.state,
+                    generation_open,
+                    metadata=metadata,
+                    plan=plan,
+                )
+            environment.finish_generation(metadata.state)
+            return self._step(
+                session,
+                metadata.state,
+                False,
+                observable=True,
+                finished=False,
+                metadata=metadata,
+                plan=plan,
+            )
+        return self._step(
+            session,
+            metadata.state,
+            generation_open,
+            metadata=metadata,
+            plan=plan,
+        )
 
     @staticmethod
     def _has_unfinished_async_work(
@@ -1275,6 +1688,8 @@ class AsyncPipelineRuntime(PipelineRuntime):
             raise ValidationError(
                 "AsyncPipelineRuntime.advance requires a RuntimeSession"
             )
+        if isinstance(session.plan, StructuredPlan):
+            return self._advance_structured_async(session)
         if not isinstance(session.plan, SequentialPlan):
             raise ValidationError(
                 "AsyncPipelineRuntime.advance requires a SequentialPlan session"
@@ -1565,13 +1980,12 @@ def _sync_runtime_factory(optimizer: object, plan: ExecutablePlan) -> ExecutionR
 
 
 def _async_runtime_factory(optimizer: object, plan: ExecutablePlan) -> ExecutionRuntime:
+    runtime_plan: SequentialPlan | StructuredPlan
     if isinstance(plan.graph, StructuredGraph):
-        raise ValidationError(
-            "AsyncPipelineRuntime does not yet execute structured graph plans"
-        )
-    return AsyncPipelineRuntime(
-        _OptimizerEnvironment(optimizer, SequentialPlan.from_executable_plan(plan))
-    )
+        runtime_plan = StructuredPlan.from_executable_plan(plan)
+    else:
+        runtime_plan = SequentialPlan.from_executable_plan(plan)
+    return AsyncPipelineRuntime(_OptimizerEnvironment(optimizer, runtime_plan))
 
 
 def _sync_runtime_capability_provider(

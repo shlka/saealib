@@ -15,18 +15,21 @@ from saealib.algorithms.pymoo_algorithm import PymooAlgorithm
 from saealib.context import OptimizationState
 from saealib.core.compiler.compiler import CompileContext, Compiler, ExecutablePlan
 from saealib.core.compiler.graph import ComponentGraph, ComponentNode, NodeRef
+from saealib.core.compiler.structured import StructuredGraph
 from saealib.core.contracts import ComponentContract, ExecutionContract
 from saealib.core.runtime import (
     NodeResult,
     NodeStatus,
     RequestRecompile,
     RuntimeStep,
+    StructuredPlan,
 )
 from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
 from saealib.core.state.patch import StatePatch
 from saealib.exceptions import ConfigurationError, StalePlanError, ValidationError
 from saealib.execution import (
     AsyncEvaluationScheduler,
+    AsyncEvaluator,
     RuntimeFactory,
     RuntimeRegistration,
     RuntimeRegistry,
@@ -47,6 +50,7 @@ from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
+from saealib.termination import Termination, max_gen
 
 
 def _state() -> OptimizationState:
@@ -305,6 +309,41 @@ def test_real_strategy_graphs_compile_and_initialize_selected_runtimes() -> None
                 assert isinstance(runtime, AsyncPipelineRuntime)
             else:
                 assert isinstance(runtime, PipelineRuntime)
+
+
+def test_generation_strategy_runs_as_structured_async_plan() -> None:
+    evaluator = AsyncEvaluator(SerialEvaluator())
+    optimizer = (
+        Optimizer(_problem())
+        .set_strategy(GenerationBasedStrategy(gen_ctrl=0))
+        .set_evaluator(evaluator)
+        .set_async_evaluation_scheduler(
+            AsyncEvaluationScheduler(evaluator, max_pending=2)
+        )
+        .set_termination(Termination(max_gen(1)))
+    )
+    try:
+        optimizer._resolve_defaults()
+        plan = optimizer._compile_plan()
+        assert plan is not None
+        assert isinstance(plan.graph, StructuredGraph)
+        initializer = optimizer.initializer
+        assert initializer is not None
+        state = initializer.initialize(optimizer, optimizer.problem)
+        runtime = create_runtime(optimizer)
+        session = runtime.initialize(plan, state)
+        assert isinstance(session.plan, StructuredPlan)
+
+        first = runtime.advance(session)
+
+        assert any(result.status is NodeStatus.BLOCKED for result in first.node_results)
+        assert first.session is not None
+        second = runtime.advance(first.session)
+
+        assert second.finished
+        assert not second.state.pending_evaluations
+    finally:
+        evaluator.close()
 
 
 def _graph_signature(optimizer: Optimizer) -> tuple[object, ...]:

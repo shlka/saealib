@@ -974,6 +974,7 @@ class EvaluationPlanStage(Stage):
                 EVALUATIONS_OWNERS,
                 ACQUISITION_RESULT,
                 SCORES,
+                SURROGATES_PREDICTIONS,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
             ),
             writes=(
@@ -985,6 +986,8 @@ class EvaluationPlanStage(Stage):
                 EVALUATION_UPDATES,
                 EVALUATION_UPDATE_NEW_IDS,
                 EVALUATION_NEW_IDS,
+                EVALUATION_HANDLES,
+                EVALUATIONS_OWNERS,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
             ),
             components=(("_planner", self._planner),),

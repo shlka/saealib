@@ -131,10 +131,12 @@ while structured graph-native nodes use the restricted core view. A
 `StructuredPlan` rejects stage adapters and `execute(OptimizationState)` nodes,
 so the two execution contracts cannot be mixed accidentally.
 
-The asynchronous provider does not flatten a structured plan into a sequential
-one. Until its scheduler seam is structured-region aware, it rejects such a
-plan explicitly; sequential stage graphs continue to use the existing async
-provider.
+The asynchronous provider preserves a structured plan and executes its regions
+with the same resumable frames as the synchronous provider. Ordinary leaves use
+their synchronous execution boundary; leaves with an asynchronous driver use
+the scheduler seam, and a pending evaluation keeps the current operation
+position until the next poll. A required asynchronous capability without a
+driver is rejected rather than silently downgraded.
 
 Structured plans also reject `RECOMPILE_REQUIRED` until a frame migration
 contract defines how an active region cursor maps to a rebuilt plan. Sequential
