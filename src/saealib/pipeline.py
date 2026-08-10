@@ -1,15 +1,19 @@
-"""Stage ABC and Pipeline: building blocks for the optimization pipeline."""
+"""Legacy executable stages and the structural pipeline DSL."""
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from functools import reduce
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from saealib.core.contracts import ComponentContract
+from saealib.core.compiler.regions import Condition
+from saealib.core.contracts import ComponentContract, StateContract
+from saealib.exceptions import ValidationError
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
+
+__all__ = ["Branch", "Condition", "Loop", "Pipeline", "Repeat", "Stage"]
 
 
 class Stage(ABC):
@@ -112,23 +116,114 @@ class Stage(ABC):
         return ComponentContract()
 
 
-def _find_recursive(stages: list[Stage], name: str) -> Stage | None:
+def _find_recursive(stages: Sequence[object], name: str) -> object | None:
     for stage in stages:
-        if stage.name == name:
+        if getattr(stage, "name", None) == name:
             return stage
-        if stage.stages:
-            result = _find_recursive(stage.stages, name)
+        children = getattr(stage, "stages", None)
+        if children is None and isinstance(stage, (Repeat, Loop)):
+            children = (stage.body,)
+        elif children is None and isinstance(stage, Branch):
+            children = (stage.then,)
+            if stage.else_ is not None:
+                children += (stage.else_,)
+        if children is not None and not isinstance(children, (str, bytes)):
+            if not isinstance(children, (list, tuple)):
+                children = (children,)
+            result = _find_recursive(children, name)
             if result is not None:
                 return result
     return None
 
 
-class Pipeline(Stage):
-    """
-    A sequential composition of :class:`Stage` objects.
+def _validate_dsl_condition(condition: object) -> None:
+    if not callable(getattr(condition, "contract", None)):
+        raise ValidationError("DSL condition must provide contract()")
+    if not callable(getattr(condition, "evaluate", None)):
+        raise ValidationError("DSL condition must provide evaluate(context)")
+    if not isinstance(condition.contract(), StateContract):
+        raise ValidationError("DSL condition contract() must return StateContract")
 
-    Executes each stage in order using ``functools.reduce``.  Can be nested
-    inside another ``Pipeline`` because ``Pipeline`` is itself a ``Stage``.
+
+class _ControlValue:
+    """Common identity and pseudocode surface for structural DSL values."""
+
+    name: str = ""
+    label: str = ""
+    notation: str = ""
+
+    def __init__(self, *, name: str = "", label: str = "", notation: str = "") -> None:
+        self.name = name or type(self).__name__.lower()
+        self.label = label
+        self.notation = notation
+
+    def to_pseudocode(self, *, expand: bool = False, indent: int = 0) -> str:
+        """Render this repeat as a lightweight pseudocode line."""
+        prefix = "  " * indent
+        return f"{prefix}\\State {self.notation or self.label or self.name}"
+
+
+class Repeat(_ControlValue):
+    """Repeat a structural body a fixed number of times."""
+
+    def __init__(self, body: object, count: int, *, name: str = "") -> None:
+        if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+            raise ValidationError("Repeat count must be a non-negative integer")
+        super().__init__(name=name, label=f"Repeat {count} times")
+        self.body = body
+        self.count = count
+
+    def to_pseudocode(self, *, expand: bool = False, indent: int = 0) -> str:
+        """Render this repeat as a lightweight pseudocode line."""
+        prefix = "  " * indent
+        return f"{prefix}\\State \\Repeat{{{self.count}}}"
+
+
+class Loop(_ControlValue):
+    """Repeat a structural body while a condition remains active."""
+
+    def __init__(self, body: object, *, until: Condition, name: str = "") -> None:
+        _validate_dsl_condition(until)
+        super().__init__(name=name, label="Loop")
+        self.body = body
+        self.until = until
+        self.condition = until
+
+    def to_pseudocode(self, *, expand: bool = False, indent: int = 0) -> str:
+        """Render this loop as a lightweight pseudocode line."""
+        prefix = "  " * indent
+        return f"{prefix}\\State \\Loop{{{self.name}}}"
+
+
+class Branch(_ControlValue):
+    """Select one of two structural bodies using a condition."""
+
+    def __init__(
+        self,
+        condition: Condition,
+        *,
+        then: object,
+        else_: object | None = None,
+        name: str = "",
+    ) -> None:
+        _validate_dsl_condition(condition)
+        super().__init__(name=name, label="Branch")
+        self.condition = condition
+        self.then = then
+        self.else_ = else_
+
+    def to_pseudocode(self, *, expand: bool = False, indent: int = 0) -> str:
+        """Render this branch as a lightweight pseudocode line."""
+        prefix = "  " * indent
+        return f"{prefix}\\State \\If{{{self.name}}}"
+
+
+class Pipeline:
+    """
+    An ordered structural DSL sequence.
+
+    Pipelines describe components for
+    lowering and have no state execution path.
 
     Parameters
     ----------
@@ -144,28 +239,33 @@ class Pipeline(Stage):
 
     def __init__(
         self,
-        stages: list[Stage],
+        stages: Sequence[object] | None = None,
         name: str = "",
         label: str = "",
         notation: str = "",
+        *,
+        steps: Sequence[object] | None = None,
     ) -> None:
-        super().__init__(name=name, label=label, notation=notation)
-        self.stages = stages
+        if stages is not None and steps is not None:
+            raise TypeError("Provide either positional stages or steps=, not both")
+        self.name = name
+        self.label = label
+        self.notation = notation
+        self.steps = list(steps if steps is not None else (stages or ()))
+        self.stages = self.steps
         self._validate()
 
     def _validate(self) -> None:
-        for stage in self.stages:
-            if not isinstance(stage, Stage):
+        for stage in self.steps:
+            if isinstance(stage, (Pipeline, Repeat, Loop, Branch, Stage)):
+                continue
+            if not callable(getattr(stage, "contract", None)):
                 raise TypeError(
-                    f"{stage!r} is not a Stage instance; "
-                    "all elements of a Pipeline must be Stage subclasses"
+                    f"{stage!r} is not a Stage instance or graph component; "
+                    "all elements of a Pipeline must be structural values"
                 )
 
-    def execute(self, state: OptimizationState) -> OptimizationState:
-        """Execute all stages sequentially, threading state through each."""
-        return reduce(lambda s, stage: stage.execute(s), self.stages, state)
-
-    def __getitem__(self, name: str) -> Stage:
+    def __getitem__(self, name: str) -> object:
         """Look up a stage by its ``name`` attribute.
 
         Parameters
@@ -187,7 +287,7 @@ class Pipeline(Stage):
                 return stage
         raise KeyError(name)
 
-    def replace(self, name: str, stage: Stage) -> None:
+    def replace(self, name: str, stage: object) -> None:
         """Replace the stage named *name* in the top-level stages list.
 
         Parameters
@@ -204,10 +304,12 @@ class Pipeline(Stage):
         TypeError
             If *stage* is not a ``Stage`` instance.
         """
-        if not isinstance(stage, Stage):
+        if not isinstance(
+            stage, (Pipeline, Repeat, Loop, Branch, Stage)
+        ) and not callable(getattr(stage, "contract", None)):
             raise TypeError(
-                f"{stage!r} is not a Stage instance; "
-                "replacement must be a Stage subclass"
+                f"{stage!r} is not a Stage instance or graph component; "
+                "replacement must be a structural value"
             )
         for i, s in enumerate(self.stages):
             if s.name == name:
@@ -215,7 +317,7 @@ class Pipeline(Stage):
                 return
         raise KeyError(name)
 
-    def find(self, name: str, *, recursive: bool = False) -> Stage:
+    def find(self, name: str, *, recursive: bool = False) -> object:
         """Look up a stage by name, optionally descending into nested stages.
 
         Parameters
@@ -262,7 +364,18 @@ class Pipeline(Stage):
             prefix = "  " * indent
             label = self.label or self.name or "Pipeline"
             inner = "\n".join(
-                s.to_pseudocode(expand=True, indent=indent + 1) for s in self.stages
+                _to_pseudocode(s, expand=True, indent=indent + 1) for s in self.stages
             )
             return f"{prefix}\\Comment{{{label}}}\n{inner}"
-        return super().to_pseudocode(expand=expand, indent=indent)
+        prefix = "  " * indent
+        notation = self.notation or self.label or self.name or "Pipeline"
+        return f"{prefix}\\State {notation}"
+
+
+def _to_pseudocode(value: object, *, expand: bool, indent: int) -> str:
+    renderer = getattr(value, "to_pseudocode", None)
+    if callable(renderer):
+        return renderer(expand=expand, indent=indent)
+    prefix = "  " * indent
+    name = getattr(value, "name", type(value).__name__)
+    return f"{prefix}\\State {name}"

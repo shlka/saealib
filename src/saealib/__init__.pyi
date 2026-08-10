@@ -157,7 +157,11 @@ from saealib.operators import TournamentSelection as TournamentSelection
 from saealib.operators import TruncationSelection as TruncationSelection
 from saealib.operators import repair_clipping as repair_clipping
 from saealib.optimizer import Optimizer as Optimizer
+from saealib.pipeline import Branch as Branch
+from saealib.pipeline import Condition as Condition
+from saealib.pipeline import Loop as Loop
 from saealib.pipeline import Pipeline as Pipeline
+from saealib.pipeline import Repeat as Repeat
 from saealib.pipeline import Stage as Stage
 from saealib.policies import ComparatorWorstFallback as ComparatorWorstFallback
 from saealib.policies import EvaluateAll as EvaluateAll

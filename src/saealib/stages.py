@@ -87,7 +87,7 @@ from saealib.execution.evaluator import (
     Evaluator,
     PendingEvaluation,
 )
-from saealib.pipeline import Pipeline, Stage
+from saealib.pipeline import Stage
 from saealib.policies.evaluation import (
     EvaluateAll,
     EvaluationPlan,
@@ -2131,21 +2131,18 @@ class SurrogateOnlyLoopStage(Stage):
         self._sm = surrogate_manager
         self._cbmanager = cbmanager
         if gen_ctrl > 0:
-            self._inner = Pipeline(
-                [
-                    CountGenerationStage(),
-                    AskStage(algorithm, cbmanager=cbmanager),
-                    SurrogatePredictStage(
-                        surrogate_manager, cbmanager=cbmanager, refit=False
-                    ),
-                    AcquisitionStage(acquisition, cbmanager=cbmanager),
-                    FeedbackStage(feedback_builder or MixedFeedback()),
-                    TellStage(algorithm, channel=SURROGATE),
-                ]
-            )
-            self.stages = self._inner.stages
+            self.stages = [
+                CountGenerationStage(),
+                AskStage(algorithm, cbmanager=cbmanager),
+                SurrogatePredictStage(
+                    surrogate_manager, cbmanager=cbmanager, refit=False
+                ),
+                AcquisitionStage(acquisition, cbmanager=cbmanager),
+                FeedbackStage(feedback_builder or MixedFeedback()),
+                TellStage(algorithm, channel=SURROGATE),
+            ]
         else:
-            self._inner = Pipeline([])
+            self.stages = []
 
     def to_pseudocode(self, *, expand: bool = False, indent: int = 0) -> str:
         r"""Render as a ``\For`` loop block when *expand* is True."""
@@ -2171,7 +2168,8 @@ class SurrogateOnlyLoopStage(Stage):
                     )
                 )
             for _ in range(self._gen_ctrl):
-                state = self._inner.execute(state)
+                for stage in self.stages:
+                    state = stage.execute(state)
         return state
 
 

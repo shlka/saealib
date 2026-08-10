@@ -74,7 +74,7 @@ from saealib.operators import (
     TruncationSelection,
 )
 from saealib.optimizer import Optimizer
-from saealib.pipeline import Pipeline, Stage
+from saealib.pipeline import Branch, Condition, Loop, Pipeline, Repeat, Stage
 from saealib.policies import (
     ComparatorWorstFallback,
     EvaluateAll,
@@ -176,12 +176,14 @@ __all__ = [
     "AsyncEvaluationSubmitStage",
     "AsyncEvaluator",
     "BatchExpectedImprovement",
+    "Branch",
     "CallbackManager",
     "CategoricalVariable",
     "CheckpointCallback",
     "CheckpointError",
     "Comparator",
     "ComparatorWorstFallback",
+    "Condition",
     "ConfigurationError",
     "ConstraintHandler",
     "ContinuousVariable",
@@ -227,6 +229,7 @@ __all__ = [
     "IntegerVariable",
     "IslandModel",
     "LHSInitializer",
+    "Loop",
     "MixedFeedback",
     "Mutation",
     "MutationPolynomial",
@@ -247,6 +250,7 @@ __all__ = [
     "Problem",
     "RandomInitializer",
     "RatioEvaluation",
+    "Repeat",
     "RepeatedEvaluation",
     "ReplicateSummary",
     "Result",
