@@ -7,9 +7,9 @@ Tests cover:
 - ExpectedImprovement: basic EI formula, xi parameter, requires uncertainty
 - LowerConfidenceBound: negated LCB, kappa parameter, requires uncertainty
 - ProbabilityOfFeasibility: P(g<=0), requires uncertainty
-- CORSDistance: distance-constrained mean prediction, beta_i cycling (Issue #212)
+- CORSDistance: distance-constrained mean prediction, beta_i cycling
 - AcquisitionFunction: abstract base class cannot be instantiated
-- direction-aware minimize-space conversion for EI/LCB (Issue #198)
+- direction-aware minimize-space conversion for EI/LCB
 """
 
 import numpy as np
@@ -314,7 +314,7 @@ class TestLowerConfidenceBound:
 
 
 # ===========================================================================
-# CORSDistance Tests (Issue #212)
+# CORSDistance tests
 # ===========================================================================
 class TestCORSDistance:
     """Tests for the CORS distance-constrained acquisition function."""
@@ -362,7 +362,6 @@ class TestCORSDistance:
             assert af.score(pred, reference=reference)[0] == pytest.approx(5.0)
 
     def test_empty_archive_no_constraint(self) -> None:
-        """With no previously evaluated points, the constraint is vacuously satisfied."""  # noqa: E501
         reference = _archive_x([]).x
         pred = _pred_x(value=[[5.0]], x=[[0.0]])
         scores = CORSDistance(delta=10.0).score(pred, reference=reference)
@@ -505,7 +504,7 @@ class TestProductOfFeasibility:
 
 
 # ===========================================================================
-# Direction-aware minimize-space conversion (Issue #198)
+# Direction-aware minimize-space conversion
 # ===========================================================================
 class TestDirectionSensitivity:
     """

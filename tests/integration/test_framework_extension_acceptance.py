@@ -94,7 +94,7 @@ def _representation_profiles() -> tuple[tuple[str, Any, Any, Any], ...]:
     )
 
 
-def test_u10_4_cross_phase_focused_inventory_guard() -> None:
+def test_extension_inventory_and_profiles_are_complete() -> None:
     assert len(EXTENSION_FOCUSED_TESTS) == 8
     assert all(
         callable(getattr(external_plugin, name, None))
@@ -134,7 +134,7 @@ def test_representation_graph_profiles_compile_through_current_public_path() -> 
         ] == [], name
 
 
-def test_u10_4_plugin_uses_core_compiler_without_representation_branch() -> None:
+def test_plugin_uses_core_compiler_without_representation_branch() -> None:
     compiler_root = Path(__file__).parents[2] / "src" / "saealib" / "core" / "compiler"
     compiler_source = "\n".join(
         path.read_text(encoding="utf-8") for path in compiler_root.glob("*.py")

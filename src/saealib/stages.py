@@ -166,7 +166,6 @@ class _DispatchProxy:
 
 
 def _plan_complete(state: OptimizationState) -> bool:
-    """Return whether every request in the active plan is terminal."""
     plan = state.evaluation_plan
     if plan is None:
         return True
@@ -182,7 +181,6 @@ def _plan_incomplete(state: OptimizationState) -> bool:
 
 
 def _apply_component_patch(state: OptimizationState, patch: StatePatch) -> None:
-    """Apply a non-empty component patch to the live state store."""
     if not isinstance(patch, StatePatch):
         raise ValidationError("feedback consumer must return a StatePatch")
     if patch.writes or patch.deletes:

@@ -400,7 +400,6 @@ class DecompositionComparator(Comparator):
         return self._ideal_point
 
     def _to_min_frame(self, f: np.ndarray) -> np.ndarray:
-        """Apply direction transform so that all objectives are minimized."""
         if self.direction is None:
             return f
         return f * (-self.direction)

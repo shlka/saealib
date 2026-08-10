@@ -1,5 +1,5 @@
 """
-Tests for evolutionary operators (Issue #010).
+Tests for evolutionary operators.
 
 Tests cover:
 - CrossoverBLXAlpha: alpha rename, output shape, determinism
@@ -1578,15 +1578,12 @@ class TestMutationUniformBatch:
 
 
 class TestMutationUniformBatchUnboundedDimensions:
-    """Regression for Issue #224's Fix 4: mutate_batch used to draw a
-    replacement for every (row, dim) position unconditionally, via
-    ``rng.uniform(lb, ub, size=(k, dim))``, even for positions var_gate
-    would discard -- raising OverflowError as soon as ANY dimension in the
-    batch was unbounded, regardless of whether that dimension was ever
-    actually gated in. The fix draws a replacement only for the positions
-    var_gate selects, mirroring how the scalar mutate() only ever calls
-    rng.uniform for a dimension that actually passed its per-dimension
-    gate."""
+    """Draw replacements only for dimensions selected for mutation.
+
+    Unbounded dimensions must not be passed to ``rng.uniform`` unless their
+    per-dimension gate selected them. This preserves scalar mutation semantics
+    and allows unbounded dimensions when no replacement is needed.
+    """
 
     def test_prob_var_zero_with_infinite_bounds_does_not_raise(self):
         op = MutationUniform(prob=1.0, prob_var=0.0)
@@ -2312,17 +2309,12 @@ class TestDuplicateElimination:
 
 # ---------------------------------------------------------------------------
 # GA + batched default crossover operators: end-to-end smoke test
-# (Issue #224, commit 7 — CrossoverSBX now dispatches through
-# crossover_batch by default on continuous-only problems.)
 # ---------------------------------------------------------------------------
 
 
 class TestGABatchedCrossoverSmoke:
     def test_ga_with_sbx_runs_several_generations_on_sphere(self):
-        """Coarse sanity net for the new default crossover_batch dispatch
-        path: GA with CrossoverSBX (now batch-capable) on a continuous-only
-        problem must run several generations without error and produce
-        finite, in-bounds candidates. Not a strict numeric-equality check."""
+        """Run batched SBX through GA and keep generated candidates valid."""
         dim = 5
         lb = [-5.0] * dim
         ub = [5.0] * dim

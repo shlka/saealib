@@ -1,4 +1,4 @@
-"""Runtime implementations and the legacy optimizer environment bridge."""
+"""Runtime implementations and the optimizer environment compatibility bridge."""
 
 from __future__ import annotations
 
@@ -823,7 +823,7 @@ def create_runtime(optimizer: object) -> ExecutionRuntime:
 
 
 def resolve_plan(optimizer: object) -> ExecutablePlan:
-    """Return the optimizer plan, compiling only for legacy bare providers."""
+    """Return the optimizer plan, compiling only for bare providers."""
     plan = getattr(optimizer, "executable_plan", None)
     if isinstance(plan, ExecutablePlan):
         return plan

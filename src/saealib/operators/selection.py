@@ -187,7 +187,6 @@ class SequentialSelection(ParentSelection):
     """Sequential selection operator."""
 
     def __init__(self):
-        """Initialize sequential selection operator."""
         super().__init__()
 
     def select(
@@ -240,7 +239,6 @@ class LinearRankSelection(ParentSelection):
     """
 
     def __init__(self):
-        """Initialize linear rank selection."""
         super().__init__()
 
     def contract(self) -> ComponentContract:

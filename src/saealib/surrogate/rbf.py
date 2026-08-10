@@ -114,12 +114,11 @@ class _RBFModel:
 
 @register()
 class RBFSurrogate(RegressionSurrogate):
-    """
-    Radial Basis Function (RBF) Interpolation surrogate model.
+    """Radial Basis Function interpolation surrogate model.
 
-    Supports multi-objective problems by maintaining one independent
-    _RBFModel per objective. The number of objectives is inferred from
-    ``train_y`` on the first call to ``fit`` (lazy initialization).
+    Supports multi-objective problems with one independent model per
+    objective. The number of objectives is inferred from ``train_y`` on the
+    first call to ``fit``.
 
     Attributes
     ----------

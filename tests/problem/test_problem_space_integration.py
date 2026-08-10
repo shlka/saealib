@@ -90,13 +90,6 @@ def _setup_state(
 
 
 def test_problem_properties_derive_from_space() -> None:
-    """problem.lb/ub/dim derive directly from space without duplication.
-
-    Implementation mutation that would break this test:
-        Store `self._lb = lb.copy()` in Problem.__init__ and return
-        `self._lb` in `Problem.lb`. Modifying `problem.space._lb` would no
-        longer be reflected in `problem.lb`.
-    """
     prob = Problem(
         func=dummy_func,
         dim=3,
@@ -122,12 +115,6 @@ def test_problem_properties_derive_from_space() -> None:
 
 
 def test_bounds_service_matches_problem_bounds() -> None:
-    """BoundsService.bounds returns the exact (lb, ub) matching problem.lb/ub.
-
-    Implementation mutation that would break this test:
-        In `_VectorBoundsService`, add `+ 1.0` to `self._ub`.
-        `np.testing.assert_array_equal(srv_ub, prob.ub)` would fail.
-    """
     prob = Problem(
         func=dummy_func,
         dim=2,
@@ -151,12 +138,6 @@ def test_bounds_service_matches_problem_bounds() -> None:
 
 
 def test_ga_and_pso_determinism_with_bounds_service() -> None:
-    """GA and PSO produce deterministic outputs using BoundsService.
-
-    Implementation mutation that would break this test:
-        Swap `lb, ub = ub, lb` in `GA.ask` or `PSO.ask`.
-        Candidate values generated with the same seed will differ.
-    """
     prob = Problem(
         func=dummy_func,
         dim=4,
@@ -199,12 +180,6 @@ def test_ga_and_pso_determinism_with_bounds_service() -> None:
 
 
 def test_bounds_service_not_required_in_inner_loops() -> None:
-    """GA.ask uses the compiled bounds reference without registry lookup.
-
-    Implementation mutation that would break this test:
-        Reintroduce `ctx.problem.space.services.require("BoundsService")` in
-        GA.ask. The post-initialization spy would observe a non-zero call.
-    """
     prob = Problem(
         func=dummy_func,
         dim=4,

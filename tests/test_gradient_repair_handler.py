@@ -1,4 +1,4 @@
-"""Tests for GradientRepairHandler (Issue #110)."""
+"""Tests for GradientRepairHandler."""
 
 import numpy as np
 import pytest

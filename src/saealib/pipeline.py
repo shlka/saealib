@@ -245,15 +245,12 @@ class Pipeline(Stage):
         raise KeyError(name)
 
     def __len__(self) -> int:
-        """Return the number of top-level stages."""
         return len(self.stages)
 
     def __iter__(self):
-        """Iterate over the top-level stages."""
         return iter(self.stages)
 
     def __repr__(self) -> str:
-        """Return a concise developer-facing string for this pipeline."""
         names = ", ".join(type(s).__name__ for s in self.stages)
         if self.name:
             return f"Pipeline(name={self.name!r}, stages=[{names}])"

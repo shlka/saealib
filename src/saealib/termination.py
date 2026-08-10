@@ -91,7 +91,6 @@ class TerminationCondition:
 
     @staticmethod
     def _coerce(cond: ConditionFunc | TerminationCondition) -> TerminationCondition:
-        """Wrap a plain callable into a ``TerminationCondition`` if needed."""
         if isinstance(cond, TerminationCondition):
             return cond
         return TerminationCondition(cond)

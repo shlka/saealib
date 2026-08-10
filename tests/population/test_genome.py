@@ -1,9 +1,4 @@
-"""Tests for GenomeBatch protocol and implementations.
-
-Covers DenseVectorBatch and ObjectBatch guarantees.
-Each test covers a specific genome-batch contract and documents the
-implementation-side mutation that would cause it to fail.
-"""
+"""Tests for GenomeBatch protocol and implementations."""
 
 from __future__ import annotations
 
@@ -19,12 +14,6 @@ from saealib.population.genome import DenseVectorBatch, GenomeBatch, ObjectBatch
 
 
 def test_implementations_satisfy_protocol() -> None:
-    """DenseVectorBatch and ObjectBatch satisfy GenomeBatch protocol.
-
-    Implementation mutation that would break this test:
-        Rename `take` or `concat` in either class to something else (e.g. `take_rows`).
-        `isinstance(obj, GenomeBatch)` or type checkers would fail.
-    """
     dense = DenseVectorBatch([[1.0, 2.0], [3.0, 4.0]])
     obj = ObjectBatch(["a", "b"])
 
@@ -38,12 +27,6 @@ def test_implementations_satisfy_protocol() -> None:
 
 
 def test_dense_vector_batch_array_is_readonly() -> None:
-    """DenseVectorBatch array returned to callers rejects in-place mutation.
-
-    Implementation mutation that would break this test:
-        In `DenseVectorBatch.__init__`, remove `readonly_view.setflags(write=False)`.
-        `batch.array[0, 0] = 999.0` would then succeed without raising ValueError.
-    """
     batch = DenseVectorBatch([[1.0, 2.0], [3.0, 4.0]])
 
     assert not batch.array.flags.writeable
@@ -57,12 +40,6 @@ def test_dense_vector_batch_array_is_readonly() -> None:
 
 
 def test_dense_vector_batch_take_out_of_bounds_raises() -> None:
-    """DenseVectorBatch.take with an out-of-bounds index raises ValidationError.
-
-    Implementation mutation that would break this test:
-        In `DenseVectorBatch.take`, catch `IndexError` and return `self`
-        instead of re-raising `ValidationError`. The `pytest.raises` check fails.
-    """
     batch = DenseVectorBatch([[1.0, 2.0], [3.0, 4.0]])
 
     with pytest.raises(ValidationError, match="Index out of bounds"):
@@ -70,13 +47,6 @@ def test_dense_vector_batch_take_out_of_bounds_raises() -> None:
 
 
 def test_object_batch_take_out_of_bounds_raises() -> None:
-    """ObjectBatch.take with an out-of-bounds index raises ValidationError.
-
-    Implementation mutation that would break this test:
-        In `ObjectBatch.take`, remove the `if i < -n or i >= n:` bounds check.
-        Taking index 10 from a length-2 ObjectBatch would raise IndexError
-        instead of ValidationError.
-    """
     batch = ObjectBatch(["a", "b"])
 
     with pytest.raises(ValidationError, match="Index out of bounds"):
@@ -89,12 +59,6 @@ def test_object_batch_take_out_of_bounds_raises() -> None:
 
 
 def test_dense_vector_batch_concat_mismatched_dim_raises() -> None:
-    """DenseVectorBatch.concat with mismatched dimensions raises.
-
-    Implementation mutation that would break this test:
-        In `DenseVectorBatch.concat`, remove the `if len(dims) > 1:` check.
-        NumPy's `np.concatenate` raises ValueError instead of ValidationError.
-    """
     b1 = DenseVectorBatch([[1.0, 2.0]])
     b2 = DenseVectorBatch([[3.0, 4.0, 5.0]])
 
@@ -108,37 +72,16 @@ def test_dense_vector_batch_concat_mismatched_dim_raises() -> None:
 
 
 def test_dense_vector_batch_concat_empty_sequence_raises() -> None:
-    """DenseVectorBatch.concat on an empty sequence raises ValidationError.
-
-    Implementation mutation that would break this test:
-        In `DenseVectorBatch.concat`, remove the `if not batches_tuple:` check.
-        Calling `np.concatenate([])` raises ValueError instead of ValidationError.
-    """
     with pytest.raises(ValidationError, match="empty sequence"):
         DenseVectorBatch.concat([])
 
 
 def test_object_batch_concat_empty_sequence_raises() -> None:
-    """ObjectBatch.concat on an empty sequence raises ValidationError.
-
-    Implementation mutation that would break this test:
-        In `ObjectBatch.concat`, remove the `if not batches_tuple:` check
-        and return `cls(())`. `pytest.raises(ValidationError)` would fail.
-    """
     with pytest.raises(ValidationError, match="empty sequence"):
         ObjectBatch.concat([])
 
 
 def test_take_empty_indices_returns_empty_batch() -> None:
-    """take([]) on an existing batch returns an empty batch for all implementations.
-
-    This is the recommended idiom for obtaining an empty batch rather than
-    calling concat([]).
-
-    Implementation mutation that would break this test:
-        In `DenseVectorBatch.take` or `ObjectBatch.take`, raise ValidationError
-        when `len(idx) == 0`. This test would then fail.
-    """
     dense_batch = DenseVectorBatch([[1.0, 2.0], [3.0, 4.0]])
     dense_empty = dense_batch.take([])
     assert isinstance(dense_empty, DenseVectorBatch)
@@ -158,13 +101,6 @@ def test_take_empty_indices_returns_empty_batch() -> None:
 
 
 def test_object_batch_preserves_object_identity() -> None:
-    """ObjectBatch.take and concat preserve item identity (is).
-
-    Implementation mutation that would break this test:
-        In `ObjectBatch.take` or `concat`, apply `copy.deepcopy(item)` to items.
-        The `item is obj` identity check would fail.
-    """
-
     class CustomItem:
         pass
 
@@ -191,12 +127,6 @@ def test_object_batch_preserves_object_identity() -> None:
 
 
 def test_dense_vector_batch_take_immutability() -> None:
-    """DenseVectorBatch.take returns a new batch, leaving original unchanged.
-
-    Implementation mutation that would break this test:
-        In `DenseVectorBatch.take`, mutate `self._data` in place and return `self`.
-        `len(batch)` or `batch.array` would change, breaking `len(batch) == 3`.
-    """
     data = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
     batch = DenseVectorBatch(data)
 
@@ -211,12 +141,6 @@ def test_dense_vector_batch_take_immutability() -> None:
 
 
 def test_object_batch_take_immutability() -> None:
-    """ObjectBatch.take returns a new batch, leaving original unchanged.
-
-    Implementation mutation that would break this test:
-        In `ObjectBatch.take`, mutate `self._items` in place and return `self`.
-        `len(batch) == 3` would fail after `take([0])`.
-    """
     items = ("x", "y", "z")
     batch = ObjectBatch(items)
 

@@ -107,7 +107,7 @@ class DenseVectorBatch:
         return self._data
 
     def __getitem__(self, index: Any) -> Any:
-        """Provide read-only ndarray-style indexing for legacy evaluators."""
+        """Provide read-only ndarray-style indexing for evaluator compatibility."""
         return self._data[index]
 
     def __len__(self) -> int:

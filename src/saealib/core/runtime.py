@@ -221,7 +221,7 @@ class SequentialPlan:
         if not isinstance(plan, ExecutablePlan):
             raise ValidationError("SequentialPlan requires an ExecutablePlan")
 
-        # Import locally: graph_builder owns the legacy Stage bridge and also
+        # Import locally: graph_builder owns the Stage compatibility bridge and also
         # imports compiler vocabulary used while constructing the graph.
         from saealib.core.graph_builder import StageNodeAdapter
 

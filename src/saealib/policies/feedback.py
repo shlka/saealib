@@ -231,7 +231,6 @@ MISSING_VALUE_FALLBACK_POLICY = FallbackPolicy()
 
 
 def _legacy_batch(evaluation: EvaluationResult) -> ObservationBatch:
-    """Adapt the old dense evaluation object to the observation model."""
     if evaluation.candidate_ids is None:
         raise ValidationError("evaluation candidate IDs are required")
     schema = ObservationSchema(
@@ -266,7 +265,7 @@ def _record_candidate_ids(records: ObservationRecords) -> np.ndarray:
 
 
 def _optional_column(records: ObservationRecords, name: str, default) -> np.ndarray:
-    """Read an optional column while keeping legacy dense batches compatible."""
+    """Read an optional column while keeping dense batches compatible."""
     try:
         return records.column(name)
     except KeyError:
@@ -404,7 +403,6 @@ def _feedback_batch_from_result(
 
 @cache
 def _objective_schema(n_obj: int) -> ObservationSchema:
-    """Reuse the immutable schema for the dense legacy objective adapter."""
     return ObservationSchema(objective_count=n_obj)
 
 

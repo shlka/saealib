@@ -1,5 +1,5 @@
 """
-Tests for constraint handling (Issue #005).
+Tests for constraint handling.
 
 Tests cover:
 - InequalityConstraint: evaluate, violation (satisfied / violated / on boundary)
@@ -29,28 +29,23 @@ class TestInequalityConstraint:
         assert c.evaluate(np.array([2.0])) == pytest.approx(3.0)
 
     def test_violation_satisfied(self):
-        """g(x) <= threshold → violation == 0."""
         c = InequalityConstraint(lambda x: float(x[0]), threshold=5.0)
         assert c.violation(np.array([3.0])) == pytest.approx(0.0)
 
     def test_violation_on_boundary(self):
-        """g(x) == threshold → violation == 0."""
         c = InequalityConstraint(lambda x: float(x[0]), threshold=5.0)
         assert c.violation(np.array([5.0])) == pytest.approx(0.0)
 
     def test_violation_violated(self):
-        """g(x) > threshold → violation == g(x) - threshold."""
         c = InequalityConstraint(lambda x: float(x[0]), threshold=5.0)
         assert c.violation(np.array([7.0])) == pytest.approx(2.0)
 
     def test_default_threshold_zero(self):
-        """Default threshold is 0.0: g(x) <= 0."""
         c = InequalityConstraint(lambda x: float(x[0]))
         assert c.violation(np.array([-1.0])) == pytest.approx(0.0)
         assert c.violation(np.array([2.0])) == pytest.approx(2.0)
 
     def test_evaluate_with_violation_returns_both(self):
-        """Returns (g, cv) consistent with evaluate / violation."""
         c = InequalityConstraint(lambda x: float(x[0]), threshold=5.0)
         g, cv = c.evaluate_with_violation(np.array([7.0]))
         assert g == pytest.approx(7.0)
@@ -60,7 +55,6 @@ class TestInequalityConstraint:
         assert cv2 == pytest.approx(0.0)
 
     def test_evaluate_with_violation_calls_func_once(self):
-        """A single function evaluation yields both g and cv (no double-eval)."""
         calls = {"n": 0}
 
         def func(x):

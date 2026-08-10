@@ -32,7 +32,7 @@ class _ConflictBypassProperty(property):
 
 
 class _LegacyDenseNumericView:
-    """Dense view used only by the pre-genome Population constructor path."""
+    """Dense view for schema-backed ``x`` compatibility populations."""
 
     _canonical_identity_backing = True
 
@@ -42,9 +42,7 @@ class _LegacyDenseNumericView:
         return genomes.array
 
 
-def bind_property(key: str, doc: str = "") -> Any:
-    """Make property for Individual attributes (helper function)."""
-
+def bind_property(key: str, doc: str = "") -> Any:  # noqa: D103
     def fget(self):
         return self.get_readonly_value(key)
 
@@ -54,9 +52,7 @@ def bind_property(key: str, doc: str = "") -> Any:
     return _ConflictBypassProperty(fget, fset, doc=doc)
 
 
-def bind_property_array(key: str, doc: str = "") -> Any:
-    """Make property for Population attributes (helper function)."""
-
+def bind_property_array(key: str, doc: str = "") -> Any:  # noqa: D103
     def fget(self):
         return self.get_array(key)
 
@@ -67,27 +63,7 @@ def bind_property_array(key: str, doc: str = "") -> Any:
 
 
 class Population(Generic[T_Individual]):
-    """
-    Container for population data.
-
-    Attributes
-    ----------
-    schema : Dict[str, PopulationAttribute]
-        Schema defining the attributes of the population.
-    _data : Dict[str, np.ndarray]
-        Dictionary to store population data arrays.
-    _cache : Dict[str, Any]
-        Dictionary to store cached values (ex: nds_rank).
-        Cleared on every value or structure modification.
-    _capacity : int
-        Current capacity of the population.
-    _size : int
-        Current size of the population.
-    _structure_version : int
-        Version number to track structure modifications.
-    _value_version : int
-        Version number to track value modifications.
-    """
+    """Container for schema-defined population attributes and genome data."""
 
     individual_class = None
 
@@ -111,11 +87,18 @@ class Population(Generic[T_Individual]):
 
         Parameters
         ----------
-        attrs : List[PopulationAttribute]
-            List of population attributes.
-            Each attribute defines a column in the population.
-        init_capacity : int, optional
-            Initial capacity of the population, by default 100.
+        attrs
+            Column definitions for per-candidate data.
+        init_capacity
+            Initial storage capacity.
+        genomes
+            Optional initial genome batch.
+        space
+            Search space associated with the genomes.
+        dense_numeric_view
+            Service used to obtain a dense numeric view of dense genomes.
+        dense_view
+            Compatibility alias for ``dense_numeric_view``.
         """
         if genomes is not None:
             init_capacity = max(init_capacity, len(genomes))
@@ -138,9 +121,8 @@ class Population(Generic[T_Individual]):
         if genomes is not None:
             self._initialize_genomes(genomes)
         elif "x" in self._schema:
-            # The legacy attrs=[..., PopulationAttribute("x", ...)] API is
-            # still used by archives and older user factories.  Its x array
-            # remains the compatibility backing store and is dense by nature.
+            # Compatibility path for schema-backed ``x`` populations without
+            # an explicitly supplied GenomeBatch.
             if self._schema["x"].shape == ():
                 self._legacy_scalar_x = True
                 self._genome_items = []
@@ -192,18 +174,11 @@ class Population(Generic[T_Individual]):
             self._size = len(self._genome_items)
             self._genome_batch = ObjectBatch(self._genome_items)
         else:
-            # Custom GenomeBatch values are retained as values.  Dense x
-            # compatibility is intentionally unavailable for them.
+            # Dense ``x`` compatibility is defined only for DenseVectorBatch.
             self._genome_batch = genomes
             self._size = len(genomes)
 
     def _check_name_conflicts(self):
-        """
-        Check conflict attributes.
-
-        If any attributes provided during initialization have the same name
-        as a method or property of the Population class, a warning message is displayed.
-        """
         cls = type(self)
         for name in self.schema:
             if hasattr(cls, name):
@@ -221,16 +196,6 @@ class Population(Generic[T_Individual]):
                 )
 
     def _init_column(self, attr: PopulationAttribute, capacity: int) -> None:
-        """
-        Initialize a column in the population.
-
-        Parameters
-        ----------
-        attr : PopulationAttribute
-            The attribute definition for the column.
-        capacity : int
-            The initial capacity of the column.
-        """
         shape = (capacity, *attr.shape)
         if attr.default is not None:
             arr = np.full(
@@ -243,14 +208,6 @@ class Population(Generic[T_Individual]):
         self._data[attr.name] = arr
 
     def _resize(self, new_capacity: int) -> None:
-        """
-        Resize the population to a new capacity.
-
-        Parameters
-        ----------
-        new_capacity : int
-            The new capacity of the population.
-        """
         for k, v in self._data.items():
             attr = self._schema.get(k)
             if attr is None and k == "x":
@@ -272,70 +229,31 @@ class Population(Generic[T_Individual]):
             self._genome_batch = DenseVectorBatch(self._data["x"])
 
     def mod_value(self) -> None:
-        """Public method to call when the value changes."""
+        """Mark population values as changed and invalidate cached results."""
         self._value_version += 1
         if "_cache" in self.__dict__:
             self._cache.clear()
 
     def mod_structure(self) -> None:
-        """Public method to call when the structure changes."""
+        """Mark population structure as changed and invalidate cached results."""
         self._structure_version += 1
         self.mod_value()
 
     def set_cache(self, key: Hashable, value: Any) -> None:
-        """
-        Set a cache value.
-
-        The cache is automatically cleared when the population is modified
-        (via ``mod_value`` or ``mod_structure``).
-
-        Parameters
-        ----------
-        key : Hashable
-            The key of the cache.
-        value : Any
-            The value to be cached.
-        """
+        """Store a cached value until the population changes."""
         self._cache[key] = value
 
     def get_cache(self, key: Hashable) -> Any | None:
-        """
-        Get a cached value.
-
-        Returns ``None`` if the key is not found.
-
-        Parameters
-        ----------
-        key : Hashable
-            The key of the cache.
-
-        Returns
-        -------
-        Any | None
-            The cached value, or ``None`` if not found.
-        """
+        """Return a cached value, or ``None`` when the key is absent."""
         return self._cache.get(key)
 
     def append(
         self, element: T_Individual | dict[str, Any] | None = None, **kwargs
     ) -> None:
-        """
-        Append a new individual to the population.
+        """Append one candidate.
 
-        Parameters
-        ----------
-        element : Individual | dict | None
-            Data for the additional individual
-        **kwargs :
-            Set attribute values individually and add them.
-            Alternatively, overwrite based on the element's value and add it.
-
-        Examples
-        --------
-        >>> pop.append(ind)
-        >>> pop.append({"x": x_val})
-        >>> pop.append(x=x_val, f=0.1)
-        >>> pop.append(ind, f=0.1)
+        An explicit candidate ID other than the unassigned ``-1`` sentinel is
+        not accepted through this public method.
         """
         self._append_internal(element, preserve_ids=False, **kwargs)
 
@@ -347,23 +265,7 @@ class Population(Generic[T_Individual]):
         allow_duplicate_ids: bool = False,
         **kwargs,
     ) -> None:
-        """Append a new individual; ``preserve_ids`` controls ``id`` acceptance.
-
-        The public and internal ``id`` columns use the same acceptance rules.
-
-        Parameters
-        ----------
-        element : Individual | dict | None
-            Data for the additional individual
-        preserve_ids : bool
-            If ``False`` (the public ``append()`` path), an explicit ``id``
-            other than the ``-1`` sentinel raises ``ValidationError``. If
-            ``True``, an explicit real ``id`` is accepted and validated for
-            uniqueness — used only by internal lifecycle code.
-        **kwargs :
-            Set attribute values individually and add them.
-            Alternatively, overwrite based on the element's value and add it.
-        """
+        """Append a candidate while optionally preserving validated candidate IDs."""
         data: dict[str, Any] = {}
         if element is not None:
             if isinstance(element, dict):
@@ -439,14 +341,7 @@ class Population(Generic[T_Individual]):
         self.mod_structure()
 
     def extend(self, other: Self | dict) -> None:
-        """
-        Extend this population with another population.
-
-        Parameters
-        ----------
-        other : Population | dict
-            The other population to extend from.
-        """
+        """Extend the population while rejecting assigned candidate IDs."""
         self._extend_internal(other, preserve_ids=False)
 
     def _validate_incoming_ids(
@@ -496,20 +391,7 @@ class Population(Generic[T_Individual]):
         preserve_ids: bool,
         allow_duplicate_ids: bool = False,
     ) -> None:
-        """Extend this population; ``preserve_ids`` controls ``id`` acceptance.
-
-        The public and internal ``id`` columns use the same acceptance rules.
-
-        Parameters
-        ----------
-        other : Population | dict
-            The other population to extend from.
-        preserve_ids : bool
-            If ``False`` (the public ``extend()`` path), an explicit ``id``
-            other than the ``-1`` sentinel raises ``ValidationError``. If
-            ``True``, explicit real ``id`` values are accepted and validated
-            for uniqueness — used only by internal lifecycle code.
-        """
+        """Extend while optionally preserving validated candidate IDs."""
         exact_dense_population = False
         canonical_identity_backing = False
         if isinstance(other, Population):
@@ -696,14 +578,7 @@ class Population(Generic[T_Individual]):
         return True
 
     def extract(self, indices: np.ndarray | list[int] | slice) -> Self:
-        """
-        Extract individuals with indices, and return new Population.
-
-        Parameters
-        ----------
-        indices : np.ndarray | List[int] | slice
-            Indices to extract
-        """
+        """Return a new population containing rows selected by ``indices``."""
         if isinstance(indices, slice):
             start, stop, step = indices.indices(self._size)
             n_extract = len(range(start, stop, step))
@@ -719,7 +594,8 @@ class Population(Generic[T_Individual]):
 
         # Dense genomes are backed by the x column copied above.  The helper
         # is needed only for representations whose genome storage is not in
-        # _data (or for legacy scalar x, whose object mirror must be synced).
+        # _data (or for schema-backed scalar ``x``, whose object mirror must
+        # be synced).
         if not isinstance(self._genome_batch, DenseVectorBatch):
             new_pop._copy_genomes_from(self, indices_arr)
 
@@ -728,13 +604,9 @@ class Population(Generic[T_Individual]):
         return new_pop
 
     def truncate(self, new_size: int) -> None:
-        """
-        Cut the population to a new size.
+        """Keep the first ``new_size`` candidates and invalidate structure state.
 
-        Parameters
-        ----------
-        new_size : int
-            The new size of the population.
+        Raises ``ValueError`` when ``new_size`` is negative.
         """
         if new_size < 0:
             raise ValueError("new_size must be non-negative")
@@ -750,14 +622,7 @@ class Population(Generic[T_Individual]):
             self.mod_structure()
 
     def delete(self, index: int | slice | list[int] | np.ndarray) -> None:
-        """
-        Delete individuals from the population.
-
-        Parameters
-        ----------
-        index : int, slice, list[int], np.ndarray
-            The index or indices of individuals to delete.
-        """
+        """Delete candidates selected by ``index`` and invalidate structure state."""
         bool_mask = np.ones(self._size, dtype=bool)
         bool_mask[index] = False
         new_size = np.sum(bool_mask)
@@ -769,14 +634,7 @@ class Population(Generic[T_Individual]):
         self.mod_structure()
 
     def reorder(self, order: np.ndarray) -> None:
-        """
-        Reorder individuals in the population.
-
-        Parameters
-        ----------
-        order : np.ndarray
-            The new order of individuals.
-        """
+        """Reorder candidates according to a complete row permutation."""
         if len(order) != self._size:
             raise ValueError(
                 f"Order length {len(order)} must match population size {self._size}"
@@ -788,16 +646,7 @@ class Population(Generic[T_Individual]):
         self.mod_structure()
 
     def argsort(self, name: str, reverse: bool = False) -> np.ndarray:
-        """
-        Get the indices that would sort the population by a specific attribute.
-
-        Parameters
-        ----------
-        name : str
-            The attribute name to sort by.
-        reverse : bool, optional
-            Whether to sort in descending order, by default False.
-        """
+        """Return row indices that order a named column."""
         if name not in self._data:
             raise KeyError(f"Key '{name}' not found in population schema")
         sort_arg = np.argsort(self._data[name][: self._size])
@@ -816,14 +665,7 @@ class Population(Generic[T_Individual]):
         self.mod_structure()
 
     def empty_like(self, capacity: int | None = None):
-        """
-        Create an empty Population with the same schema.
-
-        Parameters
-        ----------
-        capacity : int
-            Initial capacity of the new Population. Defaults to ``self._capacity``.
-        """
+        """Create an empty population with the same schema and genome representation."""
         if capacity is None:
             capacity = self._capacity
         # Dense populations can reconstruct their empty x-backed genome view
@@ -1022,17 +864,11 @@ class Population(Generic[T_Individual]):
         )
 
     def get_array(self, key: str) -> np.ndarray:
-        """
-        Get the array of a specific attribute.
+        """Return a read-only view of a named column.
 
-        Returns a read-only view; mutating the returned array raises
-        ``ValueError``. Use ``update_array()`` or ``update_rows()`` to
-        mutate, so structure/value versions and caches stay in sync.
-
-        Parameters
-        ----------
-        key : str
-            The attribute name to get the array for.
+        Mutating the returned view raises ``ValueError``. Use
+        ``update_array()`` or ``update_rows()`` so cache and version state stay
+        synchronized.
         """
         if key == "x":
             if self._legacy_scalar_x:
@@ -1147,8 +983,8 @@ class Population(Generic[T_Individual]):
             schema exactly.
         """
         genome_value = genome
-        # Keep the old x mapping working for legacy callers, but the explicit
-        # genome argument is the canonical route after the column split.
+        # Preserve schema-backed ``x`` input when no explicit genome is supplied;
+        # the explicit genome argument is canonical.
         if "x" in values and genome_value is not None:
             raise ValidationError(
                 "'x' is not a column; pass the genome through the explicit "
@@ -1288,18 +1124,7 @@ class Population(Generic[T_Individual]):
 
 
 class Individual(Generic[T_Population]):
-    """
-    Individual class representing a single solution in the population.
-
-    Attributes
-    ----------
-    _popref : weakref.ref
-        Weak reference to the parent population.
-    _index : int
-        Index of the individual in the population.
-    _structure_version : int
-        Version number to track structure modifications.
-    """
+    """Live view of one population row; structural changes invalidate it."""
 
     __slots__ = ("_index", "_popref", "_structure_version")
 

@@ -30,7 +30,7 @@ INTENTIONAL_CORE_BRIDGES: dict[tuple[str, str], str] = {
     (
         "src/saealib/core/graph_builder.py",
         "saealib.pipeline",
-    ): "The graph builder retains the legacy Stage/Pipeline compatibility bridge.",
+    ): "The graph builder retains the Stage/Pipeline compatibility bridge.",
 }
 
 

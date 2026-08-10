@@ -1,5 +1,5 @@
 """
-Tests for PSO algorithm (Issue #007).
+Tests for the PSO algorithm.
 
 Tests cover:
 - get_required_attrs: attribute names, shapes, defaults

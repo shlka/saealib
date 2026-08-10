@@ -143,7 +143,6 @@ def build(spec: Any) -> Any:
 
 
 def _dotted_path(obj: Any) -> str:
-    """Return the ``module.qualname`` import path of a class or function."""
     return f"{obj.__module__}.{obj.__qualname__}"
 
 

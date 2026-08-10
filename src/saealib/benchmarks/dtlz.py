@@ -180,7 +180,6 @@ def dtlz4(n_obj: int = 3, k: int = 10, alpha: float = 100.0) -> Problem:
 
 
 def _sphere_objectives(theta: np.ndarray, g: float, n_obj: int) -> np.ndarray:
-    """Compute spherical objectives shared by DTLZ2/3/4/5/6."""
     cos_theta = np.cos(theta)
     f = np.empty(n_obj)
     for i in range(n_obj):

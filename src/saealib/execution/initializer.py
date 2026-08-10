@@ -77,7 +77,8 @@ def _make_population(factory, attrs, capacity, problem, genomes=None):
             kwargs["genomes"] = genomes
     population = factory(**kwargs)
     if isinstance(population, Population):
-        # Legacy factories may not accept the service as a constructor argument.
+        # Factories without the optional service parameter still need the
+        # resolved view attached before evaluation begins.
         population._dense_numeric_view = dense_view
     return population
 

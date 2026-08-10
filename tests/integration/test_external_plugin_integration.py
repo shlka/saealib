@@ -179,7 +179,7 @@ def test_map_elites_uses_behavior_cells_and_quality_replacement() -> None:
     assert np.isclose(plugin.archive[(1,)][1], 1.28)
 
 
-def test_u10_3_map_elites_archive_is_independent_of_record_order() -> None:
+def test_map_elites_archive_is_independent_of_record_order() -> None:
     plugin = MAPElitesPlugin()
     proposal = plugin.propose()
     feedback = plugin.evaluate(proposal)

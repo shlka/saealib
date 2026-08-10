@@ -1,5 +1,5 @@
 """
-Tests for InitialEvaluationStartEvent and InitialEvaluationEndEvent (Issue #97).
+Tests for InitialEvaluationStartEvent and InitialEvaluationEndEvent.
 
 Tests cover:
 - Event field definitions

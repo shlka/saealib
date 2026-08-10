@@ -512,34 +512,16 @@ class TestGAMixedAsk:
 
 
 # ---------------------------------------------------------------------------
-# _mutate_candidates fallback-loop interleaving order (Issue #224, commit 6
-# review fix)
+# Fallback-loop interleaving order
 # ---------------------------------------------------------------------------
 
 
 class TestMutateCandidatesInterleaveOrder:
-    """``_mutate_candidates``'s per-individual fallback loop must call
-    ``_route_mutation`` and ``post_mutation`` interleaved per individual —
-    i.e. ``mutate(0), post(0), mutate(1), post(1), ...`` — matching the
-    pre-batching behaviour byte-for-byte. A prior version of this method
-    ran the full ``_route_mutation`` loop first and only then a separate
-    ``post_mutation`` loop, which is invisible for the default (identity,
-    RNG-free) ``post_mutation`` hook but silently reorders RNG consumption
-    for a ``with_post`` hook that draws from ``rng``. This test uses such a
-    hook and cross-checks the library's output against an independently
-    hand-written interleaved reference loop fed an identically-seeded RNG.
+    """Keep mutation and post-mutation RNG draws interleaved per candidate.
 
-    Uses ``_MutationUnbatched`` (imported from ``tests/test_operators.py``)
-    as the test vehicle with explicit sequential execution. The problem
-    remains continuous-only, so ``_route_mutation`` still calls its scalar
-    ``mutate()`` exactly once per candidate.
-    ``_MutationUnbatched`` provides the required but unused
-    ``mutate_batch()`` primitive, while its scalar override draws exactly
-    one ``rng.random()`` value per call. Without that draw, this test would
-    pass regardless of whether ``_mutate_candidates`` actually interleaves
-    correctly, since a zero-draw ``mutate()`` produces byte-identical RNG
-    consumption under both the correct interleaved order and the buggy
-    two-pass order this test guards against.
+    A post-mutation hook may consume RNG state, so changing the order changes
+    the observable offspring. The test compares a seeded result with an
+    independently interleaved reference and rejects a two-pass order.
     """
 
     def test_fallback_loop_matches_hand_written_interleaved_reference(self):

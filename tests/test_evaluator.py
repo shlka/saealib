@@ -1,5 +1,5 @@
 """
-Tests for the Evaluator abstraction (Issue #85, Commit 1; Issue #224, Commit 2).
+Tests for the Evaluator abstraction.
 
 Tests cover:
 - SerialEvaluator: batch shapes for f / g / cv
@@ -7,7 +7,7 @@ Tests cover:
 - No-constraint problems (g shape (n, 0), cv all zeros)
 - Single-row input handling
 - Optimizer wiring: default evaluator and set_evaluator chaining
-- SerialEvaluator's Problem.evaluate_batch fast path (Issue #224): call
+- SerialEvaluator's Problem.evaluate_batch fast path: call
   counting, numerical equivalence with the row-loop fallback, and the
   empty-batch edge case
 """
@@ -226,7 +226,7 @@ class TestEvaluatorBoundaryValidation:
 
 
 class TestSerialEvaluatorBatchHook:
-    """SerialEvaluator's fast path via Problem.evaluate_batch (Issue #224)."""
+    """SerialEvaluator's fast path via Problem.evaluate_batch."""
 
     def test_evaluate_batch_called_once_no_row_calls(self):
         p = _CountedBatchSphereProblem(

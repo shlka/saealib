@@ -82,11 +82,6 @@ def _object_space() -> ObjectSpace:
 def test_exact_identity_uses_fingerprint_without_constructing_kdtree(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """An explicit zero-tolerance archive never enters the KD-tree path.
-
-    Mutation check: changing the zero-tolerance branch to construct a KD-tree
-    makes this test fail before the second add completes.
-    """
     module = importlib.import_module("saealib.population.archive")
 
     def fail_kdtree(*args, **kwargs):

@@ -28,7 +28,7 @@ def build_runtime_neutral_graph(
 
 
 def build_pipeline_from_graph(graph: ComponentGraph) -> Pipeline:
-    """Recover the legacy Stage facade from a canonical strategy graph."""
+    """Recover the Stage facade from a canonical strategy graph."""
     from saealib.core.graph_builder import StageNodeAdapter
 
     stages = [

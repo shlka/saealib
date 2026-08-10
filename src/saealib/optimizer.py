@@ -476,9 +476,8 @@ class Optimizer:
         """
         Set a user-defined preset. Returns self.
 
-        The preset is only used to fill components not already configured
-        via ``set_*()`` (see ``_resolve_defaults()``); explicitly set
-        components always take precedence over the preset.
+        The preset fills components that are not already configured via
+        ``set_*()``; explicitly set components take precedence.
         """
         from saealib.defaults import load_preset
 

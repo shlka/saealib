@@ -127,11 +127,11 @@ class Recorder:
         }
 
     def register_store(self, store: InstrumentedStateStore) -> None:
-        """Keep every moved store available for in-place mutation checks."""
+        """Keep every moved store available for in-place update checks."""
         self._stores.append(store)
 
     def flush(self) -> None:
-        """Record controlled in-place mutations made since the last flush."""
+        """Record controlled in-place updates made since the last flush."""
         for store in tuple(self._stores):
             store._flush_mutations()
 

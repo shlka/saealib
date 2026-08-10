@@ -46,12 +46,6 @@ def _object_space() -> ObjectSpace:
 def test_exact_index_uses_numpy_canonicalization_and_no_archive_tree(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Exact identity uses vectorized bits and a hash index.
-
-    Mutation checks: restoring the element-wise canonicalizer makes the
-    profile exceed the call budget; routing exact identity through Archive's
-    cKDTree makes the first duplicate add raise.
-    """
     archive_module = importlib.import_module("saealib.population.archive")
 
     def fail_tree(*args: Any, **kwargs: Any) -> None:
@@ -89,13 +83,6 @@ def test_canonical_fingerprint_preserves_zero_and_nan_identity() -> None:
 def test_equivalence_collection_query_is_one_pass_not_three_dimensional(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Approximate collection lookup avoids the old Archive row loop.
-
-    Mutation check: broadcasting collection and query batches into an
-    (n_query, n_collection, dim) tensor makes the recorded input three-
-    dimensional and fails.  The service call also proves Archive has a
-    collection-query shape rather than the pairwise bridge.
-    """
     vector_module = importlib.import_module("saealib.space.vector")
     original_isclose = vector_module.np.isclose
     shapes: list[tuple[tuple[int, ...], tuple[int, ...]]] = []
@@ -138,12 +125,6 @@ def test_equivalence_single_query_preserves_first_match_and_nan_behavior() -> No
 def test_distance_knn_uses_lazy_service_tree_without_pairwise_distance(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """kNN queries use the DistanceService index and never call pairwise API.
-
-    Mutation check: replacing query_knn with a full pairwise-distance path
-    invokes the patched method and fails; the service tree is lazy until the
-    first query.
-    """
     space = VectorSpace(2, [-10.0, -10.0], [10.0, 10.0])
     service = cast(DistanceService, space.services.require("DistanceService"))
     collection = DenseVectorBatch([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
@@ -227,12 +208,6 @@ def test_archive_knn_falls_back_for_nonfinite_builtin_archive_rows() -> None:
 
 
 def test_append_archive_requires_no_identity_or_distance_service() -> None:
-    """Append-only object archives do not resolve any identity service.
-
-    Mutation check: making Archive eagerly require FingerprintService,
-    EquivalenceService, or DistanceService for append causes construction to
-    fail because ObjectSpace intentionally offers none of them.
-    """
     attrs = [
         PopulationAttribute("f", np.float64, (1,), default=np.nan),
         PopulationAttribute("id", np.int64, (), default=-1),
@@ -257,11 +232,6 @@ def test_append_archive_requires_no_identity_or_distance_service() -> None:
 
 
 def test_service_indexes_are_invalidated_after_value_structure_change() -> None:
-    """Changed rows cannot be answered by an old fingerprint or kNN handle.
-
-    Mutation check: removing ArchiveMixin's service-index invalidation from
-    mod_value leaves the old nearest-neighbor result and fails this test.
-    """
     space = VectorSpace(2, [-100.0, -100.0], [100.0, 100.0], atol=0.0, rtol=0.0)
     archive = Archive(_attrs(), space=space)
     archive.add(x=np.array([0.0, 0.0]), f=np.array([0.0]))
@@ -278,11 +248,6 @@ def test_service_indexes_are_invalidated_after_value_structure_change() -> None:
 
 
 def test_service_and_legacy_duplicate_results_are_identical() -> None:
-    """Exact and approximate service paths preserve legacy Archive results.
-
-    Mutation check: changing either service's first-match position or its
-    tolerance relation changes one of the returned insertion-index sequences.
-    """
     points = [
         np.array([0.0, 0.0]),
         np.array([1e-12, 0.0]),

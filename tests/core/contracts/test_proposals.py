@@ -1,5 +1,3 @@
-"""Proposal contract tests."""
-
 from __future__ import annotations
 
 from typing import cast
@@ -56,11 +54,6 @@ class _IncompleteCandidates:
 
 
 def test_requirements_keep_sources_and_fidelity_per_quantity() -> None:
-    """Each quantity keeps its own source set and fidelity floor.
-
-    Mutation note: moving these fields to ``FeedbackRequirement`` makes the two
-    independent values collapse and fails this assertion.
-    """
     requirement = FeedbackRequirement(
         quantities=(
             QuantityRequirement(
@@ -104,18 +97,12 @@ def test_candidate_population_rejects_structurally_incomplete_type() -> None:
 
 
 def test_relations_reject_unknown_kinds_and_keep_empty_row_count() -> None:
-    """Only registered kinds are accepted, including the empty relation case.
-
-    Mutation note: accepting arbitrary relation names or omitting ``row_count``
-    on an empty mapping breaks the ProposalBatch alignment invariant.
-    """
     with pytest.raises(ValidationError, match="unknown relation kind"):
         ProposalRelations({"unregistered": np.array([1], dtype=np.int64)})
     assert ProposalRelations({}).row_count == 0
 
 
 def test_relations_follow_declared_column_dtype_and_are_read_only() -> None:
-    """Core relation columns stay native and cannot be mutated through a view."""
     relations = ProposalRelations(
         {"parent_ids": np.arange(6, dtype=np.int64).reshape(3, 2)}
     )
@@ -129,7 +116,6 @@ def test_relations_follow_declared_column_dtype_and_are_read_only() -> None:
 
 
 def test_variable_many_relation_outer_store_is_read_only() -> None:
-    """Ragged MANY values use a read-only object outer column."""
     relations = ProposalRelations({"parent_ids": [[1, 2], [3]]})
     column = cast(np.ndarray, relations["parent_ids"])
 
@@ -140,12 +126,6 @@ def test_variable_many_relation_outer_store_is_read_only() -> None:
 def test_take_calls_reindex_and_preserves_candidate_relation_alignment(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Taking rows invokes the descriptor and renumbers row-index payloads.
-
-    Mutation note: removing the reindex call, or taking candidates and
-    relations with different indices, leaves this callback/alignment check
-    failing.
-    """
     calls: list[np.ndarray] = []
 
     def reindex(payload: np.ndarray, indices: np.ndarray) -> np.ndarray:
@@ -179,11 +159,6 @@ def test_take_calls_reindex_and_preserves_candidate_relation_alignment(
 
 
 def test_allocator_path_assigns_proposal_id_and_metadata_is_frozen() -> None:
-    """Proposal IDs come from the supplied allocator and metadata is copied.
-
-    Mutation note: adding an independent proposal counter or retaining the
-    caller's mutable metadata makes one of these assertions fail.
-    """
     metadata = {"tag": "kept"}
     batch = ProposalBatch.from_allocator(
         IDAllocator(start=40),

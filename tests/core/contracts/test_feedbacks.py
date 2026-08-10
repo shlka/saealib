@@ -1,5 +1,3 @@
-"""Feedback batch and contract tests."""
-
 from __future__ import annotations
 
 from typing import Any, cast
@@ -55,8 +53,7 @@ def _contract(
     )
 
 
-def test_feedback_batch_reuses_j2_batch_and_validates_delivery_envelope() -> None:
-    """Mutation: replacing ObservationBatch or dropping envelope validation fails."""
+def test_feedback_batch_reuses_observations_and_validates_delivery_envelope() -> None:
     observations = ObservationBatch(
         schema=ObservationSchema(),
         records=ObservationRecords(),
@@ -80,7 +77,6 @@ def test_feedback_batch_reuses_j2_batch_and_validates_delivery_envelope() -> Non
 
 
 def test_feedback_contract_requires_channels_and_uses_restrictive_defaults() -> None:
-    """Mutation: adding a channel default or loosening any default fails."""
     with pytest.raises(TypeError):
         cast(Any, FeedbackContract)()
     contract = FeedbackContract(accepted_channels=frozenset({"true"}))
@@ -92,14 +88,12 @@ def test_feedback_contract_requires_channels_and_uses_restrictive_defaults() -> 
 
 
 def test_lifecycle_feedback_is_optional_for_non_consumers() -> None:
-    """Lifecycle keeps non-feedback components at the empty default."""
     assert LifecycleContract().feedback is None
     with pytest.raises(ValidationError):
         LifecycleContract(feedback=cast(Any, object()))
 
 
 def test_sources_and_channels_are_independent_axes() -> None:
-    """Mutation: merging source and channel sets fails this axis check."""
     contract = FeedbackContract(
         accepted_channels=frozenset({"true"}),
         accepted_sources=frozenset({TRUE, SURROGATE}),
@@ -110,7 +104,6 @@ def test_sources_and_channels_are_independent_axes() -> None:
 
 
 def test_feedback_contract_contains_only_narrower_requirements() -> None:
-    """Mutation: reversing subset direction or completion ordering fails."""
     contract = _contract(accepted_sources=frozenset({TRUE, SURROGATE}))
     assert contract.contains_requirement(_requirement(TRUE))
     assert contract.contains_requirement(_requirement(TRUE, SURROGATE))
@@ -126,7 +119,6 @@ def test_feedback_contract_contains_only_narrower_requirements() -> None:
 def test_algorithm_family_declares_complete_feedback_and_subclasses_inherit_it() -> (
     None
 ):
-    """Mutation: removing the family declaration fails the inheritance check."""
     # The family method only reads its contract definition, so a structural
     # placeholder is sufficient and avoids constructing GA's collaborators.
     base_contract = Algorithm.contract(cast(Algorithm, object()))
@@ -138,7 +130,6 @@ def test_algorithm_family_declares_complete_feedback_and_subclasses_inherit_it()
 
 
 def test_pymoo_completion_matches_partial_tell_and_keeps_runtime_capability() -> None:
-    """Mutation: removing either completion or capability declaration fails."""
     baseline = PymooAlgorithm(cast(Any, object())).contract()
     partial = PymooAlgorithm(cast(Any, object()), allow_partial_tell=True).contract()
     assert baseline.lifecycle.feedback is not None

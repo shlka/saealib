@@ -1,4 +1,4 @@
-"""Build component graphs from the legacy stage-based pipelines.
+"""Build component graphs from stage-based compatibility pipelines.
 
 The graph builder is deliberately a bridge.  ``Stage`` remains the execution
 object used by the existing optimizer, while ``StageNodeAdapter`` gives the
@@ -160,7 +160,7 @@ def _compose_contracts(held: Sequence[_HeldComponent]) -> ComponentContract:
     State, lifecycle, execution, and assumptions are unions.  Ports retain
     their original role when possible; a colliding role is qualified by the
     held-component path.  Held components are not declared as parts because
-    they are a collection inside the legacy Stage, not named adapter attrs.
+    they are a collection inside the Stage, not named adapter attrs.
     """
     ports: dict[str, PortContract] = {}
     reads: list[StateKey[object]] = []
@@ -249,7 +249,7 @@ def _surrogate_key_name(node_id: str, item: _HeldComponent) -> str:
 
 
 class StageNodeAdapter:
-    """Represent a legacy ``Stage`` as a graph component.
+    """Represent a ``Stage`` as a graph component.
 
     The adapter delegates execution to the unchanged Stage and exposes only a
     composed contract for the components held by that Stage.  It intentionally
@@ -348,7 +348,7 @@ class StageContractNodeAdapter(StageNodeAdapter):
 class StagePartNodeAdapter:
     """Expose one declared Stage part as an independently discoverable node.
 
-    Parts deliberately do not implement ``execute``.  The legacy Stage remains
+    Parts deliberately do not implement ``execute``. The Stage remains
     the executable owner until the runtime migration unit; these nodes provide
     the contract and data-dependency identity without executing a component a
     second time.
@@ -637,7 +637,7 @@ def build_decomposed_component_graph_from_specs(
             stage_parts[part.name] = (part_id, part_node)
             declared_components.add(id(component))
         # Declarations are authoritative for direct Stage state, but the
-        # legacy held objects still own ports on a few compatibility stages.
+        # Held objects still own ports on a few compatibility stages.
         # Discover those objects as additional part nodes so no existing port
         # disappears merely because its Stage contract has not migrated yet.
         for item_index, item in enumerate(held, start=1):
@@ -770,7 +770,7 @@ def build_decomposed_component_graph(
     """Build a graph from node specs, retaining Pipeline compatibility.
 
     New callers should pass ``NodeAdapterSpec`` values.  ``Pipeline`` is
-    accepted solely for the legacy graph-builder facade.
+    accepted solely for the stage compatibility facade.
     """
     if isinstance(value, Pipeline):
         return build_decomposed_component_graph_from_stages(value.stages)

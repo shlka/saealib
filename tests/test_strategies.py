@@ -276,9 +276,8 @@ class TestPreSelectionStrategy:
 
     def test_archive_grows_by_n_select(self):
         ctx, provider, strategy = self._setup(n_candidates=20, n_select=5)
-        # prob_var=1.0: with the shared _make_ga()'s prob_var=0.1 (Issue
-        # #224, commit 9 -- MutationUniform now dispatches through
-        # mutate_batch, which changed the RNG draw order enough for this
+        # prob_var=1.0: with the shared _make_ga()'s prob_var=0.1, the batched
+        # mutation path changes RNG consumption enough for this
         # seed to leave one candidate's x exactly matching an archived
         # point), the archive's exact-duplicate check (atol=rtol=0)
         # sometimes reuses an existing index instead of growing, making

@@ -198,11 +198,7 @@ class TrainingSet(ABC):
 
 
 class ArchiveObjectiveSet(TrainingSet):
-    """Use the entire archive as training data with raw objective values.
-
-    Default for ``GlobalSurrogateManager``.  Equivalent to the behaviour
-    before Issue #026.
-    """
+    """Use the entire archive as training data with raw objective values."""
 
     def build(
         self,
@@ -224,8 +220,7 @@ class ArchiveObjectiveSet(TrainingSet):
 class KNNObjectiveSet(TrainingSet):
     """Retrieve the *k* nearest archive neighbours of ``candidate_x``.
 
-    Default for ``LocalSurrogateManager``.  Equivalent to the
-    ``n_neighbors``-based behaviour before Issue #026.
+    This is the default training set for ``LocalSurrogateManager``.
 
     Parameters
     ----------

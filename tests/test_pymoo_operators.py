@@ -389,7 +389,7 @@ class TestPymooOperatorsEndToEnd:
 
 
 # ---------------------------------------------------------------------------
-# GA.ask() batch-path dispatch (Issue #224, commit 6)
+# GA.ask() batch-path dispatch
 # ---------------------------------------------------------------------------
 
 

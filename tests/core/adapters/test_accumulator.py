@@ -1,5 +1,3 @@
-"""Tests for complete-batch feedback accumulation semantics."""
-
 from __future__ import annotations
 
 import numpy as np
@@ -130,7 +128,6 @@ def _batch(
 
 
 def test_two_partial_deliveries_produce_exactly_one_final_batch() -> None:
-    """Mutation: removing cross-delivery accumulation loses the first row."""
     accumulator = FeedbackAccumulator(_contract())
     proposal = _proposal(1, (10, 11))
     accumulator.register(proposal)
@@ -146,7 +143,6 @@ def test_two_partial_deliveries_produce_exactly_one_final_batch() -> None:
 
 
 def test_unfinished_accumulation_has_no_ready_batch() -> None:
-    """Mutation: emitting before ``final`` makes this incomplete-state test fail."""
     accumulator = FeedbackAccumulator(_contract())
     accumulator.register(_proposal(2, (20, 21)))
     accumulator.add(_batch(2, 0, (_record(20, 1.0),)))
@@ -157,7 +153,6 @@ def test_unfinished_accumulation_has_no_ready_batch() -> None:
 
 
 def test_out_of_order_delivery_is_allowed_only_for_declared_ordering() -> None:
-    """Mutation: ignoring ``FeedbackContract.ordering`` breaks both branches."""
     accumulator = FeedbackAccumulator(_contract(ordering=OUT_OF_ORDER_ALLOWED))
     accumulator.register(_proposal(3, (30, 31)))
     accumulator.add(_batch(3, 10, (_record(31, 2.0),)))
@@ -172,7 +167,6 @@ def test_out_of_order_delivery_is_allowed_only_for_declared_ordering() -> None:
 
 
 def test_exact_duplicate_delivery_is_idempotent_and_conflict_is_rejected() -> None:
-    """Mutation: appending a duplicate delivery yields duplicate output rows."""
     accumulator = FeedbackAccumulator(_contract())
     accumulator.register(_proposal(5, (50, 51)))
     first = _batch(5, 0, (_record(50, 1.0),))
@@ -188,7 +182,6 @@ def test_exact_duplicate_delivery_is_idempotent_and_conflict_is_rejected() -> No
 
 
 def test_failed_cancelled_and_timeout_records_are_terminal_coverage() -> None:
-    """Mutation: counting only ``ok`` records deadlocks terminal failures."""
     accumulator = FeedbackAccumulator(_contract())
     accumulator.register(_proposal(6, (60, 61, 62)))
     accumulator.add(_batch(6, 0, (_record(60, 0.0, status=FAILED),)))
@@ -205,7 +198,6 @@ def test_failed_cancelled_and_timeout_records_are_terminal_coverage() -> None:
 
 
 def test_duplicate_observations_are_resolved_by_selection_policy() -> None:
-    """Mutation: choosing the first row instead of the policy changes the value."""
     policy = SelectionPolicy(source_priority=(SURROGATE, TRUE))
     accumulator = FeedbackAccumulator(
         _contract(accepted_sources=frozenset({TRUE, SURROGATE})),
@@ -222,7 +214,6 @@ def test_duplicate_observations_are_resolved_by_selection_policy() -> None:
 
 
 def test_completion_requires_the_declared_quantity_fidelity_floor() -> None:
-    """Mutation: ignoring ``QuantityRequirement.fidelity`` accepts low fidelity."""
     accumulator = FeedbackAccumulator(_contract())
     accumulator.register(_proposal(71, (710,), fidelity=2))
     accumulator.add(_batch(71, 0, (_record(710, 1.0, fidelity=1),)))
@@ -235,7 +226,6 @@ def test_completion_requires_the_declared_quantity_fidelity_floor() -> None:
 
 
 def test_final_incomplete_delivery_reports_and_releases_buffer() -> None:
-    """Mutation: suppressing the final coverage diagnostic leaves a deadlock."""
     accumulator = FeedbackAccumulator(_contract())
     accumulator.register(_proposal(8, (80, 81)))
     with pytest.raises(ValidationError, match="incomplete"):
@@ -245,7 +235,6 @@ def test_final_incomplete_delivery_reports_and_releases_buffer() -> None:
 
 
 def test_mixed_channels_cannot_be_represented_by_one_final_envelope() -> None:
-    """Channel provenance is preserved by rejecting mixed delivery."""
     accumulator = FeedbackAccumulator(
         _contract(accepted_channels=frozenset({TRUE, SURROGATE}))
     )
@@ -264,7 +253,6 @@ def test_mixed_channels_cannot_be_represented_by_one_final_envelope() -> None:
 
 
 def test_unaccepted_source_is_dropped_before_completion_selection() -> None:
-    """Mutation: forwarding an unaccepted source violates the consumer contract."""
     accumulator = FeedbackAccumulator(_contract())
     accumulator.register(_proposal(10, (100,)))
     accumulator.add(_batch(10, 0, (_record(100, 99.0, source=SURROGATE),)))
@@ -278,7 +266,6 @@ def test_unaccepted_source_is_dropped_before_completion_selection() -> None:
 
 
 def test_completion_releases_each_proposal_buffer() -> None:
-    """Mutation: retaining per-proposal state makes buffered count grow linearly."""
     accumulator = FeedbackAccumulator(_contract())
     for proposal_id in range(64):
         candidate_id = 1000 + proposal_id
@@ -300,7 +287,6 @@ def test_completion_releases_each_proposal_buffer() -> None:
 def test_accumulator_rejects_partial_consumer_because_buffering_changes_timing() -> (
     None
 ):
-    """This adapter applies only to complete-batch consumers."""
     contract = FeedbackContract(
         accepted_channels=frozenset({TRUE}),
         completion=PARTIAL_ALLOWED,
@@ -310,7 +296,6 @@ def test_accumulator_rejects_partial_consumer_because_buffering_changes_timing()
 
 
 def test_selection_policy_call_count_is_constant_across_candidate_counts() -> None:
-    """Mutation: slot-by-slot selection makes calls grow with candidates."""
     call_counts: list[int] = []
 
     class CountingSelectionPolicy(SelectionPolicy):
@@ -355,7 +340,6 @@ def test_selection_policy_call_count_is_constant_across_candidate_counts() -> No
 
 
 def test_partial_out_of_order_retry_snapshot_restores_continuation() -> None:
-    """The codec retains sequence, duplicate identity, and accepted records."""
     contract = _contract(ordering=OUT_OF_ORDER_ALLOWED)
     continuous = FeedbackAccumulator(contract)
     resumed = FeedbackAccumulator(contract)
@@ -399,7 +383,6 @@ def test_accumulator_snapshot_preserves_ready_queue_and_terminal_records() -> No
     ],
 )
 def test_accumulator_codec_rejects_missing_resume_evidence(mutation) -> None:
-    """Dropping codec evidence must fail instead of silently resuming."""
     accumulator = FeedbackAccumulator(_contract())
     accumulator.register(_proposal(93, (930, 931)))
     accumulator.add(_batch(93, 0, (_record(930, 1.0),)))
@@ -426,7 +409,6 @@ def test_accumulator_codec_rejects_pickle_only_bypass() -> None:
     ],
 )
 def test_accumulator_codec_rejects_delivery_identity_mutations(mutate) -> None:
-    """Sequence, schema, and channel evidence are resume invariants."""
     accumulator = FeedbackAccumulator(_contract())
     accumulator.register(_proposal(94, (940, 941)))
     accumulator.add(_batch(94, 0, (_record(940, 1.0),)))

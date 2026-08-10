@@ -1,5 +1,5 @@
 """
-Tests for the ConstraintHandler abstraction (Issue #108).
+Tests for the ConstraintHandler abstraction.
 
 Tests cover:
 - InequalityConstraint: rename, gradient() default, removed Constraint alias

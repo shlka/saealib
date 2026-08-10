@@ -1004,7 +1004,6 @@ class OptimizationState:
         return result
 
     def _validate_plan_replacement(self, kwargs: dict[str, Any]) -> None:
-        """Validate plan-related replacement fields with normal state rules."""
         evaluation_plan = kwargs.get("evaluation_plan", self.evaluation_plan)
         evaluation_plan_state = kwargs.get(
             "evaluation_plan_state", self.evaluation_plan_state

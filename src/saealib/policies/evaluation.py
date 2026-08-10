@@ -170,7 +170,8 @@ class _RequestPlanner(EvaluationPlanner):
         if genomes is not None:
             payload = genomes.take(indices)
         else:
-            # Keep compatibility with the pre-GenomeBatch candidate fixture
+            # Keep compatibility with candidate fixtures that provide ``x``
+            # instead of a GenomeBatch.
             # while ensuring the public request payload remains a GenomeBatch.
             try:
                 payload = DenseVectorBatch(np.asarray(candidates.x)[indices])

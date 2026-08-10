@@ -145,35 +145,18 @@ def _extract_genome(
     if genome_value is None and element is not None and hasattr(element, "genome"):
         genome_value = getattr(element, "genome")
     if genome_value is None and "x" in population.schema:
-        # ``x`` is accepted only as the legacy dense compatibility input.  The
-        # service-backed path does not use it as an identity key after this
-        # one-row batch has been formed.
+        # ``x`` is accepted only for dense compatibility. The service-backed
+        # path does not use it as an identity key after this row is formed.
         return None
     return _as_single_genome_batch(genome_value)
 
 
 class ArchiveMixin:
-    """
-    A mixin class for using Population as an Archive.
+    """Provide archive operations for a :class:`Population` subclass.
 
-    Must be subclassed via multiple inheritance as a subclass of the Population class.
-    Handle archive of evaluated solutions.
-    Duplicate identity is supplied by the search-space services.  The legacy
-    ``key_attr``/``atol``/``rtol`` path remains only for source compatibility
-    with the pre-service constructor.
-
-    Attributes
-    ----------
-    data : dict[str, np.ndarray]
-        Dictionary to store archive data.
-    duplicate_log : list[dict]
-        List to store duplicate solutions information.
-    key_attr : str
-        Legacy key for duplicate checking.
-    atol : float
-        Compatibility view of the configured absolute tolerance.
-    rtol : float
-        Compatibility view of the configured relative tolerance.
+    Duplicate identity is normally supplied by search-space services. The
+    ``key_attr``, ``atol``, and ``rtol`` arguments remain supported for direct
+    schema-backed construction without those services.
     """
 
     def __init__(
@@ -249,11 +232,9 @@ class ArchiveMixin:
             )
         )
 
-        # A direct, legacy Archive(attrs=[..., "x", ...]) remains usable until
-        # the public construction paths pass resolved services.  A population
-        # with an opaque genome, or an explicitly supplied service registry,
-        # always takes the service path and therefore fails early if its
-        # required identity service is missing.
+        # Direct schema-backed archives remain usable without resolved
+        # services. Opaque genomes and explicit service configuration use the
+        # service path and fail early when identity services are missing.
         legacy_dense = isinstance(
             getattr(self, "_genome_batch", None), DenseVectorBatch
         )
@@ -476,7 +457,7 @@ class ArchiveMixin:
             self._fingerprint_service.add_to_index(fingerprint_index, incoming_genome)
             self._fingerprint_index = fingerprint_index
         self._kdtree = None
-        # The fingerprint index is incrementally updated above; legacy caches
+        # The fingerprint index is incrementally updated above; compatibility
         # remain invalidated as before.
         if not self._has_index_api(self._fingerprint_service, "find_matches"):
             self._fingerprint_index = None
