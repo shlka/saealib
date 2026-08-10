@@ -33,6 +33,7 @@ from saealib.core.contracts.ports import (
     PortCompatibility,
     PortDirection,
     PortSpec,
+    ServiceRequirement,
     check_port_compatibility,
 )
 from saealib.core.contracts.vocabulary import validate_name
@@ -303,6 +304,19 @@ def _service_path(
     )
 
 
+def _iter_component_services(
+    node: ComponentNode,
+    contract: ComponentContract,
+    part_path: tuple[str, ...] = (),
+) -> Iterable[tuple[ContractPath, ServiceRequirement]]:
+    path = ContractPath(components=(node.component_id, *part_path))
+    yield from ((path, requirement) for requirement in contract.required_services)
+    for part in contract.parts:
+        yield from _iter_component_services(
+            node, part.contract, (*part_path, part.name)
+        )
+
+
 def _service_registry(provider: object) -> object | None:
     if provider is None:
         return None
@@ -363,68 +377,72 @@ class ServiceResolutionRule:
         claims: set[RewriteClaim] = set()
         for node in context.graph.nodes:
             resolved: dict[str, object] = {}
+            requirements: list[tuple[ContractPath, ServiceRequirement]] = list(
+                _iter_component_services(node, node.contract)
+            )
             for part_path, role, port in _iter_port_specs(node.contract):
                 path = _service_path(node, part_path, role, port)
-                for requirement in port.required_services:
-                    descriptor = SERVICE_VOCABULARY.get(requirement.name)
-                    if descriptor is None:
-                        findings.append(
-                            _service_diagnostic(
-                                code="unknown_service",
-                                path=path,
-                                service_name=requirement.name,
-                                message=(
-                                    "The service is not in the core service vocabulary."
-                                ),
-                                resolution=(
-                                    f"Register {requirement.name!r} in "
-                                    "SERVICE_VOCABULARY before requiring it."
-                                ),
-                            )
+                requirements.extend(
+                    (path, requirement) for requirement in port.required_services
+                )
+            for path, requirement in requirements:
+                descriptor = SERVICE_VOCABULARY.get(requirement.name)
+                if descriptor is None:
+                    findings.append(
+                        _service_diagnostic(
+                            code="unknown_service",
+                            path=path,
+                            service_name=requirement.name,
+                            message=(
+                                "The service is not in the core service vocabulary."
+                            ),
+                            resolution=(
+                                f"Register {requirement.name!r} in "
+                                "SERVICE_VOCABULARY before requiring it."
+                            ),
                         )
-                        continue
-                    provider_name = getattr(descriptor, "provider", None)
-                    if provider_name not in {"space", "problem"}:
-                        findings.append(
-                            _service_diagnostic(
-                                code="unresolved_service",
-                                path=path,
-                                service_name=requirement.name,
-                                message=(
-                                    "Its provider descriptor is invalid or missing."
-                                ),
-                                resolution=(
-                                    "Give the service descriptor a valid provider "
-                                    "identity (space or problem)."
-                                ),
-                            )
-                        )
-                        continue
-                    provider_name = cast(str, provider_name)
-                    service = _lookup_service(
-                        context.compile_context,
-                        provider_name,
-                        requirement.name,
                     )
-                    if service is None:
-                        findings.append(
-                            _service_diagnostic(
-                                code="unresolved_service",
-                                path=path,
-                                service_name=requirement.name,
-                                message=(
-                                    f"No {provider_name} provider is available in "
-                                    "the compile context."
-                                ),
-                                resolution=(
-                                    f"Provide {requirement.name!r} through the "
-                                    f"bound {provider_name}, or choose a component "
-                                    "whose port does not require it."
-                                ),
-                            )
+                    continue
+                provider_name = getattr(descriptor, "provider", None)
+                if provider_name not in {"space", "problem"}:
+                    findings.append(
+                        _service_diagnostic(
+                            code="unresolved_service",
+                            path=path,
+                            service_name=requirement.name,
+                            message="Its provider descriptor is invalid or missing.",
+                            resolution=(
+                                "Give the service descriptor a valid provider "
+                                "identity (space or problem)."
+                            ),
                         )
-                        continue
-                    resolved.setdefault(requirement.name, service)
+                    )
+                    continue
+                provider_name = cast(str, provider_name)
+                service = _lookup_service(
+                    context.compile_context,
+                    provider_name,
+                    requirement.name,
+                )
+                if service is None:
+                    findings.append(
+                        _service_diagnostic(
+                            code="unresolved_service",
+                            path=path,
+                            service_name=requirement.name,
+                            message=(
+                                f"No {provider_name} provider is available in "
+                                "the compile context."
+                            ),
+                            resolution=(
+                                f"Provide {requirement.name!r} through the "
+                                f"bound {provider_name}, or choose a component "
+                                "whose port does not require it."
+                            ),
+                        )
+                    )
+                    continue
+                resolved.setdefault(requirement.name, service)
             if resolved != dict(node.resolved_services):
                 updated_nodes.append(node.with_resolved_services(resolved))
                 claims.add(context.claim("node", node.component_id))

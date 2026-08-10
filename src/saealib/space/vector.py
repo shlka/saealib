@@ -59,6 +59,18 @@ class _VectorDenseNumericView:
         return genomes.array
 
 
+class _VectorFeatureEncoder:
+    """Lossless identity encoding for dense vector genomes."""
+
+    def encode(self, genomes: GenomeBatch) -> np.ndarray:
+        if not isinstance(genomes, DenseVectorBatch):
+            raise ValidationError(
+                "FeatureEncoder requires DenseVectorBatch, got "
+                f"{type(genomes).__name__}"
+            )
+        return genomes.array
+
+
 class _VectorCloneService:
     def clone(self, genomes: GenomeBatch) -> GenomeBatch:
         if not isinstance(genomes, DenseVectorBatch):
@@ -316,6 +328,7 @@ class VectorSpace:
             "BoundsService", _VectorBoundsService(self._lb, self._ub)
         )
         self._services.register("DenseNumericView", _VectorDenseNumericView())
+        self._services.register("FeatureEncoder", _VectorFeatureEncoder())
         self._services.register("GenomeCodec", _VectorGenomeCodec())
         self._services.register("CloneService", _VectorCloneService())
         self._services.register("DistanceService", _VectorDistanceService())

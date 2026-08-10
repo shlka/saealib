@@ -107,6 +107,7 @@ def _contract_has_unresolved_service(
     declared: set[str] = set()
 
     def collect(contract: ComponentContract) -> None:
+        declared.update(requirement.name for requirement in contract.required_services)
         for role in contract.ports.values():
             for port in (*role.inputs, *role.outputs):
                 declared.update(

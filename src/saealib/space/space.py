@@ -103,14 +103,7 @@ def encode_features(space: SearchSpace, genomes: GenomeBatch) -> np.ndarray:
         encode = getattr(feature_encoder, "encode", None)
         if callable(encode):
             return np.asarray(encode(genomes), dtype=np.float64)
-    dense_view = space.services.get("DenseNumericView")
-    if dense_view is not None:
-        get_view = getattr(dense_view, "get_view", None)
-        if callable(get_view):
-            return np.asarray(get_view(genomes), dtype=np.float64)
-    raise ValidationError(
-        "surrogate features require an explicit FeatureEncoder or DenseNumericView"
-    )
+    raise ValidationError("surrogate features require the FeatureEncoder service")
 
 
 @runtime_checkable

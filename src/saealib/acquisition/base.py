@@ -21,6 +21,7 @@ from saealib.core.contracts import (
     PortContract,
     PortDirection,
     PortSpec,
+    ServiceRequirement,
 )
 from saealib.exceptions import ValidationError
 
@@ -100,6 +101,7 @@ class AcquisitionFunction(ABC):
     def contract(self) -> ComponentContract:
         """Return the acquisition contract."""
         return ComponentContract(
+            required_services=(ServiceRequirement(name="FeatureEncoder"),),
             ports={
                 "acquisition": PortContract(
                     inputs=(
@@ -120,7 +122,7 @@ class AcquisitionFunction(ABC):
                         ),
                     ),
                 ),
-            }
+            },
         )
 
     def prepare(self, archive: Archive, ctx: OptimizationState | None = None) -> Any:

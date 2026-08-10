@@ -42,6 +42,7 @@ from saealib.core.contracts import (
     PortContract,
     PortDirection,
     PortSpec,
+    ServiceRequirement,
     StateContract,
     Var,
 )
@@ -85,6 +86,7 @@ class SurrogateManager(ABC):
         feature_schema = Var(name="F")
         objective_schema = Var(name="O")
         return ComponentContract(
+            required_services=(ServiceRequirement(name="FeatureEncoder"),),
             ports={
                 "fitter": PortContract(
                     inputs=(
@@ -126,7 +128,7 @@ class SurrogateManager(ABC):
                         ),
                     ),
                 ),
-            }
+            },
         )
 
     def fit(

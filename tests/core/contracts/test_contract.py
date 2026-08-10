@@ -5,7 +5,12 @@ import pytest
 from saealib.core.contracts.assumptions import AssumptionSet
 from saealib.core.contracts.contract import ComponentContract, PartSpec
 from saealib.core.contracts.data import DataSpec
-from saealib.core.contracts.ports import PortContract, PortDirection, PortSpec
+from saealib.core.contracts.ports import (
+    PortContract,
+    PortDirection,
+    PortSpec,
+    ServiceRequirement,
+)
 from saealib.exceptions import ValidationError
 
 
@@ -63,6 +68,15 @@ def test_parts_hold_nested_contracts_without_merging_declarations() -> None:
 def test_component_contract_rejects_invalid_role_shape() -> None:
     with pytest.raises(ValidationError):
         ComponentContract(ports={"invalid role": PortContract()})
+
+
+def test_component_contract_validates_required_services() -> None:
+    contract = ComponentContract(
+        required_services=(ServiceRequirement(name="FeatureEncoder"),)
+    )
+    assert contract.required_services == (ServiceRequirement(name="FeatureEncoder"),)
+    with pytest.raises(ValidationError):
+        ComponentContract(required_services=cast(Any, ("FeatureEncoder",)))
 
 
 def test_part_spec_rejects_namespace_name() -> None:

@@ -34,6 +34,7 @@ from saealib.space import (
     SequenceSpace,
     ServiceRegistry,
     ValidationResult,
+    VectorSpace,
 )
 from saealib.space.space import encode_features
 from saealib.strategies.direct import DirectStrategy
@@ -87,6 +88,14 @@ def test_sequence_profile_services_and_mutation() -> None:
         alphabet=space.alphabet, min_length=1, max_length=3
     ).apply(left, np.random.default_rng(7))
     assert space.validate(mutated).valid
+
+
+def test_vector_feature_encoder_is_lossless_identity_service() -> None:
+    space = VectorSpace(dim=2, lb=[-1.0, -1.0], ub=[1.0, 1.0])
+    batch = space.sample(3, np.random.default_rng(8))
+    encoder = cast(Any, space.services.require("FeatureEncoder"))
+    np.testing.assert_array_equal(encoder.encode(batch), batch.array)
+    np.testing.assert_array_equal(encode_features(space, batch), batch.array)
 
 
 def _vector_problem() -> Problem:
@@ -473,7 +482,7 @@ def test_external_representation_rejects_missing_feature_encoder() -> None:
     try:
         with pytest.raises(
             ValidationError,
-            match="explicit FeatureEncoder or DenseNumericView",
+            match="require the FeatureEncoder service",
         ):
             encode_features(cast(Any, space), cast(Any, space.sample(3)))
     finally:

@@ -34,6 +34,7 @@ from saealib.core.contracts import (
     PortDirection,
     PortSpec,
     RepresentationSpec,
+    ServiceRequirement,
     StateContract,
 )
 from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS, SURROGATES_DEFAULT
@@ -69,8 +70,16 @@ class _SequentialSurvivors(SurvivorSelection):
 class _ContractComponent:
     """A minimal held component for an actual strategy graph probe."""
 
-    def __init__(self, *, exports: tuple = ()) -> None:
-        self._contract = ComponentContract(state=StateContract(exports=exports))
+    def __init__(
+        self,
+        *,
+        exports: tuple = (),
+        required_services: tuple[ServiceRequirement, ...] = (),
+    ) -> None:
+        self._contract = ComponentContract(
+            state=StateContract(exports=exports),
+            required_services=required_services,
+        )
 
     def contract(self) -> ComponentContract:
         return self._contract
@@ -143,6 +152,42 @@ def test_resolved_service_is_a_direct_reference_on_the_node() -> None:
     assert not any(
         diagnostic.code in {"unresolved_service", "unknown_service"}
         for diagnostic in plan.diagnostics
+    )
+
+
+def test_component_service_is_resolved_without_compiler_insertion() -> None:
+    component = _ContractComponent(
+        required_services=(ServiceRequirement(name="FeatureEncoder"),)
+    )
+    graph = ComponentGraph(
+        nodes=(ComponentNode(component_id="component", component=component),),
+        entry_points=(NodeRef(component_id="component"),),
+    )
+    missing = Compiler().compile(graph, CompileContext(space=_object_space()))
+    assert any(
+        diagnostic.code == "unresolved_service"
+        and "FeatureEncoder" in diagnostic.message
+        for diagnostic in missing.diagnostics
+    )
+
+    space = VectorSpace(dim=1, lb=[0.0], ub=[1.0])
+    resolved = Compiler().compile(graph, CompileContext(space=space))
+    assert resolved.graph.node_by_id("component").resolved_services[
+        "FeatureEncoder"
+    ] is space.services.require("FeatureEncoder")
+
+    no_requirement = Compiler().compile(
+        ComponentGraph(
+            nodes=(
+                ComponentNode(component_id="component", component=_ContractComponent()),
+            ),
+            entry_points=(NodeRef(component_id="component"),),
+        ),
+        CompileContext(space=space),
+    )
+    assert (
+        "FeatureEncoder"
+        not in no_requirement.graph.node_by_id("component").resolved_services
     )
 
 
