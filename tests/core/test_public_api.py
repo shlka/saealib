@@ -8,7 +8,6 @@ from pathlib import Path
 
 import saealib.core as core
 
-
 PUBLIC_EXPORTS = {
     "Component": ("saealib.core.component", "Component"),
     "ComponentContract": ("saealib.core.contracts.contract", "ComponentContract"),

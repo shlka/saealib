@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-FORBIDDEN_TOP_LEVEL_PACKAGES = {
+FORBIDDEN_FEATURE_PACKAGES = {
     "algorithms",
     "operators",
     "surrogate",
@@ -16,9 +16,9 @@ FORBIDDEN_TOP_LEVEL_PACKAGES = {
     "pipeline",
 }
 
-# Keep exceptions exact and intentional.  These are implementation leaves that
-# still need population runtime types; all shared descriptors use saealib.identity.
-IMPORT_ALLOWLIST: dict[tuple[str, str], str] = {
+# Keep exceptions exact and intentional. These are implementation leaves that
+# still need population runtime types; shared identity types live in core.
+INTENTIONAL_CORE_BRIDGES: dict[tuple[str, str], str] = {
     (
         "src/saealib/core/state/patch.py",
         "saealib.population.genome",
@@ -68,18 +68,18 @@ def test_core_has_no_forbidden_module_level_imports() -> None:
             if len(parts) < 2 or parts[0] != "saealib":
                 continue
             package = parts[1]
-            if package not in FORBIDDEN_TOP_LEVEL_PACKAGES:
+            if package not in FORBIDDEN_FEATURE_PACKAGES:
                 continue
             key = (relative, module)
-            if key in IMPORT_ALLOWLIST:
+            if key in INTENTIONAL_CORE_BRIDGES:
                 seen_allowlist.add(key)
             else:
                 violations.append(f"{relative}:{node.lineno}: from {module}")
 
     assert not violations, "Forbidden core imports:\n" + "\n".join(violations)
-    assert seen_allowlist == set(IMPORT_ALLOWLIST), (
+    assert seen_allowlist == set(INTENTIONAL_CORE_BRIDGES), (
         "Allowlist contains stale or unobserved entries: "
-        + repr(set(IMPORT_ALLOWLIST) - seen_allowlist)
+        + repr(set(INTENTIONAL_CORE_BRIDGES) - seen_allowlist)
     )
 
 
