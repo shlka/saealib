@@ -164,7 +164,7 @@ def test_repeat_zero_does_not_provide_data_to_the_following_region() -> None:
                 RepeatRegion(
                     region_id="repeat",
                     count=0,
-                    body=[_Component("producer", output="Population")],
+                    body=(_Component("producer", output="Population"),),
                 ),
                 _Component("consumer", input_kind="Population"),
             ]
@@ -182,7 +182,7 @@ def test_dynamic_repeat_does_not_provide_data_to_the_following_region() -> None:
                 RepeatRegion(
                     region_id="repeat",
                     count=lambda view: 1,
-                    body=[_Component("producer", output="Population")],
+                    body=(_Component("producer", output="Population"),),
                 ),
                 _Component("consumer", input_kind="Population"),
             ]
@@ -200,7 +200,7 @@ def test_loop_body_does_not_provide_data_to_the_following_region() -> None:
                 LoopRegion(
                     region_id="loop",
                     condition=_Condition(),
-                    body=[_Component("producer", output="Population")],
+                    body=(_Component("producer", output="Population"),),
                 ),
                 _Component("consumer", input_kind="Population"),
             ]
@@ -218,7 +218,7 @@ def test_branch_single_path_producer_does_not_provide_data_after_branch() -> Non
                 BranchRegion(
                     region_id="branch",
                     condition=_Condition(),
-                    body=[_Component("producer", output="Population")],
+                    body=(_Component("producer", output="Population"),),
                 ),
                 _Component("consumer", input_kind="Population"),
             ]

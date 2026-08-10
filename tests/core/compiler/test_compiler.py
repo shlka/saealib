@@ -495,8 +495,8 @@ def test_structured_rewrite_rebinds_operations_and_alternate_regions() -> None:
                         "evaluate": lambda self, view: True,
                     },
                 )(),
-                body=[_Component()],
-                otherwise=[_Component()],
+                body=(_Component(),),
+                otherwise=(_Component(),),
             ),
             _Component(),
         ]
@@ -517,6 +517,8 @@ def test_structured_rewrite_rebinds_operations_and_alternate_regions() -> None:
         if isinstance(operation, ComponentNode)
     )
     branch = plan.graph.region_nodes[0].region
+    assert isinstance(branch, BranchRegion)
+    assert isinstance(branch.body, StructuredGraph)
     assert all(
         operation
         is next(
@@ -527,7 +529,7 @@ def test_structured_rewrite_rebinds_operations_and_alternate_regions() -> None:
         for operation in branch.body.operations
         if isinstance(operation, ComponentNode)
     )
-    assert branch.otherwise is not None
+    assert isinstance(branch.otherwise, StructuredGraph)
     assert all(
         operation
         is next(
