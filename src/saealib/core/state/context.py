@@ -1,8 +1,5 @@
 """Restricted runtime context exposed to graph-native components."""
 
-# The facade's public surface is self-documenting through its explicit
-# property names; individual forwarding properties do not need duplicate
-# docstrings.
 # ruff: noqa: D102
 
 from __future__ import annotations
@@ -166,7 +163,6 @@ class RuntimeContext:
     def pareto_archive(self) -> Any:
         return self._state.pareto_archive
 
-    # Runtime values used by graph-native algorithms and policies.
     @property
     def rng(self) -> Any:
         return self._state.rng

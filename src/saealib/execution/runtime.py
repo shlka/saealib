@@ -394,7 +394,6 @@ def _execute_structured(
                     )
                 )
                 continue
-            # SequenceRegion and future region types use their body as one frame.
             stack.append(RegionFrame(graph=body, region_id=region.qualified_id))
             continue
 
