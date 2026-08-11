@@ -117,9 +117,11 @@ population implementation.
 
 Graph-native components execute against a restricted `StateView` and return a
 `StatePatch` or a `NodeResult`. A `NodeResult` may also contain events,
-runtime commands, and a status such as completed, blocked, failed, or
-recompile-required. The runtime applies patches in order, dispatches events,
-and interprets commands. The view's context is a read-only `RuntimeContext`
+runtime commands, and one of four `NodeStatus` values: `COMPLETED`, `BLOCKED`,
+`RUNNING`, or `FAILED`. A node requests plan replacement with the
+`RequestRecompile` command; recompilation is handled at a safe runtime
+boundary. The runtime applies patches in order, dispatches events, and
+interprets commands. The view's context is a read-only `RuntimeContext`
 facade; it does not expose the complete `OptimizationState` or arbitrary state
 mutation methods. `saealib.core.ExecutionRuntime` defines this plan and result
 vocabulary; concrete lifecycle implementations and evaluator services are
