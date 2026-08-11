@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import Any, Protocol, cast
+from typing import Protocol, cast
 
 import numpy as np
 
@@ -13,6 +13,7 @@ from saealib.algorithms.base import (
     algorithm_context,
 )
 from saealib.callback import PostAskEvent
+from saealib.comparators import Comparator
 from saealib.core.contracts import (
     ComponentContract,
     FeedbackBatch,
@@ -32,13 +33,13 @@ class _LeaderContext(Protocol):
     """Capabilities required to construct and rank PSO personal bests."""
 
     @property
-    def population(self) -> Any: ...
+    def population(self) -> Population: ...
 
     @property
-    def problem(self) -> Any: ...
+    def problem(self) -> Problem: ...
 
     @property
-    def comparator(self) -> Any: ...
+    def comparator(self) -> Comparator: ...
 
     @property
     def dim(self) -> int: ...

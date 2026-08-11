@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import TYPE_CHECKING, Protocol, cast
 
 import numpy as np
 
@@ -30,6 +30,7 @@ from saealib.core.state import (
     StateView,
 )
 from saealib.exceptions import ConfigurationError
+from saealib.identity import IDAllocator
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem.constraint import EqualityConstraint
 from saealib.problem.problem import Problem
@@ -57,19 +58,19 @@ class _PymooContext(Protocol):
     """Capabilities used by the pymoo adapter's synchronization helpers."""
 
     @property
-    def problem(self) -> Any: ...
+    def problem(self) -> Problem: ...
 
     @property
-    def population(self) -> Any: ...
+    def population(self) -> Population: ...
 
     @property
-    def rng(self) -> Any: ...
+    def rng(self) -> np.random.Generator: ...
 
     @property
-    def candidate_id_allocator(self) -> Any: ...
+    def candidate_id_allocator(self) -> IDAllocator: ...
 
     @property
-    def proposal_id_allocator(self) -> Any: ...
+    def proposal_id_allocator(self) -> IDAllocator: ...
 
     def compiled_service(self, name: str) -> object: ...
 
