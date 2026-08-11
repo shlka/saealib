@@ -278,8 +278,7 @@ def _structured_recompile_accepted(
         and metadata.frames == ()
         and not metadata.state.pending_evaluations
         and not any(
-            result.status
-            in {NodeStatus.BLOCKED, NodeStatus.RUNNING, NodeStatus.FAILED}
+            result.status in {NodeStatus.BLOCKED, NodeStatus.RUNNING, NodeStatus.FAILED}
             for result in metadata.node_results
         )
     )

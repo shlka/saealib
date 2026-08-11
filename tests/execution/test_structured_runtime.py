@@ -401,9 +401,7 @@ def test_async_structured_recompile_waits_for_pending_evaluations() -> None:
     component = _RequestRecompileOnce()
     state = _state().replace(pending_evaluations={1: object()})
     runtime = AsyncPipelineRuntime(environment=environment)
-    first = runtime.advance(
-        runtime.initialize(_compile(Pipeline([component])), state)
-    )
+    first = runtime.advance(runtime.initialize(_compile(Pipeline([component])), state))
 
     assert environment.recompiled == 1
     assert environment.finished_generations == 1
@@ -424,8 +422,9 @@ def test_async_structured_recompile_waits_for_pending_evaluations() -> None:
     assert second.session is not None and second.session.frames == ()
 
 
-def test_async_structured_refuses_recompile_when_leaf_creates_pending_evaluation(
-) -> None:
+def test_async_structured_refuses_recompile_when_leaf_creates_pending_evaluation() -> (
+    None
+):
     class Environment(_StructuredEnvironment):
         def __init__(self) -> None:
             super().__init__()
@@ -439,9 +438,7 @@ def test_async_structured_refuses_recompile_when_leaf_creates_pending_evaluation
     state = _state()
     component = _RequestRecompileWithPending(state)
     runtime = AsyncPipelineRuntime(environment=environment)
-    step = runtime.advance(
-        runtime.initialize(_compile(Pipeline([component])), state)
-    )
+    step = runtime.advance(runtime.initialize(_compile(Pipeline([component])), state))
 
     assert environment.recompiled == 0
     assert environment.finished_generations == 0
