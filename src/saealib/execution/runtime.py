@@ -717,18 +717,19 @@ def _execute_structured(
                 refused.append(command)
         if result.status is NodeStatus.COMPLETED:
             stack[-1] = replace(frame, operation_index=frame.operation_index + 1)
+            root_complete = len(stack) == 1 and stack[-1].operation_index >= len(
+                stack[-1].graph.operations
+            )
+            if recompile_requested and root_complete:
+                return _ExecutionOutcome(
+                    state=current,
+                    node_results=tuple(results),
+                    executed_node_ids=tuple(executed),
+                    refused_commands=tuple(refused),
+                    plan_completed=True,
+                    frames=(),
+                )
             if recompile_requested:
-                if len(stack) == 1 and stack[-1].operation_index >= len(
-                    stack[-1].graph.operations
-                ):
-                    return _ExecutionOutcome(
-                        state=current,
-                        node_results=tuple(results),
-                        executed_node_ids=tuple(executed),
-                        refused_commands=tuple(refused),
-                        plan_completed=True,
-                        frames=(),
-                    )
                 refused.extend(
                     command
                     for command in result.commands
@@ -799,7 +800,7 @@ def _execute_with_metadata(
                 current,
                 reads=node.contract.state.reads,
                 dispatch=dispatch,
-                resolved_services=None,
+                resolved_services=node.resolved_services,
             ),
             dispatch=dispatch,
         )
@@ -932,19 +933,21 @@ class _OptimizerEnvironment:
             self.optimizer._executable_plan = executable
         self._execution_fingerprint = current_fingerprint
 
-    def recompile(self, plan: SequentialPlan) -> SequentialPlan:
-        """Rebuild the graph at a completed step boundary."""
-        del plan
-        executable, sequential = self._compile_current_plan()
-        if not isinstance(sequential, SequentialPlan):
-            raise ValidationError(
-                "sequential recompile provider cannot return a structured plan"
+    def recompile(
+        self, plan: SequentialPlan | StructuredPlan
+    ) -> SequentialPlan | StructuredPlan:
+        executable, _ = self._compile_current_plan()
+        if isinstance(plan, StructuredPlan):
+            rebuilt: SequentialPlan | StructuredPlan = (
+                StructuredPlan.from_executable_plan(executable)
             )
-        self.plan = sequential
+        else:
+            rebuilt = SequentialPlan.from_executable_plan(executable)
+        self.plan = rebuilt
         if hasattr(self.optimizer, "_executable_plan"):
             self.optimizer._executable_plan = executable
         self._execution_fingerprint = self._fingerprint()
-        return sequential
+        return rebuilt
 
     def _compile_current_plan(
         self,

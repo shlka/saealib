@@ -180,6 +180,14 @@ class _RequestRecompile(_Increment):
         )
 
 
+class _CompletedRequestRecompile(_Increment):
+    def execute(self, view):
+        return NodeResult(
+            patch=super().execute(view),
+            commands=(RequestRecompile(),),
+        )
+
+
 class _AsyncBlockOnce(_Increment):
     def __init__(self) -> None:
         self.calls = 0
@@ -460,6 +468,55 @@ def test_structured_runtime_refuses_recompile_with_active_frame() -> None:
 
     assert step.refused_commands == (RequestRecompile(),)
     assert step.session is not None and step.session.frames
+
+
+def test_structured_runtime_recompiles_at_root_and_discards_frames() -> None:
+    class Environment(_StructuredEnvironment):
+        def __init__(self) -> None:
+            super().__init__()
+            self.recompiled: list[object] = []
+
+        def recompile(self, plan):
+            self.recompiled.append(plan)
+            return plan
+
+    environment = Environment()
+    runtime = PipelineRuntime(environment=environment)
+    session = runtime.initialize(
+        _compile(Pipeline([_CompletedRequestRecompile()])), _state()
+    )
+
+    step = runtime.advance(session)
+
+    assert len(environment.recompiled) == 1
+    assert step.refused_commands == ()
+    assert step.session is not None and step.session.frames == ()
+
+
+def test_structured_runtime_refuses_recompile_before_root_completion() -> None:
+    class SecondIncrement(_Increment):
+        name = "second_increment"
+
+    class Environment(_StructuredEnvironment):
+        def __init__(self) -> None:
+            super().__init__()
+            self.recompiled = 0
+
+        def recompile(self, plan):
+            self.recompiled += 1
+            return plan
+
+    environment = Environment()
+    runtime = PipelineRuntime(environment=environment)
+    session = runtime.initialize(
+        _compile(Pipeline([_CompletedRequestRecompile(), SecondIncrement()])), _state()
+    )
+
+    step = runtime.advance(session)
+
+    assert environment.recompiled == 0
+    assert step.refused_commands == (RequestRecompile(),)
+    assert step.executed_node_ids == ("increment", "second_increment")
 
 
 @pytest.mark.parametrize("count", [0, 2])

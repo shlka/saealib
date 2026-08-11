@@ -229,6 +229,28 @@ def test_generic_node_result_uses_state_binding_and_executes_termination() -> No
     assert step.state._store.get(bound) == 2
 
 
+def test_sequential_graph_node_receives_node_scoped_services() -> None:
+    service = object()
+
+    def execute(view: Any) -> NodeResult:
+        assert view.context.compiled_service("ScopedService") is service
+        return NodeResult(patch=StatePatch(writes={}))
+
+    executable = _generic_plan(
+        (_GenericNode(ComponentContract(), execute),)
+    )
+    node = replace(
+        executable.graph.nodes[0], resolved_services={"ScopedService": service}
+    )
+    executable = replace(executable, graph=replace(executable.graph, nodes=(node,)))
+
+    step = PipelineRuntime().advance(
+        PipelineRuntime().initialize(executable, _generic_state({}))
+    )
+
+    assert step.executed_node_ids == ("node_0",)
+
+
 def test_compiler_to_runtime_executes_state_bound_component() -> None:
     abstract = StateKey(namespace="user", name="value", schema_version=1)
     bound = StateKey(namespace="user", name="value_for_node", schema_version=1)
