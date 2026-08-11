@@ -39,6 +39,8 @@ from saealib.core.state.keys import (
     USER_DATA,
     StateKey,
 )
+from saealib.core.state.readonly import _readonly_value
+from saealib.exceptions import ValidationError
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
@@ -105,7 +107,9 @@ class RuntimeContext:
     _state: OptimizationState
     _reads: frozenset[StateKey[object]] | None
 
-    __slots__ = ("_dispatch", "_reads", "_state")
+    _resolved_services: Mapping[str, object] | None
+
+    __slots__ = ("_dispatch", "_reads", "_resolved_services", "_state")
 
     def __init__(
         self,
@@ -113,9 +117,11 @@ class RuntimeContext:
         *,
         dispatch: Callable[[Any], None] | None = None,
         reads: Iterable[StateKey[object]] | None = None,
+        resolved_services: Mapping[str, object] | None = None,
     ) -> None:
         object.__setattr__(self, "_state", state)
         object.__setattr__(self, "_dispatch", dispatch)
+        object.__setattr__(self, "_resolved_services", resolved_services)
         object.__setattr__(
             self,
             "_reads",
@@ -143,41 +149,44 @@ class RuntimeContext:
 
     @property
     def population(self) -> Any:
-        return self._state.population
+        return _readonly_value(self._state.population)
 
     @property
     def populations(self) -> Mapping[str, Any]:
-        return MappingProxyType({"main": self._state.population})
+        return MappingProxyType({"main": _readonly_value(self._state.population)})
 
     @property
     def archive(self) -> Any:
-        return self._state.archive
+        return _readonly_value(self._state.archive)
 
     @property
     def archives(self) -> Mapping[str, Any]:
         return MappingProxyType(
-            {"main": self._state.archive, "pareto": self._state.pareto_archive}
+            {
+                "main": _readonly_value(self._state.archive),
+                "pareto": _readonly_value(self._state.pareto_archive),
+            }
         )
 
     @property
     def pareto_archive(self) -> Any:
-        return self._state.pareto_archive
+        return _readonly_value(self._state.pareto_archive)
 
     @property
     def rng(self) -> Any:
-        return self._state.rng
+        return _readonly_value(self._state.rng)
 
     @property
     def candidate_id_allocator(self) -> Any:
-        return self._state.candidate_id_allocator
+        return _readonly_value(self._state.candidate_id_allocator)
 
     @property
     def proposal_id_allocator(self) -> Any:
-        return self._state.proposal_id_allocator
+        return _readonly_value(self._state.proposal_id_allocator)
 
     @property
     def request_id_allocator(self) -> Any:
-        return self._state.request_id_allocator
+        return _readonly_value(self._state.request_id_allocator)
 
     @property
     def fe(self) -> int:
@@ -197,83 +206,83 @@ class RuntimeContext:
 
     @property
     def lb(self) -> Any:
-        return self._state.lb
+        return _readonly_value(self._state.lb)
 
     @property
     def ub(self) -> Any:
-        return self._state.ub
+        return _readonly_value(self._state.ub)
 
     @property
     def direction(self) -> Any:
-        return self._state.direction
+        return _readonly_value(self._state.direction)
 
     @property
     def comparator(self) -> Any:
-        return self._state.comparator
+        return _readonly_value(self._state.comparator)
 
     @property
     def offspring(self) -> Any:
-        return self._state.offspring
+        return _readonly_value(self._state.offspring)
 
     @property
     def evaluated_offspring(self) -> Any:
-        return self._state.evaluated_offspring
+        return _readonly_value(self._state.evaluated_offspring)
 
     @property
     def scores(self) -> Any:
-        return self._state.scores
+        return _readonly_value(self._state.scores)
 
     @property
     def acquisition_result(self) -> Any:
-        return self._state.acquisition_result
+        return _readonly_value(self._state.acquisition_result)
 
     @property
     def predictions(self) -> Any:
-        return self._state.predictions
+        return _readonly_value(self._state.predictions)
 
     @property
     def evaluation_request(self) -> Any:
-        return self._state.evaluation_request
+        return _readonly_value(self._state.evaluation_request)
 
     @property
     def evaluation_plan(self) -> Any:
-        return self._state.evaluation_plan
+        return _readonly_value(self._state.evaluation_plan)
 
     @property
     def evaluation_plan_state(self) -> Any:
-        return self._state.evaluation_plan_state
+        return _readonly_value(self._state.evaluation_plan_state)
 
     @property
     def evaluation_updates(self) -> Any:
-        return self._state.evaluation_updates
+        return _readonly_value(self._state.evaluation_updates)
 
     @property
     def evaluation_plan_updates(self) -> Any:
-        return self._state.evaluation_plan_updates
+        return _readonly_value(self._state.evaluation_plan_updates)
 
     @property
     def evaluation_update_new_ids(self) -> Any:
-        return self._state.evaluation_update_new_ids
+        return _readonly_value(self._state.evaluation_update_new_ids)
 
     @property
     def evaluation_new_ids(self) -> Any:
-        return self._state.evaluation_new_ids
+        return _readonly_value(self._state.evaluation_new_ids)
 
     @property
     def evaluation_handles(self) -> Any:
-        return self._state.evaluation_handles
+        return _readonly_value(self._state.evaluation_handles)
 
     @property
     def evaluation_owners(self) -> Any:
-        return self._state.evaluation_owners
+        return _readonly_value(self._state.evaluation_owners)
 
     @property
     def pending_evaluations(self) -> Any:
-        return self._state.pending_evaluations
+        return _readonly_value(self._state.pending_evaluations)
 
     @property
     def pending_candidate_ids(self) -> Any:
-        return self._state.pending_candidate_ids
+        return _readonly_value(self._state.pending_candidate_ids)
 
     @property
     def reserved_fe(self) -> int:
@@ -285,22 +294,29 @@ class RuntimeContext:
 
     @property
     def feedback_result(self) -> Any:
-        return self._state.feedback_result
+        return _readonly_value(self._state.feedback_result)
 
     @property
     def feedback_accumulator(self) -> Any:
-        return self._state.feedback_accumulator
+        return _readonly_value(self._state.feedback_accumulator)
 
     @property
     def async_fatal(self) -> Any:
-        return self._state.async_fatal
+        return _readonly_value(self._state.async_fatal)
 
     @property
     def data(self) -> Mapping[str, Any]:
-        return MappingProxyType(self._state.data)
+        return _readonly_value(self._state.data)
 
     def compiled_service(self, name: str) -> object:
         """Return a service resolved by the compiled graph."""
+        if self._resolved_services is not None:
+            try:
+                return self._resolved_services[name]
+            except KeyError as exc:
+                raise ValidationError(
+                    f"compiled service {name!r} is not resolved for this node"
+                ) from exc
         return self._state.compiled_service(name)
 
     def dispatch(self, event: object) -> None:

@@ -366,7 +366,8 @@ def _evaluate_condition(
     contract = condition.contract()
     view = state._store.view(
         contract.reads,
-        context=RuntimeContext(state, reads=contract.reads, dispatch=dispatch),
+        context=RuntimeContext(state, reads=contract.reads, dispatch=dispatch,
+                               resolved_services={}),
         dispatch=dispatch,
     )
     return bool(condition.evaluate(view))
@@ -682,7 +683,10 @@ def _execute_structured(
         view = current._store.view(
             tuple({aliases.get(key, key) for key in node.contract.state.reads}),
             context=RuntimeContext(
-                current, reads=node.contract.state.reads, dispatch=dispatch
+                current,
+                reads=node.contract.state.reads,
+                dispatch=dispatch,
+                resolved_services=node.resolved_services,
             ),
             dispatch=dispatch,
         )
@@ -795,7 +799,10 @@ def _execute_with_metadata(
         view = current._store.view(
             tuple({aliases.get(key, key) for key in node.contract.state.reads}),
             context=RuntimeContext(
-                current, reads=node.contract.state.reads, dispatch=dispatch
+                current,
+                reads=node.contract.state.reads,
+                dispatch=dispatch,
+                resolved_services=None,
             ),
             dispatch=dispatch,
         )
@@ -1191,6 +1198,7 @@ class PipelineRuntime:
                 "PipelineRuntime.initialize requires an OptimizationState"
             )
         validate_plan_contracts(plan)
+        structured_graph = isinstance(plan.graph, StructuredGraph)
         services: dict[str, object] = {}
         for node in plan.graph.nodes:
             required = {
@@ -1205,20 +1213,22 @@ class PipelineRuntime:
                     f"compiled plan node {node.component_id!r} is missing resolved "
                     f"services: {missing}"
                 )
-            for name, service in node.resolved_services.items():
-                previous = services.get(name)
-                if previous is not None and previous is not service:
-                    raise ValidationError(
-                        f"compiled plan resolves service {name!r} to "
-                        "conflicting objects"
-                    )
-                services[name] = service
-        state.bind_compiled_services(services)
+            if not structured_graph:
+                for name, service in node.resolved_services.items():
+                    previous = services.get(name)
+                    if previous is not None and previous is not service:
+                        raise ValidationError(
+                            f"compiled plan resolves service {name!r} to "
+                            "conflicting objects"
+                        )
+                    services[name] = service
         structured = (
             StructuredPlan.from_executable_plan(plan)
-            if isinstance(plan.graph, StructuredGraph)
+            if structured_graph
             else None
         )
+        if structured is None:
+            state.bind_compiled_services(services)
         selected_plan = structured or SequentialPlan.from_executable_plan(plan)
         capabilities = self.capabilities | frozenset(
             getattr(self.environment, "capabilities", ())

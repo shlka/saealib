@@ -355,16 +355,28 @@ class _StageStateProxy:
             return self._writes[key]
         if key in self._deletes:
             raise KeyError(key)
+        state = object.__getattribute__(self._context, "_state")
+        get_state = getattr(state, "get_state", None)
+        if callable(get_state):
+            try:
+                return get_state(key)
+            except KeyError:
+                pass
+        name = next(
+            (name for name, candidate in _STATE_FIELD_KEYS.items() if candidate == key),
+            None,
+        )
+        if name is not None:
+            try:
+                return object.__getattribute__(state, name)
+            except AttributeError:
+                pass
         try:
             present = self._view.contains(key)
         except KeyError:
             raise
         if present:
             return self._view.get(key)
-        name = next(
-            (name for name, candidate in _STATE_FIELD_KEYS.items() if candidate == key),
-            None,
-        )
         if name is None:
             raise KeyError(key)
         try:

@@ -5,7 +5,16 @@ import pytest
 
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
-from saealib.core.state import USER_DATA, RuntimeContext, StateStore
+from saealib.core.state import (
+    POPULATIONS_MAIN,
+    PROPOSALS_ID_ALLOCATOR,
+    RUNTIME_RNG,
+    USER_DATA,
+    RuntimeContext,
+    StatePatch,
+    StateStore,
+)
+from saealib.exceptions import ValidationError
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 
@@ -54,7 +63,10 @@ def test_runtime_context_restricts_graph_native_context_capabilities() -> None:
     assert isinstance(runtime_context, RuntimeContext)
     assert not isinstance(runtime_context, OptimizationState)
     assert runtime_context.problem is state.problem
-    assert runtime_context.population is state.population
+    assert runtime_context.population is not state.population
+    with pytest.raises(AttributeError):
+        runtime_context.population.append({"x": 1.0})
+    assert len(state.population) == 0
     assert runtime_context.compiled_service("example") is service
     runtime_context.dispatch("event")
     assert events == ["event"]
@@ -76,6 +88,36 @@ def test_runtime_context_restricts_graph_native_context_capabilities() -> None:
         runtime_context.data["new"] = 2  # type: ignore[index]
 
 
+def test_state_view_does_not_expose_mutable_population_rng_or_allocator() -> None:
+    state = _state()
+    view = state._store.view(
+        (POPULATIONS_MAIN, RUNTIME_RNG, PROPOSALS_ID_ALLOCATOR),
+        context=RuntimeContext(state),
+    )
+
+    with pytest.raises(AttributeError):
+        view.get(POPULATIONS_MAIN).append({"x": 1.0})
+    before_rng = state.rng.bit_generator.state
+    view.get(RUNTIME_RNG).random()
+    assert state.rng.bit_generator.state == before_rng
+    before_id = state.proposal_id_allocator.next_value
+    view.get(PROPOSALS_ID_ALLOCATOR).allocate(1)
+    assert state.proposal_id_allocator.next_value == before_id
+
+
+def test_state_patch_is_the_population_replacement_path() -> None:
+    state = _state()
+    replacement = Population(
+        [PopulationAttribute(name="x", dtype=np.float64, shape=(1,))],
+        init_capacity=1,
+    )
+    updated = state._store.apply_patch(
+        StatePatch(writes={POPULATIONS_MAIN: replacement})
+    )
+
+    assert updated.get(POPULATIONS_MAIN) is replacement
+
+
 def test_runtime_context_state_capabilities_follow_declared_reads() -> None:
     state = _state()
     context = RuntimeContext(state, reads=(USER_DATA,))
@@ -83,3 +125,13 @@ def test_runtime_context_state_capabilities_follow_declared_reads() -> None:
     assert context.data == state.data
     with pytest.raises(AttributeError, match="population"):
         context.population
+
+
+def test_runtime_context_compiled_services_are_node_scoped() -> None:
+    state = _state()
+    service = object()
+    context = RuntimeContext(state, resolved_services={"own": service})
+
+    assert context.compiled_service("own") is service
+    with pytest.raises(ValidationError, match="not resolved for this node"):
+        context.compiled_service("other")

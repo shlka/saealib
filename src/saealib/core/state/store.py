@@ -7,14 +7,13 @@ from collections.abc import Callable, Iterable, Mapping
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
-import numpy as np
-
 from saealib.core.state.keys import StateKey
 from saealib.core.state.patch import (
     PopulationRowUpdate,
     StatePatch,
     StateUpdate,
 )
+from saealib.core.state.readonly import _readonly_value, _unwrap_readonly
 from saealib.exceptions import ValidationError
 from saealib.population import Population
 
@@ -140,7 +139,7 @@ class StateStore:
                         genome=update.genome,
                     )
             else:
-                values[key] = update
+                values[key] = _unwrap_readonly(update)
         for key in deletes:
             values.pop(key, None)
 
@@ -223,12 +222,7 @@ class StateView:
         StateStore._validate_key(key)
         if key not in self._reads:
             raise KeyError(f"State key was not declared as a read: {key!r}")
-        value = self._store.get(key)
-        if isinstance(value, np.ndarray):
-            readonly = value.view()
-            readonly.setflags(write=False)
-            return cast(ValueT, readonly)
-        return value
+        return cast(ValueT, _readonly_value(self._store.get(key)))
 
     def contains(self, key: StateKey) -> bool:
         """Return presence for a declared key."""
