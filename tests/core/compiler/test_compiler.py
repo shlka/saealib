@@ -572,6 +572,118 @@ def test_structured_resolution_cannot_change_operation_order() -> None:
 
 
 @dataclass
+class _StructuredExecutableOperationMutationRule:
+    name: str = "structured_executable_operation_mutation"
+    namespace: str = "test"
+    phase: Literal["resolution"] = "resolution"
+
+    def apply(self, context: RuleContext) -> ResolutionResult:
+        extra = ComponentNode(component_id="extra", component=_Component())
+        return ResolutionResult(
+            graph=replace(
+                context.graph,
+                nodes=(*context.graph.nodes, extra),
+                operations=(*context.graph.operations, extra),
+            )
+        )
+
+
+def test_structured_resolution_cannot_add_executable_operation() -> None:
+    plan = Compiler(
+        RuleRegistry([_StructuredExecutableOperationMutationRule()])
+    ).compile(
+        lower_structured([_Component(), _Component()]),
+        CompileContext(enabled_rule_namespaces=frozenset({"test"})),
+    )
+
+    assert any(
+        diagnostic.code == "structured_execution_mutation"
+        for diagnostic in plan.diagnostics
+    )
+
+
+@dataclass
+class _StructuredSemanticNodeRule:
+    name: str = "structured_semantic_node"
+    namespace: str = "test"
+    phase: Literal["resolution"] = "resolution"
+
+    def apply(self, context: RuleContext) -> ResolutionResult:
+        if any(node.component_id == "semantic" for node in context.graph.nodes):
+            return ResolutionResult(
+                graph=context.graph,
+                claims=frozenset({context.claim("node", "semantic")}),
+            )
+        semantic = ComponentNode(component_id="semantic", component=_Component())
+        return ResolutionResult(
+            graph=replace(context.graph, nodes=(*context.graph.nodes, semantic)),
+            claims=frozenset({context.claim("node", "semantic")}),
+        )
+
+
+def test_structured_resolution_allows_semantic_only_nodes() -> None:
+    plan = Compiler(RuleRegistry([_StructuredSemanticNodeRule()])).compile(
+        lower_structured([_Component(), _Component()]),
+        CompileContext(enabled_rule_namespaces=frozenset({"test"})),
+    )
+
+    assert "semantic" in {node.component_id for node in plan.graph.nodes}
+    assert not any(
+        diagnostic.code == "structured_execution_mutation"
+        for diagnostic in plan.diagnostics
+    )
+
+
+@dataclass
+class _StructuredNestedTopologyMutationRule:
+    name: str = "structured_nested_topology_mutation"
+    namespace: str = "test"
+    phase: Literal["resolution"] = "resolution"
+
+    def apply(self, context: RuleContext) -> ResolutionResult:
+        assert isinstance(context.graph, StructuredGraph)
+        region_node = context.graph.region_nodes[0]
+        region = region_node.region
+        assert isinstance(region.body, StructuredGraph)
+        body = replace(region.body, operations=tuple(reversed(region.body.operations)))
+        mutated_region_node = replace(region_node, region=replace(region, body=body))
+        return ResolutionResult(
+            graph=replace(
+                context.graph,
+                region_nodes=(mutated_region_node,),
+                operations=(mutated_region_node,),
+            )
+        )
+
+
+def test_structured_resolution_cannot_change_nested_topology() -> None:
+    graph = lower_structured(
+        [
+            BranchRegion(
+                region_id="branch",
+                condition=type(
+                    "Condition",
+                    (),
+                    {
+                        "contract": lambda self: StateContract(),
+                        "evaluate": lambda self, view: True,
+                    },
+                )(),
+                body=(_Component(), _Component()),
+            )
+        ]
+    )
+    plan = Compiler(
+        RuleRegistry([_StructuredNestedTopologyMutationRule()])
+    ).compile(graph, CompileContext(enabled_rule_namespaces=frozenset({"test"})))
+
+    assert any(
+        diagnostic.code == "structured_execution_mutation"
+        for diagnostic in plan.diagnostics
+    )
+
+
+@dataclass
 class _NeverStableRule:
     name: str = "never_stable"
     namespace: str = "test"

@@ -223,5 +223,9 @@ def _execution_signature(graph: StructuredGraph) -> tuple[object, ...]:
         for operation in graph.operations
     )
     regions = tuple(region_signature(region) for region in graph.region_nodes)
-    node_ids = tuple(sorted(node.component_id for node in graph.nodes))
+    node_ids = tuple(
+        operation.component_id
+        for operation in graph.operations
+        if isinstance(operation, ComponentNode)
+    )
     return (node_ids, operations, regions)
