@@ -269,6 +269,40 @@ def _environment_recompile(
     return rebuilt
 
 
+def _structured_recompile_accepted(
+    metadata: _ExecutionOutcome,
+) -> bool:
+    return (
+        metadata.recompile_requested
+        and metadata.plan_completed
+        and metadata.frames == ()
+        and not metadata.state.pending_evaluations
+        and not any(
+            result.status
+            in {NodeStatus.BLOCKED, NodeStatus.RUNNING, NodeStatus.FAILED}
+            for result in metadata.node_results
+        )
+    )
+
+
+def _refuse_structured_recompile(
+    metadata: _ExecutionOutcome,
+) -> _ExecutionOutcome:
+    requests = tuple(
+        command
+        for result in metadata.node_results
+        for command in result.commands
+        if isinstance(command, RequestRecompile)
+        and command not in metadata.refused_commands
+    )
+    if not requests:
+        return metadata
+    return replace(
+        metadata,
+        refused_commands=(*metadata.refused_commands, *requests),
+    )
+
+
 class _BoundStateView:
     """StateView-compatible alias projection for a bound component contract."""
 
@@ -1323,14 +1357,19 @@ class PipelineRuntime:
                 dispatch=env.dispatch,
             )
             if metadata.recompile_requested:
-                plan = _environment_recompile(env, plan)
-                return self._step(
-                    session,
-                    metadata.state,
-                    generation_open,
-                    metadata=metadata,
-                    plan=plan,
-                )
+                if not _structured_recompile_accepted(metadata):
+                    metadata = _refuse_structured_recompile(metadata)
+                else:
+                    env.finish_generation(metadata.state)
+                    plan = _environment_recompile(env, plan)
+                    return self._step(
+                        session,
+                        metadata.state,
+                        False,
+                        metadata=metadata,
+                        plan=plan,
+                        frames=(),
+                    )
             failed = next(
                 (
                     result
@@ -1352,6 +1391,14 @@ class PipelineRuntime:
                     plan=plan,
                 )
             if metadata.plan_completed:
+                if metadata.state.pending_evaluations:
+                    return self._step(
+                        session,
+                        metadata.state,
+                        generation_open,
+                        metadata=metadata,
+                        plan=plan,
+                    )
                 env.finish_generation(metadata.state)
                 return self._step(
                     session,
@@ -1703,14 +1750,19 @@ class AsyncPipelineRuntime(PipelineRuntime):
             resume_async_driver=resume_async_driver,
         )
         if metadata.recompile_requested:
-            plan = _environment_recompile(environment, plan)
-            return self._step(
-                session,
-                metadata.state,
-                generation_open,
-                metadata=metadata,
-                plan=plan,
-            )
+            if not _structured_recompile_accepted(metadata):
+                metadata = _refuse_structured_recompile(metadata)
+            else:
+                environment.finish_generation(metadata.state)
+                plan = _environment_recompile(environment, plan)
+                return self._step(
+                    session,
+                    metadata.state,
+                    False,
+                    metadata=metadata,
+                    plan=plan,
+                    frames=(),
+                )
         if any(result.status is NodeStatus.FAILED for result in metadata.node_results):
             raise ValidationError("structured runtime node reported FAILED status")
         if metadata.terminated:

@@ -20,7 +20,12 @@ from saealib.core import (
     lower_pipeline,
 )
 from saealib.core.compiler import CompileContext, Compiler
-from saealib.core.runtime import NodeResult, NodeStatus, PollResult, RequestRecompile
+from saealib.core.runtime import (
+    NodeResult,
+    NodeStatus,
+    PollResult,
+    RequestRecompile,
+)
 from saealib.core.state import (
     EVALUATION_UPDATES,
     EVALUATIONS_PLAN_UPDATES,
@@ -186,6 +191,16 @@ class _CompletedRequestRecompile(_Increment):
             patch=super().execute(view),
             commands=(RequestRecompile(),),
         )
+
+
+class _RequestRecompileOnce(_Increment):
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def execute(self, view):
+        self.calls += 1
+        commands = (RequestRecompile(),) if self.calls == 1 else ()
+        return NodeResult(patch=super().execute(view), commands=commands)
 
 
 class _AsyncBlockOnce(_Increment):
@@ -356,6 +371,47 @@ def test_async_structured_branch_executes_only_the_selected_leaf() -> None:
     assert skipped.calls == 0
 
 
+def test_async_structured_recompile_waits_for_pending_evaluations() -> None:
+    class Environment(_StructuredAsyncPollingEnvironment):
+        def __init__(self) -> None:
+            super().__init__(terminated=False, progressed=True)
+            self.recompiled = 0
+
+        def recompile(self, plan):
+            self.recompiled += 1
+            return plan
+
+        def poll(self, state):
+            object.__setattr__(state, "pending_evaluations", {})
+            return PollResult(state=state, progressed=True)
+
+    environment = Environment()
+    component = _RequestRecompileOnce()
+    state = _state().replace(pending_evaluations={1: object()})
+    runtime = AsyncPipelineRuntime(environment=environment)
+    first = runtime.advance(
+        runtime.initialize(_compile(Pipeline([component])), state)
+    )
+
+    assert environment.recompiled == 1
+    assert environment.finished_generations == 1
+    assert first.session is not None
+    assert not first.session.generation_open
+    assert first.session.frames == ()
+
+    second = runtime.advance(first.session)
+
+    assert environment.recompiled == 1
+    assert environment.finished_generations == 2
+    assert [type(event) for event in environment.dispatched] == [
+        RunStartEvent,
+        GenerationEndEvent,
+        GenerationStartEvent,
+        GenerationEndEvent,
+    ]
+    assert second.session is not None and second.session.frames == ()
+
+
 def test_async_structured_requires_a_driver_without_sync_fallback() -> None:
     runtime = AsyncPipelineRuntime()
     session = runtime.initialize(
@@ -491,6 +547,71 @@ def test_structured_runtime_recompiles_at_root_and_discards_frames() -> None:
     assert len(environment.recompiled) == 1
     assert step.refused_commands == ()
     assert step.session is not None and step.session.frames == ()
+
+
+def test_structured_recompile_closes_generation_before_next_generation_start() -> None:
+    class Environment(_StructuredEnvironment):
+        def __init__(self) -> None:
+            super().__init__()
+            self.recompiled = 0
+
+        def recompile(self, plan):
+            self.recompiled += 1
+            return plan
+
+    environment = Environment()
+    component = _RequestRecompileOnce()
+    runtime = PipelineRuntime(environment=environment)
+    first = runtime.advance(
+        runtime.initialize(_compile(Pipeline([component])), _state())
+    )
+
+    assert environment.recompiled == 1
+    assert environment.finished_generations == 1
+    assert [type(event) for event in environment.dispatched] == [
+        RunStartEvent,
+        GenerationStartEvent,
+        GenerationEndEvent,
+    ]
+    assert first.session is not None
+    assert not first.session.generation_open
+    assert first.session.frames == ()
+
+    second = runtime.advance(first.session)
+
+    assert environment.recompiled == 1
+    assert environment.finished_generations == 2
+    assert [type(event) for event in environment.dispatched] == [
+        RunStartEvent,
+        GenerationStartEvent,
+        GenerationEndEvent,
+        GenerationStartEvent,
+        GenerationEndEvent,
+    ]
+    assert second.session is not None and second.session.frames == ()
+
+
+def test_structured_runtime_refuses_recompile_with_pending_evaluation() -> None:
+    class Environment(_StructuredEnvironment):
+        def __init__(self) -> None:
+            super().__init__()
+            self.recompiled = 0
+
+        def recompile(self, plan):
+            self.recompiled += 1
+            return plan
+
+    environment = Environment()
+    state = _state().replace(pending_evaluations={1: object()})
+    runtime = PipelineRuntime(environment=environment)
+    step = runtime.advance(
+        runtime.initialize(_compile(Pipeline([_CompletedRequestRecompile()])), state)
+    )
+
+    assert environment.recompiled == 0
+    assert environment.finished_generations == 0
+    assert step.refused_commands == (RequestRecompile(),)
+    assert step.session is not None and step.session.generation_open
 
 
 def test_structured_runtime_refuses_recompile_before_root_completion() -> None:
