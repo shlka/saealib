@@ -236,9 +236,7 @@ def test_sequential_graph_node_receives_node_scoped_services() -> None:
         assert view.context.compiled_service("ScopedService") is service
         return NodeResult(patch=StatePatch(writes={}))
 
-    executable = _generic_plan(
-        (_GenericNode(ComponentContract(), execute),)
-    )
+    executable = _generic_plan((_GenericNode(ComponentContract(), execute),))
     node = replace(
         executable.graph.nodes[0], resolved_services={"ScopedService": service}
     )

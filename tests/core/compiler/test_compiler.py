@@ -673,9 +673,9 @@ def test_structured_resolution_cannot_change_nested_topology() -> None:
             )
         ]
     )
-    plan = Compiler(
-        RuleRegistry([_StructuredNestedTopologyMutationRule()])
-    ).compile(graph, CompileContext(enabled_rule_namespaces=frozenset({"test"})))
+    plan = Compiler(RuleRegistry([_StructuredNestedTopologyMutationRule()])).compile(
+        graph, CompileContext(enabled_rule_namespaces=frozenset({"test"}))
+    )
 
     assert any(
         diagnostic.code == "structured_execution_mutation"

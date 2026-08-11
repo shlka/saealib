@@ -141,9 +141,7 @@ def test_readonly_population_rows_and_derived_populations_are_facades() -> None:
     assert len(empty) == 0
     with pytest.raises(AttributeError):
         extracted.append(x=np.array([4.0]), f=np.array([5.0]))
-    updated = state._store.apply_patch(
-        StatePatch(writes={POPULATIONS_MAIN: extracted})
-    )
+    updated = state._store.apply_patch(StatePatch(writes={POPULATIONS_MAIN: extracted}))
     assert updated.get(POPULATIONS_MAIN) is not extracted
     assert len(updated.get(POPULATIONS_MAIN)) == 1
 
