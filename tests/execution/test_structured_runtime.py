@@ -608,6 +608,7 @@ def test_structured_recompile_closes_generation_before_next_generation_start() -
 
     assert environment.recompiled == 1
     assert environment.finished_generations == 1
+    assert first.observable is True
     assert [type(event) for event in environment.dispatched] == [
         RunStartEvent,
         GenerationStartEvent,
