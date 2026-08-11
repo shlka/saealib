@@ -186,9 +186,7 @@ def _rebind_nodes(graph: StructuredGraph) -> StructuredGraph:
         operations: list[ComponentNode | RegionNode] = []
         for operation in current.operations:
             if isinstance(operation, ComponentNode):
-                operations.append(
-                    nodes_by_id.get(operation.component_id, operation)
-                )
+                operations.append(nodes_by_id.get(operation.component_id, operation))
             else:
                 operations.append(
                     regions_by_id.get(operation.region.qualified_id, operation)

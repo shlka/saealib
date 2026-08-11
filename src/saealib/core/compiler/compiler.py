@@ -989,8 +989,7 @@ class Compiler:
                 if isinstance(current, StructuredGraph):
                     candidate = result.graph
                     if not isinstance(candidate, StructuredGraph) or (
-                        _execution_signature(current)
-                        != _execution_signature(candidate)
+                        _execution_signature(current) != _execution_signature(candidate)
                     ):
                         diagnostics.append(
                             Diagnostic(

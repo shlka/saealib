@@ -364,8 +364,9 @@ def _evaluate_condition(
     contract = condition.contract()
     view = state._store.view(
         contract.reads,
-        context=RuntimeContext(state, reads=contract.reads, dispatch=dispatch,
-                               resolved_services={}),
+        context=RuntimeContext(
+            state, reads=contract.reads, dispatch=dispatch, resolved_services={}
+        ),
         dispatch=dispatch,
     )
     return bool(condition.evaluate(view))
@@ -612,9 +613,7 @@ def _execute_structured(
             if isinstance(region, RepeatRegion):
                 count = region.count
                 if isinstance(count, bool) or not isinstance(count, int) or count < 0:
-                    raise ValidationError(
-                        "Repeat count must be a non-negative integer"
-                    )
+                    raise ValidationError("Repeat count must be a non-negative integer")
                 if count == 0:
                     stack[-1] = replace(
                         frame, operation_index=frame.operation_index + 1
@@ -1221,9 +1220,7 @@ class PipelineRuntime:
                         )
                     services[name] = service
         structured = (
-            StructuredPlan.from_executable_plan(plan)
-            if structured_graph
-            else None
+            StructuredPlan.from_executable_plan(plan) if structured_graph else None
         )
         if structured is None:
             state.bind_compiled_services(services)
