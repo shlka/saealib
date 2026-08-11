@@ -40,9 +40,8 @@ class Event:
 
     Attributes
     ----------
-    ctx : OptimizationState
-        The current optimization context. Read-only by convention; handlers
-        should not mutate ctx. Use component lifecycle hooks for mutation.
+    ctx : _EventContext
+        Read-only context for the lifecycle boundary that emitted the event.
     """
 
     ctx: _EventContext
