@@ -20,7 +20,7 @@ from saealib.core import (
     lower_pipeline,
 )
 from saealib.core.compiler import CompileContext, Compiler
-from saealib.core.runtime import NodeResult, NodeStatus, PollResult
+from saealib.core.runtime import NodeResult, NodeStatus, PollResult, RequestRecompile
 from saealib.core.state import (
     EVALUATION_UPDATES,
     EVALUATIONS_PLAN_UPDATES,
@@ -169,6 +169,15 @@ class _StatusOnce(_Increment):
         patch = super().execute(view)
         status = self.status if self.calls == 1 else NodeStatus.COMPLETED
         return NodeResult(patch=patch, status=status)
+
+
+class _RequestRecompile(_Increment):
+    def execute(self, view):
+        return NodeResult(
+            patch=super().execute(view),
+            commands=(RequestRecompile(),),
+            status=NodeStatus.BLOCKED,
+        )
 
 
 class _AsyncBlockOnce(_Increment):
@@ -444,11 +453,26 @@ def test_structured_external_environment_rejects_failed_node() -> None:
     assert environment.finished_generations == 0
 
 
-def test_structured_runtime_rejects_recompile_required() -> None:
-    plan = _compile(Pipeline([_StatusOnce(NodeStatus.RECOMPILE_REQUIRED)]))
+def test_structured_runtime_refuses_recompile_with_active_frame() -> None:
+    plan = _compile(Pipeline([Repeat(_RequestRecompile(), count=2)]))
 
-    with pytest.raises(ValidationError, match="structured plan"):
-        PipelineRuntime().advance(PipelineRuntime().initialize(plan, _state()))
+    step = PipelineRuntime().advance(PipelineRuntime().initialize(plan, _state()))
+
+    assert step.refused_commands == (RequestRecompile(),)
+    assert step.session is not None and step.session.frames
+
+
+@pytest.mark.parametrize("count", [0, 2])
+def test_structured_runtime_repeat_count(count: int) -> None:
+    component = _StatusOnce(NodeStatus.COMPLETED)
+    step = PipelineRuntime().advance(
+        PipelineRuntime().initialize(
+            _compile(Pipeline([Repeat(component, count=count)])), _state()
+        )
+    )
+
+    assert component.calls == count
+    assert step.finished
 
 
 def test_async_runtime_accepts_structured_plan_at_initialization() -> None:

@@ -503,9 +503,6 @@ def test_runtime_capabilities_are_checked_as_a_required_subset() -> None:
 
 
 def test_refusal_remains_a_step_outcome_and_recompile_is_step_boundary_data() -> None:
-    # This test owns the protocol boundary only. Node dispatch and command
-    # execution are outside it, so refusal is asserted as a normal RuntimeStep
-    # outcome and RECOMPILE_REQUIRED is exposed for the next step boundary.
     step = RuntimeStep(
         state=_state(),
         refused_commands=(RequestRecompile(reason="policy"),),
@@ -517,11 +514,11 @@ def test_refusal_remains_a_step_outcome_and_recompile_is_step_boundary_data() ->
         node_results=(
             NodeResult(
                 patch=StatePatch(writes={}),
-                status=NodeStatus.RECOMPILE_REQUIRED,
+                commands=(RequestRecompile(),),
             ),
         ),
     )
-    assert boundary.recompile_required
+    assert boundary.recompile_requested
     assert boundary.refused_commands == ()
 
 

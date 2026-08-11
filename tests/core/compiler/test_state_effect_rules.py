@@ -1,5 +1,7 @@
 from dataclasses import replace
 
+import pytest
+
 from saealib.core.compiler import (
     BranchRegion,
     Compiler,
@@ -14,6 +16,7 @@ from saealib.core.compiler import (
 )
 from saealib.core.contracts import ComponentContract, StateContract
 from saealib.core.state import SURROGATES_DEFAULT, USER_DATA, StateKey, StateView
+from saealib.exceptions import ValidationError
 
 
 class _Component:
@@ -240,12 +243,7 @@ def test_structured_loop_and_repeat_state_is_sequential():
     assert "unreachable_state_read" not in _codes(repeat_once)
 
 
-def test_dynamic_repeat_does_not_guarantee_body_writes() -> None:
+def test_callable_repeat_count_is_rejected() -> None:
     writer = _Component(ComponentContract(state=StateContract(writes=(USER_DATA,))))
-    reader = _Component(ComponentContract(state=StateContract(reads=(USER_DATA,))))
-    graph = _structured(
-        RepeatRegion(region_id="repeat", count=lambda view: 1, body=(writer,)),
-        reader,
-    )
-
-    assert "unreachable_state_read" in _codes(graph)
+    with pytest.raises(ValidationError):
+        RepeatRegion(region_id="repeat", count=lambda view: 1, body=(writer,))

@@ -40,6 +40,7 @@ from saealib.core.runtime import (
     NodeResult,
     NodeStatus,
     RequestCheckpoint,
+    RequestRecompile,
     RequestTermination,
     SequentialPlan,
 )
@@ -276,17 +277,17 @@ def test_generic_node_rejects_undeclared_writes_and_does_not_mutate_state() -> N
     assert state._store.get(key) == 1
 
 
-def test_recompile_required_without_provider_fails_at_step_boundary() -> None:
+def test_recompile_request_without_provider_fails_at_step_boundary() -> None:
     node = _GenericNode(
         ComponentContract(),
         lambda view: NodeResult(
             patch=StatePatch(writes={}),
-            status=NodeStatus.RECOMPILE_REQUIRED,
+            commands=(RequestRecompile(),),
         ),
     )
     plan = _generic_plan((node,))
 
-    with pytest.raises(ValidationError, match="cannot satisfy RECOMPILE_REQUIRED"):
+    with pytest.raises(ValidationError, match="cannot satisfy RequestRecompile"):
         PipelineRuntime().advance(
             PipelineRuntime().initialize(plan, _generic_state({}))
         )

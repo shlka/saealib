@@ -51,24 +51,20 @@ def _result(status: NodeStatus, *commands: RuntimeCommand) -> NodeResult:
     )
 
 
-@pytest.mark.parametrize("status", NodeStatus)
+@pytest.mark.parametrize(
+    "status",
+    (NodeStatus.COMPLETED, NodeStatus.RUNNING, NodeStatus.BLOCKED, NodeStatus.FAILED),
+)
 def test_node_result_accepts_each_status(status: NodeStatus) -> None:
     assert _result(status).status is status
 
 
-def test_recompile_status_and_request_are_mutually_exclusive() -> None:
-    with pytest.raises(ValidationError, match="cannot be combined"):
-        _result(NodeStatus.RECOMPILE_REQUIRED, RequestRecompile())
-
-
-def test_runtime_step_rejects_status_command_overlap_after_node_guard_bypass() -> None:
-    result = object.__new__(NodeResult)
-    object.__setattr__(result, "patch", StatePatch(writes={}))
-    object.__setattr__(result, "events", ())
-    object.__setattr__(result, "commands", (RequestRecompile(),))
-    object.__setattr__(result, "status", NodeStatus.RECOMPILE_REQUIRED)
-    with pytest.raises(ValidationError, match="cannot be combined"):
-        RuntimeStep(state=_state(), node_results=(result,))
+def test_request_recompile_is_the_recompile_signal() -> None:
+    step = RuntimeStep(
+        state=_state(),
+        node_results=(_result(NodeStatus.COMPLETED, RequestRecompile()),),
+    )
+    assert step.recompile_requested
 
 
 def test_runtime_command_refusal_is_a_normal_step_outcome() -> None:

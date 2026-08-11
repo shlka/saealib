@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 __all__ = [
     "BranchRegion",
     "Condition",
-    "CountProvider",
     "LoopRegion",
     "RegionEffect",
     "RegionNode",
@@ -39,13 +38,6 @@ class Condition(Protocol):
 
     def evaluate(self, view: StateView) -> bool:
         """Evaluate the predicate against its declared state view."""
-
-
-class CountProvider(Protocol):
-    """A runtime repeat-count provider."""
-
-    def __call__(self, view: StateView) -> int:
-        """Return a non-negative integer repeat count."""
 
 
 def _region_id(value: str, label: str = "region_id") -> str:
@@ -116,21 +108,16 @@ class SequenceRegion(StructuredRegion):
 
 @dataclass(frozen=True, kw_only=True)
 class RepeatRegion(StructuredRegion):
-    """A body repeated by a fixed count or a runtime count provider."""
+    """A body repeated by a fixed count."""
 
-    count: int | CountProvider = 1
+    count: int = 1
 
     def __post_init__(self) -> None:
         super().__post_init__()
         if isinstance(self.count, bool):
             raise ValidationError("Repeat count must be a non-negative integer")
-        if isinstance(self.count, int):
-            if self.count < 0:
-                raise ValidationError("Repeat count must be non-negative")
-        elif not callable(self.count):
-            raise ValidationError(
-                "Repeat count must be an integer or callable provider"
-            )
+        if not isinstance(self.count, int) or self.count < 0:
+            raise ValidationError("Repeat count must be a non-negative integer")
 
 
 def _validate_condition(condition: Condition) -> None:

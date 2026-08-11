@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from saealib.core.compiler import (
     BranchRegion,
     Compiler,
@@ -22,6 +24,7 @@ from saealib.core.contracts import (
     PortSpec,
     StateContract,
 )
+from saealib.exceptions import ValidationError
 from saealib.pipeline import Pipeline
 
 
@@ -175,22 +178,13 @@ def test_repeat_zero_does_not_provide_data_to_the_following_region() -> None:
     assert [diagnostic.code for diagnostic in plan.diagnostics] == ["unresolved_input"]
 
 
-def test_dynamic_repeat_does_not_provide_data_to_the_following_region() -> None:
-    plan = Compiler().compile(
-        lower_structured(
-            [
-                RepeatRegion(
-                    region_id="repeat",
-                    count=lambda view: 1,
-                    body=(_Component("producer", output="Population"),),
-                ),
-                _Component("consumer", input_kind="Population"),
-            ]
+def test_callable_repeat_count_is_rejected() -> None:
+    with pytest.raises(ValidationError):
+        RepeatRegion(
+            region_id="repeat",
+            count=lambda view: 1,
+            body=(_Component("producer", output="Population"),),
         )
-    )
-
-    assert not plan.graph.data_edges
-    assert [diagnostic.code for diagnostic in plan.diagnostics] == ["unresolved_input"]
 
 
 def test_loop_body_does_not_provide_data_to_the_following_region() -> None:

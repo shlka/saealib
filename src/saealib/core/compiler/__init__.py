@@ -45,7 +45,6 @@ from saealib.core.compiler.lowerer import lower_pipeline, lower_structured
 from saealib.core.compiler.regions import (
     BranchRegion,
     Condition,
-    CountProvider,
     LoopRegion,
     RegionEffect,
     RegionNode,
@@ -68,7 +67,6 @@ __all__ = [
     "Condition",
     "ContractPath",
     "ControlEdge",
-    "CountProvider",
     "DataEdge",
     "Diagnostic",
     "DiagnosticBag",

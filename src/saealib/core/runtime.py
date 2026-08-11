@@ -51,7 +51,6 @@ class NodeStatus(str, Enum):
     BLOCKED = "blocked"
     RUNNING = "running"
     FAILED = "failed"
-    RECOMPILE_REQUIRED = "recompile_required"
 
 
 @dataclass(frozen=True)
@@ -124,12 +123,6 @@ class NodeResult:
             )
         if not isinstance(self.status, NodeStatus):
             raise ValidationError("NodeResult status must be a NodeStatus")
-        if self.status is NodeStatus.RECOMPILE_REQUIRED and any(
-            isinstance(command, RequestRecompile) for command in commands
-        ):
-            raise ValidationError(
-                "RECOMPILE_REQUIRED cannot be combined with RequestRecompile"
-            )
         object.__setattr__(self, "events", events)
         object.__setattr__(self, "commands", commands)
 
@@ -567,13 +560,6 @@ class RuntimeStep:
             raise ValidationError(
                 "RuntimeStep node_results must contain NodeResult values"
             )
-        for result in results:
-            if result.status is NodeStatus.RECOMPILE_REQUIRED and any(
-                isinstance(command, RequestRecompile) for command in result.commands
-            ):
-                raise ValidationError(
-                    "RECOMPILE_REQUIRED cannot be combined with RequestRecompile"
-                )
         if any(not isinstance(command, RuntimeCommand) for command in refused):
             raise ValidationError(
                 "RuntimeStep refused_commands must contain RuntimeCommand values"
@@ -593,11 +579,16 @@ class RuntimeStep:
         object.__setattr__(self, "refused_commands", refused)
 
     @property
-    def recompile_required(self) -> bool:
-        """Whether this step requests the next step-boundary recompile."""
+    def recompile_requested(self) -> bool:
+        """Whether this step contains a recompile request."""
         return any(
-            result.status is NodeStatus.RECOMPILE_REQUIRED
+            isinstance(command, RequestRecompile)
+            and not any(
+                command is refused_command
+                for refused_command in self.refused_commands
+            )
             for result in self.node_results
+            for command in result.commands
         )
 
 

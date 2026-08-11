@@ -39,6 +39,7 @@ from saealib.core.runtime import (
     NodeStatus,
     PollResult,
     RegionFrame,
+    RequestRecompile,
     RequestTermination,
     RuntimeCommand,
     RuntimeSession,
@@ -116,10 +117,15 @@ class _ExecutionOutcome:
     frames: tuple[RegionFrame, ...] = ()
 
     @property
-    def recompile_required(self) -> bool:
+    def recompile_requested(self) -> bool:
         return any(
-            result.status is NodeStatus.RECOMPILE_REQUIRED
+            isinstance(command, RequestRecompile)
+            and not any(
+                command is refused_command
+                for refused_command in self.refused_commands
+            )
             for result in self.node_results
+            for command in result.commands
         )
 
 
@@ -250,16 +256,18 @@ def _environment_execute_async(
 
 
 def _environment_recompile(
-    environment: RuntimeEnvironment, plan: SequentialPlan
-) -> SequentialPlan:
+    environment: RuntimeEnvironment, plan: SequentialPlan | StructuredPlan
+) -> SequentialPlan | StructuredPlan:
     recompile = getattr(environment, "recompile", None)
     if not callable(recompile):
         raise ValidationError(
-            "runtime cannot satisfy RECOMPILE_REQUIRED: no recompile provider"
+            "runtime cannot satisfy RequestRecompile: no recompile provider"
         )
     rebuilt = recompile(plan)
-    if not isinstance(rebuilt, SequentialPlan):
+    if not isinstance(rebuilt, (SequentialPlan, StructuredPlan)):
         raise ValidationError("runtime recompile provider returned an invalid plan")
+    if isinstance(plan, StructuredPlan) is not isinstance(rebuilt, StructuredPlan):
+        raise ValidationError("runtime recompile provider changed plan structure")
     return rebuilt
 
 
@@ -603,22 +611,10 @@ def _execute_structured(
                     "StructuredPlan region bodies must be StructuredGraph values"
                 )
             if isinstance(region, RepeatRegion):
-                context = RuntimeContext(
-                    current, reads=region.effect.reads, dispatch=dispatch
-                )
-                if callable(region.count):
-                    count = cast(Any, region.count)(
-                        current._store.view(
-                            region.effect.reads,
-                            context=context,
-                            dispatch=dispatch,
-                        )
-                    )
-                else:
-                    count = region.count
+                count = region.count
                 if isinstance(count, bool) or not isinstance(count, int) or count < 0:
                     raise ValidationError(
-                        "Repeat count provider must return a non-negative integer"
+                        "Repeat count must be a non-negative integer"
                     )
                 if count == 0:
                     stack[-1] = replace(
@@ -712,11 +708,37 @@ def _execute_structured(
             for event in result.events:
                 dispatch(event)
         results.append(result)
+        recompile_requested = any(
+            isinstance(command, RequestRecompile) for command in result.commands
+        )
         for command in result.commands:
-            if not isinstance(command, RequestTermination):
+            if not isinstance(command, (RequestTermination, RequestRecompile)):
                 refused.append(command)
         if result.status is NodeStatus.COMPLETED:
             stack[-1] = replace(frame, operation_index=frame.operation_index + 1)
+            if recompile_requested:
+                if len(stack) == 1 and stack[-1].operation_index >= len(
+                    stack[-1].graph.operations
+                ):
+                    return _ExecutionOutcome(
+                        state=current,
+                        node_results=tuple(results),
+                        executed_node_ids=tuple(executed),
+                        refused_commands=tuple(refused),
+                        plan_completed=True,
+                        frames=(),
+                    )
+                refused.extend(
+                    command
+                    for command in result.commands
+                    if isinstance(command, RequestRecompile)
+                )
+        elif recompile_requested:
+            refused.extend(
+                command
+                for command in result.commands
+                if isinstance(command, RequestRecompile)
+            )
         if result.status is not NodeStatus.COMPLETED or any(
             isinstance(command, RequestTermination) for command in result.commands
         ):
@@ -794,14 +816,13 @@ def _execute_with_metadata(
                 dispatch(event)
         results.append(result)
         for command in result.commands:
-            if isinstance(command, RequestTermination):
+            if isinstance(command, (RequestTermination, RequestRecompile)):
                 continue
             refused.append(command)
         if result.status in {
             NodeStatus.FAILED,
             NodeStatus.BLOCKED,
             NodeStatus.RUNNING,
-            NodeStatus.RECOMPILE_REQUIRED,
         }:
             break
         if any(isinstance(command, RequestTermination) for command in result.commands):
@@ -1232,10 +1253,10 @@ class PipelineRuntime:
                     session.state,
                     session.frames,
                 )
-                if metadata.recompile_required:
+                if metadata.recompile_requested:
                     raise ValidationError(
-                        "PipelineRuntime cannot recompile a structured plan "
-                        "while preserving its region frames"
+                        "PipelineRuntime cannot satisfy RequestRecompile "
+                        "without a recompile provider"
                     )
                 if any(
                     result.status is NodeStatus.FAILED
@@ -1266,7 +1287,7 @@ class PipelineRuntime:
             env = self.environment
             env.fatal(session.state)
             refresh = getattr(env, "_refresh_plan_if_needed", None)
-            if callable(refresh):
+            if callable(refresh) and not session.frames:
                 refresh()
             plan = getattr(env, "plan", session.plan)
             if not isinstance(plan, StructuredPlan):
@@ -1293,10 +1314,14 @@ class PipelineRuntime:
                 session.frames,
                 dispatch=env.dispatch,
             )
-            if metadata.recompile_required:
-                raise ValidationError(
-                    "PipelineRuntime cannot recompile a structured plan while "
-                    "preserving its region frames"
+            if metadata.recompile_requested:
+                plan = _environment_recompile(env, plan)
+                return self._step(
+                    session,
+                    metadata.state,
+                    generation_open,
+                    metadata=metadata,
+                    plan=plan,
                 )
             failed = next(
                 (
@@ -1363,9 +1388,9 @@ class PipelineRuntime:
             )
         if self.environment is None:
             metadata = _execute_with_metadata(session.plan, session.state)
-            if metadata.recompile_required:
+            if metadata.recompile_requested:
                 raise ValidationError(
-                    "PipelineRuntime cannot satisfy RECOMPILE_REQUIRED without "
+                    "PipelineRuntime cannot satisfy RequestRecompile without "
                     "a recompile provider"
                 )
             state = metadata.state
@@ -1397,7 +1422,7 @@ class PipelineRuntime:
         if state.pending_evaluations:
             metadata = _environment_execute(env, plan, state)
             state = metadata.state
-            if metadata.recompile_required:
+            if metadata.recompile_requested:
                 plan = _environment_recompile(env, plan)
                 return self._step(
                     session, state, generation_open, metadata=metadata, plan=plan
@@ -1440,7 +1465,7 @@ class PipelineRuntime:
         generation_open = True
         metadata = _environment_execute(env, plan, state)
         state = metadata.state
-        if metadata.recompile_required:
+        if metadata.recompile_requested:
             plan = _environment_recompile(env, plan)
             return self._step(
                 session, state, generation_open, metadata=metadata, plan=plan
@@ -1573,10 +1598,10 @@ class AsyncPipelineRuntime(PipelineRuntime):
                 leaf_executor=_structured_async_leaf_executor({}),
                 async_control=True,
             )
-            if metadata.recompile_required:
+            if metadata.recompile_requested:
                 raise ValidationError(
-                    "AsyncPipelineRuntime cannot recompile a structured plan "
-                    "while preserving its region frames"
+                    "AsyncPipelineRuntime cannot satisfy RequestRecompile "
+                    "without a recompile provider"
                 )
             if any(
                 result.status is NodeStatus.FAILED for result in metadata.node_results
@@ -1604,7 +1629,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
         environment = self.environment
         environment.fatal(session.state)
         refresh = getattr(environment, "_refresh_plan_if_needed", None)
-        if callable(refresh):
+        if callable(refresh) and not session.frames:
             refresh()
         plan = getattr(environment, "plan", session.plan)
         if not isinstance(plan, StructuredPlan):
@@ -1669,10 +1694,14 @@ class AsyncPipelineRuntime(PipelineRuntime):
             async_control=True,
             resume_async_driver=resume_async_driver,
         )
-        if metadata.recompile_required:
-            raise ValidationError(
-                "AsyncPipelineRuntime cannot recompile a structured plan while "
-                "preserving its region frames"
+        if metadata.recompile_requested:
+            plan = _environment_recompile(environment, plan)
+            return self._step(
+                session,
+                metadata.state,
+                generation_open,
+                metadata=metadata,
+                plan=plan,
             )
         if any(result.status is NodeStatus.FAILED for result in metadata.node_results):
             raise ValidationError("structured runtime node reported FAILED status")
@@ -1769,7 +1798,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                     return self._step(session, state, generation_open)
                 metadata = _environment_execute_async(env, plan, state)
                 state = metadata.state
-                if metadata.recompile_required:
+                if metadata.recompile_requested:
                     plan = _environment_recompile(env, plan)
                     return self._step(
                         session,
@@ -1799,7 +1828,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
             if self._has_unfinished_async_work(plan, state):
                 metadata = _environment_execute_async(env, plan, state)
                 state = metadata.state
-                if metadata.recompile_required:
+                if metadata.recompile_requested:
                     plan = _environment_recompile(env, plan)
                     return self._step(
                         session,
@@ -1838,7 +1867,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
             # Checkpoints may retain deferred requests without active handles.
             metadata = _environment_execute_async(env, plan, state)
             state = metadata.state
-            if metadata.recompile_required:
+            if metadata.recompile_requested:
                 plan = _environment_recompile(env, plan)
                 return self._step(
                     session,
@@ -1868,7 +1897,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
         env.dispatch(GenerationStartEvent(ctx=state))
         metadata = _environment_execute_async(env, plan, state)
         state = metadata.state
-        if metadata.recompile_required:
+        if metadata.recompile_requested:
             plan = _environment_recompile(env, plan)
             return self._step(
                 session,

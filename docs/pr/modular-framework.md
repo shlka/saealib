@@ -138,9 +138,9 @@ the scheduler seam, and a pending evaluation keeps the current operation
 position until the next poll. A required asynchronous capability without a
 driver is rejected rather than silently downgraded.
 
-Structured plans also reject `RECOMPILE_REQUIRED` until a frame migration
-contract defines how an active region cursor maps to a rebuilt plan. Sequential
-plans retain their existing step-boundary recompilation path.
+Structured plans refuse `RequestRecompile` while a region frame is active and
+refresh the plan only at a safe boundary with no frames. Sequential plans retain
+their existing step-boundary recompilation path.
 
 ## Proposal/observation/feedback model
 
