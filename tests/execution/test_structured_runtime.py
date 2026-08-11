@@ -203,6 +203,18 @@ class _RequestRecompileOnce(_Increment):
         return NodeResult(patch=super().execute(view), commands=commands)
 
 
+class _RequestRecompileWithPending(_Increment):
+    def __init__(self, state: OptimizationState) -> None:
+        self.state = state
+
+    def execute(self, view):
+        object.__setattr__(self.state, "pending_evaluations", {1: object()})
+        return NodeResult(
+            patch=super().execute(view),
+            commands=(RequestRecompile(),),
+        )
+
+
 class _AsyncBlockOnce(_Increment):
     def __init__(self) -> None:
         self.calls = 0
@@ -410,6 +422,34 @@ def test_async_structured_recompile_waits_for_pending_evaluations() -> None:
         GenerationEndEvent,
     ]
     assert second.session is not None and second.session.frames == ()
+
+
+def test_async_structured_refuses_recompile_when_leaf_creates_pending_evaluation(
+) -> None:
+    class Environment(_StructuredEnvironment):
+        def __init__(self) -> None:
+            super().__init__()
+            self.recompiled = 0
+
+        def recompile(self, plan):
+            self.recompiled += 1
+            return plan
+
+    environment = Environment()
+    state = _state()
+    component = _RequestRecompileWithPending(state)
+    runtime = AsyncPipelineRuntime(environment=environment)
+    step = runtime.advance(
+        runtime.initialize(_compile(Pipeline([component])), state)
+    )
+
+    assert environment.recompiled == 0
+    assert environment.finished_generations == 0
+    assert not any(
+        isinstance(event, GenerationEndEvent) for event in environment.dispatched
+    )
+    assert step.refused_commands == (RequestRecompile(),)
+    assert step.session is not None and step.session.generation_open
 
 
 def test_async_structured_requires_a_driver_without_sync_fallback() -> None:
