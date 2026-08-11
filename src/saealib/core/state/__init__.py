@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from saealib.core.state.context import RuntimeContext
+from saealib.core.state.context import ExecutionContext, RuntimeContext
 from saealib.core.state.keys import (
     ACQUISITION_RESULT,
     ARCHIVES_MAIN,
@@ -95,6 +95,7 @@ __all__ = [
     "SURROGATES_DEFAULT",
     "SURROGATES_PREDICTIONS",
     "USER_DATA",
+    "ExecutionContext",
     "Migrator",
     "PopulationRowUpdate",
     "RuntimeContext",

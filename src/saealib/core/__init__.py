@@ -38,6 +38,7 @@ _LAZY_EXPORTS: Final[dict[str, str]] = {
     "StateStore": "saealib.core.state.store",
     "StateView": "saealib.core.state.store",
     "RuntimeContext": "saealib.core.state.context",
+    "ExecutionContext": "saealib.core.state.context",
     "StatePatch": "saealib.core.state.patch",
     "ExecutionRuntime": "saealib.core.runtime",
     "RegionFrame": "saealib.core.runtime",

@@ -3,16 +3,34 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
 
 if TYPE_CHECKING:
     from saealib.acquisition.base import AcquisitionResult
-    from saealib.context import OptimizationState
     from saealib.execution.evaluator import EvaluationStatus
     from saealib.population import Archive, Population
     from saealib.surrogate.base import Surrogate
+
+
+class _EventContext(Protocol):
+    """Read-only context shared by lifecycle state and graph runtime events."""
+
+    @property
+    def archive(self) -> Any: ...
+
+    @property
+    def comparator(self) -> Any: ...
+
+    @property
+    def n_obj(self) -> int: ...
+
+    @property
+    def gen(self) -> int: ...
+
+    @property
+    def fe(self) -> int: ...
 
 
 @dataclass
@@ -27,7 +45,7 @@ class Event:
         should not mutate ctx. Use component lifecycle hooks for mutation.
     """
 
-    ctx: OptimizationState
+    ctx: _EventContext
 
 
 # --- Optimizer.run events ---

@@ -46,6 +46,7 @@ PUBLIC_EXPORTS = {
     "StateStore": ("saealib.core.state.store", "StateStore"),
     "StateView": ("saealib.core.state.store", "StateView"),
     "RuntimeContext": ("saealib.core.state.context", "RuntimeContext"),
+    "ExecutionContext": ("saealib.core.state.context", "ExecutionContext"),
     "StatePatch": ("saealib.core.state.patch", "StatePatch"),
     "ExecutionRuntime": ("saealib.core.runtime", "ExecutionRuntime"),
     "RegionFrame": ("saealib.core.runtime", "RegionFrame"),

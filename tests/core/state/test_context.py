@@ -5,11 +5,13 @@ import pytest
 
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
+from saealib.core import ExecutionContext as CoreExecutionContext
 from saealib.core.state import (
     POPULATIONS_MAIN,
     PROPOSALS_ID_ALLOCATOR,
     RUNTIME_RNG,
     USER_DATA,
+    ExecutionContext,
     RuntimeContext,
     StatePatch,
     StateStore,
@@ -68,6 +70,8 @@ def test_runtime_context_restricts_graph_native_context_capabilities() -> None:
     runtime_context = graph_native_component(view)
 
     assert isinstance(runtime_context, RuntimeContext)
+    assert isinstance(runtime_context, ExecutionContext)
+    assert CoreExecutionContext is ExecutionContext
     assert not isinstance(runtime_context, OptimizationState)
     assert runtime_context.problem is state.problem
     assert runtime_context.population is not state.population

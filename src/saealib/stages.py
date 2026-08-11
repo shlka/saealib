@@ -133,6 +133,18 @@ class _AskCandidatePopulation(Protocol):
     def _assign_ids(self, indices: np.ndarray, ids: np.ndarray) -> None: ...
 
 
+class _TransactionalExecutionContext(Protocol):
+    """Legacy transaction surface consumed by the Stage compatibility adapter."""
+
+    _store: Any
+
+    def get_state(self, key: Any) -> object: ...
+
+    def set_state(self, key: Any, value: object) -> None: ...
+
+    def replace(self, **kwargs: Any) -> _TransactionalExecutionContext: ...
+
+
 class _DispatchProxy:
     """Minimal component provider used to pass callbacks to ``Algorithm``."""
 

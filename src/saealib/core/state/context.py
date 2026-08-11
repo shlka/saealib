@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from saealib.core.state.keys import (
     ACQUISITION_RESULT,
@@ -45,7 +45,7 @@ from saealib.exceptions import ValidationError
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
 
-__all__ = ["RuntimeContext"]
+__all__ = ["ExecutionContext", "RuntimeContext"]
 
 
 _CONTEXT_STATE_KEYS: dict[str, StateKey[object] | tuple[StateKey[object], ...]] = {
@@ -81,6 +81,135 @@ _CONTEXT_STATE_KEYS: dict[str, StateKey[object] | tuple[StateKey[object], ...]] 
     "data": USER_DATA,
     "proposal_id": PROPOSALS_CURRENT,
 }
+
+
+@runtime_checkable
+class ExecutionContext(Protocol):
+    """Read and capability surface available to graph-native components."""
+
+    @property
+    def problem(self) -> Any: ...
+
+    @property
+    def population(self) -> Any: ...
+
+    @property
+    def populations(self) -> Mapping[str, Any]: ...
+
+    @property
+    def archive(self) -> Any: ...
+
+    @property
+    def archives(self) -> Mapping[str, Any]: ...
+
+    @property
+    def pareto_archive(self) -> Any: ...
+
+    @property
+    def rng(self) -> Any: ...
+
+    @property
+    def candidate_id_allocator(self) -> Any: ...
+
+    @property
+    def proposal_id_allocator(self) -> Any: ...
+
+    @property
+    def request_id_allocator(self) -> Any: ...
+
+    @property
+    def fe(self) -> int: ...
+
+    @property
+    def gen(self) -> int: ...
+
+    @property
+    def dim(self) -> int: ...
+
+    @property
+    def n_obj(self) -> int: ...
+
+    @property
+    def lb(self) -> Any: ...
+
+    @property
+    def ub(self) -> Any: ...
+
+    @property
+    def direction(self) -> Any: ...
+
+    @property
+    def comparator(self) -> Any: ...
+
+    @property
+    def offspring(self) -> Any: ...
+
+    @property
+    def evaluated_offspring(self) -> Any: ...
+
+    @property
+    def scores(self) -> Any: ...
+
+    @property
+    def acquisition_result(self) -> Any: ...
+
+    @property
+    def predictions(self) -> Any: ...
+
+    @property
+    def evaluation_request(self) -> Any: ...
+
+    @property
+    def evaluation_plan(self) -> Any: ...
+
+    @property
+    def evaluation_plan_state(self) -> Any: ...
+
+    @property
+    def evaluation_updates(self) -> Any: ...
+
+    @property
+    def evaluation_plan_updates(self) -> Any: ...
+
+    @property
+    def evaluation_update_new_ids(self) -> Any: ...
+
+    @property
+    def evaluation_new_ids(self) -> Any: ...
+
+    @property
+    def evaluation_handles(self) -> Any: ...
+
+    @property
+    def evaluation_owners(self) -> Any: ...
+
+    @property
+    def pending_evaluations(self) -> Any: ...
+
+    @property
+    def pending_candidate_ids(self) -> Any: ...
+
+    @property
+    def reserved_fe(self) -> int: ...
+
+    @property
+    def reserved_cost(self) -> float: ...
+
+    @property
+    def feedback_result(self) -> Any: ...
+
+    @property
+    def feedback_accumulator(self) -> Any: ...
+
+    @property
+    def async_fatal(self) -> Any: ...
+
+    @property
+    def data(self) -> Mapping[str, Any]: ...
+
+    def compiled_service(self, name: str) -> object: ...
+
+    def dispatch(self, event: object) -> None: ...
 
 
 class RuntimeContext:
