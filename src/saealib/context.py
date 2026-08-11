@@ -41,6 +41,7 @@ from saealib.core.state import (
 from saealib.core.state.migration import _population_entry_v1_to_v2
 from saealib.exceptions import CheckpointError, ValidationError
 from saealib.identity import IDAllocator
+from saealib.space import BoundsService
 
 if TYPE_CHECKING:
     from saealib.acquisition.base import AcquisitionResult
@@ -55,7 +56,6 @@ if TYPE_CHECKING:
     from saealib.policies.feedback import FeedbackResult
     from saealib.population import Archive, ParetoArchive, Population
     from saealib.problem import Problem
-    from saealib.space import BoundsService
     from saealib.surrogate.prediction import SurrogatePrediction
 
 
