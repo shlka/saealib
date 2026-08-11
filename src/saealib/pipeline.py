@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
-from typing import TYPE_CHECKING
+from collections.abc import Iterator, Sequence
+from typing import TYPE_CHECKING, TypeAlias, TypeGuard
 
 from saealib.core.compiler.regions import (
     Condition,
@@ -14,13 +14,22 @@ from saealib.core.compiler.regions import (
     _structural_name,
     _structural_stages,
 )
+from saealib.core.component import Component
 from saealib.core.contracts import ComponentContract, StateContract
 from saealib.exceptions import ValidationError
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
 
-__all__ = ["Branch", "Condition", "Loop", "Pipeline", "Repeat", "Stage"]
+__all__ = [
+    "Branch",
+    "Condition",
+    "Loop",
+    "Pipeline",
+    "PipelineEntry",
+    "Repeat",
+    "Stage",
+]
 
 
 class Stage(ABC):
@@ -125,8 +134,16 @@ class Stage(ABC):
         return ComponentContract()
 
 
-def _find_recursive(stages: Sequence[object], name: str) -> object | None:
+def _is_pipeline_entry(value: object) -> TypeGuard[PipelineEntry]:
+    return isinstance(value, (Pipeline, Repeat, Loop, Branch, Stage)) or _is_component(
+        value
+    )
+
+
+def _find_recursive(stages: Sequence[object], name: str) -> PipelineEntry | None:
     for stage in stages:
+        if not _is_pipeline_entry(stage):
+            continue
         if _structural_name(stage) == name:
             return stage
         children = _structural_stages(stage)
@@ -169,7 +186,7 @@ class Repeat(_ControlValue):
 
     _structured_kind = "repeat"
 
-    def __init__(self, body: object, count: int, *, name: str = "") -> None:
+    def __init__(self, body: PipelineEntry, count: int, *, name: str = "") -> None:
         if isinstance(count, bool) or not isinstance(count, int) or count < 0:
             raise ValidationError("Repeat count must be a non-negative integer")
         super().__init__(name=name, label=f"Repeat {count} times")
@@ -187,7 +204,9 @@ class Loop(_ControlValue):
 
     _structured_kind = "loop"
 
-    def __init__(self, body: object, *, until: Condition, name: str = "") -> None:
+    def __init__(
+        self, body: PipelineEntry, *, until: Condition, name: str = ""
+    ) -> None:
         _validate_dsl_condition(until)
         super().__init__(name=name, label="Loop")
         self.body = body
@@ -209,8 +228,8 @@ class Branch(_ControlValue):
         self,
         condition: Condition,
         *,
-        then: object,
-        else_: object | None = None,
+        then: PipelineEntry,
+        else_: PipelineEntry | None = None,
         name: str = "",
     ) -> None:
         _validate_dsl_condition(condition)
@@ -235,7 +254,7 @@ class Pipeline:
 
     Parameters
     ----------
-    stages : sequence of object, optional
+    stages : sequence of PipelineEntry, optional
         Ordered structural entries. ``steps`` is the keyword spelling for the
         same value.
     name : str, optional
@@ -248,33 +267,33 @@ class Pipeline:
 
     def __init__(
         self,
-        stages: Sequence[object] | None = None,
+        stages: Sequence[PipelineEntry] | None = None,
         name: str = "",
         label: str = "",
         notation: str = "",
         *,
-        steps: Sequence[object] | None = None,
+        steps: Sequence[PipelineEntry] | None = None,
     ) -> None:
         if stages is not None and steps is not None:
             raise TypeError("Provide either positional stages or steps=, not both")
         self.name = name
         self.label = label
         self.notation = notation
-        self.steps = list(steps if steps is not None else (stages or ()))
+        self.steps: list[PipelineEntry] = list(
+            steps if steps is not None else (stages or ())
+        )
         self.stages = self.steps
         self._validate()
 
     def _validate(self) -> None:
         for stage in self.steps:
-            if isinstance(stage, (Pipeline, Repeat, Loop, Branch, Stage)):
-                continue
-            if not _is_component(stage):
+            if not _is_pipeline_entry(stage):
                 raise TypeError(
                     f"{stage!r} is not a Stage instance or graph component; "
                     "all elements of a Pipeline must be structural values"
                 )
 
-    def __getitem__(self, name: str) -> object:
+    def __getitem__(self, name: str) -> PipelineEntry:
         """Look up a stage by its ``name`` attribute.
 
         Parameters
@@ -296,14 +315,14 @@ class Pipeline:
                 return stage
         raise KeyError(name)
 
-    def replace(self, name: str, stage: object) -> None:
+    def replace(self, name: str, stage: PipelineEntry) -> None:
         """Replace the named entry in the top-level structural sequence.
 
         Parameters
         ----------
         name : str
             The ``name`` of the stage to replace.
-        stage : object
+        stage : PipelineEntry
             Replacement structural value.
 
         Raises
@@ -313,9 +332,7 @@ class Pipeline:
         TypeError
             If *stage* is not a structural value.
         """
-        if not isinstance(
-            stage, (Pipeline, Repeat, Loop, Branch, Stage)
-        ) and not _is_component(stage):
+        if not _is_pipeline_entry(stage):
             raise TypeError(
                 f"{stage!r} is not a Stage instance or graph component; "
                 "replacement must be a structural value"
@@ -326,7 +343,7 @@ class Pipeline:
                 return
         raise KeyError(name)
 
-    def find(self, name: str, *, recursive: bool = False) -> object:
+    def find(self, name: str, *, recursive: bool = False) -> PipelineEntry:
         """Look up a named structural value, optionally recursively.
 
         Parameters
@@ -356,7 +373,7 @@ class Pipeline:
     def __len__(self) -> int:
         return len(self.stages)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[PipelineEntry]:
         return iter(self.stages)
 
     def __repr__(self) -> str:
@@ -379,7 +396,7 @@ class Pipeline:
         return f"{prefix}\\State {notation}"
 
 
-def _to_pseudocode(value: object, *, expand: bool, indent: int) -> str:
+def _to_pseudocode(value: PipelineEntry, *, expand: bool, indent: int) -> str:
     renderer = getattr(value, "to_pseudocode", None)
     if callable(renderer):
         return renderer(expand=expand, indent=indent)
@@ -389,3 +406,6 @@ def _to_pseudocode(value: object, *, expand: bool, indent: int) -> str:
 
 
 _register_structural_types(Repeat, Loop, Branch, Stage)
+
+
+PipelineEntry: TypeAlias = Component | Stage | Pipeline | Repeat | Loop | Branch

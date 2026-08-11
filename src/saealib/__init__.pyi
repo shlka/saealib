@@ -161,6 +161,7 @@ from saealib.pipeline import Branch as Branch
 from saealib.pipeline import Condition as Condition
 from saealib.pipeline import Loop as Loop
 from saealib.pipeline import Pipeline as Pipeline
+from saealib.pipeline import PipelineEntry as PipelineEntry
 from saealib.pipeline import Repeat as Repeat
 from saealib.pipeline import Stage as Stage
 from saealib.policies import ComparatorWorstFallback as ComparatorWorstFallback

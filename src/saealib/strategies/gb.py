@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, cast
 from saealib.core.compiler.graph import ComponentGraph
 from saealib.core.compiler.lowerer import lower_pipeline
 from saealib.core.contracts.observation import SURROGATE
-from saealib.pipeline import Pipeline, Repeat
+from saealib.pipeline import Pipeline, PipelineEntry, Repeat
 from saealib.policies.feedback import (
     FeedbackBuilder,
     MixedFeedback,
@@ -116,7 +116,7 @@ class GenerationBasedStrategy(OptimizationStrategy):
                 ),
             ],
         )
-        steps: list[object] = []
+        steps: list[PipelineEntry] = []
         if self.gen_ctrl:
             steps.extend(
                 (

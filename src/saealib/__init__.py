@@ -74,7 +74,15 @@ from saealib.operators import (
     TruncationSelection,
 )
 from saealib.optimizer import Optimizer
-from saealib.pipeline import Branch, Condition, Loop, Pipeline, Repeat, Stage
+from saealib.pipeline import (
+    Branch,
+    Condition,
+    Loop,
+    Pipeline,
+    PipelineEntry,
+    Repeat,
+    Stage,
+)
 from saealib.policies import (
     ComparatorWorstFallback,
     EvaluateAll,
@@ -241,6 +249,7 @@ __all__ = [
     "ParetoArchive",
     "PendingEvaluation",
     "Pipeline",
+    "PipelineEntry",
     "PointwiseAcquisition",
     "Population",
     "PopulationAttribute",
