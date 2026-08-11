@@ -77,12 +77,8 @@ __all__ = [
 ]
 
 
-class RuntimeEnvironment(Protocol):
-    """Minimal provider boundary needed by a lifecycle runtime."""
-
-    def execute(
-        self, plan: SequentialPlan, state: OptimizationState
-    ) -> OptimizationState: ...
+class LifecycleEnvironment(Protocol):
+    """Provider boundary needed by lifecycle-only runtime paths."""
 
     def is_terminated(self, state: OptimizationState) -> bool: ...
 
@@ -93,8 +89,16 @@ class RuntimeEnvironment(Protocol):
     def fatal(self, state: OptimizationState) -> None: ...
 
 
-class AsyncRuntimeEnvironment(RuntimeEnvironment, Protocol):
-    """Provider seam used by :class:`AsyncPipelineRuntime`."""
+class SequentialExecutionEnvironment(LifecycleEnvironment, Protocol):
+    """Lifecycle provider with the sequential execution capability."""
+
+    def execute(
+        self, plan: SequentialPlan, state: OptimizationState
+    ) -> OptimizationState: ...
+
+
+class AsyncExecutionEnvironment(LifecycleEnvironment, Protocol):
+    """Lifecycle provider with asynchronous execution capabilities."""
 
     def execute_async(
         self, plan: SequentialPlan, state: OptimizationState
@@ -105,6 +109,20 @@ class AsyncRuntimeEnvironment(RuntimeEnvironment, Protocol):
     def poll(self, state: OptimizationState) -> PollResult: ...
 
     def can_refill(self, state: OptimizationState) -> bool: ...
+
+
+class RecompileProvider(Protocol):
+    """Provider capability for rebuilding a runtime plan."""
+
+    def recompile(
+        self, plan: SequentialPlan | StructuredPlan
+    ) -> SequentialPlan | StructuredPlan: ...
+
+
+# Compatibility aliases.  The capability protocols above are the canonical
+# contracts; these names remain available for callers that imported them.
+RuntimeEnvironment = SequentialExecutionEnvironment
+AsyncRuntimeEnvironment = AsyncExecutionEnvironment
 
 
 @dataclass(frozen=True)
@@ -202,7 +220,7 @@ def _apply_structured_patch(state: OptimizationState, patch: StatePatch) -> None
 
 
 def _environment_execute(
-    environment: RuntimeEnvironment,
+    environment: SequentialExecutionEnvironment,
     plan: SequentialPlan,
     state: OptimizationState,
 ) -> _ExecutionOutcome:
@@ -228,7 +246,7 @@ def _environment_execute(
 
 
 def _environment_execute_async(
-    environment: AsyncRuntimeEnvironment,
+    environment: AsyncExecutionEnvironment,
     plan: SequentialPlan,
     state: OptimizationState,
 ) -> _ExecutionOutcome:
@@ -254,7 +272,7 @@ def _environment_execute_async(
 
 
 def _environment_recompile(
-    environment: RuntimeEnvironment, plan: SequentialPlan | StructuredPlan
+    environment: RecompileProvider, plan: SequentialPlan | StructuredPlan
 ) -> SequentialPlan | StructuredPlan:
     recompile = getattr(environment, "recompile", None)
     if not callable(recompile):
@@ -1215,7 +1233,7 @@ class PipelineRuntime:
 
     capabilities = frozenset()
 
-    def __init__(self, environment: RuntimeEnvironment | None = None) -> None:
+    def __init__(self, environment: LifecycleEnvironment | None = None) -> None:
         self.environment = environment
 
     def initialize(
@@ -1360,7 +1378,7 @@ class PipelineRuntime:
                     metadata = _refuse_structured_recompile(metadata)
                 else:
                     env.finish_generation(metadata.state)
-                    plan = _environment_recompile(env, plan)
+                    plan = _environment_recompile(cast(RecompileProvider, env), plan)
                     return self._step(
                         session,
                         metadata.state,
@@ -1468,7 +1486,7 @@ class PipelineRuntime:
                 session=next_session,
             )
 
-        env = self.environment
+        env = cast(SequentialExecutionEnvironment, self.environment)
         env.fatal(session.state)
         state = session.state
         metadata = _ExecutionOutcome(state=state)
@@ -1478,7 +1496,7 @@ class PipelineRuntime:
             metadata = _environment_execute(env, plan, state)
             state = metadata.state
             if metadata.recompile_requested:
-                plan = _environment_recompile(env, plan)
+                plan = _environment_recompile(cast(RecompileProvider, env), plan)
                 return self._step(
                     session, state, generation_open, metadata=metadata, plan=plan
                 )
@@ -1521,7 +1539,7 @@ class PipelineRuntime:
         metadata = _environment_execute(env, plan, state)
         state = metadata.state
         if metadata.recompile_requested:
-            plan = _environment_recompile(env, plan)
+            plan = _environment_recompile(cast(RecompileProvider, env), plan)
             return self._step(
                 session, state, generation_open, metadata=metadata, plan=plan
             )
@@ -1754,7 +1772,9 @@ class AsyncPipelineRuntime(PipelineRuntime):
                 metadata = _refuse_structured_recompile(metadata)
             else:
                 environment.finish_generation(metadata.state)
-                plan = _environment_recompile(environment, plan)
+                plan = _environment_recompile(
+                    cast(RecompileProvider, environment), plan
+                )
                 return self._step(
                     session,
                     metadata.state,
@@ -1838,7 +1858,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
             )
         if self.environment is None:
             raise ValidationError("AsyncPipelineRuntime requires a runtime environment")
-        env = cast(AsyncRuntimeEnvironment, self.environment)
+        env = cast(AsyncExecutionEnvironment, self.environment)
         env.fatal(session.state)
         state = session.state
         plan = session.plan
@@ -1860,7 +1880,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                 metadata = _environment_execute_async(env, plan, state)
                 state = metadata.state
                 if metadata.recompile_requested:
-                    plan = _environment_recompile(env, plan)
+                    plan = _environment_recompile(cast(RecompileProvider, env), plan)
                     return self._step(
                         session,
                         state,
@@ -1890,7 +1910,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                 metadata = _environment_execute_async(env, plan, state)
                 state = metadata.state
                 if metadata.recompile_requested:
-                    plan = _environment_recompile(env, plan)
+                    plan = _environment_recompile(cast(RecompileProvider, env), plan)
                     return self._step(
                         session,
                         state,
@@ -1929,7 +1949,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
             metadata = _environment_execute_async(env, plan, state)
             state = metadata.state
             if metadata.recompile_requested:
-                plan = _environment_recompile(env, plan)
+                plan = _environment_recompile(cast(RecompileProvider, env), plan)
                 return self._step(
                     session,
                     state,
@@ -1959,7 +1979,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
         metadata = _environment_execute_async(env, plan, state)
         state = metadata.state
         if metadata.recompile_requested:
-            plan = _environment_recompile(env, plan)
+            plan = _environment_recompile(cast(RecompileProvider, env), plan)
             return self._step(
                 session,
                 state,
