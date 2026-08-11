@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field, replace
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Protocol, TypeAlias
 
 from saealib.core.contracts.state import StateContract
 from saealib.core.contracts.vocabulary import validate_name
+from saealib.core.state.keys import StateKey
 from saealib.exceptions import ValidationError
 
 if TYPE_CHECKING:
@@ -46,24 +47,28 @@ def _region_id(value: str, label: str = "region_id") -> str:
     return validate_name(value)
 
 
+def _merge_keys(
+    effects: Iterable[StateContract],
+    accessor: Callable[[StateContract], tuple[StateKey[object], ...]],
+) -> tuple[StateKey[object], ...]:
+    result: list[StateKey[object]] = []
+    for effect in effects:
+        for key in accessor(effect):
+            if key not in result:
+                result.append(key)
+    return tuple(result)
+
+
 def compose_effects(effects: Iterable[StateContract]) -> StateContract:
     """Compose state effects, retaining first-seen key order and precision."""
     values = tuple(effects)
     if any(not isinstance(effect, StateContract) for effect in values):
         raise ValidationError("Region effects must be StateContract values")
 
-    def merge(field: str) -> tuple[object, ...]:
-        result: list[object] = []
-        for effect in values:
-            for key in getattr(effect, field):
-                if key not in result:
-                    result.append(key)
-        return tuple(result)
-
     return StateContract(
-        reads=merge("reads"),
-        writes=merge("writes"),
-        exports=merge("exports"),
+        reads=_merge_keys(values, lambda effect: effect.reads),
+        writes=_merge_keys(values, lambda effect: effect.writes),
+        exports=_merge_keys(values, lambda effect: effect.exports),
         reads_enumerable=all(effect.reads_enumerable for effect in values),
     )
 
