@@ -543,6 +543,35 @@ def test_structured_rewrite_rebinds_operations_and_alternate_regions() -> None:
 
 
 @dataclass
+class _StructuredOperationMutationRule:
+    name: str = "structured_operation_mutation"
+    namespace: str = "test"
+    phase: Literal["resolution"] = "resolution"
+
+    def apply(self, context: RuleContext) -> ResolutionResult:
+        assert isinstance(context.graph, StructuredGraph)
+        return ResolutionResult(
+            graph=replace(
+                context.graph,
+                operations=tuple(reversed(context.graph.operations)),
+            )
+        )
+
+
+def test_structured_resolution_cannot_change_operation_order() -> None:
+    graph = lower_structured([_Component(), _Component()])
+    plan = Compiler(RuleRegistry([_StructuredOperationMutationRule()])).compile(
+        graph,
+        CompileContext(enabled_rule_namespaces=frozenset({"test"})),
+    )
+
+    assert any(
+        diagnostic.code == "structured_execution_mutation"
+        for diagnostic in plan.diagnostics
+    )
+
+
+@dataclass
 class _NeverStableRule:
     name: str = "never_stable"
     namespace: str = "test"

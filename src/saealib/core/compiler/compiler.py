@@ -26,7 +26,11 @@ from saealib.core.compiler.graph import (
     ReachabilityRule,
     StateBinding,
 )
-from saealib.core.compiler.structured import StructuredGraph, _rebind_nodes
+from saealib.core.compiler.structured import (
+    StructuredGraph,
+    _execution_signature,
+    _rebind_nodes,
+)
 from saealib.core.contracts.contract import ComponentContract
 from saealib.core.contracts.execution import RuntimeCapability
 from saealib.core.contracts.ports import (
@@ -982,6 +986,31 @@ class Compiler:
                 diagnostics.extend(result.diagnostics)
                 proposal_index = len(proposals)
                 proposals.append(result)
+                if isinstance(current, StructuredGraph):
+                    candidate = result.graph
+                    if not isinstance(candidate, StructuredGraph) or (
+                        _execution_signature(current)
+                        != _execution_signature(candidate)
+                    ):
+                        diagnostics.append(
+                            Diagnostic(
+                                severity=Severity.ERROR,
+                                code="structured_execution_mutation",
+                                message=(
+                                    f"Rule {registration.namespace}:"
+                                    f"{registration.name} changed the lowered "
+                                    "structured execution tree."
+                                ),
+                                path=ContractPath(components=("graph",)),
+                                resolutions=(
+                                    "Resolve contracts, services, dataflow, or state "
+                                    "bindings without changing executable operations "
+                                    "or region topology.",
+                                ),
+                            )
+                        )
+                        conflicted.add(proposal_index)
+                        continue
                 unclaimed = _changed_locations(current, result.graph) - set(claims)
                 if unclaimed:
                     locations = ", ".join(sorted(map(str, unclaimed)))

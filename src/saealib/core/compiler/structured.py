@@ -149,11 +149,11 @@ class StructuredGraph(ComponentGraph):
 
 
 def _rebind_nodes(graph: StructuredGraph) -> StructuredGraph:
-    nodes_by_key: dict[tuple[str, object | None], ComponentNode] = {}
+    nodes_by_id: dict[str, ComponentNode] = {}
 
     def collect(current: StructuredGraph) -> None:
         for node in current.nodes:
-            nodes_by_key.setdefault((node.component_id, node.role), node)
+            nodes_by_id.setdefault(node.component_id, node)
         for region_node in current.region_nodes:
             if isinstance(region_node.region.body, StructuredGraph):
                 collect(region_node.region.body)
@@ -187,9 +187,7 @@ def _rebind_nodes(graph: StructuredGraph) -> StructuredGraph:
         for operation in current.operations:
             if isinstance(operation, ComponentNode):
                 operations.append(
-                    nodes_by_key.get(
-                        (operation.component_id, operation.role), operation
-                    )
+                    nodes_by_id.get(operation.component_id, operation)
                 )
             else:
                 operations.append(
@@ -202,3 +200,30 @@ def _rebind_nodes(graph: StructuredGraph) -> StructuredGraph:
         )
 
     return rebind(graph)
+
+
+def _execution_signature(graph: StructuredGraph) -> tuple[object, ...]:
+    """Return the executable tree shape, excluding semantic metadata."""
+
+    def region_signature(region_node: RegionNode) -> tuple[object, ...]:
+        region = region_node.region
+        body = region.body
+        otherwise = getattr(region, "otherwise", None)
+        return (
+            type(region).__name__,
+            region.qualified_id,
+            _execution_signature(body) if isinstance(body, StructuredGraph) else None,
+            _execution_signature(otherwise)
+            if isinstance(otherwise, StructuredGraph)
+            else None,
+        )
+
+    operations = tuple(
+        ("component", operation.component_id)
+        if isinstance(operation, ComponentNode)
+        else ("region", operation.region.qualified_id)
+        for operation in graph.operations
+    )
+    regions = tuple(region_signature(region) for region in graph.region_nodes)
+    node_ids = tuple(sorted(node.component_id for node in graph.nodes))
+    return (node_ids, operations, regions)
