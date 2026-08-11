@@ -246,4 +246,8 @@ def test_structured_loop_and_repeat_state_is_sequential():
 def test_callable_repeat_count_is_rejected() -> None:
     writer = _Component(ComponentContract(state=StateContract(writes=(USER_DATA,))))
     with pytest.raises(ValidationError):
-        RepeatRegion(region_id="repeat", count=lambda view: 1, body=(writer,))
+        RepeatRegion(
+            region_id="repeat",
+            count=lambda view: 1,  # type: ignore[arg-type]
+            body=(writer,),
+        )
