@@ -61,6 +61,7 @@ from saealib.core.state import (
     StateView,
 )
 from saealib.core.state.patch import StatePatch
+from saealib.core.state.readonly import _unwrap_readonly
 from saealib.exceptions import ConfigurationError, EvaluationFatalError, ValidationError
 
 __all__ = [
@@ -120,10 +121,7 @@ class _ExecutionOutcome:
     def recompile_requested(self) -> bool:
         return any(
             isinstance(command, RequestRecompile)
-            and not any(
-                command is refused_command
-                for refused_command in self.refused_commands
-            )
+            and command not in self.refused_commands
             for result in self.node_results
             for command in result.commands
         )
@@ -184,7 +182,7 @@ def _apply_structured_patch(state: OptimizationState, patch: StatePatch) -> None
         if name is None:
             store_writes[key] = value
         else:
-            transient_writes[name] = value
+            transient_writes[name] = _unwrap_readonly(value)
             store_deletes.add(key)
     for key in patch.deletes:
         name = _transient_field_for_key(key)

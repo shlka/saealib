@@ -8,7 +8,6 @@ from typing import Any
 import numpy as np
 
 from saealib.identity import IDAllocator
-from saealib.population import Population
 
 _MUTATING_METHODS = frozenset(
     {
@@ -50,14 +49,14 @@ class _ReadOnlyFacade:
 
     def __getattr__(self, name: str) -> Any:
         value = getattr(object.__getattribute__(self, "_value"), name)
-        if name in _MUTATING_METHODS:
+        if name.startswith("_") or name in _MUTATING_METHODS:
             raise AttributeError(f"read-only value has no mutating method {name!r}")
         if callable(value):
 
             def invoke(*args: Any, **kwargs: Any) -> Any:
                 result = value(*args, **kwargs)
                 raw = object.__getattribute__(self, "_value")
-                if isinstance(result, Population) and result is not raw:
+                if _is_population(result) and result is not raw:
                     return result
                 return _readonly_value(result)
 
@@ -69,7 +68,7 @@ class _ReadOnlyFacade:
 
     def __getitem__(self, index: object) -> Any:
         value = object.__getattribute__(self, "_value")[index]  # type: ignore[index]
-        return value if isinstance(value, Population) else _readonly_value(value)
+        return value if _is_population(value) else _readonly_value(value)
 
     def __iter__(self):
         value = object.__getattribute__(self, "_value")
@@ -88,10 +87,18 @@ def _readonly_array(value: np.ndarray) -> np.ndarray:
     return result
 
 
+def _is_population(value: object) -> bool:
+    return any(
+        base.__name__ == "Population"
+        and base.__module__.startswith("saealib.population.")
+        for base in type(value).__mro__
+    )
+
+
 def _readonly_value(value: Any) -> Any:
     if isinstance(value, np.ndarray):
         return _readonly_array(value)
-    if isinstance(value, Population):
+    if _is_population(value):
         return _ReadOnlyFacade(value)
     if isinstance(value, np.random.Generator):
         return copy.deepcopy(value)

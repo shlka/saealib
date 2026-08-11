@@ -118,6 +118,10 @@ for _name, _description in (
         "A resolution rule changed a graph location without claiming it.",
     ),
     (
+        "structured_execution_mutation",
+        "A resolution rule changed the lowered structured execution tree.",
+    ),
+    (
         "incompatible_port",
         "A data connection does not satisfy its producer and consumer port contracts.",
     ),

@@ -105,7 +105,9 @@ class StateStore:
             and not any(isinstance(value, StateUpdate) for value in writes.values())
         ):
             values = dict(self._values)
-            values.update(writes)
+            values.update(
+                {key: _unwrap_readonly(value) for key, value in writes.items()}
+            )
             self._moved = True
             result = StateStore.__new__(StateStore)
             result._values = MappingProxyType(values)

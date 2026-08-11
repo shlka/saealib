@@ -583,10 +583,7 @@ class RuntimeStep:
         """Whether this step contains a recompile request."""
         return any(
             isinstance(command, RequestRecompile)
-            and not any(
-                command is refused_command
-                for refused_command in self.refused_commands
-            )
+            and command not in self.refused_commands
             for result in self.node_results
             for command in result.commands
         )

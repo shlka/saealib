@@ -322,7 +322,7 @@ class _StageTransactionStore:
         store = StateStore(values)
         return store.view(
             declared,
-            context=self._owner._context,
+            context=self._owner._context._for_stage_compatibility(),
             dispatch=dispatch,
         )
 
