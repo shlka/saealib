@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import cast
+from typing import Any, Protocol, cast
 
 import numpy as np
 
@@ -13,7 +13,6 @@ from saealib.algorithms.base import (
     algorithm_context,
 )
 from saealib.callback import PostAskEvent
-from saealib.context import OptimizationState
 from saealib.core.contracts import (
     ComponentContract,
     FeedbackBatch,
@@ -27,6 +26,22 @@ from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.registry import register
 from saealib.space import BoundsService
+
+
+class _LeaderContext(Protocol):
+    """Capabilities required to construct and rank PSO personal bests."""
+
+    @property
+    def population(self) -> Any: ...
+
+    @property
+    def problem(self) -> Any: ...
+
+    @property
+    def comparator(self) -> Any: ...
+
+    @property
+    def dim(self) -> int: ...
 
 
 @register()
@@ -321,7 +336,7 @@ class PSO(AskTellAlgorithm):
 
     def _select_leader(
         self,
-        ctx: OptimizationState,
+        ctx: _LeaderContext,
         pbest_x: np.ndarray,
         pbest_f: np.ndarray,
         pbest_cv: np.ndarray,
@@ -334,7 +349,7 @@ class PSO(AskTellAlgorithm):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : _LeaderContext
             Optimization context.
         pbest_x : np.ndarray
             Personal best positions, shape (popsize, dim).

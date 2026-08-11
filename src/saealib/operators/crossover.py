@@ -25,7 +25,7 @@ from saealib.core.contracts import (
 from saealib.registry import register
 
 if TYPE_CHECKING:
-    from saealib.context import OptimizationState
+    from saealib.core.state import ExecutionContext
 
 
 class Crossover(ABC):
@@ -168,7 +168,7 @@ class Crossover(ABC):
         offspring: np.ndarray,
         parents: np.ndarray,
         rng: np.random.Generator,
-        ctx: OptimizationState | None = None,
+        ctx: ExecutionContext | None = None,
     ) -> np.ndarray:
         """Post-crossover lifecycle hook; override to inject custom processing.
 
@@ -180,7 +180,7 @@ class Crossover(ABC):
             Parent individuals. shape = (n_parents, dim)
         rng : np.random.Generator
             Random number generator.
-        ctx : OptimizationState or None, optional
+        ctx : ExecutionContext or None, optional
             Current optimization context.
 
         Returns
@@ -195,7 +195,7 @@ class Crossover(ABC):
         offspring_batch: np.ndarray,
         parents_batch: np.ndarray,
         rng: np.random.Generator,
-        ctx: OptimizationState | None = None,
+        ctx: ExecutionContext | None = None,
     ) -> np.ndarray:
         """Run the post-crossover lifecycle hook for a batch.
 
@@ -212,7 +212,7 @@ class Crossover(ABC):
             Batch of parent groups. shape = (n_pair, n_parents, dim)
         rng : np.random.Generator
             Random number generator.
-        ctx : OptimizationState or None, optional
+        ctx : ExecutionContext or None, optional
             Current optimization context.
 
         Returns
@@ -239,7 +239,7 @@ class Crossover(ABC):
     def with_post(
         self,
         fn: Callable[
-            [np.ndarray, np.ndarray, np.random.Generator, OptimizationState | None],
+            [np.ndarray, np.ndarray, np.random.Generator, ExecutionContext | None],
             np.ndarray,
         ],
     ) -> Self:

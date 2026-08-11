@@ -14,7 +14,6 @@ from saealib.algorithms.base import (
     algorithm_context,
 )
 from saealib.callback import PostAskEvent, PostCrossoverEvent, PostMutationEvent
-from saealib.context import OptimizationState
 from saealib.core.contracts import (
     ComponentContract,
     FeedbackBatch,
@@ -23,7 +22,7 @@ from saealib.core.contracts import (
     ProposalBatch,
     ProposalRelations,
 )
-from saealib.core.state import POPULATIONS_MAIN, StatePatch, StateView
+from saealib.core.state import POPULATIONS_MAIN, ExecutionContext, StatePatch, StateView
 from saealib.exceptions import ConfigurationError
 from saealib.operators.crossover import (
     Crossover,
@@ -498,7 +497,7 @@ class GA(AskTellAlgorithm):
 
     def _crossover_pairs(
         self,
-        ctx: OptimizationState,
+        ctx: ExecutionContext,
         parents_batch: np.ndarray,
         lb: np.ndarray,
         ub: np.ndarray,
@@ -513,7 +512,7 @@ class GA(AskTellAlgorithm):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Current optimization context.
         parents_batch : np.ndarray
             Batch of parent groups. shape = (n_pair, n_parents, dim)
@@ -609,7 +608,7 @@ class GA(AskTellAlgorithm):
 
     def _mutate_candidates(
         self,
-        ctx: OptimizationState,
+        ctx: ExecutionContext,
         cand: np.ndarray,
         lb: np.ndarray,
         ub: np.ndarray,
@@ -625,7 +624,7 @@ class GA(AskTellAlgorithm):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Current optimization context.
         cand : np.ndarray
             Candidates to mutate. shape = (n, dim)
@@ -684,7 +683,7 @@ class GA(AskTellAlgorithm):
 
     def _repair_batch(
         self,
-        ctx: OptimizationState,
+        ctx: ExecutionContext,
         cand: np.ndarray,
         handler,
         constraints,
@@ -703,7 +702,7 @@ class GA(AskTellAlgorithm):
 
     def _make_offspring(
         self,
-        ctx: OptimizationState,
+        ctx: ExecutionContext,
         n_target: int,
         pop: np.ndarray,
         popsize: int,

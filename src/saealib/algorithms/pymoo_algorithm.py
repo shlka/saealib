@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
 
@@ -38,7 +38,6 @@ from saealib.space import BoundsService
 if TYPE_CHECKING:
     from pymoo.core.problem import Problem as PymooCoreProblem
 
-    from saealib.context import OptimizationState
     from saealib.problem import Problem
 
 
@@ -52,6 +51,27 @@ class _PymooPopulationLike(Protocol):
         ...
 
     def __len__(self) -> int: ...
+
+
+class _PymooContext(Protocol):
+    """Capabilities used by the pymoo adapter's synchronization helpers."""
+
+    @property
+    def problem(self) -> Any: ...
+
+    @property
+    def population(self) -> Any: ...
+
+    @property
+    def rng(self) -> Any: ...
+
+    @property
+    def candidate_id_allocator(self) -> Any: ...
+
+    @property
+    def proposal_id_allocator(self) -> Any: ...
+
+    def compiled_service(self, name: str) -> object: ...
 
 
 class _PymooAlgorithmLike(Protocol):
@@ -201,7 +221,7 @@ class PymooAlgorithm(AskTellAlgorithm):
             r"$P \leftarrow \text{pymoo\_algorithm.pop}$",
         ]
 
-    def _build_pymoo_problem(self, ctx: OptimizationState) -> PymooCoreProblem:
+    def _build_pymoo_problem(self, ctx: _PymooContext) -> PymooCoreProblem:
         from pymoo.core.problem import Problem as PymooProblem
 
         problem = ctx.problem
@@ -288,7 +308,7 @@ class PymooAlgorithm(AskTellAlgorithm):
         if len(self._eq_idx) > 0:
             pymoo_pop.set("H", g[:, self._eq_idx])
 
-    def _ensure_initialized(self, ctx: OptimizationState) -> None:
+    def _ensure_initialized(self, ctx: _PymooContext) -> None:
         if self._initialized:
             return
         from pymoo.core.termination import NoTermination
@@ -326,7 +346,7 @@ class PymooAlgorithm(AskTellAlgorithm):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Current optimization context.
         provider : Dispatchable
             Component provider.
@@ -385,7 +405,7 @@ class PymooAlgorithm(AskTellAlgorithm):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Current optimization context.
         provider : Dispatchable
             Component provider.
@@ -488,7 +508,7 @@ class PymooAlgorithm(AskTellAlgorithm):
             raise ConfigurationError("pymoo survivor candidate IDs are not unique")
         return values
 
-    def _sync_population(self, ctx: OptimizationState) -> None:
+    def _sync_population(self, ctx: _PymooContext) -> None:
         alg_pop = self.pymoo_algorithm.pop
         assert alg_pop is not None  # setup()/tell() already ran by this point
         population = ctx.population

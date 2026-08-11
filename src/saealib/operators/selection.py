@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import replace
+from typing import Any, Protocol
 
 import numpy as np
 
-from saealib.context import OptimizationState
 from saealib.core.contracts import (
     MANY,
     ComponentContract,
@@ -22,6 +22,16 @@ from saealib.core.contracts import (
 from saealib.core.state import RUNTIME_RNG
 from saealib.population import Population
 from saealib.registry import register
+
+
+class _SelectionContext(Protocol):
+    """Comparison and random capabilities used by selection operators."""
+
+    @property
+    def comparator(self) -> Any: ...
+
+    @property
+    def rng(self) -> np.random.Generator: ...
 
 
 class ParentSelection(ABC):
@@ -59,7 +69,7 @@ class ParentSelection(ABC):
     @abstractmethod
     def select(
         self,
-        ctx: OptimizationState,
+        ctx: _SelectionContext,
         population: Population,
         n_pair: int,
         n_parents: int,
@@ -70,7 +80,7 @@ class ParentSelection(ABC):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Optimization context.
         population : Population
             Population to select from.
@@ -132,7 +142,7 @@ class TournamentSelection(ParentSelection):
 
     def select(
         self,
-        ctx: OptimizationState,
+        ctx: _SelectionContext,
         population: Population,
         n_pair: int,
         n_parents: int,
@@ -143,7 +153,7 @@ class TournamentSelection(ParentSelection):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Optimization context.
         population : Population
             Population to select from.
@@ -191,7 +201,7 @@ class SequentialSelection(ParentSelection):
 
     def select(
         self,
-        ctx: OptimizationState,
+        ctx: _SelectionContext,
         population: Population,
         n_pair: int,
         n_parents: int,
@@ -204,7 +214,7 @@ class SequentialSelection(ParentSelection):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Optimization context.
         population : Population
             Population to select from.
@@ -264,7 +274,7 @@ class LinearRankSelection(ParentSelection):
 
     def select(
         self,
-        ctx: OptimizationState,
+        ctx: _SelectionContext,
         population: Population,
         n_pair: int,
         n_parents: int,
@@ -275,7 +285,7 @@ class LinearRankSelection(ParentSelection):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Optimization context.
         population : Population
             Population to select from.
@@ -332,7 +342,7 @@ class SurvivorSelection(ABC):
     @abstractmethod
     def select(
         self,
-        ctx: OptimizationState,
+        ctx: _SelectionContext,
         pool: Population,
         n_survivors: int,
     ) -> np.ndarray:
@@ -345,7 +355,7 @@ class SurvivorSelection(ABC):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Optimization context.
         pool : Population
             Selection pool to choose survivors from.
@@ -416,7 +426,7 @@ class TruncationSelection(SurvivorSelection):
 
     def select(
         self,
-        ctx: OptimizationState,
+        ctx: _SelectionContext,
         pool: Population,
         n_survivors: int,
     ) -> np.ndarray:
@@ -425,7 +435,7 @@ class TruncationSelection(SurvivorSelection):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Optimization context.
         pool : Population
             Selection pool to choose survivors from.

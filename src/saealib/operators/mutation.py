@@ -25,7 +25,7 @@ from saealib.core.contracts import (
 from saealib.registry import register
 
 if TYPE_CHECKING:
-    from saealib.context import OptimizationState
+    from saealib.core.state import ExecutionContext
 
 
 class Mutation(ABC):
@@ -164,7 +164,7 @@ class Mutation(ABC):
         offspring: np.ndarray,
         mutate_range: tuple,
         rng: np.random.Generator,
-        ctx: OptimizationState | None = None,
+        ctx: ExecutionContext | None = None,
     ) -> np.ndarray:
         """Post-mutation lifecycle hook; override to inject custom processing.
 
@@ -176,7 +176,7 @@ class Mutation(ABC):
             Tuple of (lower_bound, upper_bound) used for mutation.
         rng : np.random.Generator
             Random number generator.
-        ctx : OptimizationState or None, optional
+        ctx : ExecutionContext or None, optional
             Current optimization context.
 
         Returns
@@ -191,7 +191,7 @@ class Mutation(ABC):
         offspring_batch: np.ndarray,
         mutate_range: tuple,
         rng: np.random.Generator,
-        ctx: OptimizationState | None = None,
+        ctx: ExecutionContext | None = None,
     ) -> np.ndarray:
         """Run the post-mutation lifecycle hook for a batch.
 
@@ -207,7 +207,7 @@ class Mutation(ABC):
             Tuple of (lower_bound, upper_bound) used for mutation.
         rng : np.random.Generator
             Random number generator.
-        ctx : OptimizationState or None, optional
+        ctx : ExecutionContext or None, optional
             Current optimization context.
 
         Returns
@@ -232,7 +232,7 @@ class Mutation(ABC):
     def with_post(
         self,
         fn: Callable[
-            [np.ndarray, tuple, np.random.Generator, OptimizationState | None],
+            [np.ndarray, tuple, np.random.Generator, ExecutionContext | None],
             np.ndarray,
         ],
     ) -> Self:
