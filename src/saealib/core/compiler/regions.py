@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field, replace
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Protocol, TypeAlias
+from typing import TYPE_CHECKING, Protocol, TypeAlias, TypeGuard
 
 from saealib.core.contracts.state import StateContract
 from saealib.core.contracts.vocabulary import validate_name
@@ -37,8 +37,115 @@ class Condition(Protocol):
     def contract(self) -> StateContract:
         """Return the condition's declared state contract."""
 
-    def evaluate(self, view: StateView) -> bool:
+    def evaluate(self, view: StateView, /) -> bool:
         """Evaluate the predicate against its declared state view."""
+
+
+class _NamedStructuralValue(Protocol):
+    name: str
+
+
+class _PipelineLike(Protocol):
+    stages: Sequence[object]
+
+
+class _ComponentLike(Protocol):
+    def contract(self) -> object:
+        ...
+
+
+class _RepeatLike(Protocol):
+    body: object
+    count: int
+
+
+class _LoopLike(Protocol):
+    body: object
+    condition: Condition
+
+
+class _BranchLike(Protocol):
+    then: object
+    condition: Condition
+    else_: object | None
+
+
+_repeat_type: type[object] | None = None
+_loop_type: type[object] | None = None
+_branch_type: type[object] | None = None
+_stage_type: type[object] | None = None
+
+
+def _register_structural_types(
+    repeat_type: type[object],
+    loop_type: type[object],
+    branch_type: type[object],
+    stage_type: type[object],
+) -> None:
+    global _repeat_type, _loop_type, _branch_type, _stage_type
+    _repeat_type = repeat_type
+    _loop_type = loop_type
+    _branch_type = branch_type
+    _stage_type = stage_type
+
+
+def _is_pipeline_like(value: object) -> TypeGuard[_PipelineLike]:
+    """Return whether *value* exposes a structural pipeline sequence."""
+    stages = getattr(value, "stages", None)
+    return (
+        not callable(getattr(value, "contract", None))
+        and isinstance(stages, Sequence)
+        and not isinstance(stages, (str, bytes))
+    )
+
+
+def _is_component(value: object) -> TypeGuard[_ComponentLike]:
+    """Return whether *value* exposes the minimal component contract."""
+    return callable(getattr(value, "contract", None))
+
+
+def _is_condition(value: object) -> TypeGuard[Condition]:
+    """Return whether *value* exposes the condition protocol at runtime."""
+    return callable(getattr(value, "contract", None)) and callable(
+        getattr(value, "evaluate", None)
+    )
+
+
+def _is_named_structural_value(value: object) -> TypeGuard[_NamedStructuralValue]:
+    """Return whether *value* has a string structural name."""
+    return isinstance(getattr(value, "name", None), str)
+
+
+def _structural_name(value: object, default: str = "") -> str:
+    """Read a structural name without requiring one from every entry."""
+    return value.name if _is_named_structural_value(value) else default
+
+
+def _is_repeat(value: object) -> TypeGuard[_RepeatLike]:
+    return _repeat_type is not None and isinstance(value, _repeat_type)
+
+
+def _is_loop(value: object) -> TypeGuard[_LoopLike]:
+    return _loop_type is not None and isinstance(value, _loop_type)
+
+
+def _is_branch(value: object) -> TypeGuard[_BranchLike]:
+    return _branch_type is not None and isinstance(value, _branch_type)
+
+
+def _is_stage(value: object) -> bool:
+    return _stage_type is not None and isinstance(value, _stage_type)
+
+
+def _structural_stages(value: object) -> tuple[object, ...] | None:
+    if _is_repeat(value) or _is_loop(value):
+        return (value.body,)
+    if _is_branch(value):
+        children = (value.then,)
+        return children if value.else_ is None else (*children, value.else_)
+    if _is_pipeline_like(value):
+        return tuple(value.stages)
+    return None
 
 
 def _region_id(value: str, label: str = "region_id") -> str:

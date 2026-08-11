@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import replace
-from typing import Any, cast
 
 from saealib.core.compiler.graph import (
     ComponentNode,
@@ -19,6 +18,13 @@ from saealib.core.compiler.regions import (
     RepeatRegion,
     SequenceRegion,
     StructuredRegion,
+    _is_branch,
+    _is_component,
+    _is_loop,
+    _is_pipeline_like,
+    _is_repeat,
+    _is_stage,
+    _structural_name,
     compose_effects,
 )
 from saealib.core.compiler.structured import StructuredGraph
@@ -32,16 +38,13 @@ __all__ = ["lower_pipeline", "lower_structured"]
 def _pipeline_items(value: object) -> tuple[object, ...] | None:
     if isinstance(value, (list, tuple)):
         return tuple(value)
-    if type(value).__name__ == "Pipeline" or (
-        hasattr(value, "stages") and not callable(getattr(value, "contract", None))
-    ):
-        return tuple(cast(Any, value).stages)
+    if _is_pipeline_like(value):
+        return tuple(value.stages)
     return None
 
 
 def _pipeline_name(value: object) -> str:
-    name = getattr(value, "name", "")
-    return name if isinstance(name, str) else ""
+    return _structural_name(value)
 
 
 def _body_items(value: object) -> tuple[object, ...] | None:
@@ -51,6 +54,13 @@ def _body_items(value: object) -> tuple[object, ...] | None:
     if isinstance(value, StructuredGraph):
         return None
     return (value,)
+
+
+def _region_body(value: object) -> StructuredGraph | tuple[object, ...]:
+    if isinstance(value, StructuredGraph):
+        return value
+    items = _pipeline_items(value)
+    return items if items is not None else (value,)
 
 
 def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGraph:
@@ -64,7 +74,7 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
     for index, item in enumerate(items):
         entries: tuple[ComponentNode, ...] = ()
         exits: tuple[ComponentNode, ...] = ()
-        item_name = getattr(item, "name", "")
+        item_name = _structural_name(item)
         if isinstance(item, StructuredRegion):
             item_name = item.region_id
         local_id = (
@@ -72,31 +82,29 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
         )
         child_namespace = f"{namespace}.{local_id}" if namespace else local_id
         nested_items = _pipeline_items(item)
-        structured_kind = getattr(item, "_structured_kind", None)
-        if structured_kind == "repeat":
-            structured_item = cast(Any, item)
+        if _is_repeat(item):
             item = RepeatRegion(
                 region_id=local_id,
                 namespace=namespace,
-                body=structured_item.body,
-                count=structured_item.count,
+                body=_region_body(item.body),
+                count=item.count,
             )
-        elif structured_kind == "loop":
-            structured_item = cast(Any, item)
+        elif _is_loop(item):
             item = LoopRegion(
                 region_id=local_id,
                 namespace=namespace,
-                body=structured_item.body,
-                condition=structured_item.condition,
+                body=_region_body(item.body),
+                condition=item.condition,
             )
-        elif structured_kind == "branch":
-            structured_item = cast(Any, item)
+        elif _is_branch(item):
             item = BranchRegion(
                 region_id=local_id,
                 namespace=namespace,
-                body=structured_item.then,
-                condition=structured_item.condition,
-                otherwise=structured_item.else_,
+                body=_region_body(item.then),
+                condition=item.condition,
+                otherwise=(
+                    None if item.else_ is None else _region_body(item.else_)
+                ),
             )
         if isinstance(item, (RepeatRegion, LoopRegion, BranchRegion)):
             nested_items = None
@@ -189,19 +197,18 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
                 for node in (graph.nodes[-1],)
             )
         else:
-            if getattr(item, "_saealib_stage_boundary", False):
+            if _is_stage(item):
                 raise ValidationError(
                     "Structured lowering does not accept bare Stage "
                     f"{type(item).__name__!r}; wrap it with stage_component(...) "
                     "or use the sequential runtime"
                 )
-            contract_method = getattr(item, "contract", None)
-            if not callable(contract_method):
+            if not _is_component(item):
                 raise ValidationError(
                     "Structured lowering requires components with contract(); "
                     "pipeline values must contain components with contract()"
                 )
-            contract = contract_method()
+            contract = item.contract()
             if not isinstance(contract, ComponentContract):
                 raise ValidationError(
                     "Component contract() must return ComponentContract"

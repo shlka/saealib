@@ -470,6 +470,14 @@ def _unique_node_ids(stages: Sequence[Stage]) -> tuple[str, ...]:
     return tuple(ids)
 
 
+def _pipeline_stages(pipeline: Pipeline) -> tuple[Stage, ...]:
+    """Validate the Pipeline-to-Stage compatibility bridge boundary."""
+    stages = tuple(pipeline.stages)
+    if any(not isinstance(stage, Stage) for stage in stages):
+        raise ValidationError("Pipeline stages must contain Stage values")
+    return tuple(stage for stage in stages if isinstance(stage, Stage))
+
+
 def build_component_graph(pipeline: Pipeline) -> ComponentGraph:
     """Build a graph with the same top-level stages as *pipeline*.
 
@@ -478,7 +486,7 @@ def build_component_graph(pipeline: Pipeline) -> ComponentGraph:
     """
     if not isinstance(pipeline, Pipeline):
         raise ValidationError("build_component_graph requires a Pipeline")
-    stages = tuple(pipeline.stages)
+    stages = _pipeline_stages(pipeline)
     node_ids = _unique_node_ids(stages)
     adapters = tuple(
         StageNodeAdapter(stage, node_path=node_id)
@@ -775,7 +783,7 @@ def build_decomposed_component_graph(
     accepted solely for the stage compatibility facade.
     """
     if isinstance(value, Pipeline):
-        return build_decomposed_component_graph_from_stages(value.stages)
+        return build_decomposed_component_graph_from_stages(_pipeline_stages(value))
     if not isinstance(value, Sequence):
         raise ValidationError(
             "build_decomposed_component_graph requires node specs or a Pipeline"

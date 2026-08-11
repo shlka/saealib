@@ -6,7 +6,14 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from saealib.core.compiler.regions import Condition
+from saealib.core.compiler.regions import (
+    Condition,
+    _is_component,
+    _is_condition,
+    _register_structural_types,
+    _structural_name,
+    _structural_stages,
+)
 from saealib.core.contracts import ComponentContract, StateContract
 from saealib.exceptions import ValidationError
 
@@ -120,18 +127,10 @@ class Stage(ABC):
 
 def _find_recursive(stages: Sequence[object], name: str) -> object | None:
     for stage in stages:
-        if getattr(stage, "name", None) == name:
+        if _structural_name(stage) == name:
             return stage
-        children = getattr(stage, "stages", None)
-        if children is None and isinstance(stage, (Repeat, Loop)):
-            children = (stage.body,)
-        elif children is None and isinstance(stage, Branch):
-            children = (stage.then,)
-            if stage.else_ is not None:
-                children += (stage.else_,)
-        if children is not None and not isinstance(children, (str, bytes)):
-            if not isinstance(children, (list, tuple)):
-                children = (children,)
+        children = _structural_stages(stage)
+        if children is not None:
             result = _find_recursive(children, name)
             if result is not None:
                 return result
@@ -139,9 +138,9 @@ def _find_recursive(stages: Sequence[object], name: str) -> object | None:
 
 
 def _validate_dsl_condition(condition: object) -> None:
-    if not callable(getattr(condition, "contract", None)):
-        raise ValidationError("DSL condition must provide contract()")
-    if not callable(getattr(condition, "evaluate", None)):
+    if not _is_condition(condition):
+        if not callable(getattr(condition, "contract", None)):
+            raise ValidationError("DSL condition must provide contract()")
         raise ValidationError("DSL condition must provide evaluate(context)")
     if not isinstance(condition.contract(), StateContract):
         raise ValidationError("DSL condition contract() must return StateContract")
@@ -269,7 +268,7 @@ class Pipeline:
         for stage in self.steps:
             if isinstance(stage, (Pipeline, Repeat, Loop, Branch, Stage)):
                 continue
-            if not callable(getattr(stage, "contract", None)):
+            if not _is_component(stage):
                 raise TypeError(
                     f"{stage!r} is not a Stage instance or graph component; "
                     "all elements of a Pipeline must be structural values"
@@ -293,7 +292,7 @@ class Pipeline:
             If no stage with the given name exists.
         """
         for stage in self.stages:
-            if stage.name == name:
+            if _structural_name(stage) == name:
                 return stage
         raise KeyError(name)
 
@@ -316,13 +315,13 @@ class Pipeline:
         """
         if not isinstance(
             stage, (Pipeline, Repeat, Loop, Branch, Stage)
-        ) and not callable(getattr(stage, "contract", None)):
+        ) and not _is_component(stage):
             raise TypeError(
                 f"{stage!r} is not a Stage instance or graph component; "
                 "replacement must be a structural value"
             )
         for i, s in enumerate(self.stages):
-            if s.name == name:
+            if _structural_name(s) == name:
                 self.stages[i] = stage
                 return
         raise KeyError(name)
@@ -385,5 +384,8 @@ def _to_pseudocode(value: object, *, expand: bool, indent: int) -> str:
     if callable(renderer):
         return renderer(expand=expand, indent=indent)
     prefix = "  " * indent
-    name = getattr(value, "name", type(value).__name__)
+    name = _structural_name(value, type(value).__name__)
     return f"{prefix}\\State {name}"
+
+
+_register_structural_types(Repeat, Loop, Branch, Stage)
