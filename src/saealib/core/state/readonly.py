@@ -29,6 +29,7 @@ _MUTATING_METHODS = frozenset(
         "truncate",
         "update_array",
         "update_rows",
+        "update_value",
     }
 )
 
@@ -55,9 +56,6 @@ class _ReadOnlyFacade:
 
             def invoke(*args: Any, **kwargs: Any) -> Any:
                 result = value(*args, **kwargs)
-                raw = object.__getattribute__(self, "_value")
-                if _is_population(result) and result is not raw:
-                    return result
                 return _readonly_value(result)
 
             return invoke
@@ -68,7 +66,7 @@ class _ReadOnlyFacade:
 
     def __getitem__(self, index: object) -> Any:
         value = object.__getattribute__(self, "_value")[index]  # type: ignore[index]
-        return value if _is_population(value) else _readonly_value(value)
+        return _readonly_value(value)
 
     def __iter__(self):
         value = object.__getattribute__(self, "_value")
@@ -112,6 +110,8 @@ def _readonly_value(value: Any) -> Any:
         return type(value)(_readonly_value(item) for item in value)
     if isinstance(value, frozenset):
         return frozenset(_readonly_value(item) for item in value)
+    if hasattr(value, "__slots__") and not isinstance(value, type):
+        return _ReadOnlyFacade(value)
     if hasattr(value, "__dict__") and not isinstance(value, type):
         try:
             return copy.deepcopy(value)

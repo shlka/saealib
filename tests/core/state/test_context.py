@@ -19,6 +19,13 @@ from saealib.population import Archive, ParetoArchive, Population, PopulationAtt
 from saealib.problem import Problem
 
 
+class _SlotOnly:
+    __slots__ = ("value",)
+
+    def __init__(self, value: int) -> None:
+        self.value = value
+
+
 def _state() -> OptimizationState:
     attrs = [
         PopulationAttribute(name="x", dtype=np.float64, shape=(1,)),
@@ -103,6 +110,55 @@ def test_state_view_does_not_expose_mutable_population_rng_or_allocator() -> Non
     before_id = state.proposal_id_allocator.next_value
     view.get(PROPOSALS_ID_ALLOCATOR).allocate(1)
     assert state.proposal_id_allocator.next_value == before_id
+
+
+def test_readonly_population_rows_and_derived_populations_are_facades() -> None:
+    state = _state()
+    state.population.append(x=np.array([1.0]), f=np.array([2.0]))
+    runtime_population = RuntimeContext(state).population
+    with pytest.raises(AttributeError):
+        runtime_population[0].update_value("f", np.array([3.0]))
+    view = state._store.view(
+        (POPULATIONS_MAIN,),
+        context=RuntimeContext(state),
+    )
+    population = view.get(POPULATIONS_MAIN)
+
+    row = population[0]
+    assert row.x[0] == 1.0
+    assert all(item.x[0] == 1.0 for item in population)
+    with pytest.raises(AttributeError):
+        row.update_value("f", np.array([3.0]))
+    with pytest.raises(AttributeError):
+        row.f = np.array([3.0])
+    with pytest.raises(AttributeError):
+        row.pop.append(x=np.array([4.0]), f=np.array([5.0]))
+    assert len(state.population) == 1
+
+    extracted = population.extract([0])
+    empty = population.empty_like()
+    assert extracted[0].x[0] == 1.0
+    assert len(empty) == 0
+    with pytest.raises(AttributeError):
+        extracted.append(x=np.array([4.0]), f=np.array([5.0]))
+    updated = state._store.apply_patch(
+        StatePatch(writes={POPULATIONS_MAIN: extracted})
+    )
+    assert updated.get(POPULATIONS_MAIN) is not extracted
+    assert len(updated.get(POPULATIONS_MAIN)) == 1
+
+
+def test_readonly_facade_wraps_slot_only_mutable_results() -> None:
+    slot_value = _SlotOnly(1)
+    state = _state()
+    state._store = state._store.apply_patch(StatePatch(writes={USER_DATA: slot_value}))
+    view = state._store.view((USER_DATA,), context=RuntimeContext(state))
+
+    exposed = view.get(USER_DATA)
+    assert exposed.value == 1
+    with pytest.raises(AttributeError):
+        exposed.value = 2
+    assert slot_value.value == 1
 
 
 def test_state_patch_is_the_population_replacement_path() -> None:
