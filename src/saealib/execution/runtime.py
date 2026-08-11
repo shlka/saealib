@@ -2160,19 +2160,17 @@ default_runtime_registry = RuntimeRegistry(
     (
         RuntimeRegistration(
             name="async",
-            matches=lambda optimizer: getattr(
-                optimizer, "async_evaluation_scheduler", None
-            )
-            is not None,
+            matches=lambda optimizer: (
+                getattr(optimizer, "async_evaluation_scheduler", None) is not None
+            ),
             factory=_async_runtime_factory,
             offered_runtime_capabilities=AsyncPipelineRuntime.capabilities,
         ),
         RuntimeRegistration(
             name="sync",
-            matches=lambda optimizer: getattr(
-                optimizer, "async_evaluation_scheduler", None
-            )
-            is None,
+            matches=lambda optimizer: (
+                getattr(optimizer, "async_evaluation_scheduler", None) is None
+            ),
             factory=_sync_runtime_factory,
             offered_runtime_capabilities=PipelineRuntime.capabilities,
             capability_provider=_sync_runtime_capability_provider,

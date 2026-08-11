@@ -50,8 +50,7 @@ class _PipelineLike(Protocol):
 
 
 class _ComponentLike(Protocol):
-    def contract(self) -> object:
-        ...
+    def contract(self) -> object: ...
 
 
 class _RepeatLike(Protocol):

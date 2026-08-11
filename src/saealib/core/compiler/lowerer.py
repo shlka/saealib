@@ -102,9 +102,7 @@ def _lower_sequence(items: tuple[object, ...], namespace: str) -> StructuredGrap
                 namespace=namespace,
                 body=_region_body(item.then),
                 condition=item.condition,
-                otherwise=(
-                    None if item.else_ is None else _region_body(item.else_)
-                ),
+                otherwise=(None if item.else_ is None else _region_body(item.else_)),
             )
         if isinstance(item, (RepeatRegion, LoopRegion, BranchRegion)):
             nested_items = None

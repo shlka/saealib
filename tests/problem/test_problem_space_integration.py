@@ -70,10 +70,8 @@ def _setup_state(
         provider.algorithm.population_class = Population
 
     provider.algorithm.archive_class = Archive
-    provider.algorithm.create_pareto_archive = (
-        lambda attrs, init_capacity, problem: ParetoArchive(
-            attrs=attrs, init_capacity=init_capacity
-        )
+    provider.algorithm.create_pareto_archive = lambda attrs, init_capacity, problem: (
+        ParetoArchive(attrs=attrs, init_capacity=init_capacity)
     )
     provider.evaluator.evaluate_batch = lambda x_arr, p: MagicMock(
         f=np.array([[dummy_func(row)] for row in x_arr]),
