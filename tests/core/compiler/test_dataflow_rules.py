@@ -182,7 +182,7 @@ def test_callable_repeat_count_is_rejected() -> None:
     with pytest.raises(ValidationError):
         RepeatRegion(
             region_id="repeat",
-            count=lambda view: 1,  # type: ignore[arg-type]
+            count=lambda view: 1,  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
             body=(_Component("producer", output="Population"),),
         )
 

@@ -578,6 +578,7 @@ class _StructuredExecutableOperationMutationRule:
     phase: Literal["resolution"] = "resolution"
 
     def apply(self, context: RuleContext) -> ResolutionResult:
+        assert isinstance(context.graph, StructuredGraph)
         extra = ComponentNode(component_id="extra", component=_Component())
         return ResolutionResult(
             graph=replace(

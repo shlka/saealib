@@ -64,10 +64,10 @@ def test_control_regions_are_retained_and_loop_has_no_cycle_edge():
     graph = lower_structured(
         [
             Component("before"),
-            RepeatRegion(region_id="repeat", count=2, body=[Component("r")]),
-            LoopRegion(region_id="loop", condition=Condition(), body=[Component("l")]),
+            RepeatRegion(region_id="repeat", count=2, body=(Component("r"),)),
+            LoopRegion(region_id="loop", condition=Condition(), body=(Component("l"),)),
             BranchRegion(
-                region_id="branch", condition=Condition(), body=[Component("b")]
+                region_id="branch", condition=Condition(), body=(Component("b"),)
             ),
             Component("after"),
         ]
@@ -95,7 +95,7 @@ def test_region_effects_compose_component_and_condition_state():
             LoopRegion(
                 region_id="loop",
                 condition=Condition(StateContract(reads=(RUNTIME_RNG,))),
-                body=[Component("reader", StateContract(reads=(USER_DATA,)))],
+                body=(Component("reader", StateContract(reads=(USER_DATA,))),),
             ),
         ]
     )
@@ -108,7 +108,7 @@ def test_region_effects_compose_component_and_condition_state():
 @pytest.mark.parametrize("count", [-1, True, 1.5])
 def test_repeat_rejects_invalid_count(count):
     with pytest.raises(ValidationError):
-        RepeatRegion(region_id="repeat", count=count, body=[])
+        RepeatRegion(region_id="repeat", count=count, body=())
 
 
 @pytest.mark.parametrize(
@@ -116,10 +116,10 @@ def test_repeat_rejects_invalid_count(count):
 )
 def test_regions_reject_invalid_conditions(condition):
     with pytest.raises(ValidationError):
-        LoopRegion(region_id="loop", condition=condition, body=[])
+        LoopRegion(region_id="loop", condition=condition, body=())
 
 
 def test_structured_vocabulary_is_immutable():
-    region = RepeatRegion(region_id="repeat", count=0, body=[])
+    region = RepeatRegion(region_id="repeat", count=0, body=())
     with pytest.raises(FrozenInstanceError):
-        region.region_id = "changed"
+        region.region_id = "changed"  # ty: ignore[invalid-assignment]

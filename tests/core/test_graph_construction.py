@@ -165,7 +165,8 @@ def test_builtins_and_graph_only_strategies_share_graph_pipeline_facade(
     strategy = GraphOnlyStrategy()
     graph = strategy.build_graph(provider)
     pipeline = strategy.build_pipeline(provider)
-    assert [stage.name for stage in pipeline.stages] == [
+    stages = cast(list[Stage], pipeline.stages)
+    assert [stage.name for stage in stages] == [
         node.component.stage.name
         for node in graph.nodes
         if isinstance(node.component, StageNodeAdapter)

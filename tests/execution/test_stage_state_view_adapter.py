@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-from types import SimpleNamespace
 from typing import get_type_hints
 
 from saealib.context import OptimizationState
@@ -69,9 +68,10 @@ class _AsyncStatefulStage(Stage):
         return state
 
 
-def _view() -> tuple[StateView, SimpleNamespace]:
+def _view() -> tuple[StateView, OptimizationState]:
     store = StateStore({USER_DATA: 1})
-    owner = SimpleNamespace(_store=store)
+    owner = object.__new__(OptimizationState)
+    object.__setattr__(owner, "_store", store)
     return store.view((USER_DATA,), context=RuntimeContext(owner)), owner
 
 

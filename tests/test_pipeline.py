@@ -20,7 +20,7 @@ from saealib.core.contracts import (
 )
 from saealib.core.state import POPULATIONS_MAIN, StatePatch, StateView
 from saealib.execution.evaluator import SerialEvaluator
-from saealib.pipeline import Pipeline
+from saealib.pipeline import Pipeline, Stage
 from saealib.population import Archive, Population
 from saealib.stages import (
     AcquisitionStage,
@@ -149,7 +149,7 @@ def _make_gb_pipeline(gen_ctrl: int = 3):
 class TestPipelineValidation:
     def test_non_stage_raises(self):
         with pytest.raises(TypeError, match="not a Stage instance"):
-            Pipeline([CountGenerationStage(), "not_a_stage"])  # type: ignore[list-item]  # ty: ignore[invalid-argument-type]
+            Pipeline([CountGenerationStage(), "not_a_stage"])  # type: ignore[list-item]
 
     def test_empty_pipeline_allowed(self):
         p = Pipeline([])
@@ -440,6 +440,7 @@ class TestPipelineFind:
         p = _make_gb_pipeline(gen_ctrl=2)
         # "ask" exists both inside the loop and at top level; recursive returns first
         stage = p.find("ask", recursive=True)
+        assert isinstance(stage, Stage)
         assert stage.name == "ask"
 
     def test_find_recursive_inner_miss_then_hit(self):
@@ -450,6 +451,7 @@ class TestPipelineFind:
         inner2 = Pipeline([AskStage(p.algorithm)], name="loop2")
         outer = Pipeline([inner1, inner2])
         stage = outer.find("ask", recursive=True)
+        assert isinstance(stage, Stage)
         assert stage.name == "ask"
 
 

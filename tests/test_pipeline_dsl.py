@@ -34,7 +34,9 @@ def test_pipeline_is_structural_and_accepts_steps_keyword() -> None:
 
     assert not hasattr(pipeline, "execute")
     assert pipeline.stages is pipeline.steps
-    assert pipeline["one"].name == "one"
+    entry = pipeline["one"]
+    assert isinstance(entry, _Component)
+    assert entry.name == "one"
 
 
 def test_structural_dsl_values_lower_to_regions_without_cycles() -> None:
@@ -74,14 +76,14 @@ def test_structural_dsl_values_lower_to_regions_without_cycles() -> None:
 @pytest.mark.parametrize("count", [-1, True, "2"])
 def test_repeat_rejects_invalid_count(count: object) -> None:
     with pytest.raises(ValidationError):
-        Repeat(_Component("body"), count)  # type: ignore[arg-type]
+        Repeat(_Component("body"), count)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
 
 def test_loop_and_branch_validate_conditions() -> None:
     with pytest.raises(ValidationError):
-        Loop(_Component("body"), until=object())  # type: ignore[arg-type]
+        Loop(_Component("body"), until=object())  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
     with pytest.raises(ValidationError):
-        Branch(object(), then=_Component("body"))  # type: ignore[arg-type]
+        Branch(object(), then=_Component("body"))  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
 
 def test_branch_effect_includes_both_alternatives() -> None:
