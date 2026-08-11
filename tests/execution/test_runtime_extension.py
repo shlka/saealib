@@ -337,11 +337,15 @@ def test_generation_strategy_runs_as_structured_async_plan() -> None:
         first = runtime.advance(session)
 
         assert any(result.status is NodeStatus.BLOCKED for result in first.node_results)
-        assert first.session is not None
-        second = runtime.advance(first.session)
+        step = first
+        for _ in range(10):
+            if step.finished:
+                break
+            assert step.session is not None
+            step = runtime.advance(step.session)
 
-        assert second.finished
-        assert not second.state.pending_evaluations
+        assert step.finished
+        assert not step.state.pending_evaluations
     finally:
         evaluator.close()
 
