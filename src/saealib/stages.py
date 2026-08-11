@@ -441,6 +441,12 @@ class _StageStateProxy:
             raise AttributeError(name) from exc
 
 
+class _TransactionalStageExecutor(Protocol):
+    def execute(
+        self, state: _TransactionalExecutionContext
+    ) -> _TransactionalExecutionContext | StatePatch | None: ...
+
+
 class StageStateViewAdapter:
     """Expose a Stage through the graph-native StateView contract."""
 
@@ -492,7 +498,7 @@ class StageStateViewAdapter:
         if not isinstance(context, RuntimeContext):
             raise ValidationError("StageStateViewAdapter requires RuntimeContext")
         proxy = _StageStateProxy(state, context)
-        result = cast(Any, self.stage).execute(proxy)
+        result = cast(_TransactionalStageExecutor, self.stage).execute(proxy)
         return self._to_patch(proxy, result, self.stage)
 
     async def execute_async(self, state: StateView, **kwargs: Any) -> StatePatch:
