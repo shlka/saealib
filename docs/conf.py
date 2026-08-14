@@ -3,6 +3,7 @@ import sys
 from importlib.metadata import version as _get_version
 
 sys.path.insert(0, os.path.abspath("../src"))
+sys.path.insert(0, os.path.abspath("."))
 
 # -- Project information -----------------------------------------------------
 project = "saealib"
@@ -119,6 +120,7 @@ html_theme_options = {
         "theme-switcher",
         "navbar-icon-links",
     ],
+    "header_links_before_dropdown": 6,
     "switcher": {
         "json_url": html_baseurl.rstrip("/") + "/versions.json",
         # Placeholder; overwritten per-build by _set_version_switcher_match()
@@ -132,6 +134,8 @@ html_theme_options = {
     "check_switcher": False,
 }
 html_favicon = "_static/icon.svg"
+
+extensions.append("_ext.layer_badges")
 
 # -- autodoc -----------------------------------------------------------------
 autodoc_member_order = "bysource"

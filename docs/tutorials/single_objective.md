@@ -1,10 +1,14 @@
+---
+primary_layer: layer1
+---
+
 # Single-Objective Optimization
 
 Solve a single-objective optimization problem with an expensive-to-evaluate objective function, using `saealib`.
 
 First we define the problem and solve it with the high-level API `minimize`, then move on to the low-level API with `Optimizer`.
 
-For the detailed specification and customization of each component, see the [Components](../components/index.md) pages linked from the following sections.
+For the detailed specification and customization of each component, see the [Concepts](../concepts/index.md) pages linked from the following sections.
 
 ## Problem setup
 
@@ -59,7 +63,7 @@ result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, max_fe=500, seed=0)
 
 For all three, you can also pass an instance directly instead of a string.
 
-The internal behavior and customization of each component are covered on the [Algorithm](../components/algorithm.md), [Surrogate](../components/surrogate.md), and [OptimizationStrategy](../components/strategies.md) pages.
+The internal behavior and customization of each component are covered on the [Algorithm](../concepts/search_algorithms/algorithm.md), [Surrogate](../concepts/surrogate_modeling/surrogate.md), and [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md) pages.
 
 ### Algorithm
 
@@ -106,6 +110,9 @@ result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, strategy="ib", seed=0)
 
 Instantiating components individually and assembling them into `Optimizer` removes this limitation.
 
+`LocalSurrogateManager`にはSurrogateと学習データの作り方を渡し、AcquisitionFunctionは `Optimizer.set_acquisition()` で別に設定します。
+この二つを同じコンストラクタ引数として扱わないでください。
+
 ```python
 import numpy as np
 from saealib import (
@@ -147,7 +154,6 @@ algorithm = GA(
 
 surrogate_manager = LocalSurrogateManager(
     RBFSurrogate(gaussian_kernel, dim=DIM),
-    MeanPrediction(),  # direction is auto-injected from problem.direction
 )
 
 strategy = IndividualBasedStrategy(evaluation_ratio=0.1)
@@ -165,6 +171,7 @@ ctx = (
     .set_initializer(initializer)
     .set_algorithm(algorithm)
     .set_surrogate_manager(surrogate_manager)
+    .set_acquisition(MeanPrediction())
     .set_strategy(strategy)
     .set_termination(termination)
     .run()

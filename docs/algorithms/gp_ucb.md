@@ -1,3 +1,9 @@
+---
+primary_layer: layer2
+related_layers: []
+page_type: concept
+---
+
 # GP-UCB (Gaussian Process Upper Confidence Bound)
 
 GP-UCB is a sequential optimization method for expensive-to-evaluate objective functions, combining a surrogate model built from Gaussian Process (GP) regression with the **Upper Confidence Bound** (UCB) acquisition function, a linear combination of the predictive mean and predictive standard deviation.
@@ -129,8 +135,8 @@ If you want to change `kappa` dynamically with $t$, update the optimizer's acqui
 ## Related
 
 - [References](../references.md): Full bibliographic details for the source, and a list of sources for acquisition functions other than LCB
-- [SurrogateManager](../components/surrogate_manager.md): Detailed usage of `GlobalSurrogateManager`
-- [AcquisitionFunction](../components/acquisition_functions.md): List of acquisition functions including `LowerConfidenceBound`
-- [Surrogate](../components/surrogate.md): List of surrogate models including `SklearnGPRSurrogate`, and an explanation of the `sklearn` extra
-- [OptimizationStrategy](../components/strategies.md): List of strategies including `IndividualBasedStrategy`'s `evaluation_ratio`
+- [SurrogateManager](../concepts/surrogate_modeling/surrogate_manager.md): Detailed usage of `GlobalSurrogateManager`
+- [AcquisitionFunction](../concepts/surrogate_modeling/acquisition_functions.md): List of acquisition functions including `LowerConfidenceBound`
+- [Surrogate](../concepts/surrogate_modeling/surrogate.md): List of surrogate models including `SklearnGPRSurrogate`, and an explanation of the `sklearn` extra
+- [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md): List of strategies including `IndividualBasedStrategy`'s `evaluation_ratio`
 - [EGO](ego.md): A method with the same GP surrogate model + `IndividualBasedStrategy` configuration, replacing the acquisition function with Expected Improvement (EI)

@@ -1,43 +1,55 @@
-# API Reference
+---
+primary_layer: cross
+related_layers: [layer1, layer2, layer3, layer4]
+page_type: entry
+---
 
-## API layers
+# APIリファレンス
 
-Use the following four canonical layers when choosing an import path:
+APIリファレンスは、公開ファサードを中心に構成します。
+実装モジュールの深いパスはcanonical importとして案内しません。
 
-- **Root convenience API** — stable, common entry points:
+## APIの公開層
+
+import経路を選ぶときは、次の公開層を使います。
+
+- **ルートの便利API**：日常的に使う安定したAPIです。
 
   ```python
   from saealib import minimize, Problem, GA
   ```
 
-- **Public namespaces** — public components grouped by domain:
+- **公開名前空間**：分野ごとにまとめた公開コンポーネントです。
 
   ```python
   from saealib.surrogate import RBFSurrogate
   from saealib.operators import MutationPolynomial
   ```
 
-- **Framework extension API** — contracts and composition primitives for extensions:
+探索空間、実行、Feedbackの名前は、それぞれ `saealib.space`、`saealib.execution`、`saealib.policies` から取得します。
+
+- **フレームワーク拡張API**：拡張に使う契約と構成要素です。
 
   ```python
   from saealib.core import Component, ComponentGraph, ComponentContract
   ```
 
-- **Internal implementation modules** — modules such as
-  `saealib.core.compiler.compiler` are unsupported and may change without notice.
+- 実装モジュールは、公開ファサードの代わりに使うものではありません。
 
-Namespace exports do not automatically become root exports. Preserve-root compatibility
-means existing root imports remain available; adding a name to a namespace is not, by
-itself, a reason to add it to `saealib`.
+名前空間の公開名は、自動的にルートへ再公開されません。
+既存のルートimportを維持することと、新しい名前をルートへ追加することは別の判断です。
 
-Add a new root convenience export only when the API is broadly useful, expected to be
-stable, and materially improves the common import path. Otherwise, keep it in the
-appropriate public namespace or framework extension API.
+新しいルート公開名は、広く使われ、安定性が見込まれ、一般的なimportを明確に改善する場合に限ります。
+それ以外の名前は、対応する公開名前空間またはフレームワーク拡張APIに置きます。
 
 ```{toctree}
 :maxdepth: 2
 
 imports
+core
+execution
+space
+feedback
 highlevel
 optimizer
 exceptions
@@ -59,4 +71,5 @@ callbacks
 pipeline
 stages
 utils
+../references
 ```

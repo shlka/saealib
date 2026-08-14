@@ -1,3 +1,7 @@
+---
+primary_layer: layer4
+---
+
 # Evaluation
 
 ```{eval-rst}
@@ -8,6 +12,14 @@
    saealib.Evaluator
    saealib.SerialEvaluator
    saealib.JoblibEvaluator
+   saealib.ThreadPoolEvaluator
+   saealib.AsyncEvaluator
+   saealib.EvaluationAdapter
+   saealib.EvaluationRequest
+   saealib.EvaluationHandle
+   saealib.EvaluationQuery
+   saealib.EvaluationUpdate
+   saealib.PendingEvaluation
    saealib.EvaluationResult
 ```
 

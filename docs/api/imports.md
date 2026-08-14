@@ -1,3 +1,7 @@
+---
+primary_layer: cross
+---
+
 # Canonical Imports
 
 saealib is still pre-1.0, so public APIs may evolve before the first stable
@@ -28,6 +32,8 @@ from saealib.surrogate import RBFSurrogate
 from saealib.acquisition import MeanPrediction
 from saealib.operators import MutationPolynomial
 ```
+
+探索空間、実行、Feedbackの名前は、それぞれ `saealib.space`、`saealib.execution`、`saealib.policies` の公開名前空間から取得します。
 
 Other public domain namespaces follow the same rule. Prefer the namespace
 export over a deeper module path when both are available.

@@ -1,10 +1,14 @@
+---
+primary_layer: layer2
+---
+
 # Reproducibility and Checkpointing
 
 Makes long-running optimizations reproducible and lets you resume them partway through.
 
-Checkpointing is only available with the low-level `Optimizer` API.
-
-See the low-level API section of [Single-Objective Optimization](single_objective.md) for how to assemble an `Optimizer`.
+チェックポイント機能は低レベルの `Optimizer` APIで使います。
+`Optimizer(problem)`を構築し、`set_*()`を連鎖させてコンポーネントを設定し、`run()`で実行します。
+保存した状態からは `run_from()`で再開できます。
 
 ## Reproducibility via random seed
 
@@ -64,9 +68,10 @@ def build_optimizer(max_fe_value):
         )
         .set_surrogate_manager(
             LocalSurrogateManager(
-                RBFSurrogate(gaussian_kernel, dim=DIM), MeanPrediction()
+                RBFSurrogate(gaussian_kernel, dim=DIM)
             )
         )
+        .set_acquisition(MeanPrediction())
         .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.1))
         .set_termination(Termination(max_fe(max_fe_value)))
     )
@@ -79,6 +84,9 @@ print(np.allclose(ctx1.archive.get_array("f"), ctx2.archive.get_array("f")))  # 
 ```
 
 `build_optimizer` is used in the following sections too, to rebuild an `Optimizer` with the same component configuration.
+
+再現性を保つには、SurrogateManagerとAcquisitionFunctionを同じ構成で再生成します。
+`LocalSurrogateManager`の引数にAcquisitionFunctionを渡す構成は現行APIでは使いません。
 
 ## Saving and resuming a checkpoint
 

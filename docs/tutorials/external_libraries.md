@@ -1,3 +1,7 @@
+---
+primary_layer: layer3
+---
+
 # Integrating External Libraries
 
 `saealib` provides adapters that thinly wrap external machine learning and evolutionary-computation libraries behind its own abstract base classes.
@@ -56,9 +60,9 @@ result = minimize(
 )
 ```
 
-Passing a `Surrogate` instance to the `surrogate` argument works the same as the `RBFSurrogate` example in "Switching components" in [Single-Objective Optimization](single_objective.md) — internally it is wrapped in a `LocalSurrogateManager`.
+`Surrogate`インスタンスを `minimize(..., surrogate=...)` に渡すと、内部で `LocalSurrogateManager` にラップされます。
 
-See [Surrogate](../components/surrogate.md) for adapters aimed at classification problems (e.g. feasibility classification) and the detailed arguments of each adapter.
+See [Surrogate](../concepts/surrogate_modeling/surrogate.md) for adapters aimed at classification problems (e.g. feasibility classification) and the detailed arguments of each adapter.
 
 ## pymoo adapters
 
@@ -127,7 +131,7 @@ result = minimize(
 ```
 
 `PymooAlgorithm` runs in "engine mode": the wrapped pymoo algorithm owns its own population and internal survival state, and `ctx.population` is refreshed from it after every generation rather than being the source of truth.
-See [Algorithm](../components/algorithm.md) for what this means in practice (no checkpoint/resume, `n_offspring` is ignored, and `PreSelectionStrategy`'s partial `tell()` needs an explicit opt-in).
+See [Algorithm](../concepts/search_algorithms/algorithm.md) for what this means in practice (no checkpoint/resume, `n_offspring` is ignored, and `PreSelectionStrategy`'s partial `tell()` needs an explicit opt-in).
 
 (porting-operators-to-native-saealib-code)=
 ## Porting operators to native saealib code
@@ -237,7 +241,7 @@ class MyCrossover(Crossover):
 
 ### Algorithm- and Problem-level code
 
-Porting a whole search algorithm (survival selection, archive management, index-coupled state such as DE) is not a mechanical rewrite in the same way: it means reimplementing `Algorithm.ask()`/`tell()` from scratch. For pymoo specifically, the engine-mode `PymooAlgorithm` adapter above covers this case without a rewrite; for other libraries, see [Algorithm](../components/algorithm.md) for what a native `Algorithm` subclass needs to implement.
+Porting a whole search algorithm (survival selection, archive management, index-coupled state such as DE) is not a mechanical rewrite in the same way: it means reimplementing `Algorithm.ask()`/`tell()` from scratch. For pymoo specifically, the engine-mode `PymooAlgorithm` adapter above covers this case without a rewrite; for other libraries, see [Algorithm](../concepts/search_algorithms/algorithm.md) for what a native `Algorithm` subclass needs to implement.
 
 ## References
 

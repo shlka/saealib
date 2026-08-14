@@ -1,3 +1,7 @@
+---
+primary_layer: layer2
+---
+
 # Logging Progress
 
 Record optimization progress with the standard `logging` module.
@@ -121,7 +125,7 @@ Note that, unlike INFO-level progress logs, this kind of warning is visible even
 
 If you want to log something other than what `logging_generation`/`logging_generation_hv` record, register your own handler on `CallbackManager`.
 
-See [CallbackManager](../components/callbacks.md) for the underlying mechanism.
+See [CallbackManager](../concepts/observation_and_state/callbacks.md) for the underlying mechanism.
 
 ## References
 

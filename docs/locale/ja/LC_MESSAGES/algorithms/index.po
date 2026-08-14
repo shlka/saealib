@@ -42,7 +42,7 @@ msgstr "構成が理論上の定義と厳密に一致しない場合（近似）
 
 #: ../../../algorithms/index.md:13
 msgid "EGO"
-msgstr "EGO"
+msgstr "{fa}`crosshairs;sd-mr-1` EGO"
 
 #: ../../../algorithms/index.md:17
 msgid ""
@@ -52,7 +52,7 @@ msgstr "Gaussian Process回帰と期待改善量(Expected Improvement)による�
 
 #: ../../../algorithms/index.md:20
 msgid "GP-UCB"
-msgstr "GP-UCB"
+msgstr "{fa}`chart-line;sd-mr-1` GP-UCB"
 
 #: ../../../algorithms/index.md:24
 msgid ""
@@ -62,7 +62,7 @@ msgstr "Gaussian Process回帰と上側信頼限界(Upper Confidence Bound)に�
 
 #: ../../../algorithms/index.md:27
 msgid "MaxUnc"
-msgstr "MaxUnc"
+msgstr "{fa}`magnifying-glass;sd-mr-1` MaxUnc"
 
 #: ../../../algorithms/index.md:31
 msgid ""
@@ -72,7 +72,7 @@ msgstr "Gaussian Process回帰の予測不確実性のみを基準にする、�
 
 #: ../../../algorithms/index.md:34
 msgid "CORS-RBF"
-msgstr "CORS-RBF"
+msgstr "{fa}`circle-nodes;sd-mr-1` CORS-RBF"
 
 #: ../../../algorithms/index.md:38
 msgid ""
@@ -83,7 +83,7 @@ msgstr "RBF補間によるサロゲートモデルと、既存評価点からの
 
 #: ../../../algorithms/index.md:41
 msgid "NSGA-II"
-msgstr "NSGA-II"
+msgstr "{fa}`people-arrows;sd-mr-1` NSGA-II"
 
 #: ../../../algorithms/index.md:45
 msgid ""
@@ -93,7 +93,7 @@ msgstr "非優越ソートと混雑度距離による多目的遺伝アルゴリ
 
 #: ../../../algorithms/index.md:48
 msgid "SPEA2"
-msgstr "SPEA2"
+msgstr "{fa}`weight-hanging;sd-mr-1` SPEA2"
 
 #: ../../../algorithms/index.md:52
 msgid ""
@@ -103,7 +103,7 @@ msgstr "支配関係に基づく強度と密度を組み合わせた適応度、
 
 #: ../../../algorithms/index.md:55
 msgid "NSGA-III"
-msgstr "NSGA-III"
+msgstr "{fa}`bullseye;sd-mr-1` NSGA-III"
 
 #: ../../../algorithms/index.md:59
 msgid ""
@@ -114,7 +114,7 @@ msgstr "参照点ベースのニッチ保存による多目的遺伝アルゴリ
 
 #: ../../../algorithms/index.md:62
 msgid "SMS-EMOA"
-msgstr "SMS-EMOA"
+msgstr "{fa}`chart-area;sd-mr-1` SMS-EMOA"
 
 #: ../../../algorithms/index.md:66
 msgid ""

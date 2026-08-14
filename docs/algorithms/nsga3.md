@@ -1,3 +1,9 @@
+---
+primary_layer: layer2
+related_layers: []
+page_type: concept
+---
+
 # NSGA-III
 
 NSGA-III is a genetic algorithm that extends NSGA-II's selection mechanism to many-objective optimization with four or more objectives.
@@ -121,17 +127,17 @@ If you want the population size deliberately matched to `H`, check the number of
 `TournamentSelection(tournament_size=1)` expresses this "random parent selection," since no comparison is actually performed when the tournament size is 1.
 Changing `tournament_size` to 2 or more adds the same dominance-based selection pressure as NSGA-II/SPEA2, introducing a selection mechanism the paper deliberately excludes.
 
-**Swapping the dominator (dominance predicate)**: `NSGA3Comparator(reference_points, dominator=...)` lets you inject a [Dominator](../components/dominance.md) other than the default `ParetoDominator`.
+**Swapping the dominator (dominance predicate)**: `NSGA3Comparator(reference_points, dominator=...)` lets you inject a [Dominator](../concepts/problem_and_ranking/dominance.md) other than the default `ParetoDominator`.
 Since this changes the result of non-dominated sorting itself, the population subjected to front splitting and niche preservation also depends on this dominance predicate.
 
 ## Related
 
 - [References](../references.md): Full bibliographic details for the source
-- [Comparator](../components/comparators.md): Detailed specification of `NSGA3Comparator`, the `reference_points` argument, and lazy `rng` generation
-- [Crossover](../components/crossover.md): List of crossover operators including `CrossoverSBX`
-- [Mutation](../components/mutation.md): List of mutation operators including `MutationPolynomial`
-- [ParentSelection](../components/parent_selection.md): Detailed usage of `TournamentSelection`
-- [SurvivorSelection](../components/survivor_selection.md): Detailed usage of `TruncationSelection`
-- [OptimizationStrategy](../components/strategies.md): List of strategies including `DirectStrategy`
-- [NonDominatedSorting](../components/nondominated_sorting.md): Implementation details of non-dominated sorting
-- [Dominator](../components/dominance.md): List of dominance predicates that can be swapped in via the `dominator` argument
+- [Comparator](../concepts/problem_and_ranking/comparators.md): Detailed specification of `NSGA3Comparator`, the `reference_points` argument, and lazy `rng` generation
+- [Crossover](../concepts/search_algorithms/crossover.md): List of crossover operators including `CrossoverSBX`
+- [Mutation](../concepts/search_algorithms/mutation.md): List of mutation operators including `MutationPolynomial`
+- [ParentSelection](../concepts/search_algorithms/parent_selection.md): Detailed usage of `TournamentSelection`
+- [SurvivorSelection](../concepts/search_algorithms/survivor_selection.md): Detailed usage of `TruncationSelection`
+- [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md): List of strategies including `DirectStrategy`
+- [NonDominatedSorting](../concepts/problem_and_ranking/nondominated_sorting.md): Implementation details of non-dominated sorting
+- [Dominator](../concepts/problem_and_ranking/dominance.md): List of dominance predicates that can be swapped in via the `dominator` argument

@@ -1,8 +1,13 @@
+---
+primary_layer: layer1
+---
+
 # Mixed-Variable Optimization
 
 Solve problems that include not only continuous variables but also integer and categorical variables, using `saealib`.
 
-Switching algorithms, surrogates, and the evaluation strategy works the same as in "Switching components" in [Single-Objective Optimization](single_objective.md).
+`minimize()`では、アルゴリズム、代理モデル、評価戦略に文字列またはインスタンスを指定できます。
+このページの例では問題固有の設定だけを追加し、それ以外にはデフォルトを使います。
 
 ## Problem setup
 
@@ -93,7 +98,7 @@ ga = GA(
 result = minimize(problem, algorithm=ga, max_fe=500, seed=0)
 ```
 
-See [Algorithm](../components/algorithm.md) for details on each operator.
+See [Algorithm](../concepts/search_algorithms/algorithm.md) for details on each operator.
 
 ## References
 

@@ -1,3 +1,9 @@
+---
+primary_layer: layer2
+related_layers: []
+page_type: concept
+---
+
 # SPEA2 (Strength Pareto Evolutionary Algorithm 2)
 
 SPEA2 is a multi-objective evolutionary algorithm that improves the fitness assignment and archive management of the original SPEA (Strength Pareto Evolutionary Algorithm).
@@ -113,16 +119,16 @@ In NSGA-II, `NSGA2Comparator` is the default for `n_obj > 1`, so the same line c
 **Archive size $\bar N$ and population size $N$**: The paper defines these two as independently configurable, in general form {cite}`zitzler2001spea2`.
 Because saealib's `GA.tell()` combines the population and offspring into a single pool, $\bar N$ uses the same value as $N$.
 
-**Swapping the dominator (dominance predicate)**: `SPEA2Comparator(dominator=...)` lets you inject a [Dominator](../components/dominance.md) other than the default `ParetoDominator`.
+**Swapping the dominator (dominance predicate)**: `SPEA2Comparator(dominator=...)` lets you inject a [Dominator](../concepts/problem_and_ranking/dominance.md) other than the default `ParetoDominator`.
 Since the computation of $S(i)$/$R(i)$ depends on this dominance predicate, swapping it changes SPEA2's fitness itself.
 
 ## Related
 
 - [References](../references.md): Full bibliographic details for the source
-- [Comparator](../components/comparators.md): Detailed specification of `SPEA2Comparator`
-- [Crossover](../components/crossover.md): List of crossover operators including `CrossoverSBX`
-- [Mutation](../components/mutation.md): List of mutation operators including `MutationPolynomial`
-- [ParentSelection](../components/parent_selection.md): Detailed usage of `TournamentSelection`
-- [SurvivorSelection](../components/survivor_selection.md): Detailed usage of `TruncationSelection`
-- [OptimizationStrategy](../components/strategies.md): List of strategies including `DirectStrategy`
-- [Dominator](../components/dominance.md): List of dominance predicates that can be swapped in via the `dominator` argument
+- [Comparator](../concepts/problem_and_ranking/comparators.md): Detailed specification of `SPEA2Comparator`
+- [Crossover](../concepts/search_algorithms/crossover.md): List of crossover operators including `CrossoverSBX`
+- [Mutation](../concepts/search_algorithms/mutation.md): List of mutation operators including `MutationPolynomial`
+- [ParentSelection](../concepts/search_algorithms/parent_selection.md): Detailed usage of `TournamentSelection`
+- [SurvivorSelection](../concepts/search_algorithms/survivor_selection.md): Detailed usage of `TruncationSelection`
+- [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md): List of strategies including `DirectStrategy`
+- [Dominator](../concepts/problem_and_ranking/dominance.md): List of dominance predicates that can be swapped in via the `dominator` argument

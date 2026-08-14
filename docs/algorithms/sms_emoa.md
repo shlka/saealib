@@ -1,3 +1,9 @@
+---
+primary_layer: layer2
+related_layers: []
+page_type: concept
+---
+
 # SMS-EMOA (S Metric Selection EMOA)
 
 SMS-EMOA is a steady-state multi-objective evolutionary algorithm that incorporates dominated hypervolume (the $\mathcal{S}$ metric) directly into the selection criterion.
@@ -138,17 +144,17 @@ Also, for the two-objective case, the paper unconditionally keeps the two extrem
 **Alternative reduce procedure ("SMS-EMOA dp")**: The paper also proposes a faster variant using the domination count $d(s, P(t))$ instead of hypervolume contribution.
 `HypervolumeComparator` does not implement this variant, providing only the base version using $\Delta_{\mathcal{S}}$.
 
-**Swapping the dominator (dominance predicate)**: `HypervolumeComparator(reference_point=..., dominator=...)` lets you inject a [Dominator](../components/dominance.md) other than the default `ParetoDominator`.
+**Swapping the dominator (dominance predicate)**: `HypervolumeComparator(reference_point=..., dominator=...)` lets you inject a [Dominator](../concepts/problem_and_ranking/dominance.md) other than the default `ParetoDominator`.
 Since this changes the result of non-dominated sorting, the population subjected to front splitting and contribution computation also depends on this dominance predicate.
 
 ## Related
 
 - [References](../references.md): Full bibliographic details for the source
-- [Comparator](../components/comparators.md): Detailed specification of `HypervolumeComparator`, and how population-relative comparators are handled
-- [Crossover](../components/crossover.md): List of crossover operators including `CrossoverSBX`
-- [Mutation](../components/mutation.md): List of mutation operators including `MutationPolynomial`
-- [ParentSelection](../components/parent_selection.md): Detailed usage of `TournamentSelection`
-- [SurvivorSelection](../components/survivor_selection.md): Detailed usage of `TruncationSelection`
-- [OptimizationStrategy](../components/strategies.md): Implementing a custom Strategy, and `AskStage`'s `n_offspring`
-- [NonDominatedSorting](../components/nondominated_sorting.md): Implementation details of non-dominated sorting
-- [Dominator](../components/dominance.md): List of dominance predicates that can be swapped in via the `dominator` argument
+- [Comparator](../concepts/problem_and_ranking/comparators.md): Detailed specification of `HypervolumeComparator`, and how population-relative comparators are handled
+- [Crossover](../concepts/search_algorithms/crossover.md): List of crossover operators including `CrossoverSBX`
+- [Mutation](../concepts/search_algorithms/mutation.md): List of mutation operators including `MutationPolynomial`
+- [ParentSelection](../concepts/search_algorithms/parent_selection.md): Detailed usage of `TournamentSelection`
+- [SurvivorSelection](../concepts/search_algorithms/survivor_selection.md): Detailed usage of `TruncationSelection`
+- [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md): Implementing a custom Strategy, and `AskStage`'s `n_offspring`
+- [NonDominatedSorting](../concepts/problem_and_ranking/nondominated_sorting.md): Implementation details of non-dominated sorting
+- [Dominator](../concepts/problem_and_ranking/dominance.md): List of dominance predicates that can be swapped in via the `dominator` argument

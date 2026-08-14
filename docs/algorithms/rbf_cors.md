@@ -1,3 +1,9 @@
+---
+primary_layer: layer2
+related_layers: []
+page_type: concept
+---
+
 # CORS-RBF (Constrained Optimization using Response Surfaces)
 
 CORS-RBF is a sequential optimization method for expensive-to-evaluate objective functions that selects the next evaluation point one at a time using a surrogate model built from RBF (Radial Basis Function) interpolation.
@@ -119,7 +125,7 @@ Shrinking `evaluation_ratio` down to roughly the inverse of the population size 
 ## Related
 
 - [References](../references.md): Full bibliographic details for the source
-- [Surrogate](../components/surrogate.md): List of surrogate models including `RBFSurrogate`/`gaussian_kernel`
-- [AcquisitionFunction](../components/acquisition_functions.md): List of acquisition functions including `MeanPrediction`
-- [SurrogateManager](../components/surrogate_manager.md): Detailed usage of `GlobalSurrogateManager`
-- [OptimizationStrategy](../components/strategies.md): List of strategies including `IndividualBasedStrategy`'s `evaluation_ratio`
+- [Surrogate](../concepts/surrogate_modeling/surrogate.md): List of surrogate models including `RBFSurrogate`/`gaussian_kernel`
+- [AcquisitionFunction](../concepts/surrogate_modeling/acquisition_functions.md): List of acquisition functions including `MeanPrediction`
+- [SurrogateManager](../concepts/surrogate_modeling/surrogate_manager.md): Detailed usage of `GlobalSurrogateManager`
+- [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md): List of strategies including `IndividualBasedStrategy`'s `evaluation_ratio`

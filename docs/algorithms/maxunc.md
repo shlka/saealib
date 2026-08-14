@@ -1,3 +1,9 @@
+---
+primary_layer: layer2
+related_layers: []
+page_type: concept
+---
+
 # MaxUnc (Uncertainty Sampling)
 
 MaxUnc is an exploration-only acquisition function that uses a surrogate model's predictive uncertainty (standard deviation) as its criterion, selecting for the next true evaluation the candidate point the model is least confident about.
@@ -120,9 +126,9 @@ To continuously adjust the exploration–exploitation weight, use [GP-UCB](gp_uc
 ## Related
 
 - [References](../references.md): Full bibliographic details for the source
-- [SurrogateManager](../components/surrogate_manager.md): Detailed usage of `GlobalSurrogateManager`
-- [AcquisitionFunction](../components/acquisition_functions.md): List of acquisition functions including `MaxUncertainty`
-- [Surrogate](../components/surrogate.md): List of surrogate models including `SklearnGPRSurrogate`, and an explanation of the `sklearn` extra
-- [OptimizationStrategy](../components/strategies.md): List of strategies including `IndividualBasedStrategy`'s `evaluation_ratio`
+- [SurrogateManager](../concepts/surrogate_modeling/surrogate_manager.md): Detailed usage of `GlobalSurrogateManager`
+- [AcquisitionFunction](../concepts/surrogate_modeling/acquisition_functions.md): List of acquisition functions including `MaxUncertainty`
+- [Surrogate](../concepts/surrogate_modeling/surrogate.md): List of surrogate models including `SklearnGPRSurrogate`, and an explanation of the `sklearn` extra
+- [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md): List of strategies including `IndividualBasedStrategy`'s `evaluation_ratio`
 - [EGO](ego.md): A method using the same GP surrogate model + `IndividualBasedStrategy` configuration, replacing the acquisition function with the exploitation-leaning Expected Improvement (EI)
 - [GP-UCB](gp_ucb.md): A method using the `LowerConfidenceBound` acquisition function, which has the same $\mu - \kappa\sigma$ structure as Büche et al.'s merit function

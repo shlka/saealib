@@ -1,8 +1,13 @@
+---
+primary_layer: layer1
+---
+
 # Constrained Optimization
 
 Solve a problem with constraints on the design variables using `saealib`.
 
-Switching algorithms, surrogates, and the evaluation strategy works the same as in "Switching components" in [Single-Objective Optimization](single_objective.md).
+`minimize()`では、アルゴリズム、代理モデル、評価戦略に文字列またはインスタンスを指定できます。
+このページの例では問題固有の設定だけを追加し、それ以外にはデフォルトを使います。
 
 ## Problem setup
 

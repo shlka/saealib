@@ -1,3 +1,7 @@
+---
+primary_layer: layer1
+---
+
 # Problem
 
 ```{eval-rst}
@@ -23,6 +27,5 @@
 .. autofunction:: saealib.exponential_epsilon_schedule
 ```
 
-```{note}
-`saealib.Constraint` は `saealib.InequalityConstraint` の非推奨エイリアスです。新しいコードでは `InequalityConstraint` を使用してください。
-```
+`Problem` は `space` に `SearchSpace` を受け取り、Genomeの表現と評価入力の変換を管理できます。
+詳細は [Problem](../concepts/problem_and_ranking/problem.md) と [探索空間（SearchSpace）](../concepts/problem_and_ranking/search_space.md) を参照してください。

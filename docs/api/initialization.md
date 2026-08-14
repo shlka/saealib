@@ -1,3 +1,7 @@
+---
+primary_layer: layer4
+---
+
 # Initialization
 
 ```{eval-rst}
@@ -6,6 +10,7 @@
    :nosignatures:
 
    saealib.Initializer
+   saealib.GenomeInitializer
    saealib.LHSInitializer
    saealib.RandomInitializer
    saealib.SobolInitializer

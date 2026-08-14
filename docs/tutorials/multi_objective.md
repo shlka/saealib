@@ -1,8 +1,13 @@
+---
+primary_layer: layer1
+---
+
 # Multi-Objective Optimization
 
 Solve multi-objective optimization problems with trade-offs between objectives, using `saealib`.
 
-Regardless of the number of objectives, switching algorithms, surrogates, and the evaluation strategy works the same as in "Switching components" in [Single-Objective Optimization](single_objective.md).
+`minimize()`は目的関数の数に応じたデフォルトのコンポーネントを使います。
+アルゴリズム、代理モデル、評価戦略を個別に設定する場合は `Optimizer.set_*()` を使います。
 
 This page covers what's specific to problems with two or more objectives: choosing a comparator and extracting the Pareto front.
 
@@ -36,6 +41,25 @@ print(result.f.shape)  # (n_pareto, n_obj)
 ```
 
 Where `result.x`/`result.f` were a single point in the single-objective case, in the multi-objective case they become multiple solutions forming the Pareto front.
+
+## Optimizerによる構成
+
+`Optimizer(problem)`では、各コンポーネントを独立して設定できます。
+`set_*()`は連鎖呼び出しのために同じ `Optimizer` を返し、`run()`または `iterate()`で最適化を実行します。
+
+```python
+from saealib import Optimizer, Termination, max_fe
+
+optimizer = (
+    Optimizer(problem, seed=0)
+    .set_termination(Termination(max_fe(2000)))
+)
+ctx = optimizer.run()
+pareto_f = ctx.pareto_archive.get_array("f")
+```
+
+未設定のコンポーネントはデフォルトに解決されます。
+多目的の順位付けは、次のComparatorの選択で設定します。
 
 ## Choosing a comparator
 

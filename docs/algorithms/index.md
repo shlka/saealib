@@ -1,3 +1,9 @@
+---
+primary_layer: layer2
+related_layers: []
+page_type: entry
+---
+
 # Algorithms
 
 Pages summarizing how named algorithms from the literature are reproduced as combinations of saealib components.

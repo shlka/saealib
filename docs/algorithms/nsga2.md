@@ -1,3 +1,9 @@
+---
+primary_layer: layer2
+related_layers: []
+page_type: concept
+---
+
 # NSGA-II (Nondominated Sorting Genetic Algorithm II)
 
 NSGA-II is the most widely used genetic algorithm for the selection mechanism in multi-objective optimization.
@@ -121,10 +127,10 @@ Setting `randomize_ties=True` shuffles individuals tied at the truncation bounda
 ## Related
 
 - [References](../references.md): Full bibliographic details for the source
-- [Comparator](../components/comparators.md): Detailed specification of `NSGA2Comparator`
-- [Crossover](../components/crossover.md): List of crossover operators including `CrossoverSBX`
-- [Mutation](../components/mutation.md): List of mutation operators including `MutationPolynomial`
-- [ParentSelection](../components/parent_selection.md): Detailed usage of `TournamentSelection`
-- [SurvivorSelection](../components/survivor_selection.md): Detailed usage of `TruncationSelection`
-- [OptimizationStrategy](../components/strategies.md): List of strategies including `DirectStrategy`
-- [NonDominatedSorting](../components/nondominated_sorting.md): Implementation details of non-dominated sorting
+- [Comparator](../concepts/problem_and_ranking/comparators.md): Detailed specification of `NSGA2Comparator`
+- [Crossover](../concepts/search_algorithms/crossover.md): List of crossover operators including `CrossoverSBX`
+- [Mutation](../concepts/search_algorithms/mutation.md): List of mutation operators including `MutationPolynomial`
+- [ParentSelection](../concepts/search_algorithms/parent_selection.md): Detailed usage of `TournamentSelection`
+- [SurvivorSelection](../concepts/search_algorithms/survivor_selection.md): Detailed usage of `TruncationSelection`
+- [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md): List of strategies including `DirectStrategy`
+- [NonDominatedSorting](../concepts/problem_and_ranking/nondominated_sorting.md): Implementation details of non-dominated sorting

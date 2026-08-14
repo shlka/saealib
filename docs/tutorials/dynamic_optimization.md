@@ -1,3 +1,7 @@
+---
+primary_layer: layer3
+---
+
 # Dynamic Switching Based on Surrogate Accuracy
 
 The prediction accuracy of a surrogate model changes as generations progress.
@@ -8,7 +12,7 @@ This page covers how to switch the evaluation strategy or the `SurrogateManager`
 
 ## Problem setup
 
-We use the same Sphere function as in the single-objective optimization tutorial.
+ここでは単純なSphere関数を使います。
 
 ```python
 import numpy as np
@@ -27,6 +31,9 @@ SEED = 0
 Passing an `accuracy_evaluator` to `SurrogateManager` computes accuracy on every fit and records it in `surrogate_manager.last_accuracy`.
 
 `LOOAccuracyEvaluator` computes accuracy via leave-one-out cross-validation on the current training data, without preparing any additional held-out data.
+
+`LocalSurrogateManager`のコンストラクタにはSurrogateと精度評価器を渡します。
+AcquisitionFunctionは `Optimizer.set_acquisition()` で別に設定します。
 
 ```python
 from saealib import (
@@ -65,7 +72,6 @@ algorithm = GA(
 
 surrogate_manager = LocalSurrogateManager(
     RBFSurrogate(gaussian_kernel, dim=DIM),
-    MeanPrediction(),
     accuracy_evaluator=LOOAccuracyEvaluator(),
 )
 
@@ -96,6 +102,7 @@ optimizer = (
     .set_initializer(initializer)
     .set_algorithm(algorithm)
     .set_surrogate_manager(surrogate_manager)
+    .set_acquisition(MeanPrediction())
     .set_strategy(ib_strategy)
     .set_termination(Termination(max_fe(600)))
 )

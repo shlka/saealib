@@ -1,3 +1,7 @@
+---
+primary_layer: layer2
+---
+
 # Surrogate Models
 
 ## Base
