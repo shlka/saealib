@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 02:51+0900\n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,37 +19,39 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../../components/surrogate_switching.md:1
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:6
 msgid "AccuracyBasedSurrogateSwitcher"
 msgstr "AccuracyBasedSurrogateSwitcher"
 
-#: ../../../components/surrogate_switching.md:3
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:8
 msgid ""
 "The mechanism for dynamically switching `SurrogateManager` or "
 "`OptimizationStrategy` based on surrogate accuracy is made of three "
 "independent concerns, combined."
 msgstr "サロゲートの精度に応じて`SurrogateManager`や`OptimizationStrategy`を動的に切り替える仕組みは、3つの独立した関心事の組み合わせでできています。"
 
-#: ../../../components/surrogate_switching.md:5
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:10
 msgid ""
 "**Accuracy metric** (`SurrogateAccuracyMetric`): Computes a scalar value "
 "from a single fit/predict pair"
 msgstr "**精度指標**（`SurrogateAccuracyMetric`）：1回のfit/predictペアからスカラー値を計算する"
 
-#: ../../../components/surrogate_switching.md:6
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:11
 msgid ""
 "**Accuracy evaluation method** (`AccuracyEvaluator`): Decides how to "
 "measure the surrogate's generalization performance using the accuracy "
 "metric (cross-validation, held-out, etc.)"
-msgstr "**精度評価方法**（`AccuracyEvaluator`）：精度指標を使って、サロゲートの汎化性能をどう測るか（交差検証、held-outなど）を決める"
+msgstr ""
+"**精度評価方法**（`AccuracyEvaluator`）：精度指標を使って、サロゲートの汎化性能をどう測るか（交差検証、held-"
+"outなど）を決める"
 
-#: ../../../components/surrogate_switching.md:7
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:12
 msgid ""
 "**Switching decision** (`AccuracyBasedSurrogateSwitcher`): Takes the "
 "evaluation result and decides which component or parameter to use next"
 msgstr "**切り替え判断**（`AccuracyBasedSurrogateSwitcher`）：評価結果を受けて、次に使うコンポーネントやパラメータを決める"
 
-#: ../../../components/surrogate_switching.md:9
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:14
 msgid ""
 "The accuracy evaluation method is injected as the `accuracy_evaluator` "
 "argument on things like `GlobalSurrogateManager`, and its result is "
@@ -58,201 +60,236 @@ msgid ""
 " to be used inside an `iterate()` loop. Because the high-level API "
 "(`minimize`/`maximize`) provides no way to swap components mid-run, these"
 " Switchers can't be used there."
-msgstr "精度評価方法は`GlobalSurrogateManager`などの`accuracy_evaluator`引数として注入され、その結果は`surrogate_manager.last_accuracy`プロパティを経由して切り替え判断へ渡されます。 この一連の仕組みは`iterate()`ループでの利用を前提としています。 高レベルAPI（`minimize`/`maximize`）は実行中のコンポーネント差し替え手段を提供しないため、これらのSwitcherは使えません。"
+msgstr ""
+"精度評価方法は`GlobalSurrogateManager`などの`accuracy_evaluator`引数として注入され、その結果は`surrogate_manager.last_accuracy`プロパティを経由して切り替え判断へ渡されます。"
+" この一連の仕組みは`iterate()`ループでの利用を前提としています。 "
+"高レベルAPI（`minimize`/`maximize`）は実行中のコンポーネント差し替え手段を提供しないため、これらのSwitcherは使えません。"
 
-#: ../../../components/surrogate_switching.md:13
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:18
+msgid "SurrogateSwitcher's role"
+msgstr "SurrogateSwitcherの役割"
+
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:20
+msgid ""
+"It separates and combines the accuracy metric, accuracy evaluation, and "
+"switching decision to choose the next `SurrogateManager` or "
+"`OptimizationStrategy` configuration."
+msgstr "この仕組みは、精度指標、精度評価、切り替え判断を分離して組み合わせ、次に使う`SurrogateManager`または`OptimizationStrategy`の構成を決めます。"
+
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:22
 msgid "Accuracy metric: SurrogateAccuracyMetric"
 msgstr "精度指標：SurrogateAccuracyMetric"
 
-#: ../../../components/surrogate_switching.md:15
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:24
 msgid ""
 "`SurrogateAccuracyMetric` requires two things to be implemented: `name` "
 "(a property) and `compute(y_true, y_pred) -> float`."
-msgstr "`SurrogateAccuracyMetric`が実装を要求するのは`name`（プロパティ）と`compute(y_true, y_pred) -> float`の2つです。"
+msgstr ""
+"`SurrogateAccuracyMetric`が実装を要求するのは`name`（プロパティ）と`compute(y_true, y_pred)"
+" -> float`の2つです。"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "Class"
 msgstr "クラス"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "Range"
 msgstr "範囲"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "Meaning"
 msgstr "意味"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`SpearmanCorrelation`"
 msgstr "`SpearmanCorrelation`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`[-1, 1]`, higher is better"
 msgstr "`[-1, 1]`、高いほど良い"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 #, python-brace-format
 msgid ""
 "The average per-objective Spearman rank correlation. Based on the view "
 "that rank preservation matters for EA {cite}`yu2019spearman`"
 msgstr "目的ごとのSpearman順位相関の平均。EAではランクの保存性が重要という観点{cite}`yu2019spearman`に基づく"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`RMSE`"
 msgstr "`RMSE`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`[0, ∞)`, lower is better"
 msgstr "`[0, ∞)`、低いほど良い"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "Root mean squared error"
 msgstr "二乗平均平方根誤差"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`R2Score`"
 msgstr "`R2Score`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`(-∞, 1]`, higher is better"
 msgstr "`(-∞, 1]`、高いほど良い"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "Coefficient of determination"
 msgstr "決定係数"
 
-#: ../../../components/surrogate_switching.md:23
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:32
 msgid ""
 "If `metrics` is omitted from `AccuracyEvaluator`'s constructor, all three"
 " metrics are used by default."
 msgstr "`AccuracyEvaluator`のコンストラクタで`metrics`を省略すると、この3指標全てが既定として使われます。"
 
-#: ../../../components/surrogate_switching.md:25
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:34
 msgid "Accuracy evaluation method: AccuracyEvaluator"
 msgstr "精度評価方法：AccuracyEvaluator"
 
-#: ../../../components/surrogate_switching.md:27
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:36
 msgid ""
 "`AccuracyEvaluator` requires only one method, `evaluate(surrogate, "
 "train_x, train_y) -> SurrogateAccuracy`, to be implemented."
-msgstr "`AccuracyEvaluator`が実装を要求するのは`evaluate(surrogate, train_x, train_y) -> SurrogateAccuracy`の1つだけです。"
+msgstr ""
+"`AccuracyEvaluator`が実装を要求するのは`evaluate(surrogate, train_x, train_y) -> "
+"SurrogateAccuracy`の1つだけです。"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "Parameters"
 msgstr "パラメータ"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "Evaluation method"
 msgstr "評価方法"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`KFoldAccuracyEvaluator`"
 msgstr "`KFoldAccuracyEvaluator`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`metrics=None, n_splits=5`"
 msgstr "`metrics=None, n_splits=5`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "k-fold cross-validation, retraining a copy of the surrogate per fold"
 msgstr "サロゲートをfoldごとに複製して再学習するk分割交差検証"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`LOOAccuracyEvaluator`"
 msgstr "`LOOAccuracyEvaluator`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`metrics=None`"
 msgstr "`metrics=None`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid ""
 "Equivalent to `KFoldAccuracyEvaluator` with `n_splits=n_samples` (leave-"
 "one-out cross-validation)"
 msgstr "`n_splits=n_samples`の`KFoldAccuracyEvaluator`と等価（1件抜き交差検証）"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`HeldOutAccuracyEvaluator`"
 msgstr "`HeldOutAccuracyEvaluator`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`held_x, held_y, metrics=None`"
 msgstr "`held_x, held_y, metrics=None`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid ""
 "Evaluates an already-fitted surrogate on the given held-out data, without"
 " retraining"
 msgstr "既にfit済みのサロゲートを再学習せず、指定したheld-outデータで評価する"
 
-#: ../../../components/surrogate_switching.md:35
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:44
 #, python-brace-format
 msgid ""
 "`HeldOutAccuracyEvaluator` is used for comparison against recent true "
 "evaluation points {cite}`hanawa2025switching`."
 msgstr "`HeldOutAccuracyEvaluator`は、直近の真の評価点との比較用途{cite}`hanawa2025switching`で使います。"
 
-#: ../../../components/surrogate_switching.md:37
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:46
 msgid ""
 "`SurrogateAccuracy` (`metrics: dict[str, float]`, `n_samples: int`) is a "
 "simple container holding the evaluation result, with `get(name, "
 "default=nan)` to retrieve a value by metric name."
-msgstr "`SurrogateAccuracy`（`metrics: dict[str, float]`, `n_samples: int`）は、評価結果を保持する単純なコンテナで、`get(name, default=nan)`で指標名から値を取り出します。"
+msgstr ""
+"`SurrogateAccuracy`（`metrics: dict[str, float]`, `n_samples: "
+"int`）は、評価結果を保持する単純なコンテナで、`get(name, default=nan)`で指標名から値を取り出します。"
 
-#: ../../../components/surrogate_switching.md:39
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:48
 msgid "Switching decision: AccuracyBasedSurrogateSwitcher"
 msgstr "切り替え判断：AccuracyBasedSurrogateSwitcher"
 
-#: ../../../components/surrogate_switching.md:41
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:50
 msgid ""
 "`AccuracyBasedSurrogateSwitcher` requires only one method, "
-"`switch(accuracy: SurrogateAccuracy | None) -> T`, to be implemented. "
-"Called inside an `iterate()` loop, paired with `optimizer.set_*()`."
-msgstr "`AccuracyBasedSurrogateSwitcher`が実装を要求するのは`switch(accuracy: SurrogateAccuracy | None) -> T`の1つだけです。 `iterate()`ループの中で`optimizer.set_*()`と組み合わせて呼びます。"
+"`switch(accuracy: SurrogateAccuracy | None) -> T`, to be implemented. It "
+"chooses the next component or parameter from the accuracy result. "
+"Applying that choice to the Runtime plan is a separate operation."
+msgstr ""
+"`AccuracyBasedSurrogateSwitcher`が実装する必要があるメソッドは`switch(accuracy: "
+"SurrogateAccuracy | None) -> "
+"T`の1つだけです。精度結果から次のコンポーネントまたはパラメータを選びます。その選択をRuntimeの計画へ適用する操作は別です。"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:53
+msgid ""
+"The following example changes the configuration with `iterate()` and "
+"`optimizer.set_*()`. The execution environment detects the change, "
+"recompiles the plan, and applies it from the next generation. This "
+"procedure works on both the Stage compatibility path and the graph-native"
+" path."
+msgstr "次の例では、`iterate()`と`optimizer.set_*()`で構成を変更します。実行環境が変更を検出して計画を再コンパイルし、次の世代から変更を適用します。この手順は、反復中に構成を変更する他のケースにも使えます。"
+
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "What it switches"
-msgstr "切り替え対象"
+msgstr "切り替える対象"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`ManagerSwitcher`"
 msgstr "`ManagerSwitcher`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`primary, fallback, *, metric=\"spearman\", threshold=0.5`"
 msgstr "`primary, fallback, *, metric=\"spearman\", threshold=0.5`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`SurrogateManager`"
 msgstr "`SurrogateManager`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`StrategySwitcher`"
 msgstr "`StrategySwitcher`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`primary, fallback, *, metric=\"spearman\", threshold=0.56`"
 msgstr "`primary, fallback, *, metric=\"spearman\", threshold=0.56`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`OptimizationStrategy`"
 msgstr "`OptimizationStrategy`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`GenCtrlSwitcher`"
 msgstr "`GenCtrlSwitcher`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid ""
 "`*, gm_max=5, gm_min=0, update_rate=0.5, metric=\"spearman\", "
 "initial_error=0.5`"
-msgstr "`*, gm_max=5, gm_min=0, update_rate=0.5, metric=\"spearman\", initial_error=0.5`"
+msgstr ""
+"`*, gm_max=5, gm_min=0, update_rate=0.5, metric=\"spearman\", "
+"initial_error=0.5`"
 
-#: ../../../components/surrogate_switching.md
+#: ../../concepts/surrogate_modeling/surrogate_switching.md
 msgid "`gen_ctrl` (an integer)"
 msgstr "`gen_ctrl`（整数）"
 
-#: ../../../components/surrogate_switching.md:58
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:70
 #, python-brace-format
 msgid ""
 "`ManagerSwitcher`/`StrategySwitcher` are simple binary switches, "
@@ -260,9 +297,12 @@ msgid ""
 " and `fallback` otherwise. `StrategySwitcher`'s default threshold `0.56` "
 "is based on the PS/IB-GB switching setting from "
 "{cite}`hanawa2025switching`."
-msgstr "`ManagerSwitcher`/`StrategySwitcher`は、指定した指標が閾値以上なら`primary`、そうでなければ`fallback`を返す単純な二値切り替えです。 `StrategySwitcher`の既定閾値`0.56`は、{cite}`hanawa2025switching`によるPS/IB-GB切り替えの設定値に基づきます。"
+msgstr ""
+"`ManagerSwitcher`/`StrategySwitcher`は、指定した指標が閾値以上なら`primary`、そうでなければ`fallback`を返す単純な二値切り替えです。"
+" `StrategySwitcher`の既定閾値`0.56`は、{cite}`hanawa2025switching`によるPS/IB-"
+"GB切り替えの設定値に基づきます。"
 
-#: ../../../components/surrogate_switching.md:61
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:73
 #, python-brace-format
 msgid ""
 "Rather than a binary switch, `GenCtrlSwitcher` continuously adjusts "
@@ -270,242 +310,111 @@ msgid ""
 "it holds state — a smoothed error estimate in the public attribute "
 "`smoothed_error` — use one instance per `run`. The `int` returned by "
 "`GenCtrlSwitcher.switch()` is meant to be passed directly to "
-"[GenerationBasedStrategy](strategies.md)'s `gen_ctrl` argument."
-msgstr "`GenCtrlSwitcher`は、二値切り替えではなく`gen_ctrl`を指数平滑化で連続的に調整します{cite}`repicky2017genctrl`。 公開属性`smoothed_error`に平滑化済みの誤差推定値を保持する状態を持つため、1回の`run`につき1つのインスタンスを使います。 `GenCtrlSwitcher.switch()`が返す`int`は、そのまま[GenerationBasedStrategy](strategies.md)の`gen_ctrl`引数に渡す想定です。"
+"[GenerationBasedStrategy](../execution_and_evaluation/strategies.md)'s "
+"`gen_ctrl` argument."
+msgstr ""
+"`GenCtrlSwitcher`は、二値切り替えではなく`gen_ctrl`を指数平滑化で連続的に調整します{cite}`repicky2017genctrl`。"
+" 公開属性`smoothed_error`に平滑化済みの誤差推定値を保持する状態を持つため、1回の`run`につき1つのインスタンスを使います。 "
+"`GenCtrlSwitcher.switch()`が返す`int`は、そのまま[GenerationBasedStrategy](../execution_and_evaluation/strategies.md)の`gen_ctrl`引数に渡す想定です。"
 
-#: ../../../components/surrogate_switching.md:65
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:77
+msgid ""
+"For the path where a component requests recompilation, see "
+"[OptimizationStrategy](../execution_and_evaluation/strategies.md)'s "
+"\"Behavior of runtime swapping\"."
+msgstr "コンポーネント側から再コンパイルを要求する経路については、[OptimizationStrategy](../execution_and_evaluation/strategies.md)の「ランタイム差し替えの動作」を参照してください。"
+
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:79
 msgid "Implementing a custom Switcher"
 msgstr "独自Switcherの実装方法"
 
-#: ../../../components/surrogate_switching.md:67
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:81
 msgid ""
 "If you need custom switching logic, subclass "
 "`AccuracyBasedSurrogateSwitcher` and implement only `switch()`."
 msgstr "独自の切り替えロジックが必要な場合は、`AccuracyBasedSurrogateSwitcher`を継承して`switch()`だけを実装すればよいです。"
 
-#: ../../../components/surrogate_switching.md:82
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:96
 msgid "Related components"
 msgstr "関連コンポーネント"
 
-#: ../../../components/surrogate_switching.md:84
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:98
 msgid ""
 "[SurrogateManager](surrogate_manager.md): The `accuracy_evaluator` "
 "argument and `last_accuracy` property"
 msgstr "[SurrogateManager](surrogate_manager.md)：`accuracy_evaluator`引数と`last_accuracy`プロパティ"
 
-#: ../../../components/surrogate_switching.md:85
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:99
 msgid ""
-"[strategies](strategies.md): What `StrategySwitcher`/`GenCtrlSwitcher` "
-"switch"
-msgstr "[strategies](strategies.md)：`StrategySwitcher`/`GenCtrlSwitcher`が切り替える対象"
+"[strategies](../execution_and_evaluation/strategies.md): What "
+"`StrategySwitcher`/`GenCtrlSwitcher` switch"
+msgstr "[strategies](../execution_and_evaluation/strategies.md)：`StrategySwitcher`/`GenCtrlSwitcher`が切り替える対象"
 
-#: ../../../components/surrogate_switching.md:87
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:101
 msgid "References"
 msgstr "参照"
 
-#: ../../../components/surrogate_switching.md:89
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:103
 #, python-brace-format
 msgid "{py:class}`saealib.AccuracyBasedSurrogateSwitcher`"
 msgstr "{py:class}`saealib.AccuracyBasedSurrogateSwitcher`"
 
-#: ../../../components/surrogate_switching.md:90
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:104
 #, python-brace-format
 msgid "{py:class}`saealib.ManagerSwitcher`"
 msgstr "{py:class}`saealib.ManagerSwitcher`"
 
-#: ../../../components/surrogate_switching.md:91
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:105
 #, python-brace-format
 msgid "{py:class}`saealib.StrategySwitcher`"
 msgstr "{py:class}`saealib.StrategySwitcher`"
 
-#: ../../../components/surrogate_switching.md:92
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:106
 #, python-brace-format
 msgid "{py:class}`saealib.GenCtrlSwitcher`"
 msgstr "{py:class}`saealib.GenCtrlSwitcher`"
 
-#: ../../../components/surrogate_switching.md:93
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:107
 #, python-brace-format
 msgid "{py:class}`saealib.SurrogateAccuracyMetric`"
 msgstr "{py:class}`saealib.SurrogateAccuracyMetric`"
 
-#: ../../../components/surrogate_switching.md:94
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:108
 #, python-brace-format
 msgid "{py:class}`saealib.SpearmanCorrelation`"
 msgstr "{py:class}`saealib.SpearmanCorrelation`"
 
-#: ../../../components/surrogate_switching.md:95
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:109
 #, python-brace-format
 msgid "{py:class}`saealib.RMSE`"
 msgstr "{py:class}`saealib.RMSE`"
 
-#: ../../../components/surrogate_switching.md:96
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:110
 #, python-brace-format
 msgid "{py:class}`saealib.R2Score`"
 msgstr "{py:class}`saealib.R2Score`"
 
-#: ../../../components/surrogate_switching.md:97
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:111
 #, python-brace-format
 msgid "{py:class}`saealib.AccuracyEvaluator`"
 msgstr "{py:class}`saealib.AccuracyEvaluator`"
 
-#: ../../../components/surrogate_switching.md:98
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:112
 #, python-brace-format
 msgid "{py:class}`saealib.KFoldAccuracyEvaluator`"
 msgstr "{py:class}`saealib.KFoldAccuracyEvaluator`"
 
-#: ../../../components/surrogate_switching.md:99
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:113
 #, python-brace-format
 msgid "{py:class}`saealib.LOOAccuracyEvaluator`"
 msgstr "{py:class}`saealib.LOOAccuracyEvaluator`"
 
-#: ../../../components/surrogate_switching.md:100
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:114
 #, python-brace-format
 msgid "{py:class}`saealib.HeldOutAccuracyEvaluator`"
 msgstr "{py:class}`saealib.HeldOutAccuracyEvaluator`"
 
-#: ../../../components/surrogate_switching.md:101
+#: ../../concepts/surrogate_modeling/surrogate_switching.md:115
 #, python-brace-format
 msgid "{py:class}`saealib.SurrogateAccuracy`"
 msgstr "{py:class}`saealib.SurrogateAccuracy`"
-
-#~ msgid "サロゲートの精度に応じて`SurrogateManager`や`OptimizationStrategy`を動的に切り替える仕組みは、3つの独立した関心事の組み合わせでできている。"
-#~ msgstr ""
-
-#~ msgid "**精度指標**（`SurrogateAccuracyMetric`）：1回のfit/predictペアからスカラー値を計算する"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "**精度評価方法**（`AccuracyEvaluator`）：精度指標を使って、サロゲートの汎化性能をどう測るか（交差検証"
-#~ "、held-outなど）を決める"
-#~ msgstr ""
-
-#~ msgid "**切り替え判断**（`AccuracyBasedSurrogateSwitcher`）：評価結果を受けて、次に使うコンポーネントやパラメータを決める"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "精度評価方法は`GlobalSurrogateManager`などの`accuracy_evaluator`引数として注入され、その結果は`surrogate_manager.last_accuracy`プロパティを経由して切り替え判断へ渡される。"
-#~ " この一連の仕組みは`iterate()`ループでの利用を前提としている。 "
-#~ "高レベルAPI（`minimize`/`maximize`）は実行中のコンポーネント差し替え手段を提供しないため、これらのSwitcherは使えない。"
-#~ msgstr ""
-
-#~ msgid "精度指標：SurrogateAccuracyMetric"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`SurrogateAccuracyMetric`が実装を要求するのは`name`（プロパティ）と`compute(y_true, "
-#~ "y_pred) -> float`の2つである。"
-#~ msgstr ""
-
-#~ msgid "クラス"
-#~ msgstr ""
-
-#~ msgid "範囲"
-#~ msgstr ""
-
-#~ msgid "意味"
-#~ msgstr ""
-
-#~ msgid "`[-1, 1]`、高いほど良い"
-#~ msgstr ""
-
-#~ msgid "目的ごとのSpearman順位相関の平均。EAではランクの保存性が重要という観点{cite}`yu2019spearman`に基づく"
-#~ msgstr ""
-
-#~ msgid "`[0, ∞)`、低いほど良い"
-#~ msgstr ""
-
-#~ msgid "二乗平均平方根誤差"
-#~ msgstr ""
-
-#~ msgid "`(-∞, 1]`、高いほど良い"
-#~ msgstr ""
-
-#~ msgid "決定係数"
-#~ msgstr ""
-
-#~ msgid "`AccuracyEvaluator`のコンストラクタで`metrics`を省略すると、この3指標全てが既定として使われる。"
-#~ msgstr ""
-
-#~ msgid "精度評価方法：AccuracyEvaluator"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`AccuracyEvaluator`が実装を要求するのは`evaluate(surrogate, train_x, "
-#~ "train_y) -> SurrogateAccuracy`の1つだけである。"
-#~ msgstr ""
-
-#~ msgid "パラメータ"
-#~ msgstr ""
-
-#~ msgid "評価方法"
-#~ msgstr ""
-
-#~ msgid "サロゲートをfoldごとに複製して再学習するk分割交差検証"
-#~ msgstr ""
-
-#~ msgid "`n_splits=n_samples`の`KFoldAccuracyEvaluator`と等価（1件抜き交差検証）"
-#~ msgstr ""
-
-#~ msgid "既にfit済みのサロゲートを再学習せず、指定したheld-outデータで評価する"
-#~ msgstr ""
-
-#~ msgid "`HeldOutAccuracyEvaluator`は、直近の真の評価点との比較用途{cite}`hanawa2025switching`で使う。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`SurrogateAccuracy`（`metrics: dict[str, float]`, "
-#~ "`n_samples: int`）は、評価結果を保持する単純なコンテナで、`get(name, "
-#~ "default=nan)`でメトリクス名から値を取り出す。"
-#~ msgstr ""
-
-#~ msgid "切り替え判断：AccuracyBasedSurrogateSwitcher"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`AccuracyBasedSurrogateSwitcher`が実装を要求するのは`switch(accuracy: "
-#~ "SurrogateAccuracy | None) -> T`の1つだけである。 "
-#~ "`iterate()`ループの中で`optimizer.set_*()`と組み合わせて呼ぶ。"
-#~ msgstr ""
-
-#~ msgid "切り替え対象"
-#~ msgstr ""
-
-#~ msgid "`gen_ctrl`（整数）"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`ManagerSwitcher`/`StrategySwitcher`は、指定したメトリクスが閾値以上なら`primary`、そうでなければ`fallback`を返す単純な二値切り替えである。"
-#~ " `StrategySwitcher`の既定閾値`0.56`は、{cite}`hanawa2025switching`によるPS"
-#~ "/IB-GB切り替えの実装である。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`GenCtrlSwitcher`は、二値切り替えではなく`gen_ctrl`を指数平滑化で連続的に調整する{cite}`repicky2017genctrl`。"
-#~ " "
-#~ "公開属性`smoothed_error`に平滑化済みの誤差推定値を保持する状態を持つため、1回の`run`につき1つのインスタンスを使う。"
-#~ " "
-#~ "`GenCtrlSwitcher.switch()`が返す`int`は、そのまま[GenerationBasedStrategy](strategies.md)の`gen_ctrl`引数に渡す想定である。"
-#~ msgstr ""
-
-#~ msgid "独自Switcherの実装方法"
-#~ msgstr ""
-
-#~ msgid "独自の切り替えロジックが必要な場合は、`AccuracyBasedSurrogateSwitcher`を継承して`switch()`だけを実装すればよい。"
-#~ msgstr ""
-
-#~ msgid "関連コンポーネント"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "[SurrogateManager](surrogate_manager.md) — "
-#~ "`accuracy_evaluator`引数と`last_accuracy`プロパティ"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "[strategies](strategies.md) — "
-#~ "`StrategySwitcher`/`GenCtrlSwitcher`が切り替える対象"
-#~ msgstr ""
-
-#~ msgid "参照"
-#~ msgstr ""
-

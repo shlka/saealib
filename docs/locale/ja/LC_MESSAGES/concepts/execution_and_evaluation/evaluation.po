@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-02 10:23+0900\n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -18,99 +18,196 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../components/evaluation.md:1
+#: ../../concepts/execution_and_evaluation/evaluation.md:7
 msgid "Evaluator"
 msgstr "Evaluator"
 
-#: ../../components/evaluation.md:3
+#: ../../concepts/execution_and_evaluation/evaluation.md:9
 msgid ""
-"`OptimizationStrategy` builds an `EvaluationPlan`; its requests are then "
-"submitted by the synchronous evaluator or asynchronous scheduler. Each "
-"request converts a batch of design-variable candidates into objective "
-"values, raw constraint values, and constraint violation. Whether "
-"evaluation runs sequentially or in parallel can be switched by swapping "
-"out only `Evaluator`, without changing the pipeline-side code."
-msgstr "`OptimizationStrategy`は`EvaluationPlan`を構築し、そのリクエストを同期Evaluatorまたは非同期Schedulerが送信します。"
-" 各リクエストは設計変数の候補バッチを目的関数値、生の制約値、制約違反へ変換します。"
-" 評価を逐次実行するか並列実行するかは、パイプライン側のコードを変えずに`Evaluator`だけを差し替えて切り替えられます。"
+"`OptimizationStrategy` creates an `EvaluationPlan` and delegates "
+"evaluation to the Evaluator."
+msgstr "`OptimizationStrategy` は `EvaluationPlan` を作り、Evaluatorへ評価を委譲します。"
 
-#: ../../components/evaluation.md:6
+#: ../../concepts/execution_and_evaluation/evaluation.md:11
 msgid "Evaluator's role"
 msgstr "Evaluatorの役割"
 
-#: ../../components/evaluation.md:8
+#: ../../concepts/execution_and_evaluation/evaluation.md:13
 msgid ""
-"`Evaluator` requires only one method, `evaluate_batch(x, problem) -> "
-"EvaluationResult`, to be implemented. `x` receives the set of design "
-"variables to evaluate with shape `(n, dim)`, and it builds and returns an"
-" `EvaluationResult` using [Problem](problem.md)'s objective and "
-"constraint functions."
+"The two synchronous and asynchronous evaluation boundaries receive and "
+"return the following values."
+msgstr "同期・非同期の二つの評価境界で受け取る値と返す値は次のとおりです。"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "Boundary"
+msgstr "境界"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "Receives"
+msgstr "受け取る値"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "Returns"
+msgstr "返す値"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "Main users"
+msgstr "主な利用者"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "graph-native boundary"
+msgstr "graph-native境界"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid ""
+"`GenomeBatch → EvaluationAdapter → EvaluationPayload`, candidate IDs, "
+"proposal relations, and metadata"
+msgstr "`GenomeBatch → EvaluationAdapter → EvaluationPayload`、候補ID、提案関係、メタデータ"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid ""
+"`ObservationBatch`, including partial, out-of-order, and repeated "
+"observations"
+msgstr "部分的・順不同・反復を含む `ObservationBatch`"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "Evaluator, asynchronous Scheduler, and structured runtime"
+msgstr "Evaluator、非同期Scheduler、構造化ランタイム"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "Stage compatibility boundary"
+msgstr "Stage互換境界"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "`x`, `Problem`, and `EvaluationRequest`"
+msgstr "`x`、`Problem`、`EvaluationRequest`"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "`EvaluationResult` (`f`, `g`, `cv`, and optional `candidate_ids`)"
+msgstr "`EvaluationResult`（`f`、`g`、`cv`、任意の `candidate_ids`）"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "Compatibility Stages and sequential compatibility runtime"
+msgstr "互換Stage、sequential compatibility ランタイム"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md:20
+msgid ""
+"Requests passed to the Evaluator or asynchronous Scheduler identify "
+"candidate IDs and the items to evaluate. The Evaluator and Runtime "
+"provider can switch between synchronous and asynchronous evaluation "
+"without changing the Pipeline's candidate-generation contract. "
+"`EvaluationAdapter` converts a `GenomeBatch` into the `EvaluationPayload`"
+" accepted by the Evaluator. The Evaluator evaluates the payload and "
+"matches observations by candidate ID, proposal relation, sequence, "
+"status, source, and completion semantics rather than by row position."
+msgstr "Evaluatorまたは非同期Schedulerへ渡されるRequestは、候補IDと評価対象を識別する情報を持ちます。評価が同期か非同期かは、パイプライン側の候補生成契約を変えずにEvaluatorとランタイムプロバイダーで切り替えられます。`EvaluationAdapter`は`GenomeBatch`をEvaluatorが受け取る`EvaluationPayload`へ変換します。Evaluatorはペイロードを評価し、観測の対応付けを候補ID、提案関係、順序、状態、出所、完了の意味論で行い、行位置を前提にしません。"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md:25
+msgid ""
+"On the Stage compatibility path, use `Evaluator.evaluate_batch(...) -> "
+"EvaluationResult`. `EvaluationRequest` holds a Request ID, candidate IDs,"
+" a GenomeBatch, and metadata. Only at the compatibility boundary, "
+"`EvaluationResult` must satisfy the shape and row-count rules for `f`, "
+"`g`, and `cv`; when `candidate_ids` is provided, it must be unique and "
+"match the result row count. When `Evaluator.submit` returns "
+"`candidate_ids`, they must exactly match the request's candidate IDs. "
+"This does not require an external `ObservationBatch` to use row order."
 msgstr ""
-"`Evaluator`が実装を要求するメソッドは`evaluate_batch(x, problem) -> "
-"EvaluationResult`の1つだけです。 `x`には評価対象の設計変数群が`shape (n, "
-"dim)`で渡され、[Problem](problem.md)の目的関数と制約関数を使って`EvaluationResult`を構築して返します。"
+"Stage互換経路では`Evaluator.evaluate_batch(...) -> "
+"EvaluationResult`を使います。`EvaluationRequest`はRequest "
+"ID、候補ID、GenomeBatch、メタデータを保持します。互換性境界でのみ、`EvaluationResult`は`f`、`g`、`cv`の形状と行数の規則を満たす必要があります。`candidate_ids`を指定した場合は一意で、結果の行数と一致しなければなりません。`Evaluator.submit`が`candidate_ids`を返す場合、それらはリクエストの候補IDと完全に一致しなければなりません。外部の`ObservationBatch`に行順を使わせる必要はありません。"
 
-#: ../../components/evaluation.md:11
-msgid "`EvaluationResult` is a dataclass holding three arrays."
-msgstr "`EvaluationResult`は3つの配列を持つデータクラスです。"
-
-#: ../../components/evaluation.md:13
-msgid "**`f`**: Objective values. Shape `(n, n_obj)`"
-msgstr "**`f`**：目的関数値。`shape (n, n_obj)`"
-
-#: ../../components/evaluation.md:14
+#: ../../concepts/execution_and_evaluation/evaluation.md:31
 msgid ""
-"**`g`**: Raw constraint values. Shape `(n, n_constraints)`. `(n, 0)` if "
-"the problem has no constraints"
-msgstr "**`g`**：生の制約値。`shape (n, n_constraints)`。問題が制約を持たない場合は`(n, 0)`"
+"`EvaluationResult` is a dataclass holding evaluation-result arrays and "
+"candidate IDs."
+msgstr "`EvaluationResult` は、評価結果の配列と候補IDを保持するデータクラスです。"
 
-#: ../../components/evaluation.md:15
+#: ../../concepts/execution_and_evaluation/evaluation.md:33
+msgid "**`f`**: Objective values, with shape `(n, n_obj)`."
+msgstr "**`f`**：目的値。形状は `(n, n_obj)`。"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md:34
 msgid ""
-"**`cv`**: Aggregated constraint violation per candidate. Shape `(n,)`. "
-"All `0` if the problem has no constraints"
-msgstr "**`cv`**：候補ごとの集約された制約違反量。`shape (n,)`。問題が制約を持たない場合は全て`0`"
+"**`g`**: Raw constraint values, with shape `(n, n_constraints)`, or `(n, "
+"0)` when there are no constraints."
+msgstr "**`g`**：生の制約値。形状は `(n, n_constraints)`。制約がない場合は `(n, 0)`。"
 
-#: ../../components/evaluation.md:17
+#: ../../concepts/execution_and_evaluation/evaluation.md:35
+msgid ""
+"**`cv`**: Aggregated constraint violation for each candidate, with shape "
+"`(n,)`, or all `0` when there are no constraints."
+msgstr "**`cv`**：候補ごとの集約制約違反。形状は `(n,)`。制約がない場合はすべて `0`。"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md:36
+msgid "**`candidate_ids`**: The candidate ID corresponding to each result row."
+msgstr "**`candidate_ids`**：結果の各行に対応する候補ID。"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md:38
 msgid "Built-in Evaluators"
 msgstr "組み込みEvaluator"
 
-#: ../../components/evaluation.md
+#: ../../concepts/execution_and_evaluation/evaluation.md
 msgid "Class"
 msgstr "クラス"
 
-#: ../../components/evaluation.md
+#: ../../concepts/execution_and_evaluation/evaluation.md
 msgid "Parameters"
 msgstr "パラメータ"
 
-#: ../../components/evaluation.md
+#: ../../concepts/execution_and_evaluation/evaluation.md
 msgid "Characteristics"
 msgstr "特徴"
 
-#: ../../components/evaluation.md
+#: ../../concepts/execution_and_evaluation/evaluation.md
 msgid "`SerialEvaluator`"
 msgstr "`SerialEvaluator`"
 
-#: ../../components/evaluation.md
+#: ../../concepts/execution_and_evaluation/evaluation.md
 msgid "None"
 msgstr "なし"
 
-#: ../../components/evaluation.md
+#: ../../concepts/execution_and_evaluation/evaluation.md
 msgid "Evaluates candidates one at a time, sequentially. The default"
 msgstr "候補を1件ずつ逐次評価する。既定値"
 
-#: ../../components/evaluation.md
+#: ../../concepts/execution_and_evaluation/evaluation.md
 msgid "`JoblibEvaluator`"
 msgstr "`JoblibEvaluator`"
 
-#: ../../components/evaluation.md
+#: ../../concepts/execution_and_evaluation/evaluation.md
 msgid "`n_jobs=-1, backend=\"loky\", **joblib_kwargs`"
 msgstr "`n_jobs=-1, backend=\"loky\", **joblib_kwargs`"
 
-#: ../../components/evaluation.md
+#: ../../concepts/execution_and_evaluation/evaluation.md
 msgid "Evaluates candidates in parallel via `joblib.Parallel`"
 msgstr "`joblib.Parallel`経由で候補を並列評価する"
 
-#: ../../components/evaluation.md:24
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "`ThreadPoolEvaluator`"
+msgstr "`ThreadPoolEvaluator`"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "Executor options"
+msgstr "Executorのオプション"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "Uses a thread pool for synchronous batch evaluation"
+msgstr "スレッドプールを使った同期バッチ評価"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "`AsyncEvaluator`"
+msgstr "`AsyncEvaluator`"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "Adapter and scheduler options"
+msgstr "アダプターとスケジューラーのオプション"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md
+msgid "Submits requests and exposes nonblocking lifecycle operations"
+msgstr "リクエストを送信し、ノンブロッキングなライフサイクル操作を公開します"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md:47
 msgid ""
 "Using `JoblibEvaluator` requires the `parallel` extra (`pip install "
 "saealib[parallel]`); if not installed, it raises `ImportError` at "
@@ -123,116 +220,122 @@ msgid ""
 "island's `n_jobs` to `1` and control overall concurrency via the "
 "parallelism across islands, or use `joblib.parallel_backend` as a context"
 " manager to limit the number of inner workers. For independent completion"
-" times, use `AsyncEvaluator` with `SteadyStateStrategy`, "
+" times, combine `AsyncEvaluator`, `SteadyStateStrategy`, "
 "`AsyncEvaluationScheduler`, and "
-"`Optimizer.set_async_evaluation_scheduler()`. Each steady-state candidate"
-" can occupy its own pending request; the scheduler owns those requests "
-"and serializes population and archive updates while `collect(wait=False)`"
-" remains non-blocking."
-msgstr "`JoblibEvaluator`を使うには`parallel` extra（`pip install saealib[parallel]`）が必要で、未インストールの場合は構築時に`ImportError`になります。"
-" `backend`は`\"loky\"`（既定、cloudpickleでシリアライズするプロセスプール）のほか、`\"dask\"`/`\"ray\"`のようなサードパーティバックエンドにも1パラメータの変更で切り替えられます（対応するパッケージとクラスタが別途必要です）。"
-" Islandモデルのように複数の`JoblibEvaluator`を同時に使う構成では、CPUコアの多重予約が起こりえます。"
-" 各island側の`n_jobs`を`1`に絞ってisland間の並列度で全体の同時実行数を制御するか、`joblib.parallel_backend`をコンテキストマネージャとして使って内側のワーカー数を制限します。"
-" 評価完了時刻が独立している場合は、`SteadyStateStrategy`、`AsyncEvaluationScheduler`、`Optimizer.set_async_evaluation_scheduler()`と`AsyncEvaluator`を組み合わせます。"
-" 定常状態の各候補は個別の保留リクエストを占有でき、Schedulerがリクエストを管理し、`collect(wait=False)`の非ブロッキング性を保ちながら個体群とアーカイブの更新を直列化します。"
+"`Optimizer.set_async_evaluation_scheduler()`. Each candidate is managed "
+"as a pending Request, while the Scheduler manages capacity, budget, and "
+"Request state. `collect(wait=False)` reports progress without waiting for"
+" completion, and the Runtime orders updates to the Population and "
+"Archive."
+msgstr ""
+"`JoblibEvaluator`を使うには`parallel`追加機能（`pip install "
+"saealib[parallel]`）が必要で、未インストールなら構築時に`ImportError`が発生します。`backend`の既定値`\"loky\"`はcloudpickleでシリアライズするプロセスプールですが、1つのパラメータ変更で`\"dask\"`/`\"ray\"`などのサードパーティ製バックエンドに切り替えられます（対応パッケージとクラスタは別途必要です）。複数の`JoblibEvaluator`を同時に使う構成（アイランドモデルなど）ではCPUコアを過剰予約することがあります。各アイランドの`n_jobs`を`1`に制限してアイランド間の並列性で全体を制御するか、`joblib.parallel_backend`をコンテキストマネージャとして使って内部ワーカー数を制限してください。完了時刻が独立している場合は、`AsyncEvaluator`、`SteadyStateStrategy`、`AsyncEvaluationScheduler`、`Optimizer.set_async_evaluation_scheduler()`を組み合わせます。各候補は保留中のRequestとして管理され、Schedulerは容量、予算、Requestの状態を管理します。`collect(wait=False)`は完了を待たずに進捗を返し、PopulationとArchiveの更新順序はRuntimeが管理します。"
 
-#: ../../components/evaluation.md:35
-msgid "Swap it via `Optimizer.set_evaluator(evaluator)`."
-msgstr "`Optimizer.set_evaluator(evaluator)`で差し替えます。"
+#: ../../concepts/execution_and_evaluation/evaluation.md:55
+msgid "Swap the synchronous Evaluator with `Optimizer.set_evaluator(evaluator)`."
+msgstr "同期Evaluatorは`Optimizer.set_evaluator(evaluator)`で差し替えます。"
 
-#: ../../components/evaluation.md:37
+#: ../../concepts/execution_and_evaluation/evaluation.md:57
 msgid ""
 "`EvaluationRequest.metadata` is consumed by evaluators that expose "
 "explicit execution planners. `RepeatedEvaluation` returns one "
 "`EvaluationPlan` request per replicate with stable candidate IDs. The "
 "scheduler owns capacity, budget, and request lifecycle."
-msgstr "`EvaluationRequest.metadata`は、明示的な実行プランナーを公開するEvaluatorが消費します。"
-" `RepeatedEvaluation`は、安定した候補IDを持つリクエストを複製ごとに1つずつ含む`EvaluationPlan`を返します。"
-" Schedulerが容量、予算、リクエストのライフサイクルを管理します。"
+msgstr ""
+"`EvaluationRequest.metadata`は、明示的な実行プランナーを公開するEvaluatorが消費します。 "
+"`RepeatedEvaluation`は、安定した候補IDを持つリクエストを複製ごとに1つずつ含む`EvaluationPlan`を返します。 "
+"Schedulerが容量、予算、リクエストのライフサイクルを管理します。"
 
-#: ../../components/evaluation.md:42
+#: ../../concepts/execution_and_evaluation/evaluation.md:62
 msgid "Implementing a custom Evaluator"
 msgstr "独自Evaluatorの実装方法"
 
-#: ../../components/evaluation.md:44
+#: ../../concepts/execution_and_evaluation/evaluation.md:64
 msgid ""
-"If you need a custom execution backend, subclass `Evaluator` and "
-"implement only `evaluate_batch()`. `SerialEvaluator`'s implementation "
-"serves directly as a template."
-msgstr ""
-"独自の実行バックエンドが必要な場合は、`Evaluator`を継承して`evaluate_batch()`だけを実装すればよいです。 "
-"`SerialEvaluator`の実装がそのままテンプレートになります。"
+"The following example is a Stage-compatible synchronous Evaluator that "
+"implements `evaluate_batch()`. For non-vector Genomes, define the payload"
+" passed to the evaluation function with `EvaluationAdapter`."
+msgstr "次の例は、`evaluate_batch()`を実装するStage互換の同期Evaluatorです。ベクトルでないGenomeでは、評価関数に渡すペイロードを`EvaluationAdapter`で定義します。"
 
-#: ../../components/evaluation.md:69
+#: ../../concepts/execution_and_evaluation/evaluation.md:89
 msgid ""
-"You need to preserve the order of calling "
-"`problem.evaluate_constraints(xi)` before `problem.evaluate(xi, g_i)`. "
-"Because [ConstraintHandler](constraints.md)'s `augment_objective` "
-"corrects the objective value using the constraint values, reversing this "
-"order means the correction isn't applied correctly."
+"Keep the order that calls `problem.evaluate_constraints(xi)` before "
+"`problem.evaluate(xi, g_i)`. "
+"[ConstraintHandler](../problem_and_ranking/constraints.md) uses "
+"constraint values to correct the objective, so reversing this order "
+"applies the correction incorrectly."
 msgstr ""
-"`problem.evaluate_constraints(xi)`を呼んでから`problem.evaluate(xi, "
-"g_i)`を呼ぶ、という順序を保つ必要があります。 "
-"[ConstraintHandler](constraints.md)の`augment_objective`が制約値を使って目的関数値を補正するため、この順序を逆にすると補正が正しく反映されません。"
+"`problem.evaluate_constraints(xi)` を `problem.evaluate(xi, g_i)` "
+"より先に呼び出す順序を維持します。[ConstraintHandler](../problem_and_ranking/constraints.md)"
+" は制約値を使って目的値を補正するため、この順序を逆にすると補正が正しく適用されません。"
 
-#: ../../components/evaluation.md:72
+#: ../../concepts/execution_and_evaluation/evaluation.md:92
 msgid "Related components"
 msgstr "関連コンポーネント"
 
-#: ../../components/evaluation.md:74
+#: ../../concepts/execution_and_evaluation/evaluation.md:94
 msgid ""
-"[Problem](problem.md): Where the objective and constraint functions "
-"evaluated by `evaluate_batch` are defined"
-msgstr "[Problem](problem.md)：`evaluate_batch`が評価する目的関数と制約関数の定義元"
+"[Problem](../problem_and_ranking/problem.md): Where the objective and "
+"constraint functions evaluated by `evaluate_batch` are defined"
+msgstr ""
+"[Problem](../problem_and_ranking/problem.md)：`evaluate_batch` "
+"が評価する目的関数と制約関数の定義"
 
-#: ../../components/evaluation.md:75
+#: ../../concepts/execution_and_evaluation/evaluation.md:95
 msgid ""
-"[ConstraintHandler](constraints.md): Aggregates constraint violation and "
-"corrects the objective value inside `problem.evaluate`"
-msgstr "[ConstraintHandler](constraints.md)：`problem.evaluate`の内部で制約違反の集約と目的関数の補正を行う"
+"[ConstraintHandler](../problem_and_ranking/constraints.md): Aggregates "
+"constraint violation and corrects the objective value inside "
+"`problem.evaluate`"
+msgstr "[ConstraintHandler](../problem_and_ranking/constraints.md)：`problem.evaluate`内で制約違反を集約し、目的値を補正します"
 
-#: ../../components/evaluation.md:76
+#: ../../concepts/execution_and_evaluation/evaluation.md:96
 msgid ""
 "[Initializer](initialization.md): Uses `Evaluator` to evaluate the "
 "initial population"
 msgstr "[Initializer](initialization.md)：初期個体群の評価に`Evaluator`を使う"
 
-#: ../../components/evaluation.md:77
+#: ../../concepts/execution_and_evaluation/evaluation.md:97
 msgid ""
 "[strategies](strategies.md): Uses `Evaluator` to evaluate candidates each"
 " generation"
 msgstr "[strategies](strategies.md)：各世代の候補評価に`Evaluator`を使う"
 
-#: ../../components/evaluation.md:79
+#: ../../concepts/execution_and_evaluation/evaluation.md:98
+msgid ""
+"[Feedback](../observation_and_state/feedback.md): The Feedback structure "
+"that passes evaluation results to the Algorithm"
+msgstr "[Feedback](../observation_and_state/feedback.md)：評価結果をAlgorithmへ渡すFeedbackの構成"
+
+#: ../../concepts/execution_and_evaluation/evaluation.md:100
 msgid "References"
 msgstr "参照"
 
-#: ../../components/evaluation.md:81
+#: ../../concepts/execution_and_evaluation/evaluation.md:102
 #, python-brace-format
 msgid "{py:class}`saealib.Evaluator`"
 msgstr "{py:class}`saealib.Evaluator`"
 
-#: ../../components/evaluation.md:82
+#: ../../concepts/execution_and_evaluation/evaluation.md:103
 #, python-brace-format
 msgid "{py:class}`saealib.SerialEvaluator`"
 msgstr "{py:class}`saealib.SerialEvaluator`"
 
-#: ../../components/evaluation.md:83
+#: ../../concepts/execution_and_evaluation/evaluation.md:104
 #, python-brace-format
 msgid "{py:class}`saealib.JoblibEvaluator`"
 msgstr "{py:class}`saealib.JoblibEvaluator`"
 
-#: ../../components/evaluation.md:84
+#: ../../concepts/execution_and_evaluation/evaluation.md:105
 #, python-brace-format
 msgid "{py:class}`saealib.AsyncEvaluator`"
 msgstr "{py:class}`saealib.AsyncEvaluator`"
 
-#: ../../components/evaluation.md:85
+#: ../../concepts/execution_and_evaluation/evaluation.md:106
 #, python-brace-format
 msgid "{py:class}`saealib.AsyncEvaluationScheduler`"
 msgstr "{py:class}`saealib.AsyncEvaluationScheduler`"
 
-#: ../../components/evaluation.md:86
+#: ../../concepts/execution_and_evaluation/evaluation.md:107
 #, python-brace-format
 msgid "{py:class}`saealib.EvaluationResult`"
 msgstr "{py:class}`saealib.EvaluationResult`"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-02 10:23+0900\n"
+"POT-Creation-Date: 2026-08-15 10:57+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,11 +19,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../components/parent_selection.md:1
+#: ../../concepts/search_algorithms/parent_selection.md:6
 msgid "ParentSelection"
 msgstr "ParentSelection"
 
-#: ../../components/parent_selection.md:3
+#: ../../concepts/search_algorithms/parent_selection.md:8
 msgid ""
 "`GA` (`saealib.GA`) delegates choosing the parent individuals used for "
 "crossover from the population to `ParentSelection`, a swappable operator."
@@ -34,46 +34,47 @@ msgstr ""
 "`GA`(`saealib.GA`)は、交叉に使う親個体を個体群から選ぶ処理を、`ParentSelection`という差し替え可能な演算子に委ねています。"
 " 選択圧（優れた個体をどれだけ優遇するか）を変えたいときは、`GA`本体ではなくこの`ParentSelection`だけを差し替えればよいです。"
 
-#: ../../components/parent_selection.md:6
+#: ../../concepts/search_algorithms/parent_selection.md:11
 msgid "ParentSelection's role"
 msgstr "ParentSelectionの役割"
 
-#: ../../components/parent_selection.md:8
+#: ../../concepts/search_algorithms/parent_selection.md:13
 msgid ""
 "`ParentSelection` requires only one method, `select(ctx, population, "
-"n_pair, n_parents, rng=...)`, to be implemented. It returns the indices "
-"of `n_pair` groups of parents, each consisting of `n_parents` "
-"individuals, as an array of shape `(n_pair, n_parents)`."
+"n_pair, n_parents, rng)`, to be implemented. It returns the indices of "
+"`n_pair` groups of parents, each consisting of `n_parents` individuals, "
+"as an array of shape `(n_pair, n_parents)`."
 msgstr ""
-"`ParentSelection`が実装を要求するメソッドは`select(ctx, population, n_pair, n_parents,"
-" rng=...)`の1つだけです。 `n_pair`組、それぞれ`n_parents`個体からなる親のインデックスを、`shape "
-"(n_pair, n_parents)`の配列で返します。"
+"`ParentSelection`が実装する必要があるメソッドは`select(ctx, population, n_pair, "
+"n_parents, "
+"rng)`の1つだけです。`n_parents`個体からなる親のグループを`n_pair`組選び、そのインデックスを形状`(n_pair, "
+"n_parents)`の配列として返します。"
 
-#: ../../components/parent_selection.md:11
+#: ../../concepts/search_algorithms/parent_selection.md:16
 msgid "Built-in ParentSelections"
 msgstr "組み込みParentSelection"
 
-#: ../../components/parent_selection.md
+#: ../../concepts/search_algorithms/parent_selection.md
 msgid "Class"
 msgstr "クラス"
 
-#: ../../components/parent_selection.md
+#: ../../concepts/search_algorithms/parent_selection.md
 msgid "Parameters"
 msgstr "パラメータ"
 
-#: ../../components/parent_selection.md
+#: ../../concepts/search_algorithms/parent_selection.md
 msgid "Characteristics"
 msgstr "特徴"
 
-#: ../../components/parent_selection.md
+#: ../../concepts/search_algorithms/parent_selection.md
 msgid "`TournamentSelection`"
 msgstr "`TournamentSelection`"
 
-#: ../../components/parent_selection.md
+#: ../../concepts/search_algorithms/parent_selection.md
 msgid "`tournament_size`"
 msgstr "`tournament_size`"
 
-#: ../../components/parent_selection.md
+#: ../../concepts/search_algorithms/parent_selection.md
 #, python-brace-format
 msgid ""
 "Randomly draws `tournament_size` individuals and picks the best, repeated"
@@ -82,42 +83,43 @@ msgstr ""
 "`tournament_size`個体をランダムに抽出し、最良個体を選ぶ操作を`n_pair * "
 "n_parents`回繰り返す{cite}`miller1995tournament`"
 
-#: ../../components/parent_selection.md
+#: ../../concepts/search_algorithms/parent_selection.md
 msgid "`SequentialSelection`"
 msgstr "`SequentialSelection`"
 
-#: ../../components/parent_selection.md
+#: ../../concepts/search_algorithms/parent_selection.md
 msgid "None"
 msgstr "なし"
 
-#: ../../components/parent_selection.md
+#: ../../concepts/search_algorithms/parent_selection.md
 msgid "Performs no comparison; simply assigns population indices in order"
 msgstr "比較を行わず、個体群のインデックスを順番に割り当てるだけ"
 
-#: ../../components/parent_selection.md
+#: ../../concepts/search_algorithms/parent_selection.md
 msgid "`LinearRankSelection`"
 msgstr "`LinearRankSelection`"
 
-#: ../../components/parent_selection.md
+#: ../../concepts/search_algorithms/parent_selection.md
 msgid "Selection with a linear rank-based probability derived from rank"
 msgstr "順位から導いた線形ランクベースの確率で選択する"
 
-#: ../../components/parent_selection.md:19
+#: ../../concepts/search_algorithms/parent_selection.md:24
 #, python-brace-format
 msgid ""
 "`TournamentSelection` selects the best individual within each tournament "
 "by repeating 1-vs-1 comparisons via `ctx.comparator.compare_population` "
 "{cite}`blickle1996selection`. Because `compare_population` is also "
 "defined on Comparators that can't use a direct two-point comparison "
-"(`compare()`), such as [SPEA2Comparator](comparators.md) or "
-"[HypervolumeComparator](comparators.md), it works correctly regardless of"
-" which `Comparator` it's paired with."
+"(`compare()`), such as "
+"[SPEA2Comparator](../problem_and_ranking/comparators.md) or "
+"[HypervolumeComparator](../problem_and_ranking/comparators.md), it works "
+"correctly regardless of which `Comparator` it's paired with."
 msgstr ""
 "`TournamentSelection`は、`ctx.comparator.compare_population`による1対1比較を繰り返してトーナメント内の最良個体を選びます{cite}`blickle1996selection`。"
 " "
-"`compare_population`は[SPEA2Comparator](comparators.md)や[HypervolumeComparator](comparators.md)のように2点だけの直接比較（`compare()`）が使えないComparatorでも定義されているため、どの`Comparator`と組み合わせても問題なく動作します。"
+"`compare_population`は[SPEA2Comparator](../problem_and_ranking/comparators.md)や[HypervolumeComparator](../problem_and_ranking/comparators.md)のように2点だけの直接比較（`compare()`）が使えないComparatorでも定義されているため、どの`Comparator`と組み合わせても問題なく動作します。"
 
-#: ../../components/parent_selection.md:22
+#: ../../concepts/search_algorithms/parent_selection.md:27
 msgid ""
 "`SequentialSelection` performs no comparison at all, making it the "
 "simplest selection scheme, with no notion of selection pressure. It can "
@@ -126,7 +128,7 @@ msgstr ""
 "`SequentialSelection`は比較を一切行わないため、選択圧という概念自体を持たない最も単純な選択方式です。 "
 "どの`Comparator`とも組み合わせられます。"
 
-#: ../../components/parent_selection.md:25
+#: ../../concepts/search_algorithms/parent_selection.md:30
 msgid ""
 "`LinearRankSelection` converts the rank returned by "
 "`ctx.comparator.sort_population` into probabilities, rather than using "
@@ -137,7 +139,7 @@ msgstr ""
 "`LinearRankSelection`は、生の適応度ではなく`ctx.comparator.sort_population`が返す順位を確率に変換します。"
 " これにより、目的関数値が負の値を取ったりスケールが大きく異なったりする問題でも、数値的な問題を起こさずに選択確率を計算できます。"
 
-#: ../../components/parent_selection.md:29
+#: ../../concepts/search_algorithms/parent_selection.md:34
 msgid ""
 "Only `SequentialSelection` is currently `@register()`ed; "
 "`TournamentSelection`/`LinearRankSelection` are not yet registered with "
@@ -147,11 +149,11 @@ msgstr ""
 "`SequentialSelection`のみ`@register()`済みで、`TournamentSelection`/`LinearRankSelection`は現状Registry未登録です。"
 " Registry経由でクラスを文字列から解決する使い方をする場合はこの違いに注意してください。"
 
-#: ../../components/parent_selection.md:33
+#: ../../concepts/search_algorithms/parent_selection.md:38
 msgid "Implementing a custom ParentSelection"
 msgstr "独自ParentSelectionの実装方法"
 
-#: ../../components/parent_selection.md:35
+#: ../../concepts/search_algorithms/parent_selection.md:40
 msgid ""
 "If you need a custom selection scheme, subclass `ParentSelection` and "
 "implement only `select()`. The following example is a selection scheme "
@@ -160,52 +162,52 @@ msgstr ""
 "独自の選択方式が必要な場合は、`ParentSelection`を継承して`select()`だけを実装すればよいです。 "
 "次の例は、比較を行わず親を完全にランダムに選ぶ選択方式です。"
 
-#: ../../components/parent_selection.md:51
+#: ../../concepts/search_algorithms/parent_selection.md:63
 msgid ""
 "Implementing it to reference `ctx.comparator` lets you build a custom "
 "scheme with selection pressure, like `TournamentSelection`."
 msgstr "`ctx.comparator`を参照する実装にすれば、`TournamentSelection`のように選択圧を持つ独自方式にもできます。"
 
-#: ../../components/parent_selection.md:53
+#: ../../concepts/search_algorithms/parent_selection.md:65
 msgid "Related components"
 msgstr "関連コンポーネント"
 
-#: ../../components/parent_selection.md:55
+#: ../../concepts/search_algorithms/parent_selection.md:67
 msgid "[Algorithm](algorithm.md): How `GA` combines `ParentSelection`"
 msgstr "[Algorithm](algorithm.md)：`GA`が`ParentSelection`をどう組み合わせるか"
 
-#: ../../components/parent_selection.md:56
+#: ../../concepts/search_algorithms/parent_selection.md:68
 msgid ""
 "[Crossover](crossover.md): The operator that receives the parents chosen "
 "by `ParentSelection`"
 msgstr "[Crossover](crossover.md)：`ParentSelection`が選んだ親個体を受け取る演算子"
 
-#: ../../components/parent_selection.md:57
+#: ../../concepts/search_algorithms/parent_selection.md:69
 msgid ""
-"[Comparator](comparators.md): Used by "
+"[Comparator](../problem_and_ranking/comparators.md): Used by "
 "`TournamentSelection`/`LinearRankSelection` to compare individuals"
-msgstr "[Comparator](comparators.md)：`TournamentSelection`/`LinearRankSelection`が個体を比較する際に使う"
+msgstr "[Comparator](../problem_and_ranking/comparators.md)：`TournamentSelection`/`LinearRankSelection`が個体を比較する際に使う"
 
-#: ../../components/parent_selection.md:59
+#: ../../concepts/search_algorithms/parent_selection.md:71
 msgid "References"
 msgstr "参照"
 
-#: ../../components/parent_selection.md:61
+#: ../../concepts/search_algorithms/parent_selection.md:73
 #, python-brace-format
 msgid "{py:class}`saealib.ParentSelection`"
 msgstr "{py:class}`saealib.ParentSelection`"
 
-#: ../../components/parent_selection.md:62
+#: ../../concepts/search_algorithms/parent_selection.md:74
 #, python-brace-format
 msgid "{py:class}`saealib.TournamentSelection`"
 msgstr "{py:class}`saealib.TournamentSelection`"
 
-#: ../../components/parent_selection.md:63
+#: ../../concepts/search_algorithms/parent_selection.md:75
 #, python-brace-format
 msgid "{py:class}`saealib.SequentialSelection`"
 msgstr "{py:class}`saealib.SequentialSelection`"
 
-#: ../../components/parent_selection.md:64
+#: ../../concepts/search_algorithms/parent_selection.md:76
 #, python-brace-format
 msgid "{py:class}`saealib.LinearRankSelection`"
 msgstr "{py:class}`saealib.LinearRankSelection`"

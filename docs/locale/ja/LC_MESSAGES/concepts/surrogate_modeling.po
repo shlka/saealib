@@ -1,0 +1,77 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../concepts/surrogate_modeling.md:7
+msgid "Surrogate modeling"
+msgstr "サロゲートモデリング"
+
+#: ../../concepts/surrogate_modeling.md:9
+msgid ""
+"`TrainingSet` builds training data from an Archive or Population, and "
+"`Surrogate` predicts objective values from that data. `SurrogateManager` "
+"coordinates when fitting and prediction occur, while "
+"`AcquisitionFunction` converts predictions into scores for candidate "
+"selection. `AccuracyBasedSurrogateSwitcher` switches the "
+"`SurrogateManager` or `OptimizationStrategy` according to prediction-"
+"accuracy evaluations."
+msgstr "`TrainingSet`はアーカイブまたは個体群から学習データを作り、`Surrogate`はそのデータから目的値を予測します。`SurrogateManager`はフィットと予測のタイミングを調整し、`AcquisitionFunction`は予測を候補選択用のスコアに変換します。`AccuracyBasedSurrogateSwitcher`は、予測精度の評価に応じて`SurrogateManager`または`OptimizationStrategy`を切り替えます。"
+
+#: ../../concepts/surrogate_modeling.md:17
+msgid "Surrogate"
+msgstr "{fa}`brain;sd-mr-1` サロゲート"
+
+#: ../../concepts/surrogate_modeling.md:20
+msgid "Fits a model from training data and returns predictions for candidates."
+msgstr "学習データからモデルをフィットし、候補の予測を返します。"
+
+#: ../../concepts/surrogate_modeling.md:23
+msgid "SurrogateManager"
+msgstr "{fa}`sitemap;sd-mr-1` サロゲートマネージャー"
+
+#: ../../concepts/surrogate_modeling.md:26
+msgid "Coordinates model fitting and batch prediction."
+msgstr "モデルのフィットとバッチ予測を調整します。"
+
+#: ../../concepts/surrogate_modeling.md:29
+msgid "TrainingSet"
+msgstr "{fa}`database;sd-mr-1` 学習データ集合"
+
+#: ../../concepts/surrogate_modeling.md:32
+msgid "Builds training inputs and labels from an Archive or Population."
+msgstr "ArchiveまたはPopulationから学習用の入力とラベルを構築します。"
+
+#: ../../concepts/surrogate_modeling.md:35
+msgid "AcquisitionFunction"
+msgstr "{fa}`calculator;sd-mr-1` 獲得関数"
+
+#: ../../concepts/surrogate_modeling.md:38
+msgid "Converts predictions into scalar scores for candidate selection."
+msgstr "予測結果を候補選択用のスカラー値に変換します。"
+
+#: ../../concepts/surrogate_modeling.md:41
+msgid "AccuracyBasedSurrogateSwitcher"
+msgstr "{fa}`toggle-on;sd-mr-1` 精度ベースのサロゲート切り替え"
+
+#: ../../concepts/surrogate_modeling.md:44
+msgid ""
+"Evaluates Surrogate accuracy and switches the configuration used during a"
+" run."
+msgstr "サロゲートの精度を評価し、実行中に使う構成を切り替えます。"

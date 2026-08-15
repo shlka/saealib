@@ -75,6 +75,7 @@ instance/
 # Sphinx documentation
 docs/_build/
 docs/api/_autosummary/
+docs/locale/*/LC_MESSAGES/api/_autosummary/
 
 # PyBuilder
 .pybuilder/

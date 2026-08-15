@@ -1,0 +1,129 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/pipeline.md:7
+msgid "Pipeline"
+msgstr "パイプライン"
+
+#: ../../api/pipeline.md:9
+msgid ""
+"`Pipeline` is a DSL for describing components and structured control "
+"regions. It does not execute `OptimizationState` directly; Optimizer uses"
+" it as input when building an execution plan."
+msgstr ""
+"`Pipeline` は、コンポーネントと構造化された制御領域を記述するDSLです。 `OptimizationState` "
+"を直接実行するオブジェクトではなく、Optimizerが実行計画を構築するための入力として使います。"
+
+#: ../../api/pipeline.md:29
+msgid ""
+"This example only shows how to build a Pipeline. In ordinary use, "
+"`Optimizer` compiles the Graph and Pipeline produced by a Strategy, so "
+"users do not need to call the Compiler directly."
+msgstr ""
+"この例はPipelineの構築だけを示しています。 通常の利用では、Strategyが作るGraphとPipelineを `Optimizer` "
+"がコンパイルし、利用者がCompilerを直接呼び出す必要はありません。"
+
+#: ../../api/pipeline.md:32
+msgid ""
+"Nested Pipelines and control values are kept as named structured regions."
+" `Repeat` represents a fixed number of repetitions, while `Loop` and "
+"`Branch` evaluate conditions through declared state contracts. Because "
+"regions are not reduced to ordinary graph cycles, the Runtime can "
+"preserve state effects and resume frames."
+msgstr ""
+"入れ子のPipelineと制御値は、名前付きの構造化領域として保持されます。 `Repeat` は固定回数の反復を表し、`Loop` と "
+"`Branch` は宣言された状態契約を通じて条件を評価します。 "
+"領域は通常のグラフサイクルへ単純化されないため、Runtimeは状態効果と再開フレームを保持できます。"
+
+#: ../../api/pipeline.md:36
+msgid ""
+"Components placed in a structured Pipeline provide the graph-native "
+"`contract()` and `execute(StateView)` boundaries. The legacy `Stage` "
+"execution surface remains as a connection point for the compatibility "
+"Graph Builder. When placing an existing Stage in a structured Pipeline, "
+"wrap it explicitly with `stage_component(stage)`."
+msgstr ""
+"構造化Pipelineへ置くComponentは、graph-nativeの `contract()` と "
+"`execute(StateView)` の境界を提供します。 旧来の `Stage` 実行面は互換性用Graph "
+"Builderへの接続点として残っています。 "
+"既存Stageを構造化Pipelineへ入れる場合は、`stage_component(stage)` で明示的に包みます。"
+
+#: ../../api/pipeline.md:40
+msgid ""
+"During compilation, required input ports are matched to compatible "
+"outputs upstream in control order. A uniquely matched connection becomes "
+"a `DataEdge`; no match or multiple candidates produces a Compiler "
+"diagnostic. Use an explicit Graph when an ambiguous connection must be "
+"resolved."
+msgstr ""
+"コンパイル時には、必要な入力ポートを制御順序上流の互換性のある出力へ対応付けます。 一意に対応付けられた接続は `DataEdge` "
+"になり、接続がない場合や複数候補がある場合はCompiler診断になります。 曖昧な接続を解消する必要がある場合は、明示的なGraphを使います。"
+
+#: ../../api/pipeline.md:44
+msgid ""
+"`stage_component(stage)` is a migration adapter. State writes through the"
+" transaction proxy become `StatePatch` values, but the adapter retains "
+"ownership of mutable objects exposed as Services or Context capabilities."
+" In a new graph-native component, keep persistent mutable state behind "
+"declared `StateKey` values and patches."
+msgstr ""
+"`stage_component(stage)`は移行アダプターです。トランザクションプロキシを通じた状態書き込みは`StatePatch`値になりますが、アダプターはServiceまたはContext能力として公開する可変オブジェクトの所有権を保持します"
+"。新しいgraph-native componentでは、永続的な可変状態を宣言済みの`StateKey`値とパッチの背後に置きます。"
+
+#: ../../api/pipeline.md:57:<autosummary>:1
+msgid ":py:obj:`saealib.Stage <saealib.Stage>`"
+msgstr "{py:obj}`saealib.Stage <saealib.Stage>`・クラス"
+
+#: ../../api/pipeline.md:57:<autosummary>:1
+msgid "Abstract base class for a compatibility execution step."
+msgstr "互換実行ステップの抽象基底クラス。"
+
+#: ../../api/pipeline.md:57:<autosummary>:1
+msgid ":py:obj:`saealib.Pipeline <saealib.Pipeline>`"
+msgstr "{py:obj}`saealib.Pipeline <saealib.Pipeline>`・クラス"
+
+#: ../../api/pipeline.md:57:<autosummary>:1
+msgid "An ordered structural DSL sequence lowered to a semantic graph."
+msgstr "意味グラフへ変換される、順序付けられた構造DSLシーケンス。"
+
+#: ../../api/pipeline.md:57:<autosummary>:1
+msgid ":py:obj:`saealib.Repeat <saealib.Repeat>`"
+msgstr "{py:obj}`saealib.Repeat <saealib.Repeat>`・クラス"
+
+#: ../../api/pipeline.md:57:<autosummary>:1
+msgid "Repeat a structural body a fixed number of times."
+msgstr "構造本体を指定回数繰り返します。"
+
+#: ../../api/pipeline.md:57:<autosummary>:1
+msgid ":py:obj:`saealib.Loop <saealib.Loop>`"
+msgstr "{py:obj}`saealib.Loop <saealib.Loop>`・クラス"
+
+#: ../../api/pipeline.md:57:<autosummary>:1
+msgid "Repeat a structural body while a condition remains active."
+msgstr "条件が有効な間、構造本体を繰り返します。"
+
+#: ../../api/pipeline.md:57:<autosummary>:1
+msgid ":py:obj:`saealib.Branch <saealib.Branch>`"
+msgstr "{py:obj}`saealib.Branch <saealib.Branch>`・クラス"
+
+#: ../../api/pipeline.md:57:<autosummary>:1
+msgid "Select one of two structural bodies using a condition."
+msgstr "条件を使って2つの構造本体の一方を選択します。"

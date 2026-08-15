@@ -1,0 +1,64 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 10:57+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/initialization.md:6
+msgid "Initialization"
+msgstr "初期化"
+
+#: ../../api/initialization.md:17:<autosummary>:1
+msgid ":py:obj:`saealib.Initializer <saealib.Initializer>`"
+msgstr "{py:obj}`saealib.Initializer <saealib.Initializer>`・クラス"
+
+#: ../../api/initialization.md:17:<autosummary>:1
+msgid "Abstract base for classes that set up the initial optimization context."
+msgstr "初期最適化コンテキストを準備するクラスの抽象基底です。"
+
+#: ../../api/initialization.md:17:<autosummary>:1
+msgid ":py:obj:`saealib.GenomeInitializer <saealib.GenomeInitializer>`"
+msgstr "{py:obj}`saealib.GenomeInitializer <saealib.GenomeInitializer>`・クラス"
+
+#: ../../api/initialization.md:17:<autosummary>:1
+msgid "Initialize a population by sampling the problem's ``SearchSpace``."
+msgstr "問題の``SearchSpace``をサンプリングして集団を初期化します。"
+
+#: ../../api/initialization.md:17:<autosummary>:1
+msgid ":py:obj:`saealib.LHSInitializer <saealib.LHSInitializer>`"
+msgstr "{py:obj}`saealib.LHSInitializer <saealib.LHSInitializer>`・クラス"
+
+#: ../../api/initialization.md:17:<autosummary>:1
+msgid "Latin Hypercube Sampling Initializer."
+msgstr "ラテン超方格サンプリング初期化器です。"
+
+#: ../../api/initialization.md:17:<autosummary>:1
+msgid ":py:obj:`saealib.RandomInitializer <saealib.RandomInitializer>`"
+msgstr "{py:obj}`saealib.RandomInitializer <saealib.RandomInitializer>`・クラス"
+
+#: ../../api/initialization.md:17:<autosummary>:1
+msgid "Random uniform sampling initializer."
+msgstr "一様ランダムサンプリング初期化器です。"
+
+#: ../../api/initialization.md:17:<autosummary>:1
+msgid ":py:obj:`saealib.SobolInitializer <saealib.SobolInitializer>`"
+msgstr "{py:obj}`saealib.SobolInitializer <saealib.SobolInitializer>`・クラス"
+
+#: ../../api/initialization.md:17:<autosummary>:1
+msgid "Sobol quasi-random sequence initializer."
+msgstr "Sobol準乱数系列初期化器です。"

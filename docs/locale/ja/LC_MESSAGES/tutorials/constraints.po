@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 02:51+0900\n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,234 +19,191 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../../tutorials/constraints.md:1
+#: ../../tutorials/constraints.md:7
 msgid "Constrained Optimization"
 msgstr "制約付き最適化"
 
-#: ../../../tutorials/constraints.md:3
+#: ../../tutorials/constraints.md:9
 msgid "Solve a problem with constraints on the design variables using `saealib`."
 msgstr "設計変数に制約がある問題を、`saealib`で解きます。"
 
-#: ../../../tutorials/constraints.md:5
+#: ../../tutorials/constraints.md:11
 msgid ""
-"Switching algorithms, surrogates, and the evaluation strategy works the "
-"same as in \"Switching components\" in [Single-Objective "
-"Optimization](single_objective.md)."
-msgstr "アルゴリズム、サロゲート、評価戦略の切り替え方は[単目的最適化](single_objective.md)の「コンポーネントの切り替え」と共通です。"
+"With `minimize()`, you can pass a string or instance for the algorithm, "
+"surrogate, and evaluation strategy. The examples on this page add only "
+"problem-specific settings and use defaults for everything else."
+msgstr ""
+"`minimize()`では、アルゴリズム、代理モデル、評価戦略に文字列またはインスタンスを指定できます。 "
+"このページの例では問題固有の設定だけを追加し、それ以外にはデフォルトを使います。"
 
-#: ../../../tutorials/constraints.md:7
-msgid "Problem setup"
-msgstr "問題設定"
+#: ../../tutorials/constraints.md:14
+msgid "What you'll be able to do"
+msgstr "このページでできるようになること"
 
-#: ../../../tutorials/constraints.md:9
+#: ../../tutorials/constraints.md:17
+msgid ""
+"By the end of this page, you'll be able to define constraints on a "
+"`Problem`, check feasibility, and choose a `ConstraintHandler`."
+msgstr "このページを終えると、`Problem`に制約を定義し、実行可能性を確認しながら`ConstraintHandler`を選べます。"
+
+#: ../../tutorials/constraints.md:20
+msgid ""
+"For a simple objective-function optimization, use [Single-objective "
+"optimization](single_objective.md). To implement custom constraint "
+"handling, see [Custom components](custom_components.md). This page covers"
+" defining constraints on a `Problem`, checking feasibility, and choosing "
+"a `ConstraintHandler`."
+msgstr "単純な目的関数の最適化には[単目的最適化](single_objective.md)を使い、独自の制約処理を実装する場合は[独自コンポーネント](custom_components.md)を参照してください。このページでは、`Problem`への制約定義、実行可能性の確認、`ConstraintHandler`の選択を扱います。"
+
+#: ../../tutorials/constraints.md:23
+msgid "Set up the problem"
+msgstr "Problemを準備する"
+
+#: ../../tutorials/constraints.md:25
 msgid ""
 "Assume a problem that, in addition to the objective function, has an "
 "inequality constraint `g(x) <= 0` that the solution must satisfy."
 msgstr "目的関数に加えて、解が満たすべき不等式制約`g(x) <= 0`を持つ問題を想定します。"
 
-#: ../../../tutorials/constraints.md:29
+#: ../../tutorials/constraints.md:45
 msgid "Only solutions satisfying `g1(x) <= 0` are feasible."
 msgstr "`g1(x) <= 0`を満たす解だけが実行可能解です。"
 
-#: ../../../tutorials/constraints.md:31
-msgid "Defining constraints"
-msgstr "制約の定義"
+#: ../../tutorials/constraints.md:47
+msgid "Define constraints"
+msgstr "制約を定義する"
 
-#: ../../../tutorials/constraints.md:33
+#: ../../tutorials/constraints.md:49
 msgid ""
 "A constraint is defined with `InequalityConstraint(func, threshold=0.0)` "
 "and passed to `Problem`'s `constraints` argument."
-msgstr "制約は`InequalityConstraint(func, threshold=0.0)`で定義し、`Problem`の`constraints`引数に渡します。"
+msgstr ""
+"制約は`InequalityConstraint(func, "
+"threshold=0.0)`で定義し、`Problem`の`constraints`引数に渡します。"
 
-#: ../../../tutorials/constraints.md:55
+#: ../../tutorials/constraints.md:71
 msgid ""
 "To impose a constraint of the form `g(x) >= threshold`, pass `func` with "
 "its sign flipped."
 msgstr "`g(x) >= threshold`の形で制約を課したい場合は、`func`の符号を反転させて渡します。"
 
-#: ../../../tutorials/constraints.md:57
+#: ../../tutorials/constraints.md:73
 msgid ""
 "For an equality constraint `h(x) = 0`, use `EqualityConstraint(func, "
 "tolerance=1e-6)` instead of combining two sign-flipped "
 "`InequalityConstraint`s."
-msgstr "等式制約`h(x) = 0`は、`InequalityConstraint`を符号反転で組み合わせる代わりに`EqualityConstraint(func, tolerance=1e-6)`を使います。"
+msgstr ""
+"等式制約`h(x) = "
+"0`は、`InequalityConstraint`を符号反転で組み合わせる代わりに`EqualityConstraint(func, "
+"tolerance=1e-6)`を使います。"
 
-#: ../../../tutorials/constraints.md:71
+#: ../../tutorials/constraints.md:87
 msgid ""
 "`EqualityConstraint` treats solutions satisfying `|h(x)| <= tolerance` as"
 " feasible."
 msgstr "`EqualityConstraint`は、`|h(x)| <= tolerance`を満たす解を実行可能解として扱います。"
 
-#: ../../../tutorials/constraints.md:73
-msgid "Checking feasibility"
-msgstr "実行可能性の確認"
+#: ../../tutorials/constraints.md:89
+msgid "Check feasibility"
+msgstr "実行可能性を確認する"
 
-#: ../../../tutorials/constraints.md:75
+#: ../../tutorials/constraints.md:91
 msgid ""
 "A solution is feasible if its constraint violation `cv` is at most "
 "`Problem`'s `eps_cv` (default `1e-6`)."
 msgstr "`Problem`の`eps_cv`（既定値`1e-6`）以下の制約違反量`cv`を持つ解が実行可能解です。"
 
-#: ../../../tutorials/constraints.md:83
-msgid "Customizing with ConstraintHandler"
-msgstr "ConstraintHandlerによるカスタマイズ"
+#: ../../tutorials/constraints.md:99
+msgid "Customize constraint handling with ConstraintHandler"
+msgstr "ConstraintHandlerで制約処理をカスタマイズする"
 
-#: ../../../tutorials/constraints.md:85
+#: ../../tutorials/constraints.md:101
 msgid ""
 "How `cv` is aggregated from multiple constraints, and how feasibility is "
 "judged from that value, is decided by `ConstraintHandler`."
 msgstr "複数の制約から`cv`を集約する方法と、その値をもとに実行可能性を判定する方法は、`ConstraintHandler`が決めます。"
 
-#: ../../../tutorials/constraints.md:87
+#: ../../tutorials/constraints.md:103
 msgid ""
 "If `Problem`'s `handler` argument is omitted, "
 "`StaticToleranceHandler(eps_cv=problem.eps_cv)` is used, which judges "
 "feasibility by whether `cv <= eps_cv`."
-msgstr "`Problem`の`handler`引数を省略すると、`StaticToleranceHandler(eps_cv=problem.eps_cv)`が使われ、`cv <= eps_cv`かどうかで実行可能性を判定します。"
+msgstr ""
+"`Problem`の`handler`引数を省略すると、`StaticToleranceHandler(eps_cv=problem.eps_cv)`が使われ、`cv"
+" <= eps_cv`かどうかで実行可能性を判定します。"
 
-#: ../../../tutorials/constraints.md
+#: ../../tutorials/constraints.md:14
 msgid "Class"
 msgstr "クラス"
 
-#: ../../../tutorials/constraints.md
+#: ../../tutorials/constraints.md:14
 msgid "Behavior"
 msgstr "動作"
 
-#: ../../../tutorials/constraints.md
+#: ../../tutorials/constraints.md:14
 msgid "`StaticToleranceHandler`"
 msgstr "`StaticToleranceHandler`"
 
-#: ../../../tutorials/constraints.md
+#: ../../tutorials/constraints.md:14
 msgid "Judges feasibility with a fixed tolerance `eps_cv` (default)"
 msgstr "固定の許容誤差`eps_cv`で実行可能性を判定する（既定）"
 
-#: ../../../tutorials/constraints.md
+#: ../../tutorials/constraints.md:14
 msgid "`EpsilonConstraintHandler`"
 msgstr "`EpsilonConstraintHandler`"
 
-#: ../../../tutorials/constraints.md
+#: ../../tutorials/constraints.md:14
 msgid ""
 "Shrinks the tolerance toward 0 over generations, gradually driving "
 "solutions into the feasible region"
 msgstr "許容誤差を世代とともに0へ近づけ、徐々に実行可能領域へ解を追い込む"
 
-#: ../../../tutorials/constraints.md
+#: ../../tutorials/constraints.md:14
 msgid "`GradientRepairHandler`"
 msgstr "`GradientRepairHandler`"
 
-#: ../../../tutorials/constraints.md
+#: ../../tutorials/constraints.md:14
 msgid "Repairs infeasible solutions using the constraint gradient"
 msgstr "制約の勾配を使って実行不可能解を修復する"
 
-#: ../../../tutorials/constraints.md:95
+#: ../../tutorials/constraints.md:111
 msgid ""
 "`EpsilonConstraintHandler` takes a function that receives the generation "
 "number and returns the tolerance."
 msgstr "`EpsilonConstraintHandler`には、世代番号を受け取り許容誤差を返す関数を渡します。"
 
-#: ../../../tutorials/constraints.md:118
-msgid "References"
-msgstr "参照"
+#: ../../tutorials/constraints.md:134
+msgid "Related concepts and reference"
+msgstr "関連するConceptとReference"
 
-#: ../../../tutorials/constraints.md:120
+#: ../../tutorials/constraints.md:136
 #, python-brace-format
 msgid ""
 "{py:class}`saealib.InequalityConstraint` / "
 "{py:class}`saealib.EqualityConstraint`"
-msgstr "{py:class}`saealib.InequalityConstraint` / {py:class}`saealib.EqualityConstraint`"
+msgstr ""
+"{py:class}`saealib.InequalityConstraint` / "
+"{py:class}`saealib.EqualityConstraint`"
 
-#: ../../../tutorials/constraints.md:121
+#: ../../tutorials/constraints.md:137
 #, python-brace-format
 msgid "{py:class}`saealib.Problem`"
 msgstr "{py:class}`saealib.Problem`"
 
-#: ../../../tutorials/constraints.md:122
+#: ../../tutorials/constraints.md:138
 #, python-brace-format
 msgid ""
 "{py:class}`saealib.ConstraintHandler` / "
 "{py:class}`saealib.StaticToleranceHandler` / "
 "{py:class}`saealib.EpsilonConstraintHandler` / "
 "{py:class}`saealib.GradientRepairHandler`"
-msgstr "{py:class}`saealib.ConstraintHandler` / {py:class}`saealib.StaticToleranceHandler` / {py:class}`saealib.EpsilonConstraintHandler` / {py:class}`saealib.GradientRepairHandler`"
+msgstr ""
+"{py:class}`saealib.ConstraintHandler` / "
+"{py:class}`saealib.StaticToleranceHandler` / "
+"{py:class}`saealib.EpsilonConstraintHandler` / "
+"{py:class}`saealib.GradientRepairHandler`"
 
-#: ../../../tutorials/constraints.md:123
+#: ../../tutorials/constraints.md:139
 #, python-brace-format
 msgid "{py:func}`saealib.minimize`"
 msgstr "{py:func}`saealib.minimize`"
-
-#~ msgid "制約付き最適化"
-#~ msgstr ""
-
-#~ msgid "設計変数に制約がある問題を、`saealib`で解きます。"
-#~ msgstr ""
-
-#~ msgid "アルゴリズム、サロゲート、評価戦略の切り替え方は[単目的最適化](single_objective.md)の「コンポーネントの切り替え」と共通です。"
-#~ msgstr ""
-
-#~ msgid "問題設定"
-#~ msgstr ""
-
-#~ msgid "目的関数に加えて、解が満たすべき不等式制約`g(x) <= 0`を持つ問題を想定します。"
-#~ msgstr ""
-
-#~ msgid "`g1(x) <= 0`を満たす解だけが実行可能解です。"
-#~ msgstr ""
-
-#~ msgid "制約の定義"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "制約は`InequalityConstraint(func, "
-#~ "threshold=0.0)`で定義し、`Problem`の`constraints`引数に渡します。"
-#~ msgstr ""
-
-#~ msgid "`g(x) >= threshold`の形で制約を課したい場合は、`func`の符号を反転させて渡します。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "等式制約`h(x) = "
-#~ "0`は、`InequalityConstraint`を符号反転で組み合わせる代わりに`EqualityConstraint(func,"
-#~ " tolerance=1e-6)`を使います。"
-#~ msgstr ""
-
-#~ msgid "`EqualityConstraint`は、`|h(x)| <= tolerance`を満たす解を実行可能解として扱います。"
-#~ msgstr ""
-
-#~ msgid "実行可能性の確認"
-#~ msgstr ""
-
-#~ msgid "`Problem`の`eps_cv`（既定値`1e-6`）以下の制約違反量`cv`を持つ解が実行可能解です。"
-#~ msgstr ""
-
-#~ msgid "ConstraintHandlerによるカスタマイズ"
-#~ msgstr ""
-
-#~ msgid "複数の制約から`cv`を集約する方法と、その値をもとに実行可能性を判定する方法は、`ConstraintHandler`が決めます。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`Problem`の`handler`引数を省略すると、`StaticToleranceHandler(eps_cv=problem.eps_cv)`が使われ、`cv"
-#~ " <= eps_cv`かどうかで実行可能性を判定します。"
-#~ msgstr ""
-
-#~ msgid "クラス"
-#~ msgstr ""
-
-#~ msgid "動作"
-#~ msgstr ""
-
-#~ msgid "固定の許容誤差`eps_cv`で実行可能性を判定する（デフォルト）"
-#~ msgstr ""
-
-#~ msgid "許容誤差を世代とともに0へ近づけ、徐々に実行可能領域へ解を追い込む"
-#~ msgstr ""
-
-#~ msgid "制約の勾配を使って実行不可能解を修復する"
-#~ msgstr ""
-
-#~ msgid "`EpsilonConstraintHandler`には、世代番号を受け取り許容誤差を返す関数を渡します。"
-#~ msgstr ""
-
-#~ msgid "参照"
-#~ msgstr ""
-

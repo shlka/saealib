@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-02 10:23+0900\n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,49 +19,54 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../components/surrogate_manager.md:1
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:6
 msgid "SurrogateManager"
-msgstr "SurrogateManager"
+msgstr "サロゲート管理"
 
-#: ../../components/surrogate_manager.md:3
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:8
 msgid ""
 "Where [Surrogate](surrogate.md) handles only fit/predict, "
 "`SurrogateManager` coordinates model fitting and batched prediction. An "
 "acquisition configured on the optimizer scores the returned predictions."
-msgstr "[Surrogate](surrogate.md)がfit/predictだけを扱うのに対し、`SurrogateManager`はモデルのフィットとバッチ予測を協調させます。オプティマイザに設定した`AcquisitionFunction`が、返された予測をスコア化します。"
+msgstr "[Surrogate](surrogate.md)がfit/predictだけを扱うのに対し、`SurrogateManager`はモデルのフィットとバッチ予測を協調させます。オプティマイザに設定した獲得関数が、返された予測をスコア化します。"
 
-#: ../../components/surrogate_manager.md:5
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:10
 msgid ""
 "`Optimizer.set_surrogate_manager()` is a separate top-level swap point "
 "from `Optimizer.set_surrogate()` (a simplified version that wraps a "
 "[Surrogate](surrogate.md) in `LocalSurrogateManager`)."
 msgstr "`Optimizer.set_surrogate_manager()`は、`Optimizer.set_surrogate()`（[Surrogate](surrogate.md)を`LocalSurrogateManager`でラップする簡易版）とは別のトップレベル差し替え点です。"
 
-#: ../../components/surrogate_manager.md:7
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:12
 msgid "SurrogateManager's role"
 msgstr "SurrogateManagerの役割"
 
-#: ../../components/surrogate_manager.md:9
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:14
 msgid ""
 "`SurrogateManager`'s abstract method is `predict()`; fitting and "
 "generation hooks have default implementations."
 msgstr "`SurrogateManager`の抽象メソッドは`predict()`です。フィットと世代フックには既定実装があります。"
 
-#: ../../components/surrogate_manager.md:11
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:16
 msgid ""
 "**`predict(candidates_x, archive, ctx=None, *, refit=True) -> "
 "SurrogatePrediction`** (abstract): Predicts the candidates. With "
 "`refit=True` (the default), the surrogate is retrained before prediction."
-msgstr "**`predict(candidates_x, archive, ctx=None, *, refit=True) -> SurrogatePrediction`**（抽象メソッド）：候補を予測します。`refit=True`（既定値）の場合は、予測前にサロゲートを再学習します。"
+msgstr ""
+"**`predict(candidates_x, archive, ctx=None, *, refit=True) -> "
+"SurrogatePrediction`**（抽象メソッド）：候補を予測します。`refit=True`（既定値）の場合は、予測前にサロゲートを再学習します。"
 
-#: ../../components/surrogate_manager.md:14
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:19
 msgid ""
 "**`fit(archive, ctx=None) -> None`**: A no-op by default. A pre-fit hook "
 "meant to be called once before a series of `predict(..., refit=False)` "
 "calls, used when the archive does not change."
-msgstr "**`fit(archive, ctx=None) -> None`**：既定では何もしません。アーカイブが変化しない場合に、`predict(..., refit=False)`を連続して呼び出す前に1回だけ呼ぶ事前フィット用フックです。"
+msgstr ""
+"**`fit(archive, ctx=None) -> "
+"None`**：既定では何もしません。アーカイブが変化しない場合に、`predict(..., "
+"refit=False)`を連続して呼び出す前に1回だけ呼ぶ事前フィット用フックです。"
 
-#: ../../components/surrogate_manager.md:17
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:22
 msgid ""
 "**`last_accuracy: SurrogateAccuracy | None`** (class attribute): The "
 "accuracy metric computed by the most recent `fit`. Covered in detail in "
@@ -71,7 +76,7 @@ msgstr ""
 "**`last_accuracy: SurrogateAccuracy | None`**（クラス属性）：直近の`fit`が計算した精度指標。 "
 "詳細は[サロゲート精度評価と動的切り替え](surrogate_switching.md)で扱います。"
 
-#: ../../components/surrogate_manager.md:20
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:25
 msgid ""
 "**`on_generation_end(gen, archive, ctx=None)`** / "
 "**`with_on_generation_end(fn)`**: An end-of-generation hook. Also "
@@ -80,53 +85,139 @@ msgstr ""
 "**`on_generation_end(gen, archive, ctx=None)`** / "
 "**`with_on_generation_end(fn)`**：世代末フック。 同じくコピー＋チェーン方式で拡張できます。"
 
-#: ../../components/surrogate_manager.md:23
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:28
+msgid "The values received and returned at the two boundaries are:"
+msgstr "二つの境界で受け取る値と返す値は次のとおりです。"
+
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
+msgid "Boundary"
+msgstr "境界"
+
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
+msgid "Receives"
+msgstr "受け取る値"
+
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
+msgid "Returns"
+msgstr "返す値"
+
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
+msgid "Main users"
+msgstr "主な利用者"
+
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
+msgid "Stage compatibility boundary"
+msgstr "Stage互換境界"
+
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
+msgid "`archive`, `candidates_x: np.ndarray`, `ctx`, `refit`"
+msgstr "`archive`、`candidates_x: np.ndarray`、`ctx`、`refit`"
+
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
+msgid "`SurrogatePrediction`, fit completion state"
+msgstr "`SurrogatePrediction`、fit の完了状態"
+
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
+msgid "compatibility Stages, sequential compatibility runtime"
+msgstr "互換Stage、逐次互換ランタイム"
+
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
+msgid "graph-native boundary"
+msgstr "graph-native境界"
+
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
+msgid "`GenomeBatch`, `FeatureEncoder`, `FeatureBatch`, declared services"
+msgstr "`GenomeBatch`、`FeatureEncoder`、`FeatureBatch`、宣言済みサービス"
+
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
+msgid "Features the Surrogate can fit and predict, plus predictions"
+msgstr "Surrogateがフィット・予測できる特徴と予測結果"
+
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
+msgid "Components, Compiler, structured runtime"
+msgstr "コンポーネント、Compiler、構造化ランタイム"
+
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:35
+msgid ""
+"The current vector-form Manager API on the Stage compatibility path uses "
+"`fit(archive, ctx=None)` and `predict(candidates_x: np.ndarray, archive, "
+"ctx=None, *, refit=True) -> SurrogatePrediction`. The current API also "
+"includes constructors such as `GlobalSurrogateManager(surrogate, "
+"training_set=None, accuracy_evaluator=None)`, "
+"`LocalSurrogateManager(surrogate, training_set=None, "
+"accuracy_evaluator=None)`, and `PairwiseSurrogateManager(surrogate, "
+"training_set=None, n_ref=10)`. In the structured runtime, the Surrogate "
+"input boundary is `GenomeBatch → FeatureEncoder → FeatureBatch → "
+"Surrogate`. `FeatureEncoder` performs semantic conversion and determines "
+"the features the surrogate can learn. It differs from a space capability "
+"such as `SamplingService`. In the current implementation, the "
+"SurrogateManager contract declares "
+"`ServiceRequirement(\"FeatureEncoder\")`, and `VectorSpace` registers a "
+"default encoder as a service, so numeric vector spaces resolve without "
+"extra configuration. `ObjectSpace`, `PermutationSpace`, and "
+"`SequenceSpace` raise an error unless the user provides a "
+"`FeatureEncoder`. The user decides what to pass to the surrogate."
+msgstr ""
+"Stage互換経路の現行vector形式のManager APIでは、`fit(archive, "
+"ctx=None)`と`predict(candidates_x: np.ndarray, archive, ctx=None, *, "
+"refit=True) -> "
+"SurrogatePrediction`を使います。現行APIには、`GlobalSurrogateManager(surrogate, "
+"training_set=None, "
+"accuracy_evaluator=None)`、`LocalSurrogateManager(surrogate, "
+"training_set=None, "
+"accuracy_evaluator=None)`、`PairwiseSurrogateManager(surrogate, "
+"training_set=None, "
+"n_ref=10)`などのコンストラクタも含まれます。構造化ランタイムでは、Surrogateの入力境界は`GenomeBatch → "
+"FeatureEncoder → FeatureBatch → "
+"Surrogate`です。`FeatureEncoder`は意味変換を行い、Surrogateが学習できる特徴を決めます。これは`SamplingService`のような空間の能力とは異なります。現行実装ではSurrogateManagerの契約が`ServiceRequirement(\"FeatureEncoder\")`を宣言し、`VectorSpace`が既定のエンコーダをサービスとして登録するため、数値ベクトル空間は追加設定なしで解決されます。`ObjectSpace`、`PermutationSpace`、`SequenceSpace`は、利用者が`FeatureEncoder`を指定しないとエラーになります。Surrogateへ渡す内容は利用者が決めます。"
+
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:41
 msgid "Built-in SurrogateManagers"
 msgstr "組み込みSurrogateManager"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "Class"
 msgstr "クラス"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "Approach"
 msgstr "方式"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "`GlobalSurrogateManager`"
 msgstr "`GlobalSurrogateManager`"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid ""
 "Fits globally once over the entire archive and predicts every candidate "
 "at once"
 msgstr "アーカイブ全体で1回グローバルにフィットし、全候補を一括予測する"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "`LocalSurrogateManager`"
 msgstr "`LocalSurrogateManager`"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "Fits locally per candidate, using its k nearest neighbors"
 msgstr "候補ごとにk近傍でローカルフィット"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "`CompositeSurrogateManager`"
 msgstr "`CompositeSurrogateManager`"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "Combines named prediction channels"
 msgstr "名前付きの予測チャンネルを組み合わせる"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "`PairwiseSurrogateManager`"
 msgstr "`PairwiseSurrogateManager`"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "Predicts win rates with a pairwise-comparison surrogate"
 msgstr "ペア比較サロゲートで勝率を予測する"
 
-#: ../../components/surrogate_manager.md:32
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:50
 msgid ""
 "`GlobalSurrogateManager(surrogate, training_set=None, "
 "accuracy_evaluator=None)` uses `ArchiveObjectiveSet()` when "
@@ -135,7 +226,7 @@ msgstr ""
 "`GlobalSurrogateManager(surrogate, training_set=None, "
 "accuracy_evaluator=None)`は、`training_set`省略時に`ArchiveObjectiveSet()`が使われます。"
 
-#: ../../components/surrogate_manager.md:34
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:52
 msgid ""
 "`LocalSurrogateManager(surrogate, training_set=None, "
 "accuracy_evaluator=None)` uses `KNNObjectiveSet(n_neighbors=50)` when "
@@ -150,7 +241,7 @@ msgstr ""
 "`n_neighbors`は`LocalSurrogateManager`自体のコンストラクタ引数ではなく、既定の`training_set`が持つパラメータです。"
 " 候補間で同一の`surrogate`インスタンスを使い回して再フィットする実装のため、スレッドセーフではありません。"
 
-#: ../../components/surrogate_manager.md:38
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:56
 msgid ""
 "`CompositeSurrogateManager(managers)` calls each named manager's "
 "`predict()` and returns a multi-channel `SurrogatePrediction`. Use "
@@ -159,7 +250,7 @@ msgid ""
 "`rank_weighted_combine(weights=None)`."
 msgstr "`CompositeSurrogateManager(managers)`は各名前付きマネージャーの`predict()`を呼び出し、複数チャンネルの`SurrogatePrediction`を返します。`CompositeAcquisition`を使うとチャンネルごとに取得関数を評価し、結果のスコア配列を`product_combine`または`rank_weighted_combine(weights=None)`で組み合わせられます。"
 
-#: ../../components/surrogate_manager.md:41
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:59
 msgid ""
 "`PairwiseSurrogateManager(surrogate, training_set=None, n_ref=10)` uses "
 "`PairwiseComparisonSet()` when `training_set` is omitted."
@@ -167,165 +258,165 @@ msgstr ""
 "`PairwiseSurrogateManager(surrogate, training_set=None, "
 "n_ref=10)`は、`training_set`省略時に`PairwiseComparisonSet()`が使われます。"
 
-#: ../../components/surrogate_manager.md:43
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:61
 msgid ""
 "See [TrainingSet](training_set.md) and [Surrogate accuracy evaluation and"
 " dynamic switching](surrogate_switching.md), respectively, for details on"
 " each manager's `training_set`/`accuracy_evaluator` arguments."
 msgstr "各マネージャーの`training_set`/`accuracy_evaluator`引数の詳細は、それぞれ[TrainingSet](training_set.md)と[サロゲート精度評価と動的切り替え](surrogate_switching.md)を参照してください。"
 
-#: ../../components/surrogate_manager.md:45
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:63
 msgid "Archive-based acquisitions"
 msgstr "アーカイブベースの取得関数"
 
-#: ../../components/surrogate_manager.md:47
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:65
 msgid ""
 "These acquisitions score candidate geometry directly against the archive "
 "and do not require a surrogate prediction."
 msgstr "これらの取得関数は候補の幾何学的な特徴をアーカイブと直接比較してスコア化するため、サロゲートの予測を必要としません。"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "Parameters"
 msgstr "パラメータ"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "Meaning of the score"
 msgstr "スコアの意味"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "`NoveltyAcquisition`"
 msgstr "`NoveltyAcquisition`"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "`k=1`"
 msgstr "`k=1`"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "Higher when the average distance to the k nearest archive points is larger"
 msgstr "アーカイブへのk近傍平均距離が大きいほど良い"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "`InverseDensityAcquisition`"
 msgstr "`InverseDensityAcquisition`"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "`eps=1.0`"
 msgstr "`eps=1.0`"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "The reciprocal of the ε-neighborhood density"
-msgstr "ε近傍密度の逆数（疎な領域を優先）"
+msgstr "ε近傍密度の逆数"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "`MaximinDistanceAcquisition`"
 msgstr "`MaximinDistanceAcquisition`"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid "None"
 msgstr "なし"
 
-#: ../../components/surrogate_manager.md
+#: ../../concepts/surrogate_modeling/surrogate_manager.md
 msgid ""
 "The minimum distance among candidates plus the minimum distance to the "
 "archive"
 msgstr "候補間の最小距離とアーカイブまでの最小距離の合計"
 
-#: ../../components/surrogate_manager.md:55
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:73
 msgid "Extending SurrogateManager and archive-based acquisitions"
 msgstr "SurrogateManagerとアーカイブベースの取得関数の拡張"
 
-#: ../../components/surrogate_manager.md:57
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:75
 msgid ""
 "If you need a custom prediction scheme, subclass `SurrogateManager` and "
 "implement `predict()`. For a custom archive-based criterion, subclass "
 "`AcquisitionFunction` and implement its evaluation contract."
 msgstr "独自の予測方式が必要な場合は`SurrogateManager`を継承して`predict()`を実装します。独自のアーカイブベース基準が必要な場合は`AcquisitionFunction`を継承して評価契約を実装します。"
 
-#: ../../components/surrogate_manager.md:72
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:90
 msgid "Related components"
 msgstr "関連コンポーネント"
 
-#: ../../components/surrogate_manager.md:74
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:92
 msgid ""
 "[Surrogate](surrogate.md): The fit/predict implementation "
 "`SurrogateManager` coordinates"
 msgstr "[Surrogate](surrogate.md)：`SurrogateManager`が協調させるfit/predictの実体"
 
-#: ../../components/surrogate_manager.md:75
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:93
 msgid ""
 "[TrainingSet](training_set.md): Used by each `SurrogateManager` to "
 "extract training data"
 msgstr "[TrainingSet](training_set.md)：各`SurrogateManager`が学習データの抽出に使う"
 
-#: ../../components/surrogate_manager.md:76
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:94
 msgid ""
 "[AcquisitionFunction](acquisition_functions.md): Scores the predictions "
 "in `AcquisitionStage`"
 msgstr "[AcquisitionFunction](acquisition_functions.md)：`AcquisitionStage`で予測をスコア化する"
 
-#: ../../components/surrogate_manager.md:77
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:95
 msgid ""
 "[Surrogate accuracy evaluation and dynamic "
 "switching](surrogate_switching.md): Details of "
 "`accuracy_evaluator`/`last_accuracy`"
 msgstr "[サロゲート精度評価と動的切り替え](surrogate_switching.md)：`accuracy_evaluator`/`last_accuracy`の詳細"
 
-#: ../../components/surrogate_manager.md:78
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:96
 msgid ""
-"[strategies](strategies.md): Assemble `SurrogatePredictStage` and "
-"`AcquisitionStage`"
-msgstr "[strategies](strategies.md)：`SurrogatePredictStage`と`AcquisitionStage`を組み立てる"
+"[strategies](../execution_and_evaluation/strategies.md): Assemble "
+"`SurrogatePredictStage` and `AcquisitionStage`"
+msgstr "[strategies](../execution_and_evaluation/strategies.md)：`SurrogatePredictStage`と`AcquisitionStage`を組み立てる"
 
-#: ../../components/surrogate_manager.md:80
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:98
 msgid "References"
 msgstr "参照"
 
-#: ../../components/surrogate_manager.md:82
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:100
 #, python-brace-format
 msgid "{py:class}`saealib.SurrogateManager`"
 msgstr "{py:class}`saealib.SurrogateManager`"
 
-#: ../../components/surrogate_manager.md:83
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:101
 #, python-brace-format
 msgid "{py:class}`saealib.GlobalSurrogateManager`"
 msgstr "{py:class}`saealib.GlobalSurrogateManager`"
 
-#: ../../components/surrogate_manager.md:84
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:102
 #, python-brace-format
 msgid "{py:class}`saealib.LocalSurrogateManager`"
 msgstr "{py:class}`saealib.LocalSurrogateManager`"
 
-#: ../../components/surrogate_manager.md:85
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:103
 #, python-brace-format
 msgid "{py:class}`saealib.CompositeSurrogateManager`"
 msgstr "{py:class}`saealib.CompositeSurrogateManager`"
 
-#: ../../components/surrogate_manager.md:86
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:104
 #, python-brace-format
 msgid "{py:class}`saealib.PairwiseSurrogateManager`"
 msgstr "{py:class}`saealib.PairwiseSurrogateManager`"
 
-#: ../../components/surrogate_manager.md:87
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:105
 #, python-brace-format
 msgid "{py:func}`saealib.product_combine`"
 msgstr "{py:func}`saealib.product_combine`"
 
-#: ../../components/surrogate_manager.md:88
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:106
 #, python-brace-format
 msgid "{py:func}`saealib.rank_weighted_combine`"
 msgstr "{py:func}`saealib.rank_weighted_combine`"
 
-#: ../../components/surrogate_manager.md:89
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:107
 #, python-brace-format
 msgid "{py:class}`saealib.NoveltyAcquisition`"
 msgstr "{py:class}`saealib.NoveltyAcquisition`"
 
-#: ../../components/surrogate_manager.md:90
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:108
 #, python-brace-format
 msgid "{py:class}`saealib.InverseDensityAcquisition`"
 msgstr "{py:class}`saealib.InverseDensityAcquisition`"
 
-#: ../../components/surrogate_manager.md:91
+#: ../../concepts/surrogate_modeling/surrogate_manager.md:109
 #, python-brace-format
 msgid "{py:class}`saealib.MaximinDistanceAcquisition`"
 msgstr "{py:class}`saealib.MaximinDistanceAcquisition`"

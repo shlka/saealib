@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 02:51+0900\n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,25 +19,27 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../../algorithms/nsga3.md:1
+#: ../../algorithms/nsga3.md:7
 msgid "NSGA-III"
-msgstr "NSGA-III"
+msgstr "式: NSGA-III"
 
-#: ../../../algorithms/nsga3.md:3
+#: ../../algorithms/nsga3.md:9
 msgid ""
-"NSGA-III is a genetic algorithm that extends NSGA-II's selection "
-"mechanism to many-objective optimization with four or more objectives. It"
-" replaces crowding-distance diversity maintenance with a niche-"
+"NSGA-III primarily targets many-objective optimization, but its "
+"reference-direction behavior can also be observed with three objectives. "
+"It replaces crowding-distance diversity maintenance with a niche-"
 "preservation operation against pre-placed reference points, maintaining "
 "the distribution of the solution set even as the number of objectives "
 "grows."
-msgstr "NSGA-IIIは、NSGA-IIの選択機構を4つ以上の目的を持つ多目的最適化(many-objective optimization)向けに拡張した遺伝アルゴリズムです。 混雑度距離による多様性維持を、あらかじめ配置した参照点(reference point)へのニッチ保存操作に置き換え、目的数が増えても解集合の分布を維持します。"
+msgstr ""
+"NSGA-"
+"IIIは主に多数目的最適化を対象としますが、3目的でも参照方向による挙動を観察できます。混雑距離による多様性維持を、あらかじめ配置した参照点に対するニッチ保存操作へ置き換え、目的数が増えても解集合の分布を維持します。"
 
-#: ../../../algorithms/nsga3.md:6
+#: ../../algorithms/nsga3.md:12
 msgid "Overview"
 msgstr "概要"
 
-#: ../../../algorithms/nsga3.md:8
+#: ../../algorithms/nsga3.md:14
 msgid ""
 "Once the number of objectives grows to four or more, NSGA-II's crowding "
 "distance can no longer adequately maintain diversity. Because the "
@@ -46,9 +48,11 @@ msgid ""
 "dominance relations alone is no longer enough to fill the next-generation"
 " population, and the relative weight of the role crowding distance plays "
 "in diversity maintenance grows accordingly."
-msgstr "目的数が4つ以上に増えると、NSGA-IIの混雑度距離は多様性維持の役割を十分に果たせなくなります。 ランダムに生成した個体群のうち非優越な個体の割合は目的数の増加とともに指数的に増えるため、優越関係による絞り込みだけでは次世代個体群を埋められなくなり、混雑度距離が担う多様性維持の比重が相対的に大きくなるためです。"
+msgstr ""
+"目的数が4つ以上に増えると、NSGA-IIの混雑度距離は多様性維持の役割を十分に果たせなくなります。 "
+"ランダムに生成した個体群のうち非優越な個体の割合は目的数の増加とともに指数的に増えるため、優越関係による絞り込みだけでは次世代個体群を埋められなくなり、混雑度距離が担う多様性維持の比重が相対的に大きくなるためです。"
 
-#: ../../../algorithms/nsga3.md:11
+#: ../../algorithms/nsga3.md:17
 msgid ""
 "NSGA-III replaces this crowding distance with a niche-preservation "
 "operation against **reference points** pre-placed in objective space. In "
@@ -61,65 +65,75 @@ msgid ""
 "associated with each are chosen in order of smallest perpendicular "
 "distance, leaving a roughly equal number of solutions per reference "
 "point."
-msgstr "NSGA-IIIは、この混雑度距離を、目的空間上にあらかじめ配置した**参照点**(reference point)へのニッチ保存操作に置き換えます。 各世代で、個体群全体の**理想点**(ideal point)と**極端点**(extreme point)から超平面の切片を求めて目的関数を正規化し、各個体を最も近い参照点への垂直距離で対応付けます。 まだ完全には受理できていない最後のフロントでは、割り当て済みの個体数（ニッチカウント）が少ない参照点を優先し、そこに対応付けられた個体のうち垂直距離が最小の個体から順に選ぶことで、参照点ごとにほぼ均等な数の解を残します。"
+msgstr ""
+"NSGA-IIIは、この混雑度距離を、目的空間上にあらかじめ配置した**参照点**へのニッチ保存操作に置き換えます。 "
+"各世代で、個体群全体の**理想点**と**極端点**から超平面の切片を求めて目的関数を正規化し、各個体を最も近い参照点への垂直距離で対応付けます。"
+" "
+"まだ完全には受理できていない最後のフロントでは、割り当て済みの個体数（ニッチカウント）が少ない参照点を優先し、そこに対応付けられた個体のうち垂直距離が最小の個体から順に選ぶことで、参照点ごとにほぼ均等な数の解を残します。"
 
-#: ../../../algorithms/nsga3.md:15
+#: ../../algorithms/nsga3.md:21
 msgid ""
 "Because NSGA-III already secures diversity through this niche-"
 "preservation operation, it does not use dominance-based parent selection "
 "like NSGA-II. Parents are chosen randomly from the current population, "
 "and crossover and mutation are applied to generate the offspring "
 "population."
-msgstr "NSGA-IIIは、このニッチ保存操作によってすでに多様性を確保しているため、NSGA-IIのような優越関係に基づく親選択を用いません。 次世代個体群から親をランダムに選び、交叉と突然変異を適用して子個体群を生成します。"
+msgstr ""
+"NSGA-IIIは、このニッチ保存操作によってすでに多様性を確保しているため、NSGA-IIのような優越関係に基づく親選択を用いません。 "
+"次世代個体群から親をランダムに選び、交叉と突然変異を適用して子個体群を生成します。"
 
-#: ../../../algorithms/nsga3.md:18
+#: ../../algorithms/nsga3.md:24
 msgid ""
 "Uniform placement of reference points uses the simplex-lattice design "
 "proposed by Das and Dennis (Das & Dennis, 1998)."
-msgstr "参照点の一様配置には、Das and Dennisが提案した単体格子法(simplex-lattice design)を用います(Das & Dennis, 1998)。"
+msgstr "参照点の一様配置には、Das and Dennisが提案した単体格子法を用います(Das & Dennis, 1998)。"
 
-#: ../../../algorithms/nsga3.md:20
+#: ../../algorithms/nsga3.md:26
 #, python-brace-format
 msgid ""
 "The source is {cite}`deb2014nsga3`. The concrete procedure is shown in "
 "the pseudocode below."
 msgstr "出典は{cite}`deb2014nsga3`。具体的な手順は次の擬似コードに示します。"
 
-#: ../../../algorithms/nsga3.md:22
+#: ../../algorithms/nsga3.md:28
 msgid "Pseudocode"
 msgstr "擬似コード"
 
-#: ../../../algorithms/nsga3.md:24
+#: ../../algorithms/nsga3.md:30
 msgid "(NSGA-III)"
-msgstr "(NSGA-III)"
+msgstr "式: (NSGA-III)"
 
-#: ../../../algorithms/nsga3.md:27
+#: ../../algorithms/nsga3.md:33
 #, python-brace-format
 msgid ""
 "**Inputs** objective functions, reference point set $Z^r$ (structured "
 "points $Z^s$ or user-specified points $Z^a$), population size $N$, "
 "initial population $P_0$ **Output** the population $P_{t+1}$ of the final"
 " generation"
-msgstr "**Inputs** 目的関数群、参照点集合 $Z^r$（構造化点 $Z^s$ またはユーザー指定点 $Z^a$）、個体数 $N$、初期個体群 $P_0$ **Output** 最終世代の個体群 $P_{t+1}$"
+msgstr ""
+"**Inputs** 目的関数群、参照点集合 $Z^r$（構造化点 $Z^s$ またはユーザー指定点 $Z^a$）、個体数 $N$、初期個体群 "
+"$P_0$ **Output** 最終世代の個体群 $P_{t+1}$"
 
-#: ../../../algorithms/nsga3.md:30
+#: ../../algorithms/nsga3.md:36
 msgid ""
 "Set $t=0$; generate an offspring population $Q_0$ via crossover and "
 "mutation from a randomly generated $P_0$"
 msgstr "$t=0$ とし、ランダム生成した $P_0$ から交叉と突然変異により子個体群 $Q_0$ を生成する"
 
-#: ../../../algorithms/nsga3.md:31
+#: ../../algorithms/nsga3.md:37
 msgid "Form the combined population $R_t = P_t \\cup Q_t$ (size $2N$)"
 msgstr "親子を結合した個体群 $R_t = P_t \\cup Q_t$（サイズ $2N$）を作る"
 
-#: ../../../algorithms/nsga3.md:32
+#: ../../algorithms/nsga3.md:38
 #, python-brace-format
 msgid ""
 "Non-dominated-sort $R_t$ to obtain the front sequence $\\mathcal{F} = "
 "(\\mathcal{F}_1, \\mathcal{F}_2, \\ldots)$"
-msgstr "$R_t$ を非優越ソートし、フロント列 $\\mathcal{F} = (\\mathcal{F}_1, \\mathcal{F}_2, \\ldots)$ を得る"
+msgstr ""
+"$R_t$ を非優越ソートし、フロント列 $\\mathcal{F} = (\\mathcal{F}_1, \\mathcal{F}_2, "
+"\\ldots)$ を得る"
 
-#: ../../../algorithms/nsga3.md:33
+#: ../../algorithms/nsga3.md:39
 #, python-brace-format
 msgid ""
 "Set $S_t = \\emptyset$, adding fronts to $S_t$ in order starting from "
@@ -127,93 +141,87 @@ msgid ""
 "front added, $P_{t+1} = \\bigcup_{i=1}^{l-1}\\mathcal{F}_i$, and $K = N -"
 " |P_{t+1}|$ (if $|S_t|=N$, set $P_{t+1}=S_t$ directly and proceed to step"
 " 8)"
-msgstr "$S_t = \\emptyset$ とし、$|S_t| \\geq N$ となるまでフロントを $\\mathcal{F}_1$ から順に $S_t$ へ加える。最後に加えたフロントを $\\mathcal{F}_l$、$P_{t+1} = \\bigcup_{i=1}^{l-1}\\mathcal{F}_i$、$K = N - |P_{t+1}|$ とする（$|S_t|=N$ ならそのまま $P_{t+1}=S_t$ とし8へ進む）"
+msgstr ""
+"$S_t = \\emptyset$ とし、$|S_t| \\geq N$ となるまでフロントを $\\mathcal{F}_1$ から順に "
+"$S_t$ へ加える。最後に加えたフロントを $\\mathcal{F}_l$、$P_{t+1} = "
+"\\bigcup_{i=1}^{l-1}\\mathcal{F}_i$、$K = N - |P_{t+1}|$ とする（$|S_t|=N$ "
+"ならそのまま $P_{t+1}=S_t$ とし8へ進む）"
 
-#: ../../../algorithms/nsga3.md:34
+#: ../../algorithms/nsga3.md:40
 msgid ""
 "Compute the hyperplane intercepts from $S_t$'s ideal point and extreme "
 "points to normalize the objectives, and place $Z^r$ in the normalized "
 "objective space"
 msgstr "$S_t$ の理想点と極端点から超平面の切片を求めて目的関数を正規化し、$Z^r$ を正規化後の目的空間に配置する"
 
-#: ../../../algorithms/nsga3.md:35
+#: ../../algorithms/nsga3.md:41
 msgid ""
 "Associate each individual in $S_t$ with the point having the smallest "
 "perpendicular distance to a reference line through the origin and each "
 "point of $Z^r$"
 msgstr "$S_t$ の各個体を、原点から $Z^r$ の各点を通る参照線への垂直距離が最小の点に対応付ける"
 
-#: ../../../algorithms/nsga3.md:36
+#: ../../algorithms/nsga3.md:42
 #, python-brace-format
 msgid ""
 "Compute each reference point's niche count $\\rho_j$ from the "
 "associations on $\\mathcal{F}_1, \\ldots, \\mathcal{F}_{l-1}$, then "
 "select $K$ individuals from $\\mathcal{F}_l$, prioritizing reference "
 "points with the smallest niche count, and add them to $P_{t+1}$"
-msgstr "$\\mathcal{F}_1, \\ldots, \\mathcal{F}_{l-1}$ 上の対応付けから各参照点のニッチカウント $\\rho_j$ を求め、ニッチカウントが最小の参照点を優先しながら $\\mathcal{F}_l$ から $K$ 個体を選んで $P_{t+1}$ に加える"
+msgstr ""
+"$\\mathcal{F}_1, \\ldots, \\mathcal{F}_{l-1}$ 上の対応付けから各参照点のニッチカウント "
+"$\\rho_j$ を求め、ニッチカウントが最小の参照点を優先しながら $\\mathcal{F}_l$ から $K$ 個体を選んで "
+"$P_{t+1}$ に加える"
 
-#: ../../../algorithms/nsga3.md:37
+#: ../../algorithms/nsga3.md:43
 #, python-brace-format
 msgid ""
 "Choose parents randomly from $P_{t+1}$, apply crossover and mutation to "
 "generate $Q_{t+1}$. Set $t=t+1$ and return to step 2, repeating until the"
 " termination condition is reached"
-msgstr "$P_{t+1}$ からランダムに親を選び、交叉と突然変異を適用して $Q_{t+1}$ を生成する。$t=t+1$ として2へ戻り、終了条件に達するまで繰り返す"
+msgstr ""
+"$P_{t+1}$ からランダムに親を選び、交叉と突然変異を適用して $Q_{t+1}$ を生成する。$t=t+1$ "
+"として2へ戻り、終了条件に達するまで繰り返す"
 
-#: ../../../algorithms/nsga3.md:40
+#: ../../algorithms/nsga3.md:46
 msgid "Flowchart"
 msgstr "フローチャート"
 
-#: ../../../algorithms/nsga3.md:57
-msgid "Complexity"
-msgstr "計算量"
-
-#: ../../../algorithms/nsga3.md:59
-#, python-brace-format
-msgid ""
-"Non-dominated sorting is $O(N\\log^{M-2}N)$ ($M$ the number of "
-"objectives, $N$ the population size), which is an asymptotically "
-"different complexity from NSGA-II's $O(MN^2)$. The worst-case per-"
-"generation complexity combining normalization, association, and niche "
-"preservation is the larger of $O(N^2\\log^{M-2}N)$ and $O(N^2 M)$ "
-"{cite}`deb2014nsga3`."
-msgstr "非優越ソートは $O(N\\log^{M-2}N)$（$M$は目的数、$N$は個体数）であり、これはNSGA-IIの $O(MN^2)$ とは異なる漸近的な計算量になります。 正規化、対応付け、ニッチ保存を合わせた1世代あたりの最悪計算量は、$O(N^2\\log^{M-2}N)$ または $O(N^2 M)$ のうち大きい方になります{cite}`deb2014nsga3`。"
-
-#: ../../../algorithms/nsga3.md:62
+#: ../../algorithms/nsga3.md:63
 msgid "Configuration in saealib"
 msgstr "saealibでの構成"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "Role"
 msgstr "役割"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "saealib implementation"
 msgstr "saealibでの実装"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "Corresponding step"
 msgstr "対応ステップ"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "Search algorithm"
 msgstr "探索アルゴリズム本体"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid ""
 "`GA` (`ask()` performs crossover and mutation; `tell()` performs "
 "combining $R_t=P_t\\cup Q_t$ and survivor selection)"
 msgstr "`GA`（`ask()`で交叉と突然変異、`tell()`で $R_t=P_t\\cup Q_t$ の結合と生存選択を実行）"
 
-#: ../../../algorithms/nsga3.md:42
-msgid "L1-2, 8"
-msgstr "L1-2, 8"
+#: ../../algorithms/nsga3.md:48
+msgid "L1-2, L8"
+msgstr "「L1-2, L8」"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "Parent selection"
 msgstr "親選択"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 #, python-brace-format
 msgid ""
 "`TournamentSelection(tournament_size=1)` (with tournament size 1, no "
@@ -221,465 +229,236 @@ msgid ""
 "description of \"choose parents randomly from $P_{t+1}$\")"
 msgstr "`TournamentSelection(tournament_size=1)`（トーナメントサイズ1では比較処理自体が実行されないため、論文が述べる「$P_{t+1}$からランダムに親を選ぶ」動作に対応する）"
 
-#: ../../../algorithms/nsga3.md:42
-msgid "L1, 8"
-msgstr "L1, 8"
+#: ../../algorithms/nsga3.md:48
+msgid "L1, L8"
+msgstr "「L1, L8」"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "Crossover"
-msgstr "交叉"
+msgstr "Crossover"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "`CrossoverSBX(prob=1.0, eta=30.0)`"
 msgstr "`CrossoverSBX(prob=1.0, eta=30.0)`"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "Mutation"
-msgstr "突然変異"
+msgstr "Mutation"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "`MutationPolynomial(eta=20.0)`"
 msgstr "`MutationPolynomial(eta=20.0)`"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "Reference point generation"
 msgstr "参照点生成"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid ""
 "`uniform_weight_vectors(n_obj, n_divisions)` (generates the initial value"
 " $Z^s$ of $Z^r$ via the Das-Dennis simplex lattice)"
-msgstr "`uniform_weight_vectors(n_obj, n_divisions)`（Das-Dennis法の単体格子で $Z^r$ の初期値 $Z^s$ を生成）"
+msgstr ""
+"`uniform_weight_vectors(n_obj, n_divisions)`（Das-Dennis法の単体格子で $Z^r$ の初期値"
+" $Z^s$ を生成）"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "L5"
-msgstr "L5"
+msgstr "手順 L5"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "Non-dominated sorting + normalization + association + niche preservation"
 msgstr "非優越ソート＋正規化＋対応付け＋ニッチ保存"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid ""
 "`NSGA3Comparator` (`sort_population` internally calls "
 "`_normalize_objectives`/`_associate_to_reference_points`/`_niche_count_select`"
 " in order)"
 msgstr "`NSGA3Comparator`（`sort_population`が内部で`_normalize_objectives`/`_associate_to_reference_points`/`_niche_count_select`を順に呼ぶ）"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "L3-7"
-msgstr "L3-7"
+msgstr "「L3-7」"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "Survivor selection"
 msgstr "生存選択"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid ""
 "`TruncationSelection()` (keeps the top $N$ individuals in the order given"
 " by `comparator.sort_population`)"
 msgstr "`TruncationSelection()`（`comparator.sort_population`の順に上位 $N$ 個体を残す）"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "L4-7"
-msgstr "L4-7"
+msgstr "「L4-7」"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "Evaluation strategy"
 msgstr "評価戦略"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid ""
 "`DirectStrategy` (no surrogate involved; every candidate generated by "
 "`GA.ask()` is evaluated with the true objective function)"
 msgstr "`DirectStrategy`（サロゲートを介さず、`GA.ask()`が生成した候補を全て真の目的関数で評価する）"
 
-#: ../../../algorithms/nsga3.md:42
+#: ../../algorithms/nsga3.md:48
 msgid "L2"
-msgstr "L2"
+msgstr "手順 L2"
 
-#: ../../../algorithms/nsga3.md:106
+#: ../../algorithms/nsga3.md:107
 msgid ""
 "The `problem.comparator = NSGA3Comparator(reference_points)` line cannot "
 "be omitted. In NSGA-II, `NSGA2Comparator` is the default for `n_obj > 1`,"
 " so the same line could be omitted, but in NSGA-III, as with SPEA2, an "
 "explicit assignment is required."
-msgstr "`problem.comparator = NSGA3Comparator(reference_points)`の行は省略できません。 NSGA-IIでは`NSGA2Comparator`が`n_obj > 1`のときの既定値なので同じ行を省略できましたが、NSGA-IIIではSPEA2と同様に明示的な代入が必要になります。"
+msgstr ""
+"`problem.comparator = NSGA3Comparator(reference_points)`の行は省略できません。 NSGA-"
+"IIでは`NSGA2Comparator`が`n_obj > 1`のときの既定値なので同じ行を省略できましたが、NSGA-"
+"IIIではSPEA2と同様に明示的な代入が必要になります。"
 
-#: ../../../algorithms/nsga3.md:109
+#: ../../algorithms/nsga3.md:110
 msgid ""
-"DTLZ2 with 3 objectives is used instead of a 2-objective ZDT benchmark "
-"because NSGA-III is aimed at many-objective optimization with four or "
-"more objectives, and the effect of reference-point-based niche "
-"preservation only shows up starting with three or more objectives."
-msgstr "2目的のZDTベンチマークではなく3目的のDTLZ2を使ったのは、NSGA-IIIが4つ以上の目的を持つ多目的最適化を主眼にした手法であり、3目的以上の問題で初めて参照点ベースのニッチ保存の効果が現れるためです。"
+"The example uses the three-objective DTLZ2 rather than a two-objective "
+"ZDT benchmark because NSGA-III primarily targets many-objective "
+"optimization while still exposing reference-direction niche preservation "
+"with three objectives."
+msgstr ""
+"2目的のZDTベンチマークではなく3目的のDTLZ2を使うのは、NSGA-"
+"IIIが多数目的最適化を主対象としつつ、3目的でも参照方向によるニッチ保持の挙動を観察できるためです。"
 
-#: ../../../algorithms/nsga3.md:111
+#: ../../algorithms/nsga3.md:112
+msgid "Differences from the source"
+msgstr "文献との差分"
+
+#: ../../algorithms/nsga3.md:114
+msgid ""
+"The original NSGA-III chooses parents randomly, while saealib represents "
+"this with `TournamentSelection(tournament_size=1)`, which performs no "
+"comparison. Setting `tournament_size` to 2 or more adds selection "
+"pressure from a dominance relation that the original method does not "
+"specify. The combination of SBX, Polynomial mutation, and "
+"`TruncationSelection` in the example is an saealib configuration choice. "
+"The original method recommends a relationship between population size and"
+" the number of reference points, but saealib's default initialization "
+"makes population size depend on `dim` and does not tie it to the number "
+"of reference points."
+msgstr ""
+"原法のNSGA-"
+"IIIは親をランダムに選びますが、saealibでは比較を行わない`TournamentSelection(tournament_size=1)`で表現します。`tournament_size`を2以上にすると、原法が指定していない支配関係による選択圧が加わります。例におけるSBX、多項式突然変異、`TruncationSelection`の組み合わせはsaealibの構成上の選択です。原法は個体群サイズと参照点数の関係を推奨しますが、saealibの既定初期化では個体群サイズは`dim`に依存し、参照点数とは連動しません。"
+
+#: ../../algorithms/nsga3.md:119
 msgid "Parameters and variants"
 msgstr "パラメータと変種"
 
-#: ../../../algorithms/nsga3.md:113
+#: ../../algorithms/nsga3.md:121
+msgid "Complexity"
+msgstr "計算量"
+
+#: ../../algorithms/nsga3.md:123
+#, python-brace-format
+msgid ""
+"The implemented non-dominated sorter has complexity $O(N\\log^{M-2}N)$ "
+"($M$ is the number of objectives and $N$ is the population size). This is"
+" asymptotically different from NSGA-II's $O(MN^2)$, but the bound applies"
+" only to this sorter, not to NSGA-III as a whole. The worst-case per-"
+"generation complexity combining normalization, association, and niche "
+"preservation is the larger of $O(N^2\\log^{M-2}N)$ and $O(N^2 M)$ "
+"{cite}`deb2014nsga3`."
+msgstr ""
+"実装された非劣ソート器の計算量は$O(N\\log^{M-2}N)$です（$M$は目的数、$N$は個体群サイズ）。これはNSGA-"
+"IIの$O(MN^2)$とは漸近的に異なりますが、この上界はソート器だけに適用され、NSGA-"
+"III全体には適用されません。正規化、対応付け、ニッチ保存を組み合わせた世代ごとの最悪計算量は、$O(N^2\\log^{M-2}N)$と$O(N^2"
+" M)$の大きい方です。{cite}`deb2014nsga3`"
+
+#: ../../algorithms/nsga3.md:127
 #, python-brace-format
 msgid ""
 "**$\\eta_c$ (SBX distribution index) and crossover probability $p_c$**: "
-"The paper reports using $p_c=1$ (`CrossoverSBX(prob=1.0)`) and"
-" $\\eta_c=30$ (`CrossoverSBX(eta=30.0)`) for NSGA-III. Both the crossover"
-" probability and distribution index are larger than NSGA-II's defaults "
+"The paper reports using $p_c=1$ (`CrossoverSBX(prob=1.0)`) and "
+"$\\eta_c=30$ (`CrossoverSBX(eta=30.0)`) for NSGA-III. Both the crossover "
+"probability and distribution index are larger than NSGA-II's defaults "
 "($p_c=0.9$, $\\eta_c=20$), a setting that generates offspring closer to "
 "the parents with higher probability {cite}`deb2014nsga3`."
-msgstr "**$\\eta_c$（SBX分布指数）と交叉確率$p_c$**：論文は、NSGA-IIIで$p_c=1$（`CrossoverSBX(prob=1.0)`）、$\\eta_c=30$（`CrossoverSBX(eta=30.0)`）を使ったと報告しています。 NSGA-IIの既定値（$p_c=0.9$、$\\eta_c=20$）より交叉確率と分布指数のいずれも大きく、親に近い子個体をより高い確率で生成する設定になっています{cite}`deb2014nsga3`。"
+msgstr ""
+"**$\\eta_c$（SBX分布指数）と交叉確率$p_c$**：論文は、NSGA-"
+"IIIで$p_c=1$（`CrossoverSBX(prob=1.0)`）、$\\eta_c=30$（`CrossoverSBX(eta=30.0)`）を使ったと報告しています。"
+" NSGA-"
+"IIの既定値（$p_c=0.9$、$\\eta_c=20$）より交叉確率と分布指数のいずれも大きく、親に近い子個体をより高い確率で生成する設定になっています{cite}`deb2014nsga3`。"
 
-#: ../../../algorithms/nsga3.md:116
-msgid ""
-"**Correspondence between population size $N$ and reference-point count "
-"$H$**: The paper recommends choosing the population size $N$ as the "
-"smallest multiple of 4 at or above the reference-point count $H$. Unless "
-"`set_initializer()` is called, `Optimizer` uses "
-"`LHSInitializer(n_init_population=4*dim)` as the default, so this "
-"population size depends only on the decision-variable dimension `dim`, "
-"and is not tied to `H`. If you want the population size deliberately "
-"matched to `H`, check the number of rows returned by "
-"`uniform_weight_vectors` and explicitly specify `n_init_population` via "
-"`set_initializer()`."
-msgstr "**個体数$N$と参照点数$H$の対応**：論文は、参照点数$H$に対して個体数$N$を$H$以上で最小の4の倍数に選ぶことを推奨しています。 `Optimizer`は`set_initializer()`を呼ばない場合`LHSInitializer(n_init_population=4*dim)`を既定値として使うため、この個体数は決定変数の次元`dim`にのみ依存し、`H`とは連動しません。 `H`に対して個体数を意図的に揃えたい場合は、`uniform_weight_vectors`が返す配列の行数を確認したうえで、`set_initializer()`で`n_init_population`を明示的に指定します。"
-
-#: ../../../algorithms/nsga3.md:120
-#, python-brace-format
-msgid ""
-"**Why parent selection isn't tournament-based**: The "
-"paper states that, since NSGA-III already secures diversity through its "
-"niche-preservation operation, it chooses parents randomly rather than "
-"using an explicit selection operator {cite}`deb2014nsga3`. "
-"`TournamentSelection(tournament_size=1)` expresses this \"random parent "
-"selection,\" since no comparison is actually performed when the "
-"tournament size is 1. Changing `tournament_size` to 2 or more adds the "
-"same dominance-based selection pressure as NSGA-II/SPEA2, introducing a "
-"selection mechanism the paper deliberately excludes."
-msgstr "**親選択がトーナメントでない理由**：論文は、NSGA-IIIがニッチ保存操作によってすでに多様性を確保しているため、明示的な選択演算子を用いず親をランダムに選ぶと述べています{cite}`deb2014nsga3`。 `TournamentSelection(tournament_size=1)`は、トーナメントサイズが1のとき比較処理自体が実行されないため、この「ランダムな親選択」を表現します。 `tournament_size`を2以上に変更すると、NSGA-II/SPEA2と同じ優越関係ベースの選択圧が加わり、論文が意図的に排除した選択機構を導入することになります。"
-
-#: ../../../algorithms/nsga3.md:124
+#: ../../algorithms/nsga3.md:131
 msgid ""
 "**Swapping the dominator (dominance predicate)**: "
 "`NSGA3Comparator(reference_points, dominator=...)` lets you inject a "
-"[Dominator](../components/dominance.md) other than the default "
-"`ParetoDominator`. Since this changes the result of non-dominated sorting"
-" itself, the population subjected to front splitting and niche "
+"[Dominator](../concepts/problem_and_ranking/dominance.md) other than the "
+"default `ParetoDominator`. Since this changes the result of non-dominated"
+" sorting itself, the population subjected to front splitting and niche "
 "preservation also depends on this dominance predicate."
-msgstr "**dominator（支配述語）の差し替え**：`NSGA3Comparator(reference_points, dominator=...)`で、既定の`ParetoDominator`以外の[Dominator](../components/dominance.md)を注入できます。 非優越ソート自体の結果が変わるため、フロント分割とニッチ保存の対象個体群もこの支配述語に依存します。"
+msgstr ""
+"**支配述語の差し替え**：`NSGA3Comparator(reference_points, "
+"dominator=...)`では、既定の`ParetoDominator`以外の[Dominator](../concepts/problem_and_ranking/dominance.md)を注入できます。非劣ソート自体の結果が変わるため、フロント分割とニッチ保存の対象となる個体群もこの支配述語に依存します。"
 
-#: ../../../algorithms/nsga3.md:127
+#: ../../algorithms/nsga3.md:134
 msgid "Related"
 msgstr "関連"
 
-#: ../../../algorithms/nsga3.md:129
+#: ../../algorithms/nsga3.md:136
 msgid "[References](../references.md): Full bibliographic details for the source"
 msgstr "[文献リファレンス](../references.md)：出典の完全な書誌情報"
 
-#: ../../../algorithms/nsga3.md:130
+#: ../../algorithms/nsga3.md:137
 msgid ""
-"[Comparator](../components/comparators.md): Detailed specification of "
-"`NSGA3Comparator`, the `reference_points` argument, and lazy `rng` "
-"generation"
-msgstr "[Comparator](../components/comparators.md)：`NSGA3Comparator`の詳しい仕様、`reference_points`引数、`rng`の遅延生成"
+"[Comparator](../concepts/problem_and_ranking/comparators.md): Detailed "
+"specification of `NSGA3Comparator`, the `reference_points` argument, and "
+"lazy `rng` generation"
+msgstr "[Comparator](../concepts/problem_and_ranking/comparators.md)：`NSGA3Comparator`、`reference_points`引数、`rng`の遅延生成の詳細"
 
-#: ../../../algorithms/nsga3.md:131
+#: ../../algorithms/nsga3.md:138
 msgid ""
-"[Crossover](../components/crossover.md): List of crossover operators "
-"including `CrossoverSBX`"
-msgstr "[Crossover](../components/crossover.md)：`CrossoverSBX`を含む交叉演算子一覧"
+"[Crossover](../concepts/search_algorithms/crossover.md): List of "
+"crossover operators including `CrossoverSBX`"
+msgstr ""
+"[Crossover](../concepts/search_algorithms/crossover.md): "
+"`CrossoverSBX`を含む交叉演算子の一覧"
 
-#: ../../../algorithms/nsga3.md:132
+#: ../../algorithms/nsga3.md:139
 msgid ""
-"[Mutation](../components/mutation.md): List of mutation operators "
-"including `MutationPolynomial`"
-msgstr "[Mutation](../components/mutation.md)：`MutationPolynomial`を含む突然変異演算子一覧"
+"[Mutation](../concepts/search_algorithms/mutation.md): List of mutation "
+"operators including `MutationPolynomial`"
+msgstr ""
+"[Mutation](../concepts/search_algorithms/mutation.md): "
+"`MutationPolynomial`を含む突然変異演算子の一覧"
 
-#: ../../../algorithms/nsga3.md:133
+#: ../../algorithms/nsga3.md:140
 msgid ""
-"[ParentSelection](../components/parent_selection.md): Detailed usage of "
-"`TournamentSelection`"
-msgstr "[ParentSelection](../components/parent_selection.md)：`TournamentSelection`の詳しい使い方"
+"[ParentSelection](../concepts/search_algorithms/parent_selection.md): "
+"Detailed usage of `TournamentSelection`"
+msgstr "[ParentSelection](../concepts/search_algorithms/parent_selection.md)：`TournamentSelection`の詳しい使い方"
 
-#: ../../../algorithms/nsga3.md:134
+#: ../../algorithms/nsga3.md:141
 msgid ""
-"[SurvivorSelection](../components/survivor_selection.md): Detailed usage "
-"of `TruncationSelection`"
-msgstr "[SurvivorSelection](../components/survivor_selection.md)：`TruncationSelection`の詳しい使い方"
+"[SurvivorSelection](../concepts/search_algorithms/survivor_selection.md):"
+" Detailed usage of `TruncationSelection`"
+msgstr "[SurvivorSelection](../concepts/search_algorithms/survivor_selection.md)：`TruncationSelection`の詳しい使い方"
 
-#: ../../../algorithms/nsga3.md:135
+#: ../../algorithms/nsga3.md:142
 msgid ""
-"[OptimizationStrategy](../components/strategies.md): List of strategies "
-"including `DirectStrategy`"
-msgstr "[OptimizationStrategy](../components/strategies.md)：`DirectStrategy`を含む戦略一覧"
+"[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md):"
+" List of strategies including `DirectStrategy`"
+msgstr ""
+"[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md):"
+" `DirectStrategy`を含む戦略の一覧"
 
-#: ../../../algorithms/nsga3.md:136
+#: ../../algorithms/nsga3.md:143
 msgid ""
-"[NonDominatedSorting](../components/nondominated_sorting.md): "
-"Implementation details of non-dominated sorting"
-msgstr "[NonDominatedSorting](../components/nondominated_sorting.md)：非優越ソートの実装詳細"
+"[NonDominatedSorting](../concepts/problem_and_ranking/nondominated_sorting.md):"
+" Implementation details of non-dominated sorting"
+msgstr "[NonDominatedSorting](../concepts/problem_and_ranking/nondominated_sorting.md)：非劣ソートの実装詳細"
 
-#: ../../../algorithms/nsga3.md:137
+#: ../../algorithms/nsga3.md:144
 msgid ""
-"[Dominator](../components/dominance.md): List of dominance predicates "
-"that can be swapped in via the `dominator` argument"
-msgstr "[Dominator](../components/dominance.md)：`dominator`引数として差し替え可能な支配述語一覧"
-
-#~ msgid ""
-#~ "NSGA-IIIは、NSGA-IIの選択機構を四つ以上の目的を持つ多目的最適化(many-"
-#~ "objective optimization)向けに拡張した遺伝アルゴリズムである。 "
-#~ "混雑度距離による多様性維持を、あらかじめ配置した参照点(reference "
-#~ "point)へのニッチ保存操作に置き換え、目的数が増えても解集合の分布を維持する。"
-#~ msgstr ""
-
-#~ msgid "概要"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "目的数が四つ以上に増えると、NSGA-IIの混雑度距離は多様性維持の役割を十分に果たせなくなる。 "
-#~ "ランダムに生成した個体群のうち非優越な個体の割合は目的数の増加とともに指数的に増えるため、優越関係による絞り込みだけでは次世代個体群を埋められなくなり、混雑度距離が担う多様性維持の比重が相対的に大きくなるためである。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "NSGA-IIIは、この混雑度距離を、目的空間上にあらかじめ配置した**参照点**(reference "
-#~ "point)へのニッチ保存操作に置き換える。 各世代で、個体群全体の**理想点**(ideal "
-#~ "point)と**極端点**(extreme "
-#~ "point)から超平面の切片を求めて目的関数を正規化し、各個体を最も近い参照点への垂直距離で対応付ける。 "
-#~ "まだ完全には受理できていない最後のフロントでは、割り当て済みの個体数(ニッチカウント)が少ない参照点を優先し、そこに対応付けられた個体のうち垂直距離が最小の個体から順に選ぶことで、参照点ごとにほぼ均等な数の解を残す。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "NSGA-IIIは、このニッチ保存操作によってすでに多様性を確保しているため、NSGA-"
-#~ "IIのような優越関係に基づく親選択を用いない。 次世代個体群から親をランダムに選び、交叉・突然変異を適用して子個体群を生成する。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "参照点の一様配置には、Das and Dennisの単体格子法(simplex-lattice "
-#~ "design)を用いる{cite}`das1998nbi`。"
-#~ msgstr ""
-
-#~ msgid "出典は{cite}`deb2014nsga3`。具体的な手順は次の擬似コードに示す。"
-#~ msgstr ""
-
-#~ msgid "擬似コード"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "**Inputs** 目的関数群、参照点集合 $Z^r$（構造化点 $Z^s$ "
-#~ "またはユーザー指定点 $Z^a$）、個体数 $N$、初期集団 $P_0$ "
-#~ "**Output** 最終世代の個体群 $P_{t+1}$"
-#~ msgstr ""
-
-#~ msgid "$t=0$ とし、ランダム生成した $P_0$ から交叉・突然変異により子個体群 $Q_0$ を生成する"
-#~ msgstr ""
-
-#~ msgid "親子を結合した集団 $R_t = P_t \\cup Q_t$（サイズ $2N$）を作る"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "$R_t$ を非優越ソートし、フロント列 $\\mathcal{F} = "
-#~ "(\\mathcal{F}_1, \\mathcal{F}_2, \\ldots)$ を得る"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "$S_t = \\emptyset$ とし、$|S_t| \\geq N$"
-#~ " となるまでフロントを $\\mathcal{F}_1$ から順に $S_t$ "
-#~ "へ加える。最後に加えたフロントを $\\mathcal{F}_l$、$P_{t+1} = "
-#~ "\\bigcup_{i=1}^{l-1}\\mathcal{F}_i$、$K = N - "
-#~ "|P_{t+1}|$ とする（$|S_t|=N$ ならそのまま $P_{t+1}=S_t$ "
-#~ "とし8へ進む）"
-#~ msgstr ""
-
-#~ msgid "$S_t$ の理想点・極端点から超平面の切片を求めて目的関数を正規化し、$Z^r$ を正規化後の目的空間に配置する"
-#~ msgstr ""
-
-#~ msgid "$S_t$ の各個体を、原点から $Z^r$ の各点を通る参照線への垂直距離が最小の点に対応付ける"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "$\\mathcal{F}_1, \\ldots, \\mathcal{F}_{l-1}$ "
-#~ "上の対応付けから各参照点のニッチカウント $\\rho_j$ を求め、ニッチカウントが最小の参照点を優先しながら"
-#~ " $\\mathcal{F}_l$ から $K$ 個体を選んで $P_{t+1}$"
-#~ " に加える"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "$P_{t+1}$ からランダムに親を選び、交叉・突然変異を適用して $Q_{t+1}$ "
-#~ "を生成する。$t=t+1$ として2へ戻り、終了条件に達するまで繰り返す"
-#~ msgstr ""
-
-#~ msgid "フローチャート"
-#~ msgstr ""
-
-#~ msgid "計算量"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "非優越ソートは $O(N\\log^{M-2}N)$（$M$は目的数、$N$は個体数）であり、これはNSGA-IIの"
-#~ " $O(MN^2)$ とは異なる漸近的な計算量になる。 "
-#~ "正規化・対応付け・ニッチ保存を合わせた1世代あたりの最悪計算量は、$O(N^2\\log^{M-2}N)$ または "
-#~ "$O(N^2 M)$ のうち大きい方になる{cite}`deb2014nsga3`。"
-#~ msgstr ""
-
-#~ msgid "saealibでの構成"
-#~ msgstr ""
-
-#~ msgid "役割"
-#~ msgstr ""
-
-#~ msgid "saealibでの実装"
-#~ msgstr ""
-
-#~ msgid "対応する擬似コードのステップ"
-#~ msgstr ""
-
-#~ msgid "探索アルゴリズム本体"
-#~ msgstr ""
-
-#~ msgid "`GA`（`ask()`で交叉・突然変異、`tell()`で $R_t=P_t\\cup Q_t$ の結合と生存選択を実行）"
-#~ msgstr ""
-
-#~ msgid "1-2, 8"
-#~ msgstr ""
-
-#~ msgid "親選択"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`TournamentSelection(tournament_size=1)`（トーナメントサイズ1では比較処理自体が実行されないため、論文がSection"
-#~ " IV-Fで述べる「$P_{t+1}$からランダムに親を選ぶ」動作に対応する）"
-#~ msgstr ""
-
-#~ msgid "1, 8"
-#~ msgstr ""
-
-#~ msgid "交叉"
-#~ msgstr ""
-
-#~ msgid "突然変異"
-#~ msgstr ""
-
-#~ msgid "参照点生成"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`uniform_weight_vectors(n_obj, n_divisions)`（Das-"
-#~ "Dennis法の単体格子で $Z^r$ の初期値 $Z^s$ を生成）"
-#~ msgstr ""
-
-#~ msgid "5"
-#~ msgstr ""
-
-#~ msgid "非優越ソート＋正規化＋対応付け＋ニッチ保存"
-#~ msgstr ""
-
-#~ msgid "`NSGA3Comparator`（`sort_population`が内部で`_normalize_objectives`・`_associate_to_reference_points`・`_niche_count_select`を順に呼ぶ）"
-#~ msgstr ""
-
-#~ msgid "3-7"
-#~ msgstr ""
-
-#~ msgid "生存選択"
-#~ msgstr ""
-
-#~ msgid "`TruncationSelection()`（`comparator.sort_population`の順に上位 $N$ 個体を残す）"
-#~ msgstr ""
-
-#~ msgid "4-7"
-#~ msgstr ""
-
-#~ msgid "評価戦略"
-#~ msgstr ""
-
-#~ msgid "`DirectStrategy`（サロゲートを介さず、`GA.ask()`が生成した候補を全て真の目的関数で評価する）"
-#~ msgstr ""
-
-#~ msgid "2"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`problem.comparator = "
-#~ "NSGA3Comparator(reference_points)`の行は省略できない。 NSGA-"
-#~ "IIでは`NSGA2Comparator`が`n_obj > 1`のときの既定値なので同じ行を省略できたが"
-#~ "、NSGA-IIIではSPEA2と同様に明示的な代入が必要になる。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "2目的のZDTベンチマークではなく3目的のDTLZ2を使ったのは、NSGA-"
-#~ "IIIが四つ以上の目的を持つ多目的最適化を主眼にした手法であり、3目的以上の問題で初めて参照点ベースのニッチ保存の効果が現れるためである。"
-#~ msgstr ""
-
-#~ msgid "パラメータと変種"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "**$\\eta_c$（SBX分布指数）と交叉確率$p_c$**: 論文は、NSGA-"
-#~ "IIIで$p_c=1$（`CrossoverSBX(prob=1.0)`）、$\\eta_c=30$（`CrossoverSBX(eta=30.0)`）を使ったと報告している。"
-#~ " NSGA-"
-#~ "IIの既定値（$p_c=0.9$、$\\eta_c=20$）より交叉確率・分布指数のいずれも大きく、親に近い子個体をより高い確率で生成する設定になっている{cite}`deb2014nsga3`。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "**個体数$N$と参照点数$H$の対応**: "
-#~ "論文は、参照点数$H$に対して個体数$N$を$H$以上で最小の4の倍数に選ぶことを推奨している。 "
-#~ "`Optimizer`は`set_initializer()`を呼ばない場合`LHSInitializer(n_init_population=4*dim)`を既定値として使うため、この個体数は決定変数の次元`dim`にのみ依存し、`H`とは連動しない。"
-#~ " "
-#~ "`H`に対して個体数を意図的に揃えたい場合は、`uniform_weight_vectors`が返す配列の行数を確認したうえで、`set_initializer()`で`n_init_population`を明示的に指定する。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "**親選択がトーナメントでない理由**: 論文は、NSGA-"
-#~ "IIIがニッチ保存操作によってすでに多様性を確保しているため、明示的な選択演算子を用いず親をランダムに選ぶと述べている{cite}`deb2014nsga3`。"
-#~ " "
-#~ "`TournamentSelection(tournament_size=1)`は、トーナメントサイズが1のとき比較処理自体が実行されないため、この「ランダムな親選択」を表現する。"
-#~ " `tournament_size`を2以上に変更すると、NSGA-"
-#~ "II/SPEA2と同じ優越関係ベースの選択圧が加わり、論文が意図的に排除した選択機構を導入することになる。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "**dominator(支配述語)の差し替え**: `NSGA3Comparator(reference_points, "
-#~ "dominator=...)`で、既定の`ParetoDominator`以外の[Dominator](../components/dominance.md)を注入できる。"
-#~ " 非優越ソート自体の結果が変わるため、フロント分割・ニッチ保存の対象母集団もこの支配述語に依存する。"
-#~ msgstr ""
-
-#~ msgid "関連"
-#~ msgstr ""
-
-#~ msgid "[文献リファレンス](../references.md) — 出典の完全な書誌情報"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "[Comparator](../components/comparators.md) — "
-#~ "`NSGA3Comparator`の詳しい仕様、`reference_points`引数、`rng`の遅延生成"
-#~ msgstr ""
-
-#~ msgid "[Crossover](../components/crossover.md) — `CrossoverSBX`を含む交叉演算子一覧"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "[Mutation](../components/mutation.md) — "
-#~ "`MutationPolynomial`を含む突然変異演算子一覧"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "[ParentSelection](../components/parent_selection.md) — "
-#~ "`TournamentSelection`の詳しい使い方"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "[SurvivorSelection](../components/survivor_selection.md) — "
-#~ "`TruncationSelection`の詳しい使い方"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "[OptimizationStrategy](../components/strategies.md) — "
-#~ "`DirectStrategy`を含む戦略一覧"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "[NonDominatedSorting](../components/nondominated_sorting.md) —"
-#~ " 非優越ソートの実装詳細"
-#~ msgstr ""
-
-#~ msgid "[Dominator](../components/dominance.md) — `dominator`引数として差し替え可能な支配述語一覧"
-#~ msgstr ""
-
+"[Dominator](../concepts/problem_and_ranking/dominance.md): List of "
+"dominance predicates that can be swapped in via the `dominator` argument"
+msgstr "[Dominator](../concepts/problem_and_ranking/dominance.md)：`dominator`引数で差し替えられる支配述語の一覧"

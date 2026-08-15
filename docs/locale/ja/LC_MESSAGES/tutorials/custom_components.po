@@ -1,0 +1,513 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../tutorials/custom_components.md:7
+msgid "Add a custom component to an existing contract"
+msgstr "既存の契約に独自Componentを追加する"
+
+#: ../../tutorials/custom_components.md:9
+msgid ""
+"This page assumes that you are implementing a replacement that fits an "
+"existing component contract."
+msgstr "前提は、既存のComponentの契約に収まる差し替えを実装することです。"
+
+#: ../../tutorials/custom_components.md:10
+msgid "What you'll be able to do"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:13
+msgid ""
+"By the end of this page, you'll be able to choose an extension point, "
+"verify its minimal contract, register the component, and test it."
+msgstr "このページを終えると、拡張点を選び、最小の契約を確認し、登録してテストできます。"
+
+#: ../../tutorials/custom_components.md:16
+msgid ""
+"See [Extension guidelines](../concepts/extension_guidelines.md) for the "
+"extension-point categories. If you need to change a contract or the "
+"execution framework itself, continue to [Framework "
+"extensions](../framework/extensions.md)."
+msgstr "[拡張ガイドライン](../concepts/extension_guidelines.md)で拡張点の分類を確認します。契約や実行フレームワーク自体を変更する場合は、[フレームワーク拡張](../framework/extensions.md)へ進みます。"
+
+#: ../../tutorials/custom_components.md:18
+msgid "The import policy is collected in [Canonical Imports](../api/imports.md)."
+msgstr "importの方針は [Canonical Imports](../api/imports.md) にまとめています。"
+
+#: ../../tutorials/custom_components.md:20
+msgid "Choose an extension point"
+msgstr "拡張点を選ぶ"
+
+#: ../../tutorials/custom_components.md:22
+msgid ""
+"If changing a built-in component's settings is enough, use [Swapping "
+"built-in components](component_swap.md) or [Hooks](interface_hooks.md). "
+"When you need new search, prediction, evaluation, or generation logic, "
+"choose the component with the corresponding contract."
+msgstr "ビルトインコンポーネントの設定変更で足りるなら、[ビルトインコンポーネントの差し替え](component_swap.md)または[Hook](interface_hooks.md)を使います。新しい探索、予測、評価、生成ロジックが必要な場合は、対応する契約を持つコンポーネントを選びます。"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Change"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Extension point"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Minimal implementation boundary"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Generate candidates and consume evaluation results"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`Algorithm`"
+msgstr "`Algorithm`"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`ask()` and `tell()`, plus the required attributes and contract"
+msgstr "`ask()`と`tell()`、必要な属性と契約"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Prediction model"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`Surrogate`"
+msgstr "`Surrogate`"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`fit()` and `predict()`"
+msgstr "`fit()`と`predict()`"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Turn predictions into candidate scores"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`AcquisitionFunction`"
+msgstr "`AcquisitionFunction`"
+
+#: ../../tutorials/custom_components.md:10
+msgid ""
+"`evaluate()`, or the corresponding Pointwise `compute_reference()` and "
+"`score()`"
+msgstr "`evaluate()`、またはPointwiseの`compute_reference()`と`score()`"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Extend the evaluation backend on the graph-native path"
+msgstr "graph-native経路で評価バックエンドを拡張する"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`EvaluationAdapter` / `Evaluator`"
+msgstr "`EvaluationAdapter` / `Evaluator`"
+
+#: ../../tutorials/custom_components.md:10
+msgid ""
+"`GenomeBatch → EvaluationAdapter → EvaluationPayload → Evaluator → "
+"ObservationBatch`"
+msgstr ""
+"`GenomeBatch → EvaluationAdapter → EvaluationPayload → Evaluator → "
+"ObservationBatch`"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Swap a synchronous Evaluator on the Stage compatibility path"
+msgstr "Stage互換経路で同期Evaluatorを差し替える"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`Evaluator`"
+msgstr "`Evaluator`"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`evaluate_batch()` and `EvaluationResult`"
+msgstr "`evaluate_batch()`と`EvaluationResult`"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Generation execution policy"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`Strategy`"
+msgstr "`Strategy`"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`build_graph()` or the existing Strategy path"
+msgstr "`build_graph()`または既存のStrategy経路"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Compatibility execution unit"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`Stage`"
+msgstr "`Stage`"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`execute(state) -> state`"
+msgstr "`execute(state) -> state`"
+
+#: ../../tutorials/custom_components.md:35
+msgid ""
+"Check the exact required methods for each contract in the [Algorithm "
+"reference](../api/algorithms.md), [Surrogate "
+"reference](../api/surrogate.md), [Acquisition "
+"reference](../api/acquisition.md), and [Stage "
+"reference](../api/stages.md). Similar names do not imply identical "
+"contracts, so a method from another component cannot be reused without "
+"checking the boundary."
+msgstr "各契約で必要なメソッドは、[Algorithmリファレンス](../api/algorithms.md)、[Surrogateリファレンス](../api/surrogate.md)、[Acquisitionリファレンス](../api/acquisition.md)、[Stageリファレンス](../api/stages.md)で確認します。似た名前でも契約が同じとは限らないため、境界を確認せずに別コンポーネントのメソッドを再利用してはいけません。"
+
+#: ../../tutorials/custom_components.md:38
+msgid "Check the minimal contract"
+msgstr "最小の契約を確認する"
+
+#: ../../tutorials/custom_components.md:40
+msgid ""
+"Before implementing the component, inspect the abstract methods on the "
+"existing abstract base class, `contract()`, and the attributes read at "
+"runtime. `Algorithm.ask()` and `Algorithm.tell()` read a `StateView` and "
+"return a `ProposalBatch` or `StatePatch`. `Surrogate` receives arrays and"
+" returns a `SurrogatePrediction`. `Stage` receives an `OptimizationState`"
+" and returns the updated state."
+msgstr "実装前に、既存の抽象基底クラスの抽象メソッド、`contract()`、実行時に参照される属性を確認します。`Algorithm.ask()`と`Algorithm.tell()`は`StateView`を読み、`ProposalBatch`または`StatePatch`を返します。`Surrogate`は配列を受け取り、`SurrogatePrediction`を返します。`Stage`は`OptimizationState`を受け取り、更新後の状態を返します。"
+
+#: ../../tutorials/custom_components.md:45
+msgid "Extend a component on the graph-native path"
+msgstr "graph-native経路のComponent拡張"
+
+#: ../../tutorials/custom_components.md:47
+msgid ""
+"Extend graph-native components such as `Algorithm` at the `ask(...) -> "
+"ProposalBatch` and `tell(FeedbackBatch, StateView) -> StatePatch` "
+"boundaries. When adding evaluation, connect it to the `GenomeBatch → "
+"EvaluationAdapter → EvaluationPayload → Evaluator → ObservationBatch` "
+"path."
+msgstr ""
+"`Algorithm`などのgraph-nativeコンポーネントは、`ask(...) -> "
+"ProposalBatch`と`tell(FeedbackBatch, StateView) -> "
+"StatePatch`の境界で拡張します。評価を追加する場合は、`GenomeBatch → EvaluationAdapter → "
+"EvaluationPayload → Evaluator → ObservationBatch`の経路に接続します。"
+
+#: ../../tutorials/custom_components.md:50
+msgid "Extend a synchronous Evaluator on the Stage compatibility path"
+msgstr "Stage互換経路の同期Evaluator拡張"
+
+#: ../../tutorials/custom_components.md:52
+msgid ""
+"This example replaces only the evaluation step with an `Evaluator` on the"
+" Stage compatibility path. The implementation boundary is "
+"`evaluate_batch(x, problem) -> EvaluationResult`; `EvaluationResult` "
+"accepts one- or two-dimensional `f`, `g`, and `cv` arrays."
+msgstr ""
+"この例では、Stage互換経路の評価処理だけを`Evaluator`に置き換えます。実装境界は`evaluate_batch(x, "
+"problem) -> "
+"EvaluationResult`で、`EvaluationResult`は1次元または2次元の`f`、`g`、`cv`配列を受け取ります。"
+
+#: ../../tutorials/custom_components.md:71
+msgid ""
+"When you pass a custom Evaluator to `Optimizer.set_evaluator()`, the "
+"built-in synchronous evaluation adapter calls it. `EvaluationResult` "
+"validates the number of rows and the array shapes."
+msgstr "独自Evaluatorを`Optimizer.set_evaluator()`に渡すと、組み込みの同期評価アダプターが呼び出します。`EvaluationResult`は行数と配列形状を検証します。"
+
+#: ../../tutorials/custom_components.md:74
+msgid "Register or compose the component"
+msgstr "登録または組み込む"
+
+#: ../../tutorials/custom_components.md:76
+msgid ""
+"For direct use, pass an instance to the public "
+"`Optimizer.set_evaluator(evaluator)` method. Add `@register()` and "
+"register the class with the Registry only when a configuration file or "
+"preset constructs it by name."
+msgstr "直接使う場合は、公開メソッド`Optimizer.set_evaluator(evaluator)`にインスタンスを渡します。設定ファイルやプリセットが名前でクラスを構築する場合だけ、`@register()`を追加してRegistryに登録します。"
+
+#: ../../tutorials/custom_components.md:100
+msgid ""
+"Because the `Problem` objective is not always replaced by this Evaluator,"
+" validate a configuration that actually calls `set_evaluator()`."
+msgstr ""
+"`Problem` の評価関数を常にこのEvaluatorで置き換えるとは限らないため、`set_evaluator()` "
+"を呼んだ構成を実際に使って検証します。"
+
+#: ../../tutorials/custom_components.md:102
+msgid "Add a minimal test"
+msgstr "最小テストを置く"
+
+#: ../../tutorials/custom_components.md:104
+msgid ""
+"Start with a small unit test that fixes the shapes and values returned by"
+" `evaluate_batch()`. Then run `Optimizer(problem).set_evaluator(...)` "
+"with a short `max_fe` and check contract validation and the execution "
+"path. Listing abstract base classes and changing the execution framework "
+"are outside this guide; see the relevant API reference or framework-"
+"extension documentation."
+msgstr ""
+"まず `evaluate_batch()` の形状と値を固定した小さな単体テストを書きます。次に "
+"`Optimizer(problem).set_evaluator(...)` を短い `max_fe` "
+"で実行し、契約検証と実行経路を確認します。抽象基底クラスの一覧化や実行フレームワークの変更はこのガイドの範囲外です。対応するAPIリファレンスまたはフレームワーク拡張のドキュメントを参照してください。"
+
+#: ../../tutorials/custom_components.md:109
+msgid "Port external operators to native saealib components"
+msgstr "外部OperatorをnativeなComponentへ移植する"
+
+#: ../../tutorials/custom_components.md:111
+msgid ""
+"Wrapping an external operator with a [pymoo "
+"adapter](external_libraries.md) keeps a runtime dependency on that "
+"library. The pymoo adapters already preserve population-level "
+"vectorization in `GA`'s default batch mode, calling the wrapped operator "
+"once for the whole batch or gated subset, so porting is not normally "
+"needed to remove per-item calling overhead. Port an operator when you "
+"want to remove the runtime dependency, or when its logic should be "
+"directly auditable and citable as native saealib code for a software "
+"paper. The core logic usually stays the same; the main changes are "
+"adapting the array shape where necessary and using saealib's RNG."
+msgstr "[pymooアダプター](external_libraries.md)で外部演算子をラップすると、そのライブラリへのランタイム依存が残ります。pymooアダプターは`GA`の既定バッチモードで個体群単位のベクトル化を維持し、ラップした演算子をバッチ全体またはゲート済み部分集合に対して一度だけ呼び出すため、要素ごとの呼び出しオーバーヘッドをなくす目的だけなら通常は移植不要です。ランタイム依存をなくしたい場合や、ソフトウェア論文向けにロジックをsaealibネイティブコードとして直接監査・引用可能にしたい場合に演算子を移植します。中核のロジックは通常変わらず、主な変更は必要に応じた配列形状の調整とsaealibのRNGの使用です。"
+
+#: ../../tutorials/custom_components.md:116
+msgid ""
+"The one detail that is easy to get wrong when porting is *where* the "
+"individual-level probability gate lives. saealib's `GA` checks "
+"`Crossover.prob` itself and passes only gated parent groups to "
+"`crossover_batch()`, but `Mutation.mutate_batch()` must draw one "
+"`self.prob` gate per row and leave ungated rows unchanged. Both pymoo's "
+"built-in mutations and DEAP's `toolbox.mutate()` (gated externally by "
+"`algorithms.varAnd`'s `mutpb`) leave this gate outside the operator, so a"
+" ported mutation usually needs a gate array that the original code did "
+"not have."
+msgstr "移植時に間違えやすい点は、個体レベルの確率ゲートを置く場所です。saealibの`GA`は`Crossover.prob`を自ら判定し、ゲートを通過した親グループだけを`crossover_batch()`へ渡します。一方、`Mutation.mutate_batch()`は行ごとに1つの`self.prob`ゲートを抽選し、通過しなかった行を変更せずに残す必要があります。pymooの組み込みMutationもDEAPの`toolbox.mutate()`（`algorithms.varAnd`の`mutpb`によって外部でゲートされます）もゲートを演算子の外に置くため、移植後のMutationには元のコードになかったゲート配列が通常必要です。"
+
+#: ../../tutorials/custom_components.md:120
+msgid "Port from pymoo"
+msgstr "pymooから移植する"
+
+#: ../../tutorials/custom_components.md:122
+msgid ""
+"A custom pymoo `Mutation` typically vectorizes over the whole batch `X` "
+"(shape `(n_individuals, dim)`):"
+msgstr "独自のpymoo `Mutation` は通常、batch全体の`X`（形状`(n_individuals, dim)`）に対してベクトル化します："
+
+#: ../../tutorials/custom_components.md:142
+msgid ""
+"Ported to a native saealib `Mutation`, the batch axis stays in place. The"
+" `_do()` body maps almost directly to `mutate_batch()`; the main addition"
+" is saealib's per-row `prob` gate:"
+msgstr ""
+"nativeなsaealib "
+"`Mutation`へ移植しても、batch軸は維持されます。`_do()`本体は`mutate_batch()`へほぼそのまま対応し、主な追加はsaealibの行ごとの`prob`ゲートです："
+
+#: ../../tutorials/custom_components.md:173
+msgid "Port from DEAP"
+msgstr "DEAPから移植する"
+
+#: ../../tutorials/custom_components.md:175
+msgid ""
+"DEAP operators work on one individual or parent pair at a time, so a "
+"native saealib port must add and vectorize over a leading batch axis. A "
+"custom crossover:"
+msgstr "DEAPのOperatorは一度に1個体または1組の親を処理するため、nativeなsaealibへの移植では先頭にbatch軸を追加し、その軸に沿ってベクトル化する必要があります。独自の交叉は次のようになります："
+
+#: ../../tutorials/custom_components.md:189
+msgid ""
+"becomes a native `Crossover` by vectorizing over both the parent pairs "
+"and dimensions. It also replaces `random.random()` with the `rng` saealib"
+" passes in, dropping DEAP's implicit global RNG state in favor of "
+"saealib's per-run `np.random.Generator` (kept reproducible via "
+"`minimize(..., seed=...)`):"
+msgstr ""
+"親の組と次元の両方に対してベクトル化することで、nativeな`Crossover`になります。また、`random.random()`をsaealibから渡される`rng`に置き換え、DEAPが暗黙に持つグローバルRNG状態を、実行ごとのsaealibの`np.random.Generator`（`minimize(...,"
+" seed=...)`で再現可能）に置き換えます："
+
+#: ../../tutorials/custom_components.md:212
+msgid ""
+"`toolbox.mate` is gated externally by `varAnd`'s `cxpb`, matching "
+"saealib's `GA`, so — unlike mutation — no extra gate is needed here."
+msgstr "`toolbox.mate`は`varAnd`の`cxpb`によって外部からゲートされ、saealibの`GA`と一致するため、突然変異とは異なり、ここで追加のゲートは不要です。"
+
+#: ../../tutorials/custom_components.md:214
+msgid "Port an Algorithm and Problem"
+msgstr "AlgorithmとProblemの移植"
+
+#: ../../tutorials/custom_components.md:216
+msgid ""
+"Porting a whole search algorithm (survival selection, archive management,"
+" index-coupled state such as DE) is not a mechanical rewrite in the same "
+"way: it means reimplementing `Algorithm.ask()`/`tell()` from scratch. For"
+" pymoo specifically, the engine-mode `PymooAlgorithm` adapter described "
+"in [Integrating External Libraries](external_libraries.md) covers this "
+"case without a rewrite; for other libraries, see "
+"[Algorithm](../concepts/search_algorithms/algorithm.md) for what a native"
+" `Algorithm` subclass needs to implement."
+msgstr "検索アルゴリズム全体（生存選択、アーカイブ管理、DEのようなインデックスに結び付いた状態）の移植は、同じ意味で機械的な書き換えではありません。`Algorithm.ask()`/`tell()`をゼロから再実装することになります。pymooでは、[外部ライブラリとの連携](external_libraries.md)で説明しているエンジンモードの`PymooAlgorithm`アダプターが書き換えなしで対応します。他のライブラリについては、ネイティブな`Algorithm`サブクラスに必要な実装を[Algorithm](../concepts/search_algorithms/algorithm.md)で確認してください。"
+
+#: ../../tutorials/custom_components.md:218
+msgid "Separate component responsibilities"
+msgstr "コンポーネントの責務を分ける"
+
+#: ../../tutorials/custom_components.md:220
+msgid ""
+"When extending an existing execution contract, define the component's "
+"responsibility and state boundary first."
+msgstr "既存の実行契約を保ったまま拡張する場合は、担当する責務と状態の境界を先に決めます。"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Component"
+msgstr "Component"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Main responsibility"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "State boundary"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Propose candidates and consume feedback"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`ProposalBatch`, `FeedbackBatch`, `StatePatch`"
+msgstr "`ProposalBatch`、`FeedbackBatch`、`StatePatch`"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Operator"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Crossover, mutation, parent selection, and survivor selection"
+msgstr "交叉、突然変異、親選択、生存選択"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Candidates and RNG passed by the Algorithm"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Fit and predict with the prediction model"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Training data from the Archive and predictions"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`OptimizationStrategy`"
+msgstr "`OptimizationStrategy`"
+
+#: ../../tutorials/custom_components.md:10
+msgid "Evaluation plan, candidate selection, and feedback flow"
+msgstr "評価計画、候補選択、フィードバックの流れ"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`build_graph()` or the Stage compatibility path"
+msgstr "`build_graph()`またはStage互換経路"
+
+#: ../../tutorials/custom_components.md:10
+msgid "One operation on the existing sequential path"
+msgstr "このページでできるようになること"
+
+#: ../../tutorials/custom_components.md:10
+msgid "`OptimizationState` and `replace()`"
+msgstr "`OptimizationState`と`replace()`"
+
+#: ../../tutorials/custom_components.md:230
+msgid ""
+"Check the contract and built-in implementation on the relevant concept "
+"page before implementing each component. `Algorithm.ask()` and "
+"`Algorithm.tell()`, `Strategy.build_graph()`, and `Stage.execute()` are "
+"different boundaries."
+msgstr "各コンポーネントを実装する前に、対応するConceptページで契約と組み込み実装を確認します。`Algorithm.ask()`と`Algorithm.tell()`、`Strategy.build_graph()`、`Stage.execute()`は異なる境界です。"
+
+#: ../../tutorials/custom_components.md:233
+msgid "Plan implementation and Stage migration"
+msgstr "実装順とStageの移行"
+
+#: ../../tutorials/custom_components.md:235
+msgid "Check the data formats returned by `Problem` and `SearchSpace`."
+msgstr "1. `Problem`と`SearchSpace`が返すデータ形式を確認します。"
+
+#: ../../tutorials/custom_components.md:236
+msgid "Obtain dependent components from the public namespaces."
+msgstr "2. 公開名前空間から依存コンポーネントを取得します。"
+
+#: ../../tutorials/custom_components.md:237
+msgid "Implement the component's contract and state access in isolation."
+msgstr "3. コンポーネント単体の契約と状態アクセスを実装します。"
+
+#: ../../tutorials/custom_components.md:238
+msgid "Assemble it with the `Optimizer` replacement API."
+msgstr "4. `Optimizer`の差し替えAPIで組み合わせます。"
+
+#: ../../tutorials/custom_components.md:239
+msgid ""
+"Check feedback candidate IDs, evaluation provenance, and checkpoint "
+"behavior."
+msgstr "5. Feedbackの候補ID、評価の出所、チェックポイント動作を確認します。"
+
+#: ../../tutorials/custom_components.md:241
+msgid ""
+"When connecting an existing Stage to a structured pipeline, make "
+"`stage_component(stage)` explicit. For a new graph-native component, do "
+"not reuse the Stage's `OptimizationState` boundary; implement "
+"`ComponentContract`, `StateView`, and `StatePatch`."
+msgstr ""
+"既存Stageを構造化パイプラインへ接続する場合は`stage_component(stage)`を明示します。新しいgraph-"
+"nativeコンポーネントではStageの`OptimizationState`境界を再利用せず、`ComponentContract`、`StateView`、`StatePatch`を実装します。"
+
+#: ../../tutorials/custom_components.md:244
+msgid ""
+"For details, see [Algorithm](../concepts/search_algorithms/algorithm.md),"
+" "
+"[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md),"
+" and [Stage](../concepts/observation_and_state/stage.md)."
+msgstr "詳細は[Algorithm](../concepts/search_algorithms/algorithm.md)、[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md)、[Stage](../concepts/observation_and_state/stage.md)を参照してください。"
+
+#: ../../tutorials/custom_components.md:246
+msgid "Related concepts and reference"
+msgstr "関連するConceptとReference"
+
+#: ../../tutorials/custom_components.md:248
+msgid "[Evaluator concept](../concepts/execution_and_evaluation/evaluation.md)"
+msgstr "[Evaluatorの概念](../concepts/execution_and_evaluation/evaluation.md)"
+
+#: ../../tutorials/custom_components.md:249
+msgid "[Extension guidelines](../concepts/extension_guidelines.md)"
+msgstr "[拡張ガイドライン](../concepts/extension_guidelines.md)"
+
+#: ../../tutorials/custom_components.md:250
+msgid "[Evaluation reference](../api/evaluation.md)"
+msgstr "[Evaluationリファレンス](../api/evaluation.md)"
+
+#: ../../tutorials/custom_components.md:251
+msgid "[Core reference](../api/core.md)"
+msgstr "[Coreリファレンス](../api/core.md)"
+
+#: ../../tutorials/custom_components.md:252
+#, python-brace-format
+msgid "{py:class}`saealib.Crossover`"
+msgstr "{py:class}`saealib.Crossover`"
+
+#: ../../tutorials/custom_components.md:253
+#, python-brace-format
+msgid "{py:class}`saealib.Mutation`"
+msgstr "{py:class}`saealib.Mutation`"

@@ -1,0 +1,165 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../framework/index.md:7
+msgid "Framework"
+msgstr "フレームワーク"
+
+#: ../../framework/index.md:9
+msgid ""
+"The saealib framework places Component contracts in a ComponentGraph and "
+"provides the execution foundation for the Compiler to turn them into a "
+"verified ExecutablePlan. It treats contract structure and execution flow "
+"as separate relationships."
+msgstr "saealibのフレームワークはComponentの契約をComponentGraphに配置し、Compilerが検証済みのExecutablePlanへ変換するための実行基盤を提供します。契約構造と実行フローは別の関係として扱います。"
+
+#: ../../framework/index.md:12
+msgid "Concept pages"
+msgstr "概念ページ"
+
+#: ../../framework/index.md:14
+msgid ""
+"Components return their static contract through `contract()`. "
+"ComponentContract describes contract inclusion for the components a "
+"Component holds and the capabilities it requires, not a Component "
+"inheritance hierarchy. `PortSpec`, `DataSpec`, and `StateContract` are "
+"declarative values that compose a contract, not Component subclasses."
+msgstr "Componentは`contract()`で静的な契約を返します。ComponentContractは、Componentが保持するコンポーネントの契約包含と必要な能力を記述するもので、Componentの継承階層を表すものではありません。`PortSpec`、`DataSpec`、`StateContract`は契約を構成する宣言的な値であり、Componentサブクラスではありません。"
+
+#: ../../framework/index.md:18
+msgid ""
+"The following pages explain the concepts needed for extensions by "
+"responsibility."
+msgstr "次のページで、拡張時に必要な概念を分担して説明します。"
+
+#: ../../framework/index.md:24
+msgid "Component"
+msgstr "{fa}`puzzle-piece;sd-mr-1` Component"
+
+#: ../../framework/index.md:27
+msgid "The Component Protocol, `contract()`, and PartSpec."
+msgstr "Component Protocol、`contract()`、PartSpecの関係。"
+
+#: ../../framework/index.md:30
+msgid "ComponentContract"
+msgstr "{fa}`file-signature;sd-mr-1` ComponentContract"
+
+#: ../../framework/index.md:33
+msgid "Contract elements and invariants."
+msgstr "契約の構成要素と不変条件。"
+
+#: ../../framework/index.md:36
+msgid "Specs"
+msgstr "{fa}`plug;sd-mr-1` Specs"
+
+#: ../../framework/index.md:39
+msgid "Declarative values for ports, data, services, and compatibility."
+msgstr "ポート、データ、サービス、互換性を表す宣言的な値"
+
+#: ../../framework/index.md:42
+msgid "Graph"
+msgstr "{fa}`diagram-project;sd-mr-1` Graph"
+
+#: ../../framework/index.md:45
+msgid "Nodes, edges, state bindings, and structured regions."
+msgstr "ノード、エッジ、状態バインディング、構造化領域。"
+
+#: ../../framework/index.md:48
+msgid "Compiler"
+msgstr "{fa}`gears;sd-mr-1` Compiler"
+
+#: ../../framework/index.md:51
+msgid "Verification, resolution, diagnostics, and ExecutablePlan."
+msgstr "検証、解決、診断、ExecutablePlan。"
+
+#: ../../framework/index.md:54
+msgid "Runtime"
+msgstr "{fa}`microchip;sd-mr-1` Runtime"
+
+#: ../../framework/index.md:57
+msgid ""
+"ExecutablePlan execution, state application, resumption, and asynchronous"
+" waiting."
+msgstr "ExecutablePlanの実行、状態適用、再開、非同期待機。"
+
+#: ../../framework/index.md:60
+msgid "SearchSpace"
+msgstr "{fa}`square-root-variable;sd-mr-1` SearchSpace"
+
+#: ../../framework/index.md:63
+msgid "Candidate representation, services, and the RepresentationSpec boundary."
+msgstr "候補表現、サービス、RepresentationSpecの境界。"
+
+#: ../../framework/index.md:66
+msgid "Feedback"
+msgstr "{fa}`comment-dots;sd-mr-1` フィードバック"
+
+#: ../../framework/index.md:69
+msgid ""
+"Candidate IDs and the correspondence between observations, true values, "
+"and predictions."
+msgstr "候補ID、観測、真値と予測の対応。"
+
+#: ../../framework/index.md:72
+msgid "OptimizationState"
+msgstr "{fa}`database;sd-mr-1` OptimizationState"
+
+#: ../../framework/index.md:75
+msgid "The ownership boundary between Stage-compatible and graph-native state."
+msgstr "Stage互換状態とgraph-native状態の所有境界。"
+
+#: ../../framework/index.md:79
+msgid "Execution flow"
+msgstr "実行の流れ"
+
+#: ../../framework/index.md:81
+msgid ""
+"The runtime relationship is `Component → ComponentNode → ComponentGraph →"
+" Compiler → ExecutablePlan → ExecutionRuntime`. This flow is separate "
+"from the contract tree; ComponentContract does not directly represent "
+"execution order."
+msgstr ""
+"Runtime上の関係は`Component → ComponentNode → ComponentGraph → Compiler → "
+"ExecutablePlan → "
+"ExecutionRuntime`です。この流れは契約ツリーとは別であり、ComponentContractが実行順序を直接表すことはありません。"
+
+#: ../../framework/index.md:84
+msgid ""
+"See "
+"[OptimizationState](../concepts/observation_and_state/optimization_state.md)"
+" and [Runtime](runtime.md) for detailed state boundaries, and "
+"[SearchSpace](../concepts/problem_and_ranking/search_space.md) and "
+"[Feedback](../concepts/observation_and_state/feedback.md) for candidate-"
+"representation and observation boundaries."
+msgstr "詳細な状態境界は[OptimizationState](../concepts/observation_and_state/optimization_state.md)と[Runtime](runtime.md)で、候補表現と観測の境界は[SearchSpace](../concepts/problem_and_ranking/search_space.md)と[Feedback](../concepts/observation_and_state/feedback.md)で説明します。"
+
+#: ../../framework/index.md:86
+msgid "Extension paths"
+msgstr "拡張方法"
+
+#: ../../framework/index.md:88
+msgid ""
+"When you only need to swap the behavior of a built-in component, choose "
+"the corresponding extension page. When you need a new contract, candidate"
+" representation, Graph connection, Compiler rule, or Runtime semantic, "
+"see [Framework extensions](extensions.md). See the [API "
+"reference](../api/index.md) for import paths for public types."
+msgstr "既存のビルトインコンポーネントの振る舞いだけを差し替える場合は、対応する拡張ページを選びます。新しい契約、候補表現、Graph接続、Compilerルール、Runtimeの意味論が必要な場合は[フレームワーク拡張](extensions.md)を参照してください。公開型のimport経路は[APIリファレンス](../api/index.md)で確認します。"

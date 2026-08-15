@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-02 10:23+0900\n"
+"POT-Creation-Date: 2026-08-15 10:57+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,323 +19,400 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../components/optimization_state.md:1
+#: ../../concepts/observation_and_state/optimization_state.md:7
 msgid "OptimizationState"
 msgstr "OptimizationState"
 
-#: ../../components/optimization_state.md:3
+#: ../../concepts/observation_and_state/optimization_state.md:9
 msgid ""
-"The components making up the optimization pipeline don't hold running "
-"state directly — they communicate through a single value object called "
-"`OptimizationState`. It appears in nearly every signature as `ctx` or "
-"`state`, e.g. `Algorithm.ask(ctx, ...)` or `Stage.execute(state)`."
+"`OptimizationState` is the value that carries an `Optimizer` run's "
+"execution context and its checkpoint. On the Stage compatibility path, a "
+"`Stage` receives this state directly and hands the copy it updated with "
+"`replace()` to the next `Stage`."
+msgstr "`OptimizationState`は、`Optimizer`の実行コンテキストとチェックポイントを保持する値です。Stage互換経路では、`Stage`がこの状態を直接受け取り、`replace()`で更新したコピーを次の`Stage`へ渡します。"
+
+#: ../../concepts/observation_and_state/optimization_state.md:12
+msgid ""
+"In the structured runtime, a graph-native component never receives the "
+"whole `OptimizationState`. A component receives a `StateView` limited to "
+"the `StateKey`s it declared, and returns its changes as a `StatePatch`. "
+"The runtime applies that patch to the `StateStore`, producing the next "
+"execution boundary."
+msgstr "構造化ランタイムでは、グラフネイティブコンポーネントが`OptimizationState`全体を受け取ることはありません。コンポーネントは宣言した`StateKey`に限定された`StateView`を受け取り、変更を`StatePatch`として返します。ランタイムはそのパッチを`StateStore`へ適用し、次の実行境界を生成します。"
+
+#: ../../concepts/observation_and_state/optimization_state.md:16
+msgid "OptimizationState's role"
+msgstr "OptimizationStateの役割"
+
+#: ../../concepts/observation_and_state/optimization_state.md:18
+msgid ""
+"`OptimizationState` gathers three things: the values the Stage "
+"compatibility path runs on, the results a user inspects, and the values "
+"needed to resume. It is not where component contracts, graph structure, "
+"or compiler rules live. Ownership of state belongs to `Optimizer` and the"
+" state itself on the Stage compatibility path, and to `StateStore` on the"
+" graph-native path."
 msgstr ""
-"最適化パイプラインを構成する各コンポーネントは、実行中の状態を直接保持せず、`OptimizationState`という1つの値オブジェクトを介してやり取りします。"
-" `Algorithm.ask(ctx, "
-"...)`や`Stage.execute(state)`など、ほぼ全てのシグネチャに`ctx`または`state`として登場します。"
+"`OptimizationState`は、Stage互換経路が実行に使う値、利用者が確認する結果、再開に必要な値の3つをまとめます。コンポーネント契約、グラフ構造、コンパイラの規則を保持する場所ではありません。状態の所有者は、Stage互換経路では`Optimizer`と状態自体"
+"、graph-native経路では`StateStore`です。"
 
-#: ../../components/optimization_state.md:6
-msgid "What OptimizationState represents"
-msgstr "OptimizationStateが表すもの"
-
-#: ../../components/optimization_state.md:8
+#: ../../concepts/observation_and_state/optimization_state.md:22
 msgid ""
-"`OptimizationState` is designed as an immutable-style value object: "
-"instead of rewriting fields directly, an updated copy is made with "
-"`replace()` and passed along. `Initializer` constructs the first state at"
-" the start of a run, and from then on, each `Stage` passes the copy it "
-"updated via `replace()` to the next `Stage`."
-msgstr ""
-"`OptimizationState`は、フィールドを直接書き換えるのではなく`replace()`で更新済みコピーを作って受け渡す、不変"
-"（immutable-style）な値オブジェクトとして設計されています。 "
-"`Initializer`が実行開始時に最初の状態を構築し、以後は各`Stage`が`replace()`で更新したコピーを次の`Stage`へ渡していきます。"
+"`OptimizationState` produces a new value with `replace()`; `StateStore` "
+"applies a `StatePatch` to produce a new generation. If a component were "
+"allowed to mutate `StateStore` or `OptimizationState` directly, neither "
+"the compiler nor the runtime could trace writes made outside the "
+"contract, or detect a resume point that no longer matches."
+msgstr "`OptimizationState`は`replace()`で新しい値を生成し、`StateStore`は`StatePatch`を適用して新しい世代を生成します。コンポーネントが`StateStore`や`OptimizationState`を直接変更できると、コンパイラもランタイムも、契約外で行われた書き込みを追跡したり、もはや一致しない再開地点を検出したりできません。"
 
-#: ../../components/optimization_state.md:11
-msgid "However, this immutability has two controlled exceptions."
-msgstr "ただし、この不変性には2つの制御された例外があります。"
+#: ../../concepts/observation_and_state/optimization_state.md:25
+msgid "The two state boundaries"
+msgstr "二つの状態境界"
 
-#: ../../components/optimization_state.md:13
+#: ../../concepts/observation_and_state/optimization_state.md:27
 msgid ""
-"**`archive`** is append-only, and in-place appending is permitted. "
-"Copying it on every evaluation would cost proportional to the square of "
-"the evaluation count, so this part is deliberately made mutable."
-msgstr ""
-"**`archive`**は追記専用（append-only）であり、in-placeの追記が許容されます。 "
-"評価のたびに複製すると評価回数の2乗に比例するコストになるため、意図的にこの部分だけ可変にしてあります。"
+"`OptimizationState` and `StateView` represent different execution "
+"boundaries."
+msgstr "`OptimizationState` と `StateView` は、異なる実行境界を表します。"
 
-#: ../../components/optimization_state.md:16
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "Boundary"
+msgstr "境界"
+
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "Receives"
+msgstr "受け取る値"
+
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "Returns"
+msgstr "返す値"
+
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "Main users"
+msgstr "主な利用者"
+
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "Stage compatibility boundary"
+msgstr "Stage互換境界"
+
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "`OptimizationState`"
+msgstr "`OptimizationState`"
+
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "existing Stages, sequential compatibility runtime"
+msgstr "既存Stage、sequential compatibility ランタイム"
+
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "graph-native boundary"
+msgstr "graph-native境界"
+
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "a declared `StateView`"
+msgstr "宣言済みの `StateView`"
+
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "`StatePatch` or `NodeResult`"
+msgstr "`StatePatch` または `NodeResult`"
+
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "components, compiler, structured runtime"
+msgstr "Component、Compiler、構造化ランタイム"
+
+#: ../../concepts/observation_and_state/optimization_state.md:34
 msgid ""
-"**`rng`** has the side effect of advancing its internal state every time "
-"it's called. This is a property of NumPy's `Generator` itself, not a "
-"design specific to `OptimizationState`."
-msgstr ""
-"**`rng`**は、呼び出すたびに内部状態が進むという副作用を持ちます。 "
-"これはNumPyの`Generator`自体の性質であり、`OptimizationState`固有の設計ではありません。"
+"Conflating the two makes it look as if a graph-native component could "
+"read and write arbitrary state. In a structured pipeline, "
+"`ComponentContract` declares which `StateKey`s are read and which are "
+"written, and the runtime hands the component only that range."
+msgstr "この二つの境界を混同すると、グラフネイティブコンポーネントが任意の状態を読み書きできるように見えます。構造化パイプラインでは、`ComponentContract`が読み書きする`StateKey`を宣言し、ランタイムはその範囲だけをコンポーネントへ渡します。"
 
-#: ../../components/optimization_state.md:19
+#: ../../concepts/observation_and_state/optimization_state.md:37
+msgid "What OptimizationState holds"
+msgstr "OptimizationStateが保持する値"
+
+#: ../../concepts/observation_and_state/optimization_state.md:39
 msgid ""
-"Aside from these two, every other field follows the principle of "
-"immutable updates via `replace()`."
-msgstr "この2つ以外のフィールドは、`replace()`による不変的な更新が原則です。"
+"`OptimizationState` holds the values you need to inspect a result or "
+"resume a run."
+msgstr "`OptimizationState` は、利用者が結果を確認したり、実行を再開したりするための値を保持します。"
 
-#: ../../components/optimization_state.md:21
-msgid "Main fields"
-msgstr "主要フィールド"
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "Value"
+msgstr "値"
 
-#: ../../components/optimization_state.md
-msgid "Field"
-msgstr "フィールド"
-
-#: ../../components/optimization_state.md
-msgid "Content"
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "Contents"
 msgstr "内容"
 
-#: ../../components/optimization_state.md
+#: ../../concepts/observation_and_state/optimization_state.md
 msgid "`problem`"
 msgstr "`problem`"
 
-#: ../../components/optimization_state.md
-msgid "The [Problem](problem.md) being solved"
-msgstr "解いている[Problem](problem.md)"
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "the `Problem` being optimized"
+msgstr "最適化対象の`Problem`"
 
-#: ../../components/optimization_state.md
-msgid "`populations`"
-msgstr "`populations`"
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "`population`"
+msgstr "`population`"
 
-#: ../../components/optimization_state.md
-msgid ""
-"Named [Population](population.md) collections; `populations[\"main\"]` is"
-" the current generation"
-msgstr "名前付きの[Population](population.md)コレクション。`populations[\"main\"]`が現在の世代を表します。"
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "compatibility shortcut to the current `Population`"
+msgstr "現在の`Population`への互換性用ショートカット"
 
-#: ../../components/optimization_state.md
-msgid "`archives`"
-msgstr "`archives`"
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "`archive`"
+msgstr "`archive`"
 
-#: ../../components/optimization_state.md
-msgid ""
-"Named [Archive](population.md) collections; `archives[\"main\"]` "
-"accumulates evaluated solutions and `archives[\"pareto\"]` maintains the "
-"non-dominated set"
-msgstr "名前付きの[Archive](population.md)コレクション。`archives[\"main\"]`が評価済み解を蓄積し、`archives[\"pareto\"]`が非支配集合を保持します。"
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "compatibility shortcut to the `Archive` of evaluated solutions"
+msgstr "評価済み解の`Archive`への互換性用ショートカット"
 
-#: ../../components/optimization_state.md
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "`pareto_archive`"
+msgstr "`pareto_archive`"
+
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "compatibility shortcut to the non-dominated solution set"
+msgstr "非劣解集合への互換性用ショートカット"
+
+#: ../../concepts/observation_and_state/optimization_state.md
 msgid "`rng`"
 msgstr "`rng`"
 
-#: ../../components/optimization_state.md
-msgid "The random number generator"
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "the random number generator"
 msgstr "乱数生成器"
 
-#: ../../components/optimization_state.md
+#: ../../concepts/observation_and_state/optimization_state.md
 msgid "`fe`"
 msgstr "`fe`"
 
-#: ../../components/optimization_state.md
-msgid "The evaluation count"
-msgstr "評価回数"
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "the number of true evaluations"
+msgstr "真の評価回数"
 
-#: ../../components/optimization_state.md
+#: ../../concepts/observation_and_state/optimization_state.md
 msgid "`gen`"
 msgstr "`gen`"
 
-#: ../../components/optimization_state.md
-msgid "The generation count"
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "the generation count"
 msgstr "世代数"
 
-#: ../../components/optimization_state.md
+#: ../../concepts/observation_and_state/optimization_state.md
 msgid "`data`"
 msgstr "`data`"
 
-#: ../../components/optimization_state.md
-msgid "A free-form dictionary for user extension"
-msgstr "ユーザー拡張用の自由形式の辞書"
+#: ../../concepts/observation_and_state/optimization_state.md
+msgid "extra data for Stage compatibility extensions"
+msgstr "Stage互換拡張用の追加データ"
 
-#: ../../components/optimization_state.md:33
+#: ../../concepts/observation_and_state/optimization_state.md:52
 msgid ""
-"There are also typed fields that each pipeline [Stage](stage.md) reads "
-"and writes."
-msgstr "このほかに、パイプラインの各[Stage](stage.md)が読み書きする型付きフィールドがあります。"
+"`population`, `archive`, and `pareto_archive` refer to named collections "
+"internally. Do not design a new graph-native component to put arbitrary "
+"values into `data` — declare a `StateKey` in its `StateContract` instead."
+msgstr "`population`、`archive`、`pareto_archive`は、内部で名前付きのコレクションを参照します。新しいグラフネイティブコンポーネントが任意の値を`data`へ入れる設計にはせず、代わりに`StateContract`で`StateKey`を宣言します。"
 
-#: ../../components/optimization_state.md
-msgid "Written by"
-msgstr "書き込むStage"
+#: ../../concepts/observation_and_state/optimization_state.md:55
+msgid "StateStore, StateView, and StatePatch"
+msgstr "StateStore、StateView、StatePatch"
 
-#: ../../components/optimization_state.md
-msgid "Read by"
-msgstr "参照するStage"
-
-#: ../../components/optimization_state.md
-msgid "`offspring`"
-msgstr "`offspring`"
-
-#: ../../components/optimization_state.md
-msgid "`AskStage`"
-msgstr "`AskStage`"
-
-#: ../../components/optimization_state.md
-msgid "Each subsequent stage"
-msgstr "後続の各Stage"
-
-#: ../../components/optimization_state.md
-msgid "`evaluated_offspring`"
-msgstr "`evaluated_offspring`"
-
-#: ../../components/optimization_state.md
-msgid "`EvaluationApplyStage`"
-msgstr "`EvaluationApplyStage`"
-
-#: ../../components/optimization_state.md
-msgid "`ArchiveUpdateStage`"
-msgstr "`ArchiveUpdateStage`"
-
-#: ../../components/optimization_state.md
-msgid "`scores` / `predictions` / `acquisition_result`"
-msgstr "`scores` / `predictions` / `acquisition_result`"
-
-#: ../../components/optimization_state.md
-msgid "`SurrogatePredictStage` / `AcquisitionStage`"
-msgstr "`SurrogatePredictStage` / `AcquisitionStage`"
-
-#: ../../components/optimization_state.md
-msgid "Evaluation planning"
-msgstr "評価計画"
-
-#: ../../components/optimization_state.md:41
-#, python-brace-format
+#: ../../concepts/observation_and_state/optimization_state.md:57
 msgid ""
-"`data` is a dictionary for user extension, used as a place for a custom "
-"`Stage` or `Callback` to add arbitrary values. Instead of a direct "
-"mutation like `state.data[\"key\"] = value`, pass a newly built "
-"dictionary via `state.replace(data={**state.data, \"key\": value})`."
+"`StateStore` is the state store that maps a typed `StateKey` to a value. "
+"The `StateView` handed to a component exposes only the read keys its "
+"`ComponentContract` declared."
+msgstr "`StateStore`は、型付きの`StateKey`を値に対応付ける状態ストアです。コンポーネントに渡される`StateView`は、`ComponentContract`が宣言した読み取りキーだけを公開します。"
+
+#: ../../concepts/observation_and_state/optimization_state.md:60
+msgid ""
+"When a component changes state, it returns a `StatePatch` rather than "
+"mutating the store. The runtime applies the patch to the current store to"
+" produce the next state. This is what prevents a component from "
+"incidentally reading or writing state it never declared."
 msgstr ""
-"`data`はユーザー拡張用の辞書で、独自の`Stage`や`Callback`が任意の値を追加する場所として使います。 "
-"`state.data[\"key\"] = "
-"value`という直接変更ではなく、`state.replace(data={**state.data, \"key\": "
-"value})`という形で新しい辞書を作って渡します。"
+"Componentが状態を変更するときは、直接Storeを変更せずに `StatePatch` を返します。 "
+"RuntimeはPatchを現在のStoreへ適用し、次の状態を生成します。 "
+"この方式によって、Componentが宣言していないStateを偶然に読み書きすることを防ぎます。"
 
-#: ../../components/optimization_state.md:44
+#: ../../concepts/observation_and_state/optimization_state.md:64
 msgid ""
-"The convenience properties `population`, `archive`, and `pareto_archive` "
-"return the corresponding `\"main\"` or `\"pareto\"` entries. Additional "
-"collections can be added with `add_population(name, value)` and "
-"`add_archive(name, value)`."
+"The compiler checks that a `StateContract`'s reads, writes, and exports "
+"line up with its `StateBinding`. The runtime restricts a `StateView` to "
+"the declared read keys, and applies a `StatePatch`'s writes to the "
+"store's typed keys and generation. Patches that conflict on the same key,"
+" or that delete a key which does not exist, are handled according to the "
+"runtime's diagnostics."
+msgstr "コンパイラは、`StateContract`のreads、writes、exportsが`StateBinding`と対応していることを確認します。ランタイムは`StateView`を宣言済みの読み取りキーに限定し、`StatePatch`の書き込みをストアの型付きキーと世代へ適用します。同じキーで競合するパッチや、存在しないキーを削除するパッチは、ランタイムの診断規則に従って扱います。"
+
+#: ../../concepts/observation_and_state/optimization_state.md:78
+msgid ""
+"Real `StateKey`s are the typed keys provided by `saealib.core.state`, not"
+" strings. The code above is simplified to show only the boundary: read "
+"from the view, return a patch."
+msgstr "実際の`StateKey`は文字列ではなく、`saealib.core.state`が提供する型付きキーです。上のコードは、ビューから読み取り、パッチを返す境界だけを示すよう簡略化しています。"
+
+#: ../../concepts/observation_and_state/optimization_state.md:81
+msgid "Updating on the Stage compatibility path"
+msgstr "Stage互換経路での更新"
+
+#: ../../concepts/observation_and_state/optimization_state.md:83
+msgid ""
+"A custom `Stage` receives an `OptimizationState` and returns the updated "
+"state via `state.replace(...)`."
+msgstr "カスタム`Stage`は`OptimizationState`を受け取り、`state.replace(...)`で更新後の状態を返します。"
+
+#: ../../concepts/observation_and_state/optimization_state.md:97
+msgid ""
+"To carry an extra value on the Stage compatibility path, copy "
+"`state.data` before passing it to `replace()`. To carry the same value in"
+" a graph-native component, use a `StateKey` and a `StatePatch`."
+msgstr "Stage互換経路で追加の値を持たせる場合は、`state.data`をコピーしてから`replace()`に渡します。グラフネイティブコンポーネントで同じ値を扱う場合は、`StateKey`と`StatePatch`を使います。"
+
+#: ../../concepts/observation_and_state/optimization_state.md:100
+msgid "Updating and checkpointing"
+msgstr "更新とチェックポイント"
+
+#: ../../concepts/observation_and_state/optimization_state.md:102
+msgid ""
+"`replace(**kwargs) -> OptimizationState` is the method for updating "
+"values on the Stage compatibility path. `archive` is mutated as it "
+"accumulates evaluation results, and `rng` advances its internal state "
+"every time it draws a random number. These are explicit exceptions to the"
+" design in which every other value goes through `replace()`."
 msgstr ""
-"便利プロパティ`population`、`archive`、`pareto_archive`は、対応する`\"main\"`または`\"pareto\"`のエントリを返します。"
-"`add_population(name, value)`と`add_archive(name, value)`で追加のコレクションを登録できます。"
+"`replace(**kwargs) -> OptimizationState` は、Stage互換経路で値を更新するためのメソッドです。 "
+"`archive` は評価結果を蓄積するために変更され、`rng` は乱数を生成するたびに内部状態が進みます。 これらは、他の値を "
+"`replace()` で渡す設計と異なる、明示された例外です。"
 
-#: ../../components/optimization_state.md:46
-msgid "Convenience properties"
-msgstr "便利プロパティ"
-
-#: ../../components/optimization_state.md:48
+#: ../../concepts/observation_and_state/optimization_state.md:106
 msgid ""
-"`dim`/`n_obj`/`lb`/`ub`/`direction`/`comparator` are all delegating "
-"properties to `state.problem.xxx`. They're provided as shorthand so you "
-"can write `ctx.dim` instead of `ctx.problem.dim`."
+"`save(path)` and `load(path, problem)` handle the npz checkpoint of an "
+"`OptimizationState`. For automatic checkpointing, see "
+"[Checkpointing](../../tutorials/checkpoint.md). The pickle format "
+"additionally requires `Optimizer`-side state, so which save path applies "
+"is decided by the combination of `CheckpointCallback` and `Optimizer`."
 msgstr ""
-"`dim`/`n_obj`/`lb`/`ub`/`direction`/`comparator`は、いずれも`state.problem.xxx`への委譲プロパティです。"
-" `ctx.problem.dim`と書く代わりに`ctx.dim`と書ける簡略表記として用意されています。"
+"`save(path)`と`load(path, "
+"problem)`は`OptimizationState`のnpzチェックポイントを扱います。自動チェックポイントについては[Checkpointing](../../tutorials/checkpoint.md)を参照してください。pickle形式では`Optimizer`側の状態も必要なため、どの保存経路を使うかは`CheckpointCallback`と`Optimizer`の組み合わせで決まります。"
 
-#: ../../components/optimization_state.md:51
-msgid "Updating via replace"
-msgstr "replaceによる更新"
+#: ../../concepts/observation_and_state/optimization_state.md:110
+msgid "Choosing a state boundary"
+msgstr "どの状態境界を使うか"
 
-#: ../../components/optimization_state.md:53
+#: ../../concepts/observation_and_state/optimization_state.md:112
+msgid "Implementing an existing Stage: use `OptimizationState` and `replace()`."
+msgstr "既存のStageを実装する：`OptimizationState` と `replace()` を使う。"
+
+#: ../../concepts/observation_and_state/optimization_state.md:113
 msgid ""
-"`replace(**kwargs) -> OptimizationState` is a wrapper around "
-"`dataclasses.replace`, the most frequently used update method throughout "
-"the pipeline. For example, `CountGenerationStage`, which advances the "
-"generation count, updates the field as `state.replace(gen=state.gen + "
-"1)`."
+"Implementing a new graph-native component: use `ComponentContract`, "
+"`StateView`, and `StatePatch`."
 msgstr ""
-"`replace(**kwargs) -> "
-"OptimizationState`は`dataclasses.replace`のラッパーで、パイプライン中で最も頻繁に使われる更新方法です。 "
-"たとえば世代数を進める`CountGenerationStage`は、`state.replace(gen=state.gen + "
-"1)`という形でフィールドを更新します。"
+"新しいグラフネイティブComponentを実装する：`ComponentContract`、`StateView`、`StatePatch` "
+"を使う。"
 
-#: ../../components/optimization_state.md:56
+#: ../../concepts/observation_and_state/optimization_state.md:114
 msgid ""
-"`OptimizationState` also provides helper methods "
-"`count_fe(count=1)`/`count_generation()` that increment `fe`/`gen`, but "
-"these are one-off mutations that bypass `replace()`. The Runner owns "
-"asynchronous generation boundaries; refill steps do not increment `gen` "
-"while a generation is open. When writing a custom `Stage`, it's easier to"
-" preserve consistency by sticking to the `replace()` path as well."
+"Inspecting the result of a run: use the `OptimizationState` returned by "
+"`Optimizer.run()` or `Optimizer.iterate()`."
 msgstr ""
-"`OptimizationState`には`fe`/`gen`をインクリメントする`count_fe(count=1)`/`count_generation()`という補助メソッドも用意されていますが、これらは`replace()`を経由しないその場限りのミューテーションです。"
-" 非同期の世代境界は`Runner`が管理し、世代が開いている間の補充処理は`gen`を増やしません。"
-" 独自の`Stage`を書く場合も、`replace()`を使う経路に揃えると一貫性を保ちやすくなります。"
+"Optimizerの実行結果を確認する：`Optimizer.run()` または `Optimizer.iterate()` が返す "
+"`OptimizationState` を使う。"
 
-#: ../../components/optimization_state.md:60
-msgid "Checkpointing"
-msgstr "チェックポイント"
-
-#: ../../components/optimization_state.md:62
+#: ../../concepts/observation_and_state/optimization_state.md:115
 msgid ""
-"`save(path)`/`load(path, problem)` (the latter a classmethod) save and "
-"restore `OptimizationState` in npz format. Named populations and "
-"archives, allocator state, metadata, and `rng`'s complete bit-generator "
-"state are saved. Checkpoints are only written at a completed evaluation "
-"boundary; pending evaluations are rejected. Reproducibility is only "
-"guaranteed as far as reasonably possible (bit-exact resumption is "
-"intended within the same NumPy version and environment, but "
-"reproducibility across versions is not guaranteed)."
-msgstr "`save(path)`/`load(path, problem)`（後者はクラスメソッド）は、`OptimizationState`をnpz形式で保存し復元します。"
-" 名前付きの個体群とアーカイブ、割り当て器の状態、メタデータ、`rng`の完全なbit-generator状態を保存します。"
-" チェックポイントは評価完了境界でのみ書き込まれ、保留中の評価がある場合は拒否されます。"
-" 再現性は可能な範囲でのみ保証され、同一NumPyバージョンと環境内ではビット完全な再開を意図しますが、バージョンをまたぐ再現は保証しません。"
-
-#: ../../components/optimization_state.md:65
-msgid ""
-"Component-specific internal rngs, such as the one "
-"[NSGA3Comparator](comparators.md) holds (spawned from `state.rng`), are "
-"not included when saving. On resume, such internal rngs are freshly re-"
-"spawned from `state.rng`."
+"Resuming a run: use `saealib.context.OptimizationState.load()` and "
+"`Optimizer.run_from()`."
 msgstr ""
-"[NSGA3Comparator](comparators.md)が持つような、コンポーネント固有の内部rng（`state.rng`からspawnされたもの）は保存対象に含まれません。"
-" 再開時はそのような内部rngを`state.rng`から新しくspawnし直します。"
+"実行を再開する：`saealib.context.OptimizationState.load()` と "
+"`Optimizer.run_from()` を使う。"
 
-#: ../../components/optimization_state.md:68
+#: ../../concepts/observation_and_state/optimization_state.md:117
+msgid "Typical failures"
+msgstr "代表的な失敗"
+
+#: ../../concepts/observation_and_state/optimization_state.md:119
 msgid ""
-"See [Checkpointing](../tutorials/checkpoint.md) for how to use automatic "
-"checkpoint saving. The `save`/`load` described here are the contract of "
-"`OptimizationState` itself, used internally by that feature."
+"Calling `replace()` on the wrong target on the Stage compatibility path "
+"leaves the next Stage without the value it expects. Reading, writing, or "
+"exporting a key absent from the `StateContract` on the graph-native path "
+"becomes a diagnostic in the compiler's state-effect validation. Applying "
+"a checkpoint to a different `Problem`, or to an incompatible plan, leaves"
+" the saved state and the execution boundary out of step."
 msgstr ""
-"自動的なチェックポイント保存の使い方は[チェックポイント](../tutorials/checkpoint.md)を参照してください。 "
-"ここで説明した`save`/`load`は、その内部で使われている`OptimizationState`自体の契約です。"
+"Stage互換経路で誤った対象に`replace()`を呼ぶと、次のStageが期待する値を受け取れません。graph-"
+"native経路で`StateContract`にないキーを読み取り、書き込み、または公開すると、コンパイラの状態効果検証で診断になります。別の`Problem`や互換性のない計画にチェックポイントを適用すると、保存された状態と実行境界がずれます。"
 
-#: ../../components/optimization_state.md:71
+#: ../../concepts/observation_and_state/optimization_state.md:123
 msgid "Related components"
 msgstr "関連コンポーネント"
 
-#: ../../components/optimization_state.md:73
+#: ../../concepts/observation_and_state/optimization_state.md:125
 msgid ""
-"[Population](population.md): The actual data behind the "
-"`population`/`archive`/`pareto_archive` fields"
-msgstr "[Population](population.md)：`population`/`archive`/`pareto_archive`フィールドの実体"
+"[Stage](stage.md): the compatibility execution unit that receives "
+"`OptimizationState` directly"
+msgstr "[Stage](stage.md)：`OptimizationState` を直接受け取る互換性用の実行単位"
 
-#: ../../components/optimization_state.md:74
-msgid "[Initializer](initialization.md): Constructs the first `OptimizationState`"
-msgstr "[Initializer](initialization.md)：最初の`OptimizationState`を構築する"
-
-#: ../../components/optimization_state.md:75
+#: ../../concepts/observation_and_state/optimization_state.md:126
 msgid ""
-"[Stage](stage.md): Advances the pipeline while updating state via "
-"`state.replace(...)`"
-msgstr "[Stage](stage.md)：`state.replace(...)`で状態を更新しながらパイプラインを進める"
+"[Framework](../../framework/index.md): how component, contract, graph, "
+"and compiler relate"
+msgstr "[Framework](../../framework/index.md)：Component、Contract、Graph、Compilerの関係"
 
-#: ../../components/optimization_state.md:76
+#: ../../concepts/observation_and_state/optimization_state.md:127
 msgid ""
-"[Checkpointing](../tutorials/checkpoint.md): How to use automatic saving "
-"via `CheckpointCallback`"
-msgstr "[チェックポイント](../tutorials/checkpoint.md)：`CheckpointCallback`経由の自動保存の使い方"
+"[Runtime](../../framework/runtime.md): plan, runtime, and the boundary at"
+" which a `StatePatch` is applied"
+msgstr "[Runtime](../../framework/runtime.md)：計画、ランタイム、`StatePatch`が適用される境界"
 
-#: ../../components/optimization_state.md:78
+#: ../../concepts/observation_and_state/optimization_state.md:128
+msgid ""
+"[Population](population.md): the `Population`, `Archive`, and "
+"`ParetoArchive` data structures"
+msgstr "[Population](population.md)：`Population`、`Archive`、`ParetoArchive`のデータ構造"
+
+#: ../../concepts/observation_and_state/optimization_state.md:129
+msgid ""
+"[Checkpointing](../../tutorials/checkpoint.md): saving and resuming a "
+"checkpoint"
+msgstr "[Checkpointing](../../tutorials/checkpoint.md)：チェックポイントの保存と再開"
+
+#: ../../concepts/observation_and_state/optimization_state.md:131
 msgid "References"
 msgstr "参照"
 
-#: ../../components/optimization_state.md:80
+#: ../../concepts/observation_and_state/optimization_state.md:133
 #, python-brace-format
-msgid "{py:class}`saealib.OptimizationState`"
-msgstr "{py:class}`saealib.OptimizationState`"
+msgid "{py:class}`saealib.context.OptimizationState`"
+msgstr "{py:class}`saealib.context.OptimizationState`"
+
+#: ../../concepts/observation_and_state/optimization_state.md:134
+#, python-brace-format
+msgid "{py:class}`saealib.core.StateStore`"
+msgstr "{py:class}`saealib.core.StateStore`"
+
+#: ../../concepts/observation_and_state/optimization_state.md:135
+#, python-brace-format
+msgid "{py:class}`saealib.core.StateView`"
+msgstr "{py:class}`saealib.core.StateView`"
+
+#: ../../concepts/observation_and_state/optimization_state.md:136
+#, python-brace-format
+msgid "{py:class}`saealib.core.StatePatch`"
+msgstr "{py:class}`saealib.core.StatePatch`"
+
+#: ../../concepts/observation_and_state/optimization_state.md:137
+msgid ""
+"[Framework ComponentContract](../../framework/contract.md): the contract,"
+" including state declarations"
+msgstr "[Framework ComponentContract](../../framework/contract.md)：状態宣言を含む契約"
+
+#: ../../concepts/observation_and_state/optimization_state.md:138
+msgid ""
+"[Framework Compiler](../../framework/compiler.md): state-effect "
+"validation and diagnostics"
+msgstr "[Framework Compiler](../../framework/compiler.md)：状態効果の検証と診断"

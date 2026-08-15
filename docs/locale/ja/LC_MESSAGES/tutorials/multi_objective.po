@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 02:51+0900\n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,182 +19,226 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../../tutorials/multi_objective.md:1
+#: ../../tutorials/multi_objective.md:7
 msgid "Multi-Objective Optimization"
 msgstr "多目的最適化"
 
-#: ../../../tutorials/multi_objective.md:3
+#: ../../tutorials/multi_objective.md:9
 msgid ""
 "Solve multi-objective optimization problems with trade-offs between "
 "objectives, using `saealib`."
-msgstr "目的間にトレードオフのある多目的最適化問題を、`saealib`で解きます。"
+msgstr "`saealib` を使って、目的間のトレードオフがある多目的最適化問題を解きます。"
 
-#: ../../../tutorials/multi_objective.md:5
+#: ../../tutorials/multi_objective.md:11
 msgid ""
-"Regardless of the number of objectives, switching algorithms, surrogates,"
-" and the evaluation strategy works the same as in \"Switching "
-"components\" in [Single-Objective Optimization](single_objective.md)."
-msgstr "アルゴリズム、サロゲート、評価戦略の切り替え方は、目的数によらず[単目的最適化](single_objective.md)の「コンポーネントの切り替え」と共通です。"
+"`minimize()` uses default components based on the number of objectives. "
+"Use `Optimizer.set_*()` to configure the algorithm, surrogate model, or "
+"evaluation strategy individually."
+msgstr ""
+"`minimize()`は目的関数の数に応じたデフォルトのコンポーネントを使います。 アルゴリズム、代理モデル、評価戦略を個別に設定する場合は "
+"`Optimizer.set_*()` を使います。"
 
-#: ../../../tutorials/multi_objective.md:7
+#: ../../tutorials/multi_objective.md:14
 msgid ""
 "This page covers what's specific to problems with two or more objectives:"
 " choosing a comparator and extracting the Pareto front."
-msgstr "このページでは、目的数が2以上のときに固有の設定である、比較演算子の選択とパレートフロントの抽出を扱います。"
+msgstr "このページでは、2つ以上の目的を持つ問題に固有の内容として、Comparatorの選択とParetoフロントの取得を扱います。"
 
-#: ../../../tutorials/multi_objective.md:9
-msgid "Problem setup"
-msgstr "問題設定"
+#: ../../tutorials/multi_objective.md:16
+msgid "What you'll be able to do"
+msgstr "このページでできるようになること"
 
-#: ../../../tutorials/multi_objective.md:11
+#: ../../tutorials/multi_objective.md:19
+msgid ""
+"By the end of this page, you'll be able to choose a Comparator for a "
+"multi-objective problem and extract the resulting Pareto front."
+msgstr "このページを終えると、多目的問題でComparatorを選び、得られたParetoフロントを取り出せます。"
+
+#: ../../tutorials/multi_objective.md:22
+msgid ""
+"For the basic single-objective procedure, use [Single-objective "
+"optimization](single_objective.md); if you need a custom Comparator, see "
+"[Custom components](custom_components.md). This page runs a multi-"
+"objective `Problem`, selects a Comparator, and extracts the Pareto front."
+msgstr ""
+"単目的問題の基本手順は [単目的最適化](single_objective.md) を使い、独自の Comparator が必要な場合は "
+"[独自コンポーネント](custom_components.md) を参照してください。このページでは、多目的 `Problem` "
+"を実行し、Comparatorを選択してParetoフロントを取得します。"
+
+#: ../../tutorials/multi_objective.md:25
+msgid "Set up the problem"
+msgstr "Problemを準備する"
+
+#: ../../tutorials/multi_objective.md:27
 msgid ""
 "When multiple objective functions are in a trade-off relationship, there "
 "exist solutions where improving one worsens another."
-msgstr "複数の目的関数がトレードオフの関係にあるとき、一方を改善するともう一方が悪化する解が存在します。"
+msgstr "複数の目的関数がトレードオフの関係にあると、一方を改善すると他方が悪化する解が存在します。"
 
-#: ../../../tutorials/multi_objective.md:13
+#: ../../tutorials/multi_objective.md:29
 msgid ""
 "Under this relationship, the set of solutions not dominated by any other "
 "solution in every objective is called the **Pareto front**."
-msgstr "この関係の下で、他のどの解にも全目的で優越されない解の集合を**パレートフロント**と呼びます。"
+msgstr "この関係において、すべての目的で他の解に支配されない解の集合を **Paretoフロント** と呼びます。"
 
-#: ../../../tutorials/multi_objective.md:15
+#: ../../tutorials/multi_objective.md:31
 msgid "Here, as an example, we minimize the ZDT1 function built into `saealib`."
-msgstr "ここでは例として、`saealib`に組み込まれたZDT1関数を最小化します。"
+msgstr "ここでは例として、`saealib` に組み込まれたZDT1関数を最小化します。"
 
-#: ../../../tutorials/multi_objective.md:23
+#: ../../tutorials/multi_objective.md:39
 msgid ""
 "`zdt1` is a `Problem` instance returning a two-objective benchmark "
 "problem with a convex Pareto front."
-msgstr "`zdt1`は、凸形のパレートフロントを持つ2目的のベンチマーク問題を返す`Problem`インスタンスです。"
+msgstr "`zdt1` は、凸型のParetoフロントを持つ2目的のベンチマーク問題を返す `Problem` インスタンスです。"
 
-#: ../../../tutorials/multi_objective.md:25
-msgid "High-level API: minimize"
-msgstr "高レベルAPI：minimize"
+#: ../../tutorials/multi_objective.md:41
+msgid "Run minimize"
+msgstr "minimizeを実行する"
 
-#: ../../../tutorials/multi_objective.md:27
+#: ../../tutorials/multi_objective.md:43
 msgid ""
 "Passing a `Problem` instance directly carries over the number of "
 "objectives from it."
-msgstr "`Problem`インスタンスを直接渡すと、目的数はそこから引き継がれます。"
+msgstr "`Problem` インスタンスを直接渡すと、そこから目的数が引き継がれます。"
 
-#: ../../../tutorials/multi_objective.md:38
+#: ../../tutorials/multi_objective.md:54
 msgid ""
 "Where `result.x`/`result.f` were a single point in the single-objective "
 "case, in the multi-objective case they become multiple solutions forming "
 "the Pareto front."
-msgstr "単目的では1点だった`result.x`/`result.f`は、多目的ではパレートフロントを構成する複数の解になります。"
+msgstr "単目的の場合に1点だった `result.x`/`result.f` は、多目的の場合にはParetoフロントを形成する複数の解になります。"
 
-#: ../../../tutorials/multi_objective.md:40
-msgid "Choosing a comparator"
-msgstr "比較演算子の選択"
+#: ../../tutorials/multi_objective.md:56
+msgid "Configure an Optimizer"
+msgstr "Optimizerを構成する"
 
-#: ../../../tutorials/multi_objective.md:42
+#: ../../tutorials/multi_objective.md:58
+msgid ""
+"With `Optimizer(problem)`, you can configure each component "
+"independently. `set_*()` returns the same `Optimizer` for chaining, and "
+"`run()` or `iterate()` executes the optimization."
+msgstr ""
+"`Optimizer(problem)`では、各コンポーネントを独立して設定できます。 `set_*()`は連鎖呼び出しのために同じ "
+"`Optimizer` を返し、`run()`または `iterate()`で最適化を実行します。"
+
+#: ../../tutorials/multi_objective.md:72
+msgid ""
+"Unconfigured components resolve to their defaults. Set multi-objective "
+"ranking by choosing one of the following Comparators."
+msgstr "未設定のコンポーネントはデフォルトに解決されます。 多目的の順位付けは、次のComparatorの選択で設定します。"
+
+#: ../../tutorials/multi_objective.md:75
+msgid "Choose a comparator"
+msgstr "Comparatorを選ぶ"
+
+#: ../../tutorials/multi_objective.md:77
 msgid ""
 "In multi-objective optimization, `Comparator` decides the relative "
 "superiority between candidate solutions."
-msgstr "多目的では、候補解同士の優劣を`Comparator`が決めます。"
+msgstr "多目的最適化では、`Comparator` が候補解同士の相対的な優劣を決めます。"
 
-#: ../../../tutorials/multi_objective.md:44
+#: ../../tutorials/multi_objective.md:79
 msgid ""
 "If `Problem`'s `comparator` argument is omitted, one is auto-selected "
 "based on the number of objectives (`SingleObjectiveComparator` when "
 "`n_obj == 1`, `NSGA2Comparator` when `n_obj > 1`)."
-msgstr "`Problem`の`comparator`引数を省略すると、目的数に応じて自動選択されます（`n_obj == 1`なら`SingleObjectiveComparator`、`n_obj > 1`なら`NSGA2Comparator`）。"
+msgstr ""
+"`Problem` の `comparator` 引数を省略すると、目的数に基づいて自動選択されます（`n_obj == 1` では "
+"`SingleObjectiveComparator`、`n_obj > 1` では `NSGA2Comparator`）。"
 
-#: ../../../tutorials/multi_objective.md
+#: ../../tutorials/multi_objective.md:16
 msgid "Class"
 msgstr "クラス"
 
-#: ../../../tutorials/multi_objective.md
+#: ../../tutorials/multi_objective.md:16
 msgid "Behavior"
 msgstr "動作"
 
-#: ../../../tutorials/multi_objective.md
+#: ../../tutorials/multi_objective.md:16
 msgid "`NSGA2Comparator`"
 msgstr "`NSGA2Comparator`"
 
-#: ../../../tutorials/multi_objective.md
+#: ../../tutorials/multi_objective.md:16
 msgid ""
 "Diversity maintenance via non-dominated sorting and crowding distance "
 "(default)"
-msgstr "非優越ソートと混雑度による多様性維持（既定）"
+msgstr "非劣ソートと混雑度距離による多様性維持（既定）"
 
-#: ../../../tutorials/multi_objective.md
+#: ../../tutorials/multi_objective.md:16
 msgid "`SPEA2Comparator`"
 msgstr "`SPEA2Comparator`"
 
-#: ../../../tutorials/multi_objective.md
+#: ../../tutorials/multi_objective.md:16
 msgid "Fitness based on strength of dominance and neighborhood density"
-msgstr "優越関係の強さと近傍密度によるフィットネス"
+msgstr "支配の強さと近傍密度に基づく適応度"
 
-#: ../../../tutorials/multi_objective.md
+#: ../../tutorials/multi_objective.md:16
 msgid "`HypervolumeComparator`"
 msgstr "`HypervolumeComparator`"
 
-#: ../../../tutorials/multi_objective.md
+#: ../../tutorials/multi_objective.md:16
 msgid "Superiority judged by hypervolume contribution"
-msgstr "ハイパーボリューム貢献度による優劣判定"
+msgstr "ハイパーボリューム寄与で優劣を判定"
 
-#: ../../../tutorials/multi_objective.md
+#: ../../tutorials/multi_objective.md:16
 msgid "`EpsilonDominanceComparator`"
 msgstr "`EpsilonDominanceComparator`"
 
-#: ../../../tutorials/multi_objective.md
+#: ../../tutorials/multi_objective.md:16
 msgid "Superiority judged by epsilon-dominance"
-msgstr "εドミナンスによる優越判定"
+msgstr "ε支配で優劣を判定"
 
-#: ../../../tutorials/multi_objective.md
+#: ../../tutorials/multi_objective.md:16
 msgid "`NSGA3Comparator`"
 msgstr "`NSGA3Comparator`"
 
-#: ../../../tutorials/multi_objective.md
+#: ../../tutorials/multi_objective.md:16
 msgid "Diversity maintenance via reference points. Requires `reference_points`"
-msgstr "参照点による多様性維持。`reference_points`が必須"
+msgstr "参照点による多様性維持。`reference_points` が必要です"
 
-#: ../../../tutorials/multi_objective.md
+#: ../../tutorials/multi_objective.md:16
 msgid "`RNSGA2Comparator`"
 msgstr "`RNSGA2Comparator`"
 
-#: ../../../tutorials/multi_objective.md
+#: ../../tutorials/multi_objective.md:16
 msgid ""
 "Concentrates solutions near specified reference points. Requires "
 "`reference_points`"
-msgstr "指定した参照点の近傍へ解を集中させる。`reference_points`が必須"
+msgstr "指定した参照点の近くに解を集中させます。`reference_points` が必要です"
 
-#: ../../../tutorials/multi_objective.md:55
+#: ../../tutorials/multi_objective.md:90
 msgid "`comparator` can be swapped as an attribute of the `Problem` instance."
-msgstr "`comparator`は`Problem`インスタンスの属性として差し替えられます。"
+msgstr "`Problem` インスタンスの属性として `comparator` を交換できます。"
 
-#: ../../../tutorials/multi_objective.md:64
-msgid "Extracting the Pareto front"
-msgstr "パレートフロントの抽出"
+#: ../../tutorials/multi_objective.md:99
+msgid "Extract the Pareto front"
+msgstr "Paretoフロントを取得する"
 
-#: ../../../tutorials/multi_objective.md:66
+#: ../../tutorials/multi_objective.md:101
 msgid "After running, `result.ctx.pareto_archive` holds the final Pareto front."
-msgstr "実行後、`result.ctx.pareto_archive`には最終的なパレートフロントが保持されています。"
+msgstr "実行後、最終的なParetoフロントは `result.ctx.pareto_archive` に保持されます。"
 
-#: ../../../tutorials/multi_objective.md:73
+#: ../../tutorials/multi_objective.md:108
 msgid ""
 "To compute the Pareto front from an arbitrary array of objective values, "
 "you can use `non_dominated_sort` directly."
-msgstr "任意の目的値配列からパレートフロントを求めたい場合は、`non_dominated_sort`を直接使えます。"
+msgstr "任意の目的値配列からParetoフロントを計算するには、`non_dominated_sort` を直接使えます。"
 
-#: ../../../tutorials/multi_objective.md:83
-msgid "References"
-msgstr "参照"
+#: ../../tutorials/multi_objective.md:118
+msgid "Related concepts and reference"
+msgstr "関連するConceptとReference"
 
-#: ../../../tutorials/multi_objective.md:85
+#: ../../tutorials/multi_objective.md:120
 #, python-brace-format
 msgid "{py:func}`saealib.minimize`"
 msgstr "{py:func}`saealib.minimize`"
 
-#: ../../../tutorials/multi_objective.md:86
+#: ../../tutorials/multi_objective.md:121
 #, python-brace-format
 msgid "{py:class}`saealib.Problem`"
 msgstr "{py:class}`saealib.Problem`"
 
-#: ../../../tutorials/multi_objective.md:87
+#: ../../tutorials/multi_objective.md:122
 #, python-brace-format
 msgid ""
 "{py:class}`saealib.NSGA2Comparator` / {py:class}`saealib.SPEA2Comparator`"
@@ -202,97 +246,14 @@ msgid ""
 "{py:class}`saealib.EpsilonDominanceComparator` / "
 "{py:class}`saealib.NSGA3Comparator` / "
 "{py:class}`saealib.RNSGA2Comparator`"
-msgstr "{py:class}`saealib.NSGA2Comparator` / {py:class}`saealib.SPEA2Comparator` / {py:class}`saealib.HypervolumeComparator` / {py:class}`saealib.EpsilonDominanceComparator` / {py:class}`saealib.NSGA3Comparator` / {py:class}`saealib.RNSGA2Comparator`"
+msgstr ""
+"{py:class}`saealib.NSGA2Comparator` / {py:class}`saealib.SPEA2Comparator`"
+" / {py:class}`saealib.HypervolumeComparator` / "
+"{py:class}`saealib.EpsilonDominanceComparator` / "
+"{py:class}`saealib.NSGA3Comparator` / "
+"{py:class}`saealib.RNSGA2Comparator`"
 
-#: ../../../tutorials/multi_objective.md:88
+#: ../../tutorials/multi_objective.md:123
 #, python-brace-format
 msgid "{py:func}`saealib.non_dominated_sort`"
 msgstr "{py:func}`saealib.non_dominated_sort`"
-
-#~ msgid "多目的最適化"
-#~ msgstr ""
-
-#~ msgid "目的間にトレードオフのある多目的最適化問題を、`saealib`で解きます。"
-#~ msgstr ""
-
-#~ msgid "アルゴリズム、サロゲート、評価戦略の切り替え方は、目的数によらず[単目的最適化](single_objective.md)の「コンポーネントの切り替え」と共通です。"
-#~ msgstr ""
-
-#~ msgid "このページでは、目的数が2以上のときに固有の設定である、比較演算子の選択とパレートフロントの抽出を扱います。"
-#~ msgstr ""
-
-#~ msgid "問題設定"
-#~ msgstr ""
-
-#~ msgid "複数の目的関数がトレードオフの関係にあるとき、一方を改善するともう一方が悪化する解が存在します。"
-#~ msgstr ""
-
-#~ msgid "この関係の下で、他のどの解にも全目的で優越されない解の集合を**パレートフロント**と呼びます。"
-#~ msgstr ""
-
-#~ msgid "ここでは例として、`saealib`に組み込まれたZDT1関数を最小化します。"
-#~ msgstr ""
-
-#~ msgid "`zdt1`は、凸形のパレートフロントを持つ2目的のベンチマーク問題を返す`Problem`インスタンスです。"
-#~ msgstr ""
-
-#~ msgid "高レベルAPI: minimize"
-#~ msgstr ""
-
-#~ msgid "`Problem`インスタンスを直接渡すと、目的数はそこから引き継がれます。"
-#~ msgstr ""
-
-#~ msgid "単目的では1点だった`result.x`/`result.f`は、多目的ではパレートフロントを構成する複数の解になります。"
-#~ msgstr ""
-
-#~ msgid "比較演算子の選択"
-#~ msgstr ""
-
-#~ msgid "多目的では、候補解同士の優劣を`Comparator`が決めます。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`Problem`の`comparator`引数を省略すると、目的数に応じて自動選択されます（`n_obj == "
-#~ "1`なら`SingleObjectiveComparator`、`n_obj > "
-#~ "1`なら`NSGA2Comparator`）。"
-#~ msgstr ""
-
-#~ msgid "クラス"
-#~ msgstr ""
-
-#~ msgid "動作"
-#~ msgstr ""
-
-#~ msgid "非優越ソートと混雑度による多様性維持（デフォルト）"
-#~ msgstr ""
-
-#~ msgid "優越関係の強さと近傍密度によるフィットネス"
-#~ msgstr ""
-
-#~ msgid "ハイパーボリューム貢献度による優劣判定"
-#~ msgstr ""
-
-#~ msgid "εドミナンスによる優越判定"
-#~ msgstr ""
-
-#~ msgid "参照点による多様性維持。`reference_points`が必須"
-#~ msgstr ""
-
-#~ msgid "指定した参照点の近傍へ解を集中させる。`reference_points`が必須"
-#~ msgstr ""
-
-#~ msgid "`comparator`は`Problem`インスタンスの属性として差し替えられます。"
-#~ msgstr ""
-
-#~ msgid "パレートフロントの抽出"
-#~ msgstr ""
-
-#~ msgid "実行後、`result.ctx.pareto_archive`には最終的なパレートフロントが保持されています。"
-#~ msgstr ""
-
-#~ msgid "任意の目的値配列からパレートフロントを求めたい場合は、`non_dominated_sort`を直接使えます。"
-#~ msgstr ""
-
-#~ msgid "参照"
-#~ msgstr ""
-

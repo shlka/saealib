@@ -1,0 +1,281 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../framework/contract.md:7
+msgid "ComponentContract"
+msgstr "ComponentContract"
+
+#: ../../framework/contract.md:9
+msgid ""
+"The capabilities a Component requires and the boundaries it provides are "
+"collected in one declarative value, `ComponentContract`. The relationship"
+" with a Component is inclusion of the contract returned by the Component,"
+" not inheritance."
+msgstr ""
+"Componentが要求する能力と提供する境界は、`ComponentContract`という一つの宣言値にまとめます。 "
+"Componentとの関係は継承ではなく、Componentが返す契約の包含です。"
+
+#: ../../framework/contract.md:12
+msgid "ComponentContract's role"
+msgstr "ComponentContractの役割"
+
+#: ../../framework/contract.md:14
+msgid ""
+"`ComponentContract` owns the capabilities a Component requires and the "
+"boundaries it provides as one declarative value. It does not represent a "
+"Component inheritance hierarchy; it is the boundary Graph and Compiler "
+"use to verify connection and execution conditions."
+msgstr "`ComponentContract`は、Componentが要求する能力と提供する境界を一つの宣言値として所有します。Componentの継承階層を表すものではなく、GraphとCompilerが接続・実行条件を検証するための境界です。"
+
+#: ../../framework/contract.md:17
+msgid "Structural elements"
+msgstr "構造要素"
+
+#: ../../framework/contract.md
+msgid "Field"
+msgstr "フィールド"
+
+#: ../../framework/contract.md
+msgid "Declares"
+msgstr "宣言する内容"
+
+#: ../../framework/contract.md
+msgid "`ports`"
+msgstr "`ports`"
+
+#: ../../framework/contract.md
+msgid "A `PortContract` for each role"
+msgstr "roleごとの`PortContract`"
+
+#: ../../framework/contract.md
+msgid "`required_services`"
+msgstr "`required_services`"
+
+#: ../../framework/contract.md
+msgid "`ServiceRequirement` values required by the whole Component"
+msgstr "Component全体が必要とする`ServiceRequirement`"
+
+#: ../../framework/contract.md
+msgid "`parts`"
+msgstr "`parts`"
+
+#: ../../framework/contract.md
+msgid "`PartSpec` values for held components"
+msgstr "保持するコンポーネントの`PartSpec`"
+
+#: ../../framework/contract.md
+msgid "`lifecycle`"
+msgstr "`lifecycle`"
+
+#: ../../framework/contract.md
+msgid "The boundary for `events` and Feedback"
+msgstr "`events`とFeedbackの境界"
+
+#: ../../framework/contract.md
+msgid "`state`"
+msgstr "`state`"
+
+#: ../../framework/contract.md
+msgid "`reads`, `writes`, `exports`, and `reads_enumerable`"
+msgstr "`reads`、`writes`、`exports`、`reads_enumerable`"
+
+#: ../../framework/contract.md
+msgid "`execution`"
+msgstr "`execution`"
+
+#: ../../framework/contract.md
+msgid "`required_runtime_capabilities` and `offered_runtime_capabilities`"
+msgstr "`required_runtime_capabilities`と`offered_runtime_capabilities`"
+
+#: ../../framework/contract.md
+msgid "`assumptions`"
+msgstr "`assumptions`"
+
+#: ../../framework/contract.md
+msgid "Assumptions handled by the Compiler"
+msgstr "コンパイラが扱う前提条件"
+
+#: ../../framework/contract.md:29
+msgid ""
+"The role of `ports` is a named set for connecting the same Component by "
+"role in a Graph. `parts` declares inclusion of child contracts in the "
+"parent contract; it does not duplicate child Component implementations."
+msgstr ""
+"`ports`のroleは、同じComponentをGraph上の役割ごとに接続するための名前付き集合です。 "
+"`parts`は子Componentの実装を複製する値ではなく、子の契約を親の契約へ含める宣言です。"
+
+#: ../../framework/contract.md:32
+msgid "Information held by each contract"
+msgstr "各契約が保持する情報"
+
+#: ../../framework/contract.md
+msgid "Contract"
+msgstr "契約"
+
+#: ../../framework/contract.md
+msgid "Information held"
+msgstr "保持する情報"
+
+#: ../../framework/contract.md
+msgid "Main checks"
+msgstr "主な検証"
+
+#: ../../framework/contract.md
+msgid "`PortContract`"
+msgstr "`PortContract`"
+
+#: ../../framework/contract.md
+msgid "Input and output `PortSpec` values"
+msgstr "入力と出力の`PortSpec`"
+
+#: ../../framework/contract.md
+msgid "Port name, direction, DataSpec, and cardinality"
+msgstr "ポート名、方向、DataSpec、cardinality"
+
+#: ../../framework/contract.md
+msgid "`StateContract`"
+msgstr "`StateContract`"
+
+#: ../../framework/contract.md
+msgid "`StateKey` values read, written, and exposed"
+msgstr "読み取り、書き込み、公開する`StateKey`"
+
+#: ../../framework/contract.md
+msgid "Undeclared state access and state effects"
+msgstr "宣言外の状態アクセス、状態効果"
+
+#: ../../framework/contract.md
+msgid "`LifecycleContract`"
+msgstr "`LifecycleContract`"
+
+#: ../../framework/contract.md
+msgid "Consumed events and FeedbackContract"
+msgstr "消費するイベントとFeedbackContract"
+
+#: ../../framework/contract.md
+msgid "Event and Feedback compatibility"
+msgstr "イベントとFeedbackの互換性"
+
+#: ../../framework/contract.md
+msgid "`ExecutionContract`"
+msgstr "`ExecutionContract`"
+
+#: ../../framework/contract.md
+msgid "Required or offered Runtime capabilities"
+msgstr "必要または提供するRuntimeの機能"
+
+#: ../../framework/contract.md
+msgid "Missing environment capabilities"
+msgstr "実行環境の能力不足"
+
+#: ../../framework/contract.md
+msgid "`AssumptionSet`"
+msgstr "`AssumptionSet`"
+
+#: ../../framework/contract.md
+msgid "Assumptions made by the Component"
+msgstr "コンポーネントが置く前提条件"
+
+#: ../../framework/contract.md
+msgid "Assumption registration and defaults"
+msgstr "前提条件の登録と既定値"
+
+#: ../../framework/contract.md:42
+msgid "Construction time and use time"
+msgstr "生成時点と利用時点"
+
+#: ../../framework/contract.md:44
+msgid ""
+"The Component creates its contract with `contract()`, and ComponentNode "
+"holds a snapshot for the compilation unit. The Compiler uses contracts to"
+" verify port compatibility, service resolution, state effects, lifecycle,"
+" and Runtime capabilities. The Runtime creates StateViews according to "
+"the contract boundaries in the verified ExecutablePlan and applies "
+"resulting StatePatches."
+msgstr ""
+"Componentは`contract()`で契約を生成し、ComponentNodeはコンパイル単位のスナップショットを保持します。 "
+"Compilerは契約をポート互換性、サービス解決、状態効果、ライフサイクル、Runtimeの機能の検証に使います。 "
+"Runtimeは検証済みのExecutablePlanに含まれる契約境界に従ってStateViewを作り、結果のStatePatchを適用します。"
+
+#: ../../framework/contract.md:48
+msgid "Invariants and diagnostics"
+msgstr "不変条件と診断"
+
+#: ../../framework/contract.md:50
+msgid ""
+"Contracts are treated as frozen data classes and are not changed during "
+"Compiler verification. `ports`, `required_services`, and `parts` contain "
+"only their corresponding declarative values, and role and component names"
+" are verified as identifiers. State `reads`, `writes`, and `exports` use "
+"typed StateKeys, and the Runtime does not expose undeclared keys to a "
+"Component. If a required execution capability is absent from the "
+"capabilities offered by CompileContext, the Compiler cannot mark the "
+"ExecutablePlan executable. An uncallable contract or incorrect return "
+"type becomes `contract_unavailable`; a held component whose contract "
+"differs from its declaration becomes `part_contract_mismatch`. "
+"Inconsistent target ports, required services, state effects, lifecycle, "
+"or Runtime capabilities are also reported as Compiler Diagnostics. An "
+"invalid contract type raises `ValidationError` when the contract is "
+"created."
+msgstr "契約は凍結されたデータクラスとして扱われ、Compilerの検証中に変更されません。`ports`、`required_services`、`parts`は対応する宣言値だけを含み、role名とコンポーネント名は識別子として検証されます。状態の`reads`、`writes`、`exports`は型付きStateKeyを使い、Runtimeは宣言されていないキーをComponentに公開しません。必要な実行能力がCompileContextの提供する能力にない場合、CompilerはExecutablePlanを実行可能としてマークできません。呼び出せない契約や誤った戻り値の型は`contract_unavailable`となり、保持されたコンポーネントの契約が宣言と異なる場合は`part_contract_mismatch`となります。対象ポート、必須サービス、状態効果、ライフサイクル、Runtime能力の不整合もCompilerの診断として報告されます。無効な契約型を作成すると`ValidationError`が発生します。"
+
+#: ../../framework/contract.md:58
+msgid "Minimal example"
+msgstr "最小例"
+
+#: ../../framework/contract.md:68
+msgid "Extension points"
+msgstr "拡張点"
+
+#: ../../framework/contract.md:70
+msgid ""
+"The public path for Compiler rules may vary by release; see the [API "
+"reference](../api/index.md) for concrete imports."
+msgstr "コンパイラ規則の公開経路はリリースごとに異なる可能性があるため、具体的なインポートは[APIリファレンス](../api/index.md)で確認してください。"
+
+#: ../../framework/contract.md:72
+msgid "Related pages"
+msgstr "関連ページ"
+
+#: ../../framework/contract.md:74
+msgid ""
+"See [Specs](specs.md) for port declarations and [Graph](graph.md) for "
+"placing them in a Graph."
+msgstr "ポートの宣言には[Specs](specs.md)を、Graphへの配置には[Graph](graph.md)を参照してください。"
+
+#: ../../framework/contract.md:76
+msgid "References"
+msgstr "参照"
+
+#: ../../framework/contract.md:78
+#, python-brace-format
+msgid "{py:class}`saealib.core.ComponentContract`"
+msgstr "{py:class}`saealib.core.ComponentContract`"
+
+#: ../../framework/contract.md:79
+#, python-brace-format
+msgid "{py:class}`saealib.core.PortContract`"
+msgstr "{py:class}`saealib.core.PortContract`"
+
+#: ../../framework/contract.md:80
+#, python-brace-format
+msgid "{py:class}`saealib.core.StateContract`"
+msgstr "{py:class}`saealib.core.StateContract`"

@@ -1,0 +1,167 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../framework/graph.md:7
+msgid "Graph"
+msgstr "Graph"
+
+#: ../../framework/graph.md:9
+msgid ""
+"Placing Component contracts into execution order and data relationships "
+"produces a `ComponentGraph`. `ComponentGraph` is an immutable graph "
+"holding that placement. ComponentContract, which holds the contract tree,"
+" and ComponentGraph, which holds execution relationships between nodes, "
+"are separate structures."
+msgstr ""
+"Componentの契約を実行順序とデータ関係へ配置すると、`ComponentGraph`になります。 "
+"`ComponentGraph`は、その配置を保持する不変のグラフです。 "
+"契約の木構造を保持するComponentContractと、ノード間の実行関係を保持するComponentGraphは別の構造です。"
+
+#: ../../framework/graph.md:13
+msgid "ComponentGraph's role"
+msgstr "ComponentGraphの役割"
+
+#: ../../framework/graph.md:15
+msgid ""
+"ComponentGraph owns the boundary that places Component contracts into "
+"execution order and data relationships. It separates the contract tree "
+"held by ComponentContract from the node relationships held by the Graph "
+"and passes a self-contained structure to the Compiler."
+msgstr ""
+"ComponentGraphは、Componentの契約を実行順序とデータ関係へ配置する境界を所有します。 "
+"契約の木構造を保持するComponentContractと、ノード間の実行関係を保持するGraphを分離し、Compilerへ自己完結した構造を渡します。"
+
+#: ../../framework/graph.md:18
+msgid "Nodes and references"
+msgstr "ノードと参照"
+
+#: ../../framework/graph.md:20
+msgid ""
+"`ComponentNode` holds a Component instance, component ID, role, resolved "
+"services, and a contract snapshot for compilation. `NodeRef` references a"
+" node by component ID and optional role, normalizing endpoints for edges "
+"and StateBindings. `NodeRef` distinguishes connection targets even when "
+"the same Component is placed under different roles."
+msgstr "`ComponentNode`はComponentインスタンス、コンポーネントID、ロール、解決済みサービス、コンパイル用の契約スナップショットを保持します。`NodeRef`はコンポーネントIDと任意のロールでノードを参照し、エッジとStateBindingの端点を正規化します。同じComponentを異なるロールで配置した場合も、`NodeRef`によって接続先を区別できます。"
+
+#: ../../framework/graph.md:24
+msgid "Edges and state"
+msgstr "エッジと状態"
+
+#: ../../framework/graph.md:26
+msgid ""
+"`DataEdge` is a data connection from a source port to a target port. "
+"`ControlEdge` passes no data; it is a control dependency that makes "
+"source completion precede target execution. `StateBinding` connects a "
+"node to actual typed StateKeys, mapping the contract's state declarations"
+" to runtime state."
+msgstr ""
+"`DataEdge`はsource portからtarget portへのデータ接続です。 "
+"`ControlEdge`はデータを渡さず、sourceの完了がtargetの実行に先行する制御依存です。 "
+"`StateBinding`はノードを実際の型付きStateKeyへ結び付け、契約のstate宣言を実行時の状態へ対応付けます。"
+
+#: ../../framework/graph.md:30
+msgid "The Graph holds nodes, edges, state bindings, and entry points as values."
+msgstr "Graphのノード、エッジ、状態バインディング、エントリーポイントはそれぞれ値として保持されます。"
+
+#: ../../framework/graph.md:32
+msgid "Structured regions"
+msgstr "構造化領域"
+
+#: ../../framework/graph.md:34
+msgid ""
+"`StructuredRegion` holds nested Sequence, Repeat, Loop, and Branch "
+"structures together with the state effects read by the region. A Loop is "
+"not represented as an ordinary Graph cycle; it is held in a form whose "
+"condition and region effects the Compiler can verify. After lowering a "
+"structured region, the mapping between the execution tree passed to "
+"ExecutablePlan and its state effects remains intact."
+msgstr "`StructuredRegion`は、Sequence、Repeat、Loop、Branchの入れ子構造と、その領域が読む状態効果を保持します。Loopは通常のグラフサイクルとして表さず、条件と領域効果をCompilerが検証できる形で保持します。構造化領域を下位変換した後も、ExecutablePlanへ渡す実行木と状態効果の対応を保ちます。"
+
+#: ../../framework/graph.md:38
+msgid "Construction time and use time"
+msgstr "生成時点と利用時点"
+
+#: ../../framework/graph.md:40
+msgid ""
+"The Graph is created when a Pipeline or Graph builder places Components. "
+"The Compiler reads contract snapshots and verifies entry points, edge "
+"endpoints, port compatibility, state bindings, and structured regions. "
+"When a Compiler rule changes the Graph during Resolution, it declares the"
+" changed locations as claims; undeclared changes and conflicts become "
+"Diagnostics."
+msgstr "グラフはパイプラインやグラフビルダーがComponentを配置するときに生成されます。Compilerは契約スナップショットを読み、エントリーポイント、エッジ端点、ポート互換性、状態バインディング、構造化領域を検証します。コンパイラ規則がグラフを解決段階で変更する場合は、変更箇所を主張として宣言し、未申告の変更や競合を診断対象にします。"
+
+#: ../../framework/graph.md:44
+msgid "Invariants and diagnostics"
+msgstr "不変条件と診断"
+
+#: ../../framework/graph.md:46
+msgid ""
+"The Graph holds nodes, edges, state bindings, and entry points as values;"
+" endpoints referring to unknown nodes become Diagnostics such as "
+"`invalid_graph_edge` or `invalid_entry_point`. Undeclared changes or "
+"conflicts from resolution rules become `unclaimed_rewrite` or "
+"`conflicting_rewrite` Diagnostics."
+msgstr ""
+"Graphのノード、エッジ、状態バインディング、エントリーポイントはそれぞれ値として保持され、未知のノードを参照する端点などは`invalid_graph_edge`や`invalid_entry_point`診断になります。"
+" 解決規則の未申告の変更や競合は`unclaimed_rewrite`または`conflicting_rewrite`診断になります。"
+
+#: ../../framework/graph.md:49
+msgid "Extension points"
+msgstr "拡張点"
+
+#: ../../framework/graph.md:65
+msgid ""
+"This example creates a Graph with one node as its entry point. See the "
+"[API reference](../api/index.md) for building actual ports and edges with"
+" the public API. See [Framework extensions](extensions.md) when adding "
+"Graph connection rules. Preserve endpoint and entry-point invariants and "
+"do not bypass Compiler verification."
+msgstr ""
+"この例は一つのノードを入口にしたGraphを作ります。 "
+"実際のポートとエッジの構築は、公開APIの構成に合わせて[APIリファレンス](../api/index.md)で確認してください。 "
+"Graph接続のルールを追加する場合は[フレームワーク拡張](extensions.md)を参照してください。 端点とentry "
+"pointの不変条件を保ち、Compilerの検証を迂回しないようにします。"
+
+#: ../../framework/graph.md:70
+msgid "Related pages"
+msgstr "関連ページ"
+
+#: ../../framework/graph.md:72
+msgid ""
+"[Contract](contract.md) explains contract inclusion, and "
+"[Compiler](compiler.md) explains Graph resolution and verification."
+msgstr "[Contract](contract.md)は契約の包含を、[Compiler](compiler.md)はGraphの解決と検証を説明します。"
+
+#: ../../framework/graph.md:74
+msgid "References"
+msgstr "参照"
+
+#: ../../framework/graph.md:76
+#, python-brace-format
+msgid "{py:class}`saealib.core.ComponentGraph`"
+msgstr "{py:class}`saealib.core.ComponentGraph`"
+
+#: ../../framework/graph.md:77
+#, python-brace-format
+msgid "{py:class}`saealib.core.Component`"
+msgstr "{py:class}`saealib.core.Component`"

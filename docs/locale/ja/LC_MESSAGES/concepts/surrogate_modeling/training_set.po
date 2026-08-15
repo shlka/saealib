@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-02 10:23+0900\n"
+"POT-Creation-Date: 2026-08-15 10:57+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,282 +19,279 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../components/training_set.md:1
+#: ../../concepts/surrogate_modeling/training_set.md:6
 msgid "TrainingSet"
-msgstr "TrainingSet"
+msgstr "学習データ集合"
 
-#: ../../components/training_set.md:3
+#: ../../concepts/surrogate_modeling/training_set.md:8
 msgid ""
 "`GlobalSurrogateManager`/`LocalSurrogateManager`/`PairwiseSurrogateManager`"
 " delegate building the training data to `TrainingSet`, a swappable "
 "component. Pass it via the `training_set` argument."
-msgstr ""
-"`GlobalSurrogateManager`/`LocalSurrogateManager`/`PairwiseSurrogateManager`は、学習データの構築を`TrainingSet`という差し替え可能なコンポーネントに委ねています。"
-" `training_set`引数に渡します。"
+msgstr "`GlobalSurrogateManager`/`LocalSurrogateManager`/`PairwiseSurrogateManager`は、交換可能なコンポーネントである`TrainingSet`に学習データの構築を委譲します。`training_set`引数で渡します。"
 
-#: ../../components/training_set.md:6
+#: ../../concepts/surrogate_modeling/training_set.md:11
 msgid "TrainingSet's role"
 msgstr "TrainingSetの役割"
 
-#: ../../components/training_set.md:8
+#: ../../concepts/surrogate_modeling/training_set.md:13
 msgid ""
 "`TrainingSet` requires only one method, `build(archive, population, ctx, "
 "candidate_x=None) -> TrainingData`, to be implemented. `candidate_x` is "
 "an argument `LocalSurrogateManager` passes as the k-NN query center per "
 "candidate; `GlobalSurrogateManager` calls it with `None`."
 msgstr ""
-"`TrainingSet`が実装を要求するメソッドは`build(archive, population, ctx, "
-"candidate_x=None) -> TrainingData`の1つだけです。 "
-"`candidate_x`は`LocalSurrogateManager`が候補ごとのk-"
-"NNクエリ中心として渡す引数で、`GlobalSurrogateManager`からは`None`で呼ばれます。"
+"`TrainingSet`が実装する必要があるメソッドは`build(archive, population, ctx, "
+"candidate_x=None) -> "
+"TrainingData`の1つだけです。`candidate_x`は、`LocalSurrogateManager`が候補ごとのk-"
+"NN検索中心として渡す引数です。`GlobalSurrogateManager`は`None`を渡して呼び出します。"
 
-#: ../../components/training_set.md:11
+#: ../../concepts/surrogate_modeling/training_set.md:16
 msgid ""
 "`TrainingData` is a dataclass holding `train_x` (normally shape "
 "`(n_train, dim)`; only `PairwiseComparisonSet` uses `(n_train, 2*dim)`) "
 "and `train_y` (`(n_train, n_obj)` for regression, `(n_train,)` for "
 "classification or ranking)."
 msgstr ""
-"`TrainingData`は`train_x`（通常`shape (n_train, "
-"dim)`。`PairwiseComparisonSet`のみ`(n_train, "
-"2*dim)`）と`train_y`（回帰なら`(n_train, "
-"n_obj)`、分類やランキングなら`(n_train,)`）を持つデータクラスです。"
+"`TrainingData`は、`train_x`（通常は形状`(n_train, "
+"dim)`で、`PairwiseComparisonSet`だけが`(n_train, 2*dim)`を使います）と、回帰では`(n_train,"
+" n_obj)`、分類またはランキングでは`(n_train,)`となる`train_y`を保持するデータクラスです。"
 
-#: ../../components/training_set.md:13
+#: ../../concepts/surrogate_modeling/training_set.md:18
 msgid "The 8 built-in classes are organized along two orthogonal axes."
-msgstr "組み込みの8クラスは、次の2つの直交する軸で整理されています。"
+msgstr "組み込みの8クラスは、直交する2つの軸に沿って整理されています。"
 
-#: ../../components/training_set.md:15
+#: ../../concepts/surrogate_modeling/training_set.md:20
 msgid ""
 "**Data-source axis**: Where training data is drawn from — archive / "
 "population / k nearest neighbors / pairs / reference point"
-msgstr "**データソース軸**：archive / population / k近傍 / ペア / 参照点のどこから学習データを取るか"
+msgstr "**データソース軸**：学習データの取得元 — アーカイブ / 個体群 / k近傍 / ペア / 参照点"
 
-#: ../../components/training_set.md:16
+#: ../../concepts/surrogate_modeling/training_set.md:21
 msgid ""
 "**Labeling axis**: How values are assigned — raw objective value "
 "(regression) / binary classification / multi-level ranking / pairwise "
 "comparison"
-msgstr "**ラベリング軸**：生の目的関数値（回帰）/ 二値分類 / 多段階ランキング / ペア比較のどれで値を割り当てるか"
+msgstr "**ラベル付け軸**：値の割り当て方 — 生の目的値（回帰） / 二値分類 / 多段階ランキング / ペア比較"
 
-#: ../../components/training_set.md:18
+#: ../../concepts/surrogate_modeling/training_set.md:23
 msgid "Correspondence with literature patterns"
 msgstr "文献パターンとの対応"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "Pattern"
 msgstr "パターン"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "Source"
-msgstr "文献"
+msgstr "出典"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "Corresponding class"
 msgstr "対応クラス"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "P1 CA-LLSO"
 msgstr "P1 CA-LLSO"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 #, python-brace-format
 msgid "{cite}`wei2021callso`"
 msgstr "{cite}`wei2021callso`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`LevelBasedSet`"
 msgstr "`LevelBasedSet`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "P2 CPS-MOEA"
 msgstr "P2 CPS-MOEA"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 #, python-brace-format
 msgid "{cite}`zhang2018cpsmoea`"
 msgstr "{cite}`zhang2018cpsmoea`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`TopKBipartitionSet`"
 msgstr "`TopKBipartitionSet`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "P3 Pairwise SAEA"
 msgstr "P3 Pairwise SAEA"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 #, python-brace-format
 msgid "{cite}`hao2024pairwise`"
 msgstr "{cite}`hao2024pairwise`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`PairwiseComparisonSet`"
 msgstr "`PairwiseComparisonSet`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "P4 SAPSO pbest"
 msgstr "P4 SAPSO pbest"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "(general)"
 msgstr "（一般）"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`ReferencePointComparisonSet`"
 msgstr "`ReferencePointComparisonSet`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "P5 CSEA / pre-selection"
-msgstr "P5 CSEA / pre-selection"
+msgstr "P5 CSEA / 事前選択"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`KNNObjectiveSet`, `ArchiveObjectiveSet`"
 msgstr "`KNNObjectiveSet`, `ArchiveObjectiveSet`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "P6 Constraint BO"
-msgstr "P6 Constraint BO"
+msgstr "P6 制約BO"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 #, python-brace-format
 msgid "{cite}`regis2005cors,letham2019constraintbo`"
 msgstr "{cite}`regis2005cors,letham2019constraintbo`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`ConstraintObjectiveSet`, `KNNConstraintObjectiveSet`"
 msgstr "`ConstraintObjectiveSet`, `KNNConstraintObjectiveSet`"
 
-#: ../../components/training_set.md:29
+#: ../../concepts/surrogate_modeling/training_set.md:34
 msgid "Built-in TrainingSets"
-msgstr "組み込みTrainingSet"
+msgstr "組み込みのTrainingSet"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "Class"
 msgstr "クラス"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "Parameters"
 msgstr "パラメータ"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "Description"
-msgstr "内容"
+msgstr "説明"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`ArchiveObjectiveSet`"
 msgstr "`ArchiveObjectiveSet`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "None"
 msgstr "なし"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid ""
 "Uses the entire archive with raw objective values. "
 "`GlobalSurrogateManager`'s default"
-msgstr "アーカイブ全体を生の目的関数値で使う。`GlobalSurrogateManager`の既定"
+msgstr "アーカイブ全体を生の目的値とともに使います。`GlobalSurrogateManager`の既定値です。"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`KNNObjectiveSet`"
 msgstr "`KNNObjectiveSet`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`n_neighbors=50`"
 msgstr "`n_neighbors=50`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid ""
 "The k nearest archive points to `candidate_x`. `LocalSurrogateManager`'s "
 "default"
-msgstr "`candidate_x`のk近傍アーカイブ点。`LocalSurrogateManager`の既定"
+msgstr "`candidate_x`に最も近いアーカイブ上のk点。`LocalSurrogateManager`の既定値。"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`ConstraintObjectiveSet`"
 msgstr "`ConstraintObjectiveSet`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "Uses the entire archive with raw constraint values `g`"
-msgstr "アーカイブ全体を生の制約値`g`で使う"
+msgstr "アーカイブ全体を生の制約値とともに使います `g`。"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`KNNConstraintObjectiveSet`"
 msgstr "`KNNConstraintObjectiveSet`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "The k-NN version of `ConstraintObjectiveSet`"
 msgstr "`ConstraintObjectiveSet`のk-NN版"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`FeasibilityClassificationSet`"
 msgstr "`FeasibilityClassificationSet`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`source=\"archive\"`"
 msgstr "`source=\"archive\"`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "Binary classification labels via `cv <= eps_cv`"
-msgstr "`cv <= eps_cv`による二値分類ラベル"
+msgstr "による二値分類ラベル `cv <= eps_cv`。"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`source=\"archive\", top_ratio=0.5`"
 msgstr "`source=\"archive\", top_ratio=0.5`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid ""
 "After sorting, labels the top `floor(n * top_ratio)` as label=1 and the "
 "rest as label=0"
-msgstr "ソート後、上位`floor(n * top_ratio)`件をlabel=1、残りをlabel=0とする二値分類ラベル"
+msgstr "ソート後、上位`floor(n * top_ratio)`件にlabel=1、残りにlabel=0を付けます。"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`source=\"population\", n_levels=5`"
 msgstr "`source=\"population\", n_levels=5`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid ""
 "After sorting, assigns multi-level labels across `n_levels` equally "
 "divided groups"
-msgstr "ソート後、`n_levels`個の等分割グループへ多段階ラベル付けする"
+msgstr "ソート後、`n_levels`個の等分されたグループに複数レベルのラベルを割り当てます。"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`source=\"archive\", n_pairs=None, rng=None`"
 msgstr "`source=\"archive\", n_pairs=None, rng=None`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "Pairs up two points and labels the win/loss of their comparison"
-msgstr "2点をペアにして比較した勝敗をラベルとする"
+msgstr "2点をペアにし、比較の勝敗をラベル付けします"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "`ref_source=\"population_best\"`"
 msgstr "`ref_source=\"population_best\"`"
 
-#: ../../components/training_set.md
+#: ../../concepts/surrogate_modeling/training_set.md
 msgid "A binary label for whether an archive point dominates a reference point"
-msgstr "アーカイブ点が参照点を支配するかどうかの二値ラベル"
+msgstr "アーカイブ上の点が参照点を支配するかどうかの二値ラベル。"
 
-#: ../../components/training_set.md:43
+#: ../../concepts/surrogate_modeling/training_set.md:48
 msgid ""
 "`ConstraintObjectiveSet`/`KNNConstraintObjectiveSet` raise `ValueError` "
 "if the problem has no constraints (`archive.g` has 0 columns)."
-msgstr "`ConstraintObjectiveSet`/`KNNConstraintObjectiveSet`は、問題が制約を持たない場合（`archive.g`が0列）は`ValueError`になります。"
+msgstr "`ConstraintObjectiveSet`/`KNNConstraintObjectiveSet`は、問題に制約がない場合（`archive.g`の列数が0）に`ValueError`を送出します。"
 
-#: ../../components/training_set.md:45
+#: ../../concepts/surrogate_modeling/training_set.md:50
 msgid ""
 "The `eps_cv` used for `FeasibilityClassificationSet`'s feasibility "
 "judgment is obtained from `ctx.problem.eps_cv`, falling back to `1e-6` "
 "when `ctx=None`."
-msgstr "`FeasibilityClassificationSet`の実行可能性判定に使う`eps_cv`は`ctx.problem.eps_cv`から取得され、`ctx=None`のときは`1e-6`が使われます。"
+msgstr "`FeasibilityClassificationSet`の実行可能性判定に使う`eps_cv`は`ctx.problem.eps_cv`から取得し、`ctx=None`の場合は`1e-6`にフォールバックします。"
 
-#: ../../components/training_set.md:47
+#: ../../concepts/surrogate_modeling/training_set.md:52
 msgid ""
 "Classes with a `source` argument "
 "(`FeasibilityClassificationSet`/`TopKBipartitionSet`/`LevelBasedSet`/`PairwiseComparisonSet`)"
 " all share the behavior of raising `ValueError` if "
 "`source=\"population\"` is specified while `population=None`."
-msgstr "`source`引数を持つクラス（`FeasibilityClassificationSet`/`TopKBipartitionSet`/`LevelBasedSet`/`PairwiseComparisonSet`）は共通して、`source=\"population\"`を指定したときに`population=None`だと`ValueError`になります。"
+msgstr "`source`引数を持つクラス（`FeasibilityClassificationSet`/`TopKBipartitionSet`/`LevelBasedSet`/`PairwiseComparisonSet`）は、`source=\"population\"`を指定したときに`population=None`であれば、いずれも`ValueError`を送出します。"
 
-#: ../../components/training_set.md:49
+#: ../../concepts/surrogate_modeling/training_set.md:54
 msgid ""
 "`PairwiseComparisonSet` builds an array of shape `(n_pairs, 2*dim)` by "
 "concatenating `train_x = [x_a, x_b]` for each pair `(a, b)`, labeling it "
@@ -302,12 +299,12 @@ msgid ""
 "b), and `0` otherwise. If `n_pairs=None`, every pair, `n*(n-1)/2` of "
 "them, is used."
 msgstr ""
-"`PairwiseComparisonSet`は、2点`(a, b)`ごとに`train_x = [x_a, x_b]`を連結した`shape "
-"(n_pairs, 2*dim)`の配列を作り、`comparator.compare(f_a, cv_a, f_b, cv_b) <= "
-"0`（aがbに勝つか同等）なら`1`、そうでなければ`0`をラベルとします。 "
-"`n_pairs=None`の場合は全ペア`n*(n-1)/2`を使います。"
+"`PairwiseComparisonSet`は、各ペア`(a, b)`について`train_x = [x_a, "
+"x_b]`を連結し、形状`(n_pairs, 2*dim)`の配列を構築します。`comparator.compare(f_a, cv_a, "
+"f_b, cv_b) <= "
+"0`（aがbに勝つか同点）の場合は`1`、それ以外は`0`とラベル付けします。`n_pairs=None`の場合は、すべてのペア`n*(n-1)/2`個を使います。"
 
-#: ../../components/training_set.md:53
+#: ../../concepts/surrogate_modeling/training_set.md:58
 msgid ""
 "`PairwiseComparisonSet`'s `train_x` has the special shape `(n_pairs, "
 "2*dim)`, incompatible in shape with a standard regression surrogate such "
@@ -318,108 +315,108 @@ msgstr ""
 "2*dim)`という特殊な形状であり、`RBFSurrogate`のような標準的な回帰サロゲートとは形状が非互換です。 "
 "[ComparisonSurrogate](surrogate.md)系のペア比較専用サロゲートと組み合わせる必要があります。"
 
-#: ../../components/training_set.md:57
+#: ../../concepts/surrogate_modeling/training_set.md:62
 msgid ""
 "Unlike `PairwiseComparisonSet`, `ReferencePointComparisonSet`'s `train_x`"
 " is only `(n_archive, dim)`, so it's compatible with "
 "`GlobalSurrogateManager`/`LocalSurrogateManager`."
 msgstr ""
-"`ReferencePointComparisonSet`は、`PairwiseComparisonSet`と異なり`train_x`が`(n_archive,"
-" dim)`のみなので、`GlobalSurrogateManager`/`LocalSurrogateManager`と互換性があります。"
+"`PairwiseComparisonSet`と異なり、`ReferencePointComparisonSet`の`train_x`は`(n_archive,"
+" dim)`だけなので、`GlobalSurrogateManager`/`LocalSurrogateManager`と互換性があります。"
 
-#: ../../components/training_set.md:59
+#: ../../concepts/surrogate_modeling/training_set.md:64
 msgid "Implementing a custom TrainingSet"
 msgstr "独自TrainingSetの実装方法"
 
-#: ../../components/training_set.md:61
+#: ../../concepts/surrogate_modeling/training_set.md:66
 msgid ""
 "If you need a custom training-data extraction scheme, subclass "
 "`TrainingSet` and implement only `build()`. The following example is an "
 "implementation that uses only the most recently added `k` entries as "
 "training data."
-msgstr ""
-"独自の学習データ抽出方式が必要な場合は、`TrainingSet`を継承して`build()`だけを実装すればよいです。 "
-"次の例は、直近に追加された`k`件だけを学習データとして使う実装です。"
+msgstr "独自の学習データ抽出方式が必要な場合は、`TrainingSet`をサブクラス化し、`build()`だけを実装します。次の例は、直近に追加された`k`件だけを学習データとして使う実装です。"
 
-#: ../../components/training_set.md:80
+#: ../../concepts/surrogate_modeling/training_set.md:85
 msgid "Related components"
 msgstr "関連コンポーネント"
 
-#: ../../components/training_set.md:82
+#: ../../concepts/surrogate_modeling/training_set.md:87
 msgid ""
 "[SurrogateManager](surrogate_manager.md): The managers with a "
 "`training_set` argument"
-msgstr "[SurrogateManager](surrogate_manager.md)：`training_set`引数を持つマネージャー"
+msgstr ""
+"[SurrogateManager](surrogate_manager.md): managers と a `training_set` "
+"argument。"
 
-#: ../../components/training_set.md:83
+#: ../../concepts/surrogate_modeling/training_set.md:88
 msgid ""
 "[Surrogate](surrogate.md): Where `TrainingData` is passed. "
 "`PairwiseComparisonSet` needs to be paired with the `ComparisonSurrogate`"
 " family"
-msgstr "[Surrogate](surrogate.md)：`TrainingData`を渡す先。`PairwiseComparisonSet`は`ComparisonSurrogate`系との組み合わせが必要"
+msgstr "[Surrogate](surrogate.md)：`TrainingData`の受け渡し先です。`PairwiseComparisonSet`は`ComparisonSurrogate`系と組み合わせる必要があります。"
 
-#: ../../components/training_set.md:84
+#: ../../concepts/surrogate_modeling/training_set.md:89
 msgid ""
-"[Comparator](comparators.md): The sorting and comparison used by "
+"[Comparator](../problem_and_ranking/comparators.md): The sorting and "
+"comparison used by "
 "`TopKBipartitionSet`/`LevelBasedSet`/`PairwiseComparisonSet`/`ReferencePointComparisonSet`"
-msgstr "[Comparator](comparators.md)：`TopKBipartitionSet`/`LevelBasedSet`/`PairwiseComparisonSet`/`ReferencePointComparisonSet`が使うソートと比較"
+msgstr "[Comparator](../problem_and_ranking/comparators.md)：`TopKBipartitionSet`/`LevelBasedSet`/`PairwiseComparisonSet`/`ReferencePointComparisonSet`で使うソートと比較。"
 
-#: ../../components/training_set.md:86
+#: ../../concepts/surrogate_modeling/training_set.md:91
 msgid "References"
 msgstr "参照"
 
-#: ../../components/training_set.md:88
+#: ../../concepts/surrogate_modeling/training_set.md:93
 #, python-brace-format
 msgid "{py:class}`saealib.TrainingSet`"
 msgstr "{py:class}`saealib.TrainingSet`"
 
-#: ../../components/training_set.md:89
+#: ../../concepts/surrogate_modeling/training_set.md:94
 #, python-brace-format
 msgid "{py:class}`saealib.TrainingData`"
 msgstr "{py:class}`saealib.TrainingData`"
 
-#: ../../components/training_set.md:90
+#: ../../concepts/surrogate_modeling/training_set.md:95
 #, python-brace-format
 msgid "{py:class}`saealib.ArchiveObjectiveSet`"
 msgstr "{py:class}`saealib.ArchiveObjectiveSet`"
 
-#: ../../components/training_set.md:91
+#: ../../concepts/surrogate_modeling/training_set.md:96
 #, python-brace-format
 msgid "{py:class}`saealib.KNNObjectiveSet`"
 msgstr "{py:class}`saealib.KNNObjectiveSet`"
 
-#: ../../components/training_set.md:92
+#: ../../concepts/surrogate_modeling/training_set.md:97
 #, python-brace-format
 msgid "{py:class}`saealib.ConstraintObjectiveSet`"
 msgstr "{py:class}`saealib.ConstraintObjectiveSet`"
 
-#: ../../components/training_set.md:93
+#: ../../concepts/surrogate_modeling/training_set.md:98
 #, python-brace-format
 msgid "{py:class}`saealib.KNNConstraintObjectiveSet`"
 msgstr "{py:class}`saealib.KNNConstraintObjectiveSet`"
 
-#: ../../components/training_set.md:94
+#: ../../concepts/surrogate_modeling/training_set.md:99
 #, python-brace-format
 msgid "{py:class}`saealib.FeasibilityClassificationSet`"
 msgstr "{py:class}`saealib.FeasibilityClassificationSet`"
 
-#: ../../components/training_set.md:95
+#: ../../concepts/surrogate_modeling/training_set.md:100
 #, python-brace-format
 msgid "{py:class}`saealib.TopKBipartitionSet`"
 msgstr "{py:class}`saealib.TopKBipartitionSet`"
 
-#: ../../components/training_set.md:96
+#: ../../concepts/surrogate_modeling/training_set.md:101
 #, python-brace-format
 msgid "{py:class}`saealib.LevelBasedSet`"
 msgstr "{py:class}`saealib.LevelBasedSet`"
 
-#: ../../components/training_set.md:97
+#: ../../concepts/surrogate_modeling/training_set.md:102
 #, python-brace-format
 msgid "{py:class}`saealib.PairwiseComparisonSet`"
 msgstr "{py:class}`saealib.PairwiseComparisonSet`"
 
-#: ../../components/training_set.md:98
+#: ../../concepts/surrogate_modeling/training_set.md:103
 #, python-brace-format
 msgid "{py:class}`saealib.ReferencePointComparisonSet`"
 msgstr "{py:class}`saealib.ReferencePointComparisonSet`"
-

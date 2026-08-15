@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-02 10:23+0900\n"
+"POT-Creation-Date: 2026-08-15 10:57+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,11 +19,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../components/dominance.md:1
+#: ../../concepts/problem_and_ranking/dominance.md:7
 msgid "Dominator"
-msgstr "Dominator"
+msgstr "支配判定器"
 
-#: ../../components/dominance.md:3
+#: ../../concepts/problem_and_ranking/dominance.md:9
 msgid ""
 "Comparators in the [ParetoComparator](comparators.md) family "
 "(`NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`)"
@@ -35,11 +35,11 @@ msgstr ""
 "[ParetoComparator](comparators.md)系のComparator（`NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`）は、支配関係の定義そのものを`Dominator`という差し替え可能なコンポーネントに委ねています。"
 " Pareto支配以外の選好関係を使いたいときは、これらのComparator本体ではなく`dominator`引数だけを差し替えればよいです。"
 
-#: ../../components/dominance.md:6
+#: ../../concepts/problem_and_ranking/dominance.md:12
 msgid "Dominator's role"
 msgstr "Dominatorの役割"
 
-#: ../../components/dominance.md:8
+#: ../../concepts/problem_and_ranking/dominance.md:14
 msgid ""
 "`Dominator` requires only one method, `dominance_matrix(f, "
 "direction=None)`, to be implemented. `f` is a matrix of objective values "
@@ -49,10 +49,10 @@ msgid ""
 "this."
 msgstr ""
 "`Dominator`が実装を要求するメソッドは`dominance_matrix(f, direction=None)`の1つだけです。 "
-"`f`は`shape (n, n_obj)`の目的関数値の行列で、`D[i, j]`が「行`i`が行`j`を支配するか」を示す`shape (n,"
+"`f`はshape `(n, n_obj)`の目的関数値の行列で、`D[i, j]`が「行`i`が行`j`を支配するか」を示すshape `(n,"
 " n)`のブール行列を返します。 `f`はNaNを含まない前提であり、呼び出し側がその保証を担います。"
 
-#: ../../components/dominance.md:12
+#: ../../concepts/problem_and_ranking/dominance.md:18
 msgid ""
 "There's also `dominates(fa, fb, direction=None) -> bool`, which compares "
 "just two points, but this is a default implementation derived from "
@@ -69,49 +69,49 @@ msgstr ""
 " 内部では`fa`/`fb`を2行のスタックにして`dominance_matrix`を呼びます。 "
 "`fa`にNaNが含まれる場合は常に`False`（支配しない）を返す一方、`fb`側のNaNは`+inf`に置き換えられ「常に支配される」個体として扱われる、という非対称な扱いになっています。"
 
-#: ../../components/dominance.md:16
+#: ../../concepts/problem_and_ranking/dominance.md:22
 msgid "Built-in Dominators"
 msgstr "組み込みDominator"
 
-#: ../../components/dominance.md
+#: ../../concepts/problem_and_ranking/dominance.md
 msgid "Class"
 msgstr "クラス"
 
-#: ../../components/dominance.md
+#: ../../concepts/problem_and_ranking/dominance.md
 msgid "Parameters"
 msgstr "パラメータ"
 
-#: ../../components/dominance.md
+#: ../../concepts/problem_and_ranking/dominance.md
 msgid "Characteristics"
 msgstr "特徴"
 
-#: ../../components/dominance.md
+#: ../../concepts/problem_and_ranking/dominance.md
 msgid "`ParetoDominator`"
 msgstr "`ParetoDominator`"
 
-#: ../../components/dominance.md
+#: ../../concepts/problem_and_ranking/dominance.md
 msgid "None"
 msgstr "なし"
 
-#: ../../components/dominance.md
+#: ../../concepts/problem_and_ranking/dominance.md
 msgid ""
 "Standard Pareto dominance. Considered dominance when at or below on every"
 " objective, and strictly less on at least one objective (default)"
 msgstr "標準Pareto支配。全目的で以下、かつ少なくとも1目的で真に小さい場合に支配とみなす（既定）"
 
-#: ../../components/dominance.md
+#: ../../concepts/problem_and_ranking/dominance.md
 msgid "`EpsilonDominator`"
 msgstr "`EpsilonDominator`"
 
-#: ../../components/dominance.md
+#: ../../concepts/problem_and_ranking/dominance.md
 msgid "`eps, mode=\"additive\"`"
 msgstr "`eps, mode=\"additive\"`"
 
-#: ../../components/dominance.md
+#: ../../concepts/problem_and_ranking/dominance.md
 msgid "Quantizes into ε-boxes and then delegates internally to `ParetoDominator`"
 msgstr "ε-boxに量子化してから内部で`ParetoDominator`に委譲する"
 
-#: ../../components/dominance.md:23
+#: ../../concepts/problem_and_ranking/dominance.md:29
 #, python-brace-format
 msgid ""
 "`EpsilonDominator` implements the ε-dominance of "
@@ -120,13 +120,13 @@ msgstr ""
 "`EpsilonDominator`は、{cite}`laumanns2002epsilon`のε-支配を実装したものです。 "
 "量子化モードは2種類あります。"
 
-#: ../../components/dominance.md:26
+#: ../../concepts/problem_and_ranking/dominance.md:32
 msgid ""
 "**additive** (default): Computes each objective's box index as `floor(f_i"
 " / eps_i)`"
 msgstr "**additive**（既定）：各目的の箱番号を`floor(f_i / eps_i)`で計算する"
 
-#: ../../components/dominance.md:27
+#: ../../concepts/problem_and_ranking/dominance.md:33
 msgid ""
 "**multiplicative**: Computes it as `floor(log(f_i) / log(1 + eps_i))`. "
 "Assumes all objective values are positive; raises `ValueError` otherwise"
@@ -134,15 +134,15 @@ msgstr ""
 "**multiplicative**：`floor(log(f_i) / log(1 + "
 "eps_i))`で計算する。目的関数値が全て正であることが前提で、そうでない場合は`ValueError`になる"
 
-#: ../../components/dominance.md:29
+#: ../../concepts/problem_and_ranking/dominance.md:35
 msgid ""
 "`eps` is specified as a scalar or an array of shape `(n_obj,)`, and every"
 " element must be positive (otherwise `ValueError` at construction time)."
 msgstr ""
-"`eps`はスカラーまたは`shape "
-"(n_obj,)`の配列で指定し、全要素が正でなければなりません（そうでない場合は構築時に`ValueError`）。"
+"`eps`はスカラーまたはshape "
+"`(n_obj,)`の配列で指定し、全要素が正でなければなりません（そうでない場合は構築時に`ValueError`）。"
 
-#: ../../components/dominance.md:31
+#: ../../concepts/problem_and_ranking/dominance.md:37
 msgid ""
 "[EpsilonDominanceComparator](comparators.md) is a thin wrapper that "
 "simply passes `EpsilonDominator(eps, mode)` to `ParetoComparator`'s "
@@ -151,18 +151,18 @@ msgstr ""
 "[EpsilonDominanceComparator](comparators.md)は、`ParetoComparator`の`dominator`引数に`EpsilonDominator(eps,"
 " mode)`を渡すだけの薄いラッパーです。"
 
-#: ../../components/dominance.md:34
+#: ../../concepts/problem_and_ranking/dominance.md:40
 msgid ""
 "For new code, use "
 "`ParetoDominator().dominates(...)`/`ParetoDominator().dominance_matrix(...)`"
 " directly."
 msgstr "新しいコードでは、`ParetoDominator().dominates(...)`または`ParetoDominator().dominance_matrix(...)`を直接使ってください。"
 
-#: ../../components/dominance.md:37
+#: ../../concepts/problem_and_ranking/dominance.md:43
 msgid "Implementing a custom Dominator"
 msgstr "独自Dominatorの実装方法"
 
-#: ../../components/dominance.md:39
+#: ../../concepts/problem_and_ranking/dominance.md:45
 msgid ""
 "If you need a custom dominance relation, subclass `Dominator` and "
 "implement only `dominance_matrix()`. The following example applies a "
@@ -171,50 +171,52 @@ msgstr ""
 "独自の支配関係が必要な場合は、`Dominator`を継承して`dominance_matrix()`だけを実装すればよいです。 "
 "次の例は、各目的にスケーリング係数をかけてからPareto支配を適用します。"
 
-#: ../../components/dominance.md:58
+#: ../../concepts/problem_and_ranking/dominance.md:64
 msgid ""
 "As with `EpsilonDominator`, delegating to the existing `ParetoDominator` "
 "on the converted values means you don't have to write the objective-value"
 " comparison logic yourself."
 msgstr "`EpsilonDominator`と同様に、既存の`ParetoDominator`へ変換後の値を委譲する実装にすると、直接目的関数値を比較するロジックを自分で書かずに済みます。"
 
-#: ../../components/dominance.md:60
+#: ../../concepts/problem_and_ranking/dominance.md:66
 msgid "Related components"
 msgstr "関連コンポーネント"
 
-#: ../../components/dominance.md:62
+#: ../../concepts/problem_and_ranking/dominance.md:68
 msgid ""
 "[Comparator](comparators.md): Injects a `Dominator` via the "
 "`ParetoComparator` family's `dominator` argument"
 msgstr "[Comparator](comparators.md)：`ParetoComparator`系の`dominator`引数から`Dominator`を注入する"
 
-#: ../../components/dominance.md:63
+#: ../../concepts/problem_and_ranking/dominance.md:69
 msgid ""
 "[NonDominatedSorter](nondominated_sorting.md): The paired swap point that"
 " controls how individuals are sorted into fronts, alongside `Dominator`"
 msgstr "[NonDominatedSorter](nondominated_sorting.md)：`Dominator`と対になる、フロントへの振り分け方の差し替え点"
 
-#: ../../components/dominance.md:64
+#: ../../concepts/problem_and_ranking/dominance.md:70
 msgid ""
-"[Population](population.md): `ParetoArchive` uses `Dominator` to "
-"determine non-dominated solutions"
-msgstr "[Population](population.md)：`ParetoArchive`が非優越解判定に`Dominator`を使う"
+"[Population](../observation_and_state/population.md): `ParetoArchive` "
+"uses `Dominator` to determine non-dominated solutions"
+msgstr ""
+"[Population](../observation_and_state/population.md)：`ParetoArchive` は "
+"`Dominator` を使って非劣解を判定します"
 
-#: ../../components/dominance.md:66
+#: ../../concepts/problem_and_ranking/dominance.md:72
 msgid "References"
 msgstr "参照"
 
-#: ../../components/dominance.md:68
+#: ../../concepts/problem_and_ranking/dominance.md:74
 #, python-brace-format
 msgid "{py:class}`saealib.Dominator`"
 msgstr "{py:class}`saealib.Dominator`"
 
-#: ../../components/dominance.md:69
+#: ../../concepts/problem_and_ranking/dominance.md:75
 #, python-brace-format
 msgid "{py:class}`saealib.ParetoDominator`"
 msgstr "{py:class}`saealib.ParetoDominator`"
 
-#: ../../components/dominance.md:70
+#: ../../concepts/problem_and_ranking/dominance.md:76
 #, python-brace-format
 msgid "{py:class}`saealib.EpsilonDominator`"
 msgstr "{py:class}`saealib.EpsilonDominator`"

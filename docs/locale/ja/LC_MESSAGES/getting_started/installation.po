@@ -29,7 +29,7 @@ msgstr "動作要件"
 
 #: ../../../getting_started/installation.md:4
 msgid "Python >= 3.10"
-msgstr "Python >= 3.10"
+msgstr "Python >= 3.10 対応"
 
 #: ../../../getting_started/installation.md:6
 msgid ""
@@ -168,81 +168,3 @@ msgid ""
 "[CONTRIBUTING.md](https://github.com/shlka/saealib/blob/main/CONTRIBUTING.md)"
 " for a development install from source."
 msgstr "ソースからの開発用インストールについては[CONTRIBUTING.md](https://github.com/shlka/saealib/blob/main/CONTRIBUTING.md)を参照してください。"
-
-#~ msgid "Installation"
-#~ msgstr ""
-
-#~ msgid "インストール"
-#~ msgstr ""
-
-#~ msgid "動作要件"
-#~ msgstr ""
-
-#~ msgid "依存パッケージの正確なバージョンは[pyproject.toml](https://github.com/shlka/saealib/blob/main/pyproject.toml)を参照してください。"
-#~ msgstr ""
-
-#~ msgid "インストール方法"
-#~ msgstr ""
-
-#~ msgid "pipによるインストールは次のように行います。 このインストールでは最小の依存関係のみインストールします。"
-#~ msgstr ""
-
-#~ msgid "すべての依存関係をフルインストールする場合は次のように行います。"
-#~ msgstr ""
-
-#~ msgid "オプションの指定については[こちら](#install-options)を参照してください。"
-#~ msgstr ""
-
-#~ msgid "バージョンの指定"
-#~ msgstr ""
-
-#~ msgid "バージョンの指定は次のように行います。"
-#~ msgstr ""
-
-#~ msgid "最新のプレリリースバージョンは次のように指定します。"
-#~ msgstr ""
-
-#~ msgid "プレリリースバージョンのAPIは予告なく変更・削除される可能性があります。"
-#~ msgstr ""
-
-#~ msgid "オプションの指定"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "一部のパッケージは依存関係を追加することで有効になります。 "
-#~ "依存関係のインストールは次のようにオプションを指定することで同時にインストールできます。"
-#~ msgstr ""
-
-#~ msgid "すべての依存関係をインストールする場合は次のように指定します。"
-#~ msgstr ""
-
-#~ msgid "すべてのオプションは次の表に示す通りです。"
-#~ msgstr ""
-
-#~ msgid "Extra"
-#~ msgstr ""
-
-#~ msgid "scikit-learn-based surrogates"
-#~ msgstr ""
-
-#~ msgid "XGBoost surrogate"
-#~ msgstr ""
-
-#~ msgid "LightGBM surrogate"
-#~ msgstr ""
-
-#~ msgid "joblib-based parallel evaluation"
-#~ msgstr ""
-
-#~ msgid "everything above"
-#~ msgstr ""
-
-#~ msgid "インストールの確認"
-#~ msgstr ""
-
-#~ msgid "インストールが完了したら、次のコマンドでバージョンを確認できます。"
-#~ msgstr ""
-
-#~ msgid "ソースからの開発用インストールについては[CONTRIBUTING.md](https://github.com/shlka/saealib/blob/main/CONTRIBUTING.md)を参照してください。"
-#~ msgstr ""
-

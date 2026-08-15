@@ -31,7 +31,10 @@ msgid ""
 "Approaches like MOEA/D {cite}`zhang2007moead`, which guide the search "
 "using a per-subproblem weight vector, are realized by combining "
 "`Decomposition` with `DecompositionComparator`."
-msgstr "`DecompositionComparator`は、複数目的を1つのスカラー値へ集約する処理を、`Decomposition`という差し替え可能なコンポーネントに委ねています。 MOEA/D{cite}`zhang2007moead`のようにサブ問題ごとの重みベクトルで探索を誘導する方式は、`Decomposition`と`DecompositionComparator`を組み合わせて実現します。"
+msgstr ""
+"`DecompositionComparator`は、複数目的を1つのスカラー値へ集約する処理を、`Decomposition`という差し替え可能なコンポーネントに委ねています。"
+" "
+"MOEA/D{cite}`zhang2007moead`のようにサブ問題ごとの重みベクトルで探索を誘導する方式は、`Decomposition`と`DecompositionComparator`を組み合わせて実現します。"
 
 #: ../../../components/decomposition.md:6
 msgid "Decomposition's role"
@@ -45,7 +48,10 @@ msgid ""
 "weight vector with shape `(n_obj,)`, and `ideal_point` is the ideal point"
 " with shape `(n_obj,)`; it returns a scalar score with shape `(N,)`. "
 "Scores are unified under the convention that lower is better."
-msgstr "`Decomposition`が実装を要求するメソッドは`aggregate(f, weights, ideal_point) -> np.ndarray`の1つだけです。 `f`は`shape (N, n_obj)`の目的関数値の行列、`weights`は`shape (n_obj,)`の非負の重みベクトル、`ideal_point`は`shape (n_obj,)`の理想点で、`shape (N,)`のスカラースコアを返します。 スコアは低いほど良いという慣習で統一されています。"
+msgstr ""
+"`Decomposition`が実装する必要があるメソッドは`aggregate(f, weights, ideal_point) -> "
+"np.ndarray`の1つだけです。`f`は形状`(N, "
+"n_obj)`の目的値行列、`weights`は形状`(n_obj,)`の非負の重みベクトル、`ideal_point`は形状`(n_obj,)`の理想点であり、形状`(N,)`のスカラー値を返します。スコアは低いほど良いという規約に統一されています。"
 
 #: ../../../components/decomposition.md:12
 msgid ""
@@ -53,7 +59,9 @@ msgid ""
 "`DecompositionComparator` having already applied the `direction` "
 "conversion. When implementing a custom `Decomposition`, you don't need to"
 " apply the `direction` conversion again inside `aggregate`."
-msgstr "`f`は、呼び出し側の`DecompositionComparator`が`direction`変換を適用済みの、最小化フレームである前提で渡されます。 独自の`Decomposition`を実装する際、`aggregate`の内部で改めて`direction`変換をする必要はありません。"
+msgstr ""
+"`f`は、呼び出し側の`DecompositionComparator`が`direction`変換を適用済みの、最小化フレームである前提で渡されます。"
+" 独自の`Decomposition`を実装する際、`aggregate`の内部で改めて`direction`変換をする必要はありません。"
 
 #: ../../../components/decomposition.md:15
 msgid "Built-in Decompositions"
@@ -120,7 +128,9 @@ msgid ""
 "`TchebycheffDecomposition` internally substitutes `1e-6` for weights that"
 " are exactly zero, since using zero directly would degenerate "
 "({cite}`zhang2007moead` Appendix A's convention)."
-msgstr "`TchebycheffDecomposition`は、ゼロの重みをそのまま使うと退化してしまうため、内部で`1e-6`へ置換します（{cite}`zhang2007moead` Appendix Aの慣習）。"
+msgstr ""
+"`TchebycheffDecomposition`は、ゼロの重みをそのまま使うと退化してしまうため、内部で`1e-6`へ置換します（{cite}`zhang2007moead`"
+" Appendix Aの慣習）。"
 
 #: ../../../components/decomposition.md:27
 #, python-brace-format
@@ -130,7 +140,10 @@ msgid ""
 "diversity (the penalty on the orthogonal distance `d2`). A larger value "
 "applies a stronger penalty to solutions that deviate from the weight "
 "vector's direction. `theta=5.0` is the default in {cite}`zhang2007moead`."
-msgstr "`PBIDecomposition`の`theta`は、収束（重みベクトル方向への射影距離`d1`）と多様性（直交距離`d2`へのペナルティ）のトレードオフを制御するパラメータです。 値が大きいほど、重みベクトルの方向から外れた解に強いペナルティがかかります。 `theta=5.0`は{cite}`zhang2007moead`の既定値です。"
+msgstr ""
+"`PBIDecomposition`の`theta`は、収束（重みベクトル方向への射影距離`d1`）と多様性（直交距離`d2`へのペナルティ）のトレードオフを制御するパラメータです。"
+" 値が大きいほど、重みベクトルの方向から外れた解に強いペナルティがかかります。 "
+"`theta=5.0`は{cite}`zhang2007moead`の既定値です。"
 
 #: ../../../components/decomposition.md:31
 msgid "DecompositionComparator"
@@ -141,14 +154,17 @@ msgid ""
 "`DecompositionComparator(decomposition, weights, ideal_point=None, "
 "direction=None, *, eps_cv=1e-6, eps_obj=1e-6)` implements MOEA/D-style "
 "ranking as a subclass of [Comparator](comparators.md)."
-msgstr "`DecompositionComparator(decomposition, weights, ideal_point=None, direction=None, *, eps_cv=1e-6, eps_obj=1e-6)`は、[Comparator](comparators.md)のサブクラスとしてMOEA/D風の順位付けを実装します。"
+msgstr ""
+"`DecompositionComparator(decomposition, weights, ideal_point=None, "
+"direction=None, *, eps_cv=1e-6, "
+"eps_obj=1e-6)`は、[Comparator](comparators.md)のサブクラスとしてMOEA/D風の順位付けを実装します。"
 
 #: ../../../components/decomposition.md:35
 #, python-brace-format
 msgid ""
 "The ordering rule prioritizes feasibility (feasibility-first "
 "{cite}`deb2000feasibility`), then sorts by ascending aggregated score."
-msgstr "順序付けの規則は、実行可能性を優先（feasibility-first{cite}`deb2000feasibility`）した上で、集約スコアの昇順で並べます。"
+msgstr "順序付けの規則は、実行可能性を優先（実行可能性優先{cite}`deb2000feasibility`）した上で、集約スコアの昇順で並べます。"
 
 #: ../../../components/decomposition.md:37
 msgid ""
@@ -157,7 +173,10 @@ msgid ""
 "`compare`, which compares only two points, on the other hand, uses the "
 "minimum of those two points' objective values as a local approximation of"
 " the ideal point. These two computation methods may not fully agree."
-msgstr "`ideal_point`を省略（`None`）すると、`sort_population`は個体群の実行可能個体から理想点を動的に計算します。 一方、2点だけを比較する`compare`では、その2点の目的関数値の最小値をローカルな理想点近似として使います。 この2つの計算方法は完全には一致しない場合があります。"
+msgstr ""
+"`ideal_point`を省略（`None`）すると、`sort_population`は個体群の実行可能個体から理想点を動的に計算します。 "
+"一方、2点だけを比較する`compare`では、その2点の目的関数値の最小値をローカルな理想点近似として使います。 "
+"この2つの計算方法は完全には一致しない場合があります。"
 
 #: ../../../components/decomposition.md:41
 msgid ""
@@ -165,7 +184,9 @@ msgid ""
 "(minimize/maximize) expressed by `direction` — a role split corresponding"
 " to the `direction`/`weight` role split described in "
 "[Problem](problem.md)."
-msgstr "`weights`は非負の大きさのみを持ち、符号（最小化/最大化）は`direction`が表現するという役割分担になっています。 [Problem](problem.md)の`direction`/`weight`の役割分担と対応します。"
+msgstr ""
+"`weights`は非負の大きさのみを持ち、符号（最小化/最大化）は`direction`が表現するという役割分担になっています。 "
+"[Problem](problem.md)の`direction`/`weight`の役割分担と対応します。"
 
 #: ../../../components/decomposition.md:43
 msgid "Implementing a custom Decomposition"
@@ -177,7 +198,9 @@ msgid ""
 " implement only `aggregate()`. The following example is a simple "
 "implementation that aggregates via a weighted product (assuming all "
 "objectives are positive)."
-msgstr "独自のスカラー化関数が必要な場合は、`Decomposition`を継承して`aggregate()`だけを実装すればよいです。 次の例は、重み付き積で集約する（全目的が正であることを前提とする）単純な実装です。"
+msgstr ""
+"独自のスカラー化関数が必要な場合は、`Decomposition`を継承して`aggregate()`だけを実装すればよいです。 "
+"次の例は、重み付き積で集約する（全目的が正であることを前提とする）単純な実装です。"
 
 #: ../../../components/decomposition.md:62
 msgid ""
@@ -227,110 +250,3 @@ msgstr "{py:class}`saealib.PBIDecomposition`"
 #, python-brace-format
 msgid "{py:class}`saealib.DecompositionComparator`"
 msgstr "{py:class}`saealib.DecompositionComparator`"
-
-#~ msgid ""
-#~ "`DecompositionComparator`は、複数目的を1つのスカラー値へ集約する処理を、`Decomposition`という差し替え可能なコンポーネントに委ねている。"
-#~ " "
-#~ "MOEA/D{cite}`zhang2007moead`のようにサブ問題ごとの重みベクトルで探索を誘導する方式は、`Decomposition`と`DecompositionComparator`を組み合わせて実現する。"
-#~ msgstr ""
-
-#~ msgid "Decompositionの役割"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`Decomposition`が実装を要求するメソッドは`aggregate(f, weights, "
-#~ "ideal_point) -> np.ndarray`の1つだけである。 `f`は`shape "
-#~ "(N, n_obj)`の目的関数値の行列、`weights`は`shape "
-#~ "(n_obj,)`の非負の重みベクトル、`ideal_point`は`shape (n_obj,)`の理想点で、`shape"
-#~ " (N,)`のスカラースコアを返す。 スコアは低いほど良いという慣習で統一されている。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`f`は、呼び出し側の`DecompositionComparator`が`direction`変換を適用済みの、最小化フレームである前提で渡される。"
-#~ " 独自の`Decomposition`を実装する際、`aggregate`の内部で改めて`direction`変換をする必要はない。"
-#~ msgstr ""
-
-#~ msgid "組み込みDecomposition"
-#~ msgstr ""
-
-#~ msgid "いずれも{cite}`zhang2007moead`のMOEA/D論文がベースになっている。"
-#~ msgstr ""
-
-#~ msgid "クラス"
-#~ msgstr ""
-
-#~ msgid "パラメータ"
-#~ msgstr ""
-
-#~ msgid "特徴"
-#~ msgstr ""
-
-#~ msgid "なし"
-#~ msgstr ""
-
-#~ msgid "`score = f @ weights`という線形重み付き和。最も単純だが非凸フロントの一部に到達できない"
-#~ msgstr ""
-
-#~ msgid "`score = max_j(w_j *"
-#~ msgstr ""
-
-#~ msgid "`d1 + theta * d2`（重みベクトル方向への射影距離＋直交距離のペナルティ）"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`TchebycheffDecomposition`は、ゼロの重みをそのまま使うと退化してしまうため、内部で`1e-6`へ置換する（{cite}`zhang2007moead`"
-#~ " Appendix Aの慣習）。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`PBIDecomposition`の`theta`は、収束（重みベクトル方向への射影距離`d1`）と多様性（直交距離`d2`へのペナルティ）のトレードオフを制御するパラメータである。"
-#~ " 値が大きいほど、重みベクトルの方向から外れた解に強いペナルティがかかる。 "
-#~ "`theta=5.0`は{cite}`zhang2007moead`の既定値である。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`DecompositionComparator(decomposition, weights, "
-#~ "ideal_point=None, direction=None, *, eps_cv=1e-6,"
-#~ " "
-#~ "eps_obj=1e-6)`は、[Comparator](comparators.md)のサブクラスとしてMOEA/D風の順位付けを実装する。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "順序付けの規則は、実行可能性を優先（feasibility-"
-#~ "first{cite}`deb2000feasibility`）した上で、集約スコアの昇順で並べる。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`ideal_point`を省略（`None`）すると、`sort_population`は母集団の実行可能個体から理想点を動的に計算する。"
-#~ " 一方、2点だけを比較する`compare`では、その2点の目的関数値の最小値をローカルな理想点近似として使う。 "
-#~ "この2つの計算方法は完全には一致しない場合がある。"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "`weights`は非負の大きさのみを持ち、符号（最小化/最大化）は`direction`が表現するという役割分担になっている。 "
-#~ "[Problem](problem.md)の`direction`/`weight`の役割分担と対応する。"
-#~ msgstr ""
-
-#~ msgid "独自Decompositionの実装方法"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "独自のスカラー化関数が必要な場合は、`Decomposition`を継承して`aggregate()`だけを実装すればよい。 "
-#~ "次の例は、重み付き積で集約する（全目的が正であることを前提とする）単純な実装である。"
-#~ msgstr ""
-
-#~ msgid "`f`は既に最小化フレームに変換済みの値として渡されるため、この実装内で`direction`を意識する必要はない。"
-#~ msgstr ""
-
-#~ msgid "関連コンポーネント"
-#~ msgstr ""
-
-#~ msgid "[Comparator](comparators.md) — `DecompositionComparator`が継承する基底クラス"
-#~ msgstr ""
-
-#~ msgid "[Problem](problem.md) — `direction`/`weights`の役割分担"
-#~ msgstr ""
-
-#~ msgid "参照"
-#~ msgstr ""
-

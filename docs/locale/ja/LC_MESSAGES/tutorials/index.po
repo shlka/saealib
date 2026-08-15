@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 02:51+0900\n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,146 +19,154 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../../tutorials/index.md:1
+#: ../../tutorials/index.md:7
 msgid "Tutorials"
 msgstr "チュートリアル"
 
-#: ../../../tutorials/index.md:3
+#: ../../tutorials/index.md:9
 msgid ""
-"Setup guides for common optimization scenarios, from the high-level API "
-"to manually assembling an `Optimizer`."
-msgstr "よくある最適化シナリオに対応する、状況別のセットアップガイドです。高レベルAPIから、手動で組み立てる`Optimizer`まで扱います。"
+"These pages show implementations for specific optimization scenarios. "
+"Choose a page for single-objective, multi-objective, constrained, mixed-"
+"variable, or another goal. Each page is an example for one scenario and "
+"does not assume a particular configuration depth."
+msgstr ""
+"具体的な最適化シナリオに対する実装例を示します。 単目的、多目的、制約、混合変数など、目的に合うページを選べます。 "
+"シナリオごとの実装例であり、構成の深さを前提にしません。"
 
-#: ../../../tutorials/index.md:9
+#: ../../tutorials/index.md:13
+msgid "Optimization scenarios"
+msgstr "最適化シナリオ"
+
+#: ../../tutorials/index.md:19
 msgid "Single-Objective Optimization"
 msgstr "{fa}`bullseye;sd-mr-1` 単目的最適化"
 
-#: ../../../tutorials/index.md:13
+#: ../../tutorials/index.md:23
 msgid ""
-"Solve an expensive single-objective problem step by step, from "
-"`minimize()` to manually assembling an `Optimizer`."
-msgstr "評価コストの高い単目的問題を、`minimize()`から手動で組み立てる`Optimizer`まで、段階的に解きます。"
+"Solve an expensive single-objective problem with `minimize()`, choosing "
+"the algorithm, surrogate, and evaluation strategy."
+msgstr "アルゴリズム、サロゲートモデル、評価戦略を選び、評価コストの高い単目的問題を`minimize()`で解きます。"
 
-#: ../../../tutorials/index.md:16
+#: ../../tutorials/index.md:26
 msgid "Multi-Objective Optimization"
 msgstr "{fa}`layer-group;sd-mr-1` 多目的最適化"
 
-#: ../../../tutorials/index.md:20
+#: ../../tutorials/index.md:30
 msgid ""
 "Solve a problem with trade-offs between objectives and extract the Pareto"
 " front."
 msgstr "目的間にトレードオフのある問題を解き、パレートフロントを抽出します。"
 
-#: ../../../tutorials/index.md:23
+#: ../../tutorials/index.md:33
 msgid "Constrained Optimization"
 msgstr "{fa}`shield-halved;sd-mr-1` 制約付き最適化"
 
-#: ../../../tutorials/index.md:27
+#: ../../tutorials/index.md:37
 msgid ""
 "Define inequality constraints and control how infeasible solutions are "
 "handled."
 msgstr "不等式制約を定義し、実行不可能解の扱い方を制御します。"
 
-#: ../../../tutorials/index.md:30
+#: ../../tutorials/index.md:40
 msgid "Mixed-Variable Optimization"
 msgstr "{fa}`shapes;sd-mr-1` 混合変数最適化"
 
-#: ../../../tutorials/index.md:34
+#: ../../tutorials/index.md:44
 msgid ""
 "Solve problems that include integer and categorical variables alongside "
 "continuous variables."
 msgstr "連続変数に加えて整数変数、カテゴリ変数を含む問題を解きます。"
 
-#: ../../../tutorials/index.md:37
+#: ../../tutorials/index.md:47
 msgid "Dynamic Switching"
 msgstr "{fa}`arrows-rotate;sd-mr-1` 動的な切り替え"
 
-#: ../../../tutorials/index.md:41
+#: ../../tutorials/index.md:51
 msgid ""
 "Switch the evaluation strategy or `SurrogateManager` at runtime based on "
 "the surrogate's prediction accuracy."
 msgstr "サロゲートの予測精度に応じて、評価戦略や`SurrogateManager`を実行中に切り替えます。"
 
-#: ../../../tutorials/index.md:44
+#: ../../tutorials/index.md:54
 msgid "Reproducibility and Checkpointing"
 msgstr "{fa}`floppy-disk;sd-mr-1` 再現性とチェックポイント"
 
-#: ../../../tutorials/index.md:48
+#: ../../tutorials/index.md:58
 msgid "Make long-running optimizations reproducible and resumable."
 msgstr "長時間実行する最適化を再現可能かつ再開可能にします。"
 
-#: ../../../tutorials/index.md:51
+#: ../../tutorials/index.md:61
 msgid "Logging Progress"
 msgstr "{fa}`file-lines;sd-mr-1` 進捗のログ記録"
 
-#: ../../../tutorials/index.md:55
+#: ../../tutorials/index.md:65
 msgid "Record optimization progress with the standard `logging` module."
 msgstr "標準の`logging`モジュールで、最適化の進捗を記録します。"
 
-#: ../../../tutorials/index.md:58
+#: ../../tutorials/index.md:68
 msgid "Integrating External Libraries"
 msgstr "{fa}`plug;sd-mr-1` 外部ライブラリとの連携"
 
-#: ../../../tutorials/index.md:62
+#: ../../tutorials/index.md:72
 msgid ""
-"Incorporate models from external libraries such as scikit-learn as "
-"surrogates."
-msgstr "scikit-learnなど外部ライブラリのモデルを、サロゲートとして組み込みます。"
+"Incorporate scikit-learn and PyTorch models as surrogates, and pymoo "
+"operators, algorithms, and problems, through adapters."
+msgstr "アダプターを通じて、scikit-learnとPyTorchのモデルをサロゲートとして、pymooの演算子、アルゴリズム、問題を組み込みます。"
 
-#~ msgid "Tutorials"
-#~ msgstr ""
+#: ../../tutorials/index.md:89
+msgid "Configuration and control"
+msgstr "構成と操作"
 
-#~ msgid "チュートリアル"
-#~ msgstr ""
+#: ../../tutorials/index.md:91
+msgid ""
+"These guides cover choosing built-in components, assembling the low-level"
+" API, and adding Hooks or Callbacks to an execution path. The guides "
+"contain the details; this page provides an overview and links."
+msgstr ""
+"ビルトインコンポーネントの選択、低レベルAPIの構成、実行経路へのHookやCallbackの追加を扱います。 "
+"詳細な内容は各ガイドで扱い、ここでは概要とリンクを示します。"
 
-#~ msgid "よくある最適化シナリオに対応する、シチュエーション別のセットアップガイドです。高レベルAPIから、手動で組み立てる`Optimizer`まで扱います。"
-#~ msgstr ""
+#: ../../tutorials/index.md:98
+msgid "Choose and swap built-in components"
+msgstr "{fa}`puzzle-piece;sd-mr-1` ビルトインコンポーネントを選んで差し替える"
 
-#~ msgid "単目的最適化"
-#~ msgstr ""
+#: ../../tutorials/index.md:101
+msgid "Choose the built-in component for a responsibility."
+msgstr "責務に対応するビルトインコンポーネントを選びます。"
 
-#~ msgid "評価コストの高い単目的問題を、`minimize()`から手動で組み立てる`Optimizer`まで、段階的に解きます。"
-#~ msgstr ""
+#: ../../tutorials/index.md:104
+msgid "Assemble Optimizer with the low-level API"
+msgstr "{fa}`sliders;sd-mr-1` Optimizerを低レベルAPIで組み立てる"
 
-#~ msgid "多目的最適化"
-#~ msgstr ""
+#: ../../tutorials/index.md:107
+msgid ""
+"Assemble a full configuration with a surrogate, combine termination "
+"conditions, and inspect each generation with `iterate()`."
+msgstr "サロゲート込みの完全な構成、終了条件の組み合わせ、`iterate()` による世代ごとの取得を扱います。"
 
-#~ msgid "目的間にトレードオフのある問題を解き、パレートフロントを抽出します。"
-#~ msgstr ""
+#: ../../tutorials/index.md:110
+msgid "Choose a Hook, Stage, or Callback"
+msgstr "{fa}`eye;sd-mr-1` Hook、Stage、Callbackを選ぶ"
 
-#~ msgid "制約付き最適化"
-#~ msgstr ""
+#: ../../tutorials/index.md:113
+msgid "Choose how to extend and observe an execution path."
+msgstr "実行経路への追加と観測を選びます。"
 
-#~ msgid "不等式制約を定義し、実行不可能解の扱い方を制御します。"
-#~ msgstr ""
+#: ../../tutorials/index.md:116
+msgid "Run an optimization with the high-level API"
+msgstr "{fa}`rocket;sd-mr-1` 高レベルAPIで最適化を実行する"
 
-#~ msgid "混合変数最適化"
-#~ msgstr ""
+#: ../../tutorials/index.md:119
+msgid "Run an optimization through the high-level API and read its Result."
+msgstr "高レベルAPIを使った最適化の実行とResultの読み方を確認します。"
 
-#~ msgid "連続変数に加えて整数変数、カテゴリカル変数を含む問題を解きます。"
-#~ msgstr ""
+#: ../../tutorials/index.md:122
+msgid "Implement a custom component"
+msgstr "{fa}`puzzle-piece;sd-mr-1` 独自Componentを実装する"
 
-#~ msgid "動的な切り替え"
-#~ msgstr ""
-
-#~ msgid "サロゲートの予測精度に応じて、評価戦略やサロゲートマネージャを実行中に切り替えます。"
-#~ msgstr ""
-
-#~ msgid "再現性とチェックポイント"
-#~ msgstr ""
-
-#~ msgid "長時間実行する最適化を再現可能・再開可能にします。"
-#~ msgstr ""
-
-#~ msgid "進捗のログ記録"
-#~ msgstr ""
-
-#~ msgid "標準の`logging`モジュールで、最適化の進捗を記録します。"
-#~ msgstr ""
-
-#~ msgid "外部ライブラリとの連携"
-#~ msgstr ""
-
-#~ msgid "scikit-learnなど外部ライブラリのモデルを、サロゲートとして組み込みます。"
-#~ msgstr ""
-
+#: ../../tutorials/index.md:125
+msgid ""
+"Implement, register, and test a custom component that follows an existing"
+" contract. The guide also covers porting external Operators to native "
+"code."
+msgstr "既存の契約に沿った独自Componentを実装し、登録してテストします。外部Operatorのnative移植も扱います。"
