@@ -1,40 +1,41 @@
 ---
 primary_layer: cross
 related_layers: [layer3, layer4]
+page_type: guide
 ---
 
-# 拡張ガイドライン
+# Extension guidelines
 
-このページは、既存コンポーネントの軽量な差し替えと互換性用Pipelineの構成を扱います。
-拡張は、既存コンポーネントの差し替えとフレームワークの拡張に分かれます。
+This page covers lightweight swaps of existing components and the construction of compatibility Pipelines.
+Extensions fall into swapping existing components and extending the framework.
 
-- 既存の契約にコンポーネントを追加する場合は [独自Componentを実装する](../tutorials/custom_components.md) を参照してください。
-- 契約、探索空間、Graph、Runtimeを追加する場合は [フレームワーク拡張](../framework/extensions.md) を参照してください。
+- To add a component within an existing contract, see [Implement a custom Component](../tutorials/custom_components.md).
+- To add a contract, SearchSpace, Graph, or Runtime, see [Extend the framework](../framework/extensions.md).
 
-import経路の規則は [Canonical Imports](../api/imports.md) にまとめています。
+Import-path rules are collected in [Canonical Imports](../api/imports.md).
 
-## 拡張点を選ぶ
+## Choose an extension point
 
-変更したい責務に対応する最も浅い境界を選びます。
-新しい実行契約が必要な場合だけFrameworkへ進み、既存の契約で表現できる差し替えはチュートリアルの手順で実装します。
+Choose the shallowest boundary that owns the behavior you want to change.
+Move into the Framework only when a new execution contract is required; implement swaps expressible by an existing contract through the tutorial procedure.
 
-| 変更したいこと | 主な境界 | 概念 | APIリファレンス |
+| What you want to change | Main boundary | Concept | API reference |
 |---|---|---|---|
-| 候補生成や個体更新を変更する | `Algorithm` | [Algorithm](search_algorithms/algorithm.md) | [アルゴリズム](../api/algorithms.md) |
-| 交叉、突然変異、選択を変更する | Operator | [Crossover](search_algorithms/crossover.md)、[Mutation](search_algorithms/mutation.md) | [演算子](../api/operators.md) |
-| 予測モデルや学習データを変更する | `Surrogate`、`SurrogateManager` | [Surrogate](surrogate_modeling/surrogate.md) | [代理モデル](../api/surrogate.md) |
-| 候補の選択や評価順序を変更する | `OptimizationStrategy`、`Stage` | [Strategy](execution_and_evaluation/strategies.md) | [戦略](../api/strategies.md) |
-| 外部ライブラリを接続する | 明示的なAdapter | [Evaluation](execution_and_evaluation/evaluation.md) | [評価](../api/evaluation.md) |
-| 候補表現や変数制約を追加する | `SearchSpace` | [SearchSpace](problem_and_ranking/search_space.md) | [Space](../api/space.md) |
-| 入出力、状態、ライフサイクルを宣言する | `ComponentContract` | [Contract](../framework/contract.md) | [Coreリファレンス](../api/core.md) |
-| 接続や互換性検査を変更する | `ComponentGraph`、Compiler rule | [Graph](../framework/graph.md)、[Compiler](../framework/compiler.md) | [Coreリファレンス](../api/core.md) |
-| 実行、再開、非同期待機の意味を変更する | `ExecutionRuntime` | [Runtime](../framework/runtime.md) | [Executionリファレンス](../api/execution.md) |
+| Change candidate generation or individual updates | `Algorithm` | [Algorithm](search_algorithms/algorithm.md) | [Algorithms](../api/algorithms.md) |
+| Change crossover, mutation, or selection | Operator | [Crossover](search_algorithms/crossover.md), [Mutation](search_algorithms/mutation.md) | [Operators](../api/operators.md) |
+| Change a prediction model or training data | `Surrogate`, `SurrogateManager` | [Surrogate](surrogate_modeling/surrogate.md) | [Surrogate models](../api/surrogate.md) |
+| Change candidate selection or evaluation order | `OptimizationStrategy`, `Stage` | [Strategy](execution_and_evaluation/strategies.md) | [Strategies](../api/strategies.md) |
+| Connect an external library | Explicit Adapter | [Evaluation](execution_and_evaluation/evaluation.md) | [Evaluation](../api/evaluation.md) |
+| Add candidate representations or variable constraints | `SearchSpace` | [SearchSpace](problem_and_ranking/search_space.md) | [Space](../api/space.md) |
+| Declare inputs, outputs, state, or lifecycle | `ComponentContract` | [Contract](../framework/contract.md) | [Core reference](../api/core.md) |
+| Change connections or compatibility checks | `ComponentGraph`, Compiler rule | [Graph](../framework/graph.md), [Compiler](../framework/compiler.md) | [Core reference](../api/core.md) |
+| Change execution, resumption, or asynchronous-wait semantics | `ExecutionRuntime` | [Runtime](../framework/runtime.md) | [Execution reference](../api/execution.md) |
 
-フレームワーク契約は `saealib.core` から取得し、実装モジュールを安定した拡張APIとして扱いません。
+Obtain framework contracts from `saealib.core`; do not treat implementation modules as stable extension APIs.
 
-`Algorithm`、`OptimizationStrategy`、`Surrogate`、`AcquisitionFunction`、`SurrogateManager`には、それぞれ差し替え可能な契約があります。
-独自の探索や予測を実装するときは、対象のドメインコンポーネントを実装して `Optimizer.set_*()` から登録します。
-既存コンポーネントの一部だけを変更する場合は、次の軽量な拡張手段を使えます。
+`Algorithm`, `OptimizationStrategy`, `Surrogate`, `AcquisitionFunction`, and `SurrogateManager` each have a swappable contract.
+To implement custom search or prediction, implement the relevant domain component and register it through `Optimizer.set_*()`.
+To change only part of an existing component, use the following lightweight extension mechanisms.
 
 ## with_post / with_post_fit
 
@@ -44,17 +45,17 @@ They don't modify the original instance — they return a copy with the hook add
 Typical uses are adding a repair function to `Crossover`/`Mutation`, or post-fit processing on `Surrogate`.
 Each component page's "Extension hooks" section has concrete examples per component.
 
-## PipelineとStage
+## Pipeline and Stage
 
-`Stage` と `Pipeline` には、互換性用の実行経路と構造化DSLの二つの境界があります。
-Stageは `OptimizationState` を受け取り、更新した状態を返す互換性用の実行単位です。
-一方、構造化Pipelineはgraph-native component、入れ子のPipeline、`Repeat`、`Loop`、`Branch`を保持し、状態を直接実行しません。
+`Stage` and `Pipeline` have two boundaries: a compatibility execution path and a structured DSL.
+Stage is a compatibility execution unit that receives `OptimizationState` and returns updated state.
+A structured Pipeline instead holds graph-native components, nested Pipelines, `Repeat`, `Loop`, and `Branch`; it does not execute state directly.
 
-構造化PipelineへStageを入れるときは、`stage_component(stage)` で互換性境界を明示します。
-Optimizerは内部でこのDSLをGraphへlowerし、構造化Runtimeで実行できる計画へ変換します。
-通常の利用者がCompilerを直接呼び出す必要はありません。
+When placing a Stage in a structured Pipeline, make the compatibility boundary explicit with `stage_component(stage)`.
+Optimizer lowers this DSL to a Graph internally and converts it into a plan executable by the structured Runtime.
+Ordinary users do not need to call the Compiler directly.
 
-`pipeline.replace("name", entry)` は構造上のエントリを置き換え、`pipeline.find("name", recursive=False)` は名前でエントリを検索します。
+`pipeline.replace("name", entry)` replaces a structural entry, and `pipeline.find("name", recursive=False)` searches for an entry by name.
 
 ```python
 from saealib import Pipeline, Stage
@@ -72,27 +73,26 @@ class DoubleCountStage(Stage):
 pipeline = Pipeline(
     steps=[
         stage_component(CountGenerationStage()),
-        # graph-native componentや、別のStage adapterを続けて置く。
+        # Add a graph-native component or another Stage adapter next.
     ]
 )
 pipeline.replace("count_generation", stage_component(DoubleCountStage()))
 ```
 
-[Stage](observation_and_state/stage.md) はStageの契約、組み込みStage、互換性用のカスタムStageを説明します。
-このページでは、既存の構成を置き換えるときにどの境界を選ぶかを説明します。
+[Stage](observation_and_state/stage.md) explains the Stage contract, built-in Stages, and compatibility custom Stages.
+This page explains which boundary to choose when replacing an existing configuration.
 
 ## CallbackManager
 
-[CallbackManager](observation_and_state/callbacks.md) is an observation mechanism that calls handlers when events fire.
-Use `cbmanager.register/unregister/replace` to change the default pipeline's handlers at runtime.
+[CallbackManager](observation_and_state/callbacks.md) is an observation mechanism that calls handlers when Events fire.
+Event fields such as `candidates` are for observation; reassigning them does not change Pipeline inputs.
+Choose `with_post()` / `with_post_fit()` for data-flow post-processing, `Stage` for replacing an execution unit, and `Runtime` for changing execution structure.
 
-The `candidates` field carried by `PostCrossoverEvent`/`PostMutationEvent`/`PostAskEvent` is for observation only; reassigning it inside a handler has no effect on the actual candidate array.
-The distinction is: use `with_post` if you want to actually swap out the candidate array, and CallbackManager if you only need observation, logging, or conditional branching decisions.
-See [CallbackManager](observation_and_state/callbacks.md)'s "The candidates field is for observation only" section for details.
-
-The `Optimizer` instance itself isn't passed as a handler argument.
-To swap a component at runtime, capture the `Optimizer` instance directly in the handler's closure and reassign `optimizer.algorithm`/`strategy`/`surrogate_manager`/`termination`.
-Because each Strategy rebuilds the pipeline on every call to `step()`, this kind of swap reliably takes effect from the next generation (or the next iteration of `iterate()`) onward.
+Changing `optimizer.set_*()` or component attributes at an `iterate()` / `run()` step boundary makes the execution environment detect the change, recompile the plan, and apply it from the next generation.
+This procedure works on both the Stage compatibility path and the graph-native path.
+For a path where a Component requests recompilation, see [OptimizationStrategy](execution_and_evaluation/strategies.md), "Behavior of runtime swapping."
+Callbacks are observation-only; handlers cannot return a `RuntimeCommand`.
+Changes made by calling `optimizer.set_*()` in a Callback closure are applied through the path above, but configuration changes are documented as an `iterate()` procedure.
 
 ## Registry
 
@@ -105,7 +105,7 @@ Adding `@register()` to a custom `Algorithm`/`Surrogate` subclass, etc., lets it
 
 ```python
 from saealib import register
-from saealib.surrogate.base import Surrogate
+from saealib.surrogate import Surrogate
 
 
 @register()
@@ -139,22 +139,22 @@ to_spec(obj)  # -> {"type": "MyCustomSurrogate", "params": {"alpha": 2.0}}
 
 Several component pages have a note saying "class X is not `@register()`ed" — this only matters if you resolve classes by name via the Registry.
 
-## どの仕組みを使うか
+## Which mechanism to use
 
 | What you want to do | Mechanism to use |
 |---|---|
 | Just add post-processing to an existing operator or surrogate | `with_post` / `with_post_fit` |
 | Change the order of stages itself | `Pipeline` / `Stage` |
-| External observation, logging, conditional swapping | `CallbackManager` |
+| External observation, logging, or conditional decisions | `CallbackManager` |
 | Assemble from a config file or preset | `Registry` |
 
-## 関連コンポーネント
+## Related components
 
 - [Crossover](search_algorithms/crossover.md) / [Mutation](search_algorithms/mutation.md) / [Surrogate](surrogate_modeling/surrogate.md): Components with `with_post`-style hooks
 - [Stage](observation_and_state/stage.md): The contract of each stage that `Pipeline` combines
 - [CallbackManager](observation_and_state/callbacks.md): The event list and observation mechanism
 - [strategies](execution_and_evaluation/strategies.md): When the pipeline is rebuilt
 
-## 参照
+## References
 
 - {py:func}`saealib.register`

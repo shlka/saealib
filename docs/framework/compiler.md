@@ -4,34 +4,33 @@ related_layers: [layer3]
 page_type: concept
 ---
 
-# コンパイラ（Compiler）
+# Compiler
 
-`ComponentGraph`を解決して検証すると、Compilerは実行から分離された`ExecutablePlan`を返します。
-CompilerはRuntimeを実行せず、Runtimeが必要とする能力と診断を計画へ記録します。
+After resolving and verifying a `ComponentGraph`, the Compiler returns an `ExecutablePlan` separate from execution.
+The Compiler does not run the Runtime; it records the capabilities and diagnostics the Runtime needs in the plan.
 
-## コンパイル、検証、解決
+## Compiler's role
 
-Compilation全体は、契約スナップショット取得、Resolution、Verificationの順に進みます。
-`ResolutionRule`はサービス、Adapter、schema bindingなどの解決候補を、claimしたGraph位置への提案として返します。
-`VerificationRule`は解決済みGraphを観察し、変更せずにDiagnosticsを返します。
-共通の`CompilationRule`はnamespace、name、phase、`apply(RuleContext)`の境界を持ちます。
+The Compiler owns the boundary that resolves and verifies a ComponentGraph and returns an ExecutablePlan separate from execution.
+It does not run the Runtime and records the capabilities and diagnostics the Runtime needs in the plan.
 
-Resolutionは提案が収束するまで反復され、同じGraph位置への競合や未申告の変更はエラー診断になります。
-VerificationはGraphのwell-formedness、ポート互換性、サービス、データフロー、状態効果、ライフサイクル、Runtime capabilityを確認します。
+## Compilation, verification, and resolution
 
-## 診断（Diagnostics）
+Compilation proceeds through contract snapshotting, Resolution, and Verification in that order.
+`ResolutionRule` returns candidates for resolving services, adapters, and schema bindings as proposals for claimed Graph locations.
+`VerificationRule` observes the resolved Graph and returns Diagnostics without changing it.
+The shared `CompilationRule` boundary contains a namespace, name, phase, and `apply(RuleContext)`.
 
-`Diagnostic`はseverity、code、message、contract path、resolution hintを持つ検証結果です。
-Compilerは失敗を任意の例外だけで表さず、複数の問題をDiagnosticBagへ集めて計画の判断材料にします。
-代表的な失敗は、未知のノード端点、未接続の必須ポート、DataSpecの不一致、要求サービスの不足、状態の未宣言アクセス、Runtime capability不足です。
+Resolution repeats until proposals converge; conflicts at the same Graph location and undeclared changes become error Diagnostics.
+Verification checks Graph well-formedness, port compatibility, services, data flow, state effects, lifecycle, and Runtime capabilities.
 
-## 実行計画（ExecutablePlan）
+## Executable plan
 
-`ExecutablePlan`は解決済みGraph、Diagnostics、必要なRuntime capability、有効なrule、挿入されたAdapter、契約スナップショットを保持する不変値です。
-計画は実行位置や現在の状態を所有しないため、同じ計画をRuntimeSessionへ渡して実行と再開を分離できます。
-Diagnosticsにエラーが残る場合、その計画を実行可能な入力として扱うかは呼び出し側の検査とRuntimeの契約に従います。
+`ExecutablePlan` is an immutable value holding the resolved Graph, Diagnostics, required Runtime capabilities, enabled rules, inserted adapters, and contract snapshots.
+Because the plan owns neither an execution position nor current state, the same plan can be passed to RuntimeSession to separate execution from resumption.
+When Diagnostics contain errors, whether the plan is accepted as executable input follows the caller's checks and the Runtime contract.
 
-## 検証から実行まで
+### From verification to execution
 
 ```{mermaid}
 flowchart LR
@@ -42,12 +41,36 @@ flowchart LR
     P --> R[ExecutionRuntime]
 ```
 
-ComponentからGraphまでは構成、Compilerは解決と検証、ExecutablePlanから先はRuntimeの責務です。
-RuntimeはPlanのノード結果からStatePatch、イベント、コマンドを適用し、検証済みの状態境界を次のStepへ渡します。
+Component through Graph is configuration, the Compiler performs resolution and verification, and everything after ExecutablePlan belongs to the Runtime.
+The Runtime applies StatePatches, events, and commands from plan node results and passes the verified state boundary to the next step.
 
-## 拡張時の不変条件
+## Construction time and use time
 
-Compiler ruleは宣言されていないGraph位置を変更せず、StructuredRegionの実行木を解決規則で勝手に変更しません。
-Adapterを使う場合も、変換の意味とlossless性を明示し、ポート互換性の検査を迂回しません。
-Compiler ruleの型やimport経路はリリースごとの[APIリファレンス](../api/index.md)で確認してください。
-拡張方針は[フレームワーク拡張](extensions.md)を参照してください。
+After the Graph is built, the Compiler reads contract snapshots and generates an ExecutablePlan through Resolution and Verification.
+The Runtime uses the generated ExecutablePlan and does not repeat Compiler resolution or verification during execution.
+
+## Invariants and diagnostics
+
+`Diagnostic` is a verification result with severity, code, message, contract path, and resolution hint.
+The Compiler does not represent failures only as arbitrary exceptions; it collects multiple issues in a DiagnosticBag for plan decisions.
+Typical failures include unknown node endpoints, unconnected required ports, mismatched DataSpecs, missing required services, undeclared state access, and missing Runtime capabilities.
+The implementation reports them with codes such as `invalid_graph_edge`, `incompatible_port`, `unresolved_service`, and `unknown_runtime_capability`.
+Compiler rules do not change undeclared Graph locations or arbitrarily change a StructuredRegion execution tree during resolution.
+Violations become Diagnostics such as `unclaimed_rewrite`, `conflicting_rewrite`, and `structured_execution_mutation`.
+Adapters must state the meaning and losslessness of their conversion and must not bypass port-compatibility checks.
+Unresolvable or ambiguous adapters become Diagnostics such as `ambiguous_adapter`.
+
+## Extension points
+
+See the release-specific [API reference](../api/index.md) for Compiler rule types and import paths.
+See [Framework extensions](extensions.md) for extension guidance.
+
+## Related pages
+
+See [Contract](contract.md) and [Specs](specs.md) for declaring components, and [Runtime](runtime.md) for using an execution plan.
+
+## References
+
+- {py:class}`saealib.core.CompilationRule`
+- {py:class}`saealib.core.ExecutablePlan`
+- {py:class}`saealib.core.ComponentGraph`

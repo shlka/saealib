@@ -6,7 +6,7 @@ _LAYER_NAMES = {
     "layer2": "Layer 2: Compose",
     "layer3": "Layer 3: Extend Components",
     "layer4": "Layer 4: Extend Framework",
-    "cross": "共通",
+    "cross": "Cross-layer",
 }
 
 

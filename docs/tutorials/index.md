@@ -6,11 +6,11 @@ page_type: entry
 
 # Tutorials
 
-具体的な最適化シナリオに対する実装例を示します。
-単目的、多目的、制約、混合変数など、目的に合うページを選べます。
-シナリオごとの実装例であり、構成の深さを前提にしません。
+These pages show implementations for specific optimization scenarios.
+Choose a page for single-objective, multi-objective, constrained, mixed-variable, or another goal.
+Each page is an example for one scenario and does not assume a particular configuration depth.
 
-## 最適化シナリオ
+## Optimization scenarios
 
 ::::{grid} 1 2 2 3
 :gutter: 3
@@ -19,7 +19,7 @@ page_type: entry
 :link: single_objective
 :link-type: doc
 
-Solve an expensive single-objective problem step by step, from `minimize()` to manually assembling an `Optimizer`.
+Solve an expensive single-objective problem with `minimize()`, choosing the algorithm, surrogate, and evaluation strategy.
 :::
 
 :::{grid-item-card} {fa}`layer-group;sd-mr-1` Multi-Objective Optimization
@@ -68,7 +68,7 @@ Record optimization progress with the standard `logging` module.
 :link: external_libraries
 :link-type: doc
 
-Incorporate models from external libraries such as scikit-learn as surrogates.
+Incorporate scikit-learn and PyTorch models as surrogates, and pymoo operators, algorithms, and problems, through adapters.
 :::
 
 ::::
@@ -86,36 +86,42 @@ logging
 external_libraries
 ```
 
-## 構成と操作
+## Configuration and control
 
-ビルトインコンポーネントの選択、低レベルAPIの構成、実行経路へのHookやCallbackの追加を扱います。
-詳細な内容は各ガイドで扱い、ここでは概要とリンクを示します。
+These guides cover choosing built-in components, assembling the low-level API, and adding Hooks or Callbacks to an execution path.
+The guides contain the details; this page provides an overview and links.
 
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} {fa}`puzzle-piece;sd-mr-1` ビルトインコンポーネントを選んで差し替える
+:::{grid-item-card} {fa}`puzzle-piece;sd-mr-1` Choose and swap built-in components
 :link: component_swap
 :link-type: doc
-責務に対応するビルトインコンポーネントを選びます。
+Choose the built-in component for a responsibility.
 :::
 
-:::{grid-item-card} {fa}`sliders;sd-mr-1` Optimizerを低レベルAPIで組み立てる
+:::{grid-item-card} {fa}`sliders;sd-mr-1` Assemble Optimizer with the low-level API
 :link: lowlevel_api
 :link-type: doc
-Optimizerの構成と実行を確認します。
+Assemble a full configuration with a surrogate, combine termination conditions, and inspect each generation with `iterate()`.
 :::
 
-:::{grid-item-card} {fa}`eye;sd-mr-1` Hook、Stage、Callbackを選ぶ
+:::{grid-item-card} {fa}`eye;sd-mr-1` Choose a Hook, Stage, or Callback
 :link: interface_hooks
 :link-type: doc
-実行経路への追加と観測を選びます。
+Choose how to extend and observe an execution path.
 :::
 
-:::{grid-item-card} {fa}`rocket;sd-mr-1` 高レベルAPIで最適化を実行する
+:::{grid-item-card} {fa}`rocket;sd-mr-1` Run an optimization with the high-level API
 :link: highlevel_api
 :link-type: doc
-高レベルAPIを使った最適化の実行とResultの読み方を確認します。
+Run an optimization through the high-level API and read its Result.
+:::
+
+:::{grid-item-card} {fa}`puzzle-piece;sd-mr-1` Implement a custom component
+:link: custom_components
+:link-type: doc
+Implement, register, and test a custom component that follows an existing contract. The guide also covers porting external Operators to native code.
 :::
 
 ::::

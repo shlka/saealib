@@ -6,8 +6,8 @@ page_type: reference
 
 # Execution API
 
-実行APIは、評価器、初期化器、非同期評価スケジューラー、ランタイムの登録機構を公開します。
-`Runner` は内部実装であるため、この公開一覧には含めません。
+The Execution API exposes evaluators, initializers, the asynchronous evaluation scheduler, and runtime registration mechanisms.
+`Runner` is an internal implementation and is not included in this public listing.
 
 ```{eval-rst}
 .. autosummary::
@@ -23,4 +23,4 @@ page_type: reference
    saealib.execution.default_runtime_registry
 ```
 
-評価器、評価Request、初期化器の詳細は [Evaluation](evaluation.md) と [Initialization](initialization.md) を参照してください。
+See [Evaluation](evaluation.md) and [Initialization](initialization.md) for details about evaluators, evaluation Requests, and initializers.

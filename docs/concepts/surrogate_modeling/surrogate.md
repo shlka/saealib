@@ -1,5 +1,6 @@
 ---
 primary_layer: layer3
+page_type: concept
 ---
 
 # Surrogate

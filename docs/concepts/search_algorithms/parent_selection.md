@@ -1,5 +1,6 @@
 ---
 primary_layer: layer3
+page_type: concept
 ---
 
 # ParentSelection
@@ -9,7 +10,7 @@ To change the selection pressure (how much better individuals are favored), you 
 
 ## ParentSelection's role
 
-`ParentSelection` requires only one method, `select(ctx, population, n_pair, n_parents, rng=...)`, to be implemented.
+`ParentSelection` requires only one method, `select(ctx, population, n_pair, n_parents, rng)`, to be implemented.
 It returns the indices of `n_pair` groups of parents, each consisting of `n_parents` individuals, as an array of shape `(n_pair, n_parents)`.
 
 ## Built-in ParentSelections
@@ -47,7 +48,14 @@ from saealib import ParentSelection
 class RandomPairSelection(ParentSelection):
     """A selection scheme that chooses parent individuals completely at random."""
 
-    def select(self, ctx, population, n_pair, n_parents, rng=np.random.default_rng()):
+    def select(
+        self,
+        ctx,
+        population,
+        n_pair,
+        n_parents,
+        rng: np.random.Generator,
+    ):
         n_pop = len(population)
         return rng.integers(0, n_pop, size=(n_pair, n_parents))
 ```

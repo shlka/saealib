@@ -1,12 +1,14 @@
 ---
-primary_layer: layer4
+primary_layer: layer2
+related_layers: [layer3]
+page_type: concept
 ---
 
 # CallbackManager
 
-`Optimizer` は、実行経過を外部へ通知する処理を `CallbackManager` に委譲します。
-CallbackManagerは、ログ記録、収束履歴の収集、条件付きのComponent差し替えに使えます。
-Eventは実行境界の観測用であり、Eventのフィールドを書き換えてPipelineの入力を差し替える仕組みではありません。
+`Optimizer` delegates notifications about execution progress to `CallbackManager`.
+CallbackManager supports observation such as logging, collecting convergence history, and making conditional decisions.
+Events observe execution boundaries; changing an Event field does not replace a Pipeline input.
 
 ## CallbackManager's role
 
@@ -19,9 +21,9 @@ Eventは実行境界の観測用であり、Eventのフィールドを書き換�
 | `unregister(event_type, func)` | Removes a registered handler |
 | `replace(event_type, old, new)` | Replaces a registered handler with a different one |
 
-`Event` の `ctx` は、`archive`、`comparator`、`n_obj`、`gen`、`fe` などを読み取るための `_EventContext` Protocolです。
-通常のsequential実行では実体が `OptimizationState` ですが、Eventの公開契約はその読み取り能力に限定されます。
-`ctx` は読み取り専用として扱い、値を変更するときは `with_post`、Component、Stageなどの正式な境界を使います。
+An Event's `ctx` is an `_EventContext` Protocol for reading values such as `archive`, `comparator`, `n_obj`, `gen`, and `fe`.
+In ordinary sequential execution its concrete value is `OptimizationState`, but the Event's public contract is limited to those read capabilities.
+Treat `ctx` as read-only; use an official boundary such as `with_post`, Component, or Stage to change values.
 
 ## List of available events
 
@@ -32,18 +34,18 @@ Eventは実行境界の観測用であり、Eventのフィールドを書き換�
 | `GenerationStartEvent` | At the start of each generation | — |
 | `GenerationEndEvent` | At the end of each generation (before the state is yielded) | — |
 | `SurrogateStartEvent` / `SurrogateEndEvent` | Before/after surrogate-based scoring | `offspring` |
-| `AcquisitionStartEvent` / `AcquisitionEndEvent` | Before/after acquisition scoring | 開始時は `offspring`、終了時は `offspring` と `result` |
+| `AcquisitionStartEvent` / `AcquisitionEndEvent` | Before/after acquisition scoring | `offspring` at start; `offspring` and `result` at end |
 | `PostCrossoverEvent` | After crossover and repair | `candidates` |
 | `PostMutationEvent` | After mutation and repair | `candidates` |
 | `PostAskEvent` | After all of `ask()` (crossover and mutation) | `candidates` |
-| `PostSurrogateFitEvent` | After the surrogate is fitted | `surrogate`。`train_x` と `train_f` は任意 |
+| `PostSurrogateFitEvent` | After the surrogate is fitted | `surrogate`; `train_x` and `train_f` are optional |
 | `PostEvaluationEvent` | After true evaluation of the chosen candidates | `offspring` |
 | `InitialEvaluationStartEvent` | After initial sampling, before initial evaluation | `candidates_x` |
 | `InitialEvaluationEndEvent` | After initial evaluation, before the archive is sorted | `archive` |
 
-`PostSurrogateFitEvent` は、Surrogateのfit後に組み込みStageから発火します。
-組み込みStageが発火するイベントでは、`train_x` と `train_f` が設定されない場合があります。
-`PostEvaluationEvent` には、評価対象の `offspring` に加えて `request_id`、`candidate_ids`、`status` が含まれる場合があります。
+`PostSurrogateFitEvent` is fired by the built-in Stage after the Surrogate is fit.
+Events fired by built-in Stages may not set `train_x` and `train_f`.
+`PostEvaluationEvent` may include `request_id`, `candidate_ids`, and `status` in addition to the evaluated `offspring`.
 
 ## Default logging output
 
@@ -103,24 +105,16 @@ The `candidates` field on `PostCrossoverEvent`/`PostMutationEvent`/`PostAskEvent
 If you want to actually swap out the candidate array, use `with_post(fn)` on [Crossover](../search_algorithms/crossover.md)/[Mutation](../search_algorithms/mutation.md) instead of `CallbackManager`.
 Think of `CallbackManager` as a mechanism for observation (logging, recording, conditional branching decisions) by design, not a means of rewriting pipeline data.
 
-## Swapping components at runtime
+## Switching configuration at runtime
 
-`Event` only passes `ctx` to handlers, not the `Optimizer` instance itself.
-To swap a component at runtime, capture the `Optimizer` instance directly in the handler's closure, and either reassign `optimizer.algorithm`/`strategy`/`surrogate_manager`/`termination`, or change a parameter on an existing component directly.
+`Event` is for observation, and directly changing `Optimizer` internals from a Callback closure is not the standard procedure.
+Use `with_post()` or `with_post_fit()` to change data flow, and switch execution configuration at a step boundary in `iterate()` or `run()`.
 
-```python
-from saealib import GenerationStartEvent
-
-
-def widen_mutation_at_gen5(event):
-    if event.ctx.gen == 5:
-        optimizer.algorithm.mutation.prob = 1.0
-
-
-optimizer.cbmanager.register(GenerationStartEvent, widen_mutation_at_gen5)
-```
-
-As explained in [strategies](../execution_and_evaluation/strategies.md), each Strategy rebuilds the pipeline on every call to `step()`, so this kind of swap reliably takes effect from the next generation onward.
+When `optimizer.set_*()` or a component attribute changes at a step boundary, the execution environment detects the change, recompiles the plan, and applies it from the next generation.
+This procedure works on both the Stage compatibility path and the graph-native path.
+For a Component-requested recompilation path, see [OptimizationStrategy](../execution_and_evaluation/strategies.md)'s "Behavior of runtime swapping".
+A Callback handler cannot return a `RuntimeCommand`.
+A change made by calling `optimizer.set_*()` in a Callback closure is applied through the path above, but configuration changes are documented as a procedure on the `iterate()` side.
 
 ## When to use CallbackManager vs. iterate()
 
@@ -134,10 +128,10 @@ The switcher classes in [Surrogate accuracy evaluation and dynamic switching](..
 
 ## CheckpointCallback
 
-`CheckpointCallback` はCallbackの実装例です。
-npz形式では `OptimizationState.save()` を使い、pickle形式では `Optimizer.save_pickle()` を使います。
-形式によって保存対象と再開条件が異なるため、詳細は [Checkpointing](../../tutorials/checkpoint.md) を参照してください。
-独自Callbackを実装するときの登録処理も、このCallbackを参考にできます。
+`CheckpointCallback` is an example Callback implementation.
+The npz format uses `OptimizationState.save()`, while the pickle format uses `Optimizer.save_pickle()`.
+Because the saved values and resumption conditions differ by format, see [Checkpointing](../../tutorials/checkpoint.md) for details.
+Use this Callback as a reference for registering a custom Callback.
 
 ## Related components
 

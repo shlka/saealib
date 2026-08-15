@@ -1,33 +1,35 @@
 ---
-primary_layer: layer4
+primary_layer: layer2
+related_layers: [layer3]
+page_type: concept
 ---
 
 # Initializer
 
-Runの開始時には、`Optimizer` が `Initializer` に初期Population、Archive、ParetoArchive、OptimizationStateの構築を委譲します。
-サンプリング方法を変えるときは、Optimizer全体ではなくInitializerを差し替えます。
+At the start of a run, `Optimizer` delegates construction of the initial `Population`, `Archive`, `ParetoArchive`, and `OptimizationState` to `Initializer`.
+To change the sampling method, swap the Initializer rather than the entire Optimizer.
 
-現行の標準経路では、`GenomeInitializer` が `Problem.space` からGenomeをサンプリングします。
-`LHSInitializer`、`RandomInitializer`、`SobolInitializer` は、ベクトルの `x` 配列を使う互換性用Initializerとして残っています。
+On the current standard path, `GenomeInitializer` samples Genomes from `Problem.space`.
+`LHSInitializer`, `RandomInitializer`, and `SobolInitializer` remain as compatibility Initializers that use vector `x` arrays.
 
-## Initializerの役割
+## Initializer's role
 
-`Initializer` の実装境界は `initialize(provider, problem) -> OptimizationState` です。
-`provider` は、AlgorithmやEvaluatorなど、すでに構築されたComponentへアクセスするためのProviderです。
-`problem` は対象となる [Problem](../problem_and_ranking/problem.md) です。
+The implementation boundary for `Initializer` is `initialize(provider, problem) -> OptimizationState`.
+`provider` gives access to already constructed Components such as the Algorithm and Evaluator.
+`problem` is the target [Problem](../problem_and_ranking/problem.md).
 
 ## Built-in Initializers
 
 | Class | Sampling method |
 |---|---|
-| `GenomeInitializer` | `Problem.space.sample()` によるGenome生成 |
+| `GenomeInitializer` | Generate Genomes with `Problem.space.sample()` |
 | `LHSInitializer` | `scipy.stats.qmc.LatinHypercube` |
 | `RandomInitializer` | `rng.uniform` |
 | `SobolInitializer` | `scipy.stats.qmc.Sobol(scramble=True)` |
 
-`GenomeInitializer` は、SearchSpaceが提供するGenomeをそのままArchiveへ登録します。
-他の3つは同じコンストラクタ `(n_init_archive, n_init_population, seed=None)` を持ち、ベクトル表現の初期点を生成します。
-いずれも初期Archiveを評価し、Comparatorで並べた上位候補を初期Populationへ渡します。
+`GenomeInitializer` registers the Genomes provided by SearchSpace directly in the Archive.
+The other three share the constructor `(n_init_archive, n_init_population, seed=None)` and generate initial points in vector form.
+All four evaluate the initial Archive, sort it with the Comparator, and pass the top candidates to the initial Population.
 
 ```
 Sample (n_init_archive points)
@@ -43,28 +45,28 @@ The three classes' implementations are nearly identical except for the one line 
 
 The `Initializer` base provides two helper methods reusable in custom implementations.
 
-**`_create_attrs(problem, provider)`**：`Population` と `Archive` の `PopulationAttribute` を組み立てます。
-旧来のベクトル経路では `x`、`f`、`g`、`cv` を使い、Algorithmが必要とする補助属性を追加します。
-`GenomeInitializer` ではGenomeが専用の列として管理されるため、標準属性に `x` を含めません。
+**`_create_attrs(problem, provider)`**: Builds the `PopulationAttribute` values for `Population` and `Archive`.
+The legacy vector path uses `x`, `f`, `g`, and `cv`, and adds auxiliary attributes required by the Algorithm.
+`GenomeInitializer` manages Genomes in a dedicated column, so its standard attributes do not include `x`.
 
-**`_create_context(problem, archive, pareto_archive, population, rng)`**：`OptimizationState` を構築します。
-Comparatorが `NSGA3Comparator` で内部乱数生成器をまだ持たない場合は、ここで `rng.spawn(1)[0]` を設定します。
+**`_create_context(problem, archive, pareto_archive, population, rng)`**: Builds the `OptimizationState`.
+When the Comparator is an `NSGA3Comparator` without an internal random generator, this sets `rng.spawn(1)[0]`.
 
-## カスタムInitializerの実装
+## Implementing a custom Initializer
 
-独自のベクトルサンプリングを追加する場合は `Initializer` を継承して `initialize()` を実装します。
-新しいGenome表現を使う場合は、`Problem.space.sample()` と `Problem.space.validate()` を使うInitializerを実装します。
+To add custom vector sampling, subclass `Initializer` and implement `initialize()`.
+For a new Genome representation, implement an Initializer that uses `Problem.space.sample()` and `Problem.space.validate()`.
 
-Genome-nativeな初期化では、次の順序を保ちます。
+Genome-native initialization keeps the following order.
 
-1. Algorithmの `population_class`、`archive_class`、`create_pareto_archive()` で入れ物を作る。
-2. `OptimizationState` を構築する。
-3. `problem.space.sample(n, rng)` でGenomeを生成し、`problem.space.validate()` で検証する。
-4. `provider.evaluator.evaluate_batch(genomes, problem)` で評価する。
-5. 候補ID、Genome、評価結果をArchiveとParetoArchiveへ登録する。
-6. 評価回数を更新し、Comparatorで並べた候補をPopulationへ渡す。
+1. Create containers with the Algorithm's `population_class`, `archive_class`, and `create_pareto_archive()`.
+2. Build the `OptimizationState`.
+3. Generate Genomes with `problem.space.sample(n, rng)` and validate them with `problem.space.validate()`.
+4. Evaluate them with `provider.evaluator.evaluate_batch(genomes, problem)`.
+5. Register candidate IDs, Genomes, and evaluation results in the Archive and ParetoArchive.
+6. Update the evaluation count and pass Comparator-sorted candidates to the Population.
 
-次の骨格は、Genome-nativeなInitializerが使う入力と出力の境界を示しています。
+The following skeleton shows the input and output boundary used by a Genome-native Initializer.
 
 ```python
 from saealib import GenomeInitializer
@@ -72,15 +74,15 @@ from saealib import GenomeInitializer
 
 class CustomGenomeInitializer(GenomeInitializer):
     def initialize(self, provider, problem):
-        # problem.space.sample() を独自のサンプリング処理へ置き換える。
-        # 生成したGenomeはspace.validate()で検証し、Evaluatorへ渡す。
+        # Replace problem.space.sample() with custom sampling.
+        # Validate each generated Genome with space.validate() before passing it to the Evaluator.
         ...
 ```
 
-初期評価の開始と終了は `CallbackManager` から観測できます。
-評価Requestの候補IDとGenomeを維持する必要があるため、Genomeを `x` 配列へ暗黙に変換して管理しません。
+The start and end of the initial evaluation can be observed through `CallbackManager`.
+Because the evaluation Request must preserve candidate IDs and Genomes, do not manage Genomes by implicitly converting them to an `x` array.
 
-`Optimizer.set_initializer(initializer)` でInitializerを差し替えます。
+Swap the Initializer with `Optimizer.set_initializer(initializer)`.
 
 ## Related components
 

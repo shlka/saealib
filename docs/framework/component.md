@@ -4,21 +4,26 @@ related_layers: [layer3]
 page_type: concept
 ---
 
-# コンポーネント（Component）
+# Component
 
-最適化の処理を実行するコンポーネントは、実行内容と静的な契約を分けて扱います。
-`Component` Protocolは、そのコンポーネントが`ComponentContract`を返す境界だけを定めます。
+Components that execute optimization work keep execution behavior separate from the static contract.
+The `Component` Protocol defines only the boundary at which a component returns a `ComponentContract`.
 
-## Component Protocolと`contract()`
+## Component's role
 
-`Component`は`contract() -> ComponentContract`を提供します。
-`contract()`はコンパイル時に読み取る純粋な契約のスナップショットを返し、実行中の可変状態を返す場所ではありません。
+Component owns the boundary between execution behavior and its static contract.
+The `Component` Protocol requires only returning a `ComponentContract` at compile time; it does not handle port compatibility or StateStore updates.
 
-`Component` Protocol自体は`execute()`を定義しません。
-Graph-nativeの実行コンポーネントが`execute(StateView)`を提供することは、Runtimeが利用する別の実行境界です。
+## Component Protocol and `contract()`
 
-ComponentContractはComponentの基底クラスでも派生型でもありません。
-Componentがコンポーネントを保持する場合、各コンポーネントの契約を`PartSpec`として親契約に包含します。
+`Component` provides `contract() -> ComponentContract`.
+`contract()` returns a pure contract snapshot read at compile time; it is not a place to return mutable execution state.
+
+The `Component` Protocol itself does not define `execute()`.
+A graph-native execution component may provide `execute(StateView)` as a separate execution boundary used by the Runtime.
+
+ComponentContract is neither a Component base class nor a derived type.
+When a Component holds other components, it includes their contracts in the parent contract as `PartSpec` values.
 
 ```python
 from saealib.core import Component, ComponentContract
@@ -29,32 +34,40 @@ class Normalize(Component):
         return ComponentContract()
 ```
 
-この例はProtocolの最小境界だけを示します。
-実際の入出力、状態、サービスは[ComponentContract](contract.md)と[宣言要素（Specs）](specs.md)で宣言します。
+This example shows only the minimal Protocol boundary.
+Declare actual inputs, outputs, state, and services in [ComponentContract](contract.md) and [Specs](specs.md).
 
-## PartSpecによる包含
+## PartSpec inclusion
 
-`PartSpec`は、Componentがコンストラクターなどで保持する別のComponentの契約を名前付きで宣言します。
-親Componentは子Componentを継承するのではなく、`parts`に子の契約を含めます。
-`optional=True`は、そのコンポーネントが構成上省略可能であることを表します。
+`PartSpec` declares the named contract of another Component held by a Component through a constructor or similar mechanism.
+The parent Component includes the child contract in `parts` rather than inheriting from the child Component.
+`optional=True` means that the component may be omitted from the configuration.
 
-この包含により、Compilerは親のポートや状態効果と、保持コンポーネントの契約を同じ計画上で検証できます。
-実行時のコンポーネントインスタンスの所有者はComponentであり、契約の不変性は`ComponentContract`が担保します。
+This inclusion lets the Compiler verify the parent ports and state effects together with the held component's contract in the same plan.
+The Component owns component instances at runtime, while `ComponentContract` preserves contract immutability.
 
-## 生成時点と利用時点
+## Construction time and use time
 
-ComponentのインスタンスはGraph構築時に`ComponentNode`へ配置されます。
-Compilerはコンパイル開始時に`contract()`を読み取り、同じコンパイルの解決と検証ではそのスナップショットを使います。
-Runtimeは契約を再解釈せず、ExecutablePlanが指定したポート、サービス、状態境界を使います。
+Component instances are placed in `ComponentNode` when the Graph is built.
+The Compiler reads `contract()` at the start of compilation and uses that snapshot for Resolution and Verification in the same compilation.
+The Runtime does not reinterpret contracts; it uses the ports, services, and state boundaries specified by the ExecutablePlan.
 
-## 責務外と拡張点
+## Invariants and diagnostics
 
-Componentは任意のStateStoreを直接変更せず、宣言したStateKeyのStateViewを読み、StatePatchまたはNodeResultを返します。
-Componentはポートの互換性を自分で決めず、接続後の判定をCompilerへ委譲します。
-新しいComponentを作る最小の拡張は、`contract()`とRuntimeが利用する実行境界を実装し、必要な契約を返すことです。
+Component does not directly modify an arbitrary StateStore; it reads a StateView of declared StateKeys and returns a StatePatch or NodeResult.
+Component does not decide port compatibility; it delegates that decision to the Compiler after connection.
+If `contract()` does not return a ComponentContract, Graph construction or Compiler snapshotting reports `contract_unavailable`.
 
-## 失敗と関連ページ
+## Extension points
 
-`contract()`がComponentContractを返さない場合、Graph構築またはCompilerの契約スナップショット取得で診断になります。
-未宣言の状態アクセスやコンポーネント間の不整合は、[Contract](contract.md)、[Graph](graph.md)、[Compiler](compiler.md)の検証対象です。
-拡張手順は[フレームワーク拡張](extensions.md)を、公開import経路は[APIリファレンス](../api/index.md)で確認してください。
+The minimal extension for a new Component is to implement `contract()` and the execution boundary used by the Runtime, then return the required contract.
+
+## Related pages
+
+Undeclared state access and inconsistencies between components are verified by [Contract](contract.md), [Graph](graph.md), and [Compiler](compiler.md).
+See [Framework extensions](extensions.md) for extension procedures and the [API reference](../api/index.md) for public import paths.
+
+## References
+
+- {py:class}`saealib.core.Component`
+- {py:class}`saealib.core.ComponentContract`

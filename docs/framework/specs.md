@@ -4,51 +4,72 @@ related_layers: [layer3]
 page_type: concept
 ---
 
-# 宣言要素（Specs）
+# Specs
 
-契約や探索空間の境界では、処理そのものではなく、接続条件や表現を宣言値として渡します。
-このページでは、これらの宣言値をまとめて宣言要素と呼びます。
-宣言要素はComponentの派生型ではなく、Compilerが接続と要求を判定するための不変値です。
+Contract and SearchSpace boundaries pass connection conditions and representations as declarative values rather than processing them directly.
+This page calls these declarative values specs.
+Specs are immutable values, not Component subclasses, that the Compiler uses to determine connections and requirements.
 
-## PortSpecとPortContract
+## Specs' role
 
-`PortSpec`はポート名、方向、DataSpec、cardinality、要求サービス、optional性を持つ一つのポート宣言です。
-`PortContract`は一つのroleに属する入力ポートと出力ポートの集合です。
-入力と出力のポート名は、それぞれの方向で一意でなければなりません。
+Specs own the boundary that passes connection conditions, representations, and required services to the Compiler rather than performing the processing itself.
+They do not hold Component execution state; `ComponentContract` and `SearchSpace` own the declarative values.
 
-`ONE`、`MANY`、`OPTIONAL`のcardinalityは、提供側の値が消費側の要求を満たすかをCompilerが判定します。
-方向、登録済みのdata kind、schema binding、cardinalityが一致しない接続は互換ではありません。
+## PortSpec and PortContract
 
-## DataSpecとServiceRequirement
+`PortSpec` is one port declaration containing a port name, direction, `DataSpec`, cardinality, required services, and optionality.
+`PortContract` is the set of input and output ports belonging to one role.
+Port names must be unique within each direction.
 
-`DataSpec`は登録済みのnominal data kindとschema bindingを表します。
-固定値、変数、包含条件、productによるbindingを使って、ポート間で同じスキーマ変数を統合できます。
-DataSpecのkind互換性、schemaのunification、サービス解決は別々の検査です。
+The Compiler uses `ONE`, `MANY`, and `OPTIONAL` cardinalities to determine whether a provided value satisfies the consumer's requirement.
+A connection is incompatible when its direction, registered data kind, schema binding, or cardinality does not match.
 
-`ServiceRequirement`は、ポートまたはComponentが必要とする名前付きサービスを宣言します。
-`SearchSpace`や`Problem`が提供するサービスと照合され、たとえばFeatureEncoderやSamplingServiceの要求を未解決のまま計画へ進めません。
+## DataSpec and ServiceRequirement
 
-## RepresentationSpecとの境界
+`DataSpec` represents a registered nominal data kind and schema binding.
+Fixed values, variables, containment conditions, and product bindings can unify the same schema variable across ports.
+DataSpec kind compatibility, schema unification, and service resolution are separate checks.
 
-`RepresentationSpec`はSearchSpace側の候補表現仕様です。
-候補の種類、形状、表現方法を記述しますが、ComponentContractのports、state、executionには含まれません。
-したがって、ポートが要求するFeatureEncoderなどのサービスと、空間が保持するRepresentationSpecは、Compilerが接続する別の境界です。
+`ServiceRequirement` declares a named service required by a port or Component.
+SearchSpace services such as `SamplingService` and `ValidationService` are matched as space capabilities.
+`EvaluationAdapter` is an adapter at the evaluation boundary, while `FeatureEncoder` is an adapter subtype exposed as `saealib.space.FeatureEncoder`.
+`FeatureEncoder` converts a `GenomeBatch` to a `FeatureBatch` and provides the semantic transformation that determines features a surrogate model can learn. It differs in nature from space capabilities such as `SamplingService`.
+In the current implementation, the SurrogateManager contract declares `ServiceRequirement("FeatureEncoder")`, and `VectorSpace` registers a default FeatureEncoder as a service, so numeric vector spaces resolve it without extra configuration. `ObjectSpace`, `PermutationSpace`, and `SequenceSpace` raise an error unless the user supplies a FeatureEncoder. The user determines the input passed to the surrogate model.
 
-| 宣言値 | 所有者 | 利用する境界 |
+## RepresentationSpec boundary
+
+`RepresentationSpec` is the candidate-representation specification on the SearchSpace side.
+It describes candidate type, shape, and representation, but is not part of a ComponentContract's ports, state, or execution.
+Therefore, SearchSpace services, `EvaluationAdapter`, `FeatureEncoder`, and the RepresentationSpec held by the space are separate boundaries that the Compiler connects.
+
+| Declarative value | Owner | Boundary using it |
 |---|---|---|
-| `PortSpec`、`PortContract` | `ComponentContract` | Graphの接続とポート互換性 |
-| `DataSpec` | ポートまたは契約 | data kindとschema bindingの統合 |
-| `ServiceRequirement` | Componentまたはポート | SearchSpace、Problemが提供するサービスの解決 |
-| `RepresentationSpec` | `SearchSpace` | 候補表現と表現サービスの整合性 |
+| `PortSpec`, `PortContract` | `ComponentContract` | Graph connections and port compatibility |
+| `DataSpec` | Port or contract | Data kind and schema binding unification |
+| `ServiceRequirement` | Component or port | Resolving services provided by SearchSpace and Problem |
+| `RepresentationSpec` | `SearchSpace` | Candidate representation and representation-service consistency |
 
-## 生成時点、所有者、拡張
+## Construction time and use time
 
-PortSpec、DataSpec、ServiceRequirementはComponentContractを生成するときに作られ、Compilerがグラフ接続時に利用します。
-値の所有者は契約またはSearchSpaceであり、Runtimeが実行中に書き換えるものではありません。
-新しいデータkindやサービスを追加する場合は、登録規則と互換性規則を明示し、暗黙の型変換で接続しない設計にします。
+`PortSpec`, `DataSpec`, and `ServiceRequirement` are created when a ComponentContract is built and used by the Compiler when connecting the graph.
+The contract or SearchSpace owns these values; the Runtime does not rewrite them during execution.
 
-## 失敗と参照
+## Invariants and diagnostics
 
-未登録のkind、未定義のcardinality、schema bindingの不一致、要求サービスの不足はDiagnosticsになります。
-ポート宣言の具体的な型と公開import経路は[APIリファレンス](../api/index.md)で確認してください。
-候補表現の拡張は[探索空間（SearchSpace）](../concepts/problem_and_ranking/search_space.md)を、Compiler ruleの拡張は[フレームワーク拡張](extensions.md)を参照してください。
+An unregistered kind, undefined cardinality, mismatched schema binding, or missing required service becomes a Diagnostic.
+The implementation reports these with codes such as `unknown_data_spec`, `unknown_cardinality`, `unknown_schema_variable`, and `unresolved_service`.
+
+## Extension points
+
+When adding a data kind or service, state its registration and compatibility rules explicitly and do not connect it through an implicit type conversion.
+
+## Related pages
+
+See the [API reference](../api/index.md) for concrete port-declaration types and public import paths.
+See [SearchSpace](../concepts/problem_and_ranking/search_space.md) for extending candidate representations and [Framework extensions](extensions.md) for extending Compiler rules.
+
+## References
+
+- {py:class}`saealib.core.PortSpec`
+- {py:class}`saealib.core.PortContract`
+- {py:class}`saealib.core.DataSpec`

@@ -2,18 +2,18 @@
 primary_layer: cross
 ---
 
-# saealibとは
+# What is saealib?
 
-saealibは、代理モデルを活用する進化計算を扱うPythonライブラリです。
-目的関数の評価に大きな計算コストがかかる最適化問題を対象としています。
+saealib is a Python library for evolutionary computation with surrogate models.
+It targets optimization problems whose objective evaluations are expensive.
 
-## SAEAとは
+## What is SAEA?
 
-進化計算では、候補解を生成し、目的関数で評価し、その結果を使って次の候補解を作る処理を繰り返します。
-目的関数の評価に時間や費用がかかる場合、候補解を何度も直接評価することが大きな負担になります。
+Evolutionary computation repeatedly generates candidate solutions, evaluates them with an objective function, and uses the results to create the next candidates.
+When objective evaluations take time or money, directly evaluating many candidates becomes a major burden.
 
-SAEAは、過去の評価結果から目的関数の値を推定する代理モデルを使い、直接評価する候補解を絞り込みます。
-代理モデルによる予測は安価ですが近似であり、最終的な判断には目的関数による直接評価を使います。
+SAEA uses a surrogate model that estimates objective values from past evaluations to narrow the candidates sent for direct evaluation.
+Surrogate predictions are inexpensive but approximate, so final decisions use direct objective evaluations.
 
 ```{mermaid}
 flowchart TD
@@ -24,38 +24,38 @@ flowchart TD
     E --> A
 ```
 
-## saealibの特徴
+## What saealib provides
 
-候補解の生成、代理モデル、評価対象の選択といった処理が分離されており、それぞれを交換できます。
-`OptimizationStrategy`は、どの候補解を直接評価するかを決める独立した戦略です。
+Candidate generation, surrogate modeling, and selection of candidates for evaluation are separate and replaceable.
+`OptimizationStrategy` is the independent strategy that decides which candidates receive direct evaluation.
 
-## 次に読む
+## Read next
 
 ::::{grid} 1 2 2 2
 :gutter: 3
 
-:::{grid-item-card} {fa}`rocket;sd-mr-1` クイックスタート
+:::{grid-item-card} {fa}`rocket;sd-mr-1` Quickstart
 :link: ../getting_started/quickstart
 :link-type: doc
-最小構成で最初の最適化を実行します。
+Run your first optimization with the smallest configuration.
 :::
 
-:::{grid-item-card} {fa}`graduation-cap;sd-mr-1` チュートリアル
+:::{grid-item-card} {fa}`graduation-cap;sd-mr-1` Tutorials
 :link: ../tutorials/index
 :link-type: doc
-目的に合わせた使い方を例から学びます。
+Learn task-oriented usage from examples.
 :::
 
-:::{grid-item-card} {fa}`cubes;sd-mr-1` 最適化の構成要素
+:::{grid-item-card} {fa}`cubes;sd-mr-1` Optimization components
 :link: ../concepts/index
 :link-type: doc
-saealibを構成するコンポーネントの役割を確認します。
+Review the roles of the components that make up saealib.
 :::
 
-:::{grid-item-card} {fa}`diagram-project;sd-mr-1` アルゴリズム
+:::{grid-item-card} {fa}`diagram-project;sd-mr-1` Algorithms
 :link: ../algorithms/index
 :link-type: doc
-利用できるアルゴリズムの構成を確認します。
+Review the configurations of the available algorithms.
 :::
 
 ::::

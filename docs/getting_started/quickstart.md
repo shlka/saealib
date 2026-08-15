@@ -46,7 +46,7 @@ By specifying an expensive-to-evaluate objective function here — such as a sim
 What's shown here is only a part of `saealib`.
 See the following pages for detailed guides.
 
-- [Layerの案内](index.md#利用方法を選ぶ)：目的に合うLayerと関連ページを選びます
+- [Choosing a layer](#choose-your-layer): Choose the Layer and related pages for your goal
 - [Tutorials](../tutorials/index.md): Guides for specific usage scenarios
 - [Concepts](../concepts/index.md): Detailed usage of each component
 - [API Reference](../api/index.md): Reference for all parameters

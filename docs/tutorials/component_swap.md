@@ -1,41 +1,41 @@
 ---
-primary_layer: cross
+primary_layer: layer2
 related_layers: []
 page_type: guide
 ---
 
-# ビルトインコンポーネントを選んで差し替える
+# Choose and swap built-in components
 
-前提は、高レベルAPIまたは `Optimizer` の実行経路を使うことです。
-:::{admonition} このページでできるようになること
+The prerequisite is using the high-level API or an `Optimizer` execution path.
+:::{admonition} What you'll be able to do
 :class: tip
 
-このページを終えると、変更したい責務に対応するビルトインコンポーネントを選び、適切な差し替え点へ渡せます。
+By the end of this page, you'll be able to choose the built-in component for the responsibility you want to change and pass it to the appropriate swap point.
 :::
 
-構成要素の索引は [最適化の構成要素](../concepts/index.md) で、独自コンポーネントが必要な場合は [独自Component](custom_components.md) を参照します。
+See the [optimization components](../concepts/index.md) index; if you need a custom component, see [Custom components](custom_components.md).
 
-importの方針は [Canonical Imports](../api/imports.md) にまとめています。
+The [Canonical Imports](../api/imports.md) page summarizes import choices.
 
-## 変更したい責務から選ぶ
+## Choose by responsibility
 
-コンポーネントは、同じ処理の別実装を選ぶための差し替え点です。
-`AcquisitionFunction` と `SurrogateManager` は独立した差し替え点であり、一方が他方を包含する関係ではありません。
+Components are swap points for choosing another implementation of the same operation.
+`AcquisitionFunction` and `SurrogateManager` are independent swap points; neither contains the other.
 
-| 何を変えたいか | 交換するコンポーネント | 確認先 |
+| What to change | Component to swap | Where to look |
 |---|---|---|
-| 候補を生成する探索法 | `Algorithm` | [Algorithmの概念](../concepts/search_algorithms/algorithm.md)、[Algorithmリファレンス](../api/algorithms.md) |
-| 交叉、突然変異、選択 | `Operator` | [Crossoverの概念](../concepts/search_algorithms/crossover.md)、[Mutationの概念](../concepts/search_algorithms/mutation.md)、[Operatorリファレンス](../api/operators.md) |
-| 予測モデル | `Surrogate` | [Surrogateの概念](../concepts/surrogate_modeling/surrogate.md)、[Surrogateリファレンス](../api/surrogate.md) |
-| 予測の学習データと予測の進め方 | `SurrogateManager` | [SurrogateManagerの概念](../concepts/surrogate_modeling/surrogate_manager.md)、[リファレンス](../api/surrogate.md) |
-| 予測を候補スコアへ変換する基準 | `AcquisitionFunction` | [AcquisitionFunctionの概念](../concepts/surrogate_modeling/acquisition_functions.md)、[リファレンス](../api/acquisition.md) |
-| Surrogate候補を真に評価する割合や順序 | `Strategy` | [Strategyの概念](../concepts/execution_and_evaluation/strategies.md)、[リファレンス](../api/strategies.md) |
-| 解の順位付け | `Comparator` | [Comparatorの概念](../concepts/problem_and_ranking/comparators.md)、[リファレンス](../api/comparators.md) |
+| Search method that generates candidates | `Algorithm` | [Algorithm concept](../concepts/search_algorithms/algorithm.md), [Algorithm reference](../api/algorithms.md) |
+| Crossover, mutation, and selection | `Operator` | [Crossover concept](../concepts/search_algorithms/crossover.md), [Mutation concept](../concepts/search_algorithms/mutation.md), [Operator reference](../api/operators.md) |
+| Prediction model | `Surrogate` | [Surrogate concept](../concepts/surrogate_modeling/surrogate.md), [Surrogate reference](../api/surrogate.md) |
+| Training data and prediction process | `SurrogateManager` | [SurrogateManager concept](../concepts/surrogate_modeling/surrogate_manager.md), [Reference](../api/surrogate.md) |
+| Rule that converts predictions into candidate scores | `AcquisitionFunction` | [AcquisitionFunction concept](../concepts/surrogate_modeling/acquisition_functions.md), [Reference](../api/acquisition.md) |
+| Fraction or order of surrogate candidates sent for true evaluation | `Strategy` | [Strategy concept](../concepts/execution_and_evaluation/strategies.md), [Reference](../api/strategies.md) |
+| Solution ranking | `Comparator` | [Comparator concept](../concepts/problem_and_ranking/comparators.md), [Reference](../api/comparators.md) |
 
-## 高レベルAPIで交換する
+## Swap through the high-level API
 
-高レベルAPIでは、`algorithm`、`surrogate`、`strategy` に文字列またはインスタンスを渡します。
-現在確認できる文字列は、アルゴリズムの `"GA"` と `"PSO"`、Surrogateの `"rbf"`、Strategyの `"ib"`、`"gb"`、`"ps"` です。
+The high-level API accepts strings or instances for `algorithm`, `surrogate`, and `strategy`.
+The available strings are `"GA"` and `"PSO"` for algorithms, `"rbf"` for Surrogate, and `"ib"`, `"gb"`, and `"ps"` for Strategy.
 
 ```python
 import numpy as np
@@ -58,13 +58,13 @@ result = minimize(
 )
 ```
 
-Surrogate単体のインスタンスは、内部で `LocalSurrogateManager` に組み込まれます。
-ManagerやAcquisitionFunctionを個別に構成する場合は `Optimizer` を使います。
+A standalone Surrogate instance is wrapped in a `LocalSurrogateManager` internally.
+Use `Optimizer` when configuring a Manager or AcquisitionFunction separately.
 
-## Optimizerで独立した差し替え点を構成する
+## Configure independent swap points with Optimizer
 
-`Optimizer.set_*()` は、コンポーネントを独立して設定するためのビルダーです。
-たとえば `set_surrogate_manager()` と `set_acquisition()` は別の呼び出しです。
+`Optimizer.set_*()` is a builder for configuring components independently.
+For example, `set_surrogate_manager()` and `set_acquisition()` are separate calls.
 
 ```python
 import numpy as np
@@ -92,13 +92,13 @@ optimizer = (
 )
 ```
 
-`Optimizer` に必要な他のコンポーネントは既定値で解決できます。
-`set_*()` で設定したコンポーネントと省略したコンポーネントは、`run()` または `iterate()` が既定値を解決した後に検証されます。
-必要なコンポーネントをすべて明示設定した構成では、実行前に `validate()` を直接呼び出して検証することもできます。
-ビルトインコンポーネントで責務を満たせないときだけ、[独自Componentを実装する](custom_components.md) に進みます。
+Other components required by `Optimizer` can be resolved from defaults.
+Components configured with `set_*()` and omitted components are validated after `run()` or `iterate()` resolves the defaults.
+When every required component is explicit, you can also call `validate()` directly before running.
+Continue to [Implement custom components](custom_components.md) only when built-in components cannot meet the responsibility.
 
-## 関連するConceptとReference
+## Related concepts and reference
 
-- [構成要素の概要](../concepts/index.md)
-- [Optimizerリファレンス](../api/optimizer.md)
-- [Registryリファレンス](../api/registry.md)
+- [Optimization components overview](../concepts/index.md)
+- [Optimizer reference](../api/optimizer.md)
+- [Registry reference](../api/registry.md)

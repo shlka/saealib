@@ -6,8 +6,8 @@ page_type: reference
 
 # Core API
 
-コアAPIは、コンポーネント契約、グラフ、状態、コンパイル済み計画の公開ファサードです。
-通常の拡張では `saealib.core` から名前を取得し、実装モジュールのパスを直接参照しません。
+The Core API is the public facade for component contracts, graphs, state, and compiled plans.
+For ordinary extensions, import names from `saealib.core` rather than referring directly to implementation-module paths.
 
 ```{eval-rst}
 .. autosummary::
@@ -35,11 +35,11 @@ page_type: reference
    saealib.core.ExecutionRuntime
 ```
 
-`Compiler` の公開 import 方針は現在整理中です。
-そのため、このページでは `saealib.core` と `saealib.core.compiler` のどちらかを標準のimport pathとして断定しません。
-コンパイラを使うコードでは、対象リリースの公開APIとリリースノートを確認してください。
+The public import policy for `Compiler` is still being organized.
+This page therefore does not declare either `saealib.core` or `saealib.core.compiler` as the standard import path.
+For code that uses the Compiler, check the target release's public API and release notes.
 
-Graphの構成値は `saealib.core.compiler` から参照できます。
+Graph composition values are available from `saealib.core.compiler`.
 
 ```{eval-rst}
 .. autosummary::

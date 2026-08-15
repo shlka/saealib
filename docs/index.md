@@ -6,63 +6,59 @@ page_type: entry
 
 # saealib
 
-1回の評価に時間や費用がかかる目的関数のための、Pythonの最適化ライブラリです。
-過去の評価結果から目的関数を近似するモデルを併用し、直接評価する回数を抑えて解を探索します。
+saealib is a Python optimization library for objective functions whose evaluations take substantial time or cost.
+It combines a model that approximates the objective from past evaluations with direct evaluation to reduce the number of expensive evaluations.
 
 ```{button-ref} getting_started/quickstart
 :ref-type: doc
 :color: primary
 :shadow:
 :class: sd-mr-2
-
-Quickstart →
 ```
 ```{button-ref} getting_started/what_is_saealib
 :ref-type: doc
 :color: secondary
 :outline:
-
-saealibとは
 ```
 
-## ドキュメント
+## Documentation
 
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} {fa}`flag;sd-mr-1` はじめに
+:::{grid-item-card} {fa}`flag;sd-mr-1` Getting started
 :link: getting_started/index
 :link-type: doc
-共通の使い始め方を確認します。
+Learn the common ways to get started.
 :::
-:::{grid-item-card} {fa}`book-open;sd-mr-1` チュートリアル
+:::{grid-item-card} {fa}`book-open;sd-mr-1` Tutorials
 :link: tutorials/index
 :link-type: doc
-用途別の手順を確認します。
+Follow task-oriented procedures.
 :::
-:::{grid-item-card} {fa}`cubes;sd-mr-1` 最適化の構成要素
+:::{grid-item-card} {fa}`cubes;sd-mr-1` Optimization components
 :link: concepts/index
 :link-type: doc
-最適化を構成する要素を確認します。
+Explore the pieces that make up an optimization.
 :::
-:::{grid-item-card} {fa}`sitemap;sd-mr-1` フレームワーク
+:::{grid-item-card} {fa}`sitemap;sd-mr-1` Framework
 :link: framework/index
 :link-type: doc
-契約、ComponentGraph、Compiler、Runtimeを確認します。
+Explore contracts, ComponentGraph, Compiler, and Runtime.
 :::
-:::{grid-item-card} {fa}`diagram-project;sd-mr-1` アルゴリズム
+:::{grid-item-card} {fa}`diagram-project;sd-mr-1` Algorithms
 :link: algorithms/index
 :link-type: doc
-アルゴリズムの構成と出典を確認します。
+Review algorithm configurations and sources.
 :::
-:::{grid-item-card} {fa}`code;sd-mr-1` APIリファレンス
+:::{grid-item-card} {fa}`code;sd-mr-1` API reference
 :link: api/index
 :link-type: doc
-公開APIを参照します。
+Browse the public API.
 :::
 ::::
 
-## 最小例
+## Minimal example
 
 ```python
 from saealib import minimize
@@ -72,11 +68,11 @@ result = minimize(rastrigin(n_var=10), max_fe=300, seed=0)
 print(result.x, result.f)
 ```
 
-どのコンポーネントを使うか、どのように組み合わせるかを設定できます。
-構成の矛盾は、最適化を始める前に検証されます。
-詳しくは[saealibとは](getting_started/what_is_saealib.md)と[最適化の構成要素](concepts/index.md)を参照してください。
+Configure which components to use and how to combine them.
+Configuration conflicts are validated before optimization starts.
+See [What is saealib?](getting_started/what_is_saealib.md) and [Optimization components](concepts/index.md) for details.
 
-インストール手順は[インストール](getting_started/installation.md)、実装の出典は[参考文献](references.md)にあります。
+Installation instructions are in [Installation](getting_started/installation.md), and implementation sources are listed in [References](references.md).
 
 ```{toctree}
 :hidden:

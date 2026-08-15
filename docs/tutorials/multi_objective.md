@@ -1,17 +1,28 @@
 ---
 primary_layer: layer1
+related_layers: [layer2]
+page_type: tutorial
 ---
 
 # Multi-Objective Optimization
 
 Solve multi-objective optimization problems with trade-offs between objectives, using `saealib`.
 
-`minimize()`は目的関数の数に応じたデフォルトのコンポーネントを使います。
-アルゴリズム、代理モデル、評価戦略を個別に設定する場合は `Optimizer.set_*()` を使います。
+`minimize()` uses default components based on the number of objectives.
+Use `Optimizer.set_*()` to configure the algorithm, surrogate model, or evaluation strategy individually.
 
 This page covers what's specific to problems with two or more objectives: choosing a comparator and extracting the Pareto front.
 
-## Problem setup
+:::{admonition} What you'll be able to do
+:class: tip
+
+By the end of this page, you'll be able to choose a Comparator for a multi-objective problem and extract the resulting Pareto front.
+:::
+
+For the basic single-objective procedure, use [Single-objective optimization](single_objective.md); if you need a custom Comparator, see [Custom components](custom_components.md).
+This page runs a multi-objective `Problem`, selects a Comparator, and extracts the Pareto front.
+
+## Set up the problem
 
 When multiple objective functions are in a trade-off relationship, there exist solutions where improving one worsens another.
 
@@ -27,7 +38,7 @@ problem = zdt1(n_var=10)
 
 `zdt1` is a `Problem` instance returning a two-objective benchmark problem with a convex Pareto front.
 
-## High-level API: minimize
+## Run minimize
 
 Passing a `Problem` instance directly carries over the number of objectives from it.
 
@@ -42,10 +53,10 @@ print(result.f.shape)  # (n_pareto, n_obj)
 
 Where `result.x`/`result.f` were a single point in the single-objective case, in the multi-objective case they become multiple solutions forming the Pareto front.
 
-## Optimizerによる構成
+## Configure an Optimizer
 
-`Optimizer(problem)`では、各コンポーネントを独立して設定できます。
-`set_*()`は連鎖呼び出しのために同じ `Optimizer` を返し、`run()`または `iterate()`で最適化を実行します。
+With `Optimizer(problem)`, you can configure each component independently.
+`set_*()` returns the same `Optimizer` for chaining, and `run()` or `iterate()` executes the optimization.
 
 ```python
 from saealib import Optimizer, Termination, max_fe
@@ -58,10 +69,10 @@ ctx = optimizer.run()
 pareto_f = ctx.pareto_archive.get_array("f")
 ```
 
-未設定のコンポーネントはデフォルトに解決されます。
-多目的の順位付けは、次のComparatorの選択で設定します。
+Unconfigured components resolve to their defaults.
+Set multi-objective ranking by choosing one of the following Comparators.
 
-## Choosing a comparator
+## Choose a comparator
 
 In multi-objective optimization, `Comparator` decides the relative superiority between candidate solutions.
 
@@ -85,7 +96,7 @@ problem.comparator = HypervolumeComparator()
 result = minimize(problem, max_fe=2000, seed=0)
 ```
 
-## Extracting the Pareto front
+## Extract the Pareto front
 
 After running, `result.ctx.pareto_archive` holds the final Pareto front.
 
@@ -104,7 +115,7 @@ ranks, fronts = non_dominated_sort(archive_f, direction=problem.direction)
 front0_f = archive_f[fronts[0]]  # first non-dominated front
 ```
 
-## References
+## Related concepts and reference
 
 - {py:func}`saealib.minimize`
 - {py:class}`saealib.Problem`

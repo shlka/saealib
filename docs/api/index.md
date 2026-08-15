@@ -4,43 +4,43 @@ related_layers: [layer1, layer2, layer3, layer4]
 page_type: entry
 ---
 
-# APIリファレンス
+# API reference
 
-APIリファレンスは、公開ファサードを中心に構成します。
-実装モジュールの深いパスはcanonical importとして案内しません。
+The API reference is organized around public facades.
+Deep implementation-module paths are not documented as canonical imports.
 
-## APIの公開層
+## Public API layers
 
-import経路を選ぶときは、次の公開層を使います。
+Use the following public layers when choosing an import path.
 
-- **ルートの便利API**：日常的に使う安定したAPIです。
+- **Root convenience API**: Stable, everyday entry points.
 
   ```python
   from saealib import minimize, Problem, GA
   ```
 
-- **公開名前空間**：分野ごとにまとめた公開コンポーネントです。
+- **Public namespaces**: Public components grouped by domain.
 
   ```python
   from saealib.surrogate import RBFSurrogate
   from saealib.operators import MutationPolynomial
   ```
 
-探索空間、実行、Feedbackの名前は、それぞれ `saealib.space`、`saealib.execution`、`saealib.policies` から取得します。
+Import SearchSpace, execution, and Feedback names from the public namespaces `saealib.space`, `saealib.execution`, and `saealib.policies`, respectively.
 
-- **フレームワーク拡張API**：拡張に使う契約と構成要素です。
+- **Framework extension API**: Contracts and composition elements for extensions.
 
   ```python
   from saealib.core import Component, ComponentGraph, ComponentContract
   ```
 
-- 実装モジュールは、公開ファサードの代わりに使うものではありません。
+- Implementation modules are not substitutes for public facades.
 
-名前空間の公開名は、自動的にルートへ再公開されません。
-既存のルートimportを維持することと、新しい名前をルートへ追加することは別の判断です。
+Names exported from a namespace are not automatically re-exported from the root.
+Preserving an existing root import and adding a new name to the root are separate decisions.
 
-新しいルート公開名は、広く使われ、安定性が見込まれ、一般的なimportを明確に改善する場合に限ります。
-それ以外の名前は、対応する公開名前空間またはフレームワーク拡張APIに置きます。
+Add a new root export only when it is broadly useful, expected to remain stable, and clearly improves common imports.
+Place other names in the corresponding public namespace or framework extension API.
 
 ```{toctree}
 :maxdepth: 2

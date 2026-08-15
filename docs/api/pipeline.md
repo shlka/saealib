@@ -1,13 +1,13 @@
 ---
-primary_layer: layer4
-related_layers: [layer2, layer3]
+primary_layer: layer2
+related_layers: [layer3, layer4]
 page_type: reference
 ---
 
 # Pipeline
 
-`Pipeline` は、コンポーネントと構造化された制御領域を記述するDSLです。
-`OptimizationState` を直接実行するオブジェクトではなく、Optimizerが実行計画を構築するための入力として使います。
+`Pipeline` is a DSL for describing components and structured control regions.
+It does not execute `OptimizationState` directly; Optimizer uses it as input when building an execution plan.
 
 ```python
 from saealib import Branch, Loop, Pipeline, Repeat
@@ -26,24 +26,24 @@ pipeline = Pipeline(
 )
 ```
 
-この例はPipelineの構築だけを示しています。
-通常の利用では、Strategyが作るGraphとPipelineを `Optimizer` がコンパイルし、利用者がCompilerを直接呼び出す必要はありません。
+This example only shows how to build a Pipeline.
+In ordinary use, `Optimizer` compiles the Graph and Pipeline produced by a Strategy, so users do not need to call the Compiler directly.
 
-入れ子のPipelineと制御値は、名前付きの構造化領域として保持されます。
-`Repeat` は固定回数の反復を表し、`Loop` と `Branch` は宣言された状態契約を通じて条件を評価します。
-領域は通常のグラフサイクルへ単純化されないため、Runtimeは状態効果と再開フレームを保持できます。
+Nested Pipelines and control values are kept as named structured regions.
+`Repeat` represents a fixed number of repetitions, while `Loop` and `Branch` evaluate conditions through declared state contracts.
+Because regions are not reduced to ordinary graph cycles, the Runtime can preserve state effects and resume frames.
 
-構造化Pipelineへ置くComponentは、graph-nativeの `contract()` と `execute(StateView)` の境界を提供します。
-旧来の `Stage` 実行面は互換性用Graph Builderへの接続点として残っています。
-既存Stageを構造化Pipelineへ入れる場合は、`stage_component(stage)` で明示的に包みます。
+Components placed in a structured Pipeline provide the graph-native `contract()` and `execute(StateView)` boundaries.
+The legacy `Stage` execution surface remains as a connection point for the compatibility Graph Builder.
+When placing an existing Stage in a structured Pipeline, wrap it explicitly with `stage_component(stage)`.
 
-コンパイル時には、必要な入力ポートを制御順序上流の互換性のある出力へ対応付けます。
-一意に対応付けられた接続は `DataEdge` になり、接続がない場合や複数候補がある場合はCompiler診断になります。
-曖昧な接続を解消する必要がある場合は、明示的なGraphを使います。
+During compilation, required input ports are matched to compatible outputs upstream in control order.
+A uniquely matched connection becomes a `DataEdge`; no match or multiple candidates produces a Compiler diagnostic.
+Use an explicit Graph when an ambiguous connection must be resolved.
 
-`stage_component(stage)` は移行用Adapterです。
-トランザクションProxyを通じた状態書き込みは `StatePatch` へ変換されますが、ServiceやContext Capabilityとして公開された可変オブジェクトの所有権はAdapter側に残ります。
-新しいgraph-native componentでは、永続的な可変状態を宣言済みのStateKeyとPatchの背後に置きます。
+`stage_component(stage)` is a migration adapter.
+State writes through the transaction proxy become `StatePatch` values, but the adapter retains ownership of mutable objects exposed as Services or Context capabilities.
+In a new graph-native component, keep persistent mutable state behind declared `StateKey` values and patches.
 
 ```{eval-rst}
 .. autosummary::

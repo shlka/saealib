@@ -6,7 +6,7 @@ page_type: concept
 
 # NSGA-III
 
-NSGA-III is a genetic algorithm that extends NSGA-II's selection mechanism to many-objective optimization with four or more objectives.
+NSGA-III primarily targets many-objective optimization, but its reference-direction behavior can also be observed with three objectives.
 It replaces crowding-distance diversity maintenance with a niche-preservation operation against pre-placed reference points, maintaining the distribution of the solution set even as the number of objectives grows.
 
 ## Overview
@@ -50,7 +50,7 @@ flowchart TD
     INIT["Initializer<br/>Generate initial population P0<br/>(L1)"] --> GEN
     subgraph GEN["One generation (DirectStrategy.step)"]
         direction TB
-        ASK["GA.ask()<br/>Randomly select parents →<br/>SBX crossover →<br/>Polynomial mutation to generate Qt<br/>(L1, 8)"] --> EVAL["True evaluation<br/>(no surrogate involved)"]
+        ASK["GA.ask()<br/>Randomly select parents →<br/>SBX crossover →<br/>Polynomial mutation to generate Qt<br/>(L1, L8)"] --> EVAL["True evaluation<br/>(no surrogate involved)"]
         EVAL --> COMB["GA.tell()<br/>Combine Rt = Pt ∪ Qt<br/>(L2)"]
         COMB --> SORT["NSGA3Comparator.sort_population()<br/>Non-dominated sorting → adaptive normalization →<br/>association to reference points →<br/>niche-preservation selection<br/>(L3-7)"]
         SORT --> TRUNC["TruncationSelection<br/>Take top N individuals as Pt+1<br/>(L4-7)"]
@@ -60,19 +60,14 @@ flowchart TD
     TERM -- "Reached" --> RESULT(["Population of the final generation"])
 ```
 
-## Complexity
-
-Non-dominated sorting is $O(N\log^{M-2}N)$ ($M$ the number of objectives, $N$ the population size), which is an asymptotically different complexity from NSGA-II's $O(MN^2)$.
-The worst-case per-generation complexity combining normalization, association, and niche preservation is the larger of $O(N^2\log^{M-2}N)$ and $O(N^2 M)$ {cite}`deb2014nsga3`.
-
 ## Configuration in saealib
 
 | Role | saealib implementation | Corresponding step |
 |---|---|---|
-| Search algorithm | `GA` (`ask()` performs crossover and mutation; `tell()` performs combining $R_t=P_t\cup Q_t$ and survivor selection) | L1-2, 8 |
-| Parent selection | `TournamentSelection(tournament_size=1)` (with tournament size 1, no comparison is actually performed, corresponding to the paper's description of "choose parents randomly from $P_{t+1}$") | L1, 8 |
-| Crossover | `CrossoverSBX(prob=1.0, eta=30.0)` | L1, 8 |
-| Mutation | `MutationPolynomial(eta=20.0)` | L1, 8 |
+| Search algorithm | `GA` (`ask()` performs crossover and mutation; `tell()` performs combining $R_t=P_t\cup Q_t$ and survivor selection) | L1-2, L8 |
+| Parent selection | `TournamentSelection(tournament_size=1)` (with tournament size 1, no comparison is actually performed, corresponding to the paper's description of "choose parents randomly from $P_{t+1}$") | L1, L8 |
+| Crossover | `CrossoverSBX(prob=1.0, eta=30.0)` | L1, L8 |
+| Mutation | `MutationPolynomial(eta=20.0)` | L1, L8 |
 | Reference point generation | `uniform_weight_vectors(n_obj, n_divisions)` (generates the initial value $Z^s$ of $Z^r$ via the Das-Dennis simplex lattice) | L5 |
 | Non-dominated sorting + normalization + association + niche preservation | `NSGA3Comparator` (`sort_population` internally calls `_normalize_objectives`/`_associate_to_reference_points`/`_niche_count_select` in order) | L3-7 |
 | Survivor selection | `TruncationSelection()` (keeps the top $N$ individuals in the order given by `comparator.sort_population`) | L4-7 |
@@ -112,20 +107,26 @@ pareto_f = ctx.pareto_archive.get_array("f")
 The `problem.comparator = NSGA3Comparator(reference_points)` line cannot be omitted.
 In NSGA-II, `NSGA2Comparator` is the default for `n_obj > 1`, so the same line could be omitted, but in NSGA-III, as with SPEA2, an explicit assignment is required.
 
-DTLZ2 with 3 objectives is used instead of a 2-objective ZDT benchmark because NSGA-III is aimed at many-objective optimization with four or more objectives, and the effect of reference-point-based niche preservation only shows up starting with three or more objectives.
+The example uses the three-objective DTLZ2 rather than a two-objective ZDT benchmark because NSGA-III primarily targets many-objective optimization while still exposing reference-direction niche preservation with three objectives.
+
+## Differences from the source
+
+The original NSGA-III chooses parents randomly, while saealib represents this with `TournamentSelection(tournament_size=1)`, which performs no comparison.
+Setting `tournament_size` to 2 or more adds selection pressure from a dominance relation that the original method does not specify.
+The combination of SBX, Polynomial mutation, and `TruncationSelection` in the example is an saealib configuration choice.
+The original method recommends a relationship between population size and the number of reference points, but saealib's default initialization makes population size depend on `dim` and does not tie it to the number of reference points.
 
 ## Parameters and variants
+
+### Complexity
+
+The implemented non-dominated sorter has complexity $O(N\log^{M-2}N)$ ($M$ is the number of objectives and $N$ is the population size).
+This is asymptotically different from NSGA-II's $O(MN^2)$, but the bound applies only to this sorter, not to NSGA-III as a whole.
+The worst-case per-generation complexity combining normalization, association, and niche preservation is the larger of $O(N^2\log^{M-2}N)$ and $O(N^2 M)$ {cite}`deb2014nsga3`.
 
 **$\eta_c$ (SBX distribution index) and crossover probability $p_c$**: The paper reports using $p_c=1$ (`CrossoverSBX(prob=1.0)`) and $\eta_c=30$ (`CrossoverSBX(eta=30.0)`) for NSGA-III.
 Both the crossover probability and distribution index are larger than NSGA-II's defaults ($p_c=0.9$, $\eta_c=20$), a setting that generates offspring closer to the parents with higher probability {cite}`deb2014nsga3`.
 
-**Correspondence between population size $N$ and reference-point count $H$**: The paper recommends choosing the population size $N$ as the smallest multiple of 4 at or above the reference-point count $H$.
-Unless `set_initializer()` is called, `Optimizer` uses `LHSInitializer(n_init_population=4*dim)` as the default, so this population size depends only on the decision-variable dimension `dim`, and is not tied to `H`.
-If you want the population size deliberately matched to `H`, check the number of rows returned by `uniform_weight_vectors` and explicitly specify `n_init_population` via `set_initializer()`.
-
-**Why parent selection isn't tournament-based**: The paper states that, since NSGA-III already secures diversity through its niche-preservation operation, it chooses parents randomly rather than using an explicit selection operator {cite}`deb2014nsga3`.
-`TournamentSelection(tournament_size=1)` expresses this "random parent selection," since no comparison is actually performed when the tournament size is 1.
-Changing `tournament_size` to 2 or more adds the same dominance-based selection pressure as NSGA-II/SPEA2, introducing a selection mechanism the paper deliberately excludes.
 
 **Swapping the dominator (dominance predicate)**: `NSGA3Comparator(reference_points, dominator=...)` lets you inject a [Dominator](../concepts/problem_and_ranking/dominance.md) other than the default `ParetoDominator`.
 Since this changes the result of non-dominated sorting itself, the population subjected to front splitting and niche preservation also depends on this dominance predicate.

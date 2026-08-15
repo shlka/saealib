@@ -1,19 +1,21 @@
 ---
 primary_layer: layer1
+related_layers: [layer2, layer3]
+page_type: concept
 ---
 
 # Problem
 
-`Problem` は、評価対象の関数、目的方向、制約、比較方法、探索空間を一つにまとめます。
-Optimizerと各コンポーネントは、このProblemを介して同じ最適化対象を参照します。
+`Problem` brings the objective function, objective directions, constraints, comparison method, and SearchSpace together.
+`Optimizer` and each component use this `Problem` to refer to the same optimization target.
 
-ベクトル表現を使う場合は、`lb`、`ub`、または `variables` から `VectorSpace` が作られます。
-非ベクトル表現を使う場合は、`space` に `SearchSpace` を渡します。
-`SearchSpace` とGenomeの設計は [探索空間（SearchSpace）](search_space.md) にまとめています。
+For a vector representation, `VectorSpace` is created from `lb`, `ub`, or `variables`.
+For a non-vector representation, pass a `SearchSpace` to `space`.
+The design of `SearchSpace` and Genomes is covered in [SearchSpace](search_space.md).
 
-## Problemの役割
+## Problem's role
 
-`Problem` のコンストラクタは次の引数を受け取ります。
+The `Problem` constructor accepts the following arguments.
 
 ```python
 Problem(
@@ -26,8 +28,8 @@ Problem(
 
 **`func`**: The objective function used by the evaluator.
 For a vector problem it normally receives an array of design variables; a non-vector problem may receive the payload produced by its evaluation adapter.
-**`dim`**：設計変数の次元数です。
-`space` が `dim` を提供する場合は省略できます。
+**`dim`**: The number of design-variable dimensions.
+It can be omitted when `space` provides `dim`.
 **`n_obj`**: The number of objective functions.
 
 **`direction`**: An array of shape `(n_obj,)` giving the optimization direction per objective; each element must be `+1` (maximize) or `-1` (minimize).
@@ -55,19 +57,19 @@ If omitted, `StaticToleranceHandler(eps_cv=eps_cv)` is used.
 This can be omitted for problems with only continuous variables, in which case every dimension is treated as `ContinuousVariable`.
 If you want to mix integer and categorical variables, including `IntegerVariable`/`CategoricalVariable` here makes [Crossover](../search_algorithms/crossover.md)/[Mutation](../search_algorithms/mutation.md) automatically assign a different operator per variable type.
 
-**`space`**：Genomeの表現と、サンプリング、検証、比較、距離計算などのサービスを提供する `SearchSpace` です。
-`space` を渡し、`variables`、`lb`、`ub` を省略した場合は、`dim` をSearchSpaceから取得します。
-非ベクトルのSearchSpaceでは、`lb` と `ub` が存在しない場合があります。
+**`space`**: A `SearchSpace` that provides Genome representation and services such as sampling, validation, comparison, and distance calculation.
+When `space` is passed and `variables`, `lb`, and `ub` are omitted, `dim` is obtained from the SearchSpace.
+A non-vector SearchSpace may not have `lb` and `ub`.
 
-**`evaluation_adapter`**：GenomeBatchを評価関数が受け取る入力へ変換する `EvaluationAdapter` です。
-表現と評価関数の入力形式が一致しない場合に、Problemへ明示的に設定します。
+**`evaluation_adapter`**: An `EvaluationAdapter` that converts a `GenomeBatch` into the input accepted by the objective function.
+Set it explicitly on `Problem` when the representation and objective-input formats do not match.
 
 ```{note}
 Older tutorials have examples using a `weight=` argument, but the current `Problem` has no such argument.
 Passing `weight=` raises `TypeError`.
 ```
 
-## The direction/weight role split
+## What Problem holds
 
 `direction` is a `±1` array, unified across all of saealib, representing sign only.
 By contrast, the `weights` received by `WeightedSumComparator` or `DecompositionComparator` are non-negative weights for aggregating multiple objectives into a scalar value — a separate concept, independent of direction.
@@ -76,7 +78,13 @@ Under this role split, `weights` cannot express the importance (scaling) of an o
 If you want to adjust the magnitude of an objective value, scale it inside `func`.
 This is organized into two axes: `direction` expresses sign only, and `weights` expresses only the aggregation weighting.
 
-## Implementing a custom Variable
+## Invariants
+
+`direction` must be `+1` or `-1` for each objective, and `dim`, variables, and the SearchSpace representation must agree. If they do not, construction-time validation or candidate processing during evaluation fails.
+
+## Extending Problem
+
+### Implementing a custom Variable
 
 `Variable` (an ABC) requires only two properties, `lb`/`ub`, and one method, `repair(x)`.
 The built-in `ContinuousVariable`/`IntegerVariable`/`CategoricalVariable` are all thin implementations that simply project a value onto their own domain; if you need a variable type beyond these (a periodic variable, a log-scale variable, etc.), subclass `Variable` directly.

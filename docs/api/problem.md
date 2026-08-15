@@ -1,5 +1,6 @@
 ---
 primary_layer: layer1
+related_layers: [layer2, layer3]
 ---
 
 # Problem
@@ -27,5 +28,5 @@ primary_layer: layer1
 .. autofunction:: saealib.exponential_epsilon_schedule
 ```
 
-`Problem` は `space` に `SearchSpace` を受け取り、Genomeの表現と評価入力の変換を管理できます。
-詳細は [Problem](../concepts/problem_and_ranking/problem.md) と [探索空間（SearchSpace）](../concepts/problem_and_ranking/search_space.md) を参照してください。
+`Problem` accepts a `SearchSpace` through `space` and can manage Genome representations and conversion to evaluation inputs.
+See [Problem](../concepts/problem_and_ranking/problem.md) and [SearchSpace](../concepts/problem_and_ranking/search_space.md) for details.

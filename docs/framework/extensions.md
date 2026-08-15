@@ -4,43 +4,43 @@ related_layers: [layer3]
 page_type: guide
 ---
 
-# フレームワークを拡張する
+# Extend the framework
 
-既存コンポーネントの差し替えではなく、コンポーネントを検査し実行するフレームワークの契約を拡張します。
+Extend the contracts of the framework that inspects and executes components rather than swapping an existing component.
 
-## 拡張対象
+## Extension targets
 
-| 対象 | 役割 | 利用する公開API |
+| Target | Role | Public API |
 |---|---|---|
-| Contract | ポート、状態、ライフサイクル、実行能力を宣言する | `ComponentContract` |
-| SearchSpace | Genomeの表現、サンプリング、検証、空間固有サービスを提供する | `SearchSpace` |
-| Graph | コンポーネントとデータ、制御、状態の関係を記述する | `ComponentGraph` |
-| Compiler rule | 契約の互換性や変換を検査する | `CompilationRule` |
-| Feedback | 候補IDと観測を対応付ける | `FeedbackBatch`、`FeedbackBuilder` |
-| Runtime | 計画を進め、状態Patchと待機を管理する | `ExecutionRuntime` |
+| Contract | Declare ports, state, lifecycle, and execution capabilities | `ComponentContract` |
+| SearchSpace | Provide Genome representation, sampling, validation, and space-specific services | `SearchSpace` |
+| Graph | Describe component, data, control, and state relationships | `ComponentGraph` |
+| Compiler rule | Check contract compatibility and transformations | `CompilationRule` |
+| Feedback | Associate candidate IDs with observations | `FeedbackBatch`, `FeedbackBuilder` |
+| Runtime | Advance the plan and manage state patches and waits | `ExecutionRuntime` |
 
-各対象の設計は、[フレームワークの概要](index.md)から[Component](component.md)、[ComponentContract](contract.md)、[宣言要素（Specs）](specs.md)、[Graph](graph.md)、[Compiler](compiler.md)へ進みます。
-SearchSpace、Feedback、Runtimeの拡張境界は、それぞれ[探索空間（SearchSpace）](../concepts/problem_and_ranking/search_space.md)、[Feedback](../concepts/observation_and_state/feedback.md)、[Runtime](runtime.md)を参照してください。
+For each target, start with the [framework overview](index.md), then read [Component](component.md), [ComponentContract](contract.md), [Specs](specs.md), [Graph](graph.md), and [Compiler](compiler.md).
+For SearchSpace, Feedback, and Runtime extension boundaries, see [SearchSpace](../concepts/problem_and_ranking/search_space.md), [Feedback](../concepts/observation_and_state/feedback.md), and [Runtime](runtime.md), respectively.
 
-## 実装時の原則
+## Implementation principles
 
-契約に宣言していない状態やサービスへ、コンポーネントから直接アクセスしません。
-状態更新は `StatePatch` で返し、Runtimeに適用を委譲します。
-表現と意味の変換は明示的なAdapterとして登録し、ポート互換性の検査を迂回しません。
-コンパイル時の検査と実行時の処理を同じ責務へまとめません。
+Do not let a component access state or services that its contract does not declare.
+Return state updates as `StatePatch` values and delegate their application to the Runtime.
+Register representation and semantic conversions as explicit adapters and do not bypass port-compatibility checks.
+Keep compilation-time checks separate from execution-time processing.
 
-## 公開APIの境界
+## Public API boundary
 
-フレームワーク拡張の公開語彙は `saealib.core`、`saealib.space`、`saealib.execution`、`saealib.policies` のファサードから取得します。
-個別の実装モジュールや内部Runtimeクラスを、一般利用者向けの拡張APIとして案内しません。
-Compiler本体やCompiler ruleの詳細なimportは、対象リリースのAPIリファレンスで公開経路を確認してください。
+Obtain the public vocabulary for framework extensions from the `saealib.core`, `saealib.space`, `saealib.execution`, and `saealib.policies` facades.
+Do not present individual implementation modules or internal Runtime classes as extension APIs for general users.
+Check the release-specific API reference for public import paths for the Compiler and Compiler rules.
 
-## 検証の観点
+## Verification checklist
 
-新しい拡張では、少なくとも次を検証します。
+For every new extension, verify at least the following:
 
-- 契約の入力と出力が、実際のGraph接続と一致すること。
-- 宣言したStateKey以外を読み書きしないこと。
-- Feedbackの候補IDと観測行の順序が一致すること。
-- 同期評価、非同期評価、チェックポイント再開で状態境界が壊れないこと。
-- 通常の利用者向け公開APIが、フレームワーク内部の型に依存しないこと。
+- Contract inputs and outputs match actual Graph connections.
+- The component reads and writes no StateKey other than those it declares.
+- Each Observation subject resolves to a valid candidate or proposal relation and satisfies the consumer's declared ordering/completion contract. Verification does not depend on source position.
+- State boundaries remain intact for synchronous evaluation, asynchronous evaluation, and checkpoint resumption.
+- The public API for ordinary users does not depend on framework-internal types.

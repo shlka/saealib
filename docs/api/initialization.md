@@ -1,5 +1,6 @@
 ---
-primary_layer: layer4
+primary_layer: layer2
+related_layers: [layer3]
 ---
 
 # Initialization

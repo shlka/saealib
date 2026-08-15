@@ -4,43 +4,43 @@ related_layers: [layer2, layer3]
 page_type: entry
 ---
 
-# 探索アルゴリズム
+# Search algorithms
 
-Algorithmは候補を生成するaskと、評価結果を受け取るtellを担います。
-CrossoverとMutationが候補を変化させ、ParentSelectionが交叉に使う親を選びます。
-生成された候補のうち次世代へ残す個体はSurvivorSelectionが選びます。
+`Algorithm` handles `ask`, which generates candidates, and `tell`, which receives evaluation results.
+`Crossover` and `Mutation` change candidates, and `ParentSelection` chooses the parents used for crossover.
+`SurvivorSelection` chooses which generated candidates remain for the next generation.
 
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} {fa}`dna;sd-mr-1` アルゴリズム（Algorithm）
+:::{grid-item-card} {fa}`dna;sd-mr-1` Algorithm
 :link: search_algorithms/algorithm
 :link-type: doc
-候補生成と評価結果の消費を分離した探索アルゴリズムの契約を提供します。
+Provides a search-algorithm contract that separates candidate generation from evaluation-result consumption.
 :::
 
-:::{grid-item-card} {fa}`code-fork;sd-mr-1` 交叉（Crossover）
+:::{grid-item-card} {fa}`code-fork;sd-mr-1` Crossover
 :link: search_algorithms/crossover
 :link-type: doc
-選択された親から子候補を生成します。
+Generates offspring from selected parents.
 :::
 
-:::{grid-item-card} {fa}`bolt-lightning;sd-mr-1` 変異（Mutation）
+:::{grid-item-card} {fa}`bolt-lightning;sd-mr-1` Mutation
 :link: search_algorithms/mutation
 :link-type: doc
-交叉後の候補へ確率的な変化を加えます。
+Adds probabilistic changes to candidates after crossover.
 :::
 
-:::{grid-item-card} {fa}`hand-pointer;sd-mr-1` 親選択（ParentSelection）
+:::{grid-item-card} {fa}`hand-pointer;sd-mr-1` ParentSelection
 :link: search_algorithms/parent_selection
 :link-type: doc
-集団から交叉に使う親の組を選びます。
+Chooses parent groups for crossover from the population.
 :::
 
-:::{grid-item-card} {fa}`user-check;sd-mr-1` 生存者選択（SurvivorSelection）
+:::{grid-item-card} {fa}`user-check;sd-mr-1` SurvivorSelection
 :link: search_algorithms/survivor_selection
 :link-type: doc
-親と子などの選択プールから次世代の個体を選びます。
+Chooses next-generation individuals from a pool such as parents and offspring.
 :::
 
 ::::

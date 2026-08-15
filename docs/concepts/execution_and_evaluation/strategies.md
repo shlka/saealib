@@ -1,22 +1,24 @@
 ---
-primary_layer: layer4
+primary_layer: layer3
+related_layers: [layer2]
+page_type: concept
 ---
 
 # OptimizationStrategy
 
-`saealib` は、高コストな真の評価へ送る候補の選択を `OptimizationStrategy` に委譲します。
-Strategyは、候補生成、予測、評価計画、Feedback、Population更新を一つのグラフとして記述します。
+`saealib` delegates the selection of candidates sent for expensive true evaluation to `OptimizationStrategy`.
+The Strategy describes candidate generation, prediction, evaluation planning, Feedback, and Population updates as one graph.
 
-## OptimizationStrategyの役割
+## OptimizationStrategy's role
 
-現行の正規の拡張点は `build_graph(provider) -> ComponentGraph` です。
-Optimizerはこのグラフを実行前にCompilerへ渡し、`ExecutablePlan`を作成します。
+The graph-native extension point is `build_graph(provider) -> ComponentGraph`.
+Before execution, Optimizer passes this graph to the Compiler to create an `ExecutablePlan`.
 
-`build_pipeline(provider) -> Pipeline` は、既存のPipeline DSLを利用するStrategyが提供できる互換性用の記述形式です。
-この形式を使う場合も、構造化Pipelineへ入れるStageは `stage_component(stage)` で明示的に包みます。
+`build_pipeline(provider) -> Pipeline` is the Stage compatibility path and an optional compatibility representation for Strategies that use the existing Pipeline DSL.
+Even in this form, a Stage inserted into a structured Pipeline must be wrapped explicitly with `stage_component(stage)`.
 
-`step(ctx, provider)` はsequential compatibility経路に残る境界です。
-新しいgraph-native componentは `StateView` を読み、`StatePatch` または `NodeResult` を返します。
+`step(ctx, provider)` is the remaining boundary on the Stage compatibility path.
+A new graph-native component reads a `StateView` and returns a `StatePatch` or `NodeResult`.
 
 The class attribute `requires_surrogate: bool` indicates whether this strategy needs a `SurrogateManager`.
 `Optimizer.validate()` checks this attribute to confirm you aren't trying to use a strategy with `requires_surrogate=True` while `surrogate_manager` is unset.
@@ -48,9 +50,9 @@ blocking, and commits each completed update in the lifecycle order.
 | `PreSelectionStrategy` | CountGeneration → Ask (n_candidates) → SurrogatePredictStage → AcquisitionStage → TopKSelection(k=n_select) → TrueEvaluation → ArchiveUpdate → Tell |
 | `GenerationBasedStrategy` | SurrogateOnlyLoop (gen_ctrl times) → CountGeneration → Ask → TrueEvaluation → ArchiveUpdate → Tell |
 
-各Strategyの構成要素には、EvaluationPlan、非同期評価のsubmitとcollect、Feedback、Tellが含まれます。
-Stageはその一部を担う互換性用の実行単位であり、構造化Pipeline全体と同一の実行契約ではありません。
-詳細は [Stage](../observation_and_state/stage.md) と [Framework](../../framework/index.md) を参照してください。
+Each Strategy's components include the `EvaluationPlan`, asynchronous evaluation submission and collection, Feedback, and Tell.
+A Stage is a compatibility execution unit for part of that work, not the same execution contract as the entire structured Pipeline.
+See [Stage](../observation_and_state/stage.md) and [Framework](../../framework/index.md) for details.
 
 ## Which Strategy to choose
 
@@ -60,15 +62,17 @@ For problems where the surrogate's approximation error itself is unacceptable, o
 
 ## Behavior of runtime swapping
 
-Every Strategy's `step()` builds the current pipeline from `provider` before running it.
-Because the pipeline isn't cached, swapping `provider.algorithm` or `provider.surrogate_manager` mid-run is reliably reflected from the next generation onward.
+When you change configuration such as `provider.algorithm` or `provider.surrogate_manager` at a step boundary in `iterate()` or `run()`, the execution environment detects the change, recompiles the plan, and applies it from the next generation.
+This procedure works on both the Stage compatibility path and the graph-native path.
+When a Component requests recompilation, the plan node returns `RuntimeCommand` or `RequestRecompile` through `NodeResult.commands`.
+The request is accepted when the Runtime environment provides `recompile()`, and recompilation happens between steps. Rejection is also a normal result.
 
 ## Implementing a custom Strategy
 
-独自の候補選択方式を実装するときは、graph-nativeの経路とStage互換の経路を分けて選びます。
+When implementing a custom candidate-selection method, choose separately between the graph-native path and the Stage compatibility path.
 
-**Graph-nativeの経路**：`build_graph()` を実装し、ComponentGraphを返します。
-Pipeline DSLを使って段階的に移行する場合は、各Stageを `stage_component()` で包んでから `lower_pipeline()` に渡します。
+**Graph-native path**: Implement `build_graph()` and return a `ComponentGraph`.
+For a gradual migration using the Pipeline DSL, wrap each Stage with `stage_component()` before passing it to `lower_pipeline()`.
 
 ```python
 from saealib import OptimizationStrategy, Pipeline
@@ -77,7 +81,7 @@ from saealib.stages import stage_component
 
 
 class CustomStrategy(OptimizationStrategy):
-    """Pipeline DSLからStrategyのComponentGraphを作る骨格。"""
+    """Skeleton for building a Strategy ComponentGraph from the Pipeline DSL."""
 
     requires_surrogate = False
 
@@ -91,10 +95,10 @@ class CustomStrategy(OptimizationStrategy):
         return lower_pipeline(pipeline)
 ```
 
-`first_stage` と `second_stage` は、実際に組み合わせるStageインスタンスを表します。
-この例はPipelineからComponentGraphを作る境界だけを示しており、評価計画やFeedbackの契約は各Stageの構成に応じて追加します。
+`first_stage` and `second_stage` stand for the Stage instances to combine.
+This example shows only the boundary for building a ComponentGraph from a Pipeline; add evaluation-plan and Feedback contracts according to the Stage composition.
 
-既存Strategyの一部だけを調整する場合は、新しいStrategyを作るよりも [Pipeline.replace/find](../extension_guidelines.md) で互換性用Pipelineを変更する方が適しています。
+When adjusting only part of an existing Strategy, changing the compatibility Pipeline with [Pipeline.replace/find](../extension_guidelines.md) is preferable to creating a new Strategy.
 
 ## Related components
 

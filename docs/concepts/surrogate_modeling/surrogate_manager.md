@@ -1,5 +1,6 @@
 ---
 primary_layer: layer3
+page_type: concept
 ---
 
 # SurrogateManager
@@ -23,6 +24,19 @@ Covered in detail in [Surrogate accuracy evaluation and dynamic switching](surro
 
 **`on_generation_end(gen, archive, ctx=None)`** / **`with_on_generation_end(fn)`**: An end-of-generation hook.
 Also extensible via the same copy-and-chain approach.
+
+The values received and returned at the two boundaries are:
+
+| Boundary | Receives | Returns | Main users |
+|---|---|---|---|
+| Stage compatibility boundary | `archive`, `candidates_x: np.ndarray`, `ctx`, `refit` | `SurrogatePrediction`, fit completion state | compatibility Stages, sequential compatibility runtime |
+| graph-native boundary | `GenomeBatch`, `FeatureEncoder`, `FeatureBatch`, declared services | Features the Surrogate can fit and predict, plus predictions | Components, Compiler, structured runtime |
+
+The current vector-form Manager API on the Stage compatibility path uses `fit(archive, ctx=None)` and `predict(candidates_x: np.ndarray, archive, ctx=None, *, refit=True) -> SurrogatePrediction`.
+The current API also includes constructors such as `GlobalSurrogateManager(surrogate, training_set=None, accuracy_evaluator=None)`, `LocalSurrogateManager(surrogate, training_set=None, accuracy_evaluator=None)`, and `PairwiseSurrogateManager(surrogate, training_set=None, n_ref=10)`.
+In the structured runtime, the Surrogate input boundary is `GenomeBatch → FeatureEncoder → FeatureBatch → Surrogate`.
+`FeatureEncoder` performs semantic conversion and determines the features the surrogate can learn. It differs from a space capability such as `SamplingService`.
+In the current implementation, the SurrogateManager contract declares `ServiceRequirement("FeatureEncoder")`, and `VectorSpace` registers a default encoder as a service, so numeric vector spaces resolve without extra configuration. `ObjectSpace`, `PermutationSpace`, and `SequenceSpace` raise an error unless the user provides a `FeatureEncoder`. The user decides what to pass to the surrogate.
 
 ## Built-in SurrogateManagers
 

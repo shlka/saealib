@@ -10,7 +10,7 @@ Pages summarizing how named algorithms from the literature are reproduced as com
 Each page has two parts: a theoretical overview of the algorithm (a general explanation independent of saealib), and how to configure it in saealib (the component combination and Python code).
 Full bibliographic details for the sources are collected in [References](../references.md), and each page in this section links there.
 
-Where a configuration does not exactly match the theoretical definition (an approximation), this is noted explicitly on the page.
+When a configuration does not exactly match the theoretical definition, each page states the implementation differences, such as acquisition-function constraints, selection or archive handling, and evaluation order.
 
 ::::{grid} 1 2 2 3
 :gutter: 3
@@ -61,7 +61,8 @@ Multi-objective genetic algorithm combining dominance-based strength and density
 :link: nsga3
 :link-type: doc
 
-Multi-objective genetic algorithm with reference-point-based niche preservation. Suited to many-objective optimization with four or more objectives.
+Multi-objective genetic algorithm that uses reference-direction niche preservation.
+Primarily targets many-objective optimization, while exposing reference-direction behavior with three objectives.
 :::
 
 :::{grid-item-card} SMS-EMOA

@@ -6,9 +6,9 @@ page_type: reference
 
 # Optimization Strategies
 
-組み込みStrategyは、候補生成、評価計画、Feedback、Population更新を構成します。
-新しいStrategyの正規の拡張点は `build_graph(provider) -> ComponentGraph` です。
-`build_pipeline()` は既存のPipeline DSLに対する互換性用の記述形式です。
+Built-in Strategies compose candidate generation, evaluation planning, Feedback, and Population updates.
+The canonical extension point for a new Strategy is `build_graph(provider) -> ComponentGraph`.
+`build_pipeline()` is the compatibility representation for the existing Pipeline DSL.
 
 ## Base
 

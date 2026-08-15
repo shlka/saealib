@@ -4,47 +4,53 @@ related_layers: [layer2, layer4]
 page_type: guide
 ---
 
-# 既存の契約に独自Componentを追加する
+# Add a custom component to an existing contract
 
-前提は、既存のComponentの契約に収まる差し替えを実装することです。
-:::{admonition} このページでできるようになること
+This page assumes that you are implementing a replacement that fits an existing component contract.
+:::{admonition} What you'll be able to do
 :class: tip
 
-このページを終えると、拡張点を選び、最小の契約を確認し、登録してテストできます。
+By the end of this page, you'll be able to choose an extension point, verify its minimal contract, register the component, and test it.
 :::
 
-拡張点の分類は [拡張ガイドライン](../concepts/extension_guidelines.md) で、契約や実行基盤自体を変える場合は [フレームワーク拡張](../framework/extensions.md) に進みます。
+See [Extension guidelines](../concepts/extension_guidelines.md) for the extension-point categories. If you need to change a contract or the execution framework itself, continue to [Framework extensions](../framework/extensions.md).
 
-importの方針は [Canonical Imports](../api/imports.md) にまとめています。
+The import policy is collected in [Canonical Imports](../api/imports.md).
 
-## 拡張点を選ぶ
+## Choose an extension point
 
-ビルトインコンポーネントの設定変更で足りるなら [ビルトインコンポーネントの差し替え](component_swap.md) または [Hook](interface_hooks.md) を使います。
-新しい探索、予測、評価、世代処理が必要なら、対応する契約を持つComponentを選びます。
+If changing a built-in component's settings is enough, use [Swapping built-in components](component_swap.md) or [Hooks](interface_hooks.md).
+When you need new search, prediction, evaluation, or generation logic, choose the component with the corresponding contract.
 
-| 変更内容 | 拡張点 | 最小の実装境界 |
+| Change | Extension point | Minimal implementation boundary |
 |---|---|---|
-| 候補生成と評価結果の反映 | `Algorithm` | `ask()` と `tell()`、必要な属性と契約 |
-| 予測モデル | `Surrogate` | `fit()` と `predict()` |
-| 予測から候補スコアを作る | `AcquisitionFunction` | `evaluate()`、または対応するPointwiseの `compute_reference()` と `score()` |
-| 評価バックエンドを差し替える | `Evaluator` | `evaluate_batch()` と `EvaluationResult` |
-| 世代の実行方針 | `Strategy` | `build_graph()` または既存のStrategy経路 |
-| 互換実行単位 | `Stage` | `execute(state) -> state` |
+| Generate candidates and consume evaluation results | `Algorithm` | `ask()` and `tell()`, plus the required attributes and contract |
+| Prediction model | `Surrogate` | `fit()` and `predict()` |
+| Turn predictions into candidate scores | `AcquisitionFunction` | `evaluate()`, or the corresponding Pointwise `compute_reference()` and `score()` |
+| Extend the evaluation backend on the graph-native path | `EvaluationAdapter` / `Evaluator` | `GenomeBatch → EvaluationAdapter → EvaluationPayload → Evaluator → ObservationBatch` |
+| Swap a synchronous Evaluator on the Stage compatibility path | `Evaluator` | `evaluate_batch()` and `EvaluationResult` |
+| Generation execution policy | `Strategy` | `build_graph()` or the existing Strategy path |
+| Compatibility execution unit | `Stage` | `execute(state) -> state` |
 
-各契約の正確な必須メソッドは、[Algorithmリファレンス](../api/algorithms.md)、[Surrogateリファレンス](../api/surrogate.md)、[Acquisitionリファレンス](../api/acquisition.md)、[Stageリファレンス](../api/stages.md) で確認します。
-名前が似ていても契約は同一ではないため、別のComponentのメソッドを流用するわけにはいきません。
+Check the exact required methods for each contract in the [Algorithm reference](../api/algorithms.md), [Surrogate reference](../api/surrogate.md), [Acquisition reference](../api/acquisition.md), and [Stage reference](../api/stages.md).
+Similar names do not imply identical contracts, so a method from another component cannot be reused without checking the boundary.
 
-## 最小の契約を確認する
+## Check the minimal contract
 
-実装前に、既存の抽象基底クラスの抽象メソッド、`contract()`、実行時に参照される属性を確認します。
-`Algorithm` の `ask()` と `tell()` は `StateView` を読み、`ProposalBatch` または `StatePatch` を返します。
-`Surrogate` は配列を受け取り、`SurrogatePrediction` を返します。
-`Stage` は `OptimizationState` を受け取り、更新後のStateを返します。
+Before implementing the component, inspect the abstract methods on the existing abstract base class, `contract()`, and the attributes read at runtime.
+`Algorithm.ask()` and `Algorithm.tell()` read a `StateView` and return a `ProposalBatch` or `StatePatch`.
+`Surrogate` receives arrays and returns a `SurrogatePrediction`.
+`Stage` receives an `OptimizationState` and returns the updated state.
 
-## 一種類を実装する
+## Extend a component on the graph-native path
 
-ここでは、評価処理だけを差し替える `Evaluator` の最小例を示します。
-`evaluate_batch(x, problem) -> EvaluationResult` が実装境界であり、`EvaluationResult` は `f`、`g`、`cv` の2次元または1次元配列を受け取ります。
+Extend graph-native components such as `Algorithm` at the `ask(...) -> ProposalBatch` and `tell(FeedbackBatch, StateView) -> StatePatch` boundaries.
+When adding evaluation, connect it to the `GenomeBatch → EvaluationAdapter → EvaluationPayload → Evaluator → ObservationBatch` path.
+
+## Extend a synchronous Evaluator on the Stage compatibility path
+
+This example replaces only the evaluation step with an `Evaluator` on the Stage compatibility path.
+The implementation boundary is `evaluate_batch(x, problem) -> EvaluationResult`; `EvaluationResult` accepts one- or two-dimensional `f`, `g`, and `cv` arrays.
 
 ```python
 import numpy as np
@@ -62,13 +68,13 @@ class BatchSphereEvaluator(Evaluator):
         )
 ```
 
-独自Evaluatorを `Optimizer.set_evaluator()` に渡すと、組み込みの同期評価アダプターから呼び出されます。
-評価結果の行数と配列形状は `EvaluationResult` が検証します。
+When you pass a custom Evaluator to `Optimizer.set_evaluator()`, the built-in synchronous evaluation adapter calls it.
+`EvaluationResult` validates the number of rows and the array shapes.
 
-## 登録または組み込む
+## Register or compose the component
 
-直接使う場合は、公開された `Optimizer.set_evaluator(evaluator)` にインスタンスを渡します。
-設定ファイルやPresetから名前で構築する場合だけ、`@register()` を付けてRegistryへ登録します。
+For direct use, pass an instance to the public `Optimizer.set_evaluator(evaluator)` method.
+Add `@register()` and register the class with the Registry only when a configuration file or preset constructs it by name.
 
 ```python
 import numpy as np
@@ -91,45 +97,157 @@ problem = Problem(
 optimizer = Optimizer(problem).set_evaluator(NamedBatchSphereEvaluator())
 ```
 
-`Problem` の評価関数を常にこのEvaluatorで置き換えるとは限らないため、`set_evaluator()` を呼んだ構成を実際に使って検証します。
+Because the `Problem` objective is not always replaced by this Evaluator, validate a configuration that actually calls `set_evaluator()`.
 
-## 最小テストを置く
+## Add a minimal test
 
-まず `evaluate_batch()` の形状と値を固定した小さな単体テストを書きます。
-次に `Optimizer(problem).set_evaluator(...)` から短い `max_fe` で実行し、契約検証と実行経路を確認します。
-抽象基底クラスの一覧化や実行基盤の変更はこのガイドの範囲ではなく、対応するAPIリファレンスまたはフレームワーク拡張の文書を参照します。
+Start with a small unit test that fixes the shapes and values returned by `evaluate_batch()`.
+Then run `Optimizer(problem).set_evaluator(...)` with a short `max_fe` and check contract validation and the execution path.
+Listing abstract base classes and changing the execution framework are outside this guide; see the relevant API reference or framework-extension documentation.
 
-## 関連するConceptとReference
+(port-operators-to-native-saealib-code)=
+## Port external operators to native saealib components
 
-- [Evaluatorの概念](../concepts/execution_and_evaluation/evaluation.md)
-- [拡張方針](../concepts/extension_guidelines.md)
-- [Evaluationリファレンス](../api/evaluation.md)
-- [Coreリファレンス](../api/core.md)
+Wrapping an external operator with a [pymoo adapter](external_libraries.md) keeps a runtime dependency on that library.
+The pymoo adapters already preserve population-level vectorization in `GA`'s default batch mode, calling the wrapped operator once for the whole batch or gated subset, so porting is not normally needed to remove per-item calling overhead.
+Port an operator when you want to remove the runtime dependency, or when its logic should be directly auditable and citable as native saealib code for a software paper.
+The core logic usually stays the same; the main changes are adapting the array shape where necessary and using saealib's RNG.
 
-## コンポーネントの責務を分ける
+The one detail that is easy to get wrong when porting is *where* the individual-level probability gate lives.
+saealib's `GA` checks `Crossover.prob` itself and passes only gated parent groups to `crossover_batch()`, but `Mutation.mutate_batch()` must draw one `self.prob` gate per row and leave ungated rows unchanged.
+Both pymoo's built-in mutations and DEAP's `toolbox.mutate()` (gated externally by `algorithms.varAnd`'s `mutpb`) leave this gate outside the operator, so a ported mutation usually needs a gate array that the original code did not have.
 
-既存の実行契約を保ったまま拡張する場合は、担当する責務と状態の境界を先に決めます。
+### Port from pymoo
 
-| コンポーネント | 主な責務 | 状態の境界 |
+A custom pymoo `Mutation` typically vectorizes over the whole batch `X` (shape `(n_individuals, dim)`):
+
+```python
+import numpy as np
+from pymoo.core.mutation import Mutation as PymooMutationBase
+
+
+class MyPymooMutation(PymooMutationBase):
+    def __init__(self, sigma=1.0):
+        super().__init__()
+        self.sigma = sigma
+
+    def _do(self, problem, X, random_state=None, **kwargs):
+        rng = random_state if random_state is not None else np.random.default_rng()
+        Xp = X.copy()
+        mask = rng.random(Xp.shape) < 0.5
+        Xp[mask] += rng.normal(0, self.sigma, size=Xp.shape)[mask]
+        return Xp
+```
+
+Ported to a native saealib `Mutation`, the batch axis stays in place.
+The `_do()` body maps almost directly to `mutate_batch()`; the main addition is saealib's per-row `prob` gate:
+
+```python
+import numpy as np
+from saealib.operators import Mutation
+
+
+class MyMutation(Mutation):
+    def __init__(self, prob=1.0, *, sigma=1.0, prob_var=0.5):
+        super().__init__()
+        self.prob = prob
+        self.sigma = sigma
+        self.prob_var = prob_var
+
+    def mutate_batch(self, candidates_batch, mutate_range, rng=np.random.default_rng()):
+        candidates_batch = np.asarray(candidates_batch, dtype=float)
+        n, dim = candidates_batch.shape
+        gate = rng.random(n) < self.prob
+        result = candidates_batch.copy()
+        if not np.any(gate):
+            return result
+
+        selected = result[gate]
+        mask = rng.random((len(selected), dim)) < self.prob_var
+        noise = rng.normal(0, self.sigma, size=selected.shape)
+        selected[mask] += noise[mask]
+        result[gate] = selected
+        return result
+```
+
+### Port from DEAP
+
+DEAP operators work on one individual or parent pair at a time, so a native saealib port must add and vectorize over a leading batch axis.
+A custom crossover:
+
+```python
+import random
+
+
+def my_cx(ind1, ind2, swap_rate=0.5):
+    for i in range(len(ind1)):
+        if random.random() < swap_rate:
+            ind1[i], ind2[i] = ind2[i], ind1[i]
+    return ind1, ind2
+```
+
+becomes a native `Crossover` by vectorizing over both the parent pairs and dimensions.
+It also replaces `random.random()` with the `rng` saealib passes in, dropping DEAP's implicit global RNG state in favor of saealib's per-run `np.random.Generator` (kept reproducible via `minimize(..., seed=...)`):
+
+```python
+import numpy as np
+from saealib.operators import Crossover
+
+
+class MyCrossover(Crossover):
+    def __init__(self, prob, swap_rate=0.5):
+        super().__init__()
+        self.prob = prob
+        self.swap_rate = swap_rate
+
+    def crossover_batch(self, parents_batch, bounds=None, rng=np.random.default_rng()):
+        n_pair, _, dim = parents_batch.shape
+        p1, p2 = parents_batch[:, 0, :], parents_batch[:, 1, :]
+        mask = rng.random((n_pair, dim)) < self.swap_rate
+        c1 = np.where(mask, p2, p1)
+        c2 = np.where(mask, p1, p2)
+        return np.stack((c1, c2), axis=1)
+```
+
+`toolbox.mate` is gated externally by `varAnd`'s `cxpb`, matching saealib's `GA`, so — unlike mutation — no extra gate is needed here.
+
+### Port an Algorithm and Problem
+
+Porting a whole search algorithm (survival selection, archive management, index-coupled state such as DE) is not a mechanical rewrite in the same way: it means reimplementing `Algorithm.ask()`/`tell()` from scratch. For pymoo specifically, the engine-mode `PymooAlgorithm` adapter described in [Integrating External Libraries](external_libraries.md) covers this case without a rewrite; for other libraries, see [Algorithm](../concepts/search_algorithms/algorithm.md) for what a native `Algorithm` subclass needs to implement.
+
+## Separate component responsibilities
+
+When extending an existing execution contract, define the component's responsibility and state boundary first.
+
+| Component | Main responsibility | State boundary |
 |---|---|---|
-| `Algorithm` | 候補の提案とFeedbackの消費 | `ProposalBatch`、`FeedbackBatch`、`StatePatch` |
-| Operator | 交叉、突然変異、親選択、生存者選択 | Algorithmから渡された候補と乱数 |
-| `Surrogate` | 予測モデルのfitとpredict | Archiveの学習データと予測結果 |
-| `OptimizationStrategy` | 評価計画、候補選択、Feedbackの流れ | `build_graph()`またはStage互換経路 |
-| `Stage` | 既存sequential経路の一処理 | `OptimizationState`と`replace()` |
+| `Algorithm` | Propose candidates and consume feedback | `ProposalBatch`, `FeedbackBatch`, `StatePatch` |
+| Operator | Crossover, mutation, parent selection, and survivor selection | Candidates and RNG passed by the Algorithm |
+| `Surrogate` | Fit and predict with the prediction model | Training data from the Archive and predictions |
+| `OptimizationStrategy` | Evaluation plan, candidate selection, and feedback flow | `build_graph()` or the Stage compatibility path |
+| `Stage` | One operation on the existing sequential path | `OptimizationState` and `replace()` |
 
-各コンポーネントは、対応するConceptページの契約と組み込み実装を確認してから実装します。
-`Algorithm`の`ask()`と`tell()`、Strategyの`build_graph()`、Stageの`execute()`は同じ境界ではありません。
+Check the contract and built-in implementation on the relevant concept page before implementing each component.
+`Algorithm.ask()` and `Algorithm.tell()`, `Strategy.build_graph()`, and `Stage.execute()` are different boundaries.
 
-## 実装順とStageの移行
+## Plan implementation and Stage migration
 
-1. `Problem`と`SearchSpace`が返すデータ形式を確認します。
-2. 公開名前空間から依存コンポーネントを取得します。
-3. コンポーネント単体の契約と状態アクセスを実装します。
-4. `Optimizer`の差し替えAPIで組み合わせます。
-5. Feedbackの候補ID、評価の出所、チェックポイント動作を確認します。
+1. Check the data formats returned by `Problem` and `SearchSpace`.
+2. Obtain dependent components from the public namespaces.
+3. Implement the component's contract and state access in isolation.
+4. Assemble it with the `Optimizer` replacement API.
+5. Check feedback candidate IDs, evaluation provenance, and checkpoint behavior.
 
-既存Stageを構造化Pipelineへ接続する場合は、`stage_component(stage)`を明示します。
-新しいgraph-native componentでは、Stageの`OptimizationState`境界を再利用せず、`ComponentContract`、`StateView`、`StatePatch`を実装します。
+When connecting an existing Stage to a structured pipeline, make `stage_component(stage)` explicit.
+For a new graph-native component, do not reuse the Stage's `OptimizationState` boundary; implement `ComponentContract`, `StateView`, and `StatePatch`.
 
-詳細は[Algorithm](../concepts/search_algorithms/algorithm.md)、[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md)、[Stage](../concepts/observation_and_state/stage.md)を参照してください。
+For details, see [Algorithm](../concepts/search_algorithms/algorithm.md), [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md), and [Stage](../concepts/observation_and_state/stage.md).
+
+## Related concepts and reference
+
+- [Evaluator concept](../concepts/execution_and_evaluation/evaluation.md)
+- [Extension guidelines](../concepts/extension_guidelines.md)
+- [Evaluation reference](../api/evaluation.md)
+- [Core reference](../api/core.md)
+- {py:class}`saealib.Crossover`
+- {py:class}`saealib.Mutation`

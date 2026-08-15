@@ -4,39 +4,49 @@ related_layers: [layer3]
 page_type: concept
 ---
 
-# グラフ（Graph）
+# Graph
 
-Componentの契約を実行順序とデータ関係へ配置すると、`ComponentGraph`になります。
-`ComponentGraph`は、その配置を保持する不変のグラフです。
-契約の木構造を保持するComponentContractと、ノード間の実行関係を保持するComponentGraphは別の構造です。
+Placing Component contracts into execution order and data relationships produces a `ComponentGraph`.
+`ComponentGraph` is an immutable graph holding that placement.
+ComponentContract, which holds the contract tree, and ComponentGraph, which holds execution relationships between nodes, are separate structures.
 
-## ノードと参照
+## ComponentGraph's role
 
-`ComponentNode`はComponentインスタンス、component ID、role、解決済みサービス、コンパイル用契約スナップショットを保持します。
-`NodeRef`はcomponent IDと任意のroleでノードを参照し、エッジやStateBindingの端点を正規化します。
-同じComponentを異なるroleで配置する場合も、NodeRefによって接続先を区別できます。
+ComponentGraph owns the boundary that places Component contracts into execution order and data relationships.
+It separates the contract tree held by ComponentContract from the node relationships held by the Graph and passes a self-contained structure to the Compiler.
 
-## エッジと状態
+## Nodes and references
 
-`DataEdge`はsource portからtarget portへのデータ接続です。
-`ControlEdge`はデータを渡さず、sourceの完了がtargetの実行に先行する制御依存です。
-`StateBinding`はノードを実際の型付きStateKeyへ結び付け、契約のstate宣言を実行時の状態へ対応付けます。
+`ComponentNode` holds a Component instance, component ID, role, resolved services, and a contract snapshot for compilation.
+`NodeRef` references a node by component ID and optional role, normalizing endpoints for edges and StateBindings.
+`NodeRef` distinguishes connection targets even when the same Component is placed under different roles.
 
-Graphのノード、エッジ、state binding、entry pointはそれぞれ値として保持され、未知のノードを参照する端点などはwell-formedness診断になります。
+## Edges and state
 
-## 構造化領域（Structured Region）
+`DataEdge` is a data connection from a source port to a target port.
+`ControlEdge` passes no data; it is a control dependency that makes source completion precede target execution.
+`StateBinding` connects a node to actual typed StateKeys, mapping the contract's state declarations to runtime state.
 
-`StructuredRegion`は、Sequence、Repeat、Loop、Branchの入れ子構造と、その領域が読む状態効果を保持します。
-Loopは通常のGraph cycleとして表さず、条件と領域効果をCompilerが検証できる構造として保持します。
-構造化領域のlowering後も、ExecutablePlanへ渡す実行木と状態効果の対応を保ちます。
+The Graph holds nodes, edges, state bindings, and entry points as values.
 
-## 生成時点と検証
+## Structured regions
 
-GraphはPipelineやGraph builderがComponentを配置するときに生成されます。
-Compilerは契約スナップショットを読み、entry point、エッジ端点、ポート互換性、状態binding、構造化領域を検証します。
-Compiler ruleがGraphを解決段階で変更する場合は、変更箇所をclaimとして宣言し、未申告の変更や競合をDiagnosticsにします。
+`StructuredRegion` holds nested Sequence, Repeat, Loop, and Branch structures together with the state effects read by the region.
+A Loop is not represented as an ordinary Graph cycle; it is held in a form whose condition and region effects the Compiler can verify.
+After lowering a structured region, the mapping between the execution tree passed to ExecutablePlan and its state effects remains intact.
 
-## 最小例と拡張
+## Construction time and use time
+
+The Graph is created when a Pipeline or Graph builder places Components.
+The Compiler reads contract snapshots and verifies entry points, edge endpoints, port compatibility, state bindings, and structured regions.
+When a Compiler rule changes the Graph during Resolution, it declares the changed locations as claims; undeclared changes and conflicts become Diagnostics.
+
+## Invariants and diagnostics
+
+The Graph holds nodes, edges, state bindings, and entry points as values; endpoints referring to unknown nodes become Diagnostics such as `invalid_graph_edge` or `invalid_entry_point`.
+Undeclared changes or conflicts from resolution rules become `unclaimed_rewrite` or `conflicting_rewrite` Diagnostics.
+
+## Extension points
 
 ```python
 from saealib.core import ComponentContract, ComponentGraph
@@ -52,6 +62,16 @@ node = ComponentNode(component_id="root", component=Empty())
 graph = ComponentGraph(nodes=(node,), entry_points=("root",))
 ```
 
-この例は一つのノードを入口にしたGraphを作ります。
-実際のポートとエッジの構築は、公開APIの構成に合わせて[APIリファレンス](../api/index.md)で確認してください。
-Graph接続のルールを追加する場合は[フレームワーク拡張](extensions.md)を参照してください。
+This example creates a Graph with one node as its entry point.
+See the [API reference](../api/index.md) for building actual ports and edges with the public API.
+See [Framework extensions](extensions.md) when adding Graph connection rules.
+Preserve endpoint and entry-point invariants and do not bypass Compiler verification.
+
+## Related pages
+
+[Contract](contract.md) explains contract inclusion, and [Compiler](compiler.md) explains Graph resolution and verification.
+
+## References
+
+- {py:class}`saealib.core.ComponentGraph`
+- {py:class}`saealib.core.Component`

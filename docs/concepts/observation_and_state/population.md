@@ -1,29 +1,30 @@
 ---
 primary_layer: layer2
+page_type: concept
 ---
 
 # Population
 
-`Population` は、個体の集合と評価結果を扱うためのドメインデータ構造です。
-旧来のベクトル経路では `x`、`f`、`g`、`cv` の列を持つ構造化配列として使います。
-現行のgraph-native経路では、個体の表現を `GenomeBatch` と `SearchSpace` が定め、`Population` の `x` は利用できる場合の互換性用ビューです。
+`Population` is a domain data structure for individuals and evaluation results.
+On the legacy vector path, it is a structured array with `x`, `f`, `g`, and `cv` columns.
+On the current graph-native path, `GenomeBatch` and `SearchSpace` define individual representations, and `Population.x` is a compatibility view available only when possible.
 
-`Initializer` はProblemのSearchSpaceからGenomeを生成し、候補IDとともに状態やArchiveへ登録します。
-したがって、すべてのProblemを浮動小数点の `x` 配列へ変換できるとは限りません。
+`Initializer` generates Genomes from the Problem's SearchSpace and registers them with their candidate IDs in state and the Archive.
+Therefore, not every Problem can be converted into a floating-point `x` array.
 
-## Populationの表現
+## Population's role
 
-`Population` は、Genome、目的値、制約値、制約違反、Algorithm固有の補助属性を保持します。
-Genomeは `DenseVectorBatch`、`ObjectBatch`、PermutationBatchなどの `GenomeBatch` 実装で表せます。
-数値ベクトルとして安全に取得できる場合だけ、`x` またはdense numeric viewを使います。
+`Population` holds Genomes, objective values, constraint values, constraint violations, and Algorithm-specific auxiliary attributes.
+A Genome can be represented by a `GenomeBatch` implementation such as `DenseVectorBatch`, `ObjectBatch`, or `PermutationBatch`.
+Use `x` or a dense numeric view only when the values can be safely obtained as numeric vectors.
 
-`Population` は通常インスタンスとして使い、独自の個体管理が必要な場合だけサブクラス化します。
+Use `Population` as an instance in ordinary cases, and subclass it only when custom individual management is needed.
 
-属性スキーマは `PopulationAttribute(name, dtype, shape, default)` のリストで定義します。
-旧来のベクトル経路では `x`、`f`、`g`、`cv` と、`Algorithm.get_required_attrs(problem)` が返す補助属性をこのスキーマへ追加します。
-Genome-native経路では、GenomeBatchとSearchSpaceの契約が表現の構造を担い、列スキーマだけで個体を表しません。
+Define the attribute schema as a list of `PopulationAttribute(name, dtype, shape, default)` values.
+On the legacy vector path, add `x`, `f`, `g`, `cv`, and the auxiliary attributes returned by `Algorithm.get_required_attrs(problem)` to this schema.
+On the Genome-native path, the GenomeBatch and SearchSpace contracts own the representation structure; individuals are not represented by a column schema alone.
 
-## Main attributes and methods
+## What Population holds
 
 | Method | Role |
 |---|---|
@@ -69,6 +70,10 @@ It doesn't duplicate the actual data — it holds only a reference to the source
 You can read and write values via `get_readonly_value(key)`/`update_value(key, value)`, or equivalently via attribute access such as `ind.x`/`ind.f = ...`.
 Using a stale `Individual` after the source `Population`'s structure (number of individuals or ordering) has changed raises an exception, as an invalid reference.
 
+## Invariants
+
+Individual-attribute arrays share the same individual count and schema, and mutating operations invalidate the cache. Updating them with mismatched row counts or schemas breaks the correspondence between individuals and evaluation results.
+
 ## Archive
 
 `Archive` is a concrete class mixing `ArchiveMixin` into `Population`, used to accumulate evaluated solutions without duplicates.
@@ -100,7 +105,7 @@ The `dominator` argument lets you swap out the definition of the dominance relat
 `eps_cv`'s default is `0.0` (only strictly feasible solutions are considered acceptable), but during an `Optimizer` run, this value is overwritten every generation with `problem.handler.feasibility_threshold`.
 The `0.0` default only matters when using `ParetoArchive` standalone, detached from `Optimizer`.
 
-## A limited extension point
+## Extending Population
 
 `ArchiveMixin`/`ParetoMixin` are designed on the assumption that they're mixed into a subclass of `Population` via multiple inheritance.
 If you need custom population-management logic, you can define a new class combining these mixins (`class MyArchive(ArchiveMixin, Population): ...`).

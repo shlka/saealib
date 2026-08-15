@@ -4,30 +4,30 @@ related_layers: []
 page_type: guide
 ---
 
-# Hook、Stage、Callbackを選ぶ
+# Choose a Hook, Stage, or Callback
 
-前提は、既存の実行経路に観測や後処理を追加したいことです。
-:::{admonition} このページでできるようになること
+The prerequisite is wanting to add observation or post-processing to an existing execution path.
+:::{admonition} What you'll be able to do
 :class: tip
 
-このページを終えると、データを変更するHook、実行単位を置き換えるStage、観測するCallbackを区別できます。
+By the end of this page, you'll be able to distinguish Hooks that change data, Stages that replace execution units, and Callbacks that observe events.
 :::
 
-構成要素の索引は [最適化の構成要素](../concepts/index.md) で、独自の契約が必要なら [独自Component](custom_components.md) に進みます。
+See the [optimization components](../concepts/index.md) index; for a custom contract, continue to [Custom components](custom_components.md).
 
-## 境界を比較する
+## Compare the boundaries
 
-| 手段 | 目的 | 実行時点 | 状態変更の可否 | 適した用途 |
+| Mechanism | Purpose | Execution point | Can change state? | Suitable uses |
 |---|---|---|---|---|
-| `with_post` | 既存Operatorの出力を後処理する | CrossoverまたはMutationの後 | 戻り値で候補を変更できる | 修復、丸め、範囲内への変換 |
-| `with_post_fit` | Surrogateのfit後に処理する | `fit()` の後 | Hookの処理でモデルや外部状態を更新できる | fit記録、モデル後処理 |
-| `Stage` | 互換実行単位を実装または置換する | Pipeline内のStage位置 | `OptimizationState` を返して状態を更新できる | 世代処理の追加、Stage差替え |
-| `CallbackManager` | イベントを観測する | 登録したEventの発火時 | `event.ctx` は読み取り用で、Pipeline入力の置換には使わない | ログ、履歴、条件判断 |
+| `with_post` | Post-process an existing Operator's output | After Crossover or Mutation | Can change candidates through its return value | Repair, rounding, and bounding |
+| `with_post_fit` | Process after a Surrogate fit | After `fit()` | Can update the model or external state in the Hook | Fit records and model post-processing |
+| `Stage` | Implement or replace a compatibility execution unit | At a Stage position in the Pipeline | Can update state by returning an `OptimizationState` | Add generation processing and swap a Stage |
+| `CallbackManager` | Observe events | When a registered Event fires | `event.ctx` is read-only; do not use it to replace Pipeline input | Logging, history, and condition checks |
 
-## Hookでデータを変更する
+## Change data with a Hook
 
-Operatorの候補配列を実際に変えるなら、`CallbackManager` ではなく `with_post()` を使います。
-`with_post()` は元のインスタンスを変更せず、Hookを追加したコピーを返します。
+To change an Operator's candidate array, use `with_post()` rather than `CallbackManager`.
+`with_post()` returns a copy with the Hook added without modifying the original instance.
 
 ```python
 import numpy as np
@@ -41,14 +41,14 @@ def snap_to_grid(offspring, parents, rng, ctx):
 mutation = MutationUniform(0.3).with_post(snap_to_grid)
 ```
 
-Surrogateのfit後処理は、`fn(train_x, train_y, ctx) -> None` を `with_post_fit()` に渡します。
-このHookを使う具体的な契約は [Surrogateの概念](../concepts/surrogate_modeling/surrogate.md) を参照してください。
+For post-processing after a Surrogate fit, pass `fn(train_x, train_y, ctx) -> None` to `with_post_fit()`.
+See the [Surrogate concept](../concepts/surrogate_modeling/surrogate.md) for the contract used by this Hook.
 
-## Stageで実行単位を置き換える
+## Replace an execution unit with a Stage
 
-`Stage` は `execute(state) -> state` の互換性用境界です。
-状態を更新するときは `state.replace()` で新しいStateを返します。
-構造化FrameworkのComponentやCompilerを直接実装する境界ではないため、それが必要なら [フレームワーク拡張](../framework/extensions.md) を参照します。
+`Stage` is the compatibility boundary `execute(state) -> state`.
+Return a new State with `state.replace()` when updating state.
+It is not the boundary for implementing a structured Framework Component or Compiler directly; for that, see [Framework extensions](../framework/extensions.md).
 
 ```python
 from saealib import Stage
@@ -62,12 +62,12 @@ class LogGenerationStage(Stage):
         return state
 ```
 
-Pipelineの構成とStageの契約は [Stageの概念](../concepts/observation_and_state/stage.md) に委ねます。
+See the [Stage concept](../concepts/observation_and_state/stage.md) for Pipeline composition and the Stage contract.
 
-## Callbackで観測する
+## Observe with a Callback
 
-`CallbackManager.register()` は、Event型と `event` を受け取る関数を登録します。
-ハンドラから読む `event.ctx` は、世代や評価回数などの公開された読み取り境界です。
+`CallbackManager.register()` registers a function that receives an Event type and `event`.
+The `event.ctx` read by the handler is the public read boundary for generation and evaluation counts.
 
 ```python
 import numpy as np
@@ -98,14 +98,14 @@ def record(event):
 optimizer.cbmanager.register(GenerationEndEvent, record)
 ```
 
-候補配列を差し替える、または状態を書き換える処理はCallbackの責務ではありません。
-Callbackはイベントの観測、ログ、履歴の記録に使います。
+Replacing candidate arrays or rewriting state is outside a Callback's responsibility.
+Use Callbacks for event observation, logging, and recording history.
 
-独自Componentの契約を実装する必要があるときは [独自Component](custom_components.md) を使い、契約やRuntimeそのものを変更するときは [フレームワーク拡張](../framework/extensions.md) を参照してください。
+Use [Custom components](custom_components.md) when you need to implement a component contract, and see [Framework extensions](../framework/extensions.md) when changing the contract or Runtime itself.
 
-## 関連するConceptとReference
+## Related concepts and reference
 
-- [Callbackの概念](../concepts/observation_and_state/callbacks.md)
-- [拡張方針](../concepts/extension_guidelines.md)
-- [Stageリファレンス](../api/stages.md)
-- [Callbackリファレンス](../api/callbacks.md)
+- [Callback concept](../concepts/observation_and_state/callbacks.md)
+- [Extension guidelines](../concepts/extension_guidelines.md)
+- [Stage reference](../api/stages.md)
+- [Callback reference](../api/callbacks.md)

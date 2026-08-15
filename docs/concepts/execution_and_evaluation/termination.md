@@ -1,11 +1,14 @@
 ---
 primary_layer: layer2
+related_layers: [layer3]
+page_type: concept
 ---
 
 # Termination
 
 `Optimizer` delegates the decision of when to stop optimizing to `Termination`, a swappable top-level component.
-Pass it via `Optimizer.set_termination(termination)`; at runtime, `is_terminated(ctx) -> bool` is called at the end of every generation.
+Pass it via `Optimizer.set_termination(termination)`.
+On the Stage compatibility path (the synchronous Pipeline), `is_terminated(ctx) -> bool` is called at the end of each generation.
 
 ## Termination's role
 
@@ -40,7 +43,7 @@ Each condition passed to `Termination` is a thin wrapper called `TerminationCond
 The `TerminationCondition` returned by `stalled` is a stateful condition that holds "the best score so far" internally via closure.
 It's meant to be used as one instance per `run` — reusing it across multiple `run`s leaves the previous state behind.
 
-## How to extend Termination
+## Extending Termination
 
 `TerminationCondition` isn't an abstract base class — it's a composition wrapper that accepts any callable and provides operator overloads for `|` (OR), `&` (AND), and `~` (NOT).
 A plain function returning `OptimizationState -> bool` is automatically converted into a `TerminationCondition` wherever it's used, so you don't need to subclass a base class to add a custom termination condition.

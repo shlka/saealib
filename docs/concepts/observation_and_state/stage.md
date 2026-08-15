@@ -1,25 +1,27 @@
 ---
 primary_layer: layer2
+related_layers: [layer3]
+page_type: concept
 ---
 
 # Stage
 
-組み込みStrategyは、世代処理を `Stage` という単位に分けて実行します。
-Stageは既存AlgorithmとカスタムStageを支えるsequential compatibility surfaceです。
+Built-in Strategies execute generation processing in units called `Stage`.
+Stage is the sequential compatibility surface that supports existing Algorithms and custom Stages.
 
-`Pipeline` は構造化DSLです。
-graph-native component、入れ子のPipeline、`Repeat`、`Loop`、`Branch`を記述しますが、`OptimizationState` を直接実行しません。
-Pipelineを実行可能な計画へ変換する処理は、Optimizerが内部でCompilerへ委譲します。
-通常の利用者がCompilerを直接呼び出す必要はありません。
+`Pipeline` is a structured DSL.
+It describes graph-native components, nested Pipelines, `Repeat`, `Loop`, and `Branch`, but does not execute `OptimizationState` directly.
+Optimizer delegates conversion of a Pipeline into an executable plan to the Compiler internally.
+Ordinary users do not need to call the Compiler directly.
 
-このページでは、Stageの互換性用契約、組み込みStage、カスタムStageの実装方法を説明します。
-graph-native componentの実装方法は [Framework](../../framework/index.md) を参照してください。
+This page explains the Stage compatibility contract, built-in Stages, and how to implement a custom Stage.
+See [Framework](../../framework/index.md) for implementing a graph-native component.
 
-## Stageの役割
+## Stage's role
 
-`Stage` が実装する境界は `execute(state: OptimizationState) -> OptimizationState` です。
-Stageは `OptimizationState` を受け取り、一つの処理を行って更新後のStateを返します。
-この境界はgraph-native componentの `execute(StateView) -> StatePatch` とは異なります。
+The boundary implemented by `Stage` is `execute(state: OptimizationState) -> OptimizationState`.
+Stage receives an `OptimizationState`, performs one operation, and returns the updated State.
+This boundary differs from a graph-native component's `execute(StateView) -> StatePatch`.
 
 There are three class attributes.
 
@@ -101,8 +103,8 @@ This page covers the contract of each Stage in isolation.
 
 ## Implementing a custom Stage
 
-sequential compatibility経路にカスタムStageを追加するときは、`Stage` を継承して `execute()` を実装します。
-`state.replace(...)` で新しいStateを返し、Stageから直接Compiler用のStatePatchを操作しないようにします。
+To add a custom Stage on the sequential compatibility path, subclass `Stage` and implement `execute()`.
+Return a new State with `state.replace(...)`; a Stage should not manipulate Compiler `StatePatch` values directly.
 
 ```python
 from saealib import Stage
@@ -119,9 +121,9 @@ class LogGenerationStage(Stage):
         return state
 ```
 
-互換性用Stageで追加の値を渡す場合は、`OptimizationState.data` に保存します。
-値を追加するときは、`state.replace(data={**state.data, "key": value})` のように新しい辞書を渡します。
-graph-native componentで同じことを行う場合は、宣言した `StateKey` と `StatePatch` を使います。
+To pass an extra value through a compatibility Stage, store it in `OptimizationState.data`.
+When adding a value, pass a new dictionary such as `state.replace(data={**state.data, "key": value})`.
+For the same operation in a graph-native component, use a declared `StateKey` and `StatePatch`.
 
 ## `to_pseudocode`
 

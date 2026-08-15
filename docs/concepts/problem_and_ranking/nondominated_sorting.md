@@ -1,5 +1,7 @@
 ---
 primary_layer: layer2
+related_layers: [layer3]
+page_type: concept
 ---
 
 # NonDominatedSorter
@@ -50,7 +52,7 @@ Computed from three components: strength (the number of individuals dominated), 
 Be careful not to pass it directly to another Comparator.
 ```
 
-## How to extend NonDominatedSorter
+## Extending NonDominatedSorter
 
 Because `NonDominatedSorter` is a Protocol, writing a single function that satisfies the `(ranks, fronts)` contract is enough to use as a custom implementation.
 There's no need to inherit from a base class.

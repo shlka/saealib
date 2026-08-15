@@ -4,50 +4,58 @@ related_layers: [layer3]
 page_type: concept
 ---
 
-# コンポーネント契約（ComponentContract）
+# ComponentContract
 
-Componentが要求する能力と提供する境界は、`ComponentContract`という一つの宣言値にまとめます。
-Componentとの関係は継承ではなく、Componentが返す契約の包含です。
+The capabilities a Component requires and the boundaries it provides are collected in one declarative value, `ComponentContract`.
+The relationship with a Component is inclusion of the contract returned by the Component, not inheritance.
 
-## 構成要素
+## ComponentContract's role
 
-| フィールド | 宣言する内容 |
+`ComponentContract` owns the capabilities a Component requires and the boundaries it provides as one declarative value.
+It does not represent a Component inheritance hierarchy; it is the boundary Graph and Compiler use to verify connection and execution conditions.
+
+## Structural elements
+
+| Field | Declares |
 |---|---|
-| `ports` | roleごとの`PortContract` |
-| `required_services` | Component全体が必要とする`ServiceRequirement` |
-| `parts` | 保持するコンポーネントの`PartSpec` |
-| `lifecycle` | `events`とFeedbackの境界 |
-| `state` | `reads`、`writes`、`exports`、`reads_enumerable` |
-| `execution` | `required_runtime_capabilities`と`offered_runtime_capabilities` |
-| `assumptions` | コンパイラが扱う前提条件 |
+| `ports` | A `PortContract` for each role |
+| `required_services` | `ServiceRequirement` values required by the whole Component |
+| `parts` | `PartSpec` values for held components |
+| `lifecycle` | The boundary for `events` and Feedback |
+| `state` | `reads`, `writes`, `exports`, and `reads_enumerable` |
+| `execution` | `required_runtime_capabilities` and `offered_runtime_capabilities` |
+| `assumptions` | Assumptions handled by the Compiler |
 
-`ports`のroleは、同じComponentをGraph上の役割ごとに接続するための名前付き集合です。
-`parts`は子Componentの実装を複製する値ではなく、子の契約を親の契約へ含める宣言です。
+The role of `ports` is a named set for connecting the same Component by role in a Graph.
+`parts` declares inclusion of child contracts in the parent contract; it does not duplicate child Component implementations.
 
-## 各契約が持つ情報
+## Information held by each contract
 
-| 契約 | 保持する情報 | 主な検証 |
+| Contract | Information held | Main checks |
 |---|---|---|
-| `PortContract` | 入力と出力の`PortSpec` | ポート名、方向、DataSpec、cardinality |
-| `StateContract` | 読み取り、書き込み、公開する`StateKey` | 宣言外の状態アクセス、状態効果 |
-| `LifecycleContract` | 消費するイベントとFeedbackContract | イベントとFeedbackの互換性 |
-| `ExecutionContract` | 必要または提供するRuntime capability | 実行環境の能力不足 |
-| `AssumptionSet` | コンポーネントが置く前提条件 | 前提条件の登録と既定値 |
+| `PortContract` | Input and output `PortSpec` values | Port name, direction, DataSpec, and cardinality |
+| `StateContract` | `StateKey` values read, written, and exposed | Undeclared state access and state effects |
+| `LifecycleContract` | Consumed events and FeedbackContract | Event and Feedback compatibility |
+| `ExecutionContract` | Required or offered Runtime capabilities | Missing environment capabilities |
+| `AssumptionSet` | Assumptions made by the Component | Assumption registration and defaults |
 
-## 不変条件
+## Construction time and use time
 
-契約は凍結されたデータクラスとして扱われ、Compilerの検証中に内容を変更しません。
-`ports`、`required_services`、`parts`は対応する宣言値だけを含み、role名やコンポーネント名は識別子として検証されます。
-状態の`reads`、`writes`、`exports`は型付きStateKeyで表し、Runtimeは宣言外のキーをComponentへ公開しません。
-実行能力の要求がCompileContextの提供能力に含まれない場合、CompilerはExecutablePlanを実行可能として確定できません。
+The Component creates its contract with `contract()`, and ComponentNode holds a snapshot for the compilation unit.
+The Compiler uses contracts to verify port compatibility, service resolution, state effects, lifecycle, and Runtime capabilities.
+The Runtime creates StateViews according to the contract boundaries in the verified ExecutablePlan and applies resulting StatePatches.
 
-## 生成時点と利用時点
+## Invariants and diagnostics
 
-Componentは`contract()`で契約を生成し、ComponentNodeはコンパイル単位のスナップショットを保持します。
-Compilerは契約をポート互換性、サービス解決、状態効果、ライフサイクル、Runtime capabilityの検証に使います。
-Runtimeは検証済みのExecutablePlanに含まれる契約境界に従ってStateViewを作り、結果のStatePatchを適用します。
+Contracts are treated as frozen data classes and are not changed during Compiler verification.
+`ports`, `required_services`, and `parts` contain only their corresponding declarative values, and role and component names are verified as identifiers.
+State `reads`, `writes`, and `exports` use typed StateKeys, and the Runtime does not expose undeclared keys to a Component.
+If a required execution capability is absent from the capabilities offered by CompileContext, the Compiler cannot mark the ExecutablePlan executable.
+An uncallable contract or incorrect return type becomes `contract_unavailable`; a held component whose contract differs from its declaration becomes `part_contract_mismatch`.
+Inconsistent target ports, required services, state effects, lifecycle, or Runtime capabilities are also reported as Compiler Diagnostics.
+An invalid contract type raises `ValidationError` when the contract is created.
 
-## 最小例
+## Minimal example
 
 ```python
 from saealib.core import ComponentContract, StateContract
@@ -57,10 +65,16 @@ def contract() -> ComponentContract:
     return ComponentContract(state=StateContract())
 ```
 
-ポートの宣言値は[宣言要素（Specs）](specs.md)を、Graphへの配置は[Graph](graph.md)を参照してください。
+## Extension points
 
-## 代表的なDiagnostics
+The public path for Compiler rules may vary by release; see the [API reference](../api/index.md) for concrete imports.
 
-契約の型が誤っている場合は契約生成時に`ValidationError`になります。
-接続先のポート、要求サービス、状態効果、ライフサイクル、Runtime capabilityが整合しない場合はCompilerの`Diagnostic`として報告されます。
-Compiler ruleの公開経路はリリースごとに異なる可能性があるため、具体的なimportは[APIリファレンス](../api/index.md)で確認してください。
+## Related pages
+
+See [Specs](specs.md) for port declarations and [Graph](graph.md) for placing them in a Graph.
+
+## References
+
+- {py:class}`saealib.core.ComponentContract`
+- {py:class}`saealib.core.PortContract`
+- {py:class}`saealib.core.StateContract`

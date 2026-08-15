@@ -1,5 +1,6 @@
 ---
 primary_layer: layer3
+page_type: concept
 ---
 
 # AccuracyBasedSurrogateSwitcher
@@ -13,6 +14,10 @@ The mechanism for dynamically switching `SurrogateManager` or `OptimizationStrat
 The accuracy evaluation method is injected as the `accuracy_evaluator` argument on things like `GlobalSurrogateManager`, and its result is passed to the switching decision via the `surrogate_manager.last_accuracy` property.
 This whole mechanism is meant to be used inside an `iterate()` loop.
 Because the high-level API (`minimize`/`maximize`) provides no way to swap components mid-run, these Switchers can't be used there.
+
+## SurrogateSwitcher's role
+
+It separates and combines the accuracy metric, accuracy evaluation, and switching decision to choose the next `SurrogateManager` or `OptimizationStrategy` configuration.
 
 ## Accuracy metric: SurrogateAccuracyMetric
 
@@ -43,7 +48,10 @@ If `metrics` is omitted from `AccuracyEvaluator`'s constructor, all three metric
 ## Switching decision: AccuracyBasedSurrogateSwitcher
 
 `AccuracyBasedSurrogateSwitcher` requires only one method, `switch(accuracy: SurrogateAccuracy | None) -> T`, to be implemented.
-Called inside an `iterate()` loop, paired with `optimizer.set_*()`.
+It chooses the next component or parameter from the accuracy result. Applying that choice to the Runtime plan is a separate operation.
+
+The following example changes the configuration with `iterate()` and `optimizer.set_*()`. The execution environment detects the change, recompiles the plan, and applies it from the next generation.
+This procedure works on both the Stage compatibility path and the graph-native path.
 
 ```python
 switcher = ManagerSwitcher(primary, fallback)
@@ -65,6 +73,8 @@ for ctx in optimizer.iterate():
 Rather than a binary switch, `GenCtrlSwitcher` continuously adjusts `gen_ctrl` via exponential smoothing {cite}`repicky2017genctrl`.
 Because it holds state — a smoothed error estimate in the public attribute `smoothed_error` — use one instance per `run`.
 The `int` returned by `GenCtrlSwitcher.switch()` is meant to be passed directly to [GenerationBasedStrategy](../execution_and_evaluation/strategies.md)'s `gen_ctrl` argument.
+
+For the path where a component requests recompilation, see [OptimizationStrategy](../execution_and_evaluation/strategies.md)'s "Behavior of runtime swapping".
 
 ## Implementing a custom Switcher
 

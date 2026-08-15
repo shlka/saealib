@@ -1,11 +1,12 @@
 ---
 primary_layer: layer3
+page_type: concept
 ---
 
 # AcquisitionFunction
 
 `SurrogatePredictStage` passes a [Surrogate](surrogate.md)'s predictions to `AcquisitionStage`, which delegates scalar scoring to `AcquisitionFunction`.
-`AcquisitionFunction` only receives `Surrogate`'s prediction results, and knows nothing about the model's internals (what algorithm produced the prediction).
+`AcquisitionFunction` receives candidates, predictions, the archive, context, and prepared data, but it does not know the Surrogate's internal implementation or the algorithm that produced the predictions.
 
 ## AcquisitionFunction's role
 

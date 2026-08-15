@@ -4,19 +4,22 @@ related_layers: []
 page_type: tutorial
 ---
 
-# 高レベルAPIで最適化を実行する
+# Run an optimization with the high-level API
 
-前提は、目的関数と設計変数の範囲が決まっていることです。
-:::{admonition} このページでできるようになること
+The prerequisite is an objective function and bounds for the design variables.
+:::{admonition} What you'll be able to do
 :class: tip
 
-このページを終えると、最小化または最大化を実行し、`Result` から解と実行状況を取得できます。
+By the end of this page, you'll be able to run minimization or maximization and retrieve solutions and run information from `Result`.
 :::
 
-## Problemを準備する
+This page runs a basic problem with the high-level API; to choose components individually, see [Swap built-in components](component_swap.md).
+For per-generation state access or finer configuration, continue to the [low-level API](lowlevel_api.md).
 
-目的関数を受け取る高レベルAPIでは、`dim`、`lb`、`ub` を同時に渡します。
-目的関数は、設計変数の配列を受け取り、スカラーまたは目的数に対応する配列を返します。
+## Set up the problem
+
+The high-level API accepts `dim`, `lb`, and `ub` together with the objective function.
+The objective function receives an array of design variables and returns a scalar or an array with one value per objective.
 
 ```python
 import numpy as np
@@ -38,39 +41,39 @@ result = minimize(
 )
 ```
 
-`Problem` をすでに構築している場合は、そのインスタンスを第一引数に渡します。
-`Problem` の目的方向、変数、制約の設計は [Problemの概念](../concepts/problem_and_ranking/problem.md) を参照してください。
-importの使い分けは [Canonical Imports](../api/imports.md) にまとめています。
+If you have already constructed a `Problem`, pass that instance as the first argument.
+See the [Problem concept](../concepts/problem_and_ranking/problem.md) for objective directions, variables, and constraints.
+The [Canonical Imports](../api/imports.md) page summarizes import choices.
 
-## minimizeとmaximizeを選ぶ
+## Choose minimize or maximize
 
-目的方向が一つなら、関数名で実行の意図を表せます。
-`minimize` は既定で全目的を最小化し、`maximize` は既定で全目的を最大化します。
+When all objectives have the same direction, the function name expresses the intent.
+By default, `minimize` minimizes every objective and `maximize` maximizes every objective.
 
-| 要件 | 呼び出し | 追加の指定 |
+| Requirement | Call | Additional specification |
 |---|---|---|
-| すべて最小化 | `minimize(...)` | なし |
-| すべて最大化 | `maximize(...)` | なし |
-| Problemで方向を定義済み | `minimize(problem)` または `maximize(problem)` | `Problem` の方向が使われる |
-| 複数目的の方向を混在させる | `minimize(..., direction=[...])` | 目的ごとに `minimize` または `maximize` を指定 |
+| Minimize all objectives | `minimize(...)` | None |
+| Maximize all objectives | `maximize(...)` | None |
+| Directions already defined by `Problem` | `minimize(problem)` or `maximize(problem)` | Uses the directions from `Problem` |
+| Mix directions across objectives | `minimize(..., direction=[...])` | Specify `minimize` or `maximize` for each objective |
 
-多目的の目的関数や方向の定義は [多目的最適化](multi_objective.md) に、制約は [制約付き最適化](constraints.md) に、混合変数は [混合変数](mixed_variable.md) に分けています。
+See [Multi-objective optimization](multi_objective.md) for multiple objectives and directions, [Constrained optimization](constraints.md) for constraints, and [Mixed-variable optimization](mixed_variable.md) for mixed variables.
 
-## 実行を制御する
+## Control the run
 
-`max_fe` は真の目的関数評価の上限です。
-省略時は `200 * dim` が使われます。
-`pop_size` は集団サイズ、`seed` は初期化に使う乱数シード、`verbose=False` は世代ログの抑制に使います。
+`max_fe` is the upper bound on true objective evaluations.
+When omitted, the default is `200 * dim`.
+`pop_size` sets the population size, `seed` sets the initialization seed, and `verbose=False` suppresses generation logs.
 
-アルゴリズム、Surrogate、Strategyをビルトインコンポーネントから選ぶ場合は、文字列またはインスタンスを `algorithm`、`surrogate`、`strategy` に渡せます。
-選択と差替えの手順は [ビルトインコンポーネントを差し替える](component_swap.md) に分けています。
+To choose built-in Algorithm, Surrogate, and Strategy components, pass strings or instances to `algorithm`, `surrogate`, and `strategy`.
+The [Swap built-in components](component_swap.md) page covers the selection and swapping procedure.
 
-## Resultを読む
+## Read Result
 
-`minimize()` と `maximize()` は `Result` を返します。
-単目的では `result.x` が最良設計変数、`result.f` が要素数1の配列として対応する目的値を保持します。
-`result.fe` は真の評価回数、`result.gen` は完了した世代数です。
-多目的では `x` と `f` がPareto解の行列になります。
+`minimize()` and `maximize()` return a `Result`.
+For a single objective, `result.x` holds the best design variables and `result.f` holds the corresponding objective value as a one-element array.
+`result.fe` is the number of true evaluations, and `result.gen` is the number of completed generations.
+For multiple objectives, `x` and `f` are matrices of Pareto solutions.
 
 ```python
 print(result.x)
@@ -81,10 +84,10 @@ archive = result.ctx.archive
 print(archive.get_array("x"))
 ```
 
-`result.ctx` は完全な `OptimizationState` です。
-世代ごとの状態取得、途中の停止、コンポーネントの組み立てが必要になったら [低レベルAPI](lowlevel_api.md) に進みます。
+`result.ctx` is the complete `OptimizationState`.
+For per-generation state access, intermediate stopping, or component assembly, continue to the [low-level API](lowlevel_api.md).
 
-## 関連するConceptとReference
+## Related concepts and reference
 
 - [Problem](../concepts/problem_and_ranking/problem.md)
-- [高レベルAPIリファレンス](../api/highlevel.md)
+- [High-level API reference](../api/highlevel.md)

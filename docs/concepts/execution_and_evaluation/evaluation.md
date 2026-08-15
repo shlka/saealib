@@ -1,28 +1,39 @@
 ---
-primary_layer: layer4
+primary_layer: layer2
+related_layers: [layer3, layer4]
+page_type: concept
 ---
 
 # Evaluator
 
-`OptimizationStrategy` は `EvaluationPlan` を作り、Evaluatorまたは非同期Schedulerへ評価Requestを渡します。
-Requestは候補IDとGenomeBatchを持ち、EvaluatorはObservationとして目的値、制約値、制約違反を返します。
-評価が同期か非同期かは、Pipeline側の候補生成契約を変えずにEvaluatorとRuntime providerで切り替えられます。
+`OptimizationStrategy` creates an `EvaluationPlan` and delegates evaluation to the Evaluator.
 
-## Evaluatorの役割
+## Evaluator's role
 
-`Evaluator` の実装境界は `evaluate_batch(payload, problem) -> EvaluationResult` です。
-`payload` は通常 `GenomeBatch` であり、旧来のベクトル経路では `numpy.ndarray` の `(n, dim)` ビューを受け取れます。
-Genomeを評価関数の入力へ変換する必要がある場合は、Problemの `evaluation_adapter` を使います。
+The two synchronous and asynchronous evaluation boundaries receive and return the following values.
 
-`EvaluationRequest` は、Request ID、候補ID、GenomeBatch、メタデータを保持します。
-評価結果は行の順序と候補IDの対応を維持し、目的値、制約値、制約違反に加えて評価コストや出力を持てます。
+| Boundary | Receives | Returns | Main users |
+|---|---|---|---|
+| graph-native boundary | `GenomeBatch → EvaluationAdapter → EvaluationPayload`, candidate IDs, proposal relations, and metadata | `ObservationBatch`, including partial, out-of-order, and repeated observations | Evaluator, asynchronous Scheduler, and structured runtime |
+| Stage compatibility boundary | `x`, `Problem`, and `EvaluationRequest` | `EvaluationResult` (`f`, `g`, `cv`, and optional `candidate_ids`) | Compatibility Stages and sequential compatibility runtime |
 
-`EvaluationResult` は、評価結果の配列と候補IDを保持するデータクラスです。
+Requests passed to the Evaluator or asynchronous Scheduler identify candidate IDs and the items to evaluate.
+The Evaluator and Runtime provider can switch between synchronous and asynchronous evaluation without changing the Pipeline's candidate-generation contract.
+`EvaluationAdapter` converts a `GenomeBatch` into the `EvaluationPayload` accepted by the Evaluator.
+The Evaluator evaluates the payload and matches observations by candidate ID, proposal relation, sequence, status, source, and completion semantics rather than by row position.
 
-- **`f`**：目的値。形状は `(n, n_obj)`。
-- **`g`**：生の制約値。形状は `(n, n_constraints)`。制約がない場合は `(n, 0)`。
-- **`cv`**：候補ごとの集約制約違反。形状は `(n,)`。制約がない場合はすべて `0`。
-- **`candidate_ids`**：結果の各行に対応する候補ID。
+On the Stage compatibility path, use `Evaluator.evaluate_batch(...) -> EvaluationResult`.
+`EvaluationRequest` holds a Request ID, candidate IDs, a GenomeBatch, and metadata.
+Only at the compatibility boundary, `EvaluationResult` must satisfy the shape and row-count rules for `f`, `g`, and `cv`; when `candidate_ids` is provided, it must be unique and match the result row count.
+When `Evaluator.submit` returns `candidate_ids`, they must exactly match the request's candidate IDs.
+This does not require an external `ObservationBatch` to use row order.
+
+`EvaluationResult` is a dataclass holding evaluation-result arrays and candidate IDs.
+
+- **`f`**: Objective values, with shape `(n, n_obj)`.
+- **`g`**: Raw constraint values, with shape `(n, n_constraints)`, or `(n, 0)` when there are no constraints.
+- **`cv`**: Aggregated constraint violation for each candidate, with shape `(n,)`, or all `0` when there are no constraints.
+- **`candidate_ids`**: The candidate ID corresponding to each result row.
 
 ## Built-in Evaluators
 
@@ -37,23 +48,21 @@ Using `JoblibEvaluator` requires the `parallel` extra (`pip install saealib[para
 Besides `backend`'s default `"loky"` (a process pool serializing with cloudpickle), you can switch to third-party backends like `"dask"`/`"ray"` with a single parameter change (the corresponding package and cluster are required separately).
 In configurations using multiple `JoblibEvaluator`s at once, such as an island model, CPU cores can end up over-reserved.
 Either limit each island's `n_jobs` to `1` and control overall concurrency via the parallelism across islands, or use `joblib.parallel_backend` as a context manager to limit the number of inner workers.
-独立した完了時刻を扱う場合は、`AsyncEvaluator`、`SteadyStateStrategy`、`AsyncEvaluationScheduler`、
-`Optimizer.set_async_evaluation_scheduler()` を組み合わせます。
-各候補は保留中のRequestとして管理され、Schedulerが容量、予算、Requestの状態を管理します。
-`collect(wait=False)` は完了を待たずに進捗を返し、PopulationとArchiveの更新はRuntimeが順序を管理します。
+For independent completion times, combine `AsyncEvaluator`, `SteadyStateStrategy`, `AsyncEvaluationScheduler`, and `Optimizer.set_async_evaluation_scheduler()`.
+Each candidate is managed as a pending Request, while the Scheduler manages capacity, budget, and Request state.
+`collect(wait=False)` reports progress without waiting for completion, and the Runtime orders updates to the Population and Archive.
 
-同期Evaluatorを差し替える場合は、`Optimizer.set_evaluator(evaluator)` を使います。
+Swap the synchronous Evaluator with `Optimizer.set_evaluator(evaluator)`.
 
 `EvaluationRequest.metadata` is consumed by evaluators that expose explicit
 execution planners. `RepeatedEvaluation` returns one `EvaluationPlan` request
 per replicate with stable candidate IDs. The scheduler owns capacity, budget,
 and request lifecycle.
 
-## カスタムEvaluatorの実装
+## Implementing a custom Evaluator
 
-独自の評価バックエンドを追加するときは、`Evaluator` を継承して `evaluate_batch()` を実装します。
-次の例は、ベクトルGenomeを受け取る互換性用Evaluatorです。
-非ベクトルGenomeでは、評価関数へ渡すpayloadを `EvaluationAdapter` で定義します。
+The following example is a Stage-compatible synchronous Evaluator that implements `evaluate_batch()`.
+For non-vector Genomes, define the payload passed to the evaluation function with `EvaluationAdapter`.
 
 ```python
 import numpy as np
@@ -77,8 +86,8 @@ class ReversedOrderEvaluator(Evaluator):
         return EvaluationResult(f=f, g=g, cv=cv)
 ```
 
-`problem.evaluate_constraints(xi)` を `problem.evaluate(xi, g_i)` より先に呼び出す順序を維持します。
-[ConstraintHandler](../problem_and_ranking/constraints.md) は制約値を使って目的値を補正するため、この順序を逆にすると補正が正しく適用されません。
+Keep the order that calls `problem.evaluate_constraints(xi)` before `problem.evaluate(xi, g_i)`.
+[ConstraintHandler](../problem_and_ranking/constraints.md) uses constraint values to correct the objective, so reversing this order applies the correction incorrectly.
 
 ## Related components
 
@@ -86,7 +95,7 @@ class ReversedOrderEvaluator(Evaluator):
 - [ConstraintHandler](../problem_and_ranking/constraints.md): Aggregates constraint violation and corrects the objective value inside `problem.evaluate`
 - [Initializer](initialization.md): Uses `Evaluator` to evaluate the initial population
 - [strategies](strategies.md): Uses `Evaluator` to evaluate candidates each generation
-- [Feedback](../observation_and_state/feedback.md)：評価結果をAlgorithmへ渡すFeedbackの構成
+- [Feedback](../observation_and_state/feedback.md): The Feedback structure that passes evaluation results to the Algorithm
 
 ## References
 

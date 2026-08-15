@@ -6,9 +6,9 @@ page_type: reference
 
 # Stages
 
-既定の世代ループを構成する公開Stageです。
-`Stage` は `OptimizationState` を受け取る互換性用の実行面であり、graph-native Componentの契約とは異なります。
-構造化Pipelineへ接続する場合は `stage_component(stage)` を使います。
+These public Stages compose the default generation loop.
+`Stage` is a compatibility execution surface that receives `OptimizationState`, distinct from a graph-native Component's contract.
+Use `stage_component(stage)` to connect a Stage to a structured Pipeline.
 
 ```{eval-rst}
 .. autosummary::

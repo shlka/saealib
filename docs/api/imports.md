@@ -33,7 +33,7 @@ from saealib.acquisition import MeanPrediction
 from saealib.operators import MutationPolynomial
 ```
 
-探索空間、実行、Feedbackの名前は、それぞれ `saealib.space`、`saealib.execution`、`saealib.policies` の公開名前空間から取得します。
+Import SearchSpace, execution, and Feedback names from the public namespaces `saealib.space`, `saealib.execution`, and `saealib.policies`, respectively.
 
 Other public domain namespaces follow the same rule. Prefer the namespace
 export over a deeper module path when both are available.
