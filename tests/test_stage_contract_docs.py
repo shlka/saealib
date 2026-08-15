@@ -14,8 +14,9 @@ from saealib._stage_docs import (
 from saealib.pipeline import Stage
 from saealib.stages import discover_builtin_stages
 
-DOCS_PATH = Path(__file__).parents[1] / "docs/components/stage.md"
-EXTENSION_DOCS_PATH = DOCS_PATH.parent / "extension_guidelines.md"
+DOCS_ROOT = Path(__file__).parents[1] / "docs"
+DOCS_PATH = DOCS_ROOT / "concepts/observation_and_state/stage.md"
+EXTENSION_DOCS_PATH = DOCS_ROOT / "concepts/extension_guidelines.md"
 
 
 def test_production_discovery_lists_all_operational_stages() -> None:
