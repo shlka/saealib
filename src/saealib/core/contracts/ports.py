@@ -140,7 +140,18 @@ class ServiceRequirement:
 
 @dataclass(frozen=True, kw_only=True)
 class PortSpec:
-    """A named, directional data contract."""
+    """A named, directional data contract.
+
+    ``cardinality`` and ``optional`` are independent axes despite the shared
+    vocabulary. ``cardinality`` describes how many items arrive per
+    activation once the port is connected (membership in ``CARDINALITIES``,
+    including ``"OPTIONAL"``, is checked by the compiler's contract
+    diagnostics, not here). ``optional`` describes whether the port may have
+    no upstream producer at all (checked by the dataflow compilation rule).
+    Any combination of the two is valid, e.g. a port with
+    ``cardinality=ONE, optional=True`` requires exactly one item whenever it
+    is connected, but the connection itself is not required.
+    """
 
     name: str
     direction: PortDirection
