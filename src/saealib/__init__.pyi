@@ -92,6 +92,9 @@ from saealib.comparators import dda_non_dominated_sort as dda_non_dominated_sort
 from saealib.comparators import non_dominated_sort as non_dominated_sort
 from saealib.comparators import spea2_fitness as spea2_fitness
 
+# context
+from saealib.context import OptimizationState as OptimizationState
+
 # decomposition
 from saealib.decomposition import Decomposition as Decomposition
 from saealib.decomposition import DecompositionComparator as DecompositionComparator

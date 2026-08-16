@@ -110,7 +110,7 @@ ctx.save("checkpoint.npz")
 A saved checkpoint can be loaded with `OptimizationState.load(path, problem)`, and passing it to `Optimizer.run_from(ctx)` resumes from where it left off.
 
 ```python
-from saealib.context import OptimizationState
+from saealib import OptimizationState
 
 loaded_ctx = OptimizationState.load("checkpoint.npz", problem)
 

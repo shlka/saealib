@@ -62,6 +62,9 @@ from saealib.core import (
 The facade contains the contract vocabulary needed for an ordinary custom
 component. More specialized contract descriptors remain under
 `saealib.core.contracts`.
+`saealib.core.contracts` is a public specialized submodule, not a
+compatibility-only path; treat it as an advanced API when the `saealib.core`
+facade does not expose the descriptor you need.
 
 Use `saealib.execution` for runtime extension points. The canonical
 provider-author surface consists of `RuntimeRegistry`, `RuntimeRegistration`,

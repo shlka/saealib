@@ -3,6 +3,7 @@
 from saealib.core.compiler.compiler import CompilationRule as CompilationRule
 from saealib.core.compiler.compiler import ExecutablePlan as ExecutablePlan
 from saealib.core.compiler.graph import ComponentGraph as ComponentGraph
+from saealib.core.compiler.graph import ComponentNode as ComponentNode
 from saealib.core.compiler.graph import GraphTemplate as GraphTemplate
 from saealib.core.compiler.lowerer import lower_pipeline as lower_pipeline
 from saealib.core.compiler.lowerer import lower_structured as lower_structured
@@ -30,6 +31,7 @@ from saealib.core.runtime import RegionFrame as RegionFrame
 from saealib.core.runtime import StructuredPlan as StructuredPlan
 from saealib.core.state.context import ExecutionContext as ExecutionContext
 from saealib.core.state.context import RuntimeContext as RuntimeContext
+from saealib.core.state.keys import RUNTIME_GENERATION as RUNTIME_GENERATION
 from saealib.core.state.patch import StatePatch as StatePatch
 from saealib.core.state.store import StateStore as StateStore
 from saealib.core.state.store import StateView as StateView

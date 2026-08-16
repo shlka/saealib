@@ -307,6 +307,8 @@ __all__ = [
 _LAZY_EXPORTS: dict[str, str] = {
     # algorithms (less common)
     "PymooAlgorithm": "saealib.algorithms",
+    # context
+    "OptimizationState": "saealib.context",
     # comparators (less common)
     "Dominator": "saealib.comparators",
     "EpsilonDominanceComparator": "saealib.comparators",

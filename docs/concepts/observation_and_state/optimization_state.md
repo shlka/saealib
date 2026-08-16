@@ -67,7 +67,7 @@ Patches that conflict on the same key, or that delete a key which does not exist
 
 ```python
 from saealib.core import StatePatch, StateView
-from saealib.core.state import RUNTIME_GENERATION
+from saealib.core import RUNTIME_GENERATION
 
 
 def execute(view: StateView) -> StatePatch:

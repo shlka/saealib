@@ -50,7 +50,7 @@ Undeclared changes or conflicts from resolution rules become `unclaimed_rewrite`
 
 ```python
 from saealib.core import ComponentContract, ComponentGraph
-from saealib.core.compiler import ComponentNode
+from saealib.core import ComponentNode
 
 
 class Empty:
