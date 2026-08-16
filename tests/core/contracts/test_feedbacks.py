@@ -25,6 +25,7 @@ from saealib.core.contracts import (
 from saealib.core.contracts.execution import ExecutionContract
 from saealib.core.contracts.observation import SURROGATE
 from saealib.exceptions import ValidationError
+from saealib.policies import FeedbackBuilder
 
 
 def _requirement(
@@ -140,3 +141,15 @@ def test_pymoo_completion_matches_partial_tell_and_keeps_runtime_capability() ->
     assert partial.execution == ExecutionContract(
         required_runtime_capabilities=("partial_feedback",)
     )
+
+
+def test_feedback_builder_contract_declares_evaluated_indices() -> None:
+    contract = FeedbackBuilder.contract(cast(FeedbackBuilder, object()))
+    inputs = {port.name: port for port in contract.ports["feedback_builder"].inputs}
+
+    assert "evaluated_indices" in inputs
+    evaluated_indices = inputs["evaluated_indices"]
+    assert evaluated_indices.data.kind == "Ordering"
+    assert evaluated_indices.data.bindings == {}
+    assert evaluated_indices.cardinality == "MANY"
+    assert not evaluated_indices.optional

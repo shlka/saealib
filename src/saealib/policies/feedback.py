@@ -772,6 +772,12 @@ class FeedbackBuilder(ABC):
                             cardinality=MANY,
                             optional=True,
                         ),
+                        PortSpec(
+                            name="evaluated_indices",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="Ordering"),
+                            cardinality=MANY,
+                        ),
                     ),
                     outputs=(
                         PortSpec(
