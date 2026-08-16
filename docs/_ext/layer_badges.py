@@ -1,6 +1,5 @@
 from docutils import nodes
 
-
 _LAYER_NAMES = {
     "layer1": "Layer 1: Use",
     "layer2": "Layer 2: Compose",
@@ -35,7 +34,11 @@ def _add_layer_badge(app, doctree, docname):
         return
 
     title = next(
-        (node for node in doctree.traverse(nodes.title) if isinstance(node.parent, nodes.section)),
+        (
+            node
+            for node in doctree.traverse(nodes.title)
+            if isinstance(node.parent, nodes.section)
+        ),
         None,
     )
     if title is None:
