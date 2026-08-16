@@ -129,6 +129,18 @@ class Stage(ABC):
         notation = self.notation or self.label or self.name or type(self).__name__
         return f"{prefix}\\State {notation}"
 
+    def to_text(self, *, expand: bool = False, indent: int = 0) -> str:
+        """Render this stage as a plain-text algorithmic line."""
+        prefix = "  " * indent
+        if expand and self.stages:
+            inner = "\n".join(
+                s.to_text(expand=True, indent=indent + 1) for s in self.stages
+            )
+            label = self.label or self.name or type(self).__name__
+            return f"{prefix}# {label}\n{inner}"
+        notation = self.notation or self.label or self.name or type(self).__name__
+        return f"{prefix}{notation}"
+
     def contract(self) -> ComponentContract:
         """Return this stage's structural and direct state-access contract."""
         return ComponentContract()
@@ -180,6 +192,11 @@ class _ControlValue:
         prefix = "  " * indent
         return f"{prefix}\\State {self.notation or self.label or self.name}"
 
+    def to_text(self, *, expand: bool = False, indent: int = 0) -> str:
+        """Render this control value as a plain-text line."""
+        prefix = "  " * indent
+        return f"{prefix}{self.notation or self.label or self.name}"
+
 
 class Repeat(_ControlValue):
     """Repeat a structural body a fixed number of times."""
@@ -197,6 +214,11 @@ class Repeat(_ControlValue):
         """Render this repeat as a lightweight pseudocode line."""
         prefix = "  " * indent
         return f"{prefix}\\State \\Repeat{{{self.count}}}"
+
+    def to_text(self, *, expand: bool = False, indent: int = 0) -> str:
+        """Render this repeat as a single plain-text line."""
+        prefix = "  " * indent
+        return f"{prefix}repeat {self.count} times:"
 
 
 class Loop(_ControlValue):
@@ -217,6 +239,11 @@ class Loop(_ControlValue):
         """Render this loop as a lightweight pseudocode line."""
         prefix = "  " * indent
         return f"{prefix}\\State \\Loop{{{self.name}}}"
+
+    def to_text(self, *, expand: bool = False, indent: int = 0) -> str:
+        """Render this loop as a single plain-text line."""
+        prefix = "  " * indent
+        return f"{prefix}loop until {self.name}:"
 
 
 class Branch(_ControlValue):
@@ -242,6 +269,11 @@ class Branch(_ControlValue):
         """Render this branch as a lightweight pseudocode line."""
         prefix = "  " * indent
         return f"{prefix}\\State \\If{{{self.name}}}"
+
+    def to_text(self, *, expand: bool = False, indent: int = 0) -> str:
+        """Render this branch as a single plain-text line."""
+        prefix = "  " * indent
+        return f"{prefix}if {self.name}:"
 
 
 class Pipeline:
@@ -395,6 +427,19 @@ class Pipeline:
         notation = self.notation or self.label or self.name or "Pipeline"
         return f"{prefix}\\State {notation}"
 
+    def to_text(self, *, expand: bool = False, indent: int = 0) -> str:
+        """Render this pipeline as a plain-text algorithmic block."""
+        if expand and self.stages:
+            prefix = "  " * indent
+            label = self.label or self.name or "Pipeline"
+            inner = "\n".join(
+                _to_text(s, expand=True, indent=indent + 1) for s in self.stages
+            )
+            return f"{prefix}# {label}\n{inner}"
+        prefix = "  " * indent
+        notation = self.notation or self.label or self.name or "Pipeline"
+        return f"{prefix}{notation}"
+
 
 def _to_pseudocode(value: PipelineEntry, *, expand: bool, indent: int) -> str:
     renderer = getattr(value, "to_pseudocode", None)
@@ -403,6 +448,15 @@ def _to_pseudocode(value: PipelineEntry, *, expand: bool, indent: int) -> str:
     prefix = "  " * indent
     name = _structural_name(value, type(value).__name__)
     return f"{prefix}\\State {name}"
+
+
+def _to_text(value: PipelineEntry, *, expand: bool, indent: int) -> str:
+    renderer = getattr(value, "to_text", None)
+    if callable(renderer):
+        return renderer(expand=expand, indent=indent)
+    prefix = "  " * indent
+    name = _structural_name(value, type(value).__name__)
+    return f"{prefix}{name}"
 
 
 _register_structural_types(Repeat, Loop, Branch, Stage)

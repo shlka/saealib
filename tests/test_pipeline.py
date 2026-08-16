@@ -12,6 +12,7 @@ from saealib import (
 )
 from saealib.acquisition import MeanPrediction
 from saealib.algorithms.base import Algorithm
+from saealib.core import Condition, StateContract
 from saealib.core.contracts import (
     FeedbackBatch,
     FeedbackRequirement,
@@ -20,7 +21,7 @@ from saealib.core.contracts import (
 )
 from saealib.core.state import POPULATIONS_MAIN, StatePatch, StateView
 from saealib.execution.evaluator import SerialEvaluator
-from saealib.pipeline import Pipeline, Stage
+from saealib.pipeline import Branch, Loop, Pipeline, Repeat, Stage
 from saealib.population import Archive, Population
 from saealib.stages import (
     AcquisitionStage,
@@ -139,6 +140,15 @@ def _make_gb_pipeline(gen_ctrl: int = 3):
         name="gb",
         label="Generation-based strategy",
     )
+
+
+class _TextCondition(Condition):
+    def contract(self) -> StateContract:
+        return StateContract()
+
+    def evaluate(self, view) -> bool:
+        del view
+        return True
 
 
 # ---------------------------------------------------------------------------
@@ -287,6 +297,39 @@ class TestPipelinePseudocode:
         out = outer.to_pseudocode(expand=True)
         assert r"\Comment{inner}" in out
         assert r"gen \leftarrow gen + 1" in out
+
+
+# ---------------------------------------------------------------------------
+# to_text
+# ---------------------------------------------------------------------------
+
+
+class TestPipelineText:
+    def test_stage_to_text_returns_plain_notation(self):
+        stage = CountGenerationStage()
+
+        assert stage.to_text(indent=1) == "  $gen \\leftarrow gen + 1$"
+
+    def test_nested_pipeline_to_text_expands_with_indentation(self):
+        inner = Pipeline([CountGenerationStage()], label="inner")
+        outer = Pipeline([inner], label="outer")
+
+        assert outer.to_text(expand=True, indent=1).splitlines() == [
+            "  # outer",
+            "    # inner",
+            "      $gen \\leftarrow gen + 1$",
+        ]
+
+    def test_control_values_to_text_use_plain_text_forms(self):
+        body = CountGenerationStage()
+        repeat = Repeat(body, count=3, name="repeat")
+        loop = Loop(body, until=_TextCondition(), name="condition")
+        branch = Branch(_TextCondition(), then=body, else_=body, name="ready")
+
+        assert repeat.to_text(indent=1) == "  repeat 3 times:"
+        assert repeat.to_text(expand=True, indent=1) == "  repeat 3 times:"
+        assert loop.to_text(indent=1) == "  loop until condition:"
+        assert branch.to_text(indent=1) == "  if ready:"
 
 
 # ---------------------------------------------------------------------------
