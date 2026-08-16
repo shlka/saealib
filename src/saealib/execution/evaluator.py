@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
@@ -37,15 +37,15 @@ if TYPE_CHECKING:
     from saealib.problem import Problem
 
 
-class EvaluationStatus(Enum):
+class EvaluationStatus(str, Enum):
     """State of a submitted evaluation."""
 
-    PENDING = auto()
-    RUNNING = auto()
-    PARTIAL = auto()
-    COMPLETED = auto()
-    FAILED = auto()
-    CANCELLED = auto()
+    PENDING = "pending"
+    RUNNING = "running"
+    PARTIAL = "partial"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
 
 
 @dataclass(frozen=True)
