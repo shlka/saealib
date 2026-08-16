@@ -203,6 +203,26 @@ def test_iterate_succeeds_with_no_components_set():
     assert ctx is not None
 
 
+def test_resolve_defaults_exposes_components_for_validation_and_pipeline():
+    opt = Optimizer(_make_problem())
+
+    before = opt.validate()
+    assert any("algorithm is not set" in issue for issue in before)
+    assert any("strategy is not set" in issue for issue in before)
+
+    opt.resolve_defaults()
+    algorithm, strategy = opt.algorithm, opt.strategy
+
+    assert algorithm is not None
+    assert strategy is not None
+    assert not any(" is not set" in issue for issue in opt.validate())
+    assert strategy.build_pipeline(opt) is not None
+
+    opt.resolve_defaults()
+    assert opt.algorithm is algorithm
+    assert opt.strategy is strategy
+
+
 # ---------------------------------------------------------------------------
 # Acquisition direction injection
 # ---------------------------------------------------------------------------

@@ -555,6 +555,9 @@ class Optimizer:
         """
         Check configuration consistency. Returns list of issues.
 
+        Call :meth:`resolve_defaults` first when validation results should
+        reflect the components that will be used for execution.
+
         Parameters
         ----------
         require_initializer : bool, optional
@@ -694,7 +697,7 @@ class Optimizer:
                     f"not match problem.n_obj ({self.problem.n_obj})"
                 )
 
-    def _resolve_defaults(self) -> None:
+    def resolve_defaults(self) -> None:
         """Fill unset components with library defaults (Registry + presets file).
 
         Components already set via ``set_*()`` are never overwritten. Gaps
@@ -801,6 +804,10 @@ class Optimizer:
             self.termination = Termination(max_fe_cond(200 * self.problem.dim))
         if self.async_evaluation_scheduler is not None:
             self.async_evaluation_scheduler.algorithm = self.algorithm
+
+    def _resolve_defaults(self) -> None:
+        """Compatibility wrapper for :meth:`resolve_defaults`."""
+        self.resolve_defaults()
 
     def _inject_acquisition_directions(self) -> None:
         """Auto-inject ``problem.direction`` into unset acquisition directions.
@@ -942,7 +949,7 @@ class Optimizer:
         Generator[OptimizationState]
             Generator of OptimizationState.
         """
-        self._resolve_defaults()
+        self.resolve_defaults()
         self._compile_plan()
         issues = self.validate()
         if issues:
@@ -986,7 +993,7 @@ class Optimizer:
         OptimizationState
             The optimization context.
         """
-        self._resolve_defaults()
+        self.resolve_defaults()
         self._compile_plan()
         issues = self.validate()
         if issues:
