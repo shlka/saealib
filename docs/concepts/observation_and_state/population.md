@@ -18,6 +18,9 @@ Therefore, not every Problem can be converted into a floating-point `x` array.
 A Genome can be represented by a `GenomeBatch` implementation such as `DenseVectorBatch`, `ObjectBatch`, or `PermutationBatch`.
 Use `x` or a dense numeric view only when the values can be safely obtained as numeric vectors.
 
+`Population.genomes` is a read-only view borrowed from the live Population's genome storage, not an immutable snapshot.
+Subsequent Population operations such as `update_array` may update that storage in place, so the contents observed through an existing `genomes` view can change.
+
 Use `Population` as an instance in ordinary cases, and subclass it only when custom individual management is needed.
 
 Define the attribute schema as a list of `PopulationAttribute(name, dtype, shape, default)` values.

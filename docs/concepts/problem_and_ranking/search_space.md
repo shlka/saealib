@@ -45,7 +45,9 @@ In the current implementation, the SurrogateManager contract declares `ServiceRe
 
 `SearchSpace` owns candidate representation, candidate-generation services, and representation validity.
 It does not own candidate objective values, observation provenance, component state, or Graph execution order.
-`GenomeBatch` is candidate data owned by the space; it does not implicitly add candidate IDs or Feedback results.
+The space owns the representation rules and services for `GenomeBatch` values, while `Population` owns the live genome storage.
+`Population.genomes` exposes that storage as a read-only view, not an immutable snapshot; subsequent Population updates may change its contents.
+It does not implicitly add candidate IDs or Feedback results.
 
 When adding a new candidate representation, define its `RepresentationSpec`, sampling, validation, and required services within one `SearchSpace` boundary.
 Do not move `RepresentationSpec` into `ComponentContract`; declare connections to the port's `DataSpec` and required services in the Compiler.

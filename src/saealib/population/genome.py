@@ -33,8 +33,13 @@ class GenomeBatch(Protocol):
     """Protocol for a batch of solution genomes.
 
     GenomeBatch is an immutable value representing a collection of genomes.
-    Generic framework components count, select, and concatenate batches
-    without inspecting their representation details.
+    This immutability is at the batch-value level, not necessarily at the
+    Population-storage level: inside a Population, storage may be updated
+    in place through a ``DenseNumericView``.  A batch obtained as a borrowed
+    view of live Population storage can therefore observe subsequent storage
+    updates, while the batch operations themselves do not mutate a batch
+    value.  Generic framework components count, select, and concatenate
+    batches without inspecting their representation details.
 
     The protocol contains exactly three operations:
     - ``__len__()``: count genomes in the batch.

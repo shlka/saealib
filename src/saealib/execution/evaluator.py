@@ -150,7 +150,15 @@ class EvaluationErrorInfo:
 
 @dataclass(frozen=True, init=False)
 class EvaluationRequest:
-    """Owned input snapshot for one evaluation request."""
+    """Input payload whose snapshot semantics depend on how it was built.
+
+    Passing an existing ``GenomeBatch`` directly, such as ``pop.genomes``,
+    does not guarantee that the request owns an immutable snapshot of the
+    input: a Population-backed batch may remain a view of live storage.  The
+    normal planner path instead calls ``genomes.take(indices)`` to construct
+    an independent batch value, which can be treated as the request's input
+    snapshot.
+    """
 
     request_id: np.int64
     candidate_ids: np.ndarray
