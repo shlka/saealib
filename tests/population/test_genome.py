@@ -34,6 +34,16 @@ def test_dense_vector_batch_array_is_readonly() -> None:
         batch.array[0, 0] = 999.0
 
 
+def test_dense_vector_batch_owns_constructor_input() -> None:
+    data = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float64, order="C")
+    batch = DenseVectorBatch(data)
+
+    data[0, 0] = 999.0
+
+    np.testing.assert_array_equal(batch.array, [[1.0, 2.0], [3.0, 4.0]])
+    assert not np.shares_memory(data, batch.array)
+
+
 # ---------------------------------------------------------------------------
 # 2. Out-of-bounds take raises ValidationError
 # ---------------------------------------------------------------------------

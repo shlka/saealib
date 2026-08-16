@@ -87,6 +87,13 @@ class DenseVectorBatch:
     """
 
     def __init__(self, data: Sequence[Sequence[float]] | np.ndarray) -> None:
+        self._set_data(self._normalize_array(data, copy=True))
+
+    @staticmethod
+    def _normalize_array(
+        data: Sequence[Sequence[float]] | np.ndarray, *, copy: bool
+    ) -> np.ndarray:
+        """Validate and normalize dense storage, optionally taking ownership."""
         arr = np.asarray(data)
         if arr.ndim != 2:
             raise ValidationError(
@@ -96,10 +103,21 @@ class DenseVectorBatch:
             arr = arr.astype(np.float64)
         if not arr.flags.c_contiguous:
             arr = np.ascontiguousarray(arr)
+        if copy:
+            arr = arr.copy()
+        return arr
 
+    def _set_data(self, arr: np.ndarray) -> None:
         readonly_view = arr.view()
         readonly_view.setflags(write=False)
         self._data: np.ndarray = readonly_view
+
+    @classmethod
+    def _from_borrowed_view(cls, array: np.ndarray) -> Self:
+        """Build a batch from normalized storage without copying suitable input."""
+        batch = cls.__new__(cls)
+        batch._set_data(cls._normalize_array(array, copy=False))
+        return batch
 
     @property
     def array(self) -> np.ndarray:
@@ -227,7 +245,7 @@ class PermutationBatch:
             )
         if arr.dtype.kind not in "iu":
             raise ValidationError("PermutationBatch values must be integers")
-        arr = np.asarray(arr, dtype=np.int64, order="C")
+        arr = np.array(arr, dtype=np.int64, order="C", copy=True)
         resolved_length = arr.shape[1] if length is None else length
         if not isinstance(resolved_length, int) or resolved_length < 0:
             raise ValidationError(

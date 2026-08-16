@@ -427,6 +427,22 @@ def test_dense_genomes_view_cache_tracks_structure_and_value_updates() -> None:
     assert custom.genomes is not custom.genomes
 
 
+def test_dense_genomes_share_population_storage_after_operations() -> None:
+    pop = _dense_population(capacity=1)
+    assert np.shares_memory(
+        pop._data["x"], cast(DenseVectorBatch, pop._genome_batch).array
+    )
+
+    pop.append(x=np.array([1.0, 2.0]))
+    assert np.shares_memory(pop._data["x"], cast(DenseVectorBatch, pop.genomes).array)
+
+    pop.update_array("x", np.array([[3.0, 4.0]]))
+    assert np.shares_memory(pop._data["x"], cast(DenseVectorBatch, pop.genomes).array)
+
+    pop.append(x=np.array([5.0, 6.0]))
+    assert np.shares_memory(pop._data["x"], cast(DenseVectorBatch, pop.genomes).array)
+
+
 def test_dense_batch_operations_keep_values_and_current_backing() -> None:
     """extract, extend, delete, truncate, and clear preserve dense cache validity."""
     pop = _dense_population(capacity=4)

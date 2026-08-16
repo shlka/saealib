@@ -130,7 +130,9 @@ class Population(Generic[T_Individual]):
             else:
                 if self._dense_numeric_view is None:
                     self._dense_numeric_view = _LegacyDenseNumericView()
-                self._genome_batch = DenseVectorBatch(self._data["x"])
+                self._genome_batch = DenseVectorBatch._from_borrowed_view(
+                    self._data["x"]
+                )
         else:
             self._genome_items = []
             self._genome_batch = ObjectBatch()
@@ -155,13 +157,17 @@ class Population(Generic[T_Individual]):
                 if tuple(attr.shape) != (storage.shape[1],):
                     raise ValidationError("genome dimension does not match x column")
                 self._data["x"][: len(storage)] = storage
-                self._genome_batch = DenseVectorBatch(self._data["x"])
+                self._genome_batch = DenseVectorBatch._from_borrowed_view(
+                    self._data["x"]
+                )
             else:
                 self._data["x"] = np.full(
                     (self._capacity, storage.shape[1]), np.nan, dtype=np.float64
                 )
                 self._data["x"][: len(storage)] = storage
-                self._genome_batch = DenseVectorBatch(self._data["x"])
+                self._genome_batch = DenseVectorBatch._from_borrowed_view(
+                    self._data["x"]
+                )
                 self._schema.setdefault(
                     "x",
                     PopulationAttribute(
@@ -226,7 +232,7 @@ class Population(Generic[T_Individual]):
             self._data[k] = new_arr
         self._capacity = new_capacity
         if isinstance(self._genome_batch, DenseVectorBatch):
-            self._genome_batch = DenseVectorBatch(self._data["x"])
+            self._genome_batch = DenseVectorBatch._from_borrowed_view(self._data["x"])
 
     def mod_value(self) -> None:
         """Mark population values as changed and invalidate cached results."""
@@ -1008,7 +1014,7 @@ class Population(Generic[T_Individual]):
                 and cached[1] == batch_id
             ):
                 return cached[2]
-            view = DenseVectorBatch(self._data["x"][: self._size])
+            view = DenseVectorBatch._from_borrowed_view(self._data["x"][: self._size])
             self._dense_genomes_view_cache = (
                 self._structure_version,
                 batch_id,

@@ -10,13 +10,14 @@ import pytest
 from saealib.core.contracts.data import Fixed
 from saealib.core.contracts.representation import ParameterSpec, RepresentationSpec
 from saealib.exceptions import ValidationError
-from saealib.population.genome import DenseVectorBatch, ObjectBatch
+from saealib.population.genome import DenseVectorBatch, ObjectBatch, PermutationBatch
 from saealib.space import (
     DenseNumericView,
     EquivalenceService,
     FingerprintService,
     GenomeCodec,
     ObjectSpace,
+    PermutationSpace,
     SearchSpace,
     ServiceRegistry,
     ValidationResult,
@@ -116,6 +117,18 @@ def test_vector_space_validate_identifies_out_of_bounds() -> None:
     assert not res_bad.valid
     assert res_bad.valid_mask == (False, True)
     assert len(res_bad.errors) > 0
+
+
+def test_permutation_batch_owns_constructor_input_for_validation() -> None:
+    data = np.array([[0, 1, 2]], dtype=np.int64, order="C")
+    batch = PermutationBatch(data, length=3)
+
+    data[0, 0] = 9
+
+    result = PermutationSpace(3).validate(batch)
+    assert result.valid
+    np.testing.assert_array_equal(batch.array, [[0, 1, 2]])
+    assert not np.shares_memory(data, batch.array)
 
 
 # ---------------------------------------------------------------------------

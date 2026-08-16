@@ -127,7 +127,7 @@ def _canonical_merge_pool(
     pool._dense_numeric_view = population._dense_numeric_view
     pool._genome_items = None
     pool._legacy_scalar_x = False
-    pool._genome_batch = DenseVectorBatch(pool._data["x"])
+    pool._genome_batch = DenseVectorBatch._from_borrowed_view(pool._data["x"])
     return pool
 
 
