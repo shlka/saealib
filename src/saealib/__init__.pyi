@@ -222,6 +222,7 @@ from saealib.stages import SurrogateFitStage as SurrogateFitStage
 from saealib.stages import SurrogateOnlyLoopStage as SurrogateOnlyLoopStage
 from saealib.stages import SurrogatePredictStage as SurrogatePredictStage
 from saealib.stages import TellStage as TellStage
+from saealib.stages import stage_component as stage_component
 from saealib.strategies import DirectStrategy as DirectStrategy
 from saealib.strategies import GenerationBasedStrategy as GenerationBasedStrategy
 from saealib.strategies import IndividualBasedStrategy as IndividualBasedStrategy

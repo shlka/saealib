@@ -440,6 +440,8 @@ _LAZY_EXPORTS: dict[str, str] = {
     "SurrogateStartEvent": "saealib.callback",
     "logging_generation": "saealib.callback",
     "logging_generation_hv": "saealib.callback",
+    # stages (less common)
+    "stage_component": "saealib.stages",
     # utils
     "gaussian_kernel": "saealib.surrogate.rbf",
     "uniform_weight_vectors": "saealib.utils.weight_vectors",
