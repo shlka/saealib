@@ -75,7 +75,7 @@ from saealib import (
     RBFSurrogate,
     gaussian_kernel,
 )
-from saealib.acquisition.mean import CORSDistance
+from saealib.acquisition import CORSDistance
 from saealib.operators.crossover import CrossoverBLXAlpha
 from saealib.operators.mutation import MutationUniform
 from saealib.operators.selection import SequentialSelection, TruncationSelection

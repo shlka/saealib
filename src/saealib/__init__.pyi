@@ -17,6 +17,7 @@ from saealib.acquisition import BatchExpectedImprovement as BatchExpectedImprove
 
 # acquisition (less common)
 from saealib.acquisition import CompositeAcquisition as CompositeAcquisition
+from saealib.acquisition import CORSDistance as CORSDistance
 from saealib.acquisition import EHVIAcquisition as EHVIAcquisition
 from saealib.acquisition import ExpectedImprovement as ExpectedImprovement
 from saealib.acquisition import InverseDensityAcquisition as InverseDensityAcquisition

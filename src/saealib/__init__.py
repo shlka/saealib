@@ -356,6 +356,7 @@ _LAZY_EXPORTS: dict[str, str] = {
     "repair_clipping": "saealib.operators",
     # acquisition (less common)
     "CompositeAcquisition": "saealib.acquisition",
+    "CORSDistance": "saealib.acquisition",
     "InverseDensityAcquisition": "saealib.acquisition",
     "MaximinDistanceAcquisition": "saealib.acquisition",
     "EHVIAcquisition": "saealib.acquisition",

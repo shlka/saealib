@@ -21,7 +21,7 @@ from saealib.acquisition.batch import BatchExpectedImprovement
 from saealib.acquisition.ehvi import EHVIAcquisition
 from saealib.acquisition.ei import ExpectedImprovement
 from saealib.acquisition.lcb import LowerConfidenceBound
-from saealib.acquisition.mean import MeanPrediction
+from saealib.acquisition.mean import CORSDistance, MeanPrediction
 from saealib.acquisition.parego import ParEGOAcquisition
 from saealib.acquisition.pof import ProbabilityOfFeasibility, ProductOfFeasibility
 from saealib.acquisition.smsego import SMSEGOAcquisition
@@ -32,6 +32,7 @@ __all__ = [
     "AcquisitionFunction",
     "AcquisitionResult",
     "BatchExpectedImprovement",
+    "CORSDistance",
     "CompositeAcquisition",
     "EHVIAcquisition",
     "ExpectedImprovement",
