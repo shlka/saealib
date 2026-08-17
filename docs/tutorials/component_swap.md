@@ -45,6 +45,7 @@ from saealib import minimize
 def objective(x):
     return np.sum(x**2)
 
+
 result = minimize(
     objective,
     dim=3,
@@ -74,6 +75,7 @@ from saealib.surrogate import GlobalSurrogateManager, RBFSurrogate, gaussian_ker
 
 def objective(x):
     return np.sum(x**2)
+
 
 problem = Problem(
     objective,

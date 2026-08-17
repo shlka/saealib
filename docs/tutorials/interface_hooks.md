@@ -78,6 +78,7 @@ from saealib import Optimizer, Problem
 def objective(x):
     return np.sum(x**2)
 
+
 problem = Problem(
     objective,
     dim=3,

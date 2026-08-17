@@ -61,10 +61,7 @@ With `Optimizer(problem)`, you can configure each component independently.
 ```python
 from saealib import Optimizer, Termination, max_fe
 
-optimizer = (
-    Optimizer(problem, seed=0)
-    .set_termination(Termination(max_fe(2000)))
-)
+optimizer = Optimizer(problem, seed=0).set_termination(Termination(max_fe(2000)))
 ctx = optimizer.run()
 pareto_f = ctx.pareto_archive.get_array("f")
 ```

@@ -31,6 +31,7 @@ from saealib import Optimizer, Problem, Termination, max_fe
 def objective(x):
     return np.sum(x**2)
 
+
 problem = Problem(
     objective,
     dim=3,
@@ -40,10 +41,7 @@ problem = Problem(
     ub=[5.0] * 3,
 )
 
-optimizer = (
-    Optimizer(problem, seed=0)
-    .set_termination(Termination(max_fe(100)))
-)
+optimizer = Optimizer(problem, seed=0).set_termination(Termination(max_fe(100)))
 ```
 
 Add only the components you need, with `set_initializer()`, `set_algorithm()`, `set_surrogate_manager()`, `set_acquisition()`, `set_strategy()`, `set_evaluator()`, and so on.

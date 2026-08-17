@@ -77,9 +77,7 @@ def build_optimizer(max_fe_value):
             )
         )
         .set_surrogate_manager(
-            LocalSurrogateManager(
-                RBFSurrogate(gaussian_kernel, dim=DIM)
-            )
+            LocalSurrogateManager(RBFSurrogate(gaussian_kernel, dim=DIM))
         )
         .set_acquisition(MeanPrediction())
         .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.1))
