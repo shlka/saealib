@@ -20,6 +20,11 @@ from saealib.operators.mutation import (
 from saealib.operators.pymoo_crossover import PymooCrossover
 from saealib.operators.pymoo_mutation import PymooMutation
 from saealib.operators.repair import repair_clipping
+from saealib.operators.representation import (
+    OrderCrossover,
+    SequenceMutation,
+    SwapMutation,
+)
 from saealib.operators.selection import (
     LinearRankSelection,
     ParentSelection,
@@ -46,11 +51,14 @@ __all__ = [
     "MutationIntegerUniform",
     "MutationPolynomial",
     "MutationUniform",
+    "OrderCrossover",
     "ParentSelection",
     "PymooCrossover",
     "PymooMutation",
+    "SequenceMutation",
     "SequentialSelection",
     "SurvivorSelection",
+    "SwapMutation",
     "TournamentSelection",
     "TruncationSelection",
     "repair_clipping",

@@ -1,0 +1,28 @@
+from saealib.core.contracts.roles import ROLES
+
+
+def test_roles_are_registered_name_only_descriptors() -> None:
+    assert ROLES.names() == (
+        "proposer",
+        "feedback_consumer",
+        "evaluation_planner",
+        "feedback_builder",
+        "fitter",
+        "predictor",
+        "acquisition",
+        "initializer",
+        "evaluator",
+        "decomposition",
+        "strategy",
+        "training_set",
+        "population_comparator",
+        "pairwise_comparator",
+        "crossover",
+        "mutation",
+        "parent_selection",
+        "survivor_selection",
+        "duplicate_filter",
+    )
+    descriptor = ROLES.get("proposer")
+    assert descriptor is not None
+    assert descriptor.description

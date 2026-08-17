@@ -27,6 +27,15 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from saealib.comparators import Comparator
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    Var,
+)
 
 if TYPE_CHECKING:
     from saealib.population import Population
@@ -65,6 +74,35 @@ class Decomposition(ABC):
     np.ndarray
         Scalar scores, shape ``(N,)``. Lower is better.
     """
+
+    def contract(self) -> ComponentContract:
+        """Return the decomposition contract."""
+        objective_schema = Var(name="O")
+        return ComponentContract(
+            ports={
+                "decomposition": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="objectives",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(
+                                kind="FeatureBatch",
+                                bindings={"objective_schema": objective_schema},
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="scores",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(kind="RowPredicate"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                ),
+            },
+        )
 
     @abstractmethod
     def aggregate(
@@ -362,7 +400,6 @@ class DecompositionComparator(Comparator):
         return self._ideal_point
 
     def _to_min_frame(self, f: np.ndarray) -> np.ndarray:
-        """Apply direction transform so that all objectives are minimized."""
         if self.direction is None:
             return f
         return f * (-self.direction)

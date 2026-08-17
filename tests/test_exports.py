@@ -1,7 +1,8 @@
-"""Drift-guard tests for saealib's top-level export tiers.
+"""Drift-guard tests for saealib's top-level export surfaces.
 
-See the "Export tiers" comment at the top of src/saealib/__init__.py for the
-Tier 1 / Tier 2 / namespace-only policy these tests enforce.
+See the root export-surface comment at the top of src/saealib/__init__.py for
+the eager/lazy policy enforced here. Namespace ``__all__`` values are checked
+on their own package and are not required to appear at the root.
 """
 
 import importlib
@@ -13,8 +14,8 @@ import pytest
 
 import saealib
 
-# Subpackages whose __all__ must be fully covered by (Tier 1 + Tier 2 + the
-# allowlist below). saealib.registry is deliberately excluded: it defines no
+# Subpackages whose namespace __all__ values are checked independently of the
+# root surfaces. saealib.registry is deliberately excluded: it defines no
 # __all__, and its get/build/to_spec namespace-only status is covered by
 # tests/test_registry.py::TestTopLevelExport instead.
 SCANNED_SUBPACKAGES = [
@@ -29,33 +30,20 @@ SCANNED_SUBPACKAGES = [
     "saealib.operators",
     "saealib.population",
     "saealib.problem",
+    "saealib.space",
     "saealib.strategies",
     "saealib.surrogate",
     "saealib.utils",
     "saealib.variables",
 ]
 
-NAMESPACE_ONLY: dict[str, set[str]] = {
-    "saealib.benchmarks": {
-        "ackley",
-        "dtlz1",
-        "dtlz2",
-        "dtlz3",
-        "dtlz4",
-        "dtlz5",
-        "dtlz6",
-        "dtlz7",
-        "rastrigin",
-        "rosenbrock",
-        "sphere",
-        "zdt1",
-        "zdt2",
-        "zdt3",
-        "zdt4",
-        "zdt5",
-        "zdt6",
-    },
-    "saealib.defaults": {"dump_preset", "load_defaults", "load_preset"},
+# These are intentionally public only through their subpackage. Keeping a
+# small explicit set makes the independence contract visible and prevents
+# this test from passing only because one incidental symbol happens to differ.
+NAMESPACE_ONLY_EXPORTS = {
+    "saealib.benchmarks": {"sphere"},
+    "saealib.defaults": {"load_defaults"},
+    "saealib.space": {"SearchSpace"},
 }
 
 REMOVED_EXPERIMENTAL_EXPORTS = {
@@ -84,13 +72,19 @@ REMOVED_CANONICAL_ALIASES = {
 }
 
 
-def test_tier1_and_tier2_do_not_overlap():
-    assert set(saealib.__all__).isdisjoint(saealib._TIER2_MAP)
+def test_eager_and_lazy_exports_do_not_overlap():
+    assert set(saealib.__all__).isdisjoint(saealib._LAZY_EXPORTS)
 
 
-def test_tier1_and_tier2_names_resolve():
-    for name in list(saealib.__all__) + list(saealib._TIER2_MAP):
+def test_eager_and_lazy_exports_resolve():
+    for name in list(saealib.__all__) + list(saealib._LAZY_EXPORTS):
         assert hasattr(saealib, name), f"{name} listed but not resolvable"
+
+
+def test_lazy_exports_resolve_from_their_canonical_modules():
+    for name, module_name in saealib._LAZY_EXPORTS.items():
+        module = importlib.import_module(module_name)
+        assert getattr(saealib, name) is getattr(module, name)
 
 
 def test_experimental_generality_code_is_not_a_library_export():
@@ -131,13 +125,39 @@ def test_removed_parameter_names_fail_construction():
         cast(Any, FeedbackStage)(policy=None)
 
 
-def test_subpackage_exports_are_covered():
-    covered = set(saealib.__all__) | set(saealib._TIER2_MAP)
+def test_namespace_exports_resolve_independently_from_root_surface():
+    root_surface = set(saealib.__all__) | set(saealib._LAZY_EXPORTS)
+    namespace_exports: list[tuple[str, str]] = []
     for modname in SCANNED_SUBPACKAGES:
         mod = importlib.import_module(modname)
-        allowed_extra = NAMESPACE_ONLY.get(modname, set())
         for name in getattr(mod, "__all__", []):
-            assert name in covered or name in allowed_extra, (
-                f"{modname}.{name} is public but neither listed at the "
-                "saealib top level nor in the NAMESPACE_ONLY allowlist"
+            assert name in vars(mod) or hasattr(mod, name), (
+                f"{modname}.{name} is listed but unresolved"
             )
+            namespace_exports.append((modname, name))
+
+    independent = [
+        (modname, name)
+        for modname, name in namespace_exports
+        if name not in root_surface
+    ]
+    assert independent, "namespace public APIs must not be coupled to root exports"
+    for _, name in independent:
+        assert name not in saealib.__all__
+        assert name not in saealib._LAZY_EXPORTS
+
+    for modname, names in NAMESPACE_ONLY_EXPORTS.items():
+        mod = importlib.import_module(modname)
+        for name in names:
+            assert name in mod.__all__
+            assert name not in root_surface
+            assert getattr(mod, name) is not getattr(saealib, name, None)
+
+
+def test_root_overlap_uses_the_namespace_canonical_object():
+    root_surface = set(saealib.__all__) | set(saealib._LAZY_EXPORTS)
+    for modname in SCANNED_SUBPACKAGES:
+        mod = importlib.import_module(modname)
+        for name in getattr(mod, "__all__", []):
+            if name in root_surface:
+                assert getattr(saealib, name) is getattr(mod, name)

@@ -3,21 +3,73 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import replace
+from typing import Any, Protocol
 
 import numpy as np
 
-from saealib.context import OptimizationState
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    ServiceRequirement,
+    StateContract,
+    Var,
+)
+from saealib.core.state import RUNTIME_RNG
 from saealib.population import Population
 from saealib.registry import register
+
+
+class _SelectionContext(Protocol):
+    """Comparison and random capabilities used by selection operators."""
+
+    @property
+    def comparator(self) -> Any: ...
+
+    @property
+    def rng(self) -> np.random.Generator: ...
 
 
 class ParentSelection(ABC):
     """Base class for parent selection operators."""
 
+    def contract(self) -> ComponentContract:
+        """Return the parent-selection contract."""
+        parents = DataSpec(
+            kind="Ordering",
+            bindings={"parent_count": Var(name="P")},
+        )
+        return ComponentContract(
+            ports={
+                "parent_selection": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="population",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="parents",
+                            direction=PortDirection.OUTPUT,
+                            data=parents,
+                            cardinality=MANY,
+                        ),
+                    ),
+                )
+            }
+        )
+
     @abstractmethod
     def select(
         self,
-        ctx: OptimizationState,
+        ctx: _SelectionContext,
         population: Population,
         n_pair: int,
         n_parents: int,
@@ -28,7 +80,7 @@ class ParentSelection(ABC):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Optimization context.
         population : Population
             Population to select from.
@@ -67,9 +119,30 @@ class TournamentSelection(ParentSelection):
         super().__init__()
         self.tournament_size = tournament_size
 
+    def contract(self) -> ComponentContract:
+        """Return the tournament-selection contract."""
+        base = super().contract()
+        role = base.ports["parent_selection"]
+        return replace(
+            base,
+            ports={
+                "parent_selection": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            required_services=(
+                                ServiceRequirement(name="ComparisonService"),
+                            ),
+                        ),
+                    ),
+                )
+            },
+        )
+
     def select(
         self,
-        ctx: OptimizationState,
+        ctx: _SelectionContext,
         population: Population,
         n_pair: int,
         n_parents: int,
@@ -80,7 +153,7 @@ class TournamentSelection(ParentSelection):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Optimization context.
         population : Population
             Population to select from.
@@ -124,12 +197,11 @@ class SequentialSelection(ParentSelection):
     """Sequential selection operator."""
 
     def __init__(self):
-        """Initialize sequential selection operator."""
         super().__init__()
 
     def select(
         self,
-        ctx: OptimizationState,
+        ctx: _SelectionContext,
         population: Population,
         n_pair: int,
         n_parents: int,
@@ -142,7 +214,7 @@ class SequentialSelection(ParentSelection):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Optimization context.
         population : Population
             Population to select from.
@@ -177,12 +249,32 @@ class LinearRankSelection(ParentSelection):
     """
 
     def __init__(self):
-        """Initialize linear rank selection."""
         super().__init__()
+
+    def contract(self) -> ComponentContract:
+        """Return the linear-rank-selection contract."""
+        base = super().contract()
+        role = base.ports["parent_selection"]
+        return replace(
+            base,
+            ports={
+                "parent_selection": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            required_services=(
+                                ServiceRequirement(name="ComparisonService"),
+                            ),
+                        ),
+                    ),
+                )
+            },
+        )
 
     def select(
         self,
-        ctx: OptimizationState,
+        ctx: _SelectionContext,
         population: Population,
         n_pair: int,
         n_parents: int,
@@ -193,7 +285,7 @@ class LinearRankSelection(ParentSelection):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Optimization context.
         population : Population
             Population to select from.
@@ -222,10 +314,35 @@ class LinearRankSelection(ParentSelection):
 class SurvivorSelection(ABC):
     """Base class for survivor selection operators."""
 
+    def contract(self) -> ComponentContract:
+        """Return the survivor-selection contract."""
+        return ComponentContract(
+            ports={
+                "survivor_selection": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="pool",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="survivors",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(kind="Ordering"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                )
+            }
+        )
+
     @abstractmethod
     def select(
         self,
-        ctx: OptimizationState,
+        ctx: _SelectionContext,
         pool: Population,
         n_survivors: int,
     ) -> np.ndarray:
@@ -238,7 +355,7 @@ class SurvivorSelection(ABC):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Optimization context.
         pool : Population
             Selection pool to choose survivors from.
@@ -280,9 +397,36 @@ class TruncationSelection(SurvivorSelection):
         """
         self.randomize_ties = randomize_ties
 
+    def contract(self) -> ComponentContract:
+        """Return the truncation-selection contract."""
+        base = super().contract()
+        role = base.ports["survivor_selection"]
+        state = (
+            StateContract(reads=(RUNTIME_RNG,), writes=(RUNTIME_RNG,))
+            if self.randomize_ties
+            else StateContract()
+        )
+        return replace(
+            base,
+            state=state,
+            ports={
+                "survivor_selection": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            required_services=(
+                                ServiceRequirement(name="ComparisonService"),
+                            ),
+                        ),
+                    ),
+                )
+            },
+        )
+
     def select(
         self,
-        ctx: OptimizationState,
+        ctx: _SelectionContext,
         pool: Population,
         n_survivors: int,
     ) -> np.ndarray:
@@ -291,7 +435,7 @@ class TruncationSelection(SurvivorSelection):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Optimization context.
         pool : Population
             Selection pool to choose survivors from.

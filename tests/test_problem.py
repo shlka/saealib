@@ -1,5 +1,5 @@
 """
-Tests for Problem.evaluate_batch (Issue #224, Commit 1).
+Tests for Problem.evaluate_batch.
 
 Tests cover:
 - Default Problem.evaluate_batch returns None (batch evaluation unsupported)

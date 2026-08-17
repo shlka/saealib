@@ -1,4 +1,4 @@
-"""Tests for seed, checkpoint, and resume features (Issue #95)."""
+"""Tests for seed, checkpoint, and resume features."""
 
 from __future__ import annotations
 
@@ -287,7 +287,6 @@ def test_run_from_npz_resumed_flag(tmp_path):
 
 
 def test_run_from_npz_matches_full_run(tmp_path):
-    """Resume from npz checkpoint produces identical results to uninterrupted run."""
     problem = _make_problem()
 
     # Full run: 4 generations
@@ -306,7 +305,6 @@ def test_run_from_npz_matches_full_run(tmp_path):
 
 
 def test_run_from_pickle_matches_full_run(tmp_path):
-    """Resume from pickle checkpoint produces identical results to uninterrupted run."""
     problem = _make_problem()
 
     ctx_full = _make_optimizer(problem, seed=42, n_gen=4).run()

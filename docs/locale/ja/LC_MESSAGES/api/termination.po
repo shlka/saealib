@@ -1,0 +1,137 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 10:57+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/termination.md:6
+msgid "Termination"
+msgstr "Termination"
+
+#: ../../api/termination.md:14:<autosummary>:1
+msgid ":py:obj:`saealib.Termination <saealib.Termination>`"
+msgstr "{py:obj}`saealib.Termination <saealib.Termination>`・終了条件"
+
+#: ../../api/termination.md:14:<autosummary>:1
+msgid "Termination class to determine when to stop the optimization process."
+msgstr "最適化処理をいつ停止するかを判定する終了条件クラスです。"
+
+#: ../../api/termination.md:14:<autosummary>:1
+msgid ":py:obj:`saealib.TerminationCondition <saealib.TerminationCondition>`"
+msgstr "{py:obj}`saealib.TerminationCondition <saealib.TerminationCondition>`・終了条件"
+
+#: ../../api/termination.md:14:<autosummary>:1
+msgid "Composable termination condition."
+msgstr "合成可能な終了条件です。"
+
+#: of saealib.termination.max_fe:1
+msgid "Create a termination condition based on maximum function evaluations."
+msgstr "関数評価回数の上限に基づく終了条件を作成します。"
+
+#: of saealib.termination.f_target saealib.termination.max_fe
+#: saealib.termination.max_gen saealib.termination.stalled
+msgid "Parameters"
+msgstr "パラメータ"
+
+#: of saealib.termination.max_fe:3
+msgid "Maximum number of function evaluations."
+msgstr "関数評価回数の最大値です。"
+
+#: of saealib.termination.f_target saealib.termination.max_fe
+#: saealib.termination.max_gen saealib.termination.stalled
+msgid "Returns"
+msgstr "返します"
+
+#: of saealib.termination.max_fe:6
+msgid "A composable condition that returns True when ``ctx.fe >= value``."
+msgstr "``ctx.fe >= value``のときに真を返す合成可能な条件です。"
+
+#: of saealib.termination.f_target saealib.termination.max_fe
+#: saealib.termination.max_gen saealib.termination.stalled
+msgid "Return type"
+msgstr "戻り値の型"
+
+#: of saealib.termination.f_target:17 saealib.termination.max_fe:10
+#: saealib.termination.max_gen:10 saealib.termination.stalled:18
+msgid "Examples"
+msgstr "例"
+
+#: of saealib.termination.max_gen:1
+msgid "Create a termination condition based on maximum generations."
+msgstr "世代数の上限に基づく終了条件を作成します。"
+
+#: of saealib.termination.max_gen:3
+msgid "Maximum number of generations."
+msgstr "世代数の最大値です。"
+
+#: of saealib.termination.max_gen:6
+msgid "A composable condition that returns True when ``ctx.gen >= value``."
+msgstr "``ctx.gen >= value``のときに真を返す合成可能な条件です。"
+
+#: of saealib.termination.f_target:1
+msgid "Create a termination condition based on a target objective value."
+msgstr "目標目的値に基づく終了条件を作成します。"
+
+#: of saealib.termination.f_target:3
+msgid ""
+"Intended for single-objective problems. The direction is taken from "
+"``ctx.direction`` (``-1`` for minimization, ``+1`` for maximization), so "
+"the condition is met when the best objective found reaches ``value`` from"
+" the correct side (``best <= value`` when minimizing, ``best >= value`` "
+"when maximizing). Returns ``False`` while the archive is empty."
+msgstr ""
+"単目的問題用です。方向は``ctx.direction``（最小化は``-1``、最大化は``+1``）から取り、最良目的値が正しい側から``value``に達したときに条件を満たします（最小化では``best"
+" <= value``、最大化では``best >= value``）。アーカイブが空の間は``False``を返します。"
+
+#: of saealib.termination.f_target:9
+msgid "Target objective value."
+msgstr "目標目的値です。"
+
+#: of saealib.termination.f_target:12
+msgid ""
+"A composable condition that returns True when the best objective in the "
+"archive reaches ``value``."
+msgstr "アーカイブ内の最良目的値が``value``に達したときに真を返す合成可能な条件です。"
+
+#: of saealib.termination.stalled:1
+msgid "Create a termination condition based on lack of improvement (stagnation)."
+msgstr "改善がない状態（停滞）に基づく終了条件を作成します。"
+
+#: of saealib.termination.stalled:3
+msgid ""
+"Terminates when the best score (``f @ direction``, higher is better) has "
+"not improved by more than ``tol`` for ``window`` consecutive generations."
+" Improvement is tracked across calls using ``ctx.gen``; the returned "
+"condition is therefore stateful and intended to be used once per run."
+msgstr ""
+"最良スコア（``f @ "
+"direction``、高いほど良い）が``window``世代連続で``tol``を超えて改善しないと終了します。改善は``ctx.gen``を使って呼び出し間で追跡するため、返される条件は状態を持ち、1回の実行につき1度使う想定です。"
+
+#: of saealib.termination.stalled:8
+msgid "Number of generations without improvement before terminating."
+msgstr "終了前に改善がない世代数です。"
+
+#: of saealib.termination.stalled:10
+msgid "Minimum score increase counted as an improvement, by default ``1e-8``."
+msgstr "改善として数える最小スコア増加量です。既定値は``1e-8``です。"
+
+#: of saealib.termination.stalled:13
+msgid ""
+"A composable condition that returns True after ``window`` stagnant "
+"generations."
+msgstr "``window``世代停滞した後に真を返す合成可能な条件です。"

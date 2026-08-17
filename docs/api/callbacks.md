@@ -1,3 +1,7 @@
+---
+primary_layer: layer2
+---
+
 # Callbacks
 
 ## Events
@@ -16,6 +20,8 @@
    saealib.GenerationEndEvent
    saealib.SurrogateStartEvent
    saealib.SurrogateEndEvent
+   saealib.AcquisitionStartEvent
+   saealib.AcquisitionEndEvent
    saealib.PostCrossoverEvent
    saealib.PostMutationEvent
    saealib.PostAskEvent

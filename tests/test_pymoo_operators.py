@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import math
+from unittest.mock import patch
 
 import numpy as np
 import pytest
+from _algorithm_boundary import ask as algorithm_ask
+from _algorithm_boundary import tell as algorithm_tell
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
 
@@ -19,6 +22,7 @@ from saealib import (
     TruncationSelection,
     minimize,
 )
+from saealib.algorithms.ga import _canonical_merge_pool
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.operators import PymooCrossover, PymooMutation
@@ -385,7 +389,7 @@ class TestPymooOperatorsEndToEnd:
 
 
 # ---------------------------------------------------------------------------
-# GA.ask() batch-path dispatch (Issue #224, commit 6)
+# GA.ask() batch-path dispatch
 # ---------------------------------------------------------------------------
 
 
@@ -492,10 +496,80 @@ class TestGABatchDispatch:
             survivor_selection=TruncationSelection(),
         )
         ctx = _make_continuous_ctx(n_pop=10)
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=13)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=13)
         assert len(offspring) == 13
         assert counted_cx.n_do_calls == 1
         assert counted_mut.n_do_calls == 1
+
+    def test_tell_resolves_main_population_once(self):
+        ga = GA(
+            crossover=PymooCrossover(SBX(eta=15)),
+            mutation=PymooMutation(PM(eta=20)),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        ctx = _make_continuous_ctx(n_pop=10)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=10)
+
+        with patch.object(
+            ctx, "get_population", wraps=ctx.get_population
+        ) as get_population:
+            algorithm_tell(ga, ctx, offspring, _NoopProvider())
+
+        assert get_population.call_count == 1
+
+    def test_tell_dense_replacement_does_not_extract_survivors(self, monkeypatch):
+        ga = GA(
+            crossover=PymooCrossover(SBX(eta=15)),
+            mutation=PymooMutation(PM(eta=20)),
+            parent_selection=TournamentSelection(2),
+            survivor_selection=TruncationSelection(),
+        )
+        ctx = _make_continuous_ctx(n_pop=10)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=10)
+
+        def fail_extract(*args, **kwargs):
+            pytest.fail("dense GA.tell should not extract survivors")
+
+        monkeypatch.setattr(Population, "extract", fail_extract)
+        algorithm_tell(ga, ctx, offspring, _NoopProvider())
+
+    def test_private_merge_pool_matches_empty_like_after_both_extends(self):
+        ctx = _make_continuous_ctx(n_pop=10)
+        offspring = ctx.population.empty_like(capacity=10)
+        rng = np.random.default_rng(91)
+        offspring.extend(
+            {
+                "x": rng.uniform(-1.0, 1.0, size=(10, DIM)),
+                "f": np.arange(10, dtype=np.float64).reshape(10, 1),
+                "g": np.zeros((10, 0)),
+                "cv": np.zeros(10),
+            }
+        )
+
+        fast = _canonical_merge_pool(ctx.population, offspring, 20)
+        assert fast is not None
+        reference = ctx.population.empty_like(capacity=20)
+        for pool in (fast, reference):
+            pool._extend_internal(ctx.population, preserve_ids=True)
+            pool._extend_internal(offspring, preserve_ids=True)
+
+        assert set(fast.__dict__) == set(reference.__dict__)
+        assert len(fast) == len(reference) == 20
+        for key in reference.schema:
+            np.testing.assert_array_equal(fast.get_array(key), reference.get_array(key))
+        np.testing.assert_array_equal(fast.get_array("x"), reference.get_array("x"))
+        assert fast.structure_version == reference.structure_version == 2
+
+    def test_private_merge_pool_rejects_population_subclasses(self):
+        ctx = _make_continuous_ctx(n_pop=4)
+
+        class CustomPopulation(Population):
+            pass
+
+        custom = CustomPopulation(ctx.population.attrs, init_capacity=4)
+        custom.extend({"x": ctx.population.get_array("x")[:4]})
+        assert _canonical_merge_pool(ctx.population, custom, 8) is None
 
     def test_sequential_mode_calls_do_once_per_unit(self):
         counted_cx = _CountedSBX(eta=15)
@@ -508,7 +582,8 @@ class TestGABatchDispatch:
             variation_execution="sequential",
         )
         n_offspring = 13
-        ga.ask(
+        algorithm_ask(
+            ga,
             _make_continuous_ctx(n_pop=10),
             _NoopProvider(),
             n_offspring=n_offspring,
@@ -528,7 +603,8 @@ class TestGABatchDispatch:
         )
         ga.variation_execution = "sequential"
         n_offspring = 13
-        ga.ask(
+        algorithm_ask(
+            ga,
             _make_continuous_ctx(n_pop=10),
             _NoopProvider(),
             n_offspring=n_offspring,
@@ -548,7 +624,8 @@ class TestGABatchDispatch:
             variation_execution={"crossover": "sequential"},
         )
         n_offspring = 13
-        ga.ask(
+        algorithm_ask(
+            ga,
             _make_continuous_ctx(n_pop=10),
             _NoopProvider(),
             n_offspring=n_offspring,
@@ -596,7 +673,7 @@ class TestGABatchDispatch:
         )
         ga.variation_execution = variation_execution
         with pytest.raises(ConfigurationError, match="variation_execution"):
-            ga.ask(_make_continuous_ctx(n_pop=10), _NoopProvider())
+            algorithm_ask(ga, _make_continuous_ctx(n_pop=10), _NoopProvider())
 
     def test_batch_mode_invokes_overridden_batch_hooks_once(self):
         crossover = _BatchHookCrossover(SBX(eta=15), prob=1.0)
@@ -607,7 +684,8 @@ class TestGABatchDispatch:
             parent_selection=TournamentSelection(2),
             survivor_selection=TruncationSelection(),
         )
-        ga.ask(
+        algorithm_ask(
+            ga,
             _make_continuous_ctx(n_pop=10),
             _NoopProvider(),
             n_offspring=13,
@@ -627,7 +705,7 @@ class TestGABatchDispatch:
         )
         ctx = _make_mixed_ctx(n_pop=8)
         n_offspring = 10
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=n_offspring)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=n_offspring)
         n_children = ga.crossover.n_children
         n_pair = math.ceil(n_offspring / n_children)
         assert len(offspring) == n_offspring
@@ -644,7 +722,7 @@ class TestGABatchDispatch:
             survivor_selection=TruncationSelection(),
         )
         ctx = _make_mixed_ctx(n_pop=8)
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=10)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=10)
         assert len(offspring) == 10
         assert counted_cx.n_do_calls == 1
         assert counted_mut.n_do_calls == 1
@@ -673,7 +751,7 @@ class TestGABatchDispatch:
             survivor_selection=TruncationSelection(),
         )
         ctx = _make_continuous_ctx(n_pop=10)
-        ga.ask(ctx, _NoopProvider(), n_offspring=13)
+        algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=13)
         n_children = ga.crossover.n_children
         n_pair = math.ceil(13 / n_children)
         assert cx_calls[0] == n_pair
@@ -695,7 +773,7 @@ class TestGABatchDispatch:
             duplicate_elimination=de,
         )
         ctx = _make_continuous_ctx(n_pop=10)
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=10)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=10)
         assert len(offspring) == 10
 
     def test_duplicate_elimination_populated_gate_branch(self):
@@ -712,5 +790,5 @@ class TestGABatchDispatch:
             duplicate_elimination=de,
         )
         ctx = _make_continuous_ctx(n_pop=10, identical=True)
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=10)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=10)
         assert len(offspring) == 10

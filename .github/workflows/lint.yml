@@ -16,7 +16,7 @@ jobs:
       - name: Run Ruff (Format)
         run: uvx ruff format --check .
       - name: Run Ruff (Lint)
-        run: uvx ruff check --fix --output-format=github .
+        run: uvx ruff check --output-format=github .
 
   ty:
     runs-on: ubuntu-latest
@@ -27,4 +27,4 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras
       - name: Run ty
-        run: uv run --with ty ty check src/saealib tests/
+        run: uv run --with ty==0.0.69 ty check src/saealib tests/

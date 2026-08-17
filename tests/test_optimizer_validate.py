@@ -13,6 +13,7 @@ from saealib.acquisition.mean import MeanPrediction
 from saealib.acquisition.pof import ProbabilityOfFeasibility, ProductOfFeasibility
 from saealib.acquisition.uncertainty import MaxUncertainty
 from saealib.comparators import SingleObjectiveComparator
+from saealib.core.contracts import ComponentContract
 from saealib.execution.initializer import LHSInitializer
 from saealib.optimizer import Optimizer
 from saealib.problem import Problem
@@ -41,15 +42,22 @@ def _make_problem(n_obj: int = N_OBJ) -> Problem:
 def _stub_strategy(requires_surrogate: bool = False) -> OptimizationStrategy:
     m = MagicMock(spec=OptimizationStrategy)
     m.requires_surrogate = requires_surrogate
+    m.contract.return_value = ComponentContract()
     return m
+
+
+def _contract_mock() -> MagicMock:
+    component = MagicMock()
+    component.contract.return_value = ComponentContract()
+    return component
 
 
 def _fully_configured() -> Optimizer:
     opt = Optimizer(_make_problem())
-    opt.set_algorithm(MagicMock())
+    opt.set_algorithm(_contract_mock())
     opt.set_strategy(_stub_strategy(requires_surrogate=False))
-    opt.initializer = MagicMock()
-    opt.set_termination(MagicMock())
+    opt.initializer = _contract_mock()
+    opt.set_termination(_contract_mock())
     return opt
 
 
@@ -193,6 +201,26 @@ def test_iterate_succeeds_with_no_components_set():
     opt = Optimizer(_make_problem())
     ctx = next(opt.iterate())
     assert ctx is not None
+
+
+def test_resolve_defaults_exposes_components_for_validation_and_pipeline():
+    opt = Optimizer(_make_problem())
+
+    before = opt.validate()
+    assert any("algorithm is not set" in issue for issue in before)
+    assert any("strategy is not set" in issue for issue in before)
+
+    opt.resolve_defaults()
+    algorithm, strategy = opt.algorithm, opt.strategy
+
+    assert algorithm is not None
+    assert strategy is not None
+    assert not any(" is not set" in issue for issue in opt.validate())
+    assert strategy.build_pipeline(opt) is not None
+
+    opt.resolve_defaults()
+    assert opt.algorithm is algorithm
+    assert opt.strategy is strategy
 
 
 # ---------------------------------------------------------------------------

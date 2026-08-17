@@ -1,0 +1,179 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/stages.md:7
+msgid "Stages"
+msgstr "ステージ"
+
+#: ../../api/stages.md:9
+msgid ""
+"These public Stages compose the default generation loop. `Stage` is a "
+"compatibility execution surface that receives `OptimizationState`, "
+"distinct from a graph-native Component's contract. Use "
+"`stage_component(stage)` to connect a Stage to a structured Pipeline."
+msgstr ""
+"既定の世代ループを構成する公開Stageです。 `Stage` は `OptimizationState` を受け取る互換性用の実行面であり"
+"、graph-native Componentの契約とは異なります。 構造化Pipelineへ接続する場合は "
+"`stage_component(stage)` を使います。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ":py:obj:`saealib.CountGenerationStage <saealib.CountGenerationStage>`"
+msgstr "{py:obj}`saealib.CountGenerationStage <saealib.CountGenerationStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Increment the generation counter by one."
+msgstr "世代カウンターを1増やします。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ":py:obj:`saealib.AskStage <saealib.AskStage>`"
+msgstr "{py:obj}`saealib.AskStage <saealib.AskStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Generate offspring candidates via the algorithm's ask() method."
+msgstr "アルゴリズムのask()メソッドで子個体候補を生成します。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ":py:obj:`saealib.AcquisitionStage <saealib.AcquisitionStage>`"
+msgstr "{py:obj}`saealib.AcquisitionStage <saealib.AcquisitionStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Score offspring via an independent AcquisitionFunction."
+msgstr "独立したAcquisitionFunctionで子個体をスコアリングします。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ":py:obj:`saealib.SurrogatePredictStage <saealib.SurrogatePredictStage>`"
+msgstr ""
+"{py:obj}`saealib.SurrogatePredictStage "
+"<saealib.SurrogatePredictStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Predict offspring with the surrogate model."
+msgstr "サロゲートモデルで子個体を予測します。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ":py:obj:`saealib.EvaluationPlanStage <saealib.EvaluationPlanStage>`"
+msgstr "{py:obj}`saealib.EvaluationPlanStage <saealib.EvaluationPlanStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Create an owned request and pending record."
+msgstr "所有対象のリクエストと保留レコードを作成します。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ""
+":py:obj:`saealib.AsyncEvaluationSubmitStage "
+"<saealib.AsyncEvaluationSubmitStage>`"
+msgstr ""
+"{py:obj}`saealib.AsyncEvaluationSubmitStage "
+"<saealib.AsyncEvaluationSubmitStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Plan and submit one request to an asynchronous scheduler."
+msgstr "非同期スケジューラーへのリクエストを1件計画して送信します。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ":py:obj:`saealib.EvaluationSubmitStage <saealib.EvaluationSubmitStage>`"
+msgstr ""
+"{py:obj}`saealib.EvaluationSubmitStage "
+"<saealib.EvaluationSubmitStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Submit the planned request to an evaluator."
+msgstr "計画したリクエストを評価器へ送信します。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ":py:obj:`saealib.EvaluationCollectStage <saealib.EvaluationCollectStage>`"
+msgstr ""
+"{py:obj}`saealib.EvaluationCollectStage "
+"<saealib.EvaluationCollectStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Collect delivered updates for the active request."
+msgstr "アクティブなリクエストに対して配信された更新を収集します。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ":py:obj:`saealib.EvaluationApplyStage <saealib.EvaluationApplyStage>`"
+msgstr "{py:obj}`saealib.EvaluationApplyStage <saealib.EvaluationApplyStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Validate and apply delivered result rows atomically."
+msgstr "配信された結果行を検証し、原子的に適用します。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ""
+":py:obj:`saealib.EvaluationAcknowledgeStage "
+"<saealib.EvaluationAcknowledgeStage>`"
+msgstr ""
+"{py:obj}`saealib.EvaluationAcknowledgeStage "
+"<saealib.EvaluationAcknowledgeStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Acknowledge committed updates and account for their evaluations."
+msgstr "コミット済みの更新を確認し、それらの評価を計上します。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ":py:obj:`saealib.SurrogateFitStage <saealib.SurrogateFitStage>`"
+msgstr "{py:obj}`saealib.SurrogateFitStage <saealib.SurrogateFitStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Pre-fit the surrogate on the current archive."
+msgstr "現在のアーカイブでサロゲートを事前適合します。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ":py:obj:`saealib.ArchiveUpdateStage <saealib.ArchiveUpdateStage>`"
+msgstr "{py:obj}`saealib.ArchiveUpdateStage <saealib.ArchiveUpdateStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Append evaluated offspring to archive and Pareto archive."
+msgstr "評価済みの子個体をアーカイブとパレートアーカイブに追加します。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ":py:obj:`saealib.FeedbackStage <saealib.FeedbackStage>`"
+msgstr "{py:obj}`saealib.FeedbackStage <saealib.FeedbackStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Copy evaluated objective channels into the offspring batch."
+msgstr "評価済みの目的値チャネルを子個体バッチにコピーします。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ":py:obj:`saealib.TellStage <saealib.TellStage>`"
+msgstr "{py:obj}`saealib.TellStage <saealib.TellStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Update the population via the algorithm's tell() method."
+msgstr "アルゴリズムのtell()メソッドで集団を更新します。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ":py:obj:`saealib.SurrogateOnlyLoopStage <saealib.SurrogateOnlyLoopStage>`"
+msgstr ""
+"{py:obj}`saealib.SurrogateOnlyLoopStage "
+"<saealib.SurrogateOnlyLoopStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Run *gen_ctrl* surrogate-only generations before real evaluation."
+msgstr "真の評価の前に、*gen_ctrl*世代だけサロゲートで実行します。"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid ":py:obj:`saealib.InitializationStage <saealib.InitializationStage>`"
+msgstr "{py:obj}`saealib.InitializationStage <saealib.InitializationStage>`・クラス"
+
+#: ../../api/stages.md:33:<autosummary>:1
+msgid "Wrap an :class:`~saealib.execution.initializer.Initializer` as a Stage."
+msgstr "{py:class}`~saealib.execution.initializer.Initializer`をStageとしてラップします。"

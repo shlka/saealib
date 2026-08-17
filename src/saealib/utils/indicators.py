@@ -161,7 +161,6 @@ def hypervolume_contributions(
 
 
 def _hv(f: np.ndarray, ref: np.ndarray) -> float:
-    """Recursive hypervolume computation (internal)."""
     n, m = f.shape
 
     if m == 1:

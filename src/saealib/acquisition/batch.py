@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import numpy as np
 
 from saealib.acquisition.base import (
@@ -9,6 +11,8 @@ from saealib.acquisition.base import (
     AcquisitionResult,
     direction_to_minimize_sign,
 )
+from saealib.core.contracts import ComponentContract, StateContract
+from saealib.core.state import RUNTIME_RNG
 from saealib.exceptions import ValidationError
 from saealib.registry import register
 
@@ -71,6 +75,22 @@ class BatchExpectedImprovement(AcquisitionFunction):
             raise ValidationError("n_draws must be positive")
         self.n_draws = n_draws
         self.direction = direction
+
+    def contract(self) -> ComponentContract:
+        """Return the batch expected-improvement contract."""
+        contract = super().contract()
+        role = contract.ports["acquisition"]
+        return replace(
+            contract,
+            ports={
+                **contract.ports,
+                "acquisition": replace(
+                    role,
+                    inputs=tuple(replace(port, optional=False) for port in role.inputs),
+                ),
+            },
+            state=StateContract(reads=(RUNTIME_RNG,), writes=(RUNTIME_RNG,)),
+        )
 
     def evaluate(self, candidates_x, prediction, archive, ctx=None, *, prepared=None):
         """Return greedy qEI marginal scores from joint normal draws."""

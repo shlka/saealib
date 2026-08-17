@@ -169,10 +169,6 @@ class TestPopulationInit:
         populated_pop.x = arr
         np.testing.assert_array_equal(populated_pop.x, arr)
 
-    def test_get_readonly_array(self, pop: Population) -> None:
-        arr = pop.get_readonly_array("f")
-        assert not arr.flags.writeable
-
     def test_mod_value_and_mod_structure(self, pop: Population) -> None:
         v0 = pop._value_version
         s0 = pop._structure_version
@@ -962,13 +958,13 @@ class TestPopulationCache:
 
 
 # ===========================================================================
-# ParetoMixin.add() fast-path differential tests (#224)
+# ParetoMixin.add() fast-path differential tests
 # ===========================================================================
 #
 # The fast path (a vectorized broadcast, using Dominator.dominates_many) and
 # the original per-row Python loop must produce byte-identical accept/reject
-# and survivor decisions.  The functions below are standalone, independent
-# transcriptions of the *pre-fast-path* add() logic (they call only
+# and survivor decisions. The functions below are standalone, independent
+# transcriptions of the scalar add() logic (they call only
 # `dominator.dominates`/`dominator.dominates_many` and plain Python/NumPy —
 # never ParetoMixin.add() itself) so that comparing against them is a genuine
 # differential test, not the new code checked against itself.
@@ -983,7 +979,7 @@ def _loop_new_dominates_existing(
     direction: np.ndarray | None,
     eps_cv: float,
 ) -> bool:
-    """Standalone transcription of the pre-#224 ParetoMixin._new_dominates_existing."""
+    """Apply the scalar dominance rule used by the differential reference."""
     a_feasible = cv_a <= eps_cv
     b_feasible = cv_b <= eps_cv
     if a_feasible and not b_feasible:
@@ -1008,7 +1004,7 @@ def _loop_masks(
     direction: np.ndarray | None,
     eps_cv: float,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Standalone transcription of the pre-#224 two-loop add() comparison."""
+    """Apply the scalar two-pass comparison used by the differential reference."""
     if f_arr is not None:
         n = f_arr.shape[0]
     elif cv_arr is not None:

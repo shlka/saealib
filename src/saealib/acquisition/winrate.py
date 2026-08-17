@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -11,6 +12,7 @@ from saealib.acquisition.base import (
     AcquisitionFunction,
     AcquisitionResult,
 )
+from saealib.core.contracts import ComponentContract
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
@@ -29,8 +31,8 @@ class WinRateAcquisition(AcquisitionFunction):
     ``predict_proba()`` + per-candidate win-rate-aggregation sequence and
     returns it as a ``"win_rate"`` prediction channel. This acquisition does
     not itself compute anything -- the win rate is a model prediction, not a
-    post-hoc acquisition score over an independent prediction (ADR-0001
-    Section 1.5): the ``(candidate, reference)`` pairs it would need to
+    post-hoc acquisition score over an independent prediction: the
+    ``(candidate, reference)`` pairs it would need to
     predict on are not known until the manager's own reference-sampling
     logic runs, and ``AcquisitionFunction`` deliberately has no
     ``Surrogate``/``SurrogateManager`` access to construct and predict on
@@ -39,6 +41,21 @@ class WinRateAcquisition(AcquisitionFunction):
 
     # Win rate is not an objective-space quantity; it has no direction.
     direction_sensitive: bool = False
+
+    def contract(self) -> ComponentContract:
+        """Return the win-rate acquisition contract."""
+        contract = super().contract()
+        role = contract.ports["acquisition"]
+        return replace(
+            contract,
+            ports={
+                **contract.ports,
+                "acquisition": replace(
+                    role,
+                    inputs=tuple(replace(port, optional=False) for port in role.inputs),
+                ),
+            },
+        )
 
     def evaluate(
         self,

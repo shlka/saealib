@@ -1,6 +1,8 @@
-# References
+---
+primary_layer: cross
+---
 
-Each page under [Components](components/index.md) and [Algorithms](algorithms/index.md) cites its implementation's theoretical source here, by number.
+# References
 
 ```{bibliography}
 ```

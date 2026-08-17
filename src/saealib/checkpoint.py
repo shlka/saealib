@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
     from saealib.callback import CallbackManager, GenerationEndEvent, RunEndEvent
@@ -85,8 +85,11 @@ class CheckpointCallback:
         stem = f"checkpoint_{ctx.gen:06d}"
 
         if self.format in ("npz", "both"):
+            from saealib.context import OptimizationState
+
+            state = cast(OptimizationState, ctx)
             p = self._base / f"{stem}.npz"
-            ctx.save(p)
+            state.save(p)
             self._saved.append(p)
 
         if self.format in ("pickle", "both"):

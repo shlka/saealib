@@ -60,6 +60,7 @@ dev = [
     "pytest>=9.0.2",
     "pytest-cov>=5.0.0",
     "setuptools>=80.9.0",
+    "ty==0.0.69",
     "ruff",
     "scikit-learn>=1.0.0",
     "xgboost>=1.7.0",
@@ -129,6 +130,7 @@ select = [
 ignore = [
     "D100",
     "D104",
+    "D105",
 ]
 
 [tool.ruff.lint.pydocstyle]

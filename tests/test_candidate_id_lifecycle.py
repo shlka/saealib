@@ -23,6 +23,8 @@ from saealib import (
 )
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
+from saealib.core.contracts import FeedbackRequirement, ProposalBatch, ProposalRelations
+from saealib.core.state import StatePatch, StateView
 from saealib.exceptions import ValidationError
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
@@ -127,7 +129,8 @@ def test_save_load_roundtrips_ids_and_allocator_state(tmp_path):
 
 
 class _DuplicateRealIdAlgorithm:
-    def ask(self, ctx, provider, n_offspring=None):
+    def ask(self, request, state: StateView) -> ProposalBatch:
+        del request
         attrs = [
             PopulationAttribute(name="x", dtype=np.float64, shape=(DIM,)),
             PopulationAttribute(name="id", dtype=np.int64, shape=(), default=-1),
@@ -140,7 +143,16 @@ class _DuplicateRealIdAlgorithm:
             },
             preserve_ids=True,
         )
-        return offspring
+        return ProposalBatch.from_allocator(
+            state.context.proposal_id_allocator,
+            candidates=offspring,
+            relations=ProposalRelations(row_count=len(offspring)),
+            requirements=FeedbackRequirement(quantities=()),
+        )
+
+    def tell(self, feedback, state: StateView) -> StatePatch:
+        del feedback, state
+        return StatePatch(writes={})
 
 
 def test_ask_stage_rejects_all_real_duplicate_id_batch():

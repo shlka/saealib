@@ -25,7 +25,6 @@ class CallbackManager:
     """
 
     def __init__(self) -> None:
-        """Initialize CallbackManager."""
         self.handlers: defaultdict[type[Event], list] = defaultdict(list)
 
     def register(self, event_type: type[E], func: Callable[[E], None]) -> None:

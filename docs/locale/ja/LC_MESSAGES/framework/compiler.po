@@ -1,0 +1,172 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../framework/compiler.md:7
+msgid "Compiler"
+msgstr "Compiler"
+
+#: ../../framework/compiler.md:9
+msgid ""
+"After resolving and verifying a `ComponentGraph`, the Compiler returns an"
+" `ExecutablePlan` separate from execution. The Compiler does not run the "
+"Runtime; it records the capabilities and diagnostics the Runtime needs in"
+" the plan."
+msgstr "`ComponentGraph`を解決して検証すると、Compilerは実行から分離された`ExecutablePlan`を返します。CompilerはRuntimeを実行せず、Runtimeが必要とする能力と診断情報を計画に記録します。"
+
+#: ../../framework/compiler.md:12
+msgid "Compiler's role"
+msgstr "Compilerの役割"
+
+#: ../../framework/compiler.md:14
+msgid ""
+"The Compiler owns the boundary that resolves and verifies a "
+"ComponentGraph and returns an ExecutablePlan separate from execution. It "
+"does not run the Runtime and records the capabilities and diagnostics the"
+" Runtime needs in the plan."
+msgstr "CompilerはComponentGraphを解決・検証し、実行から分離されたExecutablePlanを返す境界を担います。Runtimeは実行せず、Runtimeが計画で必要とする能力と診断情報を記録します。"
+
+#: ../../framework/compiler.md:17
+msgid "Compilation, verification, and resolution"
+msgstr "コンパイル、検証、解決"
+
+#: ../../framework/compiler.md:19
+msgid ""
+"Compilation proceeds through contract snapshotting, Resolution, and "
+"Verification in that order. `ResolutionRule` returns candidates for "
+"resolving services, adapters, and schema bindings as proposals for "
+"claimed Graph locations. `VerificationRule` observes the resolved Graph "
+"and returns Diagnostics without changing it. The shared `CompilationRule`"
+" boundary contains a namespace, name, phase, and `apply(RuleContext)`."
+msgstr "コンパイルは、契約のスナップショット取得、Resolution、Verificationの順に進みます。`ResolutionRule`はサービス、アダプター、スキーマバインディングを解決する候補を、担当するGraph位置への提案として返します。`VerificationRule`は解決済みGraphを観測し、Graphを変更せずに診断情報を返します。共通の`CompilationRule`境界にはnamespace、name、phase、`apply(RuleContext)`が含まれます。"
+
+#: ../../framework/compiler.md:24
+msgid ""
+"Resolution repeats until proposals converge; conflicts at the same Graph "
+"location and undeclared changes become error Diagnostics. Verification "
+"checks Graph well-formedness, port compatibility, services, data flow, "
+"state effects, lifecycle, and Runtime capabilities."
+msgstr "Resolutionは提案が収束するまで反復されます。同じGraph位置への競合や未申告の変更はエラー診断になります。VerificationはGraphの整形式性、ポート互換性、サービス、データフロー、状態効果、ライフサイクル、Runtime能力を検査します。"
+
+#: ../../framework/compiler.md:27
+msgid "Executable plan"
+msgstr "実行可能な計画"
+
+#: ../../framework/compiler.md:29
+msgid ""
+"`ExecutablePlan` is an immutable value holding the resolved Graph, "
+"Diagnostics, required Runtime capabilities, enabled rules, inserted "
+"adapters, and contract snapshots. Because the plan owns neither an "
+"execution position nor current state, the same plan can be passed to "
+"RuntimeSession to separate execution from resumption. When Diagnostics "
+"contain errors, whether the plan is accepted as executable input follows "
+"the caller's checks and the Runtime contract."
+msgstr "`ExecutablePlan`は、解決済みGraph、Diagnostics、必要なRuntime能力、有効なルール、挿入されたアダプター、契約スナップショットを保持する不変値です。計画は実行位置も現在の状態も所有しないため、同じ計画をRuntimeSessionに渡して実行と再開を分離できます。Diagnosticsにエラーが含まれる場合に計画を実行可能な入力として受け入れるかは、呼び出し側のチェックとRuntime契約に従います。"
+
+#: ../../framework/compiler.md:33
+msgid "From verification to execution"
+msgstr "検証から実行まで"
+
+#: ../../framework/compiler.md:44
+msgid ""
+"Component through Graph is configuration, the Compiler performs "
+"resolution and verification, and everything after ExecutablePlan belongs "
+"to the Runtime. The Runtime applies StatePatches, events, and commands "
+"from plan node results and passes the verified state boundary to the next"
+" step."
+msgstr "ComponentからGraphまでは構成、Compilerは解決と検証、ExecutablePlan以降はRuntimeの責務です。Runtimeは計画ノードの結果からStatePatch、イベント、コマンドを適用し、検証済みの状態境界を次のステップへ渡します。"
+
+#: ../../framework/compiler.md:47
+msgid "Construction time and use time"
+msgstr "生成時点と利用時点"
+
+#: ../../framework/compiler.md:49
+msgid ""
+"After the Graph is built, the Compiler reads contract snapshots and "
+"generates an ExecutablePlan through Resolution and Verification. The "
+"Runtime uses the generated ExecutablePlan and does not repeat Compiler "
+"resolution or verification during execution."
+msgstr "Graphの構築後、Compilerは契約スナップショットを読み取り、ResolutionとVerificationを経てExecutablePlanを生成します。Runtimeは生成されたExecutablePlanを使い、実行中にCompilerの解決や検証を繰り返しません。"
+
+#: ../../framework/compiler.md:52
+msgid "Invariants and diagnostics"
+msgstr "不変条件と診断"
+
+#: ../../framework/compiler.md:54
+msgid ""
+"`Diagnostic` is a verification result with severity, code, message, "
+"contract path, and resolution hint. The Compiler does not represent "
+"failures only as arbitrary exceptions; it collects multiple issues in a "
+"DiagnosticBag for plan decisions. Typical failures include unknown node "
+"endpoints, unconnected required ports, mismatched DataSpecs, missing "
+"required services, undeclared state access, and missing Runtime "
+"capabilities. The implementation reports them with codes such as "
+"`invalid_graph_edge`, `incompatible_port`, `unresolved_service`, and "
+"`unknown_runtime_capability`. Compiler rules do not change undeclared "
+"Graph locations or arbitrarily change a StructuredRegion execution tree "
+"during resolution. Violations become Diagnostics such as "
+"`unclaimed_rewrite`, `conflicting_rewrite`, and "
+"`structured_execution_mutation`. Adapters must state the meaning and "
+"losslessness of their conversion and must not bypass port-compatibility "
+"checks. Unresolvable or ambiguous adapters become Diagnostics such as "
+"`ambiguous_adapter`."
+msgstr ""
+"`Diagnostic`はseverity、code、message、contract path、resolution "
+"hintを持つ検証結果です。Compilerは失敗を任意の例外だけで表さず、計画の判断のために複数の問題をDiagnosticBagへ収集します。典型的な失敗には、未知のノード端点、未接続の必須ポート、不一致のDataSpec、未提供の必須サービス、未申告の状態アクセス、Runtime能力の不足があります。実装は`invalid_graph_edge`、`incompatible_port`、`unresolved_service`、`unknown_runtime_capability`などのコードで報告します。Compilerルールは未申告のGraph位置を変更せず、解決中にStructuredRegionの実行ツリーを任意に変更しません。違反は`unclaimed_rewrite`、`conflicting_rewrite`、`structured_execution_mutation`などのDiagnosticsになります。アダプターは変換の意味と無損失性を示す必要があり、ポート互換性検査を迂回してはなりません。解決不能または曖昧なアダプターは`ambiguous_adapter`などのDiagnosticsになります。"
+
+#: ../../framework/compiler.md:63
+msgid "Extension points"
+msgstr "拡張点"
+
+#: ../../framework/compiler.md:65
+msgid ""
+"See the release-specific [API reference](../api/index.md) for Compiler "
+"rule types and import paths. See [Framework extensions](extensions.md) "
+"for extension guidance."
+msgstr "Compilerのルール型とimport経路はリリースごとの[APIリファレンス](../api/index.md)で確認してください。[フレームワーク拡張](extensions.md)では拡張方法を説明します。"
+
+#: ../../framework/compiler.md:68
+msgid "Related pages"
+msgstr "関連ページ"
+
+#: ../../framework/compiler.md:70
+msgid ""
+"See [Contract](contract.md) and [Specs](specs.md) for declaring "
+"components, and [Runtime](runtime.md) for using an execution plan."
+msgstr "構成要素の宣言は[Contract](contract.md)と[Specs](specs.md)を、実行計画の利用は[Runtime](runtime.md)を参照してください。"
+
+#: ../../framework/compiler.md:72
+msgid "References"
+msgstr "参照"
+
+#: ../../framework/compiler.md:74
+#, python-brace-format
+msgid "{py:class}`saealib.core.CompilationRule`"
+msgstr "{py:class}`saealib.core.CompilationRule`・クラス"
+
+#: ../../framework/compiler.md:75
+#, python-brace-format
+msgid "{py:class}`saealib.core.ExecutablePlan`"
+msgstr "{py:class}`saealib.core.ExecutablePlan`・クラス"
+
+#: ../../framework/compiler.md:76
+#, python-brace-format
+msgid "{py:class}`saealib.core.ComponentGraph`"
+msgstr "{py:class}`saealib.core.ComponentGraph`"

@@ -1,0 +1,80 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 10:57+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/population.md:6
+msgid "Population"
+msgstr "Population"
+
+#: ../../api/population.md:19:<autosummary>:1
+msgid ":py:obj:`saealib.Population <saealib.Population>`"
+msgstr "{py:obj}`saealib.Population <saealib.Population>`・クラス"
+
+#: ../../api/population.md:19:<autosummary>:1
+msgid "Container for schema-defined population attributes and genome data."
+msgstr "スキーマで定義された個体群属性とゲノムデータのコンテナ。"
+
+#: ../../api/population.md:19:<autosummary>:1
+msgid ":py:obj:`saealib.Individual <saealib.Individual>`"
+msgstr "{py:obj}`saealib.Individual <saealib.Individual>`・クラス"
+
+#: ../../api/population.md:19:<autosummary>:1
+msgid "Live view of one population row; structural changes invalidate it."
+msgstr "個体群の1行を表すライブビュー。構造変更により無効になります。"
+
+#: ../../api/population.md:19:<autosummary>:1
+msgid ":py:obj:`saealib.Archive <saealib.Archive>`"
+msgstr "{py:obj}`saealib.Archive <saealib.Archive>`・クラス"
+
+#: ../../api/population.md:19:<autosummary>:1
+msgid "Concrete archive combining ``ArchiveMixin`` with ``Population``."
+msgstr "``ArchiveMixin``と``Population``を組み合わせた具象アーカイブ。"
+
+#: ../../api/population.md:19:<autosummary>:1
+msgid ":py:obj:`saealib.ArchiveMixin <saealib.ArchiveMixin>`"
+msgstr "{py:obj}`saealib.ArchiveMixin <saealib.ArchiveMixin>`・クラス"
+
+#: ../../api/population.md:19:<autosummary>:1
+msgid "Provide archive operations for a :class:`Population` subclass."
+msgstr "{py:class}`Population` サブクラスにアーカイブ操作を提供します。"
+
+#: ../../api/population.md:19:<autosummary>:1
+msgid ":py:obj:`saealib.ParetoArchive <saealib.ParetoArchive>`"
+msgstr "{py:obj}`saealib.ParetoArchive <saealib.ParetoArchive>`・クラス"
+
+#: ../../api/population.md:19:<autosummary>:1
+msgid "Concrete Pareto archive: ``ParetoMixin`` mixed into ``Population``."
+msgstr "``ParetoMixin``を``Population``に組み込んだ具象パレートアーカイブ。"
+
+#: ../../api/population.md:19:<autosummary>:1
+msgid ":py:obj:`saealib.ParetoMixin <saealib.ParetoMixin>`"
+msgstr "{py:obj}`saealib.ParetoMixin <saealib.ParetoMixin>`・クラス"
+
+#: ../../api/population.md:19:<autosummary>:1
+msgid "A mixin that maintains a Pareto-non-dominated archive."
+msgstr "パレート非劣アーカイブを維持するMixin。"
+
+#: ../../api/population.md:19:<autosummary>:1
+msgid ":py:obj:`saealib.PopulationAttribute <saealib.PopulationAttribute>`"
+msgstr "{py:obj}`saealib.PopulationAttribute <saealib.PopulationAttribute>`・クラス"
+
+#: ../../api/population.md:19:<autosummary>:1
+msgid "Definition of one named attribute in a population-like table."
+msgstr "個体群に似た表における1つの名前付き属性の定義。"

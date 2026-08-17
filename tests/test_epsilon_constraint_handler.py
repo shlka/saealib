@@ -1,5 +1,5 @@
 """
-Tests for EpsilonConstraintHandler and schedule helpers (Issue #109).
+Tests for EpsilonConstraintHandler and schedule helpers.
 
 Tests cover:
 - linear_epsilon_schedule / exponential_epsilon_schedule: decay behaviour
@@ -224,7 +224,6 @@ def _make_optimizer(problem, n_gen: int):
 
 
 def test_comparator_eps_cv_synced_at_start():
-    """comparator.eps_cv equals handler.feasibility_threshold before gen 0."""
     from saealib import RunStartEvent
 
     eps0 = 0.5
@@ -245,7 +244,6 @@ def test_comparator_eps_cv_synced_at_start():
 
 
 def test_comparator_eps_cv_decreases_each_generation():
-    """comparator.eps_cv is updated after every generation via on_generation_end."""
     from saealib import GenerationEndEvent
 
     n_gen = 5
@@ -268,7 +266,6 @@ def test_comparator_eps_cv_decreases_each_generation():
 
 
 def test_pareto_archive_eps_cv_synced_each_generation():
-    """ctx.pareto_archive.eps_cv tracks handler.feasibility_threshold (Issue #200)."""
     from saealib import GenerationEndEvent
 
     n_gen = 5
@@ -287,7 +284,6 @@ def test_pareto_archive_eps_cv_synced_each_generation():
 
 
 def test_standalone_pareto_archive_eps_cv_default_unaffected():
-    """A ParetoArchive never touched by Runner keeps its 0.0 default (Issue #200)."""
     from saealib.population import ParetoArchive, PopulationAttribute
 
     attrs = [

@@ -12,6 +12,8 @@ from collections.abc import Callable
 from functools import partial, reduce
 from typing import TYPE_CHECKING
 
+from saealib.core.contracts import ComponentContract, StateContract
+from saealib.core.state import ARCHIVES_MAIN, EVALUATIONS_COUNT, RUNTIME_GENERATION
 from saealib.registry import register
 
 if TYPE_CHECKING:
@@ -89,7 +91,6 @@ class TerminationCondition:
 
     @staticmethod
     def _coerce(cond: ConditionFunc | TerminationCondition) -> TerminationCondition:
-        """Wrap a plain callable into a ``TerminationCondition`` if needed."""
         if isinstance(cond, TerminationCondition):
             return cond
         return TerminationCondition(cond)
@@ -200,6 +201,31 @@ class Termination:
     def condition(self) -> TerminationCondition:
         """Return the composed termination condition (read-only)."""
         return self._condition
+
+    def contract(self) -> ComponentContract:
+        """Return the termination contract inferred from registered conditions."""
+        state_keys = {
+            "max_fe": (EVALUATIONS_COUNT,),
+            "max_gen": (RUNTIME_GENERATION,),
+            "f_target": (ARCHIVES_MAIN,),
+            "stalled": (ARCHIVES_MAIN, RUNTIME_GENERATION),
+        }
+        conservative = (EVALUATIONS_COUNT, RUNTIME_GENERATION, ARCHIVES_MAIN)
+        reads: list = []
+        reads_enumerable = True
+        for condition in self.conditions:
+            spec = condition._registry_spec
+            condition_reads = (
+                state_keys.get(spec.get("type")) if isinstance(spec, dict) else None
+            )
+            reads.extend(conservative if condition_reads is None else condition_reads)
+            reads_enumerable = reads_enumerable and condition_reads is not None
+        return ComponentContract(
+            state=StateContract(
+                reads=tuple(dict.fromkeys(reads)),
+                reads_enumerable=reads_enumerable,
+            ),
+        )
 
     @classmethod
     def any_of(cls, *conditions: ConditionFunc | TerminationCondition) -> Termination:

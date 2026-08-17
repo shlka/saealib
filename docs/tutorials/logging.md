@@ -1,8 +1,22 @@
+---
+primary_layer: layer2
+page_type: guide
+---
+
 # Logging Progress
 
 Record optimization progress with the standard `logging` module.
 
-## Default behavior
+:::{admonition} What you'll be able to do
+:class: tip
+
+By the end of this page, you'll be able to record progress, warnings, and custom events with Python's standard `logging` module.
+:::
+
+Use the [High-level API](highlevel_api.md) for a basic optimization, and see the [Low-Level API](lowlevel_api.md) when you need to tune generation-level configuration.
+This page shows how to configure the destination and level for standard logging and record built-in or custom events.
+
+## Use the default logging behavior
 
 `Optimizer` registers a handler (`logging_generation`) that records progress at the start of every generation, but only when `minimize`/`maximize`'s `verbose=True` (the default).
 
@@ -56,7 +70,7 @@ result = minimize(
 )
 ```
 
-## Writing to a file
+## Write progress to a file
 
 Adding a `FileHandler` to the `saealib.callback.handlers` logger writes progress out to a file.
 
@@ -75,7 +89,7 @@ result = minimize(
 )
 ```
 
-## Hypervolume logging for multi-objective problems
+## Log hypervolume for multi-objective problems
 
 For multi-objective problems, registering the handler returned by `logging_generation_hv(reference_point)` records the hypervolume for each generation.
 
@@ -107,7 +121,7 @@ ctx = optimizer.run()
 
 By minimization convention, `reference_point` should be a value larger than the best achievable value for each objective.
 
-## Warning-level logging
+## Handle warning-level logs
 
 Some components record numerical issues via `logger.warning(...)`.
 
@@ -117,13 +131,13 @@ Even without calling `logging.basicConfig`, WARNING-level and above logs are sho
 
 Note that, unlike INFO-level progress logs, this kind of warning is visible even without any configuration.
 
-## Custom logging
+## Add custom logging
 
 If you want to log something other than what `logging_generation`/`logging_generation_hv` record, register your own handler on `CallbackManager`.
 
-See [CallbackManager](../components/callbacks.md) for the underlying mechanism.
+See [CallbackManager](../concepts/observation_and_state/callbacks.md) for the underlying mechanism.
 
-## References
+## Related concepts and reference
 
 - {py:func}`saealib.logging_generation` / {py:func}`saealib.logging_generation_hv`
 - {py:class}`saealib.CallbackManager` / {py:class}`saealib.GenerationStartEvent`

@@ -154,6 +154,21 @@ def _planned_state():
     )
 
 
+def test_plan_state_replace_uses_lightweight_clone_and_retains_validation():
+    state = _planned_state()
+    updated = state.replace(
+        evaluation_plan_state=state.evaluation_plan_state,
+        evaluation_plan_updates=state.evaluation_plan_updates,
+        gen=state.gen + 1,
+    )
+
+    assert updated is not state
+    assert updated.evaluation_plan is state.evaluation_plan
+    assert updated.populations is not state.populations
+    with pytest.raises(ValidationError, match="unknown request"):
+        state.replace(evaluation_plan_updates={99: []})
+
+
 def _rewrite_payload(path, destination, key, value):
     payload = dict(np.load(path, allow_pickle=False).items())
     payload[key] = np.frombuffer(json.dumps(value).encode(), dtype=np.uint8)
@@ -163,7 +178,7 @@ def _rewrite_payload(path, destination, key, value):
 def test_checkpoint_rejects_malformed_evaluation_plan_payload(tmp_path):
     state = _planned_state()
     source = tmp_path / "valid.npz"
-    state.save(source)
+    state._save_v2(source)
     bad = tmp_path / "bad-plan.npz"
     _rewrite_payload(source, bad, "_evaluation_plan", {"requests": [{}]})
 
@@ -174,7 +189,7 @@ def test_checkpoint_rejects_malformed_evaluation_plan_payload(tmp_path):
 def test_checkpoint_rejects_plan_state_referencing_unknown_request(tmp_path):
     state = _planned_state()
     source = tmp_path / "valid.npz"
-    state.save(source)
+    state._save_v2(source)
     bad = tmp_path / "bad-state.npz"
     _rewrite_payload(
         source,
@@ -190,7 +205,7 @@ def test_checkpoint_rejects_plan_state_referencing_unknown_request(tmp_path):
 def test_checkpoint_rejects_updates_for_unknown_request(tmp_path):
     state = _planned_state()
     source = tmp_path / "valid.npz"
-    state.save(source)
+    state._save_v2(source)
     bad = tmp_path / "bad-updates.npz"
     _rewrite_payload(source, bad, "_evaluation_plan_updates", {"99": []})
 

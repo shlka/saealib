@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from _algorithm_boundary import ask as algorithm_ask
 
 # tests/ has no __init__.py, so pytest's default (prepend) import mode puts
 # tests/ itself on sys.path -- this makes test_operators.py importable as a
@@ -406,14 +407,14 @@ class TestGAMixedAsk:
         problem = _make_problem_mixed()
         ga = _make_ga()
         ctx = _make_ctx_for(problem)
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=4)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=4)
         assert offspring.get_array("x").shape == (4, 3)
 
     def test_ask_integer_dims_are_rounded(self):
         problem = _make_problem_mixed()
         ga = _make_ga()
         ctx = _make_ctx_for(problem, n_pop=8)
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=10)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=10)
         x = offspring.get_array("x")
         np.testing.assert_array_equal(x[:, 1], np.round(x[:, 1]))
 
@@ -421,7 +422,7 @@ class TestGAMixedAsk:
         problem = _make_problem_mixed()
         ga = _make_ga()
         ctx = _make_ctx_for(problem, n_pop=8)
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=10)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=10)
         x = offspring.get_array("x")
         assert np.all((x[:, 2] >= 0) & (x[:, 2] <= 2))
         np.testing.assert_array_equal(x[:, 2], np.round(x[:, 2]))
@@ -430,7 +431,7 @@ class TestGAMixedAsk:
         problem = _make_problem_mixed()
         ga = _make_ga()
         ctx = _make_ctx_for(problem, n_pop=8)
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=20)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=20)
         x = offspring.get_array("x")
         assert np.all(x >= problem.lb)
         assert np.all(x <= problem.ub)
@@ -447,12 +448,14 @@ class TestGAMixedAsk:
             )
 
         problem = _make_problem_mixed()
-        active = make_ga(1.0).ask(
+        active = algorithm_ask(
+            make_ga(1.0),
             _make_ctx_for(problem, n_pop=8, seed=21),
             _NoopProvider(),
             n_offspring=10,
         )
-        inactive = make_ga(0.0).ask(
+        inactive = algorithm_ask(
+            make_ga(0.0),
             _make_ctx_for(problem, n_pop=8, seed=21),
             _NoopProvider(),
             n_offspring=10,
@@ -465,12 +468,14 @@ class TestGAMixedAsk:
 
     def test_batch_mode_is_reproducible_for_mixed_problem(self):
         problem = _make_problem_mixed()
-        first = _make_ga().ask(
+        first = algorithm_ask(
+            _make_ga(),
             _make_ctx_for(problem, n_pop=8, seed=17),
             _NoopProvider(),
             n_offspring=10,
         )
-        second = _make_ga().ask(
+        second = algorithm_ask(
+            _make_ga(),
             _make_ctx_for(problem, n_pop=8, seed=17),
             _NoopProvider(),
             n_offspring=10,
@@ -482,7 +487,7 @@ class TestGAMixedAsk:
         problem = _make_problem_continuous()
         ga = _make_ga()
         ctx = _make_ctx_for(problem)
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=4)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=4)
         assert offspring.get_array("x").shape == (4, 3)
 
     def test_ask_raises_when_primary_n_children_mutated(self):
@@ -493,7 +498,7 @@ class TestGAMixedAsk:
         ga.crossover.n_children = 1
         ctx = _make_ctx_for(problem)
         with pytest.raises(ConfigurationError, match=r"integer_crossover\.n_children"):
-            ga.ask(ctx, _NoopProvider())
+            algorithm_ask(ga, ctx, _NoopProvider())
 
     def test_ask_raises_when_integer_crossover_replaced_with_mismatched(self):
         """Replacing integer_crossover with a different n_children must raise."""
@@ -503,38 +508,20 @@ class TestGAMixedAsk:
         ga.integer_crossover = _CrossoverN1C()
         ctx = _make_ctx_for(problem)
         with pytest.raises(ConfigurationError, match=r"integer_crossover\.n_children"):
-            ga.ask(ctx, _NoopProvider())
+            algorithm_ask(ga, ctx, _NoopProvider())
 
 
 # ---------------------------------------------------------------------------
-# _mutate_candidates fallback-loop interleaving order (Issue #224, commit 6
-# review fix)
+# Fallback-loop interleaving order
 # ---------------------------------------------------------------------------
 
 
 class TestMutateCandidatesInterleaveOrder:
-    """``_mutate_candidates``'s per-individual fallback loop must call
-    ``_route_mutation`` and ``post_mutation`` interleaved per individual —
-    i.e. ``mutate(0), post(0), mutate(1), post(1), ...`` — matching the
-    pre-batching behaviour byte-for-byte. A prior version of this method
-    ran the full ``_route_mutation`` loop first and only then a separate
-    ``post_mutation`` loop, which is invisible for the default (identity,
-    RNG-free) ``post_mutation`` hook but silently reorders RNG consumption
-    for a ``with_post`` hook that draws from ``rng``. This test uses such a
-    hook and cross-checks the library's output against an independently
-    hand-written interleaved reference loop fed an identically-seeded RNG.
+    """Keep mutation and post-mutation RNG draws interleaved per candidate.
 
-    Uses ``_MutationUnbatched`` (imported from ``tests/test_operators.py``)
-    as the test vehicle with explicit sequential execution. The problem
-    remains continuous-only, so ``_route_mutation`` still calls its scalar
-    ``mutate()`` exactly once per candidate.
-    ``_MutationUnbatched`` provides the required but unused
-    ``mutate_batch()`` primitive, while its scalar override draws exactly
-    one ``rng.random()`` value per call. Without that draw, this test would
-    pass regardless of whether ``_mutate_candidates`` actually interleaves
-    correctly, since a zero-draw ``mutate()`` produces byte-identical RNG
-    consumption under both the correct interleaved order and the buggy
-    two-pass order this test guards against.
+    A post-mutation hook may consume RNG state, so changing the order changes
+    the observable offspring. The test compares a seeded result with an
+    independently interleaved reference and rejects a two-pass order.
     """
 
     def test_fallback_loop_matches_hand_written_interleaved_reference(self):
@@ -653,7 +640,7 @@ class TestGASequentialDispatch:
         problem = _make_problem_continuous()
         ctx = _make_ctx_for(problem, n_pop=6)
         n_offspring = 8
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=n_offspring)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=n_offspring)
 
         assert custom_crossover.calls > 0
 
@@ -680,7 +667,7 @@ class TestGASequentialDispatch:
         problem = _make_problem_continuous()
         ctx = _make_ctx_for(problem, n_pop=6)
         n_offspring = 8
-        offspring = ga.ask(ctx, _NoopProvider(), n_offspring=n_offspring)
+        offspring = algorithm_ask(ga, ctx, _NoopProvider(), n_offspring=n_offspring)
 
         assert custom_mutation.calls > 0
 

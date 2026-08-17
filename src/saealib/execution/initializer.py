@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import inspect
 from abc import ABC, abstractmethod
+from dataclasses import replace
+from typing import cast
 
 import numpy as np
 import scipy.stats
@@ -10,32 +13,121 @@ import scipy.stats
 from saealib.callback import InitialEvaluationEndEvent, InitialEvaluationStartEvent
 from saealib.comparators import NSGA3Comparator
 from saealib.context import OptimizationState
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    Fixed,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    StateContract,
+    Var,
+)
+from saealib.core.state import (
+    ARCHIVES_MAIN,
+    ARCHIVES_PARETO,
+    EVALUATIONS_COUNT,
+    POPULATIONS_MAIN,
+    RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    RUNTIME_GENERATION,
+    RUNTIME_RNG,
+)
+from saealib.exceptions import ValidationError
 from saealib.optimizer import ComponentProvider
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
+from saealib.space import BoundsService, DenseNumericView
+
+
+def _make_population(factory, attrs, capacity, problem, genomes=None):
+    dense_view = problem.space.services.get("DenseNumericView")
+    try:
+        signature = inspect.signature(factory)
+        accepts = any(
+            name in signature.parameters
+            for name in ("dense_numeric_view", "space", "genomes")
+        ) or any(
+            parameter.kind == inspect.Parameter.VAR_KEYWORD
+            for parameter in signature.parameters.values()
+        )
+    except (TypeError, ValueError):
+        accepts = True
+        signature = None
+    kwargs = {"attrs": attrs, "init_capacity": capacity}
+    if accepts:
+        kwargs["dense_numeric_view"] = dense_view
+        if (
+            signature is None
+            or "space" in signature.parameters
+            or any(
+                parameter.kind == inspect.Parameter.VAR_KEYWORD
+                for parameter in signature.parameters.values()
+            )
+        ):
+            kwargs["space"] = problem.space
+        if genomes is not None and (
+            signature is None
+            or "genomes" in signature.parameters
+            or any(
+                parameter.kind == inspect.Parameter.VAR_KEYWORD
+                for parameter in signature.parameters.values()
+            )
+        ):
+            kwargs["genomes"] = genomes
+    population = factory(**kwargs)
+    if isinstance(population, Population):
+        # Factories without the optional service parameter still need the
+        # resolved view attached before evaluation begins.
+        population._dense_numeric_view = dense_view
+    return population
+
+
+def _resolved_dense_view(problem: Problem) -> DenseNumericView | None:
+    return cast(
+        DenseNumericView | None,
+        problem.space.services.get("DenseNumericView"),
+    )
 
 
 class Initializer(ABC):
     """Abstract base for classes that set up the initial optimization context."""
 
+    def contract(self) -> ComponentContract:
+        """Return the initializer contract."""
+        candidate_count = Var(name="N")
+        return ComponentContract(
+            ports={
+                "initializer": PortContract(
+                    outputs=(
+                        PortSpec(
+                            name="population",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(
+                                kind="Population",
+                                bindings={"candidate_count": candidate_count},
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                ),
+            },
+            state=StateContract(
+                reads=(RUNTIME_RNG,),
+                writes=(
+                    POPULATIONS_MAIN,
+                    ARCHIVES_MAIN,
+                    EVALUATIONS_COUNT,
+                    ARCHIVES_PARETO,
+                    RUNTIME_GENERATION,
+                    RUNTIME_RNG,
+                ),
+            ),
+        )
+
     def _create_attrs(
         self, problem: Problem, provider: ComponentProvider
     ) -> list[PopulationAttribute]:
-        """
-        Create attributes for Population and Archive.
-
-        Parameters
-        ----------
-        problem : Problem
-            The problem instance.
-        provider : ComponentProvider
-            The component provider instance.
-
-        Returns
-        -------
-        list[PopulationAttribute]
-            The attributes for Population and Archive.
-        """
         attrs = [
             PopulationAttribute("x", float, (problem.dim,), default=np.nan),
             PopulationAttribute("f", float, (problem.n_obj,), default=np.nan),
@@ -59,27 +151,6 @@ class Initializer(ABC):
         population: Population,
         rng: np.random.Generator,
     ) -> OptimizationState:
-        """
-        Create an OptimizationState.
-
-        Parameters
-        ----------
-        problem : Problem
-            The problem instance.
-        archive : Archive
-            The archive instance.
-        pareto_archive : ParetoArchive
-            The Pareto archive instance.
-        population : Population
-            The population instance.
-        rng : np.random.Generator
-            The random number generator.
-
-        Returns
-        -------
-        OptimizationState
-            The optimization context.
-        """
         if (
             isinstance(problem.comparator, NSGA3Comparator)
             and problem.comparator._rng is None
@@ -120,6 +191,98 @@ class Initializer(ABC):
         pass
 
 
+class GenomeInitializer(Initializer):
+    """Initialize a population by sampling the problem's ``SearchSpace``."""
+
+    def __init__(
+        self, n_init_archive: int, n_init_population: int, seed: int | None = None
+    ) -> None:
+        if n_init_archive < 0 or n_init_population < 0:
+            raise ValueError("initial sizes must be non-negative")
+        if n_init_population > n_init_archive:
+            raise ValueError("n_init_population cannot exceed n_init_archive")
+        self.n_init_archive = n_init_archive
+        self.n_init_population = n_init_population
+        self.seed = seed
+
+    def _create_attrs(
+        self, problem: Problem, provider: ComponentProvider
+    ) -> list[PopulationAttribute]:
+        attrs = [
+            PopulationAttribute("f", float, (problem.n_obj,), default=np.nan),
+            PopulationAttribute("g", float, (problem.n_constraints,), default=0.0),
+            PopulationAttribute("cv", float, (), default=0.0),
+            PopulationAttribute("id", np.int64, (), default=-1),
+        ]
+        if provider.algorithm is not None:
+            required = provider.algorithm.get_required_attrs(problem)
+            names = {attr.name for attr in attrs}
+            attrs.extend(attr for attr in required if attr.name not in names)
+        return attrs
+
+    def initialize(
+        self, provider: ComponentProvider, problem: Problem
+    ) -> OptimizationState:
+        """Create the initial population and archive for a problem."""
+        provider_seed = getattr(provider, "seed", None)
+        rng = np.random.default_rng(
+            provider_seed if provider_seed is not None else self.seed
+        )
+        attrs = self._create_attrs(problem, provider)
+        empty_genomes = problem.space.sample(0, rng)
+        population = _make_population(
+            provider.algorithm.population_class,
+            attrs,
+            self.n_init_population,
+            problem,
+            empty_genomes,
+        )
+        archive = _make_population(
+            provider.algorithm.archive_class,
+            attrs,
+            self.n_init_archive,
+            problem,
+            empty_genomes,
+        )
+        pareto_archive = provider.algorithm.create_pareto_archive(
+            attrs=attrs, init_capacity=self.n_init_archive, problem=problem
+        )
+        ctx = self._create_context(problem, archive, pareto_archive, population, rng)
+
+        genomes = problem.space.sample(self.n_init_archive, rng)
+        validation = problem.space.validate(genomes)
+        if not validation.valid:
+            raise ValidationError(
+                "SearchSpace.sample returned invalid genomes: "
+                + "; ".join(validation.errors)
+            )
+        result = provider.evaluator.evaluate_batch(genomes, problem)
+        ids = ctx.candidate_id_allocator.allocate(self.n_init_archive)
+
+        for i in range(self.n_init_archive):
+            data = {
+                "genome": genomes.take([i]),
+                "f": result.f[i],
+                "g": result.g[i],
+                "cv": float(result.cv[i]),
+                "id": int(ids[i]),
+            }
+            archive.add(data)
+            pareto_archive.add(data)
+
+        ctx.count_fe(self.n_init_archive)
+        provider.dispatch(InitialEvaluationEndEvent(ctx=ctx, archive=archive))
+
+        sorted_idx = problem.comparator.sort_population(archive)
+        archive_sorted = archive.extract(sorted_idx)
+        archive.clear()
+        archive._extend_internal(archive_sorted, preserve_ids=True)
+        population._extend_internal(
+            archive[: self.n_init_population], preserve_ids=True
+        )
+        return ctx
+
+
 class LHSInitializer(Initializer):
     """
     Latin Hypercube Sampling Initializer.
@@ -140,6 +303,43 @@ class LHSInitializer(Initializer):
         self.n_init_archive = n_init_archive
         self.n_init_population = n_init_population
         self.seed = seed
+
+    def contract(self) -> ComponentContract:
+        """Return the LHS initializer contract."""
+        contract = super().contract()
+        role = contract.ports["initializer"]
+        output = role.outputs[0]
+        return replace(
+            contract,
+            state=replace(
+                contract.state,
+                reads=(
+                    *contract.state.reads,
+                    RUNTIME_CANDIDATE_ID_ALLOCATOR,
+                    EVALUATIONS_COUNT,
+                ),
+                writes=(*contract.state.writes, RUNTIME_CANDIDATE_ID_ALLOCATOR),
+            ),
+            ports={
+                **contract.ports,
+                "initializer": replace(
+                    role,
+                    outputs=(
+                        replace(
+                            output,
+                            data=replace(
+                                output.data,
+                                bindings={
+                                    "candidate_count": Fixed(
+                                        value=self.n_init_population
+                                    )
+                                },
+                            ),
+                        ),
+                    ),
+                ),
+            },
+        )
 
     def initialize(
         self, provider: ComponentProvider, problem: Problem
@@ -164,22 +364,33 @@ class LHSInitializer(Initializer):
         )
         attrs = self._create_attrs(problem, provider)
 
-        population = provider.algorithm.population_class(
-            attrs=attrs, init_capacity=self.n_init_population
+        population = _make_population(
+            provider.algorithm.population_class,
+            attrs,
+            self.n_init_population,
+            problem,
         )
-        archive = provider.algorithm.archive_class(
-            attrs=attrs, init_capacity=self.n_init_archive
+        archive = _make_population(
+            provider.algorithm.archive_class,
+            attrs,
+            self.n_init_archive,
+            problem,
         )
         pareto_archive = provider.algorithm.create_pareto_archive(
             attrs=attrs, init_capacity=self.n_init_archive, problem=problem
         )
+        pareto_archive._dense_numeric_view = _resolved_dense_view(problem)
 
         ctx = self._create_context(problem, archive, pareto_archive, population, rng)
 
+        bounds_srv = cast(
+            BoundsService, problem.space.services.require("BoundsService")
+        )
+        lb, ub = bounds_srv.bounds
         archive_x = scipy.stats.qmc.LatinHypercube(d=problem.dim, rng=rng).random(
             self.n_init_archive
         )
-        archive_x = scipy.stats.qmc.scale(archive_x, problem.lb, problem.ub)
+        archive_x = scipy.stats.qmc.scale(archive_x, lb, ub)
 
         provider.dispatch(InitialEvaluationStartEvent(ctx=ctx, candidates_x=archive_x))
 
@@ -235,6 +446,43 @@ class RandomInitializer(Initializer):
         self.n_init_population = n_init_population
         self.seed = seed
 
+    def contract(self) -> ComponentContract:
+        """Return the random initializer contract."""
+        contract = super().contract()
+        role = contract.ports["initializer"]
+        output = role.outputs[0]
+        return replace(
+            contract,
+            state=replace(
+                contract.state,
+                reads=(
+                    *contract.state.reads,
+                    RUNTIME_CANDIDATE_ID_ALLOCATOR,
+                    EVALUATIONS_COUNT,
+                ),
+                writes=(*contract.state.writes, RUNTIME_CANDIDATE_ID_ALLOCATOR),
+            ),
+            ports={
+                **contract.ports,
+                "initializer": replace(
+                    role,
+                    outputs=(
+                        replace(
+                            output,
+                            data=replace(
+                                output.data,
+                                bindings={
+                                    "candidate_count": Fixed(
+                                        value=self.n_init_population
+                                    )
+                                },
+                            ),
+                        ),
+                    ),
+                ),
+            },
+        )
+
     def initialize(
         self, provider: ComponentProvider, problem: Problem
     ) -> OptimizationState:
@@ -258,21 +506,30 @@ class RandomInitializer(Initializer):
         )
         attrs = self._create_attrs(problem, provider)
 
-        population = provider.algorithm.population_class(
-            attrs=attrs, init_capacity=self.n_init_population
+        population = _make_population(
+            provider.algorithm.population_class,
+            attrs,
+            self.n_init_population,
+            problem,
         )
-        archive = provider.algorithm.archive_class(
-            attrs=attrs, init_capacity=self.n_init_archive
+        archive = _make_population(
+            provider.algorithm.archive_class,
+            attrs,
+            self.n_init_archive,
+            problem,
         )
         pareto_archive = provider.algorithm.create_pareto_archive(
             attrs=attrs, init_capacity=self.n_init_archive, problem=problem
         )
+        pareto_archive._dense_numeric_view = _resolved_dense_view(problem)
 
         ctx = self._create_context(problem, archive, pareto_archive, population, rng)
 
-        archive_x = rng.uniform(
-            problem.lb, problem.ub, size=(self.n_init_archive, problem.dim)
+        bounds_srv = cast(
+            BoundsService, problem.space.services.require("BoundsService")
         )
+        lb, ub = bounds_srv.bounds
+        archive_x = rng.uniform(lb, ub, size=(self.n_init_archive, problem.dim))
 
         provider.dispatch(InitialEvaluationStartEvent(ctx=ctx, candidates_x=archive_x))
 
@@ -328,6 +585,43 @@ class SobolInitializer(Initializer):
         self.n_init_population = n_init_population
         self.seed = seed
 
+    def contract(self) -> ComponentContract:
+        """Return the Sobol initializer contract."""
+        contract = super().contract()
+        role = contract.ports["initializer"]
+        output = role.outputs[0]
+        return replace(
+            contract,
+            state=replace(
+                contract.state,
+                reads=(
+                    *contract.state.reads,
+                    RUNTIME_CANDIDATE_ID_ALLOCATOR,
+                    EVALUATIONS_COUNT,
+                ),
+                writes=(*contract.state.writes, RUNTIME_CANDIDATE_ID_ALLOCATOR),
+            ),
+            ports={
+                **contract.ports,
+                "initializer": replace(
+                    role,
+                    outputs=(
+                        replace(
+                            output,
+                            data=replace(
+                                output.data,
+                                bindings={
+                                    "candidate_count": Fixed(
+                                        value=self.n_init_population
+                                    )
+                                },
+                            ),
+                        ),
+                    ),
+                ),
+            },
+        )
+
     def initialize(
         self, provider: ComponentProvider, problem: Problem
     ) -> OptimizationState:
@@ -351,22 +645,33 @@ class SobolInitializer(Initializer):
         )
         attrs = self._create_attrs(problem, provider)
 
-        population = provider.algorithm.population_class(
-            attrs=attrs, init_capacity=self.n_init_population
+        population = _make_population(
+            provider.algorithm.population_class,
+            attrs,
+            self.n_init_population,
+            problem,
         )
-        archive = provider.algorithm.archive_class(
-            attrs=attrs, init_capacity=self.n_init_archive
+        archive = _make_population(
+            provider.algorithm.archive_class,
+            attrs,
+            self.n_init_archive,
+            problem,
         )
         pareto_archive = provider.algorithm.create_pareto_archive(
             attrs=attrs, init_capacity=self.n_init_archive, problem=problem
         )
+        pareto_archive._dense_numeric_view = _resolved_dense_view(problem)
 
         ctx = self._create_context(problem, archive, pareto_archive, population, rng)
 
+        bounds_srv = cast(
+            BoundsService, problem.space.services.require("BoundsService")
+        )
+        lb, ub = bounds_srv.bounds
         archive_x = scipy.stats.qmc.Sobol(
             d=problem.dim, scramble=True, seed=rng
         ).random(self.n_init_archive)
-        archive_x = scipy.stats.qmc.scale(archive_x, problem.lb, problem.ub)
+        archive_x = scipy.stats.qmc.scale(archive_x, lb, ub)
 
         provider.dispatch(InitialEvaluationStartEvent(ctx=ctx, candidates_x=archive_x))
 

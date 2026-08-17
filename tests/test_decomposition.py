@@ -53,17 +53,14 @@ def _make_pop(f: np.ndarray, cv: np.ndarray | None = None) -> Population:
 
 class TestUniformWeightVectors:
     def test_n_obj2_h4_count(self) -> None:
-        """n_obj=2, H=4: C(2+4-1, 4) = C(5,4) = 5 vectors."""
         W = uniform_weight_vectors(2, 4)
         assert W.shape == (5, 2)
 
     def test_n_obj3_h4_count(self) -> None:
-        """n_obj=3, H=4: C(3+4-1, 4) = C(6,4) = 15 vectors."""
         W = uniform_weight_vectors(3, 4)
         assert W.shape == (15, 3)
 
     def test_n_obj4_h3_count(self) -> None:
-        """n_obj=4, H=3: C(4+3-1, 3) = C(6,3) = 20 vectors."""
         W = uniform_weight_vectors(4, 3)
         expected = math.comb(4 + 3 - 1, 3)
         assert W.shape[0] == expected
@@ -77,7 +74,6 @@ class TestUniformWeightVectors:
         assert np.all(W >= 0.0)
 
     def test_h1_yields_identity_like_rows(self) -> None:
-        """H=1: n_obj vectors, each is a standard basis vector."""
         W = uniform_weight_vectors(3, 1)
         assert W.shape == (3, 3)
         assert np.allclose(W.sum(axis=1), 1.0)

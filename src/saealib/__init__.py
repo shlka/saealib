@@ -5,25 +5,9 @@ from importlib.metadata import version
 
 __version__ = version("saealib")
 
-# ---------------------------------------------------------------------------
-# Export tiers
-#
-# Tier 1 (this section, eager import + __all__): entry points likely to be
-#   named in the first script or a subclass definition — the 5 root
-#   abstractions (Algorithm, OptimizationStrategy, Surrogate,
-#   AcquisitionFunction, SurrogateManager), one or two representative default
-#   implementations per concept, and the Comparator/Evaluator/Initializer/
-#   Termination/Event bases with their common defaults.
-# Tier 2 (_TIER2_MAP below, lazy import via __getattr__): every other public
-#   component. A name in a subpackage's __all__ belongs here unless it is
-#   namespace-only.
-# namespace-only (not listed at the top level at all): generic-named bulk
-#   sets or domain toolkits, e.g. saealib.benchmarks (sphere/zdt*/dtlz*/...),
-#   saealib.registry.get/build/to_spec, and saealib.defaults (internal).
-#   Access these via their subpackage directly. Tracked in
-#   tests/test_exports.py's NAMESPACE_ONLY allowlist so new subpackage
-#   exports can't silently drift out of this scheme.
-# ---------------------------------------------------------------------------
+# Root exports are curated independently from each subpackage's namespace.
+# Names in ``_LAZY_EXPORTS`` are root conveniences, not an automatic mirror;
+# subpackage ``__all__`` entries remain valid public APIs at their own path.
 
 from saealib.acquisition import (
     AcquisitionFunction,
@@ -32,7 +16,7 @@ from saealib.acquisition import (
     ExpectedImprovement,
     PointwiseAcquisition,
 )
-from saealib.algorithms import GA, PSO, Algorithm
+from saealib.algorithms import GA, PSO, Algorithm, AskTellAlgorithm, GenomeGA
 from saealib.api import Result, maximize, minimize
 from saealib.callback import (
     CallbackManager,
@@ -70,6 +54,7 @@ from saealib.execution.evaluator import (
     ThreadPoolEvaluator,
 )
 from saealib.execution.initializer import (
+    GenomeInitializer,
     Initializer,
     LHSInitializer,
     RandomInitializer,
@@ -89,7 +74,15 @@ from saealib.operators import (
     TruncationSelection,
 )
 from saealib.optimizer import Optimizer
-from saealib.pipeline import Pipeline, Stage
+from saealib.pipeline import (
+    Branch,
+    Condition,
+    Loop,
+    Pipeline,
+    PipelineEntry,
+    Repeat,
+    Stage,
+)
 from saealib.policies import (
     ComparatorWorstFallback,
     EvaluateAll,
@@ -124,6 +117,10 @@ from saealib.problem import (
     Problem,
     StaticToleranceHandler,
 )
+
+# Activate the standard vector profile's adapters without making the
+# framework compiler import vector implementation modules.
+from saealib.profiles.vector import activate as _activate_vector_profile
 from saealib.registry import register
 from saealib.stages import (
     AcquisitionStage,
@@ -168,6 +165,8 @@ from saealib.variables import (
     Variable,
 )
 
+_activate_vector_profile()
+
 logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
@@ -180,16 +179,19 @@ __all__ = [
     "Archive",
     "ArchiveUpdateStage",
     "AskStage",
+    "AskTellAlgorithm",
     "AsyncEvaluationScheduler",
     "AsyncEvaluationSubmitStage",
     "AsyncEvaluator",
     "BatchExpectedImprovement",
+    "Branch",
     "CallbackManager",
     "CategoricalVariable",
     "CheckpointCallback",
     "CheckpointError",
     "Comparator",
     "ComparatorWorstFallback",
+    "Condition",
     "ConfigurationError",
     "ConstraintHandler",
     "ContinuousVariable",
@@ -223,6 +225,8 @@ __all__ = [
     "GenerationBasedStrategy",
     "GenerationEndEvent",
     "GenerationStartEvent",
+    "GenomeGA",
+    "GenomeInitializer",
     "Individual",
     "IndividualBasedStrategy",
     "InequalityConstraint",
@@ -233,6 +237,7 @@ __all__ = [
     "IntegerVariable",
     "IslandModel",
     "LHSInitializer",
+    "Loop",
     "MixedFeedback",
     "Mutation",
     "MutationPolynomial",
@@ -244,6 +249,7 @@ __all__ = [
     "ParetoArchive",
     "PendingEvaluation",
     "Pipeline",
+    "PipelineEntry",
     "PointwiseAcquisition",
     "Population",
     "PopulationAttribute",
@@ -253,6 +259,7 @@ __all__ = [
     "Problem",
     "RandomInitializer",
     "RatioEvaluation",
+    "Repeat",
     "RepeatedEvaluation",
     "ReplicateSummary",
     "Result",
@@ -294,12 +301,14 @@ __all__ = [
 ]
 
 # ---------------------------------------------------------------------------
-# Tier 2 — lazy imports (accessible as saealib.<name>, shown in dir())
+# Lazy root surface — imported on first access and shown in dir()
 # ---------------------------------------------------------------------------
 
-_TIER2_MAP: dict[str, str] = {
+_LAZY_EXPORTS: dict[str, str] = {
     # algorithms (less common)
     "PymooAlgorithm": "saealib.algorithms",
+    # context
+    "OptimizationState": "saealib.context",
     # comparators (less common)
     "Dominator": "saealib.comparators",
     "EpsilonDominanceComparator": "saealib.comparators",
@@ -319,6 +328,9 @@ _TIER2_MAP: dict[str, str] = {
     "spea2_fitness": "saealib.comparators",
     # execution (parallel)
     "JoblibEvaluator": "saealib.execution.evaluator",
+    # execution (evaluation protocol)
+    "EvaluationAdapter": "saealib.execution.evaluator",
+    "EvaluationQuery": "saealib.execution.evaluator",
     # decomposition
     "Decomposition": "saealib.decomposition",
     "DecompositionComparator": "saealib.decomposition",
@@ -330,12 +342,15 @@ _TIER2_MAP: dict[str, str] = {
     "CrossoverCategorical": "saealib.operators",
     "CrossoverIntegerSBX": "saealib.operators",
     "CrossoverOnePoint": "saealib.operators",
+    "OrderCrossover": "saealib.operators",
     "CrossoverTwoPoint": "saealib.operators",
     "CrossoverUniform": "saealib.operators",
     "MutationCategorical": "saealib.operators",
     "MutationGaussian": "saealib.operators",
     "MutationIntegerUniform": "saealib.operators",
     "MutationUniform": "saealib.operators",
+    "SequenceMutation": "saealib.operators",
+    "SwapMutation": "saealib.operators",
     "PymooCrossover": "saealib.operators",
     "PymooMutation": "saealib.operators",
     "LinearRankSelection": "saealib.operators",
@@ -343,6 +358,7 @@ _TIER2_MAP: dict[str, str] = {
     "repair_clipping": "saealib.operators",
     # acquisition (less common)
     "CompositeAcquisition": "saealib.acquisition",
+    "CORSDistance": "saealib.acquisition",
     "InverseDensityAcquisition": "saealib.acquisition",
     "MaximinDistanceAcquisition": "saealib.acquisition",
     "EHVIAcquisition": "saealib.acquisition",
@@ -426,6 +442,8 @@ _TIER2_MAP: dict[str, str] = {
     "SurrogateStartEvent": "saealib.callback",
     "logging_generation": "saealib.callback",
     "logging_generation_hv": "saealib.callback",
+    # stages (less common)
+    "stage_component": "saealib.stages",
     # utils
     "gaussian_kernel": "saealib.surrogate.rbf",
     "uniform_weight_vectors": "saealib.utils.weight_vectors",
@@ -433,10 +451,10 @@ _TIER2_MAP: dict[str, str] = {
 
 
 def __getattr__(name: str) -> object:
-    if name in _TIER2_MAP:
+    if name in _LAZY_EXPORTS:
         import importlib
 
-        mod = importlib.import_module(_TIER2_MAP[name])
+        mod = importlib.import_module(_LAZY_EXPORTS[name])
         obj = getattr(mod, name)
         globals()[name] = obj  # cache to avoid repeated lookup
         return obj
@@ -444,4 +462,4 @@ def __getattr__(name: str) -> object:
 
 
 def __dir__() -> list[str]:
-    return sorted(__all__ + list(_TIER2_MAP))
+    return sorted(__all__ + list(_LAZY_EXPORTS))

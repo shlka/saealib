@@ -2,23 +2,51 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from dataclasses import replace
+from typing import Protocol, cast
 
 import numpy as np
 
-from saealib.algorithms.base import Algorithm
+from saealib.algorithms.base import (
+    AskTellAlgorithm,
+    ProposalRequest,
+    algorithm_context,
+)
 from saealib.callback import PostAskEvent
-from saealib.context import OptimizationState
+from saealib.comparators import Comparator
+from saealib.core.contracts import (
+    ComponentContract,
+    FeedbackBatch,
+    FeedbackRequirement,
+    ProposalBatch,
+    ProposalRelations,
+    ServiceRequirement,
+)
+from saealib.core.state import POPULATIONS_MAIN, StatePatch, StateView
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.registry import register
+from saealib.space import BoundsService
 
-if TYPE_CHECKING:
-    from saealib.optimizer import Dispatchable
+
+class _LeaderContext(Protocol):
+    """Capabilities required to construct and rank PSO personal bests."""
+
+    @property
+    def population(self) -> Population: ...
+
+    @property
+    def problem(self) -> Problem: ...
+
+    @property
+    def comparator(self) -> Comparator: ...
+
+    @property
+    def dim(self) -> int: ...
 
 
 @register()
-class PSO(Algorithm):
+class PSO(AskTellAlgorithm):
     """
     Particle Swarm Optimization (PSO) for single-objective problems.
 
@@ -52,6 +80,13 @@ class PSO(Algorithm):
     the inertia weight ``w`` used here.)
     """
 
+    # PSO's tell operation updates particle state row-for-row.  A
+    # pre-selection strategy may evaluate only a subset, but shrinking the
+    # particle population to that subset would silently change the algorithm's
+    # state dimension.  The canonical tell view therefore retains the full
+    # proposal for this built-in algorithm.
+    tell_requires_full_proposal = True
+
     def __init__(
         self,
         w: float = 0.7,
@@ -78,6 +113,22 @@ class PSO(Algorithm):
         self.c1 = c1
         self.c2 = c2
         self.v_max = v_max
+
+    def contract(self) -> ComponentContract:
+        """Return the PSO contract with comparator-backed feedback."""
+        family = super().contract()
+        feedback = family.ports["feedback_consumer"]
+        offspring = replace(
+            feedback.inputs[0],
+            required_services=(ServiceRequirement(name="ComparisonService"),),
+        )
+        return replace(
+            family,
+            ports={
+                **family.ports,
+                "feedback_consumer": replace(feedback, inputs=(offspring,)),
+            },
+        )
 
     def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
         """
@@ -138,31 +189,30 @@ class PSO(Algorithm):
 
     def ask(
         self,
-        ctx: OptimizationState,
-        provider: Dispatchable,
-        n_offspring: int | None = None,
-    ) -> Population:
+        request: ProposalRequest,
+        state: StateView,
+    ) -> ProposalBatch:
         """
         Update particle velocities and positions.
 
         Parameters
         ----------
-        ctx : OptimizationState
-            Current optimization context.
-        provider : Dispatchable
-            Component provider.
-        n_offspring : int or None, optional
-            Ignored; output count equals population size.
+        request : ProposalRequest
+            Request-specific offspring count; PSO uses its population size.
+        state : StateView
+            Read-only algorithm state view.
 
         Returns
         -------
-        Population
+        ProposalBatch
             Candidates with updated ``x`` and ``velocity``.
         """
+        del request
+        ctx = algorithm_context(state)
         pop = ctx.population
         popsize = len(pop)
-        lb = ctx.problem.lb
-        ub = ctx.problem.ub
+        bounds_srv = cast(BoundsService, ctx.compiled_service("BoundsService"))
+        lb, ub = bounds_srv.bounds
 
         x = pop.get_array("x").copy()
         f = pop.get_array("f").copy()
@@ -209,28 +259,35 @@ class PSO(Algorithm):
             }
         )
 
-        provider.dispatch(PostAskEvent(ctx=ctx, candidates=x_new))
+        state.dispatch(PostAskEvent(ctx=ctx, candidates=x_new))
 
-        return cand_pop
+        return ProposalBatch.from_allocator(
+            ctx.proposal_id_allocator,
+            candidates=cand_pop,
+            relations=ProposalRelations(row_count=len(cand_pop)),
+            requirements=FeedbackRequirement(quantities=()),
+        )
 
     def tell(
         self,
-        ctx: OptimizationState,
-        provider: Dispatchable,
-        offspring: Population,
-    ) -> None:
+        feedback: FeedbackBatch,
+        state: StateView,
+    ) -> StatePatch:
         """
         Update the population and personal bests from evaluated offspring.
 
         Parameters
         ----------
-        ctx : OptimizationState
-            Current optimization context.
-        provider : Dispatchable
-            Component provider.
-        offspring : Population
-            Evaluated offspring population.
+        feedback : FeedbackBatch
+            Feedback delivered for the current proposal.
+        state : StateView
+            Read-only algorithm state view.
         """
+        del feedback
+        ctx = algorithm_context(state)
+        offspring = ctx.offspring
+        if offspring is None:
+            raise ValueError("PSO.tell() requires an offspring population")
         x_new = offspring.get_array("x")
         f_new = offspring.get_array("f")
         g_new = offspring.get_array("g")
@@ -244,6 +301,7 @@ class PSO(Algorithm):
             id_new = offspring.get_array("id")
 
         popsize = len(offspring)
+        population = ctx.population
         cmp = ctx.comparator
         for i in range(popsize):
             if np.any(np.isnan(f_new[i])):
@@ -269,8 +327,9 @@ class PSO(Algorithm):
         if has_id:
             new_pop_data["id"] = id_new
 
-        ctx.population.clear()
-        ctx.population._extend_internal(new_pop_data, preserve_ids=True)
+        population.clear()
+        population._extend_internal(new_pop_data, preserve_ids=True)
+        return StatePatch(writes={POPULATIONS_MAIN: population})
 
     # ------------------------------------------------------------------
     # Helpers
@@ -278,7 +337,7 @@ class PSO(Algorithm):
 
     def _select_leader(
         self,
-        ctx: OptimizationState,
+        ctx: _LeaderContext,
         pbest_x: np.ndarray,
         pbest_f: np.ndarray,
         pbest_cv: np.ndarray,
@@ -291,7 +350,7 @@ class PSO(Algorithm):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : _LeaderContext
             Optimization context.
         pbest_x : np.ndarray
             Personal best positions, shape (popsize, dim).

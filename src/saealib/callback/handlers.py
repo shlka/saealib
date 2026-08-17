@@ -3,16 +3,12 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 
 import numpy as np
 
-from saealib.callback.events import GenerationStartEvent
+from saealib.callback.events import GenerationStartEvent, _EventContext
 from saealib.comparators import non_dominated_sort
 from saealib.utils.indicators import hypervolume
-
-if TYPE_CHECKING:
-    from saealib.context import OptimizationState
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +26,7 @@ def logging_generation(event: GenerationStartEvent) -> None:
     event : GenerationStartEvent
         The generation-start event.
     """
-    ctx: OptimizationState = event.ctx
+    ctx: _EventContext = event.ctx
 
     if ctx.n_obj == 1:
         cmp = ctx.comparator
@@ -89,7 +85,7 @@ def logging_generation_hv(reference_point: np.ndarray):
     ref = np.asarray(reference_point, dtype=float)
 
     def _callback(event: GenerationStartEvent) -> None:
-        ctx: OptimizationState = event.ctx
+        ctx: _EventContext = event.ctx
         f = ctx.archive.get_array("f")
         _, fronts = non_dominated_sort(f)
         if not fronts or not fronts[0]:

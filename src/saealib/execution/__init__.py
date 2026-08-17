@@ -1,7 +1,10 @@
+from saealib.core.runtime import PollResult
 from saealib.execution.evaluator import (
     AsyncEvaluator,
+    EvaluationAdapter,
     EvaluationErrorInfo,
     EvaluationHandle,
+    EvaluationQuery,
     EvaluationRequest,
     EvaluationResult,
     EvaluationStatus,
@@ -13,29 +16,46 @@ from saealib.execution.evaluator import (
     ThreadPoolEvaluator,
 )
 from saealib.execution.initializer import (
+    GenomeInitializer,
     Initializer,
     LHSInitializer,
     RandomInitializer,
     SobolInitializer,
+)
+from saealib.execution.runtime import (
+    RuntimeFactory,
+    RuntimeRegistration,
+    RuntimeRegistry,
+    create_runtime,
+    default_runtime_registry,
 )
 from saealib.execution.scheduler import AsyncEvaluationScheduler
 
 __all__ = [
     "AsyncEvaluationScheduler",
     "AsyncEvaluator",
+    "EvaluationAdapter",
     "EvaluationErrorInfo",
     "EvaluationHandle",
+    "EvaluationQuery",
     "EvaluationRequest",
     "EvaluationResult",
     "EvaluationStatus",
     "EvaluationUpdate",
     "Evaluator",
+    "GenomeInitializer",
     "Initializer",
     "JoblibEvaluator",
     "LHSInitializer",
     "PendingEvaluation",
+    "PollResult",
     "RandomInitializer",
+    "RuntimeFactory",
+    "RuntimeRegistration",
+    "RuntimeRegistry",
     "SerialEvaluator",
     "SobolInitializer",
     "ThreadPoolEvaluator",
+    "create_runtime",
+    "default_runtime_registry",
 ]

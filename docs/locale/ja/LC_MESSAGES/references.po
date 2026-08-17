@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 02:51+0900\n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,20 +19,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../../references.md:1
+#: ../../references.md:5
 msgid "References"
-msgstr "文献リファレンス"
-
-#: ../../../references.md:3
-msgid ""
-"Each page under [Components](components/index.md) and "
-"[Algorithms](algorithms/index.md) cites its implementation's theoretical "
-"source here, by number."
-msgstr "[コンポーネント](components/index.md)や[アルゴリズム](algorithms/index.md)配下の各ページは、実装の理論的な出典をここに番号付きで引用します。"
-
-#~ msgid "文献リファレンス"
-#~ msgstr ""
-
-#~ msgid "[コンポーネント](components/index.md)や[アルゴリズム](algorithms/index.md)配下の各ページは、実装の理論的な出典をここに番号付きで引用する。"
-#~ msgstr ""
-
+msgstr "参照"

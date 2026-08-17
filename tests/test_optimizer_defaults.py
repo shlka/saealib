@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 
 from saealib.algorithms.pso import PSO
+from saealib.execution import AsyncEvaluationScheduler, SerialEvaluator
 from saealib.optimizer import Optimizer
 from saealib.policies import (
     ComparatorWorstFallback,
@@ -39,6 +40,16 @@ class TestSetComponentsAreNeverOverwritten:
         opt.set_algorithm(pso)
         opt._resolve_defaults()
         assert opt.algorithm is pso
+
+    def test_set_algorithm_after_async_scheduler_updates_scheduler_consumer(self):
+        opt = Optimizer(_problem())
+        scheduler = AsyncEvaluationScheduler(SerialEvaluator())
+
+        opt.set_async_evaluation_scheduler(scheduler)
+        algorithm = PSO()
+        opt.set_algorithm(algorithm)
+
+        assert scheduler.algorithm is algorithm
 
     def test_set_strategy_is_preserved(self):
         from saealib.strategies.gb import GenerationBasedStrategy

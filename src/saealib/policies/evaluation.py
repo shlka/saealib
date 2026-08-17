@@ -9,6 +9,14 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from saealib.acquisition.base import AcquisitionResult
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+)
 from saealib.exceptions import ValidationError
 from saealib.execution.evaluator import (
     EvaluationRequest,
@@ -16,6 +24,7 @@ from saealib.execution.evaluator import (
     EvaluationStatus,
     EvaluationUpdate,
 )
+from saealib.population.genome import DenseVectorBatch
 from saealib.registry import register
 
 if TYPE_CHECKING:
@@ -52,6 +61,38 @@ class EvaluationPlan:
 
 class EvaluationPlanner(ABC):
     """Public contract for planners that may produce multiple requests."""
+
+    def contract(self) -> ComponentContract:
+        """Return the evaluation-planner family contract."""
+        return ComponentContract(
+            ports={
+                "evaluation_planner": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="candidates",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                        ),
+                        PortSpec(
+                            name="acquisition",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="RowPredicate"),
+                            cardinality=MANY,
+                            optional=True,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="evaluation_requests",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(kind="EvaluationRequestBatch"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                ),
+            }
+        )
 
     @abstractmethod
     def plan(
@@ -125,10 +166,24 @@ class _RequestPlanner(EvaluationPlanner):
         if len(ids) != len(np.unique(ids)) or np.any(ids < 0):
             raise ValidationError("candidate IDs must be unique and assigned")
         request_id = ctx.request_id_allocator.allocate(1)[0]
-        x = np.array(candidates.x[indices], dtype=np.float64, order="C", copy=True)
-        x.flags.writeable = False
+        genomes = getattr(candidates, "genomes", None)
+        if genomes is not None:
+            payload = genomes.take(indices)
+        else:
+            # Keep compatibility with candidate fixtures that provide ``x``
+            # instead of a GenomeBatch.
+            # while ensuring the public request payload remains a GenomeBatch.
+            try:
+                payload = DenseVectorBatch(np.asarray(candidates.x)[indices])
+            except AttributeError as exc:
+                raise ValidationError(
+                    "candidates must provide genomes or a legacy x array"
+                ) from exc
         return EvaluationRequest(
-            np.int64(request_id), ids, x, metadata={"row_indices": indices.tolist()}
+            np.int64(request_id),
+            ids,
+            payload,
+            metadata={"row_indices": indices.tolist()},
         )
 
 
@@ -203,7 +258,7 @@ class RepeatedEvaluation(_RequestPlanner):
             EvaluationRequest(
                 request.request_id,
                 request.candidate_ids,
-                request.x,
+                request.payload,
                 request.outputs,
                 {**request.metadata, "plan_id": plan_id},
             )
@@ -227,7 +282,7 @@ class RepeatedEvaluation(_RequestPlanner):
                 EvaluationRequest(
                     request_id,
                     first.candidate_ids,
-                    first.x,
+                    first.payload,
                     first.outputs,
                     {**first.metadata, "replicate": replicate},
                 )
@@ -421,7 +476,7 @@ def _continue_fidelity_plan(
     high_request = EvaluationRequest(
         request_id,
         selected_ids,
-        low_request.x[low_rows],
+        low_request.payload.take(low_rows),
         low_request.outputs,
         {
             **low_request.metadata,
@@ -460,7 +515,7 @@ class FidelityEvaluation(_RequestPlanner):
                 EvaluationRequest(
                     request.request_id,
                     request.candidate_ids,
-                    request.x,
+                    request.payload,
                     request.outputs,
                     metadata,
                 ),

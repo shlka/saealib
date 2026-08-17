@@ -1,28 +1,35 @@
-"""Candidate/request ID allocation (ADR-0001 §2.2).
-
-Leaf module: imports only ``threading``, ``numpy``, and
-``saealib.exceptions.ValidationError`` to avoid any import-cycle risk, since
-``context.py`` needs a runtime top-level import of ``IDAllocator``, not a
-``TYPE_CHECKING``-only one.
-"""
+"""Candidate and request ID allocation."""
 
 from __future__ import annotations
 
 import threading
+from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
 from saealib.exceptions import ValidationError
 
+__all__ = ["CandidateIds", "IDAllocator", "PopulationAttribute"]
+
+# Keep the identity alias identical across the core and compatibility import paths.
+CandidateIds = np.ndarray
+
+
+@dataclass(frozen=True)
+class PopulationAttribute:
+    """Definition of one named attribute in a population-like table."""
+
+    name: str
+    dtype: type | np.dtype
+    shape: tuple[int, ...] = ()
+    default: Any = np.nan
+
 
 class IDAllocator:
-    """Allocates unique, monotonically increasing int64 IDs.
+    """Allocate unique, monotonically increasing int64 IDs.
 
-    A controlled mutable exception, like OptimizationState.rng/archive:
-    advances its internal state as a side effect. Thread-safe via an
-    internal lock. Not part of saealib's public top-level export surface —
-    accessed only through OptimizationState.candidate_id_allocator /
-    .request_id_allocator.
+    Allocation mutates the allocator and is thread-safe.
     """
 
     def __init__(self, start: int = 0) -> None:
@@ -38,22 +45,11 @@ class IDAllocator:
 
     @property
     def next_value(self) -> int:
-        """The next ID that will be allocated (for checkpoint serialization only)."""
+        """Return the next unallocated ID for serialization."""
         return self._next
 
     def allocate(self, n: int) -> np.ndarray:
-        """Allocate ``n`` sequential unique int64 IDs and advance internal state.
-
-        Parameters
-        ----------
-        n : int
-            Number of IDs to allocate. Must be non-negative.
-
-        Returns
-        -------
-        np.ndarray
-            Owned ``(n,)`` int64 array of newly allocated IDs.
-        """
+        """Allocate ``n`` sequential int64 IDs and advance the allocator."""
         if n < 0:
             raise ValidationError("IDAllocator.allocate(n) requires n >= 0")
         with self._lock:
@@ -66,10 +62,8 @@ class IDAllocator:
         return ids
 
     def __getstate__(self) -> dict:
-        """Return pickle state, excluding the unpicklable lock."""
         return {"_next": self._next}
 
     def __setstate__(self, state: dict) -> None:
-        """Restore pickle state, reconstructing a fresh lock."""
         self._next = state["_next"]
         self._lock = threading.Lock()

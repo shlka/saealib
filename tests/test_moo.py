@@ -87,7 +87,7 @@ def _make_pop(f_values: np.ndarray, cv_values: np.ndarray | None = None) -> Popu
 
 
 def _nsga3_tie_population_f() -> np.ndarray:
-    """5-point front with 3 exact duplicates in one niche (Issue #199).
+    """Create a five-point front with three exact duplicates in one niche.
 
     All points lie on the segment f1+f2=1, so no point dominates another and
     the whole set forms a single Pareto front. The 3 duplicates at (0.5, 0.5)
@@ -110,8 +110,8 @@ def _nsga3_first_ctx(seed: int, reference_points: np.ndarray):
 
     Returns the context yielded immediately after ``RunStartEvent``, which is
     already past the point where ``Runner`` injects a spawned ``rng`` into an
-    unseeded ``NSGA3Comparator`` (Issue #199), so no generation needs to run
-    to observe reproducibility.
+    unseeded ``NSGA3Comparator``, so no generation needs to run to observe
+    reproducibility.
     """
     dim = 2
     problem = Problem(
@@ -495,14 +495,10 @@ class TestWeightedSumComparator:
 # SingleObjectiveComparator Tests
 # ===========================================================================
 class TestSingleObjectiveComparator:
-    """Tests for SingleObjectiveComparator direction handling (Issue #197)."""
+    """Test direction-aware comparison and sorting."""
 
     def test_maximize_compare_and_sort_agree(self) -> None:
-        """direction=+1: compare() and sort_population() must agree on ordering.
-
-        Before the fix, _compare() was hardcoded to minimize while _sort()
-        respected direction, so they disagreed under direction=+1.
-        """
+        """Comparison and sorting agree when maximizing."""
         f = np.array([[1.0], [3.0], [2.0]])
         pop = _make_pop(f)
         comp = SingleObjectiveComparator(direction=1.0)
@@ -2062,16 +2058,16 @@ class TestSPEA2Comparator:
         assert not issubclass(SPEA2Comparator, ParetoComparator)
 
     # -----------------------------------------------------------------------
-    # 9. Truncation retains boundary/extreme solutions (Issue #209)
+    # 9. Truncation retains boundary/extreme solutions
     # -----------------------------------------------------------------------
     def test_truncation_retains_boundary_solutions(self) -> None:
         """Iterative nearest-neighbour truncation keeps both extreme points.
 
         This 6-point non-dominated front (all ``F(i) < 1``) is constructed
-        so that a one-shot sort on the single-``k`` density ``D(i)`` (the
-        pre-#209 behaviour) discards the true extreme point at idx 5
-        (smallest obj-1) in favour of an interior point at idx 1, when
-        truncated to the top 4. Zitzler et al. (2001) Section 3.2's
+        so that a one-shot sort on the single-``k`` density ``D(i)`` discards
+        the true extreme point at idx 5 (smallest obj-1) in favour of an
+        interior point at idx 1, when truncated to the top 4. Zitzler et al.
+        (2001) Section 3.2's
         iterative removal -- which recomputes neighbour distances after
         every step and, per the tie-break rule, prefers to remove crowded
         interior points before boundary ones -- keeps both extremes instead.
@@ -2598,7 +2594,7 @@ class TestNSGA3Comparator:
         assert order[0] == 0  # [3,3] dominates under maximization
 
     def test_direction_maximize_matches_negated_minimize(self) -> None:
-        """_normalize_objectives must respect direction (Issue #197).
+        """Maximization ordering matches negated minimization ordering.
 
         Sorting a maximize (direction=+1) population must give the same
         ordering as sorting the negated population under minimize
@@ -2619,7 +2615,7 @@ class TestNSGA3Comparator:
         np.testing.assert_array_equal(order_max, order_min)
 
     # -----------------------------------------------------------------------
-    # Normalization must use S_t, not R_t (Issue #211)
+    # Normalization must use S_t, not R_t
     # -----------------------------------------------------------------------
     def test_normalize_objectives_front_vs_combined_population_differ(self) -> None:
         """_normalize_objectives(S_t) and _normalize_objectives(R_t) can diverge.
@@ -2689,7 +2685,7 @@ class TestNSGA3Comparator:
         assert set(order[3:].tolist()) == {3, 4, 5}
 
     # -----------------------------------------------------------------------
-    # seed=None reproducibility under a master Optimizer seed (Issue #199)
+    # seed=None reproducibility under a master Optimizer seed
     # -----------------------------------------------------------------------
     def test_seed_none_does_not_eagerly_create_rng(self) -> None:
         """seed=None must not eagerly call default_rng() at construction time."""
@@ -2716,8 +2712,8 @@ class TestNSGA3Comparator:
         assert set(order.tolist()) == {0, 1, 2}
 
     def test_explicit_seed_reproducible_regression(self) -> None:
-        """NSGA3Comparator(seed=<int>) reproduces exactly as before the fix,
-        independent of any Optimizer/ctx.rng involvement (#199 regression)."""
+        """An explicit comparator seed gives repeatable ordering independently
+        of optimizer-owned RNG state."""
         ref = np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
         f = _nsga3_tie_population_f()
         comp_a = NSGA3Comparator(ref, seed=42)
@@ -2729,9 +2725,9 @@ class TestNSGA3Comparator:
     def test_seed_none_reproducible_under_master_optimizer_seed(self) -> None:
         """Two Optimizer(seed=42) runs must reproduce NSGA3Comparator ordering.
 
-        Covers Issue #199: an unseeded NSGA3Comparator's rng is injected by
-        Runner from a spawned ``ctx.rng`` at run start, so it must reproduce
-        under a fixed master seed like every other rng-consuming component.
+        An unseeded NSGA3Comparator receives a spawned ``ctx.rng`` from
+        Runner at run start, so it reproduces under a fixed master seed like
+        every other RNG-consuming component.
         Uses a tie-break-sensitive population (duplicate objective values in
         the same niche) to actually exercise ``rng.choice`` tie-breaking.
         """
@@ -2953,15 +2949,13 @@ class TestRNSGA2Comparator:
         assert comp.compare_population(pop, 0, 2) == -1
 
     # -----------------------------------------------------------------------
-    # Steps 1-2 match the paper's per-reference-point rank minimum (Issue #210)
+    # Steps 1-2 match the paper's per-reference-point rank minimum
     # -----------------------------------------------------------------------
     def test_step1_2_min_rank_not_niche_count(self) -> None:
         """Ordering follows Deb & Sundar (2006) Steps 1-2, not niche_count.
 
-        All 4 points form a single non-dominated front, so the pre-#210
-        niche_count-based mechanism (niche_count is 0 for everyone in the
-        first front processed) degenerates to a plain sort by each
-        individual's distance to its single nearest reference point, giving
+        All 4 points form a single non-dominated front. A plain sort by each
+        individual's distance to its single nearest reference point gives
         idx order ``[2, 3, 1, 0]``. The paper's actual procedure -- rank each
         individual against *every* reference point independently (Step 1)
         and take the minimum rank across reference points (Step 2) -- gives

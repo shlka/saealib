@@ -1678,8 +1678,8 @@ class RNSGA2Comparator(ParetoComparator):
         equivalent is the minimum of its per-reference-point ranks from
         Step 1 (smaller = preferred); ties are broken by the individual's
         raw distance to its nearest reference point for determinism, since
-        the paper does not specify a tie-break. Step 3 (ε-clearing,
-        unchanged from the pre-#210 implementation): solutions within
+        the paper does not specify a tie-break. Step 3 (ε-clearing):
+        solutions within
         ``epsilon`` of a higher-ranked solution sharing the same nearest
         reference point are moved to the back of their reference-point
         group.

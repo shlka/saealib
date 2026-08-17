@@ -40,66 +40,23 @@ We adhere to strict coding standards to ensure maintainability.
 * **Type Hinting**: Type hints are strongly encouraged for all public APIs.
 * **Docstrings**: We follow the **NumPy style** docstrings.
 
-### 3. Deprecation Policy
+### 3. Pre-1.0 Compatibility Policy
 
-When renaming or removing a public API, add a backward-compatible fallback using the utilities in `src/saealib/_deprecated.py`. Always use `FutureWarning` (visible to users by default).
+Before 1.0, a beta release may introduce a breaking Python API change. Record
+the change and its migration path in the pull request and release notes; do
+not add a compatibility shim automatically. Keep a shim when it protects an
+established user-facing bridge at a proportionate maintenance cost, and add a
+test that describes the retained contract. Remove short-lived implementation
+aliases and migration scaffolding once the canonical API is in place.
 
-#### Renamed keyword argument
+Checkpoint and other serialized-state compatibility are evaluated separately
+from Python API compatibility. Preserve readers and migrations when they
+protect resumability of existing experiments, even when the corresponding
+runtime name is no longer part of the public API.
 
-```python
-from saealib._deprecated import deprecated_param
-
-class MyComparator(Comparator):
-    @deprecated_param("old_name", "new_name", "0.2.0")
-    def __init__(self, new_name=None, ...):
-        ...
-```
-
-The decorator intercepts `old_name` from `**kwargs`, emits a `FutureWarning`, and forwards the value to `new_name`. Remove `old_name` from the signature entirely.
-
-#### One old argument mapping to multiple new arguments
-
-Use `warn_deprecated` inline when a single old parameter maps to more than one new parameter:
-
-```python
-from saealib._deprecated import warn_deprecated
-
-def __init__(self, ..., eps=None, *, eps_cv=1e-6, eps_obj=1e-6):
-    if eps is not None:
-        warn_deprecated("eps", "eps_cv and eps_obj", "0.2.0")
-        eps_cv = eps_obj = eps
-```
-
-#### Deprecated class alias
-
-```python
-from saealib._deprecated import deprecated_class
-
-
-@deprecated_class("NewClassName")
-class OldClassName(NewClassName):
-    """Deprecated alias of :class:`NewClassName`."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-```
-
-#### Testing
-
-Assert the warning category is `FutureWarning`:
-
-```python
-def test_old_name_warns():
-    with pytest.warns(FutureWarning):
-        MyComparator(old_name=1.0)
-```
-
-If a test class exercises a deprecated API without testing the warning itself, suppress it at the class level:
-
-```python
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-class TestLegacyBehavior: ...
-```
+After 1.0, renaming or removing a stable public API normally requires a
+documented deprecation cycle. This policy does not make deep implementation
+imports stable.
 
 ### 4. Testing Policy
 
@@ -180,12 +137,15 @@ uv run --group docs sphinx-intl update -p docs/_build/gettext/gettext -l ja -d d
 uv run --group docs sphinx-build -b html -D language=ja docs docs/_build/html-ja
 ```
 
-### 7. Public API Export Tiers
+### 7. Public API Governance
 
-`src/saealib/__init__.py` exposes public components in three tiers (see the "Export tiers" comment at the top of that file for the authoritative version):
+`src/saealib/__init__.py` exposes a curated eager root surface (`__all__`)
+and a curated lazy root surface (`_LAZY_EXPORTS`). A symbol added to a
+subpackage's `__all__` remains public at that namespace; it does not
+automatically become a root export. Root additions must be intentional,
+represented in `src/saealib/__init__.pyi`, and covered by the export tests.
 
-* **Tier 1** (eager import, listed in `__all__`): entry points likely to be named in the first script or a subclass definition — the 5 root abstractions (`Algorithm`, `OptimizationStrategy`, `Surrogate`, `AcquisitionFunction`, `SurrogateManager`), one or two representative default implementations per concept, and the `Comparator`/`Evaluator`/`Initializer`/`Termination`/`Event` bases with their common defaults.
-* **Tier 2** (`_TIER2_MAP`, lazy import via `__getattr__`): every other public component. A name in a subpackage's `__all__` belongs here unless it is namespace-only.
-* **namespace-only** (not listed at the top level at all): generic-named bulk sets or domain toolkits, e.g. `saealib.benchmarks` (`sphere`/`zdt*`/`dtlz*`/...), `saealib.registry.get`/`build`/`to_spec`, and `saealib.defaults` (internal). Access these via their subpackage directly.
-
-When you add a new public class or function to a subpackage's `__all__`, add it to `_TIER2_MAP` (or the `NAMESPACE_ONLY` allowlist in `tests/test_exports.py` if it's a namespace-only case) and to `src/saealib/__init__.pyi` in the same PR — `tests/test_exports.py` fails otherwise.
+Use `saealib.core` for framework extension contracts and graph/state
+vocabulary. Use `saealib.execution` for runtime provider registration. Modules
+such as `saealib.core.compiler.compiler` are implementation paths rather than
+canonical extension imports and carry no compatibility guarantee.

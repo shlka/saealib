@@ -14,11 +14,13 @@ from saealib.policies.evaluation import (
 )
 from saealib.policies.feedback import (
     ComparatorWorstFallback,
+    FallbackPolicy,
     FeedbackBuilder,
     FeedbackResult,
     MixedFeedback,
     NoFeedback,
     PredictedFeedback,
+    SelectionPolicy,
     TrueOnlyFeedback,
 )
 
@@ -27,6 +29,7 @@ __all__ = [
     "EvaluateAll",
     "EvaluationPlan",
     "EvaluationPlanner",
+    "FallbackPolicy",
     "FeedbackBuilder",
     "FeedbackResult",
     "FidelityEvaluation",
@@ -37,6 +40,7 @@ __all__ = [
     "RatioEvaluation",
     "RepeatedEvaluation",
     "ReplicateSummary",
+    "SelectionPolicy",
     "TopKEvaluation",
     "TrueOnlyFeedback",
     "aggregate_replicates",

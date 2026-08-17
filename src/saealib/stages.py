@@ -20,15 +20,18 @@ dict) via ``state.replace(data={**state.data, "key": value})``.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import inspect
+import sys
+from collections.abc import Callable, Mapping
 from copy import deepcopy
 from dataclasses import replace
 from math import fsum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol, cast, runtime_checkable
 
 import numpy as np
 
 from saealib.acquisition.base import AcquisitionResult
+from saealib.algorithms.base import ProposalRequest
 from saealib.callback import (
     AcquisitionEndEvent,
     AcquisitionStartEvent,
@@ -38,6 +41,51 @@ from saealib.callback import (
     SurrogateStartEvent,
 )
 from saealib.context import EvaluationPlanState
+from saealib.core.contracts import (
+    ComponentContract,
+    FeedbackBatch,
+    PartSpec,
+    StateContract,
+)
+from saealib.core.contracts.execution import ExecutionContract
+from saealib.core.contracts.feedback import FeedbackChannel
+from saealib.core.contracts.observation import SURROGATE, TRUE
+from saealib.core.contracts.proposals import ProposalBatch
+from saealib.core.state import (
+    ACQUISITION_RESULT,
+    ARCHIVES_MAIN,
+    ARCHIVES_PARETO,
+    EVALUATED_OFFSPRING,
+    EVALUATION_HANDLES,
+    EVALUATION_NEW_IDS,
+    EVALUATION_REQUEST,
+    EVALUATION_UPDATE_NEW_IDS,
+    EVALUATION_UPDATES,
+    EVALUATIONS_COUNT,
+    EVALUATIONS_OWNERS,
+    EVALUATIONS_PENDING,
+    EVALUATIONS_PLAN,
+    EVALUATIONS_PLAN_STATE,
+    EVALUATIONS_PLAN_UPDATES,
+    FEEDBACK_ACCUMULATOR,
+    FEEDBACK_RESULT,
+    POPULATIONS_MAIN,
+    PROPOSALS_CURRENT,
+    PROPOSALS_ID_ALLOCATOR,
+    PROPOSALS_OFFSPRING,
+    RUNTIME_ASYNC_FATAL,
+    RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    RUNTIME_GENERATION,
+    RUNTIME_REQUEST_ID_ALLOCATOR,
+    RUNTIME_RNG,
+    SCORES,
+    SURROGATES_PREDICTIONS,
+    USER_DATA,
+    StatePatch,
+    StateStore,
+    StateView,
+)
+from saealib.core.state.context import RuntimeContext
 from saealib.exceptions import EvaluationProtocolError, ValidationError
 from saealib.execution.evaluator import (
     EvaluationRequest,
@@ -46,7 +94,7 @@ from saealib.execution.evaluator import (
     Evaluator,
     PendingEvaluation,
 )
-from saealib.pipeline import Pipeline, Stage
+from saealib.pipeline import Stage
 from saealib.policies.evaluation import (
     EvaluateAll,
     EvaluationPlan,
@@ -54,11 +102,17 @@ from saealib.policies.evaluation import (
     _aggregate_repeated_updates,
     _continue_fidelity_plan,
 )
-from saealib.policies.feedback import FeedbackBuilder, MixedFeedback, TrueOnlyFeedback
+from saealib.policies.feedback import (
+    FeedbackBuilder,
+    MixedFeedback,
+    TrueOnlyFeedback,
+    _feedback_batch_from_result,
+)
+from saealib.space.space import encode_features
 
 if TYPE_CHECKING:
     from saealib.acquisition.base import AcquisitionFunction
-    from saealib.algorithms.base import Algorithm
+    from saealib.algorithms.base import Algorithm, FeedbackConsumer, Proposer
     from saealib.callback import CallbackManager, Event
     from saealib.context import OptimizationState
     from saealib.execution.evaluator import Evaluator
@@ -66,6 +120,29 @@ if TYPE_CHECKING:
     from saealib.optimizer import ComponentProvider
     from saealib.problem import Problem
     from saealib.surrogate.manager import SurrogateManager
+
+
+@runtime_checkable
+class _AskCandidatePopulation(Protocol):
+    """Population operations needed only by the built-in ask stage."""
+
+    schema: Mapping[str, Any]
+
+    def get_array(self, key: str) -> np.ndarray: ...
+
+    def _assign_ids(self, indices: np.ndarray, ids: np.ndarray) -> None: ...
+
+
+class _TransactionalExecutionContext(Protocol):
+    """Legacy transaction surface consumed by the Stage compatibility adapter."""
+
+    _store: Any
+
+    def get_state(self, key: Any) -> object: ...
+
+    def set_state(self, key: Any, value: object) -> None: ...
+
+    def replace(self, **kwargs: Any) -> _TransactionalExecutionContext: ...
 
 
 class _DispatchProxy:
@@ -108,7 +185,6 @@ class _DispatchProxy:
 
 
 def _plan_complete(state: OptimizationState) -> bool:
-    """Return whether every request in the active plan is terminal."""
     plan = state.evaluation_plan
     if plan is None:
         return True
@@ -123,9 +199,342 @@ def _plan_incomplete(state: OptimizationState) -> bool:
     return state.evaluation_plan is not None and not _plan_complete(state)
 
 
-# ---------------------------------------------------------------------------
-# Concrete stages
-# ---------------------------------------------------------------------------
+def _apply_component_patch(state: OptimizationState, patch: StatePatch) -> None:
+    if not isinstance(patch, StatePatch):
+        raise ValidationError("feedback consumer must return a StatePatch")
+    if patch.writes or patch.deletes:
+        state._store = state._store.apply_patch(patch)
+
+
+def deliver_feedback(
+    consumer: Any,
+    feedback: FeedbackBatch,
+    state: OptimizationState,
+    *,
+    reads: Any = None,
+    dispatch: Callable[[object], None] | None = None,
+    offspring: Any = None,
+) -> None:
+    """Deliver one final feedback batch through the canonical tell boundary."""
+    if reads is None:
+        contract = getattr(consumer, "contract", None)
+        reads = (
+            contract().state if callable(contract) else (POPULATIONS_MAIN, RUNTIME_RNG)
+        )
+    # ``evaluated_offspring`` is normally the feedback boundary's selected
+    # view of the proposal.  Algorithms that maintain row-wise state (such as
+    # PSO's particle population) can explicitly retain the full proposal.
+    if offspring is not None:
+        tell_state = state.replace(
+            offspring=offspring,
+            evaluated_offspring=offspring,
+        )
+    elif state.evaluated_offspring is not None and not getattr(
+        consumer, "tell_requires_full_proposal", False
+    ):
+        tell_state = state.replace(offspring=state.evaluated_offspring)
+    else:
+        tell_state = state
+    state_view = tell_state._store.view(reads, context=tell_state, dispatch=dispatch)
+    patch = consumer.tell(feedback, state_view)
+    _apply_component_patch(state, patch)
+
+
+def _sync_feedback_metadata(
+    state: OptimizationState,
+    channel: FeedbackChannel,
+) -> tuple[int, bool]:
+    """Derive sync delivery metadata from the existing evaluation lifecycle."""
+    if channel == TRUE and state.evaluation_updates:
+        update = state.evaluation_updates[-1]
+        final = update.status in {
+            EvaluationStatus.COMPLETED,
+            EvaluationStatus.FAILED,
+            EvaluationStatus.CANCELLED,
+        }
+        return int(update.sequence), final
+    # A surrogate-only synchronous stage has exactly one delivery and no
+    # evaluator-assigned sequence; zero is the first runtime sequence.
+    return 0, True
+
+
+def _stage_contract(
+    *,
+    reads: tuple[Any, ...] = (),
+    writes: tuple[Any, ...] = (),
+    exports: tuple[Any, ...] = (),
+    components: tuple[tuple[str, Any], ...] = (),
+    required_runtime_capabilities: tuple[str, ...] = (),
+    offered_runtime_capabilities: tuple[str, ...] = (),
+    reads_enumerable: bool = True,
+) -> ComponentContract:
+    """Build a Stage contract while keeping held contracts as named parts."""
+    parts: list[PartSpec] = []
+    for name, component in components:
+        contract = getattr(component, "contract", None)
+        if callable(contract):
+            parts.append(PartSpec(name=name, contract=contract()))
+    return ComponentContract(
+        parts=tuple(parts),
+        state=StateContract(
+            reads=reads,
+            writes=writes,
+            exports=exports,
+            reads_enumerable=reads_enumerable,
+        ),
+        execution=ExecutionContract(
+            required_runtime_capabilities=required_runtime_capabilities,
+            offered_runtime_capabilities=offered_runtime_capabilities,
+        ),
+    )
+
+
+_STATE_FIELD_KEYS: dict[str, Any] = {
+    "population": POPULATIONS_MAIN,
+    "archive": ARCHIVES_MAIN,
+    "pareto_archive": ARCHIVES_PARETO,
+    "offspring": PROPOSALS_OFFSPRING,
+    "evaluated_offspring": EVALUATED_OFFSPRING,
+    "scores": SCORES,
+    "acquisition_result": ACQUISITION_RESULT,
+    "predictions": SURROGATES_PREDICTIONS,
+    "evaluation_request": EVALUATION_REQUEST,
+    "evaluation_plan": EVALUATIONS_PLAN,
+    "evaluation_plan_state": EVALUATIONS_PLAN_STATE,
+    "evaluation_updates": EVALUATION_UPDATES,
+    "evaluation_plan_updates": EVALUATIONS_PLAN_UPDATES,
+    "evaluation_update_new_ids": EVALUATION_UPDATE_NEW_IDS,
+    "evaluation_new_ids": EVALUATION_NEW_IDS,
+    "evaluation_handles": EVALUATION_HANDLES,
+    "evaluation_owners": EVALUATIONS_OWNERS,
+    "pending_evaluations": EVALUATIONS_PENDING,
+    "feedback_result": FEEDBACK_RESULT,
+    "feedback_accumulator": FEEDBACK_ACCUMULATOR,
+    "rng": RUNTIME_RNG,
+    "candidate_id_allocator": RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    "proposal_id_allocator": PROPOSALS_ID_ALLOCATOR,
+    "request_id_allocator": RUNTIME_REQUEST_ID_ALLOCATOR,
+    "fe": EVALUATIONS_COUNT,
+    "gen": RUNTIME_GENERATION,
+    "async_fatal": RUNTIME_ASYNC_FATAL,
+    "data": USER_DATA,
+    "proposal_id": PROPOSALS_CURRENT,
+}
+
+
+class _StageTransactionStore:
+    """Store facade for the Stage transaction proxy."""
+
+    def __init__(self, owner: _StageStateProxy) -> None:
+        self._owner = owner
+
+    def view(self, reads: Any, *, context: object | None = None, dispatch=None):
+        declared = tuple(reads.reads if hasattr(reads, "reads") else reads)
+        values = {key: self._owner._value(key) for key in declared}
+        store = StateStore(values)
+        return store.view(
+            declared,
+            context=self._owner._context._for_stage_compatibility(),
+            dispatch=dispatch,
+        )
+
+    def apply_patch(self, patch: StatePatch) -> _StageTransactionStore:
+        if not isinstance(patch, StatePatch):
+            raise ValidationError("apply_patch() expects a StatePatch")
+        self._owner._apply(patch)
+        return self
+
+
+class _StageStateProxy:
+    """OptimizationState-shaped transaction backed by a declared StateView."""
+
+    def __init__(
+        self,
+        view: StateView,
+        context: RuntimeContext,
+        *,
+        writes: Mapping[Any, object] | None = None,
+        deletes: frozenset[Any] = frozenset(),
+    ) -> None:
+        self._view = view
+        self._context = context
+        self._writes = dict(writes or {})
+        self._deletes = set(deletes)
+        self._store = _StageTransactionStore(self)
+
+    def _value(self, key: Any) -> object:
+        if key in self._writes:
+            return self._writes[key]
+        if key in self._deletes:
+            raise KeyError(key)
+        state = object.__getattribute__(self._context, "_state")
+        get_state = getattr(state, "get_state", None)
+        if callable(get_state):
+            try:
+                return get_state(key)
+            except KeyError:
+                pass
+        name = next(
+            (name for name, candidate in _STATE_FIELD_KEYS.items() if candidate == key),
+            None,
+        )
+        if name is not None:
+            try:
+                return object.__getattribute__(state, name)
+            except AttributeError:
+                pass
+        try:
+            present = self._view.contains(key)
+        except KeyError:
+            raise
+        if present:
+            return self._view.get(key)
+        if name is None:
+            raise KeyError(key)
+        try:
+            return getattr(self._context, name)
+        except AttributeError as exc:
+            raise KeyError(key) from exc
+
+    def _apply(self, patch: StatePatch) -> None:
+        self._writes.update(patch.writes)
+        self._deletes.update(patch.deletes)
+        for key in patch.writes:
+            self._deletes.discard(key)
+
+    def _patch(self) -> StatePatch:
+        return StatePatch(writes=self._writes, deletes=frozenset(self._deletes))
+
+    def get_state(self, key: Any) -> object:
+        return self._value(key)
+
+    def set_state(self, key: Any, value: object) -> None:
+        self._apply(StatePatch(writes={key: value}))
+
+    def replace(self, **kwargs: Any) -> _StageStateProxy:
+        writes = dict(self._writes)
+        deletes = frozenset(self._deletes)
+        for name, value in kwargs.items():
+            key = _STATE_FIELD_KEYS.get(name)
+            if key is None:
+                if name == "problem":
+                    raise ValidationError("graph-native Stage cannot replace problem")
+                raise TypeError(f"unknown state field {name!r}")
+            writes[key] = value
+            deletes = deletes - {key}
+        return _StageStateProxy(
+            self._view, self._context, writes=writes, deletes=deletes
+        )
+
+    def __getattr__(self, name: str) -> object:
+        key = _STATE_FIELD_KEYS.get(name)
+        if key is not None:
+            try:
+                return self._value(key)
+            except KeyError:
+                raise AttributeError(name)
+        # Problem, dimensions, archives, and services are runtime capabilities,
+        # not arbitrary state leakage.
+        try:
+            return getattr(self._context, name)
+        except AttributeError as exc:
+            raise AttributeError(name) from exc
+
+
+class _TransactionalStageExecutor(Protocol):
+    def execute(
+        self, state: _TransactionalExecutionContext
+    ) -> _TransactionalExecutionContext | StatePatch | None: ...
+
+
+class StageStateViewAdapter:
+    """Expose a Stage through the graph-native StateView contract."""
+
+    _execution_mode = "graph-native"
+
+    def __init__(self, stage: Stage, *, node_path: str | None = None) -> None:
+        if not isinstance(stage, Stage):
+            raise ValidationError("StageStateViewAdapter stage must be a Stage")
+        self.stage = stage
+        self.node_path = node_path or stage.name or type(stage).__name__
+        self.name = stage.name
+        self.label = stage.label
+        self.notation = stage.notation
+        direct = stage.contract()
+        if not isinstance(direct, ComponentContract):
+            raise ValidationError("Stage.contract() must return ComponentContract")
+        from saealib.core.graph_builder import StageNodeAdapter
+
+        held = StageNodeAdapter(stage).contract().state
+        state = StateContract(
+            reads=tuple(dict.fromkeys((*direct.state.reads, *held.reads))),
+            writes=tuple(dict.fromkeys((*direct.state.writes, *held.writes))),
+            exports=tuple(dict.fromkeys((*direct.state.exports, *held.exports))),
+            reads_enumerable=direct.state.reads_enumerable and held.reads_enumerable,
+        )
+        self._contract = replace(direct, state=state)
+
+    def contract(self) -> ComponentContract:
+        return self._contract
+
+    @staticmethod
+    def _to_patch(proxy: _StageStateProxy, result: object, stage: object) -> StatePatch:
+        if isinstance(result, _StageStateProxy):
+            return result._patch()
+        if isinstance(result, StatePatch):
+            patch = proxy._patch()
+            return StatePatch(
+                writes={**patch.writes, **result.writes},
+                deletes=frozenset((*patch.deletes, *result.deletes)),
+            )
+        if result is proxy or result is None or result is stage:
+            return proxy._patch()
+        raise ValidationError(
+            "graph-native Stage adapter requires the Stage to return its transaction"
+        )
+
+    def execute(self, state: StateView) -> StatePatch:
+        context = state.context
+        if not isinstance(context, RuntimeContext):
+            raise ValidationError("StageStateViewAdapter requires RuntimeContext")
+        proxy = _StageStateProxy(state, context)
+        result = cast(_TransactionalStageExecutor, self.stage).execute(proxy)
+        return self._to_patch(proxy, result, self.stage)
+
+    async def execute_async(self, state: StateView, **kwargs: Any) -> StatePatch:
+        context = state.context
+        if not isinstance(context, RuntimeContext):
+            raise ValidationError("StageStateViewAdapter requires RuntimeContext")
+        proxy = _StageStateProxy(state, context)
+        method = getattr(self.stage, "execute_async", None)
+        if not callable(method):
+            raise ValidationError(
+                "StageStateViewAdapter stage does not provide execute_async"
+            )
+        parameters = inspect.signature(method).parameters
+        accepts_kwargs = any(
+            parameter.kind is inspect.Parameter.VAR_KEYWORD
+            for parameter in parameters.values()
+        )
+        selected = (
+            kwargs
+            if accepts_kwargs
+            else {key: value for key, value in kwargs.items() if key in parameters}
+        )
+        result = method(proxy, **selected)
+        if inspect.isawaitable(result):
+            result = await result
+        return self._to_patch(proxy, result, self.stage)
+
+
+def stage_component(
+    stage: Stage, *, node_path: str | None = None
+) -> StageStateViewAdapter:
+    """Create a graph-native component from an existing Stage."""
+    return StageStateViewAdapter(stage, node_path=node_path)
+
+
+wrap_stage = stage_component
 
 
 class CountGenerationStage(Stage):
@@ -134,6 +543,12 @@ class CountGenerationStage(Stage):
     name = "count_generation"
     label = "Count generation"
     notation = r"$gen \leftarrow gen + 1$"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(RUNTIME_GENERATION, EVALUATIONS_PENDING),
+            writes=(RUNTIME_GENERATION,),
+        )
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         # Async steady-state refill calls strategy.step() while an earlier
@@ -165,16 +580,42 @@ class AskStage(Stage):
     label = "Generate offspring"
     notation = r"$\mathcal{Q} \leftarrow \text{ask}(P, n)$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                RUNTIME_CANDIDATE_ID_ALLOCATOR,
+            ),
+            writes=(
+                PROPOSALS_OFFSPRING,
+                PROPOSALS_CURRENT,
+                RUNTIME_CANDIDATE_ID_ALLOCATOR,
+                EVALUATED_OFFSPRING,
+            ),
+            components=(("_algorithm", self._algorithm),),
+        )
+
     def __init__(
         self,
-        algorithm: Algorithm,
+        algorithm: Algorithm | Proposer,
         n_offspring: int | None = None,
         cbmanager: CallbackManager | None = None,
     ) -> None:
         super().__init__()
-        self._algorithm = algorithm
+
         self._n_offspring = n_offspring
         self._proxy = _DispatchProxy(cbmanager)
+        self._algorithm: Proposer = algorithm
+        state_reads = getattr(self._algorithm, "_state_reads", None)
+        if state_reads is None:
+            contract = getattr(self._algorithm, "contract", None)
+            state_reads = (
+                contract().state
+                if callable(contract)
+                else (POPULATIONS_MAIN, RUNTIME_RNG)
+            )
+        self._state_reads = state_reads
 
     def to_pseudocode(self, *, expand: bool = False, indent: int = 0) -> str:
         r"""Expand into per-operator lines via ``Algorithm.ask_notation``."""
@@ -189,8 +630,21 @@ class AskStage(Stage):
     def execute(self, state: OptimizationState) -> OptimizationState:
         if _plan_incomplete(state):
             return state
-        candidates = self._algorithm.ask(state, self._proxy, self._n_offspring)
-        if "id" in candidates.schema:
+        state_view = state._store.view(
+            self._state_reads,
+            context=state,
+            dispatch=cast(Callable[[object], None], self._proxy.dispatch),
+        )
+        proposal = self._algorithm.ask(
+            ProposalRequest(n_offspring=self._n_offspring), state_view
+        )
+        if not isinstance(proposal, ProposalBatch):
+            raise ValidationError("proposer ask() must return a ProposalBatch")
+        candidates = proposal.candidates
+        if (
+            isinstance(candidates, _AskCandidatePopulation)
+            and "id" in candidates.schema
+        ):
             id_arr = candidates.get_array("id")
             unassigned = np.where(id_arr == -1)[0]
             if len(unassigned) > 0:
@@ -202,7 +656,12 @@ class AskStage(Stage):
                 raise ValidationError(
                     "AskStage received offspring with duplicate candidate ids"
                 )
-        return state.replace(offspring=candidates)
+        # A new proposal invalidates the previous evaluated view.  Keeping it
+        # would make the canonical tell boundary bind stale rows to a later
+        # surrogate-only or true-evaluation delivery.
+        state = state.replace(offspring=candidates, evaluated_offspring=None)
+        state.set_state(PROPOSALS_CURRENT, proposal.proposal_id)
+        return state
 
 
 class SurrogatePredictStage(Stage):
@@ -229,6 +688,13 @@ class SurrogatePredictStage(Stage):
     label = "Surrogate prediction"
     notation = r"$\hat{y} \leftarrow \text{predict}(\mathcal{Q}, \mathcal{A})$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(PROPOSALS_OFFSPRING, POPULATIONS_MAIN, ARCHIVES_MAIN),
+            writes=(PROPOSALS_OFFSPRING, SURROGATES_PREDICTIONS),
+            components=(("_sm", self._sm),),
+        )
+
     def __init__(
         self,
         surrogate_manager: SurrogateManager,
@@ -251,7 +717,10 @@ class SurrogatePredictStage(Stage):
             )
 
         prediction = self._sm.predict(
-            candidates.x, state.archive, state, refit=self._refit
+            encode_features(state.problem.space, candidates.genomes),
+            state.archive,
+            state,
+            refit=self._refit,
         )
         if self._refit and self._cbmanager is not None:
             self._cbmanager.dispatch(
@@ -273,19 +742,15 @@ class PendingEvaluationContextStage(Stage):
     label = "Pending evaluation context"
     notation = r"$C \leftarrow \text{pending}(C)$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract()
+
     def __init__(self, scheduler: Any) -> None:
         super().__init__()
         self._scheduler = scheduler
 
     def execute(self, state: OptimizationState) -> OptimizationState:
-        return state.replace(
-            data={
-                **state.data,
-                "pending_candidate_ids": self._scheduler.pending_candidate_ids(state),
-                "reserved_fe": self._scheduler.reserved_fe(state),
-                "reserved_cost": self._scheduler.reserved_cost(state),
-            }
-        )
+        return state
 
 
 class AcquisitionStage(Stage):
@@ -321,6 +786,19 @@ class AcquisitionStage(Stage):
     notation = (
         r"$\mathbf{s} \leftarrow \text{acquire}(\mathcal{Q}, \hat{y}, \mathcal{A})$"
     )
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                PROPOSALS_OFFSPRING,
+                SURROGATES_PREDICTIONS,
+                ARCHIVES_MAIN,
+                RUNTIME_GENERATION,
+                RUNTIME_RNG,
+            ),
+            writes=(SCORES, ACQUISITION_RESULT),
+            components=(("_acquisition", self._acquisition),),
+        )
 
     def __init__(
         self,
@@ -363,7 +841,11 @@ class AcquisitionStage(Stage):
             prepared = self._prepared_cache_value
 
             raw = self._acquisition.evaluate(
-                candidates.x, state.predictions, archive, state, prepared=prepared
+                encode_features(state.problem.space, candidates.genomes),
+                state.predictions,
+                archive,
+                state,
+                prepared=prepared,
             )
             scores = (
                 None
@@ -412,6 +894,13 @@ class SurrogateFitStage(Stage):
     label = "Fit surrogate"
     notation = r"$\hat{f} \leftarrow \text{fit}(\mathcal{A})$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(POPULATIONS_MAIN, ARCHIVES_MAIN),
+            writes=(),
+            components=(("_sm", self._sm),),
+        )
+
     def __init__(
         self,
         surrogate_manager: SurrogateManager,
@@ -448,6 +937,11 @@ class TopKSelectionStage(Stage):
     label = "Top-k pre-selection"
     notation = r"$\mathcal{Q} \leftarrow \text{top-}k(\mathcal{Q}, \mathbf{s})$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(PROPOSALS_OFFSPRING, SCORES), writes=(PROPOSALS_OFFSPRING,)
+        )
+
     def __init__(self, k: int) -> None:
         super().__init__()
         self._k = k
@@ -475,6 +969,12 @@ class SortByScoreStage(Stage):
     label = "Sort offspring by score"
     notation = r"$\mathcal{Q} \leftarrow \text{sort\_desc}(\mathcal{Q},\,\mathbf{s})$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(PROPOSALS_OFFSPRING, SCORES),
+            writes=(PROPOSALS_OFFSPRING, SCORES),
+        )
+
     def execute(self, state: OptimizationState) -> OptimizationState:
         assert state.offspring is not None
         assert state.scores is not None
@@ -491,6 +991,40 @@ class EvaluationPlanStage(Stage):
     name = "evaluation_plan"
     label = "Plan evaluation"
     notation = r"$R \leftarrow \text{plan}(Q)$"
+    async_protocol = "evaluation"
+    async_protocol_role = "driver"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                PROPOSALS_OFFSPRING,
+                EVALUATIONS_PENDING,
+                EVALUATION_REQUEST,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATION_HANDLES,
+                EVALUATIONS_OWNERS,
+                ACQUISITION_RESULT,
+                SCORES,
+                SURROGATES_PREDICTIONS,
+                RUNTIME_REQUEST_ID_ALLOCATOR,
+            ),
+            writes=(
+                EVALUATION_REQUEST,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PLAN_UPDATES,
+                EVALUATIONS_PENDING,
+                EVALUATION_UPDATES,
+                EVALUATION_UPDATE_NEW_IDS,
+                EVALUATION_NEW_IDS,
+                EVALUATION_HANDLES,
+                EVALUATIONS_OWNERS,
+                RUNTIME_REQUEST_ID_ALLOCATOR,
+            ),
+            components=(("_planner", self._planner),),
+            reads_enumerable=not callable(self._n_eval),
+        )
 
     def __init__(
         self,
@@ -575,12 +1109,106 @@ class EvaluationPlanStage(Stage):
             evaluation_new_ids=np.empty(0, dtype=np.int64),
         )
 
+    def execute_async(
+        self,
+        state: OptimizationState,
+        *,
+        scheduler: Any,
+        feedback_builder: FeedbackBuilder | None = None,
+        algorithm: Any = None,
+        callback_manager: Any = None,
+        prefix=None,
+        strategy: Any = None,
+    ) -> OptimizationState:
+        """Submit through the public async execution seam.
+
+        Runtime supplies lifecycle services and a prefix callback; planning and
+        refill decisions remain owned by this stage.
+        """
+        if scheduler is None:
+            raise ValidationError("Async evaluation requires a scheduler")
+        plan_state = state.evaluation_plan_state
+        terminal = (
+            state.evaluation_plan is not None
+            and plan_state is not None
+            and all(
+                int(item.request_id)
+                in set(plan_state.completed) | set(plan_state.acknowledged)
+                for item in state.evaluation_plan.requests
+            )
+        )
+        progressed = bool(
+            plan_state is not None and (plan_state.completed or plan_state.acknowledged)
+        )
+        refill = bool(
+            getattr(strategy, "supports_async_refill", False)
+            and state.evaluation_plan is not None
+            and not terminal
+            and progressed
+            and plan_state is not None
+            and not plan_state.deferred
+            and len(state.pending_evaluations) < scheduler.max_pending
+        )
+        current = state
+        if refill:
+            current = current.replace(
+                evaluation_plan=None,
+                evaluation_plan_state=None,
+                evaluation_plan_updates={},
+            )
+        if prefix is not None and (
+            current.evaluation_plan is None or terminal or refill
+        ):
+            current = prefix(current)
+        return AsyncEvaluationSubmitStage(
+            scheduler,
+            self._planner,
+            feedback_builder,
+            algorithm,
+            callback_manager,
+        ).execute(current)
+
+    def has_async_work(self, state: OptimizationState) -> bool:
+        plan = state.evaluation_plan
+        plan_state = state.evaluation_plan_state
+        if plan is None or plan_state is None:
+            return False
+        terminal = set(plan_state.completed) | set(plan_state.acknowledged)
+        return any(int(item.request_id) not in terminal for item in plan.requests)
+
 
 class AsyncEvaluationSubmitStage(Stage):
     """Plan and submit one request to an asynchronous scheduler."""
 
     name = "async_evaluation_submit"
     label = "Submit asynchronous evaluation"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                PROPOSALS_OFFSPRING,
+                ACQUISITION_RESULT,
+                SCORES,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PENDING,
+                EVALUATION_HANDLES,
+                RUNTIME_REQUEST_ID_ALLOCATOR,
+            ),
+            writes=(
+                EVALUATION_REQUEST,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PLAN_UPDATES,
+                EVALUATIONS_PENDING,
+                RUNTIME_REQUEST_ID_ALLOCATOR,
+            ),
+            components=(
+                ("_planner", self._planner),
+                ("_scheduler", self._scheduler),
+            ),
+            required_runtime_capabilities=("partial_feedback",),
+        )
 
     def __init__(
         self,
@@ -604,13 +1232,6 @@ class AsyncEvaluationSubmitStage(Stage):
         self._scheduler.feedback_builder = self._feedback_builder
         self._scheduler.algorithm = self._algorithm
         self._scheduler.callback_manager = self._callback_manager
-        hook_data = {
-            **state.data,
-            "pending_candidate_ids": self._scheduler.pending_candidate_ids(state),
-            "reserved_fe": self._scheduler.reserved_fe(state),
-            "reserved_cost": self._scheduler.reserved_cost(state),
-        }
-        state = state.replace(data=hook_data)
         acquisition = state.acquisition_result
         if acquisition is None and state.scores is not None:
             acquisition = AcquisitionResult(scores=state.scores)
@@ -653,13 +1274,20 @@ class AsyncEvaluationSubmitStage(Stage):
         capacity = self._scheduler.max_pending - len(state.pending_evaluations)
         if (
             len(remaining_requests) == 1
-            and capacity > 1
+            and capacity >= 1
             and len(remaining_requests[0].candidate_ids) > 1
+            and not (
+                isinstance(plan.continuation, Mapping)
+                and plan.continuation.get("kind") == "fidelity_promotion"
+            )
         ):
             request = remaining_requests[0]
-            chunks = np.array_split(
-                request.candidate_ids, min(capacity, len(request.candidate_ids))
+            chunk_count = (
+                len(request.candidate_ids)
+                if capacity == 1
+                else min(capacity, len(request.candidate_ids))
             )
+            chunks = np.array_split(request.candidate_ids, chunk_count)
             requests = []
             total_cost = float(
                 request.metadata.get("estimated_cost", len(request.candidate_ids))
@@ -686,7 +1314,7 @@ class AsyncEvaluationSubmitStage(Stage):
                     EvaluationRequest(
                         request_id,
                         ids,
-                        request.x[rows],
+                        request.payload.take(rows),
                         request.outputs,
                         {
                             **request.metadata,
@@ -752,6 +1380,20 @@ class EvaluationSubmitStage(Stage):
     name = "evaluation_submit"
     label = "Submit evaluation"
     notation = r"$H \leftarrow \text{submit}(R)$"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                EVALUATION_REQUEST,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PENDING,
+                EVALUATION_HANDLES,
+                EVALUATIONS_OWNERS,
+            ),
+            writes=(EVALUATIONS_PENDING, EVALUATION_HANDLES, EVALUATIONS_PLAN_STATE),
+            components=(("_evaluator", self._evaluator),),
+        )
 
     def __init__(self, evaluator: Evaluator) -> None:
         super().__init__()
@@ -849,6 +1491,29 @@ class EvaluationCollectStage(Stage):
     name = "evaluation_collect"
     label = "Collect evaluation"
     notation = r"$U \leftarrow \text{collect}(H)$"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PENDING,
+                EVALUATION_HANDLES,
+                EVALUATIONS_PLAN_UPDATES,
+                EVALUATION_REQUEST,
+            ),
+            writes=(
+                EVALUATION_UPDATES,
+                EVALUATION_REQUEST,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PLAN_UPDATES,
+                EVALUATIONS_PENDING,
+                EVALUATION_UPDATE_NEW_IDS,
+                EVALUATION_NEW_IDS,
+            ),
+            components=(("_evaluator", self._evaluator),),
+        )
 
     def __init__(self, evaluator: Evaluator) -> None:
         super().__init__()
@@ -1003,6 +1668,26 @@ class EvaluationApplyStage(Stage):
     name = "evaluation_apply"
     label = "Apply evaluation"
     notation = r"$Q \leftarrow \text{apply}(U)$"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                PROPOSALS_OFFSPRING,
+                EVALUATION_REQUEST,
+                EVALUATION_UPDATES,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PLAN_UPDATES,
+                EVALUATIONS_PENDING,
+            ),
+            writes=(
+                PROPOSALS_OFFSPRING,
+                EVALUATED_OFFSPRING,
+                EVALUATION_NEW_IDS,
+                EVALUATION_UPDATE_NEW_IDS,
+                EVALUATIONS_PENDING,
+            ),
+        )
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         if _plan_incomplete(state):
@@ -1218,6 +1903,33 @@ class EvaluationAcknowledgeStage(Stage):
     name = "evaluation_acknowledge"
     label = "Acknowledge evaluation"
     notation = r"$H \leftarrow \text{ack}(U)$"
+    async_protocol = "evaluation"
+    async_protocol_role = "end"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                PROPOSALS_OFFSPRING,
+                EVALUATION_REQUEST,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PENDING,
+                EVALUATION_HANDLES,
+                EVALUATION_UPDATES,
+                EVALUATION_UPDATE_NEW_IDS,
+                EVALUATIONS_PLAN_UPDATES,
+                EVALUATIONS_COUNT,
+            ),
+            writes=(
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATIONS_PLAN_UPDATES,
+                EVALUATIONS_PENDING,
+                EVALUATION_HANDLES,
+                EVALUATIONS_COUNT,
+            ),
+            components=(("_evaluator", self._evaluator),),
+        )
 
     def __init__(
         self, evaluator: Evaluator, cbmanager: CallbackManager | None = None
@@ -1368,6 +2080,13 @@ class TrueEvaluationStage(Stage):
     label = "True objective evaluation"
     notation = r"$\mathcal{Q}_{eval} \leftarrow \text{eval}(\mathcal{Q})$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(PROPOSALS_OFFSPRING,),
+            writes=(PROPOSALS_OFFSPRING, EVALUATED_OFFSPRING, EVALUATIONS_COUNT),
+            components=(("_evaluator", self._evaluator),),
+        )
+
     def __init__(
         self,
         evaluator: Evaluator,
@@ -1390,7 +2109,9 @@ class TrueEvaluationStage(Stage):
             n = self._n_eval(state)
         n = min(n, len(candidates))
 
-        result = self._evaluator.evaluate_batch(candidates.x[:n], state.problem)
+        result = self._evaluator.evaluate_batch(
+            candidates.genomes.take(np.arange(n)), state.problem
+        )
         candidates.update_rows(
             np.arange(n), {"f": result.f, "g": result.g, "cv": result.cv}
         )
@@ -1421,6 +2142,18 @@ class ArchiveUpdateStage(Stage):
     label = "Archive update"
     notation = r"$\mathcal{A} \leftarrow \mathcal{A} \cup \mathcal{Q}_{eval}$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                EVALUATED_OFFSPRING,
+                ARCHIVES_MAIN,
+                ARCHIVES_PARETO,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+            ),
+            writes=(ARCHIVES_MAIN, ARCHIVES_PARETO, EVALUATED_OFFSPRING),
+        )
+
     def execute(self, state: OptimizationState) -> OptimizationState:
         if _plan_incomplete(state):
             return state
@@ -1429,7 +2162,14 @@ class ArchiveUpdateStage(Stage):
         has_id = "id" in evaluated.schema
         for i in range(len(evaluated)):
             ind = evaluated[i]
-            entry = {"x": ind.x, "f": ind.f, "g": ind.g, "cv": float(ind.cv)}
+            entry = {
+                "genome": ind.genome,
+                "f": ind.f,
+                "g": ind.g,
+                "cv": float(ind.cv),
+            }
+            if "x" in evaluated.schema:
+                entry["x"] = ind.x
             if has_id:
                 entry["id"] = int(ind.id)
             state.archive.add(entry)
@@ -1450,6 +2190,20 @@ class FeedbackStage(Stage):
     name = "feedback"
     label = "Apply feedback"
     notation = r"$\mathcal{Q} \leftarrow \mathrm{feedback}(\mathcal{Q})$"
+
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                PROPOSALS_OFFSPRING,
+                EVALUATED_OFFSPRING,
+                EVALUATION_NEW_IDS,
+                SURROGATES_PREDICTIONS,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+            ),
+            writes=(PROPOSALS_OFFSPRING, FEEDBACK_RESULT),
+            components=(("_builder", self._builder),),
+        )
 
     def __init__(
         self,
@@ -1520,10 +2274,42 @@ class TellStage(Stage):
     label = "Update population"
     notation = r"$P \leftarrow \text{tell}(P, \mathcal{Q})$"
 
-    def __init__(self, algorithm: Algorithm) -> None:
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            reads=(
+                PROPOSALS_OFFSPRING,
+                PROPOSALS_CURRENT,
+                FEEDBACK_RESULT,
+                EVALUATED_OFFSPRING,
+                EVALUATIONS_PLAN,
+                EVALUATIONS_PLAN_STATE,
+                EVALUATION_UPDATES,
+            ),
+            writes=(),
+            components=(("_algorithm", self._algorithm),),
+        )
+
+    def __init__(
+        self,
+        algorithm: Algorithm | Proposer | FeedbackConsumer,
+        *,
+        channel: FeedbackChannel = TRUE,
+    ) -> None:
         super().__init__()
-        self._algorithm = algorithm
+        from saealib.algorithms.base import FeedbackConsumer
+
         self._proxy = _DispatchProxy()
+        self._channel = channel
+        self._algorithm = cast(FeedbackConsumer, algorithm)
+        state_reads = getattr(self._algorithm, "_state_reads", None)
+        if state_reads is None:
+            contract = getattr(self._algorithm, "contract", None)
+            state_reads = (
+                contract().state
+                if callable(contract)
+                else (POPULATIONS_MAIN, RUNTIME_RNG)
+            )
+        self._state_reads = state_reads
 
     def to_pseudocode(self, *, expand: bool = False, indent: int = 0) -> str:
         r"""Expand into per-step lines via ``Algorithm.tell_notation``."""
@@ -1543,19 +2329,25 @@ class TellStage(Stage):
         result = state.feedback_result
         if state.offspring is None or result is None or len(result.candidate_ids) == 0:
             return state
-        if "id" in state.offspring.schema:
-            ids = state.offspring.get_array("id")
-            rows = []
-            for candidate_id in result.candidate_ids:
-                matches = np.flatnonzero(ids == candidate_id)
-                if len(matches) != 1:
-                    raise ValidationError(
-                        f"feedback candidate ID {candidate_id} is not in offspring"
-                    )
-                rows.append(int(matches[0]))
-        else:
-            rows = [int(candidate_id) for candidate_id in result.candidate_ids]
-        self._algorithm.tell(state, self._proxy, state.offspring.extract(rows))
+        try:
+            proposal_id = int(state.get_state(PROPOSALS_CURRENT))
+        except KeyError:
+            raise ValidationError("feedback proposal ID is missing")
+        sequence, final = _sync_feedback_metadata(state, self._channel)
+        feedback = _feedback_batch_from_result(
+            result,
+            proposal_id=proposal_id,
+            channel=self._channel,
+            final=final,
+            sequence=sequence,
+        )
+        deliver_feedback(
+            self._algorithm,
+            feedback,
+            state,
+            reads=self._state_reads,
+            dispatch=cast(Callable[[object], None], self._proxy.dispatch),
+        )
         return state
 
 
@@ -1595,6 +2387,14 @@ class SurrogateOnlyLoopStage(Stage):
         r"\mathrm{acquire}(\mathrm{predict}(\mathrm{ask}(P))))$"
     )
 
+    def contract(self) -> ComponentContract:
+        # The nested stages are separate graph units.  This declaration covers
+        # only the loop's direct fit/read access and avoids double counting.
+        return _stage_contract(
+            reads=(ARCHIVES_MAIN,),
+            components=(("_sm", self._sm),),
+        )
+
     def __init__(
         self,
         algorithm: Algorithm,
@@ -1610,21 +2410,18 @@ class SurrogateOnlyLoopStage(Stage):
         self._sm = surrogate_manager
         self._cbmanager = cbmanager
         if gen_ctrl > 0:
-            self._inner = Pipeline(
-                [
-                    CountGenerationStage(),
-                    AskStage(algorithm, cbmanager=cbmanager),
-                    SurrogatePredictStage(
-                        surrogate_manager, cbmanager=cbmanager, refit=False
-                    ),
-                    AcquisitionStage(acquisition, cbmanager=cbmanager),
-                    FeedbackStage(feedback_builder or MixedFeedback()),
-                    TellStage(algorithm),
-                ]
-            )
-            self.stages = self._inner.stages
+            self.stages = [
+                CountGenerationStage(),
+                AskStage(algorithm, cbmanager=cbmanager),
+                SurrogatePredictStage(
+                    surrogate_manager, cbmanager=cbmanager, refit=False
+                ),
+                AcquisitionStage(acquisition, cbmanager=cbmanager),
+                FeedbackStage(feedback_builder or MixedFeedback()),
+                TellStage(algorithm, channel=SURROGATE),
+            ]
         else:
-            self._inner = Pipeline([])
+            self.stages = []
 
     def to_pseudocode(self, *, expand: bool = False, indent: int = 0) -> str:
         r"""Render as a ``\For`` loop block when *expand* is True."""
@@ -1650,7 +2447,8 @@ class SurrogateOnlyLoopStage(Stage):
                     )
                 )
             for _ in range(self._gen_ctrl):
-                state = self._inner.execute(state)
+                for stage in self.stages:
+                    state = stage.execute(state)
         return state
 
 
@@ -1682,6 +2480,12 @@ class InitializationStage(Stage):
     label = "Initialize population"
     notation = r"$\mathcal{A}_0,\,P_0 \leftarrow \mathrm{init}(n_{\mathrm{init}})$"
 
+    def contract(self) -> ComponentContract:
+        return _stage_contract(
+            writes=(),
+            components=(("_initializer", self._initializer),),
+        )
+
     def __init__(
         self,
         initializer: Initializer,
@@ -1695,3 +2499,59 @@ class InitializationStage(Stage):
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         return self._initializer.initialize(self._provider, self._problem)
+
+
+def discover_builtin_stages() -> tuple[type[Stage], ...]:
+    """Return the operational Stage classes shipped with SAEALib.
+
+    This is the single production inventory used by tooling that needs to
+    inspect all built-in stages.  It intentionally excludes ``Stage`` and
+    ``Pipeline`` themselves, as well as user-defined subclasses.
+    """
+    return tuple(
+        cls
+        for cls in vars(sys.modules[__name__]).values()
+        if isinstance(cls, type)
+        and cls is not Stage
+        and issubclass(cls, Stage)
+        and cls.__module__ == __name__
+        and "contract" in cls.__dict__
+    )
+
+
+class _ContractProbe:
+    """Side-effect-free held component used for contract introspection."""
+
+    def contract(self) -> ComponentContract:
+        return ComponentContract()
+
+    def ask(self, request: object, state: object) -> object:
+        del request, state
+        return None
+
+    def tell(self, feedback: object, state: object) -> object:
+        del feedback, state
+        return None
+
+
+def _builtin_stage_instances_for_contracts() -> tuple[Stage, ...]:
+    """Build minimal instances for tooling that calls each ``contract()``."""
+    instances: list[Stage] = []
+    for stage_type in discover_builtin_stages():
+        positional: list[object] = []
+        keyword: dict[str, object] = {}
+        for parameter in inspect.signature(stage_type).parameters.values():
+            if parameter.default is not inspect.Parameter.empty:
+                continue
+            value: object = _ContractProbe()
+            if parameter.name == "k":
+                value = 1
+            elif parameter.name == "gen_ctrl":
+                value = 0
+            if parameter.kind is inspect.Parameter.POSITIONAL_ONLY:
+                positional.append(value)
+            else:
+                keyword[parameter.name] = value
+        constructor = cast(Callable[..., Stage], stage_type)
+        instances.append(constructor(*positional, **keyword))
+    return tuple(instances)

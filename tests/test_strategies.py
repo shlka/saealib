@@ -192,6 +192,20 @@ class TestGenerationBasedStrategy:
         assert ctx.gen == 1
         assert ctx.fe == len(ctx.population)
 
+    def test_gen_ctrl_zero_skips_surrogate_fit(self):
+        fit_count = [0]
+        ctx = _make_ctx()
+        surrogate = RBFSurrogate(gaussian_kernel, DIM).with_post_fit(
+            lambda tx, ty, c: operator.setitem(fit_count, 0, fit_count[0] + 1)
+        )
+        provider = _MockProvider(
+            _make_ga(),
+            GlobalSurrogateManager(surrogate),
+            MeanPrediction(),
+        )
+        GenerationBasedStrategy(gen_ctrl=0).step(ctx, cast(Any, provider))
+        assert fit_count[0] == 0
+
     def test_pipeline_rebuilt_on_every_step(self):
         ctx, provider, strategy = self._setup(gen_ctrl=3)
         ctx = strategy.step(ctx, provider)
@@ -256,9 +270,9 @@ class TestPreSelectionStrategy:
         told = []
         tell = provider.algorithm.tell
 
-        def recording_tell(ctx_arg, dispatch, offspring):
-            told.append(offspring.x.copy())
-            tell(ctx_arg, dispatch, offspring)
+        def recording_tell(feedback, state):
+            told.append(state.context.offspring.x.copy())
+            return tell(feedback, state)
 
         provider.algorithm.tell = recording_tell
         ctx = strategy.step(ctx, provider)
@@ -276,9 +290,8 @@ class TestPreSelectionStrategy:
 
     def test_archive_grows_by_n_select(self):
         ctx, provider, strategy = self._setup(n_candidates=20, n_select=5)
-        # prob_var=1.0: with the shared _make_ga()'s prob_var=0.1 (Issue
-        # #224, commit 9 -- MutationUniform now dispatches through
-        # mutate_batch, which changed the RNG draw order enough for this
+        # prob_var=1.0: with the shared _make_ga()'s prob_var=0.1, the batched
+        # mutation path changes RNG consumption enough for this
         # seed to leave one candidate's x exactly matching an archived
         # point), the archive's exact-duplicate check (atol=rtol=0)
         # sometimes reuses an existing index instead of growing, making

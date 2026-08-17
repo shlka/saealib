@@ -29,10 +29,24 @@ from __future__ import annotations
 import copy
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from dataclasses import replace
 from typing import TYPE_CHECKING
 
 import numpy as np
 
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    PartSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    ServiceRequirement,
+    StateContract,
+    Var,
+)
+from saealib.core.state import POPULATIONS_MAIN, RUNTIME_RNG
 from saealib.exceptions import ValidationError
 from saealib.registry import register
 from saealib.surrogate.accuracy import AccuracyEvaluator, SurrogateAccuracy
@@ -66,6 +80,56 @@ class SurrogateManager(ABC):
     """
 
     last_accuracy: SurrogateAccuracy | None = None
+
+    def contract(self) -> ComponentContract:
+        """Return the surrogate-manager contract."""
+        feature_schema = Var(name="F")
+        objective_schema = Var(name="O")
+        return ComponentContract(
+            required_services=(ServiceRequirement(name="FeatureEncoder"),),
+            ports={
+                "fitter": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="archive",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                ),
+                "predictor": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="candidates",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(
+                                kind="FeatureBatch",
+                                bindings={"feature_schema": feature_schema},
+                            ),
+                            cardinality=MANY,
+                        ),
+                        PortSpec(
+                            name="archive",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="prediction",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(
+                                kind="SurrogatePrediction",
+                                bindings={"objective_schema": objective_schema},
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                ),
+            },
+        )
 
     def fit(
         self,
@@ -195,6 +259,14 @@ class GlobalSurrogateManager(SurrogateManager):
         )
         self.accuracy_evaluator = accuracy_evaluator
 
+    def contract(self) -> ComponentContract:
+        """Return the global-manager contract."""
+        parts = [
+            PartSpec(name="surrogate", contract=self.surrogate.contract()),
+            PartSpec(name="training_set", contract=self.training_set.contract()),
+        ]
+        return replace(super().contract(), parts=tuple(parts))
+
     def fit(
         self,
         archive: Archive,
@@ -270,6 +342,14 @@ class LocalSurrogateManager(SurrogateManager):
             else KNNObjectiveSet(n_neighbors=50)
         )
         self.accuracy_evaluator = accuracy_evaluator
+
+    def contract(self) -> ComponentContract:
+        """Return the local-manager contract."""
+        parts = [
+            PartSpec(name="surrogate", contract=self.surrogate.contract()),
+            PartSpec(name="training_set", contract=self.training_set.contract()),
+        ]
+        return replace(super().contract(), parts=tuple(parts))
 
     def fit(
         self,
@@ -615,6 +695,20 @@ class PairwiseSurrogateManager(SurrogateManager):
             training_set if training_set is not None else PairwiseComparisonSet()
         )
         self.n_ref = n_ref
+
+    def contract(self) -> ComponentContract:
+        """Return the pairwise-manager contract."""
+        return replace(
+            super().contract(),
+            parts=(
+                PartSpec(name="surrogate", contract=self.surrogate.contract()),
+                PartSpec(name="training_set", contract=self.training_set.contract()),
+            ),
+            state=StateContract(
+                reads=(POPULATIONS_MAIN, RUNTIME_RNG),
+                writes=(RUNTIME_RNG,),
+            ),
+        )
 
     def fit(
         self,

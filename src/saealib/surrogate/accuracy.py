@@ -37,11 +37,6 @@ if TYPE_CHECKING:
     from saealib.surrogate.base import Surrogate
 
 
-# ---------------------------------------------------------------------------
-# Metrics
-# ---------------------------------------------------------------------------
-
-
 class SurrogateAccuracyMetric(ABC):
     """Abstract base for a scalar accuracy metric."""
 
@@ -132,11 +127,6 @@ class R2Score(SurrogateAccuracyMetric):
         return float(1.0 - ss_res / ss_tot)
 
 
-# ---------------------------------------------------------------------------
-# Accuracy container
-# ---------------------------------------------------------------------------
-
-
 @dataclass
 class SurrogateAccuracy:
     """Container for surrogate accuracy metrics computed after a fit.
@@ -162,11 +152,6 @@ _DEFAULT_METRICS: list[SurrogateAccuracyMetric] = [
     RMSE(),
     R2Score(),
 ]
-
-
-# ---------------------------------------------------------------------------
-# Evaluators
-# ---------------------------------------------------------------------------
 
 
 class AccuracyEvaluator(ABC):
@@ -219,7 +204,6 @@ class AccuracyEvaluator(ABC):
     def _compute_metrics(
         self, y_true: np.ndarray, y_pred: np.ndarray
     ) -> dict[str, float]:
-        """Apply all metrics to a single (y_true, y_pred) pair."""
         return {m.name: m.compute(y_true, y_pred) for m in self.metrics}
 
 
@@ -316,11 +300,6 @@ class HeldOutAccuracyEvaluator(AccuracyEvaluator):
         pred = surrogate.predict(self.held_x)
         result = self._compute_metrics(self.held_y, pred.value)
         return SurrogateAccuracy(metrics=result, n_samples=len(train_x))
-
-
-# ---------------------------------------------------------------------------
-# Internal helper
-# ---------------------------------------------------------------------------
 
 
 def _cv_loop(

@@ -3,18 +3,88 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from dataclasses import dataclass
+from typing import Any, Protocol, runtime_checkable
 
-from saealib.context import OptimizationState
+import numpy as np
+
+from saealib.core.contracts import (
+    MANY,
+    TRUE,
+    ComponentContract,
+    DataSpec,
+    FeedbackBatch,
+    FeedbackContract,
+    LifecycleContract,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    ProposalBatch,
+    ServiceRequirement,
+    StateContract,
+)
+from saealib.core.state import (
+    POPULATIONS_MAIN,
+    PROPOSALS_ID_ALLOCATOR,
+    PROPOSALS_OFFSPRING,
+    RUNTIME_RNG,
+    ExecutionContext,
+    StatePatch,
+    StateView,
+)
+from saealib.exceptions import ValidationError
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
-
-if TYPE_CHECKING:
-    from saealib.optimizer import Dispatchable
 
 
 class Algorithm(ABC):
     """Base class for evolutionary algorithms."""
+
+    def contract(self) -> ComponentContract:
+        """Return the evolutionary-algorithm family contract."""
+        return ComponentContract(
+            ports={
+                "proposer": PortContract(
+                    outputs=(
+                        PortSpec(
+                            name="genomes",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                            required_services=(
+                                ServiceRequirement(name="BoundsService"),
+                            ),
+                        ),
+                    ),
+                ),
+                "feedback_consumer": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="feedback",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="FeedbackBatch"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                ),
+            },
+            state=StateContract(
+                reads=(
+                    POPULATIONS_MAIN,
+                    PROPOSALS_OFFSPRING,
+                    PROPOSALS_ID_ALLOCATOR,
+                    RUNTIME_RNG,
+                ),
+                writes=(
+                    POPULATIONS_MAIN,
+                    PROPOSALS_ID_ALLOCATOR,
+                    RUNTIME_RNG,
+                ),
+            ),
+            lifecycle=LifecycleContract(
+                feedback=FeedbackContract(accepted_channels=frozenset({TRUE}))
+            ),
+        )
 
     @abstractmethod
     def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
@@ -45,10 +115,21 @@ class Algorithm(ABC):
         problem: Problem,
     ) -> ParetoArchive:
         """Create a ParetoArchive with the correct direction for the problem."""
+        kwargs: dict[str, Any] = {
+            "attrs": attrs,
+            "init_capacity": init_capacity,
+            "direction": problem.direction,
+        }
+        if not any(attr.name == "x" for attr in attrs):
+            kwargs.update(
+                {
+                    "key_attr": "id",
+                    "space": problem.space,
+                    "genomes": problem.space.sample(0),
+                }
+            )
         return self.pareto_archive_class(
-            attrs=attrs,
-            init_capacity=init_capacity,
-            direction=problem.direction,
+            **kwargs,
         )
 
     @property
@@ -74,28 +155,10 @@ class Algorithm(ABC):
     @abstractmethod
     def ask(
         self,
-        ctx: OptimizationState,
-        provider: Dispatchable,
-        n_offspring: int | None = None,
-    ) -> Population:
-        """
-        Generate offspring solutions.
-
-        Parameters
-        ----------
-        ctx : OptimizationState
-            Context instance.
-        provider : Dispatchable
-            Provider instance.
-        n_offspring : int or None, optional
-            Number of offspring to generate. If ``None``, the algorithm
-            determines the count (typically equal to the population size).
-
-        Returns
-        -------
-        Population
-            Generated offspring solutions.
-        """
+        request: ProposalRequest,
+        state: StateView,
+    ) -> ProposalBatch:
+        """Generate one proposal batch from a read-only state view."""
         pass
 
     @property
@@ -112,20 +175,54 @@ class Algorithm(ABC):
     @abstractmethod
     def tell(
         self,
-        ctx: OptimizationState,
-        provider: Dispatchable,
-        offspring: Population,
-    ) -> None:
-        """
-        Update the population with offspring solutions.
-
-        Parameters
-        ----------
-        ctx : OptimizationState
-            Context instance.
-        provider : Dispatchable
-            Provider instance.
-        offspring : Population
-            Offspring solutions.
-        """
+        feedback: FeedbackBatch,
+        state: StateView,
+    ) -> StatePatch:
+        """Consume feedback and return the state changes it produced."""
         pass
+
+
+@dataclass(frozen=True, kw_only=True)
+class ProposalRequest:
+    """The request-specific part of the proposer interface."""
+
+    n_offspring: int | None = None
+
+    def __post_init__(self) -> None:
+        if self.n_offspring is None:
+            return
+        if isinstance(self.n_offspring, (bool, np.bool_)) or not isinstance(
+            self.n_offspring, (int, np.integer)
+        ):
+            raise ValidationError("n_offspring must be a non-negative integer or None")
+        n_offspring = int(self.n_offspring)
+        if n_offspring < 0:
+            raise ValidationError("n_offspring must be a non-negative integer or None")
+        object.__setattr__(self, "n_offspring", n_offspring)
+
+
+@runtime_checkable
+class Proposer(Protocol):
+    """Generate proposals without owning the feedback lifecycle."""
+
+    def ask(self, request: ProposalRequest, state: StateView) -> ProposalBatch:
+        """Return a batch of candidates and its feedback requirement."""
+        ...
+
+
+@runtime_checkable
+class FeedbackConsumer(Protocol):
+    """Consume feedback independently from proposal generation."""
+
+    def tell(self, feedback: FeedbackBatch, state: StateView) -> StatePatch:
+        """Return state changes caused by a feedback batch."""
+        ...
+
+
+class AskTellAlgorithm(Algorithm):
+    """Stable combined proposer and feedback-consumer API."""
+
+
+def algorithm_context(state: StateView) -> ExecutionContext:
+    """Return the execution context bound to a built-in algorithm call."""
+    return state.context

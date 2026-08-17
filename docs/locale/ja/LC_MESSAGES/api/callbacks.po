@@ -1,0 +1,247 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 10:57+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/callbacks.md:5
+msgid "Callbacks"
+msgstr "コールバック"
+
+#: ../../api/callbacks.md:7
+msgid "Events"
+msgstr "イベント"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ":py:obj:`saealib.Event <saealib.Event>`"
+msgstr "{py:obj}`saealib.Event <saealib.Event>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Base class for all callback events."
+msgstr "すべてのコールバックイベントの基底クラスです。"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ":py:obj:`saealib.RunStartEvent <saealib.RunStartEvent>`"
+msgstr "{py:obj}`saealib.RunStartEvent <saealib.RunStartEvent>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Fired once when the optimization run starts."
+msgstr "最適化の実行開始時に1回発火します。"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ":py:obj:`saealib.RunEndEvent <saealib.RunEndEvent>`"
+msgstr "{py:obj}`saealib.RunEndEvent <saealib.RunEndEvent>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Fired once when the optimization run ends."
+msgstr "最適化の実行終了時に1回発火します。"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ""
+":py:obj:`saealib.InitialEvaluationStartEvent "
+"<saealib.InitialEvaluationStartEvent>`"
+msgstr ""
+"{py:obj}`saealib.InitialEvaluationStartEvent "
+"<saealib.InitialEvaluationStartEvent>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Fired after initial sampling, before initial archive evaluation."
+msgstr "初期サンプリング後、初期アーカイブの評価前に発火します。"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ""
+":py:obj:`saealib.InitialEvaluationEndEvent "
+"<saealib.InitialEvaluationEndEvent>`"
+msgstr ""
+"{py:obj}`saealib.InitialEvaluationEndEvent "
+"<saealib.InitialEvaluationEndEvent>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Fired after initial archive evaluation, before archive sorting."
+msgstr "初期アーカイブの評価後、アーカイブのソート前に発火します。"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ":py:obj:`saealib.GenerationStartEvent <saealib.GenerationStartEvent>`"
+msgstr "{py:obj}`saealib.GenerationStartEvent <saealib.GenerationStartEvent>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Fired at the beginning of each generation."
+msgstr "各世代の開始時に発火します。"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ":py:obj:`saealib.GenerationEndEvent <saealib.GenerationEndEvent>`"
+msgstr "{py:obj}`saealib.GenerationEndEvent <saealib.GenerationEndEvent>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Fired at the end of each generation, before yielding the context."
+msgstr "各世代の終了時、コンテキストを返す前に発火します。"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ":py:obj:`saealib.SurrogateStartEvent <saealib.SurrogateStartEvent>`"
+msgstr "{py:obj}`saealib.SurrogateStartEvent <saealib.SurrogateStartEvent>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Fired before surrogate-based candidate scoring."
+msgstr "サロゲートによる候補スコアリングの前に発火します。"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ":py:obj:`saealib.SurrogateEndEvent <saealib.SurrogateEndEvent>`"
+msgstr "{py:obj}`saealib.SurrogateEndEvent <saealib.SurrogateEndEvent>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Fired after surrogate-based candidate scoring."
+msgstr "サロゲートによる候補スコアリングの後に発火します。"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ":py:obj:`saealib.AcquisitionStartEvent <saealib.AcquisitionStartEvent>`"
+msgstr ""
+"{py:obj}`saealib.AcquisitionStartEvent "
+"<saealib.AcquisitionStartEvent>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Fired before acquisition scoring, inside ``AcquisitionStage``."
+msgstr "``AcquisitionStage``内で、獲得スコアリングの前に発火します。"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ":py:obj:`saealib.AcquisitionEndEvent <saealib.AcquisitionEndEvent>`"
+msgstr "{py:obj}`saealib.AcquisitionEndEvent <saealib.AcquisitionEndEvent>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Fired after acquisition scoring succeeds, inside ``AcquisitionStage``."
+msgstr "``AcquisitionStage``内で、獲得スコアリング成功後に発火します。"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ":py:obj:`saealib.PostCrossoverEvent <saealib.PostCrossoverEvent>`"
+msgstr "{py:obj}`saealib.PostCrossoverEvent <saealib.PostCrossoverEvent>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Fired after crossover and repair."
+msgstr "交叉と修復の後に発火します。"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ":py:obj:`saealib.PostMutationEvent <saealib.PostMutationEvent>`"
+msgstr "{py:obj}`saealib.PostMutationEvent <saealib.PostMutationEvent>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Fired after mutation and repair."
+msgstr "突然変異と修復の後に発火します。"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ":py:obj:`saealib.PostAskEvent <saealib.PostAskEvent>`"
+msgstr "{py:obj}`saealib.PostAskEvent <saealib.PostAskEvent>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Fired after the full ask step (post crossover and mutation)."
+msgstr "交叉と突然変異を含む完全なaskステップの後に発火します。"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ":py:obj:`saealib.PostSurrogateFitEvent <saealib.PostSurrogateFitEvent>`"
+msgstr ""
+"{py:obj}`saealib.PostSurrogateFitEvent "
+"<saealib.PostSurrogateFitEvent>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Fired after the surrogate model is fitted."
+msgstr "サロゲートモデルの適合後に発火します。"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid ":py:obj:`saealib.PostEvaluationEvent <saealib.PostEvaluationEvent>`"
+msgstr "{py:obj}`saealib.PostEvaluationEvent <saealib.PostEvaluationEvent>`・クラス"
+
+#: ../../api/callbacks.md:29:<autosummary>:1
+msgid "Fired after true evaluation of selected candidates."
+msgstr "選択した候補の真の評価後に発火します。"
+
+#: ../../api/callbacks.md:32
+msgid "Callback Manager"
+msgstr "コールバックマネージャー"
+
+#: ../../api/callbacks.md:39:<autosummary>:1
+msgid ":py:obj:`saealib.CallbackManager <saealib.CallbackManager>`"
+msgstr "{py:obj}`saealib.CallbackManager <saealib.CallbackManager>`・クラス"
+
+#: ../../api/callbacks.md:39:<autosummary>:1
+msgid "Manages event handlers."
+msgstr "イベントハンドラーを管理します。"
+
+#: ../../api/callbacks.md:42
+msgid "Built-in Handlers"
+msgstr "組み込みハンドラー"
+
+#: of saealib.callback.handlers.logging_generation:1
+msgid "Log the state at the start of each generation."
+msgstr "各世代の開始時に状態を記録します。"
+
+#: of saealib.callback.handlers.logging_generation:3
+msgid ""
+"For single-objective problems, logs the best objective value determined "
+"by the comparator. For multi-objective problems, logs the size of the "
+"first Pareto front and the per-objective value ranges of that front."
+msgstr "単目的問題では、比較器が決めた最良の目的値を記録します。多目的問題では、最初のパレートフロントの大きさと、そのフロントにおける目的ごとの値の範囲を記録します。"
+
+#: ../../api/callbacks.md of saealib.callback.handlers.logging_generation_hv
+msgid "Parameters"
+msgstr "パラメータ"
+
+#: of saealib.callback.handlers.logging_generation:7
+msgid "The generation-start event."
+msgstr "世代開始イベントです。"
+
+#: ../../api/callbacks.md of saealib.callback.handlers.logging_generation_hv
+msgid "Return type"
+msgstr "戻り値の型"
+
+#: of saealib.callback.handlers.logging_generation_hv:1
+msgid "Return a handler that logs the hypervolume per generation."
+msgstr "世代ごとの超体積を記録するハンドラーを返します。"
+
+#: of saealib.callback.handlers.logging_generation_hv:3
+msgid ""
+"Computes the hypervolume of the first Pareto front in the archive with "
+"respect to the given reference point (minimization convention)."
+msgstr "アーカイブ内の最初のパレートフロントについて、指定した参照点に対する超体積を計算します（最小化規約）。"
+
+#: of saealib.callback.handlers.logging_generation_hv:6
+msgid ""
+"Reference (nadir) point, shape (n_obj,). Each component should be "
+"strictly greater than the best achievable value per objective."
+msgstr "参照（nadir）点。形状は(n_obj,)。各成分は目的ごとの達成可能な最良値より厳密に大きくする必要があります。"
+
+#: of saealib.callback.handlers.logging_generation_hv
+msgid "Returns"
+msgstr "戻り値"
+
+#: of saealib.callback.handlers.logging_generation_hv:10
+msgid "A handler compatible with ``CallbackManager.register``."
+msgstr "``CallbackManager.register``と互換性のあるハンドラーです。"
+
+#: of saealib.callback.handlers.logging_generation_hv:14
+msgid "Examples"
+msgstr "例"
+
+#: ../../api/callbacks.md:52
+msgid "Checkpointing"
+msgstr "チェックポイント保存"
+
+#: ../../api/callbacks.md:59:<autosummary>:1
+msgid ":py:obj:`saealib.CheckpointCallback <saealib.CheckpointCallback>`"
+msgstr "{py:obj}`saealib.CheckpointCallback <saealib.CheckpointCallback>`・クラス"
+
+#: ../../api/callbacks.md:59:<autosummary>:1
+msgid "Callback that saves checkpoints at regular generation intervals."
+msgstr "一定の世代間隔でチェックポイントを保存するコールバックです。"

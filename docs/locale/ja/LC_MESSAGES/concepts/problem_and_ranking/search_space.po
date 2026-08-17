@@ -1,0 +1,243 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../concepts/problem_and_ranking/search_space.md:7
+msgid "SearchSpace"
+msgstr "SearchSpace"
+
+#: ../../concepts/problem_and_ranking/search_space.md:9
+msgid ""
+"`SearchSpace` defines candidate representation and the services that "
+"operate on that representation. Algorithms and surrogates use the "
+"`GenomeBatch` and services provided by the space instead of changing its "
+"internal representation directly."
+msgstr ""
+"`SearchSpace` は候補の表現と、その表現を扱うためのサービスを定義します。 "
+"アルゴリズムや代理モデルは空間の内部表現を直接変更せず、空間が提供する `GenomeBatch` とサービスを利用します。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:12
+msgid "SearchSpace's role"
+msgstr "SearchSpaceの役割"
+
+#: ../../concepts/problem_and_ranking/search_space.md:14
+msgid ""
+"`SearchSpace` provides `representation`, `services`, `sample()`, and "
+"`validate()`. `GenomeBatch` stores candidates row-wise; it does not "
+"directly own candidate IDs or objective values. `validate()` returns per-"
+"row validity and batch-wide errors in a `ValidationResult`."
+msgstr ""
+"`SearchSpace` は `representation`、`services`、`sample()`、`validate()` "
+"を提供します。 `GenomeBatch` は候補を行方向にまとめた値であり、候補IDや目的値を直接所有するデータ構造ではありません。 "
+"`validate()` は各行の妥当性とバッチ全体のエラーを `ValidationResult` で返します。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:18
+msgid ""
+"`ServiceRegistry` registers the services provided by a space by name. The"
+" space that needs them exposes sampling, validation, cloning, "
+"equivalence, distance, genome serialization, and other capabilities as "
+"SearchSpace services. `EvaluationAdapter` is the Adapter boundary that "
+"converts a `GenomeBatch` into an evaluation Payload. `FeatureEncoder` is "
+"an Adapter subtype responsible for the semantic conversion `GenomeBatch →"
+" FeatureEncoder → FeatureBatch → Surrogate`. Unlike a space capability "
+"such as `SamplingService`, it determines the features the surrogate can "
+"learn. The public import is `from saealib.space import FeatureEncoder`."
+msgstr ""
+"`ServiceRegistry` は空間が提供するサービスを名前で登録します。 "
+"サンプリング、検証、複製、同値性、距離、ゲノムのシリアライズなどはSearchSpace servicesとして、必要な空間が公開します。 "
+"`EvaluationAdapter` は`GenomeBatch`を評価Payloadへ変換する評価境界のAdapterです。 "
+"`FeatureEncoder` は `GenomeBatch → FeatureEncoder → FeatureBatch → "
+"Surrogate` の意味変換を担うAdapter "
+"subtypeです。`SamplingService`などの空間の能力とは性格が異なり、代理モデルが学習できる特徴を決めます。 公開importは"
+" `from saealib.space import FeatureEncoder` です。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:24
+msgid "What SearchSpace holds"
+msgstr "SearchSpaceが保持するもの"
+
+#: ../../concepts/problem_and_ranking/search_space.md:26
+msgid "Built-in spaces are divided by the constraints on their representations:"
+msgstr "組み込み空間は表現の制約に応じて次のように分かれます。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:28
+msgid "**`VectorSpace`**: Handles fixed-width dense numeric vectors."
+msgstr "**`VectorSpace`**：固定幅の密な数値ベクトルを扱います。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:29
+msgid ""
+"**`ObjectSpace`**: The minimal space for holding arbitrary object "
+"representations."
+msgstr "**`ObjectSpace`**：任意のオブジェクト表現を保持する最小の空間です。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:30
+msgid "**`SequenceSpace`**: Handles sequences whose length can vary."
+msgstr "**`SequenceSpace`**：長さが変化する系列を扱います。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:31
+msgid ""
+"**`PermutationSpace`**: Handles representations that satisfy permutation "
+"constraints."
+msgstr "**`PermutationSpace`**：順列制約を満たす表現を扱います。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:33
+msgid ""
+"Each space satisfies the common `SearchSpace` contract, but its service "
+"set and `RepresentationSpec` differ. For example, `ObjectSpace` does not "
+"register default services, so the configuration must provide the services"
+" required by the algorithm separately."
+msgstr ""
+"各空間は共通の `SearchSpace` 契約を満たしますが、サービスの集合と `RepresentationSpec` の内容は異なります。 "
+"たとえば `ObjectSpace` は既定のサービスを登録しないため、アルゴリズムが要求するサービスを別途提供できる構成にする必要があります。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:36
+msgid "Invariants"
+msgstr "不変条件"
+
+#: ../../concepts/problem_and_ranking/search_space.md:38
+msgid ""
+"`RepresentationSpec` describes parameter types, shapes, and "
+"representation kinds. This description says how candidates are stored; it"
+" is not itself an implementation of sampling or feature encoding."
+msgstr ""
+"`RepresentationSpec` はパラメータの種類、形状、表現種別を記述します。 "
+"表現の記述は、候補をどのように保存するかを示すものであり、サンプリングや特徴量化の実装そのものではありません。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:41
+msgid ""
+"Services are the executable boundaries that fill this gap. In the current"
+" implementation, the SurrogateManager contract declares "
+"`ServiceRequirement(\"FeatureEncoder\")`, and `VectorSpace` registers a "
+"default encoder as a service, so numeric vector spaces resolve without "
+"extra configuration. `ObjectSpace`, `PermutationSpace`, and "
+"`SequenceSpace` raise an error unless the user provides a "
+"`FeatureEncoder`. The user decides what to pass to the surrogate."
+msgstr ""
+"サービスはこの差を埋める実行可能な境界です。 "
+"現在の実装ではSurrogateManagerの契約が`ServiceRequirement(\"FeatureEncoder\")`を宣言し、`VectorSpace`は既定のエンコーダをサービスとして登録するため、数値ベクトル空間では追加設定なしに解決されます。`ObjectSpace`、`PermutationSpace`、`SequenceSpace`などでは、利用者が`FeatureEncoder`を用意しない限り解決されずエラーになります。代理モデルへ何を入力するかは利用者が決めます。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:44
+msgid "Extending SearchSpace"
+msgstr "SearchSpaceの拡張"
+
+#: ../../concepts/problem_and_ranking/search_space.md:46
+msgid ""
+"`SearchSpace` owns candidate representation, candidate-generation "
+"services, and representation validity. It does not own candidate "
+"objective values, observation provenance, component state, or Graph "
+"execution order. `GenomeBatch` is candidate data owned by the space; it "
+"does not implicitly add candidate IDs or Feedback results."
+msgstr ""
+"`SearchSpace`の責務は、候補の表現、候補を生成するサービス、表現の妥当性を所有することです。 "
+"候補の目的値、観測の出所、Componentの状態、Graphの実行順序はSearchSpaceが所有しません。 "
+"`GenomeBatch`は空間が所有する候補データであり、候補IDやFeedback結果を暗黙に追加する値ではありません。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:50
+msgid ""
+"When adding a new candidate representation, define its "
+"`RepresentationSpec`, sampling, validation, and required services within "
+"one `SearchSpace` boundary. Do not move `RepresentationSpec` into "
+"`ComponentContract`; declare connections to the port's `DataSpec` and "
+"required services in the Compiler."
+msgstr "新しい候補表現を追加するときは、その`RepresentationSpec`、サンプリング、検証、必要なサービスを1つの`SearchSpace`境界内で定義します。`RepresentationSpec`を`ComponentContract`へ移さず、ポートの`DataSpec`との接続と必要なサービスをCompilerで宣言します。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:53
+msgid "Common failures"
+msgstr "よくある失敗"
+
+#: ../../concepts/problem_and_ranking/search_space.md:55
+msgid ""
+"The `RepresentationSpec` and service set are fixed when the space is "
+"constructed, and the Compiler checks them against the component's "
+"`ServiceRequirement`. The `GenomeBatch` returned by `sample()` conforms "
+"to the space's `RepresentationSpec`, and `validate()` reports mismatches "
+"in a `ValidationResult` instead of silently repairing them. `SearchSpace`"
+" owns service implementation state, while components request and use "
+"registered services. Mismatched kinds or shapes, missing required "
+"services, and invalid `GenomeBatch` values become Diagnostics from the "
+"Compiler or `ValidationResult`."
+msgstr "`RepresentationSpec`とサービス集合は空間の構築時に固定され、Compilerはコンポーネントの`ServiceRequirement`と照合します。`sample()`が返す`GenomeBatch`は空間の`RepresentationSpec`に適合し、`validate()`は不一致を黙って修復せず`ValidationResult`で報告します。`SearchSpace`はサービス実装の状態を所有し、コンポーネントは登録済みサービスを要求して使用します。種別や形状の不一致、必要なサービスの欠落、無効な`GenomeBatch`値は、Compilerまたは`ValidationResult`のDiagnosticsになります。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:60
+msgid ""
+"See [Framework extensions](../../framework/extensions.md) for extending "
+"candidate representations, [Declarative elements "
+"(Specs)](../../framework/specs.md) for port and `DataSpec` boundaries, "
+"and [Feedback](../observation_and_state/feedback.md) for observations "
+"associated with candidates. See the [API reference](../../api/index.md) "
+"for public type import paths."
+msgstr ""
+"候補表現の拡張は[フレームワーク拡張](../../framework/extensions.md)を、ポートと`DataSpec`の境界は[宣言要素（Specs）](../../framework/specs.md)を、候補に対する観測の対応は[Feedback](../observation_and_state/feedback.md)を参照してください。"
+" 公開型のimport経路は[APIリファレンス](../../api/index.md)で確認してください。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:63
+msgid "Related components"
+msgstr "関連コンポーネント"
+
+#: ../../concepts/problem_and_ranking/search_space.md:65
+msgid ""
+"[Problem](problem.md): Combines the objective, constraints, optimization "
+"directions, and SearchSpace."
+msgstr "[Problem](problem.md)：目的関数、制約、最適化方向とSearchSpaceを組み合わせます。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:66
+msgid ""
+"[Population](../observation_and_state/population.md): Handles "
+"`GenomeBatch` values and individual evaluation results."
+msgstr "[Population](../observation_and_state/population.md)：`GenomeBatch`と個体の評価結果を扱います。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:67
+msgid ""
+"[SurrogateManager](../surrogate_modeling/surrogate_manager.md): Requires "
+"the `FeatureEncoder` service."
+msgstr "[SurrogateManager](../surrogate_modeling/surrogate_manager.md)：`FeatureEncoder`サービスを要求します。"
+
+#: ../../concepts/problem_and_ranking/search_space.md:69
+msgid "References"
+msgstr "参照"
+
+#: ../../concepts/problem_and_ranking/search_space.md:71
+#, python-brace-format
+msgid "{py:class}`saealib.space.SearchSpace`"
+msgstr "{py:class}`saealib.space.SearchSpace`"
+
+#: ../../concepts/problem_and_ranking/search_space.md:72
+#, python-brace-format
+msgid "{py:class}`saealib.space.VectorSpace`"
+msgstr "{py:class}`saealib.space.VectorSpace`"
+
+#: ../../concepts/problem_and_ranking/search_space.md:73
+#, python-brace-format
+msgid "{py:class}`saealib.space.ObjectSpace`"
+msgstr "{py:class}`saealib.space.ObjectSpace`"
+
+#: ../../concepts/problem_and_ranking/search_space.md:74
+#, python-brace-format
+msgid "{py:class}`saealib.space.SequenceSpace`"
+msgstr "{py:class}`saealib.space.SequenceSpace`"
+
+#: ../../concepts/problem_and_ranking/search_space.md:75
+#, python-brace-format
+msgid "{py:class}`saealib.space.PermutationSpace`"
+msgstr "{py:class}`saealib.space.PermutationSpace`"
+
+#: ../../concepts/problem_and_ranking/search_space.md:76
+#, python-brace-format
+msgid "{py:class}`saealib.space.FeatureEncoder`"
+msgstr "{py:class}`saealib.space.FeatureEncoder`"

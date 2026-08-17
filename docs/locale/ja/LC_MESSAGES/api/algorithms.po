@@ -1,0 +1,86 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 10:57+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../api/algorithms.md:6
+msgid "Algorithms"
+msgstr "アルゴリズム"
+
+#: ../../api/algorithms.md:8
+msgid "Base"
+msgstr "基底"
+
+#: ../../api/algorithms.md:15:<autosummary>:1
+msgid ":py:obj:`saealib.Algorithm <saealib.Algorithm>`"
+msgstr "{py:obj}`saealib.Algorithm <saealib.Algorithm>`・アルゴリズム"
+
+#: ../../api/algorithms.md:15:<autosummary>:1
+msgid "Base class for evolutionary algorithms."
+msgstr "進化アルゴリズムの基底クラスです。"
+
+#: ../../api/algorithms.md:18
+msgid "Genetic Algorithm (GA)"
+msgstr "遺伝的アルゴリズム（GA）"
+
+#: ../../api/algorithms.md:25:<autosummary>:1
+msgid ":py:obj:`saealib.GA <saealib.GA>`"
+msgstr "{py:obj}`saealib.GA <saealib.GA>`・アルゴリズム"
+
+#: ../../api/algorithms.md:25:<autosummary>:1
+msgid "Genetic Algorithm class."
+msgstr "遺伝的アルゴリズムのクラスです。"
+
+#: ../../api/algorithms.md:28
+msgid "Genome-native Genetic Algorithm"
+msgstr "Genome-native遺伝的アルゴリズム"
+
+#: ../../api/algorithms.md:35:<autosummary>:1
+msgid ":py:obj:`saealib.GenomeGA <saealib.GenomeGA>`"
+msgstr "{py:obj}`saealib.GenomeGA <saealib.GenomeGA>`・アルゴリズム"
+
+#: ../../api/algorithms.md:35:<autosummary>:1
+msgid "A small ``ask``/``tell`` GA that only uses the GenomeBatch protocol."
+msgstr "GenomeBatchプロトコルだけを使う小規模な``ask``/``tell``型GAです。"
+
+#: ../../api/algorithms.md:38
+msgid "Particle Swarm Optimization (PSO)"
+msgstr "粒子群最適化（PSO）"
+
+#: ../../api/algorithms.md:45:<autosummary>:1
+msgid ":py:obj:`saealib.PSO <saealib.PSO>`"
+msgstr "{py:obj}`saealib.PSO <saealib.PSO>`・アルゴリズム"
+
+#: ../../api/algorithms.md:45:<autosummary>:1
+msgid "Particle Swarm Optimization (PSO) for single-objective problems."
+msgstr "単目的問題向けの粒子群最適化（PSO）です。"
+
+#: ../../api/algorithms.md:48
+msgid "pymoo / External Library Adapters"
+msgstr "pymoo / 外部ライブラリアダプター"
+
+#: ../../api/algorithms.md:55:<autosummary>:1
+msgid ":py:obj:`saealib.PymooAlgorithm <saealib.PymooAlgorithm>`"
+msgstr "{py:obj}`saealib.PymooAlgorithm <saealib.PymooAlgorithm>`・アルゴリズム"
+
+#: ../../api/algorithms.md:55:<autosummary>:1
+msgid ""
+"Adapter wrapping a pymoo Algorithm (e.g. ``NSGA2()``) as saealib's "
+"``Algorithm``."
+msgstr "pymooのアルゴリズム（例：``NSGA2()``）をsaealibの``Algorithm``としてラップするアダプターです。"

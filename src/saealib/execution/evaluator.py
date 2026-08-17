@@ -16,26 +16,53 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
-from enum import Enum, auto
-from typing import TYPE_CHECKING, Any
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
 
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    Var,
+)
 from saealib.exceptions import EvaluationProtocolError, ValidationError
+from saealib.population.genome import DenseVectorBatch, GenomeBatch, genome_value
 
 if TYPE_CHECKING:
     from saealib.problem import Problem
 
 
-class EvaluationStatus(Enum):
+class EvaluationStatus(str, Enum):
     """State of a submitted evaluation."""
 
-    PENDING = auto()
-    RUNNING = auto()
-    PARTIAL = auto()
-    COMPLETED = auto()
-    FAILED = auto()
-    CANCELLED = auto()
+    PENDING = "pending"
+    RUNNING = "running"
+    PARTIAL = "partial"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+@dataclass(frozen=True)
+class EvaluationQuery:
+    """Request context supplied to an :class:`EvaluationAdapter`."""
+
+    request_id: np.int64
+    candidate_ids: np.ndarray
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+
+class EvaluationAdapter(Protocol):
+    """Transform genomes into the payload consumed by a problem evaluation."""
+
+    def transform(self, genomes: GenomeBatch, request: EvaluationQuery) -> Any:
+        """Return an evaluation payload batch for *genomes*."""
+        ...
 
 
 def _owned_array(value: Any, *, dtype: np.dtype, ndim: int, name: str) -> np.ndarray:
@@ -45,6 +72,12 @@ def _owned_array(value: Any, *, dtype: np.dtype, ndim: int, name: str) -> np.nda
     result = np.array(arr, dtype=dtype, order="C", copy=True)
     result.flags.writeable = False
     return result
+
+
+def _payload_value(payload: Any, index: int) -> object:
+    if isinstance(payload, GenomeBatch):
+        return genome_value(payload, index)
+    return payload[index]
 
 
 @dataclass
@@ -60,7 +93,6 @@ class EvaluationResult:
     outputs: dict[str, np.ndarray] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Validate and own all numeric channels."""
         self.f = _owned_array(self.f, dtype=np.dtype(np.float64), ndim=2, name="f")
         self.g = _owned_array(self.g, dtype=np.dtype(np.float64), ndim=2, name="g")
         self.cv = _owned_array(self.cv, dtype=np.dtype(np.float64), ndim=1, name="cv")
@@ -113,36 +145,83 @@ class EvaluationErrorInfo:
     details: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Validate error details are serializable."""
         pickle.dumps(dict(self.details))
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, init=False)
 class EvaluationRequest:
-    """Owned input snapshot for one evaluation request."""
+    """Input payload whose snapshot semantics depend on how it was built.
+
+    Passing an existing ``GenomeBatch`` directly, such as ``pop.genomes``,
+    does not guarantee that the request owns an immutable snapshot of the
+    input: a Population-backed batch may remain a view of live storage.  The
+    normal planner path instead calls ``genomes.take(indices)`` to construct
+    an independent batch value, which can be treated as the request's input
+    snapshot.
+    """
 
     request_id: np.int64
     candidate_ids: np.ndarray
-    x: np.ndarray
+    payload: GenomeBatch
     outputs: tuple[str, ...] = ("f", "g", "cv")
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self) -> None:
-        """Validate and own request arrays."""
-        if np.asarray(self.request_id).shape != ():
+    def __init__(
+        self,
+        request_id: np.int64,
+        candidate_ids: np.ndarray,
+        payload: GenomeBatch | np.ndarray | None = None,
+        outputs: tuple[str, ...] = ("f", "g", "cv"),
+        metadata: Mapping[str, Any] | None = None,
+        *,
+        x: np.ndarray | None = None,
+    ) -> None:
+        if np.asarray(request_id).shape != ():
             raise ValidationError("request_id must be scalar")
-        object.__setattr__(self, "request_id", np.int64(self.request_id))
+        if x is not None:
+            if payload is not None:
+                raise ValidationError("EvaluationRequest accepts either payload or x")
+            payload = x
+        if payload is None:
+            raise ValidationError("EvaluationRequest requires a payload")
+        if isinstance(payload, np.ndarray):
+            payload = DenseVectorBatch(
+                _owned_array(
+                    payload,
+                    dtype=np.dtype(np.float64),
+                    ndim=2,
+                    name="x",
+                )
+            )
+        if not isinstance(payload, GenomeBatch):
+            raise ValidationError(
+                "EvaluationRequest payload must implement the GenomeBatch protocol"
+            )
+        object.__setattr__(self, "request_id", np.int64(request_id))
         ids = _owned_array(
-            self.candidate_ids, dtype=np.dtype(np.int64), ndim=1, name="candidate_ids"
+            candidate_ids, dtype=np.dtype(np.int64), ndim=1, name="candidate_ids"
         )
-        x = _owned_array(self.x, dtype=np.dtype(np.float64), ndim=2, name="x")
-        if len(ids) != len(x) or len(ids) != len(np.unique(ids)):
-            raise ValidationError("request candidate_ids must be unique and match x")
+        if len(ids) != len(payload) or len(ids) != len(np.unique(ids)):
+            raise ValidationError(
+                "request candidate_ids must be unique and match payload"
+            )
         object.__setattr__(self, "candidate_ids", ids)
-        object.__setattr__(self, "x", x)
-        metadata = dict(self.metadata)
+        object.__setattr__(self, "payload", payload)
+        object.__setattr__(self, "outputs", tuple(outputs))
+        metadata = {} if metadata is None else dict(metadata)
         pickle.dumps(metadata)
         object.__setattr__(self, "metadata", metadata)
+
+    @property
+    def x(self) -> np.ndarray:
+        """Return the dense compatibility view when the payload is numeric."""
+        if isinstance(self.payload, DenseVectorBatch):
+            return self.payload.array
+        raise ValidationError(
+            "EvaluationRequest.x requires a DenseNumericView-compatible "
+            "DenseVectorBatch payload; this request carries a non-dense "
+            f"{type(self.payload).__name__} payload"
+        )
 
 
 @dataclass
@@ -175,7 +254,6 @@ class EvaluationUpdate:
     sequence: int = 0
 
     def __post_init__(self) -> None:
-        """Validate update row identity."""
         if self.sequence < 0:
             raise EvaluationProtocolError("update sequence must be non-negative")
         ids = _owned_array(
@@ -208,7 +286,6 @@ class PendingEvaluation:
     prediction: Any = None
 
     def __post_init__(self) -> None:
-        """Validate and own applied candidate IDs."""
         ids = _owned_array(
             self.applied_candidate_ids,
             dtype=np.dtype(np.int64),
@@ -240,8 +317,44 @@ class PendingEvaluation:
 class Evaluator(ABC):
     """Base class for batch evaluators."""
 
+    def contract(self) -> ComponentContract:
+        """Return the evaluator family contract."""
+        return ComponentContract(
+            ports={
+                "evaluator": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="genomes",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(
+                                kind="GenomeBatch",
+                                bindings={"representation": Var(name="R")},
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="observations",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(
+                                kind="ObservationBatch",
+                                bindings={
+                                    "objective_schema": Var(name="O"),
+                                    "constraint_schema": Var(name="C"),
+                                },
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                )
+            }
+        )
+
     @abstractmethod
-    def evaluate_batch(self, x: np.ndarray, problem: Problem) -> EvaluationResult:
+    def evaluate_batch(
+        self, x: GenomeBatch | np.ndarray, problem: Problem
+    ) -> EvaluationResult:
         """
         Evaluate a batch of design vectors.
 
@@ -281,7 +394,7 @@ class Evaluator(ABC):
         self, request: EvaluationRequest, problem: Problem
     ) -> EvaluationResult:
         """Evaluate a request, including its public metadata boundary."""
-        return self.evaluate_batch(request.x, problem)
+        return self.evaluate_batch(request.payload, problem)
 
     @classmethod
     def has_partial_lifecycle_override(cls) -> bool:
@@ -367,7 +480,9 @@ class AsyncEvaluator(Evaluator):
         self._evaluator = evaluator
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
 
-    def evaluate_batch(self, x: np.ndarray, problem: Problem) -> EvaluationResult:
+    def evaluate_batch(
+        self, x: GenomeBatch | np.ndarray, problem: Problem
+    ) -> EvaluationResult:
         """Evaluate one batch on the wrapped evaluator."""
         if self._evaluator is None:
             raise EvaluationProtocolError("AsyncEvaluator requires a batch evaluator")
@@ -479,56 +594,67 @@ ThreadPoolEvaluator = AsyncEvaluator
 class SerialEvaluator(Evaluator):
     """Default evaluator: evaluates each candidate sequentially."""
 
-    def evaluate_batch(self, x: np.ndarray, problem: Problem) -> EvaluationResult:
-        """
-        Evaluate ``x``, preferring ``problem.evaluate_batch`` when available.
+    def evaluate_batch(
+        self, x: GenomeBatch | np.ndarray, problem: Problem
+    ) -> EvaluationResult:
+        """Evaluate a batch, using the problem's optional evaluation adapter."""
+        genomes = (
+            x
+            if isinstance(x, GenomeBatch)
+            else DenseVectorBatch(np.atleast_2d(np.asarray(x, dtype=float)))
+        )
+        query = EvaluationQuery(
+            request_id=np.int64(0),
+            candidate_ids=np.arange(len(genomes), dtype=np.int64),
+        )
+        return self._evaluate_batch(genomes, problem, query)
 
-        First tries ``problem.evaluate_batch(x)``: if the ``Problem`` overrides
-        it to return raw ``(f_batch, g_batch)`` for the whole batch in one
-        call, this skips ``problem.evaluate``/``problem.evaluate_constraints``
-        entirely and only runs the (cheap) per-row constraint-handler calls
-        (``handler.compute_cv`` / ``handler.augment_objective``) needed to turn
-        the raw batch into final ``f`` / ``cv`` values. Otherwise it falls back
-        to evaluating each row one at a time via
-        :meth:`~saealib.problem.Problem.evaluate` /
-        :meth:`~saealib.problem.Problem.evaluate_constraints`, reproducing the
-        per-candidate evaluation loops that previously lived in each Strategy
-        and Initializer.
+    def evaluate_request(
+        self, request: EvaluationRequest, problem: Problem
+    ) -> EvaluationResult:
+        """Evaluate a request while exposing its context to the adapter."""
+        query = EvaluationQuery(
+            request_id=request.request_id,
+            candidate_ids=request.candidate_ids,
+            metadata=request.metadata,
+        )
+        return self._evaluate_batch(request.payload, problem, query)
 
-        Parameters
-        ----------
-        x : np.ndarray
-            Design vectors to evaluate. shape = (n, dim)
-        problem : Problem
-            The optimization problem providing the objective and constraints.
-
-        Returns
-        -------
-        EvaluationResult
-            Batched objective values, raw constraint values, and violations.
-        """
-        x = np.atleast_2d(np.asarray(x, dtype=float))
-        n = len(x)
+    def _evaluate_batch(
+        self,
+        x: GenomeBatch,
+        problem: Problem,
+        request: EvaluationQuery,
+    ) -> EvaluationResult:
+        genomes = x
+        payload: Any = genomes
+        if problem.evaluation_adapter is not None:
+            payload = problem.evaluation_adapter.transform(genomes, request)
+        elif isinstance(genomes, DenseVectorBatch):
+            payload = genomes.array
+        n = len(genomes)
         n_constraints = problem.n_constraints
 
         f = np.empty((n, problem.n_obj), dtype=float)
         g = np.empty((n, n_constraints), dtype=float)
         cv = np.zeros(n, dtype=float)
 
-        raw = problem.evaluate_batch(x)
+        raw = problem.evaluate_batch(payload)
         if raw is not None:
             f_raw, g_raw = raw
             for i in range(n):
+                xi = cast(np.ndarray, _payload_value(payload, i))
                 cv[i] = float(
-                    problem.handler.compute_cv(problem.constraints, x[i], g_raw[i])
+                    problem.handler.compute_cv(problem.constraints, xi, g_raw[i])
                 )
                 f[i] = problem.handler.augment_objective(
-                    f_raw[i], problem.constraints, x[i], g_raw[i]
+                    f_raw[i], problem.constraints, xi, g_raw[i]
                 )
                 g[i] = g_raw[i]
             return EvaluationResult(f=f, g=g, cv=cv)
 
-        for i, xi in enumerate(x):
+        for i in range(n):
+            xi = _payload_value(payload, i)
             g_i, cv_i = problem.evaluate_constraints(xi)
             f[i] = problem.evaluate(xi, g_i)
             g[i] = g_i
@@ -617,7 +743,9 @@ class JoblibEvaluator(Evaluator):
         """Joblib backend name."""
         return self._backend
 
-    def evaluate_batch(self, x: np.ndarray, problem: Problem) -> EvaluationResult:
+    def evaluate_batch(
+        self, x: GenomeBatch | np.ndarray, problem: Problem
+    ) -> EvaluationResult:
         """
         Evaluate candidates in parallel using joblib.
 

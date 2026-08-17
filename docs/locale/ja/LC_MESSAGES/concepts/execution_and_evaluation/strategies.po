@@ -1,0 +1,372 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:7
+msgid "OptimizationStrategy"
+msgstr "OptimizationStrategy"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:9
+msgid ""
+"`saealib` delegates the selection of candidates sent for expensive true "
+"evaluation to `OptimizationStrategy`. The Strategy describes candidate "
+"generation, prediction, evaluation planning, Feedback, and Population "
+"updates as one graph."
+msgstr ""
+"`saealib` は、高コストな真の評価へ送る候補の選択を `OptimizationStrategy` に委譲します。 "
+"Strategyは、候補生成、予測、評価計画、Feedback、Population更新を一つのグラフとして記述します。"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:12
+msgid "OptimizationStrategy's role"
+msgstr "OptimizationStrategyの役割"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:14
+msgid ""
+"The graph-native extension point is `build_graph(provider) -> "
+"ComponentGraph`. Before execution, Optimizer passes this graph to the "
+"Compiler to create an `ExecutablePlan`."
+msgstr ""
+"graph-native経路の拡張点は `build_graph(provider) -> ComponentGraph` です。 "
+"Optimizerはこのグラフを実行前にCompilerへ渡し、`ExecutablePlan`を作成します。"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:17
+msgid ""
+"`build_pipeline(provider) -> Pipeline` is the Stage compatibility path "
+"and an optional compatibility representation for Strategies that use the "
+"existing Pipeline DSL. Even in this form, a Stage inserted into a "
+"structured Pipeline must be wrapped explicitly with "
+"`stage_component(stage)`."
+msgstr ""
+"`build_pipeline(provider) -> Pipeline` はStage互換経路で、既存のPipeline "
+"DSLを利用するStrategyが提供できる互換性用の記述形式です。 この形式を使う場合も、構造化Pipelineへ入れるStageは "
+"`stage_component(stage)` で明示的に包みます。"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:20
+msgid ""
+"`step(ctx, provider)` is the remaining boundary on the Stage "
+"compatibility path. A new graph-native component reads a `StateView` and "
+"returns a `StatePatch` or `NodeResult`."
+msgstr ""
+"`step(ctx, provider)` はStage互換経路に残る境界です。 新しいグラフネイティブコンポーネントは `StateView` "
+"を読み、`StatePatch` または `NodeResult` を返します。"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:23
+msgid ""
+"The class attribute `requires_surrogate: bool` indicates whether this "
+"strategy needs a `SurrogateManager`. `Optimizer.validate()` checks this "
+"attribute to confirm you aren't trying to use a strategy with "
+"`requires_surrogate=True` while `surrogate_manager` is unset."
+msgstr ""
+"クラス属性`requires_surrogate: bool`は、この戦略が`SurrogateManager`を必要とするかを示します。 "
+"`Optimizer.validate()`がこの属性を見て、`surrogate_manager`が未設定のまま`requires_surrogate=True`の戦略を使おうとしていないかを確認します。"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:26
+msgid "Built-in Strategies"
+msgstr "組み込みStrategy"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "Class"
+msgstr "クラス"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "Parameters"
+msgstr "パラメータ"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "Approach"
+msgstr "方式"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "`DirectStrategy`"
+msgstr "`DirectStrategy`"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "None"
+msgstr "なし"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "Uses no surrogate; truly evaluates every generated candidate"
+msgstr "サロゲートを使わず、生成した候補を全件真に評価する"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "`SteadyStateStrategy`"
+msgstr "`SteadyStateStrategy`"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "Generates one candidate per step and supports asynchronous refill"
+msgstr "1ステップにつき1候補を生成し、非同期補充に対応する"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "`IndividualBasedStrategy`"
+msgstr "`IndividualBasedStrategy`"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "`evaluation_ratio: float = 0.1`"
+msgstr "`evaluation_ratio: float = 0.1`"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid ""
+"Scores every candidate with the surrogate, and truly evaluates only the "
+"top `evaluation_ratio` fraction"
+msgstr "全候補をサロゲートでスコアリングし、上位`evaluation_ratio`の割合だけ真に評価する"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "`PreSelectionStrategy`"
+msgstr "`PreSelectionStrategy`"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "`n_candidates: int, n_select: int` (both required)"
+msgstr "`n_candidates: int, n_select: int`（共に必須）"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid ""
+"Generates `n_candidates`, scores them, and truly evaluates only the top "
+"`n_select`"
+msgstr "`n_candidates`件を生成してスコアリングし、上位`n_select`件だけ真に評価する"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "`GenerationBasedStrategy`"
+msgstr "`GenerationBasedStrategy`"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "`gen_ctrl: int` (required)"
+msgstr "`gen_ctrl: int`（必須）"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid ""
+"Advances `gen_ctrl` generations using only the surrogate, then truly "
+"evaluates a single generation"
+msgstr "`gen_ctrl`世代分をサロゲートのみで進め、その後1世代だけ真に評価する"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:36
+msgid ""
+"`IndividualBasedStrategy` selects by fraction of individuals, while "
+"`PreSelectionStrategy` selects by count of individuals. "
+"`GenerationBasedStrategy` switches between surrogate and true evaluation "
+"by generation, not by individual. `DirectStrategy` is the comparison "
+"baseline that uses no surrogate at all, with `requires_surrogate=False`."
+msgstr ""
+"`IndividualBasedStrategy`は個体の割合、`PreSelectionStrategy`は個体の件数で選抜する点が異なります。"
+" `GenerationBasedStrategy`は個体単位ではなく世代単位でサロゲートと真の評価を切り替えます。 "
+"`DirectStrategy`はサロゲートを一切使わない比較対象で、`requires_surrogate=False`です。"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:40
+msgid ""
+"For steady-state execution, combine `DirectStrategy` with an "
+"`AsyncEvaluationScheduler`. The scheduler fills available worker slots, "
+"polls without blocking, and commits each completed update in the "
+"lifecycle order."
+msgstr "定常状態実行では、`DirectStrategy`と`AsyncEvaluationScheduler`を組み合わせます。スケジューラは利用可能なワーカースロットを埋め、ブロックせずにポーリングし、完了した更新をライフサイクル順にコミットします。"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:44
+msgid "Each Strategy's pipeline structure"
+msgstr "各Strategyのパイプライン構成"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "Pipeline"
+msgstr "パイプライン"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid "CountGeneration → Ask → TrueEvaluation → ArchiveUpdate → Tell"
+msgstr "世代数のカウント → 要求 → 真の評価 → アーカイブ更新 → 反映"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid ""
+"CountGeneration → Ask → SurrogatePredictStage → AcquisitionStage → "
+"SortByScore → TrueEvaluation (ratio-based) → ArchiveUpdate → Tell"
+msgstr ""
+"CountGeneration → Ask → SurrogatePredictStage → AcquisitionStage → "
+"SortByScore → TrueEvaluation（比率指定）→ ArchiveUpdate → Tell"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid ""
+"CountGeneration → Ask (n_candidates) → SurrogatePredictStage → "
+"AcquisitionStage → TopKSelection(k=n_select) → TrueEvaluation → "
+"ArchiveUpdate → Tell"
+msgstr ""
+"CountGeneration → Ask（n_candidates）→ SurrogatePredictStage → "
+"AcquisitionStage → TopKSelection（k=n_select）→ TrueEvaluation → "
+"ArchiveUpdate → Tell"
+
+#: ../../concepts/execution_and_evaluation/strategies.md
+msgid ""
+"SurrogateOnlyLoop (gen_ctrl times) → CountGeneration → Ask → "
+"TrueEvaluation → ArchiveUpdate → Tell"
+msgstr ""
+"SurrogateOnlyLoop(gen_ctrl回) → CountGeneration → Ask → TrueEvaluation → "
+"ArchiveUpdate → Tell"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:53
+msgid ""
+"Each Strategy's components include the `EvaluationPlan`, asynchronous "
+"evaluation submission and collection, Feedback, and Tell. A Stage is a "
+"compatibility execution unit for part of that work, not the same "
+"execution contract as the entire structured Pipeline. See "
+"[Stage](../observation_and_state/stage.md) and "
+"[Framework](../../framework/index.md) for details."
+msgstr "各Strategyの構成要素には、`EvaluationPlan`、非同期評価の送信と収集、Feedback、Tellが含まれます。Stageはその一部を担う互換性用の実行単位であり、構造化されたパイプライン全体と同じ実行契約ではありません。詳細は[Stage](../observation_and_state/stage.md)と[Framework](../../framework/index.md)を参照してください。"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:57
+msgid "Which Strategy to choose"
+msgstr "どのStrategyを選ぶか"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:59
+msgid ""
+"For problems where evaluation cost is extremely high, "
+"`IndividualBasedStrategy` or `PreSelectionStrategy`, which use the "
+"surrogate to filter out most candidates, are effective. Early in the "
+"search, when the surrogate's reliability is still low, or when you don't "
+"want to pay the surrogate's own training cost frequently, "
+"`GenerationBasedStrategy`, which advances multiple generations at once "
+"using only the surrogate, is suited. For problems where the surrogate's "
+"approximation error itself is unacceptable, or evaluation cost is "
+"sufficiently low, relying solely on true evaluation via `DirectStrategy` "
+"is reasonable."
+msgstr ""
+"評価コストが極めて高い問題では、サロゲートで大半の候補を足切りする`IndividualBasedStrategy`や`PreSelectionStrategy`が有効です。"
+" "
+"サロゲートの信頼度がまだ低い探索初期や、サロゲートの学習コスト自体を頻繁に払いたくない場合は、複数世代をまとめてサロゲートのみで進める`GenerationBasedStrategy`が適しています。"
+" "
+"サロゲートの近似誤差そのものが許容できない、あるいは評価コストが十分低い問題では、`DirectStrategy`で真の評価だけに頼るのが妥当です。"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:63
+msgid "Behavior of runtime swapping"
+msgstr "実行時差し替えの挙動"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:65
+msgid ""
+"When you change configuration such as `provider.algorithm` or "
+"`provider.surrogate_manager` at a step boundary in `iterate()` or "
+"`run()`, the execution environment detects the change, recompiles the "
+"plan, and applies it from the next generation. This procedure works on "
+"both the Stage compatibility path and the graph-native path. When a "
+"Component requests recompilation, the plan node returns `RuntimeCommand` "
+"or `RequestRecompile` through `NodeResult.commands`. The request is "
+"accepted when the Runtime environment provides `recompile()`, and "
+"recompilation happens between steps. Rejection is also a normal result."
+msgstr ""
+"`iterate()` / `run()` のステップ境界で `provider.algorithm` や "
+"`provider.surrogate_manager` "
+"などの構成を変更すると、実行環境が変化を検出してplanを再コンパイルし、次世代から反映します。 この手順はStage互換経路とgraph-"
+"native経路のどちらでも利用できます。 Component側から再コンパイルを要求するときは、plan nodeが "
+"`NodeResult.commands` で `RuntimeCommand` / `RequestRecompile` を返します。 "
+"要求はRuntime環境が `recompile()` "
+"を提供する場合に受理され、再コンパイルはステップ間で行われます。受理されないことも正常な結果です。"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:70
+msgid "Implementing a custom Strategy"
+msgstr "独自Strategyの実装方法"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:72
+msgid ""
+"When implementing a custom candidate-selection method, choose separately "
+"between the graph-native path and the Stage compatibility path."
+msgstr "独自の候補選択方式を実装するときは、graph-nativeの経路とStage互換の経路を分けて選びます。"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:74
+msgid ""
+"**Graph-native path**: Implement `build_graph()` and return a "
+"`ComponentGraph`. For a gradual migration using the Pipeline DSL, wrap "
+"each Stage with `stage_component()` before passing it to "
+"`lower_pipeline()`."
+msgstr "**グラフネイティブ経路**：`build_graph()`を実装して`ComponentGraph`を返します。パイプラインDSLを使って段階的に移行する場合は、各Stageを`stage_component()`でラップしてから`lower_pipeline()`に渡します。"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:98
+msgid ""
+"`first_stage` and `second_stage` stand for the Stage instances to "
+"combine. This example shows only the boundary for building a "
+"ComponentGraph from a Pipeline; add evaluation-plan and Feedback "
+"contracts according to the Stage composition."
+msgstr ""
+"`first_stage` と `second_stage` は、実際に組み合わせるStageインスタンスを表します。 "
+"この例はPipelineからComponentGraphを作る境界だけを示しており、評価計画やFeedbackの契約は各Stageの構成に応じて追加します。"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:101
+msgid ""
+"When adjusting only part of an existing Strategy, changing the "
+"compatibility Pipeline with "
+"[Pipeline.replace/find](../extension_guidelines.md) is preferable to "
+"creating a new Strategy."
+msgstr ""
+"既存のStrategyの一部だけを調整する場合は、新しいStrategyを作るよりも "
+"[Pipeline.replace/find](../extension_guidelines.md) "
+"で互換性用パイプラインを変更する方が適しています。"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:103
+msgid "Related components"
+msgstr "関連コンポーネント"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:105
+msgid ""
+"[Stage](../observation_and_state/stage.md): The contract of each "
+"individual pipeline stage a Strategy combines"
+msgstr "[Stage](../observation_and_state/stage.md)：各Strategyが組み合わせるパイプラインステージ単体の契約"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:106
+msgid ""
+"[SurrogateManager](../surrogate_modeling/surrogate_manager.md): The "
+"prediction mechanism used by strategies with `requires_surrogate=True`"
+msgstr "[SurrogateManager](../surrogate_modeling/surrogate_manager.md)：`requires_surrogate=True`の戦略が使う予測機構"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:107
+msgid ""
+"[Extension guidelines](../extension_guidelines.md): Rearranging stages "
+"via `Pipeline.replace`/`find`"
+msgstr "[拡張のガイドライン](../extension_guidelines.md)：`Pipeline.replace`/`find`によるステージの並べ替え"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:108
+msgid ""
+"[Components overview](../index.md): The diagram of the overall pipeline "
+"structure"
+msgstr "[コンポーネント概要](../index.md)：パイプライン全体の構成図"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:110
+msgid "References"
+msgstr "参照"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:112
+#, python-brace-format
+msgid "{py:class}`saealib.OptimizationStrategy`"
+msgstr "{py:class}`saealib.OptimizationStrategy`"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:113
+#, python-brace-format
+msgid "{py:class}`saealib.IndividualBasedStrategy`"
+msgstr "{py:class}`saealib.IndividualBasedStrategy`"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:114
+#, python-brace-format
+msgid "{py:class}`saealib.GenerationBasedStrategy`"
+msgstr "{py:class}`saealib.GenerationBasedStrategy`"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:115
+#, python-brace-format
+msgid "{py:class}`saealib.PreSelectionStrategy`"
+msgstr "{py:class}`saealib.PreSelectionStrategy`"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:116
+#, python-brace-format
+msgid "{py:class}`saealib.DirectStrategy`"
+msgstr "{py:class}`saealib.DirectStrategy`"
+
+#: ../../concepts/execution_and_evaluation/strategies.md:117
+#, python-brace-format
+msgid "{py:class}`saealib.AsyncEvaluationScheduler`"
+msgstr "{py:class}`saealib.AsyncEvaluationScheduler`"

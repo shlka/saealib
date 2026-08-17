@@ -32,12 +32,26 @@ Literature patterns covered by this module:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 import numpy as np
 
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    StateContract,
+    Var,
+)
+from saealib.core.state import RUNTIME_RNG
+from saealib.population.archive import Archive
+from saealib.population.genome import DenseVectorBatch
 from saealib.registry import register
+from saealib.space.space import encode_features
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
@@ -62,12 +76,95 @@ class TrainingData:
     train_y: np.ndarray
 
 
+def _canonical_dense_archive_data(
+    archive: Archive,
+) -> dict[str, np.ndarray] | None:
+    """Return canonical dense archive storage, or ``None`` for custom paths.
+
+    This is deliberately limited to the exact built-in ``Archive`` and its
+    built-in dense genome storage.  Custom archives and subclasses retain the
+    public-property path, since their properties or storage may have different
+    semantics.
+    """
+    if type(archive) is not Archive:
+        return None
+    values = archive.__dict__
+    if not isinstance(values.get("_genome_batch"), DenseVectorBatch):
+        return None
+    data = values.get("_data")
+    if not isinstance(data, dict):
+        return None
+    return data
+
+
+def _dense_archive_rows(
+    archive: Archive, indices: np.ndarray, target: str
+) -> tuple[np.ndarray, np.ndarray] | None:
+    """Return dense genome and column rows without going through properties."""
+    data = _canonical_dense_archive_data(archive)
+    if data is None or "x" not in data or target not in data:
+        return None
+
+    size = len(archive)
+    x = data["x"][:size][indices]
+    y = data[target][:size][indices]
+    x.setflags(write=False)
+    y.setflags(write=False)
+    return x, y
+
+
 class TrainingSet(ABC):
     """Strategy object that builds ``(train_x, train_y)`` for a surrogate.
 
     Inject an instance into ``LocalSurrogateManager`` or
     ``GlobalSurrogateManager`` via their ``training_set`` constructor argument.
     """
+
+    def contract(self) -> ComponentContract:
+        """Return the training-set contract."""
+        feature_schema = Var(name="F")
+        objective_schema = Var(name="O")
+        return ComponentContract(
+            ports={
+                "training_set": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="archive",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                        ),
+                        PortSpec(
+                            name="population",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="Population"),
+                            cardinality=MANY,
+                            optional=True,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="features",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(
+                                kind="FeatureBatch",
+                                bindings={"feature_schema": feature_schema},
+                            ),
+                            cardinality=MANY,
+                        ),
+                        PortSpec(
+                            name="targets",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(
+                                kind="FeatureBatch",
+                                bindings={"objective_schema": objective_schema},
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                )
+            }
+        )
 
     @abstractmethod
     def build(
@@ -100,17 +197,8 @@ class TrainingSet(ABC):
         ...
 
 
-# ---------------------------------------------------------------------------
-# Regression defaults (backward-compatible)
-# ---------------------------------------------------------------------------
-
-
 class ArchiveObjectiveSet(TrainingSet):
-    """Use the entire archive as training data with raw objective values.
-
-    Default for ``GlobalSurrogateManager``.  Equivalent to the behaviour
-    before Issue #026.
-    """
+    """Use the entire archive as training data with raw objective values."""
 
     def build(
         self,
@@ -120,15 +208,19 @@ class ArchiveObjectiveSet(TrainingSet):
         candidate_x: np.ndarray | None = None,
     ) -> TrainingData:
         """Return all archive points with raw objective values."""
-        return TrainingData(train_x=archive.x, train_y=archive.f)
+        genomes = getattr(archive, "genomes", None)
+        if ctx is not None and genomes is not None:
+            train_x = encode_features(ctx.problem.space, genomes)
+        else:
+            train_x = archive.x
+        return TrainingData(train_x=train_x, train_y=archive.f)
 
 
 @register()
 class KNNObjectiveSet(TrainingSet):
     """Retrieve the *k* nearest archive neighbours of ``candidate_x``.
 
-    Default for ``LocalSurrogateManager``.  Equivalent to the
-    ``n_neighbors``-based behaviour before Issue #026.
+    This is the default training set for ``LocalSurrogateManager``.
 
     Parameters
     ----------
@@ -150,12 +242,10 @@ class KNNObjectiveSet(TrainingSet):
         if candidate_x is None:
             raise ValueError("KNNObjectiveSet requires candidate_x.")
         idx, _ = archive.get_knn(candidate_x, self.n_neighbors)
+        rows = _dense_archive_rows(archive, idx, "f")
+        if rows is not None:
+            return TrainingData(train_x=rows[0], train_y=rows[1])
         return TrainingData(train_x=archive.x[idx], train_y=archive.f[idx])
-
-
-# ---------------------------------------------------------------------------
-# Constraint regression (raw g values)
-# ---------------------------------------------------------------------------
 
 
 class ConstraintObjectiveSet(TrainingSet):
@@ -220,19 +310,21 @@ class KNNConstraintObjectiveSet(TrainingSet):
         """Return k nearest-neighbour archive points with raw constraint values."""
         if candidate_x is None:
             raise ValueError("KNNConstraintObjectiveSet requires candidate_x.")
-        g = archive.g
+        dense_data = _canonical_dense_archive_data(archive)
+        if dense_data is not None and "g" in dense_data:
+            g = dense_data["g"][: len(archive)]
+        else:
+            g = archive.g
         if g.shape[1] == 0:
             raise ValueError(
                 "KNNConstraintObjectiveSet requires at least one constraint "
                 "(archive.g has 0 columns)."
             )
         idx, _ = archive.get_knn(candidate_x, self.n_neighbors)
+        rows = _dense_archive_rows(archive, idx, "g")
+        if rows is not None:
+            return TrainingData(train_x=rows[0], train_y=rows[1])
         return TrainingData(train_x=archive.x[idx], train_y=g[idx])
-
-
-# ---------------------------------------------------------------------------
-# Constraint-based classification
-# ---------------------------------------------------------------------------
 
 
 class FeasibilityClassificationSet(TrainingSet):
@@ -279,11 +371,6 @@ class FeasibilityClassificationSet(TrainingSet):
         eps = ctx.problem.eps_cv if ctx is not None else 1e-6
         labels = (src.get_array("cv") <= eps).astype(float)
         return TrainingData(train_x=src.get_array("x"), train_y=labels)
-
-
-# ---------------------------------------------------------------------------
-# Rank-based labelling
-# ---------------------------------------------------------------------------
 
 
 class TopKBipartitionSet(TrainingSet):
@@ -394,11 +481,6 @@ class LevelBasedSet(TrainingSet):
         return TrainingData(train_x=x, train_y=labels.astype(float))
 
 
-# ---------------------------------------------------------------------------
-# Pairwise comparison
-# ---------------------------------------------------------------------------
-
-
 class PairwiseComparisonSet(TrainingSet):
     """Pairwise labels: ``train_x`` is ``[x_a, x_b]``, label is 1 if *a* beats *b*.
 
@@ -440,6 +522,15 @@ class PairwiseComparisonSet(TrainingSet):
         self.source = source
         self.n_pairs = n_pairs
         self.rng = rng
+
+    def contract(self) -> ComponentContract:
+        """Return the pairwise-training contract."""
+        state = (
+            StateContract(reads=(RUNTIME_RNG,), writes=(RUNTIME_RNG,))
+            if self.n_pairs is not None and self.rng is None
+            else StateContract()
+        )
+        return replace(super().contract(), state=state)
 
     def build(
         self,
@@ -485,11 +576,6 @@ class PairwiseComparisonSet(TrainingSet):
             ]
         )
         return TrainingData(train_x=train_x, train_y=train_y)
-
-
-# ---------------------------------------------------------------------------
-# Reference point comparison
-# ---------------------------------------------------------------------------
 
 
 class ReferencePointComparisonSet(TrainingSet):

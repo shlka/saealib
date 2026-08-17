@@ -303,7 +303,7 @@ def test_builtin_strategy_policy_compositions():
     )
 
 
-def test_generation_based_phase_policies_distinguish_bundled_and_explicit():
+def test_generation_based_policies_distinguish_bundled_and_explicit():
     provider = SimpleNamespace(
         algorithm=object(),
         surrogate_manager=object(),
@@ -316,12 +316,14 @@ def test_generation_based_phase_policies_distinguish_bundled_and_explicit():
     )
     strategy = GenerationBasedStrategy(1)
     pipeline = cast(Any, strategy).build_pipeline(cast(Any, provider))
-    inner_feedback = pipeline.stages[0].stages[4]._builder
-    outer_feedback = pipeline.stages[8]._builder
+    surrogate_generations = pipeline["surrogate_generations"]
+    true_generation = pipeline["true_generation"]
+    inner_feedback = surrogate_generations.body.stages[4].stage._builder
+    outer_feedback = true_generation.stages[7].stage._builder
     assert isinstance(inner_feedback, PredictedFeedback)
     assert isinstance(outer_feedback, TrueOnlyFeedback)
 
     provider.feedback_builder = NoFeedback()
     provider.feedback_builder_explicit = True
     pipeline = cast(Any, strategy).build_pipeline(cast(Any, provider))
-    assert isinstance(pipeline.stages[8]._builder, NoFeedback)
+    assert isinstance(pipeline["true_generation"].stages[7].stage._builder, NoFeedback)

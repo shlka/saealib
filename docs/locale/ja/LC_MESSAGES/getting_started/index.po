@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 02:51+0900\n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,72 +19,131 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../../getting_started/index.md:1
-msgid "Getting Started"
+#: ../../getting_started/index.md:7
+msgid "Getting started"
 msgstr "はじめに"
 
-#: ../../../getting_started/index.md:3
+#: ../../getting_started/index.md:9
 msgid ""
-"For first-time saealib users. This section covers the basics: what "
-"saealib is, how to install it, and how to run your first optimization."
-msgstr "saealibを初めて使う方へ。このセクションでは、saealibとは何か、インストール方法、最初の最適化の実行方法という基本を説明します。"
+"Learn what you need to start using saealib and how to run a simple "
+"optimization."
+msgstr "saealibを使い始めるための準備と簡単な実行方法を紹介します。"
 
-#: ../../../getting_started/index.md:9
-msgid "What is saealib"
+#: ../../getting_started/index.md:11
+msgid "Start with the basics"
+msgstr "基本情報"
+
+#: ../../getting_started/index.md:13
+msgid "Start here for installation and a simple implementation."
+msgstr "まずはここから始めましょう。"
+
+#: ../../getting_started/index.md:19
+msgid "What is saealib?"
 msgstr "{fa}`circle-info;sd-mr-1` saealibとは"
 
-#: ../../../getting_started/index.md:13
-msgid ""
-"Understand what surrogate-assisted evolutionary algorithms are, and why "
-"saealib exists."
-msgstr "サロゲート型進化的アルゴリズムとは何か、そしてsaealibが必要な理由を理解します。"
+#: ../../getting_started/index.md:22
+msgid "Learn saealib's purpose and overall structure."
+msgstr "saealibの目的と全体像を確認します。"
 
-#: ../../../getting_started/index.md:16
+#: ../../getting_started/index.md:25
 msgid "Installation"
 msgstr "{fa}`download;sd-mr-1` インストール"
 
-#: ../../../getting_started/index.md:20
-msgid ""
-"Install saealib and its optional extras (scikit-learn, XGBoost, LightGBM,"
-" PyTorch, etc.)."
-msgstr ""
-"saealib本体とオプションの追加パッケージ（scikit-"
-"learn、XGBoost、LightGBM、PyTorchなど）をインストールします。"
+#: ../../getting_started/index.md:28
+msgid "Install saealib in your environment."
+msgstr "saealibを環境に導入します。"
 
-#: ../../../getting_started/index.md:23
+#: ../../getting_started/index.md:31
 msgid "Quickstart"
 msgstr "{fa}`rocket;sd-mr-1` クイックスタート"
 
-#: ../../../getting_started/index.md:27
-msgid "Run your first optimization with `minimize()` / `maximize()`."
-msgstr "`minimize()` / `maximize()`で最初の最適化を実行します。"
+#: ../../getting_started/index.md:34
+msgid "Run your first optimization."
+msgstr "最初の最適化を実行します。"
 
-#~ msgid "Getting Started"
-#~ msgstr ""
+#: ../../getting_started/index.md:39
+msgid "Choose how to use saealib"
+msgstr "saealibの使い方を選ぶ"
 
-#~ msgid "はじめに"
-#~ msgstr ""
+#: ../../getting_started/index.md:41
+msgid ""
+"saealib offers four ways to work, depending on how much of the "
+"configuration you assemble yourself."
+msgstr "saealibには、自分で組み立てる構成の量に応じて4つの使い方があります。"
 
-#~ msgid "saealibを初めて使う方へ。このセクションでは、saealibとは何か、インストール方法、最初の最適化の実行方法という基本を説明します。"
-#~ msgstr ""
+#: ../../getting_started/index.md:31
+msgid "Layer"
+msgstr "レイヤー"
 
-#~ msgid "saealibとは"
-#~ msgstr ""
+#: ../../getting_started/index.md:31
+msgid "Usage"
+msgstr "使い方"
 
-#~ msgid "サロゲート型進化的アルゴリズムとは何か、そしてなぜsaealibが存在するのかを理解します。"
-#~ msgstr ""
+#: ../../getting_started/index.md:31
+msgid "First step"
+msgstr "最初のステップ"
 
-#~ msgid "インストール"
-#~ msgstr ""
+#: ../../getting_started/index.md:31
+msgid "Layer 1: Use"
+msgstr "Layer 1: Use"
 
-#~ msgid ""
-#~ "saealib本体とオプションの追加パッケージ(scikit-"
-#~ "learn、XGBoost、LightGBM、PyTorchなど)をインストールします。"
-#~ msgstr ""
+#: ../../getting_started/index.md:31
+msgid ""
+"Run an optimization with the defaults. Define a problem and pass it to "
+"`minimize()` or `maximize()`."
+msgstr "既定の構成で最適化を実行します。問題を定義し、`minimize()`または`maximize()`に渡します。"
 
-#~ msgid "クイックスタート"
-#~ msgstr ""
+#: ../../getting_started/index.md:31
+msgid "[Quickstart](quickstart.md), [Tutorials](../tutorials/index.md)"
+msgstr "[クイックスタート](quickstart.md)、[チュートリアル](../tutorials/index.md)"
 
-#~ msgid "`minimize()` / `maximize()`で最初の最適化を実行します。"
-#~ msgstr ""
+#: ../../getting_started/index.md:31
+msgid "Layer 2: Compose"
+msgstr "Layer 2: Compose"
 
+#: ../../getting_started/index.md:31
+msgid ""
+"Choose built-in components and combine them with `Optimizer`. Reproduce "
+"algorithms from the literature."
+msgstr "ビルトインコンポーネントを選び、`Optimizer`と組み合わせます。文献にあるアルゴリズムも再現できます。"
+
+#: ../../getting_started/index.md:31
+msgid ""
+"[Optimization components](../concepts/index.md), "
+"[Algorithms](../algorithms/index.md)"
+msgstr "[Optimizationコンポーネント](../concepts/index.md)、[アルゴリズム](../algorithms/index.md)"
+
+#: ../../getting_started/index.md:31
+msgid "Layer 3: Extend Components"
+msgstr "Layer 3: Extend Components"
+
+#: ../../getting_started/index.md:31
+msgid ""
+"Replace an existing responsibility with a custom implementation by "
+"subclassing an abstract base."
+msgstr "抽象基底クラスを継承し、既存の責務を独自実装に置き換えます。"
+
+#: ../../getting_started/index.md:31
+msgid "[Implement a custom component](../tutorials/custom_components.md)"
+msgstr "[独自Componentを実装する](../tutorials/custom_components.md)"
+
+#: ../../getting_started/index.md:31
+msgid "Layer 4: Extend Framework"
+msgstr "Layer 4: Extend Framework"
+
+#: ../../getting_started/index.md:31
+msgid "Extend the meaning of contracts, graphs, compilers, and execution itself."
+msgstr "契約、グラフ、コンパイラ、実行そのものの意味を拡張します。"
+
+#: ../../getting_started/index.md:31
+msgid "[Framework extensions](../framework/extensions.md)"
+msgstr "[フレームワーク拡張](../framework/extensions.md)"
+
+#: ../../getting_started/index.md:50
+msgid ""
+"Start at Layer 1 and move down the layers when the defaults no longer "
+"cover your needs. To choose a layer by the part you want to change, see "
+"[Choosing an extension point](../concepts/extension_guidelines.md)."
+msgstr ""
+"Layer "
+"1から始め、既定値で足りない場合に下位のLayerへ進みます。変更したい部分からLayerを選ぶ場合は、[拡張点の選び方](../concepts/extension_guidelines.md)を参照してください。"

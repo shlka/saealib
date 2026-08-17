@@ -307,7 +307,7 @@ class TestEHVIAcquisition:
 
 
 # ===========================================================================
-# Direction-aware minimize-space conversion (Issue #198)
+# Direction-aware minimize-space conversion
 # ===========================================================================
 class TestParEGODirectionSensitivity:
     """ParEGO's z_star must reflect the raw-space *maximum* under direction=+1."""

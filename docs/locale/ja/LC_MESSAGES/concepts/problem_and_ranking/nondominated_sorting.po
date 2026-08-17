@@ -1,0 +1,257 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 10:57+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:7
+msgid "NonDominatedSorter"
+msgstr "NonDominatedSorter"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:9
+msgid ""
+"Comparators in the [ParetoComparator](comparators.md) family "
+"(`NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`)"
+" delegate sorting the population into fronts to `sorter`, a swappable "
+"argument. Where [Dominator](dominance.md) handles \"the definition of the"
+" dominance relation between two points,\" `sorter` is a second, "
+"independent swap axis: \"how to use that dominance relation to assign "
+"individuals to fronts.\""
+msgstr ""
+"[ParetoComparator](comparators.md)系のComparator（`NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`）は、個体群をフロントへ振り分ける処理を`sorter`という差し替え可能な引数に委ねています。"
+" "
+"[Dominator](dominance.md)が「2点間の支配関係の定義」を担うのに対し、`sorter`は「その支配関係を使ってどうフロントに割り振るか」というもう1つの独立した差し替え軸です。"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:12
+msgid "NonDominatedSorter's role"
+msgstr "NonDominatedSorterの役割"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:14
+msgid ""
+"`NonDominatedSorter` is defined not as an abstract base class but as a "
+"`Protocol` (structural subtyping). Any callable satisfying the signature "
+"`__call__(f, direction=None, *, dominator=None) -> tuple[ranks, fronts]` "
+"can be passed as `sorter` without inheriting from any class."
+msgstr ""
+"`NonDominatedSorter`は、抽象基底クラスではなく`Protocol`（構造的部分型）として定義されています。 "
+"`__call__(f, direction=None, *, dominator=None) -> tuple[ranks, "
+"fronts]`というシグネチャを満たす呼び出し可能オブジェクトであれば、クラスを継承しなくても`sorter`として渡せます。"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:17
+msgid ""
+"`ranks` is an array giving each individual's front number (`0` is best); "
+"`fronts` satisfies the contract that `fronts[i]` is the list of "
+"individual indices belonging to front `i`."
+msgstr "`ranks`は各個体のフロント番号（`0`が最良）を表す配列、`fronts`は`fronts[i]`がフロント`i`に属する個体のインデックスリストであるという契約を満たします。"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:19
+msgid "Built-in NonDominatedSorters"
+msgstr "組み込みNonDominatedSorter"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:21
+msgid ""
+"`non_dominated_sort`/`dda_non_dominated_sort` are both functions "
+"satisfying the `(ranks, fronts)` contract above (with no class hierarchy "
+"of their own)."
+msgstr ""
+"`non_dominated_sort`/`dda_non_dominated_sort`はいずれも、上記の`(ranks, "
+"fronts)`契約を満たす関数です（クラスとしての階層は持たない）。"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md
+msgid "Function"
+msgstr "関数"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md
+msgid "Algorithm"
+msgstr "アルゴリズム"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md
+msgid "`non_dominated_sort`"
+msgstr "`non_dominated_sort`"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md
+#, python-brace-format
+msgid ""
+"{cite}`deb2002nsga2`'s non-dominated sorting. A front-peeling approach "
+"that strips off one front at a time"
+msgstr "{cite}`deb2002nsga2`の非劣ソート。フロントを1つずつ取り除く方式"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md
+msgid "`dda_non_dominated_sort`"
+msgstr "`dda_non_dominated_sort`"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md
+msgid ""
+"The Dominance-Degree Approach (Zhou et al., 2017 proposed the dominance "
+"degree matrix; Mishra & Senwar, 2020 proposed DDA-ENS's front assignment)"
+msgstr ""
+"支配度アプローチ（Zhou et al., 2017が支配度行列を、Mishra & Senwar, 2020がDDA-"
+"ENSのフロント割り当てを提案）"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:28
+msgid ""
+"`non_dominated_sort`'s complexity is O(MN²), but because the dominance "
+"matrix is built vectorized with NumPy, it runs fast in practice. "
+"`dda_non_dominated_sort` is guaranteed to return exactly the same "
+"`(ranks, fronts)` as `non_dominated_sort`, making it a drop-in "
+"alternative provided for scalability when the number of individuals `N` "
+"or objectives `M` is large (`M > 100`)."
+msgstr ""
+"`non_dominated_sort`の計算量はO(MN²)ですが、支配行列をNumPyでベクトル化して構築するため実測では高速に動作します。 "
+"`dda_non_dominated_sort`は、`non_dominated_sort`と完全に同一の`(ranks, "
+"fronts)`を返すことが保証されているそのまま置き換え可能な代替関数であり、個体数`N`や目的数`M`が大きい場合（`M > "
+"100`）のスケーラビリティ向けに用意されています。"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:31
+msgid ""
+"Both handle rows containing NaN the same way. Rows containing NaN are "
+"excluded from normal front splitting, and are appended one individual at "
+"a time as a sentinel front after the final front."
+msgstr ""
+"両者とも、NaNを含む行の扱いは共通しています。 "
+"NaNを含む行は、通常のフロント分割から除外され、最終フロントの後にセンチネルフロントとして1個体ずつ追加されます。"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:34
+msgid ""
+"`sorter` and `dominator` are independent swap axes. Both "
+"`non_dominated_sort`/`dda_non_dominated_sort` merely call "
+"`dominator.dominance_matrix()` internally, and take no part in defining "
+"the dominance relation itself. If `dominator` is omitted, "
+"`ParetoDominator` is used as the default."
+msgstr ""
+"`sorter`と`dominator`は独立した差し替え軸です。 "
+"`non_dominated_sort`/`dda_non_dominated_sort`はどちらも、内部で`dominator.dominance_matrix()`を呼ぶだけで、支配関係の定義自体には関与しません。"
+" `dominator`を省略すると`ParetoDominator`が既定として使われます。"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:38
+msgid "Auxiliary functions"
+msgstr "補助関数"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:40
+msgid ""
+"Auxiliary functions used inside the internal implementation of Pareto-"
+"family Comparators are also available standalone as public API."
+msgstr "Pareto系Comparatorの内部実装で使われる補助関数も、公開APIとして単体で利用できます。"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:42
+msgid ""
+"**`crowding_distance(f_front)`**: Computes crowding distance within a "
+"single front. Used by `NSGA2Comparator`. Boundary solutions (those "
+"achieving the minimum or maximum of each objective) are assigned `inf`."
+msgstr ""
+"**`crowding_distance(f_front)`**：単一フロント内の混雑度距離を計算します。`NSGA2Comparator`が使います。"
+" 境界解（各目的の最小値と最大値を取る解）には`inf`が割り当てられます。"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:45
+msgid ""
+"**`crowding_distance_all_fronts(f, fronts)`**: Applies "
+"`crowding_distance` to every front returned by `non_dominated_sort`."
+msgstr ""
+"**`crowding_distance_all_fronts(f, "
+"fronts)`**：`non_dominated_sort`が返す全フロントに対して`crowding_distance`を適用します。"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:47
+#, python-brace-format
+msgid ""
+"**`spea2_fitness(f, direction=None, dominator=None)`**: The fitness "
+"computation {cite}`zitzler2001spea2` used by `SPEA2Comparator`. Computed "
+"from three components: strength (the number of individuals dominated), "
+"raw fitness (the sum of the strengths of the individuals that dominate "
+"it), and density (the reciprocal of the $k$-nearest-neighbor distance)."
+msgstr ""
+"**`spea2_fitness(f, direction=None, "
+"dominator=None)`**：`SPEA2Comparator`が使う適応度計算{cite}`zitzler2001spea2`。強度（支配する個体数）、生の適応度（それを支配する個体の強度の総和）、密度（$k$近傍距離の逆数）の3要素から算出します。"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:51
+msgid ""
+"`spea2_fitness`'s return value follows the convention that lower is "
+"better, the opposite of saealib's overall \"higher is better\" score "
+"convention. Be careful not to pass it directly to another Comparator."
+msgstr "`spea2_fitness`の戻り値は「低いほど良い」という規約であり、saealib全体の「高いほど良い」というスコア規約とは逆です。他のComparatorへそのまま渡さないよう注意してください。"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:55
+msgid "Extending NonDominatedSorter"
+msgstr "NonDominatedSorterの拡張方法"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:57
+msgid ""
+"Because `NonDominatedSorter` is a Protocol, writing a single function "
+"that satisfies the `(ranks, fronts)` contract is enough to use as a "
+"custom implementation. There's no need to inherit from a base class."
+msgstr ""
+"`NonDominatedSorter`はProtocolであるため、`(ranks, "
+"fronts)`契約を満たす関数を1つ書くだけで独自実装として使えます。 基底クラスを継承する必要はありません。"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:71
+msgid ""
+"Passing it as `ParetoComparator(sorter=logged_non_dominated_sort, ...)` "
+"lets you swap the sorting scheme without changing an existing "
+"`Comparator` implementation."
+msgstr ""
+"`ParetoComparator(sorter=logged_non_dominated_sort, "
+"...)`のように渡せば、既存の`Comparator`実装を変更せずにソート方式を差し替えられます。"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:73
+msgid "Related components"
+msgstr "関連コンポーネント"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:75
+msgid ""
+"[Dominator](dominance.md): The definition of the dominance relation "
+"between two points, paired with `sorter`"
+msgstr "[Dominator](dominance.md)：`sorter`と対になる、2点間の支配関係の定義"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:76
+msgid ""
+"[Comparator](comparators.md): The `ParetoComparator` family of "
+"Comparators, which have a `sorter` argument"
+msgstr "[Comparator](comparators.md)：`sorter`引数を持つ`ParetoComparator`系のComparator"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:78
+msgid "References"
+msgstr "参照"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:80
+#, python-brace-format
+msgid "{py:class}`saealib.NonDominatedSorter`"
+msgstr "{py:class}`saealib.NonDominatedSorter`"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:81
+#, python-brace-format
+msgid "{py:func}`saealib.non_dominated_sort`"
+msgstr "{py:func}`saealib.non_dominated_sort`"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:82
+#, python-brace-format
+msgid "{py:func}`saealib.dda_non_dominated_sort`"
+msgstr "{py:func}`saealib.dda_non_dominated_sort`"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:83
+#, python-brace-format
+msgid "{py:func}`saealib.crowding_distance`"
+msgstr "{py:func}`saealib.crowding_distance`"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:84
+#, python-brace-format
+msgid "{py:func}`saealib.crowding_distance_all_fronts`"
+msgstr "{py:func}`saealib.crowding_distance_all_fronts`"
+
+#: ../../concepts/problem_and_ranking/nondominated_sorting.md:85
+#, python-brace-format
+msgid "{py:func}`saealib.spea2_fitness`"
+msgstr "{py:func}`saealib.spea2_fitness`"

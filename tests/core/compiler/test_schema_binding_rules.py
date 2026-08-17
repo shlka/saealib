@@ -1,0 +1,462 @@
+"""Tests for schema binding and lossless adapter resolution."""
+
+from __future__ import annotations
+
+import random
+from dataclasses import dataclass
+from typing import Any, cast
+
+import numpy as np
+import pytest
+from pymoo.algorithms.soo.nonconvex.ga import GA
+
+from saealib.algorithms.pymoo_algorithm import PymooAlgorithm
+from saealib.core.compiler import (
+    CompileContext,
+    Compiler,
+    ComponentGraph,
+    ComponentNode,
+    DataEdge,
+    DiagnosticBag,
+    NodeRef,
+    ResolutionResult,
+    RuleContext,
+)
+from saealib.core.compiler.adapters import (
+    ADAPTER_CATEGORIES,
+    Adapter,
+    AdapterRegistry,
+    LosslessAdapterRule,
+)
+from saealib.core.compiler.schema_rules import SchemaBindingRule
+from saealib.core.contracts import (
+    MANY,
+    ONE,
+    ComponentContract,
+    DataSpec,
+    Fixed,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    RepresentationSpec,
+    Var,
+)
+from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
+from saealib.exceptions import ValidationError
+from saealib.execution.evaluator import SerialEvaluator
+from saealib.execution.scheduler import AsyncEvaluationScheduler
+from saealib.islands import IslandModel
+from saealib.optimizer import Optimizer
+from saealib.problem import Problem
+from saealib.space import ObjectSpace
+from saealib.strategies.direct import DirectStrategy
+from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
+
+
+@dataclass(frozen=True)
+class _Endpoint:
+    data: DataSpec
+    direction: PortDirection
+    cardinality: str = MANY
+
+    def contract(self) -> ComponentContract:
+        port = PortSpec(
+            name="value",
+            direction=self.direction,
+            data=self.data,
+            cardinality=self.cardinality,
+        )
+        role = (
+            PortContract(outputs=(port,))
+            if self.direction is PortDirection.OUTPUT
+            else PortContract(inputs=(port,))
+        )
+        return ComponentContract(ports={"role": role})
+
+
+def _edge_graph(source: DataSpec, target: DataSpec) -> ComponentGraph:
+    return ComponentGraph(
+        nodes=(
+            ComponentNode(
+                component_id="producer",
+                component=_Endpoint(
+                    data=source,
+                    direction=PortDirection.OUTPUT,
+                    cardinality=ONE,
+                ),
+            ),
+            ComponentNode(
+                component_id="consumer",
+                component=_Endpoint(data=target, direction=PortDirection.INPUT),
+            ),
+        ),
+        data_edges=(
+            DataEdge(
+                source=NodeRef(component_id="producer", role="role"),
+                target=NodeRef(component_id="consumer", role="role"),
+                source_port="value",
+                target_port="value",
+            ),
+        ),
+        entry_points=(NodeRef(component_id="producer", role="role"),),
+    )
+
+
+def _problem() -> Problem:
+    return Problem(
+        func=lambda x: float(np.sum(x)),
+        dim=2,
+        n_obj=1,
+        direction=np.array([-1.0]),
+        lb=[0.0, 0.0],
+        ub=[1.0, 1.0],
+    )
+
+
+def _compile_actual_optimizer(optimizer: Optimizer):
+    optimizer._resolve_defaults()
+    graph = cast(Any, optimizer.strategy).build_graph(optimizer)
+    plan = Compiler().compile(
+        graph,
+        CompileContext(
+            space=optimizer.problem.space,
+            problem=optimizer.problem,
+            initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
+        ),
+    )
+    return graph, plan
+
+
+def test_actual_default_graph_resolves_the_vector_profile_mismatch() -> None:
+    problem = _problem()
+    graph, plan = _compile_actual_optimizer(Optimizer(problem))
+
+    assert len(graph.data_edges) == 5
+    assert not [
+        diagnostic
+        for diagnostic in plan.diagnostics
+        if diagnostic.severity.value == "error"
+    ]
+    assert {item.adapter_name for item in plan.inserted_adapters} == {
+        "dense_numeric_view",
+    }
+    description = plan.describe()
+    assert "dense_numeric_view" in description
+
+
+def test_object_space_does_not_activate_vector_profile_adapter() -> None:
+    problem = _problem()
+    graph, _ = _compile_actual_optimizer(Optimizer(problem))
+    object_space = ObjectSpace(RepresentationSpec(kind="permutation"))
+    plan = Compiler().compile(
+        graph,
+        CompileContext(space=object_space, problem=problem),
+    )
+
+    assert not any(
+        diagnostic.code == "incompatible_representation"
+        for diagnostic in plan.diagnostics
+    )
+    assert not any(
+        getattr(item, "adapter_name", None) == "dense_numeric_view"
+        for item in plan.inserted_adapters
+    )
+
+
+def test_feature_encoder_is_never_automatically_inserted() -> None:
+    adapter = Adapter(
+        name="feature_encoder",
+        category="feature_encoder",
+        source=DataSpec(kind="Population"),
+        target=DataSpec(kind="FeatureBatch"),
+        lossless=True,
+        auto_insertable=True,
+    )
+    graph = _edge_graph(adapter.source, adapter.target)
+    plan = Compiler(adapter_registry=AdapterRegistry((adapter,))).compile(graph)
+
+    assert not any(
+        diagnostic.code == "incompatible_representation"
+        for diagnostic in plan.diagnostics
+    )
+    assert not plan.inserted_adapters
+    assert all("feature_encoder" not in node.component_id for node in plan.graph.nodes)
+
+
+def test_two_automatic_adapter_candidates_are_ambiguous_and_not_inserted() -> None:
+    adapters = tuple(
+        Adapter(
+            name=name,
+            source=DataSpec(kind="Population"),
+            target=DataSpec(kind="FeatureBatch"),
+            lossless=True,
+            auto_insertable=True,
+        )
+        for name in ("population_view_a", "population_view_b")
+    )
+    plan = Compiler(adapter_registry=AdapterRegistry(adapters)).compile(
+        _edge_graph(adapters[0].source, adapters[0].target)
+    )
+
+    findings = [
+        diagnostic
+        for diagnostic in plan.diagnostics
+        if diagnostic.code == "ambiguous_adapter"
+    ]
+    assert len(findings) == 1
+    assert "population_view_a" in findings[0].message
+    assert "population_view_b" in findings[0].message
+    assert not plan.inserted_adapters
+    assert tuple(node.component_id for node in plan.graph.nodes) == (
+        "producer",
+        "consumer",
+    )
+
+
+@pytest.mark.parametrize(
+    ("name", "category"),
+    (
+        ("ordinary_transform", "text_embedding"),
+        ("ordinary_transform", "graph_embedding"),
+        ("ordinal", "ordinal_encoding"),
+        ("one_hot", "one_hot_encoding"),
+        ("latent", "latent_mapping"),
+        ("approximate_distance", "approximate_distance"),
+    ),
+)
+def test_explicit_only_adapter_categories_are_not_auto_insertable(
+    name: str, category: str
+) -> None:
+    adapter = Adapter(
+        name=name,
+        category=category,
+        source=DataSpec(kind="Population"),
+        target=DataSpec(kind="FeatureBatch"),
+        lossless=True,
+        auto_insertable=True,
+    )
+
+    assert not adapter.eligible_for_automatic_insertion
+
+
+def test_adapter_category_controls_eligibility_not_adapter_name() -> None:
+    explicit = Adapter(
+        name="ordinary_transform",
+        category="feature_encoder",
+        source=DataSpec(kind="Population"),
+        target=DataSpec(kind="FeatureBatch"),
+        lossless=True,
+        auto_insertable=True,
+    )
+    automatic = Adapter(
+        name="approximate_free_dense_view",
+        category="lossless_view",
+        source=DataSpec(kind="Population"),
+        target=DataSpec(kind="FeatureBatch"),
+        lossless=True,
+        auto_insertable=True,
+    )
+
+    assert not explicit.eligible_for_automatic_insertion
+    assert automatic.eligible_for_automatic_insertion
+
+
+def test_adapter_category_must_be_registered() -> None:
+    assert ADAPTER_CATEGORIES.names() == (
+        "identity",
+        "lossless_view",
+        "batch_buffering",
+        "immutable_clone",
+        "partial_feedback_accumulation",
+        "text_embedding",
+        "graph_embedding",
+        "ordinal_encoding",
+        "one_hot_encoding",
+        "latent_mapping",
+        "approximate_distance",
+        "feature_encoder",
+    )
+    with pytest.raises(ValidationError, match="Unknown adapter category"):
+        Adapter(
+            name="unknown_category",
+            category="not_registered",
+            source=DataSpec(kind="Population"),
+            target=DataSpec(kind="FeatureBatch"),
+            lossless=True,
+            auto_insertable=True,
+        )
+
+
+def test_schema_variables_are_freshened_per_node() -> None:
+    variable = Var(name="representation")
+    graph = ComponentGraph(
+        nodes=(
+            ComponentNode(
+                component_id="producer_a",
+                component=_Endpoint(
+                    data=DataSpec(
+                        kind="Population", bindings={"representation": variable}
+                    ),
+                    direction=PortDirection.OUTPUT,
+                    cardinality=ONE,
+                ),
+            ),
+            ComponentNode(
+                component_id="consumer_a",
+                component=_Endpoint(
+                    data=DataSpec(
+                        kind="Population",
+                        bindings={"representation": Fixed(value="real")},
+                    ),
+                    direction=PortDirection.INPUT,
+                ),
+            ),
+            ComponentNode(
+                component_id="producer_b",
+                component=_Endpoint(
+                    data=DataSpec(
+                        kind="Population", bindings={"representation": variable}
+                    ),
+                    direction=PortDirection.OUTPUT,
+                    cardinality=ONE,
+                ),
+            ),
+            ComponentNode(
+                component_id="consumer_b",
+                component=_Endpoint(
+                    data=DataSpec(
+                        kind="Population",
+                        bindings={"representation": Fixed(value="integer")},
+                    ),
+                    direction=PortDirection.INPUT,
+                ),
+            ),
+        ),
+        data_edges=(
+            DataEdge(
+                source=NodeRef(component_id="producer_a", role="role"),
+                target=NodeRef(component_id="consumer_a", role="role"),
+                source_port="value",
+                target_port="value",
+            ),
+            DataEdge(
+                source=NodeRef(component_id="producer_b", role="role"),
+                target=NodeRef(component_id="consumer_b", role="role"),
+                source_port="value",
+                target_port="value",
+            ),
+        ),
+        entry_points=(
+            NodeRef(component_id="producer_a", role="role"),
+            NodeRef(component_id="producer_b", role="role"),
+        ),
+    )
+    plan = Compiler().compile(graph)
+
+    assert not [
+        diagnostic
+        for diagnostic in plan.diagnostics
+        if diagnostic.severity.value == "error"
+    ]
+    names = [
+        plan.graph.node_by_id(node_id)
+        .contract.ports["role"]
+        .outputs[0]
+        .data.bindings["representation"]
+        for node_id in ("producer_a", "producer_b")
+    ]
+    assert all(isinstance(binding, Var) for binding in names)
+    assert [binding.name for binding in names if isinstance(binding, Var)] == [
+        "producer_a__representation",
+        "producer_b__representation",
+    ]
+
+
+def _rule_order_signature(
+    order: tuple[Any, ...],
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    problem = _problem()
+    graph = _edge_graph(DataSpec(kind="Population"), DataSpec(kind="FeatureBatch"))
+    current = graph
+    diagnostics = DiagnosticBag()
+    for rule in order:
+        result = rule.apply(
+            RuleContext(
+                graph=current,
+                compile_context=CompileContext(space=problem.space, problem=problem),
+                diagnostics=diagnostics,
+            )
+        )
+        assert isinstance(result, ResolutionResult)
+        current = result.graph
+        diagnostics.extend(result.diagnostics)
+    return (
+        tuple(node.component_id for node in current.nodes),
+        tuple(diagnostic.code for diagnostic in diagnostics),
+    )
+
+
+def test_schema_and_adapter_rule_order_is_deterministic() -> None:
+    rules = (SchemaBindingRule(), LosslessAdapterRule())
+    expected = None
+    for seed in range(8):
+        shuffled = list(rules)
+        random.Random(seed).shuffle(shuffled)
+        signature = _rule_order_signature(tuple(shuffled))
+        if expected is None:
+            expected = signature
+        else:
+            assert signature == expected
+    assert expected == (
+        (
+            "producer",
+            "consumer",
+            "__adapter_dense_numeric_view_producer_role_value_consumer_role_value",
+        ),
+        (),
+    )
+
+
+def test_actual_graph_configurations_have_no_compile_errors() -> None:
+    problem = _problem()
+    configurations: dict[str, list[Optimizer]] = {
+        "default": [Optimizer(problem)],
+        "surrogate": [
+            Optimizer(problem).set_surrogate(RBFSurrogate(gaussian_kernel, problem.dim))
+        ],
+        "async": [
+            Optimizer(problem).set_async_evaluation_scheduler(
+                AsyncEvaluationScheduler(SerialEvaluator())
+            )
+        ],
+        "island": [
+            Optimizer(problem).set_strategy(DirectStrategy()),
+            Optimizer(_problem()).set_strategy(DirectStrategy()),
+        ],
+        "pymoo": [
+            Optimizer(problem)
+            .set_algorithm(PymooAlgorithm(GA(pop_size=4)))
+            .set_strategy(DirectStrategy())
+        ],
+    }
+    IslandModel(configurations["island"])
+
+    errors_by_configuration: dict[str, tuple[str, ...]] = {}
+    for name, optimizers in configurations.items():
+        errors: list[str] = []
+        for optimizer in optimizers:
+            _, plan = _compile_actual_optimizer(optimizer)
+            errors.extend(
+                diagnostic.code
+                for diagnostic in plan.diagnostics
+                if diagnostic.severity.value == "error"
+            )
+        errors_by_configuration[name] = tuple(errors)
+
+    assert errors_by_configuration == {
+        "default": (),
+        "surrogate": (),
+        "async": (),
+        "island": (),
+        "pymoo": (),
+    }

@@ -9,11 +9,20 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    ServiceRequirement,
+)
 from saealib.exceptions import ValidationError
 
 if TYPE_CHECKING:
@@ -89,6 +98,33 @@ class AcquisitionFunction(ABC):
     # problem.direction into acquisition functions that opt in via this flag.
     direction_sensitive: bool = True
 
+    def contract(self) -> ComponentContract:
+        """Return the acquisition contract."""
+        return ComponentContract(
+            required_services=(ServiceRequirement(name="FeatureEncoder"),),
+            ports={
+                "acquisition": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="prediction",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(kind="SurrogatePrediction"),
+                            cardinality=MANY,
+                            optional=True,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="scores",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(kind="RowPredicate"),
+                            cardinality=MANY,
+                        ),
+                    ),
+                ),
+            },
+        )
+
     def prepare(self, archive: Archive, ctx: OptimizationState | None = None) -> Any:
         """
         Compute a generation-scoped reference value shared across ``evaluate()`` calls.
@@ -157,6 +193,21 @@ class PointwiseAcquisition(AcquisitionFunction):
     Concrete subclasses implement ``compute_reference()`` (once per prepared
     reference) and ``score()`` (per candidate batch, given that reference).
     """
+
+    def contract(self) -> ComponentContract:
+        """Return the pointwise acquisition contract."""
+        contract = super().contract()
+        role = contract.ports["acquisition"]
+        return replace(
+            contract,
+            ports={
+                **contract.ports,
+                "acquisition": replace(
+                    role,
+                    inputs=tuple(replace(port, optional=False) for port in role.inputs),
+                ),
+            },
+        )
 
     @abstractmethod
     def compute_reference(

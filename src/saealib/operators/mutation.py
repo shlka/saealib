@@ -5,15 +5,27 @@ from __future__ import annotations
 import copy
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from dataclasses import replace
 from typing import TYPE_CHECKING
 
 import numpy as np
 from typing_extensions import Self
 
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    Fixed,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    ServiceRequirement,
+    Var,
+)
 from saealib.registry import register
 
 if TYPE_CHECKING:
-    from saealib.context import OptimizationState
+    from saealib.core.state import ExecutionContext
 
 
 class Mutation(ABC):
@@ -31,6 +43,42 @@ class Mutation(ABC):
 
     prob: float = 1.0
     prob_var: float | None = None
+
+    def contract(self) -> ComponentContract:
+        """Return the mutation contract; mutate_range is required for every mutation."""
+        representation = Var(name="R")
+        candidate_count = Var(name="N")
+        data = DataSpec(
+            kind="GenomeBatch",
+            bindings={
+                "representation": representation,
+                "candidate_count": candidate_count,
+            },
+        )
+        bounds = (ServiceRequirement(name="BoundsService"),)
+        return ComponentContract(
+            ports={
+                "mutation": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="candidates",
+                            direction=PortDirection.INPUT,
+                            data=data,
+                            cardinality=MANY,
+                            required_services=bounds,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="mutants",
+                            direction=PortDirection.OUTPUT,
+                            data=data,
+                            cardinality=MANY,
+                        ),
+                    ),
+                )
+            }
+        )
 
     def mutate(
         self,
@@ -116,7 +164,7 @@ class Mutation(ABC):
         offspring: np.ndarray,
         mutate_range: tuple,
         rng: np.random.Generator,
-        ctx: OptimizationState | None = None,
+        ctx: ExecutionContext | None = None,
     ) -> np.ndarray:
         """Post-mutation lifecycle hook; override to inject custom processing.
 
@@ -128,7 +176,7 @@ class Mutation(ABC):
             Tuple of (lower_bound, upper_bound) used for mutation.
         rng : np.random.Generator
             Random number generator.
-        ctx : OptimizationState or None, optional
+        ctx : ExecutionContext or None, optional
             Current optimization context.
 
         Returns
@@ -143,7 +191,7 @@ class Mutation(ABC):
         offspring_batch: np.ndarray,
         mutate_range: tuple,
         rng: np.random.Generator,
-        ctx: OptimizationState | None = None,
+        ctx: ExecutionContext | None = None,
     ) -> np.ndarray:
         """Run the post-mutation lifecycle hook for a batch.
 
@@ -159,7 +207,7 @@ class Mutation(ABC):
             Tuple of (lower_bound, upper_bound) used for mutation.
         rng : np.random.Generator
             Random number generator.
-        ctx : OptimizationState or None, optional
+        ctx : ExecutionContext or None, optional
             Current optimization context.
 
         Returns
@@ -184,7 +232,7 @@ class Mutation(ABC):
     def with_post(
         self,
         fn: Callable[
-            [np.ndarray, tuple, np.random.Generator, OptimizationState | None],
+            [np.ndarray, tuple, np.random.Generator, ExecutionContext | None],
             np.ndarray,
         ],
     ) -> Self:
@@ -236,6 +284,37 @@ class MutationUniform(Mutation):
         super().__init__()
         self.prob = prob
         self.prob_var = prob_var
+
+    def contract(self) -> ComponentContract:
+        """Return the real-valued uniform mutation contract."""
+        base = super().contract()
+        role = base.ports["mutation"]
+        input_data = role.inputs[0].data
+        output_data = role.outputs[0].data
+        input_bindings = dict(input_data.bindings)
+        output_bindings = dict(output_data.bindings)
+        input_bindings["representation"] = Fixed(value="real")
+        output_bindings["representation"] = Fixed(value="real")
+        return replace(
+            base,
+            ports={
+                "mutation": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            data=replace(input_data, bindings=input_bindings),
+                        ),
+                    ),
+                    outputs=(
+                        replace(
+                            role.outputs[0],
+                            data=replace(output_data, bindings=output_bindings),
+                        ),
+                    ),
+                )
+            },
+        )
 
     def mutate_batch(
         self,
@@ -369,6 +448,37 @@ class MutationPolynomial(Mutation):
         self.prob = prob
         self.eta = eta
         self.prob_var = prob_var
+
+    def contract(self) -> ComponentContract:
+        """Return the real-valued polynomial mutation contract."""
+        base = super().contract()
+        role = base.ports["mutation"]
+        input_data = role.inputs[0].data
+        output_data = role.outputs[0].data
+        input_bindings = dict(input_data.bindings)
+        output_bindings = dict(output_data.bindings)
+        input_bindings["representation"] = Fixed(value="real")
+        output_bindings["representation"] = Fixed(value="real")
+        return replace(
+            base,
+            ports={
+                "mutation": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            data=replace(input_data, bindings=input_bindings),
+                        ),
+                    ),
+                    outputs=(
+                        replace(
+                            role.outputs[0],
+                            data=replace(output_data, bindings=output_bindings),
+                        ),
+                    ),
+                )
+            },
+        )
 
     def mutate_batch(
         self,
@@ -508,6 +618,38 @@ class MutationGaussian(Mutation):
         self.prob = prob
         self.sigma = sigma
         self.prob_var = prob_var
+
+    def contract(self) -> ComponentContract:
+        """Return the real-valued Gaussian mutation contract."""
+        base = super().contract()
+        role = base.ports["mutation"]
+        input_data = role.inputs[0].data
+        output_data = role.outputs[0].data
+        input_bindings = dict(input_data.bindings)
+        output_bindings = dict(output_data.bindings)
+        input_bindings["representation"] = Fixed(value="real")
+        output_bindings["representation"] = Fixed(value="real")
+        return replace(
+            base,
+            ports={
+                "mutation": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            data=replace(input_data, bindings=input_bindings),
+                            required_services=(),
+                        ),
+                    ),
+                    outputs=(
+                        replace(
+                            role.outputs[0],
+                            data=replace(output_data, bindings=output_bindings),
+                        ),
+                    ),
+                )
+            },
+        )
 
     def mutate_batch(
         self,
@@ -707,6 +849,37 @@ class MutationIntegerUniform(_MutationDiscreteUniform):
         """
         super().__init__(prob, prob_var=prob_var)
 
+    def contract(self) -> ComponentContract:
+        """Return the integer mutation contract."""
+        base = super().contract()
+        role = base.ports["mutation"]
+        input_data = role.inputs[0].data
+        output_data = role.outputs[0].data
+        input_bindings = dict(input_data.bindings)
+        output_bindings = dict(output_data.bindings)
+        input_bindings["representation"] = Fixed(value="integer")
+        output_bindings["representation"] = Fixed(value="integer")
+        return replace(
+            base,
+            ports={
+                "mutation": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            data=replace(input_data, bindings=input_bindings),
+                        ),
+                    ),
+                    outputs=(
+                        replace(
+                            role.outputs[0],
+                            data=replace(output_data, bindings=output_bindings),
+                        ),
+                    ),
+                )
+            },
+        )
+
 
 class MutationCategorical(_MutationDiscreteUniform):
     """
@@ -737,3 +910,34 @@ class MutationCategorical(_MutationDiscreteUniform):
             Per-variable mutation probability. ``None`` uses ``min(0.5, 1/dim)``.
         """
         super().__init__(prob, prob_var=prob_var)
+
+    def contract(self) -> ComponentContract:
+        """Return the categorical mutation contract."""
+        base = super().contract()
+        role = base.ports["mutation"]
+        input_data = role.inputs[0].data
+        output_data = role.outputs[0].data
+        input_bindings = dict(input_data.bindings)
+        output_bindings = dict(output_data.bindings)
+        input_bindings["representation"] = Fixed(value="categorical")
+        output_bindings["representation"] = Fixed(value="categorical")
+        return replace(
+            base,
+            ports={
+                "mutation": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            data=replace(input_data, bindings=input_bindings),
+                        ),
+                    ),
+                    outputs=(
+                        replace(
+                            role.outputs[0],
+                            data=replace(output_data, bindings=output_bindings),
+                        ),
+                    ),
+                )
+            },
+        )

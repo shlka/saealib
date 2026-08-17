@@ -186,6 +186,43 @@ class TestKNNObjectiveSet:
         data = ts.build(arc, None, None, candidate_x=cand)
         assert data.train_x.shape[0] <= 8
 
+    def test_dense_rows_are_read_only_and_match_archive(self) -> None:
+        arc = _make_archive(8)
+        data = KNNObjectiveSet(n_neighbors=4).build(
+            arc, None, None, candidate_x=np.zeros(DIM)
+        )
+        assert not data.train_x.flags.writeable
+        assert not data.train_y.flags.writeable
+        np.testing.assert_array_equal(
+            data.train_x, arc.x[arc.get_knn(np.zeros(DIM), 4)[0]]
+        )
+        np.testing.assert_array_equal(
+            data.train_y, arc.f[arc.get_knn(np.zeros(DIM), 4)[0]]
+        )
+
+    def test_custom_archive_subclass_uses_property_fallback(self) -> None:
+        class CustomArchive(Archive):
+            @property
+            def x(self):
+                return super().x
+
+            @property
+            def f(self):
+                return super().f
+
+        arc = CustomArchive(_ATTRS, init_capacity=8)
+        for i in range(4):
+            arc.add(
+                x=np.full(DIM, i, dtype=float), f=np.array([i], dtype=float), cv=0.0
+            )
+        data = KNNObjectiveSet(n_neighbors=2).build(
+            arc, None, None, candidate_x=np.zeros(DIM)
+        )
+        assert data.train_x.flags.writeable
+        np.testing.assert_array_equal(
+            data.train_x, arc.x[arc.get_knn(np.zeros(DIM), 2)[0]]
+        )
+
 
 # ===========================================================================
 # ConstraintObjectiveSet
@@ -277,7 +314,6 @@ class TestFeasibilityClassificationSet:
         np.testing.assert_array_equal(data.train_y, [1.0, 0.0, 1.0, 0.0])
 
     def test_eps_from_ctx(self) -> None:
-        """Boundary value: cv == eps is feasible."""
         arc = _make_archive_with_cv([0.1, 0.2, 0.3])
         ctx = _make_ctx(archive=arc, eps_cv=0.15)
         ts = FeasibilityClassificationSet(source="archive")
@@ -286,7 +322,6 @@ class TestFeasibilityClassificationSet:
         np.testing.assert_array_equal(data.train_y, [1.0, 0.0, 0.0])
 
     def test_eps_default_when_ctx_none(self) -> None:
-        """Without ctx, eps defaults to 1e-6."""
         arc = _make_archive_with_cv([0.0, 1e-7, 1e-5])
         ts = FeasibilityClassificationSet(source="archive")
         data = ts.build(arc, None, None)
@@ -349,7 +384,6 @@ class TestTopKBipartitionSet:
         assert int(data.train_y.sum()) == 2  # top 2 = label 1
 
     def test_best_get_label_one(self) -> None:
-        """After sorting best-first, the first k entries should be label 1."""
         # f=1.0 is best (minimization), f=4.0 is worst
         arc = _make_archive_with_f([4.0, 1.0, 3.0, 2.0])
         ctx = _make_ctx(archive=arc)
@@ -360,7 +394,6 @@ class TestTopKBipartitionSet:
         np.testing.assert_array_equal(data.train_y[2:], [0.0, 0.0])
 
     def test_at_least_one_label_one(self) -> None:
-        """top_ratio=0 should still yield at least one label 1."""
         arc = _make_archive_with_f([1.0, 2.0, 3.0])
         ctx = _make_ctx(archive=arc)
         ts = TopKBipartitionSet(source="archive", top_ratio=0.0)
@@ -411,7 +444,6 @@ class TestTopKBipartitionSet:
 
 class TestLevelBasedSet:
     def test_three_levels_equal_split(self) -> None:
-        """6 individuals, 3 levels → 2 per level, labels [2,2,1,1,0,0]."""
         arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
         ctx = _make_ctx(archive=arc)
         ts = LevelBasedSet(source="archive", n_levels=3)
@@ -419,7 +451,6 @@ class TestLevelBasedSet:
         np.testing.assert_array_equal(data.train_y, [2.0, 2.0, 1.0, 1.0, 0.0, 0.0])
 
     def test_remainder_goes_to_last_level(self) -> None:
-        """7 individuals, 3 levels → per=2; labels [2,2,1,1,0,0,0]."""
         arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0])
         ctx = _make_ctx(archive=arc)
         ts = LevelBasedSet(source="archive", n_levels=3)
@@ -427,7 +458,6 @@ class TestLevelBasedSet:
         np.testing.assert_array_equal(data.train_y, [2.0, 2.0, 1.0, 1.0, 0.0, 0.0, 0.0])
 
     def test_best_individuals_get_highest_label(self) -> None:
-        """Best-sorted individuals receive the highest label (n_levels - 1)."""
         arc = _make_archive_with_f([5.0, 1.0, 3.0, 2.0])
         ctx = _make_ctx(archive=arc)
         ts = LevelBasedSet(source="archive", n_levels=2)
@@ -469,7 +499,6 @@ class TestLevelBasedSet:
         assert data.train_y.dtype == float
 
     def test_score_increases_with_quality(self) -> None:
-        """MeanPrediction(direction=[1.0]) scores best individuals highest."""
         from saealib.acquisition.mean import MeanPrediction
         from saealib.surrogate.prediction import SurrogatePrediction
 
@@ -490,7 +519,6 @@ class TestLevelBasedSet:
 
 class TestPairwiseComparisonSet:
     def test_all_pairs_by_default(self) -> None:
-        """n_pairs=None → all n*(n-1)/2 pairs generated."""
         arc = _make_archive_with_f([1.0, 2.0, 3.0, 4.0])
         ctx = _make_ctx(archive=arc)
         ts = PairwiseComparisonSet(source="archive")
@@ -508,7 +536,6 @@ class TestPairwiseComparisonSet:
         assert data.train_y.shape == (3,)
 
     def test_n_pairs_exceeds_total_uses_all(self) -> None:
-        """n_pairs >= n*(n-1)/2 → all pairs used."""
         arc = _make_archive_with_f([1.0, 2.0, 3.0])
         ctx = _make_ctx(archive=arc)
         ts = PairwiseComparisonSet(source="archive", n_pairs=999)
@@ -523,7 +550,6 @@ class TestPairwiseComparisonSet:
         assert data.train_x.shape[1] == DIM * 2
 
     def test_label_ordering_best_vs_worst(self) -> None:
-        """For a pair (best, worst), label should be 1 (best wins)."""
         arc = _make_archive_with_f([1.0, 10.0])  # idx 0 = best, idx 1 = worst
         ctx = _make_ctx(archive=arc)
         ts = PairwiseComparisonSet(source="archive")

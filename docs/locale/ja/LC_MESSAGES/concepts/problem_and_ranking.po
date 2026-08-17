@@ -1,0 +1,103 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, shlka
+# This file is distributed under the same license as the saealib package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: saealib \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-15 11:39+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../concepts/problem_and_ranking.md:7
+msgid "Problem definition and ranking"
+msgstr "問題定義と順位付け"
+
+#: ../../concepts/problem_and_ranking.md:9
+msgid ""
+"`Problem` brings the objective function, objective directions, "
+"SearchSpace, and constraints together as one optimization target. "
+"Constraint handling computes candidate feasibility and violations, and "
+"`Comparator` compares those results with objective values. For multiple "
+"objectives, `Dominator` defines dominance and `NonDominatedSorter` builds"
+" layers of non-dominated solutions from that relation. `Decomposition` "
+"scalarizes multiple objectives to enable decomposition-based comparison."
+msgstr ""
+"`Problem`は、評価対象の関数、目的方向、探索空間、制約を一つの最適化対象としてまとめます。 "
+"制約処理は候補の実行可能性と制約違反を計算し、その結果を`Comparator`が目的値と合わせて比較します。 "
+"複数目的では`Dominator`が優越関係を定め、`NonDominatedSorter`がその関係から非劣解の階層を作ります。 "
+"`Decomposition`は複数の目的をスカラー化し、分解に基づく比較を可能にします。"
+
+#: ../../concepts/problem_and_ranking.md:18
+msgid "Problem"
+msgstr "{fa}`compass;sd-mr-1` 問題"
+
+#: ../../concepts/problem_and_ranking.md:21
+msgid ""
+"Defines the objective function, variables, objective directions, "
+"constraints, and SearchSpace."
+msgstr "目的関数、変数、目的方向、制約、探索空間を定義します。"
+
+#: ../../concepts/problem_and_ranking.md:24
+msgid "SearchSpace"
+msgstr "{fa}`square-root-variable;sd-mr-1` 探索空間"
+
+#: ../../concepts/problem_and_ranking.md:27
+msgid ""
+"Defines candidate representation and the services needed for sampling and"
+" validation."
+msgstr "候補の表現と、サンプリングや検証に必要なサービスを定義します。"
+
+#: ../../concepts/problem_and_ranking.md:30
+msgid "Constraint handling"
+msgstr "{fa}`filter;sd-mr-1` 制約処理"
+
+#: ../../concepts/problem_and_ranking.md:33
+msgid "Replaces violation aggregation, feasibility checks, and repair."
+msgstr "制約違反の集約、実行可能性の判定、修復を差し替えます。"
+
+#: ../../concepts/problem_and_ranking.md:36
+msgid "Comparator"
+msgstr "{fa}`arrow-down-up-across-line;sd-mr-1` 比較器"
+
+#: ../../concepts/problem_and_ranking.md:39
+msgid "Ranks solutions from objective values and constraint violations."
+msgstr "目的値と制約違反から解を順位付けします。"
+
+#: ../../concepts/problem_and_ranking.md:42
+msgid "Dominator"
+msgstr "{fa}`crown;sd-mr-1` 支配判定器"
+
+#: ../../concepts/problem_and_ranking.md:45
+msgid ""
+"Defines dominance relations between solutions, such as Pareto and "
+"ε-dominance."
+msgstr "Pareto優越やε優越など、解どうしの優越関係を定めます。"
+
+#: ../../concepts/problem_and_ranking.md:48
+msgid "Non-dominated sorter"
+msgstr "{fa}`arrow-down-wide-short;sd-mr-1` 非劣解ソーター"
+
+#: ../../concepts/problem_and_ranking.md:51
+msgid ""
+"Splits a population into non-dominated fronts using the dominance "
+"relation."
+msgstr "優越関係を使って集団を非劣解フロントへ分けます。"
+
+#: ../../concepts/problem_and_ranking.md:54
+msgid "Decomposition"
+msgstr "{fa}`scissors;sd-mr-1` 分解"
+
+#: ../../concepts/problem_and_ranking.md:57
+msgid "Provides decomposition functions that scalarize multiple objectives."
+msgstr "複数目的をスカラー化する分解関数を提供します。"

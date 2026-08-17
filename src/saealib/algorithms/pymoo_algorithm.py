@@ -2,27 +2,47 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from dataclasses import replace
+from typing import TYPE_CHECKING, Protocol, cast
 
 import numpy as np
 
-from saealib.algorithms.base import Algorithm
+from saealib.algorithms.base import (
+    AskTellAlgorithm,
+    ProposalRequest,
+    algorithm_context,
+)
 from saealib.callback import PostAskEvent
+from saealib.core.contracts import (
+    PARTIAL_ALLOWED,
+    REPEATED_ALLOWED,
+    ComponentContract,
+    ExecutionContract,
+    FeedbackBatch,
+    FeedbackRequirement,
+    ProposalBatch,
+    ProposalRelations,
+)
+from saealib.core.state import (
+    POPULATIONS_MAIN,
+    RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    StatePatch,
+    StateView,
+)
 from saealib.exceptions import ConfigurationError
+from saealib.identity import IDAllocator
 from saealib.population import Archive, Population, PopulationAttribute
 from saealib.problem.constraint import EqualityConstraint
+from saealib.problem.problem import Problem
+from saealib.space import BoundsService
 
 if TYPE_CHECKING:
     from pymoo.core.problem import Problem as PymooCoreProblem
 
-    from saealib.context import OptimizationState
-    from saealib.optimizer import Dispatchable
     from saealib.problem import Problem
 
 
 class _PymooPopulationLike(Protocol):
-    """Structural interface of a ``pymoo.core.population.Population`` instance."""
-
     def get(self, *args: object, **kwargs: object) -> object:
         """Read one or more fields (e.g. "X", "F", "G", "H", "CV")."""
         ...
@@ -31,14 +51,31 @@ class _PymooPopulationLike(Protocol):
         """Write one or more fields (e.g. "X", "F", "G", "H")."""
         ...
 
-    def __len__(self) -> int:
-        """Return the number of individuals."""
-        ...
+    def __len__(self) -> int: ...
+
+
+class _PymooContext(Protocol):
+    """Capabilities used by the pymoo adapter's synchronization helpers."""
+
+    @property
+    def problem(self) -> Problem: ...
+
+    @property
+    def population(self) -> Population: ...
+
+    @property
+    def rng(self) -> np.random.Generator: ...
+
+    @property
+    def candidate_id_allocator(self) -> IDAllocator: ...
+
+    @property
+    def proposal_id_allocator(self) -> IDAllocator: ...
+
+    def compiled_service(self, name: str) -> object: ...
 
 
 class _PymooAlgorithmLike(Protocol):
-    """Structural interface of a ``pymoo.core.algorithm.Algorithm`` instance."""
-
     @property
     def pop(self) -> _PymooPopulationLike | None:
         """Internal population; None before setup(). Read-only from here."""
@@ -57,7 +94,7 @@ class _PymooAlgorithmLike(Protocol):
         ...
 
 
-class PymooAlgorithm(Algorithm):
+class PymooAlgorithm(AskTellAlgorithm):
     """
     Adapter wrapping a pymoo Algorithm (e.g. ``NSGA2()``) as saealib's ``Algorithm``.
 
@@ -126,6 +163,36 @@ class PymooAlgorithm(Algorithm):
         self._eq_idx: np.ndarray = np.empty(0, dtype=np.int64)
         self._infills: _PymooPopulationLike | None = None
 
+    def contract(self) -> ComponentContract:
+        """Return the family contract with optional partial-feedback capability."""
+        family = super().contract()
+        family = replace(
+            family,
+            state=replace(
+                family.state,
+                reads=(*family.state.reads, RUNTIME_CANDIDATE_ID_ALLOCATOR),
+                writes=(*family.state.writes, RUNTIME_CANDIDATE_ID_ALLOCATOR),
+            ),
+        )
+        if not self.allow_partial_tell:
+            return family
+        feedback = family.lifecycle.feedback
+        assert feedback is not None
+        return replace(
+            family,
+            lifecycle=replace(
+                family.lifecycle,
+                feedback=replace(
+                    feedback,
+                    completion=PARTIAL_ALLOWED,
+                    multiplicity=REPEATED_ALLOWED,
+                ),
+            ),
+            execution=ExecutionContract(
+                required_runtime_capabilities=("partial_feedback",),
+            ),
+        )
+
     _candidate_id_attr = "saealib_candidate_id"
 
     def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
@@ -155,9 +222,10 @@ class PymooAlgorithm(Algorithm):
             r"$P \leftarrow \text{pymoo\_algorithm.pop}$",
         ]
 
-    def _build_pymoo_problem(self, problem: Problem) -> PymooCoreProblem:
-        """Synthesize a minimal pymoo Problem shim; never evaluated by pymoo itself."""
+    def _build_pymoo_problem(self, ctx: _PymooContext) -> PymooCoreProblem:
         from pymoo.core.problem import Problem as PymooProblem
+
+        problem = ctx.problem
 
         eq_mask = np.array(
             [isinstance(c, EqualityConstraint) for c in problem.constraints],
@@ -166,13 +234,16 @@ class PymooAlgorithm(Algorithm):
         self._ieq_idx = np.where(~eq_mask)[0]
         self._eq_idx = np.where(eq_mask)[0]
 
+        bounds_srv = cast(BoundsService, ctx.compiled_service("BoundsService"))
+        lb, ub = bounds_srv.bounds
+
         return PymooProblem(
             n_var=problem.dim,
             n_obj=problem.n_obj,
             n_ieq_constr=len(self._ieq_idx),
             n_eq_constr=len(self._eq_idx),
-            xl=np.asarray(problem.lb, dtype=float),
-            xu=np.asarray(problem.ub, dtype=float),
+            xl=np.asarray(lb, dtype=float),
+            xu=np.asarray(ub, dtype=float),
         )
 
     def _assign_objectives(
@@ -238,13 +309,12 @@ class PymooAlgorithm(Algorithm):
         if len(self._eq_idx) > 0:
             pymoo_pop.set("H", g[:, self._eq_idx])
 
-    def _ensure_initialized(self, ctx: OptimizationState) -> None:
-        """Bind the wrapped algorithm to the problem and seed it with saealib's DoE."""
+    def _ensure_initialized(self, ctx: _PymooContext) -> None:
         if self._initialized:
             return
         from pymoo.core.termination import NoTermination
 
-        pymoo_problem = self._build_pymoo_problem(ctx.problem)
+        pymoo_problem = self._build_pymoo_problem(ctx)
         self.pymoo_algorithm.setup(
             pymoo_problem,
             termination=NoTermination(),
@@ -269,16 +339,15 @@ class PymooAlgorithm(Algorithm):
 
     def ask(
         self,
-        ctx: OptimizationState,
-        provider: Dispatchable,
-        n_offspring: int | None = None,
-    ) -> Population:
+        request: ProposalRequest,
+        state: StateView,
+    ) -> ProposalBatch:
         """
         Generate offspring via the wrapped pymoo algorithm's own ``ask()``.
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Current optimization context.
         provider : Dispatchable
             Component provider.
@@ -291,6 +360,8 @@ class PymooAlgorithm(Algorithm):
         Population
             Candidates with ``x`` and ``pymoo_idx`` set.
         """
+        del request
+        ctx = algorithm_context(state)
         self._ensure_initialized(ctx)
         infills = self.pymoo_algorithm.ask()
         if infills is None:
@@ -308,29 +379,34 @@ class PymooAlgorithm(Algorithm):
             x[i] = handler.repair(x[i], constraints, lb, ub)
             x[i] = ctx.problem.repair(x[i])
 
-        provider.dispatch(PostAskEvent(ctx=ctx, candidates=x))
+        state.dispatch(PostAskEvent(ctx=ctx, candidates=x))
 
-        cand = ctx.population.empty_like(capacity=len(x))
+        population = ctx.population
+        cand = population.empty_like(capacity=len(x))
         data = {"x": x, "pymoo_idx": np.arange(len(x), dtype=np.int64)}
-        if "id" in ctx.population.schema:
+        if "id" in population.schema:
             candidate_ids = ctx.candidate_id_allocator.allocate(len(x))
             self._set_pymoo_candidate_ids(infills, candidate_ids)
             data["id"] = candidate_ids
         cand._extend_internal(data, preserve_ids=True)
-        return cand
+        return ProposalBatch.from_allocator(
+            ctx.proposal_id_allocator,
+            candidates=cand,
+            relations=ProposalRelations(row_count=len(cand)),
+            requirements=FeedbackRequirement(quantities=()),
+        )
 
     def tell(
         self,
-        ctx: OptimizationState,
-        provider: Dispatchable,
-        offspring: Population,
-    ) -> None:
+        feedback: FeedbackBatch,
+        state: StateView,
+    ) -> StatePatch:
         """
         Update the wrapped pymoo algorithm, then mirror its population into ``ctx``.
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Current optimization context.
         provider : Dispatchable
             Component provider.
@@ -338,6 +414,13 @@ class PymooAlgorithm(Algorithm):
             Offspring population, possibly reordered or truncated relative
             to what :meth:`ask` produced.
         """
+        del feedback
+        ctx = algorithm_context(state)
+        offspring = ctx.offspring
+        if offspring is None:
+            raise ConfigurationError(
+                "PymooAlgorithm.tell() requires an offspring population"
+            )
         assert self._infills is not None
         idx = offspring.get_array("pymoo_idx").astype(np.int64, copy=False)
         if idx.ndim != 1 or np.any(idx < 0) or np.any(idx >= len(self._infills)):
@@ -391,12 +474,12 @@ class PymooAlgorithm(Algorithm):
 
         self.pymoo_algorithm.tell(infills=infills)
         self._sync_population(ctx)
+        return StatePatch(writes={POPULATIONS_MAIN: ctx.population})
 
     @classmethod
     def _set_pymoo_candidate_ids(
         cls, pymoo_pop: _PymooPopulationLike, candidate_ids: np.ndarray
     ) -> None:
-        """Attach stable saealib candidate IDs to pymoo individuals."""
         candidate_ids = np.asarray(candidate_ids, dtype=np.int64)
         if candidate_ids.ndim != 1 or len(candidate_ids) != len(pymoo_pop):
             raise ConfigurationError("pymoo candidate provenance has invalid shape")
@@ -407,7 +490,6 @@ class PymooAlgorithm(Algorithm):
 
     @classmethod
     def _pymoo_candidate_ids(cls, pymoo_pop: _PymooPopulationLike) -> np.ndarray | None:
-        """Read survivor provenance retained by pymoo's population objects."""
         try:
             values = pymoo_pop.get(cls._candidate_id_attr)
         except (AttributeError, KeyError, TypeError):
@@ -427,14 +509,14 @@ class PymooAlgorithm(Algorithm):
             raise ConfigurationError("pymoo survivor candidate IDs are not unique")
         return values
 
-    def _sync_population(self, ctx: OptimizationState) -> None:
-        """Rebuild ctx.population in-place from the wrapped algorithm's own .pop."""
+    def _sync_population(self, ctx: _PymooContext) -> None:
         alg_pop = self.pymoo_algorithm.pop
         assert alg_pop is not None  # setup()/tell() already ran by this point
-        if len(alg_pop) != len(ctx.population):
+        population = ctx.population
+        if len(alg_pop) != len(population):
             raise ConfigurationError(
                 f"Wrapped pymoo algorithm's internal population size ({len(alg_pop)}) "
-                f"no longer matches saealib's population size ({len(ctx.population)}). "
+                f"no longer matches saealib's population size ({len(population)}). "
                 "This can happen with archive-growing pymoo algorithms that are not "
                 "supported by this adapter."
             )
@@ -457,7 +539,7 @@ class PymooAlgorithm(Algorithm):
             "cv": cv,
             "pymoo_idx": np.full(n, -1, dtype=np.int64),
         }
-        if "id" in ctx.population.schema:
+        if "id" in population.schema:
             if survivor_ids is None:
                 raise ConfigurationError(
                     "pymoo survivor candidate provenance is missing; "
@@ -465,5 +547,5 @@ class PymooAlgorithm(Algorithm):
                 )
             new_pop_data["id"] = survivor_ids
 
-        ctx.population.clear()
-        ctx.population._extend_internal(new_pop_data, preserve_ids=True)
+        population.clear()
+        population._extend_internal(new_pop_data, preserve_ids=True)

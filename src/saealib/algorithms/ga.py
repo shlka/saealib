@@ -3,13 +3,26 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Literal
+from dataclasses import replace
+from typing import TYPE_CHECKING, Literal, cast
 
 import numpy as np
 
-from saealib.algorithms.base import Algorithm
+from saealib.algorithms.base import (
+    AskTellAlgorithm,
+    ProposalRequest,
+    algorithm_context,
+)
 from saealib.callback import PostAskEvent, PostCrossoverEvent, PostMutationEvent
-from saealib.context import OptimizationState
+from saealib.core.contracts import (
+    ComponentContract,
+    FeedbackBatch,
+    FeedbackRequirement,
+    PartSpec,
+    ProposalBatch,
+    ProposalRelations,
+)
+from saealib.core.state import POPULATIONS_MAIN, ExecutionContext, StatePatch, StateView
 from saealib.exceptions import ConfigurationError
 from saealib.operators.crossover import (
     Crossover,
@@ -23,12 +36,13 @@ from saealib.operators.mutation import (
     MutationIntegerUniform,
 )
 from saealib.population import Archive, Population, PopulationAttribute
+from saealib.population.genome import DenseVectorBatch
 from saealib.problem import Problem
 from saealib.registry import register
+from saealib.space import BoundsService
 
 if TYPE_CHECKING:
     from saealib.operators.selection import ParentSelection, SurvivorSelection
-    from saealib.optimizer import Dispatchable
 
 
 def _resolve_variation_execution(
@@ -37,7 +51,6 @@ def _resolve_variation_execution(
     ),
     kind: Literal["crossover", "mutation"],
 ) -> Literal["batch", "sequential"]:
-    """Validate and resolve variation execution mode for one operator."""
     valid_modes = ("batch", "sequential")
     if isinstance(variation_execution, str):
         if variation_execution not in valid_modes:
@@ -67,6 +80,57 @@ def _resolve_variation_execution(
     return variation_execution.get(kind, "batch")
 
 
+def _canonical_merge_pool(
+    population: Population, offspring: Population, capacity: int
+) -> Population | None:
+    """Allocate the private dense pool used only by :meth:`GA.tell`.
+
+    The two callers immediately append populations with the same schema, so
+    every live cell is overwritten before the pool is observed.  Keep this
+    deliberately narrower than ``Population.empty_like``: exact built-in
+    populations, the normal ``get_array`` implementation, and canonical
+    identity-backed dense genomes are required.  Any customisation returns
+    ``None`` and the caller uses the public-compatible factory.
+    """
+    if (
+        type(population) is not Population
+        or type(offspring) is not Population
+        or type(population).get_array is not Population.get_array
+        or type(offspring).get_array is not Population.get_array
+        or population._schema != offspring._schema
+        or not isinstance(population._genome_batch, DenseVectorBatch)
+        or not isinstance(offspring._genome_batch, DenseVectorBatch)
+        or getattr(population._dense_numeric_view, "_canonical_identity_backing", False)
+        is not True
+        or getattr(offspring._dense_numeric_view, "_canonical_identity_backing", False)
+        is not True
+        or population._legacy_scalar_x
+        or offspring._legacy_scalar_x
+        or population._genome_items is not None
+        or offspring._genome_items is not None
+    ):
+        return None
+
+    pool = Population.__new__(Population)
+    pool._capacity = capacity
+    pool.space = population.space
+    pool._size = 0
+    pool._structure_version = 0
+    pool._value_version = 0
+    pool._data = {
+        attr.name: np.empty((capacity, *attr.shape), dtype=attr.dtype, order="C")
+        for attr in population.attrs
+    }
+    pool._schema = dict(population._schema)
+    pool._cache = {}
+    pool._dense_genomes_view_cache = None
+    pool._dense_numeric_view = population._dense_numeric_view
+    pool._genome_items = None
+    pool._legacy_scalar_x = False
+    pool._genome_batch = DenseVectorBatch._from_borrowed_view(pool._data["x"])
+    return pool
+
+
 def _route_crossover(
     parent: np.ndarray,
     lb: np.ndarray,
@@ -77,7 +141,6 @@ def _route_crossover(
     int_op: Crossover,
     cat_op: Crossover,
 ) -> np.ndarray:
-    """Apply per-type crossover for the sequential path and reassemble offspring."""
     i_mask = problem.integer_mask
     cat_mask = problem.categorical_mask
     if not i_mask.any() and not cat_mask.any():
@@ -114,7 +177,6 @@ def _route_mutation(
     int_op: Mutation,
     cat_op: Mutation,
 ) -> np.ndarray:
-    """Apply per-type mutation for the sequential path and reassemble offspring."""
     i_mask = problem.integer_mask
     cat_mask = problem.categorical_mask
     if not i_mask.any() and not cat_mask.any():
@@ -136,7 +198,7 @@ def _route_mutation(
 
 
 @register()
-class GA(Algorithm):
+class GA(AskTellAlgorithm):
     """
     Genetic Algorithm class.
 
@@ -287,6 +349,23 @@ class GA(Algorithm):
                     "for mixed-variable routing"
                 )
 
+    def contract(self) -> ComponentContract:
+        """Return the genetic-algorithm contract."""
+        return replace(
+            super().contract(),
+            parts=(
+                PartSpec(name="crossover", contract=self.crossover.contract()),
+                PartSpec(name="mutation", contract=self.mutation.contract()),
+                PartSpec(
+                    name="parent_selection", contract=self.parent_selection.contract()
+                ),
+                PartSpec(
+                    name="survivor_selection",
+                    contract=self.survivor_selection.contract(),
+                ),
+            ),
+        )
+
     def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
         """Return algorithm-specific attributes (GA needs none beyond the defaults)."""
         return []
@@ -320,26 +399,25 @@ class GA(Algorithm):
 
     def ask(
         self,
-        ctx: OptimizationState,
-        provider: Dispatchable,
-        n_offspring: int | None = None,
-    ) -> Population:
+        request: ProposalRequest,
+        state: StateView,
+    ) -> ProposalBatch:
         """
         Generate offspring via crossover and mutation.
 
         Parameters
         ----------
-        ctx : OptimizationState
-            Current optimization context.
-        provider : Dispatchable
-            Component provider.
-        n_offspring : int or None, optional
-            Number of offspring. Defaults to the current population size.
+        request : ProposalRequest
+            Request-specific offspring count.
+        state : StateView
+            Read-only algorithm state view.
 
         Returns
         -------
-        Population
+        ProposalBatch
         """
+        ctx = algorithm_context(state)
+        n_offspring = request.n_offspring
         # Re-validate per-type crossover consistency here because operators may be
         # replaced or mutated after __init__, bypassing constructor checks.
         if ctx.problem.integer_mask.any() or ctx.problem.categorical_mask.any():
@@ -367,8 +445,8 @@ class GA(Algorithm):
         pop = ctx.population.get_array("x")
         popsize = len(pop)
         target = n_offspring if n_offspring is not None else popsize
-        lb = ctx.problem.lb
-        ub = ctx.problem.ub
+        bounds_srv = cast(BoundsService, ctx.compiled_service("BoundsService"))
+        lb, ub = bounds_srv.bounds
         n_children = self.crossover.n_children
         n_pair = math.ceil(target / n_children)
         parent_idx_m = (
@@ -387,11 +465,11 @@ class GA(Algorithm):
         parents_batch = pop[parent_idx_m]
         cand = self._crossover_pairs(ctx, parents_batch, lb, ub, mixed)
         cand = self._repair_batch(ctx, cand, handler, constraints, lb, ub)
-        provider.dispatch(PostCrossoverEvent(ctx=ctx, candidates=cand))
+        state.dispatch(PostCrossoverEvent(ctx=ctx, candidates=cand))
 
         cand = self._mutate_candidates(ctx, cand, lb, ub, mixed)
         cand = self._repair_batch(ctx, cand, handler, constraints, lb, ub)
-        provider.dispatch(PostMutationEvent(ctx=ctx, candidates=cand))
+        state.dispatch(PostMutationEvent(ctx=ctx, candidates=cand))
 
         if self.duplicate_elimination is not None:
             pop_x = ctx.population.get_array("x")
@@ -406,15 +484,20 @@ class GA(Algorithm):
                 )
                 cand[dup_idx] = repl[: len(dup_idx)]
 
-        provider.dispatch(PostAskEvent(ctx=ctx, candidates=cand))
+        state.dispatch(PostAskEvent(ctx=ctx, candidates=cand))
 
         cand_pop = ctx.population.empty_like(capacity=target)
         cand_pop.extend({"x": cand[:target]})
-        return cand_pop
+        return ProposalBatch.from_allocator(
+            ctx.proposal_id_allocator,
+            candidates=cand_pop,
+            relations=ProposalRelations(row_count=len(cand_pop)),
+            requirements=FeedbackRequirement(quantities=()),
+        )
 
     def _crossover_pairs(
         self,
-        ctx: OptimizationState,
+        ctx: ExecutionContext,
         parents_batch: np.ndarray,
         lb: np.ndarray,
         ub: np.ndarray,
@@ -429,7 +512,7 @@ class GA(Algorithm):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Current optimization context.
         parents_batch : np.ndarray
             Batch of parent groups. shape = (n_pair, n_parents, dim)
@@ -525,7 +608,7 @@ class GA(Algorithm):
 
     def _mutate_candidates(
         self,
-        ctx: OptimizationState,
+        ctx: ExecutionContext,
         cand: np.ndarray,
         lb: np.ndarray,
         ub: np.ndarray,
@@ -541,7 +624,7 @@ class GA(Algorithm):
 
         Parameters
         ----------
-        ctx : OptimizationState
+        ctx : ExecutionContext
             Current optimization context.
         cand : np.ndarray
             Candidates to mutate. shape = (n, dim)
@@ -600,7 +683,7 @@ class GA(Algorithm):
 
     def _repair_batch(
         self,
-        ctx: OptimizationState,
+        ctx: ExecutionContext,
         cand: np.ndarray,
         handler,
         constraints,
@@ -619,7 +702,7 @@ class GA(Algorithm):
 
     def _make_offspring(
         self,
-        ctx: OptimizationState,
+        ctx: ExecutionContext,
         n_target: int,
         pop: np.ndarray,
         popsize: int,
@@ -657,29 +740,38 @@ class GA(Algorithm):
 
     def tell(
         self,
-        ctx: OptimizationState,
-        provider: Dispatchable,
-        offspring: Population,
-    ):
+        feedback: FeedbackBatch,
+        state: StateView,
+    ) -> StatePatch:
         """
         Update the population using (μ+λ) survivor selection.
 
         Parameters
         ----------
-        ctx : OptimizationState
-            Current optimization context.
-        provider : Dispatchable
-            Component provider.
-        offspring : Population
-            Offspring population.
+        feedback : FeedbackBatch
+            Feedback delivered for the current proposal.
+        state : StateView
+            Read-only algorithm state view.
         """
-        popsize = len(ctx.population)
+        del feedback
+        ctx = algorithm_context(state)
+        offspring = ctx.offspring
+        if offspring is None:
+            raise ConfigurationError("GA.tell() requires an offspring population")
+        population = ctx.population
+        popsize = len(population)
 
-        pool = ctx.population.empty_like(capacity=popsize + len(offspring))
-        pool._extend_internal(ctx.population, preserve_ids=True)
+        pool = _canonical_merge_pool(population, offspring, popsize + len(offspring))
+        if pool is None:
+            pool = population.empty_like(capacity=popsize + len(offspring))
+        pool._extend_internal(population, preserve_ids=True)
         pool._extend_internal(offspring, preserve_ids=True)
 
         survivor_idx = self.survivor_selection.select(ctx, pool, popsize)
 
-        ctx.population.clear()
-        ctx.population._extend_internal(pool.extract(survivor_idx), preserve_ids=True)
+        if not population._replace_from_population(
+            pool, survivor_idx, preserve_ids=True
+        ):
+            population.clear()
+            population._extend_internal(pool.extract(survivor_idx), preserve_ids=True)
+        return StatePatch(writes={POPULATIONS_MAIN: population})

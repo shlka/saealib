@@ -7,7 +7,7 @@ import dataclasses
 import importlib.util
 import pickle
 import warnings
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, cast
 
@@ -23,9 +23,26 @@ from saealib.callback import (
     logging_generation,
 )
 from saealib.context import OptimizationState
+from saealib.core.compiler import (
+    CompileContext,
+    Compiler,
+    ContractPath,
+    Diagnostic,
+    DiagnosticBag,
+    ExecutablePlan,
+    Severity,
+    check_component_contract,
+)
+from saealib.core.compiler.contract_diagnostics import (
+    check_pymoo_feedback_compatibility,
+)
+from saealib.core.compiler.graph import ComponentGraph
+from saealib.core.contracts import ComponentContract
+from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
 from saealib.exceptions import ConfigurationError, ValidationError
 from saealib.execution.evaluator import Evaluator, SerialEvaluator
 from saealib.execution.runner import Runner
+from saealib.execution.runtime import default_runtime_registry
 from saealib.execution.scheduler import AsyncEvaluationScheduler
 from saealib.policies.evaluation import EvaluationPlanner
 from saealib.policies.feedback import FeedbackBuilder
@@ -182,8 +199,177 @@ class Optimizer:
         self.async_evaluation_scheduler: AsyncEvaluationScheduler | None = None
         self.instance_name: str = ""
         self._preset: dict | None = None
+        self._last_contract_diagnostics: tuple[Diagnostic, ...] = ()
+        self._executable_plan: ExecutablePlan | None = None
 
     # --- setters (all return self for chaining) ---
+
+    def contract_diagnostics(self) -> DiagnosticBag:
+        """Return diagnostics for the currently configured component graph."""
+        diagnostics = DiagnosticBag()
+        contracts: dict[str, ComponentContract] = {}
+        component_names = (
+            "initializer",
+            "algorithm",
+            "surrogate_manager",
+            "termination",
+            "evaluator",
+            "evaluation_planner",
+            "feedback_builder",
+            "acquisition",
+            "async_evaluation_scheduler",
+            "strategy",
+        )
+        for name in component_names:
+            component = getattr(self, name, None)
+            if component is None:
+                continue
+            missing = object()
+            try:
+                contract_method = getattr(component, "contract", missing)
+            except Exception as error:
+                diagnostics.append(
+                    Diagnostic(
+                        severity=Severity.ERROR,
+                        code="contract_unavailable",
+                        message=(
+                            f"{name}.contract attribute could not be read: "
+                            f"{type(error).__name__}: {error}."
+                        ),
+                        path=ContractPath(components=(name,)),
+                        resolutions=(
+                            "Make the component's contract attribute readable and "
+                            "provide a callable contract() method.",
+                        ),
+                    )
+                )
+                continue
+            if contract_method is missing:
+                continue
+            if not callable(contract_method):
+                diagnostics.append(
+                    Diagnostic(
+                        severity=Severity.ERROR,
+                        code="contract_unavailable",
+                        message=(
+                            f"{name}.contract exists on {type(component).__name__} "
+                            "but is not callable."
+                        ),
+                        path=ContractPath(components=(name,)),
+                        resolutions=(
+                            "Provide a callable contract() method returning "
+                            "ComponentContract.",
+                        ),
+                    )
+                )
+                continue
+            try:
+                contract = cast(Callable[[], object], contract_method)()
+            except Exception as error:
+                diagnostics.append(
+                    Diagnostic(
+                        severity=Severity.ERROR,
+                        code="contract_unavailable",
+                        message=(
+                            f"{name}.contract() on {type(component).__name__} "
+                            f"raised {type(error).__name__}: {error}."
+                        ),
+                        path=ContractPath(components=(name,)),
+                        resolutions=(
+                            "Make contract() return a ComponentContract without "
+                            "raising.",
+                        ),
+                    )
+                )
+                continue
+            if not isinstance(contract, ComponentContract):
+                diagnostics.append(
+                    Diagnostic(
+                        severity=Severity.ERROR,
+                        code="contract_unavailable",
+                        message=(
+                            f"{name}.contract() on {type(component).__name__} "
+                            f"returned {type(contract).__name__}, not "
+                            "ComponentContract."
+                        ),
+                        path=ContractPath(components=(name,)),
+                        resolutions=(
+                            "Make contract() return a ComponentContract instance.",
+                        ),
+                    )
+                )
+                continue
+            contracts[name] = contract
+            diagnostics.extend(
+                check_component_contract(
+                    contract,
+                    component=component,
+                    path=ContractPath(components=(name,)),
+                )
+            )
+        algorithm = getattr(self, "algorithm", None)
+        scheduler = self.async_evaluation_scheduler
+        from saealib.algorithms.pymoo_algorithm import PymooAlgorithm
+
+        if (
+            isinstance(algorithm, PymooAlgorithm)
+            and not getattr(algorithm, "allow_partial_tell", False)
+            and scheduler is not None
+        ):
+            algorithm_contract = contracts.get("algorithm")
+            if algorithm_contract is not None:
+                diagnostics.extend(
+                    check_pymoo_feedback_compatibility(
+                        algorithm_contract,
+                        consumer_path=ContractPath(components=("algorithm",)),
+                        runtime_path=ContractPath(
+                            components=("async_evaluation_scheduler",)
+                        ),
+                    )
+                )
+        return diagnostics
+
+    @property
+    def last_contract_diagnostics(self) -> tuple[Diagnostic, ...]:
+        """Return the diagnostics collected by the most recent ``validate``."""
+        return self._last_contract_diagnostics
+
+    @property
+    def executable_plan(self) -> ExecutablePlan | None:
+        """Return the plan produced by the most recent execution preparation."""
+        return self._executable_plan
+
+    def describe(self) -> str:
+        """Describe the most recently compiled plan, if one exists."""
+        if self._executable_plan is None:
+            return "Optimizer(uncompiled)"
+        return self._executable_plan.describe()
+
+    def _compile_plan(self) -> ExecutablePlan | None:
+        """Build and compile the configured strategy graph once per run."""
+        strategy = getattr(self, "strategy", None)
+        build_graph = getattr(strategy, "build_graph", None)
+        if not callable(build_graph):
+            self._executable_plan = None
+            return None
+
+        graph = build_graph(self)
+        if not isinstance(graph, ComponentGraph):
+            self._executable_plan = None
+            return None
+        plan = Compiler().compile(
+            graph,
+            CompileContext(
+                space=self.problem.space,
+                problem=self.problem,
+                offered_runtime_capabilities=default_runtime_registry.offered_capabilities(
+                    self
+                ),
+                initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
+            ),
+        )
+        self._executable_plan = plan
+        return plan
 
     def set_seed(self, seed: int | None) -> Self:
         """Set the master random seed. Returns self."""
@@ -198,6 +384,8 @@ class Optimizer:
     def set_algorithm(self, algorithm: Algorithm) -> Self:
         """Set the evolutionary algorithm. Returns self."""
         self.algorithm = algorithm
+        if self.async_evaluation_scheduler is not None:
+            self.async_evaluation_scheduler.algorithm = algorithm
         return self
 
     def set_surrogate_manager(self, manager: SurrogateManager) -> Self:
@@ -288,9 +476,8 @@ class Optimizer:
         """
         Set a user-defined preset. Returns self.
 
-        The preset is only used to fill components not already configured
-        via ``set_*()`` (see ``_resolve_defaults()``); explicitly set
-        components always take precedence over the preset.
+        The preset fills components that are not already configured via
+        ``set_*()``; explicitly set components take precedence.
         """
         from saealib.defaults import load_preset
 
@@ -368,6 +555,9 @@ class Optimizer:
         """
         Check configuration consistency. Returns list of issues.
 
+        Call :meth:`resolve_defaults` first when validation results should
+        reflect the components that will be used for execution.
+
         Parameters
         ----------
         require_initializer : bool, optional
@@ -392,6 +582,18 @@ class Optimizer:
 
         if surrogate_manager is not None:
             self._validate_surrogate_compatibility(issues, surrogate_manager)
+
+        diagnostics = tuple(self.contract_diagnostics())
+        if self._executable_plan is not None:
+            diagnostics = tuple(
+                dict.fromkeys((*diagnostics, *self._executable_plan.diagnostics))
+            )
+        self._last_contract_diagnostics = diagnostics
+        issues.extend(
+            str(diagnostic)
+            for diagnostic in self._last_contract_diagnostics
+            if diagnostic.severity is Severity.ERROR
+        )
 
         return issues
 
@@ -495,7 +697,7 @@ class Optimizer:
                     f"not match problem.n_obj ({self.problem.n_obj})"
                 )
 
-    def _resolve_defaults(self) -> None:
+    def resolve_defaults(self) -> None:
         """Fill unset components with library defaults (Registry + presets file).
 
         Components already set via ``set_*()`` are never overwritten. Gaps
@@ -600,6 +802,12 @@ class Optimizer:
 
         if getattr(self, "termination", None) is None:
             self.termination = Termination(max_fe_cond(200 * self.problem.dim))
+        if self.async_evaluation_scheduler is not None:
+            self.async_evaluation_scheduler.algorithm = self.algorithm
+
+    def _resolve_defaults(self) -> None:
+        """Compatibility wrapper for :meth:`resolve_defaults`."""
+        self.resolve_defaults()
 
     def _inject_acquisition_directions(self) -> None:
         """Auto-inject ``problem.direction`` into unset acquisition directions.
@@ -741,7 +949,8 @@ class Optimizer:
         Generator[OptimizationState]
             Generator of OptimizationState.
         """
-        self._resolve_defaults()
+        self.resolve_defaults()
+        self._compile_plan()
         issues = self.validate()
         if issues:
             raise ConfigurationError(
@@ -784,7 +993,8 @@ class Optimizer:
         OptimizationState
             The optimization context.
         """
-        self._resolve_defaults()
+        self.resolve_defaults()
+        self._compile_plan()
         issues = self.validate()
         if issues:
             raise ConfigurationError(
@@ -817,6 +1027,7 @@ class Optimizer:
         -------
         Generator[OptimizationState, None, None]
         """
+        self._compile_plan()
         issues = self.validate(require_initializer=False)
         if issues:
             raise ConfigurationError(
@@ -839,6 +1050,7 @@ class Optimizer:
         OptimizationState
             The final optimization context.
         """
+        self._compile_plan()
         issues = self.validate(require_initializer=False)
         if issues:
             raise ConfigurationError(
@@ -856,6 +1068,17 @@ class Optimizer:
         "Reproducibility is only guaranteed within the same Python "
         "and library versions."
     )
+
+    def __getstate__(self) -> dict[str, object]:
+        """Exclude the compiled graph plan from legacy pickle checkpoints."""
+        state = self.__dict__.copy()
+        state["_executable_plan"] = None
+        return state
+
+    def __setstate__(self, state: dict[str, object]) -> None:
+        """Restore an optimizer without a stale compiled execution plan."""
+        self.__dict__.update(state)
+        self.__dict__.setdefault("_executable_plan", None)
 
     def save_pickle(self, ctx: OptimizationState, path: str | Path) -> None:
         """

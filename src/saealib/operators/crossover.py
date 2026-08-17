@@ -5,15 +5,27 @@ from __future__ import annotations
 import copy
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from dataclasses import replace
 from typing import TYPE_CHECKING
 
 import numpy as np
 from typing_extensions import Self
 
+from saealib.core.contracts import (
+    MANY,
+    ComponentContract,
+    DataSpec,
+    Fixed,
+    PortContract,
+    PortDirection,
+    PortSpec,
+    ServiceRequirement,
+    Var,
+)
 from saealib.registry import register
 
 if TYPE_CHECKING:
-    from saealib.context import OptimizationState
+    from saealib.core.state import ExecutionContext
 
 
 class Crossover(ABC):
@@ -36,6 +48,44 @@ class Crossover(ABC):
     n_parents: int = 2
     n_children: int = 2
     prob: float = 1.0
+
+    def contract(self) -> ComponentContract:
+        """Return the crossover contract."""
+        representation = Var(name="R")
+        return ComponentContract(
+            ports={
+                "crossover": PortContract(
+                    inputs=(
+                        PortSpec(
+                            name="parents",
+                            direction=PortDirection.INPUT,
+                            data=DataSpec(
+                                kind="GenomeBatch",
+                                bindings={
+                                    "representation": representation,
+                                    "parent_count": Fixed(value=self.n_parents),
+                                },
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                    outputs=(
+                        PortSpec(
+                            name="offspring",
+                            direction=PortDirection.OUTPUT,
+                            data=DataSpec(
+                                kind="GenomeBatch",
+                                bindings={
+                                    "representation": representation,
+                                    "candidate_count": Fixed(value=self.n_children),
+                                },
+                            ),
+                            cardinality=MANY,
+                        ),
+                    ),
+                )
+            }
+        )
 
     def crossover(
         self,
@@ -118,7 +168,7 @@ class Crossover(ABC):
         offspring: np.ndarray,
         parents: np.ndarray,
         rng: np.random.Generator,
-        ctx: OptimizationState | None = None,
+        ctx: ExecutionContext | None = None,
     ) -> np.ndarray:
         """Post-crossover lifecycle hook; override to inject custom processing.
 
@@ -130,7 +180,7 @@ class Crossover(ABC):
             Parent individuals. shape = (n_parents, dim)
         rng : np.random.Generator
             Random number generator.
-        ctx : OptimizationState or None, optional
+        ctx : ExecutionContext or None, optional
             Current optimization context.
 
         Returns
@@ -145,7 +195,7 @@ class Crossover(ABC):
         offspring_batch: np.ndarray,
         parents_batch: np.ndarray,
         rng: np.random.Generator,
-        ctx: OptimizationState | None = None,
+        ctx: ExecutionContext | None = None,
     ) -> np.ndarray:
         """Run the post-crossover lifecycle hook for a batch.
 
@@ -162,7 +212,7 @@ class Crossover(ABC):
             Batch of parent groups. shape = (n_pair, n_parents, dim)
         rng : np.random.Generator
             Random number generator.
-        ctx : OptimizationState or None, optional
+        ctx : ExecutionContext or None, optional
             Current optimization context.
 
         Returns
@@ -189,7 +239,7 @@ class Crossover(ABC):
     def with_post(
         self,
         fn: Callable[
-            [np.ndarray, np.ndarray, np.random.Generator, OptimizationState | None],
+            [np.ndarray, np.ndarray, np.random.Generator, ExecutionContext | None],
             np.ndarray,
         ],
     ) -> Self:
@@ -341,6 +391,40 @@ class CrossoverSBX(Crossover):
         self.prob = prob
         self.eta = eta
         self.prob_var = prob_var
+
+    def contract(self) -> ComponentContract:
+        """Return the bounded real-valued crossover contract."""
+        base = super().contract()
+        role = base.ports["crossover"]
+        parent_data = role.inputs[0].data
+        offspring_data = role.outputs[0].data
+        parent_bindings = dict(parent_data.bindings)
+        offspring_bindings = dict(offspring_data.bindings)
+        parent_bindings["representation"] = Fixed(value="real")
+        offspring_bindings["representation"] = Fixed(value="real")
+        return replace(
+            base,
+            ports={
+                "crossover": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            data=replace(parent_data, bindings=parent_bindings),
+                            required_services=(
+                                ServiceRequirement(name="BoundsService"),
+                            ),
+                        ),
+                    ),
+                    outputs=(
+                        replace(
+                            role.outputs[0],
+                            data=replace(offspring_data, bindings=offspring_bindings),
+                        ),
+                    ),
+                )
+            },
+        )
 
     def crossover_batch(
         self,
@@ -710,6 +794,40 @@ class CrossoverIntegerSBX(Crossover):
         self.eta = eta
         self.prob_var = prob_var
 
+    def contract(self) -> ComponentContract:
+        """Return the integer crossover contract."""
+        base = super().contract()
+        role = base.ports["crossover"]
+        parent_data = role.inputs[0].data
+        offspring_data = role.outputs[0].data
+        parent_bindings = dict(parent_data.bindings)
+        offspring_bindings = dict(offspring_data.bindings)
+        parent_bindings["representation"] = Fixed(value="integer")
+        offspring_bindings["representation"] = Fixed(value="integer")
+        return replace(
+            base,
+            ports={
+                "crossover": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            data=replace(parent_data, bindings=parent_bindings),
+                            required_services=(
+                                ServiceRequirement(name="BoundsService"),
+                            ),
+                        ),
+                    ),
+                    outputs=(
+                        replace(
+                            role.outputs[0],
+                            data=replace(offspring_data, bindings=offspring_bindings),
+                        ),
+                    ),
+                )
+            },
+        )
+
     def crossover_batch(
         self,
         parents_batch: np.ndarray,
@@ -825,6 +943,37 @@ class CrossoverCategorical(Crossover):
         """
         super().__init__()
         self.prob = prob
+
+    def contract(self) -> ComponentContract:
+        """Return the categorical crossover contract."""
+        base = super().contract()
+        role = base.ports["crossover"]
+        parent_data = role.inputs[0].data
+        offspring_data = role.outputs[0].data
+        parent_bindings = dict(parent_data.bindings)
+        offspring_bindings = dict(offspring_data.bindings)
+        parent_bindings["representation"] = Fixed(value="categorical")
+        offspring_bindings["representation"] = Fixed(value="categorical")
+        return replace(
+            base,
+            ports={
+                "crossover": replace(
+                    role,
+                    inputs=(
+                        replace(
+                            role.inputs[0],
+                            data=replace(parent_data, bindings=parent_bindings),
+                        ),
+                    ),
+                    outputs=(
+                        replace(
+                            role.outputs[0],
+                            data=replace(offspring_data, bindings=offspring_bindings),
+                        ),
+                    ),
+                )
+            },
+        )
 
     def crossover_batch(
         self,

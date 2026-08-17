@@ -1,3 +1,8 @@
+---
+primary_layer: layer2
+related_layers: [layer3]
+---
+
 # Termination
 
 ```{eval-rst}

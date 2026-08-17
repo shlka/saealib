@@ -239,7 +239,6 @@ class CORSDistance(PointwiseAcquisition):
 
     @staticmethod
     def _candidate_x(prediction: SurrogatePrediction) -> np.ndarray:
-        """Extract candidate design vectors from prediction.x."""
         x = prediction.x
         if x is None:
             raise ValueError(
