@@ -447,6 +447,10 @@ _LAZY_EXPORTS: dict[str, str] = {
     # utils
     "gaussian_kernel": "saealib.surrogate.rbf",
     "thin_plate_spline_kernel": "saealib.surrogate.rbf",
+    "linear_kernel": "saealib.surrogate.rbf",
+    "cubic_kernel": "saealib.surrogate.rbf",
+    "multiquadric_kernel": "saealib.surrogate.rbf",
+    "matern_kernel": "saealib.surrogate.rbf",
     "uniform_weight_vectors": "saealib.utils.weight_vectors",
 }
 

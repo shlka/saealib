@@ -1,10 +1,16 @@
+from functools import partial
+
 import numpy as np
 import pytest
 
 from saealib.exceptions import ValidationError
 from saealib.surrogate.rbf import (
     RBFSurrogate,
+    cubic_kernel,
     gaussian_kernel,
+    linear_kernel,
+    matern_kernel,
+    multiquadric_kernel,
     thin_plate_spline_kernel,
 )
 
@@ -151,3 +157,74 @@ def test_invalid_solver_raises_validation_error(solver):
 def test_nonpositive_alpha_raises_validation_error(solver, alpha):
     with pytest.raises(ValidationError):
         RBFSurrogate(kernel=gaussian_kernel, dim=1, solver=solver, alpha=alpha)
+
+
+@pytest.mark.parametrize(
+    ("kernel", "polynomial_degree"),
+    [
+        (linear_kernel, 0),
+        (cubic_kernel, 1),
+        (multiquadric_kernel, 0),
+    ],
+)
+def test_additional_cpd_kernels_interpolate_training_points(kernel, polynomial_degree):
+    surrogate = RBFSurrogate(
+        kernel=kernel,
+        dim=1,
+        polynomial_degree=polynomial_degree,
+    )
+    surrogate.fit(TRAIN_X, TRAIN_Y)
+
+    np.testing.assert_allclose(
+        surrogate.predict(TRAIN_X).value[:, 0],
+        TRAIN_Y,
+        rtol=1e-10,
+        atol=1e-10,
+    )
+
+
+@pytest.mark.parametrize("nu", [0.5, 1.5, 2.5])
+def test_matern_kernels_interpolate_training_points_without_polynomial_term(nu):
+    surrogate = RBFSurrogate(kernel=partial(matern_kernel, nu=nu), dim=1)
+    surrogate.fit(TRAIN_X, TRAIN_Y)
+
+    np.testing.assert_allclose(
+        surrogate.predict(TRAIN_X).value[:, 0],
+        TRAIN_Y,
+        rtol=1e-10,
+        atol=1e-10,
+    )
+
+
+def test_matern_kernel_rejects_invalid_nu_at_fit_time():
+    surrogate = RBFSurrogate(kernel=partial(matern_kernel, nu=1.0), dim=1)
+
+    with pytest.raises(ValidationError, match=r"nu must be 0\.5, 1\.5, or 2\.5"):
+        surrogate.fit(TRAIN_X, TRAIN_Y)
+
+
+def test_multiquadric_without_required_constant_term_has_worse_interpolation():
+    train_x = np.arange(40, dtype=float).reshape(-1, 1)
+    train_y = train_x[:, 0] ** 3
+
+    valid_surrogate = RBFSurrogate(
+        kernel=multiquadric_kernel,
+        dim=1,
+        polynomial_degree=0,
+    )
+    invalid_surrogate = RBFSurrogate(
+        kernel=multiquadric_kernel,
+        dim=1,
+        polynomial_degree=-1,
+    )
+    valid_surrogate.fit(train_x, train_y)
+    invalid_surrogate.fit(train_x, train_y)
+
+    valid_prediction = valid_surrogate.predict(train_x).value[:, 0]
+    invalid_prediction = invalid_surrogate.predict(train_x).value[:, 0]
+    valid_residual = np.max(np.abs(valid_prediction - train_y))
+
+    assert np.isfinite(valid_prediction).all()
+    if np.isfinite(invalid_prediction).all():
+        invalid_residual = np.max(np.abs(invalid_prediction - train_y))
+        assert invalid_residual > max(1e-3, 10 * valid_residual)

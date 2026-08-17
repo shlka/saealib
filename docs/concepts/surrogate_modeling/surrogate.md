@@ -43,14 +43,25 @@ Archive-based criteria such as `NoveltyAcquisition` instead receive candidate an
 
 ## Built-in Surrogates
 
-**`RBFSurrogate(kernel, dim, polynomial_degree=-1, solver="solve", alpha=1e-8)`**: A surrogate using RBF interpolation {cite}`gutmann2001rbf,regis2005cors` (the origin of RBF interpolation itself is Hardy, 1971).
-Accepts any kernel function (default `gaussian_kernel`; `thin_plate_spline_kernel` is also built in), and `predict()` explicitly returns `std=None` (RBF interpolation provides no uncertainty).
+**`RBFSurrogate(kernel, dim, polynomial_degree=-1, solver="solve", alpha=1e-8)`**: A surrogate using RBF interpolation {cite}`gutmann2001rbf,regis2005cors,rasmussen2006gpml` (the origin of RBF interpolation itself is Hardy, 1971).
+Accepts any kernel function (default `gaussian_kernel`; built-in kernels are listed below), and `predict()` explicitly returns `std=None` (RBF interpolation provides no uncertainty).
 
 | Parameter | Values | Role |
 |---|---|---|
 | `polynomial_degree` | `-1` (default) / `0` / `1` | Augments the system with a polynomial term (none / constant / linear); required for conditionally positive definite kernels like thin-plate-spline, unneeded for strictly positive definite ones like `gaussian_kernel`. |
 | `solver` | `"solve"` (default) / `"lstsq"` / `"tikhonov"` | How the (possibly augmented) linear system is solved: direct / least squares (tolerant of rank-deficient systems) / ridge-regularized via `alpha`. |
 | `alpha` | `1e-8` (default) | Ridge regularization strength, used only when `solver="tikhonov"`. |
+
+All kernels share a `length_scale` keyword argument (in the same distance units as the input data), interpreted per-kernel as shown below; `RBFSurrogate` sets it automatically to the median pairwise training-point distance.
+
+| Kernel | Formula | Requires `polynomial_degree` |
+|---|---|---|
+| `gaussian_kernel` (default) | `exp(-r²/(2·length_scale²))` | `-1` (none) |
+| `thin_plate_spline_kernel` | `r² log r` (`length_scale` unused) | `1` (linear) |
+| `linear_kernel` | `r` (`length_scale` unused) | `0` (constant) |
+| `cubic_kernel` | `r³` (`length_scale` unused) | `1` (linear) |
+| `multiquadric_kernel` | `√(r²+length_scale²)` | `0` (constant) |
+| `matern_kernel` (`nu=0.5/1.5/2.5`) | Matérn covariance, `length_scale` = `ℓ` | `-1` (none) |
 
 **`PerObjectiveSurrogate(surrogates)`**: A `RegressionSurrogate` subclass, a composite class that assigns a different surrogate per objective.
 Raises `ValueError` at `fit` time if `train_y`'s column count doesn't match `len(surrogates)`.
@@ -166,6 +177,10 @@ To use an uncertainty-based [AcquisitionFunction](acquisition_functions.md), `Su
 - {py:class}`saealib.RBFSurrogate`
 - {py:func}`saealib.gaussian_kernel`
 - {py:func}`saealib.thin_plate_spline_kernel`
+- {py:func}`saealib.linear_kernel`
+- {py:func}`saealib.cubic_kernel`
+- {py:func}`saealib.multiquadric_kernel`
+- {py:func}`saealib.matern_kernel`
 - {py:class}`saealib.PerObjectiveSurrogate`
 - {py:class}`saealib.SklearnGPRSurrogate`
 - {py:class}`saealib.SklearnRFRSurrogate`

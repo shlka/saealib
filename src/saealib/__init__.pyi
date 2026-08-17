@@ -301,7 +301,11 @@ from saealib.surrogate import product_combine as product_combine
 from saealib.surrogate import rank_weighted_combine as rank_weighted_combine
 
 # utils
+from saealib.surrogate.rbf import cubic_kernel as cubic_kernel
 from saealib.surrogate.rbf import gaussian_kernel as gaussian_kernel
+from saealib.surrogate.rbf import linear_kernel as linear_kernel
+from saealib.surrogate.rbf import matern_kernel as matern_kernel
+from saealib.surrogate.rbf import multiquadric_kernel as multiquadric_kernel
 from saealib.surrogate.rbf import thin_plate_spline_kernel as thin_plate_spline_kernel
 from saealib.termination import Termination as Termination
 from saealib.termination import TerminationCondition as TerminationCondition
